@@ -28,7 +28,13 @@ import { useToast } from "@/components/ui/toast";
 import { isFlagged, isUnread } from "@/jmap/mail";
 import type { BodyPart, EmailDetail, Mailbox } from "@/jmap/types";
 import { displayName, firstName, formatAddressList, formatSize, readingDate } from "@/lib/format";
-import { flattenTree, folderTree, mailboxName, systemMailboxes } from "@/lib/mailboxes";
+import {
+  flattenTree,
+  folderTree,
+  mailboxName,
+  mailboxRights,
+  systemMailboxes,
+} from "@/lib/mailboxes";
 import { m } from "@/paraglide/messages";
 import { MailBody } from "./mail-body";
 import { useEmail, useEmailActions, useMailboxes } from "./queries";
@@ -40,13 +46,14 @@ export const MessageView = ({ accountId, mailbox, emailId }: Props) => {
   const actions = useEmailActions(accountId);
   const markedFor = useRef<string | null>(null);
 
-  // Opening a mail marks it read, once per mail.
+  // Opening a mail marks it read, once per mail (if the mailbox allows it).
+  const { canMarkSeen } = mailboxRights(mailbox);
   useEffect(() => {
-    if (email && isUnread(email) && markedFor.current !== email.id) {
+    if (canMarkSeen && email && isUnread(email) && markedFor.current !== email.id) {
       markedFor.current = email.id;
       void actions.setSeen([email.id], true);
     }
-  }, [email, actions]);
+  }, [canMarkSeen, email, actions]);
 
   if (!emailId) {
     return (
@@ -145,6 +152,7 @@ const Toolbar = ({
     ...flattenTree(folderTree(mailboxes)).map((node) => node.mailbox),
   ].filter((box) => box.id !== mailbox.id);
   const flagged = isFlagged(email);
+  const { canRemove, canMarkSeen, canFlag } = mailboxRights(mailbox);
 
   return (
     <div className="flex h-12 shrink-0 items-center gap-1 border-b border-border px-2 md:px-3">
@@ -157,7 +165,7 @@ const Toolbar = ({
       >
         <ChevronLeft size={20} />
       </Button>
-      {mailbox.role !== "archive" ? (
+      {canRemove && mailbox.role !== "archive" ? (
         <Button
           variant="ghost"
           size="icon"
@@ -168,56 +176,64 @@ const Toolbar = ({
           <Archive size={16} strokeWidth={1.75} />
         </Button>
       ) : null}
-      <Button
-        variant="ghost"
-        size="icon"
-        aria-label={m.mail_delete()}
-        title={m.mail_delete()}
-        onClick={() => run(() => actions.remove([email.id], mailbox.id), true)}
-      >
-        <Trash2 size={16} strokeWidth={1.75} />
-      </Button>
-      <Button
-        variant="ghost"
-        size="icon"
-        aria-label={m.mail_mark_unread()}
-        title={m.mail_mark_unread()}
-        onClick={() => run(() => actions.setSeen([email.id], false), true)}
-      >
-        <MailOpen size={16} strokeWidth={1.75} />
-      </Button>
-      <Button
-        variant="ghost"
-        size="icon"
-        aria-label={flagged ? m.mail_unflag() : m.mail_flag()}
-        aria-pressed={flagged}
-        title={flagged ? m.mail_unflag() : m.mail_flag()}
-        onClick={() => run(() => actions.setFlagged([email.id], !flagged), false)}
-      >
-        <Star
-          size={16}
-          strokeWidth={1.75}
-          className={flagged ? "fill-warn text-warn" : undefined}
-        />
-      </Button>
-      <MenuRoot>
-        <MenuTrigger asChild>
-          <Button variant="ghost" size="icon" aria-label={m.mail_move()} title={m.mail_move()}>
-            <FolderInput size={16} strokeWidth={1.75} />
-          </Button>
-        </MenuTrigger>
-        <MenuContent align="start">
-          <MenuLabel>{m.mail_move()}</MenuLabel>
-          {targets.map((target) => (
-            <MenuItem
-              key={target.id}
-              onSelect={() => run(() => actions.move([email.id], mailbox.id, target.id), true)}
-            >
-              {mailboxName(target)}
-            </MenuItem>
-          ))}
-        </MenuContent>
-      </MenuRoot>
+      {canRemove ? (
+        <Button
+          variant="ghost"
+          size="icon"
+          aria-label={m.mail_delete()}
+          title={m.mail_delete()}
+          onClick={() => run(() => actions.remove([email.id], mailbox.id), true)}
+        >
+          <Trash2 size={16} strokeWidth={1.75} />
+        </Button>
+      ) : null}
+      {canMarkSeen ? (
+        <Button
+          variant="ghost"
+          size="icon"
+          aria-label={m.mail_mark_unread()}
+          title={m.mail_mark_unread()}
+          onClick={() => run(() => actions.setSeen([email.id], false), true)}
+        >
+          <MailOpen size={16} strokeWidth={1.75} />
+        </Button>
+      ) : null}
+      {canFlag ? (
+        <Button
+          variant="ghost"
+          size="icon"
+          aria-label={flagged ? m.mail_unflag() : m.mail_flag()}
+          aria-pressed={flagged}
+          title={flagged ? m.mail_unflag() : m.mail_flag()}
+          onClick={() => run(() => actions.setFlagged([email.id], !flagged), false)}
+        >
+          <Star
+            size={16}
+            strokeWidth={1.75}
+            className={flagged ? "fill-warn text-warn" : undefined}
+          />
+        </Button>
+      ) : null}
+      {canRemove ? (
+        <MenuRoot>
+          <MenuTrigger asChild>
+            <Button variant="ghost" size="icon" aria-label={m.mail_move()} title={m.mail_move()}>
+              <FolderInput size={16} strokeWidth={1.75} />
+            </Button>
+          </MenuTrigger>
+          <MenuContent align="start">
+            <MenuLabel>{m.mail_move()}</MenuLabel>
+            {targets.map((target) => (
+              <MenuItem
+                key={target.id}
+                onSelect={() => run(() => actions.move([email.id], mailbox.id, target.id), true)}
+              >
+                {mailboxName(target)}
+              </MenuItem>
+            ))}
+          </MenuContent>
+        </MenuRoot>
+      ) : null}
       <div className="flex-1" />
       <Button asChild variant="outline" size="sm" className="hidden sm:inline-flex">
         <Link to="." search={(prev) => ({ ...prev, compose: "reply" })}>
@@ -252,10 +268,14 @@ const Toolbar = ({
           >
             <Forward size={15} /> {m.mail_forward()}
           </MenuItem>
-          <MenuSeparator />
-          <MenuItem onSelect={() => run(() => actions.setSeen([email.id], false), true)}>
-            <MailOpen size={15} /> {m.mail_mark_unread()}
-          </MenuItem>
+          {canMarkSeen ? (
+            <>
+              <MenuSeparator />
+              <MenuItem onSelect={() => run(() => actions.setSeen([email.id], false), true)}>
+                <MailOpen size={15} /> {m.mail_mark_unread()}
+              </MenuItem>
+            </>
+          ) : null}
         </MenuContent>
       </MenuRoot>
     </div>

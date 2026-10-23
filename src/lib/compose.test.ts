@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { EmailDetail } from "@/jmap/types";
-import { startCompose } from "./compose";
+import { sharedSenderName, startCompose } from "./compose";
 
 const original: EmailDetail = {
   id: "e1",
@@ -82,5 +82,15 @@ describe("startCompose", () => {
   });
   it("starts empty for a new mail", () => {
     expect(startCompose("new", original, "", []).subject).toBe("");
+  });
+});
+
+describe("sharedSenderName", () => {
+  it("names the person and the shared mailbox", () => {
+    expect(sharedSenderName("Jonas Weber", "Weber Haustechnik")).toBe(
+      "Jonas Weber (Weber Haustechnik)",
+    );
+    expect(sharedSenderName("", "Weber Haustechnik")).toBe("Weber Haustechnik");
+    expect(sharedSenderName("Jonas Weber", "")).toBe("Jonas Weber");
   });
 });

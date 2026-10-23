@@ -1,6 +1,13 @@
 import { describe, expect, it } from "vitest";
 import type { Mailbox } from "@/jmap/types";
-import { flattenTree, folderTree, mailboxName, mailboxPath, systemMailboxes } from "./mailboxes";
+import {
+  flattenTree,
+  folderTree,
+  mailboxName,
+  mailboxPath,
+  mailboxRights,
+  systemMailboxes,
+} from "./mailboxes";
 
 const box = (
   id: string,
@@ -65,5 +72,28 @@ describe("folderTree", () => {
 describe("mailboxPath", () => {
   it("joins the names from the top", () => {
     expect(mailboxPath(mailboxes.find((m) => m.id === "h")!, mailboxes)).toBe("Kunden / Hoffmann");
+  });
+});
+
+describe("mailboxRights", () => {
+  it("allows everything when the server says nothing", () => {
+    expect(mailboxRights({ id: "a" } as Mailbox)).toEqual({
+      canRemove: true,
+      canMarkSeen: true,
+      canFlag: true,
+    });
+  });
+  it("follows a mailbox shared only for reading", () => {
+    expect(
+      mailboxRights({
+        id: "a",
+        myRights: {
+          mayReadItems: true,
+          mayRemoveItems: false,
+          maySetSeen: true,
+          maySetKeywords: false,
+        },
+      } as Mailbox),
+    ).toEqual({ canRemove: false, canMarkSeen: true, canFlag: false });
   });
 });

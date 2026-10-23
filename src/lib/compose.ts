@@ -98,3 +98,13 @@ export const startCompose = (
     references: [...(original.references ?? [])],
   };
 };
+
+/**
+ * The sender name for a mail from a shared mailbox: the person and the mailbox's name, so the
+ * customer and the colleagues (in the shared Sent folder) see who answered:
+ * "Jonas Weber (Weber Haustechnik)".
+ */
+export const sharedSenderName = (person: string, mailboxName: string): string =>
+  person && mailboxName && person !== mailboxName
+    ? `${person} (${mailboxName})`
+    : mailboxName || person;

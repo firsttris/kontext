@@ -1,5 +1,13 @@
 import { expect, test } from "@playwright/test";
-import { address, inboxMails, inboxSubjects, login, unique } from "./helpers";
+import {
+  address,
+  inboxMails,
+  inboxSubjects,
+  jmapAs,
+  login,
+  personalAccountId,
+  unique,
+} from "./helpers";
 
 test.describe("Anmeldung", () => {
   test("lehnt ein falsches Passwort ab", async ({ page }) => {
@@ -185,6 +193,45 @@ test("sendet aus dem gemeinsamen Postfach als info@", async ({ page }) => {
   await expect
     .poll(async () => (await inboxMails("anna")).find((mail) => mail.subject === subject)?.from)
     .toBe(address("info"));
+  // The sender name says who wrote it, for the customer and in the shared Sent folder.
+  const mail = (await inboxMails("anna")).find((m) => m.subject === subject);
+  expect(mail?.fromName).toMatch(/^Jonas Weber \(.+\)$/);
+});
+
+test.describe("Postfach nur zum Lesen", () => {
+  /** Jonas (a member of info@) shares its inbox with Max for reading only. */
+  const share = async (rights: Record<string, boolean> | null) => {
+    const client = jmapAs("jonas");
+    const session = await client.getSession();
+    const info = Object.entries(session.accounts).find(([, a]) => a.name === address("info"))![0];
+    const max = await personalAccountId("max");
+    const { list } = await client.call<{ list: { id: string; role: string | null }[] }>(
+      "Mailbox/get",
+      { accountId: info, properties: ["role"] },
+    );
+    const inbox = list.find((mailbox) => mailbox.role === "inbox")!.id;
+    await client.call("Mailbox/set", {
+      accountId: info,
+      update: { [inbox]: { shareWith: rights ? { [max]: rights } : {} } },
+    });
+  };
+
+  test.afterEach(() => share(null));
+
+  test("zeigt info@ ohne Löschen und antwortet vom eigenen Konto", async ({ page }) => {
+    await share({ mayReadItems: true, maySetSeen: true });
+    await login(page, "max");
+    await page.getByRole("link", { name: "info@" }).click();
+    await page
+      .getByRole("list", { name: "Posteingang" })
+      .getByText("Anfrage Wärmepumpe Neubau")
+      .click();
+    await expect(page.getByRole("heading", { name: "Anfrage Wärmepumpe Neubau" })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Archivieren" })).toHaveCount(0);
+    await expect(page.getByRole("button", { name: "Löschen" })).toHaveCount(0);
+    await page.getByRole("link", { name: "Antworten" }).first().click();
+    await expect(page.getByLabel("Von").locator("option:checked")).toHaveText(/max@/);
+  });
 });
 
 test.describe("Mail am Handy @phone", () => {

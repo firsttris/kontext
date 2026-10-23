@@ -281,5 +281,6 @@
   "contacts_import_done": "{count} Kontakte importiert.",
   "mail_remote_blocked": "Bilder aus dem Internet sind blockiert – anzeigen",
   "mail_body_title": "Inhalt der Mail",
-  "mail_all_inboxes": "Alle Posteingänge"
+  "mail_all_inboxes": "Alle Posteingänge",
+  "mail_attachment_remove": "{name} entfernen"
 }

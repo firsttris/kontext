@@ -1,0 +1,204 @@
+/** The parts of the composer around the editor: header fields, attachments, action bar. */
+import { Paperclip, Send, Trash2, X } from "lucide-react";
+import { useRef } from "react";
+import { Button } from "@/components/ui/button";
+import type { OutgoingAttachment } from "@/jmap/mail";
+import type { EmailAddress, Identity } from "@/jmap/types";
+import { formatSize } from "@/lib/format";
+import type { Suggestion } from "@/lib/groups";
+import { m } from "@/paraglide/messages";
+import { RecipientField } from "./recipient-field";
+
+type FieldsProps = {
+  identities: Identity[];
+  identityId: string;
+  onIdentity: (id: string) => void;
+  to: EmailAddress[];
+  onTo: (value: EmailAddress[]) => void;
+  cc: EmailAddress[];
+  onCc: (value: EmailAddress[]) => void;
+  bcc: EmailAddress[];
+  onBcc: (value: EmailAddress[]) => void;
+  showCopies: boolean;
+  onShowCopies: () => void;
+  subject: string;
+  onSubject: (value: string) => void;
+  suggestions: Suggestion[];
+  autoFocusTo: boolean;
+};
+
+/** From, To, Cc/Bcc and subject. */
+export const ComposerFields = ({
+  identities,
+  identityId,
+  onIdentity,
+  to,
+  onTo,
+  cc,
+  onCc,
+  bcc,
+  onBcc,
+  showCopies,
+  onShowCopies,
+  subject,
+  onSubject,
+  suggestions,
+  autoFocusTo,
+}: FieldsProps) => (
+  <div className="flex flex-col border-b border-border px-3 py-1 text-[13px]">
+    <div className="flex h-9 items-center gap-2.5">
+      <span className="w-9 shrink-0 text-muted">{m.mail_from()}</span>
+      <select
+        aria-label={m.mail_from()}
+        value={identityId}
+        onChange={(e) => onIdentity(e.target.value)}
+        className="h-8 min-w-0 flex-1 rounded-md border-0 bg-transparent text-[14px] text-fg"
+      >
+        {identities.map((i) => (
+          <option key={i.id} value={i.id}>
+            {i.name && i.name !== i.email ? `${i.name} <${i.email}>` : i.email}
+          </option>
+        ))}
+      </select>
+    </div>
+    <div className="flex items-start gap-2">
+      <RecipientField
+        label={m.mail_to()}
+        value={to}
+        onChange={onTo}
+        suggestions={suggestions}
+        autoFocus={autoFocusTo}
+      />
+      {!showCopies ? (
+        <button
+          type="button"
+          onClick={onShowCopies}
+          className="mt-2 shrink-0 text-[13px] text-muted hover:text-fg"
+        >
+          {m.mail_cc()} / {m.mail_bcc()}
+        </button>
+      ) : null}
+    </div>
+    {showCopies ? (
+      <>
+        <RecipientField label={m.mail_cc()} value={cc} onChange={onCc} suggestions={suggestions} />
+        <RecipientField
+          label={m.mail_bcc()}
+          value={bcc}
+          onChange={onBcc}
+          suggestions={suggestions}
+        />
+      </>
+    ) : null}
+    <label className="flex h-9 items-center gap-2.5 border-t border-border">
+      <span className="w-9 shrink-0 text-muted">{m.mail_subject()}</span>
+      <input
+        value={subject}
+        onChange={(e) => onSubject(e.target.value)}
+        aria-label={m.mail_subject()}
+        className="h-8 min-w-0 flex-1 border-0 bg-transparent text-[14px] text-fg outline-none"
+      />
+    </label>
+  </div>
+);
+
+/** The attached files, each with a button to remove it. */
+export const AttachmentList = ({
+  attachments,
+  uploading,
+  onRemove,
+}: {
+  attachments: OutgoingAttachment[];
+  uploading: number;
+  onRemove: (file: OutgoingAttachment) => void;
+}) =>
+  attachments.length > 0 || uploading > 0 ? (
+    <ul
+      aria-label={m.mail_attachments()}
+      className="m-0 flex list-none flex-wrap gap-2 border-t border-border p-2.5"
+    >
+      {attachments.map((file) => (
+        <li
+          key={file.blobId}
+          className="flex items-center gap-2 rounded-lg border border-border py-1 pr-1 pl-2.5 text-[13px]"
+        >
+          <Paperclip size={13} className="text-muted" />
+          <span className="max-w-[200px] truncate">{file.name}</span>
+          <span className="text-muted">{formatSize(file.size)}</span>
+          <button
+            type="button"
+            aria-label={m.mail_attachment_remove({ name: file.name })}
+            onClick={() => onRemove(file)}
+            className="flex size-6 items-center justify-center rounded-md text-muted hover:bg-hover hover:text-fg"
+          >
+            <X size={12} />
+          </button>
+        </li>
+      ))}
+      {uploading > 0 ? (
+        <li className="px-2 py-1 text-[13px] text-muted">{m.common_loading()}</li>
+      ) : null}
+    </ul>
+  ) : null;
+
+/** Send, attach, the autosave note, save as draft and discard. */
+export const ComposerActions = ({
+  sending,
+  canSend,
+  savedAt,
+  onAttach,
+  onSaveDraft,
+  onDiscard,
+}: {
+  sending: boolean;
+  canSend: boolean;
+  savedAt: Date | null;
+  onAttach: (files: FileList | null) => void;
+  onSaveDraft: () => void;
+  onDiscard: () => void;
+}) => {
+  const fileInput = useRef<HTMLInputElement>(null);
+  return (
+    <div className="flex items-center gap-2">
+      <Button type="submit" variant="primary" disabled={sending || !canSend}>
+        <Send size={15} /> {sending ? m.mail_sending() : m.mail_send()}
+      </Button>
+      <input
+        ref={fileInput}
+        type="file"
+        multiple
+        hidden
+        onChange={(e) => onAttach(e.target.files)}
+      />
+      <Button
+        variant="ghost"
+        size="icon"
+        aria-label={m.mail_attach()}
+        title={m.mail_attach()}
+        onClick={() => fileInput.current?.click()}
+      >
+        <Paperclip size={16} />
+      </Button>
+      <div className="flex-1" />
+      {savedAt ? (
+        <span role="status" className="hidden text-[12px] text-muted sm:inline">
+          {m.mail_draft_autosaved({
+            time: savedAt.toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" }),
+          })}
+        </span>
+      ) : null}
+      <Button variant="ghost" size="sm" onClick={onSaveDraft}>
+        {m.mail_save_draft()}
+      </Button>
+      <Button
+        variant="ghost"
+        size="icon"
+        aria-label={m.mail_discard()}
+        title={m.mail_discard()}
+        onClick={onDiscard}
+      >
+        <Trash2 size={16} />
+      </Button>
+    </div>
+  );
+};

@@ -10,7 +10,18 @@ export type Mailbox = {
   sortOrder: number;
   totalEmails: number;
   unreadEmails: number;
-  myRights?: { mayCreateChild?: boolean; mayDelete?: boolean; mayRename?: boolean };
+  /** RFC 8621 §2: what the user may do here; less in a mailbox shared only for reading. */
+  myRights?: {
+    mayReadItems?: boolean;
+    mayAddItems?: boolean;
+    mayRemoveItems?: boolean;
+    maySetSeen?: boolean;
+    maySetKeywords?: boolean;
+    mayCreateChild?: boolean;
+    mayRename?: boolean;
+    mayDelete?: boolean;
+    maySubmit?: boolean;
+  };
 };
 
 export type EmailSummary = {

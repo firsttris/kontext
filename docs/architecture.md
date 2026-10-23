@@ -32,7 +32,21 @@ flowchart LR
 Ein gemeinsames Postfach ist in Stalwart eine **Gruppe** mit eigener Adresse. Jedes Mitglied sieht
 die Gruppe als zusätzliches Konto in seiner JMAP-Session (`isPersonal: false`) – mit Ordnern,
 Mails und einer Absenderadresse. Sekretär zeigt diese Konten unter „Postfächer“; wer dort
-antwortet, schreibt automatisch als info@.
+antwortet, schreibt automatisch als info@. Als Absendername steht dann die Person und das
+Postfach, etwa „Jonas Weber (Weber Haustechnik)“ – so sieht der Kunde und im gemeinsamen
+Gesendet-Ordner jeder Kollege, wer geantwortet hat.
+
+Die Rechte am gemeinsamen Postfach:
+
+| Stufe                | In Stalwart                                                    | In Sekretär                                                   |
+| -------------------- | -------------------------------------------------------------- | ------------------------------------------------------------- |
+| **Verwalten**        | Mitglied der Gruppe                                            | alles, Senden als info@                                       |
+| **Lesen und senden** | Mitglied der Gruppe (Stalwart trennt das nicht weiter)         | wie Verwalten                                                 |
+| **Nur lesen**        | Ordner per `shareWith` geteilt (`mayReadItems`, `maySetSeen`) | lesen; Archivieren, Löschen, Verschieben fehlen; Antworten vom eigenen Konto |
+
+Sekretär richtet die Werkzeugleiste nach den `myRights` des Ordners. Wer keine Absenderadresse
+im Postfach hat (Stalwart gibt Identitäten nur Mitgliedern), antwortet vom eigenen Konto; die
+Antwort liegt dann im eigenen Gesendet-Ordner. Die Rechte vergibt später die Firmenverwaltung.
 
 ## Alle Posteingänge
 

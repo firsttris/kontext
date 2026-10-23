@@ -82,3 +82,14 @@ export const mailboxPath = (mailbox: Mailbox, mailboxes: Mailbox[]): string => {
 
 export const findRole = (mailboxes: Mailbox[], role: MailboxRole): Mailbox | undefined =>
   mailboxes.find((mailbox) => mailbox.role === role);
+
+/**
+ * What the toolbar offers for mails in a mailbox. Members of a shared mailbox may do everything;
+ * a mailbox shared only for reading allows reading (and, if granted, marking read).
+ * Unknown rights count as allowed, the server checks anyway.
+ */
+export const mailboxRights = (mailbox: Mailbox) => ({
+  canRemove: mailbox.myRights?.mayRemoveItems !== false,
+  canMarkSeen: mailbox.myRights?.maySetSeen !== false,
+  canFlag: mailbox.myRights?.maySetKeywords !== false,
+});

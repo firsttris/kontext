@@ -4,7 +4,7 @@ import { useNavigate } from "@tanstack/react-router";
 import Placeholder from "@tiptap/extension-placeholder";
 import { EditorContent, useEditor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
-import { ChevronLeft, Paperclip, Send, Trash2, X } from "lucide-react";
+import { ChevronLeft, X } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useClient } from "@/auth/auth";
 import { useSession } from "@/components/shell/app-shell";
@@ -13,17 +13,17 @@ import { useToast } from "@/components/ui/toast";
 import { displayBody, type OutgoingAttachment, saveDraft, sendEmail } from "@/jmap/mail";
 import type { EmailAddress, Identity } from "@/jmap/types";
 import { parseAddresses } from "@/lib/addresses";
-import { type ComposeMode, startCompose } from "@/lib/compose";
-import { formatSize } from "@/lib/format";
+import { type ComposeMode, sharedSenderName, startCompose } from "@/lib/compose";
 import { groupSuggestions } from "@/lib/groups";
 import { htmlToText, sanitizeMailHtml, textToHtml } from "@/lib/html";
 import { contactAddresses } from "@/lib/jscontact";
 import { findRole } from "@/lib/mailboxes";
 import { m } from "@/paraglide/messages";
 import { useContacts } from "../contacts/queries";
+import { AttachmentList, ComposerActions, ComposerFields } from "./composer-fields";
 import { EditorToolbar } from "./editor-toolbar";
-import { useEmail, useIdentities, useMailAccounts, useMailboxes } from "./queries";
-import { RecipientField } from "./recipient-field";
+import { useEmail } from "./queries";
+import { useSendAccount } from "./use-send-account";
 
 type Props = {
   accountId: string;
@@ -43,10 +43,7 @@ export const Composer = ({ accountId, mode, sourceEmailId, prefillTo }: Props) =
   const navigate = useNavigate();
   const toast = useToast();
   const { data: session } = useSession();
-  const accounts = useMailAccounts();
-  const account = accounts.find((a) => a.id === accountId);
-  const { data: identities = [] } = useIdentities(accountId);
-  const { data: mailboxes = [] } = useMailboxes(accountId);
+  const { account, own, sendAccountId, identities, mailboxes, myName } = useSendAccount(accountId);
   const { data: contacts = [] } = useContacts();
   const source = useEmail(accountId, sourceEmailId);
   const suggestions = useMemo(
@@ -78,7 +75,6 @@ export const Composer = ({ accountId, mode, sourceEmailId, prefillTo }: Props) =
   const [savedAt, setSavedAt] = useState<Date | null>(null);
   const saving = useRef<Promise<void> | null>(null);
   const initialized = useRef(false);
-  const fileInput = useRef<HTMLInputElement>(null);
 
   const editor = useEditor({
     extensions: [
@@ -118,7 +114,10 @@ export const Composer = ({ accountId, mode, sourceEmailId, prefillTo }: Props) =
     const start = startCompose(mode, source.data, originalHtml, myAddresses);
     const identity = defaultIdentity(
       identities,
-      start.from ?? (account?.isPersonal ? (session?.username ?? "") : (account?.name ?? "")),
+      start.from ??
+        (sendAccountId !== accountId || account?.isPersonal
+          ? (session?.username ?? "")
+          : (account?.name ?? "")),
     );
     if (identity) setIdentityId(identity.id);
     // What the user typed while the identities were loading wins over the prefill.
@@ -152,6 +151,8 @@ export const Composer = ({ accountId, mode, sourceEmailId, prefillTo }: Props) =
     prefillTo,
     account,
     session?.username,
+    sendAccountId,
+    accountId,
   ]);
 
   const identity = identities.find((i) => i.id === identityId);
@@ -172,8 +173,11 @@ export const Composer = ({ accountId, mode, sourceEmailId, prefillTo }: Props) =
   const outgoing = () => {
     const html = editor?.getHTML() ?? "";
     return {
-      accountId,
-      identity: identity!,
+      accountId: sendAccountId,
+      identity:
+        sendAccountId === own?.id
+          ? identity!
+          : { ...identity!, name: sharedSenderName(myName, identity!.name) },
       to,
       cc,
       bcc,
@@ -200,7 +204,7 @@ export const Composer = ({ accountId, mode, sourceEmailId, prefillTo }: Props) =
     const run = (async () => {
       setDraftId(await saveDraft(client, outgoing(), drafts.id));
       setSavedAt(new Date());
-      void queryClient.invalidateQueries({ queryKey: [accountId, "emails"] });
+      void queryClient.invalidateQueries({ queryKey: [sendAccountId, "emails"] });
     })();
     saving.current = run;
     try {
@@ -236,8 +240,10 @@ export const Composer = ({ accountId, mode, sourceEmailId, prefillTo }: Props) =
     lastSaved.current = changeKey;
     if (saving.current) await saving.current;
     if (draftId) {
-      await client.call("Email/set", { accountId, destroy: [draftId] }).catch(() => undefined);
-      void queryClient.invalidateQueries({ queryKey: [accountId] });
+      await client
+        .call("Email/set", { accountId: sendAccountId, destroy: [draftId] })
+        .catch(() => undefined);
+      void queryClient.invalidateQueries({ queryKey: [sendAccountId] });
     }
     await leave();
   };
@@ -254,14 +260,19 @@ export const Composer = ({ accountId, mode, sourceEmailId, prefillTo }: Props) =
       await sendEmail(client, outgoing(), { draftsId: drafts.id, sentId: sent.id });
       if ((mode === "reply" || mode === "replyAll") && sourceEmailId) {
         // RFC 8621: mark the original as answered.
-        await client.call("Email/set", {
-          accountId,
-          update: { [sourceEmailId]: { "keywords/$answered": true } },
-        });
+        // Mailboxes shared only for reading may not allow it; the mail is sent anyway.
+        await client
+          .call("Email/set", {
+            accountId,
+            update: { [sourceEmailId]: { "keywords/$answered": true } },
+          })
+          .catch(() => undefined);
       }
       lastSaved.current = changeKey;
       toast.show(m.mail_sent_toast());
       void queryClient.invalidateQueries({ queryKey: [accountId] });
+      if (sendAccountId !== accountId)
+        void queryClient.invalidateQueries({ queryKey: [sendAccountId] });
       await leave();
     } catch (error) {
       toast.show(m.common_error({ message: (error as Error).message }), "error");
@@ -287,7 +298,7 @@ export const Composer = ({ accountId, mode, sourceEmailId, prefillTo }: Props) =
       setUploading((n) => n + 1);
       try {
         const { blobId, size } = await client.upload(
-          accountId,
+          sendAccountId,
           file,
           file.type || "application/octet-stream",
         );
@@ -337,142 +348,43 @@ export const Composer = ({ accountId, mode, sourceEmailId, prefillTo }: Props) =
       </div>
 
       <div className="flex min-h-0 flex-1 flex-col rounded-xl border border-border shadow-sm">
-        <div className="flex flex-col border-b border-border px-3 py-1 text-[13px]">
-          <div className="flex h-9 items-center gap-2.5">
-            <span className="w-9 shrink-0 text-muted">{m.mail_from()}</span>
-            <select
-              aria-label={m.mail_from()}
-              value={identityId}
-              onChange={(e) => setIdentityId(e.target.value)}
-              className="h-8 min-w-0 flex-1 rounded-md border-0 bg-transparent text-[14px] text-fg"
-            >
-              {identities.map((i) => (
-                <option key={i.id} value={i.id}>
-                  {i.name && i.name !== i.email ? `${i.name} <${i.email}>` : i.email}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div className="flex items-start gap-2">
-            <RecipientField
-              label={m.mail_to()}
-              value={to}
-              onChange={setTo}
-              suggestions={suggestions}
-              autoFocus={mode === "new" || mode === "forward"}
-            />
-            {!showCopies ? (
-              <button
-                type="button"
-                onClick={() => setShowCopies(true)}
-                className="mt-2 shrink-0 text-[13px] text-muted hover:text-fg"
-              >
-                {m.mail_cc()} / {m.mail_bcc()}
-              </button>
-            ) : null}
-          </div>
-          {showCopies ? (
-            <>
-              <RecipientField
-                label={m.mail_cc()}
-                value={cc}
-                onChange={setCc}
-                suggestions={suggestions}
-              />
-              <RecipientField
-                label={m.mail_bcc()}
-                value={bcc}
-                onChange={setBcc}
-                suggestions={suggestions}
-              />
-            </>
-          ) : null}
-          <label className="flex h-9 items-center gap-2.5 border-t border-border">
-            <span className="w-9 shrink-0 text-muted">{m.mail_subject()}</span>
-            <input
-              value={subject}
-              onChange={(e) => setSubject(e.target.value)}
-              aria-label={m.mail_subject()}
-              className="h-8 min-w-0 flex-1 border-0 bg-transparent text-[14px] text-fg outline-none"
-            />
-          </label>
-        </div>
+        <ComposerFields
+          identities={identities}
+          identityId={identityId}
+          onIdentity={setIdentityId}
+          to={to}
+          onTo={setTo}
+          cc={cc}
+          onCc={setCc}
+          bcc={bcc}
+          onBcc={setBcc}
+          showCopies={showCopies}
+          onShowCopies={() => setShowCopies(true)}
+          subject={subject}
+          onSubject={setSubject}
+          suggestions={suggestions}
+          autoFocusTo={mode === "new" || mode === "forward"}
+        />
         {editor ? <EditorToolbar editor={editor} /> : null}
         <EditorContent
           editor={editor}
           className="editor-content min-h-[160px] flex-1 overflow-y-auto"
         />
-        {attachments.length > 0 || uploading > 0 ? (
-          <ul
-            aria-label={m.mail_attachments()}
-            className="m-0 flex list-none flex-wrap gap-2 border-t border-border p-2.5"
-          >
-            {attachments.map((file) => (
-              <li
-                key={file.blobId}
-                className="flex items-center gap-2 rounded-lg border border-border py-1 pr-1 pl-2.5 text-[13px]"
-              >
-                <Paperclip size={13} className="text-muted" />
-                <span className="max-w-[200px] truncate">{file.name}</span>
-                <span className="text-muted">{formatSize(file.size)}</span>
-                <button
-                  type="button"
-                  aria-label={`${file.name} entfernen`}
-                  onClick={() => setAttachments((current) => current.filter((a) => a !== file))}
-                  className="flex size-6 items-center justify-center rounded-md text-muted hover:bg-hover hover:text-fg"
-                >
-                  <X size={12} />
-                </button>
-              </li>
-            ))}
-            {uploading > 0 ? (
-              <li className="px-2 py-1 text-[13px] text-muted">{m.common_loading()}</li>
-            ) : null}
-          </ul>
-        ) : null}
+        <AttachmentList
+          attachments={attachments}
+          uploading={uploading}
+          onRemove={(file) => setAttachments((current) => current.filter((a) => a !== file))}
+        />
       </div>
 
-      <div className="flex items-center gap-2">
-        <Button type="submit" variant="primary" disabled={sending || uploading > 0 || !identity}>
-          <Send size={15} /> {sending ? m.mail_sending() : m.mail_send()}
-        </Button>
-        <input
-          ref={fileInput}
-          type="file"
-          multiple
-          hidden
-          onChange={(e) => void upload(e.target.files)}
-        />
-        <Button
-          variant="ghost"
-          size="icon"
-          aria-label={m.mail_attach()}
-          title={m.mail_attach()}
-          onClick={() => fileInput.current?.click()}
-        >
-          <Paperclip size={16} />
-        </Button>
-        <div className="flex-1" />
-        {savedAt ? (
-          <span role="status" className="hidden text-[12px] text-muted sm:inline">
-            {m.mail_draft_autosaved({
-              time: savedAt.toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" }),
-            })}
-          </span>
-        ) : null}
-        <Button variant="ghost" size="sm" onClick={() => void storeDraft()}>
-          {m.mail_save_draft()}
-        </Button>
-        <Button
-          variant="ghost"
-          size="icon"
-          aria-label={m.mail_discard()}
-          title={m.mail_discard()}
-          onClick={() => void discard()}
-        >
-          <Trash2 size={16} />
-        </Button>
-      </div>
+      <ComposerActions
+        sending={sending}
+        canSend={uploading === 0 && Boolean(identity)}
+        savedAt={savedAt}
+        onAttach={(files) => void upload(files)}
+        onSaveDraft={() => void storeDraft()}
+        onDiscard={() => void discard()}
+      />
     </form>
   );
 };

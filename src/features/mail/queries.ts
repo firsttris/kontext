@@ -12,7 +12,7 @@ import {
 } from "@tanstack/react-query";
 import { useClient } from "@/auth/auth";
 import { useSession } from "@/components/shell/app-shell";
-import { CAPABILITIES } from "@/jmap/client";
+import { CAPABILITIES, isJmapError } from "@/jmap/client";
 import {
   createMailbox,
   destroyEmails,
@@ -97,11 +97,16 @@ export const useEmail = (accountId: string, id: string | undefined) => {
   });
 };
 
+/**
+ * The addresses one may send from in an account. Only owners (the user, members of a shared
+ * mailbox) may read them; someone a mailbox was merely shared with gets "forbidden" at once.
+ */
 export const useIdentities = (accountId: string) => {
   const client = useClient();
   return useQuery({
     queryKey: [accountId, "identities"],
     queryFn: () => listIdentities(client, accountId),
+    retry: (count, error) => !(isJmapError(error) && error.type === "forbidden") && count < 3,
   });
 };
 
