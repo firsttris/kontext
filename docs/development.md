@@ -48,15 +48,21 @@ und „Team“, Termine der laufenden Woche, eine wöchentliche Teambesprechung 
 | Typen           | `bun run typecheck`   | TypeScript strict                                                                                           |
 | Format und Lint | `bun run lint`        | Biome                                                                                                       |
 | Unit            | `bun run test`        | Vitest, für alles in `src/lib/` und die Protokoll-Helfer                                                    |
+| Komponenten     | `bun run test`        | Vitest mit Testing Library für UI-Bausteine ohne Server (Empfängerfeld, Tastaturkürzel)                     |
+| Integration     | `bun run e2e`         | `e2e/integration.spec.ts`: JMAP-Funktionen, IMAP (gemeinsame Postfächer), CalDAV und CardDAV gegen Stalwart |
 | End-to-End      | `bun run e2e`         | Playwright, Desktop und Handy (Pixel 7), gegen einen frisch angelegten Stalwart auf 28080 und Vite auf 5174 |
+| Abhängigkeiten  | `bun audit`           | bekannte Lücken; in CI bei jedem Push und nachts                                                            |
 | Screenshots     | `bun run screenshots` | die Bilder in `docs/screenshots/`                                                                           |
 
-`bun run check` macht die ersten vier Schritte und den Build.
+`bun run check` macht Typen, Lint, Unit- und Komponententests und den Build. Die lokale Instanz
+erlaubt IMAP-Anmeldungen ohne TLS (nur auf 127.0.0.1), damit Mailprogramme und die
+Integrationstests sich verbinden können.
 
 ## CI und Releases
 
-- **CI** (`.github/workflows/ci.yml`): Typen, Lint, Unit-Tests und Build in einem Job; die
-  E2E-Tests parallel im offiziellen Playwright-Image, Stalwart wird gecacht.
+- **CI** (`.github/workflows/ci.yml`): Typen, Lint, Unit-Tests, Build und `bun audit` in einem
+  Job; die E2E- und Integrationstests parallel im offiziellen Playwright-Image, Stalwart wird
+  gecacht. Nachts läuft alles noch einmal, damit neue Sicherheitsmeldungen auffallen.
 - **Screenshots**: Actions → _Update screenshots_ → Run workflow.
 - **Release**: Tag `vX.Y.Z` (Version in `package.json`) baut das Image `tristanteu/sekretaer`
   für amd64 und arm64 und legt das GitHub-Release an.

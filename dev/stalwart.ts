@@ -112,11 +112,14 @@ const createListeners = async (port: number): Promise<void> => {
           },
           "0",
         ],
+        // The dev listeners have no TLS; let IMAP clients (and the integration tests) log in
+        // anyway. Only for this local instance on 127.0.0.1.
+        ["x:Imap/set", { update: { singleton: { allowPlainTextAuth: true } } }, "1"],
       ],
     }),
   });
   const body = await response.text();
-  if (!response.ok || body.includes("notCreated"))
+  if (!response.ok || body.includes("notCreated") || body.includes("notUpdated"))
     throw new Error(`Listener setup failed: ${body}`);
 };
 

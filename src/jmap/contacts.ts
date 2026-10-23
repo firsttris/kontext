@@ -1,4 +1,5 @@
 /** Contacts over JMAP (draft-ietf-jmap-contacts): address books and JSContact cards. */
+import { chunk } from "@/lib/chunk";
 import type { ContactCard } from "@/lib/jscontact";
 import type { Rights, ShareWith } from "@/lib/sharing";
 import { assertSetOk, CAPABILITIES, type JmapClient } from "./client";
@@ -48,11 +49,6 @@ export const listContacts = async (
   }
   return cards;
 };
-
-const chunk = <T>(items: T[], size: number): T[][] =>
-  Array.from({ length: Math.ceil(items.length / size) }, (_, i) =>
-    items.slice(i * size, i * size + size),
-  );
 
 /**
  * Reads vCards with the server's parser (RFC 9555 mapping). `ContactCard/parse` reads one card

@@ -1,4 +1,6 @@
 /** Calendars over JMAP (draft-ietf-jmap-calendars). Repeating events come expanded per instance. */
+
+import { chunk } from "@/lib/chunk";
 import type { CalendarEvent } from "@/lib/jscalendar";
 import type { Rights, ShareWith } from "@/lib/sharing";
 import { assertSetOk, CAPABILITIES, type JmapClient } from "./client";
@@ -95,37 +97,33 @@ export const queryEvents = async (
   before: Date,
   { text, calendarId }: { text?: string; calendarId?: string } = {},
 ): Promise<CalendarEvent[]> => {
-  const [, get] = await client.request(
-    [
-      [
-        "CalendarEvent/query",
-        {
-          accountId,
-          filter: {
-            after: after.toISOString().replace(/\.\d+Z$/, "Z"),
-            before: before.toISOString().replace(/\.\d+Z$/, "Z"),
-            ...(text ? { text } : {}),
-            ...(calendarId ? { inCalendar: calendarId } : {}),
-          },
-          expandRecurrences: true,
-          timeZone: "Europe/Berlin",
-          limit: 1000,
-        },
-        "q",
-      ],
-      [
-        "CalendarEvent/get",
-        {
-          accountId,
-          "#ids": { resultOf: "q", name: "CalendarEvent/query", path: "/ids" },
-          properties: EVENT_PROPERTIES,
-        },
-        "g",
-      ],
-    ],
+  const { ids } = await client.call<{ ids: string[] }>(
+    "CalendarEvent/query",
+    {
+      accountId,
+      filter: {
+        after: after.toISOString().replace(/\.\d+Z$/, "Z"),
+        before: before.toISOString().replace(/\.\d+Z$/, "Z"),
+        ...(text ? { text } : {}),
+        ...(calendarId ? { inCalendar: calendarId } : {}),
+      },
+      expandRecurrences: true,
+      timeZone: "Europe/Berlin",
+      limit: 5000,
+    },
     USING,
   );
-  return (get![1].list as CalendarEvent[]) ?? [];
+  // At most `maxObjectsInGet` (500) per call, one call after the other.
+  const events: CalendarEvent[] = [];
+  for (const page of chunk(ids, 500)) {
+    const { list } = await client.call<{ list: CalendarEvent[] }>(
+      "CalendarEvent/get",
+      { accountId, ids: page, properties: EVENT_PROPERTIES },
+      USING,
+    );
+    events.push(...list);
+  }
+  return events;
 };
 
 /** One stored event, e.g. the series behind an instance (which carries the rule). */
