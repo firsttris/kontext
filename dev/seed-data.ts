@@ -320,7 +320,7 @@ export const events: SeedEvent[] = [
     time: "10:00",
     minutes: 60,
     location: "Hauptstraße 41, Bühl",
-    attendees: [`anna@${d}`],
+    attendees: [`anna@${d}`, hoffmann[1]],
   },
   {
     uid: "heizung-sommer",

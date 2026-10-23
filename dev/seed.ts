@@ -12,14 +12,16 @@ import { DEV_DOMAIN, DEV_PASSWORD, STALWART_ADMIN } from "./config";
 import { buildMessage } from "./mime";
 import { contacts, events, folders, groups, mails, type SeedMail, users } from "./seed-data";
 
-const { values: args } = parseArgs({ options: { http: { type: "string", default: "18080" } } });
-const origin = `http://127.0.0.1:${args.http}`;
 const ADMIN_USING = [CAPABILITIES.core, CAPABILITIES.stalwart];
 
-const admin = createJmapClient({
-  origin,
-  credentials: { username: STALWART_ADMIN.user, password: STALWART_ADMIN.password },
-});
+/** The server being seeded; set once by `seed()` before anything else runs. */
+let origin = "http://127.0.0.1:18080";
+
+const admin = () =>
+  createJmapClient({
+    origin,
+    credentials: { username: STALWART_ADMIN.user, password: STALWART_ADMIN.password },
+  });
 
 const userClient = (name: string): JmapClient =>
   createJmapClient({
@@ -30,14 +32,14 @@ const userClient = (name: string): JmapClient =>
 type Named = { id: string; name: string };
 
 const ensureDomain = async (): Promise<string> => {
-  const { list } = await admin.call<{ list: Named[] }>(
+  const { list } = await admin().call<{ list: Named[] }>(
     "x:Domain/get",
     { ids: null, properties: ["name"] },
     ADMIN_USING,
   );
   const existing = list.find((domain) => domain.name === DEV_DOMAIN);
   if (existing) return existing.id;
-  const result = await admin.call<{ created: Record<string, { id: string }> }>(
+  const result = await admin().call<{ created: Record<string, { id: string }> }>(
     "x:Domain/set",
     { create: { d: { name: DEV_DOMAIN, description: "Weber Haustechnik (Testdaten)" } } },
     ADMIN_USING,
@@ -49,7 +51,7 @@ const ensureDomain = async (): Promise<string> => {
 const ensureAccounts = async (domainId: string): Promise<void> => {
   const existing = async () =>
     (
-      await admin.call<{ list: Named[] }>(
+      await admin().call<{ list: Named[] }>(
         "x:Account/get",
         { ids: null, properties: ["name"] },
         ADMIN_USING,
@@ -67,7 +69,7 @@ const ensureAccounts = async (domainId: string): Promise<void> => {
   );
   if (Object.keys(groupCreates).length > 0) {
     assertSetOk(
-      await admin.call("x:Account/set", { create: groupCreates }, ADMIN_USING),
+      await admin().call("x:Account/set", { create: groupCreates }, ADMIN_USING),
       "Gruppen",
     );
   }
@@ -91,7 +93,7 @@ const ensureAccounts = async (domainId: string): Promise<void> => {
   );
   if (Object.keys(userCreates).length > 0) {
     assertSetOk(
-      await admin.call("x:Account/set", { create: userCreates }, ADMIN_USING),
+      await admin().call("x:Account/set", { create: userCreates }, ADMIN_USING),
       "Benutzer",
     );
   }
@@ -355,7 +357,9 @@ const ensureEvents = async (): Promise<number> => {
   return created;
 };
 
-const main = async (): Promise<void> => {
+/** Seeds the server at `serverOrigin`; returns a one-line summary. */
+export const seed = async (serverOrigin: string): Promise<string> => {
+  origin = serverOrigin;
   const domainId = await ensureDomain();
   await ensureAccounts(domainId);
 
@@ -375,10 +379,11 @@ const main = async (): Promise<void> => {
   const createdContacts = await ensureContacts();
   const createdEvents = await ensureEvents();
 
-  console.log(
-    `Testdaten bereit: ${users.length} Benutzer, ${groups.length} gemeinsame Postfächer, ${imported} neue Mails, ${createdContacts} neue Kontakte, ${createdEvents} neue Termine.`,
-  );
-  console.log(`Anmelden als jonas@${DEV_DOMAIN} / ${DEV_PASSWORD}`);
+  return `Testdaten bereit: ${users.length} Benutzer, ${groups.length} gemeinsame Postfächer, ${imported} neue Mails, ${createdContacts} neue Kontakte, ${createdEvents} neue Termine.`;
 };
 
-await main();
+if (import.meta.main) {
+  const { values: args } = parseArgs({ options: { http: { type: "string", default: "18080" } } });
+  console.log(await seed(`http://127.0.0.1:${args.http}`));
+  console.log(`Anmelden als jonas@${DEV_DOMAIN} / ${DEV_PASSWORD}`);
+}

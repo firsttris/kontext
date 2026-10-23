@@ -3,7 +3,8 @@
  *
  *   bun dev/stalwart.ts                 # dev instance, data in .dev/stalwart, HTTP on 18080
  *   bun dev/stalwart.ts --fresh         # wipe the dev data first
- *   bun dev/stalwart.ts --instance e2e --http 28080 --smtp 20025 --imap 20143 --fresh
+ *   bun dev/stalwart.ts --seed          # and fill it with the test data
+ *   bun dev/stalwart.ts --instance e2e --http 28080 --smtp 20025 --imap 20143 --fresh --seed
  *
  * Stalwart 0.16 keeps all settings in its database, only the datastore is in config.json
  * (see UPGRADING/v0_16.md in stalwartlabs/stalwart). On the first start the script boots the
@@ -24,6 +25,7 @@ const { values: args } = parseArgs({
     smtp: { type: "string", default: "10025" },
     imap: { type: "string", default: "10143" },
     fresh: { type: "boolean", default: false },
+    seed: { type: "boolean", default: false },
   },
 });
 
@@ -149,6 +151,10 @@ const main = async (): Promise<void> => {
   console.log(
     `Stalwart ${STALWART_VERSION} läuft: http://127.0.0.1:${httpPort} (SMTP ${args.smtp}, IMAP ${args.imap}), Admin ${STALWART_ADMIN.user}`,
   );
+  if (args.seed) {
+    const { seed } = await import("./seed");
+    console.log(await seed(`http://127.0.0.1:${httpPort}`));
+  }
   const shutdown = () => server.kill("SIGTERM");
   process.on("SIGINT", shutdown);
   process.on("SIGTERM", shutdown);
