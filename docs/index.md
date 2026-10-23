@@ -11,7 +11,7 @@ Kontakte** im Browser und am Handy. Jede Firma bekommt ihren eigenen Server mit
 |              |                                                                                                                                                               |
 | ------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **Mail**     | Ordner und Unterordner, gemeinsame Postfächer (info@, rechnung@), Archiv, Suche, Schreiben mit Formatierung, Anhänge, Antworten mit Zitat, Push ohne Neuladen |
-| **Kalender** | Woche und Tag, Einladungen mit Zusage/Absage, ganztägige Termine                                                                                              |
+| **Kalender** | Tag, Woche, Monat und Liste, Termine per Ziehen verschieben, wiederkehrende Termine, Einladungen mit Zusage/Absage, ganztägige Termine                        |
 | **Kontakte** | Kunden-Ansicht mit letzten Mails und nächsten Terminen, Anlegen und Bearbeiten                                                                                |
 | **Handy**    | jede Ansicht als eigener Bildschirm mit Tab-Leiste                                                                                                            |
 

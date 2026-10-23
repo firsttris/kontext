@@ -13,6 +13,7 @@ import {
   timeLabel,
 } from "@/lib/jscalendar";
 import { m } from "@/paraglide/messages";
+import { type Moved, useDragEvents } from "./use-drag";
 
 export const HOUR_HEIGHT = 56;
 
@@ -37,10 +38,28 @@ type Props = {
   isInvitation: (event: CalendarEvent) => boolean;
   /** The row with weekday and date; the phone shows its own strip instead. */
   showDayHeader?: boolean;
+  /** Events the user may drag to another time (their own). */
+  canMove?: (event: CalendarEvent) => boolean;
+  onMove?: (moved: Moved) => void;
 };
 
-export const WeekGrid = ({ days, events, isInvitation, showDayHeader = true }: Props) => {
+/** Only events within one day can be dragged; longer ones are changed in the dialog. */
+const withinDay = (event: CalendarEvent): boolean => {
+  const { start, end } = eventTimes(event);
+  return dateKey(start) === dateKey(new Date(end.getTime() - 1));
+};
+
+export const WeekGrid = ({
+  days,
+  events,
+  isInvitation,
+  showDayHeader = true,
+  canMove = () => false,
+  onMove = () => {},
+}: Props) => {
   const now = useNow();
+  const { preview, handlers } = useDragEvents(HOUR_HEIGHT, onMove);
+  const dragged = preview ? events.find((event) => event.id === preview.id) : undefined;
   const today = dateKey(now);
   const scroller = useRef<HTMLDivElement>(null);
 
@@ -118,7 +137,10 @@ export const WeekGrid = ({ days, events, isInvitation, showDayHeader = true }: P
           </div>
           {days.map((day) => {
             const placed = layoutDay(
-              events.filter((event) => !eventTimes(event).allDay && onDay(event, day)),
+              events.filter(
+                (event) =>
+                  !eventTimes(event).allDay && onDay(event, day) && event.id !== dragged?.id,
+              ),
               day,
               24,
             );
@@ -149,20 +171,47 @@ export const WeekGrid = ({ days, events, isInvitation, showDayHeader = true }: P
                     style={{ top: hour * HOUR_HEIGHT, height: HOUR_HEIGHT }}
                   />
                 ))}
-                {placed.map(({ event, top, height, column, columns: count }) => (
+                {placed.map(({ event, top, height, column, columns: count }) => {
+                  const movable = canMove(event) && withinDay(event);
+                  return (
+                    <div
+                      key={event.id}
+                      className={cn("absolute", movable && "cursor-grab select-none")}
+                      style={{
+                        top: (top / 60) * HOUR_HEIGHT,
+                        height: Math.max((height / 60) * HOUR_HEIGHT - 3, 20),
+                        left: `calc(${(column / count) * 100}% + 3px)`,
+                        width: `calc(${100 / count}% - 6px)`,
+                      }}
+                      {...(movable ? handlers(event, day) : {})}
+                    >
+                      <EventBlock event={event} invitation={isInvitation(event)} />
+                      {movable ? (
+                        <div
+                          data-resize
+                          aria-hidden="true"
+                          className="absolute inset-x-0 bottom-0 h-2 cursor-ns-resize"
+                        />
+                      ) : null}
+                    </div>
+                  );
+                })}
+                {dragged && preview?.day === day ? (
                   <div
-                    key={event.id}
-                    className="absolute"
+                    data-testid="drag-preview"
+                    className="pointer-events-none absolute right-[3px] left-[3px] z-10 opacity-80 shadow-lg"
                     style={{
-                      top: (top / 60) * HOUR_HEIGHT,
-                      height: Math.max((height / 60) * HOUR_HEIGHT - 3, 20),
-                      left: `calc(${(column / count) * 100}% + 3px)`,
-                      width: `calc(${100 / count}% - 6px)`,
+                      top: (preview.top / 60) * HOUR_HEIGHT,
+                      height: Math.max((preview.height / 60) * HOUR_HEIGHT - 3, 20),
                     }}
                   >
-                    <EventBlock event={event} invitation={isInvitation(event)} />
+                    <EventBlock
+                      event={dragged}
+                      invitation={false}
+                      times={[preview.top, preview.top + preview.height]}
+                    />
                   </div>
-                ))}
+                ) : null}
                 {day === today ? (
                   <div
                     aria-hidden="true"
@@ -186,13 +235,25 @@ const eventClass = (invitation: boolean) =>
     ? "border-[1.5px] border-dashed border-muted bg-bg"
     : "border border-accent/40 bg-accent/12";
 
-const EventBlock = ({ event, invitation }: { event: CalendarEvent; invitation: boolean }) => {
+const EventBlock = ({
+  event,
+  invitation,
+  times,
+}: {
+  event: CalendarEvent;
+  invitation: boolean;
+  /** Minutes from–to while it is dragged. */
+  times?: [number, number];
+}) => {
   const { start, end } = eventTimes(event);
   const where = locationName(event);
+  const from = times?.[0] ?? minutesInDay(start, dateKey(start));
+  const to = times?.[1] ?? (minutesInDay(end, dateKey(new Date(end.getTime() - 1))) || 1440);
   return (
     <Link
       to="/calendar"
       search={(prev) => ({ ...prev, event: event.id })}
+      draggable={false}
       className={cn(
         "flex h-full flex-col gap-px overflow-hidden rounded-lg px-2 py-1.5 text-fg no-underline",
         eventClass(invitation),
@@ -200,8 +261,7 @@ const EventBlock = ({ event, invitation }: { event: CalendarEvent; invitation: b
     >
       <span className="text-[12px] leading-tight font-semibold">{event.title || "—"}</span>
       <span className="font-mono text-[11px] text-muted">
-        {timeLabel(minutesInDay(start, dateKey(start)))}–
-        {timeLabel(minutesInDay(end, dateKey(new Date(end.getTime() - 1))) || 1440)}
+        {timeLabel(from)}–{timeLabel(to)}
       </span>
       {where ? <span className="truncate text-[11px] text-muted">{where}</span> : null}
     </Link>

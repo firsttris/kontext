@@ -117,11 +117,16 @@ export const Composer = ({ accountId, mode, sourceEmailId, prefillTo }: Props) =
       start.from ?? (account?.isPersonal ? (session?.username ?? "") : (account?.name ?? "")),
     );
     if (identity) setIdentityId(identity.id);
-    setTo(prefillTo ? parseAddresses(prefillTo).addresses : start.to);
-    setCc(start.cc);
-    setBcc(start.bcc);
+    // What the user typed while the identities were loading wins over the prefill.
+    const keep =
+      <T,>(prefill: T[]) =>
+      (current: T[]) =>
+        current.length ? current : prefill;
+    setTo(keep(prefillTo ? parseAddresses(prefillTo).addresses : start.to));
+    setCc(keep(start.cc));
+    setBcc(keep(start.bcc));
     if (start.cc.length || start.bcc.length) setShowCopies(true);
-    setSubject(start.subject);
+    setSubject((current) => current || start.subject);
     setAttachments(start.attachments);
     setThreading({ inReplyTo: start.inReplyTo, references: start.references });
     // A draft already has its signature; a new mail gets the one of the sender.

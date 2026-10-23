@@ -4,17 +4,24 @@ import { useSession } from "@/components/shell/app-shell";
 import {
   createEvent,
   deleteEvent,
+  getEvent,
   listCalendars,
   queryEvents,
   respondToEvent,
   updateEvent,
 } from "@/jmap/calendar";
 import { CAPABILITIES } from "@/jmap/client";
-import { addDays, dateKey, fromLocal } from "@/lib/jscalendar";
+import { addDays, type CalendarEvent, dateKey, fromLocal } from "@/lib/jscalendar";
 
 export const useCalendarAccountId = (): string | undefined => {
   const { data: session } = useSession();
   return session?.primaryAccounts[CAPABILITIES.calendars];
+};
+
+/** The addresses that count as "me" in participant lists. */
+export const useMyAddresses = (): string[] => {
+  const { data: session } = useSession();
+  return session ? [session.username] : [];
 };
 
 export const useCalendars = () => {
@@ -65,6 +72,17 @@ export const useEventsWith = (email: string | undefined) => {
   });
 };
 
+/** The series an instance belongs to; holds the rule the editor shows. */
+export const useSeries = (baseEventId: string | null | undefined) => {
+  const client = useClient();
+  const accountId = useCalendarAccountId();
+  return useQuery({
+    queryKey: [accountId, "events", "series", baseEventId],
+    queryFn: () => getEvent(client, accountId!, baseEventId!),
+    enabled: Boolean(accountId && baseEventId),
+  });
+};
+
 export const useEventMutations = () => {
   const client = useClient();
   const accountId = useCalendarAccountId();
@@ -84,6 +102,31 @@ export const useEventMutations = () => {
     update: useMutation({
       mutationFn: ({ id, patch }: { id: string; patch: Record<string, unknown> }) =>
         updateEvent(client, accountId!, id, patch),
+      onSettled: refresh,
+    }),
+    /** Drag in the grid: shown at once, saved in the background. */
+    move: useMutation({
+      mutationFn: ({
+        event,
+        patch,
+      }: {
+        event: CalendarEvent;
+        patch: Record<string, unknown>;
+        start: Date;
+        end: Date;
+      }) => updateEvent(client, accountId!, event.id, patch),
+      onMutate: async ({ event, start, end }) => {
+        await queryClient.cancelQueries({ queryKey: [accountId, "events"] });
+        queryClient.setQueriesData<CalendarEvent[]>({ queryKey: [accountId, "events"] }, (list) =>
+          Array.isArray(list)
+            ? list.map((item) =>
+                item.id === event.id
+                  ? { ...item, utcStart: start.toISOString(), utcEnd: end.toISOString() }
+                  : item,
+              )
+            : list,
+        );
+      },
       onSettled: refresh,
     }),
     remove: useMutation({

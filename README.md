@@ -72,9 +72,11 @@ und unter `https://<Ihre Domain>` anmelden. DNS-Einträge, Backups und Updates s
 
 ### 📅 Kalender
 
-- **Woche und Tag**: überlappende Termine nebeneinander, ganztägige oben, Jetzt-Linie.
+- **Tag, Woche, Monat und Liste**: überlappende Termine nebeneinander, ganztägige oben, Jetzt-Linie; die Liste zeigt die nächsten 30 Tage.
+- **Termine verschieben**: mit der Maus ziehen, die Länge am unteren Rand ändern.
+- **Wiederkehrende Termine**: täglich, werktags, wöchentlich, alle 2 Wochen, monatlich, jährlich – bis zu einem Datum oder eine Anzahl lang; einzelne Termine der Serie ändern oder absagen.
 - **Einladungen**: Teilnehmer bekommen eine Einladung und können zusagen, absagen oder „vielleicht“.
-- **Am Handy**: Tagesansicht mit Wochenleiste und Plus-Knopf.
+- **Am Handy**: Tagesansicht mit Wochenleiste, Monat und Liste, Plus-Knopf.
 
 ### 👥 Kontakte
 

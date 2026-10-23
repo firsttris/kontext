@@ -34,6 +34,21 @@ die Gruppe als zusätzliches Konto in seiner JMAP-Session (`isPersonal: false`) 
 Mails und einer Absenderadresse. Sekretär zeigt diese Konten unter „Postfächer“; wer dort
 antwortet, schreibt automatisch als info@.
 
+## Wiederkehrende Termine
+
+Eine Serie ist in Stalwart **ein** Termin mit `recurrenceRule` (JSCalendar, RFC 8984; Stalwart
+0.16 nimmt die Einzahl). Die Kalenderansichten fragen mit `expandRecurrences` ab und bekommen
+jeden einzelnen Termin mit eigener ID, `baseEventId` und `recurrenceId`.
+
+- **Nur dieser Termin**: Ändern oder Löschen über die ID des einzelnen Termins; Stalwart trägt das
+  in `recurrenceOverrides` der Serie ein (beim Löschen als `excluded`).
+- **Ganze Serie**: Ändern oder Löschen über die `baseEventId`. Wird dabei die Uhrzeit geändert,
+  verschiebt sich der Beginn der Serie um denselben Betrag.
+- Regeln, die das Formular nicht abbildet (etwa „letzter Freitag im Monat“ aus einem anderen
+  Programm), bleiben beim Speichern unverändert.
+
+Ziehen im Wochenraster ändert immer nur den einen Termin.
+
 ## Anmeldung
 
 Benutzer und Passwörter bleiben in Stalwart. Bei der Anmeldung schickt die App E-Mail, Passwort

@@ -88,8 +88,96 @@ test.describe("Kalender", () => {
     await page.getByRole("dialog").getByRole("button", { name: "Speichern" }).click();
     await expect(day.getByText(`${title} verschoben`)).toBeVisible();
     await day.getByText(`${title} verschoben`).click();
-    await page.getByRole("dialog").getByRole("button", { name: "Termin löschen" }).click();
+    await page
+      .getByRole("dialog")
+      .getByRole("button", { name: "Termin löschen", exact: true })
+      .click();
     await expect(day.getByText(`${title} verschoben`)).toHaveCount(0);
+  });
+
+  test("legt eine Terminserie an, ändert und löscht einzelne Termine", async ({ page }) => {
+    const title = unique("Wochenrunde");
+    await login(page);
+    await page.goto(`/calendar?date=${tomorrow()}&event=new&start=${tomorrow()}T08:00`);
+    const dialog = page.getByRole("dialog");
+    await dialog.getByLabel("Titel").fill(title);
+    await dialog.getByLabel("Wiederholen").selectOption("weekly");
+    await dialog.getByLabel("Endet").selectOption("count");
+    await dialog.getByLabel("Anzahl Termine").fill("3");
+    await dialog.getByRole("button", { name: "Speichern" }).click();
+
+    await page.goto(`/calendar?date=${tomorrow()}&view=agenda`);
+    const list = page.getByRole("list", { name: "Liste" });
+    await expect(list.getByText(title)).toHaveCount(3);
+
+    // Only the second date gets a new title.
+    await list.getByText(title).nth(1).click();
+    await expect(page.getByRole("dialog").getByText("Wöchentlich, 3-mal")).toBeVisible();
+    await page.getByRole("dialog").getByRole("button", { name: "Bearbeiten" }).click();
+    await expect(page.getByRole("dialog").getByLabel("Nur dieser Termin")).toBeChecked();
+    await page.getByRole("dialog").getByLabel("Titel").fill(`${title} mit Kunde`);
+    await page.getByRole("dialog").getByRole("button", { name: "Speichern" }).click();
+    await expect(list.getByText(`${title} mit Kunde`)).toHaveCount(1);
+    await expect(list.getByText(title, { exact: true })).toHaveCount(2);
+
+    // The first date is skipped, then the whole series goes.
+    await list.getByText(title, { exact: true }).first().click();
+    await page
+      .getByRole("dialog")
+      .getByRole("button", { name: "Nur diesen Termin löschen" })
+      .click();
+    await expect(list.getByText(title, { exact: true })).toHaveCount(1);
+    await list.getByText(title, { exact: true }).click();
+    await page.getByRole("dialog").getByRole("button", { name: "Serie löschen" }).click();
+    await expect(page.getByText(title)).toHaveCount(0);
+  });
+
+  test("verschiebt einen Termin per Ziehen und ändert seine Länge", async ({ page }) => {
+    const title = unique("Kundentermin");
+    await login(page);
+    await page.goto(`/calendar?date=${tomorrow()}&event=new&start=${tomorrow()}T10:00`);
+    await page.getByRole("dialog").getByLabel("Titel").fill(title);
+    await page.getByRole("dialog").getByRole("button", { name: "Speichern" }).click();
+    const column = page.locator(`[data-day="${tomorrow()}"]`);
+    const block = column.getByRole("link", { name: new RegExp(title) });
+    await expect(block).toContainText("10:00–11:00");
+
+    // One hour down (56 px per hour).
+    const box = (await block.boundingBox())!;
+    await page.mouse.move(box.x + box.width / 2, box.y + 10);
+    await page.mouse.down();
+    await page.mouse.move(box.x + box.width / 2, box.y + 40, { steps: 4 });
+    await page.mouse.move(box.x + box.width / 2, box.y + 66, { steps: 4 });
+    await expect(page.getByTestId("drag-preview")).toContainText("11:00–12:00");
+    await page.mouse.up();
+    await expect(page.getByRole("status")).toHaveText("Termin verschoben.");
+    await expect(block).toContainText("11:00–12:00");
+    await expect(page.getByRole("dialog")).toHaveCount(0);
+
+    // Pull the lower edge half an hour further.
+    const moved = (await block.boundingBox())!;
+    await page.mouse.move(moved.x + moved.width / 2, moved.y + moved.height - 3);
+    await page.mouse.down();
+    await page.mouse.move(moved.x + moved.width / 2, moved.y + moved.height + 27, { steps: 6 });
+    await page.mouse.up();
+    await expect(block).toContainText("11:00–12:30");
+
+    // It is stored: after a reload it is still there.
+    await page.reload();
+    await expect(column.getByRole("link", { name: new RegExp(title) })).toContainText(
+      "11:00–12:30",
+    );
+  });
+
+  test("zeigt den Monat", async ({ page }) => {
+    await login(page);
+    await page.goto("/calendar");
+    await page.getByRole("link", { name: "Monat" }).click();
+    await expect(
+      page.locator(`[data-month-day="${today()}"]`).getByText("Baubesprechung Hoffmann"),
+    ).toBeVisible();
+    await page.getByRole("link", { name: today(), exact: true }).click();
+    await expect(page.getByRole("link", { name: "Tag" })).toHaveAttribute("aria-pressed", "true");
   });
 
   test("prüft die Eingaben", async ({ page }) => {
@@ -113,5 +201,14 @@ test.describe("Kalender am Handy @phone", () => {
     await expect(page.getByText("Baubesprechung Hoffmann")).toBeVisible();
     await page.getByRole("link", { name: "Neuer Termin", exact: true }).click();
     await expect(page.getByRole("dialog").getByLabel("Titel")).toBeVisible();
+  });
+
+  test("Liste der nächsten Termine", async ({ page }) => {
+    await login(page);
+    await page.goto("/calendar");
+    await page.getByRole("link", { name: "Liste" }).click();
+    await expect(
+      page.getByRole("list", { name: "Liste" }).getByText("Baubesprechung Hoffmann"),
+    ).toBeVisible();
   });
 });

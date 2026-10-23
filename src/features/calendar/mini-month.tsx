@@ -3,7 +3,7 @@ import { Link } from "@tanstack/react-router";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useState } from "react";
 import { cn } from "@/lib/cn";
-import { addDays, weekDays, weekStart } from "@/lib/jscalendar";
+import { addDays, addMonths, weekDays, weekStart } from "@/lib/jscalendar";
 
 const monthTitle = new Intl.DateTimeFormat("de-DE", {
   month: "long",
@@ -11,12 +11,6 @@ const monthTitle = new Intl.DateTimeFormat("de-DE", {
   timeZone: "UTC",
 });
 const WEEKDAYS = ["Mo", "Di", "Mi", "Do", "Fr", "Sa", "So"];
-
-const shiftMonth = (key: string, months: number): string => {
-  const [y, m] = key.split("-").map(Number);
-  const date = new Date(Date.UTC(y!, m! - 1 + months, 1));
-  return date.toISOString().slice(0, 10);
-};
 
 export const MiniMonth = ({ selected, today }: { selected: string; today: string }) => {
   const [month, setMonth] = useState(`${selected.slice(0, 7)}-01`);
@@ -34,7 +28,7 @@ export const MiniMonth = ({ selected, today }: { selected: string; today: string
           <button
             type="button"
             aria-label="Vorheriger Monat"
-            onClick={() => setMonth(shiftMonth(month, -1))}
+            onClick={() => setMonth(addMonths(month, -1))}
             className="flex size-[26px] items-center justify-center rounded-md hover:bg-hover"
           >
             <ChevronLeft size={14} />
@@ -42,7 +36,7 @@ export const MiniMonth = ({ selected, today }: { selected: string; today: string
           <button
             type="button"
             aria-label="Nächster Monat"
-            onClick={() => setMonth(shiftMonth(month, 1))}
+            onClick={() => setMonth(addMonths(month, 1))}
             className="flex size-[26px] items-center justify-center rounded-md hover:bg-hover"
           >
             <ChevronRight size={14} />

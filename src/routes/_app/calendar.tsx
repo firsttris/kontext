@@ -9,7 +9,7 @@ export const Route = createFileRoute("/_app/calendar")({
       .string()
       .regex(/^\d{4}-\d{2}-\d{2}$/)
       .optional(),
-    view: z.enum(["week", "day"]).optional(),
+    view: z.enum(["day", "week", "month", "agenda"]).optional(),
     /** The open event, or "new". */
     event: z.string().optional(),
     /** Start of a new event (YYYY-MM-DDTHH:MM). */

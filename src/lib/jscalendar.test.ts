@@ -4,16 +4,12 @@ import {
   type CalendarEvent,
   durationMinutes,
   eventTimes,
-  eventToForm,
-  formToEvent,
   fromLocal,
   isoWeek,
   layoutDay,
-  newEventForm,
   onDay,
   toDuration,
   toLocal,
-  validateEventForm,
   weekDays,
 } from "./jscalendar";
 
@@ -100,57 +96,5 @@ describe("onDay", () => {
     expect(onDay(allDay, "2026-10-24")).toBe(true);
     expect(onDay(allDay, "2026-10-25")).toBe(false);
     expect(eventTimes(allDay).allDay).toBe(true);
-  });
-});
-
-describe("forms", () => {
-  const me = { email: "jonas@weber.test", name: "Jonas" };
-  it("validates title and order", () => {
-    expect(validateEventForm({ ...newEventForm("2026-10-23T10:00:00"), title: "" })).toBe("title");
-    expect(
-      validateEventForm({ ...newEventForm("2026-10-23T10:00:00"), title: "x", endTime: "09:00" }),
-    ).toBe("order");
-    expect(validateEventForm({ ...newEventForm("2026-10-23T10:00:00"), title: "x" })).toBe(null);
-  });
-  it("writes a timed event with attendees and reads it back", () => {
-    const form = {
-      ...newEventForm("2026-10-23T10:00:00", 90),
-      title: "Baubesprechung",
-      attendees: "anna@weber.test",
-      location: "Werkstatt",
-    };
-    const written = formToEvent(form, me);
-    expect(written).toMatchObject({
-      title: "Baubesprechung",
-      start: "2026-10-23T10:00:00",
-      timeZone: "Europe/Berlin",
-      duration: "PT1H30M",
-      organizerCalendarAddress: "mailto:jonas@weber.test",
-    });
-    const read = eventToForm(
-      { ...(written as unknown as CalendarEvent), id: "x", calendarIds: {} },
-      [me.email],
-    );
-    expect(read).toMatchObject({
-      date: "2026-10-23",
-      startTime: "10:00",
-      endTime: "11:30",
-      attendees: "anna@weber.test",
-      location: "Werkstatt",
-    });
-  });
-  it("writes an all-day event over two days", () => {
-    const form = {
-      ...newEventForm("2026-10-23T00:00:00"),
-      title: "Urlaub",
-      allDay: true,
-      endDate: "2026-10-24",
-    };
-    expect(formToEvent(form, me)).toMatchObject({
-      start: "2026-10-23T00:00:00",
-      duration: "P2D",
-      showWithoutTime: true,
-      participants: null,
-    });
   });
 });

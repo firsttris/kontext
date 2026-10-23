@@ -16,7 +16,8 @@ const EVENT_PROPERTIES = [
   "locations",
   "participants",
   "organizerCalendarAddress",
-  "recurrenceRules",
+  "recurrenceRule",
+  "recurrenceOverrides",
   "recurrenceId",
   "baseEventId",
   "utcStart",
@@ -75,6 +76,24 @@ export const queryEvents = async (
   return (get![1].list as CalendarEvent[]) ?? [];
 };
 
+/** One stored event, e.g. the series behind an instance (which carries the rule). */
+export const getEvent = async (
+  client: JmapClient,
+  accountId: string,
+  id: string,
+): Promise<CalendarEvent | null> =>
+  (
+    await client.call<{ list: CalendarEvent[] }>(
+      "CalendarEvent/get",
+      { accountId, ids: [id], properties: EVENT_PROPERTIES },
+      USING,
+    )
+  ).list[0] ?? null;
+
+/**
+ * Changing or deleting an instance id changes only that date: Stalwart writes it to the series'
+ * `recurrenceOverrides` (an exclusion for a delete). The base id changes the whole series.
+ */
 export const createEvent = async (
   client: JmapClient,
   accountId: string,

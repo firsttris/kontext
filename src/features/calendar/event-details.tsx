@@ -1,0 +1,162 @@
+/** An appointment as the dialog shows it: when, where, who, the answer buttons, delete. */
+import { CalendarDays, MapPin, Repeat, Users } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { useToast } from "@/components/ui/toast";
+import {
+  attendees,
+  type CalendarEvent,
+  eventTimes,
+  isInstance,
+  isOrganizer,
+  locationName,
+  myParticipation,
+  participantEmail,
+  toLocal,
+} from "@/lib/jscalendar";
+import { describeRecurrence } from "@/lib/recurrence";
+import { m } from "@/paraglide/messages";
+import { useEventMutations, useMyAddresses } from "./queries";
+
+const longDay = new Intl.DateTimeFormat("de-DE", {
+  timeZone: "Europe/Berlin",
+  weekday: "long",
+  day: "numeric",
+  month: "long",
+  year: "numeric",
+});
+
+const statusLabel: Record<string, () => string> = {
+  accepted: m.calendar_status_accepted,
+  declined: m.calendar_status_declined,
+  tentative: m.calendar_status_tentative,
+  "needs-action": m.calendar_status_needs_action,
+};
+
+type Props = {
+  event: CalendarEvent;
+  series: CalendarEvent | undefined;
+  onEdit: () => void;
+  onDone: () => void;
+};
+
+export const EventDetails = ({ event, series, onEdit, onDone }: Props) => {
+  const mine = useMyAddresses();
+  const { respond, remove } = useEventMutations();
+  const toast = useToast();
+  const { start, end, allDay } = eventTimes(event);
+  const me = myParticipation(event, mine);
+  const organizer = isOrganizer(event, mine);
+  const people = attendees(event);
+  const repeats = describeRecurrence((series ?? event).recurrenceRule);
+
+  const run = async (action: () => Promise<unknown>, done?: () => void) => {
+    try {
+      await action();
+      done?.();
+    } catch (error) {
+      toast.show(m.common_error({ message: (error as Error).message }), "error");
+    }
+  };
+
+  const answer = (status: "accepted" | "declined" | "tentative") =>
+    me && run(() => respond.mutateAsync({ id: event.id, participantId: me[0], status }));
+
+  return (
+    <div className="flex flex-col gap-4">
+      <div className="flex items-start gap-3 text-[14px]">
+        <CalendarDays size={16} className="mt-0.5 shrink-0 text-muted" />
+        <span>
+          {longDay.format(start)}
+          {allDay
+            ? ` · ${m.calendar_all_day()}`
+            : `, ${toLocal(start).slice(11, 16)}–${toLocal(end).slice(11, 16)}`}
+        </span>
+      </div>
+      {repeats ? (
+        <div className="flex items-start gap-3 text-[14px]">
+          <Repeat size={16} className="mt-0.5 shrink-0 text-muted" />
+          <span>{repeats}</span>
+        </div>
+      ) : null}
+      {locationName(event) ? (
+        <div className="flex items-start gap-3 text-[14px]">
+          <MapPin size={16} className="mt-0.5 shrink-0 text-muted" />
+          <span>{locationName(event)}</span>
+        </div>
+      ) : null}
+      {people.length > 0 ? (
+        <div className="flex items-start gap-3 text-[14px]">
+          <Users size={16} className="mt-0.5 shrink-0 text-muted" />
+          <ul
+            aria-label={m.calendar_event_attendees()}
+            className="m-0 flex list-none flex-col gap-1 p-0"
+          >
+            {people.map(([id, person]) => (
+              <li key={id} className="flex gap-2">
+                <span>{person.name || participantEmail(person)}</span>
+                <span className="text-muted">
+                  {statusLabel[person.participationStatus ?? "needs-action"]?.() ?? ""}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
+      {event.description ? (
+        <p className="m-0 whitespace-pre-line text-[14px] text-muted">{event.description}</p>
+      ) : null}
+      {me && !organizer ? (
+        <fieldset aria-label="Antwort" className="m-0 flex gap-2 border-0 p-0">
+          {(
+            [
+              ["accepted", m.calendar_accept()],
+              ["tentative", m.calendar_tentative()],
+              ["declined", m.calendar_decline()],
+            ] as const
+          ).map(([status, label]) => (
+            <Button
+              key={status}
+              variant={me[1].participationStatus === status ? "primary" : "outline"}
+              aria-pressed={me[1].participationStatus === status}
+              className="flex-1"
+              onClick={() => void answer(status)}
+            >
+              {label}
+            </Button>
+          ))}
+        </fieldset>
+      ) : null}
+      <div className="flex flex-wrap gap-2">
+        {organizer ? (
+          <Button variant="primary" onClick={onEdit}>
+            {m.contacts_edit()}
+          </Button>
+        ) : null}
+        <div className="flex-1" />
+        {isInstance(event) ? (
+          <>
+            <Button
+              variant="outline"
+              onClick={() => void run(() => remove.mutateAsync(event.id), onDone)}
+            >
+              {m.calendar_delete_this()}
+            </Button>
+            <Button
+              variant="danger"
+              onClick={() => void run(() => remove.mutateAsync(event.baseEventId!), onDone)}
+            >
+              {m.calendar_delete_series()}
+            </Button>
+          </>
+        ) : (
+          <Button
+            variant="danger"
+            onClick={() => void run(() => remove.mutateAsync(event.id), onDone)}
+          >
+            {m.calendar_event_delete()}
+          </Button>
+        )}
+      </div>
+    </div>
+  );
+};
