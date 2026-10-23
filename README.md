@@ -84,6 +84,7 @@ und unter `https://<Ihre Domain>` anmelden. DNS-Einträge, Backups und Updates s
 - **Kunde auf einen Blick**: letzte Mails und nächste Termine mit diesem Kontakt.
 - **Anlegen und pflegen**: Firma, Mail, Telefon, Adresse, Notiz; Anrufen und Mail schreiben mit einem Tipp.
 - **Gruppen**: Kontakte zu Gruppen wie „Lieferanten“ zusammenfassen und allen mit einer Mail schreiben; beim Schreiben schlägt Sekretär die Gruppe vor.
+- **vCard-Import und -Export**: Kontakte aus Outlook, Google oder dem Handy übernehmen (ohne Doppelte) und ganze Adressbücher oder einzelne Kontakte als `.vcf` sichern.
 - **Adressbücher teilen**: eigene Adressbücher anlegen und mit Kollegen teilen – zum Lesen oder zum Bearbeiten. Geteilte Adressbücher und die der gemeinsamen Postfächer stehen unter „Geteilt mit mir“.
 
 ## 📸 Screenshots

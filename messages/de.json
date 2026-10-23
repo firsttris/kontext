@@ -267,5 +267,16 @@
   "contacts_group_delete": "Gruppe löschen",
   "contacts_group_name_missing": "Bitte einen Namen für die Gruppe angeben.",
   "contacts_group_pick": "Mitglieder suchen",
-  "contacts_member_of": "Gruppen"
+  "contacts_member_of": "Gruppen",
+  "contacts_vcard": "Import und Export (vCard)",
+  "contacts_vcard_book": "Adressbuch für Import und Export",
+  "contacts_import": "Importieren…",
+  "contacts_export": "Exportieren",
+  "contacts_export_one": "vCard",
+  "contacts_import_file": "vCard-Datei",
+  "contacts_import_preview": "{count} neue Kontakte gefunden.",
+  "contacts_import_duplicates": "{count} sind schon vorhanden.",
+  "contacts_import_failed": "{count} ließen sich nicht lesen.",
+  "contacts_import_confirm": "{count} importieren",
+  "contacts_import_done": "{count} Kontakte importiert."
 }

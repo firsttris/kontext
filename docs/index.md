@@ -12,7 +12,7 @@ Kontakte** im Browser und am Handy. Jede Firma bekommt ihren eigenen Server mit
 | ------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **Mail**     | Ordner und Unterordner, gemeinsame Postfächer (info@, rechnung@), Archiv, Suche, Schreiben mit Formatierung, Anhänge, Antworten mit Zitat, Push ohne Neuladen |
 | **Kalender** | Tag, Woche, Monat und Liste, Termine per Ziehen verschieben, wiederkehrende Termine, Kalender mit Kollegen teilen, Einladungen mit Zusage/Absage               |
-| **Kontakte** | Kunden-Ansicht mit letzten Mails und nächsten Terminen, Anlegen und Bearbeiten, Gruppen, Adressbücher mit Kollegen teilen (Lesen oder Bearbeiten)             |
+| **Kontakte** | Kunden-Ansicht mit letzten Mails und nächsten Terminen, Anlegen und Bearbeiten, Gruppen, vCard-Import/-Export, Adressbücher mit Kollegen teilen              |
 | **Handy**    | jede Ansicht als eigener Bildschirm mit Tab-Leiste                                                                                                            |
 
 ## Wie es weitergeht

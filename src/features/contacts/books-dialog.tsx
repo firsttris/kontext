@@ -11,6 +11,7 @@ import { m } from "@/paraglide/messages";
 import { usePrincipals } from "../sharing/queries";
 import { ShareDialog } from "../sharing/share-dialog";
 import { type BookRef, useBookMutations, useBooks } from "./queries";
+import { VCardSection } from "./vcard-section";
 
 type Props = { open: boolean; onOpenChange: (open: boolean) => void };
 
@@ -75,6 +76,7 @@ export const BooksDialog = ({ open, onOpenChange }: Props) => {
             </ul>
           </section>
         ) : null}
+        <VCardSection books={books} />
       </Dialog>
       {sharing ? (
         <ShareBook

@@ -2,7 +2,7 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
-import { CalendarDays, ChevronLeft, Mail, Pencil, Phone } from "lucide-react";
+import { CalendarDays, ChevronLeft, Download, Mail, Pencil, Phone } from "lucide-react";
 import type { ReactNode } from "react";
 import { useClient } from "@/auth/auth";
 import { useSession } from "@/components/shell/app-shell";
@@ -10,10 +10,12 @@ import { Avatar } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { CAPABILITIES } from "@/jmap/client";
 import { emailsWithAddress } from "@/jmap/mail";
+import { downloadText } from "@/lib/download";
 import { displayName, listDate } from "@/lib/format";
 import { groupsOf } from "@/lib/groups";
 import { dateKey, eventTimes, locationName, toLocal } from "@/lib/jscalendar";
 import { addressLines, company, fullName, note, primaryEmail, primaryPhone } from "@/lib/jscontact";
+import { toVCard } from "@/lib/vcard";
 import { m } from "@/paraglide/messages";
 import { useEventsWith } from "../calendar/queries";
 import { type BookRef, bookOf, type Contact } from "./queries";
@@ -113,6 +115,13 @@ export const ContactDetail = ({ card, books, groups }: Props) => {
             <Link to="/calendar" search={{ event: "new", start: `${dateKey(new Date())}T09:00` }}>
               <CalendarDays size={15} /> {m.calendar_new()}
             </Link>
+          </Button>
+          <Button
+            variant="ghost"
+            onClick={() => downloadText(toVCard(card), `${fullName(card)}.vcf`, "text/vcard")}
+            title={m.contacts_export()}
+          >
+            <Download size={15} /> {m.contacts_export_one()}
           </Button>
           {book?.mayWrite ? (
             <Button asChild variant="ghost">

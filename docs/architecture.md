@@ -40,6 +40,15 @@ Eine Gruppe ist eine JSContact-Karte mit `kind: "group"`; ihr `members` hält di
 Mitglieder (RFC 9553). Stalwart speichert sie wie jeden Kontakt. Mitglieder kommen immer aus
 demselben Konto, weil eine `uid` nur dort eindeutig ist.
 
+## vCard-Import und -Export
+
+Beim Import liest Stalwart die Datei (`ContactCard/parse`, Abbildung nach RFC 9555). Weil
+`parse` nur eine Karte pro Blob liest, teilt die App die Datei in einzelne Karten und legt sie mit
+`Blob/upload` (RFC 9404) im selben Request als Blobs an, 50 pro Request. Karten, die es im
+Adressbuch schon gibt (gleiche `uid`, oder gleicher Name und gleiche Mail-Adresse), werden
+übersprungen; vor dem Anlegen zeigt die App, wie viele neu sind. Der Export schreibt vCard 4.0
+(RFC 6350) aus den Feldern, die die App bearbeitet, auch Gruppen mit `MEMBER`.
+
 ## Adressbücher und Kalender teilen
 
 Adressbücher und Kalender werden über ihr `shareWith` geteilt (draft-ietf-jmap-contacts und

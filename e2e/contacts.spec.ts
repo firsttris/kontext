@@ -1,3 +1,4 @@
+import { readFile } from "node:fs/promises";
 import { expect, test } from "@playwright/test";
 import { login, unique } from "./helpers";
 
@@ -119,6 +120,82 @@ test.describe("Kontaktgruppen", () => {
   });
 });
 
+test.describe("vCard", () => {
+  test("importiert eine Datei ohne Doppelte und exportiert das Adressbuch", async ({ page }) => {
+    const book = unique("Import");
+    const surname = unique("Mustermann");
+    const file = {
+      name: "kontakte.vcf",
+      mimeType: "text/vcard",
+      buffer: Buffer.from(
+        [
+          "BEGIN:VCARD",
+          "VERSION:3.0",
+          `FN:Erika ${surname}`,
+          `N:${surname};Erika;;;`,
+          "ORG:Muster GmbH",
+          "EMAIL;TYPE=WORK:erika@muster.test",
+          "TEL;TYPE=CELL:+49 170 1112233",
+          "END:VCARD",
+          "BEGIN:VCARD",
+          "VERSION:4.0",
+          `FN:Hans ${surname}`,
+          "EMAIL:hans@muster.test",
+          "END:VCARD",
+          "",
+        ].join("\r\n"),
+      ),
+    };
+    await login(page);
+    await page.goto("/contacts");
+    await page.getByRole("button", { name: "Adressbücher" }).click();
+    const dialog = page.getByRole("dialog", { name: "Adressbücher" });
+    await dialog.getByLabel("Name des Adressbuchs").fill(book);
+    await dialog.getByRole("button", { name: "Anlegen" }).click();
+    await dialog.getByLabel("Adressbuch für Import und Export").selectOption({ label: book });
+
+    await dialog.getByLabel("vCard-Datei").setInputFiles(file);
+    await expect(dialog.getByText("2 neue Kontakte gefunden.")).toBeVisible();
+    await dialog.getByRole("button", { name: "2 importieren" }).click();
+    await expect(page.getByRole("status")).toHaveText("2 Kontakte importiert.");
+
+    // The same file again adds nothing.
+    await dialog.getByLabel("vCard-Datei").setInputFiles(file);
+    await expect(
+      dialog.getByText("0 neue Kontakte gefunden. 2 sind schon vorhanden."),
+    ).toBeVisible();
+    await dialog.getByRole("button", { name: "Abbrechen" }).click();
+
+    // Export: both cards in one file.
+    const [download] = await Promise.all([
+      page.waitForEvent("download"),
+      dialog.getByRole("button", { name: "Exportieren" }).click(),
+    ]);
+    expect(download.suggestedFilename()).toBe(`${book}.vcf`);
+    const content = await readFile(await download.path(), "utf8");
+    expect(content).toContain(`FN:Erika ${surname}`);
+    expect(content).toContain("EMAIL;TYPE=work:erika@muster.test");
+    expect(content).toContain(`FN:Hans ${surname}`);
+    await page.keyboard.press("Escape");
+
+    await expect(page.getByRole("link", { name: new RegExp(`Erika ${surname}`) })).toBeVisible();
+    await page.getByRole("link", { name: new RegExp(`Erika ${surname}`) }).click();
+    await expect(page.getByText("+49 170 1112233")).toBeVisible();
+
+    // One contact as a file.
+    const [single] = await Promise.all([
+      page.waitForEvent("download"),
+      page.getByRole("button", { name: "vCard" }).click(),
+    ]);
+    expect(single.suggestedFilename()).toBe(`Erika ${surname}.vcf`);
+
+    page.once("dialog", (confirm) => confirm.accept());
+    await page.getByRole("button", { name: "Adressbücher" }).click();
+    await dialog.getByRole("button", { name: `Adressbuch löschen: ${book}` }).click();
+    await expect(dialog.getByText(book)).toHaveCount(0);
+  });
+});
+
 test.describe("Adressbücher teilen", () => {
   test("Jonas teilt ein Adressbuch mit Anna, erst zum Bearbeiten, dann nur zum Lesen", async ({
     page,
@@ -208,7 +285,9 @@ test.describe("Kontakte am Handy @phone", () => {
     await login(page);
     await page.getByRole("link", { name: "Kontakte" }).click();
     await page.getByRole("button", { name: "Adressbücher" }).click();
-    await expect(page.getByRole("dialog").getByText("Meine Kontakte")).toBeVisible();
+    await expect(
+      page.getByRole("list", { name: "Meine Adressbücher" }).getByText("Meine Kontakte"),
+    ).toBeVisible();
     await page.getByRole("dialog").getByRole("button", { name: "Teilen: Meine Kontakte" }).click();
     await expect(page.getByRole("dialog").getByLabel("Anna Weber")).toHaveValue("none");
   });
