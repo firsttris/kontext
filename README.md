@@ -64,6 +64,12 @@ und unter `https://<Ihre Domain>` anmelden. DNS-Einträge, Backups und Updates s
 - **Sicher lesen**: Mails laufen in einem abgeschotteten Rahmen, Bilder aus dem Internet erst auf Wunsch.
 - **Sofort aktuell**: neue Mails und Änderungen von Kollegen erscheinen ohne Neuladen (JMAP Push).
 
+### ⚙️ Einstellungen
+
+- **Signatur pro Absender**: eigene Adresse und gemeinsame Postfächer, mit Formatierung.
+- **Abwesenheitsnotiz**: mit Zeitraum, antwortet automatisch.
+- **Passwort und Anmeldung mit Code** (Authenticator-App); man bleibt auf dem Gerät angemeldet.
+
 ### 📅 Kalender
 
 - **Woche und Tag**: überlappende Termine nebeneinander, ganztägige oben, Jetzt-Linie.

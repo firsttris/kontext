@@ -1,0 +1,108 @@
+import { expect, test } from "@playwright/test";
+import { DEV_PASSWORD } from "../dev/config";
+import { totp } from "../src/lib/totp";
+import { address, inboxMails, login, unique } from "./helpers";
+
+test.describe("Einstellungen", () => {
+  test("Signatur erscheint in neuen Mails", async ({ page }) => {
+    await login(page, "sandra");
+    await page.goto("/settings?section=signature");
+    const editor = page.getByRole("textbox", { name: `Signatur ${address("sandra")}` });
+    await editor.click();
+    await page.keyboard.type("Sandra Klein · Weber Haustechnik");
+    await page.getByRole("button", { name: "Speichern" }).first().click();
+    await expect(page.getByRole("status").filter({ hasText: "Gespeichert." })).toBeVisible();
+
+    await page.getByRole("link", { name: "Mail", exact: true }).first().click();
+    await page.getByRole("link", { name: "Neue Mail" }).first().click();
+    await expect(page.getByRole("textbox", { name: "Ihre Nachricht …" })).toContainText(
+      "Sandra Klein · Weber Haustechnik",
+    );
+  });
+
+  test("Abwesenheitsnotiz antwortet automatisch", async ({ page, browser }) => {
+    await login(page, "max");
+    await page.goto("/settings?section=vacation");
+    await page.getByLabel("Abwesenheitsnotiz einschalten").check();
+    await page.getByLabel("Betreff").fill("Bin im Urlaub");
+    await page.getByLabel("Nachricht").fill("Ab Montag wieder da.");
+    await page.getByRole("button", { name: "Speichern" }).click();
+    await expect(page.getByRole("status").filter({ hasText: "eingeschaltet" })).toBeVisible();
+
+    const anna = await (await browser.newContext()).newPage();
+    await login(anna, "anna");
+    const subject = unique("Frage Lager");
+    await anna.getByRole("link", { name: "Neue Mail" }).first().click();
+    await anna.getByRole("combobox", { name: "An" }).fill(address("max"));
+    await anna.keyboard.press("Enter");
+    await anna.getByLabel("Betreff").fill(subject);
+    await anna.getByRole("button", { name: "Senden" }).click();
+    await expect
+      .poll(
+        async () => (await inboxMails("anna")).some((mail) => mail.subject === "Bin im Urlaub"),
+        {
+          timeout: 20_000,
+        },
+      )
+      .toBe(true);
+  });
+
+  test("ändert das Passwort", async ({ page }) => {
+    const next = "werkbank-kaffee-neues-passwort";
+    await login(page, "max");
+    await page.goto("/settings?section=security");
+    await page.getByLabel("Aktuelles Passwort").first().fill("falsch-falsch-falsch");
+    await page.getByLabel("Neues Passwort", { exact: true }).fill(next);
+    await page.getByLabel("Neues Passwort wiederholen").fill(next);
+    await page.getByRole("button", { name: "Passwort ändern" }).click();
+    await expect(page.getByRole("alert")).toHaveText("Das aktuelle Passwort stimmt nicht.");
+
+    await page.getByLabel("Aktuelles Passwort").first().fill(DEV_PASSWORD);
+    await page.getByRole("button", { name: "Passwort ändern" }).click();
+    await expect(page.getByRole("status").filter({ hasText: "Passwort geändert." })).toBeVisible();
+
+    // still signed in with the new password; and back, so the other tests can sign in as Max
+    await page.getByLabel("Aktuelles Passwort").first().fill(next);
+    await page.getByLabel("Neues Passwort", { exact: true }).fill(DEV_PASSWORD);
+    await page.getByLabel("Neues Passwort wiederholen").fill(DEV_PASSWORD);
+    await page.getByRole("button", { name: "Passwort ändern" }).click();
+    await expect(page.getByRole("status").filter({ hasText: "Passwort geändert." })).toBeVisible();
+  });
+
+  test("richtet die Anmeldung mit Code ein und meldet damit an", async ({ page }) => {
+    test.setTimeout(60_000);
+    await login(page, "sandra");
+    await page.goto("/settings?section=security");
+    await page.getByRole("button", { name: "Einrichten" }).click();
+    const secret = (await page.getByTestId("totp-secret").textContent()) ?? "";
+    await page.getByLabel("Bestätigungscode").fill("000000");
+    await page.getByLabel("Aktuelles Passwort").nth(1).fill(DEV_PASSWORD);
+    await page.getByRole("button", { name: "Einschalten" }).click();
+    await expect(page.getByRole("alert").last()).toContainText("Der Code stimmt nicht");
+    await page.getByLabel("Bestätigungscode").fill(await totp(secret));
+    await page.getByRole("button", { name: "Einschalten" }).click();
+    await expect(page.getByRole("status").filter({ hasText: "eingeschaltet" })).toBeVisible();
+
+    await page
+      .getByRole("button", { name: address("sandra") })
+      .first()
+      .click();
+    await page.getByRole("menuitem", { name: "Abmelden" }).click();
+    await page.getByLabel("E-Mail-Adresse").fill(address("sandra"));
+    await page.getByLabel("Passwort").fill(DEV_PASSWORD);
+    await page.getByRole("button", { name: "Anmelden" }).click();
+    await page.getByLabel("Bestätigungscode").fill(await totp(secret));
+    await page.getByRole("button", { name: "Anmelden" }).click();
+    // back where Sandra was before signing out
+    await expect(page.getByRole("heading", { name: "Passwort und Sicherheit" })).toBeVisible();
+
+    await page.goto("/settings?section=security");
+    await page.getByLabel("Aktuelles Passwort").nth(1).fill(DEV_PASSWORD);
+    await page
+      .getByLabel("Bestätigungscode")
+      .nth(1)
+      .fill(await totp(secret));
+    await page.getByRole("button", { name: "Ausschalten" }).click();
+    await expect(page.getByRole("status").filter({ hasText: "ausgeschaltet" })).toBeVisible();
+  });
+});

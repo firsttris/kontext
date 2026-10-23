@@ -14,6 +14,7 @@ import { Route as LoginRouteImport } from './routes/login'
 import { Route as AppIndexRouteImport } from './routes/_app/index'
 import { Route as AppCalendarRouteImport } from './routes/_app/calendar'
 import { Route as AppContactsRouteImport } from './routes/_app/contacts'
+import { Route as AppSettingsRouteImport } from './routes/_app/settings'
 import { Route as AppMailIndexRouteImport } from './routes/_app/mail.index'
 import { Route as AppMailAccountIdMailboxIdRouteImport } from './routes/_app/mail.$accountId.$mailboxId'
 
@@ -41,6 +42,11 @@ const AppContactsRoute = AppContactsRouteImport.update({
   path: '/contacts',
   getParentRoute: () => AppRoute,
 } as any)
+const AppSettingsRoute = AppSettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppMailIndexRoute = AppMailIndexRouteImport.update({
   id: '/mail/',
   path: '/mail/',
@@ -58,6 +64,7 @@ export interface FileRoutesByFullPath {
   '/login': typeof LoginRoute
   '/calendar': typeof AppCalendarRoute
   '/contacts': typeof AppContactsRoute
+  '/settings': typeof AppSettingsRoute
   '/mail/': typeof AppMailIndexRoute
   '/mail/$accountId/$mailboxId': typeof AppMailAccountIdMailboxIdRoute
 }
@@ -65,6 +72,7 @@ export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/calendar': typeof AppCalendarRoute
   '/contacts': typeof AppContactsRoute
+  '/settings': typeof AppSettingsRoute
   '/': typeof AppIndexRoute
   '/mail': typeof AppMailIndexRoute
   '/mail/$accountId/$mailboxId': typeof AppMailAccountIdMailboxIdRoute
@@ -75,6 +83,7 @@ export interface FileRoutesById {
   '/login': typeof LoginRoute
   '/_app/calendar': typeof AppCalendarRoute
   '/_app/contacts': typeof AppContactsRoute
+  '/_app/settings': typeof AppSettingsRoute
   '/_app/': typeof AppIndexRoute
   '/_app/mail/': typeof AppMailIndexRoute
   '/_app/mail/$accountId/$mailboxId': typeof AppMailAccountIdMailboxIdRoute
@@ -86,6 +95,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/calendar'
     | '/contacts'
+    | '/settings'
     | '/mail/'
     | '/mail/$accountId/$mailboxId'
   fileRoutesByTo: FileRoutesByTo
@@ -93,6 +103,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/calendar'
     | '/contacts'
+    | '/settings'
     | '/'
     | '/mail'
     | '/mail/$accountId/$mailboxId'
@@ -102,6 +113,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/_app/calendar'
     | '/_app/contacts'
+    | '/_app/settings'
     | '/_app/'
     | '/_app/mail/'
     | '/_app/mail/$accountId/$mailboxId'
@@ -149,6 +161,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppContactsRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/settings': {
+      id: '/_app/settings'
+      path: '/settings'
+      fullPath: '/settings'
+      preLoaderRoute: typeof AppSettingsRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/mail/': {
       id: '/_app/mail/'
       path: '/mail'
@@ -169,6 +188,7 @@ declare module '@tanstack/react-router' {
 interface AppRouteChildren {
   AppCalendarRoute: typeof AppCalendarRoute
   AppContactsRoute: typeof AppContactsRoute
+  AppSettingsRoute: typeof AppSettingsRoute
   AppIndexRoute: typeof AppIndexRoute
   AppMailIndexRoute: typeof AppMailIndexRoute
   AppMailAccountIdMailboxIdRoute: typeof AppMailAccountIdMailboxIdRoute
@@ -177,6 +197,7 @@ interface AppRouteChildren {
 const AppRouteChildren: AppRouteChildren = {
   AppCalendarRoute: AppCalendarRoute,
   AppContactsRoute: AppContactsRoute,
+  AppSettingsRoute: AppSettingsRoute,
   AppIndexRoute: AppIndexRoute,
   AppMailIndexRoute: AppMailIndexRoute,
   AppMailAccountIdMailboxIdRoute: AppMailAccountIdMailboxIdRoute,

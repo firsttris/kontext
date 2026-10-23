@@ -1,7 +1,7 @@
 /** The frame of every logged-in page: the app rail on the left (desktop), the page beside it. */
 import { useQuery } from "@tanstack/react-query";
 import { Link, useRouterState } from "@tanstack/react-router";
-import { LogOut } from "lucide-react";
+import { LogOut, Settings } from "lucide-react";
 import type { ReactNode } from "react";
 import { useAuth, useClient } from "@/auth/auth";
 import { Avatar } from "@/components/ui/avatar";
@@ -33,6 +33,11 @@ const UserMenu = ({ side }: { side: "right" | "top" }) => {
       </MenuTrigger>
       <MenuContent side={side} align={side === "right" ? "end" : "end"}>
         <MenuLabel>{name}</MenuLabel>
+        <MenuItem asChild>
+          <Link to="/settings" search={{}} className="text-fg no-underline">
+            <Settings size={15} /> {m.nav_settings()}
+          </Link>
+        </MenuItem>
         <MenuItem onSelect={logout}>
           <LogOut size={15} /> {m.logout()}
         </MenuItem>
@@ -73,6 +78,19 @@ const Rail = () => {
         );
       })}
       <div className="flex-1" />
+      <Link
+        to="/settings"
+        search={{}}
+        aria-label={m.nav_settings()}
+        title={m.nav_settings()}
+        aria-current={pathname.startsWith("/settings") ? "page" : undefined}
+        className={cn(
+          "mb-1.5 flex size-10 items-center justify-center rounded-[10px] hover:bg-hover",
+          pathname.startsWith("/settings") ? "bg-subtle text-fg" : "text-muted",
+        )}
+      >
+        <Settings size={18} strokeWidth={1.75} />
+      </Link>
       <UserMenu side="right" />
     </nav>
   );

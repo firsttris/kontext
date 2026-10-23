@@ -52,6 +52,13 @@ Stalwarts eigene Verwaltung ist nur über die Tailscale-Adresse des Servers erre
 Danach unter `https://sekretaer.firma.de` anmelden. Am Handy im Browser „Zum Startbildschirm
 hinzufügen“ wählen: Sekretär startet dann wie eine App und bleibt angemeldet.
 
+### Wenn jemand sein Handy mit der Authenticator-App verliert
+
+Mitarbeiter schalten die Anmeldung mit Code selbst unter *Einstellungen → Passwort und Sicherheit*
+ein. Geht das Handy verloren, nimmt der Admin in Stalwarts Verwaltung beim Konto unter
+*Credentials* den OTP-Eintrag heraus; danach meldet sich der Mitarbeiter wieder nur mit Passwort
+an und richtet den Code neu ein.
+
 ## 4. Backups
 
 `deploy/backup.sh` sichert Stalwarts Datenvolume mit [Restic](https://restic.net) auf einen
