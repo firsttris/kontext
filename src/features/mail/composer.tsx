@@ -59,7 +59,20 @@ export const Composer = ({ accountId, mode, sourceEmailId, prefillTo }: Props) =
   const [attachments, setAttachments] = useState<OutgoingAttachment[]>([]);
   const [uploading, setUploading] = useState(0);
   const [sending, setSending] = useState(false);
-  const [draftId, setDraftId] = useState<string | null>(null);
+  const [draftId, setDraftId] = useState<string | null>(
+    mode === "draft" ? (sourceEmailId ?? null) : null,
+  );
+  const [threading, setThreading] = useState<{
+    inReplyTo: string[] | null;
+    references: string[] | null;
+  }>({
+    inReplyTo: null,
+    references: null,
+  });
+  /** Bumped on every change; the autosave runs a moment after the last one. */
+  const [changes, setChanges] = useState(0);
+  const [savedAt, setSavedAt] = useState<Date | null>(null);
+  const saving = useRef<Promise<void> | null>(null);
   const initialized = useRef(false);
   const fileInput = useRef<HTMLInputElement>(null);
 
@@ -68,6 +81,9 @@ export const Composer = ({ accountId, mode, sourceEmailId, prefillTo }: Props) =
       StarterKit.configure({ link: { openOnClick: false, autolink: true } }),
       Placeholder.configure({ placeholder: m.mail_body_placeholder() }),
     ],
+    onUpdate: () => {
+      if (initialized.current) setChanges((n) => n + 1);
+    },
     editorProps: {
       attributes: {
         "aria-label": m.mail_body_placeholder(),
@@ -87,12 +103,6 @@ export const Composer = ({ accountId, mode, sourceEmailId, prefillTo }: Props) =
   useEffect(() => {
     if (initialized.current || !editor || identities.length === 0) return;
     if (sourceEmailId && !source.data) return;
-    initialized.current = true;
-    const identity = defaultIdentity(
-      identities,
-      account?.isPersonal ? (session?.username ?? "") : (account?.name ?? ""),
-    );
-    if (identity) setIdentityId(identity.id);
     let originalHtml = "";
     if (source.data) {
       const body = displayBody(source.data);
@@ -102,16 +112,27 @@ export const Composer = ({ accountId, mode, sourceEmailId, prefillTo }: Props) =
       }).html;
     }
     const start = startCompose(mode, source.data, originalHtml, myAddresses);
+    const identity = defaultIdentity(
+      identities,
+      start.from ?? (account?.isPersonal ? (session?.username ?? "") : (account?.name ?? "")),
+    );
+    if (identity) setIdentityId(identity.id);
     setTo(prefillTo ? parseAddresses(prefillTo).addresses : start.to);
     setCc(start.cc);
-    if (start.cc.length) setShowCopies(true);
+    setBcc(start.bcc);
+    if (start.cc.length || start.bcc.length) setShowCopies(true);
     setSubject(start.subject);
-    setAttachments(start.forwardAttachments);
+    setAttachments(start.attachments);
+    setThreading({ inReplyTo: start.inReplyTo, references: start.references });
+    // A draft already has its signature; a new mail gets the one of the sender.
     const signature =
-      identity?.htmlSignature ||
-      (identity?.textSignature ? textToHtml(identity.textSignature) : "");
+      mode === "draft"
+        ? ""
+        : identity?.htmlSignature ||
+          (identity?.textSignature ? textToHtml(identity.textSignature) : "");
     editor.commands.setContent(`${signature ? `<p></p>${signature}` : ""}${start.html}`);
-    editor.commands.focus("start");
+    editor.commands.focus(mode === "draft" ? "end" : "start");
+    initialized.current = true;
   }, [
     editor,
     identities,
@@ -128,14 +149,14 @@ export const Composer = ({ accountId, mode, sourceEmailId, prefillTo }: Props) =
   const drafts = findRole(mailboxes, "drafts");
   const sent = findRole(mailboxes, "sent");
 
-  const close = () =>
+  const leave = () =>
     navigate({
       to: ".",
       search: (prev) => ({
         ...prev,
         compose: undefined,
         to: undefined,
-        email: mode === "new" ? undefined : prev.email,
+        email: mode === "new" || mode === "draft" ? undefined : prev.email,
       }),
     });
 
@@ -151,10 +172,65 @@ export const Composer = ({ accountId, mode, sourceEmailId, prefillTo }: Props) =
       html,
       text: htmlToText(html),
       attachments,
-      inReplyTo: mode === "reply" || mode === "replyAll" ? source.data?.messageId : null,
-      references: mode === "reply" || mode === "replyAll" ? source.data?.references : null,
+      inReplyTo: threading.inReplyTo,
+      references: threading.references,
       draftId,
     };
+  };
+
+  const isEmpty = () =>
+    to.length + cc.length + bcc.length === 0 &&
+    !subject.trim() &&
+    attachments.length === 0 &&
+    !(editor?.getText().trim() ?? "");
+
+  /** Saves the current state as the draft (replacing the previous one); one save at a time. */
+  const autosave = async (): Promise<void> => {
+    if (saving.current) await saving.current;
+    if (!identity || !drafts || isEmpty()) return;
+    const run = (async () => {
+      setDraftId(await saveDraft(client, outgoing(), drafts.id));
+      setSavedAt(new Date());
+      void queryClient.invalidateQueries({ queryKey: [accountId, "emails"] });
+    })();
+    saving.current = run;
+    try {
+      await run;
+    } finally {
+      saving.current = null;
+    }
+  };
+
+  // Autosave two seconds after the last change.
+  const changeKey = `${changes}|${JSON.stringify([to, cc, bcc, subject, attachments.length, identityId])}`;
+  const lastSaved = useRef(changeKey);
+  useEffect(() => {
+    if (!initialized.current || sending || changeKey === lastSaved.current) return;
+    const timer = setTimeout(() => {
+      lastSaved.current = changeKey;
+      void autosave().catch(() => undefined);
+    }, 2000);
+    return () => clearTimeout(timer);
+  });
+
+  /** Closing keeps the work: unsaved changes are saved as a draft first. */
+  const close = async () => {
+    if (initialized.current && changeKey !== lastSaved.current && !isEmpty()) {
+      lastSaved.current = changeKey;
+      await autosave().catch(() => undefined);
+    }
+    await leave();
+  };
+
+  /** Throws the mail away, including its draft. */
+  const discard = async () => {
+    lastSaved.current = changeKey;
+    if (saving.current) await saving.current;
+    if (draftId) {
+      await client.call("Email/set", { accountId, destroy: [draftId] }).catch(() => undefined);
+      void queryClient.invalidateQueries({ queryKey: [accountId] });
+    }
+    await leave();
   };
 
   const send = async () => {
@@ -165,17 +241,19 @@ export const Composer = ({ accountId, mode, sourceEmailId, prefillTo }: Props) =
     if (!identity || !drafts || !sent) return;
     setSending(true);
     try {
+      if (saving.current) await saving.current;
       await sendEmail(client, outgoing(), { draftsId: drafts.id, sentId: sent.id });
-      if (mode === "reply" || mode === "replyAll") {
+      if ((mode === "reply" || mode === "replyAll") && sourceEmailId) {
         // RFC 8621: mark the original as answered.
         await client.call("Email/set", {
           accountId,
-          update: { [sourceEmailId!]: { "keywords/$answered": true } },
+          update: { [sourceEmailId]: { "keywords/$answered": true } },
         });
       }
+      lastSaved.current = changeKey;
       toast.show(m.mail_sent_toast());
       void queryClient.invalidateQueries({ queryKey: [accountId] });
-      await close();
+      await leave();
     } catch (error) {
       toast.show(m.common_error({ message: (error as Error).message }), "error");
     } finally {
@@ -184,12 +262,11 @@ export const Composer = ({ accountId, mode, sourceEmailId, prefillTo }: Props) =
   };
 
   const storeDraft = async () => {
-    if (!identity || !drafts) return;
     try {
-      setDraftId(await saveDraft(client, outgoing(), drafts.id));
+      lastSaved.current = changeKey;
+      await autosave();
       toast.show(m.mail_draft_saved());
-      void queryClient.invalidateQueries({ queryKey: [accountId] });
-      await close();
+      await leave();
     } catch (error) {
       toast.show(m.common_error({ message: (error as Error).message }), "error");
     }
@@ -367,6 +444,13 @@ export const Composer = ({ accountId, mode, sourceEmailId, prefillTo }: Props) =
           <Paperclip size={16} />
         </Button>
         <div className="flex-1" />
+        {savedAt ? (
+          <span role="status" className="hidden text-[12px] text-muted sm:inline">
+            {m.mail_draft_autosaved({
+              time: savedAt.toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" }),
+            })}
+          </span>
+        ) : null}
         <Button variant="ghost" size="sm" onClick={() => void storeDraft()}>
           {m.mail_save_draft()}
         </Button>
@@ -375,7 +459,7 @@ export const Composer = ({ accountId, mode, sourceEmailId, prefillTo }: Props) =
           size="icon"
           aria-label={m.mail_discard()}
           title={m.mail_discard()}
-          onClick={() => close()}
+          onClick={() => void discard()}
         >
           <Trash2 size={16} />
         </Button>

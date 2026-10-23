@@ -205,3 +205,42 @@ test.describe("Mail am Handy @phone", () => {
     await expect(page.getByRole("link", { name: "Papierkorb" })).toBeVisible();
   });
 });
+
+test.describe("Entwürfe", () => {
+  test.beforeEach(async ({ page }) => login(page));
+
+  test("speichert automatisch, öffnet den Entwurf wieder und sendet ihn", async ({ page }) => {
+    const subject = unique("Angebot Bad");
+    await page.getByRole("link", { name: "Neue Mail" }).first().click();
+    await page.getByRole("combobox", { name: "An" }).fill("anna@weber-haustechnik.test");
+    await page.keyboard.press("Enter");
+    await page.getByLabel("Betreff").fill(subject);
+    await page.getByRole("textbox", { name: "Ihre Nachricht …" }).click();
+    await page.keyboard.type("Erster Teil.");
+    await expect(page.getByText(/Entwurf gespeichert um/)).toBeVisible({ timeout: 10_000 });
+    await page.getByRole("button", { name: "Schließen" }).click();
+
+    await page.getByRole("link", { name: /Entwürfe/ }).click();
+    await page.getByRole("list", { name: "Entwürfe" }).getByText(subject).click();
+    await expect(page.getByLabel("Betreff")).toHaveValue(subject);
+    const body = page.getByRole("textbox", { name: "Ihre Nachricht …" });
+    await expect(body).toContainText("Erster Teil.");
+    await body.click();
+    await page.keyboard.press("End");
+    await page.keyboard.type(" Zweiter Teil.");
+    await page.getByRole("button", { name: "Senden" }).click();
+    await expect(page.getByRole("status").filter({ hasText: "Mail gesendet." })).toBeVisible();
+    await expect.poll(() => inboxSubjects("anna")).toContain(subject);
+    await expect(page.getByRole("list", { name: "Entwürfe" }).getByText(subject)).toHaveCount(0);
+  });
+
+  test("verwirft einen Entwurf ganz", async ({ page }) => {
+    const subject = unique("Notiz");
+    await page.getByRole("link", { name: "Neue Mail" }).first().click();
+    await page.getByLabel("Betreff").fill(subject);
+    await expect(page.getByText(/Entwurf gespeichert um/)).toBeVisible({ timeout: 10_000 });
+    await page.getByRole("button", { name: "Verwerfen" }).click();
+    await page.getByRole("link", { name: /Entwürfe/ }).click();
+    await expect(page.getByRole("list", { name: "Entwürfe" }).getByText(subject)).toHaveCount(0);
+  });
+});

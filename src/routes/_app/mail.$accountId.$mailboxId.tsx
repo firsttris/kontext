@@ -5,8 +5,8 @@ import { MailPage } from "@/features/mail/mail-page";
 export const mailSearchSchema = z.object({
   /** The open mail. */
   email: z.string().optional(),
-  /** Composer: a new mail, or an answer to / forward of the open mail. */
-  compose: z.enum(["new", "reply", "replyAll", "forward"]).optional(),
+  /** Composer: a new mail, an answer to / forward of the open mail, or the open draft. */
+  compose: z.enum(["new", "reply", "replyAll", "forward", "draft"]).optional(),
   /** Prefilled recipient for a new mail, e.g. from the contacts. */
   to: z.string().optional(),
   q: z.string().optional(),

@@ -1,32 +1,47 @@
-/** What the composer starts with for a new mail, a reply or a forward. Pure, so it is tested. */
+/** What the composer starts with for a new mail, a reply, a forward or a saved draft. Pure, so it is tested. */
 import type { EmailAddress, EmailDetail } from "@/jmap/types";
 import { m } from "@/paraglide/messages";
 import { prefixSubject, replyRecipients } from "./addresses";
 import { displayName, readingDate } from "./format";
 import { escapeHtml, quoteHtml } from "./html";
 
-export type ComposeMode = "new" | "reply" | "replyAll" | "forward";
+export type ComposeMode = "new" | "reply" | "replyAll" | "forward" | "draft";
 
 export type ComposeStart = {
   to: EmailAddress[];
   cc: EmailAddress[];
+  bcc: EmailAddress[];
+  /** The sender of a draft, to pick the same identity again. */
+  from: string | null;
   subject: string;
   html: string;
   inReplyTo: string[] | null;
   references: string[] | null;
-  /** Attachments of the original that a forward carries along. */
-  forwardAttachments: { blobId: string; name: string; type: string; size: number }[];
+  /** Attachments carried along: those of a forwarded original or of a draft. */
+  attachments: { blobId: string; name: string; type: string; size: number }[];
 };
 
 const empty: ComposeStart = {
   to: [],
   cc: [],
+  bcc: [],
+  from: null,
   subject: "",
   html: "",
   inReplyTo: null,
   references: null,
-  forwardAttachments: [],
+  attachments: [],
 };
+
+const fileAttachments = (email: EmailDetail): ComposeStart["attachments"] =>
+  email.attachments
+    .filter((part) => part.blobId && part.disposition !== "inline")
+    .map((part) => ({
+      blobId: part.blobId!,
+      name: part.name ?? "anhang",
+      type: part.type,
+      size: part.size,
+    }));
 
 /**
  * `originalHtml` is the cleaned body of the original (already sanitized for display), so the
@@ -39,6 +54,19 @@ export const startCompose = (
   myAddresses: string[],
 ): ComposeStart => {
   if (mode === "new" || !original) return empty;
+  if (mode === "draft") {
+    return {
+      to: original.to ?? [],
+      cc: original.cc ?? [],
+      bcc: original.bcc ?? [],
+      from: original.from?.[0]?.email ?? null,
+      subject: original.subject ?? "",
+      html: originalHtml,
+      inReplyTo: original.inReplyTo,
+      references: original.references,
+      attachments: fileAttachments(original),
+    };
+  }
   const sender = original.from?.[0];
   const header = m.mail_quote_header({
     date: readingDate(original.sentAt ?? original.receivedAt),
@@ -55,14 +83,7 @@ export const startCompose = (
       ...empty,
       subject: prefixSubject("Fwd", original.subject),
       html: `<p></p><p>---------- Weitergeleitete Nachricht ----------<br>${lines.join("<br>")}</p>${originalHtml}`,
-      forwardAttachments: original.attachments
-        .filter((part) => part.blobId && part.disposition !== "inline")
-        .map((part) => ({
-          blobId: part.blobId!,
-          name: part.name ?? "anhang",
-          type: part.type,
-          size: part.size,
-        })),
+      attachments: fileAttachments(original),
     };
   }
 

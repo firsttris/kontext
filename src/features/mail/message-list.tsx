@@ -159,6 +159,7 @@ export const MessageList = ({ accountId, mailbox, search }: Props) => {
                     email={email}
                     active={email.id === search.email}
                     showRecipient={showRecipient}
+                    isDraft={mailbox.role === "drafts"}
                   />
                 </li>
               );
@@ -178,17 +179,20 @@ const MessageRow = ({
   email,
   active,
   showRecipient,
+  isDraft,
 }: {
   email: EmailSummary;
   active: boolean;
   showRecipient: boolean;
+  /** A draft opens in the composer to be finished. */
+  isDraft: boolean;
 }) => {
   const unread = isUnread(email);
   const who = showRecipient ? formatAddressList(email.to) : displayName(email.from?.[0]);
   return (
     <Link
       to="."
-      search={(prev) => ({ ...prev, email: email.id, compose: undefined })}
+      search={(prev) => ({ ...prev, email: email.id, compose: isDraft ? "draft" : undefined })}
       aria-current={active ? "true" : undefined}
       className={cn(
         "flex gap-3 rounded-[10px] px-3 py-3 text-left text-fg no-underline hover:bg-hover",

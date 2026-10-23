@@ -61,6 +61,7 @@
   "mail_discard": "Verwerfen",
   "mail_save_draft": "Als Entwurf speichern",
   "mail_draft_saved": "Entwurf gespeichert.",
+  "mail_draft_autosaved": "Entwurf gespeichert um {time}",
   "mail_body_placeholder": "Ihre Nachricht …",
   "mail_attachments": "Anhänge",
   "mail_attach": "Datei anhängen",

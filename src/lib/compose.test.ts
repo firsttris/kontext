@@ -57,9 +57,28 @@ describe("startCompose", () => {
     expect(start.to).toEqual([]);
     expect(start.subject).toBe("Fwd: Angebot <2027>");
     expect(start.html).toContain("Angebot &lt;2027&gt;");
-    expect(start.forwardAttachments).toEqual([
+    expect(start.attachments).toEqual([
       { blobId: "b1", name: "Angebot.pdf", type: "application/pdf", size: 5 },
     ]);
+  });
+  it("reopens a draft as it was saved", () => {
+    const draft = {
+      ...original,
+      from: [{ name: "Jonas", email: "jonas@weber.test" }],
+      to: [{ name: "Petra", email: "petra@keller.test" }],
+      bcc: [{ name: null, email: "archiv@weber.test" }],
+      subject: "Angebot",
+      inReplyTo: ["x@keller.test"],
+    };
+    const start = startCompose("draft", draft, "<p>Entwurf</p>", ["jonas@weber.test"]);
+    expect(start).toMatchObject({
+      from: "jonas@weber.test",
+      subject: "Angebot",
+      html: "<p>Entwurf</p>",
+      inReplyTo: ["x@keller.test"],
+    });
+    expect(start.bcc.map((a) => a.email)).toEqual(["archiv@weber.test"]);
+    expect(start.attachments).toHaveLength(1);
   });
   it("starts empty for a new mail", () => {
     expect(startCompose("new", original, "", []).subject).toBe("");
