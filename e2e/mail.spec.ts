@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { address, inboxSubjects, login, unique } from "./helpers";
+import { address, inboxMails, inboxSubjects, login, unique } from "./helpers";
 
 test.describe("Anmeldung", () => {
   test("lehnt ein falsches Passwort ab", async ({ page }) => {
@@ -150,6 +150,24 @@ test.describe("Mail", () => {
       /info@weber-haustechnik\.test/,
     );
   });
+});
+
+test("sendet aus dem gemeinsamen Postfach als info@", async ({ page }) => {
+  const subject = unique("Rückruf Kundin");
+  await login(page);
+  await page.getByRole("link", { name: "info@" }).click();
+  await page.getByRole("link", { name: "Neue Mail" }).first().click();
+  await expect(page.getByLabel("Von").locator("option:checked")).toHaveText(/info@/);
+  await page.getByRole("combobox", { name: "An" }).fill("anna@weber-haustechnik.test");
+  await page.keyboard.press("Enter");
+  await page.getByLabel("Betreff").fill(subject);
+  await page.getByRole("textbox", { name: "Ihre Nachricht …" }).click();
+  await page.keyboard.type("Bitte Frau Sommer zurückrufen.");
+  await page.getByRole("button", { name: "Senden" }).click();
+  await expect(page.getByRole("status")).toHaveText("Mail gesendet.");
+  await expect
+    .poll(async () => (await inboxMails("anna")).find((mail) => mail.subject === subject)?.from)
+    .toBe(address("info"));
 });
 
 test.describe("Mail am Handy @phone", () => {

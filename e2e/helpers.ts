@@ -27,7 +27,11 @@ export const personalAccountId = async (user: string) => {
 };
 
 /** Subjects of the mails in a user's inbox. */
-export const inboxSubjects = async (user: string): Promise<string[]> => {
+export const inboxSubjects = async (user: string): Promise<string[]> =>
+  (await inboxMails(user)).map((email) => email.subject);
+
+/** Subject and sender of the mails in a user's inbox. */
+export const inboxMails = async (user: string): Promise<{ subject: string; from: string }[]> => {
   const client = jmapAs(user);
   const accountId = await personalAccountId(user);
   const { list } = await client.call<{ list: { id: string; role: string | null }[] }>(
@@ -45,12 +49,15 @@ export const inboxSubjects = async (user: string): Promise<string[]> => {
       {
         accountId,
         "#ids": { resultOf: "q", name: "Email/query", path: "/ids" },
-        properties: ["subject"],
+        properties: ["subject", "from"],
       },
       "g",
     ],
   ]);
-  return (get![1].list as { subject: string }[]).map((email) => email.subject);
+  return (get![1].list as { subject: string; from: { email: string }[] }[]).map((email) => ({
+    subject: email.subject,
+    from: email.from[0]?.email ?? "",
+  }));
 };
 
 export const unique = (text: string) => `${text} ${Date.now().toString(36)}`;
