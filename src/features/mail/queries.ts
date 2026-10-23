@@ -30,26 +30,38 @@ import type { Account, EmailSummary, Mailbox } from "@/jmap/types";
 import { findRole } from "@/lib/mailboxes";
 import { usePrincipals } from "../sharing/queries";
 
+export const mailboxesKey = (accountId: string) => [accountId, "mailboxes"] as const;
+
 /**
- * Mail accounts the user can open: the own one first, then shared mailboxes like info@. A
- * colleague who shares an address book or calendar also shows up as an account in the session,
- * so only accounts of groups count as shared mailboxes.
+ * Mail accounts the user can open: the own one first, then shared mailboxes like info@, then
+ * mailboxes of former colleagues handed over by the Firmenverwaltung. A colleague who shares only
+ * an address book or calendar also shows up as an account in the session; such an account counts
+ * only if it is a group or shows folders.
  */
 export const useMailAccounts = (): Account[] => {
+  const client = useClient();
   const { data: session } = useSession();
   const { data: principals = [] } = usePrincipals();
-  if (!session) return [];
   const groups = new Set(principals.filter((p) => p.type === "group").map((p) => p.id));
-  return Object.entries(session.accounts)
-    .filter(
-      ([id, account]) =>
-        CAPABILITIES.mail in account.accountCapabilities && (account.isPersonal || groups.has(id)),
-    )
-    .map(([id, account]) => ({ id, ...account }))
-    .sort((a, b) => Number(b.isPersonal) - Number(a.isPersonal) || a.name.localeCompare(b.name));
+  const candidates = Object.entries(session?.accounts ?? {})
+    .filter(([, account]) => CAPABILITIES.mail in account.accountCapabilities)
+    .map(([id, account]) => ({ id, ...account }));
+  const others = candidates.filter((a) => !a.isPersonal && !groups.has(a.id));
+  const folders = useQueries({
+    queries: others.map((account) => ({
+      queryKey: mailboxesKey(account.id),
+      queryFn: () => listMailboxes(client, account.id),
+      retry: false,
+    })),
+  });
+  const handedOver = new Set(
+    others.filter((_, index) => (folders[index]?.data?.length ?? 0) > 0).map((a) => a.id),
+  );
+  const rank = (a: Account) => (a.isPersonal ? 0 : groups.has(a.id) ? 1 : 2);
+  return candidates
+    .filter((a) => a.isPersonal || groups.has(a.id) || handedOver.has(a.id))
+    .sort((a, b) => rank(a) - rank(b) || a.name.localeCompare(b.name));
 };
-
-export const mailboxesKey = (accountId: string) => [accountId, "mailboxes"] as const;
 
 /** The folders of every mail account, by account id (same cache as each folder list). */
 export const useAllMailboxes = (): Record<string, Mailbox[] | undefined> => {

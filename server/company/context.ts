@@ -13,11 +13,13 @@ import {
 } from "./accounts";
 import type { Mailstore } from "./mailstore";
 import type { Management } from "./management";
+import type { CompanySettings } from "./settings";
 import type { Folder } from "./sharing";
 
 export type CompanyDeps = {
   management: Management;
   mailstore: Mailstore;
+  settings: CompanySettings;
   /** The signed-in user's address, or null. */
   currentEmail: (request: Request) => Promise<string | null>;
   /** Ends the user's Sekretär sessions (after deactivating or a new password). */

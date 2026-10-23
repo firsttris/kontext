@@ -141,13 +141,13 @@ export const EmployeeDialog = ({
   company,
   employee,
   onClose,
-  onVacation,
+  onOpen,
 }: {
   company: Company;
   employee: Employee;
   onClose: () => void;
-  /** Opens the out-of-office reply instead of this dialog. */
-  onVacation: () => void;
+  /** Opens the out-of-office reply or the leaving instead of this dialog. */
+  onOpen: (dialog: "vacation" | "offboarding") => void;
 }) => {
   const toast = useToast();
   const self = employee.id === company.selfId;
@@ -223,9 +223,14 @@ export const EmployeeDialog = ({
         </p>
         {password ? <PasswordNotice name={name} password={password} /> : null}
         <div className="flex flex-wrap items-start gap-2">
-          <Button disabled={busy} onClick={onVacation}>
+          <Button disabled={busy} onClick={() => onOpen("vacation")}>
             {m.company_vacation()}
           </Button>
+          {self ? null : (
+            <Button variant="danger" disabled={busy} onClick={() => onOpen("offboarding")}>
+              {m.company_offboarding()}
+            </Button>
+          )}
           <ConfirmButton
             label={m.company_password_reset()}
             question={m.company_password_reset_confirm({ name })}

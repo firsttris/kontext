@@ -82,6 +82,8 @@ und unter `https://<Ihre Domain>` anmelden. DNS-Einträge, Backups und Updates s
 - **Weitere Adressen** wie buchhaltung@ für eine Person oder ein Postfach.
 - **Gemeinsame Postfächer** anlegen und pro Person festlegen: kein Zugriff, nur lesen, oder lesen und senden.
 - **Abwesenheit eintragen**, wenn jemand krank ist – mit Vertretung, die in der automatischen Antwort steht.
+- **Firmen-Signatur**: eine Vorlage mit Name und Adresse, mit einem Klick für alle übernommen; neue Mitarbeiter bekommen sie automatisch.
+- **Austritt**: Zugang sperren, Postfach einer Kollegin übergeben, neue Mails weiterleiten und automatisch antworten – gelöscht wird nichts.
 - Nur für Konten mit dem Recht „Firmenverwaltung“, das der Chef auch weitergeben kann.
 
 ### 📅 Kalender

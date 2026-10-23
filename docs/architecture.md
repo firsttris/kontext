@@ -74,7 +74,20 @@ mit einem eigenen API-Schlüssel an und erlaubt nur, was die Firmenverwaltung br
 - **Abwesenheit** eines Mitarbeiters (etwa bei Krankheit) ist dessen `VacationResponse`; die
   Vertretung steht als eigene Zeile in der Nachricht.
 
-Für Ordner und Abwesenheit arbeitet der Server per JMAP *im Konto* des Mitarbeiters bzw. der
+- **Firmen-Signatur:** eine Vorlage mit `[Name]` und `[E-Mail]`, gespeichert in Sekretärs
+  SQLite (`company_setting`). „Für alle übernehmen“ schreibt sie in jede Absenderadresse
+  (`Identity`) aller aktiven Mitarbeiter, ausgefüllt mit Name und Adresse der Identität; neue
+  Mitarbeiter bekommen sie beim Anlegen.
+- **Austritt:** Zugang sperren, das Postfach einer Kollegin übergeben (alle Ordner per
+  `shareWith` mit allen Rechten außer Teilen), neue Mails weiterleiten und einmal am Tag
+  automatisch antworten. Weiterleitung und Antwort sind ein Sieve-Skript
+  (`sekretaer-austritt`, `redirect` und `vacation`), weil Stalwart nur ein aktives Skript pro
+  Konto ausführt; es ersetzt dabei die Abwesenheitsnotiz. Gelöscht wird nichts.
+- In der Mail zeigt Sekretär übergebene Postfächer unter „Postfächer“ wie gemeinsame: als
+  Postfach zählt ein fremdes Konto, wenn es eine Gruppe ist oder Ordner zeigt (wer nur einen
+  Kalender teilt, zeigt keine).
+
+Für Ordner, Abwesenheit, Signaturen und Sieve arbeitet der Server per JMAP *im Konto* des Mitarbeiters bzw. der
 Gruppe. Das erlaubt Stalwart mit dem Recht `impersonate`: dann gilt der Schlüssel als Mitglied
 jedes Kontos (`AccessToken::is_member`). `server/company/management.ts` spricht die
 Verwaltungsobjekte an, `server/company/mailstore.ts` die Konten.

@@ -78,6 +78,22 @@ export const getEmployeeVacation = (id: string) =>
 export const setEmployeeVacation = (id: string, vacation: Vacation) =>
   send<{ ok: true }>("PUT", `/employees/${encodeURIComponent(id)}/vacation`, vacation);
 
+export type Offboarding = {
+  handoverTo: string | null;
+  forwardTo: string | null;
+  reply: { subject: string; text: string } | null;
+};
+
+export const offboard = (id: string, offboarding: Offboarding) =>
+  send<{ ok: true }>("POST", `/employees/${encodeURIComponent(id)}/offboarding`, offboarding);
+
+export type SignatureTemplate = { html: string; text: string };
+
+export const getSignature = () => send<SignatureTemplate>("GET", "/signature");
+
+export const saveSignature = (template: SignatureTemplate & { apply: boolean }) =>
+  send<{ updated: number }>("PUT", "/signature", template);
+
 export const createMailbox = (mailbox: NewMailbox) =>
   send<{ id: string }>("POST", "/mailboxes", mailbox);
 

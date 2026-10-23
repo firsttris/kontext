@@ -1,5 +1,5 @@
 import { expect, type Page, test } from "@playwright/test";
-import { address, login } from "./helpers";
+import { address, inboxMails, jmapAs, login, personalAccountId, unique } from "./helpers";
 
 const stamp = () => Date.now().toString(36);
 
@@ -166,5 +166,84 @@ test.describe("Firmenverwaltung", () => {
       .then((r) => r.json());
     expect(vacation).toMatchObject({ isEnabled: true, subject: "Nicht im Büro" });
     expect(vacation.textBody).toContain("Anna Weber (anna@weber-haustechnik.test)");
+  });
+
+  test("Firmen-Signatur für alle", async ({ page }) => {
+    await login(page, "jonas");
+    await page.goto("/settings?section=company-signature");
+    const editor = page.getByRole("textbox", { name: "Firmen-Signatur" });
+    await editor.click();
+    await page.keyboard.type("[Name] · Weber Haustechnik · [E-Mail]");
+    await page.getByRole("button", { name: "Speichern und für alle übernehmen" }).click();
+    await page.getByRole("button", { name: "Ja, weiter" }).click();
+    await expect(page.getByRole("status").filter({ hasText: "übernommen" })).toBeVisible();
+
+    const sandra = jmapAs("sandra");
+    const { list } = await sandra.call<{ list: { email: string; textSignature: string }[] }>(
+      "Identity/get",
+      { accountId: await personalAccountId("sandra") },
+      ["urn:ietf:params:jmap:core", "urn:ietf:params:jmap:mail", "urn:ietf:params:jmap:submission"],
+    );
+    expect(list.find((i) => i.email === address("sandra"))?.textSignature).toBe(
+      `Sandra Klein · Weber Haustechnik · ${address("sandra")}`,
+    );
+    expect(list.find((i) => i.email === address("info"))?.textSignature).toContain(address("info"));
+
+    // empty again, so the other tests start without signatures
+    await editor.click();
+    await page.keyboard.press("ControlOrMeta+a");
+    await page.keyboard.press("Delete");
+    await page.getByRole("button", { name: "Speichern und für alle übernehmen" }).click();
+    await page.getByRole("button", { name: "Ja, weiter" }).click();
+    await expect(page.getByRole("status").filter({ hasText: "übernommen" }).last()).toBeVisible();
+  });
+
+  test("Austritt: sperrt, übergibt das Postfach, leitet weiter und antwortet", async ({
+    page,
+    browser,
+  }) => {
+    test.setTimeout(90_000);
+    const local = `geht-${stamp()}`;
+    await login(page, "jonas");
+    await newEmployee(page, local, "Karl Geht");
+    await page.getByRole("button", { name: /Karl Geht/ }).click();
+    await page.getByRole("dialog").getByRole("button", { name: "Austritt" }).click();
+    const dialog = page.getByRole("dialog", { name: "Austritt von Karl Geht" });
+    await dialog.getByLabel("Postfach übergeben an").selectOption({ label: "Sandra Klein" });
+    await dialog.getByLabel("Neue Mails weiterleiten an").selectOption({ label: "Anna Weber" });
+    await expect(dialog.getByLabel("Nachricht")).toHaveValue(/Anna Weber \(anna@/);
+    await dialog.getByRole("button", { name: "Austritt durchführen" }).click();
+    await dialog.getByRole("button", { name: "Ja, weiter" }).click();
+    await expect(
+      page.getByRole("status").filter({ hasText: "Austritt von Karl Geht" }),
+    ).toBeVisible();
+    await expect(page.getByRole("button", { name: /Karl Geht.*Gesperrt/ })).toBeVisible();
+
+    const sandra = await (await browser.newContext()).newPage();
+    await login(sandra, "sandra");
+    await expect(sandra.getByRole("link", { name: `${local}@` }).first()).toBeVisible();
+
+    const max = await (await browser.newContext()).newPage();
+    await login(max, "max");
+    const subject = unique("Frage an Karl");
+    await max.getByRole("link", { name: "Neue Mail" }).first().click();
+    await max.getByRole("combobox", { name: "An" }).fill(address(local));
+    await max.keyboard.press("Enter");
+    await max.getByLabel("Betreff").fill(subject);
+    await max.getByRole("button", { name: "Senden" }).click();
+    await expect
+      .poll(async () => (await inboxMails("anna")).some((mail) => mail.subject === subject), {
+        timeout: 30_000,
+      })
+      .toBe(true);
+    await expect
+      .poll(
+        async () =>
+          (await inboxMails("max")).some(
+            (mail) => mail.subject === "Karl Geht ist nicht mehr bei uns",
+          ),
+        { timeout: 30_000 },
+      )
+      .toBe(true);
   });
 });

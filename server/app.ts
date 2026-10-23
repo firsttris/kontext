@@ -8,8 +8,9 @@ import { Hono } from "hono";
 import { serveStatic } from "hono/bun";
 import { type Auth, createAuth, createGrants, type Grants } from "./auth";
 import { createMailstore } from "./company/mailstore";
-import { createManagement, createRequest } from "./company/management";
+import { createManagement, createRequest, createUpload } from "./company/management";
 import { createCompanyRoutes } from "./company/routes";
+import { createCompanySettings } from "./company/settings";
 import { createSealer } from "./crypto";
 import { type Db, openDatabase, schema } from "./db";
 import type { Env } from "./env";
@@ -90,7 +91,8 @@ export const createApp = async (env: Env) => {
     const request = createRequest(env.STALWART_URL, env.STALWART_ADMIN_KEY);
     const company = createCompanyRoutes({
       management: createManagement(request),
-      mailstore: createMailstore(request),
+      mailstore: createMailstore(request, createUpload(env.STALWART_URL, env.STALWART_ADMIN_KEY)),
+      settings: createCompanySettings(db),
       currentEmail: async (request) =>
         (await auth.api.getSession({ headers: request.headers }))?.user.email ?? null,
       endSessions: endSessionsOf(db),

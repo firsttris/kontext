@@ -9,6 +9,7 @@ import {
   Palette,
   Palmtree,
   PenLine,
+  Signature,
   User,
   Users,
 } from "lucide-react";
@@ -17,6 +18,7 @@ import { TabBar } from "@/components/shell/app-shell";
 import { EmployeesSection } from "@/features/company/employees-section";
 import { MailboxesSection } from "@/features/company/mailboxes-section";
 import { useIsCompanyAdmin } from "@/features/company/queries";
+import { CompanySignatureSection } from "@/features/company/signature-section";
 import { cn } from "@/lib/cn";
 import { m } from "@/paraglide/messages";
 import type { settingsSections } from "@/routes/_app/settings";
@@ -42,6 +44,7 @@ const OWN: Entry[] = [
 const COMPANY: Entry[] = [
   { id: "employees", label: m.company_employees, icon: Users },
   { id: "mailboxes", label: m.company_mailboxes, icon: Inbox },
+  { id: "company-signature", label: m.company_signature, icon: Signature },
 ];
 
 const CONTENT: Record<Section, () => ReactNode> = {
@@ -52,6 +55,7 @@ const CONTENT: Record<Section, () => ReactNode> = {
   appearance: () => <AppearanceSection />,
   employees: () => <EmployeesSection />,
   mailboxes: () => <MailboxesSection />,
+  "company-signature": () => <CompanySignatureSection />,
 };
 
 const SectionLinks = ({ entries, current }: { entries: Entry[]; current: Section }) => (

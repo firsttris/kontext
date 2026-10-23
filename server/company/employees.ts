@@ -25,6 +25,9 @@ import {
   notFound,
   userOf,
 } from "./context";
+import { OFFBOARDING_SCRIPT, offboardingScript } from "./offboarding";
+import { FULL_ACCESS, sharePatches } from "./sharing";
+import { applySignature } from "./signature-routes";
 
 const newEmployee = z.object({
   email: z.string().trim().max(320),
@@ -49,10 +52,24 @@ const vacation = z.object({
   htmlBody: z.string().max(100_000).nullable(),
 });
 
+const offboarding = z.object({
+  /** Who gets full access to all folders of the mailbox. */
+  handoverTo: z.string().max(64).nullable(),
+  /** Who gets new mail instead. */
+  forwardTo: z.string().max(64).nullable(),
+  reply: z.object({ subject: z.string().max(500), text: z.string().max(20_000) }).nullable(),
+});
+
 const knownMailboxes = (loaded: Loaded, wanted: string[]) =>
   wanted.every((id) => mailboxOf(loaded, id));
 
-export const employeeRoutes = ({ management, mailstore, endSessions, random }: CompanyDeps) => {
+export const employeeRoutes = ({
+  management,
+  mailstore,
+  settings,
+  endSessions,
+  random,
+}: CompanyDeps) => {
   const makePassword = () =>
     newPassword(random ?? ((size) => crypto.getRandomValues(new Uint8Array(size))));
   const app = new Hono<Env>();
@@ -76,6 +93,9 @@ export const employeeRoutes = ({ management, mailstore, endSessions, random }: C
       credentials: { "0": { "@type": "Password", secret: password } },
     });
     if (!created.ok) return bad(created.error);
+    // New people start with the company signature; a refusal there does not undo the account.
+    const signature = await settings.signature();
+    if (signature) await applySignature(mailstore, created.value, signature);
     return c.json({ id: created.value, password }, 201);
   });
 
@@ -154,6 +174,49 @@ export const employeeRoutes = ({ management, mailstore, endSessions, random }: C
     if (!body) return bad("Angaben unvollständig.");
     const result = await mailstore.setVacation(user.id, body);
     return result.ok ? c.json({ ok: true }) : bad(result.error);
+  });
+
+  /**
+   * Someone leaves: access locked, the mailbox handed over, new mail forwarded and answered.
+   * Nothing is deleted; the mailbox stays for the GoBD retention.
+   */
+  app.post("/:id/offboarding", async (c) => {
+    const loaded = c.get("loaded");
+    const user = userOf(loaded, c.req.param("id"));
+    if (!user) return notFound();
+    if (user.id === loaded.selfId)
+      return bad("Das eigene Konto kann sich nicht selbst aussperren.");
+    const body = await bodyOf(c, offboarding);
+    if (!body) return bad("Angaben unvollständig.");
+    const heir = body.handoverTo ? userOf(loaded, body.handoverTo) : null;
+    const forward = body.forwardTo ? userOf(loaded, body.forwardTo) : null;
+    if ((body.handoverTo && !heir) || (body.forwardTo && !forward)) {
+      return bad("Unbekannte Person.");
+    }
+
+    const locked = await management.updateAccounts({
+      [user.id]: { permissions: permissionsValue(false, user.permissions) },
+    });
+    if (!locked.ok) return bad(locked.error);
+    await endSessions(user.emailAddress ?? "");
+
+    if (heir) {
+      const folders = (await mailstore.listFolders([user.id]))[user.id] ?? [];
+      const shared = await mailstore.updateFolders(
+        user.id,
+        sharePatches(folders, [heir.id], FULL_ACCESS, []),
+      );
+      if (!shared.ok) return bad(shared.error);
+    }
+    const script = offboardingScript({
+      forwardTo: forward?.emailAddress ?? null,
+      reply: body.reply,
+    });
+    if (script) {
+      const sieve = await mailstore.setSieveScript(user.id, OFFBOARDING_SCRIPT, script);
+      if (!sieve.ok) return bad(sieve.error);
+    }
+    return c.json({ ok: true });
   });
 
   return app;

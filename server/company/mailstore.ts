@@ -4,13 +4,19 @@
  * of every account (`AccessToken::is_member`, crates/common/src/auth/access_token.rs).
  */
 import type { Result } from "./accounts";
-import { firstError, type SetResult, type StalwartRequest } from "./management";
+import {
+  firstError,
+  type SetResult,
+  type StalwartRequest,
+  type StalwartUpload,
+} from "./management";
 import type { Folder } from "./sharing";
 
 const CORE = "urn:ietf:params:jmap:core";
 const MAIL = [CORE, "urn:ietf:params:jmap:mail"];
 const VACATION = [CORE, "urn:ietf:params:jmap:vacationresponse"];
 const SUBMISSION = [...MAIL, "urn:ietf:params:jmap:submission"];
+const SIEVE = [CORE, "urn:ietf:params:jmap:sieve"];
 
 export type Vacation = {
   isEnabled: boolean;
@@ -34,7 +40,7 @@ const setOk = (result: SetResult): Result<null> => {
   return error ? { ok: false, error } : { ok: true, value: null };
 };
 
-export const createMailstore = (request: StalwartRequest) => {
+export const createMailstore = (request: StalwartRequest, upload: StalwartUpload) => {
   const call = async <T>(method: string, args: Record<string, unknown>, using: string[]) =>
     (await request([[method, args, "0"]], using))[0]![1] as T;
 
@@ -85,7 +91,39 @@ export const createMailstore = (request: StalwartRequest) => {
       ? setOk(await call<SetResult>("Identity/set", { accountId, update }, SUBMISSION))
       : { ok: true, value: null };
 
+  /**
+   * Puts a Sieve script (RFC 9661) under `name` and activates it. That deactivates the
+   * out-of-office script Stalwart keeps for VacationResponse.
+   */
+  const setSieveScript = async (
+    accountId: string,
+    name: string,
+    content: string,
+  ): Promise<Result<null>> => {
+    const { list } = await call<{ list: { id: string; name: string }[] }>(
+      "SieveScript/get",
+      { accountId, properties: ["name"] },
+      SIEVE,
+    );
+    const existing = list.find((script) => script.name === name);
+    const blobId = await upload(accountId, content, "application/sieve");
+    return setOk(
+      await call<SetResult>(
+        "SieveScript/set",
+        existing
+          ? {
+              accountId,
+              update: { [existing.id]: { blobId } },
+              onSuccessActivateScript: existing.id,
+            }
+          : { accountId, create: { s: { name, blobId } }, onSuccessActivateScript: "#s" },
+        SIEVE,
+      ),
+    );
+  };
+
   return {
+    setSieveScript,
     listFolders,
     updateFolders,
     getVacation,

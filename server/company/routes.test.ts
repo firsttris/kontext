@@ -59,6 +59,7 @@ const fakeManagement = () => {
     }),
     setVacation: async () => ({ ok: true, value: null }),
     listIdentities: async () => [],
+    setSieveScript: async () => ({ ok: true, value: null }),
     updateIdentities: async () => ({ ok: true, value: null }),
   };
   return { management, mailstore, updates, created, shared };
@@ -70,6 +71,7 @@ const setup = (email: string | null) => {
   const app = createCompanyRoutes({
     management: fake.management,
     mailstore: fake.mailstore,
+    settings: { signature: async () => null, saveSignature: async () => {} },
     currentEmail: async () => email,
     endSessions: async (address) => {
       ended.push(address);

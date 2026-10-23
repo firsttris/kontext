@@ -9,6 +9,7 @@ import type { Company } from "./api";
 import { EmployeeDialog, NewEmployeeDialog } from "./employee-dialogs";
 import { Badge } from "./fields";
 import { CompanyGate } from "./gate";
+import { OffboardingDialog } from "./offboarding-dialog";
 import { VacationDialog } from "./vacation-dialog";
 
 export const EmployeesSection = () => (
@@ -17,9 +18,9 @@ export const EmployeesSection = () => (
 
 const Employees = ({ company }: { company: Company }) => {
   const [open, setOpen] = useState<string | "new" | null>(null);
-  const [vacationFor, setVacationFor] = useState<string | null>(null);
+  const [next, setNext] = useState<{ id: string; dialog: "vacation" | "offboarding" } | null>(null);
   const employee = company.employees.find((e) => e.id === open);
-  const absent = company.employees.find((e) => e.id === vacationFor);
+  const other = company.employees.find((e) => e.id === next?.id);
 
   return (
     <>
@@ -65,14 +66,17 @@ const Employees = ({ company }: { company: Company }) => {
           company={company}
           employee={employee}
           onClose={() => setOpen(null)}
-          onVacation={() => {
+          onOpen={(dialog) => {
             setOpen(null);
-            setVacationFor(employee.id);
+            setNext({ id: employee.id, dialog });
           }}
         />
       ) : null}
-      {absent ? (
-        <VacationDialog company={company} employee={absent} onClose={() => setVacationFor(null)} />
+      {other && next?.dialog === "vacation" ? (
+        <VacationDialog company={company} employee={other} onClose={() => setNext(null)} />
+      ) : null}
+      {other && next?.dialog === "offboarding" ? (
+        <OffboardingDialog company={company} employee={other} onClose={() => setNext(null)} />
       ) : null}
     </>
   );

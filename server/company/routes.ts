@@ -7,6 +7,7 @@ import { Hono } from "hono";
 import { type CompanyDeps, createLoader, type Env } from "./context";
 import { employeeRoutes } from "./employees";
 import { mailboxRoutes } from "./mailboxes";
+import { signatureRoutes } from "./signature-routes";
 
 export type { CompanyDeps };
 
@@ -32,5 +33,6 @@ export const createCompanyRoutes = (deps: CompanyDeps) => {
   });
   app.route("/employees", employeeRoutes(deps));
   app.route("/mailboxes", mailboxRoutes(deps));
+  app.route("/signature", signatureRoutes(deps));
   return app;
 };

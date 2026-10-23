@@ -66,3 +66,10 @@ export const stalwartGrant = sqliteTable("stalwart_grant", {
   accessExpiresAt: integer("access_expires_at", { mode: "timestamp_ms" }).notNull(),
   updatedAt: integer("updated_at", { mode: "timestamp_ms" }).notNull(),
 });
+
+/** Settings of the Firmenverwaltung that Stalwart has no place for, e.g. the company signature. */
+export const companySetting = sqliteTable("company_setting", {
+  key: text("key").primaryKey(),
+  value: text("value").notNull(),
+  updatedAt: integer("updated_at", { mode: "timestamp_ms" }).notNull(),
+});

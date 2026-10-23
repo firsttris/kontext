@@ -10,6 +10,7 @@ export const settingsSections = [
   "appearance",
   "employees",
   "mailboxes",
+  "company-signature",
 ] as const;
 
 export const Route = createFileRoute("/_app/settings")({

@@ -56,6 +56,22 @@ export const createRequest = (stalwartUrl: string, key: string) => {
 
 export type StalwartRequest = ReturnType<typeof createRequest>;
 
+/** Uploads a blob into an account (RFC 8620 §6.1); its blobId. */
+export const createUpload = (stalwartUrl: string, key: string) => {
+  const authorization = authorizationFor(key);
+  return async (accountId: string, data: string, type: string): Promise<string> => {
+    const response = await fetch(`${stalwartUrl}/jmap/upload/${encodeURIComponent(accountId)}/`, {
+      method: "POST",
+      headers: { "content-type": type, authorization },
+      body: data,
+    });
+    if (!response.ok) throw new Error(`Stalwart-Upload: ${response.status}`);
+    return ((await response.json()) as { blobId: string }).blobId;
+  };
+};
+
+export type StalwartUpload = ReturnType<typeof createUpload>;
+
 export const createManagement = (request: StalwartRequest) => {
   const call = async <T>(method: string, args: Record<string, unknown>): Promise<T> =>
     (await request([[method, args, "0"]]))[0]![1] as T;
