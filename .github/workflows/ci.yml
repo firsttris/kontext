@@ -1,0 +1,81 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_call:
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    name: Typecheck, lint, unit tests, build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.4.x
+      - uses: actions/cache@v4
+        with:
+          path: ~/.bun/install/cache
+          key: bun-${{ hashFiles('bun.lock') }}
+      - run: bun install --frozen-lockfile
+      - run: bun run typecheck
+      - run: bunx biome ci .
+      - run: bun run test
+      - run: bun run build
+
+  docs:
+    name: Documentation
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install mkdocs-material
+      - run: mkdocs build --strict
+
+  image:
+    runs-on: ubuntu-latest
+    outputs:
+      image: ${{ steps.playwright.outputs.image }}
+    steps:
+      - id: playwright
+        uses: firsttris/workflows/actions/playwright-image@v1
+        with:
+          lockfile: bun.lock
+
+  e2e:
+    name: End-to-end tests (Stalwart + Playwright)
+    needs: image
+    runs-on: ubuntu-latest
+    container:
+      image: ${{ needs.image.outputs.image }}
+      options: --ipc=host
+    steps:
+      - uses: actions/checkout@v4
+      # The npm package brings the binary without curl or unzip, which the image lacks
+      - run: npm install --global bun@1.4.x
+      - uses: actions/cache@v4
+        with:
+          path: .dev/bin
+          key: stalwart-${{ hashFiles('dev/config.ts') }}
+      - run: bun install --frozen-lockfile
+      - run: bun run e2e
+      - if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: |
+            playwright-report
+            test-results
+          retention-days: 7

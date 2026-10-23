@@ -1,0 +1,22 @@
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+jobs:
+  checks:
+    uses: ./.github/workflows/ci.yml
+
+  docker:
+    needs: checks
+    uses: firsttris/workflows/.github/workflows/docker-release.yml@v1
+    with:
+      image: tristanteu/sekretaer
+      description: Self-hosted office suite for small businesses – mail, calendar and contacts on Stalwart
+      ghcr: true
+    secrets: inherit
+    permissions:
+      contents: write
+      packages: write

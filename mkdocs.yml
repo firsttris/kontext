@@ -1,0 +1,37 @@
+site_name: Sekretär
+site_description: Mail, Kalender und Kontakte für kleine Betriebe – selbst gehostet auf Stalwart
+site_url: https://firsttris.github.io/sekretaer/
+repo_url: https://github.com/firsttris/sekretaer
+edit_uri: edit/main/docs/
+use_directory_urls: false
+theme:
+  name: material
+  language: de
+  features:
+    - navigation.instant
+    - search.highlight
+    - content.code.copy
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: black
+      toggle: { icon: material/weather-night, name: Dunkel }
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: black
+      toggle: { icon: material/weather-sunny, name: Hell }
+markdown_extensions:
+  - admonition
+  - tables
+  - toc: { permalink: true }
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+  - pymdownx.details
+nav:
+  - Start: index.md
+  - Installation: installation.md
+  - Architektur: architecture.md
+  - Entwicklung: development.md

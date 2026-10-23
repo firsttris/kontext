@@ -6,7 +6,13 @@
     "useIgnoreFile": true
   },
   "files": {
-    "includes": ["**", "!src/paraglide", "!src/routeTree.gen.ts", "!project.inlang"]
+    "includes": [
+      "**",
+      "!src/paraglide",
+      "!src/routeTree.gen.ts",
+      "!project.inlang",
+      "!**/*.md"
+    ]
   },
   "formatter": {
     "indentStyle": "space",

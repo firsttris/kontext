@@ -1,0 +1,24 @@
+# Podman Quadlet: copy to /etc/containers/systemd/ and run `systemctl daemon-reload`.
+[Unit]
+Description=Sekretär web app
+After=stalwart.service
+Wants=stalwart.service
+
+[Container]
+Image=docker.io/tristanteu/sekretaer:latest
+ContainerName=sekretaer
+Network=sekretaer.network
+PublishPort=80:80
+PublishPort=443:443
+PublishPort=443:443/udp
+Volume=caddy-data:/data
+Volume=caddy-config:/config
+EnvironmentFile=/opt/sekretaer/deploy/.env
+Environment=STALWART_UPSTREAM=stalwart:8080
+AutoUpdate=registry
+
+[Service]
+Restart=always
+
+[Install]
+WantedBy=multi-user.target

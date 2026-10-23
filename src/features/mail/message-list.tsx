@@ -90,6 +90,11 @@ export const MessageList = ({ accountId, mailbox, search }: Props) => {
         <div className="flex items-baseline justify-between gap-3">
           <h1 className="m-0 truncate text-[30px] leading-tight font-semibold tracking-tight md:text-[18px]">
             {title}
+            {account && !account.isPersonal ? (
+              <span className="ml-2 text-[15px] font-normal text-muted md:text-[13px]">
+                {account.name}
+              </span>
+            ) : null}
           </h1>
           <span className="shrink-0 text-[12px] text-muted">
             {mailbox.unreadEmails > 0 ? m.mail_unread_count({ count: mailbox.unreadEmails }) : ""}

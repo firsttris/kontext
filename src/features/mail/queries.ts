@@ -25,7 +25,7 @@ import {
   queryEmails,
   setKeyword,
 } from "@/jmap/mail";
-import type { Account, EmailSummary } from "@/jmap/types";
+import type { Account, EmailSummary, Mailbox } from "@/jmap/types";
 import { findRole } from "@/lib/mailboxes";
 
 /** Mail accounts the user can open: the own one first, then shared mailboxes like info@. */
@@ -110,6 +110,34 @@ const patchCachedEmails = (
   );
 };
 
+/** Keeps the unread counters of the folders right while a read/unread change is on its way. */
+const adjustUnreadCounts = (
+  queryClient: ReturnType<typeof useQueryClient>,
+  accountId: string,
+  ids: string[],
+  seen: boolean,
+) => {
+  const wanted = new Set(ids);
+  const changed = new Map<string, EmailSummary>();
+  for (const [, data] of queryClient.getQueriesData<ListData>({
+    queryKey: [accountId, "emails"],
+  })) {
+    for (const email of data?.pages.flatMap((page) => page.emails) ?? []) {
+      if (wanted.has(email.id) && Boolean(email.keywords.$seen) !== seen)
+        changed.set(email.id, email);
+    }
+  }
+  if (changed.size === 0) return;
+  queryClient.setQueryData<Mailbox[]>(mailboxesKey(accountId), (mailboxes) =>
+    mailboxes?.map((mailbox) => {
+      const count = [...changed.values()].filter((email) => email.mailboxIds[mailbox.id]).length;
+      return count
+        ? { ...mailbox, unreadEmails: Math.max(0, mailbox.unreadEmails + (seen ? -count : count)) }
+        : mailbox;
+    }),
+  );
+};
+
 /** Read, flag, move, archive and delete, with the list updated before the server answers. */
 export const useEmailActions = (accountId: string) => {
   const client = useClient();
@@ -120,13 +148,15 @@ export const useEmailActions = (accountId: string) => {
   const keyword = useMutation({
     mutationFn: ({ ids, keyword, on }: { ids: string[]; keyword: string; on: boolean }) =>
       setKeyword(client, accountId, ids, keyword, on),
-    onMutate: ({ ids, keyword, on }) =>
+    onMutate: ({ ids, keyword, on }) => {
+      if (keyword === "$seen") adjustUnreadCounts(queryClient, accountId, ids, on);
       patchCachedEmails(queryClient, accountId, ids, (email) => ({
         ...email,
         keywords: on
           ? { ...email.keywords, [keyword]: true }
           : Object.fromEntries(Object.entries(email.keywords).filter(([key]) => key !== keyword)),
-      })),
+      }));
+    },
     onSettled: refresh,
   });
 

@@ -16,9 +16,10 @@
     "format": "biome check --write .",
     "test": "vitest run",
     "test:watch": "vitest",
-    "e2e": "playwright test",
+    "e2e": "playwright test --project desktop --project phone",
     "check": "bun run typecheck && bun run lint && bun run test && bun run build",
-    "postinstall": "paraglide-js compile --project ./project.inlang --outdir ./src/paraglide"
+    "postinstall": "paraglide-js compile --project ./project.inlang --outdir ./src/paraglide",
+    "screenshots": "playwright test --project screenshots"
   },
   "dependencies": {
     "@fontsource-variable/geist": "^5.3.0",

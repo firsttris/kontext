@@ -1,0 +1,51 @@
+# Sekretär for one customer: Stalwart (mail, calendar, contacts) and the web app.
+# Works with Docker Compose and Podman Compose; Quadlet files are in deploy/quadlet/.
+#
+#   cp deploy/.env.example deploy/.env   # fill in domain and mail
+#   docker compose -f deploy/compose.yaml up -d
+name: sekretaer
+
+services:
+  stalwart:
+    image: docker.io/stalwartlabs/stalwart:v0.16.27
+    restart: unless-stopped
+    ports:
+      - "25:25"
+      - "465:465"
+      - "587:587"
+      - "993:993"
+      # Stalwart's own admin, only on the server's Tailscale address
+      - "${TAILSCALE_IP:-127.0.0.1}:8080:8080"
+    volumes:
+      - stalwart-config:/etc/stalwart
+      - stalwart-data:/var/lib/stalwart
+    environment:
+      STALWART_HOSTNAME: ${STALWART_HOSTNAME}
+      STALWART_PUBLIC_URL: https://${SEKRETAER_DOMAIN}
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://127.0.0.1:8080/healthz/live"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  web:
+    image: docker.io/tristanteu/sekretaer:${SEKRETAER_VERSION:-latest}
+    restart: unless-stopped
+    depends_on: [stalwart]
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    environment:
+      SEKRETAER_DOMAIN: ${SEKRETAER_DOMAIN}
+      ACME_EMAIL: ${ACME_EMAIL}
+      STALWART_UPSTREAM: stalwart:8080
+    volumes:
+      - caddy-data:/data
+      - caddy-config:/config
+
+volumes:
+  stalwart-config:
+  stalwart-data:
+  caddy-data:
+  caddy-config:

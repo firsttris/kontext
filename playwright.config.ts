@@ -32,9 +32,15 @@ export default defineConfig({
     {
       name: "desktop",
       use: { ...devices["Desktop Chrome"], viewport: { width: 1440, height: 900 }, launchOptions },
-      grepInvert: /@phone/,
+      grepInvert: /@phone|@screenshots/,
     },
     { name: "phone", use: { ...devices["Pixel 7"], launchOptions }, grep: /@phone/ },
+    // Pictures for the README and the docs: `bun run screenshots` (or the workflow).
+    {
+      name: "screenshots",
+      use: { ...devices["Desktop Chrome"], launchOptions },
+      grep: /@screenshots/,
+    },
   ],
   webServer: [
     {

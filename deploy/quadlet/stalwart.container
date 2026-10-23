@@ -1,0 +1,25 @@
+# Podman Quadlet: copy to /etc/containers/systemd/ and run `systemctl daemon-reload`.
+[Unit]
+Description=Stalwart mail server (Sekretär)
+
+[Container]
+Image=docker.io/stalwartlabs/stalwart:v0.16.27
+ContainerName=stalwart
+Network=sekretaer.network
+PublishPort=25:25
+PublishPort=465:465
+PublishPort=587:587
+PublishPort=993:993
+# Stalwart's own admin: put the server's Tailscale address here (Quadlet does not expand variables)
+PublishPort=100.64.0.10:8080:8080
+Volume=stalwart-config:/etc/stalwart
+Volume=stalwart-data:/var/lib/stalwart
+EnvironmentFile=/opt/sekretaer/deploy/.env
+HealthCmd=curl -fsS http://127.0.0.1:8080/healthz/live
+AutoUpdate=registry
+
+[Service]
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
