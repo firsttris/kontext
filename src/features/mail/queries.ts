@@ -6,6 +6,7 @@ import {
   type InfiniteData,
   useInfiniteQuery,
   useMutation,
+  useQueries,
   useQuery,
   useQueryClient,
 } from "@tanstack/react-query";
@@ -49,6 +50,22 @@ export const useMailAccounts = (): Account[] => {
 };
 
 export const mailboxesKey = (accountId: string) => [accountId, "mailboxes"] as const;
+
+/** The inbox of every mail account (own first), for "Alle Posteingänge". */
+export const useInboxes = (): { account: Account; mailbox: Mailbox }[] => {
+  const client = useClient();
+  const accounts = useMailAccounts();
+  const mailboxes = useQueries({
+    queries: accounts.map((account) => ({
+      queryKey: mailboxesKey(account.id),
+      queryFn: () => listMailboxes(client, account.id),
+    })),
+  });
+  return accounts.flatMap((account, index) => {
+    const inbox = findRole(mailboxes[index]?.data ?? [], "inbox");
+    return inbox ? [{ account, mailbox: inbox }] : [];
+  });
+};
 
 export const useMailboxes = (accountId: string) => {
   const client = useClient();

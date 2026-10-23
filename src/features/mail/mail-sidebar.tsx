@@ -8,6 +8,7 @@ import {
   File,
   Folder,
   Inbox,
+  Layers,
   type LucideIcon,
   Plus,
   Send,
@@ -33,7 +34,7 @@ import {
   systemMailboxes,
 } from "@/lib/mailboxes";
 import { m } from "@/paraglide/messages";
-import { useCreateMailbox, useMailAccounts, useMailboxes, useQuota } from "./queries";
+import { useCreateMailbox, useInboxes, useMailAccounts, useMailboxes, useQuota } from "./queries";
 
 const ROLE_ICONS: Record<string, LucideIcon> = {
   inbox: Inbox,
@@ -54,11 +55,17 @@ const navClass = (active: boolean) =>
 const Count = ({ value }: { value: number }) =>
   value > 0 ? <span className="ml-auto font-mono text-[12px] text-muted">{value}</span> : null;
 
-type Props = { accountId: string; mailbox: Mailbox | undefined };
+type Props = {
+  accountId: string;
+  mailbox: Mailbox | undefined;
+  /** "Alle Posteingänge" is open. */
+  unified?: boolean;
+};
 
-export const MailSidebar = ({ accountId, mailbox }: Props) => {
+export const MailSidebar = ({ accountId, mailbox, unified = false }: Props) => {
   const { data: mailboxes = [] } = useMailboxes(accountId);
   const accounts = useMailAccounts();
+  const inboxes = useInboxes();
   const [creating, setCreating] = useState(false);
   const [collapsed, setCollapsed] = useState<Set<string>>(new Set());
   const tree = folderTree(mailboxes);
@@ -130,6 +137,19 @@ export const MailSidebar = ({ accountId, mailbox }: Props) => {
       </div>
 
       <nav aria-label={m.mail_inbox()} className="flex flex-col gap-px">
+        {inboxes.length > 1 ? (
+          <Link
+            to="/mail/$accountId/$mailboxId"
+            params={{ accountId: "all", mailboxId: "inbox" }}
+            search={{}}
+            aria-current={unified ? "page" : undefined}
+            className={navClass(unified)}
+          >
+            <Layers size={16} strokeWidth={1.75} />
+            <span>{m.mail_all_inboxes()}</span>
+            <Count value={inboxes.reduce((sum, inbox) => sum + inbox.mailbox.unreadEmails, 0)} />
+          </Link>
+        ) : null}
         {systemMailboxes(mailboxes).map((box) => {
           const Icon = ROLE_ICONS[box.role ?? ""] ?? Folder;
           return (
@@ -160,7 +180,7 @@ export const MailSidebar = ({ accountId, mailbox }: Props) => {
               key={account.id}
               to="/mail/$accountId/$mailboxId"
               params={{ accountId: account.id, mailboxId: "inbox" }}
-              className={navClass(account.id === accountId)}
+              className={navClass(!unified && account.id === accountId)}
             >
               {account.isPersonal ? (
                 <span aria-hidden="true" className="size-2 rounded-full bg-accent" />

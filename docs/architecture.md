@@ -34,6 +34,15 @@ die Gruppe als zusätzliches Konto in seiner JMAP-Session (`isPersonal: false`) 
 Mails und einer Absenderadresse. Sekretär zeigt diese Konten unter „Postfächer“; wer dort
 antwortet, schreibt automatisch als info@.
 
+## Alle Posteingänge
+
+`/mail/all/inbox` zeigt die Posteingänge des eigenen Kontos und der gemeinsamen Postfächer in
+einer Liste. Jedes Konto lädt seine Seiten wie in der Ordneransicht (derselbe Cache, damit
+Gelesen, Verschieben und Löschen überall gleich ankommen); die App mischt sie nach Datum. Solange
+ein Konto noch ältere Mails nachladen kann, zeigt die Liste nichts, was älter ist als dessen
+älteste geladene Mail, damit die Reihenfolge stimmt. Eine geöffnete Mail trägt ihr Konto in der
+URL (`account`); Antworten gehen deshalb aus dem richtigen Postfach.
+
 ## Kontaktgruppen
 
 Eine Gruppe ist eine JSContact-Karte mit `kind: "group"`; ihr `members` hält die `uid`s der

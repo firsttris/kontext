@@ -277,3 +277,35 @@ test.describe("Sicherheit", () => {
     await expect(body.locator('img[src^="https:"]')).not.toHaveCount(0);
   });
 });
+
+test.describe("Alle Posteingänge", () => {
+  test("zeigt eigene und gemeinsame Mails in einer Liste und antwortet als info@", async ({
+    page,
+  }) => {
+    await login(page);
+    await page.getByRole("link", { name: /Alle Posteingänge/ }).click();
+    const list = page.getByRole("list", { name: "Alle Posteingänge" });
+    // Own mail and info@ mail side by side, the shared one marked.
+    await expect(list.getByText("Angebot Wartungsvertrag 2027")).toBeVisible();
+    const shared = list.getByRole("link", { name: /Anfrage Wärmepumpe Neubau/ });
+    await expect(shared).toContainText("info@");
+    await shared.click();
+    await expect(page.getByRole("heading", { name: "Anfrage Wärmepumpe Neubau" })).toBeVisible();
+    await page.getByRole("link", { name: "Antworten" }).first().click();
+    await expect(page.getByLabel("Von").locator("option:checked")).toContainText("info@");
+  });
+});
+
+test.describe("Alle Posteingänge am Handy @phone", () => {
+  test("über die Ordnerliste", async ({ page }) => {
+    await login(page);
+    await page
+      .getByRole("link", { name: /jonas@/ })
+      .first()
+      .click();
+    await page.getByRole("link", { name: /Alle Posteingänge/ }).click();
+    await expect(
+      page.getByRole("list", { name: "Alle Posteingänge" }).getByText("Anfrage Wärmepumpe Neubau"),
+    ).toBeVisible();
+  });
+});

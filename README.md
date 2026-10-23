@@ -58,6 +58,7 @@ und unter `https://<Ihre Domain>` anmelden. DNS-Einträge, Backups und Updates s
 ### ✉️ Mail
 
 - **Gemeinsame Postfächer**: info@ & Co. stehen bei jedem Mitglied in der Seitenleiste; Antworten gehen als info@ raus.
+- **Alle Posteingänge in einer Liste**: eigene Mails und die aus info@ & Co. zusammen, das gemeinsame Postfach als kleines Etikett.
 - **Ordner und Unterordner**: anlegen, Mails verschieben, Archiv und Papierkorb mit einem Klick.
 - **Schreiben mit Formatierung**: Fett, Listen, Einrücken, Links, Zitate – die Leiste ist immer sichtbar.
 - **Antworten, allen antworten, weiterleiten**: mit Zitat, Anhängen und Vorschlägen aus den Kontakten.
