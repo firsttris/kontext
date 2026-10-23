@@ -112,7 +112,11 @@ export const createAuth = (env: Env, db: Db, grants: Grants) =>
     rateLimit: {
       enabled: true,
       storage: "memory",
-      customRules: { "/sign-in/stalwart": { window: 60, max: env.SIGN_IN_PER_MINUTE } },
+      customRules: {
+        "/sign-in/stalwart": { window: 60, max: env.SIGN_IN_PER_MINUTE },
+        // Asked on every app start; a 429 there would look like being signed out.
+        "/get-session": false,
+      },
     },
     advanced: {
       ipAddress: { ipAddressHeaders: ["x-forwarded-for"] },

@@ -7,6 +7,8 @@
  *   bun dev/seed.ts --http 28080     # against the e2e instance
  */
 import { parseArgs } from "node:util";
+import { rolesValue } from "../server/company/accounts";
+import { createManagement } from "../server/company/management";
 import { assertSetOk, CAPABILITIES, createJmapClient, type JmapClient } from "../src/jmap/client";
 import { DEV_DOMAIN, DEV_PASSWORD, STALWART_ADMIN } from "./config";
 import { buildMessage } from "./mime";
@@ -106,6 +108,23 @@ const ensureAccounts = async (domainId: string): Promise<void> => {
       "Benutzer",
     );
   }
+};
+
+/** The boss may use the Firmenverwaltung (the role is Sekretär's, see server/company). */
+const ensureCompanyAdmins = async (): Promise<void> => {
+  const management = createManagement(origin, `${STALWART_ADMIN.user}:${STALWART_ADMIN.password}`);
+  const roles = await management.loadRoles();
+  const accounts = await management.listAccounts();
+  const patches = Object.fromEntries(
+    users
+      .filter((user) => user.companyAdmin)
+      .flatMap((user) => {
+        const account = accounts.find((a) => a.name === user.name);
+        return account ? [[account.id, { roles: rolesValue(true, roles) }]] : [];
+      }),
+  );
+  const result = await management.updateAccounts(patches);
+  if (!result.ok) throw new Error(`Firmenverwaltung: ${result.error}`);
 };
 
 /** Mailbox owner ("jonas", "info", …) → JMAP account id, as seen by a user with access. */
@@ -386,6 +405,7 @@ export const seed = async (serverOrigin: string): Promise<string> => {
   origin = serverOrigin;
   const domainId = await ensureDomain();
   await ensureAccounts(domainId);
+  await ensureCompanyAdmins();
 
   const folderIds = new Map<string, Map<string, string>>();
   for (const owner of new Set([...Object.keys(folders), ...mails.map((m) => m.owner)])) {

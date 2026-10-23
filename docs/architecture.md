@@ -46,7 +46,33 @@ Die Rechte am gemeinsamen Postfach:
 
 Sekretär richtet die Werkzeugleiste nach den `myRights` des Ordners. Wer keine Absenderadresse
 im Postfach hat (Stalwart gibt Identitäten nur Mitgliedern), antwortet vom eigenen Konto; die
-Antwort liegt dann im eigenen Gesendet-Ordner. Die Rechte vergibt später die Firmenverwaltung.
+Antwort liegt dann im eigenen Gesendet-Ordner. Mitglieder setzt die Firmenverwaltung; „Nur lesen“
+vergibt bisher der Besitzer eines Ordners über Stalwart.
+
+## Firmenverwaltung
+
+Unter *Einstellungen → Firma* verwaltet der Chef Mitarbeiter und gemeinsame Postfächer. Das läuft
+nicht über JMAP mit dem Token der Sitzung, sondern über den Sekretär-Server (`/api/company`,
+`server/company/`): Er spricht Stalwarts Verwaltungsobjekte (`x:Account`, `x:Role`, `x:Domain`)
+mit einem eigenen API-Schlüssel an und erlaubt nur, was die Firmenverwaltung braucht.
+
+- **Wer darf:** Konten mit der Stalwart-Rolle `Firmenverwaltung (Sekretär)` zusätzlich zur Rolle
+  *User*. Die Rolle hat keine Rechte in Stalwart, sie ist nur die Markierung; Sekretär legt sie
+  beim ersten Aufruf an. Das eigene Konto kann sich das Recht nicht selbst nehmen und sich nicht
+  sperren.
+- **Wen es zeigt:** Benutzer mit der Rolle *User* (mit oder ohne Markierung) und Gruppen mit der
+  Standardrolle. Stalwarts Admins und Konten mit anderen Rollen bleiben beim Betreiber.
+- **Anlegen:** Sekretär erzeugt ein Startpasswort (vier Vierergruppen ohne verwechselbare
+  Zeichen, 80 Bit) und zeigt es einmal an. Neue Konten bekommen Deutsch und Europe/Berlin.
+- **Sperren** nimmt dem Konto das Recht `authenticate`: keine Anmeldung mehr in Sekretär, IMAP,
+  SMTP oder DAV, Mails an die Adresse kommen aber weiter an. Sekretär beendet dazu alle Sitzungen
+  der Person, ebenso nach einem neuen Passwort.
+- **Weitere Adressen** sind Stalwarts Aliase (`aliases`), nur in den Domains des Servers.
+- **Gemeinsame Postfächer** sind Gruppen; Mitglied ist, wer die Gruppe in `memberGroupIds` hat.
+
+Stalwart lässt den Schlüssel keine Rollen oder Rechte vergeben, die er nicht selbst hat. Die
+Rolle des Server-Kontos erbt deshalb *User* (sonst könnte es niemandem die Rolle *User* geben)
+und hat dazu nur die Rechte für Konten, Rollen und Domains (siehe [Installation](installation.md)).
 
 ## Suche
 
@@ -160,7 +186,8 @@ Passkey-Anmeldung holt damit den Stalwart-Token. Am Rest ändert sich nichts.
 | --------------- | -------------------------------------------------------------------------------------------------------------------------- |
 | `src/jmap/`     | JMAP-Client (Session, Methoden, Upload/Download, Push) und die Aufrufe für Mail, Kalender, Kontakte                        |
 | `src/lib/`      | reine Funktionen: Ordnerbaum, Adressen, Antworten, HTML-Bereinigung, JSCalendar- und JSContact-Umrechnung – mit Unit-Tests |
-| `src/features/` | die Ansichten von Mail, Kalender und Kontakten, je mit ihren Daten-Hooks (`queries.ts`)                                    |
+| `src/features/` | die Ansichten von Mail, Kalender, Kontakten und Firmenverwaltung, je mit ihren Daten-Hooks (`queries.ts`)                 |
+| `server/`       | Sekretär-Server: Anmeldung, JMAP-Weiterleitung, Firmenverwaltung (`server/company/`)                                       |
 | `src/routes/`   | TanStack-Router-Routen; der Zustand einer Ansicht steht in der URL (offene Mail, Ordner, Termin)                           |
 | `dev/`          | lokaler Stalwart, Testdaten (Seed)                                                                                         |
 | `deploy/`       | Caddy, Compose, Quadlets, Backup                                                                                           |

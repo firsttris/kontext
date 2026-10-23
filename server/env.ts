@@ -14,6 +14,12 @@ const schema = z.object({
   DATABASE_PATH: z.string().default(".dev/server/sekretaer.db"),
   /** Sign-in attempts per minute and address (the e2e tests sign in far more often). */
   SIGN_IN_PER_MINUTE: z.coerce.number().default(10),
+  /**
+   * Stalwart key for the Firmenverwaltung: an API key ("API_…") of an admin account, best limited
+   * to the account permissions (see docs/installation.md), or "name:password". Without it the
+   * Firmenverwaltung is off.
+   */
+  STALWART_ADMIN_KEY: z.preprocess((v) => v || undefined, z.string().optional()),
   /** The built app (dist/); when set, the server delivers it too. Empty in dev (Vite does). */
   STATIC_DIR: z.string().optional(),
 });

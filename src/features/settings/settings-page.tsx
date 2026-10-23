@@ -3,15 +3,20 @@ import { Link } from "@tanstack/react-router";
 import {
   ChevronLeft,
   ChevronRight,
+  Inbox,
   KeyRound,
   type LucideIcon,
   Palette,
   Palmtree,
   PenLine,
   User,
+  Users,
 } from "lucide-react";
 import type { ReactNode } from "react";
 import { TabBar } from "@/components/shell/app-shell";
+import { EmployeesSection } from "@/features/company/employees-section";
+import { MailboxesSection } from "@/features/company/mailboxes-section";
+import { useIsCompanyAdmin } from "@/features/company/queries";
 import { cn } from "@/lib/cn";
 import { m } from "@/paraglide/messages";
 import type { settingsSections } from "@/routes/_app/settings";
@@ -23,12 +28,20 @@ import { VacationSection } from "./vacation-section";
 
 type Section = (typeof settingsSections)[number];
 
-const SECTIONS: { id: Section; label: () => string; icon: LucideIcon }[] = [
+type Entry = { id: Section; label: () => string; icon: LucideIcon };
+
+const OWN: Entry[] = [
   { id: "profile", label: m.settings_profile, icon: User },
   { id: "signature", label: m.settings_signature, icon: PenLine },
   { id: "vacation", label: m.settings_vacation, icon: Palmtree },
   { id: "security", label: m.settings_security, icon: KeyRound },
   { id: "appearance", label: m.settings_appearance, icon: Palette },
+];
+
+/** The Firmenverwaltung, only for accounts with that right. */
+const COMPANY: Entry[] = [
+  { id: "employees", label: m.company_employees, icon: Users },
+  { id: "mailboxes", label: m.company_mailboxes, icon: Inbox },
 ];
 
 const CONTENT: Record<Section, () => ReactNode> = {
@@ -37,11 +50,37 @@ const CONTENT: Record<Section, () => ReactNode> = {
   vacation: () => <VacationSection />,
   security: () => <SecuritySection />,
   appearance: () => <AppearanceSection />,
+  employees: () => <EmployeesSection />,
+  mailboxes: () => <MailboxesSection />,
 };
+
+const SectionLinks = ({ entries, current }: { entries: Entry[]; current: Section }) => (
+  <ul className="m-0 flex list-none flex-col gap-px p-0">
+    {entries.map(({ id, label, icon: Icon }) => (
+      <li key={id}>
+        <Link
+          to="/settings"
+          search={{ section: id }}
+          aria-current={id === current ? "page" : undefined}
+          className={cn(
+            "flex h-11 items-center gap-2.5 rounded-lg px-2.5 text-[15px] no-underline hover:bg-hover md:h-[34px] md:text-[14px]",
+            id === current ? "md:bg-subtle md:font-medium md:text-fg" : "md:text-muted",
+            "text-fg",
+          )}
+        >
+          <Icon size={16} strokeWidth={1.75} />
+          <span className="flex-1">{label()}</span>
+          <ChevronRight size={16} className="text-muted md:hidden" />
+        </Link>
+      </li>
+    ))}
+  </ul>
+);
 
 export const SettingsPage = ({ section }: { section: Section | undefined }) => {
   const current = section ?? "profile";
-  const title = SECTIONS.find((s) => s.id === current)!.label();
+  const admin = useIsCompanyAdmin();
+  const title = [...OWN, ...COMPANY].find((s) => s.id === current)!.label();
   return (
     <>
       <nav
@@ -55,26 +94,15 @@ export const SettingsPage = ({ section }: { section: Section | undefined }) => {
           {m.nav_settings()}
         </h1>
         <div className="px-2.5 text-[12px] font-medium text-muted">{m.settings_my_account()}</div>
-        <ul className="m-0 flex flex-1 list-none flex-col gap-px p-0">
-          {SECTIONS.map(({ id, label, icon: Icon }) => (
-            <li key={id}>
-              <Link
-                to="/settings"
-                search={{ section: id }}
-                aria-current={id === current ? "page" : undefined}
-                className={cn(
-                  "flex h-11 items-center gap-2.5 rounded-lg px-2.5 text-[15px] no-underline hover:bg-hover md:h-[34px] md:text-[14px]",
-                  id === current ? "md:bg-subtle md:font-medium md:text-fg" : "md:text-muted",
-                  "text-fg",
-                )}
-              >
-                <Icon size={16} strokeWidth={1.75} />
-                <span className="flex-1">{label()}</span>
-                <ChevronRight size={16} className="text-muted md:hidden" />
-              </Link>
-            </li>
-          ))}
-        </ul>
+        <div className="flex flex-1 flex-col gap-4">
+          <SectionLinks entries={OWN} current={current} />
+          {admin ? (
+            <div className="flex flex-col gap-1">
+              <div className="px-2.5 text-[12px] font-medium text-muted">{m.company_heading()}</div>
+              <SectionLinks entries={COMPANY} current={current} />
+            </div>
+          ) : null}
+        </div>
         <div className="-mx-3 -mb-4">
           <TabBar />
         </div>

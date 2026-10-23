@@ -1,6 +1,7 @@
 # Podman Quadlet: copy to /etc/containers/systemd/ and run `systemctl daemon-reload`.
-# The app and its server (sign-in, JMAP to Stalwart). Set BETTER_AUTH_URL and BETTER_AUTH_SECRET
-# in /opt/sekretaer/deploy/sekretaer.env (Quadlet does not expand variables).
+# The app and its server (sign-in, JMAP to Stalwart). Set BETTER_AUTH_URL, BETTER_AUTH_SECRET and
+# (for the Firmenverwaltung) STALWART_ADMIN_KEY in /opt/sekretaer/deploy/sekretaer.env (Quadlet
+# does not expand variables).
 [Unit]
 Description=Sekretär (app and server)
 After=stalwart.service

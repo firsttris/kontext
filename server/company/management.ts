@@ -1,0 +1,108 @@
+/**
+ * Stalwart's management objects (`x:Account`, `x:Role`, `x:Domain`, `x:Authentication`) with the
+ * server's own key. Only this file talks to them; the routes decide what is allowed.
+ * Methods: crates/jmap-proto/src/request/method.rs; objects: crates/registry/src/schema/structs.rs.
+ */
+import type { Domain, Result, Roles, StalwartAccount } from "./accounts";
+
+const USING = ["urn:ietf:params:jmap:core", "urn:stalwart:jmap"];
+
+type Invocation = [string, Record<string, unknown>, string];
+
+/** The role that marks who may use the Firmenverwaltung; it grants nothing in Stalwart. */
+export const COMPANY_ROLE = "Firmenverwaltung (Sekretär)";
+
+/** An API key ("API_…") goes as Bearer, "name:password" as Basic. */
+export const authorizationFor = (key: string): string =>
+  key.startsWith("API_") ? `Bearer ${key}` : `Basic ${Buffer.from(key).toString("base64")}`;
+
+type SetError = { type: string; description?: string; properties?: string[] };
+type SetResult = {
+  created?: Record<string, { id: string }>;
+  notCreated?: Record<string, SetError>;
+  notUpdated?: Record<string, SetError>;
+};
+
+/** Stalwart's reasons in words for the Firmenverwaltung. */
+export const describeSetError = (error: SetError): string => {
+  if (error.type === "primaryKeyViolation") return "Diese Adresse ist schon vergeben.";
+  if (error.description) return error.description;
+  return `Stalwart lehnt die Änderung ab (${error.type}).`;
+};
+
+const firstError = (result: SetResult): string | undefined => {
+  const failed = { ...result.notCreated, ...result.notUpdated };
+  const error = Object.values(failed)[0];
+  return error ? describeSetError(error) : undefined;
+};
+
+export const createManagement = (stalwartUrl: string, key: string) => {
+  const authorization = authorizationFor(key);
+
+  /** One JMAP request; a method-level error throws with Stalwart's description. */
+  const request = async (methodCalls: Invocation[]): Promise<Invocation[]> => {
+    const response = await fetch(`${stalwartUrl}/jmap/`, {
+      method: "POST",
+      headers: { "content-type": "application/json", authorization },
+      body: JSON.stringify({ using: USING, methodCalls }),
+    });
+    if (!response.ok) throw new Error(`Stalwart-Verwaltung: ${response.status}`);
+    const { methodResponses } = (await response.json()) as { methodResponses: Invocation[] };
+    for (const [name, args] of methodResponses) {
+      if (name === "error") throw new Error(String(args.description ?? args.type));
+    }
+    return methodResponses;
+  };
+
+  const call = async <T>(method: string, args: Record<string, unknown>): Promise<T> =>
+    (await request([[method, args, "0"]]))[0]![1] as T;
+
+  const listAccounts = async (): Promise<StalwartAccount[]> =>
+    (await call<{ list: StalwartAccount[] }>("x:Account/get", { ids: null })).list;
+
+  const listDomains = async (): Promise<Domain[]> =>
+    (await call<{ list: Domain[] }>("x:Domain/get", { ids: null, properties: ["name"] })).list;
+
+  /** The default user roles and the company role, which is created on first use. */
+  const loadRoles = async (): Promise<Roles> => {
+    const [auth, roles] = await request([
+      ["x:Authentication/get", { ids: ["singleton"], properties: ["defaultUserRoleIds"] }, "a"],
+      ["x:Role/get", { ids: null, properties: ["description"] }, "r"],
+    ]);
+    const userRoleIds = Object.keys(
+      (auth![1].list as { defaultUserRoleIds: Record<string, true> }[])[0]?.defaultUserRoleIds ??
+        {},
+    );
+    const existing = (roles![1].list as { id: string; description: string }[]).find(
+      (role) => role.description === COMPANY_ROLE,
+    );
+    if (existing) return { userRoleIds, companyRoleId: existing.id };
+    const created = await call<SetResult>("x:Role/set", {
+      create: { r: { description: COMPANY_ROLE } },
+    });
+    const id = created.created?.r?.id;
+    if (!id) throw new Error(firstError(created) ?? "Rolle nicht angelegt");
+    return { userRoleIds, companyRoleId: id };
+  };
+
+  /** Creates one account; the new id or Stalwart's reason. */
+  const createAccount = async (account: Record<string, unknown>): Promise<Result<string>> => {
+    const result = await call<SetResult>("x:Account/set", { create: { a: account } });
+    const id = result.created?.a?.id;
+    return id ? { ok: true, value: id } : { ok: false, error: firstError(result) ?? "Fehler" };
+  };
+
+  /** Applies patches to several accounts in one call; all or Stalwart's first reason. */
+  const updateAccounts = async (
+    patches: Record<string, Record<string, unknown>>,
+  ): Promise<Result<null>> => {
+    if (!Object.keys(patches).length) return { ok: true, value: null };
+    const result = await call<SetResult>("x:Account/set", { update: patches });
+    const error = firstError(result);
+    return error ? { ok: false, error } : { ok: true, value: null };
+  };
+
+  return { listAccounts, listDomains, loadRoles, createAccount, updateAccounts };
+};
+
+export type Management = ReturnType<typeof createManagement>;

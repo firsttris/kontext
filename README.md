@@ -74,6 +74,15 @@ und unter `https://<Ihre Domain>` anmelden. DNS-Einträge, Backups und Updates s
 - **Hell oder dunkel**: wie das Gerät, oder fest eingestellt.
 - **Tastaturkürzel** wie in Gmail: `j`/`k` durch die Mails, `r` antworten, `e` archivieren, `c` neu, `?` zeigt alle.
 
+### 🏢 Firmenverwaltung
+
+- **Mitarbeiter anlegen**: mit Startpasswort zum Weitergeben, gleich in den passenden gemeinsamen Postfächern.
+- **Passwort und Anmeldung mit Code zurücksetzen**, z. B. wenn ein Handy verloren geht.
+- **Zugang sperren**: keine Anmeldung mehr, weder in Sekretär noch am Handy oder im Mailprogramm; Mails kommen weiter an.
+- **Weitere Adressen** wie buchhaltung@ für eine Person oder ein Postfach.
+- **Gemeinsame Postfächer** anlegen und Mitglieder an- und abhaken.
+- Nur für Konten mit dem Recht „Firmenverwaltung“, das der Chef auch weitergeben kann.
+
 ### 📅 Kalender
 
 - **Tag, Woche, Monat und Liste**: überlappende Termine nebeneinander, ganztägige oben, Jetzt-Linie; die Liste zeigt die nächsten 30 Tage.

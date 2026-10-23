@@ -2,11 +2,15 @@
  * The Sekretär server: sign-in (Better Auth) under /api/auth and a pass-through of JMAP to
  * Stalwart that adds the session's Stalwart token. The browser never holds a password or token.
  */
+
+import { eq } from "drizzle-orm";
 import { Hono } from "hono";
 import { serveStatic } from "hono/bun";
 import { type Auth, createAuth, createGrants, type Grants } from "./auth";
+import { createManagement } from "./company/management";
+import { createCompanyRoutes } from "./company/routes";
 import { createSealer } from "./crypto";
-import { openDatabase } from "./db";
+import { type Db, openDatabase, schema } from "./db";
 import type { Env } from "./env";
 
 /** Request headers that go on to Stalwart; cookies and the browser's own auth stay here. */
@@ -62,6 +66,12 @@ export const createJmapProxy =
     return new Response(upstream.body, { status: upstream.status, headers: responseHeaders });
   };
 
+/** Ends all Sekretär sessions of a user; their Stalwart tokens go with them (cascade). */
+const endSessionsOf = (db: Db) => async (email: string) => {
+  const [found] = await db.select().from(schema.user).where(eq(schema.user.email, email));
+  if (found) await db.delete(schema.session).where(eq(schema.session.userId, found.id));
+};
+
 export const createApp = async (env: Env) => {
   const db = openDatabase(env.DATABASE_PATH);
   const grants = createGrants(
@@ -75,6 +85,15 @@ export const createApp = async (env: Env) => {
   const app = new Hono();
   app.get("/healthz", (c) => c.text("ok"));
   app.on(["GET", "POST"], "/api/auth/*", (c) => auth.handler(c.req.raw));
+  if (env.STALWART_ADMIN_KEY) {
+    const company = createCompanyRoutes({
+      management: createManagement(env.STALWART_URL, env.STALWART_ADMIN_KEY),
+      currentEmail: async (request) =>
+        (await auth.api.getSession({ headers: request.headers }))?.user.email ?? null,
+      endSessions: endSessionsOf(db),
+    });
+    app.route("/api/company", company);
+  }
   app.all("/jmap", (c) => proxy(c.req.raw));
   app.all("/jmap/*", (c) => proxy(c.req.raw));
   if (env.STATIC_DIR) {

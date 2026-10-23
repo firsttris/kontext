@@ -8,6 +8,8 @@ export const settingsSections = [
   "vacation",
   "security",
   "appearance",
+  "employees",
+  "mailboxes",
 ] as const;
 
 export const Route = createFileRoute("/_app/settings")({

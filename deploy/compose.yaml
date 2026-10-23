@@ -37,6 +37,7 @@ services:
       STALWART_URL: http://stalwart:8080
       BETTER_AUTH_URL: https://${SEKRETAER_DOMAIN}
       BETTER_AUTH_SECRET: ${SEKRETAER_SECRET}
+      STALWART_ADMIN_KEY: ${STALWART_ADMIN_KEY:-}
     volumes:
       - sekretaer-data:/data
 

@@ -45,8 +45,8 @@ Stalwarts eigene Verwaltung ist nur über die Tailscale-Adresse des Servers erre
 1. **Domain** `firma.de` anlegen, DKIM-Schlüssel erzeugen und als TXT-Eintrag ins DNS.
 2. **TLS** für `mail.firma.de` per ACME, am einfachsten mit DNS-01 (Cloudflare-API-Token), weil
    Port 443 bei Caddy liegt.
-3. **Benutzer** anlegen (`name@firma.de`) und für gemeinsame Postfächer eine **Gruppe** (z. B.
-   `info`) mit den Mitarbeitern als Mitglieder.
+3. **Firmenverwaltung einschalten** (siehe unten) und das Konto des Chefs anlegen. Weitere
+   Mitarbeiter und gemeinsame Postfächer legt der Chef danach selbst in Sekretär an.
 4. Caddy als vertrauenswürdigen Proxy eintragen, damit Stalwart die echten IP-Adressen sieht.
 5. Unter *Suche* die **Standardsprache** auf Deutsch (`de-DE`) stellen. Stalwart bildet damit
    die Wortstämme deutsch, auch bei kurzen Mails, deren Sprache es nicht sicher erkennt.
@@ -54,12 +54,36 @@ Stalwarts eigene Verwaltung ist nur über die Tailscale-Adresse des Servers erre
 Danach unter `https://sekretaer.firma.de` anmelden. Am Handy im Browser „Zum Startbildschirm
 hinzufügen“ wählen: Sekretär startet dann wie eine App und bleibt angemeldet.
 
+### Firmenverwaltung einschalten
+
+Unter *Einstellungen → Firma* legt der Chef (oder die Büroleitung) Mitarbeiter und gemeinsame
+Postfächer an, setzt Passwörter und die Anmeldung mit Code zurück und sperrt Zugänge. Dafür
+braucht der Sekretär-Server einen API-Schlüssel von Stalwart, der nur Konten verwalten darf:
+
+1. In Stalwarts Verwaltung eine **Rolle** `Sekretär-Server` anlegen: sie erbt die Rolle *User*
+   und bekommt dazu die Rechte `sysAccountGet`, `sysAccountQuery`, `sysAccountCreate`,
+   `sysAccountUpdate`, `sysRoleGet`, `sysRoleCreate`, `sysDomainGet` und
+   `sysAuthenticationGet`.
+2. Ein **Konto** `sekretaer-server@firma.de` mit dieser Rolle (statt *User*) und einem langen
+   Zufallspasswort anlegen.
+3. Mit diesem Konto einen **API-Schlüssel** erzeugen (*Credentials → API Key*, Rechte
+   *Inherit*). Er beginnt mit `API_`; in `deploy/.env` als `STALWART_ADMIN_KEY` eintragen und
+   Sekretär neu starten (`docker compose -f deploy/compose.yaml up -d`).
+4. Beim ersten Aufruf legt Sekretär die Rolle `Firmenverwaltung (Sekretär)` an. Dem Konto des
+   Chefs in Stalwart diese Rolle **zusätzlich zu User** geben. Danach kann er sie in Sekretär
+   selbst an weitere Personen weitergeben.
+
+Stalwart lässt den Schlüssel keine Rechte vergeben, die er selbst nicht hat; ein Mitarbeiter wird
+darüber also nie Admin. Sekretär zeigt und ändert nur Konten mit der normalen Rolle *User*.
+Admin-Konten von Stalwart kann der Schlüssel aber im Passwort ändern (Stalwart prüft dabei die
+Rechte des Zielkontos nicht) – den Schlüssel deshalb wie ein Admin-Passwort behandeln.
+
 ### Wenn jemand sein Handy mit der Authenticator-App verliert
 
 Mitarbeiter schalten die Anmeldung mit Code selbst unter *Einstellungen → Passwort und Sicherheit*
-ein. Geht das Handy verloren, nimmt der Admin in Stalwarts Verwaltung beim Konto unter
-*Credentials* den OTP-Eintrag heraus; danach meldet sich der Mitarbeiter wieder nur mit Passwort
-an und richtet den Code neu ein.
+ein. Geht das Handy verloren, setzt der Chef sie unter *Einstellungen → Firma → Mitarbeiter* beim
+Mitarbeiter zurück; danach meldet sich der Mitarbeiter wieder nur mit Passwort an und richtet den
+Code neu ein.
 
 ## 4. Backups
 

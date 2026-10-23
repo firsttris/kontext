@@ -13,6 +13,7 @@ Kontakte** im Browser und am Handy. Jede Firma bekommt ihren eigenen Server mit
 | **Mail**     | Suche über alle Ordner mit Operatoren wie in Gmail, alle Posteingänge in einer Liste, Ordner und Unterordner, gemeinsame Postfächer (info@, rechnung@), Archiv, Suche, Schreiben mit Formatierung, Anhänge, Antworten mit Zitat, Push ohne Neuladen |
 | **Kalender** | Tag, Woche, Monat und Liste, Termine per Ziehen verschieben, wiederkehrende Termine, Kalender mit Kollegen teilen, Einladungen mit Zusage/Absage               |
 | **Kontakte** | Kunden-Ansicht mit letzten Mails und nächsten Terminen, Anlegen und Bearbeiten, Gruppen, vCard-Import/-Export, Adressbücher mit Kollegen teilen              |
+| **Firma**    | Mitarbeiter anlegen und sperren, Passwort und Anmeldung mit Code zurücksetzen, weitere Adressen, gemeinsame Postfächer und ihre Mitglieder – für den Chef in den Einstellungen |
 | **Handy**    | jede Ansicht als eigener Bildschirm mit Tab-Leiste                                                                                                            |
 
 ## Wie es weitergeht
@@ -23,7 +24,7 @@ Kontakte** im Browser und am Handy. Jede Firma bekommt ihren eigenen Server mit
 3. **Pilot** bei einem Kunden, vier Wochen parallel zum alten System.
 4. **Zusatzmodule**, eins nach dem anderen: Ticket-Postfach, Aufgaben mit Zeiterfassung,
    Terminbuchung, Team-Chat, Belegarchiv.
-5. **Firmenverwaltung** für den Kunden-Admin: Mitarbeiter, Rechte für gemeinsame Postfächer,
-   Offboarding. Bis dahin reicht Stalwarts eigene Verwaltung.
+5. **Firmenverwaltung ausbauen**: Leserechte für gemeinsame Postfächer, Abwesenheit und
+   Vertretung, Offboarding (Weiterleitung, Postfach übergeben), Firmen-Signatur.
 
 Weiter: [Installation](installation.md) · [Architektur](architecture.md) · [Entwicklung](development.md)

@@ -4,10 +4,11 @@
  * Dates are relative to the moment the seed runs, so the inbox always looks current.
  */
 
-export type SeedUser = { name: string; fullName: string; groups: string[] };
+/** `companyAdmin`: may use the Firmenverwaltung. */
+export type SeedUser = { name: string; fullName: string; groups: string[]; companyAdmin?: boolean };
 
 export const users: SeedUser[] = [
-  { name: "jonas", fullName: "Jonas Weber", groups: ["info", "rechnung"] },
+  { name: "jonas", fullName: "Jonas Weber", groups: ["info", "rechnung"], companyAdmin: true },
   { name: "anna", fullName: "Anna Weber", groups: ["info", "rechnung"] },
   { name: "sandra", fullName: "Sandra Klein", groups: ["info"] },
   { name: "max", fullName: "Max Becker", groups: [] },

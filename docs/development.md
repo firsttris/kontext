@@ -37,7 +37,7 @@ und „Team“, Termine der laufenden Woche, eine wöchentliche Teambesprechung 
 
 | Anmeldung                                               | Passwort                    |
 | ------------------------------------------------------- | --------------------------- |
-| `jonas@weber-haustechnik.test` (Chef, info@, rechnung@) | `kaffee-werkbank-sekretaer` |
+| `jonas@weber-haustechnik.test` (Chef, info@, rechnung@, Firmenverwaltung) | `kaffee-werkbank-sekretaer` |
 | `anna@weber-haustechnik.test` (Büro, info@, rechnung@)  | dasselbe                    |
 | `sandra@…`, `max@…`                                     | dasselbe                    |
 
