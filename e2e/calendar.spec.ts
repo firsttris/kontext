@@ -1,8 +1,13 @@
 import { expect, test } from "@playwright/test";
 import { login, unique } from "./helpers";
 
-const today = () =>
-  new Intl.DateTimeFormat("sv-SE", { timeZone: "Europe/Berlin" }).format(new Date());
+const day = (offset: number) =>
+  new Intl.DateTimeFormat("sv-SE", { timeZone: "Europe/Berlin" }).format(
+    new Date(Date.now() + offset * 86_400_000),
+  );
+const today = () => day(0);
+/** Invitations are only sent for future events, so that test plans for tomorrow. */
+const tomorrow = () => day(1);
 
 test.describe("Kalender", () => {
   test("zeigt die Woche mit den Terminen", async ({ page }) => {
@@ -15,16 +20,17 @@ test.describe("Kalender", () => {
   });
 
   test("legt einen Termin mit Einladung an, Anna sagt zu", async ({ page, browser }) => {
+    test.setTimeout(90_000);
     const title = unique("Abnahme Bad");
     await login(page);
-    await page.goto(`/calendar?event=new&start=${today()}T15:00`);
+    await page.goto(`/calendar?date=${tomorrow()}&event=new&start=${tomorrow()}T15:00`);
     const dialog = page.getByRole("dialog");
     await dialog.getByLabel("Titel").fill(title);
     await dialog.getByLabel("Ort").fill("Hauptstraße 41");
     await dialog.getByLabel("Teilnehmer").fill("anna@weber-haustechnik.test");
     await dialog.getByRole("button", { name: "Speichern" }).click();
     await expect(page.getByRole("status")).toHaveText("Einladungen werden verschickt.");
-    const block = page.locator(`[data-day="${today()}"]`).getByText(title);
+    const block = page.locator(`[data-day="${tomorrow()}"]`).getByText(title);
     await expect(block).toBeVisible();
 
     // Anna sees the invitation and accepts it.
@@ -32,8 +38,22 @@ test.describe("Kalender", () => {
       await browser.newContext({ locale: "de-DE", timezoneId: "Europe/Berlin" })
     ).newPage();
     await login(anna, "anna");
-    await anna.goto("/calendar");
-    await anna.locator(`[data-day="${today()}"]`).getByText(title).click();
+    // Delivery to Anna's calendar runs in the background on the server.
+    await expect
+      .poll(
+        async () => {
+          await anna.goto(`/calendar?date=${tomorrow()}`);
+          return anna
+            .locator(`[data-day="${tomorrow()}"]`)
+            .getByText(title)
+            .waitFor({ timeout: 3_000 })
+            .then(() => true)
+            .catch(() => false);
+        },
+        { timeout: 30_000 },
+      )
+      .toBe(true);
+    await anna.locator(`[data-day="${tomorrow()}"]`).getByText(title).click();
     await anna.getByRole("button", { name: "Zusagen" }).click();
     await expect(anna.getByRole("button", { name: "Zusagen" })).toHaveAttribute(
       "aria-pressed",
@@ -44,9 +64,9 @@ test.describe("Kalender", () => {
     await expect
       .poll(
         async () => {
-          await page.reload();
-          await page.locator(`[data-day="${today()}"]`).getByText(title).click();
-          const text = await page.getByRole("list", { name: "Teilnehmer" }).innerText();
+          await page.goto(`/calendar?date=${tomorrow()}`);
+          await page.locator(`[data-day="${tomorrow()}"]`).getByText(title).click();
+          const text = (await page.getByRole("list", { name: "Teilnehmer" }).textContent()) ?? "";
           await page.keyboard.press("Escape");
           return text;
         },

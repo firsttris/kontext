@@ -19,9 +19,9 @@ import { ContactDetail } from "./contact-detail";
 import { ContactEditor } from "./contact-editor";
 import { useContacts } from "./queries";
 
-type Search = { id?: string; edit?: boolean; q?: string };
+type ContactsSearch = { id?: string; edit?: boolean; q?: string };
 
-export const ContactsPage = ({ search }: { search: Search }) => {
+export const ContactsPage = ({ search }: { search: ContactsSearch }) => {
   const { data: contacts = [], isPending } = useContacts();
   const [text, setText] = useState(search.q ?? "");
   const selected = contacts.find((card) => card.id === search.id);

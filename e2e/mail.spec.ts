@@ -30,7 +30,7 @@ test.describe("Mail", () => {
     const list = page.getByRole("list", { name: "Posteingang" });
     await expect(list.getByText("Angebot Wartungsvertrag 2027")).toBeVisible();
     const counter = page.getByText(/\d+ ungelesen/);
-    const before = Number((await counter.innerText()).split(" ")[0]);
+    const before = Number(((await counter.textContent()) ?? "").split(" ")[0]);
     await list.getByText("Heizung macht Geräusche").click();
     await expect(
       page.getByRole("heading", { name: "Heizung macht Geräusche – Termin möglich?" }),

@@ -16,6 +16,9 @@ import { m } from "@/paraglide/messages";
 
 export const HOUR_HEIGHT = 56;
 
+/** The hours of a day as labels, so they can serve as stable keys. */
+const HOURS = Array.from({ length: 24 }, (_, hour) => ({ hour, label: timeLabel(hour * 60) }));
+
 const dayName = new Intl.DateTimeFormat("de-DE", { weekday: "short", timeZone: "UTC" });
 
 const useNow = (): Date => {
@@ -103,13 +106,13 @@ export const WeekGrid = ({ days, events, isInvitation, showDayHeader = true }: P
       <div ref={scroller} className="min-h-0 flex-1 overflow-y-auto">
         <div className="relative grid" style={{ gridTemplateColumns: columns }}>
           <div className="flex flex-col">
-            {Array.from({ length: 24 }, (_, hour) => (
+            {HOURS.map(({ hour, label }) => (
               <div
-                key={hour}
+                key={label}
                 className="-translate-y-[7px] px-2 text-right font-mono text-[11px] text-muted"
                 style={{ height: HOUR_HEIGHT }}
               >
-                {hour === 0 ? "" : timeLabel(hour * 60)}
+                {hour === 0 ? "" : label}
               </div>
             ))}
           </div>
@@ -131,9 +134,9 @@ export const WeekGrid = ({ days, events, isInvitation, showDayHeader = true }: P
                   backgroundSize: `100% ${HOUR_HEIGHT}px`,
                 }}
               >
-                {Array.from({ length: 24 }, (_, hour) => (
+                {HOURS.map(({ hour, label }) => (
                   <Link
-                    key={hour}
+                    key={label}
                     to="/calendar"
                     search={(prev) => ({
                       ...prev,

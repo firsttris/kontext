@@ -154,7 +154,7 @@ const EventDetails = ({
         <p className="m-0 whitespace-pre-line text-[14px] text-muted">{event.description}</p>
       ) : null}
       {me && !organizer ? (
-        <div role="group" aria-label="Antwort" className="flex gap-2">
+        <fieldset aria-label="Antwort" className="m-0 flex gap-2 border-0 p-0">
           {(
             [
               ["accepted", m.calendar_accept()],
@@ -172,7 +172,7 @@ const EventDetails = ({
               {label}
             </Button>
           ))}
-        </div>
+        </fieldset>
       ) : null}
       <div className="flex flex-wrap gap-2">
         {organizer ? (
