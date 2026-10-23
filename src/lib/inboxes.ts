@@ -1,4 +1,4 @@
-/** "Alle Posteingänge": merging the paged inbox lists of several accounts into one. */
+/** Lists over several accounts ("Alle Posteingänge", search): merging their paged lists. */
 import type { Account, EmailSummary, Mailbox } from "@/jmap/types";
 
 /** A row of the combined list; `label` is empty for the own account (no badge). */
@@ -10,6 +10,8 @@ export type Feed = {
   hasMore: boolean;
   fetching: boolean;
   fetchMore: () => void;
+  /** All matches on the server. */
+  total: number;
 };
 
 export type Inbox = { account: Account; mailbox: Mailbox };
@@ -22,7 +24,7 @@ const label = (account: Account) => (account.isPersonal ? "" : account.name.repl
  * loaded mail is shown, so the order stays right as pages come in.
  */
 export const mergeFeeds = (
-  inboxes: Inbox[],
+  inboxes: { account: Account }[],
   feeds: Record<string, Feed | undefined>,
 ): MergedRow[] => {
   const cutoff = Math.max(

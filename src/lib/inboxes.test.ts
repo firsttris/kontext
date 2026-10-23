@@ -17,6 +17,7 @@ const feed = (emails: EmailSummary[], hasMore = false): Feed => ({
   pending: false,
   fetching: false,
   fetchMore: () => {},
+  total: emails.length,
 });
 
 const own = account("d", "jonas@weber.test", true);

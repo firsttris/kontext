@@ -48,6 +48,22 @@ Sekretär richtet die Werkzeugleiste nach den `myRights` des Ordners. Wer keine 
 im Postfach hat (Stalwart gibt Identitäten nur Mitgliedern), antwortet vom eigenen Konto; die
 Antwort liegt dann im eigenen Gesendet-Ordner. Die Rechte vergibt später die Firmenverwaltung.
 
+## Suche
+
+Die Suche (`/mail/all/search?q=…`) läuft über alle Ordner und Postfächer, Papierkorb und Spam
+nur mit `in:papierkorb` / `in:spam`. `src/lib/mail-search.ts` zerlegt den Text in Wörter und
+Operatoren (deutsch und englisch: `von:`/`from:`, `an:`, `betreff:`, `hat:anhang`,
+`ist:ungelesen`, `ist:markiert`, `in:`, `nach:`, `vor:`) und baut daraus pro Konto einen
+`Email/query`-Filter; die Listen der Konten werden wie bei „Alle Posteingänge“ gemischt.
+
+Stalwart sucht mit Wortstämmen, findet ein Wort, das schon sein eigener Stamm ist („Angebot“),
+aber nur genau so. Deshalb fragt die App für jedes Wort auch seine Grundform ab („Angebote“ →
+„Angebot“, „Rechnungen“ → „Rechnung“). Zusammengesetzte Wörter („Wartungsvertrag“ für „Wartung“)
+und Text in PDF-Anhängen findet Stalwart nicht; Text- und HTML-Anhänge schon.
+
+Vorschläge beim Tippen kommen aus den Kontakten (für `von:`/`an:`), den Ordnern (für `in:`), den
+Operatoren und den letzten Suchen (pro Gerät im Browser).
+
 ## Alle Posteingänge
 
 `/mail/all/inbox` zeigt die Posteingänge des eigenen Kontos und der gemeinsamen Postfächer in

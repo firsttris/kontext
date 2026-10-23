@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test";
+import { expect, type Page, test } from "@playwright/test";
 import {
   address,
   inboxMails,
@@ -156,13 +156,6 @@ test.describe("Mail", () => {
         .getByRole("list", { name: "Papierkorb" })
         .getByText("Ihre Bestellung 48211: Umwälzpumpe versandt"),
     ).toBeVisible();
-  });
-
-  test("sucht im Postfach", async ({ page }) => {
-    await page.getByRole("searchbox", { name: "Suchen" }).fill("Fahrzeugkosten");
-    const list = page.getByRole("list", { name: "Posteingang" });
-    await expect(list.getByText("Rückfrage Fahrzeugkosten Q3")).toBeVisible();
-    await expect(list.getByText("Angebot Wartungsvertrag 2027")).toHaveCount(0);
   });
 
   test("arbeitet im gemeinsamen Postfach info@ und antwortet als info@", async ({ page }) => {
@@ -387,5 +380,92 @@ test.describe("Tastaturkürzel", () => {
     await expect(page.getByText(/KW \d+/)).toBeVisible();
     await page.keyboard.press("m");
     await expect(page.getByRole("link", { name: "Monat" })).toHaveAttribute("aria-pressed", "true");
+  });
+});
+
+test.describe("Suche", () => {
+  test.beforeEach(async ({ page }) => {
+    await login(page);
+    await expect(page.getByRole("list", { name: "Posteingang" })).toBeVisible();
+  });
+
+  const searchFor = async (page: Page, text: string) => {
+    const box = page.getByRole("combobox", { name: "Suchen" });
+    await box.fill(text);
+    await box.press("Enter");
+    return page.getByRole("list", { name: "Suche" });
+  };
+
+  test("findet in allen Ordnern und Postfächern, auch die Mehrzahl", async ({ page }) => {
+    const results = await searchFor(page, "angebote");
+    await expect(page).toHaveURL(/\/mail\/all\/search\?q=angebote/);
+    await expect(results.getByText("Angebot Wartungsvertrag 2027")).toBeVisible();
+    // From the folder Kunden/Hoffmann and from info@, each named.
+    await expect(results.getByRole("link", { name: /Badsanierung Obergeschoss/ })).toContainText(
+      "Hoffmann",
+    );
+    await expect(results.getByRole("link", { name: /Anfrage Wärmepumpe Neubau/ })).toContainText(
+      "info@",
+    );
+    await expect(results.locator("mark").first()).toHaveText(/angebot/i);
+    await expect(page.getByText(/\d+ Treffer/)).toBeVisible();
+
+    // A hit from info@ opens in its mailbox.
+    await results.getByText("Anfrage Wärmepumpe Neubau").click();
+    await expect(page.getByRole("heading", { name: "Anfrage Wärmepumpe Neubau" })).toBeVisible();
+    await expect(page).toHaveURL(/account=/);
+  });
+
+  test("versteht Operatoren und Chips", async ({ page }) => {
+    let results = await searchFor(page, "von:keller hat:anhang");
+    await expect(results.getByText("Angebot Wartungsvertrag 2027")).toBeVisible();
+    await expect(results.getByText("Rechnung 2026-117", { exact: true })).toBeVisible();
+    await expect(results.getByText("Heizung macht Geräusche – Termin möglich?")).toHaveCount(0);
+
+    results = await searchFor(page, "von:keller in:rechnung@");
+    await expect(results.getByText("Rechnung 2026-117", { exact: true })).toBeVisible();
+    await expect(results.getByText("Angebot Wartungsvertrag 2027")).toHaveCount(0);
+
+    results = await searchFor(page, "angebot");
+    await expect(results.getByText("Re: Badsanierung Obergeschoss")).toBeVisible();
+    await page.getByRole("button", { name: "Mit Anhang" }).click();
+    await expect(page).toHaveURL(/hat%3Aanhang|hat:anhang/);
+    await expect(results.getByText("Angebot Wartungsvertrag 2027")).toBeVisible();
+    await expect(results.getByText("Re: Badsanierung Obergeschoss")).toHaveCount(0);
+  });
+
+  test("schlägt Kontakte vor und sucht mit / ", async ({ page }) => {
+    await page.keyboard.press("/");
+    const box = page.getByRole("combobox", { name: "Suchen" });
+    await expect(box).toBeFocused();
+    await page.keyboard.type("von:hoff");
+    await page.getByRole("option", { name: /Markus Hoffmann/ }).click();
+    await expect(box).toHaveValue(/^von:m\.hoffmann@schreinerei-hoffmann\.test $/);
+    await box.press("Enter");
+    await expect(
+      page.getByRole("list", { name: "Suche" }).getByText("Re: Badsanierung Obergeschoss"),
+    ).toBeVisible();
+    // The search is remembered and offered again in an empty box.
+    await box.fill("");
+    await box.focus();
+    await expect(page.getByRole("option", { name: /von:m\.hoffmann/ })).toBeVisible();
+  });
+
+  test("sagt, wenn nichts gefunden wurde", async ({ page }) => {
+    const results = page.getByText(/Nichts gefunden/);
+    await searchFor(page, "xylophonunterricht");
+    await expect(results).toBeVisible();
+  });
+});
+
+test.describe("Suche am Handy @phone", () => {
+  test("Suchen und Treffer öffnen", async ({ page }) => {
+    await login(page);
+    const box = page.getByRole("combobox", { name: "Suchen" });
+    await box.fill("wärmepumpe");
+    await box.press("Enter");
+    const results = page.getByRole("list", { name: "Suche" });
+    await results.getByText("Anfrage Wärmepumpe Neubau").click();
+    await expect(page.getByRole("heading", { name: "Anfrage Wärmepumpe Neubau" })).toBeVisible();
   });
 });

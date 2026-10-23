@@ -12,8 +12,8 @@ export const MessageList = ({ accountId, mailbox, search }: Props) => {
   const accounts = useMailAccounts();
   const account = accounts.find((a) => a.id === accountId);
   const filter = useMemo(
-    () => ({ mailboxId: mailbox.id, text: search.q, unreadOnly: search.unread }),
-    [mailbox.id, search.q, search.unread],
+    () => ({ mailboxId: mailbox.id, unreadOnly: search.unread }),
+    [mailbox.id, search.unread],
   );
   const list = useEmailList(accountId, filter);
   const rows = useMemo(

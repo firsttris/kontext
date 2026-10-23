@@ -21,7 +21,7 @@ export const UnifiedPage = ({ search }: { search: MailSearch }) => {
   return (
     <MailLayout
       search={search}
-      sidebar={own ? <MailSidebar accountId={own.id} mailbox={undefined} unified /> : null}
+      sidebar={own ? <MailSidebar accountId={own.id} mailbox={undefined} view="unified" /> : null}
       list={inboxes.length ? <UnifiedList inboxes={inboxes} search={search} /> : null}
       main={
         search.compose && composeAccount ? (

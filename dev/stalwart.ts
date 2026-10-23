@@ -115,6 +115,8 @@ const createListeners = async (port: number): Promise<void> => {
         // The dev listeners have no TLS; let IMAP clients (and the integration tests) log in
         // anyway. Only for this local instance on 127.0.0.1.
         ["x:Imap/set", { update: { singleton: { allowPlainTextAuth: true } } }, "1"],
+        // German stemming for the search index and for searches (see docs/installation.md).
+        ["x:Search/set", { update: { singleton: { defaultLanguage: "de-DE" } } }, "2"],
       ],
     }),
   });

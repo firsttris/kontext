@@ -10,7 +10,7 @@ Kontakte** im Browser und am Handy. Jede Firma bekommt ihren eigenen Server mit
 
 |              |                                                                                                                                                               |
 | ------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Mail**     | Alle Posteingänge in einer Liste, Ordner und Unterordner, gemeinsame Postfächer (info@, rechnung@), Archiv, Suche, Schreiben mit Formatierung, Anhänge, Antworten mit Zitat, Push ohne Neuladen |
+| **Mail**     | Suche über alle Ordner mit Operatoren wie in Gmail, alle Posteingänge in einer Liste, Ordner und Unterordner, gemeinsame Postfächer (info@, rechnung@), Archiv, Suche, Schreiben mit Formatierung, Anhänge, Antworten mit Zitat, Push ohne Neuladen |
 | **Kalender** | Tag, Woche, Monat und Liste, Termine per Ziehen verschieben, wiederkehrende Termine, Kalender mit Kollegen teilen, Einladungen mit Zusage/Absage               |
 | **Kontakte** | Kunden-Ansicht mit letzten Mails und nächsten Terminen, Anlegen und Bearbeiten, Gruppen, vCard-Import/-Export, Adressbücher mit Kollegen teilen              |
 | **Handy**    | jede Ansicht als eigener Bildschirm mit Tab-Leiste                                                                                                            |

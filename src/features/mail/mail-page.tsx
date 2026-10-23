@@ -12,6 +12,7 @@ import { MailSidebar } from "./mail-sidebar";
 import { MessageList } from "./message-list";
 import { MessageView } from "./message-view";
 import { useMailboxes } from "./queries";
+import { SearchPage } from "./search-page";
 import { UnifiedPage } from "./unified-page";
 
 /** The URL's account for "Alle Posteingänge". */
@@ -28,10 +29,12 @@ export const resolveMailbox = (
 type Props = { accountId: string; mailboxParam: string; search: MailSearch };
 
 export const MailPage = (props: Props) =>
-  props.accountId === ALL_INBOXES ? (
-    <UnifiedPage search={props.search} />
-  ) : (
+  props.accountId !== ALL_INBOXES ? (
     <FolderPage {...props} />
+  ) : props.mailboxParam === "search" ? (
+    <SearchPage search={props.search} />
+  ) : (
+    <UnifiedPage search={props.search} />
   );
 
 const FolderPage = ({ accountId, mailboxParam, search }: Props) => {

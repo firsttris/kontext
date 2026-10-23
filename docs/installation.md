@@ -48,6 +48,8 @@ Stalwarts eigene Verwaltung ist nur über die Tailscale-Adresse des Servers erre
 3. **Benutzer** anlegen (`name@firma.de`) und für gemeinsame Postfächer eine **Gruppe** (z. B.
    `info`) mit den Mitarbeitern als Mitglieder.
 4. Caddy als vertrauenswürdigen Proxy eintragen, damit Stalwart die echten IP-Adressen sieht.
+5. Unter *Suche* die **Standardsprache** auf Deutsch (`de-DE`) stellen. Stalwart bildet damit
+   die Wortstämme deutsch, auch bei kurzen Mails, deren Sprache es nicht sicher erkennt.
 
 Danach unter `https://sekretaer.firma.de` anmelden. Am Handy im Browser „Zum Startbildschirm
 hinzufügen“ wählen: Sekretär startet dann wie eine App und bleibt angemeldet.

@@ -58,11 +58,12 @@ const Count = ({ value }: { value: number }) =>
 type Props = {
   accountId: string;
   mailbox: Mailbox | undefined;
-  /** "Alle Posteingänge" is open. */
-  unified?: boolean;
+  /** A list over all accounts is open: "Alle Posteingänge" or the search. */
+  view?: "unified" | "search";
 };
 
-export const MailSidebar = ({ accountId, mailbox, unified = false }: Props) => {
+export const MailSidebar = ({ accountId, mailbox, view }: Props) => {
+  const unified = view !== undefined;
   const { data: mailboxes = [] } = useMailboxes(accountId);
   const accounts = useMailAccounts();
   const inboxes = useInboxes();
@@ -142,8 +143,8 @@ export const MailSidebar = ({ accountId, mailbox, unified = false }: Props) => {
             to="/mail/$accountId/$mailboxId"
             params={{ accountId: "all", mailboxId: "inbox" }}
             search={{}}
-            aria-current={unified ? "page" : undefined}
-            className={navClass(unified)}
+            aria-current={view === "unified" ? "page" : undefined}
+            className={navClass(view === "unified")}
           >
             <Layers size={16} strokeWidth={1.75} />
             <span>{m.mail_all_inboxes()}</span>

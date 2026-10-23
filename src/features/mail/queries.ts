@@ -51,18 +51,25 @@ export const useMailAccounts = (): Account[] => {
 
 export const mailboxesKey = (accountId: string) => [accountId, "mailboxes"] as const;
 
-/** The inbox of every mail account (own first), for "Alle Posteingänge". */
-export const useInboxes = (): { account: Account; mailbox: Mailbox }[] => {
+/** The folders of every mail account, by account id (same cache as each folder list). */
+export const useAllMailboxes = (): Record<string, Mailbox[] | undefined> => {
   const client = useClient();
   const accounts = useMailAccounts();
-  const mailboxes = useQueries({
+  const results = useQueries({
     queries: accounts.map((account) => ({
       queryKey: mailboxesKey(account.id),
       queryFn: () => listMailboxes(client, account.id),
     })),
   });
-  return accounts.flatMap((account, index) => {
-    const inbox = findRole(mailboxes[index]?.data ?? [], "inbox");
+  return Object.fromEntries(accounts.map((account, index) => [account.id, results[index]?.data]));
+};
+
+/** The inbox of every mail account (own first), for "Alle Posteingänge". */
+export const useInboxes = (): { account: Account; mailbox: Mailbox }[] => {
+  const accounts = useMailAccounts();
+  const mailboxes = useAllMailboxes();
+  return accounts.flatMap((account) => {
+    const inbox = findRole(mailboxes[account.id] ?? [], "inbox");
     return inbox ? [{ account, mailbox: inbox }] : [];
   });
 };

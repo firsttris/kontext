@@ -48,12 +48,15 @@ export const listMailboxes = async (client: JmapClient, accountId: string): Prom
   return list;
 };
 
-export type EmailFilter = { mailboxId: string; text?: string; unreadOnly?: boolean };
+/** One folder (optionally only unread), or a prepared search filter (src/lib/mail-search.ts). */
+export type EmailFilter =
+  | { mailboxId: string; unreadOnly?: boolean }
+  | { search: Record<string, unknown> };
 
-export const emailQueryFilter = ({ mailboxId, text, unreadOnly }: EmailFilter) => {
-  const conditions: Record<string, unknown>[] = [{ inMailbox: mailboxId }];
-  if (text?.trim()) conditions.push({ text: text.trim() });
-  if (unreadOnly) conditions.push({ notKeyword: "$seen" });
+export const emailQueryFilter = (filter: EmailFilter): Record<string, unknown> => {
+  if ("search" in filter) return filter.search;
+  const conditions: Record<string, unknown>[] = [{ inMailbox: filter.mailboxId }];
+  if (filter.unreadOnly) conditions.push({ notKeyword: "$seen" });
   return conditions.length === 1 ? conditions[0]! : { operator: "AND", conditions };
 };
 

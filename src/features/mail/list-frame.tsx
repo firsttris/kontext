@@ -4,8 +4,9 @@
  */
 import { Link, useNavigate } from "@tanstack/react-router";
 import { useVirtualizer } from "@tanstack/react-virtual";
-import { Menu, Paperclip, Search, SquarePen, Star } from "lucide-react";
-import { type ReactNode, useEffect, useRef, useState } from "react";
+import { Menu, Paperclip, SquarePen, Star } from "lucide-react";
+import { type ReactNode, useEffect, useRef } from "react";
+import { Highlighted } from "@/components/highlighted";
 import { TabBar } from "@/components/shell/app-shell";
 import { Button } from "@/components/ui/button";
 import { useShortcuts } from "@/components/use-shortcuts";
@@ -15,37 +16,17 @@ import { cn } from "@/lib/cn";
 import { displayName, formatAddressList, listDate } from "@/lib/format";
 import { m } from "@/paraglide/messages";
 import type { MailSearch } from "@/routes/_app/mail.$accountId.$mailboxId";
+import { SearchBox, type SearchBoxHandle } from "./search-box";
 
 /**
- * A mail in the list; `account` is set in the combined inbox (`label` empty for the own account,
- * which needs no badge).
+ * A mail in the list. `account` is set in the combined lists (`label` empty for the own account,
+ * which needs no badge); search results also name their `folder` and the words to `highlight`.
  */
-export type Row = { email: EmailSummary; account?: { id: string; label: string } };
-
-const useDebounced = (value: string, delay: number): string => {
-  const [debounced, setDebounced] = useState(value);
-  useEffect(() => {
-    const timer = setTimeout(() => setDebounced(value), delay);
-    return () => clearTimeout(timer);
-  }, [value, delay]);
-  return debounced;
-};
-
-/** The search box text, written to the URL a moment after typing stops. */
-export const useSearchText = (search: MailSearch) => {
-  const navigate = useNavigate();
-  const [text, setText] = useState(search.q ?? "");
-  const query = useDebounced(text, 300);
-  useEffect(() => {
-    if ((search.q ?? "") !== query) {
-      void navigate({
-        to: ".",
-        search: (prev) => ({ ...prev, q: query || undefined }),
-        replace: true,
-      });
-    }
-  }, [query, search.q, navigate]);
-  return [text, setText] as const;
+export type Row = {
+  email: EmailSummary;
+  account?: { id: string; label: string };
+  folder?: string;
+  highlight?: string[];
 };
 
 type Props = {
@@ -62,6 +43,10 @@ type Props = {
   search: MailSearch;
   showRecipient: boolean;
   isDraft: boolean;
+  /** Instead of "Alle / Ungelesen", e.g. the search's chips. */
+  filters?: ReactNode;
+  /** Shown when the list is empty. */
+  empty?: string;
 };
 
 export const ListFrame = ({
@@ -76,11 +61,12 @@ export const ListFrame = ({
   search,
   showRecipient,
   isDraft,
+  filters,
+  empty,
 }: Props) => {
-  const [text, setText] = useSearchText(search);
   const navigate = useNavigate();
   const scrollRef = useRef<HTMLDivElement>(null);
-  const searchRef = useRef<HTMLInputElement>(null);
+  const searchRef = useRef<SearchBoxHandle>(null);
   const virtualizer = useVirtualizer({
     count: rows.length,
     getScrollElement: () => scrollRef.current,
@@ -151,46 +137,38 @@ export const ListFrame = ({
             {unread > 0 ? m.mail_unread_count({ count: unread }) : ""}
           </span>
         </div>
-        <label className="flex h-[42px] items-center gap-2 rounded-xl bg-subtle px-3 text-muted md:h-9 md:rounded-[9px] md:border md:border-border md:bg-transparent">
-          <Search size={15} />
-          <input
-            ref={searchRef}
-            type="search"
-            aria-label={m.mail_search()}
-            placeholder={m.mail_search()}
-            value={text}
-            onChange={(e) => setText(e.target.value)}
-            className="min-w-0 flex-1 border-0 bg-transparent text-[15px] text-fg outline-none md:text-[14px]"
-          />
-        </label>
-        <nav aria-label="Filter" className="flex gap-1 self-start rounded-[9px] bg-subtle p-[3px]">
-          {[
-            { label: m.mail_filter_all(), on: !search.unread, value: undefined },
-            { label: m.mail_filter_unread(), on: Boolean(search.unread), value: true },
-          ].map((option) => (
-            <Link
-              key={option.label}
-              to="."
-              search={(prev) => ({ ...prev, unread: option.value })}
-              aria-pressed={option.on}
-              className={cn(
-                "flex h-7 items-center rounded-[7px] px-3 text-[13px] no-underline",
-                option.on ? "bg-bg text-fg shadow-sm" : "text-muted",
-              )}
-            >
-              {option.label}
-            </Link>
-          ))}
-        </nav>
+        <SearchBox ref={searchRef} key={search.q ?? ""} initial={search.q} />
+        {filters ?? (
+          <nav
+            aria-label="Filter"
+            className="flex gap-1 self-start rounded-[9px] bg-subtle p-[3px]"
+          >
+            {[
+              { label: m.mail_filter_all(), on: !search.unread, value: undefined },
+              { label: m.mail_filter_unread(), on: Boolean(search.unread), value: true },
+            ].map((option) => (
+              <Link
+                key={option.label}
+                to="."
+                search={(prev) => ({ ...prev, unread: option.value })}
+                aria-pressed={option.on}
+                className={cn(
+                  "flex h-7 items-center rounded-[7px] px-3 text-[13px] no-underline",
+                  option.on ? "bg-bg text-fg shadow-sm" : "text-muted",
+                )}
+              >
+                {option.label}
+              </Link>
+            ))}
+          </nav>
+        )}
       </header>
 
       <div ref={scrollRef} className="min-h-0 flex-1 overflow-y-auto px-2 pb-3">
         {isPending ? (
           <p className="px-3 py-6 text-[14px] text-muted">{m.common_loading()}</p>
         ) : rows.length === 0 ? (
-          <p className="px-3 py-6 text-[14px] text-muted">
-            {search.q ? m.mail_empty_search() : m.mail_empty()}
-          </p>
+          <p className="px-3 py-6 text-[14px] text-muted">{empty ?? m.mail_empty()}</p>
         ) : (
           <ul
             aria-label={title}
@@ -231,7 +209,7 @@ export const ListFrame = ({
 };
 
 const MessageRow = ({
-  row: { email, account },
+  row: { email, account, folder, highlight },
   active,
   showRecipient,
   isDraft,
@@ -269,7 +247,7 @@ const MessageRow = ({
       <span className="flex min-w-0 flex-1 flex-col gap-0.5">
         <span className="flex items-baseline gap-2">
           <span className={cn("min-w-0 flex-1 truncate", unread && "font-semibold")}>
-            {who || "—"}
+            <Highlighted text={who || "—"} terms={highlight} />
           </span>
           {isFlagged(email) ? (
             <Star
@@ -283,9 +261,14 @@ const MessageRow = ({
           </span>
         </span>
         <span className={cn("truncate", unread && "font-semibold")}>
-          {email.subject || m.mail_no_subject()}
+          <Highlighted text={email.subject || m.mail_no_subject()} terms={highlight} />
         </span>
         <span className="flex items-center gap-1.5 text-[13px] text-muted">
+          {folder ? (
+            <span className="shrink-0 rounded-md border border-border px-1.5 text-[11px] text-muted">
+              {folder}
+            </span>
+          ) : null}
           {account?.label ? (
             <span className="shrink-0 rounded-md bg-subtle px-1.5 text-[11px] font-medium text-muted">
               {account.label}
@@ -294,7 +277,9 @@ const MessageRow = ({
           {email.hasAttachment ? (
             <Paperclip size={12} className="shrink-0" aria-label={m.mail_attachments()} />
           ) : null}
-          <span className="truncate">{email.preview}</span>
+          <span className="truncate">
+            <Highlighted text={email.preview} terms={highlight} />
+          </span>
         </span>
       </span>
     </Link>

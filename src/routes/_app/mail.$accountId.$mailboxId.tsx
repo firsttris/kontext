@@ -11,6 +11,7 @@ export const mailSearchSchema = z.object({
   compose: z.enum(["new", "reply", "replyAll", "forward", "draft"]).optional(),
   /** Prefilled recipient for a new mail, e.g. from the contacts. */
   to: z.string().optional(),
+  /** The search text on `/mail/all/search` (src/lib/mail-search.ts). */
   q: z.string().optional(),
   unread: z.boolean().optional(),
   /** Phone only: the folder list as its own screen. */
