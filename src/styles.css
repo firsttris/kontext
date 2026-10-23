@@ -1,0 +1,142 @@
+@import "tailwindcss";
+@import "@fontsource-variable/geist";
+@import "@fontsource-variable/geist-mono";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* Design tokens from the mockups (zinc, Geist). Light by default, dark via the system setting. */
+:root {
+  --bg: #ffffff;
+  --side: #fafafa;
+  --fg: #09090b;
+  --muted: #71717a;
+  --subtle: #f4f4f5;
+  --border: #e4e4e7;
+  --hover: #f4f4f5;
+  --primary: #18181b;
+  --onprimary: #fafafa;
+  --accent: #2563eb;
+  --danger: #b91c1c;
+  --warn: #b45309;
+  --ok: #15803d;
+  --note: #fefce8;
+  --noteborder: #fde68a;
+  color-scheme: light;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) {
+    --bg: #09090b;
+    --side: #0c0c0e;
+    --fg: #fafafa;
+    --muted: #a1a1aa;
+    --subtle: #18181b;
+    --border: #27272a;
+    --hover: #18181b;
+    --primary: #fafafa;
+    --onprimary: #09090b;
+    --accent: #3b82f6;
+    --danger: #f87171;
+    --warn: #f59e0b;
+    --ok: #22c55e;
+    --note: #1c1a10;
+    --noteborder: #3f3a1d;
+    color-scheme: dark;
+  }
+}
+
+@theme inline {
+  --color-bg: var(--bg);
+  --color-side: var(--side);
+  --color-fg: var(--fg);
+  --color-muted: var(--muted);
+  --color-subtle: var(--subtle);
+  --color-border: var(--border);
+  --color-hover: var(--hover);
+  --color-primary: var(--primary);
+  --color-onprimary: var(--onprimary);
+  --color-accent: var(--accent);
+  --color-danger: var(--danger);
+  --color-warn: var(--warn);
+  --color-ok: var(--ok);
+  --color-note: var(--note);
+  --color-noteborder: var(--noteborder);
+  --font-sans: "Geist Variable", system-ui, sans-serif;
+  --font-mono: "Geist Mono Variable", ui-monospace, monospace;
+}
+
+@layer base {
+  html,
+  body,
+  #root {
+    height: 100%;
+  }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--fg);
+    font-family: var(--font-sans);
+    font-size: 14px;
+    line-height: 1.45;
+    -webkit-font-smoothing: antialiased;
+  }
+  button {
+    cursor: pointer;
+  }
+  :focus-visible {
+    outline: 2px solid var(--fg);
+    outline-offset: 2px;
+  }
+  input::placeholder,
+  textarea::placeholder {
+    color: var(--muted);
+  }
+}
+
+/* The compose editor (Tiptap): paragraphs and lists like in a mail. */
+.editor-content .ProseMirror {
+  min-height: 100%;
+  outline: none;
+  padding: 14px 16px;
+  font-size: 15px;
+  line-height: 1.6;
+}
+.editor-content .ProseMirror p {
+  margin: 0 0 0.6em;
+}
+.editor-content .ProseMirror ul,
+.editor-content .ProseMirror ol {
+  padding-left: 1.4em;
+  margin: 0 0 0.6em;
+}
+.editor-content .ProseMirror ul {
+  list-style: disc;
+}
+.editor-content .ProseMirror ol {
+  list-style: decimal;
+}
+.editor-content .ProseMirror blockquote {
+  border-left: 2px solid var(--border);
+  margin: 0;
+  padding-left: 12px;
+  color: var(--muted);
+}
+.editor-content .ProseMirror a {
+  color: var(--accent);
+  text-decoration: underline;
+}
+.editor-content .ProseMirror p.is-editor-empty:first-child::before {
+  content: attr(data-placeholder);
+  color: var(--muted);
+  float: left;
+  height: 0;
+  pointer-events: none;
+}
+
+/* Mobile safe areas: the content starts below the status bar and above the home indicator. */
+@utility safe-top {
+  padding-top: env(safe-area-inset-top);
+}
+@utility safe-bottom {
+  padding-bottom: max(env(safe-area-inset-bottom), 8px);
+}
