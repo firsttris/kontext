@@ -356,3 +356,36 @@ test.describe("Alle Posteingänge am Handy @phone", () => {
     ).toBeVisible();
   });
 });
+
+test.describe("Tastaturkürzel", () => {
+  test("j, k, c, ? und Esc in der Mail", async ({ page }) => {
+    await login(page);
+    await expect(page.getByRole("list", { name: "Posteingang" })).toBeVisible();
+    await page.keyboard.press("j");
+    await expect(page).toHaveURL(/email=/);
+    const opened = new URL(page.url()).searchParams.get("email");
+    await page.keyboard.press("j");
+    await expect.poll(() => new URL(page.url()).searchParams.get("email")).not.toBe(opened);
+    await page.keyboard.press("k");
+    await expect.poll(() => new URL(page.url()).searchParams.get("email")).toBe(opened);
+    await page.keyboard.press("Escape");
+    await expect(page).not.toHaveURL(/email=/);
+    await page.keyboard.press("?");
+    await expect(page.getByRole("dialog", { name: "Tastaturkürzel" })).toBeVisible();
+    await page.keyboard.press("Escape");
+    await page.keyboard.press("c");
+    await expect(page.getByRole("form", { name: "Neue Mail" })).toBeVisible();
+    // Typing in the composer is not a shortcut.
+    await page.getByLabel("Betreff").fill("jkc?");
+    await expect(page.getByLabel("Betreff")).toHaveValue("jkc?");
+  });
+
+  test("2 öffnet den Kalender, m den Monat", async ({ page }) => {
+    await login(page);
+    await expect(page.getByRole("list", { name: "Posteingang" })).toBeVisible();
+    await page.keyboard.press("2");
+    await expect(page.getByText(/KW \d+/)).toBeVisible();
+    await page.keyboard.press("m");
+    await expect(page.getByRole("link", { name: "Monat" })).toHaveAttribute("aria-pressed", "true");
+  });
+});

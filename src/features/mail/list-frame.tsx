@@ -8,6 +8,7 @@ import { Menu, Paperclip, Search, SquarePen, Star } from "lucide-react";
 import { type ReactNode, useEffect, useRef, useState } from "react";
 import { TabBar } from "@/components/shell/app-shell";
 import { Button } from "@/components/ui/button";
+import { useShortcuts } from "@/components/use-shortcuts";
 import { isFlagged, isUnread } from "@/jmap/mail";
 import type { EmailSummary } from "@/jmap/types";
 import { cn } from "@/lib/cn";
@@ -77,7 +78,9 @@ export const ListFrame = ({
   isDraft,
 }: Props) => {
   const [text, setText] = useSearchText(search);
+  const navigate = useNavigate();
   const scrollRef = useRef<HTMLDivElement>(null);
+  const searchRef = useRef<HTMLInputElement>(null);
   const virtualizer = useVirtualizer({
     count: rows.length,
     getScrollElement: () => scrollRef.current,
@@ -91,6 +94,31 @@ export const ListFrame = ({
   useEffect(() => {
     if (near) onNearEnd();
   }, [near, onNearEnd]);
+
+  /** j / k: the next or previous mail of the list. */
+  const step = (by: 1 | -1) => {
+    const current = rows.findIndex(
+      (row) => row.email.id === search.email && (!row.account || row.account.id === search.account),
+    );
+    const next = rows[current === -1 ? 0 : current + by];
+    if (!next) return;
+    virtualizer.scrollToIndex(rows.indexOf(next), { align: "auto" });
+    void navigate({
+      to: ".",
+      search: (prev) => ({
+        ...prev,
+        email: next.email.id,
+        account: next.account?.id,
+        compose: isDraft ? "draft" : undefined,
+      }),
+    });
+  };
+  useShortcuts({
+    c: () => void navigate({ to: ".", search: { compose: "new" } }),
+    "/": () => searchRef.current?.focus(),
+    j: () => step(1),
+    k: () => step(-1),
+  });
 
   return (
     <div className="flex h-full min-h-0 flex-col">
@@ -126,6 +154,7 @@ export const ListFrame = ({
         <label className="flex h-[42px] items-center gap-2 rounded-xl bg-subtle px-3 text-muted md:h-9 md:rounded-[9px] md:border md:border-border md:bg-transparent">
           <Search size={15} />
           <input
+            ref={searchRef}
             type="search"
             aria-label={m.mail_search()}
             placeholder={m.mail_search()}

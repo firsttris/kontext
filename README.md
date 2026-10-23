@@ -70,6 +70,8 @@ und unter `https://<Ihre Domain>` anmelden. DNS-Einträge, Backups und Updates s
 - **Signatur pro Absender**: eigene Adresse und gemeinsame Postfächer, mit Formatierung.
 - **Abwesenheitsnotiz**: mit Zeitraum, antwortet automatisch.
 - **Passwort und Anmeldung mit Code** (Authenticator-App); man bleibt auf dem Gerät angemeldet.
+- **Hell oder dunkel**: wie das Gerät, oder fest eingestellt.
+- **Tastaturkürzel** wie in Gmail: `j`/`k` durch die Mails, `r` antworten, `e` archivieren, `c` neu, `?` zeigt alle.
 
 ### 📅 Kalender
 
@@ -100,6 +102,10 @@ und unter `https://<Ihre Domain>` anmelden. DNS-Einträge, Backups und Updates s
     <td><img src="docs/screenshots/contacts.png" alt="Kontakt Markus Hoffmann mit nächsten Terminen und letzten Mails"></td>
   </tr>
 </table>
+
+<p align="center">
+  <img src="docs/screenshots/mail-dark.png" alt="Posteingang im dunklen Farbschema" width="720">
+</p>
 
 <p align="center">
   <img src="docs/screenshots/phone-mail.png" alt="Posteingang am Handy mit Tab-Leiste" width="240">

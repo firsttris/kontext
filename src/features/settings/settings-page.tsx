@@ -1,10 +1,11 @@
-/** Settings of the own account: name, signatures, out-of-office reply, password and 2FA. */
+/** Settings of the own account: name, signatures, out-of-office reply, password and 2FA, look. */
 import { Link } from "@tanstack/react-router";
 import {
   ChevronLeft,
   ChevronRight,
   KeyRound,
   type LucideIcon,
+  Palette,
   Palmtree,
   PenLine,
   User,
@@ -14,6 +15,7 @@ import { TabBar } from "@/components/shell/app-shell";
 import { cn } from "@/lib/cn";
 import { m } from "@/paraglide/messages";
 import type { settingsSections } from "@/routes/_app/settings";
+import { AppearanceSection } from "./appearance-section";
 import { ProfileSection } from "./profile-section";
 import { SecuritySection } from "./security-section";
 import { SignatureSection } from "./signature-section";
@@ -26,6 +28,7 @@ const SECTIONS: { id: Section; label: () => string; icon: LucideIcon }[] = [
   { id: "signature", label: m.settings_signature, icon: PenLine },
   { id: "vacation", label: m.settings_vacation, icon: Palmtree },
   { id: "security", label: m.settings_security, icon: KeyRound },
+  { id: "appearance", label: m.settings_appearance, icon: Palette },
 ];
 
 const CONTENT: Record<Section, () => ReactNode> = {
@@ -33,6 +36,7 @@ const CONTENT: Record<Section, () => ReactNode> = {
   signature: () => <SignatureSection />,
   vacation: () => <VacationSection />,
   security: () => <SecuritySection />,
+  appearance: () => <AppearanceSection />,
 };
 
 export const SettingsPage = ({ section }: { section: Section | undefined }) => {

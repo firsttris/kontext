@@ -5,23 +5,11 @@
 import { ImageOff } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useClient } from "@/auth/auth";
+import { useTheme } from "@/components/theme/use-theme";
 import { displayBody } from "@/jmap/mail";
 import type { EmailDetail } from "@/jmap/types";
 import { mailDocument, sanitizeMailHtml, textToHtml } from "@/lib/html";
 import { m } from "@/paraglide/messages";
-
-const usePrefersDark = (): boolean => {
-  const query =
-    typeof window !== "undefined" ? window.matchMedia("(prefers-color-scheme: dark)") : null;
-  const [dark, setDark] = useState(query?.matches ?? false);
-  useEffect(() => {
-    if (!query) return;
-    const update = () => setDark(query.matches);
-    query.addEventListener("change", update);
-    return () => query.removeEventListener("change", update);
-  }, [query]);
-  return dark;
-};
 
 /** Object URLs for the inline images of a mail, keyed by Content-ID. */
 const useInlineImages = (accountId: string, email: EmailDetail): Record<string, string> => {
@@ -53,7 +41,7 @@ const useInlineImages = (accountId: string, email: EmailDetail): Record<string, 
 };
 
 export const MailBody = ({ accountId, email }: { accountId: string; email: EmailDetail }) => {
-  const dark = usePrefersDark();
+  const dark = useTheme().theme === "dark";
   const [allowRemote, setAllowRemote] = useState(false);
   const cidUrls = useInlineImages(accountId, email);
   const frame = useRef<HTMLIFrameElement>(null);

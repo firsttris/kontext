@@ -1,10 +1,11 @@
 /** Contacts: the list on the left, the selected contact with mails and appointments on the right. */
 import { Link, useNavigate } from "@tanstack/react-router";
 import { BookUser, Plus, Search } from "lucide-react";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { TabBar } from "@/components/shell/app-shell";
 import { Button } from "@/components/ui/button";
 import { Select } from "@/components/ui/input";
+import { useShortcuts } from "@/components/use-shortcuts";
 import { cn } from "@/lib/cn";
 import { isGroup } from "@/lib/groups";
 import { matchesSearch } from "@/lib/jscontact";
@@ -30,6 +31,13 @@ export const ContactsPage = ({ search }: { search: ContactsSearch }) => {
   const ownAccount = useContactsAccountId();
   const [text, setText] = useState(search.q ?? "");
   const [managing, setManaging] = useState(false);
+  const navigate = useNavigate();
+  const searchRef = useRef<HTMLInputElement>(null);
+  useShortcuts({
+    c: () =>
+      void navigate({ to: "/contacts", search: { id: "new", edit: true, book: search.book } }),
+    "/": () => searchRef.current?.focus(),
+  });
   const selected = contacts.find(
     (card) => card.id === search.id && card.accountId === (search.account ?? ownAccount),
   );
@@ -79,6 +87,7 @@ export const ContactsPage = ({ search }: { search: ContactsSearch }) => {
           <label className="flex h-[42px] items-center gap-2 rounded-xl bg-subtle px-3 text-muted md:h-9 md:rounded-[9px] md:border md:border-border md:bg-bg">
             <Search size={15} />
             <input
+              ref={searchRef}
               type="search"
               aria-label={m.contacts_search()}
               placeholder={m.contacts_search()}

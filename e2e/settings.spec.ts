@@ -106,3 +106,17 @@ test.describe("Einstellungen", () => {
     await expect(page.getByRole("status").filter({ hasText: "ausgeschaltet" })).toBeVisible();
   });
 });
+
+test.describe("Darstellung", () => {
+  test("wechselt auf dunkel und bleibt dabei", async ({ page }) => {
+    await login(page);
+    await page.goto("/settings?section=appearance");
+    await page.getByText("Dunkel", { exact: true }).click();
+    await expect(page.locator("html")).toHaveClass(/\bdark\b/);
+    await page.reload();
+    await expect(page.locator("html")).toHaveClass(/\bdark\b/);
+    await page.getByText("Hell", { exact: true }).click();
+    await expect(page.locator("html")).toHaveClass(/\blight\b/);
+    await page.getByText("Wie das Gerät").click();
+  });
+});

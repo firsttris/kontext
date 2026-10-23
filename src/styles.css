@@ -4,7 +4,7 @@
 
 @custom-variant dark (&:where(.dark, .dark *));
 
-/* Design tokens from the mockups (zinc, Geist). Light by default, dark via the system setting. */
+/* Design tokens from the mockups (zinc, Geist). Light by default. */
 :root {
   --bg: #ffffff;
   --side: #fafafa;
@@ -24,25 +24,24 @@
   color-scheme: light;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root:not(.light) {
-    --bg: #09090b;
-    --side: #0c0c0e;
-    --fg: #fafafa;
-    --muted: #a1a1aa;
-    --subtle: #18181b;
-    --border: #27272a;
-    --hover: #18181b;
-    --primary: #fafafa;
-    --onprimary: #09090b;
-    --accent: #3b82f6;
-    --danger: #f87171;
-    --warn: #f59e0b;
-    --ok: #22c55e;
-    --note: #1c1a10;
-    --noteborder: #3f3a1d;
-    color-scheme: dark;
-  }
+/* Dark: set as a class on <html> from the user's choice or the device (index.html, use-theme.ts). */
+:root.dark {
+  --bg: #09090b;
+  --side: #0c0c0e;
+  --fg: #fafafa;
+  --muted: #a1a1aa;
+  --subtle: #18181b;
+  --border: #27272a;
+  --hover: #18181b;
+  --primary: #fafafa;
+  --onprimary: #09090b;
+  --accent: #3b82f6;
+  --danger: #f87171;
+  --warn: #f59e0b;
+  --ok: #22c55e;
+  --note: #1c1a10;
+  --noteborder: #3f3a1d;
+  color-scheme: dark;
 }
 
 @theme inline {

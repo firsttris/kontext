@@ -2,12 +2,13 @@
  * The calendar: on the desktop day, week, month or list with a sidebar (month, calendars, open
  * invitations); on a phone one day with a strip of the week above it, the month, or the list.
  */
-import { Link } from "@tanstack/react-router";
+import { Link, useNavigate } from "@tanstack/react-router";
 import { ChevronLeft, ChevronRight, Plus, Settings2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { TabBar, useSession } from "@/components/shell/app-shell";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/toast";
+import { useShortcuts } from "@/components/use-shortcuts";
 import { cn } from "@/lib/cn";
 import { movePatch } from "@/lib/event-form";
 import {
@@ -118,6 +119,19 @@ export const CalendarPage = ({ search }: { search: Search }) => {
   const mine = session ? [session.username] : [];
   const { move: moveEvent } = useEventMutations();
   const toast = useToast();
+  const navigate = useNavigate();
+  const go = (patch: Partial<Search>) =>
+    void navigate({ to: "/calendar", search: (prev) => ({ ...prev, ...patch }) });
+  useShortcuts({
+    c: () => go({ event: "new", start: `${selected}T09:00` }),
+    t: () => go({ date: undefined }),
+    left: () => go({ date: move(view, selected, -1) }),
+    right: () => go({ date: move(view, selected, 1) }),
+    d: () => go({ view: "day" }),
+    w: phone ? undefined : () => go({ view: "week" }),
+    m: () => go({ view: "month" }),
+    l: () => go({ view: "agenda" }),
+  });
 
   const canMove = (event: CalendarEvent) =>
     mayEdit(calendarOf(calendars, event), event, mine) && !eventTimes(event).allDay;

@@ -42,6 +42,29 @@ test.describe("Screenshots @screenshots", () => {
     await shot(page, "contacts");
   });
 
+  test("Dunkel", async ({ browser }) => {
+    const context = await browser.newContext({
+      viewport: { width: 1440, height: 900 },
+      colorScheme: "dark",
+      locale: "de-DE",
+      timezoneId: "Europe/Berlin",
+    });
+    const page = await context.newPage();
+    await login(page);
+    await page
+      .getByRole("list", { name: "Posteingang" })
+      .getByText("Angebot Wartungsvertrag 2027")
+      .click();
+    await expect(page.frameLocator("iframe").getByText("Viele Grüße")).toBeVisible();
+    await shot(page, "mail-dark");
+    await page.goto("/calendar");
+    await expect(
+      page.locator(`[data-day="${today()}"]`).getByText("Baubesprechung Hoffmann"),
+    ).toBeVisible();
+    await shot(page, "calendar-dark");
+    await context.close();
+  });
+
   test("Handy", async ({ browser }) => {
     const context = await browser.newContext({
       viewport: { width: 390, height: 844 },

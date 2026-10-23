@@ -57,6 +57,16 @@ ein Konto noch ältere Mails nachladen kann, zeigt die Liste nichts, was älter 
 älteste geladene Mail, damit die Reihenfolge stimmt. Eine geöffnete Mail trägt ihr Konto in der
 URL (`account`); Antworten gehen deshalb aus dem richtigen Postfach.
 
+## Darstellung und Tastaturkürzel
+
+Hell oder dunkel ist eine Klasse an `<html>`: `public/theme.js` setzt sie vor dem ersten Bild aus
+der Wahl in den Einstellungen (pro Gerät im Browser gespeichert) oder aus der Einstellung des
+Geräts; als eigene Datei, damit die Content-Security-Policy keine Inline-Skripte erlauben muss.
+
+Tastaturkürzel sind einzelne Tasten wie in Gmail und stehen als Liste in `src/lib/shortcuts.ts`;
+die Hilfe (`?`) und die Einstellungen zeigen dieselbe Liste. Solange ein Eingabefeld oder ein
+Dialog den Fokus hat, greift keine Taste.
+
 ## Kontaktgruppen
 
 Eine Gruppe ist eine JSContact-Karte mit `kind: "group"`; ihr `members` hält die `uid`s der

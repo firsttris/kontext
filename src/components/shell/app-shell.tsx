@@ -1,11 +1,13 @@
 /** The frame of every logged-in page: the app rail on the left (desktop), the page beside it. */
 import { useQuery } from "@tanstack/react-query";
-import { Link, useRouterState } from "@tanstack/react-router";
+import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import { LogOut, Settings } from "lucide-react";
-import type { ReactNode } from "react";
+import { type ReactNode, useState } from "react";
 import { useAuth, useClient } from "@/auth/auth";
+import { ShortcutsDialog } from "@/components/shortcuts-dialog";
 import { Avatar } from "@/components/ui/avatar";
 import { MenuContent, MenuItem, MenuLabel, MenuRoot, MenuTrigger } from "@/components/ui/menu";
+import { useShortcuts } from "@/components/use-shortcuts";
 import { cn } from "@/lib/cn";
 import { m } from "@/paraglide/messages";
 import { NAV_ITEMS } from "./nav-items";
@@ -96,12 +98,24 @@ const Rail = () => {
   );
 };
 
-export const AppShell = ({ children }: { children: ReactNode }) => (
-  <div className="flex h-dvh overflow-hidden bg-bg text-fg safe-top md:pt-0">
-    <Rail />
-    <div className="flex min-w-0 flex-1">{children}</div>
-  </div>
-);
+export const AppShell = ({ children }: { children: ReactNode }) => {
+  const navigate = useNavigate();
+  const [help, setHelp] = useState(false);
+  // "?" shows all shortcuts, 1–3 switch between the apps.
+  useShortcuts({
+    "?": () => setHelp(true),
+    ...Object.fromEntries(
+      NAV_ITEMS.map(({ to }, index) => [String(index + 1), () => void navigate({ to })]),
+    ),
+  });
+  return (
+    <div className="flex h-dvh overflow-hidden bg-bg text-fg safe-top md:pt-0">
+      <Rail />
+      <div className="flex min-w-0 flex-1">{children}</div>
+      <ShortcutsDialog open={help} onOpenChange={setHelp} />
+    </div>
+  );
+};
 
 /** The tab bar of the phone views; each list screen places it at its bottom. */
 export const TabBar = () => {

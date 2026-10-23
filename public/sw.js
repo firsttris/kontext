@@ -1,13 +1,13 @@
 // Sekretär service worker: makes the app installable and opens it without network.
 // The app shell (HTML, scripts, styles, fonts) is cached; mail data (/jmap) and sign-in (/api)
 // always go to the server and are never stored here.
-const CACHE = "sekretaer-shell-v1";
+const CACHE = "sekretaer-shell-v2";
 
 self.addEventListener("install", (event) => {
   event.waitUntil(
     caches
       .open(CACHE)
-      .then((cache) => cache.addAll(["/", "/manifest.webmanifest", "/icon-192.png"])),
+      .then((cache) => cache.addAll(["/", "/theme.js", "/manifest.webmanifest", "/icon-192.png"])),
   );
   self.skipWaiting();
 });

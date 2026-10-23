@@ -25,6 +25,7 @@ import {
   MenuTrigger,
 } from "@/components/ui/menu";
 import { useToast } from "@/components/ui/toast";
+import { useShortcuts } from "@/components/use-shortcuts";
 import { isFlagged, isUnread } from "@/jmap/mail";
 import type { BodyPart, EmailDetail, Mailbox } from "@/jmap/types";
 import { displayName, firstName, formatAddressList, formatSize, readingDate } from "@/lib/format";
@@ -153,6 +154,21 @@ const Toolbar = ({
   ].filter((box) => box.id !== mailbox.id);
   const flagged = isFlagged(email);
   const { canRemove, canMarkSeen, canFlag } = mailboxRights(mailbox);
+  const compose = (mode: "reply" | "replyAll" | "forward") =>
+    void navigate({ to: ".", search: (prev) => ({ ...prev, compose: mode }) });
+  useShortcuts({
+    r: () => compose("reply"),
+    a: () => compose("replyAll"),
+    f: () => compose("forward"),
+    e:
+      canRemove && mailbox.role !== "archive"
+        ? () => void run(() => actions.archive([email.id], mailbox.id), true)
+        : undefined,
+    "#": canRemove ? () => void run(() => actions.remove([email.id], mailbox.id), true) : undefined,
+    s: canFlag ? () => void run(() => actions.setFlagged([email.id], !flagged), false) : undefined,
+    U: canMarkSeen ? () => void run(() => actions.setSeen([email.id], false), true) : undefined,
+    esc: () => void close(),
+  });
 
   return (
     <div className="flex h-12 shrink-0 items-center gap-1 border-b border-border px-2 md:px-3">
