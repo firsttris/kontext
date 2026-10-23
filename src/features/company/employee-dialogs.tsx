@@ -141,10 +141,13 @@ export const EmployeeDialog = ({
   company,
   employee,
   onClose,
+  onVacation,
 }: {
   company: Company;
   employee: Employee;
   onClose: () => void;
+  /** Opens the out-of-office reply instead of this dialog. */
+  onVacation: () => void;
 }) => {
   const toast = useToast();
   const self = employee.id === company.selfId;
@@ -220,6 +223,9 @@ export const EmployeeDialog = ({
         </p>
         {password ? <PasswordNotice name={name} password={password} /> : null}
         <div className="flex flex-wrap items-start gap-2">
+          <Button disabled={busy} onClick={onVacation}>
+            {m.company_vacation()}
+          </Button>
           <ConfirmButton
             label={m.company_password_reset()}
             question={m.company_password_reset_confirm({ name })}

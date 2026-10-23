@@ -94,6 +94,55 @@ export const CheckList = ({
   </fieldset>
 );
 
+export type Access = "none" | "read" | "full";
+
+/** Per person who may use a shared mailbox: not at all, read only, or as a member. */
+export const AccessList = ({
+  people,
+  memberIds,
+  readerIds,
+  onChange,
+}: {
+  people: { id: string; fullName: string; email: string }[];
+  memberIds: string[];
+  readerIds: string[];
+  onChange: (memberIds: string[], readerIds: string[]) => void;
+}) => {
+  const accessOf = (id: string): Access =>
+    memberIds.includes(id) ? "full" : readerIds.includes(id) ? "read" : "none";
+  const choose = (id: string, access: Access) => {
+    const without = (list: string[]) => list.filter((other) => other !== id);
+    onChange(
+      access === "full" ? [...without(memberIds), id] : without(memberIds),
+      access === "read" ? [...without(readerIds), id] : without(readerIds),
+    );
+  };
+  return (
+    <fieldset className="m-0 flex flex-col gap-1 border-0 p-0">
+      <legend className="mb-1 p-0 text-[13px] text-muted">{m.company_access_legend()}</legend>
+      <p className="m-0 mb-1 text-[12px] text-muted">{m.company_access_hint()}</p>
+      {people.map((person) => (
+        <div key={person.id} className="flex min-h-10 items-center gap-2.5 text-[14px]">
+          <span className="flex min-w-0 flex-1 flex-col">
+            <span className="truncate">{person.fullName}</span>
+            <span className="truncate text-[12px] text-muted">{person.email}</span>
+          </span>
+          <Select
+            aria-label={m.company_access_for({ name: person.fullName })}
+            value={accessOf(person.id)}
+            onChange={(e) => choose(person.id, e.target.value as Access)}
+            className="h-9 w-auto"
+          >
+            <option value="none">{m.company_access_none()}</option>
+            <option value="read">{m.company_access_read()}</option>
+            <option value="full">{m.company_access_full()}</option>
+          </Select>
+        </div>
+      ))}
+    </fieldset>
+  );
+};
+
 /** Further addresses (aliases) of an account; the server checks the domain. */
 export const AliasesField = ({
   aliases,

@@ -46,8 +46,8 @@ Die Rechte am gemeinsamen Postfach:
 
 Sekretär richtet die Werkzeugleiste nach den `myRights` des Ordners. Wer keine Absenderadresse
 im Postfach hat (Stalwart gibt Identitäten nur Mitgliedern), antwortet vom eigenen Konto; die
-Antwort liegt dann im eigenen Gesendet-Ordner. Mitglieder setzt die Firmenverwaltung; „Nur lesen“
-vergibt bisher der Besitzer eines Ordners über Stalwart.
+Antwort liegt dann im eigenen Gesendet-Ordner. Beide Stufen setzt die Firmenverwaltung; „Nur
+lesen“ teilt dabei alle vorhandenen Ordner des Postfachs (später angelegte Ordner nicht).
 
 ## Firmenverwaltung
 
@@ -69,6 +69,15 @@ mit einem eigenen API-Schlüssel an und erlaubt nur, was die Firmenverwaltung br
   der Person, ebenso nach einem neuen Passwort.
 - **Weitere Adressen** sind Stalwarts Aliase (`aliases`), nur in den Domains des Servers.
 - **Gemeinsame Postfächer** sind Gruppen; Mitglied ist, wer die Gruppe in `memberGroupIds` hat.
+  „Nur lesen“ bekommt, wem alle Ordner des Postfachs per `shareWith` geteilt sind
+  (`mayReadItems`, `maySetSeen`); die App liest das am Posteingang ab.
+- **Abwesenheit** eines Mitarbeiters (etwa bei Krankheit) ist dessen `VacationResponse`; die
+  Vertretung steht als eigene Zeile in der Nachricht.
+
+Für Ordner und Abwesenheit arbeitet der Server per JMAP *im Konto* des Mitarbeiters bzw. der
+Gruppe. Das erlaubt Stalwart mit dem Recht `impersonate`: dann gilt der Schlüssel als Mitglied
+jedes Kontos (`AccessToken::is_member`). `server/company/management.ts` spricht die
+Verwaltungsobjekte an, `server/company/mailstore.ts` die Konten.
 
 Stalwart lässt den Schlüssel keine Rollen oder Rechte vergeben, die er nicht selbst hat. Die
 Rolle des Server-Kontos erbt deshalb *User* (sonst könnte es niemandem die Rolle *User* geben)

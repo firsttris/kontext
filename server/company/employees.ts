@@ -1,0 +1,160 @@
+/**
+ * The company's people: create, change, password and second factor, lock, out-of-office reply.
+ * Only users with the plain user role (see `isCompanyUser`); the caller cannot lock themselves out.
+ */
+import { Hono } from "hono";
+import { z } from "zod";
+import {
+  aliasesValue,
+  newPassword,
+  parseAddress,
+  passwordKey,
+  permissionsValue,
+  rolesValue,
+} from "./accounts";
+import {
+  addresses,
+  bad,
+  bodyOf,
+  type CompanyDeps,
+  type Env,
+  fullName,
+  ids,
+  type Loaded,
+  mailboxOf,
+  notFound,
+  userOf,
+} from "./context";
+
+const newEmployee = z.object({
+  email: z.string().trim().max(320),
+  fullName,
+  admin: z.boolean().default(false),
+  mailboxIds: ids.default([]),
+});
+const employeePatch = z.object({
+  fullName: fullName.optional(),
+  aliases: addresses.optional(),
+  mailboxIds: ids.optional(),
+  admin: z.boolean().optional(),
+  active: z.boolean().optional(),
+});
+const dateTime = z.string().max(40).nullable();
+const vacation = z.object({
+  isEnabled: z.boolean(),
+  fromDate: dateTime,
+  toDate: dateTime,
+  subject: z.string().max(500).nullable(),
+  textBody: z.string().max(20_000).nullable(),
+  htmlBody: z.string().max(100_000).nullable(),
+});
+
+const knownMailboxes = (loaded: Loaded, wanted: string[]) =>
+  wanted.every((id) => mailboxOf(loaded, id));
+
+export const employeeRoutes = ({ management, mailstore, endSessions, random }: CompanyDeps) => {
+  const makePassword = () =>
+    newPassword(random ?? ((size) => crypto.getRandomValues(new Uint8Array(size))));
+  const app = new Hono<Env>();
+
+  app.post("/", async (c) => {
+    const loaded = c.get("loaded");
+    const body = await bodyOf(c, newEmployee);
+    if (!body) return bad("Angaben unvollständig.");
+    const address = parseAddress(body.email, loaded.company.domains);
+    if (!address.ok) return bad(address.error);
+    if (!knownMailboxes(loaded, body.mailboxIds)) return bad("Unbekanntes Postfach.");
+    const password = makePassword();
+    const created = await management.createAccount({
+      "@type": "User",
+      ...address.value,
+      description: body.fullName,
+      locale: "de-DE",
+      timeZone: "Europe/Berlin",
+      roles: rolesValue(body.admin, loaded.roles),
+      memberGroupIds: Object.fromEntries(body.mailboxIds.map((id) => [id, true])),
+      credentials: { "0": { "@type": "Password", secret: password } },
+    });
+    if (!created.ok) return bad(created.error);
+    return c.json({ id: created.value, password }, 201);
+  });
+
+  app.patch("/:id", async (c) => {
+    const loaded = c.get("loaded");
+    const id = c.req.param("id");
+    const user = userOf(loaded, id);
+    if (!user) return notFound();
+    const change = await bodyOf(c, employeePatch);
+    if (!change) return bad("Angaben unvollständig.");
+    if (id === loaded.selfId && (change.admin === false || change.active === false)) {
+      return bad("Das eigene Konto kann sich nicht selbst aussperren.");
+    }
+    const patch: Record<string, unknown> = {};
+    if (change.fullName !== undefined) patch.description = change.fullName;
+    if (change.admin !== undefined) patch.roles = rolesValue(change.admin, loaded.roles);
+    if (change.active !== undefined) {
+      patch.permissions = permissionsValue(change.active, user.permissions);
+    }
+    if (change.aliases !== undefined) {
+      const aliases = aliasesValue(change.aliases, loaded.company.domains);
+      if (!aliases.ok) return bad(aliases.error);
+      patch.aliases = aliases.value;
+    }
+    if (change.mailboxIds !== undefined) {
+      if (!knownMailboxes(loaded, change.mailboxIds)) return bad("Unbekanntes Postfach.");
+      for (const mailbox of loaded.company.mailboxes) {
+        const wanted = change.mailboxIds.includes(mailbox.id);
+        if (wanted !== Boolean(user.memberGroupIds?.[mailbox.id])) {
+          patch[`memberGroupIds/${mailbox.id}`] = wanted ? true : null;
+        }
+      }
+    }
+    const result = await management.updateAccounts({ [id]: patch });
+    if (!result.ok) return bad(result.error);
+    if (change.active === false) await endSessions(user.emailAddress ?? "");
+    return c.json({ ok: true });
+  });
+
+  app.post("/:id/password", async (c) => {
+    const user = userOf(c.get("loaded"), c.req.param("id"));
+    const key = user && passwordKey(user);
+    if (!user || !key) return notFound();
+    const password = makePassword();
+    const result = await management.updateAccounts({
+      [user.id]: { [`credentials/${key}/secret`]: password },
+    });
+    if (!result.ok) return bad(result.error);
+    await endSessions(user.emailAddress ?? "");
+    return c.json({ password });
+  });
+
+  /** For a lost phone: the person signs in with the password only and sets up the code again. */
+  app.delete("/:id/two-factor", async (c) => {
+    const user = userOf(c.get("loaded"), c.req.param("id"));
+    const key = user && passwordKey(user);
+    if (!user || !key) return notFound();
+    const result = await management.updateAccounts({
+      [user.id]: { [`credentials/${key}/otpAuth`]: null },
+    });
+    if (!result.ok) return bad(result.error);
+    return c.json({ ok: true });
+  });
+
+  /** The out-of-office reply, e.g. when someone falls ill and cannot set it themselves. */
+  app.get("/:id/vacation", async (c) => {
+    const user = userOf(c.get("loaded"), c.req.param("id"));
+    if (!user) return notFound();
+    return c.json(await mailstore.getVacation(user.id));
+  });
+
+  app.put("/:id/vacation", async (c) => {
+    const user = userOf(c.get("loaded"), c.req.param("id"));
+    if (!user) return notFound();
+    const body = await bodyOf(c, vacation);
+    if (!body) return bad("Angaben unvollständig.");
+    const result = await mailstore.setVacation(user.id, body);
+    return result.ok ? c.json({ ok: true }) : bad(result.error);
+  });
+
+  return app;
+};

@@ -7,7 +7,8 @@ import { eq } from "drizzle-orm";
 import { Hono } from "hono";
 import { serveStatic } from "hono/bun";
 import { type Auth, createAuth, createGrants, type Grants } from "./auth";
-import { createManagement } from "./company/management";
+import { createMailstore } from "./company/mailstore";
+import { createManagement, createRequest } from "./company/management";
 import { createCompanyRoutes } from "./company/routes";
 import { createSealer } from "./crypto";
 import { type Db, openDatabase, schema } from "./db";
@@ -86,8 +87,10 @@ export const createApp = async (env: Env) => {
   app.get("/healthz", (c) => c.text("ok"));
   app.on(["GET", "POST"], "/api/auth/*", (c) => auth.handler(c.req.raw));
   if (env.STALWART_ADMIN_KEY) {
+    const request = createRequest(env.STALWART_URL, env.STALWART_ADMIN_KEY);
     const company = createCompanyRoutes({
-      management: createManagement(env.STALWART_URL, env.STALWART_ADMIN_KEY),
+      management: createManagement(request),
+      mailstore: createMailstore(request),
       currentEmail: async (request) =>
         (await auth.api.getSession({ headers: request.headers }))?.user.email ?? null,
       endSessions: endSessionsOf(db),

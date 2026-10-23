@@ -5,6 +5,7 @@
  * (UserAccount, GroupAccount, EmailAlias, PasswordCredential, Permissions, UserRoles) in
  * stalwartlabs/stalwart v0.16.27.
  */
+import { type Folder, readersOf } from "./sharing";
 
 export type Domain = { id: string; name: string };
 
@@ -60,6 +61,8 @@ export type SharedMailbox = {
   description: string;
   aliases: string[];
   memberIds: string[];
+  /** People who only read (folders shared with them), not members. */
+  readerIds: string[];
   usedBytes: number;
 };
 
@@ -131,14 +134,21 @@ export const toSharedMailbox = (
   group: StalwartAccount,
   users: StalwartAccount[],
   domains: Domain[],
-): SharedMailbox => ({
-  id: group.id,
-  email: addressOf(group, domains),
-  description: group.description?.trim() ?? "",
-  aliases: aliasAddresses(group, domains),
-  memberIds: users.filter((user) => user.memberGroupIds?.[group.id]).map((user) => user.id),
-  usedBytes: group.usedDiskQuota ?? 0,
-});
+  folders: Folder[] = [],
+): SharedMailbox => {
+  const memberIds = users.filter((user) => user.memberGroupIds?.[group.id]).map((u) => u.id);
+  return {
+    id: group.id,
+    email: addressOf(group, domains),
+    description: group.description?.trim() ?? "",
+    aliases: aliasAddresses(group, domains),
+    memberIds,
+    readerIds: readersOf(folders).filter(
+      (id) => !memberIds.includes(id) && users.some((user) => user.id === id),
+    ),
+    usedBytes: group.usedDiskQuota ?? 0,
+  };
+};
 
 export type Company = { domains: Domain[]; employees: Employee[]; mailboxes: SharedMailbox[] };
 
@@ -151,13 +161,16 @@ export const toCompany = (
   accounts: StalwartAccount[],
   roles: Roles,
   domains: Domain[],
+  folders: Record<string, Folder[]> = {},
 ): Company => {
   const users = accounts.filter((account) => isCompanyUser(account, roles));
   const groups = accounts.filter(isSharedMailbox);
   return {
     domains,
     employees: users.map((u) => toEmployee(u, roles, domains)).sort(byText((e) => e.fullName)),
-    mailboxes: groups.map((g) => toSharedMailbox(g, users, domains)).sort(byText((m) => m.email)),
+    mailboxes: groups
+      .map((g) => toSharedMailbox(g, users, domains, folders[g.id]))
+      .sort(byText((m) => m.email)),
   };
 };
 

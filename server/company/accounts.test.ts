@@ -94,6 +94,7 @@ describe("toCompany", () => {
         description: "Allgemeine Anfragen",
         aliases: [],
         memberIds: ["u1"],
+        readerIds: [],
         usedBytes: 0,
       },
     ]);

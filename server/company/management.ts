@@ -7,7 +7,7 @@ import type { Domain, Result, Roles, StalwartAccount } from "./accounts";
 
 const USING = ["urn:ietf:params:jmap:core", "urn:stalwart:jmap"];
 
-type Invocation = [string, Record<string, unknown>, string];
+export type Invocation = [string, Record<string, unknown>, string];
 
 /** The role that marks who may use the Firmenverwaltung; it grants nothing in Stalwart. */
 export const COMPANY_ROLE = "Firmenverwaltung (Sekretär)";
@@ -17,7 +17,7 @@ export const authorizationFor = (key: string): string =>
   key.startsWith("API_") ? `Bearer ${key}` : `Basic ${Buffer.from(key).toString("base64")}`;
 
 type SetError = { type: string; description?: string; properties?: string[] };
-type SetResult = {
+export type SetResult = {
   created?: Record<string, { id: string }>;
   notCreated?: Record<string, SetError>;
   notUpdated?: Record<string, SetError>;
@@ -30,21 +30,20 @@ export const describeSetError = (error: SetError): string => {
   return `Stalwart lehnt die Änderung ab (${error.type}).`;
 };
 
-const firstError = (result: SetResult): string | undefined => {
+export const firstError = (result: SetResult): string | undefined => {
   const failed = { ...result.notCreated, ...result.notUpdated };
   const error = Object.values(failed)[0];
   return error ? describeSetError(error) : undefined;
 };
 
-export const createManagement = (stalwartUrl: string, key: string) => {
+/** One JMAP request with the server's key; a method-level error throws with Stalwart's words. */
+export const createRequest = (stalwartUrl: string, key: string) => {
   const authorization = authorizationFor(key);
-
-  /** One JMAP request; a method-level error throws with Stalwart's description. */
-  const request = async (methodCalls: Invocation[]): Promise<Invocation[]> => {
+  return async (methodCalls: Invocation[], using = USING): Promise<Invocation[]> => {
     const response = await fetch(`${stalwartUrl}/jmap/`, {
       method: "POST",
       headers: { "content-type": "application/json", authorization },
-      body: JSON.stringify({ using: USING, methodCalls }),
+      body: JSON.stringify({ using, methodCalls }),
     });
     if (!response.ok) throw new Error(`Stalwart-Verwaltung: ${response.status}`);
     const { methodResponses } = (await response.json()) as { methodResponses: Invocation[] };
@@ -53,7 +52,11 @@ export const createManagement = (stalwartUrl: string, key: string) => {
     }
     return methodResponses;
   };
+};
 
+export type StalwartRequest = ReturnType<typeof createRequest>;
+
+export const createManagement = (request: StalwartRequest) => {
   const call = async <T>(method: string, args: Record<string, unknown>): Promise<T> =>
     (await request([[method, args, "0"]]))[0]![1] as T;
 

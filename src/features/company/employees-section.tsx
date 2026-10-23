@@ -9,6 +9,7 @@ import type { Company } from "./api";
 import { EmployeeDialog, NewEmployeeDialog } from "./employee-dialogs";
 import { Badge } from "./fields";
 import { CompanyGate } from "./gate";
+import { VacationDialog } from "./vacation-dialog";
 
 export const EmployeesSection = () => (
   <CompanyGate>{(company) => <Employees company={company} />}</CompanyGate>
@@ -16,7 +17,9 @@ export const EmployeesSection = () => (
 
 const Employees = ({ company }: { company: Company }) => {
   const [open, setOpen] = useState<string | "new" | null>(null);
+  const [vacationFor, setVacationFor] = useState<string | null>(null);
   const employee = company.employees.find((e) => e.id === open);
+  const absent = company.employees.find((e) => e.id === vacationFor);
 
   return (
     <>
@@ -62,7 +65,14 @@ const Employees = ({ company }: { company: Company }) => {
           company={company}
           employee={employee}
           onClose={() => setOpen(null)}
+          onVacation={() => {
+            setOpen(null);
+            setVacationFor(employee.id);
+          }}
         />
+      ) : null}
+      {absent ? (
+        <VacationDialog company={company} employee={absent} onClose={() => setVacationFor(null)} />
       ) : null}
     </>
   );

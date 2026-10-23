@@ -62,8 +62,10 @@ braucht der Sekretär-Server einen API-Schlüssel von Stalwart, der nur Konten v
 
 1. In Stalwarts Verwaltung eine **Rolle** `Sekretär-Server` anlegen: sie erbt die Rolle *User*
    und bekommt dazu die Rechte `sysAccountGet`, `sysAccountQuery`, `sysAccountCreate`,
-   `sysAccountUpdate`, `sysRoleGet`, `sysRoleCreate`, `sysDomainGet` und
-   `sysAuthenticationGet`.
+   `sysAccountUpdate`, `sysRoleGet`, `sysRoleCreate`, `sysDomainGet`, `sysAuthenticationGet`
+   und `impersonate`. Mit `impersonate` arbeitet der Server in den Postfächern der Mitarbeiter
+   (Abwesenheit, Leserechte für gemeinsame Postfächer); die App zeigt dem Chef dabei nie fremde
+   Mails.
 2. Ein **Konto** `sekretaer-server@firma.de` mit dieser Rolle (statt *User*) und einem langen
    Zufallspasswort anlegen.
 3. Mit diesem Konto einen **API-Schlüssel** erzeugen (*Credentials → API Key*, Rechte
@@ -75,8 +77,9 @@ braucht der Sekretär-Server einen API-Schlüssel von Stalwart, der nur Konten v
 
 Stalwart lässt den Schlüssel keine Rechte vergeben, die er selbst nicht hat; ein Mitarbeiter wird
 darüber also nie Admin. Sekretär zeigt und ändert nur Konten mit der normalen Rolle *User*.
-Admin-Konten von Stalwart kann der Schlüssel aber im Passwort ändern (Stalwart prüft dabei die
-Rechte des Zielkontos nicht) – den Schlüssel deshalb wie ein Admin-Passwort behandeln.
+Er kann aber alle Postfächer lesen und Admin-Konten von Stalwart im Passwort ändern (Stalwart
+prüft dabei die Rechte des Zielkontos nicht) – den Schlüssel deshalb wie ein Admin-Passwort
+behandeln.
 
 ### Wenn jemand sein Handy mit der Authenticator-App verliert
 

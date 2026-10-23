@@ -2,6 +2,8 @@
  * The Firmenverwaltung's calls to the Sekretär server (/api/company, server/company/routes.ts).
  * Unlike mail, contacts and calendar this is not JMAP: the server works with its own Stalwart key.
  */
+
+import type { Vacation } from "@/jmap/settings";
 import type {
   Company as CompanyData,
   Employee,
@@ -24,11 +26,17 @@ export type EmployeeChange = Partial<{
   admin: boolean;
   active: boolean;
 }>;
-export type NewMailbox = { email: string; description: string; memberIds: string[] };
+export type NewMailbox = {
+  email: string;
+  description: string;
+  memberIds: string[];
+  readerIds: string[];
+};
 export type MailboxChange = Partial<{
   description: string;
   aliases: string[];
   memberIds: string[];
+  readerIds: string[];
 }>;
 
 const send = async <T>(method: string, path: string, body?: unknown): Promise<T> => {
@@ -63,6 +71,12 @@ export const resetPassword = (id: string) =>
 
 export const resetTwoFactor = (id: string) =>
   send<{ ok: true }>("DELETE", `/employees/${encodeURIComponent(id)}/two-factor`);
+
+export const getEmployeeVacation = (id: string) =>
+  send<Vacation>("GET", `/employees/${encodeURIComponent(id)}/vacation`);
+
+export const setEmployeeVacation = (id: string, vacation: Vacation) =>
+  send<{ ok: true }>("PUT", `/employees/${encodeURIComponent(id)}/vacation`, vacation);
 
 export const createMailbox = (mailbox: NewMailbox) =>
   send<{ id: string }>("POST", "/mailboxes", mailbox);

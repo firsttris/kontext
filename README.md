@@ -80,7 +80,8 @@ und unter `https://<Ihre Domain>` anmelden. DNS-Einträge, Backups und Updates s
 - **Passwort und Anmeldung mit Code zurücksetzen**, z. B. wenn ein Handy verloren geht.
 - **Zugang sperren**: keine Anmeldung mehr, weder in Sekretär noch am Handy oder im Mailprogramm; Mails kommen weiter an.
 - **Weitere Adressen** wie buchhaltung@ für eine Person oder ein Postfach.
-- **Gemeinsame Postfächer** anlegen und Mitglieder an- und abhaken.
+- **Gemeinsame Postfächer** anlegen und pro Person festlegen: kein Zugriff, nur lesen, oder lesen und senden.
+- **Abwesenheit eintragen**, wenn jemand krank ist – mit Vertretung, die in der automatischen Antwort steht.
 - Nur für Konten mit dem Recht „Firmenverwaltung“, das der Chef auch weitergeben kann.
 
 ### 📅 Kalender

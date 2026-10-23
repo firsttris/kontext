@@ -7,7 +7,7 @@ import { Input, Label } from "@/components/ui/input";
 import { useToast } from "@/components/ui/toast";
 import { m } from "@/paraglide/messages";
 import { type Company, createMailbox, type SharedMailbox, updateMailbox } from "./api";
-import { AddressInput, AliasesField, addressFor, CheckList } from "./fields";
+import { AccessList, AddressInput, AliasesField, addressFor } from "./fields";
 import { CompanyGate } from "./gate";
 import { useCompanyChange } from "./queries";
 
@@ -15,11 +15,17 @@ export const MailboxesSection = () => (
   <CompanyGate>{(company) => <Mailboxes company={company} />}</CompanyGate>
 );
 
-const memberNames = (company: Company, mailbox: SharedMailbox): string =>
+const firstNames = (company: Company, ids: string[]): string =>
   company.employees
-    .filter((e) => mailbox.memberIds.includes(e.id))
+    .filter((e) => ids.includes(e.id))
     .map((e) => e.fullName.split(" ")[0])
-    .join(", ") || m.company_no_members();
+    .join(", ");
+
+const memberNames = (company: Company, mailbox: SharedMailbox): string => {
+  const members = firstNames(company, mailbox.memberIds) || m.company_no_members();
+  const readers = firstNames(company, mailbox.readerIds);
+  return readers ? `${members} · ${m.company_readers({ names: readers })}` : members;
+};
 
 const Mailboxes = ({ company }: { company: Company }) => {
   const [open, setOpen] = useState<string | "new" | null>(null);
@@ -93,14 +99,16 @@ const MailboxDialog = ({
   const [description, setDescription] = useState(mailbox?.description ?? "");
   const [aliases, setAliases] = useState(mailbox?.aliases ?? []);
   const [memberIds, setMemberIds] = useState(mailbox?.memberIds ?? []);
+  const [readerIds, setReaderIds] = useState(mailbox?.readerIds ?? []);
   const [problem, setProblem] = useState<string | null>(null);
   const save = useCompanyChange(async () =>
     mailbox
-      ? updateMailbox(mailbox.id, { description, aliases, memberIds })
+      ? updateMailbox(mailbox.id, { description, aliases, memberIds, readerIds })
       : createMailbox({
           email: addressFor(local, domainId, company.domains),
           description,
           memberIds,
+          readerIds,
         }),
   );
 
@@ -150,13 +158,16 @@ const MailboxDialog = ({
             onChange={setAliases}
           />
         ) : null}
-        <CheckList
-          legend={m.company_members()}
-          options={company.employees
-            .filter((e) => e.active)
-            .map((e) => ({ id: e.id, label: e.fullName, detail: e.email }))}
-          selected={memberIds}
-          onChange={setMemberIds}
+        <AccessList
+          people={company.employees.filter(
+            (e) => e.active || memberIds.includes(e.id) || readerIds.includes(e.id),
+          )}
+          memberIds={memberIds}
+          readerIds={readerIds}
+          onChange={(members, readers) => {
+            setMemberIds(members);
+            setReaderIds(readers);
+          }}
         />
         {problem ? (
           <p role="alert" className="m-0 text-[13px] text-danger">

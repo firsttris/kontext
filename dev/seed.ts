@@ -8,7 +8,7 @@
  */
 import { parseArgs } from "node:util";
 import { rolesValue } from "../server/company/accounts";
-import { createManagement } from "../server/company/management";
+import { createManagement, createRequest } from "../server/company/management";
 import { assertSetOk, CAPABILITIES, createJmapClient, type JmapClient } from "../src/jmap/client";
 import { DEV_DOMAIN, DEV_PASSWORD, STALWART_ADMIN } from "./config";
 import { buildMessage } from "./mime";
@@ -112,7 +112,9 @@ const ensureAccounts = async (domainId: string): Promise<void> => {
 
 /** The boss may use the Firmenverwaltung (the role is Sekretär's, see server/company). */
 const ensureCompanyAdmins = async (): Promise<void> => {
-  const management = createManagement(origin, `${STALWART_ADMIN.user}:${STALWART_ADMIN.password}`);
+  const management = createManagement(
+    createRequest(origin, `${STALWART_ADMIN.user}:${STALWART_ADMIN.password}`),
+  );
   const roles = await management.loadRoles();
   const accounts = await management.listAccounts();
   const patches = Object.fromEntries(

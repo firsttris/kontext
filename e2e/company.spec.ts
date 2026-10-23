@@ -72,8 +72,8 @@ test.describe("Firmenverwaltung", () => {
     let dialog = page.getByRole("dialog", { name: "Postfach anlegen" });
     await dialog.getByLabel("Name vor dem @").fill(local);
     await dialog.getByLabel("Bezeichnung").fill("Kundendienst");
-    await dialog.getByLabel("Sandra Klein").check();
-    await dialog.getByLabel("Max Becker").check();
+    await dialog.getByLabel("Zugriff für Sandra Klein").selectOption("Lesen und senden");
+    await dialog.getByLabel("Zugriff für Max Becker").selectOption("Lesen und senden");
     await dialog.getByRole("button", { name: "Anlegen" }).click();
     const row = page.getByRole("button", { name: new RegExp(`${local}@`) });
     await expect(row).toContainText("Max, Sandra");
@@ -85,7 +85,7 @@ test.describe("Firmenverwaltung", () => {
       .first()
       .fill(`kd-${local}@weber-haustechnik.test`);
     await dialog.getByLabel("Adresse hinzufügen").first().press("Enter");
-    await dialog.getByLabel("Max Becker").uncheck();
+    await dialog.getByLabel("Zugriff für Max Becker").selectOption("Kein Zugriff");
     await dialog.getByRole("button", { name: "Speichern" }).click();
     await expect(row).toContainText("Sandra");
     await expect(row).not.toContainText("Max");
@@ -114,5 +114,57 @@ test.describe("Firmenverwaltung", () => {
     const lisa = await (await browser.newContext()).newPage();
     await signInWith(lisa, address(local), password);
     await expect(lisa).toHaveURL(/\/mail\//);
+  });
+
+  test("gibt ein gemeinsames Postfach nur zum Lesen frei", async ({ page, browser }) => {
+    await login(page, "jonas");
+    await page.goto("/settings?section=mailboxes");
+    await page.getByRole("button", { name: /^rechnung@/ }).click();
+    const dialog = page.getByRole("dialog", { name: "Postfach bearbeiten" });
+    await dialog.getByLabel("Zugriff für Max Becker").selectOption("Nur lesen");
+    await dialog.getByRole("button", { name: "Speichern" }).click();
+    await expect(page.getByRole("button", { name: /^rechnung@/ })).toContainText("nur lesen: Max");
+
+    const max = await (await browser.newContext()).newPage();
+    await login(max, "max");
+    await max.getByRole("link", { name: "rechnung@" }).click();
+    await max
+      .getByRole("list", { name: "Posteingang" })
+      .getByText("Rechnung 2026-117")
+      .first()
+      .click();
+    await expect(max.getByRole("heading", { name: "Rechnung 2026-117" })).toBeVisible();
+    await expect(max.getByRole("button", { name: "Löschen" })).toHaveCount(0);
+
+    // and back, so the other tests see Max without rechnung@
+    await page.getByRole("button", { name: /^rechnung@/ }).click();
+    await dialog.getByLabel("Zugriff für Max Becker").selectOption("Kein Zugriff");
+    await dialog.getByRole("button", { name: "Speichern" }).click();
+    await expect(page.getByRole("button", { name: /^rechnung@/ })).not.toContainText("Max");
+  });
+
+  test("trägt die Abwesenheit eines Kollegen mit Vertretung ein", async ({ page }) => {
+    const local = `krank-${stamp()}`;
+    await login(page, "jonas");
+    await newEmployee(page, local, "Tom Krank");
+    await page.getByRole("button", { name: /Tom Krank/ }).click();
+    await page.getByRole("button", { name: "Abwesenheit eintragen" }).click();
+    const dialog = page.getByRole("dialog", { name: "Abwesenheit von Tom Krank" });
+    await dialog.getByLabel("Abwesenheitsnotiz einschalten").check();
+    await dialog.getByLabel("Vertretung").selectOption({ label: "Anna Weber" });
+    await dialog.getByLabel("Betreff").fill("Nicht im Büro");
+    await dialog.getByRole("button", { name: "Speichern" }).click();
+    await expect(
+      page.getByRole("status").filter({ hasText: "Abwesenheit gespeichert" }),
+    ).toBeVisible();
+
+    const id = (await page.request.get("/api/company").then((r) => r.json())).employees.find(
+      (e: { email: string }) => e.email === address(local),
+    ).id;
+    const vacation = await page.request
+      .get(`/api/company/employees/${id}/vacation`)
+      .then((r) => r.json());
+    expect(vacation).toMatchObject({ isEnabled: true, subject: "Nicht im Büro" });
+    expect(vacation.textBody).toContain("Anna Weber (anna@weber-haustechnik.test)");
   });
 });

@@ -389,5 +389,19 @@
   "company_mailbox_description_placeholder": "z. B. Allgemeine Anfragen",
   "company_members": "Mitglieder",
   "company_no_members": "Noch keine Mitglieder",
-  "company_no_mailboxes": "Noch keine gemeinsamen Postfächer."
+  "company_no_mailboxes": "Noch keine gemeinsamen Postfächer.",
+  "vacation_deputy_line": "In dringenden Fällen wenden Sie sich bitte an {name} ({email}).",
+  "company_access_none": "Kein Zugriff",
+  "company_access_read": "Nur lesen",
+  "company_access_full": "Lesen und senden",
+  "company_access_for": "Zugriff für {name}",
+  "company_access_hint": "„Nur lesen“: sieht die Mails, kann sie aber nicht verschieben, löschen oder als diese Adresse beantworten.",
+  "company_readers": "nur lesen: {names}",
+  "company_vacation": "Abwesenheit eintragen",
+  "company_vacation_title": "Abwesenheit von {name}",
+  "company_vacation_hint": "Zum Beispiel bei Krankheit: Wer {name} schreibt, bekommt einmal diese Antwort.",
+  "company_deputy": "Vertretung",
+  "company_deputy_none": "Keine",
+  "company_vacation_saved": "Abwesenheit gespeichert.",
+  "company_access_legend": "Zugriff"
 }

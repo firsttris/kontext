@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { type Roles, rolesValue, type StalwartAccount } from "./accounts";
+import type { Mailstore } from "./mailstore";
 import type { Management } from "./management";
 import { createCompanyRoutes } from "./routes";
 
@@ -22,7 +23,11 @@ const fakeManagement = () => {
   const updates: Record<string, Record<string, unknown>>[] = [];
   const created: Record<string, unknown>[] = [];
   const management: Management = {
-    listAccounts: async () => [account("1", "chef", true), account("2", "anna")],
+    listAccounts: async () => [
+      account("1", "chef", true),
+      account("2", "anna"),
+      { id: "g", "@type": "Group", name: "info", domainId: "d", roles: { "@type": "Default" } },
+    ],
     listDomains: async () => [{ id: "d", name: "firma.de" }],
     loadRoles: async () => roles,
     createAccount: async (value) => {
@@ -34,7 +39,29 @@ const fakeManagement = () => {
       return { ok: true, value: null };
     },
   };
-  return { management, updates, created };
+  const shared: Record<string, Record<string, unknown>>[] = [];
+  const mailstore: Mailstore = {
+    listFolders: async (accountIds) =>
+      Object.fromEntries(
+        accountIds.map((id) => [id, [{ id: "inbox", role: "inbox", shareWith: null }]]),
+      ),
+    updateFolders: async (_accountId, update) => {
+      shared.push(update);
+      return { ok: true, value: null };
+    },
+    getVacation: async () => ({
+      isEnabled: false,
+      fromDate: null,
+      toDate: null,
+      subject: null,
+      textBody: null,
+      htmlBody: null,
+    }),
+    setVacation: async () => ({ ok: true, value: null }),
+    listIdentities: async () => [],
+    updateIdentities: async () => ({ ok: true, value: null }),
+  };
+  return { management, mailstore, updates, created, shared };
 };
 
 const setup = (email: string | null) => {
@@ -42,6 +69,7 @@ const setup = (email: string | null) => {
   const ended: string[] = [];
   const app = createCompanyRoutes({
     management: fake.management,
+    mailstore: fake.mailstore,
     currentEmail: async () => email,
     endSessions: async (address) => {
       ended.push(address);
@@ -111,6 +139,19 @@ describe("Firmenverwaltung", () => {
     expect(updates).toEqual([
       { "2": { "credentials/0/secret": "aaaa-aaaa-aaaa-aaaa" } },
       { "2": { "credentials/0/otpAuth": null } },
+    ]);
+  });
+
+  it("gives a reader every folder of a shared mailbox, but not a member", async () => {
+    const { send, shared, updates } = setup("chef@firma.de");
+    const response = await send("PATCH", "/mailboxes/g", {
+      memberIds: ["1"],
+      readerIds: ["1", "2"],
+    });
+    expect(response.status).toBe(200);
+    expect(updates).toEqual([{ "1": { "memberGroupIds/g": true } }]);
+    expect(shared).toEqual([
+      { inbox: { "shareWith/2": { mayReadItems: true, maySetSeen: true } } },
     ]);
   });
 });
