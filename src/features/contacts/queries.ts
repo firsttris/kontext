@@ -132,6 +132,14 @@ export const bookLabel = (book: BookRef): string =>
     ? book.name
     : m.contacts_book_of({ book: book.name, owner: book.owner });
 
+/** Where a new contact or group goes: the shown book if writable, else the own default book. */
+export const startBook = (writable: BookRef[], preferred?: string): string =>
+  (
+    writable.find((book) => book.key === preferred) ??
+    writable.find((book) => book.isPersonal && book.book.isDefault) ??
+    writable[0]
+  )?.key ?? "";
+
 /** The book a contact is in (the first one it belongs to that the user can see). */
 export const bookOf = (books: BookRef[], contact: Contact): BookRef | undefined =>
   books.find(

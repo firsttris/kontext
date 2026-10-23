@@ -1,25 +1,21 @@
 /** Contacts: the list on the left, the selected contact with mails and appointments on the right. */
 import { Link, useNavigate } from "@tanstack/react-router";
 import { BookUser, Plus, Search } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { TabBar } from "@/components/shell/app-shell";
-import { Avatar } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Select } from "@/components/ui/input";
 import { cn } from "@/lib/cn";
-import { company, fullName, indexLetter, matchesSearch, sortKey } from "@/lib/jscontact";
+import { isGroup } from "@/lib/groups";
+import { matchesSearch } from "@/lib/jscontact";
 import { m } from "@/paraglide/messages";
 import { BooksDialog } from "./books-dialog";
 import { ContactDetail } from "./contact-detail";
 import { ContactEditor } from "./contact-editor";
-import {
-  type BookRef,
-  bookLabel,
-  type Contact,
-  contactKey,
-  useContacts,
-  useContactsAccountId,
-} from "./queries";
+import { ContactList } from "./contact-list";
+import { GroupDetail } from "./group-detail";
+import { GroupEditor } from "./group-editor";
+import { type BookRef, bookLabel, contactKey, useContacts, useContactsAccountId } from "./queries";
 
 type ContactsSearch = {
   id?: string;
@@ -39,17 +35,9 @@ export const ContactsPage = ({ search }: { search: ContactsSearch }) => {
   );
   const showDetail = Boolean(search.id);
 
-  const groups = useMemo(() => {
-    const sorted = contacts
-      .filter((card) => matchesSearch(card, text))
-      .sort((a, b) => sortKey(a).localeCompare(sortKey(b), "de"));
-    const byLetter = new Map<string, Contact[]>();
-    for (const card of sorted) {
-      const letter = indexLetter(card);
-      byLetter.set(letter, [...(byLetter.get(letter) ?? []), card]);
-    }
-    return [...byLetter.entries()];
-  }, [contacts, text]);
+  const shown = contacts.filter((card) => matchesSearch(card, text));
+  const groups = shown.filter(isGroup);
+  const people = shown.filter((card) => !isGroup(card));
 
   return (
     <>
@@ -104,39 +92,17 @@ export const ContactsPage = ({ search }: { search: ContactsSearch }) => {
         <div className="min-h-0 flex-1 overflow-y-auto px-2 pb-3">
           {isPending ? (
             <p className="px-3 py-4 text-[14px] text-muted">{m.common_loading()}</p>
-          ) : groups.length === 0 ? (
+          ) : shown.length === 0 && text ? (
             <p className="px-3 py-4 text-[14px] text-muted">{m.contacts_empty()}</p>
           ) : (
-            groups.map(([letter, cards]) => (
-              <div key={letter}>
-                <div className="px-3 pt-2 pb-1 text-[12px] font-medium text-muted">{letter}</div>
-                <ul aria-label={letter} className="m-0 flex list-none flex-col gap-0.5 p-0">
-                  {cards.map((card) => (
-                    <li key={contactKey(card)}>
-                      <Link
-                        to="/contacts"
-                        search={{
-                          id: card.id,
-                          account: card.accountId === ownAccount ? undefined : card.accountId,
-                          book: search.book,
-                        }}
-                        aria-current={card === selected ? "true" : undefined}
-                        className={cn(
-                          "flex items-center gap-3 rounded-[10px] px-3 py-2.5 text-fg no-underline hover:bg-hover",
-                          card === selected && "bg-bg shadow-[0_0_0_1px_var(--border)]",
-                        )}
-                      >
-                        <Avatar name={fullName(card)} size={34} />
-                        <span className="flex min-w-0 flex-col">
-                          <span className="truncate font-medium">{fullName(card)}</span>
-                          <span className="truncate text-[13px] text-muted">{company(card)}</span>
-                        </span>
-                      </Link>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            ))
+            <ContactList
+              groups={groups}
+              contacts={people}
+              selected={selected}
+              ownAccount={ownAccount}
+              book={search.book}
+              searching={Boolean(text.trim())}
+            />
           )}
         </div>
         <TabBar />
@@ -149,10 +115,27 @@ export const ContactsPage = ({ search }: { search: ContactsSearch }) => {
       >
         {search.id === "new" ? (
           <ContactEditor books={books} preferredBook={search.book} />
+        ) : search.id === "new-group" ? (
+          <GroupEditor contacts={contacts} books={books} preferredBook={search.book} />
+        ) : selected && isGroup(selected) && search.edit ? (
+          <GroupEditor
+            key={contactKey(selected)}
+            group={selected}
+            contacts={contacts}
+            books={books}
+          />
+        ) : selected && isGroup(selected) ? (
+          <GroupDetail group={selected} contacts={contacts} books={books} />
         ) : selected && search.edit ? (
           <ContactEditor key={contactKey(selected)} card={selected} books={books} />
         ) : selected ? (
-          <ContactDetail card={selected} books={books} />
+          <ContactDetail
+            card={selected}
+            books={books}
+            groups={contacts.filter(
+              (card) => isGroup(card) && card.accountId === selected.accountId,
+            )}
+          />
         ) : (
           <div className="flex h-full items-center justify-center text-[14px] text-muted">
             {search.id && !isPending ? m.contacts_empty() : m.contacts_pick()}

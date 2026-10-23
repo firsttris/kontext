@@ -17,6 +17,8 @@ export type ContactCard = {
   phones?: Record<string, { number: string; features?: Record<string, boolean>; pref?: number }>;
   addresses?: Record<string, { components?: NameComponent[]; full?: string }>;
   notes?: Record<string, { note: string }>;
+  /** Groups only: the member cards' `uid`s. */
+  members?: Record<string, boolean>;
   updated?: string;
 };
 
@@ -89,7 +91,7 @@ export const toForm = (card: ContactCard): ContactForm => ({
 
 /** Sorted by surname, then given name, as in a phone book. */
 export const sortKey = (card: ContactCard): string =>
-  `${surname(card) || company(card) || givenName(card) || primaryEmail(card)} ${givenName(card)}`.toLocaleLowerCase(
+  `${surname(card) || company(card) || givenName(card) || card.name?.full || primaryEmail(card)} ${givenName(card)}`.toLocaleLowerCase(
     "de",
   );
 

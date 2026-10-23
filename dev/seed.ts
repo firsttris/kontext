@@ -10,7 +10,16 @@ import { parseArgs } from "node:util";
 import { assertSetOk, CAPABILITIES, createJmapClient, type JmapClient } from "../src/jmap/client";
 import { DEV_DOMAIN, DEV_PASSWORD, STALWART_ADMIN } from "./config";
 import { buildMessage } from "./mime";
-import { contacts, events, folders, groups, mails, type SeedMail, users } from "./seed-data";
+import {
+  contactGroups,
+  contacts,
+  events,
+  folders,
+  groups,
+  mails,
+  type SeedMail,
+  users,
+} from "./seed-data";
 
 const ADMIN_USING = [CAPABILITIES.core, CAPABILITIES.stalwart];
 
@@ -241,7 +250,7 @@ const ensureContacts = async (): Promise<number> => {
       properties: ["uid"],
     });
     const known = new Set(list.map((card) => card.uid));
-    const create = Object.fromEntries(
+    const create: Record<string, Record<string, unknown>> = Object.fromEntries(
       contacts
         .filter((c) => c.owner === owner && !known.has(c.uid))
         .map((c) => [
@@ -278,6 +287,17 @@ const ensureContacts = async (): Promise<number> => {
           },
         ]),
     );
+    for (const group of contactGroups.filter((g) => g.owner === owner && !known.has(g.uid))) {
+      create[group.uid] = {
+        "@type": "Card",
+        version: "1.0",
+        uid: group.uid,
+        kind: "group",
+        addressBookIds: { [addressBookId]: true },
+        name: { full: group.name },
+        members: Object.fromEntries(group.members.map((uid) => [uid, true])),
+      };
+    }
     if (Object.keys(create).length === 0) continue;
     assertSetOk(await client.call("ContactCard/set", { accountId, create }), "Kontakte");
     created += Object.keys(create).length;

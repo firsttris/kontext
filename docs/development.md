@@ -31,8 +31,8 @@ Der Server speichert nur Sitzungen (und später Passkeys) in SQLite, Standard
 ## Testdaten
 
 `bun run seed` (oder `--seed`) legt die Firma „Weber Haustechnik“ an: vier Mitarbeiter, die
-gemeinsamen Postfächer info@ und rechnung@, Ordner, Mails mit Anhang, Kontakte und Termine der
-laufenden Woche. Das Skript ist idempotent – es ergänzt nur, was fehlt.
+gemeinsamen Postfächer info@ und rechnung@, Ordner, Mails mit Anhang, Kontakte mit den Gruppen
+„Lieferanten“ und „Team“ und Termine der laufenden Woche. Das Skript ist idempotent – es ergänzt nur, was fehlt.
 
 | Anmeldung                                               | Passwort                    |
 | ------------------------------------------------------- | --------------------------- |

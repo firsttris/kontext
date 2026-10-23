@@ -15,6 +15,7 @@ import type { EmailAddress, Identity } from "@/jmap/types";
 import { parseAddresses } from "@/lib/addresses";
 import { type ComposeMode, startCompose } from "@/lib/compose";
 import { formatSize } from "@/lib/format";
+import { groupSuggestions } from "@/lib/groups";
 import { htmlToText, sanitizeMailHtml, textToHtml } from "@/lib/html";
 import { contactAddresses } from "@/lib/jscontact";
 import { findRole } from "@/lib/mailboxes";
@@ -48,7 +49,10 @@ export const Composer = ({ accountId, mode, sourceEmailId, prefillTo }: Props) =
   const { data: mailboxes = [] } = useMailboxes(accountId);
   const { data: contacts = [] } = useContacts();
   const source = useEmail(accountId, sourceEmailId);
-  const suggestions = useMemo(() => contactAddresses(contacts), [contacts]);
+  const suggestions = useMemo(
+    () => [...groupSuggestions(contacts), ...contactAddresses(contacts)],
+    [contacts],
+  );
 
   const [identityId, setIdentityId] = useState<string>("");
   const [to, setTo] = useState<EmailAddress[]>([]);

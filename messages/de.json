@@ -255,5 +255,17 @@
   "calendar_of": "{calendar} · {owner}",
   "calendar_show": "{name} anzeigen",
   "calendar_in": "Kalender: {name}",
-  "calendar_read_only": "Von {owner} geteilt, nur zum Lesen."
+  "calendar_read_only": "Von {owner} geteilt, nur zum Lesen.",
+  "contacts_groups": "Gruppen",
+  "contacts_group": "Gruppe",
+  "contacts_group_new": "Neue Gruppe",
+  "contacts_group_name": "Name der Gruppe",
+  "contacts_group_count": "Gruppe · {count} Kontakte",
+  "contacts_group_members": "Mitglieder",
+  "contacts_group_no_members": "Noch keine Mitglieder.",
+  "contacts_group_mail_all": "Mail an alle",
+  "contacts_group_delete": "Gruppe löschen",
+  "contacts_group_name_missing": "Bitte einen Namen für die Gruppe angeben.",
+  "contacts_group_pick": "Mitglieder suchen",
+  "contacts_member_of": "Gruppen"
 }

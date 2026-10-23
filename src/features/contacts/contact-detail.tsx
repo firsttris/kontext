@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { CAPABILITIES } from "@/jmap/client";
 import { emailsWithAddress } from "@/jmap/mail";
 import { displayName, listDate } from "@/lib/format";
+import { groupsOf } from "@/lib/groups";
 import { dateKey, eventTimes, locationName, toLocal } from "@/lib/jscalendar";
 import { addressLines, company, fullName, note, primaryEmail, primaryPhone } from "@/lib/jscontact";
 import { m } from "@/paraglide/messages";
@@ -38,7 +39,15 @@ const dayFormat = new Intl.DateTimeFormat("de-DE", {
   month: "short",
 });
 
-export const ContactDetail = ({ card, books }: { card: Contact; books: BookRef[] }) => {
+type Props = {
+  card: Contact;
+  books: BookRef[];
+  /** The groups of the card's account; those it belongs to are listed. */
+  groups: Contact[];
+};
+
+export const ContactDetail = ({ card, books, groups }: Props) => {
+  const memberOf = groupsOf(card, groups);
   const book = bookOf(books, card);
   const client = useClient();
   const { data: session } = useSession();
@@ -221,6 +230,23 @@ export const ContactDetail = ({ card, books }: { card: Contact; books: BookRef[]
               </Field>
             ) : null}
           </Card>
+          {memberOf.length > 0 ? (
+            <Card title={m.contacts_member_of()}>
+              <ul className="m-0 flex list-none flex-wrap gap-1.5 p-0">
+                {memberOf.map((group) => (
+                  <li key={group.id}>
+                    <Link
+                      to="/contacts"
+                      search={(prev) => ({ book: prev.book, id: group.id, account: prev.account })}
+                      className="inline-flex h-7 items-center rounded-full border border-border px-3 text-[13px] text-fg no-underline hover:bg-hover"
+                    >
+                      {fullName(group)}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </Card>
+          ) : null}
           {note(card) ? (
             <Card title={m.contacts_note()}>
               <p className="m-0 whitespace-pre-line text-muted">{note(card)}</p>

@@ -7,7 +7,7 @@ import { Input, Label, Select, Textarea } from "@/components/ui/input";
 import { useToast } from "@/components/ui/toast";
 import { type ContactForm, emptyContactForm, formToCard, fullName, toForm } from "@/lib/jscontact";
 import { m } from "@/paraglide/messages";
-import { type BookRef, bookLabel, type Contact, useContactMutations } from "./queries";
+import { type BookRef, bookLabel, type Contact, startBook, useContactMutations } from "./queries";
 
 type Props = {
   card?: Contact;
@@ -15,14 +15,6 @@ type Props = {
   /** The address book shown in the list; a new contact goes there when the user may write. */
   preferredBook?: string;
 };
-
-/** Where a new contact goes: the shown book if writable, else the own default book. */
-const startBook = (writable: BookRef[], preferred?: string): string =>
-  (
-    writable.find((book) => book.key === preferred) ??
-    writable.find((book) => book.isPersonal && book.book.isDefault) ??
-    writable[0]
-  )?.key ?? "";
 
 export const ContactEditor = ({ card, books, preferredBook }: Props) => {
   const [form, setForm] = useState<ContactForm>(card ? toForm(card) : emptyContactForm);

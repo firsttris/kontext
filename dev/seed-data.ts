@@ -189,6 +189,19 @@ export const mails: SeedMail[] = [
   },
 ];
 
+/** Contact groups (JSContact cards of kind "group"); members by uid. */
+export type SeedContactGroup = { uid: string; owner: string; name: string; members: string[] };
+
+export const contactGroups: SeedContactGroup[] = [
+  { uid: "lieferanten", owner: "jonas", name: "Lieferanten", members: ["petra-keller", "richter"] },
+  {
+    uid: "team",
+    owner: "jonas",
+    name: "Team",
+    members: ["anna-weber", "sandra-klein", "max-becker"],
+  },
+];
+
 export type SeedContact = {
   uid: string;
   owner: string;

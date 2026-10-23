@@ -34,6 +34,12 @@ die Gruppe als zusätzliches Konto in seiner JMAP-Session (`isPersonal: false`) 
 Mails und einer Absenderadresse. Sekretär zeigt diese Konten unter „Postfächer“; wer dort
 antwortet, schreibt automatisch als info@.
 
+## Kontaktgruppen
+
+Eine Gruppe ist eine JSContact-Karte mit `kind: "group"`; ihr `members` hält die `uid`s der
+Mitglieder (RFC 9553). Stalwart speichert sie wie jeden Kontakt. Mitglieder kommen immer aus
+demselben Konto, weil eine `uid` nur dort eindeutig ist.
+
 ## Adressbücher und Kalender teilen
 
 Adressbücher und Kalender werden über ihr `shareWith` geteilt (draft-ietf-jmap-contacts und

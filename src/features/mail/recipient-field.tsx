@@ -5,12 +5,15 @@ import type { EmailAddress } from "@/jmap/types";
 import { parseAddresses } from "@/lib/addresses";
 import { cn } from "@/lib/cn";
 import { displayName } from "@/lib/format";
+import type { Suggestion } from "@/lib/groups";
+import { m } from "@/paraglide/messages";
 
 type Props = {
   label: string;
   value: EmailAddress[];
   onChange: (value: EmailAddress[]) => void;
-  suggestions: EmailAddress[];
+  /** Contacts, and groups that add all their members. */
+  suggestions: Suggestion[];
   autoFocus?: boolean;
 };
 
@@ -31,6 +34,9 @@ export const RecipientField = ({ label, value, onChange, suggestions, autoFocus 
       )
       .slice(0, 6);
   }, [text, suggestions, value]);
+
+  /** A group stands for its members. */
+  const pick = (suggestion: Suggestion) => add(suggestion.members ?? [suggestion]);
 
   const add = (addresses: EmailAddress[]) => {
     const known = new Set(value.map((a) => a.email.toLowerCase()));
@@ -62,7 +68,7 @@ export const RecipientField = ({ label, value, onChange, suggestions, autoFocus 
     ) {
       if (matches.length > 0 && event.key !== ",") {
         event.preventDefault();
-        add([matches[highlight] ?? matches[0]!]);
+        pick(matches[highlight] ?? matches[0]!);
       } else if (text.trim() && commit()) {
         event.preventDefault();
       }
@@ -122,7 +128,7 @@ export const RecipientField = ({ label, value, onChange, suggestions, autoFocus 
               aria-selected={index === highlight}
               onMouseDown={(event) => {
                 event.preventDefault();
-                add([address]);
+                pick(address);
               }}
               className={cn(
                 "flex cursor-pointer flex-col rounded-lg px-2.5 py-1.5",
@@ -130,7 +136,11 @@ export const RecipientField = ({ label, value, onChange, suggestions, autoFocus 
               )}
             >
               <span className="text-[14px]">{address.name ?? address.email}</span>
-              {address.name ? (
+              {address.members ? (
+                <span className="text-[12px] text-muted">
+                  {m.contacts_group_count({ count: address.members.length })}
+                </span>
+              ) : address.name ? (
                 <span className="text-[12px] text-muted">{address.email}</span>
               ) : null}
             </div>

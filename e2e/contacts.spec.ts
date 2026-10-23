@@ -61,6 +61,64 @@ test.describe("Kontakte", () => {
   });
 });
 
+test.describe("Kontaktgruppen", () => {
+  test.beforeEach(async ({ page }) => {
+    await login(page);
+    await page.goto("/contacts");
+  });
+
+  test("legt eine Gruppe an, schreibt allen und ändert sie", async ({ page }) => {
+    const name = unique("Kunden Bühl");
+    await page.getByRole("link", { name: "Neue Gruppe" }).click();
+    await page.getByLabel("Name der Gruppe").fill(name);
+    await page.getByLabel("Mitglieder suchen").fill("hoff");
+    await page.getByRole("checkbox", { name: /Markus Hoffmann/ }).check();
+    await page.getByLabel("Mitglieder suchen").fill("sommer");
+    await page.getByRole("checkbox", { name: /Claudia Sommer/ }).check();
+    await page.getByRole("button", { name: "Speichern" }).click();
+    await expect(page.getByRole("heading", { name })).toBeVisible();
+    const members = page.getByRole("list", { name: "Mitglieder" });
+    await expect(members.getByRole("link")).toHaveCount(2);
+
+    // The contact shows its group.
+    await members.getByRole("link", { name: /Claudia Sommer/ }).click();
+    const chip = page.getByRole("link", { name, exact: true });
+    await expect(chip).toBeVisible();
+    await chip.click();
+
+    // One mail to all members.
+    await page.getByRole("link", { name: "Mail an alle" }).click();
+    const compose = page.getByRole("form", { name: "Neue Mail" });
+    await expect(compose.getByText("Markus Hoffmann")).toBeVisible();
+    await expect(compose.getByText("Claudia Sommer")).toBeVisible();
+
+    // Markus leaves the group, then it is deleted.
+    await page.goto("/contacts");
+    await page
+      .getByRole("list", { name: "Gruppen" })
+      .getByRole("link", { name: new RegExp(name) })
+      .click();
+    await page.getByRole("link", { name: "Bearbeiten" }).click();
+    await page.getByRole("checkbox", { name: /Markus Hoffmann/ }).uncheck();
+    await page.getByRole("button", { name: "Speichern" }).click();
+    await expect(page.getByRole("list", { name: "Mitglieder" }).getByRole("link")).toHaveCount(1);
+    page.once("dialog", (dialog) => dialog.accept());
+    await page.getByRole("link", { name: "Bearbeiten" }).click();
+    await page.getByRole("button", { name: "Gruppe löschen" }).click();
+    await expect(page.getByRole("link", { name: new RegExp(name) })).toHaveCount(0);
+  });
+
+  test("schlägt eine Gruppe beim Schreiben vor", async ({ page }) => {
+    await page.getByRole("link", { name: "Mail" }).first().click();
+    await page.getByRole("link", { name: "Neue Mail" }).first().click();
+    await page.getByRole("combobox", { name: "An" }).fill("liefer");
+    await page.getByRole("option", { name: /Lieferanten.*Gruppe · 2 Kontakte/ }).click();
+    const compose = page.getByRole("form", { name: "Neue Mail" });
+    await expect(compose.getByText("Petra Keller")).toBeVisible();
+    await expect(compose.getByText("Bestellannahme Richter")).toBeVisible();
+  });
+});
+
 test.describe("Adressbücher teilen", () => {
   test("Jonas teilt ein Adressbuch mit Anna, erst zum Bearbeiten, dann nur zum Lesen", async ({
     page,
