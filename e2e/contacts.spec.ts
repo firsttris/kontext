@@ -275,6 +275,7 @@ test.describe("Kontakte am Handy @phone", () => {
   test("Liste und Kontakt", async ({ page }) => {
     await login(page);
     await page.getByRole("link", { name: "Kontakte" }).click();
+    await expect(page.getByRole("searchbox", { name: "Kontakte suchen" })).toBeVisible();
     await page.getByRole("link", { name: /Petra Keller/ }).click();
     await expect(page.getByRole("heading", { name: "Petra Keller" })).toBeVisible();
     await page.getByRole("link", { name: "Kontakte", exact: true }).first().click();
