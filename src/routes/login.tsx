@@ -4,7 +4,6 @@ import { z } from "zod";
 import { useAuth } from "@/auth/auth";
 import { Button } from "@/components/ui/button";
 import { Input, Label } from "@/components/ui/input";
-import { isJmapError } from "@/jmap/client";
 import { m } from "@/paraglide/messages";
 
 export const Route = createFileRoute("/login")({
@@ -21,6 +20,8 @@ function LoginPage() {
   const { redirect: target } = Route.useSearch();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+  const [code, setCode] = useState("");
+  const [needsCode, setNeedsCode] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
@@ -28,13 +29,20 @@ function LoginPage() {
     event.preventDefault();
     setBusy(true);
     setError(null);
-    try {
-      await login({ username: username.trim(), password });
+    const result = await login(username.trim(), password, needsCode ? code : undefined);
+    setBusy(false);
+    if (result === "ok") {
       await navigate({ to: target?.startsWith("/") ? target : "/" });
-    } catch (err) {
-      setError(isJmapError(err) && err.status === 401 ? m.login_failed() : m.login_offline());
-    } finally {
-      setBusy(false);
+    } else if (result === "mfa") {
+      setNeedsCode(true);
+    } else {
+      setError(
+        result === "failed"
+          ? needsCode
+            ? m.login_code_failed()
+            : m.login_failed()
+          : m.login_offline(),
+      );
     }
   };
 
@@ -78,6 +86,21 @@ function LoginPage() {
             onChange={(e) => setPassword(e.target.value)}
           />
         </Label>
+        {needsCode ? (
+          <Label>
+            {m.login_code()}
+            <Input
+              inputMode="numeric"
+              autoComplete="one-time-code"
+              pattern="[0-9]{6,8}"
+              required
+              autoFocus
+              value={code}
+              onChange={(e) => setCode(e.target.value.replace(/\D/g, ""))}
+            />
+            <span className="text-[12px]">{m.login_code_hint()}</span>
+          </Label>
+        ) : null}
         {error ? (
           <p role="alert" className="m-0 text-[13px] text-danger">
             {error}

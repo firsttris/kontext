@@ -1,6 +1,8 @@
 # Podman Quadlet: copy to /etc/containers/systemd/ and run `systemctl daemon-reload`.
+# The app and its server (sign-in, JMAP to Stalwart). Set BETTER_AUTH_URL and BETTER_AUTH_SECRET
+# in /opt/sekretaer/deploy/sekretaer.env (Quadlet does not expand variables).
 [Unit]
-Description=Sekretär web app
+Description=Sekretär (app and server)
 After=stalwart.service
 Wants=stalwart.service
 
@@ -8,13 +10,9 @@ Wants=stalwart.service
 Image=docker.io/tristanteu/sekretaer:latest
 ContainerName=sekretaer
 Network=sekretaer.network
-PublishPort=80:80
-PublishPort=443:443
-PublishPort=443:443/udp
-Volume=caddy-data:/data
-Volume=caddy-config:/config
-EnvironmentFile=/opt/sekretaer/deploy/.env
-Environment=STALWART_UPSTREAM=stalwart:8080
+Volume=sekretaer-data:/data
+Environment=STALWART_URL=http://stalwart:8080
+EnvironmentFile=/opt/sekretaer/deploy/sekretaer.env
 AutoUpdate=registry
 
 [Service]

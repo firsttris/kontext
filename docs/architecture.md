@@ -3,8 +3,10 @@
 ```mermaid
 flowchart LR
   Browser["Browser / Handy<br>Sekretär (React-SPA)"] -->|HTTPS| Caddy
-  Caddy -->|"/jmap, /.well-known, /dav"| Stalwart
-  Caddy -->|"alles andere"| Dateien["statische App"]
+  Caddy -->|"App, /api, /jmap"| Server["Sekretär-Server<br>(Bun, Hono, Better Auth)"]
+  Server -->|"JMAP mit Token"| Stalwart
+  Server --> SQLite[("Sitzungen")]
+  Caddy -->|"/dav, /.well-known"| Stalwart
   Clients["Mailprogramme, Handys"] -->|"IMAP, SMTP, CalDAV, CardDAV"| Stalwart
   Internet["andere Mailserver"] -->|SMTP 25| Stalwart
   Stalwart --> Daten[("RocksDB-Volume")]
@@ -16,11 +18,14 @@ flowchart LR
 - **Stalwart** (Community Edition, AGPL) ist Mail-, Kalender- und Kontaktserver in einem. Seit
   0.16 liegt die ganze Konfiguration in seiner Datenbank; auf der Platte steht nur `config.json`
   mit dem Speicherort.
-- **Sekretär** ist eine Single-Page-App ohne eigenen Server. Sie spricht ausschließlich
-  [JMAP](https://jmap.io) mit Stalwart: Mail (RFC 8621), Kalender (JSCalendar) und Kontakte
-  (JSContact) über dieselbe Schnittstelle, Push über den Event-Stream.
-- **Caddy** liefert die App aus, holt das Zertifikat und leitet JMAP an Stalwart weiter. App und
-  JMAP laufen unter derselben Adresse, deshalb braucht es kein CORS.
+- **Sekretär** ist eine Single-Page-App. Sie spricht [JMAP](https://jmap.io): Mail (RFC 8621),
+  Kalender (JSCalendar) und Kontakte (JSContact) über dieselbe Schnittstelle, Push über den
+  Event-Stream.
+- **Der Sekretär-Server** (Bun, Hono, Better Auth, SQLite) liefert die App aus, kümmert sich um
+  die Anmeldung und reicht JMAP an Stalwart durch. Dabei setzt er den Stalwart-Token der Sitzung
+  ein; der Browser kennt weder Passwort noch Token.
+- **Caddy** holt das Zertifikat und leitet alles an den Server weiter, CalDAV/CardDAV für
+  Mailprogramme direkt an Stalwart.
 
 ## Gemeinsame Postfächer
 
@@ -31,9 +36,17 @@ antwortet, schreibt automatisch als info@.
 
 ## Anmeldung
 
-Die App schickt Benutzername und Passwort als Basic-Auth an Stalwart (nur über HTTPS, gleiche
-Adresse). Sie liegen im `sessionStorage` des Tabs und sind beim Schließen weg. Später kommt OAuth
-mit Stalwart als Anbieter dazu, damit die App am Handy angemeldet bleiben kann.
+Benutzer und Passwörter bleiben in Stalwart. Bei der Anmeldung schickt die App E-Mail, Passwort
+und – wenn eingerichtet – den Code der Authenticator-App an den Server
+(`POST /api/auth/sign-in/stalwart`). Der meldet sich über Stalwarts OAuth an (Autorisierungscode
+mit PKCE, ohne Umleitung), legt eine Better-Auth-Sitzung an und setzt ein httpOnly-Cookie. Die
+Stalwart-Tokens liegen verschlüsselt (AES-GCM) in SQLite, je Sitzung. Der Zugriffstoken wird bei
+Bedarf mit dem Refresh-Token erneuert; Stalwart verlängert diesen, solange er benutzt wird. So
+bleibt die App am Handy angemeldet, bis man sich abmeldet (Sitzung 90 Tage, bei Nutzung erneuert).
+
+**Passkeys später:** Better Auth bringt ein Passkey-Plugin mit. Beim Einrichten eines Passkeys legt
+der Server in Stalwart ein App-Passwort für das Gerät an und speichert es verschlüsselt; eine
+Passkey-Anmeldung holt damit den Stalwart-Token. Am Rest ändert sich nichts.
 
 ## Code
 

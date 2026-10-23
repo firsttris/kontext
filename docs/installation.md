@@ -27,11 +27,13 @@ IP muss sich setzen lassen.
 ```bash
 git clone https://github.com/firsttris/sekretaer /opt/sekretaer && cd /opt/sekretaer
 cp deploy/.env.example deploy/.env
-nano deploy/.env                 # Domain, Mailserver-Name, Tailscale-IP, Backup-Ziel
+nano deploy/.env                 # Domain, Mailserver-Name, Geheimnis, Tailscale-IP, Backup-Ziel
 docker compose -f deploy/compose.yaml up -d
 ```
 
-Caddy holt das Zertifikat für `SEKRETAER_DOMAIN` selbst. Mit Podman liegen die Quadlet-Dateien in
+Für `SEKRETAER_SECRET` eine lange Zufallszeichenfolge nehmen (`openssl rand -base64 48`); damit
+sind die Sitzungen signiert und die Stalwart-Tokens verschlüsselt. Caddy holt das Zertifikat für
+`SEKRETAER_DOMAIN` selbst. Mit Podman liegen die Quadlet-Dateien in
 `deploy/quadlet/` (nach `/etc/containers/systemd/` kopieren, `systemctl daemon-reload`).
 
 ## 3. Stalwart einrichten
@@ -47,7 +49,8 @@ Stalwarts eigene Verwaltung ist nur über die Tailscale-Adresse des Servers erre
    `info`) mit den Mitarbeitern als Mitglieder.
 4. Caddy als vertrauenswürdigen Proxy eintragen, damit Stalwart die echten IP-Adressen sieht.
 
-Danach unter `https://sekretaer.firma.de` anmelden.
+Danach unter `https://sekretaer.firma.de` anmelden. Am Handy im Browser „Zum Startbildschirm
+hinzufügen“ wählen: Sekretär startet dann wie eine App und bleibt angemeldet.
 
 ## 4. Backups
 

@@ -19,7 +19,8 @@
     "e2e": "playwright test --project desktop --project phone",
     "check": "bun run typecheck && bun run lint && bun run test && bun run build",
     "postinstall": "paraglide-js compile --project ./project.inlang --outdir ./src/paraglide",
-    "screenshots": "playwright test --project screenshots"
+    "screenshots": "playwright test --project screenshots",
+    "dev:server": "bun --watch server/main.ts"
   },
   "dependencies": {
     "@fontsource-variable/geist": "^5.3.0",
@@ -37,9 +38,12 @@
     "@tiptap/pm": "^3.32.0",
     "@tiptap/react": "^3.32.0",
     "@tiptap/starter-kit": "^3.32.0",
+    "better-auth": "^1.7.12",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "dompurify": "^3.4.17",
+    "drizzle-orm": "^0.45.4",
+    "hono": "^4.13.13",
     "lucide-react": "^1.61.0",
     "react": "^19.3.1",
     "react-dom": "^19.3.1",
@@ -60,6 +64,7 @@
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
     "@vitejs/plugin-react": "^6.1.2",
+    "drizzle-kit": "^0.31.11",
     "jsdom": "^30.1.3",
     "tailwindcss": "^4.3.3",
     "typescript": "^7.0.2",

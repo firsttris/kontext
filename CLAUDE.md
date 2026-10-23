@@ -36,7 +36,7 @@ Green before every push, then check CI:
 
 ```sh
 bun run typecheck && bun run lint && bun run test && bun run build
-bun run e2e              # own Stalwart on 28080 and Vite on 5174, seeded fresh
+bun run e2e              # own Stalwart 28080, server 28090, Vite 5174, seeded fresh
 mkdocs build --strict    # when docs/ or mkdocs.yml changed
 ```
 
@@ -49,7 +49,7 @@ mkdocs build --strict    # when docs/ or mkdocs.yml changed
 
 - Commands as root (`sudo`, `pkexec`) are run by the user; don't work around that.
 - The user's running processes are not stopped; use other ports for tests (dev: Stalwart 18080,
-  Vite 5173; e2e: 28080 and 5174).
+  server 18090, Vite 5173; e2e: 28080, 28090, 5174).
 - Language: code, comments and commits in English; README, docs and the app in German (the users
   are German businesses; all app texts in
   `messages/de.json`, used through Paraglide's `m.*`).
@@ -71,8 +71,10 @@ split it past ~400 lines, a function past ~80. A refactor changes no behaviour.
 ## Project specifics
 
 - One Stalwart (Community edition, AGPL) per customer; Sekretär is the web app in front of it and
-  talks only JMAP (`src/jmap/`). No own backend yet; the Gmail move and the company admin will add
-  a small Bun/Hono service.
+  talks only JMAP (`src/jmap/`). The Sekretär server (`server/`: Bun, Hono, Better Auth, Drizzle
+  on SQLite) does the sign-in against Stalwart's OAuth and passes JMAP through with the session's
+  token; the browser holds only an httpOnly cookie. New server features (Gmail move, company
+  admin, passkeys) go there.
 - Shared mailboxes are Stalwart group accounts: every member sees the group's account in the JMAP
   session (`isPersonal: false`) and can send as its address.
 - Test data: `dev/seed-data.ts` ("Weber Haustechnik"). Logins `jonas@`, `anna@`, `sandra@`,

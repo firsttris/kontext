@@ -1,72 +1,93 @@
 /**
- * Login state. The credentials live in sessionStorage, so closing the tab logs out; the JMAP
- * client sends them as Basic auth over the same origin (HTTPS in production).
+ * Login state. The Sekretär server keeps the session (an httpOnly cookie, 90 days, renewed while
+ * in use) and Stalwart's tokens; the browser only knows whether it is signed in.
  */
 import { createContext, type ReactNode, useCallback, useContext, useMemo, useState } from "react";
-import { type Credentials, createJmapClient, type JmapClient } from "@/jmap/client";
+import { createJmapClient, type JmapClient } from "@/jmap/client";
 
-const STORAGE_KEY = "sekretaer.credentials";
+export type SignInResult = "ok" | "mfa" | "failed" | "offline";
 
-const readStored = (): Credentials | null => {
+/** Signs in at the server; "mfa" means the account needs the code from the authenticator app. */
+export const signIn = async (
+  email: string,
+  password: string,
+  code?: string,
+): Promise<SignInResult> => {
   try {
-    const raw = sessionStorage.getItem(STORAGE_KEY);
-    if (!raw) return null;
-    const parsed = JSON.parse(raw) as Partial<Credentials>;
-    return parsed.username && parsed.password
-      ? { username: parsed.username, password: parsed.password }
-      : null;
+    const response = await fetch("/api/auth/sign-in/stalwart", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      credentials: "same-origin",
+      body: JSON.stringify({ email, password, ...(code ? { code } : {}) }),
+    });
+    if (response.status === 401 || response.status === 400) return "failed";
+    if (!response.ok) return "offline";
+    const body = (await response.json()) as { status: "ok" | "mfa" };
+    return body.status;
   } catch {
-    return null;
+    return "offline";
   }
 };
 
-const store = (credentials: Credentials | null): void => {
+export const signOut = async (): Promise<void> => {
+  await fetch("/api/auth/sign-out", {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    credentials: "same-origin",
+    body: "{}",
+  }).catch(() => undefined);
+};
+
+/** Whether this browser has a session; asked once at start. */
+export const hasSession = async (): Promise<boolean> => {
   try {
-    if (credentials) sessionStorage.setItem(STORAGE_KEY, JSON.stringify(credentials));
-    else sessionStorage.removeItem(STORAGE_KEY);
+    const response = await fetch("/api/auth/get-session", { credentials: "same-origin" });
+    if (!response.ok) return false;
+    return (await response.json()) !== null;
   } catch {
-    // private mode: stay logged in for this page only
+    return false;
   }
 };
 
-const clientFor = (credentials: Credentials | null): JmapClient | null =>
-  credentials ? createJmapClient({ origin: window.location.origin, credentials }) : null;
+export const createAppClient = (onUnauthorized: () => void): JmapClient =>
+  createJmapClient({ origin: window.location.origin, onUnauthorized });
 
 export type Auth = {
   client: JmapClient | null;
-  login: (credentials: Credentials) => Promise<void>;
-  logout: () => void;
+  login: (email: string, password: string, code?: string) => Promise<SignInResult>;
+  logout: () => Promise<void>;
 };
 
 const AuthContext = createContext<Auth | null>(null);
 
-/** Created once at start, so the router can check the login before rendering. */
-export const initialAuthClient = (): JmapClient | null => clientFor(readStored());
-
 export const AuthProvider = ({
   initialClient,
+  makeClient,
   onChange,
   children,
 }: {
   initialClient: JmapClient | null;
+  makeClient: () => JmapClient;
   onChange: (client: JmapClient | null) => void;
   children: ReactNode;
 }) => {
   const [client, setClient] = useState(initialClient);
 
   const login = useCallback(
-    async (credentials: Credentials) => {
-      const next = clientFor(credentials)!;
-      await next.fetchSession();
-      store(credentials);
-      setClient(next);
-      onChange(next);
+    async (email: string, password: string, code?: string) => {
+      const result = await signIn(email, password, code);
+      if (result === "ok") {
+        const next = makeClient();
+        setClient(next);
+        onChange(next);
+      }
+      return result;
     },
-    [onChange],
+    [makeClient, onChange],
   );
 
-  const logout = useCallback(() => {
-    store(null);
+  const logout = useCallback(async () => {
+    await signOut();
     setClient(null);
     onChange(null);
   }, [onChange]);

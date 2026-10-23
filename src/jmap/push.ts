@@ -37,7 +37,8 @@ export const subscribeToChanges = (
     const { eventSourceUrl } = await client.getSession();
     const url = fillTemplate(eventSourceUrl, { types: "*", closeafter: "no", ping: "60" });
     const response = await fetch(url, {
-      headers: { authorization: client.authorization, accept: "text/event-stream" },
+      headers: { ...client.authHeaders, accept: "text/event-stream" },
+      credentials: "same-origin",
       signal: controller.signal,
     });
     if (!response.ok || !response.body) throw new Error(`Push ${response.status}`);

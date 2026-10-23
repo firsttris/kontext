@@ -1,4 +1,5 @@
-# Sekretär for one customer: Stalwart (mail, calendar, contacts) and the web app.
+# Sekretär for one customer: Stalwart (mail, calendar, contacts), the Sekretär server (app,
+# sign-in, JMAP pass-through) and Caddy (HTTPS).
 # Works with Docker Compose and Podman Compose; Quadlet files are in deploy/quadlet/.
 #
 #   cp deploy/.env.example deploy/.env   # fill in domain and mail
@@ -28,10 +29,21 @@ services:
       timeout: 5s
       retries: 3
 
-  web:
+  sekretaer:
     image: docker.io/tristanteu/sekretaer:${SEKRETAER_VERSION:-latest}
     restart: unless-stopped
     depends_on: [stalwart]
+    environment:
+      STALWART_URL: http://stalwart:8080
+      BETTER_AUTH_URL: https://${SEKRETAER_DOMAIN}
+      BETTER_AUTH_SECRET: ${SEKRETAER_SECRET}
+    volumes:
+      - sekretaer-data:/data
+
+  caddy:
+    image: docker.io/library/caddy:2-alpine
+    restart: unless-stopped
+    depends_on: [sekretaer]
     ports:
       - "80:80"
       - "443:443"
@@ -39,13 +51,14 @@ services:
     environment:
       SEKRETAER_DOMAIN: ${SEKRETAER_DOMAIN}
       ACME_EMAIL: ${ACME_EMAIL}
-      STALWART_UPSTREAM: stalwart:8080
     volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
       - caddy-data:/data
       - caddy-config:/config
 
 volumes:
   stalwart-config:
   stalwart-data:
+  sekretaer-data:
   caddy-data:
   caddy-config:

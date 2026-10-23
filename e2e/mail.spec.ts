@@ -11,6 +11,21 @@ test.describe("Anmeldung", () => {
     await expect(page.getByRole("alert")).toHaveText("E-Mail-Adresse oder Passwort stimmt nicht.");
   });
 
+  test("bleibt nach dem Neuladen angemeldet, ohne Passwort im Browser", async ({
+    page,
+    context,
+  }) => {
+    await login(page);
+    await page.reload();
+    await expect(page.getByRole("heading", { name: "Posteingang" })).toBeVisible();
+    const cookies = await context.cookies();
+    expect(cookies.find((cookie) => cookie.name.includes("session_token"))?.httpOnly).toBe(true);
+    const stored = await page.evaluate(() =>
+      JSON.stringify({ ...localStorage, ...sessionStorage }),
+    );
+    expect(stored).not.toContain("kaffee");
+  });
+
   test("meldet an und ab", async ({ page }) => {
     await login(page);
     await expect(page.getByRole("heading", { name: "Posteingang" })).toBeVisible();
@@ -19,6 +34,8 @@ test.describe("Anmeldung", () => {
       .first()
       .click();
     await page.getByRole("menuitem", { name: "Abmelden" }).click();
+    await expect(page).toHaveURL(/\/login/);
+    await page.goto("/mail");
     await expect(page).toHaveURL(/\/login/);
   });
 });

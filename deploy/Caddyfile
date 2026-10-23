@@ -1,6 +1,6 @@
-# One customer = one server: Sekretär on https://$SEKRETAER_DOMAIN, Stalwart behind it.
-# Caddy gets the certificate; the mail ports (25, 465, 587, 993) go straight to Stalwart.
-# Stalwart's own admin (port 8080) is not published here, only on the Tailscale address.
+# One customer = one server: Sekretär on https://$SEKRETAER_DOMAIN.
+# Caddy gets the certificate; the app, sign-in and JMAP go to the Sekretär server, which talks to
+# Stalwart. Mail clients reach Stalwart directly on the mail ports and through /dav and autoconfig.
 {
 	email {$ACME_EMAIL}
 }
@@ -8,21 +8,19 @@
 {$SEKRETAER_DOMAIN} {
 	encode zstd gzip
 
-	# JMAP (mail, calendar, contacts), the event stream, CalDAV/CardDAV and autoconfig
-	@stalwart path /jmap /jmap/* /.well-known/* /dav/* /auth/* /mail/config-v1.1.xml /autodiscover/*
+	# CalDAV/CardDAV and autoconfiguration for mail programs and phones, straight to Stalwart
+	@stalwart path /.well-known/* /dav/* /mail/config-v1.1.xml /autodiscover/*
 	handle @stalwart {
-		reverse_proxy {$STALWART_UPSTREAM:stalwart:8080} {
+		reverse_proxy stalwart:8080 {
 			header_up X-Forwarded-For {remote_host}
-			flush_interval -1
 		}
 	}
 
 	handle {
-		root * /srv
-		try_files {path} /index.html
-		file_server
-		@immutable path /assets/*
-		header @immutable Cache-Control "public, max-age=31536000, immutable"
+		reverse_proxy sekretaer:3000 {
+			header_up X-Forwarded-For {remote_host}
+			flush_interval -1
+		}
 	}
 
 	header {

@@ -6,7 +6,8 @@ nötig: das Entwicklungsskript lädt Stalwart als einzelne Datei von GitHub.
 ```bash
 bun install
 bun run dev:stalwart -- --seed   # Stalwart auf 127.0.0.1:18080, mit Testdaten
-bun run dev                      # Sekretär auf http://localhost:5173
+bun run dev:server               # Sekretär-Server auf 127.0.0.1:18090 (Anmeldung, JMAP)
+bun run dev                      # App auf http://localhost:5173
 ```
 
 ## Lokaler Stalwart
@@ -20,6 +21,12 @@ IMAP 10143) und startet dann normal. Der Admin ist `admin` / `sekretaer-admin-de
 | `--fresh`                       | Daten vorher löschen                                |
 | `--seed`                        | Testdaten einspielen, sobald der Server läuft       |
 | `--instance e2e --http 28080 …` | zweite, getrennte Instanz (so laufen die E2E-Tests) |
+
+## Datenbank des Servers
+
+Der Server speichert nur Sitzungen (und später Passkeys) in SQLite, Standard
+`.dev/server/sekretaer.db`. Das Schema steht in `server/db/schema.ts`; nach einer Änderung
+`bunx drizzle-kit generate` – der Server spielt die Migrationen beim Start ein.
 
 ## Testdaten
 

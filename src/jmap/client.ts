@@ -72,22 +72,37 @@ export const basicAuth = ({ username, password }: Credentials): string =>
   `Basic ${btoa(String.fromCharCode(...new TextEncoder().encode(`${username}:${password}`)))}`;
 
 type ClientOptions = {
-  /** Origin of the server, e.g. "http://127.0.0.1:18080". Empty in the browser (same origin). */
+  /** Origin of the server, e.g. "http://127.0.0.1:18080"; in the browser the page's own origin. */
   origin: string;
-  credentials: Credentials;
+  /**
+   * Basic auth straight to Stalwart, for the dev scripts and tests. The app leaves it out: its
+   * session cookie goes to the Sekretär server, which adds the Stalwart token.
+   */
+  credentials?: Credentials;
+  /** Called when the server answers 401, e.g. because the session ended. */
+  onUnauthorized?: () => void;
   fetch?: typeof fetch;
 };
 
 export const createJmapClient = ({
   origin,
   credentials,
-  fetch: doFetch = fetch,
+  onUnauthorized,
+  fetch: baseFetch = fetch,
 }: ClientOptions) => {
-  const authorization = basicAuth(credentials);
+  const authHeaders: Record<string, string> = credentials
+    ? { authorization: basicAuth(credentials) }
+    : {};
   let session: Session | undefined;
 
+  const doFetch = async (input: string, init: RequestInit = {}): Promise<Response> => {
+    const response = await baseFetch(input, { credentials: "same-origin", ...init });
+    if (response.status === 401) onUnauthorized?.();
+    return response;
+  };
+
   const fetchSession = async (): Promise<Session> => {
-    const response = await doFetch(`${origin}/jmap/session`, { headers: { authorization } });
+    const response = await doFetch(`${origin}/jmap/session`, { headers: authHeaders });
     if (response.status === 401) throw jmapError("Anmeldung fehlgeschlagen", "unauthorized", 401);
     if (!response.ok)
       throw jmapError(`Server antwortet nicht (${response.status})`, "network", response.status);
@@ -112,7 +127,7 @@ export const createJmapClient = ({
     const { apiUrl } = await getSession();
     const response = await doFetch(apiUrl, {
       method: "POST",
-      headers: { "content-type": "application/json", authorization },
+      headers: { "content-type": "application/json", ...authHeaders },
       body: JSON.stringify({ using, methodCalls }),
     });
     if (!response.ok) {
@@ -145,7 +160,7 @@ export const createJmapClient = ({
     const { uploadUrl } = await getSession();
     const response = await doFetch(fillTemplate(uploadUrl, { accountId }), {
       method: "POST",
-      headers: { "content-type": type, authorization },
+      headers: { "content-type": type, ...authHeaders },
       body: data,
     });
     if (!response.ok) throw jmapError(await response.text(), "upload", response.status);
@@ -159,15 +174,15 @@ export const createJmapClient = ({
 
   const download = async (accountId: string, blobId: string, name: string, type: string) => {
     const response = await doFetch(await downloadUrl(accountId, blobId, name, type), {
-      headers: { authorization },
+      headers: authHeaders,
     });
     if (!response.ok) throw jmapError(await response.text(), "download", response.status);
     return response.blob();
   };
 
   return {
-    authorization,
-    credentials,
+    authHeaders,
+    fetch: doFetch,
     getSession,
     fetchSession,
     request,

@@ -34,7 +34,7 @@ oder Microsoft 365 teurer.
 - **Gemeinsame Postfächer**: info@ und rechnung@ für das ganze Team, mit Rechten pro Person.
 - **Beliebig viele Benutzer**: bezahlt wird die Wartung des Servers, nicht jeder Kopf.
 - **Ordner statt Labels**: Posteingang, Archiv und eigene Ordner mit Unterordnern, wie gewohnt.
-- **Am Handy wie am PC**: jede Ansicht ist fürs Handy gebaut, mit Tab-Leiste wie eine App.
+- **Am Handy wie am PC**: jede Ansicht ist fürs Handy gebaut, als App installierbar, man bleibt angemeldet.
 - **Ihre Daten, Ihr Server**: ein eigener Server pro Firma, Backups verschlüsselt auf S3.
 
 Läuft auf jedem Linux-Server mit Docker oder Podman, z. B. einem kleinen VPS bei IONOS oder Hetzner.
@@ -142,10 +142,11 @@ Benötigt [Bun](https://bun.sh) 1.4 und Linux oder macOS.
 git clone https://github.com/firsttris/sekretaer && cd sekretaer
 bun install
 bun run dev:stalwart -- --seed   # Stalwart 0.16 auf Port 18080 mit Testdaten (eigenes Terminal)
+bun run dev:server               # Anmeldung und JMAP-Durchleitung auf Port 18090 (eigenes Terminal)
 bun run dev                      # http://localhost:5173, Anmeldung jonas@weber-haustechnik.test
 ```
 
-React, TanStack Router/Query, Tailwind und Tiptap im Browser, JMAP zu Stalwart. Architektur, Tests und Releases: [Entwicklung](https://firsttris.github.io/sekretaer/development.html).
+React, TanStack Router/Query, Tailwind und Tiptap im Browser; ein kleiner Bun-Server mit Hono und Better Auth für Anmeldung und JMAP zu Stalwart. Architektur, Tests und Releases: [Entwicklung](https://firsttris.github.io/sekretaer/development.html).
 
 ## 🤝 Mitmachen
 

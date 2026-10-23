@@ -1,10 +1,11 @@
 import { defineConfig, devices } from "@playwright/test";
 
 /**
- * E2E tests run against their own Stalwart (port 28080, fresh data, seeded) and their own Vite
- * (port 5174), so a running dev setup is not touched.
+ * E2E tests run against their own Stalwart (port 28080, fresh data, seeded), their own Sekretär
+ * server (28090) and their own Vite (5174), so a running dev setup is not touched.
  */
 const STALWART_PORT = 28080;
+const SERVER_PORT = 28090;
 const APP_PORT = 5174;
 
 const launchOptions = process.env.PW_CHROMIUM_PATH
@@ -51,9 +52,22 @@ export default defineConfig({
       stdout: "pipe",
     },
     {
+      command: "rm -rf .dev/e2e-server && bun server/main.ts",
+      url: `http://127.0.0.1:${SERVER_PORT}/healthz`,
+      env: {
+        PORT: String(SERVER_PORT),
+        STALWART_URL: `http://127.0.0.1:${STALWART_PORT}`,
+        BETTER_AUTH_URL: `http://localhost:${APP_PORT}`,
+        DATABASE_PATH: ".dev/e2e-server/sekretaer.db",
+        SIGN_IN_PER_MINUTE: "1000",
+      },
+      reuseExistingServer: false,
+      timeout: 60_000,
+    },
+    {
       command: `bunx vite --port ${APP_PORT}`,
       url: `http://localhost:${APP_PORT}`,
-      env: { STALWART_URL: `http://127.0.0.1:${STALWART_PORT}`, PORT: String(APP_PORT) },
+      env: { SEKRETAER_SERVER: `http://127.0.0.1:${SERVER_PORT}`, PORT: String(APP_PORT) },
       reuseExistingServer: false,
       timeout: 60_000,
     },
