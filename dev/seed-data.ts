@@ -45,6 +45,8 @@ export type SeedMail = {
   seen?: boolean;
   flagged?: boolean;
   inReplyTo?: string;
+  /** An HTML version next to `body`. */
+  html?: string;
   attachment?: { name: string; type: string; content: string };
 };
 
@@ -187,6 +189,49 @@ export const mails: SeedMail[] = [
     body: "Hi Anna,\n\nkannst du bis nächste Woche die Urlaubsplanung für Januar fertig machen? Max hat schon gefragt.\n\nJonas",
     hoursAgo: 5,
   },
+  {
+    id: "newsletter-november@richter-sanitaer.test",
+    owner: "jonas",
+    folder: "Posteingang",
+    from: richter,
+    to: [jonas],
+    subject: "Newsletter: Herbstaktion Wärmepumpen",
+    body: "Herbstaktion: 10 % auf Wärmepumpen-Zubehör bis Ende November.",
+    html: `<!doctype html><html><body style="margin:0;background:#f4f4f5">
+<table role="presentation" width="100%" style="max-width:600px;margin:0 auto;background:#fff;font-family:Arial">
+<tr><td><img src="https://images.richter-sanitaer.test/herbst.jpg" width="600" alt="Herbstaktion"></td></tr>
+<tr><td style="padding:24px"><h1 style="color:#0f766e">Herbstaktion Wärmepumpen</h1>
+<p>10 % auf Zubehör bis Ende November. <a href="https://richter-sanitaer.test/aktion">Zur Aktion</a></p>
+<img src="https://track.richter-sanitaer.test/open.gif?u=jonas" width="1" height="1" alt=""></td></tr>
+</table></body></html>`,
+    hoursAgo: 40,
+    seen: true,
+  },
+  {
+    /** Test mail with the usual XSS tricks; nothing in it may run (see e2e "XSS"). */
+    id: "xss-test@phish.test",
+    owner: "jonas",
+    folder: "Posteingang",
+    from: ["Buchhaltung", "rechnung@phish.test"],
+    to: [jonas],
+    subject: "Offene Rechnung – bitte prüfen (XSS-Test)",
+    body: "Bitte öffnen Sie die Rechnung im Anhang.",
+    html: `<html><head><script>top.__xss = "head"; alert("xss")</script>
+<meta http-equiv="refresh" content="0;url=javascript:top.__xss='meta'">
+<base href="javascript:top.__xss='base'//"></head>
+<body onload="top.__xss='onload'">
+<p>Sehr geehrte Damen und Herren,</p>
+<img src="x" onerror="top.__xss='onerror'">
+<svg onload="top.__xss='svg'"><circle r="5"></circle></svg>
+<a id="js-link" href="javascript:top.__xss='link'">Rechnung öffnen</a>
+<iframe src="javascript:top.__xss='iframe'"></iframe>
+<form action="https://phish.test/login"><input name="password"><button>Anmelden</button></form>
+<div style="background:url(javascript:top.__xss='css')">Betrag: 1.234,56 €</div>
+<object data="javascript:top.__xss='object'"></object>
+<p>Mit freundlichen Grüßen</p>
+</body></html>`,
+    hoursAgo: 52,
+  },
 ];
 
 /** Contact groups (JSContact cards of kind "group"); members by uid. */
@@ -322,6 +367,8 @@ export type SeedEvent = {
   location?: string;
   attendees?: string[];
   description?: string;
+  /** Repeats, as a JSCalendar recurrenceRule. */
+  recurrence?: { frequency: "daily" | "weekly" | "monthly"; interval?: number; count?: number };
 };
 
 export const events: SeedEvent[] = [
@@ -351,6 +398,7 @@ export const events: SeedEvent[] = [
     day: 3,
     time: "07:30",
     minutes: 30,
+    recurrence: { frequency: "weekly", count: 12 },
     location: "Werkstatt",
     attendees: [`anna@${d}`, `sandra@${d}`, `max@${d}`],
   },

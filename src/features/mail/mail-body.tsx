@@ -8,6 +8,7 @@ import { useClient } from "@/auth/auth";
 import { displayBody } from "@/jmap/mail";
 import type { EmailDetail } from "@/jmap/types";
 import { mailDocument, sanitizeMailHtml, textToHtml } from "@/lib/html";
+import { m } from "@/paraglide/messages";
 
 const usePrefersDark = (): boolean => {
   const query =
@@ -75,7 +76,10 @@ export const MailBody = ({ accountId, email }: { accountId: string; email: Email
       if (!body) return;
       setHeight(body.scrollHeight + 8);
       observer?.disconnect();
-      observer = new ResizeObserver(() => setHeight(body.scrollHeight + 8));
+      // Measured in the next frame, so setting the height does not loop within one frame.
+      observer = new ResizeObserver(() =>
+        requestAnimationFrame(() => setHeight(body.scrollHeight + 8)),
+      );
       observer.observe(body);
     };
     element.addEventListener("load", fit);
@@ -93,12 +97,12 @@ export const MailBody = ({ accountId, email }: { accountId: string; email: Email
           onClick={() => setAllowRemote(true)}
           className="flex items-center gap-2 self-start rounded-lg border border-border px-3 py-1.5 text-[13px] text-muted hover:bg-hover hover:text-fg"
         >
-          <ImageOff size={14} /> Bilder aus dem Internet sind blockiert – anzeigen
+          <ImageOff size={14} /> {m.mail_remote_blocked()}
         </button>
       ) : null}
       <iframe
         ref={frame}
-        title="Inhalt der Mail"
+        title={m.mail_body_title()}
         sandbox="allow-same-origin allow-popups allow-popups-to-escape-sandbox"
         srcDoc={document}
         className="w-full border-0 bg-transparent"

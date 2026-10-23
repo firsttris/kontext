@@ -180,6 +180,17 @@ test.describe("Kalender", () => {
     await expect(page.getByRole("link", { name: "Tag" })).toHaveAttribute("aria-pressed", "true");
   });
 
+  test("zeigt die wöchentliche Teambesprechung aus den Testdaten", async ({ page }) => {
+    await login(page);
+    await page.goto("/calendar?view=agenda");
+    const meetings = page.getByRole("list", { name: "Liste" }).getByRole("link", {
+      name: /Teambesprechung/,
+    });
+    await expect(meetings).toHaveCount(4);
+    await meetings.first().click();
+    await expect(page.getByRole("dialog").getByText("Wöchentlich, 12-mal")).toBeVisible();
+  });
+
   test("prüft die Eingaben", async ({ page }) => {
     await login(page);
     await page.goto(`/calendar?event=new&start=${today()}T10:00`);

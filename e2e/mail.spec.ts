@@ -244,3 +244,36 @@ test.describe("Entwürfe", () => {
     await expect(page.getByRole("list", { name: "Entwürfe" }).getByText(subject)).toHaveCount(0);
   });
 });
+
+test.describe("Sicherheit", () => {
+  test("eine Mail mit XSS-Tricks führt nichts aus", async ({ page }) => {
+    const dialogs: string[] = [];
+    page.on("dialog", (dialog) => {
+      dialogs.push(dialog.message());
+      void dialog.dismiss();
+    });
+    await login(page);
+    await page.getByText("Offene Rechnung – bitte prüfen (XSS-Test)").click();
+    const body = page.frameLocator('iframe[title="Inhalt der Mail"]');
+    await expect(body.getByText("Betrag: 1.234,56 €")).toBeVisible();
+    await expect(body.getByText("Rechnung öffnen")).toBeVisible();
+    await expect(body.locator('[href^="javascript:" i], [src^="javascript:" i]')).toHaveCount(0);
+    await expect(
+      body.locator("script, iframe, object, embed, base[href], meta[http-equiv]"),
+    ).toHaveCount(0);
+    await expect(body.locator("[onload], [onerror], [onclick]")).toHaveCount(0);
+    await page.waitForTimeout(500);
+    expect(await page.evaluate(() => (window as { __xss?: string }).__xss)).toBeUndefined();
+    expect(dialogs).toEqual([]);
+  });
+
+  test("blockiert Bilder aus dem Internet, bis man sie lädt", async ({ page }) => {
+    await login(page);
+    await page.getByText("Newsletter: Herbstaktion Wärmepumpen").click();
+    const body = page.frameLocator('iframe[title="Inhalt der Mail"]');
+    await expect(body.getByRole("heading", { name: "Herbstaktion Wärmepumpen" })).toBeVisible();
+    await expect(body.locator('img[src^="https:"]')).toHaveCount(0);
+    await page.getByRole("button", { name: /Bilder aus dem Internet sind blockiert/ }).click();
+    await expect(body.locator('img[src^="https:"]')).not.toHaveCount(0);
+  });
+});

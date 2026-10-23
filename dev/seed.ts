@@ -206,6 +206,7 @@ const importMail = async (
     subject: mail.subject,
     date,
     text: mail.body,
+    html: mail.html,
     attachment: mail.attachment,
   });
   const { blobId } = await client.upload(accountId, raw, "message/rfc822");
@@ -338,6 +339,9 @@ const ensureEvents = async (): Promise<number> => {
             timeZone: "Europe/Berlin",
             duration: `PT${Math.floor(e.minutes / 60) ? `${Math.floor(e.minutes / 60)}H` : ""}${e.minutes % 60 ? `${e.minutes % 60}M` : ""}`,
             ...(e.description ? { description: e.description } : {}),
+            ...(e.recurrence
+              ? { recurrenceRule: { "@type": "RecurrenceRule", ...e.recurrence } }
+              : {}),
             ...(e.location ? { locations: { l: { "@type": "Location", name: e.location } } } : {}),
             ...(e.attendees?.length
               ? {

@@ -21,6 +21,8 @@ export type MessageInput = {
   subject: string;
   date: Date;
   text: string;
+  /** With HTML the body is multipart/alternative (text and HTML). */
+  html?: string;
   attachment?: { name: string; type: string; content: string };
 };
 
@@ -36,12 +38,28 @@ export const buildMessage = (input: MessageInput): string => {
     "MIME-Version: 1.0",
   ].filter(Boolean);
 
-  const textPart = [
+  const plainPart = [
     "Content-Type: text/plain; charset=utf-8",
     "Content-Transfer-Encoding: base64",
     "",
     base64Lines(input.text),
   ].join("\r\n");
+  const alternative = `sekretaer-alt-${input.messageId.replace(/[^a-z0-9]/gi, "")}`;
+  const textPart = input.html
+    ? [
+        `Content-Type: multipart/alternative; boundary="${alternative}"`,
+        "",
+        `--${alternative}`,
+        plainPart,
+        `--${alternative}`,
+        "Content-Type: text/html; charset=utf-8",
+        "Content-Transfer-Encoding: base64",
+        "",
+        base64Lines(input.html),
+        `--${alternative}--`,
+        "",
+      ].join("\r\n")
+    : plainPart;
 
   if (!input.attachment) return `${headers.join("\r\n")}\r\n${textPart}`;
 

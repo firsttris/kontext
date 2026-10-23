@@ -59,9 +59,15 @@ export const sanitizeMailHtml = (
         blockedImages++;
       }
     }
+    // CSS images: only http(s), and only when remote content is allowed.
     const style = element.getAttribute?.("style");
-    if (style && !allowRemote && /url\(/i.test(style)) {
-      element.setAttribute("style", style.replace(/url\([^)]*\)/gi, "none"));
+    if (style && /url\(/i.test(style)) {
+      element.setAttribute(
+        "style",
+        style.replace(/url\(\s*(['"]?)([^)'"]*)\1\s*\)/gi, (whole, _quote, url: string) =>
+          allowRemote && /^https?:/i.test(url.trim()) ? whole : "none",
+        ),
+      );
     }
   });
   const clean = purify.sanitize(html, {
