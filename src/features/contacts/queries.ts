@@ -58,12 +58,8 @@ const useContactAccounts = () => {
 };
 
 /** Stalwart names the default book "Stalwart Address Book (…)"; the app calls it by its owner. */
-const bookName = (book: AddressBook, own: boolean): string =>
-  /^Stalwart Address Book/.test(book.name)
-    ? own
-      ? m.contacts_my_book()
-      : m.contacts_title()
-    : book.name;
+const bookName = (book: AddressBook, own: boolean, owner: string): string =>
+  /^Stalwart Address Book/.test(book.name) ? (own ? m.contacts_my_book() : owner) : book.name;
 
 /** All address books the user can read: own ones first, then shared mailboxes and colleagues. */
 export const useBooks = (): { books: BookRef[]; isPending: boolean } => {
@@ -93,7 +89,7 @@ export const useBooks = (): { books: BookRef[]; isPending: boolean } => {
           accountId: account.id,
           isPersonal: account.isPersonal,
           owner,
-          name: bookName(book, account.isPersonal),
+          name: bookName(book, account.isPersonal, owner),
           book,
           mayWrite: account.isPersonal || Boolean(book.myRights?.mayWrite),
         }),
@@ -129,6 +125,12 @@ export const useContacts = (bookKey?: string) => {
     isPending: booksPending || results.some((result) => result.isPending),
   };
 };
+
+/** "Kunden · Jonas Weber"; own books and colleagues' default books by their name alone. */
+export const bookLabel = (book: BookRef): string =>
+  book.isPersonal || book.name === book.owner
+    ? book.name
+    : m.contacts_book_of({ book: book.name, owner: book.owner });
 
 /** The book a contact is in (the first one it belongs to that the user can see). */
 export const bookOf = (books: BookRef[], contact: Contact): BookRef | undefined =>

@@ -1,5 +1,6 @@
 /** Calendars over JMAP (draft-ietf-jmap-calendars). Repeating events come expanded per instance. */
 import type { CalendarEvent } from "@/lib/jscalendar";
+import type { Rights, ShareWith } from "@/lib/sharing";
 import { assertSetOk, CAPABILITIES, type JmapClient } from "./client";
 
 const USING = [CAPABILITIES.core, CAPABILITIES.calendars];
@@ -27,22 +28,72 @@ const EVENT_PROPERTIES = [
 export type Calendar = {
   id: string;
   name: string;
+  /** Per user: everyone picks their own colour and whether it is shown. */
   color: string | null;
   isDefault: boolean;
   isVisible: boolean;
-  myRights?: { mayWriteAll?: boolean };
+  /** Only the owner sees whom it is shared with. */
+  shareWith?: ShareWith | null;
+  myRights?: Rights;
 };
 
 export const listCalendars = async (client: JmapClient, accountId: string): Promise<Calendar[]> =>
   (await client.call<{ list: Calendar[] }>("Calendar/get", { accountId }, USING)).list;
 
-/** Events (and instances of repeating events) between two instants. */
+export const createCalendar = async (
+  client: JmapClient,
+  accountId: string,
+  calendar: { name: string; color?: string },
+): Promise<string> => {
+  const result = await client.call<{ created?: Record<string, { id: string }> }>(
+    "Calendar/set",
+    { accountId, create: { c: calendar } },
+    USING,
+  );
+  assertSetOk(result, "Kalender");
+  return result.created!.c!.id;
+};
+
+/** Name, colour or `shareWith`. */
+export const updateCalendar = async (
+  client: JmapClient,
+  accountId: string,
+  id: string,
+  patch: Partial<Pick<Calendar, "name" | "color" | "shareWith">>,
+): Promise<void> => {
+  assertSetOk(
+    await client.call("Calendar/set", { accountId, update: { [id]: patch } }, USING),
+    "Kalender",
+  );
+};
+
+/** Deletes the calendar together with its events. */
+export const deleteCalendar = async (
+  client: JmapClient,
+  accountId: string,
+  id: string,
+): Promise<void> => {
+  assertSetOk(
+    await client.call(
+      "Calendar/set",
+      { accountId, destroy: [id], onDestroyRemoveEvents: true },
+      USING,
+    ),
+    "Kalender",
+  );
+};
+
+/**
+ * Events (and instances of repeating events) between two instants, of one calendar or (without
+ * `calendarId`) the whole account. Calendars of other accounts are always asked one by one, so
+ * the result holds exactly what is in the calendars the user can see.
+ */
 export const queryEvents = async (
   client: JmapClient,
   accountId: string,
   after: Date,
   before: Date,
-  text?: string,
+  { text, calendarId }: { text?: string; calendarId?: string } = {},
 ): Promise<CalendarEvent[]> => {
   const [, get] = await client.request(
     [
@@ -54,6 +105,7 @@ export const queryEvents = async (
             after: after.toISOString().replace(/\.\d+Z$/, "Z"),
             before: before.toISOString().replace(/\.\d+Z$/, "Z"),
             ...(text ? { text } : {}),
+            ...(calendarId ? { inCalendar: calendarId } : {}),
           },
           expandRecurrences: true,
           timeZone: "Europe/Berlin",

@@ -238,5 +238,22 @@
   "sharing_title": "„{name}“ teilen",
   "sharing_hint": "Lesen: sehen und anrufen. Bearbeiten: auch anlegen, ändern und löschen. Kollegen finden das Adressbuch unter „Geteilt mit mir“.",
   "sharing_people": "Kollegen",
-  "sharing_saved": "Freigabe gespeichert."
+  "sharing_saved": "Freigabe gespeichert.",
+  "sharing_hint_calendar": "Lesen: Termine sehen. Bearbeiten: auch anlegen, verschieben und löschen. Kollegen finden den Kalender unter „Geteilt mit mir“.",
+  "calendar_calendars": "Kalender",
+  "calendar_manage": "Kalender verwalten",
+  "calendar_shared": "Geteilt mit mir",
+  "calendar_calendar": "Kalender",
+  "calendar_new_calendar": "Neuer Kalender",
+  "calendar_calendar_name": "Name des Kalenders",
+  "calendar_create": "Anlegen",
+  "calendar_share": "Teilen",
+  "calendar_delete": "Kalender löschen",
+  "calendar_delete_confirm": "Kalender „{name}“ mit allen Terminen löschen?",
+  "calendar_shared_with": "Geteilt mit {names}",
+  "calendar_private": "Nur für mich",
+  "calendar_of": "{calendar} · {owner}",
+  "calendar_show": "{name} anzeigen",
+  "calendar_in": "Kalender: {name}",
+  "calendar_read_only": "Von {owner} geteilt, nur zum Lesen."
 }

@@ -12,6 +12,7 @@ import {
 } from "react";
 import {
   type CalendarEvent,
+  eventKey,
   eventTimes,
   fromLocal,
   minutesInDay,
@@ -69,14 +70,14 @@ export const useDragEvents = (hourHeight: number, onMove: (moved: Moved) => void
       if (state.mode === "resize") {
         const top = latest.current?.top ?? 0;
         return {
-          id: state.event.id,
+          id: eventKey(state.event),
           day: latest.current?.day ?? day,
           top,
           height: clamp(snap(pointer) - top, STEP, 1440 - top),
         };
       }
       const top = clamp(snap(pointer - state.grab), 0, 1440 - STEP);
-      return { id: state.event.id, day, top, height: state.length };
+      return { id: eventKey(state.event), day, top, height: state.length };
     };
 
     const onPointerMove = (e: PointerEvent) => {
@@ -137,7 +138,7 @@ export const useDragEvents = (hourHeight: number, onMove: (moved: Moved) => void
         length,
         started: false,
       };
-      latest.current = { id: event.id, day, top, height: length };
+      latest.current = { id: eventKey(event), day, top, height: length };
       // No text selection or native link dragging while moving.
       e.preventDefault();
     },

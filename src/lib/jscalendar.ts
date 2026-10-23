@@ -16,6 +16,10 @@ export type Participant = {
 
 export type CalendarEvent = {
   id: string;
+  /** The account the event was loaded from (own, shared mailbox or a colleague's); set by the app. */
+  accountId?: string;
+  /** The colour of its calendar; set by the app. */
+  color?: string;
   uid?: string;
   calendarIds: Record<string, boolean>;
   title?: string;
@@ -263,6 +267,9 @@ export const isOrganizer = (event: CalendarEvent, myAddresses: string[]): boolea
   const organizer = event.organizerCalendarAddress.replace(/^mailto:/i, "").toLowerCase();
   return myAddresses.some((a) => a.toLowerCase() === organizer);
 };
+
+/** Event ids are only unique within an account. */
+export const eventKey = (event: CalendarEvent): string => `${event.accountId ?? ""}/${event.id}`;
 
 /**
  * Is this one date of a repeating event? The expanded query gives every event a `baseEventId`;

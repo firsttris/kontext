@@ -15,7 +15,14 @@ import {
 } from "@/lib/jscalendar";
 import { describeRecurrence } from "@/lib/recurrence";
 import { m } from "@/paraglide/messages";
-import { useEventMutations, useMyAddresses } from "./queries";
+import {
+  calendarLabel,
+  calendarOf,
+  mayEdit,
+  useCalendarRefs,
+  useEventMutations,
+  useMyAddresses,
+} from "./queries";
 
 const longDay = new Intl.DateTimeFormat("de-DE", {
   timeZone: "Europe/Berlin",
@@ -44,8 +51,12 @@ export const EventDetails = ({ event, series, onEdit, onDone }: Props) => {
   const { respond, remove } = useEventMutations();
   const toast = useToast();
   const { start, end, allDay } = eventTimes(event);
-  const me = myParticipation(event, mine);
+  const { calendars } = useCalendarRefs();
+  const calendar = calendarOf(calendars, event);
+  // Answering is for the user's own calendar; in a colleague's it would answer for them.
+  const me = calendar?.isPersonal ? myParticipation(event, mine) : undefined;
   const organizer = isOrganizer(event, mine);
+  const editable = mayEdit(calendar, event, mine);
   const people = attendees(event);
   const repeats = describeRecurrence((series ?? event).recurrenceRule);
 
@@ -59,7 +70,7 @@ export const EventDetails = ({ event, series, onEdit, onDone }: Props) => {
   };
 
   const answer = (status: "accepted" | "declined" | "tentative") =>
-    me && run(() => respond.mutateAsync({ id: event.id, participantId: me[0], status }));
+    me && run(() => respond.mutateAsync({ event, participantId: me[0], status }));
 
   return (
     <div className="flex flex-col gap-4">
@@ -72,6 +83,27 @@ export const EventDetails = ({ event, series, onEdit, onDone }: Props) => {
             : `, ${toLocal(start).slice(11, 16)}–${toLocal(end).slice(11, 16)}`}
         </span>
       </div>
+      {calendar && calendars.length > 1 ? (
+        <div className="flex items-start gap-3 text-[14px]">
+          <span
+            aria-hidden="true"
+            className="mx-[3px] mt-[5px] size-2.5 shrink-0 rounded-full"
+            style={{ background: calendar.color }}
+          />
+          <span className="flex flex-col">
+            <span>
+              {m.calendar_in({
+                name: calendarLabel(calendar),
+              })}
+            </span>
+            {!calendar.mayWrite ? (
+              <span className="text-[13px] text-muted">
+                {m.calendar_read_only({ owner: calendar.owner })}
+              </span>
+            ) : null}
+          </span>
+        </div>
+      ) : null}
       {repeats ? (
         <div className="flex items-start gap-3 text-[14px]">
           <Repeat size={16} className="mt-0.5 shrink-0 text-muted" />
@@ -127,23 +159,25 @@ export const EventDetails = ({ event, series, onEdit, onDone }: Props) => {
         </fieldset>
       ) : null}
       <div className="flex flex-wrap gap-2">
-        {organizer ? (
+        {editable ? (
           <Button variant="primary" onClick={onEdit}>
             {m.contacts_edit()}
           </Button>
         ) : null}
         <div className="flex-1" />
-        {isInstance(event) ? (
+        {!calendar?.mayWrite ? null : isInstance(event) ? (
           <>
             <Button
               variant="outline"
-              onClick={() => void run(() => remove.mutateAsync(event.id), onDone)}
+              onClick={() => void run(() => remove.mutateAsync({ event }), onDone)}
             >
               {m.calendar_delete_this()}
             </Button>
             <Button
               variant="danger"
-              onClick={() => void run(() => remove.mutateAsync(event.baseEventId!), onDone)}
+              onClick={() =>
+                void run(() => remove.mutateAsync({ event, id: event.baseEventId! }), onDone)
+              }
             >
               {m.calendar_delete_series()}
             </Button>
@@ -151,7 +185,7 @@ export const EventDetails = ({ event, series, onEdit, onDone }: Props) => {
         ) : (
           <Button
             variant="danger"
-            onClick={() => void run(() => remove.mutateAsync(event.id), onDone)}
+            onClick={() => void run(() => remove.mutateAsync({ event }), onDone)}
           >
             {m.calendar_event_delete()}
           </Button>

@@ -7,12 +7,15 @@ import { cn } from "@/lib/cn";
 import {
   addDays,
   type CalendarEvent,
+  eventKey,
   eventTimes,
   onDay,
   toLocal,
   weekStart,
 } from "@/lib/jscalendar";
 import { m } from "@/paraglide/messages";
+import { calendarColor } from "./event-style";
+import { eventSearch } from "./queries";
 
 const WEEKDAYS = ["Mo", "Di", "Mi", "Do", "Fr", "Sa", "So"];
 const SHOWN = 3;
@@ -77,13 +80,21 @@ export const MonthView = ({ selected, today, events, isInvitation, compact }: Pr
               {compact ? (
                 <span className="flex flex-wrap gap-0.5 px-1">
                   {list.slice(0, 4).map((event) => (
-                    <span key={event.id} className="size-1.5 rounded-full bg-accent" />
+                    <span
+                      key={eventKey(event)}
+                      className="size-1.5 rounded-full bg-[var(--cal)]"
+                      style={calendarColor(event)}
+                    />
                   ))}
                 </span>
               ) : (
                 <>
                   {list.slice(0, SHOWN).map((event) => (
-                    <MonthChip key={event.id} event={event} invitation={isInvitation(event)} />
+                    <MonthChip
+                      key={eventKey(event)}
+                      event={event}
+                      invitation={isInvitation(event)}
+                    />
                   ))}
                   {list.length > SHOWN ? (
                     <Link
@@ -109,10 +120,11 @@ const MonthChip = ({ event, invitation }: { event: CalendarEvent; invitation: bo
   return (
     <Link
       to="/calendar"
-      search={(prev) => ({ ...prev, event: event.id })}
+      search={(prev) => ({ ...prev, ...eventSearch(event) })}
+      style={calendarColor(event)}
       className={cn(
         "flex min-w-0 items-baseline gap-1 rounded-md px-1.5 py-px text-[12px] text-fg no-underline",
-        allDay ? "bg-accent/12" : "hover:bg-hover",
+        allDay ? "bg-[color-mix(in_srgb,var(--cal)_13%,var(--bg))]" : "hover:bg-hover",
         invitation && "border border-dashed border-muted",
       )}
     >

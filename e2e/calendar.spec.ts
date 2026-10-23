@@ -193,6 +193,98 @@ test.describe("Kalender", () => {
   });
 });
 
+test.describe("Kalender teilen", () => {
+  test("Jonas teilt einen Kalender mit Anna, erst zum Bearbeiten, dann nur zum Lesen", async ({
+    page,
+    browser,
+  }) => {
+    test.setTimeout(90_000);
+    const calendar = unique("Baustellen");
+    const title = unique("Estrich");
+    await login(page);
+    await page.goto("/calendar");
+
+    // A new calendar, shared with Anna to edit.
+    await page.getByRole("button", { name: "Kalender verwalten" }).first().click();
+    const manage = page.getByRole("dialog", { name: "Kalender verwalten" });
+    await manage.getByLabel("Name des Kalenders").fill(calendar);
+    await manage.getByRole("button", { name: "Anlegen" }).click();
+    await manage.getByRole("button", { name: `Teilen: ${calendar}` }).click();
+    const share = page.getByRole("dialog", { name: `„${calendar}“ teilen` });
+    await share.getByLabel("Anna Weber").selectOption("edit");
+    await share.getByRole("button", { name: "Speichern" }).click();
+    await expect(page.getByRole("status")).toHaveText("Freigabe gespeichert.");
+    await expect(
+      manage
+        .getByRole("listitem")
+        .filter({ hasText: calendar })
+        .getByText("Geteilt mit Anna Weber"),
+    ).toBeVisible();
+    await page.keyboard.press("Escape");
+
+    // An appointment in it.
+    await page.goto(`/calendar?date=${tomorrow()}&event=new&start=${tomorrow()}T11:00`);
+    const dialog = page.getByRole("dialog");
+    await dialog.getByLabel("Titel").fill(title);
+    await dialog.getByLabel("Kalender", { exact: true }).selectOption({ label: calendar });
+    await dialog.getByRole("button", { name: "Speichern" }).click();
+    await expect(page.locator(`[data-day="${tomorrow()}"]`).getByText(title)).toBeVisible();
+
+    // Anna sees it in her calendar and moves it to 12:00.
+    const anna = await (
+      await browser.newContext({ locale: "de-DE", timezoneId: "Europe/Berlin" })
+    ).newPage();
+    await login(anna, "anna");
+    await anna.goto(`/calendar?date=${tomorrow()}`);
+    const annaDay = anna.locator(`[data-day="${tomorrow()}"]`);
+    await annaDay.getByText(title).click();
+    await expect(
+      anna.getByRole("dialog").getByText(`Kalender: ${calendar} · Jonas Weber`),
+    ).toBeVisible();
+    await anna.getByRole("dialog").getByRole("button", { name: "Bearbeiten" }).click();
+    await anna.getByRole("dialog").getByLabel("Beginn Uhrzeit").fill("12:00");
+    await anna.getByRole("dialog").getByLabel("Ende Uhrzeit").fill("13:00");
+    await anna.getByRole("dialog").getByRole("button", { name: "Speichern" }).click();
+    await expect(annaDay.getByRole("link", { name: new RegExp(title) })).toContainText(
+      "12:00–13:00",
+    );
+
+    // She can hide it.
+    await anna.getByLabel(`${calendar} anzeigen`).uncheck();
+    await expect(annaDay.getByText(title)).toHaveCount(0);
+    await anna.getByLabel(`${calendar} anzeigen`).check();
+    await expect(annaDay.getByText(title)).toBeVisible();
+
+    // Jonas sees her change and makes it read-only.
+    await page.goto(`/calendar?date=${tomorrow()}`);
+    await expect(
+      page.locator(`[data-day="${tomorrow()}"]`).getByRole("link", { name: new RegExp(title) }),
+    ).toContainText("12:00–13:00");
+    await page.getByRole("button", { name: "Kalender verwalten" }).first().click();
+    await manage.getByRole("button", { name: `Teilen: ${calendar}` }).click();
+    await share.getByLabel("Anna Weber").selectOption("read");
+    await share.getByRole("button", { name: "Speichern" }).click();
+    await expect(page.getByRole("status")).toHaveText("Freigabe gespeichert.");
+
+    await anna.reload();
+    await annaDay.getByText(title).click();
+    await expect(
+      anna.getByRole("dialog").getByText("Von Jonas Weber geteilt, nur zum Lesen."),
+    ).toBeVisible();
+    await expect(anna.getByRole("dialog").getByRole("button", { name: "Bearbeiten" })).toHaveCount(
+      0,
+    );
+    await anna.keyboard.press("Escape");
+
+    // Deleting the calendar removes it for both.
+    page.once("dialog", (confirm) => confirm.accept());
+    await manage.getByRole("button", { name: `Kalender löschen: ${calendar}` }).click();
+    await expect(manage.getByText(calendar)).toHaveCount(0);
+    await anna.reload();
+    await expect(annaDay.getByText(title)).toHaveCount(0);
+  });
+});
+
 test.describe("Kalender am Handy @phone", () => {
   test("Tagesansicht mit Wochenleiste und neuem Termin", async ({ page }) => {
     await login(page);
@@ -201,6 +293,14 @@ test.describe("Kalender am Handy @phone", () => {
     await expect(page.getByText("Baubesprechung Hoffmann")).toBeVisible();
     await page.getByRole("link", { name: "Neuer Termin", exact: true }).click();
     await expect(page.getByRole("dialog").getByLabel("Titel")).toBeVisible();
+  });
+
+  test("Kalender verwalten", async ({ page }) => {
+    await login(page);
+    await page.getByRole("link", { name: "Kalender" }).click();
+    await page.getByRole("button", { name: "Kalender verwalten" }).click();
+    await expect(page.getByRole("dialog").getByText("Mein Kalender")).toBeVisible();
+    await expect(page.getByRole("dialog").getByLabel("Mein Kalender anzeigen")).toBeChecked();
   });
 
   test("Liste der nächsten Termine", async ({ page }) => {

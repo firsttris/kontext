@@ -1,5 +1,5 @@
 /**
- * Who may see or change an address book (later also a calendar): one row per colleague with
+ * Who may see or change an address book or a calendar: one row per colleague with
  * "Kein Zugriff", "Lesen" or "Bearbeiten". Shared mailboxes are left out; their members already
  * see what belongs to them.
  */
@@ -10,7 +10,14 @@ import { Button } from "@/components/ui/button";
 import { Dialog } from "@/components/ui/dialog";
 import { Select } from "@/components/ui/input";
 import { principalName } from "@/jmap/principals";
-import { ACCESS, type Access, accessOf, nextShareWith, type ShareWith } from "@/lib/sharing";
+import {
+  ACCESS,
+  type Access,
+  accessOf,
+  nextShareWith,
+  type ShareKind,
+  type ShareWith,
+} from "@/lib/sharing";
 import { m } from "@/paraglide/messages";
 import { usePrincipals } from "./queries";
 
@@ -25,11 +32,22 @@ type Props = {
   onOpenChange: (open: boolean) => void;
   /** What is shared, e.g. the address book's name. */
   title: string;
+  kind: ShareKind;
+  /** What "Lesen" and "Bearbeiten" mean for this kind. */
+  hint: string;
   shareWith: ShareWith | null | undefined;
   onSave: (next: ShareWith) => Promise<void>;
 };
 
-export const ShareDialog = ({ open, onOpenChange, title, shareWith, onSave }: Props) => {
+export const ShareDialog = ({
+  open,
+  onOpenChange,
+  title,
+  kind,
+  hint,
+  shareWith,
+  onSave,
+}: Props) => {
   const { data: session } = useSession();
   const { data: principals = [], isPending } = usePrincipals();
   const [changes, setChanges] = useState<Record<string, Access>>({});
@@ -44,7 +62,7 @@ export const ShareDialog = ({ open, onOpenChange, title, shareWith, onSave }: Pr
     setSaving(true);
     setProblem(null);
     try {
-      await onSave(nextShareWith(shareWith, changes));
+      await onSave(nextShareWith(shareWith, changes, kind));
       setChanges({});
       onOpenChange(false);
     } catch (error) {
@@ -59,7 +77,7 @@ export const ShareDialog = ({ open, onOpenChange, title, shareWith, onSave }: Pr
       open={open}
       onOpenChange={onOpenChange}
       title={m.sharing_title({ name: title })}
-      description={m.sharing_hint()}
+      description={hint}
     >
       <form onSubmit={submit} className="flex flex-col gap-4">
         {isPending ? <p className="m-0 text-[14px] text-muted">{m.common_loading()}</p> : null}

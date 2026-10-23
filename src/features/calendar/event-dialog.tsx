@@ -16,7 +16,7 @@ export const EventDialog = ({ eventId, event, start }: Props) => {
   const [editing, setEditing] = useState(isNew);
   // An instance shows and edits the rule of its series.
   const { data: found, isPending: seriesPending } = useSeries(
-    event && isInstance(event) ? event.baseEventId : undefined,
+    event && isInstance(event) ? event : undefined,
   );
   const series = found ?? undefined;
   const close = () =>

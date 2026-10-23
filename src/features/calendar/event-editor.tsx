@@ -5,7 +5,7 @@
 import { type FormEvent, useState } from "react";
 import { useSession } from "@/components/shell/app-shell";
 import { Button } from "@/components/ui/button";
-import { Input, Label, Textarea } from "@/components/ui/input";
+import { Input, Label, Select, Textarea } from "@/components/ui/input";
 import { useToast } from "@/components/ui/toast";
 import {
   type EventForm,
@@ -18,7 +18,7 @@ import {
 } from "@/lib/event-form";
 import { type CalendarEvent, isInstance, toLocal } from "@/lib/jscalendar";
 import { m } from "@/paraglide/messages";
-import { useEventMutations, useMyAddresses } from "./queries";
+import { calendarLabel, useCalendarRefs, useEventMutations, useMyAddresses } from "./queries";
 import { RepeatFields } from "./repeat-fields";
 
 type Scope = "this" | "series";
@@ -45,6 +45,13 @@ export const EventEditor = ({ event, series, start, onDone, onCancel }: Props) =
   const { data: session } = useSession();
   const mine = useMyAddresses();
   const { create, update } = useEventMutations();
+  const { calendars } = useCalendarRefs();
+  const writable = calendars.filter((calendar) => calendar.mayWrite);
+  const [calendarKey, setCalendarKey] = useState("");
+  const target =
+    writable.find((calendar) => calendar.key === calendarKey) ??
+    writable.find((calendar) => calendar.isPersonal && calendar.calendar.isDefault) ??
+    writable[0];
   const toast = useToast();
   const instance = event && isInstance(event) && series ? event : undefined;
   const [initial] = useState<EventForm>(() =>
@@ -64,11 +71,14 @@ export const EventEditor = ({ event, series, start, onDone, onCancel }: Props) =
     });
 
   const save = (data: Record<string, unknown>) => {
-    if (!event) return create.mutateAsync(data);
-    if (!instance) return update.mutateAsync({ id: event.id, patch: data });
-    if (scope === "this") return update.mutateAsync({ id: instance.id, patch: data });
+    if (!event) {
+      if (!target) throw new Error(m.calendar_calendar());
+      return create.mutateAsync({ event: data, calendar: target });
+    }
+    if (!instance || scope === "this") return update.mutateAsync({ event, patch: data });
     // The whole series: its start moves by what this date moved.
     return update.mutateAsync({
+      event,
       id: series!.id,
       patch: { ...data, start: seriesStart(series!.start, startOf(initial), startOf(form)) },
     });
@@ -126,6 +136,22 @@ export const EventEditor = ({ event, series, start, onDone, onCancel }: Props) =
         {m.calendar_event_title()}
         <Input value={form.title} onChange={set("title")} autoFocus />
       </Label>
+      {!event && writable.length > 1 ? (
+        <Label>
+          {m.calendar_calendar()}
+          <Select
+            aria-label={m.calendar_calendar()}
+            value={target?.key ?? ""}
+            onChange={(e) => setCalendarKey(e.target.value)}
+          >
+            {writable.map((calendar) => (
+              <option key={calendar.key} value={calendar.key}>
+                {calendarLabel(calendar)}
+              </option>
+            ))}
+          </Select>
+        </Label>
+      ) : null}
       <label className="flex items-center gap-2 text-[14px]">
         <input
           type="checkbox"

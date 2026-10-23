@@ -14,6 +14,7 @@ import { ContactDetail } from "./contact-detail";
 import { ContactEditor } from "./contact-editor";
 import {
   type BookRef,
+  bookLabel,
   type Contact,
   contactKey,
   useContacts,
@@ -187,7 +188,7 @@ const BookPicker = ({ books, value }: { books: BookRef[]; value: string | undefi
         <optgroup label={m.contacts_books_shared()}>
           {shared.map((book) => (
             <option key={book.key} value={book.key}>
-              {m.contacts_book_of({ book: book.name, owner: book.owner })}
+              {bookLabel(book)}
             </option>
           ))}
         </optgroup>

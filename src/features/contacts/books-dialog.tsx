@@ -66,7 +66,8 @@ export const BooksDialog = ({ open, onOpenChange }: Props) => {
                   <span className="flex min-w-0 flex-1 flex-col">
                     <span className="truncate font-medium">{book.name}</span>
                     <span className="truncate text-[12px] text-muted">
-                      {book.owner} · {book.mayWrite ? m.sharing_edit() : m.sharing_read()}
+                      {book.name === book.owner ? "" : `${book.owner} · `}
+                      {book.mayWrite ? m.sharing_edit() : m.sharing_read()}
                     </span>
                   </span>
                 </li>
@@ -146,6 +147,8 @@ const ShareBook = ({ book, onClose }: { book: BookRef; onClose: () => void }) =>
         if (!open) onClose();
       }}
       title={book.name}
+      kind="addressBook"
+      hint={m.sharing_hint()}
       shareWith={book.book.shareWith}
       onSave={async (shareWith) => {
         await shareBook.mutateAsync({ book, shareWith });

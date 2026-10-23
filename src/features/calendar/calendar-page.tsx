@@ -3,7 +3,7 @@
  * invitations); on a phone one day with a strip of the week above it, the month, or the list.
  */
 import { Link } from "@tanstack/react-router";
-import { ChevronLeft, ChevronRight, Plus } from "lucide-react";
+import { ChevronLeft, ChevronRight, Plus, Settings2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { TabBar, useSession } from "@/components/shell/app-shell";
 import { Button } from "@/components/ui/button";
@@ -24,15 +24,22 @@ import {
 } from "@/lib/jscalendar";
 import { m } from "@/paraglide/messages";
 import { AGENDA_DAYS, AgendaView } from "./agenda-view";
+import { CalendarList, CalendarsDialog } from "./calendar-list";
 import { EventDialog } from "./event-dialog";
 import { MiniMonth } from "./mini-month";
 import { MonthView, monthDays } from "./month-view";
-import { useCalendars, useEventMutations, useEvents } from "./queries";
+import { calendarOf, mayEdit, useEventMutations, useEvents } from "./queries";
 import type { Moved } from "./use-drag";
 import { WeekGrid } from "./week-grid";
 
 type View = "day" | "week" | "month" | "agenda";
-type Search = { date?: string; view?: View; event?: string; start?: string };
+type Search = {
+  date?: string;
+  view?: View;
+  event?: string;
+  account?: string;
+  start?: string;
+};
 
 const VIEWS: [View, () => string][] = [
   ["day", m.calendar_day],
@@ -105,13 +112,15 @@ export const CalendarPage = ({ search }: { search: Search }) => {
   const week = weekDays(selected);
   const days = view === "day" ? [selected] : week;
   const { from, to } = range(view, selected);
-  const { data: events = [], isPending } = useEvents(from, to);
+  const { data: events, calendars, isPending } = useEvents(from, to);
+  const [managing, setManaging] = useState(false);
   const { data: session } = useSession();
   const mine = session ? [session.username] : [];
   const { move: moveEvent } = useEventMutations();
   const toast = useToast();
 
-  const canMove = (event: CalendarEvent) => isOrganizer(event, mine) && !eventTimes(event).allDay;
+  const canMove = (event: CalendarEvent) =>
+    mayEdit(calendarOf(calendars, event), event, mine) && !eventTimes(event).allDay;
   const onMove = ({ event, start, end, resized }: Moved) =>
     moveEvent.mutate(
       {
@@ -130,12 +139,19 @@ export const CalendarPage = ({ search }: { search: Search }) => {
       },
     );
 
+  /** Only the user's own calendar holds invitations to answer; a colleague's are theirs. */
   const isInvitation = (event: CalendarEvent) => {
+    if (!calendarOf(calendars, event)?.isPersonal) return false;
     const me = myParticipation(event, mine);
     return Boolean(me && !isOrganizer(event, mine) && me[1].participationStatus === "needs-action");
   };
   const invitations = events.filter(isInvitation);
-  const open = search.event ? events.find((event) => event.id === search.event) : undefined;
+  const open = search.event
+    ? events.find(
+        (event) =>
+          event.id === search.event && (!search.account || event.accountId === search.account),
+      )
+    : undefined;
 
   const header = (
     <div className="flex min-h-16 shrink-0 flex-wrap items-center gap-3 border-b border-border px-4 py-2 md:px-5">
@@ -152,6 +168,16 @@ export const CalendarPage = ({ search }: { search: Search }) => {
         </span>
       ) : null}
       <div className="flex-1" />
+      <Button
+        variant="ghost"
+        size="iconSm"
+        aria-label={m.calendar_manage()}
+        title={m.calendar_manage()}
+        onClick={() => setManaging(true)}
+        className="lg:hidden"
+      >
+        <Settings2 size={16} />
+      </Button>
       <div className="flex items-center gap-1">
         <Button asChild variant="ghost" size="iconSm" aria-label={m.calendar_prev()}>
           <Link to="/calendar" search={(prev) => ({ ...prev, date: move(view, selected, -1) })}>
@@ -203,7 +229,7 @@ export const CalendarPage = ({ search }: { search: Search }) => {
           </Link>
         </Button>
         <MiniMonth key={selected.slice(0, 7)} selected={selected} today={today} />
-        <Calendars />
+        <CalendarList onManage={() => setManaging(true)} />
         {invitations.length > 0 ? (
           <div className="mt-auto flex flex-col gap-2 rounded-xl border border-border bg-bg px-3.5 py-3">
             <span className="text-[12px] text-muted">
@@ -266,29 +292,15 @@ export const CalendarPage = ({ search }: { search: Search }) => {
         <TabBar />
       </main>
       {search.event ? (
-        <EventDialog key={search.event} eventId={search.event} event={open} start={search.start} />
+        <EventDialog
+          key={`${search.account ?? ""}/${search.event}`}
+          eventId={search.event}
+          event={open}
+          start={search.start}
+        />
       ) : null}
+      <CalendarsDialog open={managing} onOpenChange={setManaging} />
     </>
-  );
-};
-
-const Calendars = () => {
-  const { data: calendars = [] } = useCalendars();
-  if (calendars.length === 0) return null;
-  return (
-    <div className="flex flex-col gap-2">
-      <span className="text-[12px] font-medium text-muted">{m.calendar_my_calendars()}</span>
-      {calendars.map((calendar) => (
-        <span key={calendar.id} className="flex items-center gap-2.5">
-          <span
-            aria-hidden="true"
-            className="size-2.5 rounded-full"
-            style={{ background: calendar.color ?? "var(--accent)" }}
-          />
-          {/^Stalwart Calendar/.test(calendar.name) ? m.calendar_mine() : calendar.name}
-        </span>
-      ))}
-    </div>
   );
 };
 

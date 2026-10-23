@@ -5,6 +5,7 @@ import { cn } from "@/lib/cn";
 import {
   type CalendarEvent,
   dateKey,
+  eventKey,
   eventTimes,
   layoutDay,
   locationName,
@@ -13,6 +14,8 @@ import {
   timeLabel,
 } from "@/lib/jscalendar";
 import { m } from "@/paraglide/messages";
+import { calendarColor, eventClass } from "./event-style";
+import { eventSearch } from "./queries";
 import { type Moved, useDragEvents } from "./use-drag";
 
 export const HOUR_HEIGHT = 56;
@@ -59,7 +62,7 @@ export const WeekGrid = ({
 }: Props) => {
   const now = useNow();
   const { preview, handlers } = useDragEvents(HOUR_HEIGHT, onMove);
-  const dragged = preview ? events.find((event) => event.id === preview.id) : undefined;
+  const dragged = preview ? events.find((event) => eventKey(event) === preview.id) : undefined;
   const today = dateKey(now);
   const scroller = useRef<HTMLDivElement>(null);
 
@@ -116,7 +119,7 @@ export const WeekGrid = ({
               className="flex min-w-0 flex-col gap-1 border-l border-border p-1"
             >
               {list.map((event) => (
-                <EventChip key={event.id} event={event} invitation={isInvitation(event)} />
+                <EventChip key={eventKey(event)} event={event} invitation={isInvitation(event)} />
               ))}
             </div>
           ))}
@@ -138,8 +141,7 @@ export const WeekGrid = ({
           {days.map((day) => {
             const placed = layoutDay(
               events.filter(
-                (event) =>
-                  !eventTimes(event).allDay && onDay(event, day) && event.id !== dragged?.id,
+                (event) => !eventTimes(event).allDay && onDay(event, day) && event !== dragged,
               ),
               day,
               24,
@@ -175,7 +177,7 @@ export const WeekGrid = ({
                   const movable = canMove(event) && withinDay(event);
                   return (
                     <div
-                      key={event.id}
+                      key={eventKey(event)}
                       className={cn("absolute", movable && "cursor-grab select-none")}
                       style={{
                         top: (top / 60) * HOUR_HEIGHT,
@@ -230,11 +232,6 @@ export const WeekGrid = ({
   );
 };
 
-const eventClass = (invitation: boolean) =>
-  invitation
-    ? "border-[1.5px] border-dashed border-muted bg-bg"
-    : "border border-accent/40 bg-accent/12";
-
 const EventBlock = ({
   event,
   invitation,
@@ -252,8 +249,9 @@ const EventBlock = ({
   return (
     <Link
       to="/calendar"
-      search={(prev) => ({ ...prev, event: event.id })}
+      search={(prev) => ({ ...prev, ...eventSearch(event) })}
       draggable={false}
+      style={calendarColor(event)}
       className={cn(
         "flex h-full flex-col gap-px overflow-hidden rounded-lg px-2 py-1.5 text-fg no-underline",
         eventClass(invitation),
@@ -271,7 +269,8 @@ const EventBlock = ({
 const EventChip = ({ event, invitation }: { event: CalendarEvent; invitation: boolean }) => (
   <Link
     to="/calendar"
-    search={(prev) => ({ ...prev, event: event.id })}
+    search={(prev) => ({ ...prev, ...eventSearch(event) })}
+    style={calendarColor(event)}
     className={cn(
       "truncate rounded-md px-2 py-0.5 text-[12px] font-medium text-fg no-underline",
       eventClass(invitation),

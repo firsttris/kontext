@@ -75,6 +75,7 @@ und unter `https://<Ihre Domain>` anmelden. DNS-Einträge, Backups und Updates s
 - **Tag, Woche, Monat und Liste**: überlappende Termine nebeneinander, ganztägige oben, Jetzt-Linie; die Liste zeigt die nächsten 30 Tage.
 - **Termine verschieben**: mit der Maus ziehen, die Länge am unteren Rand ändern.
 - **Wiederkehrende Termine**: täglich, werktags, wöchentlich, alle 2 Wochen, monatlich, jährlich – bis zu einem Datum oder eine Anzahl lang; einzelne Termine der Serie ändern oder absagen.
+- **Kalender teilen**: eigene Kalender anlegen und mit Kollegen teilen – zum Lesen oder zum Bearbeiten; jeder Kalender in seiner Farbe, einzeln ein- und ausblendbar.
 - **Einladungen**: Teilnehmer bekommen eine Einladung und können zusagen, absagen oder „vielleicht“.
 - **Am Handy**: Tagesansicht mit Wochenleiste, Monat und Liste, Plus-Knopf.
 
@@ -113,7 +114,7 @@ Sekretär ist für Betriebe gemacht, die ihre Mail selbst (oder durch ihren IT-D
 | [Microsoft 365](https://www.microsoft.com/microsoft-365)        | Outlook und Office als Abo pro Benutzer     | läuft im Browser ohne Outlook, Daten auf dem eigenen Server                         |
 | [Stalwart Web-Admin](https://stalw.art)                         | Verwaltung des Mailservers                  | Sekretär ist die App für die Mitarbeiter, Stalwart der Server darunter              |
 | [Roundcube](https://roundcube.net), [SOGo](https://www.sogo.nu) | bewährte Webmailer                          | moderne Oberfläche, fürs Handy gebaut, gemeinsame Postfächer im Mittelpunkt         |
-| Bulwark                                                         | JMAP-Webmail für Stalwart                   | Kalender und Kontakte mit Kunden-Ansicht, geteilte Adressbücher, deutsche Oberfläche |
+| Bulwark                                                         | JMAP-Webmail für Stalwart                   | Kalender und Kontakte mit Kunden-Ansicht, Teilen mit Kollegen, deutsche Oberfläche |
 
 ## ❓ FAQ
 
@@ -121,9 +122,9 @@ Sekretär ist für Betriebe gemacht, die ihre Mail selbst (oder durch ihren IT-D
 
 Ja. Stalwart spricht IMAP, SMTP, CalDAV und CardDAV; jedes Mailprogramm und jedes Handy kann sich direkt verbinden. Sekretär ist die Oberfläche im Browser dazu.
 
-### Kann ich von Gmail umziehen?
+### Kann ich von Gmail, Microsoft 365 oder Outlook umziehen?
 
-Ja, der Gmail-Umzug (Mails, Kontakte, Kalender) ist der nächste Schritt im Plan; bis dahin geht es mit IMAP-Sync-Werkzeugen wie imapsync.
+Umzugswege für Gmail, Microsoft 365 und Outlook (lokal) sind geplant, sobald Mail, Kontakte und Kalender fertig ausgebaut sind. Bis dahin geht es mit IMAP-Sync-Werkzeugen wie imapsync.
 
 ### Was kostet es?
 

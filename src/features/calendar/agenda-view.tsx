@@ -5,6 +5,7 @@ import { cn } from "@/lib/cn";
 import {
   addDays,
   type CalendarEvent,
+  eventKey,
   eventTimes,
   isInstance,
   locationName,
@@ -12,6 +13,8 @@ import {
   toLocal,
 } from "@/lib/jscalendar";
 import { m } from "@/paraglide/messages";
+import { calendarColor } from "./event-style";
+import { eventSearch } from "./queries";
 
 export const AGENDA_DAYS = 30;
 
@@ -57,7 +60,7 @@ export const AgendaView = ({ from, today, events, isInvitation }: Props) => {
             </h2>
             <ul className="m-0 flex list-none flex-col gap-1 p-0">
               {list.map((event) => (
-                <li key={event.id}>
+                <li key={eventKey(event)}>
                   <AgendaItem event={event} invitation={isInvitation(event)} />
                 </li>
               ))}
@@ -75,7 +78,7 @@ const AgendaItem = ({ event, invitation }: { event: CalendarEvent; invitation: b
   return (
     <Link
       to="/calendar"
-      search={(prev) => ({ ...prev, event: event.id })}
+      search={(prev) => ({ ...prev, ...eventSearch(event) })}
       className="flex items-start gap-3 rounded-lg px-2 py-1.5 text-fg no-underline hover:bg-hover"
     >
       <span className="w-[92px] shrink-0 font-mono text-[12px] text-muted">
@@ -85,9 +88,10 @@ const AgendaItem = ({ event, invitation }: { event: CalendarEvent; invitation: b
       </span>
       <span
         aria-hidden="true"
+        style={calendarColor(event)}
         className={cn(
           "mt-1 size-2 shrink-0 rounded-full",
-          invitation ? "border border-dashed border-muted" : "bg-accent",
+          invitation ? "border border-dashed border-muted" : "bg-[var(--cal)]",
         )}
       />
       <span className="flex min-w-0 flex-1 flex-col">

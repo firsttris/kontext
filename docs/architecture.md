@@ -34,25 +34,32 @@ die Gruppe als zusätzliches Konto in seiner JMAP-Session (`isPersonal: false`) 
 Mails und einer Absenderadresse. Sekretär zeigt diese Konten unter „Postfächer“; wer dort
 antwortet, schreibt automatisch als info@.
 
-## Geteilte Adressbücher
+## Adressbücher und Kalender teilen
 
-Ein Adressbuch wird über sein `shareWith` geteilt (draft-ietf-jmap-contacts): pro Kollege
-(Principal-ID, in Stalwart zugleich die Konto-ID) die Rechte. Sekretär bietet zwei Stufen:
+Adressbücher und Kalender werden über ihr `shareWith` geteilt (draft-ietf-jmap-contacts und
+-calendars): pro Kollege (Principal-ID, in Stalwart zugleich die Konto-ID) die Rechte. Sekretär
+bietet zwei Stufen:
 
-| Stufe          | Rechte                                   |
-| -------------- | ---------------------------------------- |
-| **Lesen**      | `mayRead`                                |
-| **Bearbeiten** | `mayRead`, `mayWrite`, `mayDelete`       |
+| Stufe          | Adressbuch                         | Kalender                                                                              |
+| -------------- | ---------------------------------- | ------------------------------------------------------------------------------------- |
+| **Lesen**      | `mayRead`                          | `mayReadFreeBusy`, `mayReadItems`                                                     |
+| **Bearbeiten** | `mayRead`, `mayWrite`, `mayDelete` | dazu `mayWriteAll`, `mayWriteOwn`, `mayUpdatePrivate`, `mayRSVP`                      |
 
-Stalwart erlaubt mit `mayWrite` nur Anlegen und Ändern; Löschen von Kontakten braucht
-`mayDelete`. Weiterteilen (`mayShare`) bleibt beim Besitzer.
+Stalwart erlaubt bei Adressbüchern mit `mayWrite` nur Anlegen und Ändern; Löschen von Kontakten
+braucht `mayDelete`. Bei Kalendern enthält `mayWriteAll` das Löschen schon. Weiterteilen
+(`mayShare`) und Löschen des ganzen Kalenders bleiben beim Besitzer.
 
 Wer etwas geteilt bekommt, sieht das Konto des Kollegen als weiteres Konto in seiner JMAP-Session.
 Deshalb gelten in der Mail nur Konten von **Gruppen** als gemeinsame Postfächer (über
-`Principal/get`).
+`Principal/get`). Kontakte und Termine werden immer pro Adressbuch bzw. Kalender abgefragt
+(`inAddressBook`, `inCalendar`), auch die eigenen; so zeigt die App genau, was in den sichtbaren
+Adressbüchern und Kalendern steht. Jeder Termin trägt das Konto, aus dem er kommt; Ändern,
+Verschieben und Löschen gehen an dieses Konto.
 
-Kontakte werden immer pro Adressbuch abgefragt (`ContactCard/query` mit `inAddressBook`), auch
-die eigenen; so zeigt die Liste genau, was in den sichtbaren Adressbüchern steht.
+Einen Termin in einem fremden Kalender darf man mit „Bearbeiten“ ändern, wenn man selbst oder der
+Besitzer des Kalenders ihn organisiert. Zusagen und Absagen gibt es nur im eigenen Kalender.
+Welche Kalender eingeblendet sind, merkt sich die App pro Gerät im Browser: Stalwart 0.16 lässt
+das per Benutzer gespeicherte `isVisible` bei fremden Kalendern nur mit Schreibrecht ändern.
 
 ## Wiederkehrende Termine
 

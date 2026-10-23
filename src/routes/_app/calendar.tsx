@@ -12,6 +12,8 @@ export const Route = createFileRoute("/_app/calendar")({
     view: z.enum(["day", "week", "month", "agenda"]).optional(),
     /** The open event, or "new". */
     event: z.string().optional(),
+    /** The account of the open event when it is not the user's own (a shared calendar). */
+    account: z.string().optional(),
     /** Start of a new event (YYYY-MM-DDTHH:MM). */
     start: z.string().optional(),
   }),

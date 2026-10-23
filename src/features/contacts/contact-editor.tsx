@@ -7,7 +7,7 @@ import { Input, Label, Select, Textarea } from "@/components/ui/input";
 import { useToast } from "@/components/ui/toast";
 import { type ContactForm, emptyContactForm, formToCard, fullName, toForm } from "@/lib/jscontact";
 import { m } from "@/paraglide/messages";
-import { type BookRef, type Contact, useContactMutations } from "./queries";
+import { type BookRef, bookLabel, type Contact, useContactMutations } from "./queries";
 
 type Props = {
   card?: Contact;
@@ -97,12 +97,14 @@ export const ContactEditor = ({ card, books, preferredBook }: Props) => {
         {!card && writable.length > 1 ? (
           <Label className="sm:col-span-2">
             {m.contacts_book()}
-            <Select value={bookKey} onChange={(e) => setBookKey(e.target.value)}>
+            <Select
+              aria-label={m.contacts_book()}
+              value={bookKey}
+              onChange={(e) => setBookKey(e.target.value)}
+            >
               {writable.map((book) => (
                 <option key={book.key} value={book.key}>
-                  {book.isPersonal
-                    ? book.name
-                    : m.contacts_book_of({ book: book.name, owner: book.owner })}
+                  {bookLabel(book)}
                 </option>
               ))}
             </Select>
