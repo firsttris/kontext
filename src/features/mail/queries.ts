@@ -27,13 +27,23 @@ import {
 } from "@/jmap/mail";
 import type { Account, EmailSummary, Mailbox } from "@/jmap/types";
 import { findRole } from "@/lib/mailboxes";
+import { usePrincipals } from "../sharing/queries";
 
-/** Mail accounts the user can open: the own one first, then shared mailboxes like info@. */
+/**
+ * Mail accounts the user can open: the own one first, then shared mailboxes like info@. A
+ * colleague who shares an address book or calendar also shows up as an account in the session,
+ * so only accounts of groups count as shared mailboxes.
+ */
 export const useMailAccounts = (): Account[] => {
   const { data: session } = useSession();
+  const { data: principals = [] } = usePrincipals();
   if (!session) return [];
+  const groups = new Set(principals.filter((p) => p.type === "group").map((p) => p.id));
   return Object.entries(session.accounts)
-    .filter(([, account]) => CAPABILITIES.mail in account.accountCapabilities)
+    .filter(
+      ([id, account]) =>
+        CAPABILITIES.mail in account.accountCapabilities && (account.isPersonal || groups.has(id)),
+    )
     .map(([id, account]) => ({ id, ...account }))
     .sort((a, b) => Number(b.isPersonal) - Number(a.isPersonal) || a.name.localeCompare(b.name));
 };

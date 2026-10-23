@@ -3,21 +3,31 @@ import { useNavigate } from "@tanstack/react-router";
 import { ChevronLeft } from "lucide-react";
 import { type FormEvent, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Input, Label, Textarea } from "@/components/ui/input";
+import { Input, Label, Select, Textarea } from "@/components/ui/input";
 import { useToast } from "@/components/ui/toast";
-import {
-  type ContactCard,
-  type ContactForm,
-  emptyContactForm,
-  formToCard,
-  fullName,
-  toForm,
-} from "@/lib/jscontact";
+import { type ContactForm, emptyContactForm, formToCard, fullName, toForm } from "@/lib/jscontact";
 import { m } from "@/paraglide/messages";
-import { useContactMutations } from "./queries";
+import { type BookRef, type Contact, useContactMutations } from "./queries";
 
-export const ContactEditor = ({ card }: { card?: ContactCard }) => {
+type Props = {
+  card?: Contact;
+  books: BookRef[];
+  /** The address book shown in the list; a new contact goes there when the user may write. */
+  preferredBook?: string;
+};
+
+/** Where a new contact goes: the shown book if writable, else the own default book. */
+const startBook = (writable: BookRef[], preferred?: string): string =>
+  (
+    writable.find((book) => book.key === preferred) ??
+    writable.find((book) => book.isPersonal && book.book.isDefault) ??
+    writable[0]
+  )?.key ?? "";
+
+export const ContactEditor = ({ card, books, preferredBook }: Props) => {
   const [form, setForm] = useState<ContactForm>(card ? toForm(card) : emptyContactForm);
+  const writable = books.filter((book) => book.mayWrite);
+  const [bookKey, setBookKey] = useState(() => startBook(writable, preferredBook));
   const { create, update, remove } = useContactMutations();
   const navigate = useNavigate();
   const toast = useToast();
@@ -32,11 +42,20 @@ export const ContactEditor = ({ card }: { card?: ContactCard }) => {
     }
     try {
       if (card) {
-        await update.mutateAsync({ id: card.id, card: formToCard(form, card) });
-        await navigate({ to: "/contacts", search: { id: card.id } });
+        await update.mutateAsync({ contact: card, card: formToCard(form, card) });
+        await navigate({ to: "/contacts", search: (prev) => ({ ...prev, edit: undefined }) });
       } else {
-        const id = await create.mutateAsync(formToCard(form));
-        await navigate({ to: "/contacts", search: { id } });
+        const book = writable.find((b) => b.key === (bookKey || startBook(writable)));
+        if (!book) throw new Error(m.contacts_book());
+        const id = await create.mutateAsync({ card: formToCard(form), book });
+        await navigate({
+          to: "/contacts",
+          search: (prev) => ({
+            book: prev.book,
+            id,
+            account: book.isPersonal ? undefined : book.accountId,
+          }),
+        });
       }
     } catch (error) {
       toast.show(m.common_error({ message: (error as Error).message }), "error");
@@ -46,14 +65,18 @@ export const ContactEditor = ({ card }: { card?: ContactCard }) => {
   const destroy = async () => {
     if (!card || !window.confirm(m.contacts_delete_confirm({ name: fullName(card) }))) return;
     try {
-      await remove.mutateAsync(card.id);
-      await navigate({ to: "/contacts", search: {} });
+      await remove.mutateAsync(card);
+      await navigate({ to: "/contacts", search: (prev) => ({ book: prev.book }) });
     } catch (error) {
       toast.show(m.common_error({ message: (error as Error).message }), "error");
     }
   };
 
-  const cancel = () => navigate({ to: "/contacts", search: card ? { id: card.id } : {} });
+  const cancel = () =>
+    navigate({
+      to: "/contacts",
+      search: (prev) => (card ? { ...prev, edit: undefined } : { book: prev.book }),
+    });
 
   return (
     <form
@@ -71,6 +94,20 @@ export const ContactEditor = ({ card }: { card?: ContactCard }) => {
         {card ? fullName(card) : m.contacts_new()}
       </h2>
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        {!card && writable.length > 1 ? (
+          <Label className="sm:col-span-2">
+            {m.contacts_book()}
+            <Select value={bookKey} onChange={(e) => setBookKey(e.target.value)}>
+              {writable.map((book) => (
+                <option key={book.key} value={book.key}>
+                  {book.isPersonal
+                    ? book.name
+                    : m.contacts_book_of({ book: book.name, owner: book.owner })}
+                </option>
+              ))}
+            </Select>
+          </Label>
+        ) : null}
         <Label>
           {m.contacts_given()}
           <Input value={form.given} onChange={set("given")} autoFocus={!card} autoComplete="off" />

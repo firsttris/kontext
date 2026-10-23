@@ -82,6 +82,7 @@ und unter `https://<Ihre Domain>` anmelden. DNS-Einträge, Backups und Updates s
 
 - **Kunde auf einen Blick**: letzte Mails und nächste Termine mit diesem Kontakt.
 - **Anlegen und pflegen**: Firma, Mail, Telefon, Adresse, Notiz; Anrufen und Mail schreiben mit einem Tipp.
+- **Adressbücher teilen**: eigene Adressbücher anlegen und mit Kollegen teilen – zum Lesen oder zum Bearbeiten. Geteilte Adressbücher und die der gemeinsamen Postfächer stehen unter „Geteilt mit mir“.
 
 ## 📸 Screenshots
 
@@ -112,7 +113,7 @@ Sekretär ist für Betriebe gemacht, die ihre Mail selbst (oder durch ihren IT-D
 | [Microsoft 365](https://www.microsoft.com/microsoft-365)        | Outlook und Office als Abo pro Benutzer     | läuft im Browser ohne Outlook, Daten auf dem eigenen Server                         |
 | [Stalwart Web-Admin](https://stalw.art)                         | Verwaltung des Mailservers                  | Sekretär ist die App für die Mitarbeiter, Stalwart der Server darunter              |
 | [Roundcube](https://roundcube.net), [SOGo](https://www.sogo.nu) | bewährte Webmailer                          | moderne Oberfläche, fürs Handy gebaut, gemeinsame Postfächer im Mittelpunkt         |
-| Bulwark                                                         | JMAP-Webmail für Stalwart                   | Kalender und Kontakte mit Kunden-Ansicht, deutsche Oberfläche, Zusatzmodule geplant |
+| Bulwark                                                         | JMAP-Webmail für Stalwart                   | Kalender und Kontakte mit Kunden-Ansicht, geteilte Adressbücher, deutsche Oberfläche |
 
 ## ❓ FAQ
 

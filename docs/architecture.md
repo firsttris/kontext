@@ -34,6 +34,26 @@ die Gruppe als zusätzliches Konto in seiner JMAP-Session (`isPersonal: false`) 
 Mails und einer Absenderadresse. Sekretär zeigt diese Konten unter „Postfächer“; wer dort
 antwortet, schreibt automatisch als info@.
 
+## Geteilte Adressbücher
+
+Ein Adressbuch wird über sein `shareWith` geteilt (draft-ietf-jmap-contacts): pro Kollege
+(Principal-ID, in Stalwart zugleich die Konto-ID) die Rechte. Sekretär bietet zwei Stufen:
+
+| Stufe          | Rechte                                   |
+| -------------- | ---------------------------------------- |
+| **Lesen**      | `mayRead`                                |
+| **Bearbeiten** | `mayRead`, `mayWrite`, `mayDelete`       |
+
+Stalwart erlaubt mit `mayWrite` nur Anlegen und Ändern; Löschen von Kontakten braucht
+`mayDelete`. Weiterteilen (`mayShare`) bleibt beim Besitzer.
+
+Wer etwas geteilt bekommt, sieht das Konto des Kollegen als weiteres Konto in seiner JMAP-Session.
+Deshalb gelten in der Mail nur Konten von **Gruppen** als gemeinsame Postfächer (über
+`Principal/get`).
+
+Kontakte werden immer pro Adressbuch abgefragt (`ContactCard/query` mit `inAddressBook`), auch
+die eigenen; so zeigt die Liste genau, was in den sichtbaren Adressbüchern steht.
+
 ## Wiederkehrende Termine
 
 Eine Serie ist in Stalwart **ein** Termin mit `recurrenceRule` (JSCalendar, RFC 8984; Stalwart

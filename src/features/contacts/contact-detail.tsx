@@ -12,17 +12,10 @@ import { CAPABILITIES } from "@/jmap/client";
 import { emailsWithAddress } from "@/jmap/mail";
 import { displayName, listDate } from "@/lib/format";
 import { dateKey, eventTimes, locationName, toLocal } from "@/lib/jscalendar";
-import {
-  addressLines,
-  type ContactCard,
-  company,
-  fullName,
-  note,
-  primaryEmail,
-  primaryPhone,
-} from "@/lib/jscontact";
+import { addressLines, company, fullName, note, primaryEmail, primaryPhone } from "@/lib/jscontact";
 import { m } from "@/paraglide/messages";
 import { useEventsWith } from "../calendar/queries";
+import { type BookRef, bookOf, type Contact } from "./queries";
 
 const Card = ({ title, children }: { title: string; children: ReactNode }) => (
   <section className="flex flex-col gap-3 rounded-xl border border-border p-4">
@@ -45,7 +38,8 @@ const dayFormat = new Intl.DateTimeFormat("de-DE", {
   month: "short",
 });
 
-export const ContactDetail = ({ card }: { card: ContactCard }) => {
+export const ContactDetail = ({ card, books }: { card: Contact; books: BookRef[] }) => {
+  const book = bookOf(books, card);
   const client = useClient();
   const { data: session } = useSession();
   const mailAccountId = session?.primaryAccounts[CAPABILITIES.mail];
@@ -79,6 +73,13 @@ export const ContactDetail = ({ card }: { card: ContactCard }) => {
           {company(card) && company(card) !== fullName(card) ? (
             <span className="text-muted">{company(card)}</span>
           ) : null}
+          {book && !book.isPersonal ? (
+            <span className="text-[13px] text-muted">
+              {book.mayWrite
+                ? m.contacts_shared_from({ owner: book.owner })
+                : m.contacts_read_only({ owner: book.owner })}
+            </span>
+          ) : null}
         </div>
         <div className="flex flex-wrap gap-2">
           {email && mailAccountId ? (
@@ -104,11 +105,13 @@ export const ContactDetail = ({ card }: { card: ContactCard }) => {
               <CalendarDays size={15} /> {m.calendar_new()}
             </Link>
           </Button>
-          <Button asChild variant="ghost">
-            <Link to="/contacts" search={{ id: card.id, edit: true }}>
-              <Pencil size={15} /> {m.contacts_edit()}
-            </Link>
-          </Button>
+          {book?.mayWrite ? (
+            <Button asChild variant="ghost">
+              <Link to="/contacts" search={(prev) => ({ ...prev, id: card.id, edit: true })}>
+                <Pencil size={15} /> {m.contacts_edit()}
+              </Link>
+            </Button>
+          ) : null}
         </div>
       </header>
 
