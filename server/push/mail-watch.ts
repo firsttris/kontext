@@ -93,7 +93,7 @@ export const createMailWatch = ({
           eventSourceUrl: string;
           accounts: Record<string, { accountCapabilities: Record<string, unknown> }>;
         };
-        const call = async <T>(calls: unknown[]): Promise<T[]> => {
+        const call = async <T>(calls: unknown[]): Promise<(T | undefined)[]> => {
           const response = await fetch(onStalwart(session.apiUrl), {
             method: "POST",
             headers: { ...auth, "content-type": "application/json" },
@@ -103,7 +103,8 @@ export const createMailWatch = ({
           const { methodResponses } = (await response.json()) as {
             methodResponses: [string, T][];
           };
-          return methodResponses.map(([, result]) => result);
+          // A method error (an account shared without the right to look) answers nothing.
+          return methodResponses.map(([name, result]) => (name === "error" ? undefined : result));
         };
         const mailAccounts = Object.entries(session.accounts)
           .filter(([, account]) => USING[1]! in account.accountCapabilities)
@@ -113,7 +114,8 @@ export const createMailWatch = ({
           const [query] = await call<{ ids: string[] }>([
             ["Mailbox/query", { accountId, filter: { role: "inbox" } }, "q"],
           ]);
-          if (query?.ids[0]) inboxes.set(accountId, query.ids[0]);
+          const inbox = query?.ids?.[0];
+          if (inbox) inboxes.set(accountId, inbox);
           if (!since.has(accountId)) since.set(accountId, started);
         }
 
@@ -190,7 +192,10 @@ export const createMailWatch = ({
         if (signal.aborted) return;
         // The planned reconnect goes on at once; after a failure (session gone, Stalwart
         // restarting) it waits a little.
-        if ((error as Error).name !== "TimeoutError") await sleep(RETRY_MS, signal);
+        if ((error as Error).name !== "TimeoutError") {
+          console.warn(`Mail-Push für ${memberId}: ${(error as Error).message}`);
+          await sleep(RETRY_MS, signal);
+        }
       }
     }
   };
