@@ -343,3 +343,26 @@ export const snippets = sqliteTable(
   },
   (table) => [index("snippets_account").on(table.accountId)],
 );
+
+/**
+ * Mails put away until a time ("Wiedervorlage", server/snooze/): they wait in the account's
+ * snoozed folder and come back to the inbox then. `userId` is whose sign-in brings them back.
+ */
+export const snoozes = sqliteTable(
+  "snoozes",
+  {
+    accountId: text("account_id").notNull(),
+    emailId: text("email_id").notNull(),
+    until: integer("until", { mode: "timestamp_ms" }).notNull(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    /** The personal account id of who put it away, told when it is back. */
+    by: text("by").notNull(),
+    createdAt: integer("created_at", { mode: "timestamp_ms" }).notNull(),
+  },
+  (table) => [
+    primaryKey({ columns: [table.accountId, table.emailId] }),
+    index("snoozes_until").on(table.until),
+  ],
+);

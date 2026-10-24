@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { holdUntil, sendChoices, validSendTime } from "./schedule";
+import { holdUntil, sendChoices, snoozeChoices, validSendTime } from "./schedule";
 
 describe("sendChoices", () => {
   it("offers today, tomorrow and Monday morning by the time of day", () => {
@@ -30,5 +30,14 @@ describe("holdUntil and validSendTime", () => {
     expect(validSendTime(new Date("2026-10-24T11:00:00Z"), now)).toBe(false);
     expect(validSendTime(new Date("2026-10-26T07:00:00Z"), now)).toBe(true);
     expect(validSendTime(new Date("2026-12-24T07:00:00Z"), now)).toBe(false);
+  });
+});
+
+describe("snoozeChoices", () => {
+  it("adds a week from now in the morning", () => {
+    // Sunday, 25 October 2026, 18:00 in Berlin: a week on is 1 November, after the clock change.
+    const choices = snoozeChoices(new Date("2026-10-25T17:00:00Z"));
+    expect(choices.map((c) => c.label)).toEqual(["Morgen 08:00", "In einer Woche 08:00"]);
+    expect(choices[1]!.at.toISOString()).toBe("2026-11-01T07:00:00.000Z");
   });
 });

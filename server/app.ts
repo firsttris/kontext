@@ -43,6 +43,9 @@ import { createPushStore, loadVapidKeys } from "./push/store";
 import { createSessionInfo } from "./session-info";
 import { createSnippetRoutes } from "./snippets/routes";
 import { createSnippetStore } from "./snippets/store";
+import { createSnoozeRoutes } from "./snooze/routes";
+import { createSnoozeStore } from "./snooze/store";
+import { createSnoozeWaker } from "./snooze/waker";
 import { createTaskRoutes } from "./tasks/routes";
 import { createTaskStore } from "./tasks/store";
 
@@ -267,6 +270,11 @@ export const createApp = async (env: Env) => {
     }),
   );
   app.route("/api/snippets", createSnippetRoutes({ store: createSnippetStore(db), accountsOf }));
+  // Wiedervorlage: due mails come back every minute, also with nobody signed in.
+  const snoozes = createSnoozeStore(db);
+  const waker = createSnoozeWaker({ env, grants, store: snoozes, notify: pusher.notify });
+  setInterval(() => void waker.tick(), env.SNOOZE_TICK_MS).unref();
+  app.route("/api/snoozes", createSnoozeRoutes({ store: snoozes, infoOf }));
   app.route(
     "/api/categories",
     createCategoryRoutes({

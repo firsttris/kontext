@@ -42,6 +42,7 @@ import { CategoryMenu } from "../categories/category-menu";
 import { DiscussDialog } from "../chat/discuss-dialog";
 import { OwnRuleDialog } from "../rules/rule-dialog";
 import { usePersonalAccountId } from "../settings/queries";
+import { SnoozeMenu } from "../snooze/snooze-menu";
 import { TaskDialog, type TaskStart } from "../tasks/task-dialog";
 import { useEmailActions } from "./actions";
 import { useThread } from "./conversation";
@@ -181,6 +182,15 @@ export const Toolbar = ({
         >
           <Trash2 size={16} strokeWidth={1.75} />
         </Button>
+      ) : null}
+      {canRemove && mailbox.role !== "drafts" && mailbox.role !== "sent" ? (
+        <SnoozeMenu
+          accountId={accountId}
+          ids={ids}
+          from={mailbox.id}
+          onLeave={mailbox.role === "snoozed" ? undefined : close}
+          shortcut
+        />
       ) : null}
       {toggleSpam ? (
         <Button

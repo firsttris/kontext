@@ -6,6 +6,7 @@ import { mailboxNotice } from "@/lib/mail-accounts";
 import { mailboxName, mailboxRights } from "@/lib/mailboxes";
 import { m } from "@/paraglide/messages";
 import type { MailSearch } from "@/routes/_app/mail.$accountId.$mailboxId";
+import { RESURFACED, useSnoozes } from "../snooze/queries";
 import { FilterChips, ListFrame, type Row } from "./list-frame";
 import { useEmailList, useHeldMails, useMailAccounts } from "./queries";
 import { useThreadView } from "./thread-view";
@@ -20,6 +21,25 @@ export const MessageList = ({ accountId, mailbox, search }: Props) => {
     [mailbox.id, search.unread],
   );
   const list = useEmailList(accountId, filter, useThreadView());
+  // In the inbox, what came back from Wiedervorlage and is not read yet: on top, by itself.
+  const isInbox = mailbox.role === "inbox";
+  const backFilter = useMemo(
+    () => ({
+      search: {
+        operator: "AND",
+        conditions: [
+          { inMailbox: mailbox.id },
+          { hasKeyword: RESURFACED },
+          { notKeyword: "$seen" },
+        ],
+      },
+    }),
+    [mailbox.id],
+  );
+  const back = useEmailList(isInbox ? accountId : "", backFilter);
+  // On Wiedervorlage: when each comes back, the next first.
+  const isSnoozed = mailbox.role === "snoozed";
+  const snoozes = useSnoozes(isSnoozed ? accountId : "");
   // In Sent, what the server still holds: marked in the list, or on its own ("Geplant").
   const isSent = mailbox.role === "sent";
   const held = useHeldMails(isSent ? accountId : "");
@@ -31,12 +51,30 @@ export const MessageList = ({ accountId, mailbox, search }: Props) => {
         mail.email ? [{ email: mail.email, sendAt: mail.sendAt }] : [],
       );
     }
-    return (
+    const listed: Row[] =
       list.data?.pages.flatMap((page) =>
         page.emails.map((email) => ({ email, sendAt: sendAt.get(email.id) })),
-      ) ?? []
-    );
-  }, [list.data, held, scheduled]);
+      ) ?? [];
+    if (isSnoozed) {
+      const until = (row: Row) => row.snoozedUntil ?? "\uffff";
+      return listed
+        .map((row) => ({ ...row, snoozedUntil: snoozes.get(row.email.id) }))
+        .sort((a, b) => until(a).localeCompare(until(b)));
+    }
+    const backRows = isInbox ? (back.data?.pages.flatMap((page) => page.emails) ?? []) : [];
+    if (!backRows.length) return listed;
+    const ids = new Set(backRows.map((email) => email.id));
+    const rest = listed.filter((row) => !ids.has(row.email.id));
+    return [
+      ...backRows.map((email, index) => ({
+        email,
+        section: index === 0 ? m.mail_resurfaced() : undefined,
+      })),
+      ...rest.map((row, index) =>
+        index === 0 ? { ...row, section: m.mail_resurfaced_rest() } : row,
+      ),
+    ];
+  }, [list.data, held, scheduled, isSnoozed, snoozes, isInbox, back.data]);
   const { hasNextPage, isFetchingNextPage, fetchNextPage } = list;
   const onNearEnd = useCallback(() => {
     if (hasNextPage && !isFetchingNextPage) void fetchNextPage();
@@ -92,7 +130,7 @@ export const MessageList = ({ accountId, mailbox, search }: Props) => {
           />
         ) : undefined
       }
-      empty={scheduled ? m.mail_scheduled_empty() : undefined}
+      empty={scheduled ? m.mail_scheduled_empty() : isSnoozed ? m.mail_snoozed_empty() : undefined}
     />
   );
 };

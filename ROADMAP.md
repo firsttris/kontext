@@ -11,7 +11,6 @@ ein Plan, kein Versprechen; Wünsche und Hinweise gern als
 | **Aufgaben überall im Kontext** | Offene Aufgaben am Kontakt, Fälliges im Kalender, Heute-Fälliges und neu Zugewiesenes in der Glocke, Erinnerungen als Benachrichtigung, „Aufgaben erstellen“ für mehrere Mails. |
 | **Team-Chat: mehr** | Antworten im Faden, Reaktionen, Aufbewahrungsfrist, die der Chef einstellt. |
 | **Anrufe: mehr** | Videobesprechung am Kalendertermin, Gäste per Link (Kunden ohne Konto), „Verpasster Anruf“ und Gesprächsdauer im Verlauf. |
-| **Wiedervorlage** | Eine Mail ausblenden, bis sie zu einem Zeitpunkt wieder oben im Posteingang auftaucht – zusammen mit den Kategorien eine einfache Aufgabenliste. |
 
 ## Danach
 
@@ -37,6 +36,7 @@ Kleinere Dinge, die beim Bauen aufgefallen sind und noch erledigt werden.
 - [ ] Aufgabe aus einer Mail mit dem Absender als Kontakt verknüpfen; die Verknüpfungen „Kontakt“ und „Termin“ öffnen sich schon richtig, werden aber noch nirgends angelegt.
 - [ ] **Regeln für Mitarbeiter** in der Firmenverwaltung (heute nur für gemeinsame Postfächer und die eigenen).
 - [ ] **App auf Englisch** und weiteren Sprachen (Texte liegen schon gesammelt in `messages/de.json`).
+- [ ] Wiedervorlage für mehrere ausgewählte Mails auf einmal (heute aus der geöffneten Mail) und „Wieder vorgelegt“ auch in „Alle Posteingänge“ (heute im Posteingang des Postfachs).
 - [ ] **Drucken mit Bildern aus dem Internet**, wenn sie in der Mail freigegeben wurden.
 - [ ] Ideen aus dem ersten Entwurf, noch nicht eingeplant: **Belege**, **Buchung**, **Leitstand**, **Tickets**.
 
@@ -60,6 +60,8 @@ Kleinere Dinge, die beim Bauen aufgefallen sind und noch erledigt werden.
 
 ## Zuletzt fertig geworden
 
+Wiedervorlage (eine Mail bis zu einem Zeitpunkt aus dem Weg, dann oben im Posteingang – auch bei
+geschlossener App).
 Anrufe und Videobesprechungen im Chat (LiveKit auf dem eigenen Server): anrufen in
 Direktnachrichten, mit Klingeln auch bei geschlossener App, Besprechungen in Kanälen zum
 Beitreten, Bildschirm teilen, das Gespräch bleibt beim Wechsel zwischen den Apps offen.

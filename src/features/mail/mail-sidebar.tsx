@@ -1,6 +1,7 @@
 /** Left column: new mail, standard folders, shared mailboxes, own folders, storage. */
 import { Link, useNavigate } from "@tanstack/react-router";
 import {
+  AlarmClock,
   Archive,
   ChevronDown,
   ChevronLeft,
@@ -43,6 +44,7 @@ import { useCreateMailbox, useInboxes, useMailAccounts, useMailboxes, useQuota }
 const ROLE_ICONS: Record<string, LucideIcon> = {
   inbox: Inbox,
   flagged: Star,
+  snoozed: AlarmClock,
   drafts: File,
   sent: Send,
   archive: Archive,
@@ -169,7 +171,7 @@ export const MailSidebar = ({ accountId, mailbox, view, query }: Props) => {
               key={box.id}
               to="/mail/$accountId/$mailboxId"
               params={{ accountId, mailboxId: box.id }}
-              {...(box.role === "drafts" || box.role === "flagged"
+              {...(box.role === "drafts" || box.role === "flagged" || box.role === "snoozed"
                 ? {}
                 : dropTarget({ accountId, mailboxId: box.id }, mailboxName(box)))}
               className={navClass(box.id === mailbox?.id)}
@@ -179,7 +181,9 @@ export const MailSidebar = ({ accountId, mailbox, view, query }: Props) => {
               {box.role === "inbox" || box.role === "junk" ? (
                 <Count value={box.unreadEmails} />
               ) : null}
-              {box.role === "drafts" ? <Count value={box.totalEmails} /> : null}
+              {box.role === "drafts" || box.role === "snoozed" ? (
+                <Count value={box.totalEmails} />
+              ) : null}
             </Link>
           );
         })}

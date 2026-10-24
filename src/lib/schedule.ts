@@ -61,3 +61,9 @@ export const sendTimeLabel = (at: Date): string =>
     hour: "2-digit",
     minute: "2-digit",
   });
+
+/** "Wiedervorlage": the same times as for sending, and a week from now in the morning. */
+export const snoozeChoices = (now: Date): SendChoice[] => [
+  ...sendChoices(now),
+  { label: m.mail_snooze_week({ time: "08:00" }), at: at(addDays(dateKey(now), 7), 8) },
+];

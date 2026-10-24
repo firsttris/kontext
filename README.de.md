@@ -89,6 +89,7 @@ reicht ein VPS mit 2 vCPU und 4 GB RAM.
 - **Suche wie in Gmail**: über alle Ordner und Postfächer, mit `von:`, `an:`, `betreff:`, `hat:anhang`, `kategorie:`, `in:info@`, `nach:`/`vor:`; „Angebote“ findet auch „Angebot“.
 - **Unterhaltungen ohne Durcheinander**: Die Liste bleibt, wie die Mails hereinkommen; beim Lesen stehen die früheren Mails der Unterhaltung und die Antworten seitdem dabei, Zitate eingeklappt. In gemeinsamen Postfächern siehst du, wer schon geantwortet hat („Jonas · 14:02“). Gruppieren wie bei Gmail ist ein Schalter.
 - **Senden rückgängig und später senden**: ein paar Sekunden, um eine Mail zurückzuholen; „morgen 8 Uhr“ oder ein Zeitpunkt nach Wahl, und der Server schickt sie dann – auch wenn dein Rechner aus ist.
+- **Wiedervorlage**: eine Mail bis morgen, Montag oder einen Zeitpunkt nach Wahl aus dem Weg; dann liegt sie wieder oben im Posteingang, ungelesen – auch bei geschlossenem Kontext, und in info@ für das ganze Team sichtbar.
 - **Textbausteine**: Standardantworten mit zwei Klicks, eigene und gemeinsame für info@ & Co.; `{Name}` wird zum Empfänger.
 - **Drucken**: die Mail allein, sauber auf A4 (auch per Strg+P).
 - **Sofort aktuell**: neue Mails und Änderungen von Kollegen erscheinen ohne Neuladen (JMAP Push).

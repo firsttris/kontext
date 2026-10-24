@@ -102,6 +102,8 @@ export const useEmailList = (accountId: string, filter: EmailFilter, collapse = 
   return useInfiniteQuery({
     queryKey: [accountId, "emails", filter, collapse],
     queryFn: ({ pageParam }) => queryEmails(client, accountId, filter, pageParam, 50, collapse),
+    // No account: nothing to list (e.g. "wieder vorgelegt" outside the inbox).
+    enabled: Boolean(accountId),
     initialPageParam: 0,
     getNextPageParam: (last: EmailPage) => {
       const next = last.position + last.emails.length;

@@ -9,10 +9,11 @@ import { flattenTree, folderTree, mailboxPath, systemMailboxes } from "./mailbox
 export type MoveTarget = { accountId: string; mailbox: Mailbox; label: string };
 export type MoveGroup = { account: Account; targets: MoveTarget[] };
 
-/** Drafts and "Markiert" are no places to put a mail. */
+/** Drafts and "Markiert" are no places to put a mail; "Wiedervorlage" wants a time. */
 const isDestination = (mailbox: Mailbox): boolean =>
   mailbox.role !== "drafts" &&
   mailbox.role !== "flagged" &&
+  mailbox.role !== "snoozed" &&
   mailbox.myRights?.mayAddItems !== false;
 
 const targetsOf = (accountId: string, mailboxes: Mailbox[]): MoveTarget[] =>

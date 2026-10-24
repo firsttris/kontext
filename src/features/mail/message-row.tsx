@@ -1,6 +1,14 @@
 /** One mail in the list: who, when, subject, categories, preview; and its box to pick it. */
 import { Link, useParams } from "@tanstack/react-router";
-import { CalendarClock, CornerUpLeft, ListChecks, Paperclip, Star, Users } from "lucide-react";
+import {
+  AlarmClock,
+  CalendarClock,
+  CornerUpLeft,
+  ListChecks,
+  Paperclip,
+  Star,
+  Users,
+} from "lucide-react";
 import { Highlighted } from "@/components/highlighted";
 import { isFlagged, isUnread } from "@/jmap/mail";
 import { categoriesOn } from "@/lib/categories";
@@ -17,7 +25,7 @@ import { type DraggedMail, startMailDrag } from "./mail-drag";
 import type { Answer, Group } from "./use-thread-info";
 
 export const MessageRow = ({
-  row: { email, account, folder, highlight, sendAt },
+  row: { email, account, folder, highlight, sendAt, snoozedUntil },
   active,
   showRecipient,
   isDraft,
@@ -159,6 +167,14 @@ export const MessageRow = ({
               <span className="inline-flex h-[18px] shrink-0 items-center gap-1 rounded-full bg-warn/10 px-1.5 text-[11px] font-medium text-warn">
                 <CalendarClock size={11} strokeWidth={2.25} aria-hidden="true" />
                 {m.mail_scheduled_at({ when: sendTimeLabel(new Date(sendAt)) })}
+              </span>
+            ) : null}
+            {snoozedUntil ? (
+              <span className="inline-flex h-[18px] shrink-0 items-center gap-1 rounded-full bg-accent/10 px-1.5 text-[11px] font-medium text-accent">
+                <AlarmClock size={11} strokeWidth={2.25} aria-hidden="true" />
+                {Date.parse(snoozedUntil) <= Date.now()
+                  ? m.mail_snoozed_soon()
+                  : m.mail_snoozed_until({ when: sendTimeLabel(new Date(snoozedUntil)) })}
               </span>
             ) : null}
             {email.keywords.$answered ? (

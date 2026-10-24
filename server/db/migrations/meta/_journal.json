@@ -57,6 +57,13 @@
       "when": 1792872742601,
       "tag": "0007_snippets",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "6",
+      "when": 1792874354244,
+      "tag": "0008_snoozes",
+      "breakpoints": true
     }
   ]
 }

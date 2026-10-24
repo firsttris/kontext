@@ -34,6 +34,10 @@ export type Row = {
   highlight?: string[];
   /** Still held by the server, to go out then (ISO). */
   sendAt?: string;
+  /** On Wiedervorlage, back in the inbox then (ISO). */
+  snoozedUntil?: string;
+  /** A heading above the row, where a part of the list begins ("Wieder vorgelegt"). */
+  section?: string;
 };
 
 type Props = {
@@ -141,8 +145,11 @@ export const ListFrame = ({
   const navigate = useNavigate();
   const scrollRef = useRef<HTMLDivElement>(null);
   const searchRef = useRef<SearchBoxHandle>(null);
+  const rowKey = (row: Row) => `${row.account?.id ?? ""}/${row.email.id}/${row.section ?? ""}`;
   const virtualizer = useVirtualizer({
     count: rows.length,
+    // Heights follow the row, not its place: a heading above ("Wieder vorgelegt") shifts rows.
+    getItemKey: (index) => (rows[index] ? rowKey(rows[index]) : index),
     getScrollElement: () => scrollRef.current,
     estimateSize: () => 92,
     overscan: 8,
@@ -266,12 +273,17 @@ export const ListFrame = ({
               const row = rows[item.index]!;
               return (
                 <li
-                  key={`${row.account?.id ?? ""}/${row.email.id}`}
+                  key={rowKey(row)}
                   data-index={item.index}
                   ref={virtualizer.measureElement}
                   className="absolute inset-x-0"
                   style={{ transform: `translateY(${item.start}px)` }}
                 >
+                  {row.section ? (
+                    <h2 className="m-0 px-3 pt-3 pb-1 text-[12px] font-medium text-muted">
+                      {row.section}
+                    </h2>
+                  ) : null}
                   <MessageRow
                     row={row}
                     active={

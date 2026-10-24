@@ -16,6 +16,8 @@ import { m } from "@/paraglide/messages";
 import { CategoryChips } from "../categories/category-chips";
 import { useCategories } from "../categories/queries";
 import { DiscussedNotice } from "../chat/discussed-notice";
+import { RESURFACED } from "../snooze/queries";
+import { SnoozeNotice } from "../snooze/snooze-notice";
 import { useTasks } from "../tasks/queries";
 import { useEmailActions } from "./actions";
 import { Attachments } from "./attachments";
@@ -47,6 +49,10 @@ export const MessageView = ({ accountId, mailbox, emailId }: Props) => {
     if (canMarkSeen && email && isUnread(email) && markedFor.current !== email.id) {
       markedFor.current = email.id;
       void actions.setSeen([email.id], true);
+      // Read, a mail back from Wiedervorlage takes its place by date again.
+      if (email.keywords[RESURFACED]) {
+        void actions.setCategory([email.id], RESURFACED, false).catch(() => undefined);
+      }
     }
   }, [canMarkSeen, email, actions]);
 
@@ -137,6 +143,13 @@ export const MessageView = ({ accountId, mailbox, emailId }: Props) => {
               </div>
             </header>
             <ScheduledNotice accountId={accountId} emailId={email.id} />
+            {mailbox.role === "snoozed" ? (
+              <SnoozeNotice
+                accountId={accountId}
+                emailId={email.id}
+                canChange={mailboxRights(mailbox).canRemove}
+              />
+            ) : null}
             <SenderWarnings email={email} />
             {showDetails ? <MessageDetails email={email} attachments={attachments} /> : null}
             <MailBody accountId={accountId} email={email} />

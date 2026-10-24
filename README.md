@@ -89,6 +89,7 @@ fine on a VPS with 2 vCPUs and 4 GB RAM.
 - **Search like Gmail**: across folders and mailboxes, with operators such as `from:`, `to:`, `subject:`, `has:attachment`, `label:`, `in:info@`, `after:`/`before:`.
 - **Conversations without the clutter**: the list stays as mail comes in; reading a mail shows the earlier mails of the conversation and the answers since, quotes folded away. In shared mailboxes you see who answered ("Jonas · 14:02"). Grouping like Gmail is a switch away.
 - **Undo send and send later**: a few seconds to take a mail back; "tomorrow at 8" or any time, and the server sends it then – even with your computer off.
+- **Snooze ("Wiedervorlage")**: a mail out of the way until tomorrow, Monday or any time; then it is back on top of the inbox, unread – even with Kontext closed, and in info@ for the whole team to see.
 - **Text snippets**: standard answers in two clicks, your own and shared ones for info@ & co.; `{Name}` becomes the recipient.
 - **Print**: just the mail, neatly on A4 (also with Ctrl+P).
 - **Always current**: new mail and colleagues' changes appear without reloading (JMAP push).

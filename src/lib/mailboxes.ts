@@ -6,6 +6,7 @@ import { m } from "@/paraglide/messages";
 export const ROLE_ORDER = [
   "inbox",
   "flagged",
+  "snoozed",
   "drafts",
   "sent",
   "archive",
@@ -17,6 +18,7 @@ export type MailboxRole = (typeof ROLE_ORDER)[number];
 const roleNames: Record<MailboxRole, () => string> = {
   inbox: m.mail_inbox,
   flagged: m.mail_flagged,
+  snoozed: m.mail_snoozed,
   drafts: m.mail_drafts,
   sent: m.mail_sent,
   archive: m.mail_archive,
