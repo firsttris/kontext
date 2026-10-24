@@ -5,18 +5,26 @@ nötig: das Entwicklungsskript lädt Stalwart als einzelne Datei von GitHub. Fü
 Outlook braucht der Server `readpst` (`sudo apt install pst-utils`, macOS: `brew install libpst`).
 Die PST-Dateien für die Tests lädt `e2e/fixtures.ts` beim ersten Lauf nach `.dev/fixtures/`.
 Den Umzug per IMAP probiert man lokal mit dem eigenen Stalwart als „altem Anbieter“ (Anderer
-Server, `127.0.0.1`, Port 10143): dafür den Server mit `MAIL_SYNC_ALLOW_PLAIN=true bun run
-dev:server` starten, sonst verlangt er TLS und einen IMAP-Port. Für Microsoft 365 ersetzt
-`bun dev/fake-graph.ts` (Port 18095) Microsofts Anmeldung und Graph; den Server dann zusätzlich
-mit `M365_LOGIN_URL=http://127.0.0.1:18095 GRAPH_URL=http://127.0.0.1:18095/v1.0` starten und
+Server, `127.0.0.1`, Port 10143): dafür mit `MAIL_SYNC_ALLOW_PLAIN=true bun run dev` starten,
+sonst verlangt er TLS und einen IMAP-Port. Für Microsoft 365 ersetzt `bun dev/fake-graph.ts`
+(Port 18095) Microsofts Anmeldung und Graph; `bun run dev` dann zusätzlich mit
+`M365_LOGIN_URL=http://127.0.0.1:18095 GRAPH_URL=http://127.0.0.1:18095/v1.0` starten und
 Mandant `contoso`, Anwendung `sekretaer-test`, Schlüssel `geheim` eintragen.
 
 ```bash
 bun install
-bun run dev:stalwart -- --seed   # Stalwart auf 127.0.0.1:18080, mit Testdaten
-bun run dev:server               # Sekretär-Server auf 127.0.0.1:18090 (Anmeldung, JMAP)
-bun run dev                      # App auf http://localhost:5173
+bun run dev   # Stalwart, Testdaten, Sekretär-Server und App: http://localhost:5173
 ```
+
+`bun run dev` (`dev/dev.ts`) startet alles in einem Terminal: zuerst Stalwart auf 18080 (beim
+ersten Mal mit Download) und spielt die Testdaten ein – das ist idempotent, ein zweiter Start legt
+nichts doppelt an. Danach starten der Sekretär-Server auf 18090 (Anmeldung, JMAP; startet bei
+Änderungen neu) und Vite auf 5173. Stalwarts eigenes Log steht in `.dev/stalwart.log`. Strg+C
+beendet alles, und endet einer der Prozesse, stoppt auch der Rest.
+
+Läuft schon ein Stalwart auf 18080, nimmt `bun run dev` diesen. So lässt sich Stalwart in einem
+eigenen Terminal laufen lassen (`bun run dev:stalwart`, mit Log in der Konsole), während man den
+Rest neu startet. Einzeln gehen auch `bun run dev:server` und `bun run dev:app`.
 
 ## Lokaler Stalwart
 

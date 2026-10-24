@@ -68,7 +68,7 @@ export const BooksDialog = ({ open, onOpenChange }: Props) => {
                     <span className="truncate font-medium">{book.name}</span>
                     <span className="truncate text-[12px] text-muted">
                       {book.name === book.owner ? "" : `${book.owner} · `}
-                      {book.mayWrite ? m.sharing_edit() : m.sharing_read()}
+                      {book.mayWrite ? m.sharing_may_edit() : m.sharing_read_only()}
                     </span>
                   </span>
                 </li>

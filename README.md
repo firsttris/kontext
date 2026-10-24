@@ -176,9 +176,7 @@ Benötigt [Bun](https://bun.sh) 1.4 und Linux oder macOS.
 ```bash
 git clone https://github.com/firsttris/sekretaer && cd sekretaer
 bun install
-bun run dev:stalwart -- --seed   # Stalwart 0.16 auf Port 18080 mit Testdaten (eigenes Terminal)
-bun run dev:server               # Anmeldung und JMAP-Durchleitung auf Port 18090 (eigenes Terminal)
-bun run dev                      # http://localhost:5173
+bun run dev   # Stalwart mit Testdaten, Server und App: http://localhost:5173
 ```
 
 Anmelden mit `jonas@weber-haustechnik.test` / `kaffee-werkbank-sekretaer` (Chef, sieht auch die Firmenverwaltung); `anna@`, `sandra@` und `max@` haben dasselbe Passwort, info@ und rechnung@ sind gemeinsame Postfächer. `bun run dev:stalwart -- --fresh --seed` setzt die Testdaten zurück. Für den Umzug aus Outlook braucht es lokal `readpst` (`sudo apt install pst-utils`); wie man den Umzug per IMAP und von Microsoft 365 ohne echte Konten ausprobiert, steht in der Entwicklungs-Doku.

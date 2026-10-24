@@ -5,6 +5,10 @@
  *   bun dev/stalwart.ts --fresh         # wipe the dev data first
  *   bun dev/stalwart.ts --seed          # and fill it with the test data
  *   bun dev/stalwart.ts --instance e2e --http 28080 --smtp 20025 --imap 20143 --fresh --seed
+ *   bun dev/stalwart.ts --seed --log .dev/stalwart.log   # server log into a file (bun run dev)
+ *
+ * Started by another process with IPC (dev/dev.ts), it sends "ready" once the server answers and
+ * the seed is in.
  *
  * Stalwart 0.16 keeps all settings in its database, only the datastore is in config.json
  * (see UPGRADING/v0_16.md in stalwartlabs/stalwart). On the first start the script boots the
@@ -12,11 +16,12 @@
  * it normally. The admin login comes from STALWART_RECOVERY_ADMIN (see crates/store/src/registry/local.rs).
  */
 import { spawn } from "node:child_process";
-import { existsSync } from "node:fs";
+import { existsSync, mkdirSync, openSync } from "node:fs";
 import { chmod, mkdir, rm, writeFile } from "node:fs/promises";
-import { join, resolve } from "node:path";
+import { dirname, join, resolve } from "node:path";
 import { parseArgs } from "node:util";
 import { STALWART_ADMIN, STALWART_VERSION } from "./config";
+import { download } from "./download";
 
 const { values: args } = parseArgs({
   options: {
@@ -26,6 +31,7 @@ const { values: args } = parseArgs({
     imap: { type: "string", default: "10143" },
     fresh: { type: "boolean", default: false },
     seed: { type: "boolean", default: false },
+    log: { type: "string" },
   },
 });
 
@@ -36,6 +42,14 @@ const instanceDir = join(root, ".dev", args.instance);
 const configPath = join(instanceDir, "config.json");
 const httpPort = Number(args.http);
 const adminEnv = `${STALWART_ADMIN.user}:${STALWART_ADMIN.password}`;
+
+/** Where the server's own log goes: the terminal, or a file with --log. */
+const serverOutput = (): "inherit" | number => {
+  if (!args.log) return "inherit";
+  const path = resolve(args.log);
+  mkdirSync(dirname(path), { recursive: true });
+  return openSync(path, "a");
+};
 
 const releaseTarget = (): string => {
   const arch = process.arch === "arm64" ? "aarch64" : "x86_64";
@@ -48,11 +62,8 @@ const ensureBinary = async (): Promise<void> => {
   if (existsSync(binary)) return;
   await mkdir(binDir, { recursive: true });
   const url = `https://github.com/stalwartlabs/stalwart/releases/download/v${STALWART_VERSION}/stalwart-${releaseTarget()}.tar.gz`;
-  console.log(`Downloading Stalwart ${STALWART_VERSION} …`);
-  const response = await fetch(url);
-  if (!response.ok) throw new Error(`Download failed (${response.status}): ${url}`);
   const archive = join(binDir, "stalwart.tar.gz");
-  await Bun.write(archive, response);
+  await download(url, archive, `Downloading Stalwart ${STALWART_VERSION}`);
   await run("tar", ["xzf", archive, "-C", binDir]);
   await Bun.write(binary, Bun.file(join(binDir, "stalwart")));
   await chmod(binary, 0o755);
@@ -66,12 +77,14 @@ const run = (cmd: string, cmdArgs: string[]): Promise<void> =>
     child.on("exit", (code) => (code === 0 ? ok() : fail(new Error(`${cmd} exited with ${code}`))));
   });
 
-const startServer = (env: Record<string, string>) =>
-  spawn(binary, ["--config", configPath], {
+const startServer = (env: Record<string, string>) => {
+  const output = serverOutput();
+  return spawn(binary, ["--config", configPath], {
     cwd: instanceDir,
-    stdio: ["ignore", "inherit", "inherit"],
+    stdio: ["ignore", output, output],
     env: { ...process.env, STALWART_RECOVERY_ADMIN: adminEnv, ...env },
   });
+};
 
 const waitForHttp = async (port: number): Promise<void> => {
   for (let attempt = 0; attempt < 100; attempt++) {
@@ -160,6 +173,7 @@ const main = async (): Promise<void> => {
     const { seed } = await import("./seed");
     console.log(await seed(`http://127.0.0.1:${httpPort}`));
   }
+  process.send?.("ready");
   const shutdown = () => server.kill("SIGTERM");
   process.on("SIGINT", shutdown);
   process.on("SIGTERM", shutdown);

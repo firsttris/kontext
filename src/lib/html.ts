@@ -93,12 +93,16 @@ export const sanitizeMailHtml = (
   return { html: clean, blockedImages };
 };
 
-/** The document shown inside the sandboxed iframe of the reading pane. */
+/**
+ * The document shown inside the sandboxed iframe of the reading pane. The body is a flow root so
+ * the last paragraph's margin stays inside it: mail-body.tsx fits the frame to body.scrollHeight,
+ * and a margin sticking out would give the frame its own scrollbar.
+ */
 export const mailDocument = (body: string, dark: boolean): string => `<!doctype html>
 <html><head><meta charset="utf-8"><base target="_blank">
 <style>
   html { color-scheme: ${dark ? "dark" : "light"}; }
-  body { margin: 0; font: 15px/1.65 "Geist Variable", system-ui, sans-serif; color: ${dark ? "#fafafa" : "#09090b"}; background: transparent; overflow-wrap: anywhere; }
+  body { margin: 0; display: flow-root; font: 15px/1.65 "Geist Variable", system-ui, sans-serif; color: ${dark ? "#fafafa" : "#09090b"}; background: transparent; overflow-wrap: anywhere; }
   p { margin: 0 0 0.9em; }
   img { max-width: 100%; height: auto; }
   a { color: ${dark ? "#60a5fa" : "#2563eb"}; }

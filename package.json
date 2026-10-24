@@ -6,7 +6,8 @@
   "description": "Sekretär – self-hosted office suite for small businesses on top of Stalwart",
   "license": "AGPL-3.0-only",
   "scripts": {
-    "dev": "vite",
+    "dev": "bun dev/dev.ts",
+    "dev:app": "vite",
     "dev:stalwart": "bun dev/stalwart.ts",
     "seed": "bun dev/seed.ts",
     "build": "vite build",

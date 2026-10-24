@@ -239,6 +239,14 @@ test.describe("Adressbücher teilen", () => {
     await expect(mailboxes).toContainText("info@");
     await expect(mailboxes).not.toContainText("jonas@");
     await anna.goto("/contacts");
+    await anna.getByRole("button", { name: "Adressbücher" }).click();
+    await expect(
+      anna
+        .getByRole("dialog", { name: "Adressbücher" })
+        .getByRole("listitem")
+        .filter({ hasText: book }),
+    ).toContainText("Jonas Weber · Darf bearbeiten");
+    await anna.keyboard.press("Escape");
     await anna
       .getByLabel("Adressbuch", { exact: true })
       .selectOption({ label: `${book} · Jonas Weber` });

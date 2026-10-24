@@ -235,6 +235,8 @@
   "sharing_none": "Kein Zugriff",
   "sharing_read": "Lesen",
   "sharing_edit": "Bearbeiten",
+  "sharing_may_edit": "Darf bearbeiten",
+  "sharing_read_only": "Nur lesen",
   "sharing_title": "„{name}“ teilen",
   "sharing_hint": "Lesen: sehen und anrufen. Bearbeiten: auch anlegen, ändern und löschen. Kollegen finden das Adressbuch unter „Geteilt mit mir“.",
   "sharing_people": "Kollegen",

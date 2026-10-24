@@ -247,6 +247,8 @@ test.describe("Kalender teilen", () => {
     ).newPage();
     await login(anna, "anna");
     await anna.goto(`/calendar?date=${tomorrow()}`);
+    const annaCalendar = anna.locator("label").filter({ hasText: calendar });
+    await expect(annaCalendar).toContainText("Jonas Weber · Darf bearbeiten");
     const annaDay = anna.locator(`[data-day="${tomorrow()}"]`);
     await annaDay.getByText(title).click();
     await expect(
@@ -278,6 +280,7 @@ test.describe("Kalender teilen", () => {
     await expect(page.getByRole("status")).toHaveText("Freigabe gespeichert.");
 
     await anna.reload();
+    await expect(annaCalendar).toContainText("Jonas Weber · Nur lesen");
     await annaDay.getByText(title).click();
     await expect(
       anna.getByRole("dialog").getByText("Von Jonas Weber geteilt, nur zum Lesen."),

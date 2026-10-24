@@ -76,7 +76,7 @@ const Row = ({ calendar, manage }: { calendar: CalendarRef; manage: boolean }) =
           {!calendar.isPersonal ? (
             <span className="truncate text-[12px] text-muted">
               {calendar.name === calendar.owner ? "" : `${calendar.owner} · `}
-              {calendar.mayWrite ? m.sharing_edit() : m.sharing_read()}
+              {calendar.mayWrite ? m.sharing_may_edit() : m.sharing_read_only()}
             </span>
           ) : manage ? (
             <SharedWith calendar={calendar} />

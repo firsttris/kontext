@@ -67,6 +67,24 @@ test.describe("Mail", () => {
     await expect(counter).toHaveText(`${before - 1} ungelesen`);
   });
 
+  test("passt die Höhe der Mail an, ohne eigene Scrollbar", async ({ page }) => {
+    await page
+      .getByRole("list", { name: "Posteingang" })
+      .getByText("Angebot Wartungsvertrag 2027")
+      .click();
+    const frame = page.locator("iframe[title='Inhalt der Mail']");
+    await expect(frame.contentFrame().getByText("Keller Elektro GmbH")).toBeVisible();
+    // The last paragraph's margin used to stick out of the body and made the frame scroll.
+    await expect
+      .poll(() =>
+        frame.evaluate((element: HTMLIFrameElement) => {
+          const root = element.contentDocument!.documentElement;
+          return root.scrollHeight - root.clientHeight;
+        }),
+      )
+      .toBe(0);
+  });
+
   test("zeigt Anhänge", async ({ page }) => {
     await page
       .getByRole("list", { name: "Posteingang" })
