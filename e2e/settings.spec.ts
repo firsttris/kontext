@@ -1,7 +1,7 @@
 import { expect, test } from "@playwright/test";
 import { DEV_PASSWORD } from "../dev/config";
 import { totp } from "../src/lib/totp";
-import { address, inboxMails, login, unique } from "./helpers";
+import { address, inboxMails, jmapAs, login, unique } from "./helpers";
 
 test.describe("Einstellungen", () => {
   test("Signatur erscheint in neuen Mails", async ({ page }) => {
@@ -67,16 +67,29 @@ test.describe("Einstellungen", () => {
     await page.getByRole("button", { name: "Passwort ändern" }).click();
     await expect(page.getByRole("alert")).toHaveText("Das aktuelle Passwort stimmt nicht.");
 
+    const changed = page.getByRole("status").filter({ hasText: "Passwort geändert." });
     await page.getByLabel("Aktuelles Passwort").first().fill(DEV_PASSWORD);
     await page.getByRole("button", { name: "Passwort ändern" }).click();
-    await expect(page.getByRole("status").filter({ hasText: "Passwort geändert." })).toBeVisible();
+    await expect(changed).toBeVisible();
+    // The next change's message must not be mistaken for this one.
+    await expect(changed).toBeHidden({ timeout: 10_000 });
 
     // still signed in with the new password; and back, so the other tests can sign in as Max
     await page.getByLabel("Aktuelles Passwort").first().fill(next);
     await page.getByLabel("Neues Passwort", { exact: true }).fill(DEV_PASSWORD);
     await page.getByLabel("Neues Passwort wiederholen").fill(DEV_PASSWORD);
     await page.getByRole("button", { name: "Passwort ändern" }).click();
-    await expect(page.getByRole("status").filter({ hasText: "Passwort geändert." })).toBeVisible();
+    await expect(changed).toBeVisible();
+    await expect
+      .poll(() =>
+        jmapAs("max")
+          .getSession()
+          .then(
+            () => true,
+            () => false,
+          ),
+      )
+      .toBe(true);
   });
 
   test("richtet die Anmeldung mit Code ein und meldet damit an", async ({ page }) => {
