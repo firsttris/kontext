@@ -11,6 +11,8 @@ import type {
 } from "../../../server/company/accounts";
 
 import type { Job } from "../../../server/migration/jobs";
+import type { ProviderId } from "../../../server/migration/providers";
+import type { Sync } from "../../../server/migration/syncs";
 
 export type { Employee, SharedMailbox };
 /** A move as the server sends it (dates as text). */
@@ -19,6 +21,10 @@ export type Migration = Omit<Job, "createdAt" | "updatedAt"> & {
   updatedAt: string;
 };
 export type Company = CompanyData & { selfId: string };
+/** A move over IMAP as the server sends it (no password, dates as text). */
+export type MailSync = Omit<Sync, "secret" | "createdAt" | "updatedAt" | "lastRunAt"> & {
+  lastRunAt: string | null;
+};
 
 export type NewEmployee = {
   email: string;
@@ -125,3 +131,23 @@ export const sendPiece = async (id: string, offset: number, piece: Blob) => {
 
 export const retryMigration = (id: string) =>
   send<{ status: string }>("POST", `/migrations/${encodeURIComponent(id)}/retry`);
+
+export const listSyncs = () => send<MailSync[]>("GET", "/syncs");
+
+export const createSync = (input: {
+  accountId: string;
+  provider: ProviderId;
+  host?: string;
+  port?: number;
+  login: string;
+  password: string;
+}) => send<MailSync>("POST", "/syncs", input);
+
+export const runSync = (id: string) =>
+  send<{ ok: true }>("POST", `/syncs/${encodeURIComponent(id)}/run`);
+
+export const setSyncPassword = (id: string, password: string) =>
+  send<{ ok: true }>("PUT", `/syncs/${encodeURIComponent(id)}/password`, { password });
+
+export const finishSync = (id: string) =>
+  send<{ ok: true }>("POST", `/syncs/${encodeURIComponent(id)}/finish`);

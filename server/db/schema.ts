@@ -74,13 +74,14 @@ export const companySetting = sqliteTable("company_setting", {
   updatedAt: integer("updated_at", { mode: "timestamp_ms" }).notNull(),
 });
 
-/** A move from another system into one account (e.g. an Outlook PST file), with its progress. */
+/** A move from an uploaded file into one account (Outlook PST, vCard, iCalendar), with progress. */
 export const migrationJob = sqliteTable("migration_job", {
   id: text("id").primaryKey(),
   /** The Stalwart account the data goes into. */
   accountId: text("account_id").notNull(),
   accountEmail: text("account_email").notNull(),
-  source: text("source", { enum: ["pst"] }).notNull(),
+  /** The uploaded file: Outlook data file, contacts (vCard) or calendar (iCalendar). */
+  source: text("source", { enum: ["pst", "vcf", "ics"] }).notNull(),
   fileName: text("file_name").notNull(),
   size: integer("size").notNull(),
   received: integer("received").notNull(),
@@ -90,5 +91,27 @@ export const migrationJob = sqliteTable("migration_job", {
   /** JSON: counts per kind (mails, contacts, events): total, imported, skipped, failed. */
   progress: text("progress").notNull(),
   error: text("error"),
+  ...timestamps,
+});
+
+/** A running move from another mailbox over IMAP (Gmail, GMX, …), synced until it is finished. */
+export const mailSync = sqliteTable("mail_sync", {
+  id: text("id").primaryKey(),
+  accountId: text("account_id").notNull(),
+  accountEmail: text("account_email").notNull(),
+  provider: text("provider").notNull(),
+  host: text("host").notNull(),
+  port: integer("port").notNull(),
+  /** The old address, the IMAP login. */
+  login: text("login").notNull(),
+  /** The (app) password, sealed with the server secret. */
+  secret: text("secret").notNull(),
+  status: text("status", { enum: ["active", "running", "login-failed", "finished"] }).notNull(),
+  /** JSON: per old folder its UIDVALIDITY and the last UID taken over. */
+  state: text("state").notNull(),
+  /** JSON: imported, added (already there, one more folder), failed. */
+  counts: text("counts").notNull(),
+  lastRunAt: integer("last_run_at", { mode: "timestamp_ms" }),
+  lastError: text("last_error"),
   ...timestamps,
 });

@@ -73,6 +73,7 @@ const setup = (email: string | null) => {
     mailstore: fake.mailstore,
     settings: { signature: async () => null, saveSignature: async () => {} },
     migrations: {} as never,
+    syncs: {} as never,
     currentEmail: async () => email,
     endSessions: async (address) => {
       ended.push(address);

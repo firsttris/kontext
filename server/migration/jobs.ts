@@ -11,7 +11,7 @@ export type Job = {
   id: string;
   accountId: string;
   accountEmail: string;
-  source: "pst";
+  source: "pst" | "vcf" | "ics";
   fileName: string;
   size: number;
   received: number;

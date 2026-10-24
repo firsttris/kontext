@@ -53,3 +53,7 @@ export const prepareEvent = (
     ...(kept.length ? { keywords: Object.fromEntries(kept.map((k) => [k, true])) } : {}),
   };
 };
+
+/** A vCard file with many contacts (Google's export) as one text per card (RFC 6350 §3.1). */
+export const splitVCards = (text: string): string[] =>
+  text.match(/BEGIN:VCARD[\s\S]*?END:VCARD/gi) ?? [];

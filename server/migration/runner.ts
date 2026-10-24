@@ -7,11 +7,12 @@ import { createHash } from "node:crypto";
 import { mkdir, readFile, rm } from "node:fs/promises";
 import { join } from "node:path";
 import { mailFacts } from "./eml";
-import { type TargetFolder, targetFolder } from "./folders";
-import { type Folder, type Importer, INLINE_LIMIT, type MailToImport } from "./importer";
-import { cardKey, eventUid, prepareCard, prepareEvent } from "./items";
+import { targetFolder } from "./folders";
+import { type Importer, INLINE_LIMIT, type MailToImport } from "./importer";
+import { cardKey, eventUid, prepareCard, prepareEvent, splitVCards } from "./items";
 import { emptyProgress, type Job, type Jobs, type Progress } from "./jobs";
 import { extractPst, listItems, type PstItem } from "./pst";
+import { folderResolver } from "./resolve";
 
 const BATCH = 25;
 const PARSE_BATCH = 50;
@@ -20,39 +21,18 @@ const CREATE_BATCH = 500;
 export type RunnerDeps = {
   jobs: Jobs;
   importer: Importer;
-  /** Where uploads and opened files live (`<id>.pst`, `<id>/`). */
+  /** Where uploads and opened files live (`<id>.upload`, `<id>/`). */
   workDir: string;
   extract?: typeof extractPst;
 };
 
-export const pstFileOf = (workDir: string, id: string) => join(workDir, `${id}.pst`);
+/** Where an uploaded file waits until its move is done. */
+export const uploadFileOf = (workDir: string, id: string) => join(workDir, `${id}.upload`);
 
 const chunks = <T>(items: T[], size: number): T[][] =>
   Array.from({ length: Math.ceil(items.length / size) }, (_, i) =>
     items.slice(i * size, i * size + size),
   );
-
-/** Finds or creates the folder for a target, level by level. */
-const folderResolver = (importer: Importer, accountId: string, existing: Folder[]) => {
-  const known = [...existing];
-  const cache = new Map<string, string>();
-  return async (target: TargetFolder): Promise<string> => {
-    const key = `${target.role ?? ""}|${target.path.join("/")}`;
-    const cached = cache.get(key);
-    if (cached) return cached;
-    let parentId = target.role ? (known.find((f) => f.role === target.role)?.id ?? null) : null;
-    for (const name of target.path) {
-      const found = known.find((f) => f.name === name && f.parentId === parentId);
-      const id = found?.id ?? (await importer.createFolder(accountId, name, parentId));
-      if (!found) known.push({ id, name, parentId, role: null });
-      parentId = id;
-    }
-    // A role the account lacks (e.g. no archive yet) becomes a folder of that name.
-    const id = parentId ?? (await importer.createFolder(accountId, target.role ?? "Import", null));
-    cache.set(key, id);
-    return id;
-  };
-};
 
 export const createRunner = ({ jobs, importer, workDir, extract = extractPst }: RunnerDeps) => {
   const importMails = async (
@@ -88,11 +68,11 @@ export const createRunner = ({ jobs, importer, workDir, extract = extractPst }: 
         progress.mails.skipped++;
         continue;
       }
-      if (facts.messageId) known.add(facts.messageId);
+      if (facts.messageId) known.set(facts.messageId, "");
       const mail = {
         raw,
         mailboxId: await resolve(target),
-        seen: facts.seen,
+        keywords: (facts.seen ? { $seen: true } : {}) as Record<string, true>,
         receivedAt: facts.receivedAt,
       };
       if (raw.length > INLINE_LIMIT) {
@@ -110,12 +90,12 @@ export const createRunner = ({ jobs, importer, workDir, extract = extractPst }: 
 
   const importContacts = async (
     job: Job,
-    files: string[],
+    texts: string[],
     progress: Progress,
     save: () => Promise<void>,
   ) => {
-    progress.contacts.total = files.length;
-    if (!files.length) return;
+    progress.contacts.total = texts.length;
+    if (!texts.length) return;
     const known = new Set(
       (await importer.contacts.known(job.accountId)).map((card) =>
         cardKey(card as Parameters<typeof cardKey>[0]),
@@ -123,9 +103,8 @@ export const createRunner = ({ jobs, importer, workDir, extract = extractPst }: 
     );
     const bookId = await importer.contacts.defaultBook(job.accountId);
     const cards: Record<string, unknown>[] = [];
-    for (const page of chunks(files, PARSE_BATCH)) {
-      const texts = await Promise.all(page.map((file) => readFile(file, "utf8")));
-      const parsed = await importer.contacts.parse(job.accountId, texts);
+    for (const page of chunks(texts, PARSE_BATCH)) {
+      const parsed = await importer.contacts.parse(job.accountId, page);
       for (const card of parsed.map((list) => list[0] as Record<string, unknown> | undefined)) {
         if (!card) progress.contacts.failed++;
         else if (known.has(cardKey(card))) progress.contacts.skipped++;
@@ -143,35 +122,38 @@ export const createRunner = ({ jobs, importer, workDir, extract = extractPst }: 
     }
   };
 
+  /** Each text is a calendar file with one or (Google's export) many appointments. */
   const importEvents = async (
     job: Job,
-    files: string[],
+    texts: string[],
     progress: Progress,
     save: () => Promise<void>,
   ) => {
-    progress.events.total = files.length;
-    if (!files.length) return;
+    if (!texts.length) return;
     const known = await importer.events.knownUids(job.accountId);
     const calendarId = await importer.events.defaultCalendar(job.accountId);
     const events: Record<string, unknown>[] = [];
-    for (const page of chunks(files, PARSE_BATCH)) {
-      const texts = await Promise.all(page.map((file) => readFile(file, "utf8")));
-      const parsed = await importer.events.parse(job.accountId, texts);
+    for (const page of chunks(texts, PARSE_BATCH)) {
+      const parsed = await importer.events.parse(job.accountId, page);
       parsed.forEach((list, index) => {
-        const event = list[0] as Record<string, unknown> | undefined;
-        if (!event) {
+        if (!list.length) {
+          progress.events.total++;
           progress.events.failed++;
           return;
         }
         // readpst stamps every export with the current time; that line must not change the uid.
-        const content = texts[index]!.replace(/^DTSTAMP:.*$/gm, "");
+        const content = page[index]!.replace(/^DTSTAMP:.*$/gm, "");
         const hash = createHash("sha256").update(content).digest("hex").slice(0, 32);
-        const uid = eventUid(event.uid, `pst-${hash}`);
-        if (known.has(uid)) progress.events.skipped++;
-        else {
-          known.add(uid);
-          events.push(prepareEvent(event, calendarId, uid));
-        }
+        list.forEach((item, n) => {
+          const event = item as Record<string, unknown>;
+          const uid = eventUid(event.uid, `import-${hash}${n ? `-${n}` : ""}`);
+          progress.events.total++;
+          if (known.has(uid)) progress.events.skipped++;
+          else {
+            known.add(uid);
+            events.push(prepareEvent(event, calendarId, uid));
+          }
+        });
       });
     }
     for (const page of chunks(events, CREATE_BATCH)) {
@@ -190,22 +172,29 @@ export const createRunner = ({ jobs, importer, workDir, extract = extractPst }: 
     const out = join(workDir, id);
     await jobs.update(id, { status: "running", error: null, progress });
     try {
-      await rm(out, { recursive: true, force: true });
-      await mkdir(out, { recursive: true });
-      await extract(pstFileOf(workDir, id), out);
-      const items = await listItems(out);
-      const files = (kind: PstItem["kind"]) =>
-        items.filter((i) => i.kind === kind).map((i) => i.file);
-      await importMails(
-        job,
-        items.filter((i) => i.kind === "mail"),
-        progress,
-        save,
-      );
-      await importContacts(job, files("contact"), progress, save);
-      await importEvents(job, files("event"), progress, save);
+      const file = uploadFileOf(workDir, id);
+      if (job.source === "vcf") {
+        await importContacts(job, splitVCards(await readFile(file, "utf8")), progress, save);
+      } else if (job.source === "ics") {
+        await importEvents(job, [await readFile(file, "utf8")], progress, save);
+      } else {
+        await rm(out, { recursive: true, force: true });
+        await mkdir(out, { recursive: true });
+        await extract(file, out);
+        const items = await listItems(out);
+        const texts = (kind: PstItem["kind"]) =>
+          Promise.all(items.filter((i) => i.kind === kind).map((i) => readFile(i.file, "utf8")));
+        await importMails(
+          job,
+          items.filter((i) => i.kind === "mail"),
+          progress,
+          save,
+        );
+        await importContacts(job, await texts("contact"), progress, save);
+        await importEvents(job, await texts("event"), progress, save);
+      }
       await jobs.update(id, { status: "done", progress });
-      await rm(pstFileOf(workDir, id), { force: true });
+      await rm(uploadFileOf(workDir, id), { force: true });
     } catch (error) {
       await jobs.update(id, { status: "failed", error: (error as Error).message, progress });
     } finally {

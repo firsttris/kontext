@@ -5,6 +5,7 @@
 import type { Context } from "hono";
 import { z } from "zod";
 import type { MigrationDeps } from "../migration/routes";
+import type { SyncDeps } from "../migration/sync-routes";
 import {
   type Company,
   isCompanyUser,
@@ -22,6 +23,7 @@ export type CompanyDeps = {
   mailstore: Mailstore;
   settings: CompanySettings;
   migrations: MigrationDeps;
+  syncs: SyncDeps;
   /** The signed-in user's address, or null. */
   currentEmail: (request: Request) => Promise<string | null>;
   /** Ends the user's Sekretär sessions (after deactivating or a new password). */

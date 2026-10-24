@@ -98,25 +98,57 @@ und hat dazu nur die Rechte für Konten, Rollen und Domains (siehe [Installation
 
 ## Umzug
 
-Unter *Einstellungen → Firma → Umzug* lädt der Chef eine Outlook-Datei (PST) für einen
-Mitarbeiter hoch. Die App schickt sie in Stücken zu 8 MB (`PUT /api/company/migrations/:id/file`);
-bricht die Verbindung ab, sagt der Server, wie viel er hat. Danach arbeitet der Server
-(`server/migration/`) die Umzüge nacheinander ab, auch nach einem Neustart:
+Unter *Einstellungen → Firma → Umzug* holt der Chef die Daten eines Mitarbeiters aus dem alten
+System, auf zwei Wegen. Beide schreiben mit dem Server-Schlüssel in das neue Postfach
+(`server/migration/importer.ts`) und überspringen Doppeltes: Mails mit bekannter Message-ID,
+Kontakte mit gleichem Namen und gleicher erster Adresse, Termine mit bekannter UID. Ein Umzug
+lässt sich deshalb gefahrlos wiederholen.
 
-1. `readpst` (libpst) zerlegt die Datei in eine Datei pro Mail, Kontakt und Termin, mit einem
-   Verzeichnis pro Outlook-Ordner.
+### Postfach verbinden (Gmail, GMX, WEB.DE, Telekom, IONOS, STRATO, eigener Server)
+
+Sekretär liest das alte Postfach per IMAP (`imapflow`), nur lesend, und gleicht es in eine Richtung
+ab: der erste Lauf holt alles, danach alle 15 Minuten das Neue, bis der Chef den Umzug abschließt.
+So läuft das alte Postfach parallel weiter, solange Absender noch die alte Adresse nutzen.
+
+- **Anmeldung**: Adresse und Passwort – bei Gmail ein App-Passwort (Bestätigung in zwei Schritten
+  nötig). Sekretär prüft die Anmeldung sofort und speichert das Passwort verschlüsselt (AES-GCM mit
+  dem Server-Geheimnis, wie die Stalwart-Tokens). Lehnt der Anbieter es später ab, steht der Umzug
+  auf „Anmeldung abgelehnt“, bis ein neues Passwort eingetragen ist. Beim Abschließen wird es
+  gelöscht.
+- **Ordner** nach ihrer besonderen Verwendung (RFC 6154), also in jeder Sprache: Posteingang,
+  Gesendet, Entwürfe, Archiv auf die Standardordner. Gmails Labels werden Ordner; eine Mail mit
+  mehreren Labels kommt **einmal** ins Postfach und liegt in allen passenden Ordnern (JMAP erlaubt
+  mehrere `mailboxIds`). „Alle Nachrichten“, „Wichtig“, „Markiert“, Spam und Papierkorb bleiben weg;
+  markierte Mails sind über `$flagged` markiert.
+- **Stand**: pro Ordner `UIDVALIDITY` und die letzte übernommene UID (RFC 9051) in SQLite
+  (`mail_sync`); ein Lauf holt nur höhere UIDs. Ändert sich `UIDVALIDITY`, beginnt der Ordner von
+  vorn – Doppeltes fällt durch die Message-ID heraus.
+- **Grenzen**: Gmail gibt per IMAP etwa 2,5 GB am Tag heraus; ein großes Postfach braucht
+  mehrere Tage, der Abgleich macht von selbst weiter. Bei „Anderer Server“ sind nur die IMAP-Ports
+  993 (TLS) und 143 (STARTTLS) erlaubt.
+- **Nicht dabei**: Senden als alte Adresse über den alten Anbieter (Relay) und ein Abgleich in
+  beide Richtungen. Kontakte und Kalender kommen bei Gmail über den Google-Export (siehe unten).
+
+### Datei hochladen (Outlook-PST, Kontakte als vCard, Kalender als iCalendar)
+
+Die App schickt die Datei in Stücken zu 8 MB (`PUT /api/company/migrations/:id/file`); bricht
+die Verbindung ab, sagt der Server, wie viel er hat. Danach arbeitet der Server die Umzüge
+nacheinander ab (`server/migration/runner.ts`), auch nach einem Neustart:
+
+1. **PST**: `readpst` (libpst) zerlegt die Datei in eine Datei pro Mail, Kontakt und Termin, mit
+   einem Verzeichnis pro Outlook-Ordner (ohne parallele Worker: mit ihnen endet readpst manchmal,
+   bevor alle Dateien geschrieben sind). Posteingang, Gesendete Elemente, Gelöschte Elemente,
+   Entwürfe, Junk-E-Mail und Archiv (deutsch oder englisch) landen in den Standardordnern, alles
+   andere unter demselben Pfad; Aufgaben und Notizen bleiben weg.
 2. **Mails** gehen mit `Email/import` (RFC 8621) in den passenden Ordner, mit Originaldatum und
    Gelesen-Status; bis zu 25 Mails und 6 MB pro Request, die Blobs per `Blob/upload` im selben
-   Request, größere Mails einzeln über den Upload. Posteingang, Gesendete Elemente, Gelöschte
-   Elemente, Entwürfe, Junk-E-Mail und Archiv (deutsch oder englisch) landen in den
-   Standardordnern, alles andere unter demselben Pfad; Aufgaben und Notizen bleiben weg.
-3. **Kontakte** und **Termine** liest Stalwart selbst (`ContactCard/parse`,
-   `CalendarEvent/parse`); sie kommen ins Standard-Adressbuch bzw. den Standardkalender.
+   Request, größere Mails einzeln über den Upload.
+3. **Kontakte** (`.vcf`, auch Googles Export mit vielen Karten) und **Termine** (`.ics`, eine
+   Datei mit vielen Terminen) liest Stalwart selbst (`ContactCard/parse`, `CalendarEvent/parse`);
+   sie kommen ins Standard-Adressbuch bzw. den Standardkalender. readpst nummeriert Termine nur
+   („0x1268“); dann bildet Sekretär die UID aus dem Inhalt.
 
-Doppeltes überspringt der Server: Mails mit bekannter Message-ID, Kontakte mit gleichem Namen und
-gleicher erster Adresse, Termine mit bekannter UID (readpst nummeriert Termine nur, dann bildet
-Sekretär die UID aus dem Inhalt). Ein Umzug lässt sich deshalb gefahrlos wiederholen. Der
-Fortschritt steht in SQLite (`migration_job`); die PST-Datei liegt bis zum Ende neben der
+Der Fortschritt steht in SQLite (`migration_job`); die Datei liegt bis zum Ende neben der
 Datenbank unter `migrations/` und wird nach einem erfolgreichen Umzug gelöscht.
 
 ## Suche

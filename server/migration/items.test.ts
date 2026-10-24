@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { cardKey, eventUid, prepareCard, prepareEvent } from "./items";
+import { cardKey, eventUid, prepareCard, prepareEvent, splitVCards } from "./items";
 
 describe("contacts", () => {
   it("knows a card again by name and first address", () => {
@@ -30,5 +30,16 @@ describe("events", () => {
     expect(
       prepareEvent({ title: "T", keywords: { NONE: true }, calendarIds: { x: true } }, "c", "u"),
     ).toEqual({ title: "T", uid: "u", calendarIds: { c: true } });
+  });
+});
+
+describe("splitVCards", () => {
+  it("splits Google's export into one text per contact", () => {
+    const file = "BEGIN:VCARD\r\nFN:A\r\nEND:VCARD\r\nBEGIN:VCARD\r\nFN:B\r\nEND:VCARD\r\n";
+    expect(splitVCards(file)).toEqual([
+      "BEGIN:VCARD\r\nFN:A\r\nEND:VCARD",
+      "BEGIN:VCARD\r\nFN:B\r\nEND:VCARD",
+    ]);
+    expect(splitVCards("nichts")).toEqual([]);
   });
 });

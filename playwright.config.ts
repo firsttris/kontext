@@ -60,6 +60,8 @@ export default defineConfig({
         BETTER_AUTH_URL: `http://localhost:${APP_PORT}`,
         DATABASE_PATH: ".dev/e2e-server/sekretaer.db",
         SIGN_IN_PER_MINUTE: "1000",
+        // The move tests use the local Stalwart's IMAP (no TLS) as the "old provider".
+        MAIL_SYNC_ALLOW_PLAIN: "true",
       },
       reuseExistingServer: false,
       timeout: 60_000,

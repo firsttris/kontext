@@ -30,10 +30,13 @@ export type Folder = { id: string; name: string; parentId: string | null; role: 
 export type MailToImport = {
   raw: Uint8Array;
   mailboxId: string;
-  seen: boolean;
+  /** JMAP keywords such as $seen and $flagged. */
+  keywords: Record<string, true>;
   receivedAt: string | null;
 };
 export type Outcome = { imported: number; failed: string[] };
+/** Per mail of a batch the new email id, or null when Stalwart refused it. */
+export type MailOutcome = Outcome & { ids: (string | null)[] };
 
 type Response = Record<string, unknown>;
 
@@ -46,14 +49,14 @@ const base64 = (data: Uint8Array | string) =>
   Buffer.from(typeof data === "string" ? new TextEncoder().encode(data) : data).toString("base64");
 
 export const createImporter = (request: StalwartRequest, upload: StalwartUpload) => {
-  /** Every value of `property` of all objects a query finds, page by page. */
+  /** Some properties (and the id) of all objects a query finds, page by page. */
   const collect = async (
     accountId: string,
     method: "Email" | "ContactCard" | "CalendarEvent",
-    property: string,
+    properties: string[],
     using: string[],
-  ): Promise<unknown[]> => {
-    const values: unknown[] = [];
+  ): Promise<Record<string, unknown>[]> => {
+    const values: Record<string, unknown>[] = [];
     for (let position = 0; ; position += PAGE) {
       const [query, get] = await request(
         [
@@ -63,7 +66,7 @@ export const createImporter = (request: StalwartRequest, upload: StalwartUpload)
             {
               accountId,
               "#ids": { resultOf: "q", name: `${method}/query`, path: "/ids" },
-              properties: [property],
+              properties,
             },
             "g",
           ],
@@ -71,18 +74,42 @@ export const createImporter = (request: StalwartRequest, upload: StalwartUpload)
         using,
       );
       const list = (get![1].list ?? []) as Record<string, unknown>[];
-      values.push(...list.map((item) => item[property]));
+      values.push(...list);
       if ((query![1].ids as string[]).length < PAGE) return values;
     }
   };
 
-  /** Message-IDs of the mails already in the account, against duplicates. */
-  const knownMessageIds = async (accountId: string): Promise<Set<string>> =>
-    new Set(
-      (await collect(accountId, "Email", "messageId", MAIL)).flatMap(
-        (ids) => ids ?? [],
-      ) as string[],
+  /** Message-ID → email id of the mails already in the account, against duplicates. */
+  const knownMessageIds = async (accountId: string): Promise<Map<string, string>> => {
+    const known = new Map<string, string>();
+    for (const email of await collect(accountId, "Email", ["messageId"], MAIL)) {
+      for (const messageId of (email.messageId as string[] | null) ?? []) {
+        known.set(messageId, email.id as string);
+      }
+    }
+    return known;
+  };
+
+  /** Puts mails that are already there into one more folder (a second Gmail label). */
+  const addToFolders = async (accountId: string, folderOf: Record<string, string>) => {
+    const ids = Object.keys(folderOf);
+    if (!ids.length) return;
+    await request(
+      [
+        [
+          "Email/set",
+          {
+            accountId,
+            update: Object.fromEntries(
+              ids.map((id) => [id, { [`mailboxIds/${folderOf[id]}`]: true }]),
+            ),
+          },
+          "0",
+        ],
+      ],
+      MAIL,
     );
+  };
 
   const folders = async (accountId: string): Promise<Folder[]> => {
     const [[, result]] = (await request(
@@ -96,9 +123,16 @@ export const createImporter = (request: StalwartRequest, upload: StalwartUpload)
     accountId: string,
     name: string,
     parentId: string | null,
+    role: string | null = null,
   ): Promise<string> => {
     const [[, result]] = (await request(
-      [["Mailbox/set", { accountId, create: { f: { name, parentId } } }, "0"]],
+      [
+        [
+          "Mailbox/set",
+          { accountId, create: { f: { name, parentId, ...(role ? { role } : {}) } } },
+          "0",
+        ],
+      ],
       MAIL,
     )) as [[string, Response, string]];
     const id = (result.created as Record<string, { id: string }> | undefined)?.f?.id;
@@ -109,23 +143,25 @@ export const createImporter = (request: StalwartRequest, upload: StalwartUpload)
   const importArgs = (mail: MailToImport, blobId: string) => ({
     blobId,
     mailboxIds: { [mail.mailboxId]: true },
-    keywords: mail.seen ? { $seen: true } : {},
+    keywords: mail.keywords,
     ...(mail.receivedAt ? { receivedAt: mail.receivedAt } : {}),
   });
 
   /** One batch of small mails in one request; a large mail alone through the upload. */
-  const importMails = async (accountId: string, mails: MailToImport[]): Promise<Outcome> => {
+  const importMails = async (accountId: string, mails: MailToImport[]): Promise<MailOutcome> => {
     if (mails.length === 1 && mails[0]!.raw.length > INLINE_LIMIT) {
       const mail = mails[0]!;
       const blobId = await upload(accountId, mail.raw, "message/rfc822").catch(() => null);
-      if (!blobId) return { imported: 0, failed: ["Mail zu groß zum Hochladen"] };
+      if (!blobId) return { imported: 0, failed: ["Mail zu groß zum Hochladen"], ids: [null] };
       const [[, result]] = (await request(
         [["Email/import", { accountId, emails: { e: importArgs(mail, blobId) } }, "0"]],
         MAIL,
       )) as [[string, Response, string]];
+      const created = result.created as Record<string, { id: string }> | undefined;
       return {
-        imported: Object.keys(result.created ?? {}).length,
+        imported: created?.e ? 1 : 0,
         failed: failures(result, "notCreated"),
+        ids: [created?.e?.id ?? null],
       };
     }
     const [, imported] = await request(
@@ -157,9 +193,11 @@ export const createImporter = (request: StalwartRequest, upload: StalwartUpload)
       MAIL,
     );
     const result = imported![1];
+    const created = (result.created ?? {}) as Record<string, { id: string }>;
     return {
-      imported: Object.keys(result.created ?? {}).length,
+      imported: Object.keys(created).length,
       failed: failures(result, "notCreated"),
+      ids: mails.map((_, i) => created[`e${i}`]?.id ?? null),
     };
   };
 
@@ -231,17 +269,12 @@ export const createImporter = (request: StalwartRequest, upload: StalwartUpload)
 
   return {
     knownMessageIds,
+    addToFolders,
     folders,
     createFolder,
     importMails,
     contacts: {
-      known: async (accountId: string) => {
-        const [names, emails] = await Promise.all([
-          collect(accountId, "ContactCard", "name", CONTACTS),
-          collect(accountId, "ContactCard", "emails", CONTACTS),
-        ]);
-        return names.map((name, i) => ({ name, emails: emails[i] }));
-      },
+      known: (accountId: string) => collect(accountId, "ContactCard", ["name", "emails"], CONTACTS),
       parse: (accountId: string, texts: string[]) =>
         parse(accountId, "ContactCard/parse", "text/vcard", texts, CONTACTS),
       defaultBook: (accountId: string) => defaultId(accountId, "AddressBook/get", CONTACTS),
@@ -250,7 +283,11 @@ export const createImporter = (request: StalwartRequest, upload: StalwartUpload)
     },
     events: {
       knownUids: async (accountId: string) =>
-        new Set((await collect(accountId, "CalendarEvent", "uid", CALENDARS)) as string[]),
+        new Set(
+          (await collect(accountId, "CalendarEvent", ["uid"], CALENDARS)).map(
+            (e) => e.uid as string,
+          ),
+        ),
       parse: (accountId: string, texts: string[]) =>
         parse(accountId, "CalendarEvent/parse", "text/calendar", texts, CALENDARS),
       defaultCalendar: (accountId: string) => defaultId(accountId, "Calendar/get", CALENDARS),

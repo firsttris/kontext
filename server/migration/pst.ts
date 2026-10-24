@@ -12,7 +12,9 @@ const KINDS: Record<string, PstItem["kind"]> = { eml: "mail", vcf: "contact", ic
 /** Writes the items of `pstFile` below `outDir`; throws with readpst's message on failure. */
 export const extractPst = async (pstFile: string, outDir: string): Promise<void> => {
   // -e: one file per item with extension; -8: UTF-8 bodies; -cv: contacts as vCard; -q: quiet.
-  const child = Bun.spawn(["readpst", "-q", "-e", "-8", "-cv", "-o", outDir, pstFile], {
+  // -j 0: no parallel workers; with them readpst sometimes exits before the last files are
+  // written (seen with pst-utils 0.6.76: 69 of 71 mails in one of 15 runs).
+  const child = Bun.spawn(["readpst", "-q", "-j", "0", "-e", "-8", "-cv", "-o", outDir, pstFile], {
     stdout: "ignore",
     stderr: "pipe",
   });

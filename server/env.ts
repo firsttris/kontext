@@ -20,6 +20,8 @@ const schema = z.object({
    * Firmenverwaltung is off.
    */
   STALWART_ADMIN_KEY: z.preprocess((v) => v || undefined, z.string().optional()),
+  /** Tests only: moves over IMAP may use any port and servers without TLS (the local Stalwart). */
+  MAIL_SYNC_ALLOW_PLAIN: z.stringbool().default(false),
   /** The built app (dist/); when set, the server delivers it too. Empty in dev (Vite does). */
   STATIC_DIR: z.string().optional(),
 });

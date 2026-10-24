@@ -18,6 +18,8 @@ import type { Env } from "./env";
 import { createImporter } from "./migration/importer";
 import { createJobs } from "./migration/jobs";
 import { createRunner } from "./migration/runner";
+import { createSyncRunner } from "./migration/sync-runner";
+import { createSyncs } from "./migration/syncs";
 
 /** Request headers that go on to Stalwart; cookies and the browser's own auth stay here. */
 const FORWARDED_REQUEST_HEADERS = [
@@ -96,13 +98,20 @@ export const createApp = async (env: Env) => {
     const upload = createUpload(env.STALWART_URL, env.STALWART_ADMIN_KEY);
     const jobs = createJobs(db);
     const workDir = join(dirname(env.DATABASE_PATH), "migrations");
-    const runner = createRunner({ jobs, importer: createImporter(request, upload), workDir });
+    const importer = createImporter(request, upload);
+    const runner = createRunner({ jobs, importer, workDir });
     await runner.resume();
+    const syncs = createSyncs(db);
+    const syncSealer = await createSealer(env.BETTER_AUTH_SECRET, "mail-sync");
+    const allowPlain = env.MAIL_SYNC_ALLOW_PLAIN;
+    const syncRunner = createSyncRunner({ syncs, importer, sealer: syncSealer, allowPlain });
+    await syncRunner.start();
     const company = createCompanyRoutes({
       management: createManagement(request),
       mailstore: createMailstore(request, upload),
       settings: createCompanySettings(db),
       migrations: { jobs, runner, workDir },
+      syncs: { syncs, runner: syncRunner, sealer: syncSealer, allowPlain },
       currentEmail: async (request) =>
         (await auth.api.getSession({ headers: request.headers }))?.user.email ?? null,
       endSessions: endSessionsOf(db),

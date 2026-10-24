@@ -1,6 +1,9 @@
-/** Moves from Outlook: upload a PST for a person, then watch mails, contacts and appointments. */
+/**
+ * Moves into the company's mailboxes: connect an old mailbox (Gmail & Co., synced until finished)
+ * or upload a file (Outlook PST, vCard, iCalendar), then watch the progress.
+ */
 import { useQuery } from "@tanstack/react-query";
-import { Upload } from "lucide-react";
+import { Link2, Upload } from "lucide-react";
 import { type FormEvent, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Dialog } from "@/components/ui/dialog";
@@ -12,6 +15,7 @@ import {
   type Company,
   createMigration,
   listMigrations,
+  listSyncs,
   type Migration,
   retryMigration,
   sendPiece,
@@ -19,8 +23,11 @@ import {
 import { Badge } from "./fields";
 import { CompanyGate } from "./gate";
 import { useCompanyChange } from "./queries";
+import { ConnectDialog } from "./sync-dialogs";
+import { SyncRow } from "./sync-row";
 
 const MIGRATIONS = ["company", "migrations"];
+const SYNCS = ["company", "syncs"];
 
 const STATUS: Record<Migration["status"], () => string> = {
   uploading: m.company_migration_status_uploading,
@@ -35,7 +42,7 @@ export const MigrationSection = () => (
 );
 
 const Migrations = ({ company }: { company: Company }) => {
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState<"upload" | "connect" | null>(null);
   const { data: migrations = [] } = useQuery({
     queryKey: MIGRATIONS,
     queryFn: listMigrations,
@@ -45,25 +52,42 @@ const Migrations = ({ company }: { company: Company }) => {
         ? 2000
         : false,
   });
+  const { data: syncs = [] } = useQuery({
+    queryKey: SYNCS,
+    queryFn: listSyncs,
+    refetchInterval: (query) =>
+      query.state.data?.some((sync) => sync.status === "running" || !sync.lastRunAt)
+        ? 2000
+        : 60_000,
+  });
 
   return (
     <>
-      <div className="flex flex-col items-start gap-3 md:flex-row md:items-center">
-        <p className="m-0 flex-1 text-[13px] text-muted">{m.company_migration_hint()}</p>
-        <Button variant="primary" onClick={() => setOpen(true)}>
+      <p className="m-0 text-[13px] text-muted">{m.company_migration_hint()}</p>
+      <div className="flex flex-wrap gap-2">
+        <Button variant="primary" onClick={() => setOpen("connect")}>
+          <Link2 size={15} /> {m.company_sync_new()}
+        </Button>
+        <Button onClick={() => setOpen("upload")}>
           <Upload size={15} /> {m.company_migration_new()}
         </Button>
       </div>
-      {migrations.length ? (
+      {syncs.length || migrations.length ? (
         <ul className="m-0 flex list-none flex-col divide-y divide-border rounded-xl border border-border p-0">
+          {syncs.map((sync) => (
+            <SyncRow key={sync.id} sync={sync} company={company} />
+          ))}
           {migrations.map((job) => (
             <MigrationRow key={job.id} job={job} company={company} />
           ))}
         </ul>
       ) : (
-        <p className="m-0 text-[14px] text-muted">{m.company_migration_none()}</p>
+        <p className="m-0 text-[14px] text-muted">{m.company_none()}</p>
       )}
-      {open ? <UploadDialog company={company} onClose={() => setOpen(false)} /> : null}
+      {open === "upload" ? <UploadDialog company={company} onClose={() => setOpen(null)} /> : null}
+      {open === "connect" ? (
+        <ConnectDialog company={company} onClose={() => setOpen(null)} />
+      ) : null}
     </>
   );
 };
@@ -189,7 +213,7 @@ const UploadDialog = ({ company, onClose }: { company: Company; onClose: () => v
           {m.company_migration_file()}
           <Input
             type="file"
-            accept=".pst"
+            accept=".pst,.vcf,.ics"
             required
             onChange={(e) => setFile(e.target.files?.[0] ?? null)}
             className="h-auto py-2"

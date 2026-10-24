@@ -5,6 +5,7 @@
  */
 import { Hono } from "hono";
 import { migrationRoutes } from "../migration/routes";
+import { syncRoutes } from "../migration/sync-routes";
 import { type CompanyDeps, createLoader, type Env } from "./context";
 import { employeeRoutes } from "./employees";
 import { mailboxRoutes } from "./mailboxes";
@@ -36,5 +37,6 @@ export const createCompanyRoutes = (deps: CompanyDeps) => {
   app.route("/mailboxes", mailboxRoutes(deps));
   app.route("/signature", signatureRoutes(deps));
   app.route("/migrations", migrationRoutes(deps.migrations));
+  app.route("/syncs", syncRoutes(deps.syncs));
   return app;
 };

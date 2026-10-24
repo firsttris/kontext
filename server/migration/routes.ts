@@ -7,7 +7,7 @@ import { Hono } from "hono";
 import { z } from "zod";
 import { bad, bodyOf, type Env, notFound, userOf } from "../company/context";
 import type { Jobs } from "./jobs";
-import { pstFileOf, type Runner } from "./runner";
+import { type Runner, uploadFileOf } from "./runner";
 
 export type MigrationDeps = { jobs: Jobs; runner: Runner; workDir: string };
 
@@ -31,18 +31,26 @@ export const migrationRoutes = ({ jobs, runner, workDir }: MigrationDeps) => {
   app.post("/", async (c) => {
     const body = await bodyOf(c, newMigration);
     if (!body) return bad("Angaben unvollständig.");
-    if (!/\.pst$/i.test(body.fileName)) return bad("Bitte eine Outlook-Datei (.pst) wählen.");
+    const source = body.fileName.toLowerCase().match(/\.(pst|vcf|ics)$/)?.[1] as
+      | "pst"
+      | "vcf"
+      | "ics"
+      | undefined;
+    if (!source)
+      return bad(
+        "Bitte eine Outlook-Datei (.pst), Kontakte (.vcf) oder einen Kalender (.ics) wählen.",
+      );
     const user = userOf(c.get("loaded"), body.accountId);
     if (!user) return bad("Unbekannte Person.");
     await mkdir(workDir, { recursive: true });
     const job = await jobs.create({
       accountId: user.id,
       accountEmail: user.emailAddress ?? "",
-      source: "pst",
+      source,
       fileName: body.fileName,
       size: body.size,
     });
-    await rm(pstFileOf(workDir, job.id), { force: true });
+    await rm(uploadFileOf(workDir, job.id), { force: true });
     return c.json(job, 201);
   });
 
@@ -56,7 +64,7 @@ export const migrationRoutes = ({ jobs, runner, workDir }: MigrationDeps) => {
     }
     const piece = new Uint8Array(await c.req.arrayBuffer());
     if (offset + piece.length > job.size) return bad("Mehr Daten als angekündigt.");
-    await appendFile(pstFileOf(workDir, job.id), piece);
+    await appendFile(uploadFileOf(workDir, job.id), piece);
     const received = offset + piece.length;
     const done = received === job.size;
     await jobs.update(job.id, { received, ...(done ? { status: "queued" as const } : {}) });

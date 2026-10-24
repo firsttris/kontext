@@ -81,12 +81,23 @@ Er kann aber alle Postfächer lesen und Admin-Konten von Stalwart im Passwort ä
 prüft dabei die Rechte des Zielkontos nicht) – den Schlüssel deshalb wie ein Admin-Passwort
 behandeln.
 
-### Umzug aus Outlook
+### Umzug
 
-Unter *Einstellungen → Firma → Umzug* lädt der Chef die Outlook-Dateien (PST) der Mitarbeiter
-hoch. Die Datei liegt bis zum Ende des Umzugs im Datenvolume von Sekretär und wird dann
-entpackt: Für eine 10-GB-PST also vorübergehend gut 20 GB frei haben. Ein großer Umzug läuft
-mehrere Stunden; der Fortschritt steht auf derselben Seite, auch nach einem Neustart.
+Unter *Einstellungen → Firma → Umzug* übernimmt der Chef die Daten der Mitarbeiter:
+
+- **Postfach verbinden** für Gmail, GMX, WEB.DE, Telekom, IONOS, STRATO oder einen anderen
+  IMAP-Server. Gmail braucht ein App-Passwort (im Google-Konto Bestätigung in zwei Schritten
+  einschalten, dann *App-Passwörter*), GMX und WEB.DE den eingeschalteten IMAP-Zugriff. Der
+  Abgleich läuft alle 15 Minuten, bis der Umzug abgeschlossen ist; danach beim alten Anbieter eine
+  Weiterleitung einrichten oder den MX-Eintrag der eigenen Domain umstellen. Der Server braucht
+  dafür ausgehend Port 993.
+- **Datei hochladen**: Outlook-Datendatei (`.pst`), Kontakte (`.vcf`) und Kalender (`.ics`), etwa
+  aus dem Google-Export (*Google Kontakte → Exportieren → vCard*, *Google Kalender → Einstellungen →
+  Exportieren*). Die Datei liegt bis zum Ende des Umzugs im Datenvolume und wird dann entpackt: Für
+  eine 10-GB-PST also vorübergehend gut 20 GB frei haben.
+
+Ein großer Umzug läuft mehrere Stunden, bei Gmail wegen dessen Tageslimit mehrere Tage; der
+Fortschritt steht auf derselben Seite, auch nach einem Neustart.
 
 ### Wenn jemand sein Handy mit der Authenticator-App verliert
 
