@@ -1,5 +1,5 @@
 /**
- * Login state. The Sekretär server keeps the session (an httpOnly cookie, 90 days, renewed while
+ * Login state. The Kontext server keeps the session (an httpOnly cookie, 90 days, renewed while
  * in use) and Stalwart's tokens; the browser only knows whether it is signed in.
  */
 import { createContext, type ReactNode, useCallback, useContext, useMemo, useState } from "react";

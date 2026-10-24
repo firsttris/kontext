@@ -1,8 +1,8 @@
 # Roadmap
 
-Was als Nächstes in Sekretär kommt, sortiert nach Nutzen für kleine Betriebe. Die Reihenfolge ist
+Was als Nächstes in Kontext kommt, sortiert nach Nutzen für kleine Betriebe. Die Reihenfolge ist
 ein Plan, kein Versprechen; Wünsche und Hinweise gern als
-[Issue](https://github.com/firsttris/sekretaer/issues).
+[Issue](https://github.com/firsttris/kontext/issues).
 
 ## Als Nächstes
 
@@ -33,7 +33,7 @@ ein Plan, kein Versprechen; Wünsche und Hinweise gern als
 - **Drucken:** Bilder aus dem Internet und die Anhänge selbst werden nicht mitgedruckt, nur ihre
   Namen.
 - **Kategorien in Handy-Apps:** Apple Mail und die Gmail-App zeigen eigene Schlagworte nicht;
-  sichtbar sind sie in Sekretär und Thunderbird.
+  sichtbar sind sie in Kontext und Thunderbird.
 
 ## Zuletzt fertig geworden
 
@@ -41,4 +41,4 @@ Regeln (auch für gemeinsame Postfächer und auf vorhandene Mails), Kategorien (
 per Regel gesetzt, beim Umzug übernommen), mehrere Mails auf einmal bearbeiten, Drucken,
 Benachrichtigungen, Speicherplatz, Warnungen vor gefälschten Absendern, Anhänge mit Vorschau,
 Mails zwischen Postfächern verschieben. Alles Weitere steht in der
-[Dokumentation](https://firsttris.github.io/sekretaer/).
+[Dokumentation](https://firsttris.github.io/kontext/).

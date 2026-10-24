@@ -27,7 +27,7 @@ const rule: Rule = {
 
 const script = (isActive: boolean) => ({
   id: "s1",
-  name: "sekretaer-regeln",
+  name: "kontext-regeln",
   isActive,
   blobId: "b",
 });
@@ -72,7 +72,7 @@ describe("saveCalls", () => {
       "SieveScript/set",
       {
         accountId: "a",
-        create: { rules: { name: "sekretaer-regeln", blobId: "blob" } },
+        create: { rules: { name: "kontext-regeln", blobId: "blob" } },
         onSuccessActivateScript: "#rules",
       },
       "rules",

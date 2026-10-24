@@ -45,7 +45,7 @@ export const buildMessage = (input: MessageInput): string => {
     "",
     base64Lines(input.text),
   ].join("\r\n");
-  const alternative = `sekretaer-alt-${input.messageId.replace(/[^a-z0-9]/gi, "")}`;
+  const alternative = `kontext-alt-${input.messageId.replace(/[^a-z0-9]/gi, "")}`;
   const textPart = input.html
     ? [
         `Content-Type: multipart/alternative; boundary="${alternative}"`,
@@ -64,7 +64,7 @@ export const buildMessage = (input: MessageInput): string => {
 
   if (!input.attachment) return `${headers.join("\r\n")}\r\n${textPart}`;
 
-  const boundary = `sekretaer-${input.messageId.replace(/[^a-z0-9]/gi, "")}`;
+  const boundary = `kontext-${input.messageId.replace(/[^a-z0-9]/gi, "")}`;
   const { name, type, content } = input.attachment;
   return [
     ...headers,

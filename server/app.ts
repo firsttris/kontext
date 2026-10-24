@@ -1,5 +1,5 @@
 /**
- * The Sekretär server: sign-in (Better Auth) under /api/auth and a pass-through of JMAP to
+ * The Kontext server: sign-in (Better Auth) under /api/auth and a pass-through of JMAP to
  * Stalwart that adds the session's Stalwart token. The browser never holds a password or token.
  */
 
@@ -102,7 +102,7 @@ const sessionAccountsOf =
     }));
   };
 
-/** Ends all Sekretär sessions of a user; their Stalwart tokens go with them (cascade). */
+/** Ends all Kontext sessions of a user; their Stalwart tokens go with them (cascade). */
 const endSessionsOf = (db: Db) => async (email: string) => {
   const [found] = await db.select().from(schema.user).where(eq(schema.user.email, email));
   if (found) await db.delete(schema.session).where(eq(schema.session.userId, found.id));

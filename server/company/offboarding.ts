@@ -4,7 +4,7 @@
  * script per account. Pure functions.
  */
 
-export const OFFBOARDING_SCRIPT = "sekretaer-austritt";
+export const OFFBOARDING_SCRIPT = "kontext-austritt";
 
 export type Offboarding = {
   /** Address that gets every new mail instead of the old mailbox. */

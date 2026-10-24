@@ -1,7 +1,7 @@
-site_name: Sekretär
-site_description: Mail, Kalender und Kontakte für kleine Betriebe – selbst gehostet auf Stalwart
-site_url: https://firsttris.github.io/sekretaer/
-repo_url: https://github.com/firsttris/sekretaer
+site_name: Kontext
+site_description: Mail, Kalender und Kontakte, die dir gehören – wie Google Workspace, nur auf dem eigenen Server
+site_url: https://firsttris.github.io/kontext/
+repo_url: https://github.com/firsttris/kontext
 edit_uri: edit/main/docs/
 use_directory_urls: false
 theme:

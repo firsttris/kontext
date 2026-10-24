@@ -1,5 +1,5 @@
 /**
- * System notifications on this device, when switched on: a new mail while Sekretär is in the
+ * System notifications on this device, when switched on: a new mail while Kontext is in the
  * background, and a reminder 15 minutes before an appointment. A click brings the tab to the front
  * and opens the mail or the appointment.
  */

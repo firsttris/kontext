@@ -17,7 +17,7 @@
 import { z } from "zod";
 import { categorySchema } from "../categories/categories";
 
-export const RULES_SCRIPT = "sekretaer-regeln";
+export const RULES_SCRIPT = "kontext-regeln";
 
 const condition = z.object({
   field: z.enum(["from", "to", "subject", "body"]),
@@ -50,7 +50,7 @@ export type Rule = z.infer<typeof rule>;
 const stored = z.object({ vacation: z.boolean(), rules: z.array(rule) });
 export type StoredRules = z.infer<typeof stored>;
 
-const MARKER = "# sekretaer:";
+const MARKER = "# kontext:";
 
 /** A rule does something only with a condition to match and an action to take. */
 export const isEffective = (rule: Rule): boolean =>
@@ -126,7 +126,7 @@ const REQUIRE = [
 /** The whole script: the stored rules in the marker line, then what Stalwart runs. */
 export const rulesScript = ({ vacation, rules }: StoredRules): string =>
   [
-    "# Sekretär: Regeln für eingehende Mails. Wird beim Speichern in Sekretär neu geschrieben.",
+    "# Kontext: Regeln für eingehende Mails. Wird beim Speichern in Kontext neu geschrieben.",
     `${MARKER}${JSON.stringify({ vacation, rules })}`,
     `require [${REQUIRE.map((name) => `"${name}"`).join(", ")}];`,
     'if spamtest :percent :value "ge" :comparator "i;ascii-numeric" "50" { stop; }',

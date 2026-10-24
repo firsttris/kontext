@@ -1,4 +1,4 @@
-/** The moves and their progress in Sekretär's SQLite, so they survive a restart. */
+/** The moves and their progress in Kontext's SQLite, so they survive a restart. */
 import { desc, eq } from "drizzle-orm";
 import type { Db } from "../db";
 import * as schema from "../db/schema";

@@ -1,5 +1,5 @@
 /**
- * The categories of every mail account the person can open (/api/categories, Sekretär's server)
+ * The categories of every mail account the person can open (/api/categories, Kontext's server)
  * and changing those of one account. Setting one on a mail is a keyword (mail/queries.ts).
  */
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";

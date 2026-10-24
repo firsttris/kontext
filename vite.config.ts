@@ -4,8 +4,8 @@ import { tanstackRouter } from "@tanstack/router-plugin/vite";
 import react from "@vitejs/plugin-react";
 import { defineConfig } from "vitest/config";
 
-/** The Sekretär server (sign-in and JMAP to Stalwart); in production it serves the app itself. */
-const server = process.env.SEKRETAER_SERVER ?? "http://127.0.0.1:18090";
+/** The Kontext server (sign-in and JMAP to Stalwart); in production it serves the app itself. */
+const server = process.env.KONTEXT_SERVER ?? "http://127.0.0.1:18090";
 const proxy = {
   "/jmap": { target: server },
   "/api": { target: server },

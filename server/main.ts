@@ -1,5 +1,5 @@
 /**
- * Starts the Sekretär server.
+ * Starts the Kontext server.
  *
  *   bun server/main.ts            # dev: http://127.0.0.1:18090, Stalwart on 18080
  */
@@ -25,6 +25,4 @@ const env = readEnv({
 const { app } = await createApp(env);
 
 const server = Bun.serve({ port: env.PORT, fetch: app.fetch, idleTimeout: 0 });
-console.log(
-  `Sekretär-Server läuft: http://127.0.0.1:${server.port} → Stalwart ${env.STALWART_URL}`,
-);
+console.log(`Kontext-Server läuft: http://127.0.0.1:${server.port} → Stalwart ${env.STALWART_URL}`);

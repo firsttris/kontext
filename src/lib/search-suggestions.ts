@@ -107,7 +107,7 @@ export const suggest = (
   return [...people, ...operators].slice(0, 8);
 };
 
-const RECENT_KEY = "sekretaer.recentSearches";
+const RECENT_KEY = "kontext.recentSearches";
 
 /** The last searches on this device (newest first). */
 export const readRecent = (): string[] => {

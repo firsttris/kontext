@@ -2,7 +2,7 @@
  * Mail categories: coloured tags on a mail, several at once, next to the one folder it is in. On
  * the mail a category is a keyword (RFC 8621 §4.1.1, IMAP flags), readable like
  * "wartet-auf-antwort" so other programs (Thunderbird) show something sensible; its name and
- * colour are kept per account by Sekretär. In a shared mailbox every member sees the same
+ * colour are kept per account by Kontext. In a shared mailbox every member sees the same
  * categories, which makes info@ a small task list. Pure; used by the app and the server.
  */
 import { z } from "zod";

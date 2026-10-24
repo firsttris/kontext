@@ -5,8 +5,8 @@
  */
 import { useEffect, useSyncExternalStore } from "react";
 
-const SEEN = "sekretaer.notifications.seen";
-const DEVICE = "sekretaer.notifications.device";
+const SEEN = "kontext.notifications.seen";
+const DEVICE = "kontext.notifications.device";
 
 const read = (key: string): string | null => {
   try {

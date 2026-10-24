@@ -1,6 +1,6 @@
 /**
  * Microsoft Graph's contacts and events as JSContact (RFC 9553) and JSCalendar (RFC 8984), the
- * way Sekretär writes them itself (src/lib/jscontact.ts, src/lib/recurrence.ts). Graph resources:
+ * way Kontext writes them itself (src/lib/jscontact.ts, src/lib/recurrence.ts). Graph resources:
  * https://learn.microsoft.com/graph/api/resources/contact and .../event, .../patternedrecurrence.
  * Pure functions.
  */

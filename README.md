@@ -1,13 +1,15 @@
 <div align="center">
 
-<h1>Sekretär: Mail, Kalender und Kontakte für kleine Betriebe – selbst gehostet</h1>
+<h1>Kontext</h1>
 
-**Sekretär ist eine Büro-Suite für Handwerk, Kanzleien und kleine Firmen: Mail mit gemeinsamen Postfächern, Kalender und Kontakte im Browser und am Handy.**<br>
-Sie läuft auf einem eigenen Server pro Firma (Stalwart Mailserver), die Daten bleiben in Deutschland.<br>
-Open Source (AGPL), keine Lizenz pro Benutzer – eine Alternative zu Google Workspace und Microsoft 365.
+**Mail, calendar and contacts that belong to you – like Google Workspace, but on your own server.**<br>
+Shared mailboxes, a team calendar and contacts that connect everything: every customer's mails and appointments at a glance.<br>
+For freelancers, trades, law firms and small and mid-sized businesses – and for everyone who self-hosts. Made in Europe, for Europe.
 
-[![CI](https://github.com/firsttris/sekretaer/actions/workflows/ci.yml/badge.svg)](https://github.com/firsttris/sekretaer/actions/workflows/ci.yml)
-[![Docs](https://img.shields.io/badge/docs-firsttris.github.io%2Fsekretaer-4f46e5?logo=materialformkdocs&logoColor=white)](https://firsttris.github.io/sekretaer/)
+**English** · [Deutsch](README.de.md)
+
+[![CI](https://github.com/firsttris/kontext/actions/workflows/ci.yml/badge.svg)](https://github.com/firsttris/kontext/actions/workflows/ci.yml)
+[![Docs](https://img.shields.io/badge/docs-firsttris.github.io%2Fkontext-4f46e5?logo=materialformkdocs&logoColor=white)](https://firsttris.github.io/kontext/)
 [![License: AGPL-3.0](https://img.shields.io/badge/license-AGPL--3.0-blue)](LICENSE)
 [![Stalwart 0.16](https://img.shields.io/badge/Stalwart-0.16-18181b)](https://stalw.art)
 
@@ -15,200 +17,226 @@ Open Source (AGPL), keine Lizenz pro Benutzer – eine Alternative zu Google Wor
 docker compose -f deploy/compose.yaml up -d
 ```
 
+[Who it's for](#-who-is-it-for) •
+[Privacy](#-your-data-your-rules) •
 [Installation](#-installation) •
-[Funktionen](#-funktionen) •
-[Screenshots](#-screenshots) •
-[Alternativen](#-sekretär-und-die-alternativen) •
+[Features](#-features) •
+[Modules](#-modules) •
 [FAQ](#-faq) •
-[Dokumentation](https://firsttris.github.io/sekretaer/)
+[Documentation](https://firsttris.github.io/kontext/)
 
-<img src="docs/screenshots/mail.png" alt="Sekretär im Browser: Posteingang mit Ordnern, gemeinsamen Postfächern info@ und rechnung@, Kategorien und einer geöffneten Mail mit Vorschau des PDF-Anhangs" width="900">
+<img src="docs/screenshots/mail.png" alt="Kontext in the browser: inbox with folders, shared mailboxes info@ and rechnung@, categories and an open mail with a preview of its PDF attachment" width="900">
 
 </div>
 
-## 💡 Warum Sekretär?
+## 💡 Why Kontext?
 
-Viele kleine Betriebe arbeiten mit einer kostenlosen Gmail-Adresse oder dem Postfach vom Hoster:
-kein gemeinsames info@-Postfach, kein Firmenkalender, und mit jedem Mitarbeiter wird Workspace
-oder Microsoft 365 teurer.
-- **Gemeinsame Postfächer**: info@ und rechnung@ für das ganze Team, mit Rechten pro Person.
-- **Beliebig viele Benutzer**: bezahlt wird die Wartung des Servers, nicht jeder Kopf.
-- **Ordner statt Labels**: Posteingang, Archiv und eigene Ordner mit Unterordnern, wie gewohnt.
-- **Am Handy wie am PC**: jede Ansicht ist fürs Handy gebaut, als App installierbar, man bleibt angemeldet.
-- **Ihre Daten, Ihr Server**: ein eigener Server pro Firma, Backups verschlüsselt auf S3.
+Google Workspace and Microsoft 365 are convenient – but every user costs money every month, and
+the data sits with a US corporation. Kontext feels the same in the browser and on the phone, but
+runs on **your** server: a small VPS from about €5 a month (e.g. IONOS or Hetzner) or a machine of
+your own.
 
-Läuft auf jedem Linux-Server mit Docker oder Podman, z. B. einem kleinen VPS bei IONOS oder Hetzner.
+- **You own everything**: mails, appointments and contacts live on your server, not with a provider.
+- **No per-seat pricing**: ten people cost the same as one; you pay for the server.
+- **Context instead of silos**: every contact with their latest mails and upcoming appointments, categories and rules for the whole team – a small CRM without another tool.
+- **Shared mailboxes**: info@ and invoices@ for the team, with rights per person.
+- **Phone and desktop alike**: every view is built for the phone, installable as an app.
+- **Open**: open source (AGPL), standard protocols (JMAP, IMAP, CalDAV, CardDAV) – every phone and mail program keeps working.
+
+## 👥 Who is it for?
+
+- **Freelancers and the self-employed**: your own address, calendar and customers in one place, for a few euros a month instead of a subscription per service.
+- **Trades, law firms, practices, SMEs**: shared mailboxes, a company calendar, out-of-office with a deputy, onboarding and clean offboarding – with a company admin area the boss can use without IT skills.
+- **Self-hosters**: one Docker Compose setup with Stalwart as the mail server; backups and updates are documented.
+
+## 🔒 Your data, your rules
+
+- **GDPR**: the data stays on your server, in a European data centre if you like. No trackers, no ads, no sharing; the only data processing agreement you need is with your hosting provider.
+- **GoBD** (German retention rules): Kontext supports compliant retention – nothing is deleted when someone leaves, and backups go encrypted to S3 storage with Object Lock, so they cannot be altered. (Compliance also depends on the company's processes and documentation; the software is one part of it.)
+- **No lock-in**: take mails, contacts and calendars with you any time via IMAP, vCard and iCalendar; moving *to* Kontext is built in.
+- **Secure**: two-factor sign-in, mails rendered in an isolated frame, warnings about forged senders.
 
 ## 🚀 Installation
 
-Auf einem Server mit Docker, eigener Domain und offenen Ports 25, 80, 443, 465, 587 und 993:
+On a server with Docker, your own domain and open ports 25, 80, 443, 465, 587 and 993:
 
 ```bash
-git clone https://github.com/firsttris/sekretaer /opt/sekretaer && cd /opt/sekretaer
-cp deploy/.env.example deploy/.env      # Domain, Mailserver-Name, Backup-Ziel eintragen
+git clone https://github.com/firsttris/kontext /opt/kontext && cd /opt/kontext
+cp deploy/.env.example deploy/.env      # domain, mail server name, backup target
 docker compose -f deploy/compose.yaml up -d
 ```
 
-Danach in Stalwarts Verwaltung (Port 8080, nur über Tailscale) Domain, DKIM und Benutzer anlegen
-und unter `https://<Ihre Domain>` anmelden. DNS-Einträge, Backups und Updates stehen in der
-[Installationsanleitung](https://firsttris.github.io/sekretaer/installation.html).
+Then create the domain, DKIM and users in Stalwart's admin (port 8080, over Tailscale only) and
+sign in at `https://<your domain>`. DNS records, backups and updates are in the
+[installation guide](https://firsttris.github.io/kontext/installation.html) (German). Ten users run
+fine on a VPS with 2 vCPUs and 4 GB RAM.
 
-## ✨ Funktionen
+## ✨ Features
 
 ### ✉️ Mail
 
-- **Gemeinsame Postfächer**: info@ & Co. stehen bei jedem Mitglied in der Seitenleiste; eine Mail daraus sagt „Gemeinsames Postfach info@…“, damit man sieht, wo sie liegt. Antworten gehen als info@ raus, mit dem Namen der Person, die geantwortet hat. Postfächer nur zum Lesen zeigen nur, was erlaubt ist.
-- **Alle Posteingänge in einer Liste**: eigene Mails und die aus info@ & Co. zusammen, das gemeinsame Postfach als kleines Etikett.
-- **Schutz vor gefälschten Mails**: eine Warnung über der Mail, wenn der Absender nicht bestätigt ist, sich jemand von außen als die eigene Firma ausgibt oder Antworten an eine fremde Adresse gehen; „Details anzeigen“ zeigt Empfänger, Datum und die Prüfung des Absenders (SPF, DKIM, DMARC, Spam-Bewertung).
-- **Als Spam markieren**: ein Klick (oder `!`) verschiebt die Mail in den Spam, „Kein Spam“ holt sie zurück – der Spamfilter lernt aus beidem.
-- **Ordner und Unterordner**: anlegen, Mails verschieben – über das Menü oder mit der Maus auf einen Ordner gezogen, auch von info@ in die eigenen Ordner und zurück –, Archiv und Papierkorb mit einem Klick.
-- **Schreiben mit Formatierung**: Fett, Listen, Einrücken, Links, Zitate – die Leiste ist immer sichtbar.
-- **Antworten, allen antworten, weiterleiten**: mit Zitat, Anhängen und Vorschlägen aus den Kontakten.
-- **Wer schreibt mir da?** Auf breiten Bildschirmen steht neben der Mail der Absender mit Firma, nächsten Terminen und letzten Mails, dazu Mail, Termin und Anrufen mit einem Klick – und „Als Kontakt speichern“, wenn er noch fehlt.
-- **Anhänge mit Vorschau**: Fotos und die erste Seite eines PDFs als kleines Bild, andere Dateien als farbige Kachel (Word, Excel, ZIP …); ein Klick öffnet PDF und Foto direkt im Browser.
-- **Suche wie in Gmail**: über alle Ordner und Postfächer, mit `von:`, `an:`, `betreff:`, `hat:anhang`, `ist:ungelesen`, `in:info@`, `nach:`/`vor:` (auch auf Englisch), Vorschlägen beim Tippen, Filter-Chips und markierten Treffern; „Angebote“ findet auch „Angebot“.
-- **Sicher lesen**: Mails laufen in einem abgeschotteten Rahmen, Bilder aus dem Internet erst auf Wunsch.
-- **Sofort aktuell**: neue Mails und Änderungen von Kollegen erscheinen ohne Neuladen (JMAP Push).
+- **Shared mailboxes**: info@ and co. appear in every member's sidebar and are labelled as such; replies go out as info@, with the name of the person who answered. Read-only mailboxes show only what is allowed.
+- **All inboxes in one list**: your own mail and info@'s together.
+- **Categories**: coloured tags like "In progress", "Waiting for reply", "Done" – several per mail, your own ones too, set by rules. In shared mailboxes the whole team sees them: a small task board.
+- **Rules**: "if sender, recipient, subject or text … then move to folder, mark, set category, forward" – run on the server as mail arrives, even when Kontext is closed; created from a mail, optionally applied to the inbox. The boss keeps the rules of shared mailboxes.
+- **Many mails at once**: pick them (also with Shift-click or `x`) and archive, delete, mark read, categorise or move them together.
+- **Protection against forged mail**: a warning above the mail when the sender is not verified, someone outside pretends to be your company, or replies go to another address; "Show details" shows the checks (SPF, DKIM, DMARC, spam score).
+- **Mark as spam**: one click (or `!`); "Not spam" brings it back – the spam filter learns from both.
+- **Folders and subfolders**: move mails by menu or drag and drop, also between info@ and your own folders.
+- **Rich text writing**, replies with quotes, attachments, suggestions from your contacts.
+- **Who is writing?** On wide screens the sender is shown next to the mail, with company, upcoming appointments and latest mails.
+- **Attachments with previews**: photos and the first page of a PDF as thumbnails.
+- **Search like Gmail**: across folders and mailboxes, with operators such as `from:`, `to:`, `subject:`, `has:attachment`, `label:`, `in:info@`, `after:`/`before:`.
+- **Print**: just the mail, neatly on A4 (also with Ctrl+P).
+- **Always current**: new mail and colleagues' changes appear without reloading (JMAP push).
 
-### ⚙️ Einstellungen
+### 📅 Calendar
 
-- **Signatur pro Absender**: eigene Adresse und gemeinsame Postfächer, mit Formatierung.
-- **Abwesenheitsnotiz**: mit Zeitraum, antwortet automatisch.
-- **Drucken**: die Mail allein, sauber auf A4 – mit Absender, Empfängern, Datum und den Namen der Anhänge (auch per Strg+P).
-- **Mehrere Mails auf einmal**: auswählen (auch per Shift-Klick oder `x`) und gemeinsam archivieren, löschen, als gelesen markieren, kategorisieren oder verschieben – auch über mehrere Postfächer in „Alle Posteingänge“.
-- **Kategorien**: farbige Markierungen wie „In Bearbeitung“, „Wartet auf Antwort“, „Erledigt“ – mehrere je Mail, eigene anlegbar, per Regel automatisch. In info@ & Co. sieht das ganze Team sie: ein kleines Aufgabenbrett ohne Extra-Tool.
-- **Regeln**: „Wenn Absender/Empfänger/Betreff/Text … dann in Ordner verschieben, als gelesen markieren, markieren, weiterleiten“ – laufen auf dem Server beim Eingang, auch wenn Sekretär geschlossen ist; direkt aus einer Mail anlegbar („Regel erstellen …“) und auf Wunsch auch auf die Mails anwendbar, die schon im Posteingang liegen.
-- **Passwort und Anmeldung mit Code** (Authenticator-App); man bleibt auf dem Gerät angemeldet.
-- **Hell oder dunkel**: wie das Gerät, oder fest eingestellt.
-- **Tastaturkürzel** wie in Gmail: `j`/`k` durch die Mails, `r` antworten, `e` archivieren, `c` neu, `?` oder das Tastatur-Symbol links zeigt alle.
-- **Benachrichtigungen**: die Glocke links zeigt Einladungen, die auf Antwort warten, die heutigen Termine und neue Mails aus allen Postfächern; auf Wunsch meldet sich Sekretär auch als Benachrichtigung des Geräts – bei neuer Mail im Hintergrund und 15 Minuten vor einem Termin.
-- **Speicherplatz im Blick**: ein feiner Ring um das eigene Bild zeigt, wie voll das Postfach ist – gelb ab 80 %, rot ab 95 %.
+- **Day, week, month and list**, drag to move, recurring events with exceptions.
+- **Share calendars** with colleagues – to read or to edit; **invitations** with accept and decline.
+- **On the phone**: day view with a week strip, month and list.
 
-### 🏢 Firmenverwaltung
+### 👥 Contacts
 
-- **Mitarbeiter anlegen**: mit Startpasswort zum Weitergeben, gleich in den passenden gemeinsamen Postfächern.
-- **Passwort und Anmeldung mit Code zurücksetzen**, z. B. wenn ein Handy verloren geht.
-- **Zugang sperren**: keine Anmeldung mehr, weder in Sekretär noch am Handy oder im Mailprogramm; Mails kommen weiter an.
-- **Weitere Adressen** wie buchhaltung@ für eine Person oder ein Postfach.
-- **Gemeinsame Postfächer** anlegen und pro Person festlegen: kein Zugriff, nur lesen, oder lesen und senden.
-- **Abwesenheit eintragen**, wenn jemand krank ist – mit Vertretung, die in der automatischen Antwort steht.
-- **Regeln für gemeinsame Postfächer**: z. B. Reklamationen an info@ markieren oder Rechnungen in einen Ordner sortieren – für alle, die das Postfach nutzen.
-- **Firmen-Signatur**: eine Vorlage mit Name und Adresse, mit einem Klick für alle übernommen; neue Mitarbeiter bekommen sie automatisch.
-- **Umzug von Microsoft 365**: Mails mit Ordnern, Kontakte und Termine (auch Serien) über eine App im Microsoft-Konto der Firma, Postfach für Postfach zugeordnet, danach laufender Abgleich.
-- **Umzug von Gmail, GMX, WEB.DE & Co.**: altes Postfach verbinden – alle Mails mit Ordnern (Gmail-Labels inklusive) kommen herüber, danach gleicht Sekretär alle 15 Minuten ab, bis der Umzug abgeschlossen ist.
-- **Umzug aus Outlook und Google-Export**: PST-Datei, Kontakte (.vcf) oder Kalender (.ics) hochladen – ohne Doppelte beim zweiten Mal.
-- **Austritt**: Zugang sperren, Postfach einer Kollegin übergeben, neue Mails weiterleiten und automatisch antworten – gelöscht wird nichts.
-- Nur für Konten mit dem Recht „Firmenverwaltung“, das der Chef auch weitergeben kann.
+- **The customer at a glance**: latest mails and upcoming appointments with this contact.
+- **Groups** such as "Suppliers" to write to with one mail; **vCard import and export**.
+- **Share address books** with colleagues – to read or to edit.
 
-### 📅 Kalender
+### ⚙️ Settings
 
-- **Tag, Woche, Monat und Liste**: überlappende Termine nebeneinander, ganztägige oben, Jetzt-Linie; die Liste zeigt die nächsten 30 Tage.
-- **Termine verschieben**: mit der Maus ziehen, die Länge am unteren Rand ändern.
-- **Wiederkehrende Termine**: täglich, werktags, wöchentlich, alle 2 Wochen, monatlich, jährlich – bis zu einem Datum oder eine Anzahl lang; einzelne Termine der Serie ändern oder absagen.
-- **Kalender teilen**: eigene Kalender anlegen und mit Kollegen teilen – zum Lesen oder zum Bearbeiten; jeder Kalender in seiner Farbe, einzeln ein- und ausblendbar.
-- **Einladungen**: Teilnehmer bekommen eine Einladung und können zusagen, absagen oder „vielleicht“.
-- **Am Handy**: Tagesansicht mit Wochenleiste, Monat und Liste, Plus-Knopf.
+- **Signature per sender address**, **out-of-office reply** with dates, **two-factor sign-in** (authenticator app).
+- **Light or dark**, **keyboard shortcuts** like Gmail (`?` shows all).
+- **Notifications**: a bell with invitations, today's appointments and new mail; optionally as device notifications.
+- **Storage at a glance**: a thin ring around your avatar shows how full the mailbox is.
 
-### 👥 Kontakte
+### 🏢 Company admin
 
-- **Kunde auf einen Blick**: letzte Mails und nächste Termine mit diesem Kontakt.
-- **Anlegen und pflegen**: Firma, Mail, Telefon, Adresse, Notiz; Anrufen und Mail schreiben mit einem Tipp.
-- **Gruppen**: Kontakte zu Gruppen wie „Lieferanten“ zusammenfassen und allen mit einer Mail schreiben; beim Schreiben schlägt Sekretär die Gruppe vor.
-- **vCard-Import und -Export**: Kontakte aus Outlook, Google oder dem Handy übernehmen (ohne Doppelte) und ganze Adressbücher oder einzelne Kontakte als `.vcf` sichern.
-- **Adressbücher teilen**: eigene Adressbücher anlegen und mit Kollegen teilen – zum Lesen oder zum Bearbeiten. Geteilte Adressbücher und die der gemeinsamen Postfächer stehen unter „Geteilt mit mir“.
+- **Add people**, reset passwords and second factors, **lock access**.
+- **Shared mailboxes** with rights per person: no access, read only, or read and send; extra addresses like accounting@.
+- **Out-of-office for colleagues** with a deputy, **company signature** for everyone.
+- **Offboarding**: lock access, hand over the mailbox, forward, auto-reply – nothing is deleted.
+- **Move in** from Microsoft 365, Gmail and other IMAP providers (with folders and categories, then kept in sync), from Outlook (PST) and from a Google export.
+
+## 🧩 Modules
+
+The core stays lean: mail, calendar, contacts and the company admin area. On top come modules a
+business switches on when it needs them – whoever doesn't, never sees them.
+
+| Module | Status |
+| --- | --- |
+| Mail, calendar, contacts, company admin | ✅ available |
+| Tasks | planned |
+| Kanban board | planned |
+| Work reports (e.g. for trades) | planned |
+
+What comes next is in the [roadmap](ROADMAP.md) (German).
 
 ## 📸 Screenshots
 
 <table>
   <tr>
-    <td><img src="docs/screenshots/shared-mailbox.png" alt="Gemeinsames Postfach info@: Kundenanfrage zur Wärmepumpe mit der Kategorie „In Bearbeitung“"></td>
-    <td><img src="docs/screenshots/compose.png" alt="Antwort schreiben mit Formatierungsleiste, Zitat und Absender-Auswahl"></td>
+    <td><img src="docs/screenshots/shared-mailbox.png" alt="Shared mailbox info@: a customer enquiry about a heat pump with the category In progress"></td>
+    <td><img src="docs/screenshots/compose.png" alt="Writing a reply with the formatting bar, quote and sender selection"></td>
   </tr>
   <tr>
-    <td><img src="docs/screenshots/calendar.png" alt="Kalender-Wochenansicht mit Baubesprechung, Wartungstermin und Monatsübersicht"></td>
-    <td><img src="docs/screenshots/contacts.png" alt="Kontakt Markus Hoffmann mit nächsten Terminen und letzten Mails"></td>
+    <td><img src="docs/screenshots/calendar.png" alt="Calendar week view with site meeting, maintenance appointment and month overview"></td>
+    <td><img src="docs/screenshots/contacts.png" alt="Contact Markus Hoffmann with upcoming appointments and latest mails"></td>
   </tr>
 </table>
 
 <p align="center">
-  <img src="docs/screenshots/mail-dark.png" alt="Posteingang im dunklen Farbschema" width="720">
+  <img src="docs/screenshots/mail-dark.png" alt="Inbox in the dark theme" width="720">
 </p>
 
 <p align="center">
-  <img src="docs/screenshots/phone-mail.png" alt="Posteingang am Handy mit Tab-Leiste" width="240">
-  <img src="docs/screenshots/phone-read.png" alt="Mail lesen am Handy" width="240">
-  <img src="docs/screenshots/phone-calendar.png" alt="Kalender-Tagesansicht am Handy" width="240">
+  <img src="docs/screenshots/phone-mail.png" alt="Inbox on the phone with tab bar" width="240">
+  <img src="docs/screenshots/phone-read.png" alt="Reading a mail on the phone" width="240">
+  <img src="docs/screenshots/phone-calendar.png" alt="Calendar day view on the phone" width="240">
 </p>
 
-## 🔀 Sekretär und die Alternativen
+## 🔀 Kontext and the alternatives
 
-Sekretär ist für Betriebe gemacht, die ihre Mail selbst (oder durch ihren IT-Dienstleister) betreiben wollen und eine Oberfläche brauchen, die so einfach ist wie Gmail.
-
-|                                                                 | Was es ist                                  | Wo Sekretär anders ist                                                              |
-| --------------------------------------------------------------- | ------------------------------------------- | ----------------------------------------------------------------------------------- |
-| [Google Workspace](https://workspace.google.com)                | Gmail, Kalender, Drive als Abo pro Benutzer | eigener Server, keine Kosten pro Kopf, Ordner statt Labels                          |
-| [Microsoft 365](https://www.microsoft.com/microsoft-365)        | Outlook und Office als Abo pro Benutzer     | läuft im Browser ohne Outlook, Daten auf dem eigenen Server                         |
-| [Stalwart Web-Admin](https://stalw.art)                         | Verwaltung des Mailservers                  | Sekretär ist die App für die Mitarbeiter, Stalwart der Server darunter              |
-| [Roundcube](https://roundcube.net), [SOGo](https://www.sogo.nu) | bewährte Webmailer                          | moderne Oberfläche, fürs Handy gebaut, gemeinsame Postfächer im Mittelpunkt         |
-| Bulwark                                                         | JMAP-Webmail für Stalwart                   | Kalender und Kontakte mit Kunden-Ansicht, Teilen mit Kollegen, deutsche Oberfläche |
+|                                                                 | What it is                                       | How Kontext differs                                                |
+| --------------------------------------------------------------- | ------------------------------------------------ | ------------------------------------------------------------------ |
+| [Google Workspace](https://workspace.google.com)                | Gmail, Calendar, Drive as a per-user subscription | your own server, no per-seat cost, data in Europe                  |
+| [Microsoft 365](https://www.microsoft.com/microsoft-365)        | Outlook and Office as a per-user subscription     | runs in the browser without Outlook, data on your own server       |
+| [Roundcube](https://roundcube.net), [SOGo](https://www.sogo.nu) | proven webmail clients                           | modern interface, built for the phone, contacts with customer view |
+| Bulwark                                                         | JMAP webmail for Stalwart                        | calendar, contacts, company admin, team rules and categories       |
 
 ## ❓ FAQ
 
-### Funktionieren iPhone, Android, Outlook und Thunderbird weiter?
+### What does it cost?
 
-Ja. Stalwart spricht IMAP, SMTP, CalDAV und CardDAV; jedes Mailprogramm und jedes Handy kann sich direkt verbinden. Sekretär ist die Oberfläche im Browser dazu.
+The software is free (AGPL). You need a server – a VPS from about €5 a month – and someone who
+sets it up and keeps it updated.
 
-### Kann ich von Gmail, Microsoft 365 oder Outlook umziehen?
+### Can it run on my own PC?
 
-Ja, unter *Einstellungen → Firma → Umzug*: Gmail, GMX, WEB.DE, Telekom, IONOS, STRATO und andere IMAP-Postfächer verbinden (läuft parallel weiter, bis der Umzug abgeschlossen ist), Microsoft 365 über eine App im Microsoft-Konto der Firma, Outlook als PST-Datei hochladen, Kontakte und Kalender aus dem Google-Export als .vcf und .ics.
+Yes, Kontext runs wherever Docker runs. To receive mail from the internet, though, the machine
+needs port 25 reachable from outside, a fixed IP address and a reverse DNS entry; home internet
+connections usually block port 25. At home it works best with a mail relay in front – a small VPS
+is simpler.
 
-### Was kostet es?
+### Is it GDPR compliant?
 
-Die Software ist kostenlos (AGPL). Es braucht einen Server (ab ca. 5 € im Monat) und jemanden, der ihn wartet.
+It is built for it: the data stays on your server, without trackers or third parties. You sign a
+data processing agreement with your hosting provider; with a server in your own building not even
+that.
 
-### Wo liegen die Daten?
+### Do iPhone, Android, Outlook and Thunderbird keep working?
 
-Auf dem Server der Firma, z. B. in einem deutschen Rechenzentrum. Backups gehen verschlüsselt mit Restic auf einen S3-Speicher mit Object Lock.
+Yes. Stalwart speaks IMAP, SMTP, CalDAV and CardDAV; every mail program and phone can connect
+directly. Kontext is the browser interface on top.
 
-## 📚 Dokumentation
+### Can I move from Gmail, Microsoft 365 or Outlook?
 
-Die ganze Dokumentation steht unter **[firsttris.github.io/sekretaer](https://firsttris.github.io/sekretaer/)**.
+Yes, under *Settings → Company → Move*: connect IMAP mailboxes (kept in sync until the move is
+finished), Microsoft 365 through an app in the company's Microsoft account, Outlook as a PST file,
+contacts and calendars from a Google export.
 
-|                                                                         |                                                                    |
-| ----------------------------------------------------------------------- | ------------------------------------------------------------------ |
-| [Installation](https://firsttris.github.io/sekretaer/installation.html) | Server, DNS (MX, SPF, DKIM, DMARC), erster Start, Backups, Updates |
-| [Architektur](https://firsttris.github.io/sekretaer/architecture.html)  | wie App, Caddy und Stalwart zusammenspielen                        |
-| [Entwicklung](https://firsttris.github.io/sekretaer/development.html)   | lokaler Stalwart mit Testdaten, Tests, CI, Releases                |
+### Which languages?
 
-## 🛠️ Entwicklung
+The app is in German for now; English and other European languages are planned.
 
-Benötigt [Bun](https://bun.sh) 1.4 und Linux oder macOS.
+## 📚 Documentation
+
+The full documentation (German) is at **[firsttris.github.io/kontext](https://firsttris.github.io/kontext/)**:
+[installation](https://firsttris.github.io/kontext/installation.html),
+[architecture](https://firsttris.github.io/kontext/architecture.html),
+[development](https://firsttris.github.io/kontext/development.html).
+
+## 🛠️ Development
+
+Needs [Bun](https://bun.sh) 1.4 and Linux or macOS.
 
 ```bash
-git clone https://github.com/firsttris/sekretaer && cd sekretaer
+git clone https://github.com/firsttris/kontext && cd kontext
 bun install
-bun run dev   # Stalwart mit Testdaten, Server und App: http://localhost:5173
+bun run dev   # Stalwart with test data, server and app: http://localhost:5173
 ```
 
-Anmelden mit `jonas@weber-haustechnik.test` / `kaffee-werkbank-sekretaer` (Chef, sieht auch die Firmenverwaltung); `anna@`, `sandra@` und `max@` haben dasselbe Passwort, info@ und rechnung@ sind gemeinsame Postfächer. `bun run dev:stalwart -- --fresh --seed` setzt die Testdaten zurück. Für den Umzug aus Outlook braucht es lokal `readpst` (`sudo apt install pst-utils`); wie man den Umzug per IMAP und von Microsoft 365 ohne echte Konten ausprobiert, steht in der Entwicklungs-Doku.
+Sign in as `jonas@weber-haustechnik.test` / `kaffee-werkbank-kontext` (the boss, sees the company
+admin too); `anna@`, `sandra@` and `max@` share the password, info@ and rechnung@ are shared
+mailboxes. `bun run dev:stalwart -- --fresh --seed` resets the test data.
 
-React, TanStack Router/Query, Tailwind und Tiptap im Browser; ein kleiner Bun-Server mit Hono und Better Auth für Anmeldung und JMAP zu Stalwart. Architektur, Tests und Releases: [Entwicklung](https://firsttris.github.io/sekretaer/development.html).
+React, TanStack Router/Query, Tailwind and Tiptap in the browser; a small Bun server with Hono and
+Better Auth for sign-in and JMAP to Stalwart.
 
-## 🤝 Mitmachen
+## 🤝 Contributing
 
-Was als Nächstes geplant ist, steht in der [Roadmap](ROADMAP.md).
-
-Issues und Pull Requests sind willkommen. Ein guter Fehlerbericht nennt Browser oder Handy, die Ansicht und was zu sehen war (ein Screenshot hilft). Vor einem Pull Request bitte `bun run check && bun run e2e` laufen lassen.
+Issues and pull requests are welcome. A good bug report names the browser or phone, the view and
+what was shown (a screenshot helps). Before a pull request please run
+`bun run check && bun run e2e`.
 
 ---
 
 <div align="center">
 
-⭐ Gefällt Ihnen Sekretär? Ein [Stern auf GitHub](https://github.com/firsttris/sekretaer) hilft anderen, es zu finden.<br>
-🐛 [Fehler melden](https://github.com/firsttris/sekretaer/issues/new) · 💡 [Funktion vorschlagen](https://github.com/firsttris/sekretaer/issues/new)
+⭐ Like Kontext? A [star on GitHub](https://github.com/firsttris/kontext) helps others find it.<br>
+🐛 [Report a bug](https://github.com/firsttris/kontext/issues/new) · 💡 [Suggest a feature](https://github.com/firsttris/kontext/issues/new)
 
-<sub>Lizenz: <a href="LICENSE">AGPL-3.0</a> · © Tristan Teufel und Mitwirkende<br>
-Geänderte Versionen, die Sie weitergeben oder für andere betreiben, müssen ihren Quellcode unter der AGPL anbieten; eine kommerzielle Lizenz ohne diese Pflichten gibt es über <a href="https://teufel-it.de">teufel-it.de</a>.<br>
-Sekretär ist nicht mit Stalwart Labs, Google oder Microsoft verbunden.</sub>
+<sub>License: <a href="LICENSE">AGPL-3.0</a> · © Tristan Teufel and contributors<br>
+Modified versions you distribute or run for others must offer their source code under the AGPL; a commercial license without these obligations is available from <a href="https://teufel-it.de">teufel-it.de</a>.<br>
+Kontext is not affiliated with Stalwart Labs, Google or Microsoft.</sub>
 
 </div>

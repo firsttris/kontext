@@ -10,7 +10,7 @@ import type { EmailSummary } from "@/jmap/types";
 import { m } from "@/paraglide/messages";
 import { useMoveTo } from "./actions";
 
-const TYPE = "application/x-sekretaer-mail";
+const TYPE = "application/x-kontext-mail";
 
 export type DraggedMail = { accountId: string; from: string; email: EmailSummary };
 

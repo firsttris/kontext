@@ -1,6 +1,6 @@
 {
-  "name": "Sekretär",
-  "short_name": "Sekretär",
+  "name": "Kontext",
+  "short_name": "Kontext",
   "description": "Mail, Kalender und Kontakte",
   "lang": "de",
   "start_url": "/mail",

@@ -30,7 +30,7 @@ export type CompanyDeps = {
   syncs: SyncDeps;
   /** The signed-in user's address, or null. */
   currentEmail: (request: Request) => Promise<string | null>;
-  /** Ends the user's Sekretär sessions (after deactivating or a new password). */
+  /** Ends the user's Kontext sessions (after deactivating or a new password). */
   endSessions: (email: string) => Promise<void>;
   random?: (size: number) => Uint8Array;
 };

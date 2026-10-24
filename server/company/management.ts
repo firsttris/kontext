@@ -10,7 +10,7 @@ const USING = ["urn:ietf:params:jmap:core", "urn:stalwart:jmap"];
 export type Invocation = [string, Record<string, unknown>, string];
 
 /** The role that marks who may use the Firmenverwaltung; it grants nothing in Stalwart. */
-export const COMPANY_ROLE = "Firmenverwaltung (Sekretär)";
+export const COMPANY_ROLE = "Firmenverwaltung (Kontext)";
 
 /** An API key ("API_…") goes as Bearer, "name:password" as Basic. */
 export const authorizationFor = (key: string): string =>

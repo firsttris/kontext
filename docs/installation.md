@@ -11,7 +11,7 @@ IP muss sich setzen lassen.
 | Eintrag | Name                             | Wert                                                                |
 | ------- | -------------------------------- | ------------------------------------------------------------------- |
 | A       | `mail.firma.de`                  | IP des Servers                                                      |
-| A       | `sekretaer.firma.de`             | IP des Servers                                                      |
+| A       | `kontext.firma.de`             | IP des Servers                                                      |
 | MX      | `firma.de`                       | `10 mail.firma.de`                                                  |
 | TXT     | `firma.de`                       | `v=spf1 mx -all`                                                    |
 | TXT     | `<selector>._domainkey.firma.de` | DKIM-Schlüssel aus Stalwart                                         |
@@ -19,21 +19,21 @@ IP muss sich setzen lassen.
 | PTR     | IP des Servers                   | `mail.firma.de` (beim Anbieter einstellen)                          |
 
 !!! warning "Cloudflare"
-    Liegt das DNS bei Cloudflare, müssen alle Einträge für Mail und Sekretär **„DNS only“**
+    Liegt das DNS bei Cloudflare, müssen alle Einträge für Mail und Kontext **„DNS only“**
     sein (graue Wolke). Durch den Cloudflare-Proxy kommen keine Mails und kein JMAP-Push.
 
 ## 2. Starten
 
 ```bash
-git clone https://github.com/firsttris/sekretaer /opt/sekretaer && cd /opt/sekretaer
+git clone https://github.com/firsttris/kontext /opt/kontext && cd /opt/kontext
 cp deploy/.env.example deploy/.env
 nano deploy/.env                 # Domain, Mailserver-Name, Geheimnis, Tailscale-IP, Backup-Ziel
 docker compose -f deploy/compose.yaml up -d
 ```
 
-Für `SEKRETAER_SECRET` eine lange Zufallszeichenfolge nehmen (`openssl rand -base64 48`); damit
+Für `KONTEXT_SECRET` eine lange Zufallszeichenfolge nehmen (`openssl rand -base64 48`); damit
 sind die Sitzungen signiert und die Stalwart-Tokens verschlüsselt. Caddy holt das Zertifikat für
-`SEKRETAER_DOMAIN` selbst. Mit Podman liegen die Quadlet-Dateien in
+`KONTEXT_DOMAIN` selbst. Mit Podman liegen die Quadlet-Dateien in
 `deploy/quadlet/` (nach `/etc/containers/systemd/` kopieren, `systemctl daemon-reload`).
 
 ## 3. Stalwart einrichten
@@ -46,37 +46,37 @@ Stalwarts eigene Verwaltung ist nur über die Tailscale-Adresse des Servers erre
 2. **TLS** für `mail.firma.de` per ACME, am einfachsten mit DNS-01 (Cloudflare-API-Token), weil
    Port 443 bei Caddy liegt.
 3. **Firmenverwaltung einschalten** (siehe unten) und das Konto des Chefs anlegen. Weitere
-   Mitarbeiter und gemeinsame Postfächer legt der Chef danach selbst in Sekretär an.
+   Mitarbeiter und gemeinsame Postfächer legt der Chef danach selbst in Kontext an.
 4. Caddy als vertrauenswürdigen Proxy eintragen, damit Stalwart die echten IP-Adressen sieht.
 5. Unter *Suche* die **Standardsprache** auf Deutsch (`de-DE`) stellen. Stalwart bildet damit
    die Wortstämme deutsch, auch bei kurzen Mails, deren Sprache es nicht sicher erkennt.
 
-Danach unter `https://sekretaer.firma.de` anmelden. Am Handy im Browser „Zum Startbildschirm
-hinzufügen“ wählen: Sekretär startet dann wie eine App und bleibt angemeldet.
+Danach unter `https://kontext.firma.de` anmelden. Am Handy im Browser „Zum Startbildschirm
+hinzufügen“ wählen: Kontext startet dann wie eine App und bleibt angemeldet.
 
 ### Firmenverwaltung einschalten
 
 Unter *Einstellungen → Firma* legt der Chef (oder die Büroleitung) Mitarbeiter und gemeinsame
 Postfächer an, setzt Passwörter und die Anmeldung mit Code zurück und sperrt Zugänge. Dafür
-braucht der Sekretär-Server einen API-Schlüssel von Stalwart, der nur Konten verwalten darf:
+braucht der Kontext-Server einen API-Schlüssel von Stalwart, der nur Konten verwalten darf:
 
-1. In Stalwarts Verwaltung eine **Rolle** `Sekretär-Server` anlegen: sie erbt die Rolle *User*
+1. In Stalwarts Verwaltung eine **Rolle** `Kontext-Server` anlegen: sie erbt die Rolle *User*
    und bekommt dazu die Rechte `sysAccountGet`, `sysAccountQuery`, `sysAccountCreate`,
    `sysAccountUpdate`, `sysRoleGet`, `sysRoleCreate`, `sysDomainGet`, `sysAuthenticationGet`
    und `impersonate`. Mit `impersonate` arbeitet der Server in den Postfächern der Mitarbeiter
    (Abwesenheit, Leserechte für gemeinsame Postfächer); die App zeigt dem Chef dabei nie fremde
    Mails.
-2. Ein **Konto** `sekretaer-server@firma.de` mit dieser Rolle (statt *User*) und einem langen
+2. Ein **Konto** `kontext-server@firma.de` mit dieser Rolle (statt *User*) und einem langen
    Zufallspasswort anlegen.
 3. Mit diesem Konto einen **API-Schlüssel** erzeugen (*Credentials → API Key*, Rechte
    *Inherit*). Er beginnt mit `API_`; in `deploy/.env` als `STALWART_ADMIN_KEY` eintragen und
-   Sekretär neu starten (`docker compose -f deploy/compose.yaml up -d`).
-4. Beim ersten Aufruf legt Sekretär die Rolle `Firmenverwaltung (Sekretär)` an. Dem Konto des
-   Chefs in Stalwart diese Rolle **zusätzlich zu User** geben. Danach kann er sie in Sekretär
+   Kontext neu starten (`docker compose -f deploy/compose.yaml up -d`).
+4. Beim ersten Aufruf legt Kontext die Rolle `Firmenverwaltung (Kontext)` an. Dem Konto des
+   Chefs in Stalwart diese Rolle **zusätzlich zu User** geben. Danach kann er sie in Kontext
    selbst an weitere Personen weitergeben.
 
 Stalwart lässt den Schlüssel keine Rechte vergeben, die er selbst nicht hat; ein Mitarbeiter wird
-darüber also nie Admin. Sekretär zeigt und ändert nur Konten mit der normalen Rolle *User*.
+darüber also nie Admin. Kontext zeigt und ändert nur Konten mit der normalen Rolle *User*.
 Er kann aber alle Postfächer lesen und Admin-Konten von Stalwart im Passwort ändern (Stalwart
 prüft dabei die Rechte des Zielkontos nicht) – den Schlüssel deshalb wie ein Admin-Passwort
 behandeln.
@@ -93,7 +93,7 @@ Unter *Einstellungen → Firma → Umzug* übernimmt der Chef die Daten der Mita
   dafür ausgehend Port 993.
 - **Microsoft 365**: einmal pro Kunde im
   [Microsoft Entra Admin Center](https://entra.microsoft.com) unter *App-Registrierungen* eine App
-  „Sekretär Umzug“ anlegen, unter *API-Berechtigungen* die **Anwendungsberechtigungen**
+  „Kontext Umzug“ anlegen, unter *API-Berechtigungen* die **Anwendungsberechtigungen**
   `Mail.Read`, `Contacts.Read`, `Calendars.Read` und `User.Read.All` für Microsoft Graph
   (optional `MailboxSettings.Read`, damit Outlook-Kategorien ihre Farben behalten)
   hinzufügen und die Administratorzustimmung erteilen, unter *Zertifikate & Geheimnisse* einen
@@ -119,32 +119,32 @@ Code neu ein.
 ## 4. Backups
 
 `deploy/backup.sh` sichert mit [Restic](https://restic.net) auf einen S3-Speicher: Stalwarts
-Datenvolume (Mails, Kalender, Kontakte, Konten) und eine Kopie von Sekretärs Datenbank
+Datenvolume (Mails, Kalender, Kontakte, Konten) und eine Kopie der Kontext-Datenbank
 (Anmeldungen, Firmen-Signatur, Stand der Umzüge). Hochgeladene PST-Dateien bleiben draußen. Am besten einen Bucket mit **Object Lock** nehmen, dann kann auch ein Angreifer mit
 Zugriff auf den Server die Sicherungen nicht löschen (wichtig für GoBD-Archivierung).
 
 ```bash
 crontab -e
-0 3 * * *  /opt/sekretaer/deploy/backup.sh >> /var/log/sekretaer-backup.log 2>&1
+0 3 * * *  /opt/kontext/deploy/backup.sh >> /var/log/kontext-backup.log 2>&1
 ```
 
 Der Mailserver hält dafür nachts ein paar Sekunden an; absendende Server versuchen es einfach
-erneut. Sekretärs Datenbank wird im laufenden Betrieb kopiert (`VACUUM INTO`). Einmal im Monat
+erneut. Die Kontext-Datenbank wird im laufenden Betrieb kopiert (`VACUUM INTO`). Einmal im Monat
 eine Wiederherstellung auf einem Testserver üben:
 
 ```bash
 restic restore latest --tag stalwart --target /tmp/restore     # Stalwart
-restic restore latest --tag sekretaer --target /tmp/restore    # Sekretär
+restic restore latest --tag kontext --target /tmp/restore    # Kontext
 ```
 
-Sekretärs Kopie (`…/backup/sekretaer.db`) kommt bei gestopptem Container als
-`sekretaer.db` ins Volume `sekretaer_sekretaer-data`. Fehlt sie, geht nichts in Stalwart
+Die Kopie der Kontext-Datenbank (`…/backup/kontext.db`) kommt bei gestopptem Container als
+`kontext.db` ins Volume `kontext_kontext-data`. Fehlt sie, geht nichts in Stalwart
 verloren: alle melden sich einmal neu an, die Vorlage der Firmen-Signatur ist neu einzutragen.
 
 ## 5. Updates
 
 ```bash
-cd /opt/sekretaer && git pull
+cd /opt/kontext && git pull
 docker compose -f deploy/compose.yaml pull && docker compose -f deploy/compose.yaml up -d
 ```
 

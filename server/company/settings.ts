@@ -1,4 +1,4 @@
-/** The Firmenverwaltung's own settings in Sekretär's SQLite (Stalwart has no place for them). */
+/** The Firmenverwaltung's own settings in Kontext's SQLite (Stalwart has no place for them). */
 import { eq } from "drizzle-orm";
 import type { Sealer } from "../crypto";
 import type { Db } from "../db";

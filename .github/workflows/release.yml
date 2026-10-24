@@ -13,7 +13,7 @@ jobs:
     needs: checks
     uses: firsttris/workflows/.github/workflows/docker-release.yml@v1
     with:
-      image: tristanteu/sekretaer
+      image: tristanteu/kontext
       description: Self-hosted office suite for small businesses – mail, calendar and contacts on Stalwart
       ghcr: true
     secrets: inherit

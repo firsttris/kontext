@@ -40,7 +40,7 @@ export const fromBase32 = (text: string): Uint8Array<ArrayBuffer> => {
 
 export const newSecret = (): string => toBase32(crypto.getRandomValues(new Uint8Array(20)));
 
-export const otpauthUrl = (secret: string, account: string, issuer = "Sekretär"): string =>
+export const otpauthUrl = (secret: string, account: string, issuer = "Kontext"): string =>
   `otpauth://totp/${encodeURIComponent(issuer)}:${encodeURIComponent(account)}?secret=${secret}&issuer=${encodeURIComponent(issuer)}&algorithm=SHA1&digits=6&period=30`;
 
 /** The 6-digit code of a secret at a moment (default: now). */

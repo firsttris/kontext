@@ -1,4 +1,4 @@
-# Sekretär: the app and its server (sign-in, JMAP to Stalwart) in one image, run by Bun.
+# Kontext: the app and its server (sign-in, JMAP to Stalwart) in one image, run by Bun.
 FROM docker.io/oven/bun:1.4 AS build
 WORKDIR /app
 COPY package.json bun.lock ./
@@ -13,7 +13,7 @@ WORKDIR /app
 # readpst (libpst) opens Outlook data files for the move (server/migration/pst.ts).
 RUN apt-get update && apt-get install -y --no-install-recommends pst-utils \
   && rm -rf /var/lib/apt/lists/*
-ENV NODE_ENV=production PORT=3000 STATIC_DIR=/app/dist DATABASE_PATH=/data/sekretaer.db
+ENV NODE_ENV=production PORT=3000 STATIC_DIR=/app/dist DATABASE_PATH=/data/kontext.db
 COPY package.json bun.lock ./
 RUN bun install --frozen-lockfile --production --ignore-scripts
 COPY --from=build /app/dist ./dist

@@ -1,5 +1,5 @@
 /**
- * The Firmenverwaltung's calls to the Sekretär server (/api/company, server/company/routes.ts).
+ * The Firmenverwaltung's calls to the Kontext server (/api/company, server/company/routes.ts).
  * Unlike mail, contacts and calendar this is not JMAP: the server works with its own Stalwart key.
  */
 

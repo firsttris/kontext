@@ -1,11 +1,11 @@
-# One customer = one server: Sekretär on https://$SEKRETAER_DOMAIN.
-# Caddy gets the certificate; the app, sign-in and JMAP go to the Sekretär server, which talks to
+# One customer = one server: Kontext on https://$KONTEXT_DOMAIN.
+# Caddy gets the certificate; the app, sign-in and JMAP go to the Kontext server, which talks to
 # Stalwart. Mail clients reach Stalwart directly on the mail ports and through /dav and autoconfig.
 {
 	email {$ACME_EMAIL}
 }
 
-{$SEKRETAER_DOMAIN} {
+{$KONTEXT_DOMAIN} {
 	encode zstd gzip
 
 	# CalDAV/CardDAV and autoconfiguration for mail programs and phones, straight to Stalwart
@@ -17,7 +17,7 @@
 	}
 
 	handle {
-		reverse_proxy sekretaer:3000 {
+		reverse_proxy kontext:3000 {
 			header_up X-Forwarded-For {remote_host}
 			flush_interval -1
 		}

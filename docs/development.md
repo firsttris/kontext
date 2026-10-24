@@ -9,16 +9,16 @@ Server, `127.0.0.1`, Port 10143): dafür mit `MAIL_SYNC_ALLOW_PLAIN=true bun run
 sonst verlangt er TLS und einen IMAP-Port. Für Microsoft 365 ersetzt `bun dev/fake-graph.ts`
 (Port 18095) Microsofts Anmeldung und Graph; `bun run dev` dann zusätzlich mit
 `M365_LOGIN_URL=http://127.0.0.1:18095 GRAPH_URL=http://127.0.0.1:18095/v1.0` starten und
-Mandant `contoso`, Anwendung `sekretaer-test`, Schlüssel `geheim` eintragen.
+Mandant `contoso`, Anwendung `kontext-test`, Schlüssel `geheim` eintragen.
 
 ```bash
 bun install
-bun run dev   # Stalwart, Testdaten, Sekretär-Server und App: http://localhost:5173
+bun run dev   # Stalwart, Testdaten, Kontext-Server und App: http://localhost:5173
 ```
 
 `bun run dev` (`dev/dev.ts`) startet alles in einem Terminal: zuerst Stalwart auf 18080 (beim
 ersten Mal mit Download) und spielt die Testdaten ein – das ist idempotent, ein zweiter Start legt
-nichts doppelt an. Danach starten der Sekretär-Server auf 18090 (Anmeldung, JMAP; startet bei
+nichts doppelt an. Danach starten der Kontext-Server auf 18090 (Anmeldung, JMAP; startet bei
 Änderungen neu) und Vite auf 5173. Stalwarts eigenes Log steht in `.dev/stalwart.log`. Strg+C
 beendet alles, und endet einer der Prozesse, stoppt auch der Rest.
 
@@ -30,7 +30,7 @@ Rest neu startet. Einzeln gehen auch `bun run dev:server` und `bun run dev:app`.
 
 `dev/stalwart.ts` legt die Daten unter `.dev/stalwart/` ab. Beim ersten Start bootet es Stalwart
 im Wiederherstellungsmodus, legt die Listener auf Ports über 1024 an (HTTP 18080, SMTP 10025,
-IMAP 10143) und startet dann normal. Der Admin ist `admin` / `sekretaer-admin-dev`.
+IMAP 10143) und startet dann normal. Der Admin ist `admin` / `kontext-admin-dev`.
 
 | Option                          |                                                     |
 | ------------------------------- | --------------------------------------------------- |
@@ -55,7 +55,7 @@ Die E2E-Tests stellen solche Mails mit `deliverMail` aus `e2e/protocols.ts` zu.
 ## Datenbank des Servers
 
 Der Server speichert nur Sitzungen (und später Passkeys) in SQLite, Standard
-`.dev/server/sekretaer.db`. Das Schema steht in `server/db/schema.ts`; nach einer Änderung
+`.dev/server/kontext.db`. Das Schema steht in `server/db/schema.ts`; nach einer Änderung
 `bunx drizzle-kit generate` – der Server spielt die Migrationen beim Start ein.
 
 ## Testdaten
@@ -67,7 +67,7 @@ und „Team“, Termine der laufenden Woche, eine wöchentliche Teambesprechung 
 
 | Anmeldung                                               | Passwort                    |
 | ------------------------------------------------------- | --------------------------- |
-| `jonas@weber-haustechnik.test` (Chef, info@, rechnung@, Firmenverwaltung) | `kaffee-werkbank-sekretaer` |
+| `jonas@weber-haustechnik.test` (Chef, info@, rechnung@, Firmenverwaltung) | `kaffee-werkbank-kontext` |
 | `anna@weber-haustechnik.test` (Büro, info@, rechnung@)  | dasselbe                    |
 | `sandra@…`, `max@…`                                     | dasselbe                    |
 
@@ -94,5 +94,5 @@ Integrationstests sich verbinden können.
   Job; die E2E- und Integrationstests parallel im offiziellen Playwright-Image, Stalwart wird
   gecacht. Nachts läuft alles noch einmal, damit neue Sicherheitsmeldungen auffallen.
 - **Screenshots**: Actions → _Update screenshots_ → Run workflow.
-- **Release**: Tag `vX.Y.Z` (Version in `package.json`) baut das Image `tristanteu/sekretaer`
+- **Release**: Tag `vX.Y.Z` (Version in `package.json`) baut das Image `tristanteu/kontext`
   für amd64 und arm64 und legt das GitHub-Release an.

@@ -2,7 +2,7 @@
 
 ## Documentation
 
-The documentation is in `docs/` (<https://firsttris.github.io/sekretaer/>). Read the pages that
+The documentation is in `docs/` (<https://firsttris.github.io/kontext/>). Read the pages that
 touch the change before starting: `architecture.md` for how the pieces fit, `development.md` for
 the local Stalwart, the seed and the tests, `installation.md` for a customer server. Links in the
 README and the docs point to the GitHub Pages site, not to `docs/*.md`.
@@ -26,7 +26,8 @@ Update what the change affects, in the same commit, and only that:
 - the tests for what changed (Vitest next to the code for pure logic, Playwright in `e2e/` for
   what a user does, desktop and `@phone`);
 - the docs in `docs/` that describe it;
-- the README when a feature a user sees is added, changed or removed;
+- both READMEs (`README.md` in English, `README.de.md` in German) when a feature a user sees is
+  added, changed or removed;
 - the screenshots after a change to the look: **Actions → Update screenshots → Run workflow**
   (or `bun run screenshots`), then look at the new pictures.
 
@@ -50,8 +51,9 @@ mkdocs build --strict    # when docs/ or mkdocs.yml changed
 - Commands as root (`sudo`, `pkexec`) are run by the user; don't work around that.
 - The user's running processes are not stopped; use other ports for tests (dev: Stalwart 18080,
   server 18090, Vite 5173; e2e: 28080, 28090, 5174).
-- Language: code, comments and commits in English; README, docs and the app in German (the users
-  are German businesses; all app texts in
+- Language: code, comments and commits in English; `README.md` in English with `README.de.md` in
+  German; docs and the app in German for now (the first users are German businesses; English
+  comes later; all app texts in
   `messages/de.json`, used through Paraglide's `m.*`).
 
 ## Code style
@@ -70,15 +72,15 @@ split it past ~400 lines, a function past ~80. A refactor changes no behaviour.
 
 ## Project specifics
 
-- One Stalwart (Community edition, AGPL) per customer; Sekretär is the web app in front of it and
-  talks only JMAP (`src/jmap/`). The Sekretär server (`server/`: Bun, Hono, Better Auth, Drizzle
+- One Stalwart (Community edition, AGPL) per customer; Kontext is the web app in front of it and
+  talks only JMAP (`src/jmap/`). The Kontext server (`server/`: Bun, Hono, Better Auth, Drizzle
   on SQLite) does the sign-in against Stalwart's OAuth and passes JMAP through with the session's
   token; the browser holds only an httpOnly cookie. New server features (Gmail move, company
   admin, passkeys) go there.
 - Shared mailboxes are Stalwart group accounts: every member sees the group's account in the JMAP
   session (`isPersonal: false`) and can send as its address.
 - Test data: `dev/seed-data.ts` ("Weber Haustechnik"). Logins `jonas@`, `anna@`, `sandra@`,
-  `max@weber-haustechnik.test`, password `kaffee-werkbank-sekretaer` (`dev/config.ts`). Shared
+  `max@weber-haustechnik.test`, password `kaffee-werkbank-kontext` (`dev/config.ts`). Shared
   mailboxes `info@` and `rechnung@`.
 - Screen sizes: desktop from `md` (768 px) with list + pane, sidebar from `lg`; phones get one
   screen at a time, chosen by the URL, and the tab bar.

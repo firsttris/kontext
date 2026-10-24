@@ -20,7 +20,7 @@ describe("totp", () => {
   it("round-trips base32 and builds the otpauth URL", () => {
     expect(new TextDecoder().decode(fromBase32(rfcSecret))).toBe("12345678901234567890");
     expect(otpauthUrl("ABC", "max@weber.test")).toBe(
-      "otpauth://totp/Sekret%C3%A4r:max%40weber.test?secret=ABC&issuer=Sekret%C3%A4r&algorithm=SHA1&digits=6&period=30",
+      "otpauth://totp/Kontext:max%40weber.test?secret=ABC&issuer=Kontext&algorithm=SHA1&digits=6&period=30",
     );
   });
 });

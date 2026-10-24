@@ -3,7 +3,7 @@
 (() => {
   let choice = null;
   try {
-    choice = localStorage.getItem("sekretaer.theme");
+    choice = localStorage.getItem("kontext.theme");
   } catch {
     // Storage may be refused; then the device decides.
   }

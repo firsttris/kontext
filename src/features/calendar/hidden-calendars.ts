@@ -5,7 +5,7 @@
  */
 import { useSyncExternalStore } from "react";
 
-const STORAGE_KEY = "sekretaer.hiddenCalendars";
+const STORAGE_KEY = "kontext.hiddenCalendars";
 
 const read = (): string[] => {
   try {

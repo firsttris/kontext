@@ -5,36 +5,8 @@
     {
       "idx": 0,
       "version": "6",
-      "when": 1792765107122,
+      "when": 1792851808795,
       "tag": "0000_init",
-      "breakpoints": true
-    },
-    {
-      "idx": 1,
-      "version": "6",
-      "when": 1792782357581,
-      "tag": "0001_company_setting",
-      "breakpoints": true
-    },
-    {
-      "idx": 2,
-      "version": "6",
-      "when": 1792811903088,
-      "tag": "0002_migration_job",
-      "breakpoints": true
-    },
-    {
-      "idx": 3,
-      "version": "6",
-      "when": 1792822435701,
-      "tag": "0003_mail_sync",
-      "breakpoints": true
-    },
-    {
-      "idx": 4,
-      "version": "6",
-      "when": 1792847572883,
-      "tag": "0004_mail_categories",
       "breakpoints": true
     }
   ]

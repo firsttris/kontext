@@ -6,8 +6,8 @@
 import { z } from "zod";
 
 /** Stalwart only needs the redirect URI to match between the two calls; nothing is opened. */
-const CLIENT_ID = "sekretaer";
-const REDIRECT_URI = "https://sekretaer.invalid/oauth";
+const CLIENT_ID = "kontext";
+const REDIRECT_URI = "https://kontext.invalid/oauth";
 
 export type StalwartTokens = { accessToken: string; refreshToken: string; accessExpiresAt: Date };
 

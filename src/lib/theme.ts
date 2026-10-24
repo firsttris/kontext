@@ -4,7 +4,7 @@
  */
 export type ThemeChoice = "system" | "light" | "dark";
 
-export const THEME_KEY = "sekretaer.theme";
+export const THEME_KEY = "kontext.theme";
 
 export const parseTheme = (value: string | null | undefined): ThemeChoice =>
   value === "light" || value === "dark" ? value : "system";

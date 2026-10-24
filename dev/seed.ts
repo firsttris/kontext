@@ -112,7 +112,7 @@ const ensureAccounts = async (domainId: string): Promise<void> => {
   }
 };
 
-/** The boss may use the Firmenverwaltung (the role is Sekretär's, see server/company). */
+/** The boss may use the Firmenverwaltung (the role is Kontext's, see server/company). */
 const ensureCompanyAdmins = async (): Promise<void> => {
   const management = createManagement(
     createRequest(origin, `${STALWART_ADMIN.user}:${STALWART_ADMIN.password}`),

@@ -1,4 +1,4 @@
-/** The IMAP moves (Gmail & Co.) in Sekretär's SQLite, with the sealed password and the state. */
+/** The IMAP moves (Gmail & Co.) in Kontext's SQLite, with the sealed password and the state. */
 import { desc, eq } from "drizzle-orm";
 import type { Db } from "../db";
 import * as schema from "../db/schema";

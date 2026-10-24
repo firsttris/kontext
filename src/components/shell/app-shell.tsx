@@ -69,7 +69,7 @@ const Rail = ({ onHelp, bell }: { onHelp: () => void; bell: ReactNode }) => {
         aria-hidden="true"
         className="mb-3.5 flex size-8 items-center justify-center rounded-[9px] bg-primary text-[13px] font-semibold text-onprimary"
       >
-        S
+        K
       </div>
       {NAV_ITEMS.map(({ to, label, icon: Icon }) => {
         const active = pathname.startsWith(to);

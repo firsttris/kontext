@@ -134,8 +134,8 @@ describe("parseRules", () => {
 
   it("ignores scripts it did not write", () => {
     expect(parseRules('require ["fileinto"];\nfileinto "x";\n')).toBeNull();
-    expect(parseRules("# sekretaer:{kaputt\n")).toBeNull();
-    expect(parseRules('# sekretaer:{"vacation":1}\n')).toBeNull();
+    expect(parseRules("# kontext:{kaputt\n")).toBeNull();
+    expect(parseRules('# kontext:{"vacation":1}\n')).toBeNull();
   });
 });
 

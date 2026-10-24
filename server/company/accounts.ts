@@ -38,7 +38,7 @@ export type StalwartAccount = {
 export type Roles = {
   /** The role every user has by default (x:Authentication defaultUserRoleIds). */
   userRoleIds: string[];
-  /** Sekretär's own role "Firmenverwaltung": no permissions, only the mark. */
+  /** Kontext's own role "Firmenverwaltung": no permissions, only the mark. */
   companyRoleId: string;
 };
 
@@ -216,7 +216,7 @@ export const rolesValue = (admin: boolean, roles: Roles): RoleRef =>
     : { "@type": "User" };
 
 /**
- * A deactivated user loses the right to sign in (`authenticate`), everywhere: Sekretär, IMAP,
+ * A deactivated user loses the right to sign in (`authenticate`), everywhere: Kontext, IMAP,
  * SMTP, DAV. Mail to the address still arrives, so nothing bounces during an offboarding.
  */
 export const permissionsValue = (

@@ -6,7 +6,7 @@
  *   bun dev/fake-graph.ts                 # http://127.0.0.1:18095
  *   bun dev/fake-graph.ts --port 28095    # the e2e tests
  *
- * Tenant "contoso", app "sekretaer-test" with the secret "geheim"; one mailbox
+ * Tenant "contoso", app "kontext-test" with the secret "geheim"; one mailbox
  * petra@contoso.test with an inbox, a subfolder "Projekte", sent items and deleted items (not
  * moved), a contact and a weekly appointment. The first delta request is throttled once (429).
  */
@@ -18,7 +18,7 @@ const origin = `http://127.0.0.1:${port}`;
 
 export const FAKE_M365 = {
   tenantId: "contoso",
-  clientId: "sekretaer-test",
+  clientId: "kontext-test",
   clientSecret: "geheim",
   user: "petra@contoso.test",
 };

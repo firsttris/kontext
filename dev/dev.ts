@@ -6,7 +6,7 @@
  *    on every start). Its own log goes to .dev/stalwart.log to keep the terminal readable. If a
  *    Stalwart already answers on 18080 (`bun run dev:stalwart` in another terminal), that one is
  *    used.
- * 2. Once Stalwart is ready: the Sekretär server (18090, restarts on changes) and the app (Vite,
+ * 2. Once Stalwart is ready: the Kontext server (18090, restarts on changes) and the app (Vite,
  *    5173).
  *
  * Ctrl+C reaches all of them. When one exits, the others are stopped too, so a crash does not

@@ -243,7 +243,7 @@ test.describe("Umzug", () => {
     // Once per company: the app's credentials (dev/fake-graph.ts plays Microsoft).
     const setup = async (secret: string) => {
       await dialog.getByLabel("Verzeichnis-ID (Mandant)").fill("contoso");
-      await dialog.getByLabel("Anwendungs-ID (Client)").fill("sekretaer-test");
+      await dialog.getByLabel("Anwendungs-ID (Client)").fill("kontext-test");
       await dialog.getByLabel("Geheimer Clientschlüssel").fill(secret);
       await dialog.getByRole("button", { name: "Verbindung prüfen und speichern" }).click();
     };

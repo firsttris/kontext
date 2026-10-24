@@ -1,7 +1,7 @@
-// Sekretär service worker: makes the app installable and opens it without network.
+// Kontext service worker: makes the app installable and opens it without network.
 // The app shell (HTML, scripts, styles, fonts) is cached; mail data (/jmap) and sign-in (/api)
 // always go to the server and are never stored here.
-const CACHE = "sekretaer-shell-v2";
+const CACHE = "kontext-shell-v2";
 
 self.addEventListener("install", (event) => {
   event.waitUntil(

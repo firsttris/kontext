@@ -2,8 +2,8 @@
 
 ```mermaid
 flowchart LR
-  Browser["Browser / Handy<br>Sekretär (React-SPA)"] -->|HTTPS| Caddy
-  Caddy -->|"App, /api, /jmap"| Server["Sekretär-Server<br>(Bun, Hono, Better Auth)"]
+  Browser["Browser / Handy<br>Kontext (React-SPA)"] -->|HTTPS| Caddy
+  Caddy -->|"App, /api, /jmap"| Server["Kontext-Server<br>(Bun, Hono, Better Auth)"]
   Server -->|"JMAP mit Token"| Stalwart
   Server --> SQLite[("Sitzungen")]
   Caddy -->|"/dav, /.well-known"| Stalwart
@@ -18,10 +18,10 @@ flowchart LR
 - **Stalwart** (Community Edition, AGPL) ist Mail-, Kalender- und Kontaktserver in einem. Seit
   0.16 liegt die ganze Konfiguration in seiner Datenbank; auf der Platte steht nur `config.json`
   mit dem Speicherort.
-- **Sekretär** ist eine Single-Page-App. Sie spricht [JMAP](https://jmap.io): Mail (RFC 8621),
+- **Kontext** ist eine Single-Page-App. Sie spricht [JMAP](https://jmap.io): Mail (RFC 8621),
   Kalender (JSCalendar) und Kontakte (JSContact) über dieselbe Schnittstelle, Push über den
   Event-Stream.
-- **Der Sekretär-Server** (Bun, Hono, Better Auth, SQLite) liefert die App aus, kümmert sich um
+- **Der Kontext-Server** (Bun, Hono, Better Auth, SQLite) liefert die App aus, kümmert sich um
   die Anmeldung und reicht JMAP an Stalwart durch. Dabei setzt er den Stalwart-Token der Sitzung
   ein; der Browser kennt weder Passwort noch Token.
 - **Caddy** holt das Zertifikat und leitet alles an den Server weiter, CalDAV/CardDAV für
@@ -31,20 +31,20 @@ flowchart LR
 
 Ein gemeinsames Postfach ist in Stalwart eine **Gruppe** mit eigener Adresse. Jedes Mitglied sieht
 die Gruppe als zusätzliches Konto in seiner JMAP-Session (`isPersonal: false`) – mit Ordnern,
-Mails und einer Absenderadresse. Sekretär zeigt diese Konten unter „Postfächer“; wer dort
+Mails und einer Absenderadresse. Kontext zeigt diese Konten unter „Postfächer“; wer dort
 antwortet, schreibt automatisch als info@. Als Absendername steht dann die Person und das
 Postfach, etwa „Jonas Weber (Weber Haustechnik)“ – so sieht der Kunde und im gemeinsamen
 Gesendet-Ordner jeder Kollege, wer geantwortet hat.
 
 Die Rechte am gemeinsamen Postfach:
 
-| Stufe                | In Stalwart                                                    | In Sekretär                                                   |
+| Stufe                | In Stalwart                                                    | In Kontext                                                   |
 | -------------------- | -------------------------------------------------------------- | ------------------------------------------------------------- |
 | **Verwalten**        | Mitglied der Gruppe                                            | alles, Senden als info@                                       |
 | **Lesen und senden** | Mitglied der Gruppe (Stalwart trennt das nicht weiter)         | wie Verwalten                                                 |
 | **Nur lesen**        | Ordner per `shareWith` geteilt (`mayReadItems`, `maySetSeen`) | lesen; Archivieren, Löschen, Verschieben fehlen; Antworten vom eigenen Konto |
 
-Sekretär richtet die Werkzeugleiste nach den `myRights` des Ordners. Wer keine Absenderadresse
+Kontext richtet die Werkzeugleiste nach den `myRights` des Ordners. Wer keine Absenderadresse
 im Postfach hat (Stalwart gibt Identitäten nur Mitgliedern), antwortet vom eigenen Konto; die
 Antwort liegt dann im eigenen Gesendet-Ordner. Beide Stufen setzt die Firmenverwaltung; „Nur
 lesen“ teilt dabei alle vorhandenen Ordner des Postfachs (später angelegte Ordner nicht).
@@ -101,20 +101,20 @@ und die Spam-Bewertung (`src/features/mail/message-details.tsx`).
 ## Firmenverwaltung
 
 Unter *Einstellungen → Firma* verwaltet der Chef Mitarbeiter und gemeinsame Postfächer. Das läuft
-nicht über JMAP mit dem Token der Sitzung, sondern über den Sekretär-Server (`/api/company`,
+nicht über JMAP mit dem Token der Sitzung, sondern über den Kontext-Server (`/api/company`,
 `server/company/`): Er spricht Stalwarts Verwaltungsobjekte (`x:Account`, `x:Role`, `x:Domain`)
 mit einem eigenen API-Schlüssel an und erlaubt nur, was die Firmenverwaltung braucht.
 
-- **Wer darf:** Konten mit der Stalwart-Rolle `Firmenverwaltung (Sekretär)` zusätzlich zur Rolle
-  *User*. Die Rolle hat keine Rechte in Stalwart, sie ist nur die Markierung; Sekretär legt sie
+- **Wer darf:** Konten mit der Stalwart-Rolle `Firmenverwaltung (Kontext)` zusätzlich zur Rolle
+  *User*. Die Rolle hat keine Rechte in Stalwart, sie ist nur die Markierung; Kontext legt sie
   beim ersten Aufruf an. Das eigene Konto kann sich das Recht nicht selbst nehmen und sich nicht
   sperren.
 - **Wen es zeigt:** Benutzer mit der Rolle *User* (mit oder ohne Markierung) und Gruppen mit der
   Standardrolle. Stalwarts Admins und Konten mit anderen Rollen bleiben beim Betreiber.
-- **Anlegen:** Sekretär erzeugt ein Startpasswort (vier Vierergruppen ohne verwechselbare
+- **Anlegen:** Kontext erzeugt ein Startpasswort (vier Vierergruppen ohne verwechselbare
   Zeichen, 80 Bit) und zeigt es einmal an. Neue Konten bekommen Deutsch und Europe/Berlin.
-- **Sperren** nimmt dem Konto das Recht `authenticate`: keine Anmeldung mehr in Sekretär, IMAP,
-  SMTP oder DAV, Mails an die Adresse kommen aber weiter an. Sekretär beendet dazu alle Sitzungen
+- **Sperren** nimmt dem Konto das Recht `authenticate`: keine Anmeldung mehr in Kontext, IMAP,
+  SMTP oder DAV, Mails an die Adresse kommen aber weiter an. Kontext beendet dazu alle Sitzungen
   der Person, ebenso nach einem neuen Passwort.
 - **Weitere Adressen** sind Stalwarts Aliase (`aliases`), nur in den Domains des Servers.
 - **Gemeinsame Postfächer** sind Gruppen; Mitglied ist, wer die Gruppe in `memberGroupIds` hat.
@@ -124,17 +124,17 @@ mit einem eigenen API-Schlüssel an und erlaubt nur, was die Firmenverwaltung br
   Vertretung steht als eigene Zeile in der Nachricht. Hat er Regeln, läuft sie in deren Skript
   (siehe [Regeln](#regeln)); der Server nimmt dafür denselben Code wie die App.
 
-- **Firmen-Signatur:** eine Vorlage mit `[Name]` und `[E-Mail]`, gespeichert in Sekretärs
-  SQLite (`company_setting`). „Für alle übernehmen“ schreibt sie in jede Absenderadresse
+- **Firmen-Signatur:** eine Vorlage mit `[Name]` und `[E-Mail]`, gespeichert in der
+  SQLite-Datenbank von Kontext (`company_setting`). „Für alle übernehmen“ schreibt sie in jede Absenderadresse
   (`Identity`) aller aktiven Mitarbeiter, ausgefüllt mit Name und Adresse der Identität; neue
   Mitarbeiter bekommen sie beim Anlegen.
 - **Austritt:** Zugang sperren, das Postfach einer Kollegin übergeben (alle Ordner per
   `shareWith` mit allen Rechten außer Teilen), neue Mails weiterleiten und einmal am Tag
   automatisch antworten. Weiterleitung und Antwort sind ein Sieve-Skript
-  (`sekretaer-austritt`, `redirect` und `vacation`), weil Stalwart nur ein aktives Skript pro
+  (`kontext-austritt`, `redirect` und `vacation`), weil Stalwart nur ein aktives Skript pro
   Konto ausführt; es ersetzt dabei Abwesenheitsnotiz und Regeln, bis der Zugang wieder
   freigegeben wird (siehe [Regeln](#regeln)). Gelöscht wird nichts.
-- In der Mail zeigt Sekretär übergebene Postfächer unter „Postfächer“ wie gemeinsame: als
+- In der Mail zeigt Kontext übergebene Postfächer unter „Postfächer“ wie gemeinsame: als
   Postfach zählt ein fremdes Konto, wenn es eine Gruppe ist oder Ordner zeigt (wer nur einen
   Kalender teilt, zeigt keine).
 
@@ -164,12 +164,12 @@ nur für Kontakte und Termine aus, nicht für Mails.
 
 ### Postfach verbinden per IMAP (Gmail, GMX, WEB.DE, Telekom, IONOS, STRATO, eigener Server)
 
-Sekretär liest das alte Postfach per IMAP (`imapflow`), nur lesend, und gleicht es in eine Richtung
+Kontext liest das alte Postfach per IMAP (`imapflow`), nur lesend, und gleicht es in eine Richtung
 ab: der erste Lauf holt alles, danach alle 15 Minuten das Neue, bis der Chef den Umzug abschließt.
 So läuft das alte Postfach parallel weiter, solange Absender noch die alte Adresse nutzen.
 
 - **Anmeldung**: Adresse und Passwort – bei Gmail ein App-Passwort (Bestätigung in zwei Schritten
-  nötig). Sekretär prüft die Anmeldung sofort und speichert das Passwort verschlüsselt (AES-GCM mit
+  nötig). Kontext prüft die Anmeldung sofort und speichert das Passwort verschlüsselt (AES-GCM mit
   dem Server-Geheimnis, wie die Stalwart-Tokens). Lehnt der Anbieter es später ab, steht der Umzug
   auf „Anmeldung abgelehnt“, bis ein neues Passwort eingetragen ist. Beim Abschließen wird es
   gelöscht.
@@ -189,25 +189,25 @@ So läuft das alte Postfach parallel weiter, solange Absender noch die alte Adre
 
 ### Microsoft 365
 
-Für Microsoft 365 gibt es kein IMAP mit Passwort mehr; Sekretär liest über Microsoft Graph mit
+Für Microsoft 365 gibt es kein IMAP mit Passwort mehr; Kontext liest über Microsoft Graph mit
 einer App, die der Admin des Kunden einmal in seinem Mandanten registriert und freigibt
 (Anwendungsberechtigungen `Mail.Read`, `Contacts.Read`, `Calendars.Read`, `User.Read.All`,
 optional `MailboxSettings.Read` für die Farben der Kategorien,
-Token per Client Credentials). Die Zugangsdaten liegen verschlüsselt in Sekretärs SQLite
+Token per Client Credentials). Die Zugangsdaten liegen verschlüsselt in der SQLite-Datenbank von Kontext
 (`company_setting`); danach ordnet der Chef pro Mitarbeiter ein Postfach aus dem Mandanten zu
 (vorgeschlagen wird das mit gleichem Namen vor dem @). `server/migration/m365/`:
 
 - **Mails** pro Ordner mit Graphs Delta-Abfrage (`messages/delta`); der Delta-Link steht im
   Stand des Umzugs, ein späterer Lauf holt nur das Neue. Jede neue Mail kommt als MIME
   (`messages/{id}/$value`) per `Email/import` in denselben Ordner, mit Gelesen und Markierung.
-  Die Standardordner erkennt Sekretär an Graphs festen Namen (`inbox`, `sentitems`, `drafts`,
+  Die Standardordner erkennt Kontext an Graphs festen Namen (`inbox`, `sentitems`, `drafts`,
   `archive` – in jeder Sprache); Gelöschte Elemente, Junk-E-Mail, Postausgang und ähnliche
   bleiben weg.
 - **Kontakte** des Standardordners werden JSContact, **Termine** JSCalendar, Serien mit ihrer
   Regel (`recurrence` → `recurrenceRule`), in deutscher Zeit gelesen
   (`Prefer: outlook.timezone="W. Europe Standard Time"`). Einzeln geänderte Termine einer Serie
   kommen noch nicht mit, nur die Serie.
-- Drosselt Graph (429), wartet Sekretär die angegebene Zeit und versucht es erneut.
+- Drosselt Graph (429), wartet Kontext die angegebene Zeit und versucht es erneut.
 
 Für Entwicklung und Tests spielt `dev/fake-graph.ts` Microsofts Anmeldung und Graph
 (`M365_LOGIN_URL`, `GRAPH_URL`).
@@ -229,15 +229,15 @@ nacheinander ab (`server/migration/runner.ts`), auch nach einem Neustart:
 3. **Kontakte** (`.vcf`, auch Googles Export mit vielen Karten) und **Termine** (`.ics`, eine
    Datei mit vielen Terminen) liest Stalwart selbst (`ContactCard/parse`, `CalendarEvent/parse`);
    sie kommen ins Standard-Adressbuch bzw. den Standardkalender. readpst nummeriert Termine nur
-   („0x1268“); dann bildet Sekretär die UID aus dem Inhalt.
+   („0x1268“); dann bildet Kontext die UID aus dem Inhalt.
 
 Der Fortschritt steht in SQLite (`migration_job`); die Datei liegt bis zum Ende neben der
 Datenbank unter `migrations/` und wird nach einem erfolgreichen Umzug gelöscht.
 
 ## Regeln
 
-Regeln sortieren neue Mails beim Eingang, auf dem Server: Sekretär schreibt sie als **ein
-Sieve-Skript** (`sekretaer-regeln`, RFC 5228) und lädt es per JMAP (`SieveScript/set`, RFC 9661)
+Regeln sortieren neue Mails beim Eingang, auf dem Server: Kontext schreibt sie als **ein
+Sieve-Skript** (`kontext-regeln`, RFC 5228) und lädt es per JMAP (`SieveScript/set`, RFC 9661)
 ins eigene Konto. So wirken sie auch, wenn niemand angemeldet ist, und gleich auf jedem Gerät.
 
 - **Bedingungen:** Absender (`address "from"`), Empfänger (`address ["to", "cc"]`), Betreff
@@ -260,7 +260,7 @@ ins eigene Konto. So wirken sie auch, wenn niemand angemeldet ist, und gleich au
   `include :personal :optional "vacation"` ein. Ob die Abwesenheit an ist, steht dann im
   Regel-Skript.
 - **Gespeichert** werden die Regeln als JSON in einer Kommentarzeile des Skripts
-  (`# sekretaer:{…}`); die App liest nur diese Zeile, nie Sieve. Nutzertexte werden für Sieve
+  (`# kontext:{…}`); die App liest nur diese Zeile, nie Sieve. Nutzertexte werden für Sieve
   maskiert, auch `${`, das sonst als Variable gelesen würde.
 - **Eigenes Postfach:** in den Einstellungen; „Regel erstellen …“ an einer Mail im eigenen
   Postfach füllt den Absender vor.
@@ -275,7 +275,7 @@ ins eigene Konto. So wirken sie auch, wenn niemand angemeldet ist, und gleich au
   Regeln“), und verschiebt und markiert per `Email/set`. Weitergeleitet wird dabei nichts.
   Unterschied: Sieve vergleicht Groß/Klein nur bei ASCII (`i;ascii-casemap`), die App auch bei
   Umlauten.
-- **Austritt:** Er aktiviert `sekretaer-austritt`. Solange das läuft, aktiviert Sekretär weder
+- **Austritt:** Er aktiviert `kontext-austritt`. Solange das läuft, aktiviert Kontext weder
   Regeln noch Abwesenheit; die Firmenverwaltung sagt bei „Abwesenheit eintragen“, dass die
   Person ausgetreten ist. Wird der Zugang wieder freigegeben, endet der Austritt: das Skript
   wird abgeschaltet, Regeln und Abwesenheit laufen wieder wie gespeichert.
@@ -289,7 +289,7 @@ zu liegen wie bei Gmails Labels.
 - **An der Mail** ist eine Kategorie ein JMAP-Keyword (RFC 8621 §4.1.1, in IMAP ein Flag), lesbar
   geschrieben wie `wartet-auf-antwort`. Thunderbird zeigt sie als Schlagwort; Handy-Apps
   übergehen eigene Keywords.
-- **Name, Farbe und Reihenfolge** gehören zum Postfach und liegen in Sekretärs SQLite
+- **Name, Farbe und Reihenfolge** gehören zum Postfach und liegen in der SQLite-Datenbank von Kontext
   (`mail_categories`), weil Stalwart dafür keinen Platz hat. Ohne eigene Liste gelten „In
   Bearbeitung“, „Wartet auf Antwort“ und „Erledigt“. `/api/categories` liefert die Kategorien
   aller Postfächer der angemeldeten Person; wer welches Postfach öffnen darf, sagt Stalwarts
@@ -394,10 +394,10 @@ gespeichert: Den Punkt an der Glocke gibt es für Mails, die nach dem letzten Ö
 Einladungen, die damals noch nicht da waren – beides merkt sich der Browser.
 
 „Auf diesem Gerät benachrichtigen“ (in der Glocke und unter Einstellungen → Darstellung) nutzt die
-Notification-API des Browsers: neue Mail, solange Sekretär im Hintergrund ist, und eine Erinnerung
+Notification-API des Browsers: neue Mail, solange Kontext im Hintergrund ist, und eine Erinnerung
 15 Minuten vor einem Termin (`src/lib/notifications.ts`). Ob die Erlaubnis noch besteht, fragt die
 App über die Permissions-API ab; nimmt man sie im Browser zurück, schaltet sich der Schalter aus.
-Benachrichtigungen kommen nur, solange Sekretär in einem Tab offen ist.
+Benachrichtigungen kommen nur, solange Kontext in einem Tab offen ist.
 
 ## Speicherplatz
 
@@ -424,7 +424,7 @@ Adressbuch schon gibt (gleiche `uid`, oder gleicher Name und gleiche Mail-Adress
 ## Adressbücher und Kalender teilen
 
 Adressbücher und Kalender werden über ihr `shareWith` geteilt (draft-ietf-jmap-contacts und
--calendars): pro Kollege (Principal-ID, in Stalwart zugleich die Konto-ID) die Rechte. Sekretär
+-calendars): pro Kollege (Principal-ID, in Stalwart zugleich die Konto-ID) die Rechte. Kontext
 bietet zwei Stufen:
 
 | Stufe          | Adressbuch                         | Kalender                                                                              |
@@ -484,7 +484,7 @@ Passkey-Anmeldung holt damit den Stalwart-Token. Am Rest ändert sich nichts.
 | `src/jmap/`     | JMAP-Client (Session, Methoden, Upload/Download, Push) und die Aufrufe für Mail, Kalender, Kontakte                        |
 | `src/lib/`      | reine Funktionen: Ordnerbaum, Adressen, Antworten, HTML-Bereinigung, JSCalendar- und JSContact-Umrechnung – mit Unit-Tests |
 | `src/features/` | die Ansichten von Mail, Kalender, Kontakten und Firmenverwaltung, je mit ihren Daten-Hooks (`queries.ts`)                 |
-| `server/`       | Sekretär-Server: Anmeldung, JMAP-Weiterleitung, Firmenverwaltung (`server/company/`)                                       |
+| `server/`       | Kontext-Server: Anmeldung, JMAP-Weiterleitung, Firmenverwaltung (`server/company/`)                                       |
 | `src/routes/`   | TanStack-Router-Routen; der Zustand einer Ansicht steht in der URL (offene Mail, Ordner, Termin)                           |
 | `dev/`          | lokaler Stalwart, Testdaten (Seed)                                                                                         |
 | `deploy/`       | Caddy, Compose, Quadlets, Backup                                                                                           |

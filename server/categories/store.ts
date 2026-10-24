@@ -1,4 +1,4 @@
-/** The categories per account in Sekretär's SQLite; an account without its own list gets the defaults. */
+/** The categories per account in Kontext's SQLite; an account without its own list gets the defaults. */
 import { inArray } from "drizzle-orm";
 import type { Db } from "../db";
 import * as schema from "../db/schema";

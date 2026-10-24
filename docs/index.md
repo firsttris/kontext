@@ -1,10 +1,13 @@
-# Sekretär
+# Kontext
 
-Sekretär ist die Büro-Suite für kleine Betriebe: **Mail mit gemeinsamen Postfächern, Kalender und
-Kontakte** im Browser und am Handy. Jede Firma bekommt ihren eigenen Server mit
-[Stalwart](https://stalw.art); Sekretär ist die Oberfläche, mit der die Mitarbeiter arbeiten.
+Kontext ist **Mail, Kalender und Kontakte, die dir gehören** – wie Google Workspace, nur auf dem
+eigenen Server: gemeinsame Postfächer, ein Kalender fürs Team und Kontakte, die zu jedem Kunden die
+Mails und Termine zeigen. Für Freelancer, Handwerk, Kanzleien und den Mittelstand. Jede
+Installation hat ihren eigenen Mailserver [Stalwart](https://stalw.art); Kontext ist die Oberfläche
+im Browser und am Handy, die Daten bleiben auf dem eigenen Server (DSGVO, GoBD-gerechte
+Aufbewahrung).
 
-![Sekretär: Posteingang mit gemeinsamen Postfächern und geöffneter Mail](screenshots/mail.png)
+![Kontext: Posteingang mit gemeinsamen Postfächern und geöffneter Mail](screenshots/mail.png)
 
 ## Was drin ist
 

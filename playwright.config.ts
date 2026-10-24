@@ -1,7 +1,7 @@
 import { defineConfig, devices } from "@playwright/test";
 
 /**
- * E2E tests run against their own Stalwart (port 28080, fresh data, seeded), their own Sekretär
+ * E2E tests run against their own Stalwart (port 28080, fresh data, seeded), their own Kontext
  * server (28090) and their own Vite (5174), so a running dev setup is not touched.
  */
 const STALWART_PORT = 28080;
@@ -64,7 +64,7 @@ export default defineConfig({
         PORT: String(SERVER_PORT),
         STALWART_URL: `http://127.0.0.1:${STALWART_PORT}`,
         BETTER_AUTH_URL: `http://localhost:${APP_PORT}`,
-        DATABASE_PATH: ".dev/e2e-server/sekretaer.db",
+        DATABASE_PATH: ".dev/e2e-server/kontext.db",
         SIGN_IN_PER_MINUTE: "1000",
         // The move tests use the local Stalwart's IMAP (no TLS) as the "old provider".
         MAIL_SYNC_ALLOW_PLAIN: "true",
@@ -78,7 +78,7 @@ export default defineConfig({
     {
       command: `bunx vite --port ${APP_PORT}`,
       url: `http://localhost:${APP_PORT}`,
-      env: { SEKRETAER_SERVER: `http://127.0.0.1:${SERVER_PORT}`, PORT: String(APP_PORT) },
+      env: { KONTEXT_SERVER: `http://127.0.0.1:${SERVER_PORT}`, PORT: String(APP_PORT) },
       reuseExistingServer: false,
       timeout: 60_000,
     },

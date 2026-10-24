@@ -78,7 +78,7 @@ type ClientOptions = {
   origin: string;
   /**
    * Basic auth straight to Stalwart, for the dev scripts and tests. The app leaves it out: its
-   * session cookie goes to the Sekretär server, which adds the Stalwart token.
+   * session cookie goes to the Kontext server, which adds the Stalwart token.
    */
   credentials?: Credentials;
   /** Called when the server answers 401, e.g. because the session ended. */

@@ -57,7 +57,7 @@ function LoginPage() {
             aria-hidden="true"
             className="flex size-9 items-center justify-center rounded-[10px] bg-primary text-[15px] font-semibold text-onprimary"
           >
-            S
+            K
           </span>
           <span className="text-[17px] font-semibold">{m.app_name()}</span>
         </div>
