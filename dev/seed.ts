@@ -99,6 +99,8 @@ const ensureAccounts = async (domainId: string): Promise<void> => {
           description: user.fullName,
           memberGroupIds: Object.fromEntries(user.groups.map((g) => [groupId(g), true])),
           credentials: { "0": { "@type": "Password", secret: DEV_PASSWORD } },
+          // A usual plan, so the storage ring around the avatar has something to show.
+          quotas: { maxDiskQuota: 5 * 1024 ** 3 },
         },
       ]),
   );

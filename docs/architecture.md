@@ -256,8 +256,15 @@ der Wahl in den Einstellungen (pro Gerät im Browser gespeichert) oder aus der E
 Geräts; als eigene Datei, damit die Content-Security-Policy keine Inline-Skripte erlauben muss.
 
 Tastaturkürzel sind einzelne Tasten wie in Gmail und stehen als Liste in `src/lib/shortcuts.ts`;
-die Hilfe (`?`) und die Einstellungen zeigen dieselbe Liste. Solange ein Eingabefeld oder ein
-Dialog den Fokus hat, greift keine Taste.
+die Hilfe (`?` oder das Tastatur-Symbol unten in der Leiste) und die Einstellungen zeigen dieselbe
+Liste. Solange ein Eingabefeld oder ein Dialog den Fokus hat, greift keine Taste.
+
+## Speicherplatz
+
+Der Ring um das eigene Bild (Leiste, am Handy die Tableiste) zeigt den Speicher des eigenen
+Postfachs aus `Quota/get` (RFC 9425, `octets`): gelb ab 80 %, rot ab 95 % (`src/lib/storage.ts`);
+Tooltip und Benutzermenü nennen die Zahlen. Gemeinsame Postfächer haben ihr eigenes Kontingent; es
+steht als Balken unten in ihrer Ordnerliste. Die Testdaten geben jedem Benutzer 5 GB.
 
 ## Kontaktgruppen
 

@@ -1,40 +1,44 @@
 /** The frame of every logged-in page: the app rail on the left (desktop), the page beside it. */
-import { useQuery } from "@tanstack/react-query";
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
-import { LogOut, Settings } from "lucide-react";
+import { Keyboard, LogOut, Settings } from "lucide-react";
 import { type ReactNode, useState } from "react";
-import { useAuth, useClient } from "@/auth/auth";
+import { useAuth } from "@/auth/auth";
 import { ShortcutsDialog } from "@/components/shortcuts-dialog";
-import { Avatar } from "@/components/ui/avatar";
-import { MenuContent, MenuItem, MenuLabel, MenuRoot, MenuTrigger } from "@/components/ui/menu";
+import {
+  MenuContent,
+  MenuItem,
+  MenuLabel,
+  MenuRoot,
+  MenuSeparator,
+  MenuTrigger,
+} from "@/components/ui/menu";
 import { useShortcuts } from "@/components/use-shortcuts";
 import { cn } from "@/lib/cn";
 import { m } from "@/paraglide/messages";
+import { AccountAvatar, StorageSummary, storageText, useOwnQuota } from "./account-avatar";
 import { NAV_ITEMS } from "./nav-items";
+import { useSession } from "./session";
 
-export const useSession = () => {
-  const client = useClient();
-  return useQuery({
-    queryKey: ["session"],
-    queryFn: () => client.getSession(),
-    staleTime: Number.POSITIVE_INFINITY,
-  });
-};
+export { useSession };
 
 const UserMenu = ({ side }: { side: "right" | "top" }) => {
   const { logout } = useAuth();
   const { data: session } = useSession();
   const name = session?.username ?? "";
+  const quota = useOwnQuota();
   return (
     <MenuRoot>
       <MenuTrigger
         aria-label={name}
+        title={quota ? storageText(quota) : undefined}
         className="flex items-center justify-center rounded-full outline-offset-2"
       >
-        <Avatar name={name} size={side === "top" ? 24 : 32} />
+        <AccountAvatar name={name} size={side === "top" ? 22 : 30} />
       </MenuTrigger>
       <MenuContent side={side} align={side === "right" ? "end" : "end"}>
         <MenuLabel>{name}</MenuLabel>
+        <StorageSummary />
+        <MenuSeparator />
         <MenuItem asChild>
           <Link to="/settings" search={{}} className="text-fg no-underline">
             <Settings size={15} /> {m.nav_settings()}
@@ -48,7 +52,13 @@ const UserMenu = ({ side }: { side: "right" | "top" }) => {
   );
 };
 
-const Rail = () => {
+const railButton = (active: boolean) =>
+  cn(
+    "flex size-10 items-center justify-center rounded-[10px] hover:bg-hover",
+    active ? "bg-subtle text-fg" : "text-muted hover:text-fg",
+  );
+
+const Rail = ({ onHelp }: { onHelp: () => void }) => {
   const pathname = useRouterState({ select: (state) => state.location.pathname });
   return (
     <nav
@@ -80,16 +90,22 @@ const Rail = () => {
         );
       })}
       <div className="flex-1" />
+      <button
+        type="button"
+        onClick={onHelp}
+        aria-label={m.shortcuts_open()}
+        title={m.shortcuts_open()}
+        className={railButton(false)}
+      >
+        <Keyboard size={18} strokeWidth={1.75} />
+      </button>
       <Link
         to="/settings"
         search={{}}
         aria-label={m.nav_settings()}
         title={m.nav_settings()}
         aria-current={pathname.startsWith("/settings") ? "page" : undefined}
-        className={cn(
-          "mb-1.5 flex size-10 items-center justify-center rounded-[10px] hover:bg-hover",
-          pathname.startsWith("/settings") ? "bg-subtle text-fg" : "text-muted",
-        )}
+        className={cn("mb-1.5", railButton(pathname.startsWith("/settings")))}
       >
         <Settings size={18} strokeWidth={1.75} />
       </Link>
@@ -110,7 +126,7 @@ export const AppShell = ({ children }: { children: ReactNode }) => {
   });
   return (
     <div className="flex h-dvh overflow-hidden bg-bg text-fg safe-top md:pt-0">
-      <Rail />
+      <Rail onHelp={() => setHelp(true)} />
       <div className="flex min-w-0 flex-1">{children}</div>
       <ShortcutsDialog open={help} onOpenChange={setHelp} />
     </div>

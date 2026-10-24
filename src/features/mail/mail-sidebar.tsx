@@ -34,6 +34,7 @@ import {
   mailboxName,
   systemMailboxes,
 } from "@/lib/mailboxes";
+import { storageLevel } from "@/lib/storage";
 import { m } from "@/paraglide/messages";
 import { useMailDrop } from "./mail-drag";
 import { useCreateMailbox, useInboxes, useMailAccounts, useMailboxes, useQuota } from "./queries";
@@ -231,7 +232,8 @@ export const MailSidebar = ({ accountId, mailbox, view }: Props) => {
       </nav>
 
       <div className="flex-1" />
-      <StorageBar accountId={accountId} />
+      {/* The own mailbox's storage is the ring around the avatar (account-avatar.tsx). */}
+      {account && !account.isPersonal && !unified ? <StorageBar accountId={accountId} /> : null}
       <NewFolderDialog
         open={creating}
         onOpenChange={setCreating}
@@ -246,12 +248,18 @@ export const MailSidebar = ({ accountId, mailbox, view }: Props) => {
 const StorageBar = ({ accountId }: { accountId: string }) => {
   const { data: quota } = useQuota(accountId);
   if (!quota) return null;
-  const share = quota.limit ? Math.min(100, (quota.used / quota.limit) * 100) : 0;
+  const level = storageLevel(quota.used, quota.limit);
   return (
     <div className="flex flex-col gap-2 px-2.5">
-      {quota.limit ? (
+      {level ? (
         <div className="h-1 overflow-hidden rounded-full bg-subtle">
-          <div className="h-full bg-muted" style={{ width: `${share}%` }} />
+          <div
+            className={cn(
+              "h-full rounded-full",
+              level.tone === "full" ? "bg-danger" : level.tone === "warn" ? "bg-warn" : "bg-muted",
+            )}
+            style={{ width: `${Math.max(level.percent, 1.5)}%` }}
+          />
         </div>
       ) : null}
       <div className="text-[12px] text-muted">

@@ -557,6 +557,13 @@ test.describe("Tastaturkürzel", () => {
     await expect(page.getByLabel("Betreff")).toHaveValue("jkc?");
   });
 
+  test("zeigt die Tastaturkürzel auch über den Knopf in der Leiste", async ({ page }) => {
+    await login(page);
+    await page.getByRole("button", { name: "Tastaturkürzel anzeigen (?)" }).click();
+    const dialog = page.getByRole("dialog", { name: "Tastaturkürzel" });
+    await expect(dialog).toContainText("Spam / kein Spam");
+  });
+
   test("2 öffnet den Kalender, m den Monat", async ({ page }) => {
     await login(page);
     await expect(page.getByRole("list", { name: "Posteingang" })).toBeVisible();
@@ -564,6 +571,19 @@ test.describe("Tastaturkürzel", () => {
     await expect(page.getByText(/KW \d+/)).toBeVisible();
     await page.keyboard.press("m");
     await expect(page.getByRole("link", { name: "Monat" })).toHaveAttribute("aria-pressed", "true");
+  });
+});
+
+test.describe("Speicherplatz", () => {
+  test("zeigt am Avatar und im Menü, wie voll das Postfach ist", async ({ page }) => {
+    await login(page);
+    // The seed gives every user 5 GB (dev/seed.ts).
+    const avatar = page.getByRole("navigation", { name: "Apps" }).getByRole("button", {
+      name: address("jonas"),
+    });
+    await expect(avatar).toHaveAttribute("title", /von 5 GB belegt \(\d+ %\)/);
+    await avatar.click();
+    await expect(page.getByRole("menu")).toContainText(/von 5 GB belegt/);
   });
 });
 

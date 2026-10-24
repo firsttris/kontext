@@ -74,7 +74,8 @@ und unter `https://<Ihre Domain>` anmelden. DNS-Einträge, Backups und Updates s
 - **Abwesenheitsnotiz**: mit Zeitraum, antwortet automatisch.
 - **Passwort und Anmeldung mit Code** (Authenticator-App); man bleibt auf dem Gerät angemeldet.
 - **Hell oder dunkel**: wie das Gerät, oder fest eingestellt.
-- **Tastaturkürzel** wie in Gmail: `j`/`k` durch die Mails, `r` antworten, `e` archivieren, `c` neu, `?` zeigt alle.
+- **Tastaturkürzel** wie in Gmail: `j`/`k` durch die Mails, `r` antworten, `e` archivieren, `c` neu, `?` oder das Tastatur-Symbol links zeigt alle.
+- **Speicherplatz im Blick**: ein feiner Ring um das eigene Bild zeigt, wie voll das Postfach ist – gelb ab 80 %, rot ab 95 %.
 
 ### 🏢 Firmenverwaltung
 

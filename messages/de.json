@@ -328,6 +328,8 @@
   "mail_all_inboxes": "Alle Posteingänge",
   "mail_attachment_remove": "{name} entfernen",
   "shortcuts_title": "Tastaturkürzel",
+  "shortcuts_open": "Tastaturkürzel anzeigen (?)",
+  "storage_used": "{used} von {total} belegt ({percent} %)",
   "shortcuts_hint": "Einfach die Taste drücken, solange kein Eingabefeld aktiv ist.",
   "shortcuts_group_general": "Allgemein",
   "shortcuts_group_mail": "Mail",
