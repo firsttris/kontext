@@ -27,6 +27,28 @@ ein Plan, kein Versprechen; Wünsche und Hinweise gern als
 | **Lesebestätigung** | Anfordern und beantworten, wie bei Behörden und Steuerberatern üblich. |
 | **Verschlüsselung** | S/MIME oder PGP für Betriebe mit vertraulichen Kunden- oder Gesundheitsdaten. |
 
+## Offene Punkte
+
+Kleinere Dinge, die beim Bauen aufgefallen sind und noch erledigt werden.
+
+**Funktionen**
+
+- [ ] Aufgabe aus einer Mail mit dem **Kontakt** des Absenders verknüpfen (bisher nur sein Name an der Mail-Verknüpfung).
+- [ ] Aufgaben **live** zwischen Kollegen (heute alle 30 Sekunden) – kommt mit der Live-Verbindung des Chats.
+- [ ] **Tab-Leiste am Handy** für sechs Apps: Mail, Kalender, Chat, Aufgaben, „Mehr“ (Kontakte, Konto).
+- [ ] **Regeln für Mitarbeiter** in der Firmenverwaltung (heute nur für gemeinsame Postfächer und die eigenen).
+- [ ] **App auf Englisch** und weiteren Sprachen (Texte liegen schon gesammelt in `messages/de.json`).
+- [ ] **Drucken mit Bildern aus dem Internet**, wenn sie in der Mail freigegeben wurden.
+- [ ] Ideen aus dem ersten Entwurf, noch nicht eingeplant: **Belege**, **Buchung**, **Leitstand**, **Tickets**.
+
+**Technik**
+
+- [ ] Der Baustein des Regel-Dialogs ist groß (~450 KB): zod und Server-Code nur dort laden, wo nötig.
+- [ ] e2e: der Test „sendet aus dem gemeinsamen Postfach als info@“ schlägt gelegentlich fehl.
+- [ ] e2e: Tests legen immer mehr Mails an; Tests sollen nur mit eigenen Mails arbeiten, nicht mit älteren aus den Testdaten.
+- [ ] Lokal fehlt `readpst` für den Outlook-Test (`sudo apt install pst-utils`).
+- [ ] README: Screenshots von Aufgaben, Board und Regeln ergänzen.
+
 ## Bekannte Einschränkungen
 
 - **Kategorien aus Outlook-Dateien (PST):** `readpst` gibt Kategorien nur für Kontakte und
