@@ -108,6 +108,8 @@
   "mail_attachments": "Anhänge",
   "mail_attach": "Datei anhängen",
   "mail_open": "Öffnen",
+  "mail_download": "{name} herunterladen",
+  "mail_attachment_view": "{name} ansehen",
   "mail_no_subject": "(kein Betreff)",
   "mail_quote_header": "Am {date} schrieb {name}:",
   "mail_to_me": "an mich",

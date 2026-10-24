@@ -7,7 +7,7 @@ const encodeWord = (text: string): string =>
 
 const formatAddress = ([name, email]: Address): string => `${encodeWord(name)} <${email}>`;
 
-const base64Lines = (data: string): string =>
+const base64Lines = (data: string | Uint8Array): string =>
   Buffer.from(data)
     .toString("base64")
     .replace(/.{1,76}/g, "$&\r\n");
@@ -23,7 +23,8 @@ export type MessageInput = {
   text: string;
   /** With HTML the body is multipart/alternative (text and HTML). */
   html?: string;
-  attachment?: { name: string; type: string; content: string };
+  /** Text is sent as UTF-8; bytes (a PDF) as they are. */
+  attachment?: { name: string; type: string; content: string | Uint8Array };
 };
 
 export const buildMessage = (input: MessageInput): string => {

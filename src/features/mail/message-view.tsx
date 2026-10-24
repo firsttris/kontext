@@ -2,16 +2,15 @@
 import { Link } from "@tanstack/react-router";
 import { ChevronDown, Users } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
-import { useClient } from "@/auth/auth";
 import { Avatar } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { useToast } from "@/components/ui/toast";
 import { isUnread } from "@/jmap/mail";
-import type { BodyPart, Mailbox } from "@/jmap/types";
-import { displayName, firstName, formatAddressList, formatSize, readingDate } from "@/lib/format";
+import type { Mailbox } from "@/jmap/types";
+import { displayName, firstName, formatAddressList, readingDate } from "@/lib/format";
 import { mailboxNotice } from "@/lib/mail-accounts";
 import { mailboxRights } from "@/lib/mailboxes";
 import { m } from "@/paraglide/messages";
+import { Attachments } from "./attachments";
 import { MailBody } from "./mail-body";
 import { MessageDetails, SenderWarnings } from "./message-details";
 import { Toolbar } from "./message-toolbar";
@@ -124,50 +123,5 @@ export const MessageView = ({ accountId, mailbox, emailId }: Props) => {
         </div>
       </article>
     </div>
-  );
-};
-
-const Attachments = ({ accountId, parts }: { accountId: string; parts: BodyPart[] }) => {
-  const client = useClient();
-  const toast = useToast();
-  if (parts.length === 0) return null;
-
-  const open = async (part: BodyPart) => {
-    try {
-      const blob = await client.download(accountId, part.blobId!, part.name ?? "anhang", part.type);
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.href = url;
-      link.download = part.name ?? "anhang";
-      link.click();
-      setTimeout(() => URL.revokeObjectURL(url), 60_000);
-    } catch (error) {
-      toast.show(m.common_error({ message: (error as Error).message }), "error");
-    }
-  };
-
-  return (
-    <ul aria-label={m.mail_attachments()} className="m-0 flex list-none flex-wrap gap-3 p-0">
-      {parts.map((part) => (
-        <li
-          key={part.blobId ?? part.partId}
-          className="flex w-full max-w-[340px] items-center gap-3 rounded-xl border border-border px-3.5 py-3"
-        >
-          <span
-            aria-hidden="true"
-            className="flex h-11 w-9 items-center justify-center rounded-md bg-subtle font-mono text-[10px] text-muted uppercase"
-          >
-            {(part.name?.split(".").pop() ?? part.type.split("/").pop() ?? "").slice(0, 4)}
-          </span>
-          <span className="flex min-w-0 flex-1 flex-col">
-            <span className="truncate font-medium">{part.name ?? part.type}</span>
-            <span className="text-[12px] text-muted">{formatSize(part.size)}</span>
-          </span>
-          <Button size="sm" onClick={() => open(part)}>
-            {m.mail_open()}
-          </Button>
-        </li>
-      ))}
-    </ul>
   );
 };

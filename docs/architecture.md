@@ -249,6 +249,20 @@ ein Konto noch ältere Mails nachladen kann, zeigt die Liste nichts, was älter 
 älteste geladene Mail, damit die Reihenfolge stimmt. Eine geöffnete Mail trägt ihr Konto in der
 URL (`account`); Antworten gehen deshalb aus dem richtigen Postfach.
 
+## Anhänge
+
+Jeder Anhang ist eine Karte (`src/features/mail/attachments.tsx`): oben eine Vorschau, unten Typ,
+Name, Größe und Herunterladen. Fotos (PNG, JPEG, GIF, WebP, AVIF, BMP, SVG; bis 15 MB) zeigt der
+Browser selbst; von PDFs (bis 25 MB) zeichnet pdf.js die erste Seite als Bild. pdf.js wird erst
+geladen, wenn ein PDF zu sehen ist, und rechnet in seinem Worker (gleiche Herkunft, die CSP
+erlaubt `'self'`); als reine Build-Abhängigkeit kommt es nicht ins Server-Image. Alles andere
+bekommt eine farbige Kachel nach Dateityp (`src/lib/attachment-kind.ts`).
+
+Ein Klick auf die Vorschau öffnet PDFs und Fotos in einem neuen Tab – aus dem Blob, den die
+Vorschau schon geladen hat, damit der Browser den Tab nicht blockiert. SVG, HTML und alles andere
+wird nur heruntergeladen: als `blob:`-Seite liefe es mit den Rechten der App. Die Testdaten haben
+echte PDFs (`dev/pdf.ts`) und einen Grundriss als SVG.
+
 ## Darstellung und Tastaturkürzel
 
 Hell oder dunkel ist eine Klasse an `<html>`: `public/theme.js` setzt sie vor dem ersten Bild aus

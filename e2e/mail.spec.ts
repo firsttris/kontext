@@ -94,9 +94,30 @@ test.describe("Mail", () => {
       .click();
     const attachments = page.getByRole("list", { name: "Anhänge" });
     await expect(attachments.getByText("Angebot-Wartung-2027.pdf")).toBeVisible();
+    // The first page of the PDF as a thumbnail (pdf.js), not just a tile.
+    const preview = attachments.getByRole("button", { name: "Angebot-Wartung-2027.pdf ansehen" });
+    await expect(preview.locator("img")).toBeVisible();
+    await expect
+      .poll(() => preview.locator("img").evaluate((img: HTMLImageElement) => img.naturalWidth))
+      .toBeGreaterThan(100);
     const download = page.waitForEvent("download");
-    await attachments.getByRole("button", { name: "Öffnen" }).click();
+    await attachments
+      .getByRole("button", { name: "Angebot-Wartung-2027.pdf herunterladen" })
+      .click();
     expect((await download).suggestedFilename()).toBe("Angebot-Wartung-2027.pdf");
+  });
+
+  test("zeigt ein Bild im Anhang als Vorschau", async ({ page }) => {
+    await page.getByRole("link", { name: "info@" }).click();
+    await page
+      .getByRole("list", { name: "Posteingang" })
+      .getByText("Anfrage Wärmepumpe Neubau")
+      .click();
+    const attachments = page.getByRole("list", { name: "Anhänge" });
+    await expect(attachments).toContainText("Grundriss-EG.svg");
+    await expect(
+      attachments.getByRole("button", { name: "Grundriss-EG.svg ansehen" }).locator("img"),
+    ).toBeVisible();
   });
 
   test("schreibt eine neue Mail mit Formatierung an Anna", async ({ page }) => {

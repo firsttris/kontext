@@ -22,7 +22,7 @@ docker compose -f deploy/compose.yaml up -d
 [FAQ](#-faq) •
 [Dokumentation](https://firsttris.github.io/sekretaer/)
 
-<img src="docs/screenshots/mail.png" alt="Sekretär im Browser: Posteingang mit Ordnern, gemeinsamen Postfächern info@ und rechnung@ und einer geöffneten Mail mit PDF-Anhang" width="900">
+<img src="docs/screenshots/mail.png" alt="Sekretär im Browser: Posteingang mit Ordnern, gemeinsamen Postfächern info@ und rechnung@ und einer geöffneten Mail mit Vorschau des PDF-Anhangs" width="900">
 
 </div>
 
@@ -64,6 +64,7 @@ und unter `https://<Ihre Domain>` anmelden. DNS-Einträge, Backups und Updates s
 - **Ordner und Unterordner**: anlegen, Mails verschieben – über das Menü oder mit der Maus auf einen Ordner gezogen, auch von info@ in die eigenen Ordner und zurück –, Archiv und Papierkorb mit einem Klick.
 - **Schreiben mit Formatierung**: Fett, Listen, Einrücken, Links, Zitate – die Leiste ist immer sichtbar.
 - **Antworten, allen antworten, weiterleiten**: mit Zitat, Anhängen und Vorschlägen aus den Kontakten.
+- **Anhänge mit Vorschau**: Fotos und die erste Seite eines PDFs als kleines Bild, andere Dateien als farbige Kachel (Word, Excel, ZIP …); ein Klick öffnet PDF und Foto direkt im Browser.
 - **Suche wie in Gmail**: über alle Ordner und Postfächer, mit `von:`, `an:`, `betreff:`, `hat:anhang`, `ist:ungelesen`, `in:info@`, `nach:`/`vor:` (auch auf Englisch), Vorschlägen beim Tippen, Filter-Chips und markierten Treffern; „Angebote“ findet auch „Angebot“.
 - **Sicher lesen**: Mails laufen in einem abgeschotteten Rahmen, Bilder aus dem Internet erst auf Wunsch.
 - **Sofort aktuell**: neue Mails und Änderungen von Kollegen erscheinen ohne Neuladen (JMAP Push).

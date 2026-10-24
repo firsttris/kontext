@@ -5,6 +5,13 @@ import { login } from "./helpers";
 const shot = (page: Page, name: string) =>
   page.screenshot({ path: `docs/screenshots/${name}.png`, animations: "disabled" });
 
+/** The open mail is drawn: its text, and the thumbnails of its attachments (pdf.js takes a moment). */
+const mailShown = async (page: Page) => {
+  await expect(page.frameLocator("iframe").getByText("Viele Grüße")).toBeVisible();
+  const attachments = page.getByRole("list", { name: "Anhänge" });
+  if (await attachments.count()) await expect(attachments.locator("img").first()).toBeVisible();
+};
+
 const today = () =>
   new Intl.DateTimeFormat("sv-SE", { timeZone: "Europe/Berlin" }).format(new Date());
 
@@ -16,7 +23,7 @@ test.describe("Screenshots @screenshots", () => {
       .getByRole("list", { name: "Posteingang" })
       .getByText("Angebot Wartungsvertrag 2027")
       .click();
-    await expect(page.frameLocator("iframe").getByText("Viele Grüße")).toBeVisible();
+    await mailShown(page);
     await shot(page, "mail");
 
     await page.getByRole("link", { name: /Antworten an Petra/ }).click();
@@ -28,7 +35,7 @@ test.describe("Screenshots @screenshots", () => {
       .getByRole("list", { name: "Posteingang" })
       .getByText("Anfrage Wärmepumpe Neubau")
       .click();
-    await expect(page.frameLocator("iframe").getByText("Viele Grüße")).toBeVisible();
+    await mailShown(page);
     await shot(page, "shared-mailbox");
 
     await page.goto("/calendar");
@@ -56,7 +63,7 @@ test.describe("Screenshots @screenshots", () => {
       .getByRole("list", { name: "Posteingang" })
       .getByText("Angebot Wartungsvertrag 2027")
       .click();
-    await expect(page.frameLocator("iframe").getByText("Viele Grüße")).toBeVisible();
+    await mailShown(page);
     await shot(page, "mail-dark");
     await page.goto("/calendar");
     await expect(
@@ -80,7 +87,7 @@ test.describe("Screenshots @screenshots", () => {
     await expect(page.getByText("Angebot Wartungsvertrag 2027")).toBeVisible();
     await shot(page, "phone-mail");
     await page.getByText("Angebot Wartungsvertrag 2027").click();
-    await expect(page.frameLocator("iframe").getByText("Viele Grüße")).toBeVisible();
+    await mailShown(page);
     await shot(page, "phone-read");
     await page.goto("/calendar");
     await expect(page.getByText("Baubesprechung Hoffmann")).toBeVisible();

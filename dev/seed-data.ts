@@ -3,6 +3,8 @@
  * few employees, a shared info@ mailbox and the usual mix of customers, suppliers and offices.
  * Dates are relative to the moment the seed runs, so the inbox always looks current.
  */
+import { FLOOR_PLAN } from "./floor-plan";
+import { simplePdf } from "./pdf";
 
 /** `companyAdmin`: may use the Firmenverwaltung. */
 export type SeedUser = { name: string; fullName: string; groups: string[]; companyAdmin?: boolean };
@@ -48,7 +50,7 @@ export type SeedMail = {
   inReplyTo?: string;
   /** An HTML version next to `body`. */
   html?: string;
-  attachment?: { name: string; type: string; content: string };
+  attachment?: { name: string; type: string; content: string | Uint8Array };
 };
 
 const d = "weber-haustechnik.test";
@@ -76,7 +78,21 @@ export const mails: SeedMail[] = [
     attachment: {
       name: "Angebot-Wartung-2027.pdf",
       type: "application/pdf",
-      content: "%PDF-1.4\n% Testangebot\n",
+      content: simplePdf({
+        letterhead: "Keller Elektro GmbH",
+        colour: [0.11, 0.33, 0.62],
+        lines: [
+          { text: "Angebot Nr. 2026-0412", size: 16, bold: true },
+          { text: "Wartungsvertrag 2027 für Weber Haustechnik", gap: 4 },
+          { text: "Leistung", bold: true, gap: 18 },
+          { text: "Jährliche Prüfung der Elektroanlage, Halle 1 und Büro" },
+          { text: "Prüfung nach DGUV V3, ortsveränderliche Geräte" },
+          { text: "Option: Heizungsanlagen Halle 2" },
+          { text: "Preis", bold: true, gap: 18 },
+          { text: "1.840,00 € netto pro Jahr, Option Halle 2: 420,00 €" },
+          { text: "Gültig bis 30.11.2026.", gap: 18 },
+        ],
+      }),
     },
   },
   {
@@ -152,8 +168,9 @@ export const mails: SeedMail[] = [
     from: lang,
     to: [info],
     subject: "Anfrage Wärmepumpe Neubau",
-    body: "Hallo,\n\nwir bauen gerade ein Einfamilienhaus in Bühl-Weitenung (ca. 160 m²) und suchen einen Betrieb für Wärmepumpe und Fußbodenheizung. Können Sie uns ein Angebot machen?\n\nViele Grüße\nThomas Lang",
+    body: "Hallo,\n\nwir bauen gerade ein Einfamilienhaus in Bühl-Weitenung (ca. 160 m²) und suchen einen Betrieb für Wärmepumpe und Fußbodenheizung. Können Sie uns ein Angebot machen? Den Grundriss vom Erdgeschoss habe ich angehängt.\n\nViele Grüße\nThomas Lang",
     hoursAgo: 2,
+    attachment: { name: "Grundriss-EG.svg", type: "image/svg+xml", content: FLOOR_PLAN },
   },
   {
     id: "reklamation@example-privat.test",
@@ -177,7 +194,19 @@ export const mails: SeedMail[] = [
     attachment: {
       name: "Rechnung-2026-117.pdf",
       type: "application/pdf",
-      content: "%PDF-1.4\n% Testrechnung\n",
+      content: simplePdf({
+        letterhead: "Keller Elektro GmbH",
+        colour: [0.11, 0.33, 0.62],
+        lines: [
+          { text: "Rechnung 2026-117", size: 16, bold: true },
+          { text: "Elektroarbeiten Werkstatt", gap: 4 },
+          { text: "Positionen", bold: true, gap: 18 },
+          { text: "Unterverteilung erneuert          1.150,00 €" },
+          { text: "Leitungen und Steckdosen            640,00 €" },
+          { text: "Summe netto                       1.790,00 €", bold: true, gap: 6 },
+          { text: "Zahlbar innerhalb von 14 Tagen.", gap: 18 },
+        ],
+      }),
     },
   },
   {

@@ -62,18 +62,20 @@ export const AccountAvatar = ({ name, size }: { name: string; size: number }) =>
             strokeWidth={stroke}
             className="stroke-border"
           />
-          <circle
-            cx={outer / 2}
-            cy={outer / 2}
-            r={radius}
-            fill="none"
-            strokeWidth={stroke}
-            strokeLinecap="round"
-            strokeDasharray={circumference}
-            // A sliver stays visible even for an almost empty mailbox.
-            strokeDashoffset={circumference * (1 - Math.max(level.percent, 1.5) / 100)}
-            className={cn("stroke-current transition-[stroke-dashoffset]", TONE[level.tone])}
-          />
+          {/* Below 1 % only the track: a lone round cap would look like a stray dot. */}
+          {level.percent >= 1 ? (
+            <circle
+              cx={outer / 2}
+              cy={outer / 2}
+              r={radius}
+              fill="none"
+              strokeWidth={stroke}
+              strokeLinecap="round"
+              strokeDasharray={circumference}
+              strokeDashoffset={circumference * (1 - level.percent / 100)}
+              className={cn("stroke-current transition-[stroke-dashoffset]", TONE[level.tone])}
+            />
+          ) : null}
         </svg>
       ) : null}
       <span className="absolute inset-0 flex items-center justify-center">
