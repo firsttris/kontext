@@ -21,6 +21,7 @@ import {
   type EmailPage,
   getEmail,
   getQuota,
+  JUNK_KEYWORDS,
   listIdentities,
   listMailboxes,
   moveEmails,
@@ -265,8 +266,17 @@ export const useEmailActions = (accountId: string) => {
   });
 
   const move = useMutation({
-    mutationFn: async ({ ids, from, to }: { ids: string[]; from: string; to: string }) =>
-      moveEmails(client, accountId, ids, from, to),
+    mutationFn: async ({
+      ids,
+      from,
+      to,
+      keywords,
+    }: {
+      ids: string[];
+      from: string;
+      to: string;
+      keywords?: Record<string, true | null>;
+    }) => moveEmails(client, accountId, ids, from, to, keywords),
     onMutate: ({ ids }) => patchCachedEmails(queryClient, accountId, ids, () => null),
     onSettled: refresh,
   });
@@ -300,6 +310,18 @@ export const useEmailActions = (accountId: string) => {
       moveTo.mutateAsync({ accountId, emails, from, target }),
     archive: async (ids: string[], from: string) =>
       move.mutateAsync({ ids, from, to: await archiveMailboxId() }),
+    /** Into Spam, and out of it into the inbox; the spam filter learns from both. */
+    markSpam: (ids: string[], from: string, spam: boolean) => {
+      const mailboxes = queryClient.getQueryData<Mailbox[]>(mailboxesKey(accountId)) ?? [];
+      const to = findRole(mailboxes, spam ? "junk" : "inbox");
+      if (!to) throw new Error(spam ? "Kein Spam-Ordner" : "Kein Posteingang");
+      return move.mutateAsync({
+        ids,
+        from,
+        to: to.id,
+        keywords: spam ? JUNK_KEYWORDS.spam : JUNK_KEYWORDS.notSpam,
+      });
+    },
     /** Moves to the trash; in the trash it deletes for good. */
     remove: async (ids: string[], from: string) => {
       const mailboxes =

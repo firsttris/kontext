@@ -90,6 +90,10 @@ Bestätigt ist ein Absender, wenn DMARC bestanden hat oder SPF bzw. DKIM für se
 Subdomain, RFC 7489 §3.1). Ein SPF-„softfail“ allein warnt nicht, weil weitergeleitete Mails das
 oft haben; „nicht eingerichtet“ ist bei kleinen Firmen häufig und steht nur in den Details.
 
+„Als Spam markieren“ (`!`) verschiebt die Mail in den Spam-Ordner und setzt `$junk`, „Kein Spam“
+holt sie in den Posteingang und setzt `$notjunk` (IANA-Stichwörter, RFC 8621 §2). Stalwart lernt
+aus beidem, aus dem Verschieben und aus dem Stichwort (`crates/jmap/src/email/set.rs`).
+
 „Details anzeigen“ unter dem Absender klappt Absender, Empfänger, Antwort an, Datum, Größe,
 Anhänge und Nachrichten-ID auf, daneben die einzelnen Prüfungen (SPF, DKIM, DMARC, Reverse DNS)
 und die Spam-Bewertung (`src/features/mail/message-details.tsx`).

@@ -1,0 +1,254 @@
+/** The reading pane's toolbar: archive, delete, spam, read, flag, move, reply and the shortcuts. */
+import { Link, useNavigate } from "@tanstack/react-router";
+import {
+  Archive,
+  ChevronLeft,
+  FolderInput,
+  Forward,
+  MailOpen,
+  MoreHorizontal,
+  Reply,
+  ReplyAll,
+  ShieldAlert,
+  ShieldCheck,
+  Star,
+  Trash2,
+} from "lucide-react";
+import { Fragment } from "react";
+import { Button } from "@/components/ui/button";
+import {
+  MenuContent,
+  MenuItem,
+  MenuLabel,
+  MenuRoot,
+  MenuSeparator,
+  MenuTrigger,
+} from "@/components/ui/menu";
+import { useToast } from "@/components/ui/toast";
+import { useShortcuts } from "@/components/use-shortcuts";
+import { isFlagged } from "@/jmap/mail";
+import type { EmailDetail, Mailbox } from "@/jmap/types";
+import { mailboxRights } from "@/lib/mailboxes";
+import { moveTargets } from "@/lib/move-targets";
+import { m } from "@/paraglide/messages";
+import { useAllMailboxes, useEmailActions, useMailAccounts } from "./queries";
+
+export const Toolbar = ({
+  accountId,
+  mailbox,
+  email,
+}: {
+  accountId: string;
+  mailbox: Mailbox;
+  email: EmailDetail;
+}) => {
+  const actions = useEmailActions(accountId);
+  const navigate = useNavigate();
+  const toast = useToast();
+  const accounts = useMailAccounts();
+  const mailboxes = useAllMailboxes();
+  const close = () =>
+    navigate({ to: ".", search: (prev) => ({ ...prev, email: undefined, compose: undefined }) });
+
+  const run = async (action: () => Promise<unknown>, leave: boolean) => {
+    try {
+      if (leave) await close();
+      await action();
+    } catch (error) {
+      toast.show(m.common_error({ message: (error as Error).message }), "error");
+    }
+  };
+
+  const groups = moveTargets(accounts, mailboxes, { accountId, mailboxId: mailbox.id });
+  const flagged = isFlagged(email);
+  const { canRemove, canMarkSeen, canFlag } = mailboxRights(mailbox);
+  // In Spam the same button takes a mail back out; own sent mail is no spam.
+  const inJunk = mailbox.role === "junk";
+  const toggleSpam =
+    canRemove && mailbox.role !== "sent"
+      ? () =>
+          void run(async () => {
+            await actions.markSpam([email.id], mailbox.id, !inJunk);
+            toast.show(inJunk ? m.mail_spam_unmarked() : m.mail_spam_marked());
+          }, true)
+      : undefined;
+  const compose = (mode: "reply" | "replyAll" | "forward") =>
+    void navigate({ to: ".", search: (prev) => ({ ...prev, compose: mode }) });
+  useShortcuts({
+    r: () => compose("reply"),
+    a: () => compose("replyAll"),
+    f: () => compose("forward"),
+    e:
+      canRemove && mailbox.role !== "archive"
+        ? () => void run(() => actions.archive([email.id], mailbox.id), true)
+        : undefined,
+    "#": canRemove ? () => void run(() => actions.remove([email.id], mailbox.id), true) : undefined,
+    s: canFlag ? () => void run(() => actions.setFlagged([email.id], !flagged), false) : undefined,
+    U: canMarkSeen ? () => void run(() => actions.setSeen([email.id], false), true) : undefined,
+    "!": toggleSpam,
+    esc: () => void close(),
+  });
+
+  return (
+    <div className="flex h-12 shrink-0 items-center gap-1 border-b border-border px-2 md:px-3">
+      <Button
+        variant="ghost"
+        size="icon"
+        aria-label={m.mail_back()}
+        className="md:hidden"
+        onClick={() => close()}
+      >
+        <ChevronLeft size={20} />
+      </Button>
+      {canRemove && mailbox.role !== "archive" ? (
+        <Button
+          variant="ghost"
+          size="icon"
+          aria-label={m.mail_archive_action()}
+          title={m.mail_archive_action()}
+          onClick={() => run(() => actions.archive([email.id], mailbox.id), true)}
+        >
+          <Archive size={16} strokeWidth={1.75} />
+        </Button>
+      ) : null}
+      {canRemove ? (
+        <Button
+          variant="ghost"
+          size="icon"
+          aria-label={m.mail_delete()}
+          title={m.mail_delete()}
+          onClick={() => run(() => actions.remove([email.id], mailbox.id), true)}
+        >
+          <Trash2 size={16} strokeWidth={1.75} />
+        </Button>
+      ) : null}
+      {toggleSpam ? (
+        <Button
+          variant="ghost"
+          size="icon"
+          aria-label={inJunk ? m.mail_spam_unmark() : m.mail_spam_mark()}
+          title={inJunk ? m.mail_spam_unmark() : m.mail_spam_mark()}
+          onClick={toggleSpam}
+        >
+          {inJunk ? (
+            <ShieldCheck size={16} strokeWidth={1.75} />
+          ) : (
+            <ShieldAlert size={16} strokeWidth={1.75} />
+          )}
+        </Button>
+      ) : null}
+      {canMarkSeen ? (
+        <Button
+          variant="ghost"
+          size="icon"
+          aria-label={m.mail_mark_unread()}
+          title={m.mail_mark_unread()}
+          onClick={() => run(() => actions.setSeen([email.id], false), true)}
+        >
+          <MailOpen size={16} strokeWidth={1.75} />
+        </Button>
+      ) : null}
+      {canFlag ? (
+        <Button
+          variant="ghost"
+          size="icon"
+          aria-label={flagged ? m.mail_unflag() : m.mail_flag()}
+          aria-pressed={flagged}
+          title={flagged ? m.mail_unflag() : m.mail_flag()}
+          onClick={() => run(() => actions.setFlagged([email.id], !flagged), false)}
+        >
+          <Star
+            size={16}
+            strokeWidth={1.75}
+            className={flagged ? "fill-warn text-warn" : undefined}
+          />
+        </Button>
+      ) : null}
+      {canRemove ? (
+        <MenuRoot>
+          <MenuTrigger asChild>
+            <Button variant="ghost" size="icon" aria-label={m.mail_move()} title={m.mail_move()}>
+              <FolderInput size={16} strokeWidth={1.75} />
+            </Button>
+          </MenuTrigger>
+          <MenuContent align="start">
+            {groups.length === 1 ? <MenuLabel>{m.mail_move()}</MenuLabel> : null}
+            {groups.map((group, index) => (
+              <Fragment key={group.account.id}>
+                {groups.length > 1 ? (
+                  <>
+                    {index > 0 ? <MenuSeparator /> : null}
+                    <MenuLabel>
+                      {group.account.isPersonal ? m.mail_own_mailbox() : group.account.name}
+                    </MenuLabel>
+                  </>
+                ) : null}
+                {group.targets.map((target) => (
+                  <MenuItem
+                    key={target.mailbox.id}
+                    onSelect={() =>
+                      run(
+                        () =>
+                          actions.moveTo([email], mailbox.id, {
+                            accountId: target.accountId,
+                            mailboxId: target.mailbox.id,
+                          }),
+                        true,
+                      )
+                    }
+                  >
+                    {target.label}
+                  </MenuItem>
+                ))}
+              </Fragment>
+            ))}
+          </MenuContent>
+        </MenuRoot>
+      ) : null}
+      <div className="flex-1" />
+      <Button asChild variant="outline" size="sm" className="hidden sm:inline-flex">
+        <Link to="." search={(prev) => ({ ...prev, compose: "reply" })}>
+          <Reply size={15} /> {m.mail_reply()}
+        </Link>
+      </Button>
+      <MenuRoot>
+        <MenuTrigger asChild>
+          <Button variant="ghost" size="icon" aria-label={m.mail_more()}>
+            <MoreHorizontal size={16} />
+          </Button>
+        </MenuTrigger>
+        <MenuContent>
+          <MenuItem
+            onSelect={() =>
+              navigate({ to: ".", search: (prev) => ({ ...prev, compose: "reply" }) })
+            }
+          >
+            <Reply size={15} /> {m.mail_reply()}
+          </MenuItem>
+          <MenuItem
+            onSelect={() =>
+              navigate({ to: ".", search: (prev) => ({ ...prev, compose: "replyAll" }) })
+            }
+          >
+            <ReplyAll size={15} /> {m.mail_reply_all()}
+          </MenuItem>
+          <MenuItem
+            onSelect={() =>
+              navigate({ to: ".", search: (prev) => ({ ...prev, compose: "forward" }) })
+            }
+          >
+            <Forward size={15} /> {m.mail_forward()}
+          </MenuItem>
+          {canMarkSeen ? (
+            <>
+              <MenuSeparator />
+              <MenuItem onSelect={() => run(() => actions.setSeen([email.id], false), true)}>
+                <MailOpen size={15} /> {m.mail_mark_unread()}
+              </MenuItem>
+            </>
+          ) : null}
+        </MenuContent>
+      </MenuRoot>
+    </div>
+  );
+};

@@ -159,6 +159,46 @@ test.describe("Mail", () => {
     ).toBeVisible();
   });
 
+  test("markiert eine Mail als Spam und holt sie wieder heraus", async ({ page }) => {
+    const subject = unique("Gewinnspiel");
+    await addMail("jonas", "jonas", subject);
+    /** The mail's keywords on the server, to see what the spam filter learns from. */
+    const keywords = async () => {
+      const client = jmapAs("jonas");
+      const accountId = await personalAccountId("jonas");
+      const [, get] = await client.request([
+        ["Email/query", { accountId, filter: { subject } }, "q"],
+        [
+          "Email/get",
+          {
+            accountId,
+            "#ids": { resultOf: "q", name: "Email/query", path: "/ids" },
+            properties: ["keywords"],
+          },
+          "g",
+        ],
+      ]);
+      return Object.keys((get![1].list as { keywords: object }[])[0]?.keywords ?? {});
+    };
+    const inbox = page.getByRole("list", { name: "Posteingang" });
+    await inbox.getByText(subject).click();
+    await page.getByRole("button", { name: "Als Spam markieren" }).click();
+    await expect(page.getByRole("status")).toContainText("Als Spam markiert.");
+    await expect(inbox.getByText(subject)).toHaveCount(0);
+    await expect.poll(keywords).toContain("$junk");
+
+    await page.getByRole("link", { name: "Spam" }).click();
+    await page.getByRole("list", { name: "Spam" }).getByText(subject).click();
+    await page.getByRole("button", { name: "Kein Spam" }).click();
+    await expect(
+      page.getByRole("status").filter({ hasText: "In den Posteingang verschoben." }),
+    ).toBeVisible();
+    await page.getByRole("link", { name: "Posteingang" }).first().click();
+    await expect(inbox.getByText(subject)).toBeVisible();
+    await expect.poll(keywords).toContain("$notjunk");
+    expect(await keywords()).not.toContain("$junk");
+  });
+
   test("archiviert und löscht", async ({ page }) => {
     const inbox = page.getByRole("list", { name: "Posteingang" });
     await inbox.getByText("Ihre Bestellung 48211: Umwälzpumpe versandt").click();

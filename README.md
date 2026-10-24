@@ -60,6 +60,7 @@ und unter `https://<Ihre Domain>` anmelden. DNS-Einträge, Backups und Updates s
 - **Gemeinsame Postfächer**: info@ & Co. stehen bei jedem Mitglied in der Seitenleiste; eine Mail daraus sagt „Gemeinsames Postfach info@…“, damit man sieht, wo sie liegt. Antworten gehen als info@ raus, mit dem Namen der Person, die geantwortet hat. Postfächer nur zum Lesen zeigen nur, was erlaubt ist.
 - **Alle Posteingänge in einer Liste**: eigene Mails und die aus info@ & Co. zusammen, das gemeinsame Postfach als kleines Etikett.
 - **Schutz vor gefälschten Mails**: eine Warnung über der Mail, wenn der Absender nicht bestätigt ist, sich jemand von außen als die eigene Firma ausgibt oder Antworten an eine fremde Adresse gehen; „Details anzeigen“ zeigt Empfänger, Datum und die Prüfung des Absenders (SPF, DKIM, DMARC, Spam-Bewertung).
+- **Als Spam markieren**: ein Klick (oder `!`) verschiebt die Mail in den Spam, „Kein Spam“ holt sie zurück – der Spamfilter lernt aus beidem.
 - **Ordner und Unterordner**: anlegen, Mails verschieben – über das Menü oder mit der Maus auf einen Ordner gezogen, auch von info@ in die eigenen Ordner und zurück –, Archiv und Papierkorb mit einem Klick.
 - **Schreiben mit Formatierung**: Fett, Listen, Einrücken, Links, Zitate – die Leiste ist immer sichtbar.
 - **Antworten, allen antworten, weiterleiten**: mit Zitat, Anhängen und Vorschlägen aus den Kontakten.

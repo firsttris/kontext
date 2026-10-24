@@ -185,17 +185,29 @@ export const setKeyword = (
   on: boolean,
 ) => updateEmails(client, accountId, ids, { [`keywords/${keyword}`]: on ? true : null });
 
+/** Moves mails to another folder; `keywords` are set (true) or removed (null) in the same call. */
 export const moveEmails = (
   client: JmapClient,
   accountId: string,
   ids: string[],
   fromMailboxId: string,
   toMailboxId: string,
+  keywords: Record<string, true | null> = {},
 ) =>
   updateEmails(client, accountId, ids, {
     [`mailboxIds/${fromMailboxId}`]: null,
     [`mailboxIds/${toMailboxId}`]: true,
+    ...Object.fromEntries(Object.entries(keywords).map(([key, on]) => [`keywords/${key}`, on])),
   });
+
+/**
+ * Into Spam with $junk, or out of it with $notjunk (RFC 8621 §2, IANA keywords). Stalwart trains
+ * its spam filter on both, the folder move and the keyword (crates/jmap/src/email/set.rs).
+ */
+export const JUNK_KEYWORDS = {
+  spam: { $junk: true, $notjunk: null },
+  notSpam: { $junk: null, $notjunk: true },
+} as const;
 
 /**
  * Moves mails into another account (e.g. from info@ into the own mailbox): Email/copy with

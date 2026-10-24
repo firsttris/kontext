@@ -44,6 +44,7 @@ export const SHORTCUTS: { group: ShortcutGroup; keys: string[]; action: string }
   { group: "mail", keys: ["e"], action: "archive" },
   { group: "mail", keys: ["#"], action: "delete" },
   { group: "mail", keys: ["s"], action: "flag" },
+  { group: "mail", keys: ["!"], action: "spam" },
   { group: "mail", keys: ["U"], action: "unread" },
   { group: "mail", keys: ["Esc"], action: "close" },
   { group: "calendar", keys: ["c"], action: "newEvent" },
