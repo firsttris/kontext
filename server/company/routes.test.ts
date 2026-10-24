@@ -71,7 +71,12 @@ const setup = (email: string | null) => {
   const app = createCompanyRoutes({
     management: fake.management,
     mailstore: fake.mailstore,
-    settings: { signature: async () => null, saveSignature: async () => {} },
+    settings: {
+      signature: async () => null,
+      saveSignature: async () => {},
+      m365: async () => null,
+      saveM365: async () => {},
+    },
     migrations: {} as never,
     syncs: {} as never,
     currentEmail: async () => email,

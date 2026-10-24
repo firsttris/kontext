@@ -6,6 +6,7 @@ import { Input, Label, Select } from "@/components/ui/input";
 import { m } from "@/paraglide/messages";
 import { PROVIDERS, type ProviderId } from "../../../server/migration/providers";
 import { type Company, createSync, setSyncPassword } from "./api";
+import { M365Fields } from "./m365-fields";
 import { useCompanyChange } from "./queries";
 
 const HINTS: Partial<Record<ProviderId, () => string>> = {
@@ -54,7 +55,7 @@ export const ConnectDialog = ({ company, onClose }: { company: Company; onClose:
 
   return (
     <Dialog open onOpenChange={(open) => !open && onClose()} title={m.company_sync_new()}>
-      <form onSubmit={submit} className="flex flex-col gap-4">
+      <div className="flex flex-col gap-4">
         <Label>
           {m.company_migration_person()}
           <Select value={accountId} onChange={(e) => setAccountId(e.target.value)}>
@@ -75,54 +76,60 @@ export const ConnectDialog = ({ company, onClose }: { company: Company; onClose:
             ))}
           </Select>
         </Label>
-        {hint ? <p className="m-0 text-[13px] text-muted">{hint()}</p> : null}
-        {provider === "other" ? (
-          <div className="grid grid-cols-[1fr_96px] gap-3">
-            <Label>
-              {m.company_sync_host()}
-              <Input value={host} onChange={(e) => setHost(e.target.value)} required />
-            </Label>
-            <Label>
-              {m.company_sync_port()}
-              <Input
-                inputMode="numeric"
-                value={port}
-                onChange={(e) => setPort(e.target.value.replace(/\D/g, ""))}
-                required
-              />
-            </Label>
-          </div>
-        ) : null}
-        <Label>
-          {m.company_sync_login()}
-          <Input
-            type="email"
-            value={login}
-            onChange={(e) => setLogin(e.target.value)}
-            autoComplete="off"
-            required
-          />
-        </Label>
-        <Label>
-          {provider === "gmail" ? m.company_sync_password_app() : m.company_sync_password()}
-          <Input
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            autoComplete="new-password"
-            required
-          />
-        </Label>
-        {connect.isPending ? (
-          <p role="status" className="m-0 text-[13px] text-muted">
-            {m.company_sync_checking()}
-          </p>
-        ) : null}
-        <Problem text={problem} />
-        <Button type="submit" variant="primary" className="self-end" disabled={connect.isPending}>
-          {m.company_sync_connect()}
-        </Button>
-      </form>
+      </div>
+      {provider === "m365" ? (
+        <M365Fields company={company} accountId={accountId} onClose={onClose} />
+      ) : (
+        <form onSubmit={submit} className="flex flex-col gap-4">
+          {hint ? <p className="m-0 text-[13px] text-muted">{hint()}</p> : null}
+          {provider === "other" ? (
+            <div className="grid grid-cols-[1fr_96px] gap-3">
+              <Label>
+                {m.company_sync_host()}
+                <Input value={host} onChange={(e) => setHost(e.target.value)} required />
+              </Label>
+              <Label>
+                {m.company_sync_port()}
+                <Input
+                  inputMode="numeric"
+                  value={port}
+                  onChange={(e) => setPort(e.target.value.replace(/\D/g, ""))}
+                  required
+                />
+              </Label>
+            </div>
+          ) : null}
+          <Label>
+            {m.company_sync_login()}
+            <Input
+              type="email"
+              value={login}
+              onChange={(e) => setLogin(e.target.value)}
+              autoComplete="off"
+              required
+            />
+          </Label>
+          <Label>
+            {provider === "gmail" ? m.company_sync_password_app() : m.company_sync_password()}
+            <Input
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              autoComplete="new-password"
+              required
+            />
+          </Label>
+          {connect.isPending ? (
+            <p role="status" className="m-0 text-[13px] text-muted">
+              {m.company_sync_checking()}
+            </p>
+          ) : null}
+          <Problem text={problem} />
+          <Button type="submit" variant="primary" className="self-end" disabled={connect.isPending}>
+            {m.company_sync_connect()}
+          </Button>
+        </form>
+      )}
     </Dialog>
   );
 };

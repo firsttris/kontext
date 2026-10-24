@@ -4,8 +4,16 @@ import type { Db } from "../db";
 import * as schema from "../db/schema";
 
 export type SyncStatus = "active" | "running" | "login-failed" | "finished";
-export type FolderState = { uidValidity: string; lastUid: number };
-export type SyncCounts = { imported: number; added: number; failed: number };
+/** Per old folder: for IMAP its UIDVALIDITY and last UID, for Microsoft 365 the delta link. */
+export type FolderState = { uidValidity?: string; lastUid?: number; deltaLink?: string };
+/** Mails imported, put into one more folder, failed; contacts and appointments added. */
+export type SyncCounts = {
+  imported: number;
+  added: number;
+  failed: number;
+  contacts?: number;
+  events?: number;
+};
 
 export type Sync = {
   id: string;

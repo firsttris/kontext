@@ -91,12 +91,21 @@ Unter *Einstellungen → Firma → Umzug* übernimmt der Chef die Daten der Mita
   Abgleich läuft alle 15 Minuten, bis der Umzug abgeschlossen ist; danach beim alten Anbieter eine
   Weiterleitung einrichten oder den MX-Eintrag der eigenen Domain umstellen. Der Server braucht
   dafür ausgehend Port 993.
+- **Microsoft 365**: einmal pro Kunde im
+  [Microsoft Entra Admin Center](https://entra.microsoft.com) unter *App-Registrierungen* eine App
+  „Sekretär Umzug“ anlegen, unter *API-Berechtigungen* die **Anwendungsberechtigungen**
+  `Mail.Read`, `Contacts.Read`, `Calendars.Read` und `User.Read.All` für Microsoft Graph
+  hinzufügen und die Administratorzustimmung erteilen, unter *Zertifikate & Geheimnisse* einen
+  geheimen Clientschlüssel erzeugen. Verzeichnis-ID, Anwendungs-ID und Schlüssel beim ersten
+  „Postfach verbinden → Microsoft 365“ eintragen. Die App kann alle Postfächer des Mandanten
+  lesen; nach dem Umzug den Schlüssel löschen oder die App entfernen.
 - **Datei hochladen**: Outlook-Datendatei (`.pst`), Kontakte (`.vcf`) und Kalender (`.ics`), etwa
   aus dem Google-Export (*Google Kontakte → Exportieren → vCard*, *Google Kalender → Einstellungen →
   Exportieren*). Die Datei liegt bis zum Ende des Umzugs im Datenvolume und wird dann entpackt: Für
   eine 10-GB-PST also vorübergehend gut 20 GB frei haben.
 
-Ein großer Umzug läuft mehrere Stunden, bei Gmail wegen dessen Tageslimit mehrere Tage; der
+Ein großer Umzug läuft mehrere Stunden, bei Gmail wegen dessen Tageslimit mehrere Tage, bei
+Microsoft 365 bremst Graph bei vielen Abfragen; der
 Fortschritt steht auf derselben Seite, auch nach einem Neustart.
 
 ### Wenn jemand sein Handy mit der Authenticator-App verliert

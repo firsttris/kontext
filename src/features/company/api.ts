@@ -151,3 +151,18 @@ export const setSyncPassword = (id: string, password: string) =>
 
 export const finishSync = (id: string) =>
   send<{ ok: true }>("POST", `/syncs/${encodeURIComponent(id)}/finish`);
+
+export type M365State = {
+  connected: boolean;
+  tenantId?: string;
+  users: { login: string; name: string; address: string }[];
+  error?: string;
+};
+
+export const getM365 = () => send<M365State>("GET", "/syncs/m365");
+
+export const connectM365 = (credentials: {
+  tenantId: string;
+  clientId: string;
+  clientSecret: string;
+}) => send<{ ok: true }>("PUT", "/syncs/m365", credentials);

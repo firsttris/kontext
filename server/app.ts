@@ -17,6 +17,7 @@ import { type Db, openDatabase, schema } from "./db";
 import type { Env } from "./env";
 import { createImporter } from "./migration/importer";
 import { createJobs } from "./migration/jobs";
+import { createGraph, type M365Credentials } from "./migration/m365/graph";
 import { createRunner } from "./migration/runner";
 import { createSyncRunner } from "./migration/sync-runner";
 import { createSyncs } from "./migration/syncs";
@@ -103,15 +104,31 @@ export const createApp = async (env: Env) => {
     await runner.resume();
     const syncs = createSyncs(db);
     const syncSealer = await createSealer(env.BETTER_AUTH_SECRET, "mail-sync");
+    const settings = createCompanySettings(db, syncSealer);
+    const graphUrls = { login: env.M365_LOGIN_URL, graph: env.GRAPH_URL };
+    const microsoft = {
+      load: settings.m365,
+      save: settings.saveM365,
+      graph: (credentials: M365Credentials) => createGraph(credentials, graphUrls),
+    };
     const allowPlain = env.MAIL_SYNC_ALLOW_PLAIN;
-    const syncRunner = createSyncRunner({ syncs, importer, sealer: syncSealer, allowPlain });
+    const syncRunner = createSyncRunner({
+      syncs,
+      importer,
+      sealer: syncSealer,
+      allowPlain,
+      microsoft: async () => {
+        const credentials = await settings.m365();
+        return credentials ? microsoft.graph(credentials) : null;
+      },
+    });
     await syncRunner.start();
     const company = createCompanyRoutes({
       management: createManagement(request),
       mailstore: createMailstore(request, upload),
-      settings: createCompanySettings(db),
+      settings,
       migrations: { jobs, runner, workDir },
-      syncs: { syncs, runner: syncRunner, sealer: syncSealer, allowPlain },
+      syncs: { syncs, runner: syncRunner, sealer: syncSealer, allowPlain, microsoft },
       currentEmail: async (request) =>
         (await auth.api.getSession({ headers: request.headers }))?.user.email ?? null,
       endSessions: endSessionsOf(db),

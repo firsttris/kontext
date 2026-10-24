@@ -7,6 +7,7 @@ import { defineConfig, devices } from "@playwright/test";
 const STALWART_PORT = 28080;
 const SERVER_PORT = 28090;
 const APP_PORT = 5174;
+const GRAPH_PORT = 28095;
 
 const launchOptions = process.env.PW_CHROMIUM_PATH
   ? { executablePath: process.env.PW_CHROMIUM_PATH }
@@ -52,6 +53,11 @@ export default defineConfig({
       stdout: "pipe",
     },
     {
+      command: `bun dev/fake-graph.ts --port ${GRAPH_PORT}`,
+      url: `http://127.0.0.1:${GRAPH_PORT}/`,
+      reuseExistingServer: false,
+    },
+    {
       command: "rm -rf .dev/e2e-server && bun server/main.ts",
       url: `http://127.0.0.1:${SERVER_PORT}/healthz`,
       env: {
@@ -62,6 +68,9 @@ export default defineConfig({
         SIGN_IN_PER_MINUTE: "1000",
         // The move tests use the local Stalwart's IMAP (no TLS) as the "old provider".
         MAIL_SYNC_ALLOW_PLAIN: "true",
+        // Microsoft's sign-in and Graph: the stand-in below
+        M365_LOGIN_URL: `http://127.0.0.1:${GRAPH_PORT}`,
+        GRAPH_URL: `http://127.0.0.1:${GRAPH_PORT}/v1.0`,
       },
       reuseExistingServer: false,
       timeout: 60_000,

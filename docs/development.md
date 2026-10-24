@@ -6,7 +6,10 @@ Outlook braucht der Server `readpst` (`sudo apt install pst-utils`, macOS: `brew
 Die PST-Dateien für die Tests lädt `e2e/fixtures.ts` beim ersten Lauf nach `.dev/fixtures/`.
 Den Umzug per IMAP probiert man lokal mit dem eigenen Stalwart als „altem Anbieter“ (Anderer
 Server, `127.0.0.1`, Port 10143): dafür den Server mit `MAIL_SYNC_ALLOW_PLAIN=true bun run
-dev:server` starten, sonst verlangt er TLS und einen IMAP-Port.
+dev:server` starten, sonst verlangt er TLS und einen IMAP-Port. Für Microsoft 365 ersetzt
+`bun dev/fake-graph.ts` (Port 18095) Microsofts Anmeldung und Graph; den Server dann zusätzlich
+mit `M365_LOGIN_URL=http://127.0.0.1:18095 GRAPH_URL=http://127.0.0.1:18095/v1.0` starten und
+Mandant `contoso`, Anwendung `sekretaer-test`, Schlüssel `geheim` eintragen.
 
 ```bash
 bun install

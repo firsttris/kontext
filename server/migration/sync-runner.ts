@@ -8,6 +8,8 @@ import type { Sealer } from "../crypto";
 import { folderOrder, imapTarget, keywordsOf } from "./imap-folders";
 import { type ImapSource, type MailHead, openImap } from "./imap-source";
 import { type Importer, INLINE_LIMIT, type MailToImport } from "./importer";
+import type { Graph } from "./m365/graph";
+import { runM365 } from "./m365/sync";
 import { folderResolver } from "./resolve";
 import type { Sync, SyncCounts, Syncs } from "./syncs";
 
@@ -21,6 +23,8 @@ export type SyncRunnerDeps = {
   sealer: Sealer;
   /** Tests against the local Stalwart: IMAP without TLS. */
   allowPlain?: boolean;
+  /** The Graph client of the company's Microsoft 365 app, if connected. */
+  microsoft?: () => Promise<Graph | null>;
 };
 
 /** Mails of one page split into batches of at most 25 mails or 6 MB. */
@@ -46,6 +50,7 @@ export const createSyncRunner = ({
   importer,
   sealer,
   allowPlain = false,
+  microsoft,
 }: SyncRunnerDeps) => {
   /** One folder: new UIDs in pages, known mails get the folder, new ones are imported. */
   const syncFolder = async (
@@ -104,26 +109,16 @@ export const createSyncRunner = ({
     if (!uids.length) sync.state[path] = { uidValidity: listed.uidValidity, lastUid: after };
   };
 
-  const run = async (id: string): Promise<void> => {
-    const sync = await syncs.get(id);
-    if (sync?.status !== "active") return;
-    await syncs.update(id, { status: "running", lastError: null });
-    const counts = { ...sync.counts };
+  /** A run from an IMAP mailbox (Gmail & Co.). */
+  const runImap = async (sync: Sync, counts: SyncCounts): Promise<string | null> => {
     const opened = await openImap(
       { host: sync.host, port: sync.port },
       { user: sync.login, password: await sealer.open(sync.secret) },
       allowPlain,
     );
     if (!opened.ok) {
-      const loginFailed = opened.error.reason === "login";
-      await syncs.update(id, {
-        status: loginFailed ? "login-failed" : "active",
-        lastRunAt: new Date(),
-        lastError: loginFailed
-          ? "Die Anmeldung wurde abgelehnt. Wurde das (App-)Passwort geändert? Bitte neu eintragen."
-          : opened.error.message,
-      });
-      return;
+      if (opened.error.reason !== "login") throw new Error(opened.error.message);
+      return "login-failed";
     }
     const source = opened.value;
     try {
@@ -142,11 +137,43 @@ export const createSyncRunner = ({
       for (const { folder, target } of folders) {
         await syncFolder(sync, source, folder.path, await resolve(target), known, counts);
       }
+      return null;
+    } finally {
+      await source.close();
+    }
+  };
+
+  /** A run from Microsoft 365, with the company's app. */
+  const runMicrosoft = async (sync: Sync, counts: SyncCounts): Promise<string | null> => {
+    const graph = await microsoft?.();
+    if (!graph) throw new Error("Microsoft 365 ist nicht (mehr) verbunden.");
+    await runM365({
+      graph,
+      importer,
+      accountId: sync.accountId,
+      user: sync.login,
+      state: sync.state,
+      counts,
+      save: () => syncs.update(sync.id, { state: sync.state, counts }),
+    });
+    return null;
+  };
+
+  const run = async (id: string): Promise<void> => {
+    const sync = await syncs.get(id);
+    if (sync?.status !== "active") return;
+    await syncs.update(id, { status: "running", lastError: null });
+    const counts = { ...sync.counts };
+    try {
+      const failed = await (sync.provider === "m365" ? runMicrosoft : runImap)(sync, counts);
       await syncs.update(id, {
-        status: "active",
+        status: failed ? "login-failed" : "active",
         state: sync.state,
         counts,
         lastRunAt: new Date(),
+        lastError: failed
+          ? "Die Anmeldung wurde abgelehnt. Wurde das (App-)Passwort geändert? Bitte neu eintragen."
+          : null,
       });
     } catch (error) {
       await syncs.update(id, {
@@ -155,8 +182,6 @@ export const createSyncRunner = ({
         lastRunAt: new Date(),
         lastError: (error as Error).message,
       });
-    } finally {
-      await source.close();
     }
   };
 

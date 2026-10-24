@@ -104,7 +104,7 @@ System, auf zwei Wegen. Beide schreiben mit dem Server-Schlüssel in das neue Po
 Kontakte mit gleichem Namen und gleicher erster Adresse, Termine mit bekannter UID. Ein Umzug
 lässt sich deshalb gefahrlos wiederholen.
 
-### Postfach verbinden (Gmail, GMX, WEB.DE, Telekom, IONOS, STRATO, eigener Server)
+### Postfach verbinden per IMAP (Gmail, GMX, WEB.DE, Telekom, IONOS, STRATO, eigener Server)
 
 Sekretär liest das alte Postfach per IMAP (`imapflow`), nur lesend, und gleicht es in eine Richtung
 ab: der erste Lauf holt alles, danach alle 15 Minuten das Neue, bis der Chef den Umzug abschließt.
@@ -128,6 +128,30 @@ So läuft das alte Postfach parallel weiter, solange Absender noch die alte Adre
   993 (TLS) und 143 (STARTTLS) erlaubt.
 - **Nicht dabei**: Senden als alte Adresse über den alten Anbieter (Relay) und ein Abgleich in
   beide Richtungen. Kontakte und Kalender kommen bei Gmail über den Google-Export (siehe unten).
+
+### Microsoft 365
+
+Für Microsoft 365 gibt es kein IMAP mit Passwort mehr; Sekretär liest über Microsoft Graph mit
+einer App, die der Admin des Kunden einmal in seinem Mandanten registriert und freigibt
+(Anwendungsberechtigungen `Mail.Read`, `Contacts.Read`, `Calendars.Read`, `User.Read.All`,
+Token per Client Credentials). Die Zugangsdaten liegen verschlüsselt in Sekretärs SQLite
+(`company_setting`); danach ordnet der Chef pro Mitarbeiter ein Postfach aus dem Mandanten zu
+(vorgeschlagen wird das mit gleichem Namen vor dem @). `server/migration/m365/`:
+
+- **Mails** pro Ordner mit Graphs Delta-Abfrage (`messages/delta`); der Delta-Link steht im
+  Stand des Umzugs, ein späterer Lauf holt nur das Neue. Jede neue Mail kommt als MIME
+  (`messages/{id}/$value`) per `Email/import` in denselben Ordner, mit Gelesen und Markierung.
+  Die Standardordner erkennt Sekretär an Graphs festen Namen (`inbox`, `sentitems`, `drafts`,
+  `archive` – in jeder Sprache); Gelöschte Elemente, Junk-E-Mail, Postausgang und ähnliche
+  bleiben weg.
+- **Kontakte** des Standardordners werden JSContact, **Termine** JSCalendar, Serien mit ihrer
+  Regel (`recurrence` → `recurrenceRule`), in deutscher Zeit gelesen
+  (`Prefer: outlook.timezone="W. Europe Standard Time"`). Einzeln geänderte Termine einer Serie
+  kommen noch nicht mit, nur die Serie.
+- Drosselt Graph (429), wartet Sekretär die angegebene Zeit und versucht es erneut.
+
+Für Entwicklung und Tests spielt `dev/fake-graph.ts` Microsofts Anmeldung und Graph
+(`M365_LOGIN_URL`, `GRAPH_URL`).
 
 ### Datei hochladen (Outlook-PST, Kontakte als vCard, Kalender als iCalendar)
 

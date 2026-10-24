@@ -1,13 +1,28 @@
 /**
- * Mail providers a move can come from over IMAP, with their servers. Gmail first: it is the most
- * common; the German ones because small businesses often started there.
+ * Mail providers a move can come from, with their servers: over IMAP, except Microsoft 365. Gmail
+ * first: it is the most common; the German ones because small businesses often started there.
  */
-export type ProviderId = "gmail" | "gmx" | "webde" | "t-online" | "ionos" | "strato" | "other";
+export type ProviderId =
+  | "gmail"
+  | "m365"
+  | "gmx"
+  | "webde"
+  | "t-online"
+  | "ionos"
+  | "strato"
+  | "other";
 
 export type Provider = { id: ProviderId; name: string; host: string; port: number };
 
 export const PROVIDERS: Provider[] = [
   { id: "gmail", name: "Gmail / Google Mail", host: "imap.gmail.com", port: 993 },
+  // Not IMAP: Microsoft Graph with the company's app (server/migration/m365).
+  {
+    id: "m365",
+    name: "Microsoft 365 (Outlook, Exchange Online)",
+    host: "graph.microsoft.com",
+    port: 443,
+  },
   { id: "gmx", name: "GMX", host: "imap.gmx.net", port: 993 },
   { id: "webde", name: "WEB.DE", host: "imap.web.de", port: 993 },
   { id: "t-online", name: "Telekom (T-Online)", host: "secureimap.t-online.de", port: 993 },

@@ -44,6 +44,9 @@ export const SyncRow = ({ sync, company }: { sync: MailSync; company: Company })
         {sync.counts.failed
           ? ` · ${m.company_migration_failed({ count: sync.counts.failed })}`
           : ""}
+        {sync.counts.contacts || sync.counts.events
+          ? ` · ${m.company_sync_pim({ contacts: sync.counts.contacts ?? 0, events: sync.counts.events ?? 0 })}`
+          : ""}
         {sync.lastRunAt ? ` · ${m.company_sync_last({ time: time(sync.lastRunAt) })}` : ""}
       </p>
       {sync.lastError ? <p className="m-0 text-[13px] text-danger">{sync.lastError}</p> : null}
@@ -54,7 +57,9 @@ export const SyncRow = ({ sync, company }: { sync: MailSync; company: Company })
               {m.company_sync_run()}
             </Button>
           ) : null}
-          <Button onClick={() => setDialog("password")}>{m.company_sync_new_password()}</Button>
+          {sync.provider === "m365" ? null : (
+            <Button onClick={() => setDialog("password")}>{m.company_sync_new_password()}</Button>
+          )}
           <ConfirmButton
             label={m.company_sync_finish()}
             question={m.company_sync_finish_confirm()}

@@ -219,4 +219,42 @@ test.describe("Umzug", () => {
       { timeout: 30_000 },
     );
   });
+
+  test("Umzug von Microsoft 365: App verbinden, Postfach zuordnen", async ({ page }) => {
+    test.setTimeout(90_000);
+    const local = `petra-${stamp()}`;
+    await login(page, "jonas");
+    await newEmployee(page, local, "Petra Wechsel");
+    await page.goto("/settings?section=migration");
+    await page.getByRole("button", { name: "Postfach verbinden" }).click();
+    const dialog = page.getByRole("dialog", { name: "Postfach verbinden" });
+    await dialog.getByLabel("Für").selectOption({ label: `Petra Wechsel (${address(local)})` });
+    await dialog
+      .getByLabel("Anbieter")
+      .selectOption({ label: "Microsoft 365 (Outlook, Exchange Online)" });
+
+    // Once per company: the app's credentials (dev/fake-graph.ts plays Microsoft).
+    const setup = async (secret: string) => {
+      await dialog.getByLabel("Verzeichnis-ID (Mandant)").fill("contoso");
+      await dialog.getByLabel("Anwendungs-ID (Client)").fill("sekretaer-test");
+      await dialog.getByLabel("Geheimer Clientschlüssel").fill(secret);
+      await dialog.getByRole("button", { name: "Verbindung prüfen und speichern" }).click();
+    };
+    await setup("falsch");
+    await expect(dialog.getByRole("alert")).toContainText("Invalid client secret");
+    await setup("geheim");
+    await expect(dialog.getByText("Verbunden mit Mandant contoso.")).toBeVisible();
+    await expect(dialog.getByLabel("Postfach in Microsoft 365")).toHaveValue("petra@contoso.test");
+    await dialog.getByRole("button", { name: "Verbinden und übernehmen" }).click();
+    await expect(dialog).toBeHidden();
+
+    // Inbox with a subfolder and sent items; deleted items stay behind. Graph throttles once.
+    const row = page.getByRole("listitem", { name: "petra@contoso.test" });
+    await expect(row).toContainText("4 Mails übernommen", { timeout: 30_000 });
+    await expect(row).toContainText("Kontakte: 1, Termine: 1");
+    await row.getByRole("button", { name: "Jetzt abgleichen" }).click();
+    await expect(row).toContainText("Letzter Abgleich");
+    await expect(row).toContainText("4 Mails übernommen");
+    await expect(row).toContainText("Kontakte: 1, Termine: 1");
+  });
 });

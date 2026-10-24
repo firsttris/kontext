@@ -83,6 +83,7 @@ und unter `https://<Ihre Domain>` anmelden. DNS-Einträge, Backups und Updates s
 - **Gemeinsame Postfächer** anlegen und pro Person festlegen: kein Zugriff, nur lesen, oder lesen und senden.
 - **Abwesenheit eintragen**, wenn jemand krank ist – mit Vertretung, die in der automatischen Antwort steht.
 - **Firmen-Signatur**: eine Vorlage mit Name und Adresse, mit einem Klick für alle übernommen; neue Mitarbeiter bekommen sie automatisch.
+- **Umzug von Microsoft 365**: Mails mit Ordnern, Kontakte und Termine (auch Serien) über eine App im Microsoft-Konto der Firma, Postfach für Postfach zugeordnet, danach laufender Abgleich.
 - **Umzug von Gmail, GMX, WEB.DE & Co.**: altes Postfach verbinden – alle Mails mit Ordnern (Gmail-Labels inklusive) kommen herüber, danach gleicht Sekretär alle 15 Minuten ab, bis der Umzug abgeschlossen ist.
 - **Umzug aus Outlook und Google-Export**: PST-Datei, Kontakte (.vcf) oder Kalender (.ics) hochladen – ohne Doppelte beim zweiten Mal.
 - **Austritt**: Zugang sperren, Postfach einer Kollegin übergeben, neue Mails weiterleiten und automatisch antworten – gelöscht wird nichts.
@@ -148,7 +149,7 @@ Ja. Stalwart spricht IMAP, SMTP, CalDAV und CardDAV; jedes Mailprogramm und jede
 
 ### Kann ich von Gmail, Microsoft 365 oder Outlook umziehen?
 
-Ja, unter *Einstellungen → Firma → Umzug*: Gmail, GMX, WEB.DE, Telekom, IONOS, STRATO und andere IMAP-Postfächer verbinden (läuft parallel weiter, bis der Umzug abgeschlossen ist), Outlook als PST-Datei hochladen, Kontakte und Kalender aus dem Google-Export als .vcf und .ics. Microsoft 365 folgt als Nächstes.
+Ja, unter *Einstellungen → Firma → Umzug*: Gmail, GMX, WEB.DE, Telekom, IONOS, STRATO und andere IMAP-Postfächer verbinden (läuft parallel weiter, bis der Umzug abgeschlossen ist), Microsoft 365 über eine App im Microsoft-Konto der Firma, Outlook als PST-Datei hochladen, Kontakte und Kalender aus dem Google-Export als .vcf und .ics.
 
 ### Was kostet es?
 
@@ -177,8 +178,10 @@ git clone https://github.com/firsttris/sekretaer && cd sekretaer
 bun install
 bun run dev:stalwart -- --seed   # Stalwart 0.16 auf Port 18080 mit Testdaten (eigenes Terminal)
 bun run dev:server               # Anmeldung und JMAP-Durchleitung auf Port 18090 (eigenes Terminal)
-bun run dev                      # http://localhost:5173, Anmeldung jonas@weber-haustechnik.test
+bun run dev                      # http://localhost:5173
 ```
+
+Anmelden mit `jonas@weber-haustechnik.test` / `kaffee-werkbank-sekretaer` (Chef, sieht auch die Firmenverwaltung); `anna@`, `sandra@` und `max@` haben dasselbe Passwort, info@ und rechnung@ sind gemeinsame Postfächer. `bun run dev:stalwart -- --fresh --seed` setzt die Testdaten zurück. Für den Umzug aus Outlook braucht es lokal `readpst` (`sudo apt install pst-utils`); wie man den Umzug per IMAP und von Microsoft 365 ohne echte Konten ausprobiert, steht in der Entwicklungs-Doku.
 
 React, TanStack Router/Query, Tailwind und Tiptap im Browser; ein kleiner Bun-Server mit Hono und Better Auth für Anmeldung und JMAP zu Stalwart. Architektur, Tests und Releases: [Entwicklung](https://firsttris.github.io/sekretaer/development.html).
 

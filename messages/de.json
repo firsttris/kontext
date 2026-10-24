@@ -473,5 +473,16 @@
   "company_sync_finished_title": "Umzug abgeschlossen",
   "company_sync_finished_forward": "Damit nichts verloren geht, beim bisherigen Anbieter eine Weiterleitung an {address} einrichten (bei Gmail: Einstellungen → Weiterleitung und POP/IMAP).",
   "company_sync_finished_domain": "Gehört die Adresse zur eigenen Domain, stattdessen den MX-Eintrag auf diesen Server umstellen.",
-  "company_none": "Noch keine Umzüge."
+  "company_none": "Noch keine Umzüge.",
+  "company_m365_setup": "Microsoft 365 einmal verbinden",
+  "company_m365_setup_hint": "Im Microsoft Entra Admin Center eine App registrieren, ihr die Anwendungsberechtigungen Mail.Read, Contacts.Read, Calendars.Read und User.Read.All geben, die Administratorzustimmung erteilen und einen geheimen Clientschlüssel erzeugen. Die Werte hier eintragen; der Schlüssel wird verschlüsselt gespeichert.",
+  "company_m365_tenant": "Verzeichnis-ID (Mandant)",
+  "company_m365_client": "Anwendungs-ID (Client)",
+  "company_m365_secret": "Geheimer Clientschlüssel",
+  "company_m365_connect": "Verbindung prüfen und speichern",
+  "company_m365_connected": "Verbunden mit Mandant {tenant}.",
+  "company_m365_change": "Andere Zugangsdaten",
+  "company_m365_mailbox": "Postfach in Microsoft 365",
+  "company_m365_hint": "Mails mit Ordnern, Kontakte und Termine (auch Serien) kommen herüber; danach gleicht Sekretär alle 15 Minuten ab. Bei Microsoft wird nichts geändert.",
+  "company_sync_pim": "Kontakte: {contacts}, Termine: {events}"
 }

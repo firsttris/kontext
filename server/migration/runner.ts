@@ -9,14 +9,14 @@ import { join } from "node:path";
 import { mailFacts } from "./eml";
 import { targetFolder } from "./folders";
 import { type Importer, INLINE_LIMIT, type MailToImport } from "./importer";
-import { cardKey, eventUid, prepareCard, prepareEvent, splitVCards } from "./items";
+import { eventUid, splitVCards } from "./items";
 import { emptyProgress, type Job, type Jobs, type Progress } from "./jobs";
+import { addCards, addEvents } from "./pim";
 import { extractPst, listItems, type PstItem } from "./pst";
 import { folderResolver } from "./resolve";
 
 const BATCH = 25;
 const PARSE_BATCH = 50;
-const CREATE_BATCH = 500;
 
 export type RunnerDeps = {
   jobs: Jobs;
@@ -95,31 +95,15 @@ export const createRunner = ({ jobs, importer, workDir, extract = extractPst }: 
     save: () => Promise<void>,
   ) => {
     progress.contacts.total = texts.length;
-    if (!texts.length) return;
-    const known = new Set(
-      (await importer.contacts.known(job.accountId)).map((card) =>
-        cardKey(card as Parameters<typeof cardKey>[0]),
-      ),
-    );
-    const bookId = await importer.contacts.defaultBook(job.accountId);
     const cards: Record<string, unknown>[] = [];
     for (const page of chunks(texts, PARSE_BATCH)) {
-      const parsed = await importer.contacts.parse(job.accountId, page);
-      for (const card of parsed.map((list) => list[0] as Record<string, unknown> | undefined)) {
-        if (!card) progress.contacts.failed++;
-        else if (known.has(cardKey(card))) progress.contacts.skipped++;
-        else {
-          known.add(cardKey(card));
-          cards.push(prepareCard(card, bookId));
-        }
+      for (const list of await importer.contacts.parse(job.accountId, page)) {
+        const card = list[0] as Record<string, unknown> | undefined;
+        if (card) cards.push(card);
+        else progress.contacts.failed++;
       }
     }
-    for (const page of chunks(cards, CREATE_BATCH)) {
-      const outcome = await importer.contacts.create(job.accountId, page);
-      progress.contacts.imported += outcome.imported;
-      progress.contacts.failed += page.length - outcome.imported;
-      await save();
-    }
+    await addCards(importer, job.accountId, cards, progress.contacts, save);
   };
 
   /** Each text is a calendar file with one or (Google's export) many appointments. */
@@ -129,10 +113,7 @@ export const createRunner = ({ jobs, importer, workDir, extract = extractPst }: 
     progress: Progress,
     save: () => Promise<void>,
   ) => {
-    if (!texts.length) return;
-    const known = await importer.events.knownUids(job.accountId);
-    const calendarId = await importer.events.defaultCalendar(job.accountId);
-    const events: Record<string, unknown>[] = [];
+    const events: { event: Record<string, unknown>; uid: string }[] = [];
     for (const page of chunks(texts, PARSE_BATCH)) {
       const parsed = await importer.events.parse(job.accountId, page);
       parsed.forEach((list, index) => {
@@ -146,22 +127,12 @@ export const createRunner = ({ jobs, importer, workDir, extract = extractPst }: 
         const hash = createHash("sha256").update(content).digest("hex").slice(0, 32);
         list.forEach((item, n) => {
           const event = item as Record<string, unknown>;
-          const uid = eventUid(event.uid, `import-${hash}${n ? `-${n}` : ""}`);
           progress.events.total++;
-          if (known.has(uid)) progress.events.skipped++;
-          else {
-            known.add(uid);
-            events.push(prepareEvent(event, calendarId, uid));
-          }
+          events.push({ event, uid: eventUid(event.uid, `import-${hash}${n ? `-${n}` : ""}`) });
         });
       });
     }
-    for (const page of chunks(events, CREATE_BATCH)) {
-      const outcome = await importer.events.create(job.accountId, page);
-      progress.events.imported += outcome.imported;
-      progress.events.failed += page.length - outcome.imported;
-      await save();
-    }
+    await addEvents(importer, job.accountId, events, progress.events, save);
   };
 
   const run = async (id: string): Promise<void> => {
