@@ -238,6 +238,7 @@ const importMail = async (
   const keywords = {
     ...(mail.seen ? { $seen: true } : {}),
     ...(mail.flagged ? { $flagged: true } : {}),
+    ...Object.fromEntries((mail.categories ?? []).map((keyword) => [keyword, true])),
   };
   const result = await client.call("Email/import", {
     accountId,

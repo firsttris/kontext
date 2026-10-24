@@ -22,7 +22,7 @@ docker compose -f deploy/compose.yaml up -d
 [FAQ](#-faq) •
 [Dokumentation](https://firsttris.github.io/sekretaer/)
 
-<img src="docs/screenshots/mail.png" alt="Sekretär im Browser: Posteingang mit Ordnern, gemeinsamen Postfächern info@ und rechnung@ und einer geöffneten Mail mit Vorschau des PDF-Anhangs" width="900">
+<img src="docs/screenshots/mail.png" alt="Sekretär im Browser: Posteingang mit Ordnern, gemeinsamen Postfächern info@ und rechnung@, Kategorien und einer geöffneten Mail mit Vorschau des PDF-Anhangs" width="900">
 
 </div>
 
@@ -120,7 +120,7 @@ und unter `https://<Ihre Domain>` anmelden. DNS-Einträge, Backups und Updates s
 
 <table>
   <tr>
-    <td><img src="docs/screenshots/shared-mailbox.png" alt="Gemeinsames Postfach info@ mit einer Kundenanfrage zur Wärmepumpe"></td>
+    <td><img src="docs/screenshots/shared-mailbox.png" alt="Gemeinsames Postfach info@: Kundenanfrage zur Wärmepumpe mit der Kategorie „In Bearbeitung“"></td>
     <td><img src="docs/screenshots/compose.png" alt="Antwort schreiben mit Formatierungsleiste, Zitat und Absender-Auswahl"></td>
   </tr>
   <tr>

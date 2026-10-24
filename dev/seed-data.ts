@@ -47,6 +47,8 @@ export type SeedMail = {
   hoursAgo: number;
   seen?: boolean;
   flagged?: boolean;
+  /** Keywords of the default categories (server/categories/categories.ts). */
+  categories?: string[];
   inReplyTo?: string;
   /** An HTML version next to `body`. */
   html?: string;
@@ -127,6 +129,7 @@ export const mails: SeedMail[] = [
     body: "Hallo Herr Weber,\n\nfür die Umsatzsteuervoranmeldung Q3 fehlen uns noch die Tankbelege für den Transporter (September). Können Sie die bis Mittwoch nachreichen?\n\nBeste Grüße\nKanzlei Braun",
     hoursAgo: 26,
     flagged: true,
+    categories: ["wartet-auf-antwort"],
   },
   {
     id: "re-angebot-hoffmann@weber-haustechnik.test",
@@ -171,6 +174,7 @@ export const mails: SeedMail[] = [
     body: "Hallo,\n\nwir bauen gerade ein Einfamilienhaus in Bühl-Weitenung (ca. 160 m²) und suchen einen Betrieb für Wärmepumpe und Fußbodenheizung. Können Sie uns ein Angebot machen? Den Grundriss vom Erdgeschoss habe ich angehängt.\n\nViele Grüße\nThomas Lang",
     hoursAgo: 2,
     attachment: { name: "Grundriss-EG.svg", type: "image/svg+xml", content: FLOOR_PLAN },
+    categories: ["in-bearbeitung"],
   },
   {
     id: "reklamation@example-privat.test",
@@ -181,6 +185,7 @@ export const mails: SeedMail[] = [
     subject: "Wasserhahn tropft wieder",
     body: "Guten Tag,\n\nder Wasserhahn in der Küche, den Sie im August getauscht haben, tropft wieder. Können Sie bitte noch einmal vorbeikommen?\n\nClaudia Sommer",
     hoursAgo: 20,
+    categories: ["wartet-auf-antwort"],
   },
   {
     id: "rechnung-117@keller-elektro.test",

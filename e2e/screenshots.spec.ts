@@ -1,9 +1,15 @@
 import { expect, type Page, test } from "@playwright/test";
 import { login } from "./helpers";
 
-/** The pictures in the README and the docs. Run with `bun run screenshots`. */
-const shot = (page: Page, name: string) =>
-  page.screenshot({ path: `docs/screenshots/${name}.png`, animations: "disabled" });
+/**
+ * The pictures in the README and the docs. Run with `bun run screenshots`. The pointer goes to
+ * an empty corner first, so no row shows its hover state (the box to pick it).
+ */
+const shot = async (page: Page, name: string) => {
+  const size = page.viewportSize();
+  if (size) await page.mouse.move(size.width - 2, size.height - 2);
+  await page.screenshot({ path: `docs/screenshots/${name}.png`, animations: "disabled" });
+};
 
 /** The open mail is drawn: its text, and the thumbnails of its attachments (pdf.js takes a moment). */
 const mailShown = async (page: Page) => {
