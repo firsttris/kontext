@@ -1,13 +1,16 @@
 /**
- * Per device: light or dark, Kontext as an app, notifications; and the keyboard shortcuts for
+ * Per device: light or dark, the mail list as single mails or conversations, Kontext as an app,
+ * notifications; and the keyboard shortcuts for
  * reference.
  */
 import { Monitor, Moon, Sun } from "lucide-react";
 import { ShortcutList } from "@/components/shortcuts-dialog";
 import { setThemeChoice, useTheme } from "@/components/theme/use-theme";
+import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/cn";
 import type { ThemeChoice } from "@/lib/theme";
 import { m } from "@/paraglide/messages";
+import { setThreadView, useThreadView } from "../mail/thread-view";
 import { DeviceSwitch } from "../notifications/device-switch";
 import { AppSection } from "./app-section";
 import { SettingsCard } from "./settings-page";
@@ -20,6 +23,7 @@ const CHOICES: [ThemeChoice, () => string, typeof Sun][] = [
 
 export const AppearanceSection = () => {
   const { choice } = useTheme();
+  const threads = useThreadView();
   return (
     <>
       <SettingsCard title={m.settings_theme()} description={m.settings_theme_hint()}>
@@ -48,6 +52,14 @@ export const AppearanceSection = () => {
         </fieldset>
       </SettingsCard>
       <AppSection />
+      <SettingsCard title={m.settings_mail_list()}>
+        <div className="flex flex-col gap-1">
+          <Switch checked={threads} onChange={setThreadView}>
+            {m.settings_threads()}
+          </Switch>
+          <p className="m-0 text-[12px] text-muted">{m.settings_threads_hint()}</p>
+        </div>
+      </SettingsCard>
       <SettingsCard title={m.notifications_title()}>
         <DeviceSwitch />
       </SettingsCard>

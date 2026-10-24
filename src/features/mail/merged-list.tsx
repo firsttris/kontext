@@ -10,6 +10,7 @@ import type { MailSearch } from "@/routes/_app/mail.$accountId.$mailboxId";
 import { ListFrame, type Row } from "./list-frame";
 import type { DraggedMail } from "./mail-drag";
 import { useEmailList } from "./queries";
+import { useThreadView } from "./thread-view";
 
 export type Source = { account: MailAccount; filter: EmailFilter };
 
@@ -87,7 +88,9 @@ const FeedSource = ({
   filter: EmailFilter;
   report: (accountId: string, feed: Feed) => void;
 }) => {
-  const list = useEmailList(accountId, filter);
+  // Search hits stay single mails; the combined inbox follows the list setting.
+  const grouped = useThreadView() && !("search" in filter);
+  const list = useEmailList(accountId, filter, grouped);
   const { data, isPending, hasNextPage, isFetchingNextPage, fetchNextPage } = list;
   useEffect(() => {
     report(accountId, {

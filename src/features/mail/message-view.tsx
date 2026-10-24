@@ -19,6 +19,7 @@ import { DiscussedNotice } from "../chat/discussed-notice";
 import { useTasks } from "../tasks/queries";
 import { useEmailActions } from "./actions";
 import { Attachments } from "./attachments";
+import { EarlierMails, LaterMails } from "./conversation";
 import { MailBody } from "./mail-body";
 import { MessageDetails, SenderWarnings } from "./message-details";
 import { Toolbar } from "./message-toolbar";
@@ -106,6 +107,7 @@ export const MessageView = ({ accountId, mailbox, emailId }: Props) => {
                   <CategoryChips categories={categories} />
                 </div>
               ) : null}
+              <EarlierMails accountId={accountId} email={email} />
               <div className="flex items-center gap-3">
                 <Avatar name={displayName(email.from?.[0])} size={38} />
                 <div className="flex min-w-0 flex-1 flex-col">
@@ -137,6 +139,7 @@ export const MessageView = ({ accountId, mailbox, emailId }: Props) => {
             {showDetails ? <MessageDetails email={email} attachments={attachments} /> : null}
             <MailBody accountId={accountId} email={email} />
             <Attachments accountId={accountId} parts={attachments} />
+            <LaterMails accountId={accountId} email={email} />
             <div className="flex flex-wrap gap-2">
               <Button
                 asChild

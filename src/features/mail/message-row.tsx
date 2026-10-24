@@ -1,6 +1,6 @@
 /** One mail in the list: who, when, subject, categories, preview; and its box to pick it. */
 import { Link, useParams } from "@tanstack/react-router";
-import { ListChecks, Paperclip, Star, Users } from "lucide-react";
+import { CornerUpLeft, ListChecks, Paperclip, Star, Users } from "lucide-react";
 import { Highlighted } from "@/components/highlighted";
 import { isFlagged, isUnread } from "@/jmap/mail";
 import { categoriesOn } from "@/lib/categories";
@@ -13,6 +13,7 @@ import { useCategoryMap } from "../categories/queries";
 import { useTasks } from "../tasks/queries";
 import type { Row } from "./list-frame";
 import { type DraggedMail, startMailDrag } from "./mail-drag";
+import type { Answer, Group } from "./use-thread-info";
 
 export const MessageRow = ({
   row: { email, account, folder, highlight },
@@ -23,6 +24,9 @@ export const MessageRow = ({
   selecting,
   selected,
   onPick,
+  answer,
+  shared = false,
+  group,
 }: {
   row: Row;
   active: boolean;
@@ -35,8 +39,14 @@ export const MessageRow = ({
   selected: boolean;
   /** Picks or drops the mail; with Shift, the range up to the last one picked. */
   onPick: (shift: boolean) => void;
+  /** Who answered it and when (undefined: not answered, or not known yet). */
+  answer?: Answer;
+  /** In a shared mailbox the answer names the colleague. */
+  shared?: boolean;
+  /** Grouped as conversations: the conversation this line stands for. */
+  group?: Group;
 }) => {
-  const unread = isUnread(email);
+  const unread = group ? group.unread : isUnread(email);
   // Combined lists name each row's account; a folder's list is the route's account.
   const routeAccount = useParams({ strict: false }).accountId;
   const categories = categoriesOn(
@@ -46,7 +56,11 @@ export const MessageRow = ({
   const task = tasksOfMail(useTasks().tasks, email.id, email.threadId).find(
     (candidate) => candidate.status !== "done",
   );
-  const who = showRecipient ? formatAddressList(email.to) : displayName(email.from?.[0]);
+  const who = showRecipient
+    ? formatAddressList(email.to)
+    : group && group.count > 1
+      ? group.names.map((name) => name.split(" ")[0]).join(", ")
+      : displayName(email.from?.[0]);
   const boxVisible = selecting || selected;
   return (
     <div className="group relative">
@@ -99,6 +113,17 @@ export const MessageRow = ({
           <span className="flex items-baseline gap-2">
             <span className={cn("min-w-0 flex-1 truncate", unread && "font-semibold")}>
               <Highlighted text={who || "—"} terms={highlight} />
+              {group && group.count > 1 ? (
+                <>
+                  <span
+                    aria-hidden="true"
+                    className="ml-1.5 font-mono text-[12px] font-normal text-muted"
+                  >
+                    {group.count}
+                  </span>
+                  <span className="sr-only">, {m.mail_thread_count({ count: group.count })}</span>
+                </>
+              ) : null}
             </span>
             {isFlagged(email) ? (
               <Star
@@ -127,6 +152,24 @@ export const MessageRow = ({
               >
                 <Users size={11} strokeWidth={2} aria-hidden="true" />
                 {account.label}
+              </span>
+            ) : null}
+            {email.keywords.$answered ? (
+              <span
+                title={
+                  answer
+                    ? m.mail_answered_by({
+                        name: answer.name,
+                        when: listDate(answer.at, new Date()),
+                      })
+                    : m.mail_answered()
+                }
+                className="inline-flex shrink-0 items-center gap-1 text-[11px] font-medium text-muted"
+              >
+                <CornerUpLeft size={12} strokeWidth={2} aria-label={m.mail_answered()} />
+                {shared && answer
+                  ? `${answer.name.split(" ")[0]} · ${listDate(answer.at, new Date())}`
+                  : null}
               </span>
             ) : null}
             {task ? (

@@ -77,6 +77,8 @@ export const queryEmails = async (
   filter: EmailFilter,
   position: number,
   limit = 50,
+  /** One mail per conversation, the newest (RFC 8621 §4.4.3). */
+  collapseThreads = false,
 ): Promise<EmailPage> => {
   const [query, get] = await client.request([
     [
@@ -85,6 +87,7 @@ export const queryEmails = async (
         accountId,
         filter: emailQueryFilter(filter),
         sort: [{ property: "receivedAt", isAscending: false }],
+        collapseThreads,
         position,
         limit,
         calculateTotal: true,

@@ -95,11 +95,12 @@ export const useMailboxes = (accountId: string) => {
   });
 };
 
-export const useEmailList = (accountId: string, filter: EmailFilter) => {
+/** A folder's mails, newest first; with `collapse`, one line per conversation. */
+export const useEmailList = (accountId: string, filter: EmailFilter, collapse = false) => {
   const client = useClient();
   return useInfiniteQuery({
-    queryKey: [accountId, "emails", filter],
-    queryFn: ({ pageParam }) => queryEmails(client, accountId, filter, pageParam),
+    queryKey: [accountId, "emails", filter, collapse],
+    queryFn: ({ pageParam }) => queryEmails(client, accountId, filter, pageParam, 50, collapse),
     initialPageParam: 0,
     getNextPageParam: (last: EmailPage) => {
       const next = last.position + last.emails.length;

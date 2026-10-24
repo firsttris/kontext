@@ -57,6 +57,10 @@ export const deliverMail = (mail: {
   subject: string;
   body: string;
   replyTo?: string;
+  /** Without the angle brackets; random when left out. */
+  messageId?: string;
+  /** An answer to that mail: it joins the conversation. */
+  inReplyTo?: string;
 }): Promise<void> =>
   new Promise((resolve, reject) => {
     const message = [
@@ -65,7 +69,10 @@ export const deliverMail = (mail: {
       ...(mail.replyTo ? [`Reply-To: <${mail.replyTo}>`] : []),
       `Subject: ${encodeWord(mail.subject)}`,
       `Date: ${new Date().toUTCString()}`,
-      `Message-ID: <${crypto.randomUUID()}@mail.example.test>`,
+      `Message-ID: <${mail.messageId ?? `${crypto.randomUUID()}@mail.example.test`}>`,
+      ...(mail.inReplyTo
+        ? [`In-Reply-To: <${mail.inReplyTo}>`, `References: <${mail.inReplyTo}>`]
+        : []),
       "MIME-Version: 1.0",
       "Content-Type: text/plain; charset=utf-8",
       "Content-Transfer-Encoding: 8bit",

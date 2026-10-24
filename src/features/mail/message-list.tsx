@@ -7,6 +7,7 @@ import { mailboxName, mailboxRights } from "@/lib/mailboxes";
 import type { MailSearch } from "@/routes/_app/mail.$accountId.$mailboxId";
 import { ListFrame, type Row } from "./list-frame";
 import { useEmailList, useMailAccounts } from "./queries";
+import { useThreadView } from "./thread-view";
 
 type Props = { accountId: string; mailbox: Mailbox; search: MailSearch };
 
@@ -17,7 +18,7 @@ export const MessageList = ({ accountId, mailbox, search }: Props) => {
     () => ({ mailboxId: mailbox.id, unreadOnly: search.unread }),
     [mailbox.id, search.unread],
   );
-  const list = useEmailList(accountId, filter);
+  const list = useEmailList(accountId, filter, useThreadView());
   const rows = useMemo(
     () => list.data?.pages.flatMap((page) => page.emails.map((email) => ({ email }))) ?? [],
     [list.data],

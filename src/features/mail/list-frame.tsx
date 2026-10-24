@@ -16,8 +16,11 @@ import { m } from "@/paraglide/messages";
 import type { MailSearch } from "@/routes/_app/mail.$accountId.$mailboxId";
 import type { DraggedMail } from "./mail-drag";
 import { MessageRow } from "./message-row";
+import { useMailAccounts } from "./queries";
 import { SearchBox, type SearchBoxHandle } from "./search-box";
 import { SelectionBar } from "./selection-bar";
+import { useThreadView } from "./thread-view";
+import { useThreadInfo } from "./use-thread-info";
 
 /**
  * A mail in the list. `account` is set in the combined lists (`label` empty for the own account,
@@ -77,6 +80,13 @@ export const ListFrame = ({
   // Combined lists name each row's account; a folder's list is the route's account.
   const routeAccount = useParams({ strict: false }).accountId ?? "";
   const accountOf = (row: Row) => row.account?.id ?? routeAccount;
+  const grouped = useThreadView();
+  const { answers, groups } = useThreadInfo(rows, accountOf, grouped);
+  const personal = new Set(
+    useMailAccounts()
+      .filter((account) => account.isPersonal)
+      .map((account) => account.id),
+  );
   const order = rows.map((row) => pickKey(accountOf(row), row.email.id));
   const [picks, setPicks] = useState<{ keys: Set<string>; anchor?: string }>({ keys: new Set() });
   const [selecting, setSelecting] = useState(false);
@@ -264,6 +274,9 @@ export const ListFrame = ({
                     selecting={showBar}
                     selected={selected.has(pickKey(accountOf(row), row.email.id))}
                     onPick={(shift) => pick(pickKey(accountOf(row), row.email.id), shift)}
+                    answer={answers.get(pickKey(accountOf(row), row.email.id))}
+                    group={groups.get(pickKey(accountOf(row), row.email.id))}
+                    shared={!personal.has(accountOf(row))}
                   />
                 </li>
               );

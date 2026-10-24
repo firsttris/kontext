@@ -2,12 +2,13 @@
  * Shows a mail body in a sandboxed iframe: no scripts, its own styles, height fitted to the
  * content. Inline images (cid:) are loaded as blobs, remote images only on request.
  */
-import { ImageOff } from "lucide-react";
+import { Ellipsis, ImageOff } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useClient } from "@/auth/auth";
 import { useTheme } from "@/components/theme/use-theme";
 import { displayBody } from "@/jmap/mail";
 import type { EmailDetail } from "@/jmap/types";
+import { splitQuote, splitTextQuote } from "@/lib/conversation";
 import { mailDocument, sanitizeMailHtml, textToHtml } from "@/lib/html";
 import { m } from "@/paraglide/messages";
 
@@ -47,11 +48,23 @@ export const MailBody = ({ accountId, email }: { accountId: string; email: Email
   const frame = useRef<HTMLIFrameElement>(null);
   const [height, setHeight] = useState(120);
 
-  const { html, blockedImages } = useMemo(() => {
+  // The quoted original below a reply is folded; the earlier mails stand above (conversation.tsx).
+  const [showQuote, setShowQuote] = useState(false);
+  const { html, blockedImages, folded } = useMemo(() => {
     const body = displayBody(email);
-    const source = body.kind === "html" ? body.value : textToHtml(body.value);
-    return sanitizeMailHtml(source, { allowRemote, cidUrls });
-  }, [email, allowRemote, cidUrls]);
+    const parts =
+      body.kind === "html"
+        ? splitQuote(body.value)
+        : (({ main, quote }) => ({
+            main: textToHtml(main),
+            quote: quote === null ? null : textToHtml(quote),
+          }))(splitTextQuote(body.value));
+    const source = parts.quote && !showQuote ? parts.main : parts.main + (parts.quote ?? "");
+    return {
+      ...sanitizeMailHtml(source, { allowRemote, cidUrls }),
+      folded: parts.quote !== null,
+    };
+  }, [email, allowRemote, cidUrls, showQuote]);
 
   const document = useMemo(() => mailDocument(html, dark), [html, dark]);
 
@@ -96,6 +109,17 @@ export const MailBody = ({ accountId, email }: { accountId: string; email: Email
         className="w-full border-0 bg-transparent"
         style={{ height }}
       />
+      {folded ? (
+        <button
+          type="button"
+          aria-expanded={showQuote}
+          onClick={() => setShowQuote(!showQuote)}
+          className="flex items-center gap-1.5 self-start rounded-lg border border-border px-2.5 py-1 text-[12px] text-muted hover:bg-hover hover:text-fg"
+        >
+          <Ellipsis size={14} aria-hidden="true" />
+          {showQuote ? m.mail_quote_hide() : m.mail_quote_show()}
+        </button>
+      ) : null}
     </div>
   );
 };

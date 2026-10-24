@@ -31,7 +31,7 @@ import {
 import { useToast } from "@/components/ui/toast";
 import { useShortcuts } from "@/components/use-shortcuts";
 import { isFlagged } from "@/jmap/mail";
-import type { EmailDetail, Mailbox } from "@/jmap/types";
+import type { EmailDetail, EmailSummary, Mailbox } from "@/jmap/types";
 import { shortAddress } from "@/lib/mail-accounts";
 import { mailboxRights } from "@/lib/mailboxes";
 import { moveTargets } from "@/lib/move-targets";
@@ -44,8 +44,10 @@ import { OwnRuleDialog } from "../rules/rule-dialog";
 import { usePersonalAccountId } from "../settings/queries";
 import { TaskDialog, type TaskStart } from "../tasks/task-dialog";
 import { useEmailActions } from "./actions";
+import { useThread } from "./conversation";
 import { usePrintMail } from "./print-mail";
 import { useAllMailboxes, useMailAccounts } from "./queries";
+import { useThreadView } from "./thread-view";
 
 export const Toolbar = ({
   accountId,
@@ -67,6 +69,12 @@ export const Toolbar = ({
   const [rule, setRule] = useState<Rule | null>(null);
   const [task, setTask] = useState<TaskStart | null>(null);
   const [discussing, setDiscussing] = useState(false);
+  // Grouped as conversations: what one does to the line, one does to all of it in this folder.
+  const grouped = useThreadView();
+  const thread = useThread(accountId, grouped ? email.threadId : undefined);
+  const inFolder = (thread ?? []).filter((mail) => mail.mailboxIds[mailbox.id]);
+  const targets: EmailSummary[] = grouped && inFolder.length ? inFolder : [email];
+  const ids = targets.map((mail) => mail.id);
   const newTask = () =>
     setTask({
       title: plainSubject(email.subject ?? ""),
@@ -100,7 +108,7 @@ export const Toolbar = ({
     canRemove && mailbox.role !== "sent"
       ? () =>
           void run(async () => {
-            await actions.markSpam([email.id], mailbox.id, !inJunk);
+            await actions.markSpam(ids, mailbox.id, !inJunk);
             toast.show(inJunk ? m.mail_spam_unmarked() : m.mail_spam_marked());
           }, true)
       : undefined;
@@ -115,11 +123,11 @@ export const Toolbar = ({
     f: () => compose("forward"),
     e:
       canRemove && mailbox.role !== "archive"
-        ? () => void run(() => actions.archive([email.id], mailbox.id), true)
+        ? () => void run(() => actions.archive(ids, mailbox.id), true)
         : undefined,
-    "#": canRemove ? () => void run(() => actions.remove([email.id], mailbox.id), true) : undefined,
+    "#": canRemove ? () => void run(() => actions.remove(ids, mailbox.id), true) : undefined,
     s: canFlag ? () => void run(() => actions.setFlagged([email.id], !flagged), false) : undefined,
-    U: canMarkSeen ? () => void run(() => actions.setSeen([email.id], false), true) : undefined,
+    U: canMarkSeen ? () => void run(() => actions.setSeen(ids, false), true) : undefined,
     "!": toggleSpam,
     p: print,
     t: newTask,
@@ -158,7 +166,7 @@ export const Toolbar = ({
           size="icon"
           aria-label={m.mail_archive_action()}
           title={m.mail_archive_action()}
-          onClick={() => run(() => actions.archive([email.id], mailbox.id), true)}
+          onClick={() => run(() => actions.archive(ids, mailbox.id), true)}
         >
           <Archive size={16} strokeWidth={1.75} />
         </Button>
@@ -169,7 +177,7 @@ export const Toolbar = ({
           size="icon"
           aria-label={m.mail_delete()}
           title={m.mail_delete()}
-          onClick={() => run(() => actions.remove([email.id], mailbox.id), true)}
+          onClick={() => run(() => actions.remove(ids, mailbox.id), true)}
         >
           <Trash2 size={16} strokeWidth={1.75} />
         </Button>
@@ -195,7 +203,7 @@ export const Toolbar = ({
           size="icon"
           aria-label={m.mail_mark_unread()}
           title={m.mail_mark_unread()}
-          onClick={() => run(() => actions.setSeen([email.id], false), true)}
+          onClick={() => run(() => actions.setSeen(ids, false), true)}
         >
           <MailOpen size={16} strokeWidth={1.75} />
         </Button>
@@ -260,7 +268,7 @@ export const Toolbar = ({
                     onSelect={() =>
                       run(
                         () =>
-                          actions.moveTo([email], mailbox.id, {
+                          actions.moveTo(targets, mailbox.id, {
                             accountId: target.accountId,
                             mailboxId: target.mailbox.id,
                           }),
@@ -316,7 +324,7 @@ export const Toolbar = ({
           {canMarkSeen ? (
             <>
               <MenuSeparator />
-              <MenuItem onSelect={() => run(() => actions.setSeen([email.id], false), true)}>
+              <MenuItem onSelect={() => run(() => actions.setSeen(ids, false), true)}>
                 <MailOpen size={15} /> {m.mail_mark_unread()}
               </MenuItem>
             </>
@@ -341,7 +349,7 @@ export const Toolbar = ({
           onClose={() => setTask(null)}
           onArchive={
             canRemove && mailbox.role !== "archive"
-              ? () => run(() => actions.archive([email.id], mailbox.id), true)
+              ? () => run(() => actions.archive(ids, mailbox.id), true)
               : undefined
           }
         />

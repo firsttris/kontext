@@ -87,6 +87,7 @@ reicht ein VPS mit 2 vCPU und 4 GB RAM.
 - **Wer schreibt mir da?** Auf breiten Bildschirmen steht neben der Mail der Absender mit Firma, nächsten Terminen und letzten Mails.
 - **Anhänge mit Vorschau**: Fotos und die erste Seite eines PDFs als kleines Bild.
 - **Suche wie in Gmail**: über alle Ordner und Postfächer, mit `von:`, `an:`, `betreff:`, `hat:anhang`, `kategorie:`, `in:info@`, `nach:`/`vor:`; „Angebote“ findet auch „Angebot“.
+- **Unterhaltungen ohne Durcheinander**: Die Liste bleibt, wie die Mails hereinkommen; beim Lesen stehen die früheren Mails der Unterhaltung und die Antworten seitdem dabei, Zitate eingeklappt. In gemeinsamen Postfächern siehst du, wer schon geantwortet hat („Jonas · 14:02“). Gruppieren wie bei Gmail ist ein Schalter.
 - **Drucken**: die Mail allein, sauber auf A4 (auch per Strg+P).
 - **Sofort aktuell**: neue Mails und Änderungen von Kollegen erscheinen ohne Neuladen (JMAP Push).
 
