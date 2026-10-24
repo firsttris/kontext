@@ -27,11 +27,21 @@ const usePush = () => {
   const queryClient = useQueryClient();
   useEffect(
     () =>
-      subscribeToChanges(client, (changed) => {
-        for (const accountId of Object.keys(changed)) {
-          void queryClient.invalidateQueries({ queryKey: [accountId] });
-        }
-      }),
+      subscribeToChanges(
+        client,
+        (changed) => {
+          for (const accountId of Object.keys(changed)) {
+            void queryClient.invalidateQueries({ queryKey: [accountId] });
+          }
+        },
+        // What arrived before the stream was up: the lists and the folders' counts again.
+        () => {
+          void queryClient.invalidateQueries({
+            predicate: (query) =>
+              query.queryKey[1] === "emails" || query.queryKey[1] === "mailboxes",
+          });
+        },
+      ),
     [client, queryClient],
   );
 };

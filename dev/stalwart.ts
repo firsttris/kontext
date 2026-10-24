@@ -143,6 +143,9 @@ const createListeners = async (port: number): Promise<void> => {
     ["x:Imap/set", { update: { singleton: { allowPlainTextAuth: true } } }, "1"],
     // German stemming for the search index and for searches (see docs/installation.md).
     ["x:Search/set", { update: { singleton: { defaultLanguage: "de-DE" } } }, "2"],
+    // Stalwart allows 4 requests at a time per person (crates/registry/src/schema/structs_impl.rs),
+    // shared by all their tabs and devices; the app asks more on start (see docs/installation.md).
+    ["x:Jmap/set", { update: { singleton: { maxConcurrentRequests: 16 } } }, "3"],
   ]);
 };
 
