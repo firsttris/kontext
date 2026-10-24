@@ -4,7 +4,7 @@
  * photos and files (also dropped onto the conversation) and cards. What one sees counts as read.
  */
 import { Link } from "@tanstack/react-router";
-import { ChevronLeft, ImageUp, Users } from "lucide-react";
+import { BellOff, ChevronLeft, ImageUp, Users } from "lucide-react";
 import { type DragEvent, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { useMediaQuery } from "@/components/use-media-query";
@@ -12,6 +12,7 @@ import { TaskDialog, type TaskStart } from "@/features/tasks/task-dialog";
 import { type ChannelSummary, firstName, type Message, readBy, timeline } from "@/lib/chat";
 import { taskFromMessage } from "@/lib/chat-cards";
 import { m } from "@/paraglide/messages";
+import { ChannelMenu } from "./channel-menu";
 import { MessageInput } from "./message-input";
 import { isPending, Run } from "./message-run";
 import { useChatActions, useMessages } from "./queries";
@@ -195,6 +196,14 @@ export const Conversation = ({
             {prefix}
             {title}
           </h1>
+          {channel.muted ? (
+            <BellOff
+              size={14}
+              role="img"
+              aria-label={m.chat_muted()}
+              className="hidden shrink-0 text-muted md:block"
+            />
+          ) : null}
           <span className="truncate text-[12px] text-muted">
             {subtitle(channel, me, nameOf, online)}
           </span>
@@ -210,6 +219,7 @@ export const Conversation = ({
             <Users size={16} />
           </Button>
         ) : null}
+        <ChannelMenu channel={channel} me={me} title={`${prefix}${title}`} />
       </header>
       <div
         ref={scroller}
@@ -263,6 +273,14 @@ export const Conversation = ({
                 nameOf={nameOf}
                 highlight={highlight}
                 onMakeTask={makeTask}
+                onEdit={(message, text, mentions) =>
+                  actions.edit.mutate({ id: message.id, text, mentions })
+                }
+                onDelete={(message) => {
+                  if (window.confirm(m.chat_delete_message_confirm())) {
+                    actions.remove.mutate(message.id);
+                  }
+                }}
               />
             );
           })}

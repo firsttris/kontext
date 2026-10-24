@@ -9,6 +9,7 @@ import {
   mentionSuggestions,
   readBy,
   segments,
+  snippet,
   sortChannels,
   sortDirect,
   timeline,
@@ -42,6 +43,8 @@ const message = (id: string, authorId: string, createdAt: string, text = "Hallo"
   mentions: [],
   files: [],
   cards: [],
+  editedAt: null,
+  deleted: false,
   createdAt,
 });
 
@@ -193,5 +196,13 @@ describe("readBy", () => {
         max: "2026-10-24T07:00:00.000Z",
       }),
     ).toEqual(["sandra"]);
+  });
+});
+
+describe("snippet", () => {
+  it("shows the found words with a little before them", () => {
+    const text = `${"Vorher ".repeat(10)}Rohr DN 50 bestellen und danach weiter`;
+    expect(snippet(text, "rohr", 40)).toMatch(/^…Vorher (Vorher )*Rohr DN 50…$/);
+    expect(snippet("Kurz: Rohr", "rohr")).toBe("Kurz: Rohr");
   });
 });

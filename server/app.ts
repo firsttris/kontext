@@ -90,12 +90,22 @@ export const createJmapProxy =
     return new Response(upstream.body, { status: upstream.status, headers: responseHeaders });
   };
 
-/** The accounts in the signed-in person's JMAP session, asked of Stalwart with their token. */
-const sessionAccountsOf =
-  (env: Env, auth: Auth, grants: Grants) =>
-  async (request: Request): Promise<SessionAccount[] | null> => {
+/** How long the accounts of a session are taken as they were ("schreibt …" asks every 3 s). */
+const ACCOUNTS_FRESH_MS = 30_000;
+
+/**
+ * The accounts in the signed-in person's JMAP session, asked of Stalwart with their token and
+ * kept for half a minute per session; a change of access (someone left info@) counts after that.
+ */
+const sessionAccountsOf = (env: Env, auth: Auth, grants: Grants) => {
+  const known = new Map<string, { accounts: SessionAccount[]; until: number }>();
+  return async (request: Request): Promise<SessionAccount[] | null> => {
     const session = await auth.api.getSession({ headers: request.headers });
-    const token = session && (await grants.accessToken(session.session.id));
+    if (!session) return null;
+    const now = Date.now();
+    const cached = known.get(session.session.id);
+    if (cached && cached.until > now) return cached.accounts;
+    const token = await grants.accessToken(session.session.id);
     if (!token) return null;
     const response = await fetch(`${env.STALWART_URL}/jmap/session`, {
       headers: { authorization: `Bearer ${token}` },
@@ -104,12 +114,16 @@ const sessionAccountsOf =
     const { accounts } = (await response.json()) as {
       accounts: Record<string, { isReadOnly?: boolean; isPersonal?: boolean }>;
     };
-    return Object.entries(accounts).map(([id, account]) => ({
+    const list = Object.entries(accounts).map(([id, account]) => ({
       id,
       isReadOnly: Boolean(account.isReadOnly),
       isPersonal: Boolean(account.isPersonal),
     }));
+    for (const [id, entry] of known) if (entry.until <= now) known.delete(id);
+    known.set(session.session.id, { accounts: list, until: now + ACCOUNTS_FRESH_MS });
+    return list;
   };
+};
 
 /** Ends all Kontext sessions of a user; their Stalwart tokens go with them (cascade). */
 const endSessionsOf = (db: Db) => async (email: string) => {

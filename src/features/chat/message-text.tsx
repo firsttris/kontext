@@ -5,6 +5,7 @@
 
 import { type Message, type Person, segments } from "@/lib/chat";
 import { cn } from "@/lib/cn";
+import { m } from "@/paraglide/messages";
 
 export const MessageText = ({
   message,
@@ -58,6 +59,12 @@ export const MessageText = ({
         }
         return <span key={key}>{part.text}</span>;
       })}
+      {message.editedAt ? (
+        <span className="text-[11px] opacity-70 md:text-muted md:opacity-100">
+          {" "}
+          {m.chat_edited()}
+        </span>
+      ) : null}
     </p>
   );
 };

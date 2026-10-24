@@ -403,6 +403,18 @@ Principal-ID), die Namen holt die App wie bei den Aufgaben über die Principals.
   (`threadId`) schon besprochen wurde, dann solche, in denen derselbe Absender vorkam, dann der
   Kanal des Postfachs. Die Mail zeigt danach „Besprochen in #… · n Antworten“ und führt an die
   Stelle im Chat.
+- **Bearbeiten und löschen:** nur eigene Nachrichten; eine bearbeitete trägt „(bearbeitet)“,
+  eine gelöschte behält ihren Platz („Nachricht gelöscht“), Text, Karten, Fotos und Dateien sind
+  dann wirklich weg. Beides kommt bei den anderen sofort an.
+- **Suche:** über alle Kanäle, die man sieht – im Text und in den Karten (Betreff, Titel, Name),
+  ab zwei Buchstaben; ein Treffer führt an die Stelle im Verlauf. Groß und klein unterscheidet die
+  Suche bei Umlauten noch.
+- **Stummschalten, verlassen, löschen:** Stummgeschaltetes zählt nicht zum Ungelesenen am Chat
+  und am App-Symbol und meldet sich nicht. Einen eigenen Kanal verlassen kann jedes Mitglied (der
+  letzte nimmt ihn mit), löschen nur, wer ihn angelegt hat – mit allen Nachrichten und Dateien.
+  `#allgemein`, Postfach-Kanäle und Direktnachrichten lassen sich nur stummschalten.
+- **Neu dabei:** Wer in einen Kanal kommt, hat ihn bis dahin gelesen; in `#allgemein` und den
+  Postfach-Kanälen zählen ohne Gelesen-Marke nur die letzten sieben Tage als ungelesen.
 - **Aufgabe aus einer Nachricht:** im Menü jeder Nachricht; die Aufgabe ist mit der Nachricht
   verknüpft (`kind: "chat"`), die Nachricht zeigt die Aufgabe mit ihrem Stand, die Aufgabe führt
   zurück zur Nachricht. Aus dem Kanal eines gemeinsamen Postfachs landet sie auf dessen Board.
@@ -416,6 +428,8 @@ geänderte Aufgaben-Boards. Mails meldet Stalwart weiter selbst (JMAP Push).
 
 - Alle 25 Sekunden ein Kommentar, damit Proxys die ruhige Verbindung nicht schließen; Caddy
   komprimiert die beiden Streams nicht (`deploy/Caddyfile`), sonst kämen Ereignisse verzögert an.
+- Wer was sehen darf, fragt der Server Stalwart (JMAP-Session) und merkt es sich je Sitzung eine
+  halbe Minute; eine geänderte Berechtigung gilt spätestens danach.
 - Nach 15 Minuten beendet der Server die Verbindung, der Browser baut sie sofort neu auf – mit den
   aktuellen Rechten aus der JMAP-Session. Nach einer Unterbrechung lädt die App Chat und Aufgaben
   neu, damit nichts fehlt.

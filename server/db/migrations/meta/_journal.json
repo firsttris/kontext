@@ -29,6 +29,13 @@
       "when": 1792863690801,
       "tag": "0003_chat_files_cards",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "6",
+      "when": 1792866751530,
+      "tag": "0004_chat_edit_mute",
+      "breakpoints": true
     }
   ]
 }

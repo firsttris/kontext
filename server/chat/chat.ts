@@ -35,6 +35,8 @@ export type ChannelSummary = Channel & {
   /** When this person last read it (ISO), or null. */
   readAt: string | null;
   last: { authorId: string; text: string } | null;
+  /** Muted by this person: no unread count on the app, no notification. */
+  muted: boolean;
 };
 
 /** A photo or file in a message; the app loads it from /api/chat/files/:id. */
@@ -70,6 +72,9 @@ export type Message = {
   files: ChatFile[];
   cards: Card[];
   createdAt: string;
+  editedAt: string | null;
+  /** Deleted by its author: it keeps its place, without content. */
+  deleted: boolean;
 };
 
 /** What a message is about in one line: its text, else its card or file. */
@@ -132,3 +137,13 @@ export const newMessageSchema = z
 export type NewMessage = z.input<typeof newMessageSchema>;
 
 export const readSchema = z.object({ at: z.string().datetime() });
+
+export const editMessageSchema = z.object({
+  text: z.string().trim().min(1).max(4000),
+  mentions: z.array(person).max(50).default([]),
+});
+
+export const muteSchema = z.object({ muted: z.boolean() });
+
+/** Search words: at least two letters, so a search is not the whole history. */
+export const searchSchema = z.string().trim().min(2).max(100);

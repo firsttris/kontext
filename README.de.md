@@ -107,6 +107,7 @@ reicht ein VPS mit 2 vCPU und 4 GB RAM.
 - **Fotos und Dateien**: mit der Handykamera, per Ziehen oder Einfügen; Fotos werden vor dem Senden verkleinert.
 - **Mails, Aufgaben und Kontakte als Karten**: „Besprechen“ an einer Mail (`b`) spricht im Kanal darüber, statt sie intern weiterzuleiten; die Mail zeigt danach, wo sie besprochen wurde. Öffnen kann die Karte nur, wer das Postfach sehen darf – kopiert wird nichts.
 - **Aufgabe aus einer Nachricht**, in beide Richtungen verknüpft.
+- **Suche** über alle deine Kanäle; eigene Nachrichten bearbeiten oder löschen; Kanäle stummschalten, verlassen oder löschen.
 - **Am Handy**: ein eigener Tab, Unterhaltungen als Sprechblasen.
 
 ### 📅 Kalender

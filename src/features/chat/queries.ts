@@ -48,6 +48,17 @@ export const useDiscussions = (ref: string, threadId: string | null) =>
       ).discussions,
   }).data ?? [];
 
+/** Messages with these words in all channels one sees (from two letters on). */
+export const useChatSearch = (words: string) =>
+  useQuery({
+    queryKey: ["chat", "search", words],
+    queryFn: async () =>
+      (await send<{ messages: Message[] }>("GET", `/search?q=${encodeURIComponent(words)}`))
+        .messages,
+    enabled: words.trim().length >= 2,
+    staleTime: 10_000,
+  });
+
 /** Channels where mails of this sender were discussed before. */
 export const useSuggestions = (party: string) =>
   useQuery({
@@ -173,6 +184,8 @@ export const useChatActions = (me: string) => {
         files,
         cards,
         createdAt: new Date().toISOString(),
+        editedAt: null,
+        deleted: false,
       };
       addMessage(queryClient, pending);
       return { pending };
@@ -230,5 +243,56 @@ export const useChatActions = (me: string) => {
     void send("POST", `${channelPath(channelId)}/typing`).catch(() => undefined);
   };
 
-  return { post, markRead, createChannel, updateChannel, openDirect, typing };
+  /** Edited or deleted: the server's answer replaces the message (also live for the others). */
+  const replaced = (message: Message) => addMessage(queryClient, message);
+
+  const edit = useMutation({
+    mutationFn: async ({ id, text, mentions }: { id: string; text: string; mentions: string[] }) =>
+      (
+        await send<{ message: Message }>("PATCH", `/messages/${encodeURIComponent(id)}`, {
+          text,
+          mentions,
+        })
+      ).message,
+    onSuccess: replaced,
+  });
+
+  const remove = useMutation({
+    mutationFn: async (id: string) =>
+      (await send<{ message: Message }>("DELETE", `/messages/${encodeURIComponent(id)}`)).message,
+    onSuccess: replaced,
+    onSettled: refreshChannels,
+  });
+
+  const mute = useMutation({
+    mutationFn: ({ channelId, muted }: { channelId: string; muted: boolean }) =>
+      send("POST", `${channelPath(channelId)}/mute`, { muted }),
+    onMutate: ({ channelId, muted }) =>
+      patchChannel(queryClient, channelId, (channel) => ({ ...channel, muted })),
+    onSettled: refreshChannels,
+  });
+
+  const leave = useMutation({
+    mutationFn: (channelId: string) => send("POST", `${channelPath(channelId)}/leave`),
+    onSettled: refreshChannels,
+  });
+
+  const removeChannel = useMutation({
+    mutationFn: (channelId: string) => send("DELETE", channelPath(channelId)),
+    onSettled: refreshChannels,
+  });
+
+  return {
+    post,
+    markRead,
+    createChannel,
+    updateChannel,
+    openDirect,
+    typing,
+    edit,
+    remove,
+    mute,
+    leave,
+    removeChannel,
+  };
 };

@@ -2,7 +2,7 @@
  * Chat messages in Kontext's SQLite, with their cards (mails, tasks, contacts) and files; and the
  * way back from a mail: where it was discussed, and where its sender was talked about before.
  */
-import { and, count, desc, eq, gt, inArray, lt, or, sql } from "drizzle-orm";
+import { and, count, desc, eq, exists, gt, inArray, isNull, lt, or, sql } from "drizzle-orm";
 import type { Db } from "../db";
 import * as schema from "../db/schema";
 import { type Card, type Message, messageSummary } from "./chat";
@@ -35,7 +35,16 @@ export type MessageStore = {
   discussed: (ref: string, threadId: string | null) => Promise<Discussion[]>;
   /** Channels where mails of this sender were shared, the latest first. */
   channelsOfParty: (party: string) => Promise<string[]>;
+  get: (id: string) => Promise<Message | null>;
+  edit: (id: string, text: string, mentions: string[]) => Promise<Message>;
+  /** Removes text, cards and files; the message keeps its place as "deleted". */
+  remove: (id: string) => Promise<Message>;
+  /** Messages in these channels whose text or card has the words, the latest first. */
+  search: (channelIds: string[], words: string, limit: number) => Promise<Message[]>;
 };
+
+/** For LIKE: the words as they are, % and _ not as wildcards. */
+const likeWords = (words: string) => `%${words.replace(/[\\%_]/g, (c) => `\\${c}`)}%`;
 
 type MessageRow = typeof schema.chatMessages.$inferSelect;
 type CardRow = typeof schema.chatCards.$inferSelect;
@@ -85,7 +94,14 @@ export const createMessageStore = (db: Db, files: ChatFiles): MessageStore => {
       files: attached.get(row.id) ?? [],
       cards: cards.get(row.id) ?? [],
       createdAt: row.createdAt.toISOString(),
+      editedAt: row.editedAt?.toISOString() ?? null,
+      deleted: Boolean(row.deletedAt),
     }));
+  };
+
+  const get = async (id: string) => {
+    const [row] = await db.select().from(schema.chatMessages).where(eq(schema.chatMessages.id, id));
+    return row ? (await complete([row]))[0]! : null;
   };
 
   return {
@@ -111,6 +127,8 @@ export const createMessageStore = (db: Db, files: ChatFiles): MessageStore => {
         text,
         mentions: JSON.stringify([...new Set(mentions)]),
         createdAt: stamp(),
+        editedAt: null,
+        deletedAt: null,
       };
       await db.insert(schema.chatMessages).values(row);
       if (cards.length) {
@@ -177,6 +195,53 @@ export const createMessageStore = (db: Db, files: ChatFiles): MessageStore => {
           return { ...row, createdAt: row.createdAt.toISOString(), replies: after?.replies ?? 0 };
         }),
       );
+    },
+    get,
+    edit: async (id, text, mentions) => {
+      await db
+        .update(schema.chatMessages)
+        .set({ text, mentions: JSON.stringify([...new Set(mentions)]), editedAt: new Date() })
+        .where(eq(schema.chatMessages.id, id));
+      return (await get(id))!;
+    },
+    remove: async (id) => {
+      await db
+        .update(schema.chatMessages)
+        .set({ text: "", mentions: "[]", deletedAt: new Date() })
+        .where(eq(schema.chatMessages.id, id));
+      await db.delete(schema.chatCards).where(eq(schema.chatCards.messageId, id));
+      await files.removeOfMessage(id);
+      return (await get(id))!;
+    },
+    search: async (channelIds, words, limit) => {
+      if (!channelIds.length) return [];
+      const pattern = likeWords(words);
+      const rows = await db
+        .select()
+        .from(schema.chatMessages)
+        .where(
+          and(
+            inArray(schema.chatMessages.channelId, channelIds),
+            isNull(schema.chatMessages.deletedAt),
+            or(
+              sql`${schema.chatMessages.text} like ${pattern} escape '\\'`,
+              exists(
+                db
+                  .select({ one: sql`1` })
+                  .from(schema.chatCards)
+                  .where(
+                    and(
+                      eq(schema.chatCards.messageId, schema.chatMessages.id),
+                      sql`${schema.chatCards.label} like ${pattern} escape '\\'`,
+                    ),
+                  ),
+              ),
+            ),
+          ),
+        )
+        .orderBy(desc(schema.chatMessages.createdAt))
+        .limit(limit);
+      return complete(rows);
     },
     channelsOfParty: async (party) => {
       if (!party) return [];

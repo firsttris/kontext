@@ -3,12 +3,14 @@
  * as bubbles (the own on the right). Each message shows its text, photos, files and cards, the
  * tasks made from it, and its actions.
  */
-import { Ellipsis, ListChecks } from "lucide-react";
+import { Ellipsis, ListChecks, Pencil, Trash2 } from "lucide-react";
+import { type KeyboardEvent, useState } from "react";
 import { Avatar } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
 import { MenuContent, MenuItem, MenuRoot, MenuTrigger } from "@/components/ui/menu";
 import { ItemLink } from "@/features/links/item-link";
 import { useTasks } from "@/features/tasks/queries";
-import { firstName, type Message, type MessageRun, type Person } from "@/lib/chat";
+import { firstName, keptMentions, type Message, type MessageRun, type Person } from "@/lib/chat";
 import { tasksOfMessage } from "@/lib/chat-cards";
 import { cn } from "@/lib/cn";
 import { STATUS_LABELS } from "@/lib/tasks";
@@ -30,10 +32,24 @@ type Props = {
   /** The message to point at (opened from a task), marked for a moment. */
   highlight?: string;
   onMakeTask: (message: Message) => void;
+  onEdit: (message: Message, text: string, mentions: string[]) => void;
+  onDelete: (message: Message) => void;
 };
 
-const Actions = ({ message, onMakeTask }: { message: Message; onMakeTask: () => void }) =>
-  isPending(message) ? null : (
+const Actions = ({
+  message,
+  own,
+  onMakeTask,
+  onEdit,
+  onDelete,
+}: {
+  message: Message;
+  own: boolean;
+  onMakeTask: () => void;
+  onEdit: () => void;
+  onDelete: () => void;
+}) =>
+  isPending(message) || message.deleted ? null : (
     <MenuRoot>
       <MenuTrigger
         aria-label={m.chat_message_actions()}
@@ -45,9 +61,73 @@ const Actions = ({ message, onMakeTask }: { message: Message; onMakeTask: () => 
         <MenuItem onSelect={onMakeTask}>
           <ListChecks size={15} /> {m.chat_make_task()}
         </MenuItem>
+        {own && message.text ? (
+          <MenuItem onSelect={onEdit}>
+            <Pencil size={15} /> {m.chat_edit_message()}
+          </MenuItem>
+        ) : null}
+        {own ? (
+          <MenuItem onSelect={onDelete} className="text-danger">
+            <Trash2 size={15} /> {m.chat_delete_message()}
+          </MenuItem>
+        ) : null}
       </MenuContent>
     </MenuRoot>
   );
+
+/** Changing one's message in place: Enter saves, Escape leaves it as it was. */
+const EditField = ({
+  message,
+  people,
+  onSave,
+  onCancel,
+}: {
+  message: Message;
+  people: Person[];
+  onSave: (text: string, mentions: string[]) => void;
+  onCancel: () => void;
+}) => {
+  const [text, setText] = useState(message.text);
+  const save = () => {
+    const value = text.trim();
+    if (!value) return;
+    if (value === message.text) return onCancel();
+    const mentioned = people.filter((person) => message.mentions.includes(person.id));
+    onSave(value, keptMentions(value, mentioned));
+  };
+  const onKeyDown = (event: KeyboardEvent<HTMLTextAreaElement>) => {
+    if (event.key === "Escape") {
+      event.preventDefault();
+      onCancel();
+    }
+    if (event.key === "Enter" && !event.shiftKey && !event.nativeEvent.isComposing) {
+      event.preventDefault();
+      save();
+    }
+  };
+  return (
+    <div className="flex w-full max-w-[640px] flex-col gap-1.5">
+      <textarea
+        aria-label={m.chat_edit_message()}
+        value={text}
+        // biome-ignore lint/a11y/noAutofocus: editing starts where one asked for it
+        autoFocus
+        onFocus={(event) => event.currentTarget.setSelectionRange(text.length, text.length)}
+        onChange={(event) => setText(event.target.value)}
+        onKeyDown={onKeyDown}
+        className="field-sizing-content min-h-11 w-full resize-none rounded-xl border border-border bg-bg px-3 py-2 text-[15px] text-fg outline-none focus:border-muted md:text-[14px]"
+      />
+      <div className="flex justify-end gap-1.5">
+        <Button variant="ghost" size="sm" onClick={onCancel}>
+          {m.chat_cancel()}
+        </Button>
+        <Button variant="primary" size="sm" disabled={!text.trim()} onClick={save}>
+          {m.chat_save()}
+        </Button>
+      </div>
+    </div>
+  );
+};
 
 const Item = ({
   message,
@@ -56,9 +136,12 @@ const Item = ({
   people,
   highlight,
   onMakeTask,
+  onEdit,
+  onDelete,
 }: { message: Message; own: boolean } & Omit<Props, "run" | "nameOf">) => {
   const { tasks } = useTasks();
   const made = tasksOfMessage(tasks, message.id);
+  const [editing, setEditing] = useState(false);
   return (
     <div
       data-message={message.id}
@@ -72,7 +155,21 @@ const Item = ({
       <div
         className={cn("flex max-w-full items-start gap-1", own && "flex-row-reverse md:flex-row")}
       >
-        {message.text ? (
+        {editing ? (
+          <EditField
+            message={message}
+            people={people}
+            onCancel={() => setEditing(false)}
+            onSave={(text, mentions) => {
+              onEdit(message, text, mentions);
+              setEditing(false);
+            }}
+          />
+        ) : message.deleted ? (
+          <p className="m-0 rounded-2xl border border-dashed border-border px-3 py-1.5 text-[14px] text-muted italic md:border-0 md:p-0">
+            {m.chat_message_deleted()}
+          </p>
+        ) : message.text ? (
           <div
             className={cn(
               "max-w-[85vw] rounded-2xl px-3 py-2 md:max-w-none md:flex-1 md:rounded-none md:bg-transparent md:p-0 md:text-fg",
@@ -84,7 +181,15 @@ const Item = ({
         ) : (
           <span className="hidden flex-1 md:block" />
         )}
-        <Actions message={message} onMakeTask={() => onMakeTask(message)} />
+        {editing ? null : (
+          <Actions
+            message={message}
+            own={own}
+            onMakeTask={() => onMakeTask(message)}
+            onEdit={() => setEditing(true)}
+            onDelete={() => onDelete(message)}
+          />
+        )}
       </div>
       <MessageFiles files={message.files} />
       {message.cards.map((card) => (

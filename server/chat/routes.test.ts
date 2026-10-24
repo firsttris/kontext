@@ -26,7 +26,14 @@ const memoryStore = (): ChatStore => {
     list: async (viewer) =>
       channels
         .filter((channel) => canSee(channel, viewer))
-        .map((channel) => ({ ...channel, unread: 0, mentions: 0, readAt: null, last: null })),
+        .map((channel) => ({
+          ...channel,
+          unread: 0,
+          mentions: 0,
+          readAt: null,
+          last: null,
+          muted: false,
+        })),
     get: async (id) => channels.find((channel) => channel.id === id) ?? null,
     createChannel: async (name, members, createdBy) =>
       add({ kind: "channel", name, accountId: null, members: [createdBy, ...members], createdBy }),
@@ -47,6 +54,17 @@ const memoryStore = (): ChatStore => {
       return at;
     },
     reads: async (channelId) => reads[channelId] ?? {},
+    mute: async () => undefined,
+    leave: async (channelId, memberId) => {
+      const channel = channels.find((c) => c.id === channelId);
+      if (channel) channel.members = channel.members.filter((m) => m !== memberId);
+    },
+    remove: async (channelId) => {
+      channels.splice(
+        channels.findIndex((c) => c.id === channelId),
+        1,
+      );
+    },
   };
 };
 
@@ -84,17 +102,39 @@ const memoryMessages = () => {
     },
     ofMessages: async () => new Map(),
     pruneUnsent: async () => 0,
+    removeOfMessage: async () => undefined,
+    removeOfChannel: async () => undefined,
   };
   const store: MessageStore = {
     page: async (channelId) => messages.filter((m) => m.channelId === channelId).reverse(),
     post: async ({ fileIds, ...post }) => {
       const id = `m${messages.length + 1}`;
       const attached = await files.attach(fileIds, { id, ...post });
-      const message = { ...post, id, files: attached, createdAt: new Date().toISOString() };
+      const message = {
+        ...post,
+        id,
+        files: attached,
+        createdAt: new Date().toISOString(),
+        editedAt: null,
+        deleted: false,
+      };
       messages.push(message);
       return message;
     },
     last: async () => new Map(),
+    get: async (id) => messages.find((m) => m.id === id) ?? null,
+    edit: async (id, text) => {
+      const message = messages.find((m) => m.id === id)!;
+      Object.assign(message, { text, editedAt: new Date().toISOString() });
+      return message;
+    },
+    remove: async (id) => {
+      const message = messages.find((m) => m.id === id)!;
+      Object.assign(message, { text: "", cards: [], files: [], deleted: true });
+      return message;
+    },
+    search: async (channelIds, words) =>
+      messages.filter((m) => channelIds.includes(m.channelId) && m.text.includes(words)),
     discussed: async (ref, threadId) =>
       messages
         .filter((m) => m.cards.some((card) => card.ref === ref || card.threadId === threadId))
@@ -258,5 +298,46 @@ describe("/api/chat", () => {
     const { send } = setup();
     const { body } = await send("POST", "/direct", { members: ["anna"] });
     expect((await send("POST", `/channels/${body.channel.id}/messages`, {})).status).toBe(400);
+  });
+  it("lets only the author edit or delete a message, live for the others", async () => {
+    const { send, as, listen } = setup();
+    const { body } = await send("POST", "/channels", { name: "angebote", members: ["max"] });
+    const posted = await send("POST", `/channels/${body.channel.id}/messages`, {
+      text: "Angebt raus",
+    });
+    const id = posted.body.message.id;
+    const max = listen("max");
+    expect(
+      (await send("PATCH", `/messages/${id}`, { text: "Angebot raus" })).body.message.text,
+    ).toBe("Angebot raus");
+    as(person("max"));
+    expect((await send("PATCH", `/messages/${id}`, { text: "Hack" })).status).toBe(404);
+    expect((await send("DELETE", `/messages/${id}`)).status).toBe(404);
+    as(person("jonas", ["info"]));
+    expect((await send("DELETE", `/messages/${id}`)).body.message.deleted).toBe(true);
+    expect((await send("PATCH", `/messages/${id}`, { text: "wieder da" })).status).toBe(404);
+    expect(max.filter((event) => event.type === "changed")).toHaveLength(2);
+  });
+
+  it("searches only in channels one sees", async () => {
+    const { send, as } = setup();
+    const { body } = await send("POST", "/channels", { name: "intern", members: [] });
+    await send("POST", `/channels/${body.channel.id}/messages`, { text: "Gehalt Max" });
+    expect((await send("GET", "/search?q=Gehalt")).body.messages).toHaveLength(1);
+    as(person("max"));
+    expect((await send("GET", "/search?q=Gehalt")).body.messages).toEqual([]);
+  });
+
+  it("lets members leave a channel and only its maker delete it", async () => {
+    const { send, as } = setup();
+    const { body } = await send("POST", "/channels", { name: "kurz", members: ["max"] });
+    const path = `/channels/${body.channel.id}`;
+    as(person("max"));
+    expect((await send("DELETE", path)).status).toBe(403);
+    expect((await send("POST", `${path}/leave`)).status).toBe(200);
+    expect((await send("GET", `${path}/messages`)).status).toBe(404);
+    as(person("jonas", ["info"]));
+    expect((await send("DELETE", path)).status).toBe(200);
+    expect((await send("GET", `${path}/messages`)).status).toBe(404);
   });
 });

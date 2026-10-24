@@ -222,8 +222,24 @@ export const chatMessages = sqliteTable(
     /** JSON: the personal account ids mentioned with @. */
     mentions: text("mentions").notNull(),
     createdAt: integer("created_at", { mode: "timestamp_ms" }).notNull(),
+    editedAt: integer("edited_at", { mode: "timestamp_ms" }),
+    /** A deleted message keeps its place ("Nachricht gelöscht") but loses its content. */
+    deletedAt: integer("deleted_at", { mode: "timestamp_ms" }),
   },
   (table) => [index("chat_messages_channel").on(table.channelId, table.createdAt)],
+);
+
+/** One person's settings for a channel: muted ones count no unread and send no notification. */
+export const chatPrefs = sqliteTable(
+  "chat_prefs",
+  {
+    channelId: text("channel_id")
+      .notNull()
+      .references(() => chatChannels.id, { onDelete: "cascade" }),
+    memberId: text("member_id").notNull(),
+    muted: integer("muted", { mode: "boolean" }).notNull(),
+  },
+  (table) => [primaryKey({ columns: [table.channelId, table.memberId] })],
 );
 
 export const chatReads = sqliteTable(

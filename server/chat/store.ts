@@ -1,5 +1,5 @@
 /** Team chat in Kontext's SQLite: channels, their members and read marks (messages: messages.ts). */
-import { and, eq, inArray, sql } from "drizzle-orm";
+import { and, eq, inArray, isNull, sql } from "drizzle-orm";
 import type { Db } from "../db";
 import * as schema from "../db/schema";
 import {
@@ -24,7 +24,14 @@ export type ChatStore = {
   markRead: (channelId: string, memberId: string, at: Date) => Promise<Date>;
   /** Up to when each member read the channel. */
   reads: (channelId: string) => Promise<Record<string, string>>;
+  mute: (channelId: string, memberId: string, muted: boolean) => Promise<void>;
+  /** Takes the person out of a named channel; the last one out removes it. */
+  leave: (channelId: string, memberId: string) => Promise<void>;
+  remove: (channelId: string) => Promise<void>;
 };
+
+/** Without a read mark (someone new in #allgemein or info@), only this much counts as unread. */
+const UNREAD_WITHOUT_MARK_MS = 7 * 86_400_000;
 
 const TEAM_NAME = "allgemein";
 /** A fixed id: there is one #allgemein, even when two people open the chat at the same time. */
@@ -81,6 +88,16 @@ export const createChatStore = (db: Db, messages: Pick<MessageStore, "last">): C
     return inserted.length ? id : null;
   };
 
+  /** People who join a channel have read it up to now. */
+  const joined = async (channelId: string, memberIds: string[]) => {
+    if (!memberIds.length) return;
+    const readAt = new Date();
+    await db
+      .insert(schema.chatReads)
+      .values(memberIds.map((memberId) => ({ channelId, memberId, readAt })))
+      .onConflictDoNothing();
+  };
+
   /** #allgemein and one channel per shared mailbox exist from the first look on. */
   const ensureStandard = async (sharedAccountIds: string[], by: string) => {
     await insertChannel(
@@ -116,7 +133,8 @@ export const createChatStore = (db: Db, messages: Pick<MessageStore, "last">): C
         and(
           inArray(schema.chatMessages.channelId, channelIds),
           sql`${schema.chatMessages.authorId} != ${me}`,
-          sql`${schema.chatMessages.createdAt} > coalesce(${schema.chatReads.readAt}, 0)`,
+          isNull(schema.chatMessages.deletedAt),
+          sql`${schema.chatMessages.createdAt} > coalesce(${schema.chatReads.readAt}, ${Date.now() - UNREAD_WITHOUT_MARK_MS})`,
         ),
       )
       .groupBy(schema.chatMessages.channelId);
@@ -134,7 +152,7 @@ export const createChatStore = (db: Db, messages: Pick<MessageStore, "last">): C
         .map((row) => toChannel(row, members.get(row.id) ?? []))
         .filter((channel) => canSee(channel, viewer));
       const ids = visible.map((channel) => channel.id);
-      const [unread, last, reads] = await Promise.all([
+      const [unread, last, reads, prefs] = await Promise.all([
         unreadOf(ids, viewer.me),
         messages.last(visible.filter((channel) => channel.lastMessageAt).map((c) => c.id)),
         ids.length
@@ -148,22 +166,27 @@ export const createChatStore = (db: Db, messages: Pick<MessageStore, "last">): C
                 ),
               )
           : Promise.resolve([]),
+        db.select().from(schema.chatPrefs).where(eq(schema.chatPrefs.memberId, viewer.me)),
       ]);
       const readAt = new Map(reads.map((row) => [row.channelId, row.readAt.toISOString()]));
+      const muted = new Set(prefs.filter((row) => row.muted).map((row) => row.channelId));
       return visible.map((channel) => ({
         ...channel,
         unread: unread.get(channel.id)?.unread ?? 0,
         mentions: unread.get(channel.id)?.mentions ?? 0,
         readAt: readAt.get(channel.id) ?? null,
         last: last.get(channel.id) ?? null,
+        muted: muted.has(channel.id),
       }));
     },
     get,
     createChannel: async (name, members, createdBy) => {
+      const everyone = [...new Set([createdBy, ...members])];
       const id = await insertChannel(
         { kind: "channel", name, accountId: null, directKey: null, createdBy },
-        [...new Set([createdBy, ...members])],
+        everyone,
       );
+      await joined(id!, everyone);
       return (await get(id!))!;
     },
     direct: async (members, createdBy) => {
@@ -194,6 +217,11 @@ export const createChatStore = (db: Db, messages: Pick<MessageStore, "last">): C
             .insert(schema.chatMembers)
             .values(members.map((memberId) => ({ channelId: id, memberId })));
         }
+        // Who is new starts reading from now, not with the whole history unread.
+        await joined(
+          id,
+          members.filter((member) => !current.members.includes(member)),
+        );
       }
       return get(id);
     },
@@ -212,6 +240,32 @@ export const createChatStore = (db: Db, messages: Pick<MessageStore, "last">): C
           and(eq(schema.chatReads.channelId, channelId), eq(schema.chatReads.memberId, memberId)),
         );
       return row!.readAt;
+    },
+    mute: async (channelId, memberId, muted) => {
+      await db
+        .insert(schema.chatPrefs)
+        .values({ channelId, memberId, muted })
+        .onConflictDoUpdate({
+          target: [schema.chatPrefs.channelId, schema.chatPrefs.memberId],
+          set: { muted },
+        });
+    },
+    leave: async (channelId, memberId) => {
+      await db
+        .delete(schema.chatMembers)
+        .where(
+          and(
+            eq(schema.chatMembers.channelId, channelId),
+            eq(schema.chatMembers.memberId, memberId),
+          ),
+        );
+      const left = await membersOf([channelId]);
+      if (!left.get(channelId)?.length) {
+        await db.delete(schema.chatChannels).where(eq(schema.chatChannels.id, channelId));
+      }
+    },
+    remove: async (channelId) => {
+      await db.delete(schema.chatChannels).where(eq(schema.chatChannels.id, channelId));
     },
     reads: async (channelId) => {
       const rows = await db

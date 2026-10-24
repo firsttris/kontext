@@ -6,7 +6,7 @@
 import { mkdirSync } from "node:fs";
 import { rm } from "node:fs/promises";
 import { join } from "node:path";
-import { and, eq, inArray, isNull, lt } from "drizzle-orm";
+import { and, eq, inArray, isNull, lt, type SQL } from "drizzle-orm";
 import type { Db } from "../db";
 import * as schema from "../db/schema";
 import type { ChatFile } from "./chat";
@@ -24,6 +24,9 @@ export type ChatFiles = {
   ofMessages: (messageIds: string[]) => Promise<Map<string, ChatFile[]>>;
   /** Removes uploads that were never sent, from before `before`. */
   pruneUnsent: (before: Date) => Promise<number>;
+  /** Removes the files of a deleted message, or of a whole channel. */
+  removeOfMessage: (messageId: string) => Promise<void>;
+  removeOfChannel: (channelId: string) => Promise<void>;
 };
 
 type Row = typeof schema.chatFiles.$inferSelect;
@@ -33,6 +36,14 @@ export const createChatFiles = (db: Db, dir: string): ChatFiles => {
   mkdirSync(dir, { recursive: true });
   // Ids are UUIDs made here, never names from the upload: no path tricks.
   const pathOf = (id: string) => join(dir, id);
+
+  /** Deletes the bytes and rows of the files `where` picks. */
+  const removeWhere = async (where: SQL | undefined) => {
+    const rows = await db.select({ id: schema.chatFiles.id }).from(schema.chatFiles).where(where);
+    for (const { id } of rows) await rm(pathOf(id), { force: true });
+    await db.delete(schema.chatFiles).where(where);
+    return rows.length;
+  };
 
   return {
     save: async (channelId, uploadedBy, file) => {
@@ -87,18 +98,13 @@ export const createChatFiles = (db: Db, dir: string): ChatFiles => {
       }
       return byMessage;
     },
-    pruneUnsent: async (before) => {
-      const unsent = and(
-        isNull(schema.chatFiles.messageId),
-        lt(schema.chatFiles.createdAt, before),
-      );
-      const rows = await db
-        .select({ id: schema.chatFiles.id })
-        .from(schema.chatFiles)
-        .where(unsent);
-      for (const { id } of rows) await rm(pathOf(id), { force: true });
-      await db.delete(schema.chatFiles).where(unsent);
-      return rows.length;
+    pruneUnsent: (before) =>
+      removeWhere(and(isNull(schema.chatFiles.messageId), lt(schema.chatFiles.createdAt, before))),
+    removeOfMessage: async (messageId) => {
+      await removeWhere(eq(schema.chatFiles.messageId, messageId));
+    },
+    removeOfChannel: async (channelId) => {
+      await removeWhere(eq(schema.chatFiles.channelId, channelId));
     },
   };
 };

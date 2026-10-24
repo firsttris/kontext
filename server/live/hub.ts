@@ -7,6 +7,8 @@ import type { Message, Viewer } from "../chat/chat";
 
 export type LiveEvent =
   | { type: "message"; channelId: string; message: Message }
+  // Edited or deleted.
+  | { type: "changed"; channelId: string; message: Message }
   | { type: "typing"; channelId: string; memberId: string }
   | { type: "read"; channelId: string; memberId: string; at: string }
   | { type: "channels" }

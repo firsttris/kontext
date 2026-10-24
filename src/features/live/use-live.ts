@@ -32,6 +32,11 @@ export const applyLiveEvent = (queryClient: QueryClient, me: string, event: Live
       void queryClient.invalidateQueries({ queryKey: DISCUSSED_KEY });
       return;
     }
+    case "changed":
+      // Edited or deleted: in place, without a notification.
+      addMessage(queryClient, event.message);
+      void queryClient.invalidateQueries({ queryKey: CHANNELS_KEY });
+      return;
     case "typing":
       if (event.memberId !== me) startTyping(event.channelId, event.memberId);
       return;
@@ -56,6 +61,7 @@ export const applyLiveEvent = (queryClient: QueryClient, me: string, event: Live
 
 const EVENT_TYPES: LiveEvent["type"][] = [
   "message",
+  "changed",
   "typing",
   "read",
   "channels",

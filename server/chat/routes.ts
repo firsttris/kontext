@@ -10,12 +10,16 @@ import {
   type Channel,
   canSee,
   channelPatchSchema,
+  editMessageSchema,
   INLINE_TYPES,
   MAX_FILE_BYTES,
+  type Message,
+  muteSchema,
   newChannelSchema,
   newDirectSchema,
   newMessageSchema,
   readSchema,
+  searchSchema,
   type Viewer,
 } from "./chat";
 import type { ChatFiles } from "./files";
@@ -154,6 +158,85 @@ export const createChatRoutes = ({ store, messages, files, hub, accountsOf }: Ch
       { type: "typing", channelId: channel.id, memberId: viewer.me },
       (other) => other.me !== viewer.me && canSee(channel, other),
     );
+    return c.json({ ok: true });
+  });
+
+  /** One's own message in a channel one still sees, not yet deleted. */
+  const ownMessage = async (id: string, viewer: Viewer) => {
+    const message = await messages.get(id);
+    if (!message || message.authorId !== viewer.me || message.deleted) return null;
+    const channel = await visible(message.channelId, viewer);
+    return channel ? { message, channel } : null;
+  };
+  const changed = (channel: Channel, message: Message) =>
+    hub.publish({ type: "changed", channelId: channel.id, message }, (other) =>
+      canSee(channel, other),
+    );
+
+  app.patch("/messages/:id", async (c) => {
+    const own = await ownMessage(c.req.param("id"), c.get("viewer"));
+    if (!own) return c.json({ error: "Nur eigene Nachrichten lassen sich ändern." }, 404);
+    const parsed = editMessageSchema.safeParse(await c.req.json().catch(() => null));
+    if (!parsed.success) return c.json({ error: "Die Nachricht ist leer." }, 400);
+    const message = await messages.edit(own.message.id, parsed.data.text, parsed.data.mentions);
+    changed(own.channel, message);
+    return c.json({ message });
+  });
+
+  app.delete("/messages/:id", async (c) => {
+    const own = await ownMessage(c.req.param("id"), c.get("viewer"));
+    if (!own) return c.json({ error: "Nur eigene Nachrichten lassen sich löschen." }, 404);
+    const message = await messages.remove(own.message.id);
+    changed(own.channel, message);
+    return c.json({ message });
+  });
+
+  /** Messages with these words in all channels one sees. */
+  app.get("/search", async (c) => {
+    const words = searchSchema.safeParse(c.req.query("q") ?? "");
+    if (!words.success) return c.json({ messages: [] });
+    const viewer = c.get("viewer");
+    const shared = c
+      .get("accounts")
+      .filter((account) => !account.isPersonal)
+      .map((account) => account.id);
+    const ids = (await store.list(viewer, shared)).map((channel) => channel.id);
+    return c.json({ messages: await messages.search(ids, words.data, 30) });
+  });
+
+  app.post("/channels/:id/mute", async (c) => {
+    const viewer = c.get("viewer");
+    const channel = await visible(c.req.param("id"), viewer);
+    if (!channel) return c.json({ error: "Unbekannter Kanal" }, 404);
+    const parsed = muteSchema.safeParse(await c.req.json().catch(() => null));
+    if (!parsed.success) return c.json({ error: "Angaben unvollständig." }, 400);
+    await store.mute(channel.id, viewer.me, parsed.data.muted);
+    return c.json({ muted: parsed.data.muted });
+  });
+
+  app.post("/channels/:id/leave", async (c) => {
+    const viewer = c.get("viewer");
+    const channel = await visible(c.req.param("id"), viewer);
+    if (!channel) return c.json({ error: "Unbekannter Kanal" }, 404);
+    if (channel.kind !== "channel") {
+      return c.json({ error: "Diesen Kanal kann man nicht verlassen." }, 403);
+    }
+    await store.leave(channel.id, viewer.me);
+    announce(channel, [viewer.me]);
+    return c.json({ ok: true });
+  });
+
+  /** Only who made a named channel removes it, with all its messages and files. */
+  app.delete("/channels/:id", async (c) => {
+    const viewer = c.get("viewer");
+    const channel = await visible(c.req.param("id"), viewer);
+    if (!channel) return c.json({ error: "Unbekannter Kanal" }, 404);
+    if (channel.kind !== "channel" || channel.createdBy !== viewer.me) {
+      return c.json({ error: "Nur wer den Kanal angelegt hat, kann ihn löschen." }, 403);
+    }
+    await files.removeOfChannel(channel.id);
+    await store.remove(channel.id);
+    announce(channel);
     return c.json({ ok: true });
   });
 

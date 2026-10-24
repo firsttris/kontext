@@ -50,8 +50,9 @@ export const sortDirect = <T extends Channel>(channels: T[]): T[] =>
     .filter((channel) => channel.kind === "direct")
     .sort((a, b) => (b.lastMessageAt ?? b.createdAt).localeCompare(a.lastMessageAt ?? a.createdAt));
 
-export const totalUnread = (channels: Pick<ChannelSummary, "unread">[]): number =>
-  channels.reduce((sum, channel) => sum + channel.unread, 0);
+/** Unread messages for the badges; muted channels do not count. */
+export const totalUnread = (channels: Pick<ChannelSummary, "unread" | "muted">[]): number =>
+  channels.reduce((sum, channel) => sum + (channel.muted ? 0 : channel.unread), 0);
 
 /** Several messages of one person close together show under one name. */
 const RUN_MINUTES = 5;
@@ -233,3 +234,27 @@ export const readBy = (
         member !== message.authorId && Date.parse(at) >= Date.parse(message.createdAt),
     )
     .map(([member]) => member);
+
+/** A line of a found message around the words: "… Rohr DN 50 bestellen, morgen …". */
+export const snippet = (text: string, words: string, size = 120): string => {
+  const flat = text.replace(/\s+/g, " ").trim();
+  const at = flat.toLocaleLowerCase("de-DE").indexOf(words.trim().toLocaleLowerCase("de-DE"));
+  const start = at > 40 ? at - 30 : 0;
+  // Not in the middle of a word.
+  const part = flat.slice(start, start + size).replace(start > 0 ? /^\S*\s/ : /^/, "");
+  return `${start > 0 ? "…" : ""}${part}${start + size < flat.length ? "…" : ""}`;
+};
+
+/** "10:04", "Gestern", "Mi.", "14.10." */
+export const shortTime = (iso: string, now = new Date()): string => {
+  const at = new Date(iso);
+  const day = dateKey(at);
+  if (day === dateKey(now)) {
+    return at.toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" });
+  }
+  if (day === dateKey(new Date(now.getTime() - 86_400_000))) return m.chat_yesterday();
+  if (now.getTime() - at.getTime() < 6 * 86_400_000) {
+    return at.toLocaleDateString("de-DE", { weekday: "short" });
+  }
+  return at.toLocaleDateString("de-DE", { day: "2-digit", month: "2-digit" });
+};

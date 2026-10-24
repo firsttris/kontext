@@ -107,6 +107,7 @@ fine on a VPS with 2 vCPUs and 4 GB RAM.
 - **Photos and files**: from the phone's camera, by drag and drop or paste; photos are made smaller before sending.
 - **Mails, tasks and contacts as cards**: "Discuss" on a mail (`b`) talks about it in a channel instead of forwarding it internally; the mail then shows where it was discussed. Only who may open the mailbox opens the card – nothing is copied.
 - **Task from a message**, linked both ways.
+- **Search** across all your channels; edit or delete your own messages; mute, leave or delete channels.
 - **On the phone**: its own tab, conversations as bubbles.
 
 ### 📅 Calendar
