@@ -80,5 +80,27 @@ export const createPushRoutes = ({
     return c.json({ ok: true });
   });
 
+  /** The mailboxes (own, shared) this person wants no new-mail pushes for. */
+  app.get("/mailboxes", async (c) => {
+    const info = await infoOf(c.req.raw);
+    const me = info?.accounts.find((account) => account.isPersonal)?.id;
+    if (!info || !me) return c.json({ error: "Nicht angemeldet" }, 401);
+    return c.json({ off: await store.mailboxesOff(me) });
+  });
+
+  app.put("/mailboxes/:accountId", async (c) => {
+    const info = await infoOf(c.req.raw);
+    const me = info?.accounts.find((account) => account.isPersonal)?.id;
+    if (!info || !me) return c.json({ error: "Nicht angemeldet" }, 401);
+    const accountId = c.req.param("accountId");
+    if (!info.accounts.some((account) => account.id === accountId)) {
+      return c.json({ error: "Unbekanntes Postfach" }, 404);
+    }
+    const body = (await c.req.json().catch(() => null)) as { on?: unknown } | null;
+    if (typeof body?.on !== "boolean") return c.json({ error: "Angaben unvollständig." }, 400);
+    await store.setMailbox(me, accountId, body.on);
+    return c.json({ off: await store.mailboxesOff(me) });
+  });
+
   return app;
 };

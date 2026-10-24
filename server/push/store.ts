@@ -1,5 +1,5 @@
 /** The browsers' push subscriptions, and the VAPID key the server signs its pushes with. */
-import { desc, eq, inArray } from "drizzle-orm";
+import { and, desc, eq, inArray } from "drizzle-orm";
 import type { Sealer } from "../crypto";
 import type { Db } from "../db";
 import * as schema from "../db/schema";
@@ -12,6 +12,9 @@ export type PushStore = {
   targetsOf: (memberIds: string[]) => Promise<(PushTarget & { memberId: string })[]>;
   /** Everyone with a subscription, with the newest session to act for them. */
   subscribers: () => Promise<{ memberId: string; sessionId: string }[]>;
+  /** The mailboxes this person wants no mail pushes for. */
+  mailboxesOff: (memberId: string) => Promise<string[]>;
+  setMailbox: (memberId: string, accountId: string, on: boolean) => Promise<void>;
 };
 
 export const createPushStore = (db: Db): PushStore => ({
@@ -49,6 +52,30 @@ export const createPushStore = (db: Db): PushStore => ({
       .orderBy(desc(schema.pushSubscriptions.createdAt));
     const seen = new Set<string>();
     return rows.filter((row) => !seen.has(row.memberId) && seen.add(row.memberId));
+  },
+  mailboxesOff: async (memberId) =>
+    (
+      await db
+        .select({ accountId: schema.pushMailboxesOff.accountId })
+        .from(schema.pushMailboxesOff)
+        .where(eq(schema.pushMailboxesOff.memberId, memberId))
+    ).map((row) => row.accountId),
+  setMailbox: async (memberId, accountId, on) => {
+    if (on) {
+      await db
+        .delete(schema.pushMailboxesOff)
+        .where(
+          and(
+            eq(schema.pushMailboxesOff.memberId, memberId),
+            eq(schema.pushMailboxesOff.accountId, accountId),
+          ),
+        );
+    } else {
+      await db
+        .insert(schema.pushMailboxesOff)
+        .values({ memberId, accountId })
+        .onConflictDoNothing();
+    }
   },
 });
 

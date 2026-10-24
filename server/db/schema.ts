@@ -319,3 +319,13 @@ export const pushSubscriptions = sqliteTable(
   },
   (table) => [index("push_subscriptions_member").on(table.memberId)],
 );
+
+/** Mailboxes someone does not want pushes for (e.g. info@ for who only helps out there). */
+export const pushMailboxesOff = sqliteTable(
+  "push_mailboxes_off",
+  {
+    memberId: text("member_id").notNull(),
+    accountId: text("account_id").notNull(),
+  },
+  (table) => [primaryKey({ columns: [table.memberId, table.accountId] })],
+);

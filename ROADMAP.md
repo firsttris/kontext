@@ -33,7 +33,6 @@ Kleinere Dinge, die beim Bauen aufgefallen sind und noch erledigt werden.
 **Funktionen**
 
 - [ ] Erinnerungen an Termine auch bei geschlossener App (heute nur, solange Kontext offen ist): der Server müsste die Kalender beobachten wie die Posteingänge.
-- [ ] Push für gemeinsame Postfächer abwählbar machen (heute meldet jede neue Mail in info@ sich bei allen, die darin arbeiten).
 - [ ] Chat-Suche: Umlaute in Groß- und Kleinschreibung („Ö“ findet „ö“ nicht), weil SQLite nur ASCII ohne Unterschied vergleicht.
 - [ ] Chat: „Ganze Mail teilen“ als Kopie, für Kolleginnen ohne Zugriff auf das Postfach (heute sehen sie nur die Karte).
 - [ ] Chat: Fotos als kleine Vorschaubilder auf dem Server erzeugen (heute lädt der Verlauf die verkleinerten Fotos in voller Größe).

@@ -105,6 +105,56 @@ test.describe("Benachrichtigungen bei geschlossener App (Web Push)", () => {
     service.close();
   });
 
+  test("meldet keine Mails aus einem abgewählten gemeinsamen Postfach", async ({ browser }) => {
+    test.setTimeout(60_000);
+    const service = await fakePushService();
+    const keys = await browserKeys();
+    const anna = await (await browser.newContext()).newPage();
+    await login(anna, "anna");
+    const endpoint = `${service.url}/anna-${Date.now()}`;
+    await anna.request.post("/api/push/subscriptions", {
+      data: { endpoint, keys: { p256dh: keys.p256dh, auth: keys.auth } },
+    });
+    const info = await anna.evaluate(async () => {
+      const session = await (await fetch("/jmap/session")).json();
+      return Object.entries(session.accounts).find(([, a]) =>
+        (a as { name: string }).name.startsWith("info@"),
+      )![0];
+    });
+    const off = await anna.request.put(`/api/push/mailboxes/${info}`, { data: { on: false } });
+    expect(await off.json()).toEqual({ off: [info] });
+    const titles = async () =>
+      Promise.all(
+        service.received
+          .filter((push) => endpoint.endsWith(push.path))
+          .map(
+            async (push) => JSON.parse(await decryptPayload(new Uint8Array(push.body), keys)).body,
+          ),
+      );
+
+    await anna.waitForTimeout(2000);
+    const shared = unique("Anfrage an info@");
+    const own = unique("Für Anna persönlich");
+    await deliverMail({
+      from: "kunde@example.test",
+      fromName: "Kunde",
+      to: address("info"),
+      subject: shared,
+      body: "Hallo",
+    });
+    await deliverMail({
+      from: "kunde@example.test",
+      fromName: "Kunde",
+      to: address("anna"),
+      subject: own,
+      body: "Hallo",
+    });
+    await expect.poll(titles, { timeout: 20_000 }).toContain(own);
+    expect(await titles()).not.toContain(shared);
+    await anna.request.put(`/api/push/mailboxes/${info}`, { data: { on: true } });
+    service.close();
+  });
+
   test("nimmt keine Adresse an, die kein Push-Dienst ist, wenn das nicht erlaubt ist", async ({
     page,
   }) => {

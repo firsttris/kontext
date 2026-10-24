@@ -536,6 +536,8 @@ die App über die Permissions-API ab; nimmt man sie im Browser zurück, schaltet
   Mozilla oder Microsoft sieht den Inhalt nicht. Für Mails hört der Server dafür Stalwarts
   JMAP-Event-Stream ab, je Person mit dem Token ihrer jüngsten Sitzung. (Stalwart könnte selbst
   Push senden, aber ein Browser hat nur einen Absender-Schlüssel, und der ist schon der des Chats.)
+- **Welche Postfächer:** Unter dem Schalter lassen sich Postfächer abwählen (etwa info@ für wen,
+  der dort nur aushilft); das gilt für alle Geräte der Person (`push_mailboxes_off`).
 - **Wohin:** nur an die Push-Dienste der Browser (keine beliebige Adresse – der Server soll sich
   nicht nach innen schicken lassen). Die Anmeldung eines Geräts gehört zu seiner Sitzung: Wer sich
   abmeldet, bekommt dort keine Pushes mehr; beim nächsten Öffnen meldet sich das Gerät neu an.

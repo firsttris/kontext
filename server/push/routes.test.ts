@@ -30,6 +30,7 @@ describe("/api/push", () => {
   const keys = { p256dh: "B".repeat(87), auth: "A".repeat(22) };
   const setup = () => {
     const saved: { endpoint: string; memberId: string; sessionId: string }[] = [];
+    const off = new Set<string>();
     const store: PushStore = {
       save: async (target, memberId, sessionId) => {
         saved.push({ endpoint: target.endpoint, memberId, sessionId });
@@ -43,6 +44,11 @@ describe("/api/push", () => {
       targetsOf: async (ids) =>
         saved.filter((s) => ids.includes(s.memberId)).map((s) => ({ ...s, keys })),
       subscribers: async () => [],
+      mailboxesOff: async () => [...off],
+      setMailbox: async (_member, accountId, on) => {
+        if (on) off.delete(accountId);
+        else off.add(accountId);
+      },
     };
     let who = "max";
     const app = createPushRoutes({
@@ -51,7 +57,10 @@ describe("/api/push", () => {
       infoOf: async () => ({
         sessionId: `session-${who}`,
         name: who,
-        accounts: [{ id: who, isPersonal: true, isReadOnly: false }],
+        accounts: [
+          { id: who, isPersonal: true, isReadOnly: false },
+          { id: "info", isPersonal: false, isReadOnly: false },
+        ],
       }),
     });
     const send = (method: string, body: unknown) =>
@@ -76,5 +85,18 @@ describe("/api/push", () => {
     as("max");
     await send("DELETE", { endpoint });
     expect(saved).toHaveLength(0);
+  });
+  it("switches mail pushes off for a mailbox one can open, and on again", async () => {
+    const { app } = setup();
+    const put = (account: string, on: boolean) =>
+      app.request(`/mailboxes/${account}`, {
+        method: "PUT",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ on }),
+      });
+    expect(await (await put("info", false)).json()).toEqual({ off: ["info"] });
+    expect((await put("rechnung", false)).status).toBe(404);
+    expect(await (await app.request("/mailboxes")).json()).toEqual({ off: ["info"] });
+    expect(await (await put("info", true)).json()).toEqual({ off: [] });
   });
 });

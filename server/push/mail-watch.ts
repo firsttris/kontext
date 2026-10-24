@@ -65,7 +65,7 @@ export const createMailWatch = ({
 }: {
   env: Env;
   grants: Grants;
-  store: Pick<PushStore, "subscribers">;
+  store: Pick<PushStore, "subscribers" | "mailboxesOff">;
   pusher: Pusher;
 }) => {
   const watches = new Map<string, Watch>();
@@ -76,6 +76,10 @@ export const createMailWatch = ({
 
   /** One person's inboxes, told of what arrives after `since` (per account). */
   const watch = async (memberId: string, sessionId: string, signal: AbortSignal) => {
+    // From when on mail is news: the start of watching. A JMAP UTCDate has whole seconds
+    // (RFC 8620 §1.4), so a second earlier, or a mail of that very second would count as old;
+    // one told twice shows once (same tag).
+    const started = new Date(Date.now() - 1000).toISOString().replace(/\.\d+Z$/, "Z");
     const since = new Map<string, string>();
     while (!signal.aborted) {
       try {
@@ -110,15 +114,18 @@ export const createMailWatch = ({
             ["Mailbox/query", { accountId, filter: { role: "inbox" } }, "q"],
           ]);
           if (query?.ids[0]) inboxes.set(accountId, query.ids[0]);
-          // A JMAP UTCDate has whole seconds (RFC 8620 §1.4).
-          if (!since.has(accountId))
-            since.set(accountId, new Date().toISOString().replace(/\.\d+Z$/, "Z"));
+          if (!since.has(accountId)) since.set(accountId, started);
         }
 
         const check = async (accountId: string) => {
           const inbox = inboxes.get(accountId);
           const after = since.get(accountId);
           if (!inbox || !after) return;
+          // Switched off for this mailbox: nothing is told, and nothing piles up for later.
+          if ((await store.mailboxesOff(memberId)).includes(accountId)) {
+            since.set(accountId, new Date().toISOString().replace(/\.\d+Z$/, "Z"));
+            return;
+          }
           const [, got] = await call<{ list?: NewMail[] }>([
             [
               "Email/query",
@@ -151,9 +158,6 @@ export const createMailWatch = ({
           }
         };
 
-        // What came while the stream was down (nothing on the first connect: `since` is now).
-        for (const accountId of inboxes.keys()) await check(accountId);
-
         const url = onStalwart(
           fillTemplate(session.eventSourceUrl, { types: "Email", closeafter: "no", ping: "60" }),
         );
@@ -163,6 +167,8 @@ export const createMailWatch = ({
           signal: reconnect,
         });
         if (!response.ok || !response.body) throw new Error(`event stream ${response.status}`);
+        // With the stream up, what came before it: since the start, or while it was down.
+        for (const accountId of inboxes.keys()) await check(accountId);
         const reader = response.body.pipeThrough(new TextDecoderStream()).getReader();
         let buffer = "";
         for (;;) {

@@ -850,5 +850,7 @@
   "chat_search": "Im Chat suchen",
   "chat_search_hits": "Treffer im Chat",
   "chat_search_more": "Mindestens zwei Buchstaben.",
-  "chat_search_none": "Nichts gefunden."
+  "chat_search_none": "Nichts gefunden.",
+  "notifications_mailboxes": "Neue Mails melden aus",
+  "notifications_own_mailbox": "Mein Postfach"
 }

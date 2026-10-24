@@ -7,6 +7,7 @@ import {
   setDeviceNotifications,
   useDeviceNotifications,
 } from "./device-settings";
+import { PushMailboxes } from "./push-mailboxes";
 
 export const DeviceSwitch = () => {
   const on = useDeviceNotifications();
@@ -23,6 +24,11 @@ export const DeviceSwitch = () => {
         {m.notifications_device()}
       </Switch>
       <p className="m-0 text-[12px] text-muted">{m.notifications_device_hint()}</p>
+      {on ? (
+        <div className="mt-2">
+          <PushMailboxes />
+        </div>
+      ) : null}
     </div>
   );
 };
