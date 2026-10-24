@@ -8,7 +8,7 @@ import { type DragEvent, useState } from "react";
 import { useToast } from "@/components/ui/toast";
 import type { EmailSummary } from "@/jmap/types";
 import { m } from "@/paraglide/messages";
-import { useMoveTo } from "./queries";
+import { useMoveTo } from "./actions";
 
 const TYPE = "application/x-sekretaer-mail";
 

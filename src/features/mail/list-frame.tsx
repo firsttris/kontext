@@ -4,23 +4,20 @@
  */
 import { Link, useNavigate, useParams } from "@tanstack/react-router";
 import { useVirtualizer } from "@tanstack/react-virtual";
-import { Menu, Paperclip, SquarePen, Star, Users } from "lucide-react";
-import { type ReactNode, useEffect, useRef } from "react";
-import { Highlighted } from "@/components/highlighted";
+import { Menu, SquarePen } from "lucide-react";
+import { type ReactNode, useEffect, useRef, useState } from "react";
 import { TabBar } from "@/components/shell/app-shell";
 import { Button } from "@/components/ui/button";
 import { useShortcuts } from "@/components/use-shortcuts";
-import { isFlagged, isUnread } from "@/jmap/mail";
 import type { EmailSummary } from "@/jmap/types";
-import { categoriesOn } from "@/lib/categories";
 import { cn } from "@/lib/cn";
-import { displayName, formatAddressList, listDate } from "@/lib/format";
+import { addRange, keepListed, type Picked, pickKey, toggleKey } from "@/lib/selection";
 import { m } from "@/paraglide/messages";
 import type { MailSearch } from "@/routes/_app/mail.$accountId.$mailboxId";
-import { CategoryChips } from "../categories/category-chips";
-import { useCategoryMap } from "../categories/queries";
-import { type DraggedMail, startMailDrag } from "./mail-drag";
+import type { DraggedMail } from "./mail-drag";
+import { MessageRow } from "./message-row";
 import { SearchBox, type SearchBoxHandle } from "./search-box";
+import { SelectionBar } from "./selection-bar";
 
 /**
  * A mail in the list. `account` is set in the combined lists (`label` empty for the own account,
@@ -54,6 +51,9 @@ type Props = {
   empty?: string;
   /** What dragging a row carries onto a folder; rows without it cannot be dragged. */
   dragMail?: (row: Row) => DraggedMail | undefined;
+  /** The open folder, for actions on picked mails; none in combined lists. */
+  folderId?: string;
+  inJunk?: boolean;
 };
 
 export const ListFrame = ({
@@ -71,7 +71,37 @@ export const ListFrame = ({
   filters,
   empty,
   dragMail,
+  folderId,
+  inJunk = false,
 }: Props) => {
+  // Combined lists name each row's account; a folder's list is the route's account.
+  const routeAccount = useParams({ strict: false }).accountId ?? "";
+  const accountOf = (row: Row) => row.account?.id ?? routeAccount;
+  const order = rows.map((row) => pickKey(accountOf(row), row.email.id));
+  const [picks, setPicks] = useState<{ keys: Set<string>; anchor?: string }>({ keys: new Set() });
+  const [selecting, setSelecting] = useState(false);
+  const selected = keepListed(picks.keys, order);
+  const picked: Picked[] = rows
+    .filter((row) => selected.has(pickKey(accountOf(row), row.email.id)))
+    .map((row) => ({ accountId: accountOf(row), email: row.email }));
+  const clear = () => {
+    setPicks({ keys: new Set() });
+    setSelecting(false);
+  };
+  const pick = (key: string, shift: boolean) =>
+    setPicks((current) => ({
+      keys: shift
+        ? addRange(keepListed(current.keys, order), order, current.anchor, key)
+        : toggleKey(keepListed(current.keys, order), key),
+      anchor: key,
+    }));
+  // Another folder or search: start without a selection.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: only the list's identity matters
+  useEffect(() => {
+    setPicks({ keys: new Set() });
+    setSelecting(false);
+  }, [title, search.q, search.unread]);
+  const showBar = selecting || picked.length > 0;
   const navigate = useNavigate();
   const scrollRef = useRef<HTMLDivElement>(null);
   const searchRef = useRef<SearchBoxHandle>(null);
@@ -112,6 +142,14 @@ export const ListFrame = ({
     "/": () => searchRef.current?.focus(),
     j: () => step(1),
     k: () => step(-1),
+    // x: the open mail into the selection, as in Gmail.
+    x: () => {
+      const open = rows.find(
+        (row) =>
+          row.email.id === search.email && (!row.account || row.account.id === search.account),
+      );
+      if (open) pick(pickKey(accountOf(open), open.email.id), false);
+    },
   });
 
   return (
@@ -132,19 +170,40 @@ export const ListFrame = ({
             </Link>
           </Button>
         </div>
-        <div className="flex items-baseline justify-between gap-3">
-          <h1 className="m-0 truncate text-[30px] leading-tight font-semibold tracking-tight md:text-[18px]">
-            {title}
-            {subtitle ? (
-              <span className="ml-2 text-[15px] font-normal text-muted md:text-[13px]">
-                {subtitle}
-              </span>
+        {showBar ? (
+          <SelectionBar
+            picked={picked}
+            allPicked={picked.length === rows.length && rows.length > 0}
+            onPickAll={() => setPicks({ keys: new Set(order) })}
+            onClear={clear}
+            folderId={folderId}
+            inJunk={inJunk}
+          />
+        ) : (
+          <div className="flex items-baseline justify-between gap-3">
+            <h1 className="m-0 truncate text-[30px] leading-tight font-semibold tracking-tight md:text-[18px]">
+              {title}
+              {subtitle ? (
+                <span className="ml-2 text-[15px] font-normal text-muted md:text-[13px]">
+                  {subtitle}
+                </span>
+              ) : null}
+            </h1>
+            <span className="shrink-0 text-[12px] text-muted">
+              {unread > 0 ? m.mail_unread_count({ count: unread }) : ""}
+            </span>
+            {/* Phones have no hover: picking starts with this. */}
+            {rows.length ? (
+              <button
+                type="button"
+                onClick={() => setSelecting(true)}
+                className="shrink-0 self-center text-[14px] font-medium text-accent md:hidden"
+              >
+                {m.mail_select_mode()}
+              </button>
             ) : null}
-          </h1>
-          <span className="shrink-0 text-[12px] text-muted">
-            {unread > 0 ? m.mail_unread_count({ count: unread }) : ""}
-          </span>
-        </div>
+          </div>
+        )}
         <SearchBox ref={searchRef} key={search.q ?? ""} initial={search.q} />
         {filters ?? (
           <nav
@@ -202,6 +261,9 @@ export const ListFrame = ({
                     showRecipient={showRecipient}
                     isDraft={isDraft}
                     drag={dragMail?.(row)}
+                    selecting={showBar}
+                    selected={selected.has(pickKey(accountOf(row), row.email.id))}
+                    onPick={(shift) => pick(pickKey(accountOf(row), row.email.id), shift)}
                   />
                 </li>
               );
@@ -214,98 +276,5 @@ export const ListFrame = ({
       </div>
       <TabBar />
     </div>
-  );
-};
-
-const MessageRow = ({
-  row: { email, account, folder, highlight },
-  active,
-  showRecipient,
-  isDraft,
-  drag,
-}: {
-  row: Row;
-  active: boolean;
-  showRecipient: boolean;
-  /** A draft opens in the composer to be finished. */
-  isDraft: boolean;
-  drag: DraggedMail | undefined;
-}) => {
-  const unread = isUnread(email);
-  // Combined lists name each row's account; a folder's list is the route's account.
-  const routeAccount = useParams({ strict: false }).accountId;
-  const categories = categoriesOn(
-    email.keywords,
-    useCategoryMap()[account?.id ?? routeAccount ?? ""] ?? [],
-  );
-  const who = showRecipient ? formatAddressList(email.to) : displayName(email.from?.[0]);
-  return (
-    <Link
-      to="."
-      search={(prev) => ({
-        ...prev,
-        email: email.id,
-        account: account?.id,
-        compose: isDraft ? "draft" : undefined,
-      })}
-      aria-current={active ? "true" : undefined}
-      draggable={drag ? true : undefined}
-      onDragStart={drag ? (event) => startMailDrag(event, drag) : (event) => event.preventDefault()}
-      className={cn(
-        "flex gap-3 rounded-[10px] px-3 py-3 text-left text-fg no-underline hover:bg-hover",
-        active && "bg-subtle",
-      )}
-    >
-      <span
-        aria-hidden="true"
-        className={cn(
-          "mt-[7px] size-1.5 shrink-0 rounded-full",
-          unread ? "bg-accent" : "bg-transparent",
-        )}
-      />
-      <span className="flex min-w-0 flex-1 flex-col gap-0.5">
-        <span className="flex items-baseline gap-2">
-          <span className={cn("min-w-0 flex-1 truncate", unread && "font-semibold")}>
-            <Highlighted text={who || "—"} terms={highlight} />
-          </span>
-          {isFlagged(email) ? (
-            <Star
-              size={12}
-              className="shrink-0 fill-warn text-warn"
-              aria-label={m.mail_flagged()}
-            />
-          ) : null}
-          <span className="shrink-0 font-mono text-[12px] text-muted">
-            {listDate(email.receivedAt, new Date())}
-          </span>
-        </span>
-        <span className={cn("truncate", unread && "font-semibold")}>
-          <Highlighted text={email.subject || m.mail_no_subject()} terms={highlight} />
-        </span>
-        <span className="flex items-center gap-1.5 text-[13px] text-muted">
-          {folder ? (
-            <span className="shrink-0 rounded-md border border-border px-1.5 text-[11px] text-muted">
-              {folder}
-            </span>
-          ) : null}
-          {account?.label ? (
-            <span
-              title={account.title}
-              className="flex shrink-0 items-center gap-1 rounded-md bg-subtle px-1.5 text-[11px] font-medium text-muted"
-            >
-              <Users size={11} strokeWidth={2} aria-hidden="true" />
-              {account.label}
-            </span>
-          ) : null}
-          <CategoryChips categories={categories} max={2} />
-          {email.hasAttachment ? (
-            <Paperclip size={12} className="shrink-0" aria-label={m.mail_attachments()} />
-          ) : null}
-          <span className="truncate">
-            <Highlighted text={email.preview} terms={highlight} />
-          </span>
-        </span>
-      </span>
-    </Link>
   );
 };

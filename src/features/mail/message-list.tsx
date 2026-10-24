@@ -59,6 +59,8 @@ export const MessageList = ({ accountId, mailbox, search }: Props) => {
       showRecipient={mailbox.role === "sent" || mailbox.role === "drafts"}
       isDraft={mailbox.role === "drafts"}
       dragMail={dragMail}
+      folderId={mailbox.id}
+      inJunk={mailbox.role === "junk"}
     />
   );
 };

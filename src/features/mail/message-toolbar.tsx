@@ -37,7 +37,8 @@ import { m } from "@/paraglide/messages";
 import { CategoryMenu } from "../categories/category-menu";
 import { OwnRuleDialog } from "../rules/rule-dialog";
 import { usePersonalAccountId } from "../settings/queries";
-import { useAllMailboxes, useEmailActions, useMailAccounts } from "./queries";
+import { useEmailActions } from "./actions";
+import { useAllMailboxes, useMailAccounts } from "./queries";
 
 export const Toolbar = ({
   accountId,

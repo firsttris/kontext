@@ -644,5 +644,14 @@
   "category_color_teal": "Türkis",
   "category_color_blue": "Blau",
   "category_color_violet": "Violett",
-  "category_color_gray": "Grau"
+  "category_color_gray": "Grau",
+  "mail_select": "„{subject}“ auswählen",
+  "mail_select_all": "Alle auswählen",
+  "mail_selected": "{count} ausgewählt",
+  "mail_selected_one": "1 ausgewählt",
+  "mail_select_mode": "Auswählen",
+  "mail_select_done": "Fertig",
+  "mail_selection_clear": "Auswahl aufheben",
+  "mail_bulk_done": "{count} Mails: erledigt.",
+  "shortcuts_select": "Mail auswählen"
 }

@@ -14,11 +14,12 @@ import { mailboxRights } from "@/lib/mailboxes";
 import { m } from "@/paraglide/messages";
 import { CategoryChips } from "../categories/category-chips";
 import { useCategories } from "../categories/queries";
+import { useEmailActions } from "./actions";
 import { Attachments } from "./attachments";
 import { MailBody } from "./mail-body";
 import { MessageDetails, SenderWarnings } from "./message-details";
 import { Toolbar } from "./message-toolbar";
-import { useEmail, useEmailActions, useMailAccounts } from "./queries";
+import { useEmail, useMailAccounts } from "./queries";
 import { SenderPanel } from "./sender-panel";
 
 type Props = { accountId: string; mailbox: Mailbox; emailId: string | undefined };

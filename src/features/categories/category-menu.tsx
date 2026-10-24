@@ -15,7 +15,7 @@ import type { EmailSummary } from "@/jmap/types";
 import { COLOR_STYLES } from "@/lib/categories";
 import { cn } from "@/lib/cn";
 import { m } from "@/paraglide/messages";
-import { useEmailActions } from "../mail/queries";
+import { useEmailActions } from "../mail/actions";
 import { CategoryDialog } from "./category-dialog";
 import { useCategories } from "./queries";
 

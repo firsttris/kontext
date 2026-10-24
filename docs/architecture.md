@@ -303,6 +303,19 @@ zu liegen wie bei Gmails Labels.
   `kategorie:`/`label:` in der Suche; **automatisch** per Regel („Kategorie setzen“: Sieve
   `addflag "<keyword>"`).
 
+## Mehrere Mails auswählen
+
+Wie in Gmail: am Desktop erscheint beim Überfahren einer Zeile links ein Kästchen, Shift-Klick
+nimmt den Bereich bis zur zuletzt gewählten Mail dazu, `x` die offene Mail; am Handy schaltet
+„Auswählen“ die Kästchen ein. Solange etwas gewählt ist, ersetzt eine Leiste den Titel der Liste:
+archivieren, löschen, Spam, gelesen/ungelesen, markieren, Kategorie, verschieben.
+
+Gewählt wird nach Konto und Mail (`src/lib/selection.ts`), denn „Alle Posteingänge“ und die Suche
+mischen Postfächer. Ausgeführt wird je Konto und Ordner, aus dem die Mails kommen; Kategorie und
+Verschieben gibt es nur, wenn alle gewählten Mails in einem Postfach liegen, weil Kategorien und
+Ordner zum Postfach gehören. Was nicht mehr in der Liste steht, fällt aus der Auswahl; ein anderer
+Ordner oder eine neue Suche beginnt ohne Auswahl.
+
 ## Suche
 
 Die Suche (`/mail/all/search?q=…`) läuft über alle Ordner und Postfächer, Papierkorb und Spam
