@@ -3,7 +3,15 @@
  * the server's key. Needs the `impersonate` permission: with it Stalwart treats the key as member
  * of every account (`AccessToken::is_member`, crates/common/src/auth/access_token.rs).
  */
-import { type FilterAccess, loadFilters, saveFilters, type Vacation } from "../rules/filters";
+import { applyToInbox } from "../rules/apply";
+import {
+  endOffboarding,
+  type FilterAccess,
+  loadFilters,
+  saveFilters,
+  type Vacation,
+} from "../rules/filters";
+import type { Rule } from "../rules/script";
 import type { Result } from "./accounts";
 import {
   firstError,
@@ -20,6 +28,15 @@ const SUBMISSION = [...MAIL, "urn:ietf:params:jmap:submission"];
 const SIEVE = [CORE, "urn:ietf:params:jmap:sieve"];
 
 export type { Vacation };
+
+/** A folder as the rules dialog needs it (names and tree), RFC 8621 Mailbox. */
+export type FolderName = {
+  id: string;
+  name: string;
+  parentId: string | null;
+  role: string | null;
+  sortOrder: number;
+};
 
 export type Identity = {
   id: string;
@@ -73,14 +90,49 @@ export const createMailstore = (
     download,
   };
 
-  const getVacation = async (accountId: string): Promise<Vacation> =>
-    (await loadFilters(filters, accountId)).vacation;
+  /** The reply, and whether the person left (then their offboarding answers instead). */
+  const getVacation = async (accountId: string): Promise<Vacation & { departed: boolean }> => {
+    const { vacation, departed } = await loadFilters(filters, accountId);
+    return { ...vacation, departed };
+  };
+
+  const done = (error: string | null): Result<null> =>
+    error ? { ok: false, error } : { ok: true, value: null };
 
   const setVacation = async (accountId: string, vacation: Vacation): Promise<Result<null>> => {
-    const { rules } = await loadFilters(filters, accountId);
-    const error = await saveFilters(filters, accountId, { rules, vacation });
-    return error ? { ok: false, error } : { ok: true, value: null };
+    const { rules, departed } = await loadFilters(filters, accountId);
+    if (departed) {
+      return {
+        ok: false,
+        error: "Die Person ist ausgetreten; neue Mails beantwortet die Antwort aus dem Austritt.",
+      };
+    }
+    return done(await saveFilters(filters, accountId, { rules, vacation }));
   };
+
+  /** The mail rules of an account (a shared mailbox), with its folders to file into. */
+  const getRules = async (accountId: string) => {
+    const [{ rules }, folders] = await Promise.all([
+      loadFilters(filters, accountId),
+      call<{ list: FolderName[] }>(
+        "Mailbox/get",
+        { accountId, properties: ["name", "parentId", "role", "sortOrder"] },
+        MAIL,
+      ),
+    ]);
+    return { rules, folders: folders.list };
+  };
+
+  const setRules = async (accountId: string, rules: Rule[]): Promise<Result<null>> => {
+    const { vacation } = await loadFilters(filters, accountId);
+    return done(await saveFilters(filters, accountId, { rules, vacation }));
+  };
+
+  const applyRules = (accountId: string, rules: Rule[]) => applyToInbox(request, accountId, rules);
+
+  /** Someone who left is back: their offboarding script stops, their rules run again. */
+  const endOffboardingOf = async (accountId: string): Promise<Result<null>> =>
+    done(await endOffboarding(filters, accountId));
 
   const listIdentities = async (accountId: string): Promise<Identity[]> =>
     (await call<{ list: Identity[] }>("Identity/get", { accountId }, SUBMISSION)).list;
@@ -130,6 +182,10 @@ export const createMailstore = (
     updateFolders,
     getVacation,
     setVacation,
+    getRules,
+    setRules,
+    applyRules,
+    endOffboarding: endOffboardingOf,
     listIdentities,
     updateIdentities,
   };

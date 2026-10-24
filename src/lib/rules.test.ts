@@ -5,6 +5,7 @@ import {
   moveRule,
   newRule,
   operatorsFor,
+  ruleFolders,
   ruleFromSender,
   ruleProblem,
   ruleTitle,
@@ -26,6 +27,24 @@ describe("sievePath", () => {
     ];
     expect(sievePath(boxes[2]!, boxes)).toBe("Kunden/Hoffmann");
     expect(sievePath(mailbox("x", "Projekte", "a"), boxes)).toBe("INBOX/Projekte");
+  });
+});
+
+describe("ruleFolders", () => {
+  it("offers standard folders first and the own tree, but not inbox, drafts or sent", () => {
+    const boxes = [
+      mailbox("a", "Inbox", null, "inbox"),
+      mailbox("d", "Drafts", null, "drafts"),
+      mailbox("s", "Sent Items", null, "sent"),
+      mailbox("t", "Deleted Items", null, "trash"),
+      mailbox("k", "Kunden", null),
+      mailbox("h", "Hoffmann", "k"),
+    ];
+    expect(ruleFolders(boxes)).toEqual([
+      { id: "t", label: "Papierkorb", path: "Deleted Items" },
+      { id: "k", label: "Kunden", path: "Kunden" },
+      { id: "h", label: "Kunden / Hoffmann", path: "Kunden/Hoffmann" },
+    ]);
   });
 });
 

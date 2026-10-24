@@ -132,7 +132,8 @@ mit einem eigenen API-Schlüssel an und erlaubt nur, was die Firmenverwaltung br
   `shareWith` mit allen Rechten außer Teilen), neue Mails weiterleiten und einmal am Tag
   automatisch antworten. Weiterleitung und Antwort sind ein Sieve-Skript
   (`sekretaer-austritt`, `redirect` und `vacation`), weil Stalwart nur ein aktives Skript pro
-  Konto ausführt; es ersetzt dabei die Abwesenheitsnotiz. Gelöscht wird nichts.
+  Konto ausführt; es ersetzt dabei Abwesenheitsnotiz und Regeln, bis der Zugang wieder
+  freigegeben wird (siehe [Regeln](#regeln)). Gelöscht wird nichts.
 - In der Mail zeigt Sekretär übergebene Postfächer unter „Postfächer“ wie gemeinsame: als
   Postfach zählt ein fremdes Konto, wenn es eine Gruppe ist oder Ordner zeigt (wer nur einen
   Kalender teilt, zeigt keine).
@@ -253,8 +254,23 @@ ins eigene Konto. So wirken sie auch, wenn niemand angemeldet ist, und gleich au
 - **Gespeichert** werden die Regeln als JSON in einer Kommentarzeile des Skripts
   (`# sekretaer:{…}`); die App liest nur diese Zeile, nie Sieve. Nutzertexte werden für Sieve
   maskiert, auch `${`, das sonst als Variable gelesen würde.
-- Regeln gelten für das **eigene Postfach**; „Regel erstellen …“ gibt es darum nur an Mails
-  dort. Ein Austritt ersetzt das Skript durch `sekretaer-austritt`.
+- **Eigenes Postfach:** in den Einstellungen; „Regel erstellen …“ an einer Mail im eigenen
+  Postfach füllt den Absender vor.
+- **Gemeinsame Postfächer** (info@, rechnung@): Stalwart führt bei der Zustellung das aktive
+  Skript des Empfängerkontos aus, also auch das der Gruppe (`crates/email/src/message/
+  delivery.rs`). Der Chef pflegt die Regeln in der Firmenverwaltung („Regeln“ am Postfach); der
+  Server schreibt sie mit seinem Schlüssel ins Gruppenkonto (`/api/company/mailboxes/:id/rules`),
+  mit demselben Code wie die App.
+- **Auf vorhandene Mails anwenden** (Häkchen im Dialog): Die gespeicherte Regel läuft einmal
+  über die neuesten 1.000 Mails im Posteingang, mit derselben Logik wie das Skript
+  (`server/rules/match.ts`: Teiltext ohne Groß/Klein, erster Ordner gewinnt, „keine weiteren
+  Regeln“), und verschiebt und markiert per `Email/set`. Weitergeleitet wird dabei nichts.
+  Unterschied: Sieve vergleicht Groß/Klein nur bei ASCII (`i;ascii-casemap`), die App auch bei
+  Umlauten.
+- **Austritt:** Er aktiviert `sekretaer-austritt`. Solange das läuft, aktiviert Sekretär weder
+  Regeln noch Abwesenheit; die Firmenverwaltung sagt bei „Abwesenheit eintragen“, dass die
+  Person ausgetreten ist. Wird der Zugang wieder freigegeben, endet der Austritt: das Skript
+  wird abgeschaltet, Regeln und Abwesenheit laufen wieder wie gespeichert.
 
 ## Suche
 

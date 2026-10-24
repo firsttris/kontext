@@ -40,6 +40,8 @@ const fakeManagement = () => {
     },
   };
   const shared: Record<string, Record<string, unknown>>[] = [];
+  const rules: { accountId: string; rules: unknown[] }[] = [];
+  const back: string[] = [];
   const mailstore: Mailstore = {
     listFolders: async (accountIds) =>
       Object.fromEntries(
@@ -56,13 +58,24 @@ const fakeManagement = () => {
       subject: null,
       textBody: null,
       htmlBody: null,
+      departed: false,
     }),
     setVacation: async () => ({ ok: true, value: null }),
     listIdentities: async () => [],
     setSieveScript: async () => ({ ok: true, value: null }),
     updateIdentities: async () => ({ ok: true, value: null }),
+    getRules: async () => ({ rules: [], folders: [] }),
+    setRules: async (accountId, list) => {
+      rules.push({ accountId, rules: list });
+      return { ok: true, value: null };
+    },
+    applyRules: async () => 2,
+    endOffboarding: async (accountId) => {
+      back.push(accountId);
+      return { ok: true, value: null };
+    },
   };
-  return { management, mailstore, updates, created, shared };
+  return { management, mailstore, updates, created, shared, rules, back };
 };
 
 const setup = (email: string | null) => {
@@ -130,6 +143,35 @@ describe("Firmenverwaltung", () => {
       },
     });
     expect(ended).toEqual(["anna@firma.de"]);
+  });
+
+  it("ends the offboarding when a person is unlocked again", async () => {
+    const { send, back } = setup("chef@firma.de");
+    expect((await send("PATCH", "/employees/2", { active: true })).status).toBe(200);
+    expect(back).toEqual(["2"]);
+  });
+
+  it("keeps the rules of shared mailboxes, not of other accounts", async () => {
+    const { send, rules } = setup("chef@firma.de");
+    const rule = {
+      id: "r",
+      name: "",
+      enabled: true,
+      match: "all",
+      conditions: [{ field: "subject", operator: "contains", value: "Rechnung" }],
+      moveTo: null,
+      markRead: true,
+      flag: false,
+      forwardTo: null,
+      stop: false,
+    };
+    expect((await send("PUT", "/mailboxes/g/rules", { rules: [rule] })).status).toBe(200);
+    expect(rules).toEqual([{ accountId: "g", rules: [rule] }]);
+    expect((await send("PUT", "/mailboxes/2/rules", { rules: [rule] })).status).toBe(404);
+    expect((await send("PUT", "/mailboxes/g/rules", { rules: [{ id: 1 }] })).status).toBe(400);
+    expect(await (await send("POST", "/mailboxes/g/rules/apply", { rule })).json()).toEqual({
+      changed: 2,
+    });
   });
 
   it("does not let the admin lock themselves out", async () => {

@@ -1,6 +1,8 @@
 import { expect, test } from "@playwright/test";
+import { createJmapClient } from "../src/jmap/client";
 import { newEmployee, signInWith, stamp } from "./company-helpers";
-import { address, inboxMails, jmapAs, login, personalAccountId, unique } from "./helpers";
+import { address, inboxMails, jmapAs, login, personalAccountId, STALWART, unique } from "./helpers";
+import { deliverMail } from "./protocols";
 
 test.describe("Firmenverwaltung", () => {
   test("nur mit dem Recht sichtbar", async ({ page }) => {
@@ -53,7 +55,7 @@ test.describe("Firmenverwaltung", () => {
     await dialog.getByLabel("Zugriff für Sandra Klein").selectOption("Lesen und senden");
     await dialog.getByLabel("Zugriff für Max Becker").selectOption("Lesen und senden");
     await dialog.getByRole("button", { name: "Anlegen" }).click();
-    const row = page.getByRole("button", { name: new RegExp(`${local}@`) });
+    const row = page.getByRole("button", { name: new RegExp(`^${local}@`) });
     await expect(row).toContainText("Max, Sandra");
 
     await row.click();
@@ -183,7 +185,7 @@ test.describe("Firmenverwaltung", () => {
     test.setTimeout(90_000);
     const local = `geht-${stamp()}`;
     await login(page, "jonas");
-    await newEmployee(page, local, "Karl Geht");
+    const password = await newEmployee(page, local, "Karl Geht");
     await page.getByRole("button", { name: /Karl Geht/ }).click();
     await page.getByRole("dialog").getByRole("button", { name: "Austritt" }).click();
     const dialog = page.getByRole("dialog", { name: "Austritt von Karl Geht" });
@@ -223,5 +225,42 @@ test.describe("Firmenverwaltung", () => {
         { timeout: 30_000 },
       )
       .toBe(true);
+
+    // While Karl is gone, an out-of-office reply would not switch the offboarding off.
+    await page.getByRole("button", { name: /Karl Geht/ }).click();
+    await page.getByRole("dialog").getByRole("button", { name: "Abwesenheit eintragen" }).click();
+    await expect(page.getByRole("dialog", { name: "Abwesenheit von Karl Geht" })).toContainText(
+      "Karl ist ausgetreten",
+    );
+    await page.keyboard.press("Escape");
+
+    // Back again: mail stays with Karl, no more forwarding.
+    await page.getByRole("button", { name: /Karl Geht/ }).click();
+    await page.getByRole("dialog").getByRole("button", { name: "Zugang wieder freigeben" }).click();
+    await expect(page.getByRole("button", { name: /Karl Geht.*Gesperrt/ })).toHaveCount(0);
+    const back = unique("Karl wieder da");
+    await deliverMail({
+      from: "kunde@beispiel.example",
+      fromName: "Ein Kunde",
+      to: address(local),
+      subject: back,
+      body: "Willkommen zurück.",
+    });
+    const karl = createJmapClient({
+      origin: STALWART,
+      credentials: { username: address(local), password },
+    });
+    const karlHas = async () => {
+      const session = await karl.getSession();
+      const accountId = Object.keys(session.accounts)[0]!;
+      const { ids } = await karl.call<{ ids: string[] }>("Email/query", {
+        accountId,
+        filter: { subject: back },
+      });
+      return ids.length;
+    };
+    await expect.poll(karlHas, { timeout: 15_000 }).toBe(1);
+    await page.waitForTimeout(2_000);
+    expect((await inboxMails("anna")).some((mail) => mail.subject === back)).toBe(false);
   });
 });

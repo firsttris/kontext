@@ -1,38 +1,68 @@
+/**
+ * Where a rules list comes from and goes to: the own mailbox through JMAP, or a shared mailbox
+ * (info@ & co.) through the Firmenverwaltung on the server. The list and the dialog only see this.
+ */
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useClient } from "@/auth/auth";
 import { setFilters } from "@/jmap/rules";
-import { flattenTree, folderTree, mailboxPath, systemMailboxes } from "@/lib/mailboxes";
-import type { Rule } from "@/lib/rules";
-import { sievePath } from "@/lib/rules";
+import type { Mailbox } from "@/jmap/types";
+import { type Rule, type RuleFolder, ruleFolders } from "@/lib/rules";
+import { applyToInbox } from "../../../server/rules/apply";
+import { applyMailboxRule, getMailboxRules, setMailboxRules } from "../company/api";
 import { useAllMailboxes } from "../mail/queries";
-import { useFilters, usePersonalAccountId, useSave } from "../settings/queries";
+import { useFilters, usePersonalAccountId } from "../settings/queries";
 
-/** Stores the whole list; the out-of-office reply goes along unchanged. */
-export const useSaveRules = () => {
-  const client = useClient();
-  const accountId = usePersonalAccountId();
-  const { data: filters } = useFilters();
-  return useSave(
-    (rules: Rule[]) => setFilters(client, accountId!, { rules, vacation: filters!.vacation }),
-    [[accountId, "filters"]],
-  );
+export type RulesStore = {
+  /** Undefined while loading. */
+  rules: Rule[] | undefined;
+  folders: RuleFolder[];
+  save: (rules: Rule[]) => Promise<void>;
+  /** One rule over the mails already in the inbox; how many it changed. */
+  apply: (rule: Rule) => Promise<number>;
+  saving: boolean;
 };
 
-export type RuleFolder = { id: string; label: string; path: string };
-
-/** Where a rule can file a mail: the own mailbox's folders, but not back into the inbox. */
-const NOT_A_TARGET = new Set(["inbox", "drafts", "sent", "flagged"]);
-
-export const useRuleFolders = (): RuleFolder[] => {
+export const usePersonalRules = (): RulesStore => {
+  const client = useClient();
+  const queryClient = useQueryClient();
   const accountId = usePersonalAccountId();
+  const { data: filters } = useFilters();
   const mailboxes = useAllMailboxes()[accountId ?? ""] ?? [];
-  return [
-    ...systemMailboxes(mailboxes),
-    ...flattenTree(folderTree(mailboxes)).map((n) => n.mailbox),
-  ]
-    .filter((mailbox) => !NOT_A_TARGET.has(mailbox.role ?? ""))
-    .map((mailbox) => ({
-      id: mailbox.id,
-      label: mailboxPath(mailbox, mailboxes),
-      path: sievePath(mailbox, mailboxes),
-    }));
+  const save = useMutation({
+    // The out-of-office reply goes along unchanged.
+    mutationFn: (rules: Rule[]) =>
+      setFilters(client, accountId!, { rules, vacation: filters!.vacation }),
+    onSettled: () => queryClient.invalidateQueries({ queryKey: [accountId, "filters"] }),
+  });
+  const apply = async (rule: Rule) => {
+    const changed = await applyToInbox(client.request, accountId!, [rule]);
+    // Lists and counts of the account show the moved and marked mails.
+    await queryClient.invalidateQueries({ queryKey: [accountId] });
+    return changed;
+  };
+  return {
+    rules: filters?.rules,
+    folders: ruleFolders(mailboxes),
+    save: async (rules) => void (await save.mutateAsync(rules)),
+    apply,
+    saving: save.isPending,
+  };
+};
+
+export const useMailboxRules = (mailboxId: string): RulesStore => {
+  const queryClient = useQueryClient();
+  const queryKey = ["company", "rules", mailboxId];
+  const { data } = useQuery({ queryKey, queryFn: () => getMailboxRules(mailboxId) });
+  const save = useMutation({
+    mutationFn: (rules: Rule[]) => setMailboxRules(mailboxId, rules),
+    onSettled: () => queryClient.invalidateQueries({ queryKey }),
+  });
+  return {
+    rules: data?.rules,
+    // The server sends the folder fields the tree needs; the rest of a Mailbox is not used.
+    folders: ruleFolders((data?.folders ?? []) as Mailbox[]),
+    save: async (rules) => void (await save.mutateAsync(rules)),
+    apply: async (rule) => (await applyMailboxRule(mailboxId, rule)).changed,
+    saving: save.isPending,
+  };
 };

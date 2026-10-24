@@ -132,6 +132,11 @@ export const employeeRoutes = ({
     const result = await management.updateAccounts({ [id]: patch });
     if (!result.ok) return bad(result.error);
     if (change.active === false) await endSessions(user.emailAddress ?? "");
+    // Unlocked again after leaving: forwarding and reply of the offboarding stop.
+    if (change.active === true) {
+      const back = await mailstore.endOffboarding(id);
+      if (!back.ok) return bad(back.error);
+    }
     return c.json({ ok: true });
   });
 

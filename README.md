@@ -74,7 +74,7 @@ und unter `https://<Ihre Domain>` anmelden. DNS-Einträge, Backups und Updates s
 
 - **Signatur pro Absender**: eigene Adresse und gemeinsame Postfächer, mit Formatierung.
 - **Abwesenheitsnotiz**: mit Zeitraum, antwortet automatisch.
-- **Regeln**: „Wenn Absender/Empfänger/Betreff/Text … dann in Ordner verschieben, als gelesen markieren, markieren, weiterleiten“ – laufen auf dem Server beim Eingang, auch wenn Sekretär geschlossen ist; direkt aus einer Mail anlegbar („Regel erstellen …“).
+- **Regeln**: „Wenn Absender/Empfänger/Betreff/Text … dann in Ordner verschieben, als gelesen markieren, markieren, weiterleiten“ – laufen auf dem Server beim Eingang, auch wenn Sekretär geschlossen ist; direkt aus einer Mail anlegbar („Regel erstellen …“) und auf Wunsch auch auf die Mails anwendbar, die schon im Posteingang liegen.
 - **Passwort und Anmeldung mit Code** (Authenticator-App); man bleibt auf dem Gerät angemeldet.
 - **Hell oder dunkel**: wie das Gerät, oder fest eingestellt.
 - **Tastaturkürzel** wie in Gmail: `j`/`k` durch die Mails, `r` antworten, `e` archivieren, `c` neu, `?` oder das Tastatur-Symbol links zeigt alle.
@@ -89,6 +89,7 @@ und unter `https://<Ihre Domain>` anmelden. DNS-Einträge, Backups und Updates s
 - **Weitere Adressen** wie buchhaltung@ für eine Person oder ein Postfach.
 - **Gemeinsame Postfächer** anlegen und pro Person festlegen: kein Zugriff, nur lesen, oder lesen und senden.
 - **Abwesenheit eintragen**, wenn jemand krank ist – mit Vertretung, die in der automatischen Antwort steht.
+- **Regeln für gemeinsame Postfächer**: z. B. Reklamationen an info@ markieren oder Rechnungen in einen Ordner sortieren – für alle, die das Postfach nutzen.
 - **Firmen-Signatur**: eine Vorlage mit Name und Adresse, mit einem Klick für alle übernommen; neue Mitarbeiter bekommen sie automatisch.
 - **Umzug von Microsoft 365**: Mails mit Ordnern, Kontakte und Termine (auch Serien) über eine App im Microsoft-Konto der Firma, Postfach für Postfach zugeordnet, danach laufender Abgleich.
 - **Umzug von Gmail, GMX, WEB.DE & Co.**: altes Postfach verbinden – alle Mails mit Ordnern (Gmail-Labels inklusive) kommen herüber, danach gleicht Sekretär alle 15 Minuten ab, bis der Umzug abgeschlossen ist.

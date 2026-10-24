@@ -1,4 +1,7 @@
-/** The mail rules in the settings: the list in the order they apply, each one a sentence. */
+/**
+ * A mailbox's rules as a list in the order they apply, each one a sentence: the own ones in the
+ * settings, those of a shared mailbox in the Firmenverwaltung.
+ */
 import { ArrowDown, ArrowRight, ArrowUp, ListFilter, Plus } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -8,31 +11,32 @@ import {
   moveRule,
   newRule,
   type Rule,
+  type RuleFolder,
   ruleTitle,
   thenText,
   upsertRule,
   whenText,
 } from "@/lib/rules";
 import { m } from "@/paraglide/messages";
-import { useFilters } from "../settings/queries";
 import { SettingsCard } from "../settings/settings-page";
-import { useRuleFolders, useSaveRules } from "./queries";
+import { type RulesStore, usePersonalRules } from "./queries";
 import { RuleDialog } from "./rule-dialog";
 
 const RuleRow = ({
   rule,
+  folders,
   first,
   last,
   onEdit,
   onChange,
 }: {
   rule: Rule;
+  folders: RuleFolder[];
   first: boolean;
   last: boolean;
   onEdit: () => void;
   onChange: (rules: (current: Rule[]) => Rule[]) => void;
 }) => {
-  const folders = useRuleFolders();
   const folderName = (id: string) => folders.find((folder) => folder.id === id)?.label;
   const title = ruleTitle(rule);
   return (
@@ -85,25 +89,23 @@ const RuleRow = ({
   );
 };
 
-export const RulesSection = () => {
+export const RulesList = ({ store }: { store: RulesStore }) => {
   const toast = useToast();
-  const { data: filters, isPending } = useFilters();
-  const save = useSaveRules();
   const [editing, setEditing] = useState<Rule | null>(null);
-  const rules = filters?.rules ?? [];
+  const rules = store.rules ?? [];
 
   const change = async (next: (current: Rule[]) => Rule[]) => {
     try {
-      await save.mutateAsync(next(rules));
+      await store.save(next(rules));
     } catch (error) {
       toast.show(m.common_error({ message: (error as Error).message }), "error");
     }
   };
 
   return (
-    <SettingsCard title={m.settings_rules()} description={m.rules_hint()}>
-      {isPending ? <p className="m-0 text-[14px] text-muted">{m.common_loading()}</p> : null}
-      {filters && !rules.length ? (
+    <>
+      {store.rules ? null : <p className="m-0 text-[14px] text-muted">{m.common_loading()}</p>}
+      {store.rules && !rules.length ? (
         <div className="flex flex-col items-center gap-2 rounded-lg bg-subtle px-6 py-8 text-center">
           <ListFilter size={22} className="text-muted" />
           <p className="m-0 max-w-[380px] text-[13px] text-muted">{m.rules_empty()}</p>
@@ -118,6 +120,7 @@ export const RulesSection = () => {
             <RuleRow
               key={rule.id}
               rule={rule}
+              folders={store.folders}
               first={index === 0}
               last={index === rules.length - 1}
               onEdit={() => setEditing(rule)}
@@ -129,12 +132,20 @@ export const RulesSection = () => {
       <Button
         variant="primary"
         className="self-start"
-        disabled={!filters}
+        disabled={!store.rules}
         onClick={() => setEditing(newRule(crypto.randomUUID()))}
       >
         <Plus size={15} /> {m.rules_add()}
       </Button>
-      {editing ? <RuleDialog initial={editing} onClose={() => setEditing(null)} /> : null}
-    </SettingsCard>
+      {editing ? (
+        <RuleDialog store={store} initial={editing} onClose={() => setEditing(null)} />
+      ) : null}
+    </>
   );
 };
+
+export const RulesSection = () => (
+  <SettingsCard title={m.settings_rules()} description={m.rules_hint()}>
+    <RulesList store={usePersonalRules()} />
+  </SettingsCard>
+);

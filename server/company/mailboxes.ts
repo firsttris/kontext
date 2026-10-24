@@ -4,6 +4,7 @@
  */
 import { Hono } from "hono";
 import { z } from "zod";
+import { ruleSchema } from "../rules/script";
 import { aliasesValue, membershipPatches, parseAddress, type Result } from "./accounts";
 import {
   addresses,
@@ -32,6 +33,9 @@ const mailboxPatch = z.object({
   memberIds: ids.optional(),
   readerIds: ids.optional(),
 });
+
+const rulesBody = z.object({ rules: z.array(ruleSchema).max(100) });
+const applyBody = z.object({ rule: ruleSchema });
 
 const knownPeople = (loaded: Loaded, people: string[]) => people.every((id) => userOf(loaded, id));
 
@@ -104,6 +108,31 @@ export const mailboxRoutes = ({ management, mailstore }: CompanyDeps) => {
     const access = await setAccess(loaded, id, change);
     if (!access.ok) return bad(access.error);
     return c.json({ ok: true });
+  });
+
+  /** The mailbox's rules, run by Stalwart when mail for info@ & co. arrives. */
+  app.get("/:id/rules", async (c) => {
+    const id = c.req.param("id");
+    if (!mailboxOf(c.get("loaded"), id)) return notFound();
+    return c.json(await mailstore.getRules(id));
+  });
+
+  app.put("/:id/rules", async (c) => {
+    const id = c.req.param("id");
+    if (!mailboxOf(c.get("loaded"), id)) return notFound();
+    const body = await bodyOf(c, rulesBody);
+    if (!body) return bad("Angaben unvollständig.");
+    const result = await mailstore.setRules(id, body.rules);
+    return result.ok ? c.json({ ok: true }) : bad(result.error);
+  });
+
+  /** One rule over the mails already in the inbox; how many it changed. */
+  app.post("/:id/rules/apply", async (c) => {
+    const id = c.req.param("id");
+    if (!mailboxOf(c.get("loaded"), id)) return notFound();
+    const body = await bodyOf(c, applyBody);
+    if (!body) return bad("Angaben unvollständig.");
+    return c.json({ changed: await mailstore.applyRules(id, [body.rule]) });
   });
 
   return app;

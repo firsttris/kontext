@@ -1,11 +1,17 @@
 import { expect, type Page, test } from "@playwright/test";
-import { addMail, address, inboxMails, jmapAs, login, personalAccountId, unique } from "./helpers";
+import { addMail, address, inboxMails, jmapAs, login, unique } from "./helpers";
 import { deliverMail } from "./protocols";
 
-/** Where a user's mail with this subject is, by folder role or name, and its keywords. */
-const findMail = async (user: string, subject: string) => {
+/**
+ * Where a mail with this subject is, by folder role or name, and its keywords; in the user's own
+ * mailbox or in a shared one they belong to.
+ */
+const findMail = async (user: string, subject: string, mailbox = user) => {
   const client = jmapAs(user);
-  const accountId = await personalAccountId(user);
+  const session = await client.getSession();
+  const accountId = Object.entries(session.accounts).find(
+    ([, account]) => account.name === address(mailbox),
+  )![0];
   const [boxes, , get] = await client.request([
     ["Mailbox/get", { accountId, properties: ["name", "role"] }, "m"],
     ["Email/query", { accountId, filter: { subject } }, "q"],
@@ -23,7 +29,7 @@ const findMail = async (user: string, subject: string) => {
   const email = (get![1].list as { mailboxIds: object; keywords: object }[])[0];
   if (!email) return null;
   const box = mailboxes.find((candidate) => Object.keys(email.mailboxIds).includes(candidate.id));
-  return { folder: box?.role ?? box?.name, keywords: Object.keys(email.keywords) };
+  return { folder: box?.role ?? box?.name, keywords: Object.keys(email.keywords).sort() };
 };
 
 const deleteRule = async (page: Page, title: RegExp) => {
@@ -128,6 +134,73 @@ test.describe("Regeln", () => {
     await expect(page.getByRole("status").filter({ hasText: "Gespeichert." })).toBeVisible();
     await page.goto("/settings?section=rules");
     await deleteRule(page, /erika@example\.test/);
+  });
+});
+
+test.describe("Regeln auf vorhandene Mails und für gemeinsame Postfächer", () => {
+  test("wendet eine neue Regel auch auf den Posteingang an", async ({ page }) => {
+    const token = unique("Angebot Heizung");
+    await addMail("anna", "anna", `${token} von gestern`);
+    await login(page, "anna");
+    await page.goto("/settings?section=rules");
+    await page.getByRole("button", { name: "Neue Regel" }).click();
+    const dialog = page.getByRole("dialog", { name: "Neue Regel" });
+    await dialog.getByLabel("Feld").selectOption("subject");
+    await dialog.getByLabel("Wert").fill(token);
+    await dialog.getByLabel("In Ordner verschieben").check();
+    await dialog.getByLabel("Ordner wählen").selectOption({ label: "Archiv" });
+    await dialog.getByLabel("Markieren", { exact: true }).check();
+    await dialog.getByLabel("Auch auf die Mails anwenden").check();
+    await dialog.getByRole("button", { name: "Regel speichern" }).click();
+    await expect(
+      page.getByRole("status").filter({ hasText: "auf eine Mail im Posteingang angewendet" }),
+    ).toBeVisible();
+    expect(await findMail("anna", token)).toEqual({
+      folder: "archive",
+      keywords: ["$flagged", "$seen"],
+    });
+    await deleteRule(page, new RegExp(token));
+  });
+
+  test("der Chef legt Regeln für info@ an; sie gelten für neue und vorhandene Mails", async ({
+    page,
+  }) => {
+    const token = unique("Reklamation");
+    await addMail("jonas", "info", `${token} alt`);
+    await login(page, "jonas");
+    await page.goto("/settings?section=mailboxes");
+    await page.getByRole("button", { name: `Regeln für ${address("info")}` }).click();
+    const rules = page.getByRole("dialog", { name: `Regeln für ${address("info")}` });
+    await expect(rules.getByText("Noch keine Regeln.")).toBeVisible();
+    await rules.getByRole("button", { name: "Neue Regel" }).click();
+    const dialog = page.getByRole("dialog", { name: "Neue Regel" });
+    await dialog.getByLabel("Feld").selectOption("subject");
+    await dialog.getByLabel("Wert").fill(token);
+    await dialog.getByLabel("Markieren", { exact: true }).check();
+    await dialog.getByLabel("Auch auf die Mails anwenden").check();
+    await dialog.getByRole("button", { name: "Regel speichern" }).click();
+    await expect(
+      page.getByRole("status").filter({ hasText: "auf eine Mail im Posteingang angewendet" }),
+    ).toBeVisible();
+    await expect(rules.getByRole("list", { name: "Regeln" })).toContainText(token);
+    expect(await findMail("jonas", `${token} alt`, "info")).toEqual({
+      folder: "inbox",
+      keywords: ["$flagged", "$seen"],
+    });
+
+    await deliverMail({
+      from: "kunde@beispiel.example",
+      fromName: "Ein Kunde",
+      to: address("info"),
+      subject: `${token} neu`,
+      body: "Die Heizung ist kalt.",
+    });
+    await expect
+      .poll(() => findMail("jonas", `${token} neu`, "info"), { timeout: 15_000 })
+      .toEqual({ folder: "inbox", keywords: ["$flagged"] });
+
+    await deleteRule(page, new RegExp(token));
+    await expect(rules.getByText("Noch keine Regeln.")).toBeVisible();
   });
 });
 

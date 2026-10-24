@@ -6,6 +6,7 @@
 import type { Mailbox } from "@/jmap/types";
 import { m } from "@/paraglide/messages";
 import type { Rule, RuleCondition, RuleField, RuleOperator } from "../../server/rules/script";
+import { flattenTree, folderTree, mailboxPath, systemMailboxes } from "./mailboxes";
 
 export type { Rule, RuleCondition, RuleField, RuleOperator };
 
@@ -65,6 +66,21 @@ export const sievePath = (mailbox: Mailbox, mailboxes: Mailbox[]): string => {
   }
   return parts.join("/");
 };
+
+export type RuleFolder = { id: string; label: string; path: string };
+
+/** Filing a mail back into the inbox, or among drafts or sent mail, makes no sense. */
+const NOT_A_TARGET = new Set(["inbox", "drafts", "sent", "flagged"]);
+
+/** Where a rule can file a mail: the account's folders, standard ones first. */
+export const ruleFolders = (mailboxes: Mailbox[]): RuleFolder[] =>
+  [...systemMailboxes(mailboxes), ...flattenTree(folderTree(mailboxes)).map((node) => node.mailbox)]
+    .filter((mailbox) => !NOT_A_TARGET.has(mailbox.role ?? ""))
+    .map((mailbox) => ({
+      id: mailbox.id,
+      label: mailboxPath(mailbox, mailboxes),
+      path: sievePath(mailbox, mailboxes),
+    }));
 
 const filled = (rule: Rule) => rule.conditions.filter((condition) => condition.value.trim());
 

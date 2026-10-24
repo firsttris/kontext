@@ -21,8 +21,7 @@ import {
   upsertRule,
 } from "@/lib/rules";
 import { m } from "@/paraglide/messages";
-import { useFilters } from "../settings/queries";
-import { useRuleFolders, useSaveRules } from "./queries";
+import { type RulesStore, usePersonalRules } from "./queries";
 
 const ConditionRow = ({
   condition,
@@ -119,21 +118,22 @@ const Heading = ({ children }: { children: ReactNode }) => (
 );
 
 export const RuleDialog = ({
+  store,
   initial,
   onClose,
 }: {
+  store: RulesStore;
   /** A new rule (not yet in the list) or one to change. */
   initial: Rule;
   onClose: () => void;
 }) => {
   const toast = useToast();
-  const { data: filters } = useFilters();
-  const save = useSaveRules();
-  const folders = useRuleFolders();
+  const { rules, folders } = store;
   const [rule, setRule] = useState(initial);
+  const [applyNow, setApplyNow] = useState(false);
   const [problem, setProblem] = useState<string | null>(null);
   const [confirmDelete, setConfirmDelete] = useState(false);
-  const isNew = !filters?.rules.some((candidate) => candidate.id === initial.id);
+  const isNew = !rules?.some((candidate) => candidate.id === initial.id);
   const set = (patch: Partial<Rule>) => setRule((current) => ({ ...current, ...patch }));
   const setCondition = (index: number, condition: RuleCondition) =>
     set({ conditions: rule.conditions.map((c, i) => (i === index ? condition : c)) });
@@ -142,10 +142,23 @@ export const RuleDialog = ({
     event.preventDefault();
     const found = ruleProblem(rule);
     setProblem(found);
-    if (found || !filters) return;
+    if (found || !rules) return;
+    const saved = cleanRule(rule);
     try {
-      await save.mutateAsync(upsertRule(filters.rules, cleanRule(rule)));
-      toast.show(m.rules_saved());
+      await store.save(upsertRule(rules, saved));
+      if (!applyNow) {
+        toast.show(m.rules_saved());
+        onClose();
+        return;
+      }
+      const changed = await store.apply(saved);
+      toast.show(
+        changed === 0
+          ? m.rules_saved_none()
+          : changed === 1
+            ? m.rules_saved_applied_one()
+            : m.rules_saved_applied({ count: changed }),
+      );
       onClose();
     } catch (error) {
       setProblem(m.common_error({ message: (error as Error).message }));
@@ -153,9 +166,9 @@ export const RuleDialog = ({
   };
 
   const remove = async () => {
-    if (!filters) return;
+    if (!rules) return;
     try {
-      await save.mutateAsync(filters.rules.filter((candidate) => candidate.id !== rule.id));
+      await store.save(rules.filter((candidate) => candidate.id !== rule.id));
       toast.show(m.rules_deleted());
       onClose();
     } catch (error) {
@@ -273,6 +286,11 @@ export const RuleDialog = ({
           </div>
         </fieldset>
 
+        <div className="flex flex-col gap-1 rounded-lg bg-subtle px-3 py-2.5">
+          <Action label={m.rules_apply_existing()} checked={applyNow} onChange={setApplyNow} />
+          <span className="pl-[26px] text-[12px] text-muted">{m.rules_apply_hint()}</span>
+        </div>
+
         {problem ? (
           <p role="alert" className="m-0 text-[13px] text-danger">
             {problem}
@@ -282,7 +300,7 @@ export const RuleDialog = ({
           {isNew ? null : (
             <Button
               variant="danger"
-              disabled={save.isPending}
+              disabled={store.saving}
               onClick={() => (confirmDelete ? void remove() : setConfirmDelete(true))}
             >
               {confirmDelete ? m.rules_delete_really() : m.rules_delete()}
@@ -292,11 +310,17 @@ export const RuleDialog = ({
           <Button variant="ghost" onClick={onClose}>
             {m.rules_cancel()}
           </Button>
-          <Button type="submit" variant="primary" disabled={save.isPending || !filters}>
+          <Button type="submit" variant="primary" disabled={store.saving || !rules}>
             {m.rules_save()}
           </Button>
         </div>
       </form>
     </Dialog>
   );
+};
+
+/** For a rule of the own mailbox, e.g. from a mail; loads the rules only when it opens. */
+export const OwnRuleDialog = (props: { initial: Rule; onClose: () => void }) => {
+  const store = usePersonalRules();
+  return <RuleDialog store={store} {...props} />;
 };

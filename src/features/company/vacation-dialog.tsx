@@ -35,7 +35,11 @@ export const VacationDialog = ({
       title={m.company_vacation_title({ name: employee.fullName })}
       description={m.company_vacation_hint({ name: employee.fullName.split(" ")[0] ?? "" })}
     >
-      {vacation ? (
+      {vacation?.departed ? (
+        <p className="m-0 rounded-lg bg-subtle px-3 py-2.5 text-[13px]">
+          {m.company_vacation_departed({ name: employee.fullName.split(" ")[0] ?? "" })}
+        </p>
+      ) : vacation ? (
         <VacationForm
           initial={toVacationForm(vacation)}
           saving={save.isPending}

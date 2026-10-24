@@ -33,7 +33,7 @@ import { mailboxRights } from "@/lib/mailboxes";
 import { moveTargets } from "@/lib/move-targets";
 import { type Rule, ruleFromSender } from "@/lib/rules";
 import { m } from "@/paraglide/messages";
-import { RuleDialog } from "../rules/rule-dialog";
+import { OwnRuleDialog } from "../rules/rule-dialog";
 import { usePersonalAccountId } from "../settings/queries";
 import { useAllMailboxes, useEmailActions, useMailAccounts } from "./queries";
 
@@ -265,7 +265,7 @@ export const Toolbar = ({
           ) : null}
         </MenuContent>
       </MenuRoot>
-      {rule ? <RuleDialog initial={rule} onClose={() => setRule(null)} /> : null}
+      {rule ? <OwnRuleDialog initial={rule} onClose={() => setRule(null)} /> : null}
     </div>
   );
 };

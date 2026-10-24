@@ -89,6 +89,18 @@ describe("saveCalls", () => {
     expect(rules![1]).toEqual({ accountId: "a", update: { s1: { blobId: "blob" } } });
   });
 
+  it("leaves an offboarding script running: nothing activated, the reply stays off", () => {
+    const [reply, rules] = saveCalls(
+      "a",
+      { rules: [rule], vacation: vacation(true) },
+      script(false),
+      "blob",
+      true,
+    );
+    expect(reply![1]).toEqual({ accountId: "a", update: { singleton: vacation(false) } });
+    expect(rules![1]).toEqual({ accountId: "a", update: { s1: { blobId: "blob" } } });
+  });
+
   it("deactivates the rules script when nothing is left to run", () => {
     const [, rules] = saveCalls(
       "a",

@@ -1,11 +1,16 @@
-/** Shared mailboxes (Stalwart groups): creating them, their addresses and who belongs to them. */
-import { Inbox, Plus } from "lucide-react";
+/**
+ * Shared mailboxes (Stalwart groups): creating them, their addresses, who belongs to them and the
+ * rules that sort their mail.
+ */
+import { Inbox, ListFilter, Plus } from "lucide-react";
 import { type FormEvent, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Dialog } from "@/components/ui/dialog";
 import { Input, Label } from "@/components/ui/input";
 import { useToast } from "@/components/ui/toast";
 import { m } from "@/paraglide/messages";
+import { useMailboxRules } from "../rules/queries";
+import { RulesList } from "../rules/rules-section";
 import { type Company, createMailbox, type SharedMailbox, updateMailbox } from "./api";
 import { AccessList, AddressInput, AliasesField, addressFor } from "./fields";
 import { CompanyGate } from "./gate";
@@ -29,6 +34,7 @@ const memberNames = (company: Company, mailbox: SharedMailbox): string => {
 
 const Mailboxes = ({ company }: { company: Company }) => {
   const [open, setOpen] = useState<string | "new" | null>(null);
+  const [rulesOf, setRulesOf] = useState<SharedMailbox | null>(null);
   const mailbox = company.mailboxes.find((mb) => mb.id === open);
 
   return (
@@ -42,11 +48,11 @@ const Mailboxes = ({ company }: { company: Company }) => {
       {company.mailboxes.length ? (
         <ul className="m-0 flex list-none flex-col divide-y divide-border rounded-xl border border-border p-0">
           {company.mailboxes.map((item) => (
-            <li key={item.id}>
+            <li key={item.id} className="flex items-center hover:bg-hover">
               <button
                 type="button"
                 onClick={() => setOpen(item.id)}
-                className="flex w-full items-center gap-3 px-3 py-2.5 text-left hover:bg-hover md:px-4"
+                className="flex min-w-0 flex-1 items-center gap-3 px-3 py-2.5 text-left md:px-4"
               >
                 <span className="flex size-[34px] shrink-0 items-center justify-center rounded-full border border-border bg-subtle text-muted">
                   <Inbox size={16} />
@@ -63,6 +69,15 @@ const Mailboxes = ({ company }: { company: Company }) => {
                   </span>
                 </span>
               </button>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="mr-2 shrink-0"
+                aria-label={m.rules_mailbox_title({ address: item.email })}
+                onClick={() => setRulesOf(item)}
+              >
+                <ListFilter size={15} /> <span className="hidden sm:inline">{m.rules_open()}</span>
+              </Button>
             </li>
           ))}
         </ul>
@@ -79,9 +94,29 @@ const Mailboxes = ({ company }: { company: Company }) => {
           onClose={() => setOpen(null)}
         />
       ) : null}
+      {rulesOf ? <MailboxRulesDialog mailbox={rulesOf} onClose={() => setRulesOf(null)} /> : null}
     </>
   );
 };
+
+/** The rules of a shared mailbox; Stalwart runs them for mail to its address. */
+const MailboxRulesDialog = ({
+  mailbox,
+  onClose,
+}: {
+  mailbox: SharedMailbox;
+  onClose: () => void;
+}) => (
+  <Dialog
+    open
+    onOpenChange={(open) => !open && onClose()}
+    title={m.rules_mailbox_title({ address: mailbox.email })}
+    description={m.rules_mailbox_hint()}
+    className="md:w-[min(640px,calc(100vw-32px))]"
+  >
+    <RulesList store={useMailboxRules(mailbox.id)} />
+  </Dialog>
+);
 
 /** New with `mailbox` left out; otherwise its description, addresses and members. */
 const MailboxDialog = ({

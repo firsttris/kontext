@@ -8,10 +8,12 @@ import type {
   Employee,
   SharedMailbox,
 } from "../../../server/company/accounts";
+import type { FolderName } from "../../../server/company/mailstore";
 import type { Job } from "../../../server/migration/jobs";
 import type { ProviderId } from "../../../server/migration/providers";
 import type { Sync } from "../../../server/migration/syncs";
 import type { Vacation } from "../../../server/rules/filters";
+import type { Rule } from "../../../server/rules/script";
 
 export type { Employee, SharedMailbox };
 /** A move as the server sends it (dates as text). */
@@ -85,7 +87,7 @@ export const resetTwoFactor = (id: string) =>
   send<{ ok: true }>("DELETE", `/employees/${encodeURIComponent(id)}/two-factor`);
 
 export const getEmployeeVacation = (id: string) =>
-  send<Vacation>("GET", `/employees/${encodeURIComponent(id)}/vacation`);
+  send<Vacation & { departed: boolean }>("GET", `/employees/${encodeURIComponent(id)}/vacation`);
 
 export const setEmployeeVacation = (id: string, vacation: Vacation) =>
   send<{ ok: true }>("PUT", `/employees/${encodeURIComponent(id)}/vacation`, vacation);
@@ -111,6 +113,18 @@ export const createMailbox = (mailbox: NewMailbox) =>
 
 export const updateMailbox = (id: string, change: MailboxChange) =>
   send<{ ok: true }>("PATCH", `/mailboxes/${encodeURIComponent(id)}`, change);
+
+export const getMailboxRules = (id: string) =>
+  send<{ rules: Rule[]; folders: FolderName[] }>(
+    "GET",
+    `/mailboxes/${encodeURIComponent(id)}/rules`,
+  );
+
+export const setMailboxRules = (id: string, rules: Rule[]) =>
+  send<{ ok: true }>("PUT", `/mailboxes/${encodeURIComponent(id)}/rules`, { rules });
+
+export const applyMailboxRule = (id: string, rule: Rule) =>
+  send<{ changed: number }>("POST", `/mailboxes/${encodeURIComponent(id)}/rules/apply`, { rule });
 
 export const listMigrations = () => send<Migration[]>("GET", "/migrations");
 
