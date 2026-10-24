@@ -303,6 +303,14 @@ zu liegen wie bei Gmails Labels.
   `kategorie:`/`label:` in der Suche; **automatisch** per Regel („Kategorie setzen“: Sieve
   `addflag "<keyword>"`).
 
+## Drucken
+
+„Drucken“ im Menü „…“ der Mail, `p` oder Strg+P (Cmd+P) druckt die offene Mail, nicht die App
+darum: `src/lib/print.ts` baut eine eigene Seite (Betreff, Von, An, Cc, Datum, bei gemeinsamen
+Postfächern das Postfach, der Text, die Namen der Anhänge; hell, A4), `print-mail.ts` lädt sie in
+ein unsichtbares Frame ohne Skripte und öffnet den Druckdialog des Browsers. Der Text ist derselbe
+bereinigte wie im Lesebereich, eingebettete Bilder kommen mit, Bilder aus dem Internet nicht.
+
 ## Mehrere Mails auswählen
 
 Wie in Gmail: am Desktop erscheint beim Überfahren einer Zeile links ein Kästchen, Shift-Klick

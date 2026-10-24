@@ -74,6 +74,7 @@ und unter `https://<Ihre Domain>` anmelden. DNS-Einträge, Backups und Updates s
 
 - **Signatur pro Absender**: eigene Adresse und gemeinsame Postfächer, mit Formatierung.
 - **Abwesenheitsnotiz**: mit Zeitraum, antwortet automatisch.
+- **Drucken**: die Mail allein, sauber auf A4 – mit Absender, Empfängern, Datum und den Namen der Anhänge (auch per Strg+P).
 - **Mehrere Mails auf einmal**: auswählen (auch per Shift-Klick oder `x`) und gemeinsam archivieren, löschen, als gelesen markieren, kategorisieren oder verschieben – auch über mehrere Postfächer in „Alle Posteingänge“.
 - **Kategorien**: farbige Markierungen wie „In Bearbeitung“, „Wartet auf Antwort“, „Erledigt“ – mehrere je Mail, eigene anlegbar, per Regel automatisch. In info@ & Co. sieht das ganze Team sie: ein kleines Aufgabenbrett ohne Extra-Tool.
 - **Regeln**: „Wenn Absender/Empfänger/Betreff/Text … dann in Ordner verschieben, als gelesen markieren, markieren, weiterleiten“ – laufen auf dem Server beim Eingang, auch wenn Sekretär geschlossen ist; direkt aus einer Mail anlegbar („Regel erstellen …“) und auf Wunsch auch auf die Mails anwendbar, die schon im Posteingang liegen.

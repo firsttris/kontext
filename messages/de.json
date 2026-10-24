@@ -653,5 +653,12 @@
   "mail_select_done": "Fertig",
   "mail_selection_clear": "Auswahl aufheben",
   "mail_bulk_done": "{count} Mails: erledigt.",
-  "shortcuts_select": "Mail auswählen"
+  "shortcuts_select": "Mail auswählen",
+  "print_from": "Von",
+  "print_to": "An",
+  "print_date": "Datum",
+  "print_mailbox": "Postfach",
+  "print_attachments": "Anhänge ({count})",
+  "mail_print": "Drucken",
+  "shortcuts_print": "Mail drucken"
 }

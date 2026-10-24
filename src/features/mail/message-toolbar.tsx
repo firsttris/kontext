@@ -8,6 +8,7 @@ import {
   ListFilter,
   MailOpen,
   MoreHorizontal,
+  Printer,
   Reply,
   ReplyAll,
   ShieldAlert,
@@ -15,7 +16,7 @@ import {
   Star,
   Trash2,
 } from "lucide-react";
-import { Fragment, useState } from "react";
+import { Fragment, useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
   MenuContent,
@@ -38,6 +39,7 @@ import { CategoryMenu } from "../categories/category-menu";
 import { OwnRuleDialog } from "../rules/rule-dialog";
 import { usePersonalAccountId } from "../settings/queries";
 import { useEmailActions } from "./actions";
+import { usePrintMail } from "./print-mail";
 import { useAllMailboxes, useMailAccounts } from "./queries";
 
 export const Toolbar = ({
@@ -91,6 +93,9 @@ export const Toolbar = ({
       : undefined;
   const compose = (mode: "reply" | "replyAll" | "forward") =>
     void navigate({ to: ".", search: (prev) => ({ ...prev, compose: mode }) });
+  const printMail = usePrintMail();
+  const print = () => void run(() => printMail(accountId, email), false);
+
   useShortcuts({
     r: () => compose("reply"),
     a: () => compose("replyAll"),
@@ -103,8 +108,23 @@ export const Toolbar = ({
     s: canFlag ? () => void run(() => actions.setFlagged([email.id], !flagged), false) : undefined,
     U: canMarkSeen ? () => void run(() => actions.setSeen([email.id], false), true) : undefined,
     "!": toggleSpam,
+    p: print,
     esc: () => void close(),
   });
+
+  // Ctrl+P (Cmd+P) prints the mail, not the whole app around it.
+  const printRef = useRef(print);
+  printRef.current = print;
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      if ((event.ctrlKey || event.metaKey) && !event.altKey && event.key.toLowerCase() === "p") {
+        event.preventDefault();
+        printRef.current();
+      }
+    };
+    document.addEventListener("keydown", onKeyDown);
+    return () => document.removeEventListener("keydown", onKeyDown);
+  }, []);
 
   return (
     <div className="flex h-12 shrink-0 items-center gap-1 border-b border-border px-2 md:px-3">
@@ -256,6 +276,9 @@ export const Toolbar = ({
             }
           >
             <Forward size={15} /> {m.mail_forward()}
+          </MenuItem>
+          <MenuItem onSelect={print}>
+            <Printer size={15} /> {m.mail_print()}
           </MenuItem>
           {canMarkSeen ? (
             <>
