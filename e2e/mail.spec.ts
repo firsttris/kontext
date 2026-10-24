@@ -143,6 +143,22 @@ test.describe("Mail", () => {
     await expect(page.getByRole("list", { name: "Gesendet" }).getByText(subject)).toBeVisible();
   });
 
+  test("behält beim Schreiben den Fokus, auch wenn die Absender spät laden", async ({ page }) => {
+    // Identities arrive late, while the recipient is already being typed.
+    await page.route(/\/jmap/, async (route) => {
+      if ((route.request().postData() ?? "").includes('"Identity/get"')) {
+        await new Promise((resolve) => setTimeout(resolve, 1500));
+      }
+      await route.continue();
+    });
+    await page.getByRole("link", { name: "Neue Mail" }).first().click();
+    const to = page.getByRole("combobox", { name: "An" });
+    await to.fill("anna");
+    await page.waitForTimeout(2000);
+    await expect(to).toBeFocused();
+    await expect(page.getByRole("option", { name: /Anna Weber/ })).toBeVisible();
+  });
+
   test("antwortet mit Zitat und Betreff Re:", async ({ page }) => {
     await page.getByRole("list", { name: "Posteingang" }).getByText("Weihnachtsessen").click();
     await page.getByRole("link", { name: /Antworten an Anna/ }).click();
@@ -462,7 +478,7 @@ test.describe("Entwürfe", () => {
 
     await page.getByRole("link", { name: /Entwürfe/ }).click();
     await page.getByRole("list", { name: "Entwürfe" }).getByText(subject).click();
-    await expect(page.getByLabel("Betreff")).toHaveValue(subject);
+    await expect(page.getByRole("textbox", { name: "Betreff" })).toHaveValue(subject);
     const body = page.getByRole("textbox", { name: "Ihre Nachricht …" });
     await expect(body).toContainText("Erster Teil.");
     await body.click();

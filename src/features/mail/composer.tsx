@@ -152,7 +152,10 @@ export const Composer = ({ accountId, mode, sourceEmailId, prefill }: Props) => 
           (identity?.textSignature ? textToHtml(identity.textSignature) : "");
     const text = prefill?.body ? textToHtml(prefill.body) : "";
     editor.commands.setContent(`${text}${signature ? `<p></p>${signature}` : ""}${start.html}`);
-    editor.commands.focus(mode === "draft" ? "end" : "start");
+    // Into the text – unless one is already typing elsewhere (e.g. the recipient).
+    const active = document.activeElement;
+    const typing = active instanceof HTMLInputElement || active instanceof HTMLTextAreaElement;
+    if (!typing) editor.commands.focus(mode === "draft" ? "end" : "start");
     initialized.current = true;
   }, [
     editor,
