@@ -4,6 +4,7 @@ import { ChevronDown, Users } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { Avatar } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
+import { useMediaQuery } from "@/components/use-media-query";
 import { isUnread } from "@/jmap/mail";
 import type { Mailbox } from "@/jmap/types";
 import { displayName, firstName, formatAddressList, readingDate } from "@/lib/format";
@@ -15,6 +16,7 @@ import { MailBody } from "./mail-body";
 import { MessageDetails, SenderWarnings } from "./message-details";
 import { Toolbar } from "./message-toolbar";
 import { useEmail, useEmailActions, useMailAccounts } from "./queries";
+import { SenderPanel } from "./sender-panel";
 
 type Props = { accountId: string; mailbox: Mailbox; emailId: string | undefined };
 
@@ -26,6 +28,7 @@ export const MessageView = ({ accountId, mailbox, emailId }: Props) => {
   const notice = account ? mailboxNotice(account) : undefined;
   // Open for one mail; the next mail starts folded again.
   const [detailsFor, setDetailsFor] = useState<string | null>(null);
+  const wide = useMediaQuery("(min-width: 1536px)");
 
   // Opening a mail marks it read, once per mail (if the mailbox allows it).
   const { canMarkSeen } = mailboxRights(mailbox);
@@ -53,75 +56,80 @@ export const MessageView = ({ accountId, mailbox, emailId }: Props) => {
   return (
     <div className="flex h-full min-h-0 flex-col">
       <Toolbar accountId={accountId} mailbox={mailbox} email={email} />
-      <article className="flex min-h-0 flex-1 justify-center overflow-y-auto">
-        <div className="flex w-full max-w-[780px] flex-col gap-[18px] px-5 pt-5 pb-8 md:px-6">
-          <header className="flex flex-col gap-3">
-            {notice && account ? (
-              <p
-                title={m.mail_shared_mailbox_hint({ address: account.name })}
-                className="m-0 flex max-w-full items-center gap-1.5 self-start rounded-md bg-subtle px-2 py-1 text-[12px] text-muted"
-              >
-                <Users size={13} strokeWidth={1.75} aria-hidden="true" className="shrink-0" />
-                <span className="truncate">{notice}</span>
-              </p>
-            ) : null}
-            <h2 className="m-0 text-[21px] leading-snug font-semibold tracking-tight">
-              {email.subject || m.mail_no_subject()}
-            </h2>
-            <div className="flex items-center gap-3">
-              <Avatar name={displayName(email.from?.[0])} size={38} />
-              <div className="flex min-w-0 flex-1 flex-col">
-                <span className="truncate font-medium">{displayName(email.from?.[0])}</span>
-                <span className="truncate text-[13px] text-muted">
-                  {email.from?.[0]?.email} → {formatAddressList(email.to)}
-                  {email.cc?.length ? `, Cc: ${formatAddressList(email.cc)}` : ""}
-                </span>
-                <button
-                  type="button"
-                  aria-expanded={showDetails}
-                  onClick={() => setDetailsFor(showDetails ? null : email.id)}
-                  className="mt-0.5 flex items-center gap-1 self-start text-[12px] text-muted hover:text-fg"
+      <div className="flex min-h-0 flex-1">
+        {/* Left-aligned with the toolbar; the column stays narrow enough to read (about 70 characters). */}
+        <article className="min-h-0 min-w-0 flex-1 overflow-y-auto">
+          <div className="flex w-full max-w-[780px] flex-col gap-[18px] px-5 pt-5 pb-8 md:px-6 xl:px-8">
+            <header className="flex flex-col gap-3">
+              {notice && account ? (
+                <p
+                  title={m.mail_shared_mailbox_hint({ address: account.name })}
+                  className="m-0 flex max-w-full items-center gap-1.5 self-start rounded-md bg-subtle px-2 py-1 text-[12px] text-muted"
                 >
-                  <ChevronDown
-                    size={13}
-                    aria-hidden="true"
-                    className={showDetails ? "rotate-180" : undefined}
-                  />
-                  {showDetails ? m.mail_details_hide() : m.mail_details_show()}
-                </button>
+                  <Users size={13} strokeWidth={1.75} aria-hidden="true" className="shrink-0" />
+                  <span className="truncate">{notice}</span>
+                </p>
+              ) : null}
+              <h2 className="m-0 text-[21px] leading-snug font-semibold tracking-tight">
+                {email.subject || m.mail_no_subject()}
+              </h2>
+              <div className="flex items-center gap-3">
+                <Avatar name={displayName(email.from?.[0])} size={38} />
+                <div className="flex min-w-0 flex-1 flex-col">
+                  <span className="truncate font-medium">{displayName(email.from?.[0])}</span>
+                  <span className="truncate text-[13px] text-muted">
+                    {email.from?.[0]?.email} → {formatAddressList(email.to)}
+                    {email.cc?.length ? `, Cc: ${formatAddressList(email.cc)}` : ""}
+                  </span>
+                  <button
+                    type="button"
+                    aria-expanded={showDetails}
+                    onClick={() => setDetailsFor(showDetails ? null : email.id)}
+                    className="mt-0.5 flex items-center gap-1 self-start text-[12px] text-muted hover:text-fg"
+                  >
+                    <ChevronDown
+                      size={13}
+                      aria-hidden="true"
+                      className={showDetails ? "rotate-180" : undefined}
+                    />
+                    {showDetails ? m.mail_details_hide() : m.mail_details_show()}
+                  </button>
+                </div>
+                <span className="hidden shrink-0 text-[13px] text-muted sm:block">
+                  {readingDate(email.receivedAt)}
+                </span>
               </div>
-              <span className="hidden shrink-0 text-[13px] text-muted sm:block">
-                {readingDate(email.receivedAt)}
-              </span>
+            </header>
+            <SenderWarnings email={email} />
+            {showDetails ? <MessageDetails email={email} attachments={attachments} /> : null}
+            <MailBody accountId={accountId} email={email} />
+            <Attachments accountId={accountId} parts={attachments} />
+            <div className="flex flex-wrap gap-2">
+              <Button
+                asChild
+                variant="outline"
+                className="h-10 basis-full justify-start rounded-[10px] font-normal text-muted sm:min-w-[200px] sm:flex-1 sm:basis-auto"
+              >
+                <Link to="." search={(prev) => ({ ...prev, compose: "reply" })}>
+                  {m.mail_reply_to({ name: firstName(email.from?.[0]) })}
+                </Link>
+              </Button>
+              <Button asChild variant="outline" className="h-10 flex-1 rounded-[10px] sm:flex-none">
+                <Link to="." search={(prev) => ({ ...prev, compose: "replyAll" })}>
+                  {m.mail_reply_all()}
+                </Link>
+              </Button>
+              <Button asChild variant="outline" className="h-10 flex-1 rounded-[10px] sm:flex-none">
+                <Link to="." search={(prev) => ({ ...prev, compose: "forward" })}>
+                  {m.mail_forward()}
+                </Link>
+              </Button>
             </div>
-          </header>
-          <SenderWarnings email={email} />
-          {showDetails ? <MessageDetails email={email} attachments={attachments} /> : null}
-          <MailBody accountId={accountId} email={email} />
-          <Attachments accountId={accountId} parts={attachments} />
-          <div className="flex flex-wrap gap-2">
-            <Button
-              asChild
-              variant="outline"
-              className="h-10 basis-full justify-start rounded-[10px] font-normal text-muted sm:min-w-[200px] sm:flex-1 sm:basis-auto"
-            >
-              <Link to="." search={(prev) => ({ ...prev, compose: "reply" })}>
-                {m.mail_reply_to({ name: firstName(email.from?.[0]) })}
-              </Link>
-            </Button>
-            <Button asChild variant="outline" className="h-10 flex-1 rounded-[10px] sm:flex-none">
-              <Link to="." search={(prev) => ({ ...prev, compose: "replyAll" })}>
-                {m.mail_reply_all()}
-              </Link>
-            </Button>
-            <Button asChild variant="outline" className="h-10 flex-1 rounded-[10px] sm:flex-none">
-              <Link to="." search={(prev) => ({ ...prev, compose: "forward" })}>
-                {m.mail_forward()}
-              </Link>
-            </Button>
           </div>
-        </div>
-      </article>
+        </article>
+        {/* Only mounted when there is room (2xl), so smaller screens load nothing for it. */}
+        {wide ? <SenderPanel accountId={accountId} email={email} /> : null}
+      </div>
     </div>
   );
 };

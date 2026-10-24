@@ -595,6 +595,37 @@ test.describe("Tastaturkürzel", () => {
   });
 });
 
+test.describe("Breiter Bildschirm", () => {
+  test.beforeEach(async ({ page }) => {
+    await page.setViewportSize({ width: 1700, height: 1000 });
+    await login(page);
+  });
+
+  test("zeigt neben der Mail, mit wem sie ist", async ({ page }) => {
+    await page
+      .getByRole("list", { name: "Posteingang" })
+      .getByText("Angebot Wartungsvertrag 2027")
+      .click();
+    const panel = page.getByRole("complementary", { name: "Zu Petra Keller" });
+    await expect(panel).toContainText("Keller Elektro GmbH");
+    await expect(panel.getByRole("link", { name: "Kontakt öffnen" })).toBeVisible();
+    await panel.getByRole("link", { name: "Mail" }).click();
+    await expect(page.getByRole("combobox", { name: "An" })).toBeVisible();
+    await expect(page.getByRole("form", { name: "Neue Mail" })).toContainText("Petra Keller");
+  });
+
+  test("speichert einen Absender mit einem Klick als Kontakt", async ({ page }) => {
+    // A mail of its own: the seed's mails are moved around by other tests.
+    const subject = unique("Rückfrage Angebot");
+    await addMail("jonas", "jonas", subject);
+    await page.getByRole("list", { name: "Posteingang" }).getByText(subject).click();
+    const panel = page.getByRole("complementary", { name: "Zu Erika Test" });
+    await panel.getByRole("button", { name: "Als Kontakt speichern" }).click();
+    await expect(page.getByRole("status")).toHaveText("Erika Test ist jetzt in Ihren Kontakten.");
+    await expect(panel.getByRole("link", { name: "Kontakt öffnen" })).toBeVisible();
+  });
+});
+
 test.describe("Speicherplatz", () => {
   test("zeigt am Avatar und im Menü, wie voll das Postfach ist", async ({ page }) => {
     await login(page);

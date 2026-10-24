@@ -249,6 +249,16 @@ ein Konto noch ältere Mails nachladen kann, zeigt die Liste nichts, was älter 
 älteste geladene Mail, damit die Reihenfolge stimmt. Eine geöffnete Mail trägt ihr Konto in der
 URL (`account`); Antworten gehen deshalb aus dem richtigen Postfach.
 
+## Leseansicht auf breiten Bildschirmen
+
+Die Mail steht linksbündig unter der Werkzeugleiste, die Textspalte bleibt höchstens 780 px breit
+(etwa 70 Zeichen pro Zeile, gut zu lesen). Ab 1536 px (`2xl`) füllt eine Spalte rechts den Platz
+(`src/features/mail/sender-panel.tsx`): die Person, mit der die Mail ist – der Absender, bei
+eigenen Mails (auch aus info@) der erste andere Empfänger (`src/lib/correspondent.ts`) –, ihre
+Kontaktkarte, falls es eine gibt, sonst „Als Kontakt speichern“ ins eigene Adressbuch; dazu Mail,
+Termin und Anrufen, die nächsten Termine (`useEventsWith`) und die letzten Mails mit ihr aus dem
+Postfach der geöffneten Mail.
+
 ## Anhänge
 
 Jeder Anhang ist eine Karte (`src/features/mail/attachments.tsx`): oben eine Vorschau, unten Typ,

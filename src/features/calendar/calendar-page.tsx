@@ -4,10 +4,11 @@
  */
 import { Link, useNavigate } from "@tanstack/react-router";
 import { ChevronLeft, ChevronRight, Plus, Settings2 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { TabBar, useSession } from "@/components/shell/app-shell";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/toast";
+import { useMediaQuery } from "@/components/use-media-query";
 import { useShortcuts } from "@/components/use-shortcuts";
 import { cn } from "@/lib/cn";
 import { movePatch } from "@/lib/event-form";
@@ -92,16 +93,7 @@ const rangeTitle = (days: string[]): string => {
     : `${dayMonth.format(first)} – ${dayMonth.format(last)}`;
 };
 
-const useIsPhone = (): boolean => {
-  const query = window.matchMedia("(max-width: 767px)");
-  const [phone, setPhone] = useState(query.matches);
-  useEffect(() => {
-    const update = () => setPhone(query.matches);
-    query.addEventListener("change", update);
-    return () => query.removeEventListener("change", update);
-  }, [query]);
-  return phone;
-};
+const useIsPhone = (): boolean => useMediaQuery("(max-width: 767px)");
 
 export const CalendarPage = ({ search }: { search: Search }) => {
   const today = dateKey(new Date());
