@@ -190,7 +190,7 @@ test.describe("Videobesprechung per Link", () => {
     const dialog = page.getByRole("dialog");
     await dialog.getByLabel("Titel").fill(title);
     await dialog.getByRole("button", { name: "Videobesprechung hinzufügen" }).click();
-    await expect(dialog.getByText(/\/meet\//)).toBeVisible();
+    await expect(dialog.getByText(/^http.*\/meet\//)).toBeVisible();
     // The link also goes into the notes, for guests' mail programs.
     await expect(dialog.getByLabel("Notizen")).toHaveValue(/^Videobesprechung: http.*\/meet\//);
     await dialog.getByRole("button", { name: "Speichern" }).click();
