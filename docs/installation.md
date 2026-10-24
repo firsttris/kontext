@@ -97,8 +97,9 @@ Code neu ein.
 
 ## 4. Backups
 
-`deploy/backup.sh` sichert Stalwarts Datenvolume mit [Restic](https://restic.net) auf einen
-S3-Speicher. Am besten einen Bucket mit **Object Lock** nehmen, dann kann auch ein Angreifer mit
+`deploy/backup.sh` sichert mit [Restic](https://restic.net) auf einen S3-Speicher: Stalwarts
+Datenvolume (Mails, Kalender, Kontakte, Konten) und eine Kopie von Sekretärs Datenbank
+(Anmeldungen, Firmen-Signatur, Stand der Umzüge). Hochgeladene PST-Dateien bleiben draußen. Am besten einen Bucket mit **Object Lock** nehmen, dann kann auch ein Angreifer mit
 Zugriff auf den Server die Sicherungen nicht löschen (wichtig für GoBD-Archivierung).
 
 ```bash
@@ -107,8 +108,17 @@ crontab -e
 ```
 
 Der Mailserver hält dafür nachts ein paar Sekunden an; absendende Server versuchen es einfach
-erneut. Einmal im Monat eine Wiederherstellung auf einem Testserver üben:
-`restic restore latest --target /tmp/restore`.
+erneut. Sekretärs Datenbank wird im laufenden Betrieb kopiert (`VACUUM INTO`). Einmal im Monat
+eine Wiederherstellung auf einem Testserver üben:
+
+```bash
+restic restore latest --tag stalwart --target /tmp/restore     # Stalwart
+restic restore latest --tag sekretaer --target /tmp/restore    # Sekretär
+```
+
+Sekretärs Kopie (`…/backup/sekretaer.db`) kommt bei gestopptem Container als
+`sekretaer.db` ins Volume `sekretaer_sekretaer-data`. Fehlt sie, geht nichts in Stalwart
+verloren: alle melden sich einmal neu an, die Vorlage der Firmen-Signatur ist neu einzutragen.
 
 ## 5. Updates
 
