@@ -22,7 +22,7 @@ import { findRole, mailboxName, mailboxPath } from "@/lib/mailboxes";
 import { m } from "@/paraglide/messages";
 import type { MailSearch } from "@/routes/_app/mail.$accountId.$mailboxId";
 import { useCategoryMap } from "../categories/queries";
-import { Composer } from "./composer";
+import { Composer } from "./lazy-composer";
 import type { Row } from "./list-frame";
 import { MailLayout } from "./mail-layout";
 import { MailSidebar } from "./mail-sidebar";

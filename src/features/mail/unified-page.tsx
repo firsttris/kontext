@@ -3,7 +3,7 @@
  * in the account it belongs to (`account` in the URL), so a reply from info@ goes out as info@.
  */
 import type { MailSearch } from "@/routes/_app/mail.$accountId.$mailboxId";
-import { Composer } from "./composer";
+import { Composer } from "./lazy-composer";
 import { MailLayout } from "./mail-layout";
 import { MailSidebar } from "./mail-sidebar";
 import { MessageView } from "./message-view";

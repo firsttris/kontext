@@ -160,24 +160,19 @@ test.describe("Mail", () => {
 
   test("legt einen Ordner an und verschiebt eine Mail hinein", async ({ page }) => {
     const folder = unique("Projekt");
+    const subject = unique("Abschlagsrechnung");
+    await addMail("jonas", "jonas", subject);
     await page.getByRole("button", { name: "Ordner anlegen" }).click();
     await page.getByLabel("Name des Ordners").fill(folder);
     await page.getByRole("dialog").getByRole("button", { name: "Ordner anlegen" }).click();
     await expect(page.getByRole("link", { name: folder })).toBeVisible();
 
-    await page
-      .getByRole("list", { name: "Posteingang" })
-      .getByText("Ihre Abschlagsrechnung Oktober")
-      .click();
+    await page.getByRole("list", { name: "Posteingang" }).getByText(subject).click();
     await page.getByRole("button", { name: "Verschieben nach …" }).click();
     await page.getByRole("menuitem", { name: folder }).click();
-    await expect(
-      page.getByRole("list", { name: "Posteingang" }).getByText("Ihre Abschlagsrechnung Oktober"),
-    ).toHaveCount(0);
+    await expect(page.getByRole("list", { name: "Posteingang" }).getByText(subject)).toHaveCount(0);
     await page.getByRole("link", { name: folder }).click();
-    await expect(
-      page.getByRole("list", { name: folder }).getByText("Ihre Abschlagsrechnung Oktober"),
-    ).toBeVisible();
+    await expect(page.getByRole("list", { name: folder }).getByText(subject)).toBeVisible();
   });
 
   test("markiert eine Mail als Spam und holt sie wieder heraus", async ({ page }) => {
@@ -221,22 +216,17 @@ test.describe("Mail", () => {
   });
 
   test("archiviert und löscht", async ({ page }) => {
+    const subject = unique("Bestellung versandt");
+    await addMail("jonas", "jonas", subject);
     const inbox = page.getByRole("list", { name: "Posteingang" });
-    await inbox.getByText("Ihre Bestellung 48211: Umwälzpumpe versandt").click();
+    await inbox.getByText(subject).click();
     await page.getByRole("button", { name: "Archivieren" }).click();
-    await expect(inbox.getByText("Ihre Bestellung 48211: Umwälzpumpe versandt")).toHaveCount(0);
+    await expect(inbox.getByText(subject)).toHaveCount(0);
     await page.getByRole("link", { name: "Archiv" }).click();
-    await page
-      .getByRole("list", { name: "Archiv" })
-      .getByText("Ihre Bestellung 48211: Umwälzpumpe versandt")
-      .click();
+    await page.getByRole("list", { name: "Archiv" }).getByText(subject).click();
     await page.getByRole("button", { name: "Löschen" }).click();
     await page.getByRole("link", { name: "Papierkorb" }).click();
-    await expect(
-      page
-        .getByRole("list", { name: "Papierkorb" })
-        .getByText("Ihre Bestellung 48211: Umwälzpumpe versandt"),
-    ).toBeVisible();
+    await expect(page.getByRole("list", { name: "Papierkorb" }).getByText(subject)).toBeVisible();
   });
 
   test("arbeitet im gemeinsamen Postfach info@ und antwortet als info@", async ({ page }) => {
@@ -481,6 +471,41 @@ test.describe("Entwürfe", () => {
     await page.getByRole("button", { name: "Senden" }).click();
     await expect(page.getByRole("status").filter({ hasText: "Mail gesendet." })).toBeVisible();
     await expect.poll(() => inboxSubjects("anna")).toContain(subject);
+    await expect(page.getByRole("list", { name: "Entwürfe" }).getByText(subject)).toHaveCount(0);
+  });
+
+  test("sendet, während der Entwurf gerade gespeichert wird", async ({ page }) => {
+    const subject = unique("Termin Wartung");
+    await page.getByRole("link", { name: "Neue Mail" }).first().click();
+    await page.getByRole("combobox", { name: "An" }).fill("anna@weber-haustechnik.test");
+    await page.keyboard.press("Enter");
+    await page.getByLabel("Betreff").fill(subject);
+    await page.getByRole("textbox", { name: "Ihre Nachricht …" }).click();
+    await page.keyboard.type("Erster Teil.");
+    await expect(page.getByText(/Entwurf gespeichert um/)).toBeVisible({ timeout: 10_000 });
+
+    // Hold the next draft save back, so the send waits for it.
+    let saveStarted: () => void = () => undefined;
+    const saving = new Promise<void>((resolve) => {
+      saveStarted = resolve;
+    });
+    await page.route(/\/jmap/, async (route) => {
+      const body = route.request().postData() ?? "";
+      if (body.includes('"Email/set"') && !body.includes("EmailSubmission/set")) {
+        saveStarted();
+        await new Promise((resolve) => setTimeout(resolve, 1500));
+      }
+      await route.continue();
+    });
+    await page.keyboard.type(" Zweiter Teil.");
+    await saving;
+    await page.getByRole("button", { name: "Senden" }).click();
+    await expect(
+      page.getByRole("status").filter({ hasText: "Mail gesendet." }).or(page.getByRole("alert")),
+    ).toBeVisible({ timeout: 15_000 });
+    expect(await page.getByRole("alert").allTextContents()).toEqual([]);
+    await expect.poll(() => inboxSubjects("anna")).toContain(subject);
+    await page.getByRole("link", { name: /Entwürfe/ }).click();
     await expect(page.getByRole("list", { name: "Entwürfe" }).getByText(subject)).toHaveCount(0);
   });
 

@@ -43,9 +43,7 @@ Kleinere Dinge, die beim Bauen aufgefallen sind und noch erledigt werden.
 
 **Technik**
 
-- [ ] Der Baustein des Regel-Dialogs ist groß (~450 KB): zod und Server-Code nur dort laden, wo nötig.
-- [ ] e2e: der Test „sendet aus dem gemeinsamen Postfach als info@“ schlägt gelegentlich fehl.
-- [ ] e2e: Tests legen immer mehr Mails an; Tests sollen nur mit eigenen Mails arbeiten, nicht mit älteren aus den Testdaten.
+- [ ] e2e: lesende Tests öffnen Mails aus den Testdaten. Kommen im Posteingang von Jonas über 50 Test-Mails dazu, rutschen diese auf die zweite Seite der Liste; dann auch dort eigene Mails anlegen.
 - [ ] Lokal fehlt `readpst` für den Outlook-Test (`sudo apt install pst-utils`).
 - [ ] README: Screenshots von Aufgaben, Board und Regeln ergänzen.
 

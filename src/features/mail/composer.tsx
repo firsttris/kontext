@@ -70,9 +70,9 @@ export const Composer = ({ accountId, mode, sourceEmailId, prefill }: Props) => 
   const [attachments, setAttachments] = useState<OutgoingAttachment[]>([]);
   const [uploading, setUploading] = useState(0);
   const [sending, setSending] = useState(false);
-  const [draftId, setDraftId] = useState<string | null>(
-    mode === "draft" ? (sourceEmailId ?? null) : null,
-  );
+  // A ref, not state: a send that waited for a running autosave must replace the draft that
+  // save just wrote, not the one from before it.
+  const draftId = useRef<string | null>(mode === "draft" ? (sourceEmailId ?? null) : null);
   const [threading, setThreading] = useState<{
     inReplyTo: string[] | null;
     references: string[] | null;
@@ -110,8 +110,10 @@ export const Composer = ({ accountId, mode, sourceEmailId, prefill }: Props) => 
   );
 
   // Fill the form once the original (for reply/forward) and the identities are loaded.
+  // A form hidden by a suspending route gets a new editor when it shows again; the effect still
+  // holds the destroyed one then and waits for the render with the new one.
   useEffect(() => {
-    if (initialized.current || !editor || identities.length === 0) return;
+    if (initialized.current || !editor || editor.isDestroyed || identities.length === 0) return;
     if (sourceEmailId && !source.data) return;
     let originalHtml = "";
     if (source.data) {
@@ -205,7 +207,7 @@ export const Composer = ({ accountId, mode, sourceEmailId, prefill }: Props) => 
       attachments,
       inReplyTo: threading.inReplyTo,
       references: threading.references,
-      draftId,
+      draftId: draftId.current,
     };
   };
 
@@ -220,7 +222,7 @@ export const Composer = ({ accountId, mode, sourceEmailId, prefill }: Props) => 
     if (saving.current) await saving.current;
     if (!identity || !drafts || isEmpty()) return;
     const run = (async () => {
-      setDraftId(await saveDraft(client, outgoing(), drafts.id));
+      draftId.current = await saveDraft(client, outgoing(), drafts.id);
       setSavedAt(new Date());
       void queryClient.invalidateQueries({ queryKey: [sendAccountId, "emails"] });
     })();
@@ -257,9 +259,9 @@ export const Composer = ({ accountId, mode, sourceEmailId, prefill }: Props) => 
   const discard = async () => {
     lastSaved.current = changeKey;
     if (saving.current) await saving.current;
-    if (draftId) {
+    if (draftId.current) {
       await client
-        .call("Email/set", { accountId: sendAccountId, destroy: [draftId] })
+        .call("Email/set", { accountId: sendAccountId, destroy: [draftId.current] })
         .catch(() => undefined);
       void queryClient.invalidateQueries({ queryKey: [sendAccountId] });
     }
@@ -407,7 +409,7 @@ export const Composer = ({ accountId, mode, sourceEmailId, prefill }: Props) => 
 
       <ComposerActions
         sending={sending}
-        canSend={uploading === 0 && Boolean(identity)}
+        canSend={uploading === 0 && Boolean(identity && drafts && sent)}
         savedAt={savedAt}
         onAttach={(files) => void upload(files)}
         onSaveDraft={() => void storeDraft()}

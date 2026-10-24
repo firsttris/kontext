@@ -18,13 +18,12 @@ import {
   User,
   Users,
 } from "lucide-react";
-import type { ReactNode } from "react";
+import { lazy, type ReactNode, Suspense } from "react";
 import { TabBar } from "@/components/shell/app-shell";
 import { EmployeesSection } from "@/features/company/employees-section";
 import { MailboxesSection } from "@/features/company/mailboxes-section";
 import { MigrationSection } from "@/features/company/migration-section";
 import { useIsCompanyAdmin } from "@/features/company/queries";
-import { CompanySignatureSection } from "@/features/company/signature-section";
 import { RulesSection } from "@/features/rules/rules-section";
 import { cn } from "@/lib/cn";
 import { m } from "@/paraglide/messages";
@@ -32,8 +31,17 @@ import type { settingsSections } from "@/routes/_app/settings";
 import { AppearanceSection } from "./appearance-section";
 import { ProfileSection } from "./profile-section";
 import { SecuritySection } from "./security-section";
-import { SignatureSection } from "./signature-section";
 import { VacationSection } from "./vacation-section";
+
+// The signature editors bring the mail editor (Tiptap): loaded when their section opens.
+const SignatureSection = lazy(() =>
+  import("./signature-section").then((module) => ({ default: module.SignatureSection })),
+);
+const CompanySignatureSection = lazy(() =>
+  import("@/features/company/signature-section").then((module) => ({
+    default: module.CompanySignatureSection,
+  })),
+);
 
 type Section = (typeof settingsSections)[number];
 
@@ -137,7 +145,9 @@ export const SettingsPage = ({ section }: { section: Section | undefined }) => {
             <ChevronLeft size={18} /> {m.nav_settings()}
           </Link>
           <h2 className="m-0 text-[24px] font-semibold tracking-tight">{title}</h2>
-          {CONTENT[current]()}
+          <Suspense fallback={<p className="m-0 text-[14px] text-muted">{m.common_loading()}</p>}>
+            {CONTENT[current]()}
+          </Suspense>
         </div>
       </main>
     </>
