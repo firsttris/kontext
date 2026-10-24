@@ -1,10 +1,13 @@
 import { describe, expect, it } from "vitest";
 import {
+  addMeetingNote,
   eventToForm,
   formToEvent,
   localDiff,
+  meetingNote,
   movePatch,
   newEventForm,
+  removeMeetingNote,
   seriesStart,
   shiftLocal,
   validateEventForm,
@@ -144,5 +147,50 @@ describe("movePatch", () => {
       start: "2026-10-24T09:15:00",
       duration: "PT15M",
     });
+  });
+});
+
+describe("video meeting", () => {
+  const me = { email: "jonas@weber.test" };
+  const link = "https://kontext.weber.test/meet/AbCdEfGhIjKlMnOpQrSt_-";
+
+  it("writes the link as an online place and reads it back", () => {
+    const form = { ...newEventForm("2026-10-23T10:00:00"), title: "Abnahme", meeting: link };
+    const written = formToEvent(form, me);
+    expect(written.virtualLocations).toEqual({
+      "kontext-meeting": {
+        "@type": "VirtualLocation",
+        name: "Videobesprechung",
+        uri: link,
+        features: { audio: true, video: true, screen: true },
+      },
+    });
+    const read = eventToForm(
+      { ...(written as unknown as CalendarEvent), id: "x", calendarIds: {} },
+      [me.email],
+    );
+    expect(read.meeting).toBe(link);
+  });
+
+  it("keeps other online places and removes only its own", () => {
+    const teams = { teams: { name: "Teams", uri: "https://teams.example/join/1" } };
+    const existing = {
+      id: "x",
+      calendarIds: {},
+      start: "2026-10-23T10:00:00",
+      virtualLocations: { ...teams, "kontext-meeting": { uri: link } },
+    } as CalendarEvent;
+    const form = { ...eventToForm(existing, [me.email]), title: "Abnahme", meeting: "" };
+    expect(formToEvent(form, me, existing).virtualLocations).toEqual(teams);
+    const none = { ...newEventForm("2026-10-23T10:00:00"), title: "x" };
+    expect(formToEvent(none, me).virtualLocations).toBeNull();
+  });
+
+  it("puts the link into the notes and takes it out again", () => {
+    expect(addMeetingNote("", link)).toBe(meetingNote(link));
+    const notes = addMeetingNote("Bitte Pläne mitbringen.", link);
+    expect(notes).toBe(`Bitte Pläne mitbringen.\n\nVideobesprechung: ${link}`);
+    expect(addMeetingNote(notes, link)).toBe(notes);
+    expect(removeMeetingNote(notes, link)).toBe("Bitte Pläne mitbringen.");
   });
 });

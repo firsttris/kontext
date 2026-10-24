@@ -118,6 +118,7 @@ reicht ein VPS mit 2 vCPU und 4 GB RAM.
 ### 📅 Kalender
 
 - **Tag, Woche, Monat und Liste**, Termine mit der Maus verschieben, wiederkehrende Termine mit Ausnahmen.
+- **Videobesprechung am Termin**: ein Klick legt einen Link an; Kunden treten im Browser bei, ohne Konto – sobald jemand aus deiner Firma da ist.
 - **Kalender teilen** mit Kollegen – zum Lesen oder Bearbeiten; **Einladungen** mit Zusage und Absage.
 - **Am Handy**: Tagesansicht mit Wochenleiste, Monat und Liste.
 

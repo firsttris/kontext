@@ -458,8 +458,17 @@ Server läuft; Kontext baut nur die Oberfläche und entscheidet, wer hinein darf
   Ton und Bild direkt zum Server: UDP 7882 für alle Gespräche, TCP 7881, wenn UDP gesperrt ist.
   Verschlüsselt ist beides (WebRTC, DTLS-SRTP); LiveKit selbst kann mitschneiden, Kontext tut es
   nicht.
+- **Videobesprechung am Termin:** „Videobesprechung hinzufügen“ im Termin legt einen Link
+  `https://kontext.firma.de/meet/<id>` an (`/api/meet`, 128 Zufallsbits, nichts gespeichert –
+  der Link ist der Schlüssel). Er steht als `virtualLocations` im Termin (in iCalendar
+  `CONFERENCE`) und zusätzlich als Zeile in den Notizen, weil nicht jedes Mailprogramm der Gäste
+  Online-Orte zeigt. Am Termin führt „Beitreten“ hin.
+- **Gäste:** Die Seite `/meet/<id>` geht ohne Anmeldung. Kollegen treten als sie selbst bei,
+  jederzeit; Gäste geben ihren Namen an und kommen erst hinein, wenn jemand aus der Firma da ist
+  (bis dahin fragt die Seite alle paar Sekunden). So öffnet ein weitergeleiteter Link nie einen
+  leeren Raum für Fremde. Gäste stehen in den Kacheln als „Name · Gast“.
 - **Ohne LiveKit** (keine `LIVEKIT_*`-Einstellungen) sind Anrufe aus: Die App fragt
-  `/api/calls` und zeigt keine Knöpfe.
+  `/api/calls` und zeigt keine Knöpfe; der Termin bietet keine Videobesprechung an.
 
 ## Live-Verbindung
 

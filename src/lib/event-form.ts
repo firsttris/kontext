@@ -4,7 +4,9 @@ import {
   type CalendarEvent,
   eventTimes,
   fromLocal,
+  isMeetingLink,
   locationName,
+  meetingLink,
   participantEmail,
   toDuration,
   toLocal,
@@ -20,6 +22,8 @@ export type EventForm = {
   endTime: string;
   allDay: boolean;
   location: string;
+  /** The link of the event's Kontext video meeting, or "". */
+  meeting: string;
   attendees: string;
   description: string;
   /** How the event repeats; null for a rule the form cannot show, which is kept as it is. */
@@ -44,6 +48,7 @@ export const eventToForm = (
     endTime: endLocal.slice(11, 16),
     allDay,
     location: locationName(event),
+    meeting: meetingLink(event),
     attendees: attendees(event)
       .map(([, p]) => participantEmail(p))
       .filter((email) => email && !mine.has(email.toLowerCase()))
@@ -64,6 +69,7 @@ export const newEventForm = (startLocal: string, minutes = 60): EventForm => {
     endTime: end.slice(11, 16),
     allDay: false,
     location: "",
+    meeting: "",
     attendees: "",
     description: "",
     recurrence: NO_REPEAT,
@@ -159,6 +165,7 @@ export const formToEvent = (
           },
         }
       : null,
+    virtualLocations: withMeeting(existing?.virtualLocations, form.meeting),
     participants,
     organizerCalendarAddress: participants ? `mailto:${organizer.email}` : null,
     ...(withRecurrence && form.recurrence
@@ -166,6 +173,55 @@ export const formToEvent = (
       : {}),
   };
 };
+
+/**
+ * The event's online places with the Kontext meeting as the form has it; other places (a Teams
+ * link from an imported invitation) stay.
+ */
+const withMeeting = (
+  existing: CalendarEvent["virtualLocations"],
+  meeting: string,
+): Record<string, unknown> | null => {
+  const others = Object.entries(existing ?? {}).filter(
+    ([, place]) => !isMeetingLink(place.uri ?? ""),
+  );
+  const places = Object.fromEntries([
+    ...others,
+    ...(meeting
+      ? [
+          [
+            "kontext-meeting",
+            {
+              "@type": "VirtualLocation",
+              name: "Videobesprechung",
+              uri: meeting,
+              features: { audio: true, video: true, screen: true },
+            },
+          ],
+        ]
+      : []),
+  ]);
+  return Object.keys(places).length ? places : null;
+};
+
+/**
+ * The meeting's line in the notes, so guests in Outlook or Gmail find the link too (they do not
+ * all show iCalendar's CONFERENCE).
+ */
+export const meetingNote = (url: string) => `Videobesprechung: ${url}`;
+
+export const addMeetingNote = (description: string, url: string): string =>
+  description.includes(url)
+    ? description
+    : [description.trimEnd(), meetingNote(url)].filter(Boolean).join("\n\n");
+
+export const removeMeetingNote = (description: string, url: string): string =>
+  description
+    .split("\n")
+    .filter((line) => !line.includes(url))
+    .join("\n")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
 
 /** Adds minutes to a local date-time as on a wall clock ("…T09:00:00" + 30 → "…T09:30:00"). */
 export const shiftLocal = (local: string, minutes: number): string =>

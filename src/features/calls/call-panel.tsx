@@ -105,7 +105,11 @@ const CallView = ({ active, expanded }: { active: ActiveCall; expanded: boolean 
       >
         {status}
       </p>
-      <CallTiles tracks={tracks} expanded={expanded} nameOf={nameOf} />
+      <CallTiles
+        tracks={tracks}
+        expanded={expanded}
+        nameOf={(participant) => nameOf(participant.identity)}
+      />
       {canPlayAudio ? null : (
         <button
           type="button"

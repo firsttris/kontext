@@ -9,6 +9,7 @@ import { Hono } from "hono";
 import { serveStatic } from "hono/bun";
 import { type Auth, createAuth, createGrants, type Grants } from "./auth";
 import { currentRoomEvents, type LiveKitConfig } from "./calls/livekit";
+import { createMeetRoutes } from "./calls/meet-routes";
 import { createCallRoutes, createCallState } from "./calls/routes";
 import { createCategoryRoutes } from "./categories/routes";
 import { createCategoryStore } from "./categories/store";
@@ -220,17 +221,20 @@ export const createApp = async (env: Env) => {
   const chatStore = createChatStore(db, messages);
   const livekit = liveKitOf(env);
   if (livekit) {
+    const callState = createCallState();
+    const viewerOfRequest = async (request: Request) => {
+      const accounts = await accountsOf(request);
+      return accounts && viewerOf(accounts);
+    };
+    const nameOfRequest = async (request: Request) => (await infoOf(request))?.name ?? "";
     const calls = createCallRoutes(
       {
         livekit,
         publicUrl: env.LIVEKIT_PUBLIC_URL ?? null,
         hub,
         channelOf: chatStore.get,
-        viewerOf: async (request) => {
-          const accounts = await accountsOf(request);
-          return accounts && viewerOf(accounts);
-        },
-        nameOf: async (request) => (await infoOf(request))?.name ?? "",
+        viewerOf: viewerOfRequest,
+        nameOf: nameOfRequest,
         notify: pusher.notify,
         postCall: (channelId, authorId, call) =>
           messages.post({
@@ -243,9 +247,22 @@ export const createApp = async (env: Env) => {
             call,
           }),
       },
-      createCallState(),
+      callState,
     );
     app.route("/api/calls", calls.app);
+    app.route(
+      "/api/meet",
+      createMeetRoutes(
+        {
+          livekit,
+          publicUrl: env.LIVEKIT_PUBLIC_URL ?? null,
+          origin: new URL(env.BETTER_AUTH_URL).origin,
+          viewerOf: viewerOfRequest,
+          nameOf: nameOfRequest,
+        },
+        callState,
+      ),
+    );
     // Calls that ran through a restart of this server: LiveKit still knows who is in them.
     void currentRoomEvents(livekit)
       .then(async (events) => {

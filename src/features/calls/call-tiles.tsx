@@ -14,6 +14,9 @@ import { Avatar } from "@/components/ui/avatar";
 import { cn } from "@/lib/cn";
 import { m } from "@/paraglide/messages";
 
+/** How a tile names someone: as the chat does for colleagues, by their given name for guests. */
+export type NameOf = (participant: { identity: string; name?: string }) => string;
+
 const hasVideo = (trackRef: TrackReferenceOrPlaceholder) =>
   Boolean(trackRef.publication?.track) && !trackRef.publication?.isMuted;
 
@@ -24,14 +27,13 @@ const Tile = ({
 }: {
   trackRef: TrackReferenceOrPlaceholder;
   large: boolean;
-  nameOf: (id: string) => string;
+  nameOf: NameOf;
 }) => {
   const { participant } = trackRef;
   const speaking = useIsSpeaking(participant);
   const micMuted = useIsMuted({ participant, source: Track.Source.Microphone });
   const screen = trackRef.source === Track.Source.ScreenShare;
-  // Names as the chat shows them; the identity is the person's account id.
-  const fullName = nameOf(participant.identity);
+  const fullName = nameOf(participant);
   const name = participant.isLocal ? m.call_you() : fullName;
   return (
     <li
@@ -71,7 +73,7 @@ export const CallTiles = ({
 }: {
   tracks: TrackReferenceOrPlaceholder[];
   expanded: boolean;
-  nameOf: (id: string) => string;
+  nameOf: NameOf;
 }) => {
   const screens = tracks.filter((trackRef) => trackRef.source === Track.Source.ScreenShare);
   const cameras = tracks.filter((trackRef) => trackRef.source !== Track.Source.ScreenShare);

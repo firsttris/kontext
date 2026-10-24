@@ -60,3 +60,10 @@ export const joinCall = async (channelId: string, video: boolean) => {
 
 export const declineCall = (channelId: string) =>
   send<unknown>("POST", `${channelPath(channelId)}/decline`).catch(() => undefined);
+
+/** A new meeting link for a calendar event (…/meet/<id>). */
+export const createMeeting = async (): Promise<string> => {
+  const response = await fetch("/api/meet", { method: "POST", credentials: "same-origin" });
+  if (!response.ok) throw new Error(String(response.status));
+  return ((await response.json()) as { url: string }).url;
+};

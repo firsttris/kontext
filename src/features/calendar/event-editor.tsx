@@ -7,6 +7,7 @@ import { useSession } from "@/components/shell/app-shell";
 import { Button } from "@/components/ui/button";
 import { Input, Label, Select, Textarea } from "@/components/ui/input";
 import { useToast } from "@/components/ui/toast";
+import { MeetingField } from "@/features/calls/meeting-field";
 import {
   type EventForm,
   eventToForm,
@@ -189,6 +190,13 @@ export const EventEditor = ({ event, series, start, onDone, onCancel }: Props) =
         {m.calendar_event_location()}
         <Input value={form.location} onChange={set("location")} />
       </Label>
+      <MeetingField
+        meeting={form.meeting}
+        description={form.description}
+        onChange={(meeting, description) =>
+          setForm((current) => ({ ...current, meeting, description }))
+        }
+      />
       <Label>
         {m.calendar_event_attendees()}
         <Input

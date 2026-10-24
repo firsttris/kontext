@@ -1,6 +1,6 @@
 /** An appointment as the dialog shows it: when, where, who, the answer buttons, delete. */
-import { CalendarDays, MapPin, Repeat, Users } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { CalendarDays, MapPin, Repeat, Users, Video } from "lucide-react";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { useToast } from "@/components/ui/toast";
 import {
   attendees,
@@ -9,6 +9,7 @@ import {
   isInstance,
   isOrganizer,
   locationName,
+  meetingLink,
   myParticipation,
   participantEmail,
   toLocal,
@@ -114,6 +115,20 @@ export const EventDetails = ({ event, series, onEdit, onDone }: Props) => {
         <div className="flex items-start gap-3 text-[14px]">
           <MapPin size={16} className="mt-0.5 shrink-0 text-muted" />
           <span>{locationName(event)}</span>
+        </div>
+      ) : null}
+      {meetingLink(event) ? (
+        <div className="flex items-center gap-3 text-[14px]">
+          <Video size={16} className="shrink-0 text-muted" />
+          <span className="flex-1">{m.meeting_label()}</span>
+          <a
+            href={meetingLink(event)}
+            target="_blank"
+            rel="noopener"
+            className={buttonVariants({ variant: "primary", size: "sm" })}
+          >
+            {m.meeting_join()}
+          </a>
         </div>
       ) : null}
       {people.length > 0 ? (

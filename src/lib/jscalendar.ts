@@ -29,6 +29,8 @@ export type CalendarEvent = {
   duration?: string;
   showWithoutTime?: boolean;
   locations?: Record<string, { name?: string }>;
+  /** Online places, such as the link to a Kontext meeting (RFC 8984 §5.1.6). */
+  virtualLocations?: Record<string, { name?: string; uri?: string }>;
   participants?: Record<string, Participant>;
   organizerCalendarAddress?: string;
   recurrenceRule?: RecurrenceRule | null;
@@ -240,6 +242,15 @@ export const onDay = (event: CalendarEvent, key: string): boolean => {
   if (allDay) return start < to && end > from;
   return start < to && (end > from || (end.getTime() === start.getTime() && start >= from));
 };
+
+/** A Kontext meeting's link (…/meet/<id>), the way into its video meeting. */
+const MEETING_LINK = /\/meet\/[A-Za-z0-9_-]{16,64}$/;
+export const isMeetingLink = (uri: string): boolean => MEETING_LINK.test(uri);
+
+export const meetingLink = (event: Pick<CalendarEvent, "virtualLocations">): string =>
+  Object.values(event.virtualLocations ?? {})
+    .map((place) => place.uri ?? "")
+    .find(isMeetingLink) ?? "";
 
 export const locationName = (event: CalendarEvent): string =>
   Object.values(event.locations ?? {})

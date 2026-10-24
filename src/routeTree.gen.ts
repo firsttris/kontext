@@ -18,6 +18,7 @@ import { Route as AppComposeRouteImport } from './routes/_app/compose'
 import { Route as AppContactsRouteImport } from './routes/_app/contacts'
 import { Route as AppSettingsRouteImport } from './routes/_app/settings'
 import { Route as AppTasksRouteImport } from './routes/_app/tasks'
+import { Route as MeetIdRouteImport } from './routes/meet.$id'
 import { Route as AppMailIndexRouteImport } from './routes/_app/mail.index'
 import { Route as AppMailAccountIdMailboxIdRouteImport } from './routes/_app/mail.$accountId.$mailboxId'
 
@@ -65,6 +66,11 @@ const AppTasksRoute = AppTasksRouteImport.update({
   path: '/tasks',
   getParentRoute: () => AppRoute,
 } as any)
+const MeetIdRoute = MeetIdRouteImport.update({
+  id: '/meet/$id',
+  path: '/meet/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AppMailIndexRoute = AppMailIndexRouteImport.update({
   id: '/mail/',
   path: '/mail/',
@@ -86,6 +92,7 @@ export interface FileRoutesByFullPath {
   '/contacts': typeof AppContactsRoute
   '/settings': typeof AppSettingsRoute
   '/tasks': typeof AppTasksRoute
+  '/meet/$id': typeof MeetIdRoute
   '/mail/': typeof AppMailIndexRoute
   '/mail/$accountId/$mailboxId': typeof AppMailAccountIdMailboxIdRoute
 }
@@ -97,6 +104,7 @@ export interface FileRoutesByTo {
   '/contacts': typeof AppContactsRoute
   '/settings': typeof AppSettingsRoute
   '/tasks': typeof AppTasksRoute
+  '/meet/$id': typeof MeetIdRoute
   '/': typeof AppIndexRoute
   '/mail': typeof AppMailIndexRoute
   '/mail/$accountId/$mailboxId': typeof AppMailAccountIdMailboxIdRoute
@@ -111,6 +119,7 @@ export interface FileRoutesById {
   '/_app/contacts': typeof AppContactsRoute
   '/_app/settings': typeof AppSettingsRoute
   '/_app/tasks': typeof AppTasksRoute
+  '/meet/$id': typeof MeetIdRoute
   '/_app/': typeof AppIndexRoute
   '/_app/mail/': typeof AppMailIndexRoute
   '/_app/mail/$accountId/$mailboxId': typeof AppMailAccountIdMailboxIdRoute
@@ -126,6 +135,7 @@ export interface FileRouteTypes {
     | '/contacts'
     | '/settings'
     | '/tasks'
+    | '/meet/$id'
     | '/mail/'
     | '/mail/$accountId/$mailboxId'
   fileRoutesByTo: FileRoutesByTo
@@ -137,6 +147,7 @@ export interface FileRouteTypes {
     | '/contacts'
     | '/settings'
     | '/tasks'
+    | '/meet/$id'
     | '/'
     | '/mail'
     | '/mail/$accountId/$mailboxId'
@@ -150,6 +161,7 @@ export interface FileRouteTypes {
     | '/_app/contacts'
     | '/_app/settings'
     | '/_app/tasks'
+    | '/meet/$id'
     | '/_app/'
     | '/_app/mail/'
     | '/_app/mail/$accountId/$mailboxId'
@@ -158,6 +170,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   AppRoute: typeof AppRouteWithChildren
   LoginRoute: typeof LoginRoute
+  MeetIdRoute: typeof MeetIdRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -225,6 +238,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppTasksRouteImport
       parentRoute: typeof AppRoute
     }
+    '/meet/$id': {
+      id: '/meet/$id'
+      path: '/meet/$id'
+      fullPath: '/meet/$id'
+      preLoaderRoute: typeof MeetIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_app/mail/': {
       id: '/_app/mail/'
       path: '/mail'
@@ -271,6 +291,7 @@ const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
 const rootRouteChildren: RootRouteChildren = {
   AppRoute: AppRouteWithChildren,
   LoginRoute: LoginRoute,
+  MeetIdRoute: MeetIdRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

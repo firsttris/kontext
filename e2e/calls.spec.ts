@@ -176,3 +176,55 @@ test.describe("Anrufe am Handy @phone", () => {
     await expect(panel).toHaveCount(0);
   });
 });
+
+test.describe("Videobesprechung per Link", () => {
+  test("am Termin anlegen; ein Gast wartet, bis Jonas da ist, und kommt dann dazu", async ({
+    page,
+    browser,
+  }) => {
+    test.setTimeout(90_000);
+    const day = new Intl.DateTimeFormat("sv-SE", { timeZone: "Europe/Berlin" }).format(new Date());
+    const title = `Abnahme online ${Date.now()}`;
+    await login(page);
+    await page.goto(`/calendar?date=${day}&event=new&start=${day}T16:00`);
+    const dialog = page.getByRole("dialog");
+    await dialog.getByLabel("Titel").fill(title);
+    await dialog.getByRole("button", { name: "Videobesprechung hinzufügen" }).click();
+    await expect(dialog.getByText(/\/meet\//)).toBeVisible();
+    // The link also goes into the notes, for guests' mail programs.
+    await expect(dialog.getByLabel("Notizen")).toHaveValue(/^Videobesprechung: http.*\/meet\//);
+    await dialog.getByRole("button", { name: "Speichern" }).click();
+
+    await page.locator(`[data-day="${day}"]`).getByText(title).click();
+    const join = page.getByRole("link", { name: "Beitreten" });
+    const link = String(await join.getAttribute("href"));
+    expect(link).toMatch(/\/meet\/[A-Za-z0-9_-]{16,}$/);
+    const path = new URL(link).pathname;
+
+    // A guest without an account: no way in before someone of the company is there.
+    const guest = await (await browser.newContext()).newPage();
+    await guest.goto(path);
+    await expect(guest.getByRole("status")).toContainText("noch nicht begonnen");
+    await guest.getByLabel("Dein Name").fill("Frau Hoffmann");
+    await expect(guest.getByRole("button", { name: "Beitreten" })).toBeDisabled();
+
+    await page.goto(path);
+    await page.getByRole("button", { name: "Beitreten" }).click();
+    const room = page.getByRole("region", { name: "Videobesprechung" });
+    await expect(room).toBeVisible();
+
+    await expect(guest.getByRole("status")).toHaveText("Die Besprechung läuft.", {
+      timeout: 15_000,
+    });
+    await guest.getByRole("button", { name: "Beitreten" }).click();
+    await expect(guest.getByRole("region", { name: "Videobesprechung" })).toBeVisible();
+    await expect(room.getByRole("listitem", { name: /^Frau Hoffmann · Gast/ })).toBeVisible({
+      timeout: 15_000,
+    });
+
+    await guest.getByRole("button", { name: "Auflegen" }).click();
+    await expect(guest.getByRole("status")).toHaveText("Du hast die Besprechung verlassen.");
+    await room.getByRole("button", { name: "Auflegen" }).click();
+    await guest.context().close();
+  });
+});

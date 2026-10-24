@@ -118,6 +118,7 @@ fine on a VPS with 2 vCPUs and 4 GB RAM.
 ### 📅 Calendar
 
 - **Day, week, month and list**, drag to move, recurring events with exceptions.
+- **Video meeting per event**: one click adds a link; customers join in the browser without an account, once someone of your company is there.
 - **Share calendars** with colleagues – to read or to edit; **invitations** with accept and decline.
 - **On the phone**: day view with a week strip, month and list.
 
