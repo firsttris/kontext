@@ -35,8 +35,14 @@ const own: SearchAccount = {
   isPersonal: true,
   mailboxes,
   path: (m) => paths[m.id] ?? m.name,
+  categories: [{ keyword: "erledigt", name: "Erledigt", color: "green" }],
 };
-const info: SearchAccount = { ...own, label: "info@", isPersonal: false };
+const info: SearchAccount = {
+  ...own,
+  label: "info@",
+  isPersonal: false,
+  categories: [{ keyword: "in-bearbeitung", name: "In Bearbeitung", color: "blue" }],
+};
 
 describe("parseSearch", () => {
   it("splits words, phrases and operators in German and English", () => {
@@ -86,6 +92,19 @@ describe("parseSearch", () => {
 });
 
 describe("toEmailFilter", () => {
+  it("finds a category by its name in each account's own categories", () => {
+    const query = parseSearch('kategorie:"in bearbeitung" in:info@', today);
+    expect(query.categories).toEqual(["in bearbeitung"]);
+    expect(toEmailFilter(query, info)).toEqual({
+      operator: "AND",
+      conditions: [{ inMailboxOtherThan: ["tr", "ju"] }, { hasKeyword: "in-bearbeitung" }],
+    });
+    expect(toEmailFilter(parseSearch("label:Erledigt", today), info)).toBeNull();
+    expect(toEmailFilter(parseSearch("label:Erledigt", today), own)).toMatchObject({
+      conditions: [{ inMailboxOtherThan: ["tr", "ju"] }, { hasKeyword: "erledigt" }],
+    });
+  });
+
   it("searches everywhere but trash and spam", () => {
     expect(toEmailFilter(parseSearch("angebot von:keller", today), own)).toEqual({
       operator: "AND",

@@ -3,6 +3,7 @@
  * Unlike mail, contacts and calendar this is not JMAP: the server works with its own Stalwart key.
  */
 
+import type { Category } from "../../../server/categories/categories";
 import type {
   Company as CompanyData,
   Employee,
@@ -115,7 +116,7 @@ export const updateMailbox = (id: string, change: MailboxChange) =>
   send<{ ok: true }>("PATCH", `/mailboxes/${encodeURIComponent(id)}`, change);
 
 export const getMailboxRules = (id: string) =>
-  send<{ rules: Rule[]; folders: FolderName[] }>(
+  send<{ rules: Rule[]; folders: FolderName[]; categories: Category[] }>(
     "GET",
     `/mailboxes/${encodeURIComponent(id)}/rules`,
   );

@@ -8,6 +8,8 @@ import { Button } from "@/components/ui/button";
 import { Dialog } from "@/components/ui/dialog";
 import { Input, Label, Select } from "@/components/ui/input";
 import { useToast } from "@/components/ui/toast";
+import { COLOR_STYLES } from "@/lib/categories";
+import { cn } from "@/lib/cn";
 import {
   cleanRule,
   emptyCondition,
@@ -128,7 +130,13 @@ export const RuleDialog = ({
   onClose: () => void;
 }) => {
   const toast = useToast();
-  const { rules, folders } = store;
+  const { rules, folders, categories } = store;
+  const toggleCategory = (keyword: string) =>
+    set({
+      categories: rule.categories.includes(keyword)
+        ? rule.categories.filter((candidate) => candidate !== keyword)
+        : [...rule.categories, keyword],
+    });
   const [rule, setRule] = useState(initial);
   const [applyNow, setApplyNow] = useState(false);
   const [problem, setProblem] = useState<string | null>(null);
@@ -261,6 +269,39 @@ export const RuleDialog = ({
             checked={rule.flag}
             onChange={(flag) => set({ flag })}
           />
+          {categories.length ? (
+            <Action
+              label={m.rules_action_category()}
+              checked={rule.categories.length > 0}
+              onChange={(on) => set({ categories: on ? [categories[0]!.keyword] : [] })}
+            >
+              <div className="flex flex-wrap gap-1.5">
+                {categories.map((category) => {
+                  const on = rule.categories.includes(category.keyword);
+                  return (
+                    <button
+                      key={category.keyword}
+                      type="button"
+                      aria-pressed={on}
+                      onClick={() => toggleCategory(category.keyword)}
+                      className={cn(
+                        "flex h-8 items-center gap-1.5 rounded-full border px-3 text-[13px]",
+                        on
+                          ? cn("border-transparent font-medium", COLOR_STYLES[category.color].chip)
+                          : "border-border text-muted hover:bg-hover",
+                      )}
+                    >
+                      <span
+                        aria-hidden="true"
+                        className={cn("size-2 rounded-full", COLOR_STYLES[category.color].dot)}
+                      />
+                      {category.name}
+                    </button>
+                  );
+                })}
+              </div>
+            </Action>
+          ) : null}
           <Action
             label={m.rules_action_forward()}
             checked={rule.forwardTo !== null}

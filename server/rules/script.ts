@@ -15,6 +15,7 @@
  *   rules below.
  */
 import { z } from "zod";
+import { categorySchema } from "../categories/categories";
 
 export const RULES_SCRIPT = "sekretaer-regeln";
 
@@ -35,6 +36,8 @@ const rule = z.object({
   markRead: z.boolean(),
   flag: z.boolean(),
   forwardTo: z.string().nullable(),
+  /** Category keywords to set (categories/categories.ts); older rules have none. */
+  categories: z.array(categorySchema.shape.keyword).max(10).default([]),
   stop: z.boolean(),
 });
 
@@ -53,7 +56,7 @@ const MARKER = "# sekretaer:";
 export const isEffective = (rule: Rule): boolean =>
   rule.enabled &&
   rule.conditions.some((condition) => condition.value.trim() !== "") &&
-  Boolean(rule.moveTo || rule.markRead || rule.flag || rule.forwardTo);
+  Boolean(rule.moveTo || rule.markRead || rule.flag || rule.forwardTo || rule.categories.length);
 
 /** A reference to a Sieve variable (RFC 5229), "${name}". */
 const variable = (name: string) => `$\{${name}}`;
@@ -94,6 +97,7 @@ const ruleBlock = (rule: Rule): string[] => [
   `if ${ruleTest(rule)} {`,
   ...(rule.markRead ? ['  addflag "\\\\Seen";'] : []),
   ...(rule.flag ? ['  addflag "\\\\Flagged";'] : []),
+  ...rule.categories.map((keyword) => `  addflag ${quoted(keyword)};`),
   ...(rule.forwardTo ? [`  redirect :copy ${quoted(rule.forwardTo.trim())};`] : []),
   ...(rule.moveTo
     ? [

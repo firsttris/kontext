@@ -12,6 +12,7 @@ const rule = (patch: Partial<Rule> = {}): Rule => ({
   markRead: true,
   flag: false,
   forwardTo: "nie@example.test",
+  categories: [],
   stop: false,
   ...patch,
 });
@@ -46,6 +47,17 @@ describe("patchFor", () => {
       "mailboxIds/archive": true,
       "keywords/$seen": true,
     });
+  });
+
+  it("sets categories as keywords", () => {
+    expect(
+      patchFor(
+        [rule({ moveTo: null, markRead: false, categories: ["angebot"] })],
+        mail,
+        "inbox",
+        folders,
+      ),
+    ).toEqual({ "keywords/angebot": true });
   });
 
   it("leaves a mail alone that no rule matches, or a folder that is gone", () => {

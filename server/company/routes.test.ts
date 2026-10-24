@@ -82,6 +82,10 @@ const setup = (email: string | null) => {
   const fake = fakeManagement();
   const ended: string[] = [];
   const app = createCompanyRoutes({
+    categories: {
+      list: async (ids) => Object.fromEntries(ids.map((id) => [id, []])),
+      save: async () => {},
+    },
     management: fake.management,
     mailstore: fake.mailstore,
     settings: {
@@ -163,6 +167,7 @@ describe("Firmenverwaltung", () => {
       markRead: true,
       flag: false,
       forwardTo: null,
+      categories: [],
       stop: false,
     };
     expect((await send("PUT", "/mailboxes/g/rules", { rules: [rule] })).status).toBe(200);

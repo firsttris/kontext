@@ -1,9 +1,11 @@
 /**
  * The search box's language, like Gmail's: free words plus operators, in German and English
- * (`von:hoffmann`, `from:hoffmann`, `hat:anhang`, `in:info@`, `nach:01.10.2026` …). Parsed into
+ * (`von:hoffmann`, `from:hoffmann`, `hat:anhang`, `in:info@`, `nach:01.10.2026`,
+ * `kategorie:erledigt` …). Parsed into
  * a query, turned into a JMAP Email/query filter per account (RFC 8621 §4.4.1).
  */
 import type { Mailbox } from "@/jmap/types";
+import type { Category } from "./categories";
 import { addDays, fromLocal } from "./jscalendar";
 
 export type SearchQuery = {
@@ -12,6 +14,8 @@ export type SearchQuery = {
   from: string[];
   to: string[];
   subject: string[];
+  /** Category names, matched in each account by its own categories. */
+  categories: string[];
   hasAttachment: boolean;
   unread: boolean;
   flagged: boolean;
@@ -27,6 +31,7 @@ const EMPTY: SearchQuery = {
   from: [],
   to: [],
   subject: [],
+  categories: [],
   hasAttachment: false,
   unread: false,
   flagged: false,
@@ -46,6 +51,9 @@ const KEYS: Record<string, keyof SearchQuery> = {
   after: "after",
   seit: "after",
   in: "in",
+  kategorie: "categories",
+  category: "categories",
+  label: "categories",
 };
 
 const FLAGS: Record<string, "hasAttachment" | "unread" | "flagged"> = {
@@ -77,7 +85,14 @@ export const parseDay = (value: string, today: string): string | undefined => {
 };
 
 export const parseSearch = (input: string, today: string): SearchQuery => {
-  const query: SearchQuery = { ...EMPTY, words: [], from: [], to: [], subject: [] };
+  const query: SearchQuery = {
+    ...EMPTY,
+    words: [],
+    from: [],
+    to: [],
+    subject: [],
+    categories: [],
+  };
   for (const token of tokenize(input)) {
     const flag = FLAGS[token.toLowerCase()];
     if (flag) {
@@ -92,7 +107,8 @@ export const parseSearch = (input: string, today: string): SearchQuery => {
       continue;
     }
     const value = unquote(operator[2]!);
-    if (key === "from" || key === "to" || key === "subject") query[key].push(value);
+    if (key === "from" || key === "to" || key === "subject" || key === "categories")
+      query[key].push(value);
     else if (key === "before" || key === "after") query[key] = parseDay(value, today);
     else if (key === "in") query.in = value;
   }
@@ -105,6 +121,7 @@ export const isEmptySearch = (query: SearchQuery): boolean =>
   !query.from.length &&
   !query.to.length &&
   !query.subject.length &&
+  !query.categories.length &&
   !query.hasAttachment &&
   !query.unread &&
   !query.flagged &&
@@ -163,6 +180,7 @@ export type SearchAccount = {
   mailboxes: Mailbox[];
   /** "Kunden/Hoffmann" for a mailbox. */
   path: (mailbox: Mailbox) => string;
+  categories: Category[];
 };
 
 /**
@@ -196,6 +214,14 @@ export const toEmailFilter = (
   for (const from of query.from) conditions.push({ from });
   for (const to of query.to) conditions.push({ to });
   for (const subject of query.subject) conditions.push(anyOf("subject", wordVariants(subject)));
+  for (const name of query.categories) {
+    // A category is the account's own: where none has the name, nothing there can match.
+    const category = account.categories.find(
+      (candidate) => candidate.name.toLowerCase() === name.toLowerCase(),
+    );
+    if (!category) return null;
+    conditions.push({ hasKeyword: category.keyword });
+  }
   if (query.hasAttachment) conditions.push({ hasAttachment: true });
   if (query.unread) conditions.push({ notKeyword: "$seen" });
   if (query.flagged) conditions.push({ hasKeyword: "$flagged" });

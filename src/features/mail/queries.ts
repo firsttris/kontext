@@ -28,7 +28,7 @@ import {
   queryEmails,
   setKeyword,
 } from "@/jmap/mail";
-import type { Account, EmailSummary, Mailbox } from "@/jmap/types";
+import type { Account, EmailDetail, EmailSummary, Mailbox } from "@/jmap/types";
 import type { MailAccount } from "@/lib/mail-accounts";
 import { findRole } from "@/lib/mailboxes";
 import { usePrincipals } from "../sharing/queries";
@@ -270,12 +270,19 @@ export const useEmailActions = (accountId: string) => {
       setKeyword(client, accountId, ids, keyword, on),
     onMutate: ({ ids, keyword, on }) => {
       if (keyword === "$seen") adjustUnreadCounts(queryClient, accountId, ids, on);
-      patchCachedEmails(queryClient, accountId, ids, (email) => ({
+      const switched = <T extends EmailSummary>(email: T): T => ({
         ...email,
         keywords: on
           ? { ...email.keywords, [keyword]: true }
           : Object.fromEntries(Object.entries(email.keywords).filter(([key]) => key !== keyword)),
-      }));
+      });
+      patchCachedEmails(queryClient, accountId, ids, switched);
+      // The open mail too, so its menu and chips follow at once.
+      for (const id of ids) {
+        queryClient.setQueryData<EmailDetail>([accountId, "email", id], (email) =>
+          email ? switched(email) : email,
+        );
+      }
     },
     onSettled: refresh,
   });
@@ -320,6 +327,9 @@ export const useEmailActions = (accountId: string) => {
       keyword.mutateAsync({ ids, keyword: "$seen", on: seen }),
     setFlagged: (ids: string[], flagged: boolean) =>
       keyword.mutateAsync({ ids, keyword: "$flagged", on: flagged }),
+    /** A category (its keyword) on or off. */
+    setCategory: (ids: string[], category: string, on: boolean) =>
+      keyword.mutateAsync({ ids, keyword: category, on }),
     /** Into a folder of this or of another mailbox (`target.accountId`). */
     moveTo: (emails: EmailSummary[], from: string, target: MoveTarget) =>
       moveTo.mutateAsync({ accountId, emails, from, target }),

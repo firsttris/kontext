@@ -8,7 +8,12 @@ import { isEffective, type Rule, type RuleCondition } from "./script";
 /** What a rule looks at; addresses without names, like Sieve's `address :all`. */
 export type MailFacts = { from: string[]; to: string[]; subject: string; body: string };
 
-export type Outcome = { moveTo: Rule["moveTo"]; markRead: boolean; flag: boolean };
+export type Outcome = {
+  moveTo: Rule["moveTo"];
+  markRead: boolean;
+  flag: boolean;
+  categories: string[];
+};
 
 const fold = (text: string) => text.toLowerCase();
 
@@ -31,12 +36,13 @@ export const ruleMatches = (rule: Rule, mail: MailFacts): boolean => {
 };
 
 export const outcome = (rules: Rule[], mail: MailFacts): Outcome => {
-  const result: Outcome = { moveTo: null, markRead: false, flag: false };
+  const result: Outcome = { moveTo: null, markRead: false, flag: false, categories: [] };
   for (const rule of rules.filter(isEffective)) {
     if (!ruleMatches(rule, mail)) continue;
     result.moveTo ??= rule.moveTo;
     result.markRead ||= rule.markRead;
     result.flag ||= rule.flag;
+    result.categories = [...new Set([...result.categories, ...rule.categories])];
     if (rule.stop) break;
   }
   return result;

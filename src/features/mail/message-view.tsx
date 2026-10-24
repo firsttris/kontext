@@ -7,10 +7,13 @@ import { Button } from "@/components/ui/button";
 import { useMediaQuery } from "@/components/use-media-query";
 import { isUnread } from "@/jmap/mail";
 import type { Mailbox } from "@/jmap/types";
+import { categoriesOn } from "@/lib/categories";
 import { displayName, firstName, formatAddressList, readingDate } from "@/lib/format";
 import { mailboxNotice } from "@/lib/mail-accounts";
 import { mailboxRights } from "@/lib/mailboxes";
 import { m } from "@/paraglide/messages";
+import { CategoryChips } from "../categories/category-chips";
+import { useCategories } from "../categories/queries";
 import { Attachments } from "./attachments";
 import { MailBody } from "./mail-body";
 import { MessageDetails, SenderWarnings } from "./message-details";
@@ -29,6 +32,7 @@ export const MessageView = ({ accountId, mailbox, emailId }: Props) => {
   // Open for one mail; the next mail starts folded again.
   const [detailsFor, setDetailsFor] = useState<string | null>(null);
   const wide = useMediaQuery("(min-width: 1536px)");
+  const accountCategories = useCategories(accountId);
 
   // Opening a mail marks it read, once per mail (if the mailbox allows it).
   const { canMarkSeen } = mailboxRights(mailbox);
@@ -49,6 +53,7 @@ export const MessageView = ({ accountId, mailbox, emailId }: Props) => {
   if (isPending) return <div className="p-6 text-[14px] text-muted">{m.common_loading()}</div>;
   if (!email) return <div className="p-6 text-[14px] text-muted">{m.mail_pick()}</div>;
   const showDetails = detailsFor === email.id;
+  const categories = categoriesOn(email.keywords, accountCategories);
   const attachments = email.attachments.filter(
     (part) => !part.cid || part.disposition === "attachment",
   );
@@ -73,6 +78,11 @@ export const MessageView = ({ accountId, mailbox, emailId }: Props) => {
               <h2 className="m-0 text-[21px] leading-snug font-semibold tracking-tight">
                 {email.subject || m.mail_no_subject()}
               </h2>
+              {categories.length ? (
+                <div className="-mt-1 flex flex-wrap gap-1">
+                  <CategoryChips categories={categories} />
+                </div>
+              ) : null}
               <div className="flex items-center gap-3">
                 <Avatar name={displayName(email.from?.[0])} size={38} />
                 <div className="flex min-w-0 flex-1 flex-col">

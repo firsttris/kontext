@@ -272,12 +272,35 @@ ins eigene Konto. So wirken sie auch, wenn niemand angemeldet ist, und gleich au
   Person ausgetreten ist. Wird der Zugang wieder freigegeben, endet der Austritt: das Skript
   wird abgeschaltet, Regeln und Abwesenheit laufen wieder wie gespeichert.
 
+## Kategorien
+
+Farbige Markierungen an Mails, mehrere je Mail, neben dem einen Ordner, in dem sie liegt. Eine
+Mail kann damit gleichzeitig „Angebot“ und „Wartet auf Antwort“ sein, ohne doppelt in zwei Ordnern
+zu liegen wie bei Gmails Labels.
+
+- **An der Mail** ist eine Kategorie ein JMAP-Keyword (RFC 8621 §4.1.1, in IMAP ein Flag), lesbar
+  geschrieben wie `wartet-auf-antwort`. Thunderbird zeigt sie als Schlagwort; Handy-Apps
+  übergehen eigene Keywords.
+- **Name, Farbe und Reihenfolge** gehören zum Postfach und liegen in Sekretärs SQLite
+  (`mail_categories`), weil Stalwart dafür keinen Platz hat. Ohne eigene Liste gelten „In
+  Bearbeitung“, „Wartet auf Antwort“ und „Erledigt“. `/api/categories` liefert die Kategorien
+  aller Postfächer der angemeldeten Person; wer welches Postfach öffnen darf, sagt Stalwarts
+  JMAP-Session mit ihrem Token, ändern darf, wer nicht nur lesen darf.
+- **Umbenennen** behält das Keyword, die Mails behalten also ihre Kategorie. Entfernen blendet
+  sie nur aus; das Keyword bleibt an den Mails.
+- **Gemeinsame Postfächer:** Kategorien an einer Mail in info@ sehen alle Mitglieder. So wird
+  info@ zur kleinen Aufgabenliste („In Bearbeitung“ → „Erledigt“).
+- **Setzen** im Menü „Kategorie“ der Mail (mehrere nacheinander, das Menü bleibt offen);
+  **finden** über die Seitenleiste, die `in:info@ kategorie:"…"` sucht, oder per
+  `kategorie:`/`label:` in der Suche; **automatisch** per Regel („Kategorie setzen“: Sieve
+  `addflag "<keyword>"`).
+
 ## Suche
 
 Die Suche (`/mail/all/search?q=…`) läuft über alle Ordner und Postfächer, Papierkorb und Spam
 nur mit `in:papierkorb` / `in:spam`. `src/lib/mail-search.ts` zerlegt den Text in Wörter und
 Operatoren (deutsch und englisch: `von:`/`from:`, `an:`, `betreff:`, `hat:anhang`,
-`ist:ungelesen`, `ist:markiert`, `in:`, `nach:`, `vor:`) und baut daraus pro Konto einen
+`ist:ungelesen`, `ist:markiert`, `in:`, `nach:`, `vor:`, `kategorie:`/`label:`) und baut daraus pro Konto einen
 `Email/query`-Filter; die Listen der Konten werden wie bei „Alle Posteingänge“ gemischt.
 
 Stalwart sucht mit Wortstämmen, findet ein Wort, das schon sein eigener Stamm ist („Angebot“),

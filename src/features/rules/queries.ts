@@ -6,8 +6,10 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useClient } from "@/auth/auth";
 import { setFilters } from "@/jmap/rules";
 import type { Mailbox } from "@/jmap/types";
+import type { Category } from "@/lib/categories";
 import { type Rule, type RuleFolder, ruleFolders } from "@/lib/rules";
 import { applyToInbox } from "../../../server/rules/apply";
+import { useCategories } from "../categories/queries";
 import { applyMailboxRule, getMailboxRules, setMailboxRules } from "../company/api";
 import { useAllMailboxes } from "../mail/queries";
 import { useFilters, usePersonalAccountId } from "../settings/queries";
@@ -16,6 +18,8 @@ export type RulesStore = {
   /** Undefined while loading. */
   rules: Rule[] | undefined;
   folders: RuleFolder[];
+  /** The mailbox's categories, for "Kategorie setzen". */
+  categories: Category[];
   save: (rules: Rule[]) => Promise<void>;
   /** One rule over the mails already in the inbox; how many it changed. */
   apply: (rule: Rule) => Promise<number>;
@@ -28,6 +32,7 @@ export const usePersonalRules = (): RulesStore => {
   const accountId = usePersonalAccountId();
   const { data: filters } = useFilters();
   const mailboxes = useAllMailboxes()[accountId ?? ""] ?? [];
+  const categories = useCategories(accountId);
   const save = useMutation({
     // The out-of-office reply goes along unchanged.
     mutationFn: (rules: Rule[]) =>
@@ -43,6 +48,7 @@ export const usePersonalRules = (): RulesStore => {
   return {
     rules: filters?.rules,
     folders: ruleFolders(mailboxes),
+    categories,
     save: async (rules) => void (await save.mutateAsync(rules)),
     apply,
     saving: save.isPending,
@@ -61,6 +67,7 @@ export const useMailboxRules = (mailboxId: string): RulesStore => {
     rules: data?.rules,
     // The server sends the folder fields the tree needs; the rest of a Mailbox is not used.
     folders: ruleFolders((data?.folders ?? []) as Mailbox[]),
+    categories: data?.categories ?? [],
     save: async (rules) => void (await save.mutateAsync(rules)),
     apply: async (rule) => (await applyMailboxRule(mailboxId, rule)).changed,
     saving: save.isPending,

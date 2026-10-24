@@ -39,7 +39,7 @@ const applyBody = z.object({ rule: ruleSchema });
 
 const knownPeople = (loaded: Loaded, people: string[]) => people.every((id) => userOf(loaded, id));
 
-export const mailboxRoutes = ({ management, mailstore }: CompanyDeps) => {
+export const mailboxRoutes = ({ management, mailstore, categories }: CompanyDeps) => {
   /** Members and readers of a mailbox; someone in both lists is a member. */
   const setAccess = async (
     loaded: Loaded,
@@ -114,7 +114,8 @@ export const mailboxRoutes = ({ management, mailstore }: CompanyDeps) => {
   app.get("/:id/rules", async (c) => {
     const id = c.req.param("id");
     if (!mailboxOf(c.get("loaded"), id)) return notFound();
-    return c.json(await mailstore.getRules(id));
+    const [rules, own] = await Promise.all([mailstore.getRules(id), categories.list([id])]);
+    return c.json({ ...rules, categories: own[id] ?? [] });
   });
 
   app.put("/:id/rules", async (c) => {

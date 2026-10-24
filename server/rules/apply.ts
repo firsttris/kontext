@@ -44,7 +44,7 @@ export const patchFor = (
   inboxId: string,
   folderIds: Set<string>,
 ): Record<string, boolean | null> | null => {
-  const { moveTo, markRead, flag } = outcome(rules, factsOf(mail));
+  const { moveTo, markRead, flag, categories } = outcome(rules, factsOf(mail));
   const patch: Record<string, boolean | null> = {};
   if (moveTo && moveTo.id !== inboxId && folderIds.has(moveTo.id)) {
     patch[`mailboxIds/${inboxId}`] = null;
@@ -52,6 +52,7 @@ export const patchFor = (
   }
   if (markRead) patch["keywords/$seen"] = true;
   if (flag) patch["keywords/$flagged"] = true;
+  for (const keyword of categories) patch[`keywords/${keyword}`] = true;
   return Object.keys(patch).length ? patch : null;
 };
 

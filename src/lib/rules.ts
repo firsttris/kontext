@@ -46,6 +46,7 @@ export const newRule = (id: string, conditions = [emptyCondition()]): Rule => ({
   markRead: false,
   flag: false,
   forwardTo: null,
+  categories: [],
   stop: false,
 });
 
@@ -101,13 +102,23 @@ export const whenText = (rule: Rule): string =>
 export const ruleTitle = (rule: Rule): string =>
   rule.name.trim() || whenText(rule) || m.rules_untitled();
 
-/** "In „Kunden“ verschieben · Als gelesen markieren · …"; folders by id from `folderName`. */
-export const thenText = (rule: Rule, folderName: (id: string) => string | undefined): string[] => [
+/**
+ * "In „Kunden“ verschieben · Als gelesen markieren · …"; folders by id from `folderName`,
+ * categories by keyword from `categoryName`.
+ */
+export const thenText = (
+  rule: Rule,
+  folderName: (id: string) => string | undefined,
+  categoryName: (keyword: string) => string | undefined = () => undefined,
+): string[] => [
   ...(rule.moveTo
     ? [m.rules_then_move({ folder: folderName(rule.moveTo.id) ?? rule.moveTo.path })]
     : []),
   ...(rule.markRead ? [m.rules_then_read()] : []),
   ...(rule.flag ? [m.rules_then_flag()] : []),
+  ...rule.categories.map((keyword) =>
+    m.rules_then_category({ name: categoryName(keyword) ?? keyword }),
+  ),
   ...(rule.forwardTo ? [m.rules_then_forward({ address: rule.forwardTo })] : []),
   ...(rule.stop ? [m.rules_then_stop()] : []),
 ];
@@ -117,7 +128,7 @@ const ADDRESS = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 /** What keeps the rule from being saved, or null. */
 export const ruleProblem = (rule: Rule): string | null => {
   if (!filled(rule).length) return m.rules_problem_condition();
-  if (!rule.moveTo && !rule.markRead && !rule.flag && !rule.forwardTo)
+  if (!rule.moveTo && !rule.markRead && !rule.flag && !rule.forwardTo && !rule.categories.length)
     return m.rules_problem_action();
   if (rule.forwardTo !== null && !ADDRESS.test(rule.forwardTo.trim()))
     return m.rules_problem_address();

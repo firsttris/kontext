@@ -22,6 +22,7 @@ const OPERATORS: { token: string; label: () => string }[] = [
   { token: "ist:ungelesen", label: m.search_op_unread },
   { token: "ist:markiert", label: m.search_op_flagged },
   { token: "in:", label: m.search_op_in },
+  { token: "kategorie:", label: m.search_op_category },
   { token: "nach:", label: m.search_op_after },
   { token: "vor:", label: m.search_op_before },
 ];

@@ -1,4 +1,5 @@
 import * as Menu from "@radix-ui/react-dropdown-menu";
+import { Check } from "lucide-react";
 import type { ComponentProps, ReactNode } from "react";
 import { cn } from "@/lib/cn";
 
@@ -42,3 +43,24 @@ export const MenuLabel = ({ children }: { children: ReactNode }) => (
 );
 
 export const MenuSeparator = () => <Menu.Separator className="my-1 h-px bg-border" />;
+
+/** An item that is on or off; it stays open, so several can be switched in a row. */
+export const MenuCheckboxItem = ({
+  className,
+  children,
+  ...props
+}: ComponentProps<typeof Menu.CheckboxItem>) => (
+  <Menu.CheckboxItem
+    onSelect={(event) => event.preventDefault()}
+    className={cn(
+      "flex h-9 cursor-pointer items-center gap-2.5 rounded-lg px-2.5 outline-none data-[highlighted]:bg-hover",
+      className,
+    )}
+    {...props}
+  >
+    {children}
+    <Menu.ItemIndicator className="ml-auto text-fg">
+      <Check size={15} />
+    </Menu.ItemIndicator>
+  </Menu.CheckboxItem>
+);

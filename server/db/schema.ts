@@ -115,3 +115,13 @@ export const mailSync = sqliteTable("mail_sync", {
   lastError: text("last_error"),
   ...timestamps,
 });
+
+/**
+ * The mail categories of one Stalwart account (own or shared mailbox): names, colours and order
+ * as JSON. The mails carry only the keyword (RFC 8621 keywords); Stalwart has no place for the rest.
+ */
+export const mailCategories = sqliteTable("mail_categories", {
+  accountId: text("account_id").primaryKey(),
+  categories: text("categories").notNull(),
+  updatedAt: integer("updated_at", { mode: "timestamp_ms" }).notNull(),
+});

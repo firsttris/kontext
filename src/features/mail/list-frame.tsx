@@ -2,7 +2,7 @@
  * The middle column's frame: title, search, filter and the virtualized rows. The data comes from
  * one folder (`MessageList`) or from the inboxes of all accounts (`UnifiedList`).
  */
-import { Link, useNavigate } from "@tanstack/react-router";
+import { Link, useNavigate, useParams } from "@tanstack/react-router";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import { Menu, Paperclip, SquarePen, Star, Users } from "lucide-react";
 import { type ReactNode, useEffect, useRef } from "react";
@@ -12,10 +12,13 @@ import { Button } from "@/components/ui/button";
 import { useShortcuts } from "@/components/use-shortcuts";
 import { isFlagged, isUnread } from "@/jmap/mail";
 import type { EmailSummary } from "@/jmap/types";
+import { categoriesOn } from "@/lib/categories";
 import { cn } from "@/lib/cn";
 import { displayName, formatAddressList, listDate } from "@/lib/format";
 import { m } from "@/paraglide/messages";
 import type { MailSearch } from "@/routes/_app/mail.$accountId.$mailboxId";
+import { CategoryChips } from "../categories/category-chips";
+import { useCategoryMap } from "../categories/queries";
 import { type DraggedMail, startMailDrag } from "./mail-drag";
 import { SearchBox, type SearchBoxHandle } from "./search-box";
 
@@ -229,6 +232,12 @@ const MessageRow = ({
   drag: DraggedMail | undefined;
 }) => {
   const unread = isUnread(email);
+  // Combined lists name each row's account; a folder's list is the route's account.
+  const routeAccount = useParams({ strict: false }).accountId;
+  const categories = categoriesOn(
+    email.keywords,
+    useCategoryMap()[account?.id ?? routeAccount ?? ""] ?? [],
+  );
   const who = showRecipient ? formatAddressList(email.to) : displayName(email.from?.[0]);
   return (
     <Link
@@ -288,6 +297,7 @@ const MessageRow = ({
               {account.label}
             </span>
           ) : null}
+          <CategoryChips categories={categories} max={2} />
           {email.hasAttachment ? (
             <Paperclip size={12} className="shrink-0" aria-label={m.mail_attachments()} />
           ) : null}

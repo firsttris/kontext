@@ -2,8 +2,10 @@
  * What every Firmenverwaltung request works with: the company as Stalwart has it now, the caller,
  * and the helpers to look things up and answer. Loaded fresh per request (a few accounts).
  */
+
 import type { Context } from "hono";
 import { z } from "zod";
+import type { CategoryStore } from "../categories/store";
 import type { MigrationDeps } from "../migration/routes";
 import type { SyncDeps } from "../migration/sync-routes";
 import {
@@ -22,6 +24,8 @@ export type CompanyDeps = {
   management: Management;
   mailstore: Mailstore;
   settings: CompanySettings;
+  /** Categories of the shared mailboxes, for the rules that set them. */
+  categories: CategoryStore;
   migrations: MigrationDeps;
   syncs: SyncDeps;
   /** The signed-in user's address, or null. */

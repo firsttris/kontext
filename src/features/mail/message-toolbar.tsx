@@ -29,10 +29,12 @@ import { useToast } from "@/components/ui/toast";
 import { useShortcuts } from "@/components/use-shortcuts";
 import { isFlagged } from "@/jmap/mail";
 import type { EmailDetail, Mailbox } from "@/jmap/types";
+import { shortAddress } from "@/lib/mail-accounts";
 import { mailboxRights } from "@/lib/mailboxes";
 import { moveTargets } from "@/lib/move-targets";
 import { type Rule, ruleFromSender } from "@/lib/rules";
 import { m } from "@/paraglide/messages";
+import { CategoryMenu } from "../categories/category-menu";
 import { OwnRuleDialog } from "../rules/rule-dialog";
 import { usePersonalAccountId } from "../settings/queries";
 import { useAllMailboxes, useEmailActions, useMailAccounts } from "./queries";
@@ -67,6 +69,12 @@ export const Toolbar = ({
     }
   };
 
+  const account = accounts.find((candidate) => candidate.id === accountId);
+  const mailboxLabel = !account
+    ? ""
+    : account.isPersonal
+      ? account.name
+      : shortAddress(account.name);
   const groups = moveTargets(accounts, mailboxes, { accountId, mailboxId: mailbox.id });
   const flagged = isFlagged(email);
   const { canRemove, canMarkSeen, canFlag } = mailboxRights(mailbox);
@@ -172,6 +180,7 @@ export const Toolbar = ({
           />
         </Button>
       ) : null}
+      {canFlag ? <CategoryMenu accountId={accountId} mailbox={mailboxLabel} email={email} /> : null}
       {canRemove ? (
         <MenuRoot>
           <MenuTrigger asChild>

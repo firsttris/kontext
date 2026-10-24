@@ -12,6 +12,7 @@ const rule = (patch: Partial<Rule> = {}): Rule => ({
   markRead: false,
   flag: false,
   forwardTo: null,
+  categories: [],
   stop: false,
   ...patch,
 });
@@ -67,7 +68,12 @@ describe("outcome", () => {
         ],
         mail,
       ),
-    ).toEqual({ moveTo: { id: "m", path: "Steuerberater" }, markRead: true, flag: true });
+    ).toEqual({
+      moveTo: { id: "m", path: "Steuerberater" },
+      markRead: true,
+      flag: true,
+      categories: [],
+    });
   });
 
   it("stops after a rule with stop, and skips disabled rules", () => {
@@ -76,7 +82,12 @@ describe("outcome", () => {
         [rule({ enabled: false, flag: true }), rule({ stop: true }), rule({ markRead: true })],
         mail,
       ),
-    ).toEqual({ moveTo: { id: "m", path: "Steuerberater" }, markRead: false, flag: false });
+    ).toEqual({
+      moveTo: { id: "m", path: "Steuerberater" },
+      markRead: false,
+      flag: false,
+      categories: [],
+    });
   });
 });
 

@@ -12,6 +12,7 @@ const rule = (patch: Partial<Rule> = {}): Rule => ({
   markRead: false,
   flag: false,
   forwardTo: null,
+  categories: [],
   stop: false,
   ...patch,
 });
@@ -104,6 +105,24 @@ describe("rulesScript", () => {
     });
     expect(script).not.toMatch(/^# (aus|leer|nichts)$/m);
     expect(parseRules(script)?.rules.map((r) => r.id)).toEqual(["a", "b", "c"]);
+  });
+});
+
+describe("categories in rules", () => {
+  it("sets a category as an IMAP keyword", () => {
+    const script = rulesScript({
+      vacation: false,
+      rules: [rule({ moveTo: null, categories: ["in-bearbeitung", "angebot"] })],
+    });
+    expect(script).toContain('  addflag "in-bearbeitung";\n  addflag "angebot";');
+  });
+
+  it("reads rules stored before categories existed", () => {
+    const script = rulesScript({ vacation: false, rules: [rule()] }).replace(
+      ',"categories":[]',
+      "",
+    );
+    expect(parseRules(script)?.rules[0]?.categories).toEqual([]);
   });
 });
 

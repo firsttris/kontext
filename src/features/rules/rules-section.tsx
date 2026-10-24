@@ -7,6 +7,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/components/ui/toast";
+import type { Category } from "@/lib/categories";
 import {
   moveRule,
   newRule,
@@ -25,6 +26,7 @@ import { RuleDialog } from "./rule-dialog";
 const RuleRow = ({
   rule,
   folders,
+  categories,
   first,
   last,
   onEdit,
@@ -32,12 +34,15 @@ const RuleRow = ({
 }: {
   rule: Rule;
   folders: RuleFolder[];
+  categories: Category[];
   first: boolean;
   last: boolean;
   onEdit: () => void;
   onChange: (rules: (current: Rule[]) => Rule[]) => void;
 }) => {
   const folderName = (id: string) => folders.find((folder) => folder.id === id)?.label;
+  const categoryName = (keyword: string) =>
+    categories.find((category) => category.keyword === keyword)?.name;
   const title = ruleTitle(rule);
   return (
     <li className="flex items-start gap-3 px-3 py-3 md:px-4">
@@ -57,7 +62,7 @@ const RuleRow = ({
         {rule.name.trim() ? <span className="text-[13px] text-muted">{whenText(rule)}</span> : null}
         <span className="flex gap-1.5 text-[13px] text-muted">
           <ArrowRight size={13} className="mt-[3px] shrink-0" aria-hidden="true" />
-          <span>{thenText(rule, folderName).join(" · ")}</span>
+          <span>{thenText(rule, folderName, categoryName).join(" · ")}</span>
         </span>
       </button>
       <div className="flex shrink-0 items-center gap-1">
@@ -121,6 +126,7 @@ export const RulesList = ({ store }: { store: RulesStore }) => {
               key={rule.id}
               rule={rule}
               folders={store.folders}
+              categories={store.categories}
               first={index === 0}
               last={index === rules.length - 1}
               onEdit={() => setEditing(rule)}

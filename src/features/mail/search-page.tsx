@@ -3,6 +3,7 @@
  * chips for the common filters, the folder of each hit and the words marked. Trash and spam only
  * with `in:papierkorb` / `in:spam`.
  */
+
 import { useNavigate } from "@tanstack/react-router";
 import { useCallback, useMemo } from "react";
 import type { Mailbox } from "@/jmap/types";
@@ -20,6 +21,7 @@ import {
 import { findRole, mailboxName, mailboxPath } from "@/lib/mailboxes";
 import { m } from "@/paraglide/messages";
 import type { MailSearch } from "@/routes/_app/mail.$accountId.$mailboxId";
+import { useCategoryMap } from "../categories/queries";
 import { Composer } from "./composer";
 import type { Row } from "./list-frame";
 import { MailLayout } from "./mail-layout";
@@ -32,6 +34,7 @@ export const SearchPage = ({ search }: { search: MailSearch }) => {
   const accounts = useMailAccounts();
   const own = accounts.find((account) => account.isPersonal);
   const mailboxes = useAllMailboxes();
+  const categories = useCategoryMap();
   const today = dateKey(new Date());
   const query = useMemo(() => parseSearch(search.q ?? "", today), [search.q, today]);
   const terms = useMemo(() => highlightTerms(query), [query]);
@@ -46,10 +49,11 @@ export const SearchPage = ({ search }: { search: MailSearch }) => {
           isPersonal: account.isPersonal,
           mailboxes: list,
           path: (mailbox) => mailboxPath(mailbox, list),
+          categories: categories[account.id] ?? [],
         });
         return filter ? [{ account, filter: { search: filter } }] : [];
       }),
-    [accounts, mailboxes, query],
+    [accounts, mailboxes, query, categories],
   );
 
   /** The folder a hit lies in, and the words to mark. */
@@ -68,7 +72,11 @@ export const SearchPage = ({ search }: { search: MailSearch }) => {
   return (
     <MailLayout
       search={search}
-      sidebar={own ? <MailSidebar accountId={own.id} mailbox={undefined} view="search" /> : null}
+      sidebar={
+        own ? (
+          <MailSidebar accountId={own.id} mailbox={undefined} view="search" query={search.q} />
+        ) : null
+      }
       list={
         <MergedList
           sources={sources}

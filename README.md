@@ -74,6 +74,7 @@ und unter `https://<Ihre Domain>` anmelden. DNS-Einträge, Backups und Updates s
 
 - **Signatur pro Absender**: eigene Adresse und gemeinsame Postfächer, mit Formatierung.
 - **Abwesenheitsnotiz**: mit Zeitraum, antwortet automatisch.
+- **Kategorien**: farbige Markierungen wie „In Bearbeitung“, „Wartet auf Antwort“, „Erledigt“ – mehrere je Mail, eigene anlegbar, per Regel automatisch. In info@ & Co. sieht das ganze Team sie: ein kleines Aufgabenbrett ohne Extra-Tool.
 - **Regeln**: „Wenn Absender/Empfänger/Betreff/Text … dann in Ordner verschieben, als gelesen markieren, markieren, weiterleiten“ – laufen auf dem Server beim Eingang, auch wenn Sekretär geschlossen ist; direkt aus einer Mail anlegbar („Regel erstellen …“) und auf Wunsch auch auf die Mails anwendbar, die schon im Posteingang liegen.
 - **Passwort und Anmeldung mit Code** (Authenticator-App); man bleibt auf dem Gerät angemeldet.
 - **Hell oder dunkel**: wie das Gerät, oder fest eingestellt.

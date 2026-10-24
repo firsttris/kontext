@@ -36,6 +36,7 @@ import {
 } from "@/lib/mailboxes";
 import { storageLevel } from "@/lib/storage";
 import { m } from "@/paraglide/messages";
+import { CategoryNav } from "../categories/category-nav";
 import { useMailDrop } from "./mail-drag";
 import { useCreateMailbox, useInboxes, useMailAccounts, useMailboxes, useQuota } from "./queries";
 
@@ -65,9 +66,11 @@ type Props = {
   mailbox: Mailbox | undefined;
   /** A list over all accounts is open: "Alle Posteingänge" or the search. */
   view?: "unified" | "search";
+  /** The open search's text, to mark a category whose search it is. */
+  query?: string;
 };
 
-export const MailSidebar = ({ accountId, mailbox, view }: Props) => {
+export const MailSidebar = ({ accountId, mailbox, view, query }: Props) => {
   const unified = view !== undefined;
   const { data: mailboxes = [] } = useMailboxes(accountId);
   const accounts = useMailAccounts();
@@ -230,6 +233,15 @@ export const MailSidebar = ({ accountId, mailbox, view }: Props) => {
         </div>
         <ul className="m-0 list-none p-0">{tree.map(renderNode)}</ul>
       </nav>
+
+      {account ? (
+        <CategoryNav
+          accountId={account.id}
+          mailbox={account.isPersonal ? account.name : shortAddress(account.name)}
+          activeQuery={view === "search" ? query : undefined}
+          navClass={navClass}
+        />
+      ) : null}
 
       <div className="flex-1" />
       {/* The own mailbox's storage is the ring around the avatar (account-avatar.tsx). */}

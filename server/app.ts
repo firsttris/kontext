@@ -8,6 +8,8 @@ import { eq } from "drizzle-orm";
 import { Hono } from "hono";
 import { serveStatic } from "hono/bun";
 import { type Auth, createAuth, createGrants, type Grants } from "./auth";
+import { createCategoryRoutes, type SessionAccount } from "./categories/routes";
+import { createCategoryStore } from "./categories/store";
 import { createMailstore } from "./company/mailstore";
 import {
   createDownload,
@@ -80,6 +82,26 @@ export const createJmapProxy =
     return new Response(upstream.body, { status: upstream.status, headers: responseHeaders });
   };
 
+/** The accounts in the signed-in person's JMAP session, asked of Stalwart with their token. */
+const sessionAccountsOf =
+  (env: Env, auth: Auth, grants: Grants) =>
+  async (request: Request): Promise<SessionAccount[] | null> => {
+    const session = await auth.api.getSession({ headers: request.headers });
+    const token = session && (await grants.accessToken(session.session.id));
+    if (!token) return null;
+    const response = await fetch(`${env.STALWART_URL}/jmap/session`, {
+      headers: { authorization: `Bearer ${token}` },
+    });
+    if (!response.ok) return null;
+    const { accounts } = (await response.json()) as {
+      accounts: Record<string, { isReadOnly?: boolean }>;
+    };
+    return Object.entries(accounts).map(([id, account]) => ({
+      id,
+      isReadOnly: Boolean(account.isReadOnly),
+    }));
+  };
+
 /** Ends all Sekretär sessions of a user; their Stalwart tokens go with them (cascade). */
 const endSessionsOf = (db: Db) => async (email: string) => {
   const [found] = await db.select().from(schema.user).where(eq(schema.user.email, email));
@@ -96,6 +118,7 @@ export const createApp = async (env: Env) => {
   const auth = createAuth(env, db, grants);
   const proxy = createJmapProxy(env, auth, grants);
 
+  const categories = createCategoryStore(db);
   const app = new Hono();
   app.get("/healthz", (c) => c.text("ok"));
   app.on(["GET", "POST"], "/api/auth/*", (c) => auth.handler(c.req.raw));
@@ -129,6 +152,7 @@ export const createApp = async (env: Env) => {
     });
     await syncRunner.start();
     const company = createCompanyRoutes({
+      categories,
       management: createManagement(request),
       mailstore: createMailstore(
         request,
@@ -144,6 +168,13 @@ export const createApp = async (env: Env) => {
     });
     app.route("/api/company", company);
   }
+  app.route(
+    "/api/categories",
+    createCategoryRoutes({
+      store: categories,
+      accountsOf: sessionAccountsOf(env, auth, grants),
+    }),
+  );
   app.all("/jmap", (c) => proxy(c.req.raw));
   app.all("/jmap/*", (c) => proxy(c.req.raw));
   if (env.STATIC_DIR) {

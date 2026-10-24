@@ -21,6 +21,7 @@ const rule: Rule = {
   markRead: false,
   flag: false,
   forwardTo: null,
+  categories: [],
   stop: false,
 };
 
