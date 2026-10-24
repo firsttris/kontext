@@ -1,5 +1,5 @@
-/** Team chat in Kontext's SQLite: channels, their members, messages and read marks. */
-import { and, desc, eq, inArray, lt, sql } from "drizzle-orm";
+/** Team chat in Kontext's SQLite: channels, their members and read marks (messages: messages.ts). */
+import { and, eq, inArray, sql } from "drizzle-orm";
 import type { Db } from "../db";
 import * as schema from "../db/schema";
 import {
@@ -8,9 +8,9 @@ import {
   type ChannelSummary,
   canSee,
   directKey,
-  type Message,
   type Viewer,
 } from "./chat";
+import type { MessageStore } from "./messages";
 
 export type ChatStore = {
   /** The channels this person sees, with what is unread; creates #allgemein and the mailbox ones. */
@@ -20,9 +20,6 @@ export type ChatStore = {
   /** The direct conversation of exactly these people, made when there is none yet. */
   direct: (members: string[], createdBy: string) => Promise<Channel>;
   update: (id: string, patch: { name?: string; members?: string[] }) => Promise<Channel | null>;
-  /** The newest messages before `before` (all when null), newest first. */
-  messages: (channelId: string, before: Date | null, limit: number) => Promise<Message[]>;
-  post: (channelId: string, authorId: string, text: string, mentions: string[]) => Promise<Message>;
   /** Marks read up to `at`; never moves the mark back. Returns the mark. */
   markRead: (channelId: string, memberId: string, at: Date) => Promise<Date>;
   /** Up to when each member read the channel. */
@@ -34,7 +31,6 @@ const TEAM_NAME = "allgemein";
 const TEAM_ID = "team";
 
 type ChannelRow = typeof schema.chatChannels.$inferSelect;
-type MessageRow = typeof schema.chatMessages.$inferSelect;
 
 const toChannel = (row: ChannelRow, members: string[]): Channel => ({
   id: row.id,
@@ -47,23 +43,7 @@ const toChannel = (row: ChannelRow, members: string[]): Channel => ({
   lastMessageAt: row.lastMessageAt?.toISOString() ?? null,
 });
 
-const toMessage = (row: MessageRow): Message => ({
-  id: row.id,
-  channelId: row.channelId,
-  authorId: row.authorId,
-  text: row.text,
-  mentions: JSON.parse(row.mentions) as string[],
-  createdAt: row.createdAt.toISOString(),
-});
-
-export const createChatStore = (db: Db): ChatStore => {
-  // Messages of one channel never share a millisecond, so "before" pages cleanly.
-  let lastStamp = 0;
-  const stamp = () => {
-    lastStamp = Math.max(Date.now(), lastStamp + 1);
-    return new Date(lastStamp);
-  };
-
+export const createChatStore = (db: Db, messages: Pick<MessageStore, "last">): ChatStore => {
   const membersOf = async (ids: string[]) => {
     const byChannel = new Map<string, string[]>();
     if (!ids.length) return byChannel;
@@ -145,21 +125,6 @@ export const createChatStore = (db: Db): ChatStore => {
     );
   };
 
-  const lastOf = async (channels: Channel[]) => {
-    const last = new Map<string, { authorId: string; text: string }>();
-    for (const channel of channels) {
-      if (!channel.lastMessageAt) continue;
-      const [row] = await db
-        .select({ authorId: schema.chatMessages.authorId, text: schema.chatMessages.text })
-        .from(schema.chatMessages)
-        .where(eq(schema.chatMessages.channelId, channel.id))
-        .orderBy(desc(schema.chatMessages.createdAt))
-        .limit(1);
-      if (row) last.set(channel.id, row);
-    }
-    return last;
-  };
-
   return {
     list: async (viewer, sharedAccountIds) => {
       await ensureStandard(sharedAccountIds, viewer.me);
@@ -171,7 +136,7 @@ export const createChatStore = (db: Db): ChatStore => {
       const ids = visible.map((channel) => channel.id);
       const [unread, last, reads] = await Promise.all([
         unreadOf(ids, viewer.me),
-        lastOf(visible),
+        messages.last(visible.filter((channel) => channel.lastMessageAt).map((c) => c.id)),
         ids.length
           ? db
               .select()
@@ -231,36 +196,6 @@ export const createChatStore = (db: Db): ChatStore => {
         }
       }
       return get(id);
-    },
-    messages: async (channelId, before, limit) => {
-      const rows = await db
-        .select()
-        .from(schema.chatMessages)
-        .where(
-          and(
-            eq(schema.chatMessages.channelId, channelId),
-            before ? lt(schema.chatMessages.createdAt, before) : undefined,
-          ),
-        )
-        .orderBy(desc(schema.chatMessages.createdAt))
-        .limit(limit);
-      return rows.map(toMessage);
-    },
-    post: async (channelId, authorId, text, mentions) => {
-      const row = {
-        id: crypto.randomUUID(),
-        channelId,
-        authorId,
-        text,
-        mentions: JSON.stringify([...new Set(mentions)]),
-        createdAt: stamp(),
-      };
-      await db.insert(schema.chatMessages).values(row);
-      await db
-        .update(schema.chatChannels)
-        .set({ lastMessageAt: row.createdAt })
-        .where(eq(schema.chatChannels.id, channelId));
-      return toMessage(row);
     },
     markRead: async (channelId, memberId, at) => {
       await db

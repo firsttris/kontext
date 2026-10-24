@@ -15,6 +15,7 @@ import { STATUS_LABELS, tasksOfMail } from "@/lib/tasks";
 import { m } from "@/paraglide/messages";
 import { CategoryChips } from "../categories/category-chips";
 import { useCategories } from "../categories/queries";
+import { DiscussedNotice } from "../chat/discussed-notice";
 import { useTasks } from "../tasks/queries";
 import { useEmailActions } from "./actions";
 import { Attachments } from "./attachments";
@@ -99,6 +100,7 @@ export const MessageView = ({ accountId, mailbox, emailId }: Props) => {
                   </span>
                 </Link>
               ))}
+              <DiscussedNotice emailId={email.id} threadId={email.threadId ?? null} />
               {categories.length ? (
                 <div className="-mt-1 flex flex-wrap gap-1">
                   <CategoryChips categories={categories} />

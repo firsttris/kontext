@@ -10,16 +10,22 @@ import {
   type Channel,
   canSee,
   channelPatchSchema,
+  INLINE_TYPES,
+  MAX_FILE_BYTES,
   newChannelSchema,
   newDirectSchema,
   newMessageSchema,
   readSchema,
   type Viewer,
 } from "./chat";
+import type { ChatFiles } from "./files";
+import type { MessageStore } from "./messages";
 import type { ChatStore } from "./store";
 
 export type ChatDeps = {
   store: ChatStore;
+  messages: MessageStore;
+  files: ChatFiles;
   hub: Hub;
   accountsOf: (request: Request) => Promise<SessionAccount[] | null>;
 };
@@ -32,7 +38,7 @@ export const viewerOf = (accounts: SessionAccount[]): Viewer | null => {
   return me ? { me, accountIds: accounts.map((account) => account.id) } : null;
 };
 
-export const createChatRoutes = ({ store, hub, accountsOf }: ChatDeps) => {
+export const createChatRoutes = ({ store, messages, files, hub, accountsOf }: ChatDeps) => {
   const app = new Hono<{ Variables: { viewer: Viewer; accounts: SessionAccount[] } }>();
 
   app.use(async (c, next) => {
@@ -98,7 +104,7 @@ export const createChatRoutes = ({ store, hub, accountsOf }: ChatDeps) => {
     const channel = await visible(c.req.param("id"), c.get("viewer"));
     if (!channel) return c.json({ error: "Unbekannter Kanal" }, 404);
     const before = c.req.query("before");
-    const page = await store.messages(channel.id, before ? new Date(before) : null, PAGE + 1);
+    const page = await messages.page(channel.id, before ? new Date(before) : null, PAGE + 1);
     return c.json({
       messages: page.slice(0, PAGE),
       hasMore: page.length > PAGE,
@@ -112,7 +118,11 @@ export const createChatRoutes = ({ store, hub, accountsOf }: ChatDeps) => {
     if (!channel) return c.json({ error: "Unbekannter Kanal" }, 404);
     const parsed = newMessageSchema.safeParse(await c.req.json().catch(() => null));
     if (!parsed.success) return c.json({ error: "Die Nachricht ist leer." }, 400);
-    const message = await store.post(channel.id, viewer.me, parsed.data.text, parsed.data.mentions);
+    const message = await messages.post({
+      ...parsed.data,
+      channelId: channel.id,
+      authorId: viewer.me,
+    });
     // What one writes oneself is read.
     await store.markRead(channel.id, viewer.me, new Date(message.createdAt));
     hub.publish({ type: "message", channelId: channel.id, message }, (other) =>
@@ -145,6 +155,58 @@ export const createChatRoutes = ({ store, hub, accountsOf }: ChatDeps) => {
       (other) => other.me !== viewer.me && canSee(channel, other),
     );
     return c.json({ ok: true });
+  });
+
+  app.post("/channels/:id/files", async (c) => {
+    const viewer = c.get("viewer");
+    const channel = await visible(c.req.param("id"), viewer);
+    if (!channel) return c.json({ error: "Unbekannter Kanal" }, 404);
+    const form = await c.req.formData().catch(() => null);
+    const file = form?.get("file");
+    // A form field is text or a file.
+    if (!file || typeof file === "string" || file.size === 0) {
+      return c.json({ error: "Keine Datei." }, 400);
+    }
+    if (file.size > MAX_FILE_BYTES) {
+      return c.json({ error: "Die Datei ist größer als 25 MB." }, 413);
+    }
+    return c.json({ file: await files.save(channel.id, viewer.me, file) }, 201);
+  });
+
+  app.get("/files/:id", async (c) => {
+    const file = await files.get(c.req.param("id"));
+    const channel = file && (await visible(file.channelId, c.get("viewer")));
+    if (!file || !channel) return c.json({ error: "Unbekannte Datei" }, 404);
+    // Photos show in the page; everything else is a download that cannot run in this origin.
+    const inline = INLINE_TYPES.includes(file.type);
+    return new Response(Bun.file(file.path), {
+      headers: {
+        "content-type": inline ? file.type : "application/octet-stream",
+        "content-length": String(file.size),
+        "content-disposition": `${inline ? "inline" : "attachment"}; filename*=UTF-8''${encodeURIComponent(file.name)}`,
+        "content-security-policy": "sandbox",
+        "x-content-type-options": "nosniff",
+        "cache-control": "private, max-age=31536000, immutable",
+      },
+    });
+  });
+
+  /** Where a mail (or its thread) was discussed, in the channels one sees. */
+  app.get("/discussed", async (c) => {
+    const ref = c.req.query("ref");
+    if (!ref) return c.json({ error: "Angaben unvollständig." }, 400);
+    const viewer = c.get("viewer");
+    const found = await messages.discussed(ref, c.req.query("thread") || null);
+    const seen = await Promise.all(found.map((item) => visible(item.channelId, viewer)));
+    return c.json({ discussions: found.filter((_, index) => seen[index]) });
+  });
+
+  /** Channels one sees where mails of this sender were discussed: the first suggestions. */
+  app.get("/suggestions", async (c) => {
+    const viewer = c.get("viewer");
+    const ids = await messages.channelsOfParty(c.req.query("party") ?? "");
+    const seen = await Promise.all(ids.map((id) => visible(id, viewer)));
+    return c.json({ channelIds: ids.filter((_, index) => seen[index]) });
   });
 
   return app;

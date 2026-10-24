@@ -1,11 +1,13 @@
 /**
  * Writing a message: Enter sends, Shift+Enter starts a new line; "@" suggests colleagues (arrow
- * keys and Enter or Tab pick one). While one writes, the others see "… schreibt".
+ * keys and Enter or Tab pick one). While one writes, the others see "… schreibt". With
+ * `attachments`: photos and files (also pasted), and mails, tasks or contacts as cards.
  */
-import { AtSign, SendHorizontal } from "lucide-react";
+import { AtSign, Camera, Link2, Paperclip, Plus, SendHorizontal } from "lucide-react";
 import { type KeyboardEvent, useLayoutEffect, useRef, useState } from "react";
 import { Avatar } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
+import { MenuContent, MenuItem, MenuRoot, MenuTrigger } from "@/components/ui/menu";
 import {
   insertMention,
   keptMentions,
@@ -15,6 +17,9 @@ import {
 } from "@/lib/chat";
 import { cn } from "@/lib/cn";
 import { m } from "@/paraglide/messages";
+import { InputTray } from "./input-tray";
+import { LinkPicker } from "./link-picker";
+import type { Attachments } from "./use-attachments";
 
 type Props = {
   placeholder: string;
@@ -22,10 +27,26 @@ type Props = {
   me: string;
   onSend: (text: string, mentions: string[]) => void;
   onTyping: () => void;
+  attachments?: Attachments;
+  /** Something goes along anyway (a mail being discussed), so a message without text is fine. */
+  allowEmpty?: boolean;
+  autoFocus?: boolean;
 };
 
-export const MessageInput = ({ placeholder, people, me, onSend, onTyping }: Props) => {
+export const MessageInput = ({
+  placeholder,
+  people,
+  me,
+  onSend,
+  onTyping,
+  attachments,
+  allowEmpty = false,
+  autoFocus = false,
+}: Props) => {
   const field = useRef<HTMLTextAreaElement>(null);
+  const filePicker = useRef<HTMLInputElement>(null);
+  const camera = useRef<HTMLInputElement>(null);
+  const [linking, setLinking] = useState(false);
   const [text, setText] = useState("");
   const [caret, setCaret] = useState(0);
   const [picked, setPicked] = useState<Person[]>([]);
@@ -62,9 +83,13 @@ export const MessageInput = ({ placeholder, people, me, onSend, onTyping }: Prop
     setHighlight(0);
   };
 
+  const hasContent =
+    Boolean(text.trim()) || allowEmpty || Boolean(attachments && !attachments.empty);
+  const canSend = hasContent && !attachments?.uploading;
+
   const send = () => {
     const value = text.trim();
-    if (!value) return;
+    if (!canSend) return;
     onSend(value, keptMentions(value, picked));
     setText("");
     setCaret(0);
@@ -132,40 +157,127 @@ export const MessageInput = ({ placeholder, people, me, onSend, onTyping }: Prop
           ))}
         </div>
       ) : null}
-      <div className="flex items-end gap-1.5 md:flex-col md:items-stretch md:gap-0 md:rounded-xl md:border md:border-border md:focus-within:border-muted">
-        <label className="flex min-w-0 flex-1 rounded-[22px] border border-border md:rounded-none md:border-0">
-          <span className="sr-only">{m.chat_message()}</span>
-          <textarea
-            ref={field}
-            rows={1}
-            value={text}
-            placeholder={placeholder}
-            onChange={(event) => update(event.target.value, event.target.selectionStart)}
-            onSelect={(event) => setCaret(event.currentTarget.selectionStart)}
-            onKeyDown={onKeyDown}
-            className="field-sizing-content max-h-40 min-h-11 flex-1 resize-none bg-transparent px-3.5 py-[11px] text-[15px] leading-[1.45] text-fg outline-none placeholder:text-muted md:min-h-[52px] md:py-3"
+      {attachments ? (
+        <>
+          <input
+            ref={filePicker}
+            type="file"
+            multiple
+            hidden
+            onChange={(event) => {
+              if (event.target.files) attachments.addFiles(event.target.files);
+              event.target.value = "";
+            }}
           />
-        </label>
-        <div className="flex items-center gap-0.5 md:px-2 md:pb-1.5">
-          <Button
-            variant="ghost"
-            size="sm"
-            className="hidden text-muted md:inline-flex"
-            onClick={startMention}
-          >
-            <AtSign size={14} /> {m.chat_mention()}
-          </Button>
-          <span className="hidden flex-1 md:block" />
-          <Button
-            variant="primary"
-            aria-label={m.chat_send()}
-            disabled={!text.trim()}
-            onClick={send}
-            className="size-11 rounded-full p-0 md:h-8 md:w-auto md:rounded-lg md:px-3.5"
-          >
-            <SendHorizontal size={17} className="md:hidden" />
-            <span className="hidden md:inline">{m.chat_send()}</span>
-          </Button>
+          <input
+            ref={camera}
+            type="file"
+            accept="image/*"
+            capture="environment"
+            hidden
+            onChange={(event) => {
+              if (event.target.files) attachments.addFiles(event.target.files);
+              event.target.value = "";
+            }}
+          />
+          {linking ? (
+            <LinkPicker
+              onPick={attachments.addCard}
+              onClose={() => setLinking(false)}
+              // Back to writing, so Enter sends the card.
+              onClosed={() => field.current?.focus()}
+            />
+          ) : null}
+        </>
+      ) : null}
+      <div className="md:rounded-xl md:border md:border-border md:focus-within:border-muted">
+        {attachments ? <InputTray attachments={attachments} /> : null}
+        <div className="flex items-end gap-1.5 md:flex-col md:items-stretch md:gap-0">
+          {attachments ? (
+            <MenuRoot>
+              <MenuTrigger
+                aria-label={m.chat_add()}
+                className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-subtle text-fg md:hidden"
+              >
+                <Plus size={19} />
+              </MenuTrigger>
+              <MenuContent side="top" align="start">
+                <MenuItem onSelect={() => camera.current?.click()}>
+                  <Camera size={15} /> {m.chat_take_photo()}
+                </MenuItem>
+                <MenuItem onSelect={() => filePicker.current?.click()}>
+                  <Paperclip size={15} /> {m.chat_attach()}
+                </MenuItem>
+                <MenuItem onSelect={() => setLinking(true)}>
+                  <Link2 size={15} /> {m.chat_link()}
+                </MenuItem>
+              </MenuContent>
+            </MenuRoot>
+          ) : null}
+          <label className="flex min-w-0 flex-1 rounded-[22px] border border-border md:rounded-none md:border-0">
+            <span className="sr-only">{m.chat_message()}</span>
+            <textarea
+              ref={field}
+              rows={1}
+              value={text}
+              placeholder={placeholder}
+              onChange={(event) => update(event.target.value, event.target.selectionStart)}
+              onSelect={(event) => setCaret(event.currentTarget.selectionStart)}
+              onKeyDown={onKeyDown}
+              onPaste={(event) => {
+                if (!attachments || !event.clipboardData.files.length) return;
+                event.preventDefault();
+                attachments.addFiles(event.clipboardData.files);
+              }}
+              autoFocus={autoFocus}
+              className="field-sizing-content max-h-40 min-h-11 flex-1 resize-none bg-transparent px-3.5 py-[11px] text-[15px] leading-[1.45] text-fg outline-none placeholder:text-muted md:min-h-[52px] md:py-3"
+            />
+          </label>
+          <div className="flex items-center gap-0.5 md:px-2 md:pb-1.5">
+            {attachments ? (
+              <>
+                <Button
+                  variant="ghost"
+                  size="iconSm"
+                  aria-label={m.chat_attach()}
+                  title={m.chat_attach()}
+                  className="hidden md:inline-flex"
+                  onClick={() => filePicker.current?.click()}
+                >
+                  <Paperclip size={16} />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="iconSm"
+                  aria-label={m.chat_link()}
+                  title={m.chat_link()}
+                  className="hidden md:inline-flex"
+                  onClick={() => setLinking(true)}
+                >
+                  <Link2 size={16} />
+                </Button>
+              </>
+            ) : null}
+            <Button
+              variant="ghost"
+              size="sm"
+              className="hidden text-muted md:inline-flex"
+              onClick={startMention}
+            >
+              <AtSign size={14} /> {m.chat_mention()}
+            </Button>
+            <span className="hidden flex-1 md:block" />
+            <Button
+              variant="primary"
+              aria-label={m.chat_send()}
+              disabled={!canSend}
+              onClick={send}
+              className="size-11 rounded-full p-0 md:h-8 md:w-auto md:rounded-lg md:px-3.5"
+            >
+              <SendHorizontal size={17} className="md:hidden" />
+              <span className="hidden md:inline">{m.chat_send()}</span>
+            </Button>
+          </div>
         </div>
       </div>
     </div>

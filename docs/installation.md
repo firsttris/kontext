@@ -119,8 +119,9 @@ Code neu ein.
 ## 4. Backups
 
 `deploy/backup.sh` sichert mit [Restic](https://restic.net) auf einen S3-Speicher: Stalwarts
-Datenvolume (Mails, Kalender, Kontakte, Konten) und eine Kopie der Kontext-Datenbank
-(Anmeldungen, Firmen-Signatur, Stand der Umzüge). Hochgeladene PST-Dateien bleiben draußen. Am besten einen Bucket mit **Object Lock** nehmen, dann kann auch ein Angreifer mit
+Datenvolume (Mails, Kalender, Kontakte, Konten), eine Kopie der Kontext-Datenbank
+(Anmeldungen, Firmen-Signatur, Aufgaben, Chat, Stand der Umzüge) und die Fotos und Dateien aus dem
+Chat. Hochgeladene PST-Dateien bleiben draußen. Am besten einen Bucket mit **Object Lock** nehmen, dann kann auch ein Angreifer mit
 Zugriff auf den Server die Sicherungen nicht löschen (wichtig für GoBD-Archivierung).
 
 ```bash
@@ -138,8 +139,9 @@ restic restore latest --tag kontext --target /tmp/restore    # Kontext
 ```
 
 Die Kopie der Kontext-Datenbank (`…/backup/kontext.db`) kommt bei gestopptem Container als
-`kontext.db` ins Volume `kontext_kontext-data`. Fehlt sie, geht nichts in Stalwart
-verloren: alle melden sich einmal neu an, die Vorlage der Firmen-Signatur ist neu einzutragen.
+`kontext.db` ins Volume `kontext_kontext-data`, der Ordner `…/chat-files` daneben als
+`chat-files`. Fehlt sie, geht nichts in Stalwart verloren: alle melden sich einmal neu an, die
+Vorlage der Firmen-Signatur ist neu einzutragen; Aufgaben und Chat sind dann leer.
 
 ## 5. Updates
 

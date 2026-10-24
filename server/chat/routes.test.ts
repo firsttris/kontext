@@ -1,14 +1,16 @@
+// @vitest-environment node
 import { describe, expect, it } from "vitest";
 import type { SessionAccount } from "../categories/routes";
 import { createHub, type LiveEvent } from "../live/hub";
-import { type Channel, canSee, directKey, type Message } from "./chat";
+import { type Channel, type ChatFile, canSee, directKey, type Message } from "./chat";
+import type { ChatFiles, StoredFile } from "./files";
+import type { MessageStore } from "./messages";
 import { createChatRoutes } from "./routes";
 import type { ChatStore } from "./store";
 
 /** The store in memory, enough for the routes. */
 const memoryStore = (): ChatStore => {
   const channels: Channel[] = [];
-  const messages: Message[] = [];
   const reads: Record<string, Record<string, string>> = {};
   const add = (channel: Omit<Channel, "id" | "createdAt" | "lastMessageAt">) => {
     const created = {
@@ -40,19 +42,6 @@ const memoryStore = (): ChatStore => {
       if (channel) Object.assign(channel, patch);
       return channel ?? null;
     },
-    messages: async (channelId) => messages.filter((m) => m.channelId === channelId).reverse(),
-    post: async (channelId, authorId, text, mentions) => {
-      const message = {
-        id: `m${messages.length + 1}`,
-        channelId,
-        authorId,
-        text,
-        mentions,
-        createdAt: new Date().toISOString(),
-      };
-      messages.push(message);
-      return message;
-    },
     markRead: async (channelId, memberId, at) => {
       reads[channelId] = { ...reads[channelId], [memberId]: at.toISOString() };
       return at;
@@ -66,10 +55,77 @@ const person = (id: string, shared: string[] = []): SessionAccount[] => [
   ...shared.map((account) => ({ id: account, isReadOnly: false, isPersonal: false })),
 ];
 
+/** Messages and files in memory; a mail is "discussed" where a card with its ref or thread is. */
+const memoryMessages = () => {
+  const messages: Message[] = [];
+  const stored: StoredFile[] = [];
+  const files: ChatFiles = {
+    save: async (channelId, _by, file) => {
+      const saved = {
+        id: `f${stored.length + 1}`,
+        name: file.name,
+        type: file.type,
+        size: file.size,
+      };
+      stored.push({ ...saved, channelId, messageId: null, path: "" });
+      return saved;
+    },
+    get: async (id) => stored.find((file) => file.id === id) ?? null,
+    attach: async (ids, message) => {
+      const attached: ChatFile[] = [];
+      for (const file of stored) {
+        if (!ids.includes(file.id) || file.channelId !== message.channelId || file.messageId) {
+          continue;
+        }
+        file.messageId = message.id;
+        attached.push({ id: file.id, name: file.name, type: file.type, size: file.size });
+      }
+      return attached;
+    },
+    ofMessages: async () => new Map(),
+    pruneUnsent: async () => 0,
+  };
+  const store: MessageStore = {
+    page: async (channelId) => messages.filter((m) => m.channelId === channelId).reverse(),
+    post: async ({ fileIds, ...post }) => {
+      const id = `m${messages.length + 1}`;
+      const attached = await files.attach(fileIds, { id, ...post });
+      const message = { ...post, id, files: attached, createdAt: new Date().toISOString() };
+      messages.push(message);
+      return message;
+    },
+    last: async () => new Map(),
+    discussed: async (ref, threadId) =>
+      messages
+        .filter((m) => m.cards.some((card) => card.ref === ref || card.threadId === threadId))
+        .map((m) => ({
+          channelId: m.channelId,
+          messageId: m.id,
+          createdAt: m.createdAt,
+          replies: 0,
+        })),
+    channelsOfParty: async (party) => [
+      ...new Set(
+        messages
+          .filter((m) => m.cards.some((card) => card.party === party))
+          .map((m) => m.channelId),
+      ),
+    ],
+  };
+  return { store, files };
+};
+
 const setup = () => {
   const hub = createHub();
   let signedIn: SessionAccount[] | null = person("jonas", ["info"]);
-  const app = createChatRoutes({ store: memoryStore(), hub, accountsOf: async () => signedIn });
+  const memory = memoryMessages();
+  const app = createChatRoutes({
+    store: memoryStore(),
+    messages: memory.store,
+    files: memory.files,
+    hub,
+    accountsOf: async () => signedIn,
+  });
   const as = (accounts: SessionAccount[] | null) => {
     signedIn = accounts;
   };
@@ -81,7 +137,13 @@ const setup = () => {
     });
     return {
       status: response.status,
-      body: (await response.json()) as { channel: Channel; messages: Message[] },
+      body: (await response.json()) as {
+        channel: Channel;
+        message: Message;
+        messages: Message[];
+        discussions: { channelId: string }[];
+        channelIds: string[];
+      },
     };
   };
   const listen = (me: string, accountIds: string[] = [me]) => {
@@ -89,7 +151,16 @@ const setup = () => {
     hub.subscribe({ me, accountIds }, (event) => heard.push(event));
     return heard;
   };
-  return { send, as, listen };
+  const upload = async (channelId: string, name: string) => {
+    const form = new FormData();
+    form.append("file", new File(["jpeg"], name, { type: "image/jpeg" }));
+    const response = await app.request(`/channels/${channelId}/files`, {
+      method: "POST",
+      body: form,
+    });
+    return { status: response.status, body: (await response.json()) as { file: ChatFile } };
+  };
+  return { send, as, listen, upload, app };
 };
 
 describe("/api/chat", () => {
@@ -149,5 +220,43 @@ describe("/api/chat", () => {
       (await send("POST", `/channels/${body.channel.id}/messages`, { text: "  " })).status,
     ).toBe(400);
     expect((await send("PATCH", `/channels/${body.channel.id}`, { name: "x" })).status).toBe(403);
+  });
+  it("sends photos and a mail as a card; the mail knows where it was discussed", async () => {
+    const { send, as, upload, app } = setup();
+    const { body } = await send("POST", "/channels", { name: "baustelle", members: ["max"] });
+    const channel = body.channel.id;
+    const photo = await upload(channel, "abfluss.jpg");
+    expect(photo.status).toBe(201);
+    const card = {
+      kind: "mail",
+      accountId: "info",
+      ref: "e1",
+      threadId: "t1",
+      party: "markus@hoffmann.test",
+      label: "Re: Badsanierung",
+    };
+    const posted = await send("POST", `/channels/${channel}/messages`, {
+      fileIds: [photo.body.file.id],
+      cards: [card],
+    });
+    expect(posted.status).toBe(201);
+    expect(posted.body.message.files.map((file) => file.name)).toEqual(["abfluss.jpg"]);
+    expect(posted.body.message.cards[0]).toMatchObject({ ref: "e1", detail: "" });
+
+    expect((await send("GET", "/discussed?ref=e2&thread=t1")).body.discussions).toHaveLength(1);
+    expect((await send("GET", "/suggestions?party=markus@hoffmann.test")).body.channelIds).toEqual([
+      channel,
+    ]);
+    // Anna is not in the channel: she does not learn of it, nor gets its photo.
+    as(person("anna", ["info"]));
+    expect((await send("GET", "/discussed?ref=e1")).body.discussions).toEqual([]);
+    expect((await app.request(`/files/${photo.body.file.id}`)).status).toBe(404);
+    expect((await upload(channel, "x.jpg")).status).toBe(404);
+  });
+
+  it("refuses a message with neither text nor anything in it", async () => {
+    const { send } = setup();
+    const { body } = await send("POST", "/direct", { members: ["anna"] });
+    expect((await send("POST", `/channels/${body.channel.id}/messages`, {})).status).toBe(400);
   });
 });

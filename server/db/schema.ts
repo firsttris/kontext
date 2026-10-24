@@ -237,3 +237,49 @@ export const chatReads = sqliteTable(
   },
   (table) => [primaryKey({ columns: [table.channelId, table.memberId] })],
 );
+
+/**
+ * Photos and files of chat messages; the bytes lie in the data directory under `chat-files/`.
+ * `messageId` is null between the upload and sending the message.
+ */
+export const chatFiles = sqliteTable(
+  "chat_files",
+  {
+    id: text("id").primaryKey(),
+    channelId: text("channel_id")
+      .notNull()
+      .references(() => chatChannels.id, { onDelete: "cascade" }),
+    messageId: text("message_id").references(() => chatMessages.id, { onDelete: "cascade" }),
+    uploadedBy: text("uploaded_by").notNull(),
+    name: text("name").notNull(),
+    type: text("type").notNull(),
+    size: integer("size").notNull(),
+    createdAt: integer("created_at", { mode: "timestamp_ms" }).notNull(),
+  },
+  (table) => [index("chat_files_message").on(table.messageId)],
+);
+
+/** Mails, tasks and contacts shared in a message; by `ref` and `thread_id` a mail finds its talks. */
+export const chatCards = sqliteTable(
+  "chat_cards",
+  {
+    messageId: text("message_id")
+      .notNull()
+      .references(() => chatMessages.id, { onDelete: "cascade" }),
+    channelId: text("channel_id").notNull(),
+    position: integer("position").notNull(),
+    kind: text("kind").notNull(),
+    accountId: text("account_id").notNull(),
+    ref: text("ref").notNull(),
+    threadId: text("thread_id"),
+    party: text("party").notNull(),
+    label: text("label").notNull(),
+    detail: text("detail").notNull(),
+  },
+  (table) => [
+    primaryKey({ columns: [table.messageId, table.position] }),
+    index("chat_cards_ref").on(table.ref),
+    index("chat_cards_thread").on(table.threadId),
+    index("chat_cards_party").on(table.party),
+  ],
+);

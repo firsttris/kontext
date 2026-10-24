@@ -385,6 +385,27 @@ Principal-ID), die Namen holt die App wie bei den Aufgaben über die Principals.
 - **Verlauf:** 50 Nachrichten je Seite, ältere auf Knopfdruck; Nachrichten einer Person kurz
   hintereinander stehen unter einem Namen, eine Linie „Neu“ zeigt, wo das Ungelesene beginnt.
   Aufbewahrt wird unbegrenzt.
+- **Fotos und Dateien:** bis 10 je Nachricht, 25 MB je Datei; über Büroklammer, Kamera (Handy),
+  Ziehen auf die Unterhaltung oder Einfügen. Fotos verkleinert die App vorher (längere Seite
+  2048 px, JPEG), damit sie auch unterwegs schnell ankommen. Der Server legt sie unter
+  `chat-files/` neben der Datenbank ab (`chat_files`, `server/chat/files.ts`) und gibt sie nur
+  an Personen, die den Kanal sehen; Fotos (JPEG, PNG, WebP, GIF) zeigt der Browser an, alles andere
+  wird heruntergeladen (`Content-Security-Policy: sandbox`, nie HTML oder SVG aus derselben
+  Herkunft). Hochgeladenes, das nie verschickt wurde, löscht der Server nach einem Tag.
+- **Karten:** Mails, Aufgaben und Kontakte hängen als Karte an einer Nachricht (`chat_cards`).
+  Die Karte hält fest, worum es geht (Betreff, Absender, Zeit; Titel; Name, Firma) – öffnen kann
+  sie nur, wer die Mail, die Aufgabe oder den Kontakt ohnehin sehen darf. Alle anderen sehen
+  „Liegt bei … – nur dort zu öffnen“; kopiert wird nichts. Eine Aufgaben-Karte zeigt ihren
+  aktuellen Stand.
+- **Über eine Mail sprechen:** „Besprechen“ in der Werkzeugleiste der Mail (Taste `b`) schickt
+  sie als Karte mit einer Nachricht in einen Kanal oder an eine Person, statt sie intern
+  weiterzuleiten. Vorgeschlagen werden zuerst Kanäle, in denen dieselbe Unterhaltung
+  (`threadId`) schon besprochen wurde, dann solche, in denen derselbe Absender vorkam, dann der
+  Kanal des Postfachs. Die Mail zeigt danach „Besprochen in #… · n Antworten“ und führt an die
+  Stelle im Chat.
+- **Aufgabe aus einer Nachricht:** im Menü jeder Nachricht; die Aufgabe ist mit der Nachricht
+  verknüpft (`kind: "chat"`), die Nachricht zeigt die Aufgabe mit ihrem Stand, die Aufgabe führt
+  zurück zur Nachricht. Aus dem Kanal eines gemeinsamen Postfachs landet sie auf dessen Board.
 
 ## Live-Verbindung
 

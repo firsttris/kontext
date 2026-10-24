@@ -40,6 +40,8 @@ const message = (id: string, authorId: string, createdAt: string, text = "Hallo"
   authorId,
   text,
   mentions: [],
+  files: [],
+  cards: [],
   createdAt,
 });
 

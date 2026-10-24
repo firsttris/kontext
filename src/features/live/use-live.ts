@@ -10,6 +10,7 @@ import {
   CHANNELS_KEY,
   CHAT_KEY,
   type ChannelsData,
+  DISCUSSED_KEY,
   setRead,
 } from "@/features/chat/queries";
 import { startTyping, stopTyping } from "@/features/chat/typing";
@@ -27,6 +28,8 @@ export const applyLiveEvent = (queryClient: QueryClient, me: string, event: Live
       addMessage(queryClient, message);
       stopTyping(message.channelId, message.authorId);
       void queryClient.invalidateQueries({ queryKey: CHANNELS_KEY });
+      // A mail shows where it was discussed and how many answers came since.
+      void queryClient.invalidateQueries({ queryKey: DISCUSSED_KEY });
       return;
     }
     case "typing":

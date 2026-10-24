@@ -104,6 +104,9 @@ fine on a VPS with 2 vCPUs and 4 GB RAM.
 - **Direct messages** to one colleague or a few, with "read".
 - **Live**: messages, "Sandra is typing …" and who is online, without reloading; unread counts on Chat and on the app icon.
 - **@mentions** with suggestions while you type; a mention or a direct message becomes a device notification when Kontext is in the background.
+- **Photos and files**: from the phone's camera, by drag and drop or paste; photos are made smaller before sending.
+- **Mails, tasks and contacts as cards**: "Discuss" on a mail (`b`) talks about it in a channel instead of forwarding it internally; the mail then shows where it was discussed. Only who may open the mailbox opens the card – nothing is copied.
+- **Task from a message**, linked both ways.
 - **On the phone**: its own tab, conversations as bubbles.
 
 ### 📅 Calendar
@@ -143,7 +146,7 @@ business switches on when it needs them – whoever doesn't, never sees them.
 | --- | --- |
 | Mail, calendar, contacts, company admin | ✅ available |
 | Tasks and Kanban board | ✅ available |
-| Team chat | ✅ available (files and mail cards next) |
+| Team chat | ✅ available |
 | Work reports (e.g. for trades) | planned |
 
 What comes next is in the [roadmap](ROADMAP.md) (German).

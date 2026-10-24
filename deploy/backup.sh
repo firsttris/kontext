@@ -3,8 +3,9 @@
 #
 # Stalwart keeps everything (mails, calendars, contacts, settings) in its RocksDB volume. For a
 # consistent copy the container stops for the few seconds the snapshot takes; senders retry
-# delivery, so no mail is lost. Kontext's own SQLite (sessions, the company signature, the
-# progress of moves) is copied while it runs with VACUUM INTO; uploaded PST files are left out.
+# delivery, so no mail is lost. Kontext's own SQLite (sessions, the company signature, tasks,
+# chat, the progress of moves) is copied while it runs with VACUUM INTO; the chat's photos and
+# files are never changed once written, so they go in as they are; uploaded PST files are left out.
 # Run from cron or a systemd timer at night, e.g.:
 #   0 3 * * *  /opt/kontext/deploy/backup.sh >> /var/log/kontext-backup.log 2>&1
 set -eu
@@ -27,7 +28,8 @@ $compose exec -T kontext bun -e '
   rmSync("/data/backup/kontext.db", { force: true });
   new Database(process.env.DATABASE_PATH).exec("VACUUM INTO '"'"'/data/backup/kontext.db'"'"'");
 '
-restic backup --tag kontext --host "$KONTEXT_DOMAIN" "$app/backup"
+mkdir -p "$app/chat-files"
+restic backup --tag kontext --host "$KONTEXT_DOMAIN" "$app/backup" "$app/chat-files"
 
 $compose stop stalwart
 trap '$compose start stalwart' EXIT

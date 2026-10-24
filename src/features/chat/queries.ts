@@ -12,10 +12,55 @@ import {
 } from "@tanstack/react-query";
 import { useRef } from "react";
 import type { Channel, ChannelSummary, Message } from "@/lib/chat";
+import type { Card, ChatFile } from "@/lib/chat-cards";
 
 export const CHAT_KEY = ["chat"];
 export const CHANNELS_KEY = ["chat", "channels"];
+export const DISCUSSED_KEY = ["chat", "discussed"];
 export const messagesKey = (channelId: string) => ["chat", "messages", channelId];
+
+/** A message to send; `files` are already uploaded. */
+export type Post = {
+  channelId: string;
+  text: string;
+  mentions: string[];
+  cards: Card[];
+  files: ChatFile[];
+};
+
+export type Discussion = {
+  channelId: string;
+  messageId: string;
+  createdAt: string;
+  replies: number;
+};
+
+/** Where a mail (or its thread) was discussed, in channels one sees; the latest first. */
+export const useDiscussions = (ref: string, threadId: string | null) =>
+  useQuery({
+    queryKey: [...DISCUSSED_KEY, ref, threadId],
+    queryFn: async () =>
+      (
+        await send<{ discussions: Discussion[] }>(
+          "GET",
+          `/discussed?ref=${encodeURIComponent(ref)}&thread=${encodeURIComponent(threadId ?? "")}`,
+        )
+      ).discussions,
+  }).data ?? [];
+
+/** Channels where mails of this sender were discussed before. */
+export const useSuggestions = (party: string) =>
+  useQuery({
+    queryKey: ["chat", "suggestions", party],
+    queryFn: async () =>
+      (
+        await send<{ channelIds: string[] }>(
+          "GET",
+          `/suggestions?party=${encodeURIComponent(party)}`,
+        )
+      ).channelIds,
+    enabled: Boolean(party),
+  }).data ?? [];
 
 export type ChannelsData = { channels: ChannelSummary[]; online: string[] };
 export type MessagePage = { messages: Message[]; hasMore: boolean; reads: Record<string, string> };
@@ -111,20 +156,22 @@ export const useChatActions = (me: string) => {
   const refreshChannels = () => queryClient.invalidateQueries({ queryKey: CHANNELS_KEY });
 
   const post = useMutation({
-    mutationFn: async (input: { channelId: string; text: string; mentions: string[] }) =>
+    mutationFn: async ({ channelId, files, ...body }: Post) =>
       (
-        await send<{ message: Message }>("POST", `${channelPath(input.channelId)}/messages`, {
-          text: input.text,
-          mentions: input.mentions,
+        await send<{ message: Message }>("POST", `${channelPath(channelId)}/messages`, {
+          ...body,
+          fileIds: files.map((file) => file.id),
         })
       ).message,
-    onMutate: (input) => {
+    onMutate: ({ channelId, text, mentions, cards, files }) => {
       const pending: Message = {
         id: `pending-${crypto.randomUUID()}`,
-        channelId: input.channelId,
+        channelId,
         authorId: me,
-        text: input.text,
-        mentions: input.mentions,
+        text,
+        mentions,
+        files,
+        cards,
         createdAt: new Date().toISOString(),
       };
       addMessage(queryClient, pending);

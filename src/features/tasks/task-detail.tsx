@@ -2,12 +2,13 @@
  * One task to read and change: title, status, who, when, which board, steps, notes and what it is
  * about (mails, contacts). Every change is saved at once; text when leaving the field.
  */
-import { Link, useNavigate } from "@tanstack/react-router";
-import { CalendarDays, Check, ChevronLeft, Mail, RotateCcw, Trash2 } from "lucide-react";
+import { useNavigate } from "@tanstack/react-router";
+import { Check, ChevronLeft, RotateCcw, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input, Label, Select, Textarea } from "@/components/ui/input";
 import { useToast } from "@/components/ui/toast";
+import { ItemLink, LinkIcon } from "@/features/links/item-link";
 import { cn } from "@/lib/cn";
 import { shortAddress } from "@/lib/mail-accounts";
 import { STATUS_LABELS, TASK_STATUSES, type Task } from "@/lib/tasks";
@@ -207,15 +208,13 @@ export const TaskDetail = ({ task, onClose }: { task: Task; onClose?: () => void
                 {m.tasks_links()}
               </span>
               {task.links.map((link) => (
-                <Link
+                <ItemLink
                   key={`${link.kind}-${link.ref}`}
-                  to="/mail/$accountId/$mailboxId"
-                  params={{ accountId: link.accountId, mailboxId: "inbox" }}
-                  search={{ email: link.ref }}
+                  item={link}
                   className="flex items-center gap-3 rounded-[10px] border border-border px-3 py-2.5 text-fg no-underline hover:bg-hover"
                 >
                   <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-accent/10 text-accent">
-                    {link.kind === "event" ? <CalendarDays size={16} /> : <Mail size={16} />}
+                    <LinkIcon kind={link.kind} />
                   </span>
                   <span className="flex min-w-0 flex-col">
                     <span className="truncate font-medium">{link.label}</span>
@@ -223,7 +222,7 @@ export const TaskDetail = ({ task, onClose }: { task: Task; onClose?: () => void
                       <span className="truncate text-[12px] text-muted">{link.detail}</span>
                     ) : null}
                   </span>
-                </Link>
+                </ItemLink>
               ))}
             </div>
           ) : null}

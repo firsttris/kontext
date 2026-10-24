@@ -104,8 +104,20 @@ export const TaskDialog = ({
     <Dialog
       open
       onOpenChange={(open) => !open && onClose()}
-      title={start.link ? m.tasks_from_mail_title() : m.tasks_new()}
-      description={start.link ? m.tasks_from_mail_link() : undefined}
+      title={
+        start.link?.kind === "chat"
+          ? m.tasks_from_message_title()
+          : start.link
+            ? m.tasks_from_mail_title()
+            : m.tasks_new()
+      }
+      description={
+        start.link?.kind === "chat"
+          ? m.tasks_from_message_link()
+          : start.link
+            ? m.tasks_from_mail_link()
+            : undefined
+      }
     >
       <form onSubmit={(event) => void submit(event)} className="flex flex-col gap-4">
         <Label>

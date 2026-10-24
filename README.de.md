@@ -104,6 +104,9 @@ reicht ein VPS mit 2 vCPU und 4 GB RAM.
 - **Direktnachrichten** an eine Kollegin oder ein paar Kollegen, mit „Gelesen“.
 - **Live**: Nachrichten, „Sandra schreibt …“ und wer online ist, ohne Neuladen; Ungelesenes am Chat und am App-Symbol.
 - **@Erwähnungen** mit Vorschlägen beim Tippen; eine Erwähnung oder Direktnachricht wird zur Benachrichtigung auf dem Gerät, wenn Kontext im Hintergrund ist.
+- **Fotos und Dateien**: mit der Handykamera, per Ziehen oder Einfügen; Fotos werden vor dem Senden verkleinert.
+- **Mails, Aufgaben und Kontakte als Karten**: „Besprechen“ an einer Mail (`b`) spricht im Kanal darüber, statt sie intern weiterzuleiten; die Mail zeigt danach, wo sie besprochen wurde. Öffnen kann die Karte nur, wer das Postfach sehen darf – kopiert wird nichts.
+- **Aufgabe aus einer Nachricht**, in beide Richtungen verknüpft.
 - **Am Handy**: ein eigener Tab, Unterhaltungen als Sprechblasen.
 
 ### 📅 Kalender
@@ -143,7 +146,7 @@ Module, die ein Betrieb einschaltet, wenn er sie braucht – wer sie nicht brauc
 | --- | --- |
 | Mail, Kalender, Kontakte, Firmenverwaltung | ✅ verfügbar |
 | Aufgaben und Kanban-Board | ✅ verfügbar |
-| Team-Chat | ✅ verfügbar (Dateien und Mail-Karten folgen) |
+| Team-Chat | ✅ verfügbar |
 | Rapportzettel (Arbeitsnachweise, z. B. im Handwerk) | geplant |
 
 Was als Nächstes kommt, steht in der [Roadmap](ROADMAP.md).

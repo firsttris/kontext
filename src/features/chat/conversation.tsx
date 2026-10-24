@@ -1,84 +1,23 @@
 /**
  * One channel or direct conversation: the history (a list with names on a desktop, bubbles on a
- * phone), a line where the new messages begin, who is writing, and the field to write. What one
- * sees here counts as read.
+ * phone), a line where the new messages begin, who is writing, and the field to write – with
+ * photos and files (also dropped onto the conversation) and cards. What one sees counts as read.
  */
 import { Link } from "@tanstack/react-router";
-import { ChevronLeft, Users } from "lucide-react";
-import { useEffect, useLayoutEffect, useRef, useState } from "react";
-import { Avatar } from "@/components/ui/avatar";
+import { ChevronLeft, ImageUp, Users } from "lucide-react";
+import { type DragEvent, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { useMediaQuery } from "@/components/use-media-query";
-import {
-  type ChannelSummary,
-  firstName,
-  type Message,
-  type MessageRun,
-  type Person,
-  readBy,
-  timeline,
-} from "@/lib/chat";
-import { cn } from "@/lib/cn";
+import { TaskDialog, type TaskStart } from "@/features/tasks/task-dialog";
+import { type ChannelSummary, firstName, type Message, readBy, timeline } from "@/lib/chat";
+import { taskFromMessage } from "@/lib/chat-cards";
 import { m } from "@/paraglide/messages";
 import { MessageInput } from "./message-input";
-import { MessageText } from "./message-text";
+import { isPending, Run } from "./message-run";
 import { useChatActions, useMessages } from "./queries";
 import { useTyping } from "./typing";
+import { useAttachments } from "./use-attachments";
 import { useChatNames } from "./use-chat-names";
-
-const time = (iso: string) =>
-  new Date(iso).toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" });
-
-const isPending = (message: Message) => message.id.startsWith("pending-");
-
-const Run = ({
-  run,
-  me,
-  people,
-  nameOf,
-}: {
-  run: MessageRun;
-  me: string;
-  people: Person[];
-  nameOf: (id: string) => string;
-}) => {
-  const own = run.authorId === me;
-  const name = nameOf(run.authorId);
-  return (
-    <li className={cn("flex gap-3", own && "justify-end md:justify-start")}>
-      <Avatar name={name} size={34} className="hidden md:inline-flex" />
-      <div
-        className={cn(
-          "flex min-w-0 flex-1 flex-col gap-1 md:items-stretch",
-          own ? "items-end" : "items-start",
-        )}
-      >
-        <span className="text-[12px] text-muted md:text-[14px]">
-          <span className={cn("font-semibold text-fg", own && "hidden md:inline")}>
-            {firstName(name)}
-          </span>
-          <span className={cn(own && "hidden md:inline")}> · </span>
-          <time dateTime={run.createdAt} className="md:font-mono md:text-[12px]">
-            {time(run.createdAt)}
-          </time>
-        </span>
-        {run.messages.map((message) => (
-          <div
-            key={message.id}
-            data-message={message.id}
-            className={cn(
-              "max-w-[85%] rounded-2xl px-3 py-2 md:max-w-none md:rounded-none md:bg-transparent md:p-0 md:text-fg",
-              own ? "rounded-br-md bg-primary text-onprimary" : "rounded-bl-md bg-subtle",
-              isPending(message) && "opacity-60",
-            )}
-          >
-            <MessageText message={message} people={people} me={me} own={own} />
-          </div>
-        ))}
-      </div>
-    </li>
-  );
-};
 
 const subtitle = (
   channel: ChannelSummary,
@@ -100,13 +39,19 @@ const typingLine = (names: string[]) =>
     ? m.chat_typing_one({ name: names[0]! })
     : m.chat_typing_many({ names: names.join(", ") });
 
+/** Dragged in from the desktop: files, not text or links. */
+const carriesFiles = (event: DragEvent) => event.dataTransfer.types.includes("Files");
+
 export const Conversation = ({
   channel,
   online,
+  messageId,
   onEdit,
 }: {
   channel: ChannelSummary;
   online: string[];
+  /** A message to show, e.g. the one a task was made from. */
+  messageId?: string;
   onEdit: () => void;
 }) => {
   const { me, people, nameOf, titleOf } = useChatNames();
@@ -161,6 +106,41 @@ export const Conversation = ({
     loadOlder();
   };
 
+  // A message asked for in the URL: load older pages until it is there, then show and mark it.
+  const [highlight, setHighlight] = useState<string>();
+  const shown = useRef<string | null>(null);
+  const pagesLoaded = useRef(0);
+  useEffect(() => {
+    if (!messageId || shown.current === messageId || loading) return;
+    const element = scroller.current?.querySelector(`[data-message="${CSS.escape(messageId)}"]`);
+    if (element) {
+      shown.current = messageId;
+      atBottom.current = false;
+      element.scrollIntoView({ block: "center" });
+      setHighlight(messageId);
+      const fade = setTimeout(() => setHighlight(undefined), 2500);
+      return () => clearTimeout(fade);
+    }
+    // At most ten pages back; a removed message is not searched for in the whole history.
+    if (hasOlder && !loadingOlder && pagesLoaded.current < 10) {
+      pagesLoaded.current += 1;
+      older();
+    }
+  });
+
+  const attachments = useAttachments(channel.id);
+  const [dragging, setDragging] = useState(false);
+  const [task, setTask] = useState<TaskStart | null>(null);
+  const makeTask = (message: Message) => {
+    const { title: taskTitle, link } = taskFromMessage(message, `${prefix}${title}`);
+    // From the channel of a shared mailbox the task goes on its board, else on one's own.
+    setTask({
+      title: taskTitle,
+      link,
+      accountId: channel.kind === "mailbox" ? channel.accountId! : me,
+    });
+  };
+
   // In a direct conversation: who has read my last message.
   const mine = [...messages].reverse().find((message) => message.authorId === me);
   const seenBy =
@@ -177,7 +157,30 @@ export const Conversation = ({
       : people;
 
   return (
-    <section aria-label={title} className="flex h-full min-h-0 flex-1 flex-col">
+    <section
+      aria-label={title}
+      className="relative flex h-full min-h-0 flex-1 flex-col"
+      onDragOver={(event) => {
+        if (!carriesFiles(event)) return;
+        event.preventDefault();
+        setDragging(true);
+      }}
+      onDragLeave={(event) => {
+        if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setDragging(false);
+      }}
+      onDrop={(event) => {
+        if (!carriesFiles(event)) return;
+        event.preventDefault();
+        setDragging(false);
+        attachments.addFiles(event.dataTransfer.files);
+      }}
+    >
+      {dragging ? (
+        <div className="pointer-events-none absolute inset-2 z-10 flex flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-accent bg-bg/90 text-[15px] font-medium text-accent">
+          <ImageUp size={28} aria-hidden="true" />
+          {m.chat_drop_here({ name: `${prefix}${title}` })}
+        </div>
+      ) : null}
       <header className="flex h-14 shrink-0 items-center gap-1 border-b border-border px-2 md:gap-3 md:px-5">
         <Link
           to="/chat"
@@ -252,7 +255,15 @@ export const Conversation = ({
               );
             }
             return (
-              <Run key={item.messages[0]!.id} run={item} me={me} people={people} nameOf={nameOf} />
+              <Run
+                key={item.messages[0]!.id}
+                run={item}
+                me={me}
+                people={people}
+                nameOf={nameOf}
+                highlight={highlight}
+                onMakeTask={makeTask}
+              />
             );
           })}
         </ol>
@@ -281,12 +292,21 @@ export const Conversation = ({
           people={mentionable}
           me={me}
           onTyping={() => actions.typing(channel.id)}
+          attachments={attachments}
           onSend={(text, mentions) => {
             atBottom.current = true;
-            actions.post.mutate({ channelId: channel.id, text, mentions });
+            actions.post.mutate({
+              channelId: channel.id,
+              text,
+              mentions,
+              cards: attachments.cards,
+              files: attachments.files.flatMap((file) => (file.uploaded ? [file.uploaded] : [])),
+            });
+            attachments.clear();
           }}
         />
       </div>
+      {task ? <TaskDialog start={task} onClose={() => setTask(null)} /> : null}
     </section>
   );
 };

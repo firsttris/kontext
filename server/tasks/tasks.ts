@@ -18,7 +18,8 @@ export const checkItemSchema = z.object({
 export type CheckItem = z.infer<typeof checkItemSchema>;
 
 export const taskLinkSchema = z.object({
-  kind: z.enum(["mail", "contact", "event"]),
+  /** chat: a message (`ref`) in a channel (`accountId`). */
+  kind: z.enum(["mail", "contact", "event", "chat"]),
   accountId: z.string().min(1).max(64),
   ref: z.string().min(1).max(200),
   threadId: z.string().max(200).nullable().default(null),

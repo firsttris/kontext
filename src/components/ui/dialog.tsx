@@ -11,6 +11,8 @@ type DialogProps = {
   description?: string;
   children: ReactNode;
   className?: string;
+  /** Where focus goes on closing; by default back to what opened the dialog. */
+  onCloseAutoFocus?: (event: Event) => void;
 };
 
 /** A centered dialog on desktop, a bottom sheet on phones. */
@@ -21,6 +23,7 @@ export const Dialog = ({
   description,
   children,
   className,
+  onCloseAutoFocus,
 }: DialogProps) => (
   <DialogPrimitive.Root open={open} onOpenChange={onOpenChange}>
     <DialogPrimitive.Portal>
@@ -33,6 +36,7 @@ export const Dialog = ({
           className,
         )}
         aria-describedby={description ? undefined : undefined}
+        onCloseAutoFocus={onCloseAutoFocus}
       >
         <div className="flex items-start gap-3">
           <div className="flex flex-1 flex-col gap-1">

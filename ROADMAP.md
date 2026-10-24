@@ -9,7 +9,6 @@ ein Plan, kein Versprechen; Wünsche und Hinweise gern als
 | Funktion | Worum es geht |
 | --- | --- |
 | **Aufgaben überall im Kontext** | Offene Aufgaben am Kontakt, Fälliges im Kalender, Heute-Fälliges und neu Zugewiesenes in der Glocke, Erinnerungen als Benachrichtigung, „Aufgaben erstellen“ für mehrere Mails. |
-| **Team-Chat: Fotos und Karten** | Fotos und Dateien (Kamera-Knopf am Handy, Ziehen am PC), Mails, Aufgaben und Kontakte als Karten im Verlauf, „Über diese Mail sprechen“ statt intern weiterzuleiten, „Aufgabe aus Nachricht“. |
 | **Team-Chat: Feinschliff** | Suche im Chat, eigene Nachrichten bearbeiten und löschen, Kanäle stummschalten und verlassen; später Antworten im Faden, Reaktionen, „Besprechung starten“. |
 | **Benachrichtigungen bei geschlossener App** | Web Push: Stalwart kann ihn selbst senden (`urn:ietf:params:jmap:webpush-vapid`), damit das Handy auch bei ganz geschlossener App neue Mails meldet; für Direktnachrichten und Erwähnungen im Chat sendet ihn der Kontext-Server. |
 | **Unterhaltungen** | Antworten zu einem Verlauf zusammenfassen: eine Zeile pro Unterhaltung in der Liste, alle Mails darin untereinander im Lesebereich. Die Daten (`threadId`) lädt die App schon. |
@@ -34,9 +33,11 @@ Kleinere Dinge, die beim Bauen aufgefallen sind und noch erledigt werden.
 
 **Funktionen**
 
-- [ ] Aufgabe aus einer Mail mit dem **Kontakt** des Absenders verknüpfen (bisher nur sein Name an der Mail-Verknüpfung).
 - [ ] Chat: Wer neu in einen Kanal kommt, hat den ganzen bisherigen Verlauf als ungelesen.
 - [ ] Chat: einen eigenen Kanal verlassen oder löschen (heute nur Name und Mitglieder ändern).
+- [ ] Chat: „Ganze Mail teilen“ als Kopie, für Kolleginnen ohne Zugriff auf das Postfach (heute sehen sie nur die Karte).
+- [ ] Chat: Fotos als kleine Vorschaubilder auf dem Server erzeugen (heute lädt der Verlauf die verkleinerten Fotos in voller Größe).
+- [ ] Aufgabe aus einer Mail mit dem Absender als Kontakt verknüpfen; die Verknüpfungen „Kontakt“ und „Termin“ öffnen sich schon richtig, werden aber noch nirgends angelegt.
 - [ ] **Regeln für Mitarbeiter** in der Firmenverwaltung (heute nur für gemeinsame Postfächer und die eigenen).
 - [ ] **App auf Englisch** und weiteren Sprachen (Texte liegen schon gesammelt in `messages/de.json`).
 - [ ] **Drucken mit Bildern aus dem Internet**, wenn sie in der Mail freigegeben wurden.
@@ -64,8 +65,9 @@ Kleinere Dinge, die beim Bauen aufgefallen sind und noch erledigt werden.
 ## Zuletzt fertig geworden
 
 Team-Chat mit Kanälen (#allgemein, einer pro gemeinsamem Postfach, eigene), Direktnachrichten,
-@Erwähnungen, „schreibt …“, Gelesen und Ungelesen, live über eine eigene Verbindung, die auch
-Aufgaben sofort abgleicht; am Handy eine neue Tab-Leiste mit Chat und „Mehr“.
+@Erwähnungen, „schreibt …“, Gelesen und Ungelesen, Fotos und Dateien, Mails, Aufgaben und
+Kontakte als Karten, „Über diese Mail sprechen“ und Aufgaben aus Nachrichten – live über eine
+eigene Verbindung, die auch Aufgaben sofort abgleicht; am Handy eine Tab-Leiste mit Chat und „Mehr“.
 Aufgaben mit Liste und Kanban-Board (eigene und pro gemeinsamem Postfach, aus Mails heraus, mit
 Checkliste, Zuständigen und Fälligkeit), Kontext als installierbare App (PWA),
 Regeln (auch für gemeinsame Postfächer und auf vorhandene Mails), Kategorien (im Team geteilt,

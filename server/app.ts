@@ -10,6 +10,8 @@ import { serveStatic } from "hono/bun";
 import { type Auth, createAuth, createGrants, type Grants } from "./auth";
 import { createCategoryRoutes, type SessionAccount } from "./categories/routes";
 import { createCategoryStore } from "./categories/store";
+import { createChatFiles } from "./chat/files";
+import { createMessageStore } from "./chat/messages";
 import { createChatRoutes, viewerOf } from "./chat/routes";
 import { createChatStore } from "./chat/store";
 import { createMailstore } from "./company/mailstore";
@@ -187,7 +189,23 @@ export const createApp = async (env: Env) => {
       },
     }),
   );
-  app.route("/api/chat", createChatRoutes({ store: createChatStore(db), hub, accountsOf }));
+  const chatFiles = createChatFiles(db, join(dirname(env.DATABASE_PATH), "chat-files"));
+  // Photos uploaded for a message that was never sent go after a day.
+  const pruneChatFiles = () =>
+    void chatFiles.pruneUnsent(new Date(Date.now() - 86_400_000)).catch(() => undefined);
+  pruneChatFiles();
+  setInterval(pruneChatFiles, 3_600_000).unref();
+  const messages = createMessageStore(db, chatFiles);
+  app.route(
+    "/api/chat",
+    createChatRoutes({
+      store: createChatStore(db, messages),
+      messages,
+      files: chatFiles,
+      hub,
+      accountsOf,
+    }),
+  );
   app.route(
     "/api/tasks",
     createTaskRoutes({

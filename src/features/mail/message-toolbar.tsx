@@ -8,6 +8,7 @@ import {
   ListChecks,
   ListFilter,
   MailOpen,
+  MessagesSquare,
   MoreHorizontal,
   Printer,
   Reply,
@@ -38,6 +39,7 @@ import { type Rule, ruleFromSender } from "@/lib/rules";
 import { mailLink, plainSubject } from "@/lib/tasks";
 import { m } from "@/paraglide/messages";
 import { CategoryMenu } from "../categories/category-menu";
+import { DiscussDialog } from "../chat/discuss-dialog";
 import { OwnRuleDialog } from "../rules/rule-dialog";
 import { usePersonalAccountId } from "../settings/queries";
 import { TaskDialog, type TaskStart } from "../tasks/task-dialog";
@@ -64,6 +66,7 @@ export const Toolbar = ({
   const sender = email.from?.[0]?.email;
   const [rule, setRule] = useState<Rule | null>(null);
   const [task, setTask] = useState<TaskStart | null>(null);
+  const [discussing, setDiscussing] = useState(false);
   const newTask = () =>
     setTask({
       title: plainSubject(email.subject ?? ""),
@@ -120,6 +123,7 @@ export const Toolbar = ({
     "!": toggleSpam,
     p: print,
     t: newTask,
+    b: () => setDiscussing(true),
     esc: () => void close(),
   });
 
@@ -222,6 +226,15 @@ export const Toolbar = ({
       >
         <ListChecks size={16} strokeWidth={1.75} />
       </Button>
+      <Button
+        variant="ghost"
+        size="icon"
+        aria-label={m.chat_discuss()}
+        title={`${m.chat_discuss()} (b)`}
+        onClick={() => setDiscussing(true)}
+      >
+        <MessagesSquare size={16} strokeWidth={1.75} />
+      </Button>
       {canRemove ? (
         <MenuRoot>
           <MenuTrigger asChild>
@@ -319,6 +332,9 @@ export const Toolbar = ({
         </MenuContent>
       </MenuRoot>
       {rule ? <OwnRuleDialog initial={rule} onClose={() => setRule(null)} /> : null}
+      {discussing ? (
+        <DiscussDialog accountId={accountId} email={email} onClose={() => setDiscussing(false)} />
+      ) : null}
       {task ? (
         <TaskDialog
           start={task}

@@ -37,7 +37,8 @@ test.describe("Chat", () => {
     await expect(page.getByRole("list", { name: "Nachrichten" })).toContainText(text);
 
     // Sandra sees it without reloading: on "Chat" in the rail, then in the conversation.
-    await expect(sandra.getByRole("link", { name: "Chat, 1 ungelesen" })).toBeVisible();
+    // (Sandra may have more unread elsewhere, e.g. in info@ from other tests.)
+    await expect(sandra.getByRole("link", { name: /^Chat, \d+ ungelesen$/ })).toBeVisible();
     await openChat(sandra);
     await sandra
       .getByRole("navigation", { name: "Direktnachrichten" })
@@ -46,7 +47,12 @@ test.describe("Chat", () => {
       .click();
     await expect(sandra.getByRole("list", { name: "Nachrichten" })).toContainText(text);
     await expect(page.getByText("Gelesen", { exact: true })).toBeVisible();
-    await expect(sandra.getByRole("link", { name: "Chat, 1 ungelesen" })).toHaveCount(0);
+    await expect(
+      sandra
+        .getByRole("navigation", { name: "Direktnachrichten" })
+        .first()
+        .getByRole("link", { name: /Jonas Weber/ }),
+    ).not.toContainText(/\d/);
 
     const field = sandra.getByRole("textbox", { name: "Nachricht" });
     await field.pressSequentially("@Jo");
