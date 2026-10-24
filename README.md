@@ -196,6 +196,8 @@ React, TanStack Router/Query, Tailwind und Tiptap im Browser; ein kleiner Bun-Se
 
 ## 🤝 Mitmachen
 
+Was als Nächstes geplant ist, steht in der [Roadmap](ROADMAP.md).
+
 Issues und Pull Requests sind willkommen. Ein guter Fehlerbericht nennt Browser oder Handy, die Ansicht und was zu sehen war (ein Screenshot hilft). Vor einem Pull Request bitte `bun run check && bun run e2e` laufen lassen.
 
 ---
