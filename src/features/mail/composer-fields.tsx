@@ -8,6 +8,7 @@ import { formatSize } from "@/lib/format";
 import type { Suggestion } from "@/lib/groups";
 import { m } from "@/paraglide/messages";
 import { RecipientField } from "./recipient-field";
+import { SendLater } from "./send-later";
 
 type FieldsProps = {
   identities: Identity[];
@@ -145,6 +146,7 @@ export const AttachmentList = ({
 export const ComposerActions = ({
   sending,
   canSend,
+  onSendLater,
   savedAt,
   onAttach,
   onSaveDraft,
@@ -152,6 +154,7 @@ export const ComposerActions = ({
 }: {
   sending: boolean;
   canSend: boolean;
+  onSendLater: (at: Date) => void;
   savedAt: Date | null;
   onAttach: (files: FileList | null) => void;
   onSaveDraft: () => void;
@@ -160,9 +163,17 @@ export const ComposerActions = ({
   const fileInput = useRef<HTMLInputElement>(null);
   return (
     <div className="flex items-center gap-2">
-      <Button type="submit" variant="primary" disabled={sending || !canSend}>
-        <Send size={15} /> {sending ? m.mail_sending() : m.mail_send()}
-      </Button>
+      <span className="flex">
+        <Button
+          type="submit"
+          variant="primary"
+          disabled={sending || !canSend}
+          className="rounded-r-none"
+        >
+          <Send size={15} /> {sending ? m.mail_sending() : m.mail_send()}
+        </Button>
+        <SendLater disabled={sending || !canSend} onPick={onSendLater} />
+      </span>
       <input
         ref={fileInput}
         type="file"

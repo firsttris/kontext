@@ -1,11 +1,12 @@
 /** One mail in the list: who, when, subject, categories, preview; and its box to pick it. */
 import { Link, useParams } from "@tanstack/react-router";
-import { CornerUpLeft, ListChecks, Paperclip, Star, Users } from "lucide-react";
+import { CalendarClock, CornerUpLeft, ListChecks, Paperclip, Star, Users } from "lucide-react";
 import { Highlighted } from "@/components/highlighted";
 import { isFlagged, isUnread } from "@/jmap/mail";
 import { categoriesOn } from "@/lib/categories";
 import { cn } from "@/lib/cn";
 import { displayName, formatAddressList, listDate } from "@/lib/format";
+import { sendTimeLabel } from "@/lib/schedule";
 import { tasksOfMail } from "@/lib/tasks";
 import { m } from "@/paraglide/messages";
 import { CategoryChips } from "../categories/category-chips";
@@ -16,7 +17,7 @@ import { type DraggedMail, startMailDrag } from "./mail-drag";
 import type { Answer, Group } from "./use-thread-info";
 
 export const MessageRow = ({
-  row: { email, account, folder, highlight },
+  row: { email, account, folder, highlight, sendAt },
   active,
   showRecipient,
   isDraft,
@@ -152,6 +153,12 @@ export const MessageRow = ({
               >
                 <Users size={11} strokeWidth={2} aria-hidden="true" />
                 {account.label}
+              </span>
+            ) : null}
+            {sendAt ? (
+              <span className="inline-flex h-[18px] shrink-0 items-center gap-1 rounded-full bg-warn/10 px-1.5 text-[11px] font-medium text-warn">
+                <CalendarClock size={11} strokeWidth={2.25} aria-hidden="true" />
+                {m.mail_scheduled_at({ when: sendTimeLabel(new Date(sendAt)) })}
               </span>
             ) : null}
             {email.keywords.$answered ? (

@@ -36,7 +36,7 @@ test.describe("Einstellungen", () => {
     await anna.getByRole("combobox", { name: "An" }).fill(address("max"));
     await anna.keyboard.press("Enter");
     await anna.getByLabel("Betreff").fill(subject);
-    await anna.getByRole("button", { name: "Senden" }).click();
+    await anna.getByRole("button", { name: "Senden", exact: true }).click();
     await expect
       .poll(
         async () => (await inboxMails("anna")).some((mail) => mail.subject === "Bin im Urlaub"),

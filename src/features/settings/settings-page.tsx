@@ -14,17 +14,19 @@ import {
   Palmtree,
   PenLine,
   Signature,
+  TextQuote,
   Truck,
   User,
   Users,
 } from "lucide-react";
-import { lazy, type ReactNode, Suspense } from "react";
+import { lazy, type ReactNode, Suspense, useId } from "react";
 import { TabBar } from "@/components/shell/app-shell";
 import { EmployeesSection } from "@/features/company/employees-section";
 import { MailboxesSection } from "@/features/company/mailboxes-section";
 import { MigrationSection } from "@/features/company/migration-section";
 import { useIsCompanyAdmin } from "@/features/company/queries";
 import { RulesSection } from "@/features/rules/rules-section";
+import { SnippetsSection } from "@/features/snippets/snippets-section";
 import { cn } from "@/lib/cn";
 import { m } from "@/paraglide/messages";
 import type { settingsSections } from "@/routes/_app/settings";
@@ -52,6 +54,7 @@ const OWN: Entry[] = [
   { id: "signature", label: m.settings_signature, icon: PenLine },
   { id: "vacation", label: m.settings_vacation, icon: Palmtree },
   { id: "rules", label: m.settings_rules, icon: ListFilter },
+  { id: "snippets", label: m.settings_snippets, icon: TextQuote },
   { id: "security", label: m.settings_security, icon: KeyRound },
   { id: "appearance", label: m.settings_appearance, icon: Palette },
 ];
@@ -69,6 +72,7 @@ const CONTENT: Record<Section, () => ReactNode> = {
   signature: () => <SignatureSection />,
   vacation: () => <VacationSection />,
   rules: () => <RulesSection />,
+  snippets: () => <SnippetsSection />,
   security: () => <SecuritySection />,
   appearance: () => <AppearanceSection />,
   employees: () => <EmployeesSection />,
@@ -163,12 +167,21 @@ export const SettingsCard = ({
   title: string;
   description?: string;
   children: ReactNode;
-}) => (
-  <section className="flex flex-col gap-4 rounded-xl border border-border p-4 md:p-5">
-    <div className="flex flex-col gap-1">
-      <h3 className="m-0 text-[15px] font-semibold">{title}</h3>
-      {description ? <p className="m-0 text-[13px] text-muted">{description}</p> : null}
-    </div>
-    {children}
-  </section>
-);
+}) => {
+  // Named by its heading, so it is a region one can find (and jump to).
+  const id = useId();
+  return (
+    <section
+      aria-labelledby={id}
+      className="flex flex-col gap-4 rounded-xl border border-border p-4 md:p-5"
+    >
+      <div className="flex flex-col gap-1">
+        <h3 id={id} className="m-0 text-[15px] font-semibold">
+          {title}
+        </h3>
+        {description ? <p className="m-0 text-[13px] text-muted">{description}</p> : null}
+      </div>
+      {children}
+    </section>
+  );
+};

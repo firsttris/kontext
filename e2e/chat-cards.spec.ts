@@ -93,7 +93,7 @@ test.describe("Chat: Fotos, Dateien und Karten", () => {
       .click();
     await expect(dialog.getByRole("radio", { name: /^info@/ })).toBeChecked();
     await dialog.getByRole("textbox", { name: "Nachricht" }).fill("Wer ruft zurück?");
-    await dialog.getByRole("button", { name: "Senden" }).click();
+    await dialog.getByRole("button", { name: "Senden", exact: true }).click();
     await expect(page.getByRole("status").filter({ hasText: "An info@ geschickt." })).toBeVisible();
     await expect(page.getByRole("link", { name: "Besprochen in info@" })).toBeVisible();
 
@@ -173,7 +173,7 @@ test.describe("Chat: Fotos, Dateien und Karten", () => {
     await picker.getByRole("tab", { name: "Kontakt" }).click();
     await picker.getByRole("searchbox", { name: "Suchen" }).fill("Petra");
     await picker.getByRole("button", { name: /Petra Keller/ }).click();
-    await page.getByRole("button", { name: "Senden" }).click();
+    await page.getByRole("button", { name: "Senden", exact: true }).click();
     const card = page
       .getByRole("list", { name: "Nachrichten" })
       .getByRole("link", { name: /Kontakt.*Petra Keller/ });
@@ -200,7 +200,7 @@ test.describe("Chat am Handy: Foto @phone", () => {
     await expect(page.getByRole("region", { name: "Angehängt" }).getByRole("status")).toHaveCount(
       0,
     );
-    await page.getByRole("button", { name: "Senden" }).click();
+    await page.getByRole("button", { name: "Senden", exact: true }).click();
     await expect(
       page.getByRole("button", { name: "Foto baustelle.png groß zeigen" }).last().locator("img"),
     ).toHaveJSProperty("complete", true);

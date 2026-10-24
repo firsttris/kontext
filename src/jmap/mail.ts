@@ -342,11 +342,28 @@ const emailCreate = (mail: OutgoingEmail, mailboxIds: Record<string, boolean>, d
 });
 
 /** Creates the mail in Drafts, submits it, and on success moves it to Sent (RFC 8621 §7.5). */
+/**
+ * When the server sends it (FUTURERELEASE, RFC 4865): after a few seconds, so it can still be
+ * taken back, or at a time ("Später senden"). The recipients then come from the headers.
+ */
+export type Hold = { seconds: number } | { until: string };
+
 export const sendEmail = async (
   client: JmapClient,
   mail: OutgoingEmail,
   mailboxes: { draftsId: string; sentId: string },
-): Promise<void> => {
+  hold?: Hold,
+): Promise<{ emailId: string; submissionId: string }> => {
+  const envelope = hold
+    ? {
+        mailFrom: {
+          email: mail.identity.email,
+          parameters:
+            "until" in hold ? { HOLDUNTIL: hold.until } : { HOLDFOR: String(hold.seconds) },
+        },
+        rcptTo: [],
+      }
+    : undefined;
   const responses = await client.request(
     [
       [
@@ -362,7 +379,13 @@ export const sendEmail = async (
         "EmailSubmission/set",
         {
           accountId: mail.accountId,
-          create: { send: { identityId: mail.identity.id, emailId: "#draft" } },
+          create: {
+            send: {
+              identityId: mail.identity.id,
+              emailId: "#draft",
+              ...(envelope ? { envelope } : {}),
+            },
+          },
           onSuccessUpdateEmail: {
             "#send": {
               [`mailboxIds/${mailboxes.draftsId}`]: null,
@@ -378,6 +401,12 @@ export const sendEmail = async (
   );
   assertSetOk(responses[0]![1], "Entwurf");
   assertSetOk(responses[1]![1], "Versand");
+  const created = (result: unknown, key: string) =>
+    (result as { created?: Record<string, { id: string }> }).created?.[key]?.id ?? "";
+  return {
+    emailId: created(responses[0]![1], "draft"),
+    submissionId: created(responses[1]![1], "send"),
+  };
 };
 
 export const saveDraft = async (

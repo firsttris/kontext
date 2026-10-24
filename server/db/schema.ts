@@ -329,3 +329,17 @@ export const pushMailboxesOff = sqliteTable(
   },
   (table) => [primaryKey({ columns: [table.memberId, table.accountId] })],
 );
+
+/** Text snippets (server/snippets/): standard answers, per account – shared ones for the team. */
+export const snippets = sqliteTable(
+  "snippets",
+  {
+    id: text("id").primaryKey(),
+    accountId: text("account_id").notNull(),
+    title: text("title").notNull(),
+    body: text("body").notNull(),
+    createdBy: text("created_by").notNull(),
+    ...timestamps,
+  },
+  (table) => [index("snippets_account").on(table.accountId)],
+);

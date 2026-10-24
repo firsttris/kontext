@@ -135,7 +135,7 @@ test.describe("Mail", () => {
     await page.keyboard.type(" bitte bis Freitag bestellen.");
     await page.getByRole("button", { name: "Aufzählung" }).click();
     await page.keyboard.type("Rohre");
-    await page.getByRole("button", { name: "Senden" }).click();
+    await page.getByRole("button", { name: "Senden", exact: true }).click();
     await expect(page.getByRole("status")).toHaveText("Mail gesendet.");
     await expect.poll(() => inboxSubjects("anna")).toContain(subject);
 
@@ -167,7 +167,7 @@ test.describe("Mail", () => {
       "schrieb Anna Weber:",
     );
     await page.keyboard.type("Ich bin dabei.");
-    await page.getByRole("button", { name: "Senden" }).click();
+    await page.getByRole("button", { name: "Senden", exact: true }).click();
     await expect(page.getByRole("status")).toHaveText("Mail gesendet.");
     await expect
       .poll(() => inboxSubjects("anna"))
@@ -392,7 +392,7 @@ test("sendet aus dem gemeinsamen Postfach als info@", async ({ page }) => {
   await page.getByLabel("Betreff").fill(subject);
   await page.getByRole("textbox", { name: "Ihre Nachricht …" }).click();
   await page.keyboard.type("Bitte Frau Sommer zurückrufen.");
-  await page.getByRole("button", { name: "Senden" }).click();
+  await page.getByRole("button", { name: "Senden", exact: true }).click();
   // Sent, or an error toast; a failure then names the error instead of only timing out (this
   // test failed now and then in full runs, showing just the composer's "Entwurf gespeichert").
   await expect(
@@ -484,7 +484,7 @@ test.describe("Entwürfe", () => {
     await body.click();
     await page.keyboard.press("End");
     await page.keyboard.type(" Zweiter Teil.");
-    await page.getByRole("button", { name: "Senden" }).click();
+    await page.getByRole("button", { name: "Senden", exact: true }).click();
     await expect(page.getByRole("status").filter({ hasText: "Mail gesendet." })).toBeVisible();
     await expect.poll(() => inboxSubjects("anna")).toContain(subject);
     await expect(page.getByRole("list", { name: "Entwürfe" }).getByText(subject)).toHaveCount(0);
@@ -515,7 +515,7 @@ test.describe("Entwürfe", () => {
     });
     await page.keyboard.type(" Zweiter Teil.");
     await saving;
-    await page.getByRole("button", { name: "Senden" }).click();
+    await page.getByRole("button", { name: "Senden", exact: true }).click();
     await expect(
       page.getByRole("status").filter({ hasText: "Mail gesendet." }).or(page.getByRole("alert")),
     ).toBeVisible({ timeout: 15_000 });

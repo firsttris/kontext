@@ -23,6 +23,7 @@ import {
   listMailboxes,
   queryEmails,
 } from "@/jmap/mail";
+import { heldMails } from "@/jmap/submissions";
 import type { Account, EmailSummary, Mailbox } from "@/jmap/types";
 import type { MailAccount } from "@/lib/mail-accounts";
 import { findRole } from "@/lib/mailboxes";
@@ -214,4 +215,16 @@ export const useCreateMailbox = (accountId: string) => {
       createMailbox(client, accountId, name, parentId),
     onSettled: () => queryClient.invalidateQueries({ queryKey: mailboxesKey(accountId) }),
   });
+};
+
+/** Mails the server still holds in this account: scheduled ones, and those within "Rückgängig". */
+export const useHeldMails = (accountId: string) => {
+  const client = useClient();
+  return (
+    useQuery({
+      queryKey: [accountId, "held"],
+      queryFn: () => heldMails(client, accountId),
+      enabled: Boolean(accountId),
+    }).data ?? []
+  );
 };

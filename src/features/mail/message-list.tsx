@@ -4,9 +4,10 @@ import { useCallback, useMemo } from "react";
 import type { Mailbox } from "@/jmap/types";
 import { mailboxNotice } from "@/lib/mail-accounts";
 import { mailboxName, mailboxRights } from "@/lib/mailboxes";
+import { m } from "@/paraglide/messages";
 import type { MailSearch } from "@/routes/_app/mail.$accountId.$mailboxId";
-import { ListFrame, type Row } from "./list-frame";
-import { useEmailList, useMailAccounts } from "./queries";
+import { FilterChips, ListFrame, type Row } from "./list-frame";
+import { useEmailList, useHeldMails, useMailAccounts } from "./queries";
 import { useThreadView } from "./thread-view";
 
 type Props = { accountId: string; mailbox: Mailbox; search: MailSearch };
@@ -19,10 +20,23 @@ export const MessageList = ({ accountId, mailbox, search }: Props) => {
     [mailbox.id, search.unread],
   );
   const list = useEmailList(accountId, filter, useThreadView());
-  const rows = useMemo(
-    () => list.data?.pages.flatMap((page) => page.emails.map((email) => ({ email }))) ?? [],
-    [list.data],
-  );
+  // In Sent, what the server still holds: marked in the list, or on its own ("Geplant").
+  const isSent = mailbox.role === "sent";
+  const held = useHeldMails(isSent ? accountId : "");
+  const scheduled = isSent && Boolean(search.scheduled);
+  const rows = useMemo((): Row[] => {
+    const sendAt = new Map(held.map((mail) => [mail.emailId, mail.sendAt]));
+    if (scheduled) {
+      return held.flatMap((mail) =>
+        mail.email ? [{ email: mail.email, sendAt: mail.sendAt }] : [],
+      );
+    }
+    return (
+      list.data?.pages.flatMap((page) =>
+        page.emails.map((email) => ({ email, sendAt: sendAt.get(email.id) })),
+      ) ?? []
+    );
+  }, [list.data, held, scheduled]);
   const { hasNextPage, isFetchingNextPage, fetchNextPage } = list;
   const onNearEnd = useCallback(() => {
     if (hasNextPage && !isFetchingNextPage) void fetchNextPage();
@@ -62,6 +76,23 @@ export const MessageList = ({ accountId, mailbox, search }: Props) => {
       dragMail={dragMail}
       folderId={mailbox.id}
       inJunk={mailbox.role === "junk"}
+      filters={
+        isSent ? (
+          <FilterChips
+            options={[
+              { label: m.mail_filter_all(), on: !scheduled, set: { scheduled: undefined } },
+              {
+                label: held.length
+                  ? m.mail_filter_scheduled_count({ count: held.length })
+                  : m.mail_filter_scheduled(),
+                on: scheduled,
+                set: { scheduled: true },
+              },
+            ]}
+          />
+        ) : undefined
+      }
+      empty={scheduled ? m.mail_scheduled_empty() : undefined}
     />
   );
 };

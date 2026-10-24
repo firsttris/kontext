@@ -12,6 +12,8 @@ export const login = async (page: Page, user = "jonas") => {
   await page.getByLabel("Passwort").fill(DEV_PASSWORD);
   await page.getByRole("button", { name: "Anmelden" }).click();
   await expect(page).toHaveURL(/\/mail\//);
+  // Mails go out at once in the tests; "Rückgängig" has its own (e2e/send-later.spec.ts).
+  await page.evaluate(() => window.localStorage.setItem("kontext.mail.undo", "0"));
 };
 
 /** A JMAP client for checks behind the UI's back, e.g. whether a mail arrived. */

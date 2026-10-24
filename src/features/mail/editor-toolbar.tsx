@@ -15,6 +15,7 @@ import {
   Strikethrough,
   Underline,
 } from "lucide-react";
+import type { ReactNode } from "react";
 import { cn } from "@/lib/cn";
 import { m } from "@/paraglide/messages";
 
@@ -101,7 +102,8 @@ const groups: Tool[][] = [
   ],
 ];
 
-export const EditorToolbar = ({ editor }: { editor: Editor }) => {
+/** `extra`: more for the end of the bar, e.g. the snippets. */
+export const EditorToolbar = ({ editor, extra }: { editor: Editor; extra?: ReactNode }) => {
   // Re-render when the selection or marks change, so the active buttons are right.
   const active = useEditorState({
     editor,
@@ -140,6 +142,12 @@ export const EditorToolbar = ({ editor }: { editor: Editor }) => {
           })}
         </div>
       ))}
+      {extra ? (
+        <div className="flex items-center gap-0.5">
+          <span aria-hidden="true" className="mx-1 h-5 w-px bg-border" />
+          {extra}
+        </div>
+      ) : null}
     </div>
   );
 };

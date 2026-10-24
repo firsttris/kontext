@@ -20,6 +20,8 @@ export const mailSearchSchema = z.object({
   /** The search text on `/mail/all/search` (src/lib/mail-search.ts). */
   q: z.string().optional(),
   unread: z.boolean().optional(),
+  /** The Sent folder: only the mails still waiting to go out ("Später senden"). */
+  scheduled: z.boolean().optional(),
   /** Phone only: the folder list as its own screen. */
   folders: z.boolean().optional(),
 });

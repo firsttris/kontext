@@ -24,6 +24,7 @@ import { MailBody } from "./mail-body";
 import { MessageDetails, SenderWarnings } from "./message-details";
 import { Toolbar } from "./message-toolbar";
 import { useEmail, useMailAccounts } from "./queries";
+import { ScheduledNotice } from "./scheduled-notice";
 import { SenderPanel } from "./sender-panel";
 
 type Props = { accountId: string; mailbox: Mailbox; emailId: string | undefined };
@@ -135,6 +136,7 @@ export const MessageView = ({ accountId, mailbox, emailId }: Props) => {
                 </span>
               </div>
             </header>
+            <ScheduledNotice accountId={accountId} emailId={email.id} />
             <SenderWarnings email={email} />
             {showDetails ? <MessageDetails email={email} attachments={attachments} /> : null}
             <MailBody accountId={accountId} email={email} />

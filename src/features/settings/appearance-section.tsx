@@ -4,12 +4,16 @@
  * reference.
  */
 import { Monitor, Moon, Sun } from "lucide-react";
+import { useId } from "react";
 import { ShortcutList } from "@/components/shortcuts-dialog";
 import { setThemeChoice, useTheme } from "@/components/theme/use-theme";
+import { Select } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/cn";
+import { UNDO_CHOICES, type UndoSeconds } from "@/lib/schedule";
 import type { ThemeChoice } from "@/lib/theme";
 import { m } from "@/paraglide/messages";
+import { setUndoSeconds, useUndoSeconds } from "../mail/send-settings";
 import { setThreadView, useThreadView } from "../mail/thread-view";
 import { DeviceSwitch } from "../notifications/device-switch";
 import { AppSection } from "./app-section";
@@ -24,6 +28,8 @@ const CHOICES: [ThemeChoice, () => string, typeof Sun][] = [
 export const AppearanceSection = () => {
   const { choice } = useTheme();
   const threads = useThreadView();
+  const undo = useUndoSeconds();
+  const undoId = useId();
   return (
     <>
       <SettingsCard title={m.settings_theme()} description={m.settings_theme_hint()}>
@@ -59,6 +65,22 @@ export const AppearanceSection = () => {
           </Switch>
           <p className="m-0 text-[12px] text-muted">{m.settings_threads_hint()}</p>
         </div>
+        <div className="mt-3 flex items-center justify-between gap-3 text-[14px]">
+          <label htmlFor={undoId}>{m.settings_undo()}</label>
+          <Select
+            id={undoId}
+            value={String(undo)}
+            onChange={(event) => setUndoSeconds(Number(event.target.value) as UndoSeconds)}
+            className="w-auto"
+          >
+            {UNDO_CHOICES.map((seconds) => (
+              <option key={seconds} value={seconds}>
+                {seconds ? m.settings_undo_seconds({ seconds }) : m.settings_undo_off()}
+              </option>
+            ))}
+          </Select>
+        </div>
+        <p className="m-0 mt-1 text-[12px] text-muted">{m.settings_undo_hint()}</p>
       </SettingsCard>
       <SettingsCard title={m.notifications_title()}>
         <DeviceSwitch />

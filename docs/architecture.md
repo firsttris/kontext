@@ -495,6 +495,31 @@ eines Kontos – auch die Antworten im Gesendet-Ordner.
   und der Zahl der Mails; Archivieren, Löschen, Verschieben und Spam gelten dann für alle Mails der
   Unterhaltung im Ordner, Markieren für die eine. Die Suche zeigt weiter einzelne Mails.
 
+## Senden rückgängig und später senden
+
+Beides macht Stalwart selbst: Es hält eine Mail in seiner Warteschlange (FUTURERELEASE, RFC 4865 –
+`HOLDFOR` in Sekunden, `HOLDUNTIL` mit Zeitpunkt, bis 7 Tage im Voraus) und gibt sie frei, solange sie
+dort liegt (`undoStatus: "canceled"`, RFC 8621 §7). Die Empfänger nimmt es dann aus den Kopfzeilen
+(`src/jmap/mail.ts` `sendEmail`, `src/jmap/submissions.ts`).
+
+- **Rückgängig:** Jede Mail wartet nach „Senden“ ein paar Sekunden (Einstellungen → Darstellung,
+  je Gerät: aus, 5, 10, 20 oder 30 Sekunden; vorgegeben 10). So lange steht „Rückgängig“ an der
+  Meldung; danach ist sie unterwegs („Zu spät – die Mail ist schon unterwegs“).
+- **Später senden:** der Pfeil neben „Senden“ – heute 13 oder 17 Uhr (solange das noch kommt),
+  morgen 8 Uhr, Montag 8 Uhr, oder ein Zeitpunkt nach Wahl. Die Mail liegt bis dahin im
+  Gesendet-Ordner unter „Geplant“, mit Zeitpunkt in der Liste und „Nicht senden“ in der Mail.
+- **Zurückholen:** erst wird der Versand gestoppt, dann kommt die Mail zurück zu den Entwürfen und
+  öffnet sich zum Ändern – nie liegt eine Mail bei den Entwürfen, die doch hinausging.
+
+## Textbausteine
+
+Standardantworten liegen in Kontexts SQLite (`snippets`, `server/snippets/`), je Konto: die
+eigenen nur für einen selbst, die eines gemeinsamen Postfachs für alle, die darin arbeiten –
+anlegen und ändern darf, wer das Postfach nicht nur lesen darf. Verwaltet werden sie unter
+Einstellungen → Textbausteine; im Schreibfenster bietet „Textbaustein einfügen“ (am Ende der
+Formatierungsleiste) die eigenen und die des Absender-Postfachs an. Der Text kommt an die
+Cursorstelle, `{Vorname}` und `{Name}` werden durch den Namen des ersten Empfängers ersetzt.
+
 ## Alle Posteingänge
 
 `/mail/all/inbox` zeigt die Posteingänge des eigenen Kontos und der gemeinsamen Postfächer in

@@ -32,6 +32,8 @@ export type Row = {
   account?: { id: string; label: string; title?: string };
   folder?: string;
   highlight?: string[];
+  /** Still held by the server, to go out then (ISO). */
+  sendAt?: string;
 };
 
 type Props = {
@@ -58,6 +60,30 @@ type Props = {
   folderId?: string;
   inJunk?: boolean;
 };
+
+/** "Alle / Ungelesen" and the like: each chip sets part of the search. */
+export const FilterChips = ({
+  options,
+}: {
+  options: { label: string; on: boolean; set: Partial<MailSearch> }[];
+}) => (
+  <nav aria-label="Filter" className="flex gap-1 self-start rounded-[9px] bg-subtle p-[3px]">
+    {options.map((option) => (
+      <Link
+        key={option.label}
+        to="."
+        search={(prev) => ({ ...prev, ...option.set })}
+        aria-pressed={option.on}
+        className={cn(
+          "flex h-7 items-center rounded-[7px] px-3 text-[13px] no-underline",
+          option.on ? "bg-bg text-fg shadow-sm" : "text-muted",
+        )}
+      >
+        {option.label}
+      </Link>
+    ))}
+  </nav>
+);
 
 export const ListFrame = ({
   title,
@@ -216,28 +242,12 @@ export const ListFrame = ({
         )}
         <SearchBox ref={searchRef} key={search.q ?? ""} initial={search.q} />
         {filters ?? (
-          <nav
-            aria-label="Filter"
-            className="flex gap-1 self-start rounded-[9px] bg-subtle p-[3px]"
-          >
-            {[
-              { label: m.mail_filter_all(), on: !search.unread, value: undefined },
-              { label: m.mail_filter_unread(), on: Boolean(search.unread), value: true },
-            ].map((option) => (
-              <Link
-                key={option.label}
-                to="."
-                search={(prev) => ({ ...prev, unread: option.value })}
-                aria-pressed={option.on}
-                className={cn(
-                  "flex h-7 items-center rounded-[7px] px-3 text-[13px] no-underline",
-                  option.on ? "bg-bg text-fg shadow-sm" : "text-muted",
-                )}
-              >
-                {option.label}
-              </Link>
-            ))}
-          </nav>
+          <FilterChips
+            options={[
+              { label: m.mail_filter_all(), on: !search.unread, set: { unread: undefined } },
+              { label: m.mail_filter_unread(), on: Boolean(search.unread), set: { unread: true } },
+            ]}
+          />
         )}
       </header>
 

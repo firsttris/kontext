@@ -210,7 +210,7 @@ test.describe("Firmenverwaltung", () => {
     await max.getByRole("combobox", { name: "An" }).fill(address(local));
     await max.keyboard.press("Enter");
     await max.getByLabel("Betreff").fill(subject);
-    await max.getByRole("button", { name: "Senden" }).click();
+    await max.getByRole("button", { name: "Senden", exact: true }).click();
     await expect
       .poll(async () => (await inboxMails("anna")).some((mail) => mail.subject === subject), {
         timeout: 30_000,

@@ -18,11 +18,15 @@ import { groupSuggestions } from "@/lib/groups";
 import { htmlToText, sanitizeMailHtml, textToHtml } from "@/lib/html";
 import { contactAddresses } from "@/lib/jscontact";
 import { findRole } from "@/lib/mailboxes";
+import { holdUntil, sendTimeLabel } from "@/lib/schedule";
 import { m } from "@/paraglide/messages";
 import { useContacts } from "../contacts/queries";
+import { SnippetMenu } from "../snippets/snippet-menu";
 import { AttachmentList, ComposerActions, ComposerFields } from "./composer-fields";
 import { EditorToolbar } from "./editor-toolbar";
 import { useEmail } from "./queries";
+import { useUndoSeconds } from "./send-settings";
+import { useTakeBack } from "./take-back";
 import { useSendAccount } from "./use-send-account";
 
 /** What a new mail starts with from outside: a contact, a mailto: link, a share. */
@@ -70,6 +74,8 @@ export const Composer = ({ accountId, mode, sourceEmailId, prefill }: Props) => 
   const [attachments, setAttachments] = useState<OutgoingAttachment[]>([]);
   const [uploading, setUploading] = useState(0);
   const [sending, setSending] = useState(false);
+  const undoSeconds = useUndoSeconds();
+  const takeBack = useTakeBack();
   // A ref, not state: a send that waited for a running autosave must replace the draft that
   // save just wrote, not the one from before it.
   const draftId = useRef<string | null>(mode === "draft" ? (sourceEmailId ?? null) : null);
@@ -271,7 +277,8 @@ export const Composer = ({ accountId, mode, sourceEmailId, prefill }: Props) => 
     await leave();
   };
 
-  const send = async () => {
+  /** Now (held for the seconds of "Rückgängig"), or `later` at that time. */
+  const send = async (later?: Date) => {
     if (to.length + cc.length + bcc.length === 0) {
       toast.show(m.mail_recipients_missing(), "error");
       return;
@@ -280,7 +287,17 @@ export const Composer = ({ accountId, mode, sourceEmailId, prefill }: Props) => 
     setSending(true);
     try {
       if (saving.current) await saving.current;
-      await sendEmail(client, outgoing(), { draftsId: drafts.id, sentId: sent.id });
+      const hold = later
+        ? { until: holdUntil(later) }
+        : undoSeconds > 0
+          ? { seconds: undoSeconds }
+          : undefined;
+      const held = await sendEmail(
+        client,
+        outgoing(),
+        { draftsId: drafts.id, sentId: sent.id },
+        hold,
+      );
       if ((mode === "reply" || mode === "replyAll") && sourceEmailId) {
         // RFC 8621: mark the original as answered.
         // Mailboxes shared only for reading may not allow it; the mail is sent anyway.
@@ -292,7 +309,22 @@ export const Composer = ({ accountId, mode, sourceEmailId, prefill }: Props) => 
           .catch(() => undefined);
       }
       lastSaved.current = changeKey;
-      toast.show(m.mail_sent_toast());
+      const back = {
+        label: later ? m.mail_unsend() : m.mail_undo(),
+        run: () => takeBack(sendAccountId, held, drafts.id),
+      };
+      if (later) {
+        toast.show(m.mail_scheduled_toast({ when: sendTimeLabel(later) }), "info", {
+          action: back,
+          duration: 8000,
+        });
+      } else {
+        toast.show(
+          m.mail_sent_toast(),
+          "info",
+          hold ? { action: back, duration: undoSeconds * 1000 } : undefined,
+        );
+      }
       void queryClient.invalidateQueries({ queryKey: [accountId] });
       if (sendAccountId !== accountId)
         void queryClient.invalidateQueries({ queryKey: [sendAccountId] });
@@ -398,7 +430,12 @@ export const Composer = ({ accountId, mode, sourceEmailId, prefill }: Props) => 
           suggestions={suggestions}
           autoFocusTo={mode === "new" || mode === "forward"}
         />
-        {editor ? <EditorToolbar editor={editor} /> : null}
+        {editor ? (
+          <EditorToolbar
+            editor={editor}
+            extra={<SnippetMenu editor={editor} accountId={sendAccountId} recipient={to[0]} />}
+          />
+        ) : null}
         <EditorContent
           editor={editor}
           className="editor-content min-h-[160px] flex-1 overflow-y-auto"
@@ -412,6 +449,7 @@ export const Composer = ({ accountId, mode, sourceEmailId, prefill }: Props) => 
 
       <ComposerActions
         sending={sending}
+        onSendLater={(at) => void send(at)}
         canSend={uploading === 0 && Boolean(identity && drafts && sent)}
         savedAt={savedAt}
         onAttach={(files) => void upload(files)}

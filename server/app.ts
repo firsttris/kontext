@@ -39,6 +39,8 @@ import { createPusher } from "./push/pusher";
 import { createPushRoutes } from "./push/routes";
 import { createPushStore, loadVapidKeys } from "./push/store";
 import { createSessionInfo } from "./session-info";
+import { createSnippetRoutes } from "./snippets/routes";
+import { createSnippetStore } from "./snippets/store";
 import { createTaskRoutes } from "./tasks/routes";
 import { createTaskStore } from "./tasks/store";
 
@@ -227,6 +229,7 @@ export const createApp = async (env: Env) => {
         ),
     }),
   );
+  app.route("/api/snippets", createSnippetRoutes({ store: createSnippetStore(db), accountsOf }));
   app.route(
     "/api/categories",
     createCategoryRoutes({

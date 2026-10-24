@@ -10,10 +10,7 @@ ein Plan, kein Versprechen; Wünsche und Hinweise gern als
 | --- | --- |
 | **Aufgaben überall im Kontext** | Offene Aufgaben am Kontakt, Fälliges im Kalender, Heute-Fälliges und neu Zugewiesenes in der Glocke, Erinnerungen als Benachrichtigung, „Aufgaben erstellen“ für mehrere Mails. |
 | **Team-Chat: mehr** | Antworten im Faden, Reaktionen, „Besprechung starten“ (Jitsi-Link), Aufbewahrungsfrist, die der Chef einstellt. |
-| **Senden rückgängig** | Nach „Senden“ ein paar Sekunden, um es zurückzunehmen (Tippfehler, falscher Empfänger). |
-| **Später senden** | Eine Mail zu einem Zeitpunkt verschicken lassen, etwa morgen um 8 Uhr. |
 | **Wiedervorlage** | Eine Mail ausblenden, bis sie zu einem Zeitpunkt wieder oben im Posteingang auftaucht – zusammen mit den Kategorien eine einfache Aufgabenliste. |
-| **Textbausteine** | Vorlagen für Standardantworten (Angebotsanfrage, Terminbestätigung, Rechnungsnachfrage), auch pro gemeinsamem Postfach für das ganze Team. |
 
 ## Danach
 
@@ -61,6 +58,7 @@ Kleinere Dinge, die beim Bauen aufgefallen sind und noch erledigt werden.
 
 ## Zuletzt fertig geworden
 
+Senden rückgängig und später senden, Textbausteine.
 Unterhaltungen beim Lesen (frühere Mails, Antworten seitdem, Zitate eingeklappt, „wer hat
 geantwortet“ in gemeinsamen Postfächern), auf Wunsch gruppiert.
 Benachrichtigungen bei geschlossener App (Web Push, Ende-zu-Ende verschlüsselt) für neue Mails,
