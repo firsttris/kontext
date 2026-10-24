@@ -3,7 +3,7 @@
  * (.eml), contact (.vcf) and appointment (.ics), in a directory per Outlook folder.
  */
 import { readdir } from "node:fs/promises";
-import { join, relative, sep } from "node:path";
+import { dirname, join, relative, sep } from "node:path";
 
 export type PstItem = { kind: "mail" | "contact" | "event"; folder: string[]; file: string };
 
@@ -20,16 +20,26 @@ export const extractPst = async (pstFile: string, outDir: string): Promise<void>
   if (code !== 0) throw new Error(stderr.trim() || `readpst endete mit ${code}`);
 };
 
+/** Files below `dir`, walked by hand: `readdir`'s recursive mode differs between runtimes. */
+const filesBelow = async (dir: string): Promise<string[]> => {
+  const entries = await readdir(dir, { withFileTypes: true });
+  const nested = await Promise.all(
+    entries.map((entry) => {
+      const path = join(dir, entry.name);
+      if (entry.isDirectory()) return filesBelow(path);
+      return Promise.resolve(entry.isFile() ? [path] : []);
+    }),
+  );
+  return nested.flat();
+};
+
 /** All items below `outDir`, in a stable order (folder, then number). */
-export const listItems = async (outDir: string): Promise<PstItem[]> => {
-  const entries = await readdir(outDir, { recursive: true, withFileTypes: true });
-  return entries
-    .filter((entry) => entry.isFile())
-    .flatMap((entry): PstItem[] => {
-      const kind = KINDS[entry.name.split(".").pop()?.toLowerCase() ?? ""];
+export const listItems = async (outDir: string): Promise<PstItem[]> =>
+  (await filesBelow(outDir))
+    .flatMap((file): PstItem[] => {
+      const kind = KINDS[file.split(".").pop()?.toLowerCase() ?? ""];
       if (!kind) return [];
-      const file = join(entry.parentPath, entry.name);
-      const folder = relative(outDir, entry.parentPath).split(sep).filter(Boolean);
+      const folder = relative(outDir, dirname(file)).split(sep).filter(Boolean);
       return [{ kind, folder, file }];
     })
     .sort(
@@ -37,4 +47,3 @@ export const listItems = async (outDir: string): Promise<PstItem[]> => {
         a.folder.join("/").localeCompare(b.folder.join("/")) ||
         a.file.localeCompare(b.file, undefined, { numeric: true }),
     );
-};

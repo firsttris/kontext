@@ -1,6 +1,7 @@
 /** The moves and their progress in Sekretär's SQLite, so they survive a restart. */
 import { desc, eq } from "drizzle-orm";
-import { type Db, schema } from "../db";
+import type { Db } from "../db";
+import * as schema from "../db/schema";
 
 export type Count = { total: number; imported: number; skipped: number; failed: number };
 export type Progress = { mails: Count; contacts: Count; events: Count };

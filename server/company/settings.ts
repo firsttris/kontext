@@ -1,6 +1,7 @@
 /** The Firmenverwaltung's own settings in Sekretär's SQLite (Stalwart has no place for them). */
 import { eq } from "drizzle-orm";
-import { type Db, schema } from "../db";
+import type { Db } from "../db";
+import * as schema from "../db/schema";
 import type { SignatureTemplate } from "./signature";
 
 export type CompanySettings = {
