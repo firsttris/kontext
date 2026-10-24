@@ -2,8 +2,9 @@
  * The out-of-office form and RFC 8621's VacationResponse, in both directions, and the sentence
  * that names a deputy. Used for the own reply and by the Firmenverwaltung for a colleague.
  */
-import type { Vacation } from "@/jmap/settings";
+
 import { m } from "@/paraglide/messages";
+import type { Vacation } from "../../server/rules/filters";
 import { htmlToText, textToHtml } from "./html";
 import { addDays, dateKey, fromLocal } from "./jscalendar";
 

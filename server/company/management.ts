@@ -72,6 +72,21 @@ export const createUpload = (stalwartUrl: string, key: string) => {
 
 export type StalwartUpload = ReturnType<typeof createUpload>;
 
+/** Downloads a blob of an account as text (RFC 8620 §6.2), e.g. a Sieve script. */
+export const createDownload = (stalwartUrl: string, key: string) => {
+  const authorization = authorizationFor(key);
+  return async (accountId: string, blobId: string): Promise<string> => {
+    const response = await fetch(
+      `${stalwartUrl}/jmap/download/${encodeURIComponent(accountId)}/${encodeURIComponent(blobId)}/blob`,
+      { headers: { authorization } },
+    );
+    if (!response.ok) throw new Error(`Stalwart-Download: ${response.status}`);
+    return response.text();
+  };
+};
+
+export type StalwartDownload = ReturnType<typeof createDownload>;
+
 export const createManagement = (request: StalwartRequest) => {
   const call = async <T>(method: string, args: Record<string, unknown>): Promise<T> =>
     (await request([[method, args, "0"]]))[0]![1] as T;

@@ -74,6 +74,7 @@ und unter `https://<Ihre Domain>` anmelden. DNS-Einträge, Backups und Updates s
 
 - **Signatur pro Absender**: eigene Adresse und gemeinsame Postfächer, mit Formatierung.
 - **Abwesenheitsnotiz**: mit Zeitraum, antwortet automatisch.
+- **Regeln**: „Wenn Absender/Empfänger/Betreff/Text … dann in Ordner verschieben, als gelesen markieren, markieren, weiterleiten“ – laufen auf dem Server beim Eingang, auch wenn Sekretär geschlossen ist; direkt aus einer Mail anlegbar („Regel erstellen …“).
 - **Passwort und Anmeldung mit Code** (Authenticator-App); man bleibt auf dem Gerät angemeldet.
 - **Hell oder dunkel**: wie das Gerät, oder fest eingestellt.
 - **Tastaturkürzel** wie in Gmail: `j`/`k` durch die Mails, `r` antworten, `e` archivieren, `c` neu, `?` oder das Tastatur-Symbol links zeigt alle.

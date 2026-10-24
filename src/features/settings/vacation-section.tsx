@@ -1,10 +1,10 @@
 /** The automatic out-of-office reply (RFC 8621 VacationResponse), optionally limited to dates. */
 import { useClient } from "@/auth/auth";
 import { useToast } from "@/components/ui/toast";
-import { setVacation } from "@/jmap/settings";
+import { setFilters } from "@/jmap/rules";
 import { type VacationForm as Form, toVacation, toVacationForm } from "@/lib/vacation";
 import { m } from "@/paraglide/messages";
-import { usePersonalAccountId, useSave, useVacation } from "./queries";
+import { useFilters, usePersonalAccountId, useSave } from "./queries";
 import { SettingsCard } from "./settings-page";
 import { VacationForm } from "./vacation-form";
 
@@ -12,10 +12,13 @@ export const VacationSection = () => {
   const client = useClient();
   const toast = useToast();
   const accountId = usePersonalAccountId();
-  const { data: vacation } = useVacation();
+  const { data: filters } = useFilters();
+  const vacation = filters?.vacation;
+  // The rules go along unchanged: with rules, the reply runs inside their script.
   const save = useSave(
-    (value: Form) => setVacation(client, accountId!, toVacation(value)),
-    [[accountId, "vacation"]],
+    (value: Form) =>
+      setFilters(client, accountId!, { rules: filters!.rules, vacation: toVacation(value) }),
+    [[accountId, "filters"]],
   );
 
   const onSave = async (form: Form) => {

@@ -3,7 +3,8 @@ import { useClient } from "@/auth/auth";
 import { useSession } from "@/components/shell/app-shell";
 import { CAPABILITIES } from "@/jmap/client";
 import { listIdentities } from "@/jmap/mail";
-import { getAccountSettings, getVacation, hasTwoFactor } from "@/jmap/settings";
+import { getFilters } from "@/jmap/rules";
+import { getAccountSettings, hasTwoFactor } from "@/jmap/settings";
 
 export const usePersonalAccountId = (): string | undefined => {
   const { data: session } = useSession();
@@ -20,12 +21,13 @@ export const useTwoFactor = () => {
   return useQuery({ queryKey: ["settings", "twoFactor"], queryFn: () => hasTwoFactor(client) });
 };
 
-export const useVacation = () => {
+/** The mail rules and the out-of-office reply, which are stored together. */
+export const useFilters = () => {
   const client = useClient();
   const accountId = usePersonalAccountId();
   return useQuery({
-    queryKey: [accountId, "vacation"],
-    queryFn: () => getVacation(client, accountId!),
+    queryKey: [accountId, "filters"],
+    queryFn: () => getFilters(client, accountId!),
     enabled: Boolean(accountId),
   });
 };

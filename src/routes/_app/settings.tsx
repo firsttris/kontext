@@ -6,6 +6,7 @@ export const settingsSections = [
   "profile",
   "signature",
   "vacation",
+  "rules",
   "security",
   "appearance",
   "employees",

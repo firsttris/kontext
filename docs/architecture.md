@@ -121,7 +121,8 @@ mit einem eigenen API-Schlüssel an und erlaubt nur, was die Firmenverwaltung br
   „Nur lesen“ bekommt, wem alle Ordner des Postfachs per `shareWith` geteilt sind
   (`mayReadItems`, `maySetSeen`); die App liest das am Posteingang ab.
 - **Abwesenheit** eines Mitarbeiters (etwa bei Krankheit) ist dessen `VacationResponse`; die
-  Vertretung steht als eigene Zeile in der Nachricht.
+  Vertretung steht als eigene Zeile in der Nachricht. Hat er Regeln, läuft sie in deren Skript
+  (siehe [Regeln](#regeln)); der Server nimmt dafür denselben Code wie die App.
 
 - **Firmen-Signatur:** eine Vorlage mit `[Name]` und `[E-Mail]`, gespeichert in Sekretärs
   SQLite (`company_setting`). „Für alle übernehmen“ schreibt sie in jede Absenderadresse
@@ -223,6 +224,37 @@ nacheinander ab (`server/migration/runner.ts`), auch nach einem Neustart:
 
 Der Fortschritt steht in SQLite (`migration_job`); die Datei liegt bis zum Ende neben der
 Datenbank unter `migrations/` und wird nach einem erfolgreichen Umzug gelöscht.
+
+## Regeln
+
+Regeln sortieren neue Mails beim Eingang, auf dem Server: Sekretär schreibt sie als **ein
+Sieve-Skript** (`sekretaer-regeln`, RFC 5228) und lädt es per JMAP (`SieveScript/set`, RFC 9661)
+ins eigene Konto. So wirken sie auch, wenn niemand angemeldet ist, und gleich auf jedem Gerät.
+
+- **Bedingungen:** Absender (`address "from"`), Empfänger (`address ["to", "cc"]`), Betreff
+  (`header`), Text (`body :text`), je mit „enthält“, „enthält nicht“ oder „ist genau“; alle oder
+  eine davon.
+- **Aktionen:** in einen Ordner (`fileinto :mailboxid`, mit dem Pfad als Ersatz, falls die Id
+  fehlt), als gelesen markieren oder markieren (`addflag`), weiterleiten mit Kopie
+  (`redirect :copy`; Stalwart leitet eine Mail höchstens einmal weiter), keine weiteren Regeln.
+- **Reihenfolge:** Alle passenden Regeln wirken von oben nach unten; der **erste Ordner
+  gewinnt**, damit eine Mail nicht als Kopie in mehreren Ordnern landet. Das Skript merkt sich
+  Ordner und „fertig“ in Variablen (RFC 5229) und legt am Ende einmal ab.
+- **Spam** verlässt das Skript vorher (`spamtest :percent` ≥ 50, wie Stalwarts Grenze): Stalwart
+  legt eine Mail nur in „Junk“, wenn das Skript sie nirgends abgelegt hat (`is_spam &&
+  !did_file_into`, `crates/email/src/sieve/ingest.rs`).
+- **Abwesenheit:** Stalwart führt nur ein aktives Skript pro Konto aus, und `VacationResponse`
+  ist selbst eines (`vacation`, `crates/jmap/src/vacation/set.rs`), das beim Einschalten alle
+  anderen abschaltet. Darum gilt (`server/rules/filters.ts`, von App und Server genutzt):
+  ohne Regeln bleibt alles bei `VacationResponse`; mit Regeln bleibt `VacationResponse` „aus“,
+  behält Text und Zeitraum, und das Regel-Skript bindet es mit
+  `include :personal :optional "vacation"` ein. Ob die Abwesenheit an ist, steht dann im
+  Regel-Skript.
+- **Gespeichert** werden die Regeln als JSON in einer Kommentarzeile des Skripts
+  (`# sekretaer:{…}`); die App liest nur diese Zeile, nie Sieve. Nutzertexte werden für Sieve
+  maskiert, auch `${`, das sonst als Variable gelesen würde.
+- Regeln gelten für das **eigene Postfach**; „Regel erstellen …“ gibt es darum nur an Mails
+  dort. Ein Austritt ersetzt das Skript durch `sekretaer-austritt`.
 
 ## Suche
 

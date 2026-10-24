@@ -3,10 +3,12 @@
  * the server's key. Needs the `impersonate` permission: with it Stalwart treats the key as member
  * of every account (`AccessToken::is_member`, crates/common/src/auth/access_token.rs).
  */
+import { type FilterAccess, loadFilters, saveFilters, type Vacation } from "../rules/filters";
 import type { Result } from "./accounts";
 import {
   firstError,
   type SetResult,
+  type StalwartDownload,
   type StalwartRequest,
   type StalwartUpload,
 } from "./management";
@@ -14,18 +16,10 @@ import type { Folder } from "./sharing";
 
 const CORE = "urn:ietf:params:jmap:core";
 const MAIL = [CORE, "urn:ietf:params:jmap:mail"];
-const VACATION = [CORE, "urn:ietf:params:jmap:vacationresponse"];
 const SUBMISSION = [...MAIL, "urn:ietf:params:jmap:submission"];
 const SIEVE = [CORE, "urn:ietf:params:jmap:sieve"];
 
-export type Vacation = {
-  isEnabled: boolean;
-  fromDate: string | null;
-  toDate: string | null;
-  subject: string | null;
-  textBody: string | null;
-  htmlBody: string | null;
-};
+export type { Vacation };
 
 export type Identity = {
   id: string;
@@ -40,7 +34,11 @@ const setOk = (result: SetResult): Result<null> => {
   return error ? { ok: false, error } : { ok: true, value: null };
 };
 
-export const createMailstore = (request: StalwartRequest, upload: StalwartUpload) => {
+export const createMailstore = (
+  request: StalwartRequest,
+  upload: StalwartUpload,
+  download: StalwartDownload,
+) => {
   const call = async <T>(method: string, args: Record<string, unknown>, using: string[]) =>
     (await request([[method, args, "0"]], using))[0]![1] as T;
 
@@ -68,17 +66,21 @@ export const createMailstore = (request: StalwartRequest, upload: StalwartUpload
       ? setOk(await call<SetResult>("Mailbox/set", { accountId, update }, MAIL))
       : { ok: true, value: null };
 
-  const getVacation = async (accountId: string): Promise<Vacation> =>
-    (await call<{ list: Vacation[] }>("VacationResponse/get", { accountId }, VACATION)).list[0]!;
+  /** The reply together with the person's mail rules, which it must not switch off. */
+  const filters: FilterAccess = {
+    request,
+    upload: (accountId, script) => upload(accountId, script, "application/sieve"),
+    download,
+  };
 
-  const setVacation = async (accountId: string, vacation: Vacation): Promise<Result<null>> =>
-    setOk(
-      await call<SetResult>(
-        "VacationResponse/set",
-        { accountId, update: { singleton: vacation } },
-        VACATION,
-      ),
-    );
+  const getVacation = async (accountId: string): Promise<Vacation> =>
+    (await loadFilters(filters, accountId)).vacation;
+
+  const setVacation = async (accountId: string, vacation: Vacation): Promise<Result<null>> => {
+    const { rules } = await loadFilters(filters, accountId);
+    const error = await saveFilters(filters, accountId, { rules, vacation });
+    return error ? { ok: false, error } : { ok: true, value: null };
+  };
 
   const listIdentities = async (accountId: string): Promise<Identity[]> =>
     (await call<{ list: Identity[] }>("Identity/get", { accountId }, SUBMISSION)).list;

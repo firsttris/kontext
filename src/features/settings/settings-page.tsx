@@ -1,10 +1,14 @@
-/** Settings of the own account: name, signatures, out-of-office reply, password and 2FA, look. */
+/**
+ * Settings of the own account: name, signatures, out-of-office reply, mail rules, password and
+ * 2FA, look.
+ */
 import { Link } from "@tanstack/react-router";
 import {
   ChevronLeft,
   ChevronRight,
   Inbox,
   KeyRound,
+  ListFilter,
   type LucideIcon,
   Palette,
   Palmtree,
@@ -21,6 +25,7 @@ import { MailboxesSection } from "@/features/company/mailboxes-section";
 import { MigrationSection } from "@/features/company/migration-section";
 import { useIsCompanyAdmin } from "@/features/company/queries";
 import { CompanySignatureSection } from "@/features/company/signature-section";
+import { RulesSection } from "@/features/rules/rules-section";
 import { cn } from "@/lib/cn";
 import { m } from "@/paraglide/messages";
 import type { settingsSections } from "@/routes/_app/settings";
@@ -38,6 +43,7 @@ const OWN: Entry[] = [
   { id: "profile", label: m.settings_profile, icon: User },
   { id: "signature", label: m.settings_signature, icon: PenLine },
   { id: "vacation", label: m.settings_vacation, icon: Palmtree },
+  { id: "rules", label: m.settings_rules, icon: ListFilter },
   { id: "security", label: m.settings_security, icon: KeyRound },
   { id: "appearance", label: m.settings_appearance, icon: Palette },
 ];
@@ -54,6 +60,7 @@ const CONTENT: Record<Section, () => ReactNode> = {
   profile: () => <ProfileSection />,
   signature: () => <SignatureSection />,
   vacation: () => <VacationSection />,
+  rules: () => <RulesSection />,
   security: () => <SecuritySection />,
   appearance: () => <AppearanceSection />,
   employees: () => <EmployeesSection />,

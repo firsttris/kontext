@@ -5,6 +5,7 @@ import {
   ChevronLeft,
   FolderInput,
   Forward,
+  ListFilter,
   MailOpen,
   MoreHorizontal,
   Reply,
@@ -14,7 +15,7 @@ import {
   Star,
   Trash2,
 } from "lucide-react";
-import { Fragment } from "react";
+import { Fragment, useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
   MenuContent,
@@ -30,7 +31,10 @@ import { isFlagged } from "@/jmap/mail";
 import type { EmailDetail, Mailbox } from "@/jmap/types";
 import { mailboxRights } from "@/lib/mailboxes";
 import { moveTargets } from "@/lib/move-targets";
+import { type Rule, ruleFromSender } from "@/lib/rules";
 import { m } from "@/paraglide/messages";
+import { RuleDialog } from "../rules/rule-dialog";
+import { usePersonalAccountId } from "../settings/queries";
 import { useAllMailboxes, useEmailActions, useMailAccounts } from "./queries";
 
 export const Toolbar = ({
@@ -47,6 +51,10 @@ export const Toolbar = ({
   const toast = useToast();
   const accounts = useMailAccounts();
   const mailboxes = useAllMailboxes();
+  // Rules run on the own mailbox only, so they are offered for its mails.
+  const ownMailbox = usePersonalAccountId() === accountId;
+  const sender = email.from?.[0]?.email;
+  const [rule, setRule] = useState<Rule | null>(null);
   const close = () =>
     navigate({ to: ".", search: (prev) => ({ ...prev, email: undefined, compose: undefined }) });
 
@@ -247,8 +255,17 @@ export const Toolbar = ({
               </MenuItem>
             </>
           ) : null}
+          {ownMailbox && sender ? (
+            <>
+              <MenuSeparator />
+              <MenuItem onSelect={() => setRule(ruleFromSender(crypto.randomUUID(), sender))}>
+                <ListFilter size={15} /> {m.rules_from_mail()}
+              </MenuItem>
+            </>
+          ) : null}
         </MenuContent>
       </MenuRoot>
+      {rule ? <RuleDialog initial={rule} onClose={() => setRule(null)} /> : null}
     </div>
   );
 };

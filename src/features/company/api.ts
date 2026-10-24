@@ -3,16 +3,15 @@
  * Unlike mail, contacts and calendar this is not JMAP: the server works with its own Stalwart key.
  */
 
-import type { Vacation } from "@/jmap/settings";
 import type {
   Company as CompanyData,
   Employee,
   SharedMailbox,
 } from "../../../server/company/accounts";
-
 import type { Job } from "../../../server/migration/jobs";
 import type { ProviderId } from "../../../server/migration/providers";
 import type { Sync } from "../../../server/migration/syncs";
+import type { Vacation } from "../../../server/rules/filters";
 
 export type { Employee, SharedMailbox };
 /** A move as the server sends it (dates as text). */

@@ -1,12 +1,11 @@
 /**
  * The user's own settings: name, password and two-factor sign-in (Stalwart's x:AccountSettings
- * and x:AccountPassword singletons, crates/jmap/src/registry/mapping/account.rs), the
- * out-of-office reply (RFC 8621 VacationResponse) and sender names and signatures (Identity).
+ * and x:AccountPassword singletons, crates/jmap/src/registry/mapping/account.rs) and sender
+ * names and signatures (Identity). The out-of-office reply is in rules.ts, with the mail rules.
  */
 import { assertSetOk, CAPABILITIES, type JmapClient } from "./client";
 
 const STALWART = [CAPABILITIES.core, CAPABILITIES.stalwart];
-const VACATION = [CAPABILITIES.core, "urn:ietf:params:jmap:vacationresponse"];
 const SUBMISSION = [CAPABILITIES.core, CAPABILITIES.mail, CAPABILITIES.submission];
 
 export type AccountSettings = {
@@ -76,34 +75,6 @@ export const enableTwoFactor = (
 /** Turning it off needs the password and a current code. */
 export const disableTwoFactor = (client: JmapClient, current: string, code: string) =>
   setPassword(client, { currentSecret: current, otpAuth: { otpCode: code, otpUrl: null } });
-
-export type Vacation = {
-  isEnabled: boolean;
-  fromDate: string | null;
-  toDate: string | null;
-  subject: string | null;
-  textBody: string | null;
-  htmlBody: string | null;
-};
-
-export const getVacation = async (client: JmapClient, accountId: string): Promise<Vacation> => {
-  const { list } = await client.call<{ list: Vacation[] }>(
-    "VacationResponse/get",
-    { accountId },
-    VACATION,
-  );
-  return list[0]!;
-};
-
-export const setVacation = async (client: JmapClient, accountId: string, vacation: Vacation) =>
-  assertSetOk(
-    await client.call(
-      "VacationResponse/set",
-      { accountId, update: { singleton: vacation } },
-      VACATION,
-    ),
-    "Abwesenheit",
-  );
 
 export const updateIdentity = async (
   client: JmapClient,
