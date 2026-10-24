@@ -110,6 +110,7 @@ fine on a VPS with 2 vCPUs and 4 GB RAM.
 - **Photos and files**: from the phone's camera, by drag and drop or paste; photos are made smaller before sending.
 - **Mails, tasks and contacts as cards**: "Discuss" on a mail (`b`) talks about it in a channel instead of forwarding it internally; the mail then shows where it was discussed. Only who may open the mailbox opens the card – nothing is copied.
 - **Task from a message**, linked both ways.
+- **Calls and video calls** right from a conversation: ring a colleague, or start a meeting in a channel that others join; mute, camera, share your screen, and the call stays open while you switch to mail. Runs on your own server ([LiveKit](https://github.com/livekit/livekit), optional).
 - **Search** across all your channels; edit or delete your own messages; mute, leave or delete channels.
 - **On the phone**: its own tab, conversations as bubbles.
 
@@ -130,7 +131,7 @@ fine on a VPS with 2 vCPUs and 4 GB RAM.
 - **Signature per sender address**, **out-of-office reply** with dates, **two-factor sign-in** (authenticator app).
 - **Light or dark**, **keyboard shortcuts** like Gmail (`?` shows all).
 - **An app on every device**: install Kontext from the browser (desktop, Android, iPhone) with its own window and icon, unread count on the icon, starts without network; share photos and files from other apps straight into a new mail; open `mailto:` links in Kontext. New versions arrive reliably and load when you click "Reload".
-- **Notifications**: a bell with invitations, today's appointments and new mail; on your devices also with Kontext closed (Web Push, end-to-end encrypted): new mail, direct messages and @mentions.
+- **Notifications**: a bell with invitations, today's appointments and new mail; on your devices also with Kontext closed (Web Push, end-to-end encrypted): new mail, direct messages, @mentions and incoming calls.
 - **Storage at a glance**: a thin ring around your avatar shows how full the mailbox is.
 
 ### 🏢 Company admin
@@ -151,6 +152,7 @@ business switches on when it needs them – whoever doesn't, never sees them.
 | Mail, calendar, contacts, company admin | ✅ available |
 | Tasks and Kanban board | ✅ available |
 | Team chat | ✅ available |
+| Calls and video meetings in the chat | ✅ available |
 | Work reports (e.g. for trades) | planned |
 
 What comes next is in the [roadmap](ROADMAP.md) (German).

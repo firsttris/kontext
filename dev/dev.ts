@@ -6,7 +6,8 @@
  *    on every start). Its own log goes to .dev/stalwart.log to keep the terminal readable. If a
  *    Stalwart already answers on 18080 (`bun run dev:stalwart` in another terminal), that one is
  *    used.
- * 2. Once Stalwart is ready: the Kontext server (18090, restarts on changes) and the app (Vite,
+ * 2. LiveKit for calls in the chat on 17880 (dev/livekit.ts), unless one already answers there.
+ * 3. Once Stalwart is ready: the Kontext server (18090, restarts on changes) and the app (Vite,
  *    5173).
  *
  * Ctrl+C reaches all of them. When one exits, the others are stopped too, so a crash does not
@@ -48,6 +49,16 @@ const stalwart = async (): Promise<Subprocess[]> => {
   return [child];
 };
 
+const livekitPort = 17880;
+
+/** LiveKit is optional: without it everything works except calls. */
+const livekit = async (): Promise<Subprocess[]> => {
+  if (await isListening(`http://127.0.0.1:${livekitPort}/`)) return [];
+  const child = Bun.spawn(["bun", "dev/livekit.ts"], { stdio: ["ignore", "inherit", "inherit"] });
+  return [child];
+};
+
+const optional = await livekit();
 const processes: Subprocess[] = [
   ...(await stalwart()),
   Bun.spawn(["bun", "--watch", "server/main.ts"], { stdio: ["ignore", "inherit", "inherit"] }),
@@ -55,6 +66,6 @@ const processes: Subprocess[] = [
 ];
 
 const exitCode = await Promise.race(processes.map((child) => child.exited));
-for (const child of processes) child.kill();
-await Promise.all(processes.map((child) => child.exited));
+for (const child of [...processes, ...optional]) child.kill();
+await Promise.all([...processes, ...optional].map((child) => child.exited));
 process.exit(exitCode);

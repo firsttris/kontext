@@ -6,6 +6,9 @@ flowchart LR
   Caddy -->|"App, /api, /jmap"| Server["Kontext-Server<br>(Bun, Hono, Better Auth)"]
   Server -->|"JMAP mit Token"| Stalwart
   Server --> SQLite[("Sitzungen, Aufgaben, Chat")]
+  Caddy -->|"/rtc"| LiveKit["LiveKit<br>(Anrufe)"]
+  Browser -.->|"Ton und Bild<br>UDP 7882, TCP 7881"| LiveKit
+  LiveKit -->|Webhooks| Server
   Caddy -->|"/dav, /.well-known"| Stalwart
   Clients["Mailprogramme, Handys"] -->|"IMAP, SMTP, CalDAV, CardDAV"| Stalwart
   Internet["andere Mailserver"] -->|SMTP 25| Stalwart
@@ -26,6 +29,8 @@ flowchart LR
   ein; der Browser kennt weder Passwort noch Token.
 - **Caddy** holt das Zertifikat und leitet alles an den Server weiter, CalDAV/CardDAV für
   Mailprogramme direkt an Stalwart.
+- **LiveKit** (Apache 2.0, optional) trägt die [Anrufe](#anrufe) im Chat: ein SFU, der Ton, Bild
+  und geteilte Bildschirme zwischen den Browsern verteilt.
 
 ## Gemeinsame Postfächer
 
@@ -419,12 +424,43 @@ Principal-ID), die Namen holt die App wie bei den Aufgaben über die Principals.
   verknüpft (`kind: "chat"`), die Nachricht zeigt die Aufgabe mit ihrem Stand, die Aufgabe führt
   zurück zur Nachricht. Aus dem Kanal eines gemeinsamen Postfachs landet sie auf dessen Board.
 
+## Anrufe
+
+Aus jeder Unterhaltung im Chat heraus: „Anrufen“ und „Videoanruf“ in Direktnachrichten,
+„Besprechung starten“ in Kanälen (`src/features/calls/`, Server `server/calls/`). Ton und Bild
+laufen über [LiveKit](https://github.com/livekit/livekit), das neben Stalwart auf demselben
+Server läuft; Kontext baut nur die Oberfläche und entscheidet, wer hinein darf.
+
+- **Ein Raum pro Kanal:** jede Unterhaltung hat ihren LiveKit-Raum (`kontext-<Kanal-ID>`). Wer
+  den Kanal sehen darf (`canSee`), bekommt vom Server eine Eintrittskarte
+  (`POST /api/calls/:kanal/join`): ein JWT, mit LiveKits API-Schlüssel signiert, zehn Minuten
+  gültig, mit der persönlichen Konto-ID als Identität. Ein eigenes Rechtesystem gibt es nicht.
+- **Was läuft, sagt LiveKit:** Der Server merkt sich die Gespräche nur im Speicher und erfährt
+  über LiveKits Webhooks (`/api/calls/webhook`, mit dem Schlüssel signiert und mit SHA-256 des
+  Inhalts), wer beitritt und geht. Daraus wird das Live-Ereignis `call` für alle, die den Kanal
+  sehen; nach einem Neustart fragt der Server LiveKit, wer gerade in welchem Raum ist.
+- **Klingeln:** Ein neues Gespräch in einer Direktnachricht klingelt bei den anderen – in der
+  offenen App als Karte oben rechts (mit Ton), sonst als Benachrichtigung (Web Push, wie bei
+  Nachrichten). „Ablehnen“ meldet der Server dem Anrufer (`call-declined`); haben alle
+  abgelehnt oder geht nach 45 Sekunden niemand ran, legt die App des Anrufers auf. In Kanälen
+  klingelt nichts: dort zeigt die Kopfzeile „Beitreten“, solange jemand im Gespräch ist.
+- **Das Gespräch:** ein Fenster unten rechts (vergrößerbar), am Handy der ganze Bildschirm; es
+  bleibt offen, während man zwischen Mail, Chat und Kalender wechselt. Mikrofon, Kamera,
+  Bildschirm teilen (am Rechner) und Auflegen; wer spricht, hat einen grünen Rand. LiveKits Code
+  (`livekit-client`, `@livekit/components-react`) lädt erst beim ersten Gespräch.
+- **Verbindung:** Die Signalisierung geht über Caddy (`/rtc`, WebSocket auf Kontexts Adresse),
+  Ton und Bild direkt zum Server: UDP 7882 für alle Gespräche, TCP 7881, wenn UDP gesperrt ist.
+  Verschlüsselt ist beides (WebRTC, DTLS-SRTP); LiveKit selbst kann mitschneiden, Kontext tut es
+  nicht.
+- **Ohne LiveKit** (keine `LIVEKIT_*`-Einstellungen) sind Anrufe aus: Die App fragt
+  `/api/calls` und zeigt keine Knöpfe.
+
 ## Live-Verbindung
 
 Jede offene App hält eine Verbindung `/api/live` (Server-Sent Events, `server/live/`). Der Server
 merkt sich nur, wer verbunden ist (`hub.ts`), und schickt jedes Ereignis an die, die es sehen
-dürfen: neue Nachrichten, „schreibt …“, Gelesen-Marken, geänderte Kanäle, wer online ist und
-geänderte Aufgaben-Boards. Mails meldet Stalwart weiter selbst (JMAP Push).
+dürfen: neue Nachrichten, „schreibt …“, Gelesen-Marken, geänderte Kanäle, wer online ist,
+geänderte Aufgaben-Boards und Anrufe. Mails meldet Stalwart weiter selbst (JMAP Push).
 
 - Alle 25 Sekunden ein Kommentar, damit Proxys die ruhige Verbindung nicht schließen; Caddy
   komprimiert die beiden Streams nicht (`deploy/Caddyfile`), sonst kämen Ereignisse verzögert an.
@@ -577,9 +613,9 @@ Einladungen, die damals noch nicht da waren – beides merkt sich der Browser.
 Browser um Erlaubnis und meldet das Gerät für **Web Push** an. Ob die Erlaubnis noch besteht, fragt
 die App über die Permissions-API ab; nimmt man sie im Browser zurück, schaltet sich der Schalter aus.
 
-- **Bei geschlossener App:** neue Mails in allen Posteingängen und Chat-Nachrichten an einen selbst
-  (Direktnachrichten, @Erwähnungen, nicht aus stummgeschalteten Kanälen) kommen als Push, auch
-  wenn Kontext ganz zu ist. Den Push sendet der Kontext-Server (`server/push/`): mit seinem
+- **Bei geschlossener App:** neue Mails in allen Posteingängen, Chat-Nachrichten an einen selbst
+  (Direktnachrichten, @Erwähnungen, nicht aus stummgeschalteten Kanälen) und eingehende
+  [Anrufe](#anrufe) kommen als Push, auch wenn Kontext ganz zu ist. Den Push sendet der Kontext-Server (`server/push/`): mit seinem
   VAPID-Schlüssel (RFC 8292, beim ersten Start erzeugt und versiegelt in der Datenbank) und
   Ende-zu-Ende verschlüsselt für das eine Gerät (RFC 8291) – der Push-Dienst von Google, Apple,
   Mozilla oder Microsoft sieht den Inhalt nicht. Für Mails hört der Server dafür Stalwarts

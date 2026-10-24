@@ -27,6 +27,15 @@ const schema = z.object({
   /** Tests only: a stand-in for Microsoft's sign-in and Graph (dev/fake-graph.ts). */
   M365_LOGIN_URL: z.url().default("https://login.microsoftonline.com"),
   GRAPH_URL: z.url().default("https://graph.microsoft.com/v1.0"),
+  /**
+   * LiveKit for calls in the chat: its API as the Kontext server reaches it (http://livekit:7880),
+   * and the key and secret both use (the secret at least 32 characters). Without them calls are off.
+   */
+  LIVEKIT_URL: z.preprocess((v) => v || undefined, z.url().optional()),
+  LIVEKIT_API_KEY: z.preprocess((v) => v || undefined, z.string().optional()),
+  LIVEKIT_API_SECRET: z.preprocess((v) => v || undefined, z.string().min(32).optional()),
+  /** Where browsers reach LiveKit, if not through Kontext's own address (/rtc via Caddy). */
+  LIVEKIT_PUBLIC_URL: z.preprocess((v) => v || undefined, z.url().optional()),
   /** The built app (dist/); when set, the server delivers it too. Empty in dev (Vite does). */
   STATIC_DIR: z.string().optional(),
 });

@@ -1,7 +1,7 @@
 # Podman Quadlet: copy to /etc/containers/systemd/ and run `systemctl daemon-reload`.
-# The app and its server (sign-in, JMAP to Stalwart). Set BETTER_AUTH_URL, BETTER_AUTH_SECRET and
-# (for the Firmenverwaltung) STALWART_ADMIN_KEY in /opt/kontext/deploy/kontext.env (Quadlet
-# does not expand variables).
+# The app and its server (sign-in, JMAP to Stalwart). Set BETTER_AUTH_URL, BETTER_AUTH_SECRET,
+# (for the Firmenverwaltung) STALWART_ADMIN_KEY and (for calls, with livekit.container)
+# LIVEKIT_API_SECRET in /opt/kontext/deploy/kontext.env (Quadlet does not expand variables).
 [Unit]
 Description=Kontext (app and server)
 After=stalwart.service
@@ -13,6 +13,8 @@ ContainerName=kontext
 Network=kontext.network
 Volume=kontext-data:/data
 Environment=STALWART_URL=http://stalwart:8080
+Environment=LIVEKIT_URL=http://livekit:7880
+Environment=LIVEKIT_API_KEY=kontext
 EnvironmentFile=/opt/kontext/deploy/kontext.env
 AutoUpdate=registry
 

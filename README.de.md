@@ -110,6 +110,7 @@ reicht ein VPS mit 2 vCPU und 4 GB RAM.
 - **Fotos und Dateien**: mit der Handykamera, per Ziehen oder Einfügen; Fotos werden vor dem Senden verkleinert.
 - **Mails, Aufgaben und Kontakte als Karten**: „Besprechen“ an einer Mail (`b`) spricht im Kanal darüber, statt sie intern weiterzuleiten; die Mail zeigt danach, wo sie besprochen wurde. Öffnen kann die Karte nur, wer das Postfach sehen darf – kopiert wird nichts.
 - **Aufgabe aus einer Nachricht**, in beide Richtungen verknüpft.
+- **Anrufe und Videoanrufe** direkt aus der Unterhaltung: eine Kollegin anrufen oder im Kanal eine Besprechung starten, der die anderen beitreten; stummschalten, Kamera, Bildschirm teilen, und das Gespräch bleibt offen, während du zur Mail wechselst. Läuft auf dem eigenen Server ([LiveKit](https://github.com/livekit/livekit), optional).
 - **Suche** über alle deine Kanäle; eigene Nachrichten bearbeiten oder löschen; Kanäle stummschalten, verlassen oder löschen.
 - **Am Handy**: ein eigener Tab, Unterhaltungen als Sprechblasen.
 
@@ -130,7 +131,7 @@ reicht ein VPS mit 2 vCPU und 4 GB RAM.
 - **Signatur pro Absender**, **Abwesenheitsnotiz** mit Zeitraum, **Anmeldung mit Code** (Authenticator-App).
 - **Hell oder dunkel**, **Tastaturkürzel** wie in Gmail (`?` zeigt alle).
 - **Als App auf jedem Gerät**: Kontext aus dem Browser installieren (PC, Android, iPhone) – eigenes Fenster und Symbol, Ungelesen-Zahl am Symbol, startet auch ohne Netz; Fotos und Dateien aus anderen Apps direkt in eine neue Mail teilen; `mailto:`-Links öffnen Kontext. Neue Versionen kommen zuverlässig an und laden auf Klick auf „Neu laden“.
-- **Benachrichtigungen**: Glocke mit Einladungen, heutigen Terminen und neuen Mails; auf deinen Geräten auch bei geschlossener App (Web Push, Ende-zu-Ende verschlüsselt): neue Mails, Direktnachrichten und @Erwähnungen.
+- **Benachrichtigungen**: Glocke mit Einladungen, heutigen Terminen und neuen Mails; auf deinen Geräten auch bei geschlossener App (Web Push, Ende-zu-Ende verschlüsselt): neue Mails, Direktnachrichten, @Erwähnungen und eingehende Anrufe.
 - **Speicherplatz im Blick**: ein feiner Ring um das eigene Bild zeigt, wie voll das Postfach ist.
 
 ### 🏢 Firmenverwaltung
@@ -151,6 +152,7 @@ Module, die ein Betrieb einschaltet, wenn er sie braucht – wer sie nicht brauc
 | Mail, Kalender, Kontakte, Firmenverwaltung | ✅ verfügbar |
 | Aufgaben und Kanban-Board | ✅ verfügbar |
 | Team-Chat | ✅ verfügbar |
+| Anrufe und Videobesprechungen im Chat | ✅ verfügbar |
 | Rapportzettel (Arbeitsnachweise, z. B. im Handwerk) | geplant |
 
 Was als Nächstes kommt, steht in der [Roadmap](ROADMAP.md).

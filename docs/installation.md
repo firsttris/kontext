@@ -32,7 +32,9 @@ docker compose -f deploy/compose.yaml up -d
 ```
 
 Für `KONTEXT_SECRET` eine lange Zufallszeichenfolge nehmen (`openssl rand -base64 48`); damit
-sind die Sitzungen signiert und die Stalwart-Tokens verschlüsselt. Caddy holt das Zertifikat für
+sind die Sitzungen signiert und die Stalwart-Tokens verschlüsselt. Für Anrufe im Chat ebenso
+`LIVEKIT_SECRET` setzen und in der Firewall **TCP 7881 und UDP 7882** öffnen (siehe
+[Anrufe](#anrufe)). Caddy holt das Zertifikat für
 `KONTEXT_DOMAIN` selbst. Mit Podman liegen die Quadlet-Dateien in
 `deploy/quadlet/` (nach `/etc/containers/systemd/` kopieren, `systemctl daemon-reload`).
 
@@ -57,6 +59,26 @@ Stalwarts eigene Verwaltung ist nur über die Tailscale-Adresse des Servers erre
 
 Danach unter `https://kontext.firma.de` anmelden. Am Handy im Browser „Zum Startbildschirm
 hinzufügen“ wählen: Kontext startet dann wie eine App und bleibt angemeldet.
+
+### Anrufe
+
+Anrufe und Besprechungen im Chat laufen über LiveKit, das `compose.yaml` mit dem Profil `calls`
+startet (`COMPOSE_PROFILES=calls` in `.env`, so in `.env.example`). Dafür braucht es:
+
+- `LIVEKIT_SECRET` in `.env`: mindestens 32 Zeichen (`openssl rand -base64 48`). Kontext und
+  LiveKit nutzen denselben.
+- In der Firewall des Servers (und beim Anbieter) **TCP 7881** und **UDP 7882** offen. Darüber
+  gehen Ton und Bild; die Anmeldung am Gespräch läuft über Caddy (`https://kontext.firma.de/rtc`).
+- LiveKit findet die öffentliche IP des Servers selbst (STUN). Sitzt der Server hinter NAT, in
+  `deploy/livekit.yaml` unter `rtc` `node_ip: <öffentliche IP>` eintragen und
+  `use_external_ip: false` setzen.
+
+Mit Podman: `deploy/quadlet/livekit.container` mitkopieren, `LIVEKIT_KEYS="kontext: <secret>"` in
+`/opt/kontext/deploy/livekit.env` und dasselbe Geheimnis als `LIVEKIT_API_SECRET` in
+`kontext.env`. Ohne Geheimnis bleiben die Anrufe aus, alles andere läuft wie gehabt.
+
+Für zehn Leute reicht der kleine VPS; ein Videogespräch zu dritt braucht am Server etwa
+3–5 Mbit/s je Teilnehmer in jede Richtung.
 
 ### Firmenverwaltung einschalten
 

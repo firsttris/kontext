@@ -18,8 +18,12 @@ bun run dev   # Stalwart, Testdaten, Kontext-Server und App: http://localhost:51
 
 `bun run dev` (`dev/dev.ts`) startet alles in einem Terminal: zuerst Stalwart auf 18080 (beim
 ersten Mal mit Download) und spielt die Testdaten ein – das ist idempotent, ein zweiter Start legt
-nichts doppelt an. Danach starten der Kontext-Server auf 18090 (Anmeldung, JMAP; startet bei
-Änderungen neu) und Vite auf 5173. Stalwarts eigenes Log steht in `.dev/stalwart.log`. Strg+C
+nichts doppelt an. Daneben LiveKit für die Anrufe (`dev/livekit.ts`, 17880, Medien über TCP 17881
+und UDP 17882, nur auf 127.0.0.1); unter Linux lädt das Skript die Release-Datei von GitHub, unter
+macOS nimmt es `livekit-server` aus dem PATH (`brew install livekit`). Vite reicht `/rtc` an
+LiveKit weiter, LiveKits Webhooks gehen an den Server. Danach starten der Kontext-Server auf 18090
+(Anmeldung, JMAP; startet bei Änderungen neu) und Vite auf 5173. Einen Anruf probiert man mit
+zwei Browserfenstern (eins privat), etwa Jonas und Anna. Stalwarts eigenes Log steht in `.dev/stalwart.log`. Strg+C
 beendet alles, und endet einer der Prozesse, stoppt auch der Rest.
 
 Läuft schon ein Stalwart auf 18080, nimmt `bun run dev` diesen. So lässt sich Stalwart in einem
@@ -80,7 +84,7 @@ und „Team“, Termine der laufenden Woche, eine wöchentliche Teambesprechung 
 | Unit            | `bun run test`        | Vitest, für alles in `src/lib/` und die Protokoll-Helfer                                                    |
 | Komponenten     | `bun run test`        | Vitest mit Testing Library für UI-Bausteine ohne Server (Empfängerfeld, Tastaturkürzel)                     |
 | Integration     | `bun run e2e`         | `e2e/integration.spec.ts`: JMAP-Funktionen, IMAP (gemeinsame Postfächer), CalDAV und CardDAV gegen Stalwart |
-| End-to-End      | `bun run e2e`         | Playwright, Desktop und Handy (Pixel 7), gegen einen frisch angelegten Stalwart auf 28080 und Vite auf 5174 |
+| End-to-End      | `bun run e2e`         | Playwright, Desktop und Handy (Pixel 7), gegen einen frisch angelegten Stalwart auf 28080, LiveKit auf 27880 und Vite auf 5174; Chromium mit unechter Kamera und Mikrofon |
 | App (PWA)       | `bun run e2e`         | `e2e/pwa.spec.ts` gegen die gebaute App wie in Produktion (Server auf 28090 liefert `dist/`): Updates, Offline-Start, Cache-Header, Teilen |
 | Abhängigkeiten  | `bun audit`           | bekannte Lücken; in CI bei jedem Push und nachts                                                            |
 | Screenshots     | `bun run screenshots` | die Bilder in `docs/screenshots/` und für den Installationsdialog in `public/screenshots/`                  |

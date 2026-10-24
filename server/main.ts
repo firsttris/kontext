@@ -12,6 +12,17 @@ const devAdminKey = async (): Promise<string | undefined> => {
   return `${STALWART_ADMIN.user}:${STALWART_ADMIN.password}`;
 };
 
+/** Development only: the local LiveKit of dev/livekit.ts, so calls work after `bun run dev`. */
+const devLiveKit = async (): Promise<Record<string, string>> => {
+  if (process.env.NODE_ENV === "production") return {};
+  const { LIVEKIT_DEV_KEY } = await import("../dev/config");
+  return {
+    LIVEKIT_URL: "http://127.0.0.1:17880",
+    LIVEKIT_API_KEY: LIVEKIT_DEV_KEY.key,
+    LIVEKIT_API_SECRET: LIVEKIT_DEV_KEY.secret,
+  };
+};
+
 const env = readEnv({
   // Development only: a fixed secret so sessions survive restarts. Production sets its own.
   BETTER_AUTH_SECRET:
@@ -20,6 +31,7 @@ const env = readEnv({
       : "dev-secret-only-for-local-development-0123456789",
   // Development only: the local Stalwart's admin for the Firmenverwaltung (dev/ is not in the image).
   STALWART_ADMIN_KEY: await devAdminKey(),
+  ...(await devLiveKit()),
   ...process.env,
 });
 const { app } = await createApp(env);

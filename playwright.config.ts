@@ -8,10 +8,13 @@ const STALWART_PORT = 28080;
 const SERVER_PORT = 28090;
 const APP_PORT = 5174;
 const GRAPH_PORT = 28095;
+const LIVEKIT_PORT = 27880;
 
-const launchOptions = process.env.PW_CHROMIUM_PATH
-  ? { executablePath: process.env.PW_CHROMIUM_PATH }
-  : {};
+const launchOptions = {
+  ...(process.env.PW_CHROMIUM_PATH ? { executablePath: process.env.PW_CHROMIUM_PATH } : {}),
+  // Calls: a test pattern as camera and a tone as microphone, without asking.
+  args: ["--use-fake-ui-for-media-stream", "--use-fake-device-for-media-stream"],
+};
 
 export default defineConfig({
   testDir: "./e2e",
@@ -69,6 +72,12 @@ export default defineConfig({
       stdout: "pipe",
     },
     {
+      command: `bun dev/livekit.ts --port ${LIVEKIT_PORT} --server ${SERVER_PORT}`,
+      wait: { stdout: /LiveKit .* bereit/ },
+      timeout: 120_000,
+      reuseExistingServer: false,
+    },
+    {
       command: `bun dev/fake-graph.ts --port ${GRAPH_PORT}`,
       url: `http://127.0.0.1:${GRAPH_PORT}/`,
       reuseExistingServer: false,
@@ -87,6 +96,7 @@ export default defineConfig({
         // The move tests use the local Stalwart's IMAP (no TLS) as the "old provider".
         MAIL_SYNC_ALLOW_PLAIN: "true",
         PUSH_ANY_ENDPOINT: "true",
+        LIVEKIT_URL: `http://127.0.0.1:${LIVEKIT_PORT}`,
         // Microsoft's sign-in and Graph: the stand-in below
         M365_LOGIN_URL: `http://127.0.0.1:${GRAPH_PORT}`,
         GRAPH_URL: `http://127.0.0.1:${GRAPH_PORT}/v1.0`,
@@ -97,7 +107,11 @@ export default defineConfig({
     {
       command: `bunx vite --port ${APP_PORT}`,
       url: `http://localhost:${APP_PORT}`,
-      env: { KONTEXT_SERVER: `http://127.0.0.1:${SERVER_PORT}`, PORT: String(APP_PORT) },
+      env: {
+        KONTEXT_SERVER: `http://127.0.0.1:${SERVER_PORT}`,
+        KONTEXT_LIVEKIT: `http://127.0.0.1:${LIVEKIT_PORT}`,
+        PORT: String(APP_PORT),
+      },
       reuseExistingServer: false,
       timeout: 60_000,
     },

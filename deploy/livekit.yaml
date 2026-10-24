@@ -1,0 +1,22 @@
+# LiveKit for calls in the chat (Apache 2.0, livekit/livekit config-sample.yaml).
+# The key and secret come from LIVEKIT_KEYS ("kontext: <secret>"), the same pair as the Kontext
+# server's LIVEKIT_API_KEY and LIVEKIT_API_SECRET.
+#
+# Signalling goes through Caddy (https://$KONTEXT_DOMAIN/rtc). Media go straight to the server:
+# open TCP 7881 and UDP 7882 in the firewall. One UDP port carries every call (ICE/UDP mux),
+# which is plenty for a small business.
+port: 7880
+rtc:
+  tcp_port: 7881
+  # The server's public address, found via STUN (the browsers must reach it).
+  use_external_ip: true
+webhook:
+  api_key: kontext
+  urls:
+    - http://kontext:3000/api/calls/webhook
+room:
+  # An unanswered call does not keep its room for long.
+  empty_timeout: 60
+  departure_timeout: 10
+logging:
+  level: warn

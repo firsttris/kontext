@@ -7,3 +7,10 @@ export const STALWART_ADMIN = { user: "admin", password: "kontext-admin-dev" } a
 export const DEV_PASSWORD = "kaffee-werkbank-kontext";
 
 export const DEV_DOMAIN = "weber-haustechnik.test";
+
+/** LiveKit for calls in the chat (dev/livekit.ts): the release and the dev key pair. */
+export const LIVEKIT_VERSION = "1.13.10";
+export const LIVEKIT_DEV_KEY = {
+  key: "kontext-dev",
+  secret: "kontext-dev-secret-only-for-local-calls-0123",
+} as const;

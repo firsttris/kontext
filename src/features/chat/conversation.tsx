@@ -8,6 +8,7 @@ import { BellOff, ChevronLeft, ImageUp, Users } from "lucide-react";
 import { type DragEvent, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { useMediaQuery } from "@/components/use-media-query";
+import { CallButtons } from "@/features/calls/call-buttons";
 import { TaskDialog, type TaskStart } from "@/features/tasks/task-dialog";
 import { type ChannelSummary, firstName, type Message, readBy, timeline } from "@/lib/chat";
 import { taskFromMessage } from "@/lib/chat-cards";
@@ -208,6 +209,7 @@ export const Conversation = ({
             {subtitle(channel, me, nameOf, online)}
           </span>
         </div>
+        <CallButtons channel={channel} />
         {channel.kind === "channel" ? (
           <Button
             variant="ghost"

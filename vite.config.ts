@@ -7,9 +7,13 @@ import { defineConfig } from "vitest/config";
 
 /** The Kontext server (sign-in and JMAP to Stalwart); in production it serves the app itself. */
 const server = process.env.KONTEXT_SERVER ?? "http://127.0.0.1:18090";
+// LiveKit's signalling for calls (dev/livekit.ts); in production Caddy passes /rtc on.
+const livekit = process.env.KONTEXT_LIVEKIT ?? "http://127.0.0.1:17880";
+
 const proxy = {
   "/jmap": { target: server },
   "/api": { target: server },
+  "/rtc": { target: livekit, ws: true },
 };
 
 export default defineConfig({

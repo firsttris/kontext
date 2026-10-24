@@ -1,10 +1,12 @@
 /**
  * The live connection to Kontext's server (/api/live, Server-Sent Events): chat messages, typing,
- * read marks, presence and changed tasks reach the open views at once. The browser reconnects by
+ * read marks, presence, changed tasks and calls reach the open views at once. The browser reconnects by
  * itself; after a reconnect everything live is fetched again, in case something was missed.
  */
 import { type QueryClient, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useRef } from "react";
+import { heardDeclined } from "@/features/calls/call-store";
+import { CALLS_KEY, setCall } from "@/features/calls/queries";
 import {
   addMessage,
   CHANNELS_KEY,
@@ -56,6 +58,12 @@ export const applyLiveEvent = (queryClient: QueryClient, me: string, event: Live
     case "tasks":
       void queryClient.invalidateQueries({ queryKey: TASKS_KEY });
       return;
+    case "call":
+      setCall(queryClient, event.channelId, event.call);
+      return;
+    case "call-declined":
+      heardDeclined(event.channelId, event.memberId);
+      return;
   }
 };
 
@@ -67,6 +75,8 @@ const EVENT_TYPES: LiveEvent["type"][] = [
   "channels",
   "presence",
   "tasks",
+  "call",
+  "call-declined",
 ];
 
 /** `onMessage` hears every new chat message (for notifications). */
@@ -87,6 +97,7 @@ export const useLive = (me: string, onMessage?: (message: Message) => void) => {
         lost = false;
         void queryClient.invalidateQueries({ queryKey: CHAT_KEY });
         void queryClient.invalidateQueries({ queryKey: TASKS_KEY });
+        void queryClient.invalidateQueries({ queryKey: CALLS_KEY });
       };
       source.onerror = () => {
         lost = true;

@@ -9,7 +9,8 @@ ein Plan, kein Versprechen; Wünsche und Hinweise gern als
 | Funktion | Worum es geht |
 | --- | --- |
 | **Aufgaben überall im Kontext** | Offene Aufgaben am Kontakt, Fälliges im Kalender, Heute-Fälliges und neu Zugewiesenes in der Glocke, Erinnerungen als Benachrichtigung, „Aufgaben erstellen“ für mehrere Mails. |
-| **Team-Chat: mehr** | Antworten im Faden, Reaktionen, „Besprechung starten“ (Jitsi-Link), Aufbewahrungsfrist, die der Chef einstellt. |
+| **Team-Chat: mehr** | Antworten im Faden, Reaktionen, Aufbewahrungsfrist, die der Chef einstellt. |
+| **Anrufe: mehr** | Videobesprechung am Kalendertermin, Gäste per Link (Kunden ohne Konto), „Verpasster Anruf“ und Gesprächsdauer im Verlauf. |
 | **Wiedervorlage** | Eine Mail ausblenden, bis sie zu einem Zeitpunkt wieder oben im Posteingang auftaucht – zusammen mit den Kategorien eine einfache Aufgabenliste. |
 
 ## Danach
@@ -21,6 +22,7 @@ ein Plan, kein Versprechen; Wünsche und Hinweise gern als
 | **Bilder je Absender erlauben** | Bilder aus dem Internet für bekannte Absender immer laden, statt bei jeder Mail neu zu fragen. |
 | **Lesebestätigung** | Anfordern und beantworten, wie bei Behörden und Steuerberatern üblich. |
 | **Verschlüsselung** | S/MIME oder PGP für Betriebe mit vertraulichen Kunden- oder Gesundheitsdaten. |
+| **Telefonie** | Eine Firmennummer, die in Kontext klingelt: Festnetz und Handy über einen SIP-Anbieter (LiveKit SIP), Gruppenruf, Weiterleitung, Mailbox. |
 
 ## Offene Punkte
 
@@ -58,6 +60,9 @@ Kleinere Dinge, die beim Bauen aufgefallen sind und noch erledigt werden.
 
 ## Zuletzt fertig geworden
 
+Anrufe und Videobesprechungen im Chat (LiveKit auf dem eigenen Server): anrufen in
+Direktnachrichten, mit Klingeln auch bei geschlossener App, Besprechungen in Kanälen zum
+Beitreten, Bildschirm teilen, das Gespräch bleibt beim Wechsel zwischen den Apps offen.
 Senden rückgängig und später senden, Textbausteine.
 Unterhaltungen beim Lesen (frühere Mails, Antworten seitdem, Zitate eingeklappt, „wer hat
 geantwortet“ in gemeinsamen Postfächern), auf Wunsch gruppiert.

@@ -19,6 +19,11 @@
 		}
 	}
 
+	# Calls: LiveKit's signalling (WebSocket); the media go to it directly (TCP 7881, UDP 7882)
+	handle /rtc* {
+		reverse_proxy livekit:7880
+	}
+
 	handle {
 		reverse_proxy kontext:3000 {
 			header_up X-Forwarded-For {remote_host}
@@ -30,7 +35,8 @@
 		Strict-Transport-Security "max-age=31536000; includeSubDomains"
 		X-Content-Type-Options nosniff
 		Referrer-Policy no-referrer
-		Permissions-Policy "camera=(), microphone=(), geolocation=()"
+		# Camera, microphone and the screen only for Kontext itself (calls in the chat)
+		Permissions-Policy "camera=(self), microphone=(self), display-capture=(self), geolocation=()"
 		Content-Security-Policy "default-src 'self'; img-src 'self' data: blob: https:; style-src 'self' 'unsafe-inline'; frame-src 'self' blob:; connect-src 'self'; font-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'"
 		-Server
 	}

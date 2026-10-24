@@ -1,5 +1,6 @@
 # Kontext for one customer: Stalwart (mail, calendar, contacts), the Kontext server (app,
-# sign-in, JMAP pass-through) and Caddy (HTTPS).
+# sign-in, JMAP pass-through), Caddy (HTTPS) and, with the profile "calls", LiveKit for calls in
+# the chat (COMPOSE_PROFILES=calls in .env).
 # Works with Docker Compose and Podman Compose; Quadlet files are in deploy/quadlet/.
 #
 #   cp deploy/.env.example deploy/.env   # fill in domain and mail
@@ -38,8 +39,25 @@ services:
       BETTER_AUTH_URL: https://${KONTEXT_DOMAIN}
       BETTER_AUTH_SECRET: ${KONTEXT_SECRET}
       STALWART_ADMIN_KEY: ${STALWART_ADMIN_KEY:-}
+      # Calls in the chat; without a secret they are off.
+      LIVEKIT_URL: http://livekit:7880
+      LIVEKIT_API_KEY: kontext
+      LIVEKIT_API_SECRET: ${LIVEKIT_SECRET:-}
     volumes:
       - kontext-data:/data
+
+  livekit:
+    image: docker.io/livekit/livekit-server:v1.13.10
+    profiles: [calls]
+    restart: unless-stopped
+    command: ["--config", "/etc/livekit.yaml", "--udp-port", "7882"]
+    ports:
+      - "7881:7881"
+      - "7882:7882/udp"
+    environment:
+      LIVEKIT_KEYS: "kontext: ${LIVEKIT_SECRET:-}"
+    volumes:
+      - ./livekit.yaml:/etc/livekit.yaml:ro
 
   caddy:
     image: docker.io/library/caddy:2-alpine

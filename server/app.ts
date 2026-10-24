@@ -8,6 +8,8 @@ import { eq } from "drizzle-orm";
 import { Hono } from "hono";
 import { serveStatic } from "hono/bun";
 import { type Auth, createAuth, createGrants, type Grants } from "./auth";
+import { currentRoomEvents, type LiveKitConfig } from "./calls/livekit";
+import { createCallRoutes, createCallState } from "./calls/routes";
 import { createCategoryRoutes } from "./categories/routes";
 import { createCategoryStore } from "./categories/store";
 import { createChatFiles } from "./chat/files";
@@ -102,6 +104,12 @@ const endSessionsOf = (db: Db) => async (email: string) => {
   const [found] = await db.select().from(schema.user).where(eq(schema.user.email, email));
   if (found) await db.delete(schema.session).where(eq(schema.session.userId, found.id));
 };
+
+/** LiveKit, when all three settings are there; calls are off otherwise. */
+const liveKitOf = (env: Env): LiveKitConfig | null =>
+  env.LIVEKIT_URL && env.LIVEKIT_API_KEY && env.LIVEKIT_API_SECRET
+    ? { url: env.LIVEKIT_URL, apiKey: env.LIVEKIT_API_KEY, apiSecret: env.LIVEKIT_API_SECRET }
+    : null;
 
 export const createApp = async (env: Env) => {
   const db = openDatabase(env.DATABASE_PATH);
@@ -206,10 +214,39 @@ export const createApp = async (env: Env) => {
       anyEndpoint: env.PUSH_ANY_ENDPOINT,
     }),
   );
+  const chatStore = createChatStore(db, messages);
+  const livekit = liveKitOf(env);
+  if (livekit) {
+    const calls = createCallRoutes(
+      {
+        livekit,
+        publicUrl: env.LIVEKIT_PUBLIC_URL ?? null,
+        hub,
+        channelOf: chatStore.get,
+        viewerOf: async (request) => {
+          const accounts = await accountsOf(request);
+          return accounts && viewerOf(accounts);
+        },
+        nameOf: async (request) => (await infoOf(request))?.name ?? "",
+        notify: pusher.notify,
+      },
+      createCallState(),
+    );
+    app.route("/api/calls", calls.app);
+    // Calls that ran through a restart of this server: LiveKit still knows who is in them.
+    void currentRoomEvents(livekit)
+      .then(async (events) => {
+        for (const event of events) await calls.receive(event);
+      })
+      .catch(() => undefined);
+  } else {
+    // The app asks; without LiveKit it shows no call buttons.
+    app.get("/api/calls", (c) => c.json({ enabled: false, calls: [] }));
+  }
   app.route(
     "/api/chat",
     createChatRoutes({
-      store: createChatStore(db, messages),
+      store: chatStore,
       messages,
       files: chatFiles,
       hub,

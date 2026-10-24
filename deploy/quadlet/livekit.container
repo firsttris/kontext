@@ -1,0 +1,23 @@
+# Podman Quadlet: copy to /etc/containers/systemd/ and run `systemctl daemon-reload`.
+# Calls in the chat. Put LIVEKIT_KEYS="kontext: <secret>" in /opt/kontext/deploy/livekit.env and
+# the same secret as LIVEKIT_API_SECRET in kontext.env. Open TCP 7881 and UDP 7882.
+[Unit]
+Description=LiveKit (calls in Kontext's chat)
+Before=kontext.service
+
+[Container]
+Image=docker.io/livekit/livekit-server:v1.13.10
+ContainerName=livekit
+Network=kontext.network
+PublishPort=7881:7881
+PublishPort=7882:7882/udp
+Volume=/opt/kontext/deploy/livekit.yaml:/etc/livekit.yaml:ro
+EnvironmentFile=/opt/kontext/deploy/livekit.env
+Exec=--config /etc/livekit.yaml --udp-port 7882
+AutoUpdate=registry
+
+[Service]
+Restart=always
+
+[Install]
+WantedBy=multi-user.target

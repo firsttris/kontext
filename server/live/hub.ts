@@ -1,8 +1,9 @@
 /**
  * The live connection: every open app holds one (Server-Sent Events, /api/live) and hears what
- * changed for its person – new chat messages, someone typing, tasks of their mailboxes. The hub
+ * changed for its person – new chat messages, someone typing, tasks of their mailboxes, calls. The hub
  * only keeps who is connected; each event names who may hear it.
  */
+import type { Call } from "../calls/calls";
 import type { Message, Viewer } from "../chat/chat";
 
 export type LiveEvent =
@@ -13,7 +14,10 @@ export type LiveEvent =
   | { type: "read"; channelId: string; memberId: string; at: string }
   | { type: "channels" }
   | { type: "presence"; online: string[] }
-  | { type: "tasks"; accountId: string };
+  | { type: "tasks"; accountId: string }
+  // A call began, someone joined or left, or it ended (null).
+  | { type: "call"; channelId: string; call: Call | null }
+  | { type: "call-declined"; channelId: string; memberId: string };
 
 type Listener = { viewer: Viewer; send: (event: LiveEvent) => void };
 
