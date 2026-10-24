@@ -25,11 +25,20 @@ import { EditorToolbar } from "./editor-toolbar";
 import { useEmail } from "./queries";
 import { useSendAccount } from "./use-send-account";
 
+/** What a new mail starts with from outside: a contact, a mailto: link, a share. */
+export type ComposePrefill = {
+  to?: string;
+  cc?: string;
+  subject?: string;
+  body?: string;
+  files?: File[];
+};
+
 type Props = {
   accountId: string;
   mode: ComposeMode;
   sourceEmailId?: string;
-  prefillTo?: string;
+  prefill?: ComposePrefill;
 };
 
 /** The identity to send from: in a shared mailbox its address, else the login address. */
@@ -37,7 +46,8 @@ const defaultIdentity = (identities: Identity[], preferred: string): Identity | 
   identities.find((identity) => identity.email.toLowerCase() === preferred.toLowerCase()) ??
   identities[0];
 
-export const Composer = ({ accountId, mode, sourceEmailId, prefillTo }: Props) => {
+export const Composer = ({ accountId, mode, sourceEmailId, prefill }: Props) => {
+  const prefillTo = prefill?.to;
   const client = useClient();
   const queryClient = useQueryClient();
   const navigate = useNavigate();
@@ -126,10 +136,10 @@ export const Composer = ({ accountId, mode, sourceEmailId, prefillTo }: Props) =
       (current: T[]) =>
         current.length ? current : prefill;
     setTo(keep(prefillTo ? parseAddresses(prefillTo).addresses : start.to));
-    setCc(keep(start.cc));
+    setCc(keep(prefill?.cc ? parseAddresses(prefill.cc).addresses : start.cc));
     setBcc(keep(start.bcc));
-    if (start.cc.length || start.bcc.length) setShowCopies(true);
-    setSubject((current) => current || start.subject);
+    if (start.cc.length || start.bcc.length || prefill?.cc) setShowCopies(true);
+    setSubject((current) => current || prefill?.subject || start.subject);
     setAttachments(start.attachments);
     setThreading({ inReplyTo: start.inReplyTo, references: start.references });
     // A draft already has its signature; a new mail gets the one of the sender.
@@ -138,7 +148,8 @@ export const Composer = ({ accountId, mode, sourceEmailId, prefillTo }: Props) =
         ? ""
         : identity?.htmlSignature ||
           (identity?.textSignature ? textToHtml(identity.textSignature) : "");
-    editor.commands.setContent(`${signature ? `<p></p>${signature}` : ""}${start.html}`);
+    const text = prefill?.body ? textToHtml(prefill.body) : "";
+    editor.commands.setContent(`${text}${signature ? `<p></p>${signature}` : ""}${start.html}`);
     editor.commands.focus(mode === "draft" ? "end" : "start");
     initialized.current = true;
   }, [
@@ -149,6 +160,9 @@ export const Composer = ({ accountId, mode, sourceEmailId, prefillTo }: Props) =
     mode,
     myAddresses,
     prefillTo,
+    prefill?.cc,
+    prefill?.subject,
+    prefill?.body,
     account,
     session?.username,
     sendAccountId,
@@ -166,6 +180,10 @@ export const Composer = ({ accountId, mode, sourceEmailId, prefillTo }: Props) =
         ...prev,
         compose: undefined,
         to: undefined,
+        cc: undefined,
+        subject: undefined,
+        body: undefined,
+        shared: undefined,
         email: mode === "new" || mode === "draft" ? undefined : prev.email,
       }),
     });
@@ -292,7 +310,7 @@ export const Composer = ({ accountId, mode, sourceEmailId, prefillTo }: Props) =
     }
   };
 
-  const upload = async (files: FileList | null) => {
+  const upload = async (files: FileList | File[] | null) => {
     if (!files) return;
     for (const file of Array.from(files)) {
       setUploading((n) => n + 1);
@@ -313,6 +331,16 @@ export const Composer = ({ accountId, mode, sourceEmailId, prefillTo }: Props) =
       }
     }
   };
+
+  // Files shared from another app become attachments once the form is filled (which sets the
+  // attachments of a new mail to none) and the sender is known.
+  const sharedUploaded = useRef(false);
+  useEffect(() => {
+    if (sharedUploaded.current || !initialized.current || !prefill?.files?.length) return;
+    if (!sendAccountId) return;
+    sharedUploaded.current = true;
+    void upload(prefill.files);
+  });
 
   return (
     <form

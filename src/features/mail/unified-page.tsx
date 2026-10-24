@@ -30,7 +30,7 @@ export const UnifiedPage = ({ search }: { search: MailSearch }) => {
             accountId={composeAccount}
             mode={search.compose}
             sourceEmailId={search.compose === "new" ? undefined : search.email}
-            prefillTo={search.to}
+            prefill={{ to: search.to }}
           />
         ) : reader ? (
           <MessageView

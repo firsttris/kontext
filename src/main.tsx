@@ -52,11 +52,6 @@ const App = () => {
   );
 };
 
-// Installable app and offline shell; only in the built app, so dev reloads stay plain.
-if (import.meta.env.PROD && "serviceWorker" in navigator) {
-  void navigator.serviceWorker.register("/sw.js");
-}
-
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <App />

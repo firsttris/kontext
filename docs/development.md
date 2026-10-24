@@ -81,10 +81,13 @@ und „Team“, Termine der laufenden Woche, eine wöchentliche Teambesprechung 
 | Komponenten     | `bun run test`        | Vitest mit Testing Library für UI-Bausteine ohne Server (Empfängerfeld, Tastaturkürzel)                     |
 | Integration     | `bun run e2e`         | `e2e/integration.spec.ts`: JMAP-Funktionen, IMAP (gemeinsame Postfächer), CalDAV und CardDAV gegen Stalwart |
 | End-to-End      | `bun run e2e`         | Playwright, Desktop und Handy (Pixel 7), gegen einen frisch angelegten Stalwart auf 28080 und Vite auf 5174 |
+| App (PWA)       | `bun run e2e`         | `e2e/pwa.spec.ts` gegen die gebaute App wie in Produktion (Server auf 28090 liefert `dist/`): Updates, Offline-Start, Cache-Header, Teilen |
 | Abhängigkeiten  | `bun audit`           | bekannte Lücken; in CI bei jedem Push und nachts                                                            |
-| Screenshots     | `bun run screenshots` | die Bilder in `docs/screenshots/`                                                                           |
+| Screenshots     | `bun run screenshots` | die Bilder in `docs/screenshots/` und für den Installationsdialog in `public/screenshots/`                  |
 
-`bun run check` macht Typen, Lint, Unit- und Komponententests und den Build. Die lokale Instanz
+`bun run check` macht Typen, Lint, Unit- und Komponententests und den Build. `bun run e2e` baut
+die App vorher (`vite build`), weil die PWA-Tests den Service Worker brauchen, den es nur im Build
+gibt; im Dev-Server ist er bewusst aus, damit Neuladen nichts aus einem Cache holt. Die lokale Instanz
 erlaubt IMAP-Anmeldungen ohne TLS (nur auf 127.0.0.1), damit Mailprogramme und die
 Integrationstests sich verbinden können.
 

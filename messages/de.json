@@ -660,5 +660,17 @@
   "print_mailbox": "Postfach",
   "print_attachments": "Anhänge ({count})",
   "mail_print": "Drucken",
-  "shortcuts_print": "Mail drucken"
+  "shortcuts_print": "Mail drucken",
+  "pwa_offline": "Keine Verbindung. Neue Mails und Änderungen kommen, sobald das Gerät wieder online ist.",
+  "pwa_update": "Eine neue Version von Kontext ist da.",
+  "pwa_reload": "Neu laden",
+  "pwa_title": "App auf diesem Gerät",
+  "pwa_hint": "Kontext lässt sich wie eine App installieren: eigenes Fenster, Symbol im Startmenü oder auf dem Home-Bildschirm, Ungelesen-Zahl am Symbol, Fotos und Dateien aus anderen Apps direkt in eine neue Mail teilen.",
+  "pwa_install": "Als App installieren",
+  "pwa_installed": "Kontext ist auf diesem Gerät als App installiert.",
+  "pwa_install_apple": "Auf iPhone und iPad: in Safari auf „Teilen“ tippen, dann „Zum Home-Bildschirm“.",
+  "pwa_install_browser": "Im Browsermenü „App installieren“ oder „Zum Startbildschirm hinzufügen“ wählen.",
+  "pwa_mailto": "Als Mailprogramm verwenden",
+  "pwa_mailto_hint": "Ein Klick auf eine E-Mail-Adresse auf einer Webseite öffnet dann eine neue Mail in Kontext.",
+  "pwa_mailto_done": "Der Browser fragt jetzt nach, ob Kontext E-Mail-Links öffnen soll."
 }

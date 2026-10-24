@@ -3,8 +3,10 @@ import { createFileRoute, Outlet, redirect } from "@tanstack/react-router";
 import { useEffect } from "react";
 import { useClient } from "@/auth/auth";
 import { AppShell, railButton } from "@/components/shell/app-shell";
+import { useInboxes } from "@/features/mail/queries";
 import { NotificationBell } from "@/features/notifications/notification-bell";
 import { subscribeToChanges } from "@/jmap/push";
+import { useAppBadge } from "@/pwa/badge";
 
 export const Route = createFileRoute("/_app")({
   beforeLoad: ({ context, location }) => {
@@ -30,6 +32,8 @@ const usePush = () => {
 
 function AppLayout() {
   usePush();
+  // Unread mail of all inboxes on the app's icon, as in "Alle Posteingänge".
+  useAppBadge(useInboxes().reduce((sum, inbox) => sum + inbox.mailbox.unreadEmails, 0));
   return (
     <AppShell bell={<NotificationBell className={railButton(false)} />}>
       <Outlet />

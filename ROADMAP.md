@@ -18,6 +18,7 @@ ein Plan, kein Versprechen; Wünsche und Hinweise gern als
 
 | Funktion | Worum es geht |
 | --- | --- |
+| **Benachrichtigungen bei geschlossener App** | Web Push über den Kontext-Server, damit das Handy auch bei ganz geschlossener App eine neue Mail meldet (heute: solange Kontext offen ist, auch im Hintergrund). |
 | **Newsletter abbestellen** | Ein Knopf an Mails mit `List-Unsubscribe`, der die Abmeldung erledigt. |
 | **Bilder je Absender erlauben** | Bilder aus dem Internet für bekannte Absender immer laden, statt bei jeder Mail neu zu fragen. |
 | **Lesebestätigung** | Anfordern und beantworten, wie bei Behörden und Steuerberatern üblich. |

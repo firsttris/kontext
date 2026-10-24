@@ -47,6 +47,16 @@ test.describe("Einstellungen", () => {
       .toBe(true);
   });
 
+  test("App auf diesem Gerät: installieren und als Mailprogramm verwenden", async ({ page }) => {
+    await login(page, "anna");
+    await page.goto("/settings?section=appearance");
+    const card = page.locator("section").filter({ hasText: "App auf diesem Gerät" });
+    // Headless Chromium offers no install prompt: the card says how to install instead.
+    await expect(card).toContainText("App installieren");
+    await card.getByRole("button", { name: "Als Mailprogramm verwenden" }).click();
+    await expect(card).toContainText("Der Browser fragt jetzt nach");
+  });
+
   test("ändert das Passwort", async ({ page }) => {
     const next = "werkbank-kaffee-neues-passwort";
     await login(page, "max");

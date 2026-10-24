@@ -16,9 +16,10 @@
     "noEmit": true,
     "resolveJsonModule": true,
     "isolatedModules": true,
-    "types": ["bun", "vite/client"],
+    "types": ["bun", "vite/client", "vite-plugin-pwa/react"],
     "paths": { "@/*": ["./src/*"] }
   },
+  "exclude": ["src/sw"],
   "include": [
     "src",
     "dev",

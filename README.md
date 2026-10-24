@@ -40,7 +40,7 @@ your own.
 - **No per-seat pricing**: ten people cost the same as one; you pay for the server.
 - **Context instead of silos**: every contact with their latest mails and upcoming appointments, categories and rules for the whole team – a small CRM without another tool.
 - **Shared mailboxes**: info@ and invoices@ for the team, with rights per person.
-- **Phone and desktop alike**: every view is built for the phone, installable as an app.
+- **Phone and desktop alike**: every view is built for the phone; install it as an app on any device – no app store needed.
 - **Open**: open source (AGPL), standard protocols (JMAP, IMAP, CalDAV, CardDAV) – every phone and mail program keeps working.
 
 ## 👥 Who is it for?
@@ -106,6 +106,7 @@ fine on a VPS with 2 vCPUs and 4 GB RAM.
 
 - **Signature per sender address**, **out-of-office reply** with dates, **two-factor sign-in** (authenticator app).
 - **Light or dark**, **keyboard shortcuts** like Gmail (`?` shows all).
+- **An app on every device**: install Kontext from the browser (desktop, Android, iPhone) with its own window and icon, unread count on the icon, starts without network; share photos and files from other apps straight into a new mail; open `mailto:` links in Kontext. New versions arrive reliably and load when you click "Reload".
 - **Notifications**: a bell with invitations, today's appointments and new mail; optionally as device notifications.
 - **Storage at a glance**: a thin ring around your avatar shows how full the mailbox is.
 

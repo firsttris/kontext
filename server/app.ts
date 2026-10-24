@@ -186,9 +186,27 @@ export const createApp = async (env: Env) => {
         onFound: (_path, c) => c.header("cache-control", "public, max-age=31536000, immutable"),
       }),
     );
-    app.use("*", serveStatic({ root }));
+    // The service worker, the page and the manifest are asked for again every time: a new
+    // version must never hang in a cache (the worker itself then caches by content hash).
+    const fresh = (path: string) => /(\/service-worker\.js|\.html|\.webmanifest)$/.test(path);
+    app.use(
+      "*",
+      serveStatic({
+        root,
+        onFound: (path, c) => {
+          if (fresh(path)) c.header("cache-control", "no-cache");
+        },
+      }),
+    );
     // Every other path belongs to the app's router.
-    app.get("*", serveStatic({ root, path: "index.html" }));
+    app.get(
+      "*",
+      serveStatic({
+        root,
+        path: "index.html",
+        onFound: (_path, c) => c.header("cache-control", "no-cache"),
+      }),
+    );
   }
   return { app, auth, db };
 };

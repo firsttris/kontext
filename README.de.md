@@ -40,7 +40,7 @@ oder einem eigenen Rechner.
 - **Keine Kosten pro Kopf**: zehn Mitarbeiter kosten dasselbe wie einer; bezahlt wird der Server.
 - **Kontext statt Inseln**: zu jedem Kontakt die letzten Mails und nächsten Termine, Kategorien und Regeln für das ganze Team – ein kleines CRM ohne Extra-Tool.
 - **Gemeinsame Postfächer**: info@ und rechnung@ für das Team, mit Rechten pro Person.
-- **Am Handy wie am PC**: jede Ansicht ist fürs Handy gebaut, als App installierbar.
+- **Am Handy wie am PC**: jede Ansicht ist fürs Handy gebaut; als App auf jedem Gerät installierbar – ohne App-Store.
 - **Offen**: Open Source (AGPL), Standardprotokolle (JMAP, IMAP, CalDAV, CardDAV) – jedes Handy und Mailprogramm funktioniert weiter.
 
 ## 👥 Für wen?
@@ -106,6 +106,7 @@ reicht ein VPS mit 2 vCPU und 4 GB RAM.
 
 - **Signatur pro Absender**, **Abwesenheitsnotiz** mit Zeitraum, **Anmeldung mit Code** (Authenticator-App).
 - **Hell oder dunkel**, **Tastaturkürzel** wie in Gmail (`?` zeigt alle).
+- **Als App auf jedem Gerät**: Kontext aus dem Browser installieren (PC, Android, iPhone) – eigenes Fenster und Symbol, Ungelesen-Zahl am Symbol, startet auch ohne Netz; Fotos und Dateien aus anderen Apps direkt in eine neue Mail teilen; `mailto:`-Links öffnen Kontext. Neue Versionen kommen zuverlässig an und laden auf Klick auf „Neu laden“.
 - **Benachrichtigungen**: Glocke mit Einladungen, heutigen Terminen und neuen Mails; auf Wunsch als Benachrichtigung des Geräts.
 - **Speicherplatz im Blick**: ein feiner Ring um das eigene Bild zeigt, wie voll das Postfach ist.
 

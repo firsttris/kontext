@@ -9,8 +9,14 @@ export const mailSearchSchema = z.object({
   account: z.string().optional(),
   /** Composer: a new mail, an answer to / forward of the open mail, or the open draft. */
   compose: z.enum(["new", "reply", "replyAll", "forward", "draft"]).optional(),
-  /** Prefilled recipient for a new mail, e.g. from the contacts. */
+  /** Prefilled recipient for a new mail, e.g. from the contacts or a mailto: link. */
   to: z.string().optional(),
+  /** More of a mailto: link (src/routes/_app/compose.tsx). */
+  cc: z.string().optional(),
+  subject: z.string().optional(),
+  body: z.string().optional(),
+  /** Something another app shared with Kontext, kept by the service worker. */
+  shared: z.string().optional(),
   /** The search text on `/mail/all/search` (src/lib/mail-search.ts). */
   q: z.string().optional(),
   unread: z.boolean().optional(),

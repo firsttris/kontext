@@ -5,10 +5,14 @@ import { login } from "./helpers";
  * The pictures in the README and the docs. Run with `bun run screenshots`. The pointer goes to
  * an empty corner first, so no row shows its hover state (the box to pick it).
  */
-const shot = async (page: Page, name: string) => {
+const shot = async (page: Page, name: string, alsoFor?: "wide" | "narrow") => {
   const size = page.viewportSize();
   if (size) await page.mouse.move(size.width - 2, size.height - 2);
   await page.screenshot({ path: `docs/screenshots/${name}.png`, animations: "disabled" });
+  // The same picture for the app's install dialog (manifest screenshots, vite.config.ts).
+  if (alsoFor) {
+    await page.screenshot({ path: `public/screenshots/${alsoFor}.png`, animations: "disabled" });
+  }
 };
 
 /** The open mail is drawn: its text, and the thumbnails of its attachments (pdf.js takes a moment). */
@@ -30,7 +34,7 @@ test.describe("Screenshots @screenshots", () => {
       .getByText("Angebot Wartungsvertrag 2027")
       .click();
     await mailShown(page);
-    await shot(page, "mail");
+    await shot(page, "mail", "wide");
 
     await page.getByRole("link", { name: /Antworten an Petra/ }).click();
     await expect(page.getByLabel("Betreff")).toHaveValue(/Re:/);
@@ -91,7 +95,7 @@ test.describe("Screenshots @screenshots", () => {
     const page = await context.newPage();
     await login(page);
     await expect(page.getByText("Angebot Wartungsvertrag 2027")).toBeVisible();
-    await shot(page, "phone-mail");
+    await shot(page, "phone-mail", "narrow");
     await page.getByText("Angebot Wartungsvertrag 2027").click();
     await mailShown(page);
     await shot(page, "phone-read");

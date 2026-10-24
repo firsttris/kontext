@@ -303,6 +303,37 @@ zu liegen wie bei Gmails Labels.
   `kategorie:`/`label:` in der Suche; **automatisch** per Regel („Kategorie setzen“: Sieve
   `addflag "<keyword>"`).
 
+## App (PWA)
+
+Kontext lässt sich als App installieren (Chrome, Edge, Safari, Android, iPhone): eigenes Fenster,
+Symbol, Kurzbefehle (Neue Mail, Kalender, Kontakte). Gebaut mit `vite-plugin-pwa` und Workbox;
+das Manifest steht in `vite.config.ts`, der Service Worker in `src/sw/service-worker.ts`.
+
+- **Updates kommen sicher an.** Der Server liefert `service-worker.js`, `index.html` und das
+  Manifest immer mit `cache-control: no-cache`, die Bausteine unter `/assets/` mit Hash im Namen
+  dauerhaft. Jeder Build ist ein neuer Worker mit einer neuen Liste der Dateien und ihrer Hashes;
+  Workbox lädt nur Geändertes und räumt den alten Cache weg (`cleanupOutdatedCaches`). Die App
+  fragt stündlich und jedes Mal, wenn sie wieder in den Vordergrund kommt, nach einer neuen
+  Version (`src/pwa/pwa-status.tsx`).
+- **Neu laden auf Wunsch.** Eine neue Version wartet und meldet sich mit „Eine neue Version von
+  Kontext ist da – Neu laden“; sie übernimmt erst nach dem Klick, damit eine angefangene Mail
+  nicht verloren geht. Sind alle Fenster zu, startet beim nächsten Öffnen ohnehin die neue.
+- **Was gecacht wird:** nur die App selbst (HTML, Skripte, Styles, Schriften, Symbole). Mails,
+  Kalender und Anmeldung (`/jmap`, `/api`) gehen nie über einen Cache. Ohne Netz startet die App
+  und sagt „Keine Verbindung“; neue Daten kommen, sobald das Gerät wieder online ist.
+- **Als Mailprogramm:** `mailto:`-Links öffnen eine neue Mail in Kontext – in der installierten
+  App über das Manifest (`protocol_handlers`), im Browser über *Einstellungen → Darstellung →
+  Als Mailprogramm verwenden* (`registerProtocolHandler`). `/compose?mailto=…` wertet Empfänger,
+  Cc, Betreff und Text aus (`src/lib/mailto.ts`, RFC 6068).
+- **Teilen in Kontext:** Auf dem Handy erscheint Kontext im Teilen-Menü anderer Apps (Web Share
+  Target). Der Service Worker nimmt Fotos, Dateien, Texte und Links an, legt sie kurz in einem
+  eigenen Cache ab und öffnet eine neue Mail damit; die Dateien sind dann schon Anhänge.
+- **Benachrichtigungen** gehen über den Service Worker (`showNotification`), weil installierte Apps
+  auf Android nur so dürfen; ein Klick öffnet die Mail oder den Termin, auch bei geschlossenem
+  Fenster. Sie kommen, solange Kontext geöffnet ist (auch im Hintergrund); bei ganz geschlossener
+  App bräuchte es Web Push über den Server, siehe [Roadmap](https://github.com/firsttris/kontext/blob/main/ROADMAP.md).
+- **Ungelesen-Zahl am App-Symbol** (Badging API) als Summe aller Posteingänge.
+
 ## Drucken
 
 „Drucken“ im Menü „…“ der Mail, `p` oder Strg+P (Cmd+P) druckt die offene Mail, nicht die App

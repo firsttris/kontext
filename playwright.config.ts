@@ -35,8 +35,24 @@ export default defineConfig({
       name: "desktop",
       use: { ...devices["Desktop Chrome"], viewport: { width: 1440, height: 900 }, launchOptions },
       grepInvert: /@phone|@screenshots/,
+      testIgnore: /pwa\.spec\.ts/,
     },
-    { name: "phone", use: { ...devices["Pixel 7"], launchOptions }, grep: /@phone/ },
+    {
+      name: "phone",
+      use: { ...devices["Pixel 7"], launchOptions },
+      grep: /@phone/,
+      testIgnore: /pwa\.spec\.ts/,
+    },
+    // The built app as in production (service worker, manifest, caching), served by the server.
+    {
+      name: "pwa",
+      use: {
+        ...devices["Desktop Chrome"],
+        baseURL: `http://localhost:${SERVER_PORT}`,
+        launchOptions,
+      },
+      testMatch: /pwa\.spec\.ts/,
+    },
     // Pictures for the README and the docs: `bun run screenshots` (or the workflow).
     {
       name: "screenshots",
@@ -65,6 +81,8 @@ export default defineConfig({
         STALWART_URL: `http://127.0.0.1:${STALWART_PORT}`,
         BETTER_AUTH_URL: `http://localhost:${APP_PORT}`,
         DATABASE_PATH: ".dev/e2e-server/kontext.db",
+        // The built app (`bun run e2e` builds it first) for the pwa project.
+        STATIC_DIR: "dist",
         SIGN_IN_PER_MINUTE: "1000",
         // The move tests use the local Stalwart's IMAP (no TLS) as the "old provider".
         MAIL_SYNC_ALLOW_PLAIN: "true",

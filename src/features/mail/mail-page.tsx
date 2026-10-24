@@ -2,9 +2,12 @@
  * The mail app: folders | list | reading pane or composer. On a phone one of them fills the
  * screen at a time, chosen by the URL (folders, email, compose), so the back button works.
  */
+import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import { useEffect } from "react";
 import type { Mailbox } from "@/jmap/types";
+import { shareStart } from "@/lib/mailto";
+import { takeShared } from "@/pwa/share-cache";
 import type { MailSearch } from "@/routes/_app/mail.$accountId.$mailboxId";
 import { Composer } from "./composer";
 import { MailLayout } from "./mail-layout";
@@ -37,8 +40,27 @@ export const MailPage = (props: Props) =>
     <UnifiedPage search={props.search} />
   );
 
+/**
+ * What another app shared, read once from the service worker's cache (taking it removes it, so
+ * the query keeps it for the composer).
+ */
+const useShared = (id: string | undefined) => {
+  const { data, isPending } = useQuery({
+    queryKey: ["shared", id],
+    queryFn: async () => {
+      const item = await takeShared(id!);
+      return item ? { ...shareStart(item), files: item.files } : null;
+    },
+    enabled: Boolean(id),
+    staleTime: Number.POSITIVE_INFINITY,
+    gcTime: Number.POSITIVE_INFINITY,
+  });
+  return { shared: data ?? undefined, waiting: Boolean(id) && isPending };
+};
+
 const FolderPage = ({ accountId, mailboxParam, search }: Props) => {
   const mailboxes = useMailboxes(accountId);
+  const { shared, waiting } = useShared(search.shared);
   const mailbox = resolveMailbox(mailboxes.data, mailboxParam);
   const navigate = useNavigate();
 
@@ -61,13 +83,19 @@ const FolderPage = ({ accountId, mailboxParam, search }: Props) => {
         mailbox ? <MessageList accountId={accountId} mailbox={mailbox} search={search} /> : null
       }
       main={
-        mailbox && search.compose ? (
+        mailbox && search.compose && !waiting ? (
           <Composer
-            key={`${search.compose}-${search.email ?? ""}`}
+            key={`${search.compose}-${search.email ?? ""}-${search.shared ?? ""}`}
             accountId={accountId}
             mode={search.compose}
             sourceEmailId={search.compose === "new" ? undefined : search.email}
-            prefillTo={search.to}
+            prefill={{
+              to: search.to,
+              cc: search.cc,
+              subject: search.subject ?? shared?.subject,
+              body: search.body ?? shared?.body,
+              files: shared?.files,
+            }}
           />
         ) : mailbox ? (
           <MessageView accountId={accountId} mailbox={mailbox} emailId={search.email} />
