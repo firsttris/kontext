@@ -47,6 +47,8 @@ test.describe("Senden rückgängig und später senden", () => {
     const row = list.getByRole("link", { name: new RegExp(subject) });
     await expect(row).toContainText("Geplant ·");
     await row.click();
+    // The notice in the mail, once the toast with the same words has gone.
+    await expect(page.getByRole("status").filter({ hasText: "gesendet" })).toHaveCount(0);
     await expect(page.getByText(/^Wird .* 08:00 gesendet\./)).toBeVisible();
     await page.getByRole("button", { name: "Nicht senden" }).click();
     await expect(page.getByRole("textbox", { name: "Betreff" })).toHaveValue(subject);
