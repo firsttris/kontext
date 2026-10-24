@@ -1,6 +1,6 @@
 /** The reading pane: toolbar, header, sender check, body, attachments and the reply buttons. */
 import { Link } from "@tanstack/react-router";
-import { ChevronDown, Users } from "lucide-react";
+import { ChevronDown, ListChecks, Users } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { Avatar } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -11,9 +11,11 @@ import { categoriesOn } from "@/lib/categories";
 import { displayName, firstName, formatAddressList, readingDate } from "@/lib/format";
 import { mailboxNotice } from "@/lib/mail-accounts";
 import { mailboxRights } from "@/lib/mailboxes";
+import { STATUS_LABELS, tasksOfMail } from "@/lib/tasks";
 import { m } from "@/paraglide/messages";
 import { CategoryChips } from "../categories/category-chips";
 import { useCategories } from "../categories/queries";
+import { useTasks } from "../tasks/queries";
 import { useEmailActions } from "./actions";
 import { Attachments } from "./attachments";
 import { MailBody } from "./mail-body";
@@ -34,6 +36,7 @@ export const MessageView = ({ accountId, mailbox, emailId }: Props) => {
   const [detailsFor, setDetailsFor] = useState<string | null>(null);
   const wide = useMediaQuery("(min-width: 1536px)");
   const accountCategories = useCategories(accountId);
+  const { tasks } = useTasks();
 
   // Opening a mail marks it read, once per mail (if the mailbox allows it).
   const { canMarkSeen } = mailboxRights(mailbox);
@@ -55,6 +58,7 @@ export const MessageView = ({ accountId, mailbox, emailId }: Props) => {
   if (!email) return <div className="p-6 text-[14px] text-muted">{m.mail_pick()}</div>;
   const showDetails = detailsFor === email.id;
   const categories = categoriesOn(email.keywords, accountCategories);
+  const mailTasks = tasksOfMail(tasks, email.id, email.threadId);
   const attachments = email.attachments.filter(
     (part) => !part.cid || part.disposition === "attachment",
   );
@@ -79,6 +83,22 @@ export const MessageView = ({ accountId, mailbox, emailId }: Props) => {
               <h2 className="m-0 text-[21px] leading-snug font-semibold tracking-tight">
                 {email.subject || m.mail_no_subject()}
               </h2>
+              {mailTasks.map((task) => (
+                <Link
+                  key={task.id}
+                  to="/tasks"
+                  search={{ task: task.id }}
+                  className="-mt-1 flex items-center gap-2 self-start rounded-lg border border-border px-2.5 py-1.5 text-[13px] text-fg no-underline hover:bg-hover"
+                >
+                  <ListChecks size={14} className="text-accent" aria-hidden="true" />
+                  <span className={task.status === "done" ? "text-muted line-through" : undefined}>
+                    {m.tasks_on_mail_open({ title: task.title })}
+                  </span>
+                  <span className="rounded-md bg-subtle px-1.5 text-[11px] font-medium text-muted">
+                    {STATUS_LABELS[task.status]()}
+                  </span>
+                </Link>
+              ))}
               {categories.length ? (
                 <div className="-mt-1 flex flex-wrap gap-1">
                   <CategoryChips categories={categories} />

@@ -90,6 +90,13 @@ fine on a VPS with 2 vCPUs and 4 GB RAM.
 - **Print**: just the mail, neatly on A4 (also with Ctrl+P).
 - **Always current**: new mail and colleagues' changes appear without reloading (JMAP push).
 
+### ✅ Tasks
+
+- **Tasks for you and the team**: My tasks, Today, Upcoming, Done; a board for your own mailbox and one per shared mailbox (info@, rechnung@).
+- **List or Kanban**: grouped by due date, or as a board with Open, In progress, Waiting, Done – drag cards between columns.
+- **From a mail**: "Task" (or `t`) turns a mail into a task with its subject, due date and assignee; the mail then shows its task.
+- **Quick entry**: "Call Hoffmann tomorrow" in German ("Rückruf Hoffmann morgen") is due tomorrow; checklists, notes, assignees.
+
 ### 📅 Calendar
 
 - **Day, week, month and list**, drag to move, recurring events with exceptions.
@@ -126,8 +133,8 @@ business switches on when it needs them – whoever doesn't, never sees them.
 | Module | Status |
 | --- | --- |
 | Mail, calendar, contacts, company admin | ✅ available |
-| Tasks | planned |
-| Kanban board | planned |
+| Tasks and Kanban board | ✅ available |
+| Team chat | planned |
 | Work reports (e.g. for trades) | planned |
 
 What comes next is in the [roadmap](ROADMAP.md) (German).

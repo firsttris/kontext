@@ -16,6 +16,7 @@ import { Route as AppCalendarRouteImport } from './routes/_app/calendar'
 import { Route as AppComposeRouteImport } from './routes/_app/compose'
 import { Route as AppContactsRouteImport } from './routes/_app/contacts'
 import { Route as AppSettingsRouteImport } from './routes/_app/settings'
+import { Route as AppTasksRouteImport } from './routes/_app/tasks'
 import { Route as AppMailIndexRouteImport } from './routes/_app/mail.index'
 import { Route as AppMailAccountIdMailboxIdRouteImport } from './routes/_app/mail.$accountId.$mailboxId'
 
@@ -53,6 +54,11 @@ const AppSettingsRoute = AppSettingsRouteImport.update({
   path: '/settings',
   getParentRoute: () => AppRoute,
 } as any)
+const AppTasksRoute = AppTasksRouteImport.update({
+  id: '/tasks',
+  path: '/tasks',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppMailIndexRoute = AppMailIndexRouteImport.update({
   id: '/mail/',
   path: '/mail/',
@@ -72,6 +78,7 @@ export interface FileRoutesByFullPath {
   '/compose': typeof AppComposeRoute
   '/contacts': typeof AppContactsRoute
   '/settings': typeof AppSettingsRoute
+  '/tasks': typeof AppTasksRoute
   '/mail/': typeof AppMailIndexRoute
   '/mail/$accountId/$mailboxId': typeof AppMailAccountIdMailboxIdRoute
 }
@@ -81,6 +88,7 @@ export interface FileRoutesByTo {
   '/compose': typeof AppComposeRoute
   '/contacts': typeof AppContactsRoute
   '/settings': typeof AppSettingsRoute
+  '/tasks': typeof AppTasksRoute
   '/': typeof AppIndexRoute
   '/mail': typeof AppMailIndexRoute
   '/mail/$accountId/$mailboxId': typeof AppMailAccountIdMailboxIdRoute
@@ -93,6 +101,7 @@ export interface FileRoutesById {
   '/_app/compose': typeof AppComposeRoute
   '/_app/contacts': typeof AppContactsRoute
   '/_app/settings': typeof AppSettingsRoute
+  '/_app/tasks': typeof AppTasksRoute
   '/_app/': typeof AppIndexRoute
   '/_app/mail/': typeof AppMailIndexRoute
   '/_app/mail/$accountId/$mailboxId': typeof AppMailAccountIdMailboxIdRoute
@@ -106,6 +115,7 @@ export interface FileRouteTypes {
     | '/compose'
     | '/contacts'
     | '/settings'
+    | '/tasks'
     | '/mail/'
     | '/mail/$accountId/$mailboxId'
   fileRoutesByTo: FileRoutesByTo
@@ -115,6 +125,7 @@ export interface FileRouteTypes {
     | '/compose'
     | '/contacts'
     | '/settings'
+    | '/tasks'
     | '/'
     | '/mail'
     | '/mail/$accountId/$mailboxId'
@@ -126,6 +137,7 @@ export interface FileRouteTypes {
     | '/_app/compose'
     | '/_app/contacts'
     | '/_app/settings'
+    | '/_app/tasks'
     | '/_app/'
     | '/_app/mail/'
     | '/_app/mail/$accountId/$mailboxId'
@@ -187,6 +199,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppSettingsRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/tasks': {
+      id: '/_app/tasks'
+      path: '/tasks'
+      fullPath: '/tasks'
+      preLoaderRoute: typeof AppTasksRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/mail/': {
       id: '/_app/mail/'
       path: '/mail'
@@ -209,6 +228,7 @@ interface AppRouteChildren {
   AppComposeRoute: typeof AppComposeRoute
   AppContactsRoute: typeof AppContactsRoute
   AppSettingsRoute: typeof AppSettingsRoute
+  AppTasksRoute: typeof AppTasksRoute
   AppIndexRoute: typeof AppIndexRoute
   AppMailIndexRoute: typeof AppMailIndexRoute
   AppMailAccountIdMailboxIdRoute: typeof AppMailAccountIdMailboxIdRoute
@@ -219,6 +239,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppComposeRoute: AppComposeRoute,
   AppContactsRoute: AppContactsRoute,
   AppSettingsRoute: AppSettingsRoute,
+  AppTasksRoute: AppTasksRoute,
   AppIndexRoute: AppIndexRoute,
   AppMailIndexRoute: AppMailIndexRoute,
   AppMailAccountIdMailboxIdRoute: AppMailAccountIdMailboxIdRoute,

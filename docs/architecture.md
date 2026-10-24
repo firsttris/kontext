@@ -331,8 +331,31 @@ das Manifest steht in `vite.config.ts`, der Service Worker in `src/sw/service-wo
 - **Benachrichtigungen** gehen über den Service Worker (`showNotification`), weil installierte Apps
   auf Android nur so dürfen; ein Klick öffnet die Mail oder den Termin, auch bei geschlossenem
   Fenster. Sie kommen, solange Kontext geöffnet ist (auch im Hintergrund); bei ganz geschlossener
-  App bräuchte es Web Push über den Server, siehe [Roadmap](https://github.com/firsttris/kontext/blob/main/ROADMAP.md).
+  App braucht es Web Push; Stalwart kann ihn selbst senden (`urn:ietf:params:jmap:webpush-vapid`), siehe [Roadmap](https://github.com/firsttris/kontext/blob/main/ROADMAP.md).
 - **Ungelesen-Zahl am App-Symbol** (Badging API) als Summe aller Posteingänge.
+
+## Aufgaben
+
+Aufgaben (`src/features/tasks/`, Server `server/tasks/`) liegen in Kontexts SQLite (`tasks`,
+`task_links`): Stalwart kennt Aufgaben nur als CalDAV-VTODO, ohne Verknüpfung zu Mails, Spalten
+oder Reihenfolge.
+
+- **Wem sie gehören:** Jede Aufgabe gehört zu einem Konto – dem eigenen Postfach oder einem
+  gemeinsamen wie info@. `/api/tasks` liefert alle Aufgaben der Konten in der JMAP-Session der
+  angemeldeten Person; anlegen, ändern und löschen darf, wer das Postfach nicht nur lesen darf.
+  Erledigtes bleibt 30 Tage in den Listen.
+- **Ansichten:** „Meine Aufgaben“ sind mir zugewiesene und die im eigenen Postfach ohne
+  Zuständigen; „Heute“ nimmt Überfälliges mit, heute Erledigtes bleibt durchgestrichen stehen. Ein
+  Board pro Postfach mit den festen Spalten Offen, In Arbeit, Wartet, Erledigt (`status`); die
+  Reihenfolge ist `position`, beim Ziehen wird zwischen die Nachbarn gesetzt.
+- **Aus einer Mail:** „Aufgabe“ in der Werkzeugleiste (Taste `t`): Titel aus dem Betreff ohne
+  „AW:/Re:“, verknüpft mit der Mail und ihrer Unterhaltung (`threadId`), auf Wunsch wird die
+  Mail danach archiviert (merkt sich der Browser). Die Mail zeigt ihre Aufgabe in Liste und
+  Lesebereich.
+- **Schnelleingabe** (`src/lib/tasks.ts`): ein letztes Wort „heute“, „morgen“, „übermorgen“, ein
+  Wochentag oder ein Datum wie „30.10.“ wird zur Fälligkeit.
+- **Abgleich im Team:** Die App lädt die Aufgaben alle 30 Sekunden und beim Zurückkehren neu;
+  Änderungen zeigt sie sofort und korrigiert sie, wenn der Server etwas anderes sagt.
 
 ## Drucken
 

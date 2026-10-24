@@ -28,6 +28,8 @@ import { createGraph, type M365Credentials } from "./migration/m365/graph";
 import { createRunner } from "./migration/runner";
 import { createSyncRunner } from "./migration/sync-runner";
 import { createSyncs } from "./migration/syncs";
+import { createTaskRoutes } from "./tasks/routes";
+import { createTaskStore } from "./tasks/store";
 
 /** Request headers that go on to Stalwart; cookies and the browser's own auth stay here. */
 const FORWARDED_REQUEST_HEADERS = [
@@ -94,11 +96,12 @@ const sessionAccountsOf =
     });
     if (!response.ok) return null;
     const { accounts } = (await response.json()) as {
-      accounts: Record<string, { isReadOnly?: boolean }>;
+      accounts: Record<string, { isReadOnly?: boolean; isPersonal?: boolean }>;
     };
     return Object.entries(accounts).map(([id, account]) => ({
       id,
       isReadOnly: Boolean(account.isReadOnly),
+      isPersonal: Boolean(account.isPersonal),
     }));
   };
 
@@ -168,11 +171,13 @@ export const createApp = async (env: Env) => {
     });
     app.route("/api/company", company);
   }
+  const accountsOf = sessionAccountsOf(env, auth, grants);
+  app.route("/api/tasks", createTaskRoutes({ store: createTaskStore(db), accountsOf }));
   app.route(
     "/api/categories",
     createCategoryRoutes({
       store: categories,
-      accountsOf: sessionAccountsOf(env, auth, grants),
+      accountsOf,
     }),
   );
   app.all("/jmap", (c) => proxy(c.req.raw));

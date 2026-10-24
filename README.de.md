@@ -90,6 +90,13 @@ reicht ein VPS mit 2 vCPU und 4 GB RAM.
 - **Drucken**: die Mail allein, sauber auf A4 (auch per Strg+P).
 - **Sofort aktuell**: neue Mails und Änderungen von Kollegen erscheinen ohne Neuladen (JMAP Push).
 
+### ✅ Aufgaben
+
+- **Aufgaben für dich und das Team**: Meine Aufgaben, Heute, Demnächst, Erledigt; ein Board fürs eigene Postfach und eins pro gemeinsamem Postfach (info@, rechnung@).
+- **Liste oder Kanban**: nach Fälligkeit gruppiert, oder als Board mit Offen, In Arbeit, Wartet, Erledigt – Karten zwischen den Spalten ziehen.
+- **Aus einer Mail**: „Aufgabe“ (oder `t`) macht aus einer Mail eine Aufgabe mit Betreff, Fälligkeit und Zuständigem; die Mail zeigt danach ihre Aufgabe.
+- **Schnelleingabe**: „Rückruf Hoffmann morgen“ ist morgen fällig; Checkliste, Notiz, Zuständige.
+
 ### 📅 Kalender
 
 - **Tag, Woche, Monat und Liste**, Termine mit der Maus verschieben, wiederkehrende Termine mit Ausnahmen.
@@ -126,8 +133,8 @@ Module, die ein Betrieb einschaltet, wenn er sie braucht – wer sie nicht brauc
 | Modul | Stand |
 | --- | --- |
 | Mail, Kalender, Kontakte, Firmenverwaltung | ✅ verfügbar |
-| Aufgaben | geplant |
-| Kanban-Board | geplant |
+| Aufgaben und Kanban-Board | ✅ verfügbar |
+| Team-Chat | geplant |
 | Rapportzettel (Arbeitsnachweise, z. B. im Handwerk) | geplant |
 
 Was als Nächstes kommt, steht in der [Roadmap](ROADMAP.md).

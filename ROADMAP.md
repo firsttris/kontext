@@ -8,6 +8,9 @@ ein Plan, kein Versprechen; Wünsche und Hinweise gern als
 
 | Funktion | Worum es geht |
 | --- | --- |
+| **Aufgaben überall im Kontext** | Offene Aufgaben am Kontakt, Fälliges im Kalender, Heute-Fälliges und neu Zugewiesenes in der Glocke, Erinnerungen als Benachrichtigung, „Aufgaben erstellen“ für mehrere Mails. |
+| **Team-Chat** | Kanäle pro Team bzw. gemeinsamem Postfach, Direktnachrichten, @Erwähnungen, Dateien; „Über diese Mail sprechen“ statt intern weiterzuleiten. |
+| **Benachrichtigungen bei geschlossener App** | Web Push: Stalwart kann ihn selbst senden (`urn:ietf:params:jmap:webpush-vapid`), damit das Handy auch bei ganz geschlossener App neue Mails meldet; der Chat braucht ihn ebenso. |
 | **Unterhaltungen** | Antworten zu einem Verlauf zusammenfassen: eine Zeile pro Unterhaltung in der Liste, alle Mails darin untereinander im Lesebereich. Die Daten (`threadId`) lädt die App schon. |
 | **Senden rückgängig** | Nach „Senden“ ein paar Sekunden, um es zurückzunehmen (Tippfehler, falscher Empfänger). |
 | **Später senden** | Eine Mail zu einem Zeitpunkt verschicken lassen, etwa morgen um 8 Uhr. |
@@ -18,7 +21,7 @@ ein Plan, kein Versprechen; Wünsche und Hinweise gern als
 
 | Funktion | Worum es geht |
 | --- | --- |
-| **Benachrichtigungen bei geschlossener App** | Web Push über den Kontext-Server, damit das Handy auch bei ganz geschlossener App eine neue Mail meldet (heute: solange Kontext offen ist, auch im Hintergrund). |
+| **Mehr für Aufgaben** | Eigene Spalten pro Board, wiederkehrende Aufgaben, Regel-Aktion „Aufgabe anlegen“, Abgleich mit Thunderbird und Handy-Apps über CalDAV (VTODO). |
 | **Newsletter abbestellen** | Ein Knopf an Mails mit `List-Unsubscribe`, der die Abmeldung erledigt. |
 | **Bilder je Absender erlauben** | Bilder aus dem Internet für bekannte Absender immer laden, statt bei jeder Mail neu zu fragen. |
 | **Lesebestätigung** | Anfordern und beantworten, wie bei Behörden und Steuerberatern üblich. |
@@ -38,6 +41,8 @@ ein Plan, kein Versprechen; Wünsche und Hinweise gern als
 
 ## Zuletzt fertig geworden
 
+Aufgaben mit Liste und Kanban-Board (eigene und pro gemeinsamem Postfach, aus Mails heraus, mit
+Checkliste, Zuständigen und Fälligkeit), Kontext als installierbare App (PWA),
 Regeln (auch für gemeinsame Postfächer und auf vorhandene Mails), Kategorien (im Team geteilt,
 per Regel gesetzt, beim Umzug übernommen), mehrere Mails auf einmal bearbeiten, Drucken,
 Benachrichtigungen, Speicherplatz, Warnungen vor gefälschten Absendern, Anhänge mit Vorschau,

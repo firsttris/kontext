@@ -8,7 +8,7 @@ import { z } from "zod";
 import { categoriesSchema } from "./categories";
 import type { CategoryStore } from "./store";
 
-export type SessionAccount = { id: string; isReadOnly: boolean };
+export type SessionAccount = { id: string; isReadOnly: boolean; isPersonal: boolean };
 
 export type CategoryDeps = {
   store: CategoryStore;

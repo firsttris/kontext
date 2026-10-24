@@ -5,6 +5,7 @@ import {
   ChevronLeft,
   FolderInput,
   Forward,
+  ListChecks,
   ListFilter,
   MailOpen,
   MoreHorizontal,
@@ -34,10 +35,12 @@ import { shortAddress } from "@/lib/mail-accounts";
 import { mailboxRights } from "@/lib/mailboxes";
 import { moveTargets } from "@/lib/move-targets";
 import { type Rule, ruleFromSender } from "@/lib/rules";
+import { mailLink, plainSubject } from "@/lib/tasks";
 import { m } from "@/paraglide/messages";
 import { CategoryMenu } from "../categories/category-menu";
 import { OwnRuleDialog } from "../rules/rule-dialog";
 import { usePersonalAccountId } from "../settings/queries";
+import { TaskDialog, type TaskStart } from "../tasks/task-dialog";
 import { useEmailActions } from "./actions";
 import { usePrintMail } from "./print-mail";
 import { useAllMailboxes, useMailAccounts } from "./queries";
@@ -60,6 +63,13 @@ export const Toolbar = ({
   const ownMailbox = usePersonalAccountId() === accountId;
   const sender = email.from?.[0]?.email;
   const [rule, setRule] = useState<Rule | null>(null);
+  const [task, setTask] = useState<TaskStart | null>(null);
+  const newTask = () =>
+    setTask({
+      title: plainSubject(email.subject ?? ""),
+      accountId,
+      link: mailLink(accountId, email),
+    });
   const close = () =>
     navigate({ to: ".", search: (prev) => ({ ...prev, email: undefined, compose: undefined }) });
 
@@ -109,6 +119,7 @@ export const Toolbar = ({
     U: canMarkSeen ? () => void run(() => actions.setSeen([email.id], false), true) : undefined,
     "!": toggleSpam,
     p: print,
+    t: newTask,
     esc: () => void close(),
   });
 
@@ -202,6 +213,15 @@ export const Toolbar = ({
         </Button>
       ) : null}
       {canFlag ? <CategoryMenu accountId={accountId} mailbox={mailboxLabel} email={email} /> : null}
+      <Button
+        variant="ghost"
+        size="icon"
+        aria-label={m.tasks_from_mail_title()}
+        title={`${m.tasks_from_mail_title()} (t)`}
+        onClick={newTask}
+      >
+        <ListChecks size={16} strokeWidth={1.75} />
+      </Button>
       {canRemove ? (
         <MenuRoot>
           <MenuTrigger asChild>
@@ -299,6 +319,17 @@ export const Toolbar = ({
         </MenuContent>
       </MenuRoot>
       {rule ? <OwnRuleDialog initial={rule} onClose={() => setRule(null)} /> : null}
+      {task ? (
+        <TaskDialog
+          start={task}
+          onClose={() => setTask(null)}
+          onArchive={
+            canRemove && mailbox.role !== "archive"
+              ? () => run(() => actions.archive([email.id], mailbox.id), true)
+              : undefined
+          }
+        />
+      ) : null}
     </div>
   );
 };

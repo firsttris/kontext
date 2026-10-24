@@ -34,7 +34,7 @@ export type ShortcutGroup = "general" | "mail" | "calendar" | "contacts";
 /** Every shortcut with its group; `keys` as shown in the help ("j / k"). */
 export const SHORTCUTS: { group: ShortcutGroup; keys: string[]; action: string }[] = [
   { group: "general", keys: ["?"], action: "help" },
-  { group: "general", keys: ["1", "2", "3"], action: "apps" },
+  { group: "general", keys: ["1", "2", "3", "4"], action: "apps" },
   { group: "mail", keys: ["c"], action: "compose" },
   { group: "mail", keys: ["/"], action: "search" },
   { group: "mail", keys: ["j", "k"], action: "nextPrev" },
@@ -48,6 +48,7 @@ export const SHORTCUTS: { group: ShortcutGroup; keys: string[]; action: string }
   { group: "mail", keys: ["U"], action: "unread" },
   { group: "mail", keys: ["x"], action: "select" },
   { group: "mail", keys: ["p"], action: "print" },
+  { group: "mail", keys: ["t"], action: "newTask" },
   { group: "mail", keys: ["Esc"], action: "close" },
   { group: "calendar", keys: ["c"], action: "newEvent" },
   { group: "calendar", keys: ["t"], action: "today" },

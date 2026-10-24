@@ -26,15 +26,15 @@ const categories = [{ keyword: "angebot", name: "Angebot", color: "violet" }];
 
 describe("/api/categories", () => {
   it("lists the categories of the person's accounts only", async () => {
-    const { send } = setup([{ id: "own", isReadOnly: false }]);
+    const { send } = setup([{ id: "own", isReadOnly: false, isPersonal: true }]);
     expect(await (await send("GET", "/")).json()).toEqual({ own: [] });
     expect((await setup(null).send("GET", "/")).status).toBe(401);
   });
 
   it("changes them only in an account the person may write to", async () => {
     const { send, saved } = setup([
-      { id: "own", isReadOnly: false },
-      { id: "info", isReadOnly: true },
+      { id: "own", isReadOnly: false, isPersonal: true },
+      { id: "info", isReadOnly: true, isPersonal: false },
     ]);
     expect((await send("PUT", "/own", { categories })).status).toBe(200);
     expect(saved.own).toEqual(categories);

@@ -3,7 +3,7 @@
  * core schema for SQLite (https://www.better-auth.com/docs/concepts/database#core-schema);
  * `stalwart_grant` holds the Stalwart tokens of each session, encrypted.
  */
-import { integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
+import { index, integer, primaryKey, real, sqliteTable, text } from "drizzle-orm/sqlite-core";
 
 const timestamps = {
   createdAt: integer("created_at", { mode: "timestamp_ms" }).notNull(),
@@ -125,3 +125,52 @@ export const mailCategories = sqliteTable("mail_categories", {
   categories: text("categories").notNull(),
   updatedAt: integer("updated_at", { mode: "timestamp_ms" }).notNull(),
 });
+
+/**
+ * Tasks (src/features/tasks/): each belongs to one Stalwart account – the own mailbox or a shared
+ * one like info@ – and whoever can open that account sees it. `status` is the board column,
+ * `position` the order within it; the checklist is JSON.
+ */
+export const tasks = sqliteTable(
+  "tasks",
+  {
+    id: text("id").primaryKey(),
+    accountId: text("account_id").notNull(),
+    title: text("title").notNull(),
+    notes: text("notes").notNull(),
+    status: text("status").notNull(),
+    position: real("position").notNull(),
+    /** The personal account id of the person responsible, or null. */
+    assigneeId: text("assignee_id"),
+    /** YYYY-MM-DD, and HH:MM when the task is due at a time. */
+    dueDate: text("due_date"),
+    dueTime: text("due_time"),
+    checklist: text("checklist").notNull(),
+    createdBy: text("created_by").notNull(),
+    completedAt: integer("completed_at", { mode: "timestamp_ms" }),
+    ...timestamps,
+  },
+  (table) => [index("tasks_account").on(table.accountId)],
+);
+
+/** What a task is about: a mail (with its thread), a contact, an appointment. */
+export const taskLinks = sqliteTable(
+  "task_links",
+  {
+    taskId: text("task_id")
+      .notNull()
+      .references(() => tasks.id, { onDelete: "cascade" }),
+    kind: text("kind").notNull(),
+    accountId: text("account_id").notNull(),
+    ref: text("ref").notNull(),
+    /** The mail's thread, so every mail of the conversation shows the task. */
+    threadId: text("thread_id"),
+    /** A snapshot to show without loading the mail, e.g. its subject and sender. */
+    label: text("label").notNull(),
+    detail: text("detail").notNull(),
+  },
+  (table) => [
+    primaryKey({ columns: [table.taskId, table.kind, table.ref] }),
+    index("task_links_ref").on(table.ref),
+  ],
+);

@@ -119,7 +119,7 @@ const Rail = ({ onHelp, bell }: { onHelp: () => void; bell: ReactNode }) => {
 export const AppShell = ({ children, bell }: { children: ReactNode; bell?: ReactNode }) => {
   const navigate = useNavigate();
   const [help, setHelp] = useState(false);
-  // "?" shows all shortcuts, 1–3 switch between the apps.
+  // "?" shows all shortcuts, 1–4 switch between the apps.
   useShortcuts({
     "?": () => setHelp(true),
     ...Object.fromEntries(

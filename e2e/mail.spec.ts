@@ -554,8 +554,9 @@ test.describe("Alle Posteingänge am Handy @phone", () => {
       .first()
       .click();
     await page.getByRole("link", { name: /Alle Posteingänge/ }).click();
+    // Mails of info@ among the own (other tests add newer mails, so no particular one).
     await expect(
-      page.getByRole("list", { name: "Alle Posteingänge" }).getByText("Anfrage Wärmepumpe Neubau"),
+      page.getByRole("list", { name: "Alle Posteingänge" }).getByText("info@", { exact: true }).first(),
     ).toBeVisible();
   });
 });

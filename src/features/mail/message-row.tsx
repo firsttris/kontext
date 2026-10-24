@@ -1,14 +1,16 @@
 /** One mail in the list: who, when, subject, categories, preview; and its box to pick it. */
 import { Link, useParams } from "@tanstack/react-router";
-import { Paperclip, Star, Users } from "lucide-react";
+import { ListChecks, Paperclip, Star, Users } from "lucide-react";
 import { Highlighted } from "@/components/highlighted";
 import { isFlagged, isUnread } from "@/jmap/mail";
 import { categoriesOn } from "@/lib/categories";
 import { cn } from "@/lib/cn";
 import { displayName, formatAddressList, listDate } from "@/lib/format";
+import { tasksOfMail } from "@/lib/tasks";
 import { m } from "@/paraglide/messages";
 import { CategoryChips } from "../categories/category-chips";
 import { useCategoryMap } from "../categories/queries";
+import { useTasks } from "../tasks/queries";
 import type { Row } from "./list-frame";
 import { type DraggedMail, startMailDrag } from "./mail-drag";
 
@@ -40,6 +42,9 @@ export const MessageRow = ({
   const categories = categoriesOn(
     email.keywords,
     useCategoryMap()[account?.id ?? routeAccount ?? ""] ?? [],
+  );
+  const task = tasksOfMail(useTasks().tasks, email.id, email.threadId).find(
+    (candidate) => candidate.status !== "done",
   );
   const who = showRecipient ? formatAddressList(email.to) : displayName(email.from?.[0]);
   const boxVisible = selecting || selected;
@@ -122,6 +127,12 @@ export const MessageRow = ({
               >
                 <Users size={11} strokeWidth={2} aria-hidden="true" />
                 {account.label}
+              </span>
+            ) : null}
+            {task ? (
+              <span className="inline-flex h-[18px] shrink-0 items-center gap-1 rounded-full bg-accent/10 px-1.5 text-[11px] font-medium text-accent">
+                <ListChecks size={11} strokeWidth={2.25} aria-hidden="true" />
+                {m.tasks_from_mail()}
               </span>
             ) : null}
             <CategoryChips categories={categories} max={2} />
