@@ -186,6 +186,7 @@ export const useChatActions = (me: string) => {
         createdAt: new Date().toISOString(),
         editedAt: null,
         deleted: false,
+        call: null,
       };
       addMessage(queryClient, pending);
       return { pending };

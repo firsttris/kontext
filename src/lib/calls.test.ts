@@ -3,9 +3,11 @@ import {
   type Call,
   callDuration,
   callerState,
+  callLine,
   firstNameList,
   RING_TIMEOUT_MS,
   ringingCall,
+  roughDuration,
 } from "./calls";
 
 const call = (
@@ -18,6 +20,8 @@ const call = (
   startedAt,
   video: false,
   participants: [startedBy],
+  everyone: [startedBy],
+  answeredAt: null,
 });
 
 const channels = [
@@ -88,5 +92,25 @@ describe("firstNameList", () => {
     const names: Record<string, string> = { anna: "Anna Schmidt", max: "Max Bauer" };
     expect(firstNameList(["anna"], (id) => names[id] ?? "")).toBe("Anna");
     expect(firstNameList(["anna", "max"], (id) => names[id] ?? "")).toBe("Anna, Max");
+  });
+});
+
+describe("roughDuration", () => {
+  it("rounds to minutes, with hours from 60 on", () => {
+    expect(roughDuration(20)).toBe("unter 1 Min");
+    expect(roughDuration(90)).toBe("2 Min");
+    expect(roughDuration(3900)).toBe("1 Std 5 Min");
+  });
+});
+
+describe("callLine", () => {
+  const record = { video: false, meeting: false, participants: ["jonas", "anna"], durationS: 300 };
+  it("says what kind of call it was and how long", () => {
+    expect(callLine(record)).toBe("Anruf · 5 Min");
+    expect(callLine({ ...record, video: true })).toBe("Videoanruf · 5 Min");
+    expect(callLine({ ...record, meeting: true, participants: ["a", "b", "c"] })).toBe(
+      "Besprechung · 3 dabei · 5 Min",
+    );
+    expect(callLine({ ...record, durationS: null })).toBe("Verpasster Anruf");
   });
 });

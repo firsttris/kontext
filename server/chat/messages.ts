@@ -5,7 +5,7 @@
 import { and, count, desc, eq, exists, gt, inArray, isNull, lt, or, sql } from "drizzle-orm";
 import type { Db } from "../db";
 import * as schema from "../db/schema";
-import { type Card, type Message, messageSummary } from "./chat";
+import { type CallRecord, type Card, type Message, messageSummary } from "./chat";
 import type { ChatFiles } from "./files";
 
 export type NewPost = {
@@ -15,6 +15,8 @@ export type NewPost = {
   mentions: string[];
   cards: Card[];
   fileIds: string[];
+  /** Only from the server: the line for a call that ended. */
+  call?: CallRecord;
 };
 
 /** A message that shares a mail, with how many messages followed it in its channel. */
@@ -96,6 +98,7 @@ export const createMessageStore = (db: Db, files: ChatFiles): MessageStore => {
       createdAt: row.createdAt.toISOString(),
       editedAt: row.editedAt?.toISOString() ?? null,
       deleted: Boolean(row.deletedAt),
+      call: row.call && !row.deletedAt ? (JSON.parse(row.call) as CallRecord) : null,
     }));
   };
 
@@ -119,7 +122,7 @@ export const createMessageStore = (db: Db, files: ChatFiles): MessageStore => {
         .limit(limit);
       return complete(rows);
     },
-    post: async ({ channelId, authorId, text, mentions, cards, fileIds }) => {
+    post: async ({ channelId, authorId, text, mentions, cards, fileIds, call }) => {
       const row = {
         id: crypto.randomUUID(),
         channelId,
@@ -129,6 +132,7 @@ export const createMessageStore = (db: Db, files: ChatFiles): MessageStore => {
         createdAt: stamp(),
         editedAt: null,
         deletedAt: null,
+        call: call ? JSON.stringify(call) : null,
       };
       await db.insert(schema.chatMessages).values(row);
       if (cards.length) {
@@ -207,7 +211,7 @@ export const createMessageStore = (db: Db, files: ChatFiles): MessageStore => {
     remove: async (id) => {
       await db
         .update(schema.chatMessages)
-        .set({ text: "", mentions: "[]", deletedAt: new Date() })
+        .set({ text: "", mentions: "[]", deletedAt: new Date(), call: null })
         .where(eq(schema.chatMessages.id, id));
       await db.delete(schema.chatCards).where(eq(schema.chatCards.messageId, id));
       await files.removeOfMessage(id);

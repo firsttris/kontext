@@ -118,6 +118,7 @@ const memoryMessages = () => {
         createdAt: new Date().toISOString(),
         editedAt: null,
         deleted: false,
+        call: null,
       };
       messages.push(message);
       return message;

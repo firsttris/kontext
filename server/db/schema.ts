@@ -225,6 +225,8 @@ export const chatMessages = sqliteTable(
     editedAt: integer("edited_at", { mode: "timestamp_ms" }),
     /** A deleted message keeps its place ("Nachricht gelöscht") but loses its content. */
     deletedAt: integer("deleted_at", { mode: "timestamp_ms" }),
+    /** JSON CallRecord: a call that ended here (server/calls/), else null. */
+    call: text("call"),
   },
   (table) => [index("chat_messages_channel").on(table.channelId, table.createdAt)],
 );

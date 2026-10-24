@@ -111,7 +111,7 @@ reicht ein VPS mit 2 vCPU und 4 GB RAM.
 - **Fotos und Dateien**: mit der Handykamera, per Ziehen oder Einfügen; Fotos werden vor dem Senden verkleinert.
 - **Mails, Aufgaben und Kontakte als Karten**: „Besprechen“ an einer Mail (`b`) spricht im Kanal darüber, statt sie intern weiterzuleiten; die Mail zeigt danach, wo sie besprochen wurde. Öffnen kann die Karte nur, wer das Postfach sehen darf – kopiert wird nichts.
 - **Aufgabe aus einer Nachricht**, in beide Richtungen verknüpft.
-- **Anrufe und Videoanrufe** direkt aus der Unterhaltung: eine Kollegin anrufen oder im Kanal eine Besprechung starten, der die anderen beitreten; stummschalten, Kamera, Bildschirm teilen, und das Gespräch bleibt offen, während du zur Mail wechselst. Läuft auf dem eigenen Server ([LiveKit](https://github.com/livekit/livekit), optional).
+- **Anrufe und Videoanrufe** direkt aus der Unterhaltung: eine Kollegin anrufen oder im Kanal eine Besprechung starten, der die anderen beitreten; stummschalten, Kamera, Bildschirm teilen, und das Gespräch bleibt offen, während du zur Mail wechselst; verpasste Anrufe und die Dauer stehen im Verlauf. Läuft auf dem eigenen Server ([LiveKit](https://github.com/livekit/livekit), optional).
 - **Suche** über alle deine Kanäle; eigene Nachrichten bearbeiten oder löschen; Kanäle stummschalten, verlassen oder löschen.
 - **Am Handy**: ein eigener Tab, Unterhaltungen als Sprechblasen.
 

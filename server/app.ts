@@ -232,6 +232,16 @@ export const createApp = async (env: Env) => {
         },
         nameOf: async (request) => (await infoOf(request))?.name ?? "",
         notify: pusher.notify,
+        postCall: (channelId, authorId, call) =>
+          messages.post({
+            channelId,
+            authorId,
+            text: "",
+            mentions: [],
+            cards: [],
+            fileIds: [],
+            call,
+          }),
       },
       createCallState(),
     );

@@ -45,6 +45,7 @@ const message = (id: string, authorId: string, createdAt: string, text = "Hallo"
   cards: [],
   editedAt: null,
   deleted: false,
+  call: null,
   createdAt,
 });
 

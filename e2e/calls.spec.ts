@@ -66,6 +66,17 @@ test.describe("Anrufe", () => {
     await expect(panel).toHaveCount(0);
     // The other side hung up: Anna's call ends too.
     await expect(annasPanel).toHaveCount(0, { timeout: 15_000 });
+    // Both conversations keep a line of the call.
+    await page.getByRole("link", { name: /^Chat/ }).first().click();
+    await page
+      .getByRole("navigation", { name: "Direktnachrichten" })
+      .first()
+      .getByRole("link", { name: /Anna Weber/ })
+      .click();
+    await expect(page.getByRole("list", { name: "Nachrichten" })).toContainText(
+      /Videoanruf · (unter 1|\d+) Min/,
+      { timeout: 15_000 },
+    );
     await anna.close();
   });
 
@@ -83,6 +94,24 @@ test.describe("Anrufe", () => {
     const panel = callPanel(page);
     await expect(panel.getByRole("status")).toHaveText("Abgelehnt");
     await expect(panel).toHaveCount(0, { timeout: 10_000 });
+
+    // Nobody answered: "Keine Antwort" for Jonas, "Verpasster Anruf" with a way back for Sandra.
+    const history = page.getByRole("list", { name: "Nachrichten" });
+    await expect(history).toContainText("Keine Antwort", { timeout: 15_000 });
+    await sandra.page.getByRole("link", { name: /^Chat/ }).first().click();
+    await sandra.page
+      .getByRole("navigation", { name: "Direktnachrichten" })
+      .first()
+      .getByRole("link", { name: /Jonas Weber/ })
+      .click();
+    const missed = sandra.page.getByRole("list", { name: "Nachrichten" });
+    await expect(missed).toContainText("Verpasster Anruf");
+    await missed.getByRole("button", { name: "Zurückrufen" }).last().click();
+    await expect(page.getByRole("dialog", { name: "Sandra Klein ruft an" })).toBeVisible();
+    await callPanel(sandra.page).getByRole("button", { name: "Auflegen" }).click();
+    await expect(page.getByRole("dialog", { name: "Sandra Klein ruft an" })).toHaveCount(0, {
+      timeout: 15_000,
+    });
     await sandra.close();
   });
 
@@ -98,7 +127,7 @@ test.describe("Anrufe", () => {
         .click();
     }
 
-    await page.getByRole("button", { name: "Besprechung starten" }).click();
+    await page.getByRole("button", { name: "Besprechung starten", exact: true }).click();
     await expect(callPanel(page)).toBeVisible();
     const join = max.page.getByRole("button", { name: /Beitreten/ });
     await expect(join).toContainText("1", { timeout: 15_000 });
@@ -134,7 +163,7 @@ test.describe("Anrufe am Handy @phone", () => {
       .getByRole("navigation", { name: "Kanäle" })
       .getByRole("link", { name: /allgemein/ })
       .click();
-    await page.getByRole("button", { name: "Besprechung starten" }).click();
+    await page.getByRole("button", { name: "Besprechung starten", exact: true }).click();
     const panel = callPanel(page);
     await expect(panel).toBeVisible();
     const box = await panel.boundingBox();

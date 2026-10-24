@@ -35,6 +35,7 @@ const message = (text: string): Message => ({
   cards: [],
   editedAt: null,
   deleted: false,
+  call: null,
   createdAt: "2026-10-24T08:00:00Z",
 });
 

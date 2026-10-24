@@ -8,6 +8,7 @@ import { type KeyboardEvent, useState } from "react";
 import { Avatar } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { MenuContent, MenuItem, MenuRoot, MenuTrigger } from "@/components/ui/menu";
+import { CallLine } from "@/features/calls/call-line";
 import { ItemLink } from "@/features/links/item-link";
 import { useTasks } from "@/features/tasks/queries";
 import { firstName, keptMentions, type Message, type MessageRun, type Person } from "@/lib/chat";
@@ -164,6 +165,8 @@ const Item = ({
               setEditing(false);
             }}
           />
+        ) : message.call ? (
+          <CallLine call={message.call} channelId={message.channelId} own={own} />
         ) : message.deleted ? (
           <p className="m-0 rounded-2xl border border-dashed border-border px-3 py-1.5 text-[14px] text-muted italic md:border-0 md:p-0">
             {m.chat_message_deleted()}

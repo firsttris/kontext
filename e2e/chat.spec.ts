@@ -66,7 +66,11 @@ test.describe("Chat", () => {
     await expect(page.getByText("Sandra schreibt …")).toHaveCount(0);
     const sent = await page.evaluate(async () => {
       const { channels } = await (await fetch("/api/chat/channels")).json();
-      const direct = channels.find((c: { kind: string }) => c.kind === "direct");
+      // The conversation with Sandra (other direct ones may exist, e.g. from the call tests).
+      const direct = channels.find(
+        (c: { kind: string; last: { text: string } | null }) =>
+          c.kind === "direct" && c.last?.text.endsWith("mache ich gleich"),
+      );
       const { messages } = await (await fetch(`/api/chat/channels/${direct.id}/messages`)).json();
       return messages[0];
     });

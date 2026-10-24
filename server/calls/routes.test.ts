@@ -1,7 +1,7 @@
 // @vitest-environment node
 import { decodeJwt, SignJWT } from "jose";
 import { describe, expect, it } from "vitest";
-import type { Channel, Viewer } from "../chat/chat";
+import type { Channel, Message, Viewer } from "../chat/chat";
 import { createHub, type LiveEvent } from "../live/hub";
 import { participantMetadata, type RoomEvent, roomOf } from "./calls";
 import { type LiveKitConfig, verifyWebhook } from "./livekit";
@@ -36,7 +36,8 @@ const setup = () => {
   for (const me of ["jonas", "anna", "max"]) {
     hub.subscribe({ me, accountIds: [me] }, (event) => heard.push({ who: me, event }));
   }
-  const rung: { who: string[]; title: string }[] = [];
+  const rung: { who: string[]; title: string; body: string }[] = [];
+  const posted: Message[] = [];
   const { app, receive } = createCallRoutes(
     {
       livekit,
@@ -48,7 +49,25 @@ const setup = () => {
         return me ? { me, accountIds: [me] } : null;
       },
       nameOf: async (request) => `Name of ${request.headers.get("x-who")}`,
-      notify: async (who, notice) => void rung.push({ who, title: notice.title }),
+      notify: async (who, notice) =>
+        void rung.push({ who, title: notice.title, body: notice.body }),
+      postCall: async (channelId, authorId, call) => {
+        const message: Message = {
+          id: `m${posted.length + 1}`,
+          channelId,
+          authorId,
+          text: "",
+          mentions: [],
+          files: [],
+          cards: [],
+          createdAt: new Date().toISOString(),
+          editedAt: null,
+          deleted: false,
+          call,
+        };
+        posted.push(message);
+        return message;
+      },
     },
     createCallState(),
   );
@@ -61,7 +80,7 @@ const setup = () => {
         "content-type": "application/json",
       },
     });
-  return { call, receive, heard, rung };
+  return { call, receive, heard, rung, posted };
 };
 
 /** A webhook as LiveKit signs it: a JWT with the body's SHA-256. */
@@ -119,7 +138,7 @@ describe("/api/calls", () => {
     };
     expect((await webhook(joined("jonas", roomOf("dm"), "Jonas Weber"))).status).toBe(204);
     await new Promise((resolve) => setTimeout(resolve, 0));
-    expect(rung).toEqual([{ who: ["anna"], title: "Jonas Weber" }]);
+    expect(rung).toEqual([{ who: ["anna"], title: "Jonas Weber", body: "Videoanruf" }]);
     const told = heard.filter(({ event }) => event.type === "call").map(({ who }) => who);
     expect(told.sort()).toEqual(["anna", "jonas"]);
 
@@ -177,6 +196,60 @@ const postWebhook = (
     body,
     headers: authorization ? { authorization } : {},
   });
+
+describe("the line a call leaves", () => {
+  const event = (
+    kind: string,
+    identity: string,
+    seconds: number,
+    room = roomOf("dm"),
+  ): RoomEvent => ({
+    event: kind,
+    room: { name: room },
+    participant: { identity, name: identity, metadata: participantMetadata(false) },
+    createdAt: String(1767225600 + seconds),
+  });
+
+  it("writes how long an answered call ran and tells who sees the conversation", async () => {
+    const { receive, posted, heard, rung } = setup();
+    await receive(event("participant_joined", "jonas", 0));
+    await receive(event("participant_joined", "anna", 10));
+    await receive(event("participant_left", "anna", 310));
+    await receive(event("participant_left", "jonas", 311));
+    expect(posted).toHaveLength(1);
+    expect(posted[0]).toMatchObject({
+      channelId: "dm",
+      authorId: "jonas",
+      call: { video: false, meeting: false, participants: ["jonas", "anna"], durationS: 301 },
+    });
+    const told = heard.filter(({ event }) => event.type === "message").map(({ who }) => who);
+    expect(told.sort()).toEqual(["anna", "jonas"]);
+    expect(rung.map(({ body }) => body)).toEqual(["Anruf"]);
+  });
+
+  it("writes a missed call and replaces the ringing notification", async () => {
+    const { receive, posted, rung } = setup();
+    await receive(event("participant_joined", "jonas", 0));
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    await receive(event("participant_left", "jonas", 45));
+    expect(posted[0]?.call).toMatchObject({ durationS: null, participants: ["jonas"] });
+    expect(rung.map(({ who, body }) => [who, body])).toEqual([
+      [["anna"], "Anruf"],
+      [["anna"], "Verpasster Anruf"],
+    ]);
+  });
+
+  it("writes a meeting in a channel from its start", async () => {
+    const { receive, posted, rung } = setup();
+    await receive(event("participant_joined", "jonas", 0, roomOf("baustelle")));
+    await receive(event("participant_left", "jonas", 60, roomOf("baustelle")));
+    expect(posted[0]).toMatchObject({
+      channelId: "baustelle",
+      call: { meeting: true, durationS: 60 },
+    });
+    expect(rung).toEqual([]);
+  });
+});
 
 describe("verifyWebhook", () => {
   it("also takes the token after Bearer", async () => {

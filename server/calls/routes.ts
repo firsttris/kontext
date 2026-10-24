@@ -1,16 +1,18 @@
 /**
  * /api/calls: the calls one may see, a ticket into a channel's call, saying no to a ringing call,
  * and LiveKit's webhooks. Every change goes out on the live connection to whoever may see the
- * channel; a new direct call also rings on the others' devices (Web Push).
+ * channel; a new direct call also rings on the others' devices (Web Push). A call that ended
+ * leaves a line in its conversation ("Anruf · 5 Min", "Verpasster Anruf").
  */
 import { Hono } from "hono";
-import { type Channel, canSee, type Viewer } from "../chat/chat";
+import { type CallRecord, type Channel, canSee, type Message, type Viewer } from "../chat/chat";
 import type { Hub } from "../live/hub";
 import {
   applyRoomEvent,
   type Call,
   type Calls,
   callNotice,
+  callRecord,
   joinSchema,
   participantMetadata,
   type RoomEvent,
@@ -28,6 +30,8 @@ export type CallDeps = {
   viewerOf: (request: Request) => Promise<Viewer | null>;
   nameOf: (request: Request) => Promise<string>;
   notify?: (memberIds: string[], notice: ReturnType<typeof callNotice>) => Promise<void>;
+  /** Writes the line of an ended call into its conversation, as the caller. */
+  postCall?: (channelId: string, authorId: string, call: CallRecord) => Promise<Message>;
 };
 
 /** The calls as they stand, changed only through `apply`. */
@@ -54,21 +58,41 @@ export const createCallRoutes = (deps: CallDeps, state: CallState) => {
     hub.publish({ type: "call", channelId, call }, (viewer) => canSee(channel, viewer));
   };
 
-  /** The caller's name comes with the webhook: it is the name in their join token. */
+  /** Whom a call rang, and the caller's name (from the webhook: the name in their token). */
+  const rung = new Map<string, { who: string[]; caller: string }>();
+
   const ring = async (call: Call, caller: string) => {
     const channel = await channelOf(call.channelId);
     const who = channel ? ringWho(channel, call) : [];
-    if (!who.length || !deps.notify) return;
-    await deps.notify(who, callNotice(call.channelId, caller, call.video));
+    if (!who.length) return;
+    rung.set(call.channelId, { who, caller });
+    await deps.notify?.(who, callNotice(call.channelId, caller, call.video));
+  };
+
+  /** The line in the conversation, and "Verpasster Anruf" on the devices it rang on. */
+  const logEnded = async (call: Call, endedAt: string) => {
+    const channel = await channelOf(call.channelId);
+    const ringing = rung.get(call.channelId);
+    rung.delete(call.channelId);
+    if (!channel || !deps.postCall) return;
+    const record = callRecord(call, endedAt, channel.kind);
+    const message = await deps.postCall(channel.id, call.startedBy, record);
+    hub.publish({ type: "message", channelId: channel.id, message }, (viewer) =>
+      canSee(channel, viewer),
+    );
+    if (record.durationS === null && ringing) {
+      await deps.notify?.(ringing.who, callNotice(channel.id, ringing.caller, call.video, true));
+    }
   };
 
   /** Applies one room event; also used to rebuild the calls after a restart. */
   const receive = async (event: RoomEvent) => {
-    const { channelId, started } = state.apply(event);
+    const { channelId, started, ended } = state.apply(event);
     if (!channelId) return;
     const call = state.all()[channelId] ?? null;
     await publishCall(channelId, call);
     if (started && call) void ring(call, event.participant?.name ?? "").catch(() => undefined);
+    if (ended) await logEnded(ended.call, ended.at).catch(() => undefined);
   };
 
   // LiveKit's webhooks: signed with the API secret, no session.

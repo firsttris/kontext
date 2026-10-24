@@ -5,6 +5,7 @@ import {
   channelName,
   chatNotice,
   directKey,
+  messageSummary,
   newChannelSchema,
   notifyWho,
 } from "./chat";
@@ -95,5 +96,22 @@ describe("chatNotice", () => {
     expect(
       channelLabel({ kind: "mailbox", name: null, accountId: "i" }, () => "info@weber.test"),
     ).toBe("info@");
+  });
+});
+
+describe("messageSummary of a call", () => {
+  const line = (durationS: number | null, meeting = false, video = false) =>
+    messageSummary({
+      text: "",
+      files: [],
+      cards: [],
+      call: { video, meeting, participants: ["jonas"], durationS },
+    });
+
+  it("names missed calls, calls, video calls and meetings", () => {
+    expect(line(null)).toBe("Verpasster Anruf");
+    expect(line(60)).toBe("Anruf");
+    expect(line(60, false, true)).toBe("Videoanruf");
+    expect(line(60, true, true)).toBe("Besprechung");
   });
 });

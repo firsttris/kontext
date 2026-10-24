@@ -10,7 +10,7 @@ ein Plan, kein Versprechen; Wünsche und Hinweise gern als
 | --- | --- |
 | **Aufgaben überall im Kontext** | Offene Aufgaben am Kontakt, Fälliges im Kalender, Heute-Fälliges und neu Zugewiesenes in der Glocke, Erinnerungen als Benachrichtigung, „Aufgaben erstellen“ für mehrere Mails. |
 | **Team-Chat: mehr** | Antworten im Faden, Reaktionen, Aufbewahrungsfrist, die der Chef einstellt. |
-| **Anrufe: mehr** | Videobesprechung am Kalendertermin, Gäste per Link (Kunden ohne Konto), „Verpasster Anruf“ und Gesprächsdauer im Verlauf. |
+| **Anrufe: mehr** | Videobesprechung am Kalendertermin, Gäste per Link (Kunden ohne Konto). |
 
 ## Danach
 
@@ -64,7 +64,8 @@ Wiedervorlage (eine Mail bis zu einem Zeitpunkt aus dem Weg, dann oben im Postei
 geschlossener App).
 Anrufe und Videobesprechungen im Chat (LiveKit auf dem eigenen Server): anrufen in
 Direktnachrichten, mit Klingeln auch bei geschlossener App, Besprechungen in Kanälen zum
-Beitreten, Bildschirm teilen, das Gespräch bleibt beim Wechsel zwischen den Apps offen.
+Beitreten, Bildschirm teilen, das Gespräch bleibt beim Wechsel zwischen den Apps offen;
+„Verpasster Anruf“ und Gesprächsdauer im Verlauf.
 Senden rückgängig und später senden, Textbausteine.
 Unterhaltungen beim Lesen (frühere Mails, Antworten seitdem, Zitate eingeklappt, „wer hat
 geantwortet“ in gemeinsamen Postfächern), auf Wunsch gruppiert.

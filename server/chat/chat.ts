@@ -63,6 +63,20 @@ export const cardSchema = z.object({
 });
 export type Card = z.infer<typeof cardSchema>;
 
+/**
+ * A call that ended, as a line in its conversation: who was in it and how long it ran. A direct
+ * call nobody answered has no duration ("Verpasster Anruf").
+ */
+export type CallRecord = {
+  video: boolean;
+  /** A meeting in a channel rather than a call in a direct conversation. */
+  meeting: boolean;
+  /** Everyone who was in it at some point, the caller first. */
+  participants: string[];
+  /** Seconds from the answer (direct) or the start (meeting) to the end; null: not answered. */
+  durationS: number | null;
+};
+
 export type Message = {
   id: string;
   channelId: string;
@@ -75,11 +89,28 @@ export type Message = {
   editedAt: string | null;
   /** Deleted by its author: it keeps its place, without content. */
   deleted: boolean;
+  /** A call that ended in this conversation (written by the server, not by a person). */
+  call: CallRecord | null;
 };
 
 /** What a message is about in one line: its text, else its card or file. */
-export const messageSummary = (message: Pick<Message, "text" | "files" | "cards">): string =>
-  message.text || message.cards[0]?.label || message.files[0]?.name || "";
+export const messageSummary = (
+  message: Pick<Message, "text" | "files" | "cards"> & { call?: CallRecord | null },
+): string =>
+  message.text ||
+  message.cards[0]?.label ||
+  message.files[0]?.name ||
+  (message.call ? callSummary(message.call) : "");
+
+/** A call in one line, as the channel list and notifications show it. */
+export const callSummary = (call: CallRecord): string =>
+  call.durationS === null
+    ? "Verpasster Anruf"
+    : call.meeting
+      ? "Besprechung"
+      : call.video
+        ? "Videoanruf"
+        : "Anruf";
 
 /** Per file; photos are made smaller in the app before they are sent. */
 export const MAX_FILE_BYTES = 25 * 1024 * 1024;

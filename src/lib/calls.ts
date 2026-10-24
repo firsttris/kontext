@@ -2,11 +2,13 @@
  * Calls in the chat as the app shows them: which call rings here, how long one has been talking,
  * and what the caller of a direct call is waiting for. Pure; what a call is: server/calls/calls.ts.
  */
+
+import { m } from "@/paraglide/messages";
 import type { Call } from "../../server/calls/calls";
-import type { Channel } from "../../server/chat/chat";
+import type { CallRecord, Channel } from "../../server/chat/chat";
 import { firstName } from "./chat";
 
-export type { Call };
+export type { Call, CallRecord };
 
 /** After this long without an answer the caller gives up ("Keine Antwort"). */
 export const RING_TIMEOUT_MS = 45_000;
@@ -73,3 +75,19 @@ export const callerState = ({
 /** Whom a call rings for, by first name: "Anna", "Anna, Max". */
 export const firstNameList = (ids: string[], nameOf: (id: string) => string): string =>
   ids.map((id) => firstName(nameOf(id))).join(", ");
+
+/** How long a call ran, roughly: "unter 1 Min", "12 Min", "1 Std 5 Min". */
+export const roughDuration = (seconds: number): string => {
+  const minutes = Math.round(seconds / 60);
+  if (minutes < 1) return m.call_under_minute();
+  if (minutes < 60) return m.call_minutes({ minutes });
+  return m.call_hours({ hours: Math.floor(minutes / 60), minutes: minutes % 60 });
+};
+
+/** The line an ended call leaves in its conversation. */
+export const callLine = (call: CallRecord): string => {
+  if (call.durationS === null) return m.call_line_missed();
+  const duration = roughDuration(call.durationS);
+  if (call.meeting) return m.call_line_meeting({ count: call.participants.length, duration });
+  return call.video ? m.call_line_video({ duration }) : m.call_line_audio({ duration });
+};

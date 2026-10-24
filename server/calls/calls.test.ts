@@ -2,8 +2,10 @@
 import { describe, expect, it } from "vitest";
 import {
   applyRoomEvent,
+  type Call,
   type Calls,
   callNotice,
+  callRecord,
   channelOfRoom,
   participantMetadata,
   type RoomEvent,
@@ -34,13 +36,15 @@ describe("rooms", () => {
 describe("applyRoomEvent", () => {
   it("opens a call with the first one in the room, with camera as they asked", () => {
     const result = applyRoomEvent({}, joined("jonas", true));
-    expect(result).toMatchObject({ channelId: "c1", started: true });
+    expect(result).toMatchObject({ channelId: "c1", started: true, ended: null });
     expect(result.calls.c1).toEqual({
       channelId: "c1",
       startedBy: "jonas",
       startedAt: "2026-01-01T00:00:00.000Z",
       video: true,
       participants: ["jonas"],
+      everyone: ["jonas"],
+      answeredAt: null,
     });
   });
 
@@ -48,7 +52,11 @@ describe("applyRoomEvent", () => {
     const { calls } = applyRoomEvent({}, joined("jonas"));
     const result = applyRoomEvent(calls, joined("anna", true));
     expect(result.started).toBe(false);
-    expect(result.calls.c1).toMatchObject({ startedBy: "jonas", video: false });
+    expect(result.calls.c1).toMatchObject({
+      startedBy: "jonas",
+      video: false,
+      answeredAt: "2026-01-01T00:00:00.000Z",
+    });
     expect(result.calls.c1?.participants).toEqual(["jonas", "anna"]);
   });
 
@@ -62,8 +70,12 @@ describe("applyRoomEvent", () => {
     calls = applyRoomEvent(calls, joined("anna")).calls;
     calls = applyRoomEvent(calls, left("jonas")).calls;
     expect(calls.c1?.participants).toEqual(["anna"]);
-    const last = applyRoomEvent(calls, left("anna"));
+    const last = applyRoomEvent(calls, left("anna"), new Date("2026-01-01T00:10:00Z"));
     expect(last).toMatchObject({ channelId: "c1", started: false });
+    expect(last.ended).toEqual({
+      call: expect.objectContaining({ everyone: ["jonas", "anna"] }),
+      at: "2026-01-01T00:10:00.000Z",
+    });
     expect(last.calls).toEqual({});
     const finished = applyRoomEvent(calls, {
       event: "room_finished",
@@ -77,7 +89,7 @@ describe("applyRoomEvent", () => {
     expect(applyRoomEvent(calls, joined("x", false, "other-room")).calls).toBe(calls);
     expect(
       applyRoomEvent(calls, { event: "track_published", room: { name: roomOf("c1") } }),
-    ).toEqual({ calls, channelId: null, started: false });
+    ).toEqual({ calls, channelId: null, started: false, ended: null });
     expect(applyRoomEvent({}, left("jonas")).channelId).toBeNull();
   });
 
@@ -88,12 +100,14 @@ describe("applyRoomEvent", () => {
 });
 
 describe("ringWho", () => {
-  const call = {
+  const call: Call = {
     channelId: "c1",
     startedBy: "jonas",
     startedAt: "",
     video: false,
     participants: ["jonas"],
+    everyone: ["jonas"],
+    answeredAt: null,
   };
 
   it("rings the others of a direct conversation", () => {
@@ -116,6 +130,46 @@ describe("callNotice", () => {
       body: "Videoanruf",
       url: "/chat?channel=c%201",
       tag: "call-c 1",
+    });
+  });
+});
+
+describe("callRecord", () => {
+  const call: Call = {
+    channelId: "c1",
+    startedBy: "jonas",
+    startedAt: "2026-01-01T00:00:00.000Z",
+    video: true,
+    participants: [],
+    everyone: ["jonas", "anna"],
+    answeredAt: "2026-01-01T00:00:20.000Z",
+  };
+
+  it("counts a direct call from the answer", () => {
+    expect(callRecord(call, "2026-01-01T00:05:20.000Z", "direct")).toEqual({
+      video: true,
+      meeting: false,
+      participants: ["jonas", "anna"],
+      durationS: 300,
+    });
+  });
+
+  it("marks a direct call nobody answered as missed", () => {
+    const missed = { ...call, everyone: ["jonas"], answeredAt: null };
+    expect(callRecord(missed, "2026-01-01T00:00:45.000Z", "direct").durationS).toBeNull();
+  });
+
+  it("counts a meeting from its start, even alone", () => {
+    const alone = { ...call, everyone: ["jonas"], answeredAt: null };
+    expect(callRecord(alone, "2026-01-01T00:01:00.000Z", "channel").durationS).toBe(60);
+  });
+});
+
+describe("a missed call", () => {
+  it("replaces the ringing notification", () => {
+    expect(callNotice("c1", "Jonas Weber", false, true)).toMatchObject({
+      body: "Verpasster Anruf",
+      tag: "call-c1",
     });
   });
 });
