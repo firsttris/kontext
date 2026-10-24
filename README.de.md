@@ -163,6 +163,10 @@ Was als Nächstes kommt, steht in der [Roadmap](ROADMAP.md).
     <td><img src="docs/screenshots/calendar.png" alt="Kalender-Wochenansicht mit Baubesprechung, Wartungstermin und Monatsübersicht"></td>
     <td><img src="docs/screenshots/contacts.png" alt="Kontakt Markus Hoffmann mit nächsten Terminen und letzten Mails"></td>
   </tr>
+  <tr>
+    <td><img src="docs/screenshots/tasks-board.png" alt="Kanban-Board des gemeinsamen Postfachs info@ mit Offen, In Arbeit, Wartet und Erledigt"></td>
+    <td><img src="docs/screenshots/chat.png" alt="Team-Chat-Kanal mit Aufmaß von der Baustelle, einer Kundenmail als Karte und einer Aufgabe aus einer Nachricht"></td>
+  </tr>
 </table>
 
 <p align="center">
@@ -170,9 +174,10 @@ Was als Nächstes kommt, steht in der [Roadmap](ROADMAP.md).
 </p>
 
 <p align="center">
-  <img src="docs/screenshots/phone-mail.png" alt="Posteingang am Handy mit Tab-Leiste" width="240">
-  <img src="docs/screenshots/phone-read.png" alt="Mail lesen am Handy" width="240">
-  <img src="docs/screenshots/phone-calendar.png" alt="Kalender-Tagesansicht am Handy" width="240">
+  <img src="docs/screenshots/phone-mail.png" alt="Posteingang am Handy mit Tab-Leiste" width="200">
+  <img src="docs/screenshots/phone-read.png" alt="Mail lesen am Handy" width="200">
+  <img src="docs/screenshots/phone-calendar.png" alt="Kalender-Tagesansicht am Handy" width="200">
+  <img src="docs/screenshots/phone-chat.png" alt="Team-Chat am Handy mit Sprechblasen, einer Datei und einer Mail-Karte" width="200">
 </p>
 
 ## 🔀 Kontext und die Alternativen

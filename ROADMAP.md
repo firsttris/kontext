@@ -47,7 +47,7 @@ Kleinere Dinge, die beim Bauen aufgefallen sind und noch erledigt werden.
 
 - [ ] e2e: lesende Tests öffnen Mails aus den Testdaten. Kommen im Posteingang von Jonas über 50 Test-Mails dazu, rutschen diese auf die zweite Seite der Liste; dann auch dort eigene Mails anlegen.
 - [ ] Lokal fehlt `readpst` für den Outlook-Test (`sudo apt install pst-utils`).
-- [ ] README: Screenshots von Aufgaben, Board, Regeln und Chat ergänzen; dafür Chat-Beispieldaten in den Testdaten (heute legt der Seed nur Stalwart-Daten an).
+- [ ] README: ein Bild der Regeln; Aufgaben und Chat sind drin (Beispieldaten über die API, `e2e/demo-data.ts`). In der lokalen Entwicklung sind Aufgaben und Chat weiterhin leer.
 
 ## Bekannte Einschränkungen
 

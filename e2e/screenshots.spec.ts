@@ -1,4 +1,5 @@
 import { expect, type Page, test } from "@playwright/test";
+import { fillDemo } from "./demo-data";
 import { login } from "./helpers";
 
 /**
@@ -103,5 +104,45 @@ test.describe("Screenshots @screenshots", () => {
     await expect(page.getByText("Baubesprechung Hoffmann")).toBeVisible();
     await shot(page, "phone-calendar");
     await context.close();
+  });
+
+  test("Aufgaben und Chat", async ({ browser }) => {
+    const { channelId, infoBoard } = await fillDemo(browser);
+    const context = await browser.newContext({
+      viewport: { width: 1440, height: 900 },
+      locale: "de-DE",
+      timezoneId: "Europe/Berlin",
+    });
+    const page = await context.newPage();
+    await login(page);
+    await page.goto("/tasks");
+    await expect(page.getByText("Baubesprechung Hoffmann vorbereiten")).toBeVisible();
+    await shot(page, "tasks");
+    await page.goto(`/tasks?board=${encodeURIComponent(infoBoard)}&mode=board`);
+    await expect(page.getByText("Angebot Wärmepumpe Lang erstellen")).toBeVisible();
+    await shot(page, "tasks-board");
+    await page.goto(`/chat?channel=${encodeURIComponent(channelId)}`);
+    await expect(
+      page.getByRole("list", { name: "Nachrichten" }).getByText("Passt, ich messe morgen früh"),
+    ).toBeVisible();
+    await shot(page, "chat");
+    await context.close();
+
+    const phone = await browser.newContext({
+      viewport: { width: 390, height: 844 },
+      deviceScaleFactor: 2,
+      isMobile: true,
+      hasTouch: true,
+      locale: "de-DE",
+      timezoneId: "Europe/Berlin",
+    });
+    const handy = await phone.newPage();
+    await login(handy);
+    await handy.goto(`/chat?channel=${encodeURIComponent(channelId)}`);
+    await expect(
+      handy.getByRole("list", { name: "Nachrichten" }).getByText("Passt, ich messe morgen früh"),
+    ).toBeVisible();
+    await shot(handy, "phone-chat");
+    await phone.close();
   });
 });

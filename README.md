@@ -163,6 +163,10 @@ What comes next is in the [roadmap](ROADMAP.md) (German).
     <td><img src="docs/screenshots/calendar.png" alt="Calendar week view with site meeting, maintenance appointment and month overview"></td>
     <td><img src="docs/screenshots/contacts.png" alt="Contact Markus Hoffmann with upcoming appointments and latest mails"></td>
   </tr>
+  <tr>
+    <td><img src="docs/screenshots/tasks-board.png" alt="Kanban board of the shared mailbox info@ with Open, In progress, Waiting and Done"></td>
+    <td><img src="docs/screenshots/chat.png" alt="Team chat channel with a site report, a shared customer mail as a card and a task made from a message"></td>
+  </tr>
 </table>
 
 <p align="center">
@@ -170,9 +174,10 @@ What comes next is in the [roadmap](ROADMAP.md) (German).
 </p>
 
 <p align="center">
-  <img src="docs/screenshots/phone-mail.png" alt="Inbox on the phone with tab bar" width="240">
-  <img src="docs/screenshots/phone-read.png" alt="Reading a mail on the phone" width="240">
-  <img src="docs/screenshots/phone-calendar.png" alt="Calendar day view on the phone" width="240">
+  <img src="docs/screenshots/phone-mail.png" alt="Inbox on the phone with tab bar" width="200">
+  <img src="docs/screenshots/phone-read.png" alt="Reading a mail on the phone" width="200">
+  <img src="docs/screenshots/phone-calendar.png" alt="Calendar day view on the phone" width="200">
+  <img src="docs/screenshots/phone-chat.png" alt="Team chat on the phone with bubbles, a file and a mail card" width="200">
 </p>
 
 ## 🔀 Kontext and the alternatives
