@@ -183,6 +183,44 @@ export const moveEmails = (
     [`mailboxIds/${toMailboxId}`]: true,
   });
 
+/**
+ * Moves mails into another account (e.g. from info@ into the own mailbox): Email/copy with
+ * onSuccessDestroyOriginal (RFC 8620 §5.4, RFC 8621 §4.7). The copy keeps only the keywords and
+ * the date it is given, so read and flagged are passed along.
+ */
+export const copyEmails = async (
+  client: JmapClient,
+  fromAccountId: string,
+  toAccountId: string,
+  emails: Pick<EmailSummary, "id" | "keywords" | "receivedAt">[],
+  toMailboxId: string,
+): Promise<void> => {
+  const responses = await client.request([
+    [
+      "Email/copy",
+      {
+        fromAccountId,
+        accountId: toAccountId,
+        onSuccessDestroyOriginal: true,
+        create: Object.fromEntries(
+          emails.map((email, index) => [
+            `c${index}`,
+            {
+              id: email.id,
+              mailboxIds: { [toMailboxId]: true },
+              keywords: email.keywords,
+              receivedAt: email.receivedAt,
+            },
+          ]),
+        ),
+      },
+      "0",
+    ],
+  ]);
+  // The copy's response, then the implicit Email/set that removes the originals.
+  for (const [name, result] of responses) assertSetOk(result, name);
+};
+
 export const destroyEmails = async (
   client: JmapClient,
   accountId: string,

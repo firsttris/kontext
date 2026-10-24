@@ -14,6 +14,7 @@ import { useClient } from "@/auth/auth";
 import { useSession } from "@/components/shell/app-shell";
 import { CAPABILITIES, isJmapError } from "@/jmap/client";
 import {
+  copyEmails,
   createMailbox,
   destroyEmails,
   type EmailFilter,
@@ -27,6 +28,7 @@ import {
   setKeyword,
 } from "@/jmap/mail";
 import type { Account, EmailSummary, Mailbox } from "@/jmap/types";
+import type { MailAccount } from "@/lib/mail-accounts";
 import { findRole } from "@/lib/mailboxes";
 import { usePrincipals } from "../sharing/queries";
 
@@ -38,7 +40,7 @@ export const mailboxesKey = (accountId: string) => [accountId, "mailboxes"] as c
  * an address book or calendar also shows up as an account in the session; such an account counts
  * only if it is a group or shows folders.
  */
-export const useMailAccounts = (): Account[] => {
+export const useMailAccounts = (): MailAccount[] => {
   const client = useClient();
   const { data: session } = useSession();
   const { data: principals = [] } = usePrincipals();
@@ -57,10 +59,13 @@ export const useMailAccounts = (): Account[] => {
   const handedOver = new Set(
     others.filter((_, index) => (folders[index]?.data?.length ?? 0) > 0).map((a) => a.id),
   );
-  const rank = (a: Account) => (a.isPersonal ? 0 : groups.has(a.id) ? 1 : 2);
+  const kind = (a: Account): MailAccount["kind"] =>
+    a.isPersonal ? "own" : groups.has(a.id) ? "shared" : "handedOver";
+  const rank = { own: 0, shared: 1, handedOver: 2 };
   return candidates
     .filter((a) => a.isPersonal || groups.has(a.id) || handedOver.has(a.id))
-    .sort((a, b) => rank(a) - rank(b) || a.name.localeCompare(b.name));
+    .map((a) => ({ ...a, kind: kind(a) }))
+    .sort((a, b) => rank[a.kind] - rank[b.kind] || a.name.localeCompare(b.name));
 };
 
 /** The folders of every mail account, by account id (same cache as each folder list). */
@@ -77,7 +82,7 @@ export const useAllMailboxes = (): Record<string, Mailbox[] | undefined> => {
 };
 
 /** The inbox of every mail account (own first), for "Alle Posteingänge". */
-export const useInboxes = (): { account: Account; mailbox: Mailbox }[] => {
+export const useInboxes = (): { account: MailAccount; mailbox: Mailbox }[] => {
   const accounts = useMailAccounts();
   const mailboxes = useAllMailboxes();
   return accounts.flatMap((account) => {
@@ -189,12 +194,60 @@ const adjustUnreadCounts = (
   );
 };
 
+type MoveTarget = { accountId: string; mailboxId: string };
+
+/**
+ * Moves mails into a folder of any mailbox: within the account a folder change, into another
+ * account a copy there and a delete here. The account is passed per call, so a list over several
+ * accounts (drag and drop in "Alle Posteingänge") can use one hook.
+ */
+export const useMoveTo = () => {
+  const client = useClient();
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      accountId,
+      emails,
+      from,
+      target,
+    }: {
+      accountId: string;
+      emails: EmailSummary[];
+      from: string;
+      target: MoveTarget;
+    }) =>
+      target.accountId === accountId
+        ? moveEmails(
+            client,
+            accountId,
+            emails.map((email) => email.id),
+            from,
+            target.mailboxId,
+          )
+        : copyEmails(client, accountId, target.accountId, emails, target.mailboxId),
+    onMutate: ({ accountId, emails }) =>
+      patchCachedEmails(
+        queryClient,
+        accountId,
+        emails.map((email) => email.id),
+        () => null,
+      ),
+    onSettled: (_data, _error, { accountId, target }) =>
+      Promise.all(
+        [...new Set([accountId, target.accountId])].map((id) =>
+          queryClient.invalidateQueries({ queryKey: [id] }),
+        ),
+      ),
+  });
+};
+
 /** Read, flag, move, archive and delete, with the list updated before the server answers. */
 export const useEmailActions = (accountId: string) => {
   const client = useClient();
   const queryClient = useQueryClient();
 
   const refresh = () => queryClient.invalidateQueries({ queryKey: [accountId] });
+  const moveTo = useMoveTo();
 
   const keyword = useMutation({
     mutationFn: ({ ids, keyword, on }: { ids: string[]; keyword: string; on: boolean }) =>
@@ -242,7 +295,9 @@ export const useEmailActions = (accountId: string) => {
       keyword.mutateAsync({ ids, keyword: "$seen", on: seen }),
     setFlagged: (ids: string[], flagged: boolean) =>
       keyword.mutateAsync({ ids, keyword: "$flagged", on: flagged }),
-    move: (ids: string[], from: string, to: string) => move.mutateAsync({ ids, from, to }),
+    /** Into a folder of this or of another mailbox (`target.accountId`). */
+    moveTo: (emails: EmailSummary[], from: string, target: MoveTarget) =>
+      moveTo.mutateAsync({ accountId, emails, from, target }),
     archive: async (ids: string[], from: string) =>
       move.mutateAsync({ ids, from, to: await archiveMailboxId() }),
     /** Moves to the trash; in the trash it deletes for good. */

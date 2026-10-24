@@ -8,6 +8,7 @@ import { useCallback, useMemo } from "react";
 import type { Mailbox } from "@/jmap/types";
 import { cn } from "@/lib/cn";
 import { dateKey } from "@/lib/jscalendar";
+import { shortAddress } from "@/lib/mail-accounts";
 import {
   highlightTerms,
   parseSearch,
@@ -41,7 +42,7 @@ export const SearchPage = ({ search }: { search: MailSearch }) => {
         const list = mailboxes[account.id];
         if (!list) return [];
         const filter = toEmailFilter(query, {
-          label: account.isPersonal ? account.name : account.name.replace(/@.*/, "@"),
+          label: account.isPersonal ? account.name : shortAddress(account.name),
           isPersonal: account.isPersonal,
           mailboxes: list,
           path: (mailbox) => mailboxPath(mailbox, list),

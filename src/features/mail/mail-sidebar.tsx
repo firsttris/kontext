@@ -26,6 +26,7 @@ import { useToast } from "@/components/ui/toast";
 import type { Mailbox } from "@/jmap/types";
 import { cn } from "@/lib/cn";
 import { formatSize } from "@/lib/format";
+import { mailboxNotice, shortAddress } from "@/lib/mail-accounts";
 import {
   type FolderNode,
   flattenTree,
@@ -34,6 +35,7 @@ import {
   systemMailboxes,
 } from "@/lib/mailboxes";
 import { m } from "@/paraglide/messages";
+import { useMailDrop } from "./mail-drag";
 import { useCreateMailbox, useInboxes, useMailAccounts, useMailboxes, useQuota } from "./queries";
 
 const ROLE_ICONS: Record<string, LucideIcon> = {
@@ -49,6 +51,8 @@ const ROLE_ICONS: Record<string, LucideIcon> = {
 const navClass = (active: boolean) =>
   cn(
     "flex h-[34px] items-center gap-2.5 rounded-lg px-2.5 text-left text-[14px] no-underline hover:bg-hover",
+    // A mail dragged over it (mail-drag.ts).
+    "data-[drop-over]:bg-hover data-[drop-over]:text-fg data-[drop-over]:ring-1 data-[drop-over]:ring-accent",
     active ? "bg-subtle font-medium text-fg" : "text-muted",
   );
 
@@ -67,6 +71,8 @@ export const MailSidebar = ({ accountId, mailbox, view }: Props) => {
   const { data: mailboxes = [] } = useMailboxes(accountId);
   const accounts = useMailAccounts();
   const inboxes = useInboxes();
+  const account = accounts.find((candidate) => candidate.id === accountId);
+  const dropTarget = useMailDrop();
   const [creating, setCreating] = useState(false);
   const [collapsed, setCollapsed] = useState<Set<string>>(new Set());
   const tree = folderTree(mailboxes);
@@ -88,6 +94,7 @@ export const MailSidebar = ({ accountId, mailbox, view }: Props) => {
           <Link
             to="/mail/$accountId/$mailboxId"
             params={{ accountId, mailboxId: node.mailbox.id }}
+            {...dropTarget({ accountId, mailboxId: node.mailbox.id }, node.mailbox.name)}
             className={cn(navClass(node.mailbox.id === mailbox?.id), "h-8 flex-1")}
             style={{ paddingLeft: 10 + node.depth * 18 }}
           >
@@ -158,6 +165,9 @@ export const MailSidebar = ({ accountId, mailbox, view }: Props) => {
               key={box.id}
               to="/mail/$accountId/$mailboxId"
               params={{ accountId, mailboxId: box.id }}
+              {...(box.role === "drafts" || box.role === "flagged"
+                ? {}
+                : dropTarget({ accountId, mailboxId: box.id }, mailboxName(box)))}
               className={navClass(box.id === mailbox?.id)}
             >
               <Icon size={16} strokeWidth={1.75} />
@@ -176,29 +186,37 @@ export const MailSidebar = ({ accountId, mailbox, view }: Props) => {
           <div className="px-2.5 pb-1.5 text-[12px] font-medium text-muted">
             {m.mail_mailboxes()}
           </div>
-          {accounts.map((account) => (
-            <Link
-              key={account.id}
-              to="/mail/$accountId/$mailboxId"
-              params={{ accountId: account.id, mailboxId: "inbox" }}
-              className={navClass(!unified && account.id === accountId)}
-            >
-              {account.isPersonal ? (
-                <span aria-hidden="true" className="size-2 rounded-full bg-accent" />
-              ) : (
-                <Users size={15} strokeWidth={1.75} />
-              )}
-              <span className="truncate">
-                {account.isPersonal ? account.name : account.name.replace(/@.*/, "@")}
-              </span>
-            </Link>
-          ))}
+          {accounts.map((entry) => {
+            const inbox = inboxes.find((candidate) => candidate.account.id === entry.id)?.mailbox;
+            const label = entry.isPersonal ? entry.name : shortAddress(entry.name);
+            return (
+              <Link
+                key={entry.id}
+                to="/mail/$accountId/$mailboxId"
+                params={{ accountId: entry.id, mailboxId: "inbox" }}
+                {...(inbox ? dropTarget({ accountId: entry.id, mailboxId: inbox.id }, label) : {})}
+                title={mailboxNotice(entry)}
+                className={navClass(!unified && entry.id === accountId)}
+              >
+                {entry.isPersonal ? (
+                  <span aria-hidden="true" className="size-2 rounded-full bg-accent" />
+                ) : (
+                  <Users size={15} strokeWidth={1.75} />
+                )}
+                <span className="truncate">{label}</span>
+              </Link>
+            );
+          })}
         </nav>
       ) : null}
 
       <nav aria-label={m.mail_folders()} className="flex flex-col gap-px">
         <div className="flex items-center pr-1 pb-1.5 pl-2.5">
-          <span className="flex-1 text-[12px] font-medium text-muted">{m.mail_folders()}</span>
+          <span className="flex-1 truncate text-[12px] font-medium text-muted">
+            {account && !account.isPersonal && !unified
+              ? m.mail_folders_of({ name: shortAddress(account.name) })
+              : m.mail_folders()}
+          </span>
           <button
             type="button"
             aria-label={m.mail_new_folder()}

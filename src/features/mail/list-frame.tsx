@@ -4,7 +4,7 @@
  */
 import { Link, useNavigate } from "@tanstack/react-router";
 import { useVirtualizer } from "@tanstack/react-virtual";
-import { Menu, Paperclip, SquarePen, Star } from "lucide-react";
+import { Menu, Paperclip, SquarePen, Star, Users } from "lucide-react";
 import { type ReactNode, useEffect, useRef } from "react";
 import { Highlighted } from "@/components/highlighted";
 import { TabBar } from "@/components/shell/app-shell";
@@ -16,6 +16,7 @@ import { cn } from "@/lib/cn";
 import { displayName, formatAddressList, listDate } from "@/lib/format";
 import { m } from "@/paraglide/messages";
 import type { MailSearch } from "@/routes/_app/mail.$accountId.$mailboxId";
+import { type DraggedMail, startMailDrag } from "./mail-drag";
 import { SearchBox, type SearchBoxHandle } from "./search-box";
 
 /**
@@ -24,7 +25,8 @@ import { SearchBox, type SearchBoxHandle } from "./search-box";
  */
 export type Row = {
   email: EmailSummary;
-  account?: { id: string; label: string };
+  /** `title` explains the badge, e.g. "Gemeinsames Postfach info@…". */
+  account?: { id: string; label: string; title?: string };
   folder?: string;
   highlight?: string[];
 };
@@ -47,6 +49,8 @@ type Props = {
   filters?: ReactNode;
   /** Shown when the list is empty. */
   empty?: string;
+  /** What dragging a row carries onto a folder; rows without it cannot be dragged. */
+  dragMail?: (row: Row) => DraggedMail | undefined;
 };
 
 export const ListFrame = ({
@@ -63,6 +67,7 @@ export const ListFrame = ({
   isDraft,
   filters,
   empty,
+  dragMail,
 }: Props) => {
   const navigate = useNavigate();
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -193,6 +198,7 @@ export const ListFrame = ({
                     }
                     showRecipient={showRecipient}
                     isDraft={isDraft}
+                    drag={dragMail?.(row)}
                   />
                 </li>
               );
@@ -213,12 +219,14 @@ const MessageRow = ({
   active,
   showRecipient,
   isDraft,
+  drag,
 }: {
   row: Row;
   active: boolean;
   showRecipient: boolean;
   /** A draft opens in the composer to be finished. */
   isDraft: boolean;
+  drag: DraggedMail | undefined;
 }) => {
   const unread = isUnread(email);
   const who = showRecipient ? formatAddressList(email.to) : displayName(email.from?.[0]);
@@ -232,6 +240,8 @@ const MessageRow = ({
         compose: isDraft ? "draft" : undefined,
       })}
       aria-current={active ? "true" : undefined}
+      draggable={drag ? true : undefined}
+      onDragStart={drag ? (event) => startMailDrag(event, drag) : (event) => event.preventDefault()}
       className={cn(
         "flex gap-3 rounded-[10px] px-3 py-3 text-left text-fg no-underline hover:bg-hover",
         active && "bg-subtle",
@@ -270,7 +280,11 @@ const MessageRow = ({
             </span>
           ) : null}
           {account?.label ? (
-            <span className="shrink-0 rounded-md bg-subtle px-1.5 text-[11px] font-medium text-muted">
+            <span
+              title={account.title}
+              className="flex shrink-0 items-center gap-1 rounded-md bg-subtle px-1.5 text-[11px] font-medium text-muted"
+            >
+              <Users size={11} strokeWidth={2} aria-hidden="true" />
               {account.label}
             </span>
           ) : null}

@@ -1,6 +1,6 @@
 import { expect, type Page } from "@playwright/test";
 import { DEV_DOMAIN, DEV_PASSWORD } from "../dev/config";
-import { createJmapClient } from "../src/jmap/client";
+import { assertSetOk, createJmapClient } from "../src/jmap/client";
 
 export const STALWART = "http://127.0.0.1:28080";
 
@@ -66,3 +66,36 @@ export const inboxMails = async (
 };
 
 export const unique = (text: string) => `${text} ${Date.now().toString(36)}`;
+
+/**
+ * Puts a read mail straight into the inbox of a mailbox the user can open (their own or a shared
+ * one like info@), for tests that move it and must not touch the seed's mails.
+ */
+export const addMail = async (user: string, mailbox: string, subject: string) => {
+  const client = jmapAs(user);
+  const session = await client.getSession();
+  const accountId = Object.entries(session.accounts).find(
+    ([, a]) => a.name === address(mailbox),
+  )![0];
+  const { list } = await client.call<{ list: { id: string; role: string | null }[] }>(
+    "Mailbox/get",
+    { accountId, properties: ["role"] },
+  );
+  const inbox = list.find((box) => box.role === "inbox")!.id;
+  const result = await client.call("Email/set", {
+    accountId,
+    create: {
+      m: {
+        mailboxIds: { [inbox]: true },
+        keywords: { $seen: true },
+        from: [{ name: "Erika Test", email: "erika@example.test" }],
+        to: [{ name: null, email: address(mailbox) }],
+        subject,
+        receivedAt: new Date().toISOString(),
+        bodyValues: { b: { value: "Eine Mail nur für diesen Test." } },
+        textBody: [{ partId: "b", type: "text/plain" }],
+      },
+    },
+  });
+  assertSetOk(result, "Email/set");
+};

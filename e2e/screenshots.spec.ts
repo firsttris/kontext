@@ -28,6 +28,7 @@ test.describe("Screenshots @screenshots", () => {
       .getByRole("list", { name: "Posteingang" })
       .getByText("Anfrage Wärmepumpe Neubau")
       .click();
+    await expect(page.frameLocator("iframe").getByText("Viele Grüße")).toBeVisible();
     await shot(page, "shared-mailbox");
 
     await page.goto("/calendar");

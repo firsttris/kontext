@@ -1,5 +1,6 @@
 import { expect, type Page, test } from "@playwright/test";
 import {
+  addMail,
   address,
   inboxMails,
   inboxSubjects,
@@ -185,6 +186,67 @@ test.describe("Mail", () => {
     await expect(page.getByLabel("Von").locator("option:checked")).toHaveText(
       /info@weber-haustechnik\.test/,
     );
+  });
+});
+
+test.describe("Gemeinsames Postfach erkennen und verschieben", () => {
+  test.beforeEach(async ({ page }) => login(page));
+
+  test("sagt in der Mail und in der Seitenleiste, dass sie in info@ liegt", async ({ page }) => {
+    await page.getByRole("link", { name: "info@" }).click();
+    await page
+      .getByRole("list", { name: "Posteingang" })
+      .getByText("Anfrage Wärmepumpe Neubau")
+      .click();
+    await expect(
+      page.getByText("Gemeinsames Postfach info@weber-haustechnik.test", { exact: true }),
+    ).toBeVisible();
+    await expect(page.getByRole("navigation", { name: "Eigene Ordner" })).toContainText(
+      "Ordner von info@",
+    );
+    // The own mailbox has no such note.
+    await page.getByRole("link", { name: /^jonas@/ }).click();
+    await page
+      .getByRole("list", { name: "Posteingang" })
+      .getByText("Angebot Wartungsvertrag 2027")
+      .click();
+    await expect(page.getByRole("heading", { name: "Angebot Wartungsvertrag 2027" })).toBeVisible();
+    await expect(page.getByText(/^Gemeinsames Postfach/)).toHaveCount(0);
+  });
+
+  test("verschiebt eine Mail aus info@ in einen eigenen Ordner", async ({ page }) => {
+    const subject = unique("Rechnung Heizöl");
+    await addMail("jonas", "info", subject);
+    await page.getByRole("link", { name: "info@" }).click();
+    await page.getByRole("list", { name: "Posteingang" }).getByText(subject).click();
+    await page.getByRole("button", { name: "Verschieben nach …" }).click();
+    // Grouped by mailbox: info@'s folders first, then the own ones.
+    const menu = page.getByRole("menu");
+    await expect(menu).toContainText("info@weber-haustechnik.test");
+    await expect(menu).toContainText("Mein Postfach");
+    await menu.getByRole("menuitem", { name: "Steuerberater" }).click();
+    await expect(page.getByRole("list", { name: "Posteingang" }).getByText(subject)).toHaveCount(0);
+
+    await page.getByRole("link", { name: /^jonas@/ }).click();
+    await page.getByRole("link", { name: "Steuerberater" }).click();
+    await page.getByRole("list", { name: "Steuerberater" }).getByText(subject).click();
+    await expect(page.getByRole("heading", { name: subject })).toBeVisible();
+  });
+
+  test("zieht eine Mail aus Alle Posteingänge auf einen Ordner", async ({ page }) => {
+    const subject = unique("Lieferschein Rohre");
+    await addMail("jonas", "info", subject);
+    await page.getByRole("link", { name: /Alle Posteingänge/ }).click();
+    const row = page.getByRole("list", { name: "Alle Posteingänge" }).getByRole("link", {
+      name: new RegExp(subject),
+    });
+    await expect(row).toContainText("info@");
+    await row.dragTo(page.getByRole("link", { name: "Lieferanten" }));
+    await expect(page.getByRole("status")).toHaveText("Nach „Lieferanten“ verschoben.");
+    await expect(row).toHaveCount(0);
+
+    await page.getByRole("link", { name: "Lieferanten" }).click();
+    await expect(page.getByRole("list", { name: "Lieferanten" }).getByText(subject)).toBeVisible();
   });
 });
 

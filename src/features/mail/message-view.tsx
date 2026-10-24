@@ -11,8 +11,9 @@ import {
   ReplyAll,
   Star,
   Trash2,
+  Users,
 } from "lucide-react";
-import { useEffect, useRef } from "react";
+import { Fragment, useEffect, useRef } from "react";
 import { useClient } from "@/auth/auth";
 import { Avatar } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -29,16 +30,12 @@ import { useShortcuts } from "@/components/use-shortcuts";
 import { isFlagged, isUnread } from "@/jmap/mail";
 import type { BodyPart, EmailDetail, Mailbox } from "@/jmap/types";
 import { displayName, firstName, formatAddressList, formatSize, readingDate } from "@/lib/format";
-import {
-  flattenTree,
-  folderTree,
-  mailboxName,
-  mailboxRights,
-  systemMailboxes,
-} from "@/lib/mailboxes";
+import { mailboxNotice } from "@/lib/mail-accounts";
+import { mailboxRights } from "@/lib/mailboxes";
+import { moveTargets } from "@/lib/move-targets";
 import { m } from "@/paraglide/messages";
 import { MailBody } from "./mail-body";
-import { useEmail, useEmailActions, useMailboxes } from "./queries";
+import { useAllMailboxes, useEmail, useEmailActions, useMailAccounts } from "./queries";
 
 type Props = { accountId: string; mailbox: Mailbox; emailId: string | undefined };
 
@@ -46,6 +43,8 @@ export const MessageView = ({ accountId, mailbox, emailId }: Props) => {
   const { data: email, isPending } = useEmail(accountId, emailId);
   const actions = useEmailActions(accountId);
   const markedFor = useRef<string | null>(null);
+  const account = useMailAccounts().find((candidate) => candidate.id === accountId);
+  const notice = account ? mailboxNotice(account) : undefined;
 
   // Opening a mail marks it read, once per mail (if the mailbox allows it).
   const { canMarkSeen } = mailboxRights(mailbox);
@@ -72,6 +71,15 @@ export const MessageView = ({ accountId, mailbox, emailId }: Props) => {
       <article className="flex min-h-0 flex-1 justify-center overflow-y-auto">
         <div className="flex w-full max-w-[780px] flex-col gap-[18px] px-5 pt-5 pb-8 md:px-6">
           <header className="flex flex-col gap-3">
+            {notice && account ? (
+              <p
+                title={m.mail_shared_mailbox_hint({ address: account.name })}
+                className="m-0 flex max-w-full items-center gap-1.5 self-start rounded-md bg-subtle px-2 py-1 text-[12px] text-muted"
+              >
+                <Users size={13} strokeWidth={1.75} aria-hidden="true" className="shrink-0" />
+                <span className="truncate">{notice}</span>
+              </p>
+            ) : null}
             <h2 className="m-0 text-[21px] leading-snug font-semibold tracking-tight">
               {email.subject || m.mail_no_subject()}
             </h2>
@@ -135,7 +143,8 @@ const Toolbar = ({
   const actions = useEmailActions(accountId);
   const navigate = useNavigate();
   const toast = useToast();
-  const { data: mailboxes = [] } = useMailboxes(accountId);
+  const accounts = useMailAccounts();
+  const mailboxes = useAllMailboxes();
   const close = () =>
     navigate({ to: ".", search: (prev) => ({ ...prev, email: undefined, compose: undefined }) });
 
@@ -148,10 +157,7 @@ const Toolbar = ({
     }
   };
 
-  const targets = [
-    ...systemMailboxes(mailboxes).filter((box) => box.role !== "drafts" && box.role !== "flagged"),
-    ...flattenTree(folderTree(mailboxes)).map((node) => node.mailbox),
-  ].filter((box) => box.id !== mailbox.id);
+  const groups = moveTargets(accounts, mailboxes, { accountId, mailboxId: mailbox.id });
   const flagged = isFlagged(email);
   const { canRemove, canMarkSeen, canFlag } = mailboxRights(mailbox);
   const compose = (mode: "reply" | "replyAll" | "forward") =>
@@ -238,14 +244,35 @@ const Toolbar = ({
             </Button>
           </MenuTrigger>
           <MenuContent align="start">
-            <MenuLabel>{m.mail_move()}</MenuLabel>
-            {targets.map((target) => (
-              <MenuItem
-                key={target.id}
-                onSelect={() => run(() => actions.move([email.id], mailbox.id, target.id), true)}
-              >
-                {mailboxName(target)}
-              </MenuItem>
+            {groups.length === 1 ? <MenuLabel>{m.mail_move()}</MenuLabel> : null}
+            {groups.map((group, index) => (
+              <Fragment key={group.account.id}>
+                {groups.length > 1 ? (
+                  <>
+                    {index > 0 ? <MenuSeparator /> : null}
+                    <MenuLabel>
+                      {group.account.isPersonal ? m.mail_own_mailbox() : group.account.name}
+                    </MenuLabel>
+                  </>
+                ) : null}
+                {group.targets.map((target) => (
+                  <MenuItem
+                    key={target.mailbox.id}
+                    onSelect={() =>
+                      run(
+                        () =>
+                          actions.moveTo([email], mailbox.id, {
+                            accountId: target.accountId,
+                            mailboxId: target.mailbox.id,
+                          }),
+                        true,
+                      )
+                    }
+                  >
+                    {target.label}
+                  </MenuItem>
+                ))}
+              </Fragment>
             ))}
           </MenuContent>
         </MenuRoot>

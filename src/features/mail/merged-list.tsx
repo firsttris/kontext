@@ -4,13 +4,14 @@
  */
 import { type ReactNode, useCallback, useEffect, useMemo, useState } from "react";
 import type { EmailFilter } from "@/jmap/mail";
-import type { Account } from "@/jmap/types";
 import { type Feed, mergeFeeds } from "@/lib/inboxes";
+import type { MailAccount } from "@/lib/mail-accounts";
 import type { MailSearch } from "@/routes/_app/mail.$accountId.$mailboxId";
 import { ListFrame, type Row } from "./list-frame";
+import type { DraggedMail } from "./mail-drag";
 import { useEmailList } from "./queries";
 
-export type Source = { account: Account; filter: EmailFilter };
+export type Source = { account: MailAccount; filter: EmailFilter };
 
 type Props = {
   sources: Source[];
@@ -22,6 +23,7 @@ type Props = {
   empty?: string;
   /** Adds to each row, e.g. the folder and the words to mark in search results. */
   decorate?: (row: Row) => Row;
+  dragMail?: (row: Row) => DraggedMail | undefined;
 };
 
 export const MergedList = ({
@@ -33,6 +35,7 @@ export const MergedList = ({
   filters,
   empty,
   decorate,
+  dragMail,
 }: Props) => {
   const [feeds, setFeeds] = useState<Record<string, Feed | undefined>>({});
   const report = useCallback(
@@ -68,6 +71,7 @@ export const MergedList = ({
         isDraft={false}
         filters={filters}
         empty={empty}
+        dragMail={dragMail}
       />
     </>
   );

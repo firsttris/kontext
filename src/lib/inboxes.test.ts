@@ -1,14 +1,16 @@
 import { describe, expect, it } from "vitest";
-import type { Account, EmailSummary, Mailbox } from "@/jmap/types";
+import type { EmailSummary, Mailbox } from "@/jmap/types";
 import { type Feed, type Inbox, mergeFeeds } from "./inboxes";
+import type { MailAccount } from "./mail-accounts";
 
-const account = (id: string, name: string, isPersonal: boolean): Account => ({
+const account = (id: string, name: string, isPersonal: boolean): MailAccount => ({
   id,
   name,
   isPersonal,
   isReadOnly: false,
+  kind: isPersonal ? "own" : "shared",
 });
-const inbox = (a: Account): Inbox => ({ account: a, mailbox: { id: "i" } as Mailbox });
+const inbox = (a: MailAccount): Inbox => ({ account: a, mailbox: { id: "i" } as Mailbox });
 const mail = (id: string, hour: number): EmailSummary =>
   ({ id, receivedAt: `2026-10-23T${String(hour).padStart(2, "0")}:00:00Z` }) as EmailSummary;
 const feed = (emails: EmailSummary[], hasMore = false): Feed => ({

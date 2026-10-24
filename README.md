@@ -57,9 +57,9 @@ und unter `https://<Ihre Domain>` anmelden. DNS-Einträge, Backups und Updates s
 
 ### ✉️ Mail
 
-- **Gemeinsame Postfächer**: info@ & Co. stehen bei jedem Mitglied in der Seitenleiste; Antworten gehen als info@ raus, mit dem Namen der Person, die geantwortet hat. Postfächer nur zum Lesen zeigen nur, was erlaubt ist.
+- **Gemeinsame Postfächer**: info@ & Co. stehen bei jedem Mitglied in der Seitenleiste; eine Mail daraus sagt „Gemeinsames Postfach info@…“, damit man sieht, wo sie liegt. Antworten gehen als info@ raus, mit dem Namen der Person, die geantwortet hat. Postfächer nur zum Lesen zeigen nur, was erlaubt ist.
 - **Alle Posteingänge in einer Liste**: eigene Mails und die aus info@ & Co. zusammen, das gemeinsame Postfach als kleines Etikett.
-- **Ordner und Unterordner**: anlegen, Mails verschieben, Archiv und Papierkorb mit einem Klick.
+- **Ordner und Unterordner**: anlegen, Mails verschieben – über das Menü oder mit der Maus auf einen Ordner gezogen, auch von info@ in die eigenen Ordner und zurück –, Archiv und Papierkorb mit einem Klick.
 - **Schreiben mit Formatierung**: Fett, Listen, Einrücken, Links, Zitate – die Leiste ist immer sichtbar.
 - **Antworten, allen antworten, weiterleiten**: mit Zitat, Anhängen und Vorschlägen aus den Kontakten.
 - **Suche wie in Gmail**: über alle Ordner und Postfächer, mit `von:`, `an:`, `betreff:`, `hat:anhang`, `ist:ungelesen`, `in:info@`, `nach:`/`vor:` (auch auf Englisch), Vorschlägen beim Tippen, Filter-Chips und markierten Treffern; „Angebote“ findet auch „Angebot“.

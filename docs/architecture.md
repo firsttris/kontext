@@ -49,6 +49,25 @@ im Postfach hat (Stalwart gibt Identitäten nur Mitgliedern), antwortet vom eige
 Antwort liegt dann im eigenen Gesendet-Ordner. Beide Stufen setzt die Firmenverwaltung; „Nur
 lesen“ teilt dabei alle vorhandenen Ordner des Postfachs (später angelegte Ordner nicht).
 
+### Verschieben zwischen Postfächern
+
+„Verschieben nach …“ zeigt die Ordner aller Postfächer, nach Postfach gruppiert, das der Mail
+zuerst (`src/lib/move-targets.ts`); Ordner ohne `mayAddItems` fehlen. Innerhalb eines Kontos
+ändert die App `mailboxIds` (`Email/set`). In ein anderes Konto – etwa von info@ in den eigenen
+Ordner „Steuerberater“ – geht es mit `Email/copy` und `onSuccessDestroyOriginal` (RFC 8620 §5.4,
+RFC 8621 §4.7): Stalwart legt die Mail dort an und löscht sie hier im selben Request. Die Kopie
+übernimmt Stichwörter und Datum nur, wenn man sie mitschickt; die App schickt `keywords` und
+`receivedAt` mit, damit gelesen und markiert erhalten bleiben.
+
+Mit der Maus geht dasselbe: eine Zeile der Liste auf einen Ordner oder ein Postfach in der
+Seitenleiste ziehen (`src/features/mail/mail-drag.ts`, HTML-Drag-and-Drop). Ziehen lassen sich
+nur Mails aus Ordnern mit `mayRemoveItems`; auf dem Handy bleibt das Menü.
+
+Damit man sieht, wo eine Mail liegt, steht über dem Betreff „Gemeinsames Postfach info@…“ (bei
+übergebenen Postfächern „Übergebenes Postfach …“), das Etikett in „Alle Posteingänge“ trägt das
+Gruppen-Symbol, und die Seitenleiste nennt die Ordner eines gemeinsamen Postfachs „Ordner von
+info@“.
+
 ## Firmenverwaltung
 
 Unter *Einstellungen → Firma* verwaltet der Chef Mitarbeiter und gemeinsame Postfächer. Das läuft
