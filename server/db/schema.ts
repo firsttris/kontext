@@ -73,3 +73,22 @@ export const companySetting = sqliteTable("company_setting", {
   value: text("value").notNull(),
   updatedAt: integer("updated_at", { mode: "timestamp_ms" }).notNull(),
 });
+
+/** A move from another system into one account (e.g. an Outlook PST file), with its progress. */
+export const migrationJob = sqliteTable("migration_job", {
+  id: text("id").primaryKey(),
+  /** The Stalwart account the data goes into. */
+  accountId: text("account_id").notNull(),
+  accountEmail: text("account_email").notNull(),
+  source: text("source", { enum: ["pst"] }).notNull(),
+  fileName: text("file_name").notNull(),
+  size: integer("size").notNull(),
+  received: integer("received").notNull(),
+  status: text("status", {
+    enum: ["uploading", "queued", "running", "done", "failed"],
+  }).notNull(),
+  /** JSON: counts per kind (mails, contacts, events): total, imported, skipped, failed. */
+  progress: text("progress").notNull(),
+  error: text("error"),
+  ...timestamps,
+});

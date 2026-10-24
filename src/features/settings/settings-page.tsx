@@ -10,6 +10,7 @@ import {
   Palmtree,
   PenLine,
   Signature,
+  Truck,
   User,
   Users,
 } from "lucide-react";
@@ -17,6 +18,7 @@ import type { ReactNode } from "react";
 import { TabBar } from "@/components/shell/app-shell";
 import { EmployeesSection } from "@/features/company/employees-section";
 import { MailboxesSection } from "@/features/company/mailboxes-section";
+import { MigrationSection } from "@/features/company/migration-section";
 import { useIsCompanyAdmin } from "@/features/company/queries";
 import { CompanySignatureSection } from "@/features/company/signature-section";
 import { cn } from "@/lib/cn";
@@ -45,6 +47,7 @@ const COMPANY: Entry[] = [
   { id: "employees", label: m.company_employees, icon: Users },
   { id: "mailboxes", label: m.company_mailboxes, icon: Inbox },
   { id: "company-signature", label: m.company_signature, icon: Signature },
+  { id: "migration", label: m.company_migration, icon: Truck },
 ];
 
 const CONTENT: Record<Section, () => ReactNode> = {
@@ -56,6 +59,7 @@ const CONTENT: Record<Section, () => ReactNode> = {
   employees: () => <EmployeesSection />,
   mailboxes: () => <MailboxesSection />,
   "company-signature": () => <CompanySignatureSection />,
+  migration: () => <MigrationSection />,
 };
 
 const SectionLinks = ({ entries, current }: { entries: Entry[]; current: Section }) => (

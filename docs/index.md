@@ -13,14 +13,14 @@ Kontakte** im Browser und am Handy. Jede Firma bekommt ihren eigenen Server mit
 | **Mail**     | Suche über alle Ordner mit Operatoren wie in Gmail, alle Posteingänge in einer Liste, Ordner und Unterordner, gemeinsame Postfächer (info@, rechnung@), Archiv, Suche, Schreiben mit Formatierung, Anhänge, Antworten mit Zitat, Push ohne Neuladen |
 | **Kalender** | Tag, Woche, Monat und Liste, Termine per Ziehen verschieben, wiederkehrende Termine, Kalender mit Kollegen teilen, Einladungen mit Zusage/Absage               |
 | **Kontakte** | Kunden-Ansicht mit letzten Mails und nächsten Terminen, Anlegen und Bearbeiten, Gruppen, vCard-Import/-Export, Adressbücher mit Kollegen teilen              |
-| **Firma**    | Mitarbeiter anlegen und sperren, Passwort und Anmeldung mit Code zurücksetzen, weitere Adressen, gemeinsame Postfächer mit Lese- oder Senderecht, Abwesenheit mit Vertretung, Firmen-Signatur, Austritt mit Übergabe – für den Chef in den Einstellungen |
+| **Firma**    | Mitarbeiter anlegen und sperren, Passwort und Anmeldung mit Code zurücksetzen, weitere Adressen, gemeinsame Postfächer mit Lese- oder Senderecht, Abwesenheit mit Vertretung, Firmen-Signatur, Austritt mit Übergabe, Umzug aus Outlook (PST) – für den Chef in den Einstellungen |
 | **Handy**    | jede Ansicht als eigener Bildschirm mit Tab-Leiste                                                                                                            |
 
 ## Wie es weitergeht
 
 1. **Kern ausbauen**: Mail, Kontakte und Kalender so gut machen, dass niemand etwas vermisst.
-2. **Umzugswege** von Gmail, Microsoft 365 und Outlook (lokal, PST): Mails, Kontakte und Kalender
-   übernehmen – als Werkzeug oder Anleitung, je nachdem, was für die Quelle am besten passt.
+2. **Umzugswege** von Gmail und Microsoft 365 (Outlook lokal per PST ist fertig): Mails,
+   Kontakte und Kalender übernehmen, in der Firmenverwaltung.
 3. **Pilot** bei einem Kunden, vier Wochen parallel zum alten System.
 4. **Zusatzmodule**, eins nach dem anderen: Ticket-Postfach, Aufgaben mit Zeiterfassung,
    Terminbuchung, Team-Chat, Belegarchiv.

@@ -1,7 +1,9 @@
 # Entwicklung
 
 Benötigt [Bun](https://bun.sh) 1.4 auf Linux oder macOS (Windows über WSL). Docker ist nicht
-nötig: das Entwicklungsskript lädt Stalwart als einzelne Datei von GitHub.
+nötig: das Entwicklungsskript lädt Stalwart als einzelne Datei von GitHub. Für den Umzug aus
+Outlook braucht der Server `readpst` (`sudo apt install pst-utils`, macOS: `brew install libpst`).
+Die PST-Dateien für die Tests lädt `e2e/fixtures.ts` beim ersten Lauf nach `.dev/fixtures/`.
 
 ```bash
 bun install

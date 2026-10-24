@@ -3,6 +3,7 @@
  * Stalwart that adds the session's Stalwart token. The browser never holds a password or token.
  */
 
+import { dirname, join } from "node:path";
 import { eq } from "drizzle-orm";
 import { Hono } from "hono";
 import { serveStatic } from "hono/bun";
@@ -14,6 +15,9 @@ import { createCompanySettings } from "./company/settings";
 import { createSealer } from "./crypto";
 import { type Db, openDatabase, schema } from "./db";
 import type { Env } from "./env";
+import { createImporter } from "./migration/importer";
+import { createJobs } from "./migration/jobs";
+import { createRunner } from "./migration/runner";
 
 /** Request headers that go on to Stalwart; cookies and the browser's own auth stay here. */
 const FORWARDED_REQUEST_HEADERS = [
@@ -89,10 +93,16 @@ export const createApp = async (env: Env) => {
   app.on(["GET", "POST"], "/api/auth/*", (c) => auth.handler(c.req.raw));
   if (env.STALWART_ADMIN_KEY) {
     const request = createRequest(env.STALWART_URL, env.STALWART_ADMIN_KEY);
+    const upload = createUpload(env.STALWART_URL, env.STALWART_ADMIN_KEY);
+    const jobs = createJobs(db);
+    const workDir = join(dirname(env.DATABASE_PATH), "migrations");
+    const runner = createRunner({ jobs, importer: createImporter(request, upload), workDir });
+    await runner.resume();
     const company = createCompanyRoutes({
       management: createManagement(request),
-      mailstore: createMailstore(request, createUpload(env.STALWART_URL, env.STALWART_ADMIN_KEY)),
+      mailstore: createMailstore(request, upload),
       settings: createCompanySettings(db),
+      migrations: { jobs, runner, workDir },
       currentEmail: async (request) =>
         (await auth.api.getSession({ headers: request.headers }))?.user.email ?? null,
       endSessions: endSessionsOf(db),

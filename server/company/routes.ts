@@ -4,6 +4,7 @@
  * what is here (no roles beyond the mark, no other accounts, no server settings).
  */
 import { Hono } from "hono";
+import { migrationRoutes } from "../migration/routes";
 import { type CompanyDeps, createLoader, type Env } from "./context";
 import { employeeRoutes } from "./employees";
 import { mailboxRoutes } from "./mailboxes";
@@ -34,5 +35,6 @@ export const createCompanyRoutes = (deps: CompanyDeps) => {
   app.route("/employees", employeeRoutes(deps));
   app.route("/mailboxes", mailboxRoutes(deps));
   app.route("/signature", signatureRoutes(deps));
+  app.route("/migrations", migrationRoutes(deps.migrations));
   return app;
 };

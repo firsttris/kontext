@@ -14,7 +14,7 @@ export const useCompany = () =>
   useQuery({ queryKey: ["company", "all"], queryFn: getCompany, retry: false });
 
 /**
- * A change in the Firmenverwaltung; afterwards the list and the JMAP session (new shared
+ * A change in the Firmenverwaltung; afterwards its data and the JMAP session (new shared
  * mailboxes, names) are loaded again.
  */
 export const useCompanyChange = <T, R>(change: (value: T) => Promise<R>) => {
@@ -23,7 +23,7 @@ export const useCompanyChange = <T, R>(change: (value: T) => Promise<R>) => {
   return useMutation({
     mutationFn: change,
     onSettled: async () => {
-      await queryClient.invalidateQueries({ queryKey: ["company", "all"] });
+      await queryClient.invalidateQueries({ queryKey: ["company"] });
       queryClient.setQueryData(["session"], await client.fetchSession());
     },
   });

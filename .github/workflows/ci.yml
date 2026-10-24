@@ -70,6 +70,8 @@ jobs:
       - uses: actions/checkout@v4
       # The npm package brings the binary without curl or unzip, which the image lacks
       - run: npm install --global bun@1.4.x
+      # readpst for the Outlook move (server/migration/pst.ts)
+      - run: apt-get update && apt-get install -y --no-install-recommends pst-utils
       - uses: actions/cache@v4
         with:
           path: .dev/bin

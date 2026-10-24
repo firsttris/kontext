@@ -10,6 +10,9 @@ RUN bun run build
 
 FROM docker.io/oven/bun:1.4-slim
 WORKDIR /app
+# readpst (libpst) opens Outlook data files for the move (server/migration/pst.ts).
+RUN apt-get update && apt-get install -y --no-install-recommends pst-utils \
+  && rm -rf /var/lib/apt/lists/*
 ENV NODE_ENV=production PORT=3000 STATIC_DIR=/app/dist DATABASE_PATH=/data/sekretaer.db
 COPY package.json bun.lock ./
 RUN bun install --frozen-lockfile --production --ignore-scripts

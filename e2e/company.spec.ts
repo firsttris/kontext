@@ -1,4 +1,5 @@
 import { expect, type Page, test } from "@playwright/test";
+import { pstFixture } from "./fixtures";
 import { address, inboxMails, jmapAs, login, personalAccountId, unique } from "./helpers";
 
 const stamp = () => Date.now().toString(36);
@@ -245,5 +246,36 @@ test.describe("Firmenverwaltung", () => {
         { timeout: 30_000 },
       )
       .toBe(true);
+  });
+
+  test("Umzug aus Outlook: PST hochladen, zweimal ohne Doppelte", async ({ page }) => {
+    test.setTimeout(120_000);
+    const local = `umzug-${stamp()}`;
+    await login(page, "jonas");
+    await newEmployee(page, local, "Uwe Umzug");
+    await page.goto("/settings?section=migration");
+
+    const upload = async (file: string) => {
+      await page.getByRole("button", { name: "Outlook-Datei hochladen" }).click();
+      const dialog = page.getByRole("dialog", { name: "Outlook-Datei hochladen" });
+      await dialog.getByLabel("Für").selectOption({ label: `Uwe Umzug (${address(local)})` });
+      await dialog.getByLabel("Outlook-Datei (.pst)").setInputFiles(file);
+      await dialog.getByRole("button", { name: "Hochladen und übernehmen" }).click();
+      await expect(dialog).toBeHidden({ timeout: 30_000 });
+    };
+    const job = (file: string) => page.getByRole("listitem", { name: file }).first();
+
+    await upload(await pstFixture("enron.pst"));
+    await expect(job("enron.pst")).toContainText("Fertig", { timeout: 60_000 });
+    await expect(job("enron.pst")).toContainText("71 von 71 übernommen");
+
+    await upload(await pstFixture("dist-list.pst"));
+    await expect(job("dist-list.pst")).toContainText("Fertig", { timeout: 60_000 });
+    await expect(job("dist-list.pst")).toContainText("Kontakte1 von 1 übernommen");
+    await expect(job("dist-list.pst")).toContainText("Termine1 von 1 übernommen");
+
+    // the same file again: nothing twice
+    await upload(await pstFixture("enron.pst"));
+    await expect(job("enron.pst")).toContainText("71 schon vorhanden", { timeout: 60_000 });
   });
 });

@@ -11,6 +11,7 @@ export const settingsSections = [
   "employees",
   "mailboxes",
   "company-signature",
+  "migration",
 ] as const;
 
 export const Route = createFileRoute("/_app/settings")({

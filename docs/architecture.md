@@ -96,6 +96,29 @@ Stalwart lässt den Schlüssel keine Rollen oder Rechte vergeben, die er nicht s
 Rolle des Server-Kontos erbt deshalb *User* (sonst könnte es niemandem die Rolle *User* geben)
 und hat dazu nur die Rechte für Konten, Rollen und Domains (siehe [Installation](installation.md)).
 
+## Umzug
+
+Unter *Einstellungen → Firma → Umzug* lädt der Chef eine Outlook-Datei (PST) für einen
+Mitarbeiter hoch. Die App schickt sie in Stücken zu 8 MB (`PUT /api/company/migrations/:id/file`);
+bricht die Verbindung ab, sagt der Server, wie viel er hat. Danach arbeitet der Server
+(`server/migration/`) die Umzüge nacheinander ab, auch nach einem Neustart:
+
+1. `readpst` (libpst) zerlegt die Datei in eine Datei pro Mail, Kontakt und Termin, mit einem
+   Verzeichnis pro Outlook-Ordner.
+2. **Mails** gehen mit `Email/import` (RFC 8621) in den passenden Ordner, mit Originaldatum und
+   Gelesen-Status; bis zu 25 Mails und 6 MB pro Request, die Blobs per `Blob/upload` im selben
+   Request, größere Mails einzeln über den Upload. Posteingang, Gesendete Elemente, Gelöschte
+   Elemente, Entwürfe, Junk-E-Mail und Archiv (deutsch oder englisch) landen in den
+   Standardordnern, alles andere unter demselben Pfad; Aufgaben und Notizen bleiben weg.
+3. **Kontakte** und **Termine** liest Stalwart selbst (`ContactCard/parse`,
+   `CalendarEvent/parse`); sie kommen ins Standard-Adressbuch bzw. den Standardkalender.
+
+Doppeltes überspringt der Server: Mails mit bekannter Message-ID, Kontakte mit gleichem Namen und
+gleicher erster Adresse, Termine mit bekannter UID (readpst nummeriert Termine nur, dann bildet
+Sekretär die UID aus dem Inhalt). Ein Umzug lässt sich deshalb gefahrlos wiederholen. Der
+Fortschritt steht in SQLite (`migration_job`); die PST-Datei liegt bis zum Ende neben der
+Datenbank unter `migrations/` und wird nach einem erfolgreichen Umzug gelöscht.
+
 ## Suche
 
 Die Suche (`/mail/all/search?q=…`) läuft über alle Ordner und Postfächer, Papierkorb und Spam

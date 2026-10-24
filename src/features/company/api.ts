@@ -10,7 +10,14 @@ import type {
   SharedMailbox,
 } from "../../../server/company/accounts";
 
+import type { Job } from "../../../server/migration/jobs";
+
 export type { Employee, SharedMailbox };
+/** A move as the server sends it (dates as text). */
+export type Migration = Omit<Job, "createdAt" | "updatedAt"> & {
+  createdAt: string;
+  updatedAt: string;
+};
 export type Company = CompanyData & { selfId: string };
 
 export type NewEmployee = {
@@ -99,3 +106,22 @@ export const createMailbox = (mailbox: NewMailbox) =>
 
 export const updateMailbox = (id: string, change: MailboxChange) =>
   send<{ ok: true }>("PATCH", `/mailboxes/${encodeURIComponent(id)}`, change);
+
+export const listMigrations = () => send<Migration[]>("GET", "/migrations");
+
+export const createMigration = (input: { accountId: string; fileName: string; size: number }) =>
+  send<Migration>("POST", "/migrations", input);
+
+/** One piece of the file; on a mismatch the server says how much it has. */
+export const sendPiece = async (id: string, offset: number, piece: Blob) => {
+  const response = await fetch(
+    `/api/company/migrations/${encodeURIComponent(id)}/file?offset=${offset}`,
+    { method: "PUT", credentials: "same-origin", body: piece },
+  );
+  const body = (await response.json().catch(() => ({}))) as { received?: number; error?: string };
+  if (response.ok || response.status === 409) return { received: body.received ?? offset };
+  throw new Error(body.error ?? String(response.status));
+};
+
+export const retryMigration = (id: string) =>
+  send<{ status: string }>("POST", `/migrations/${encodeURIComponent(id)}/retry`);

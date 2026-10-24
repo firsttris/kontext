@@ -4,6 +4,7 @@
  */
 import type { Context } from "hono";
 import { z } from "zod";
+import type { MigrationDeps } from "../migration/routes";
 import {
   type Company,
   isCompanyUser,
@@ -20,6 +21,7 @@ export type CompanyDeps = {
   management: Management;
   mailstore: Mailstore;
   settings: CompanySettings;
+  migrations: MigrationDeps;
   /** The signed-in user's address, or null. */
   currentEmail: (request: Request) => Promise<string | null>;
   /** Ends the user's Sekretär sessions (after deactivating or a new password). */

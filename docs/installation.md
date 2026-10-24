@@ -81,6 +81,13 @@ Er kann aber alle Postfächer lesen und Admin-Konten von Stalwart im Passwort ä
 prüft dabei die Rechte des Zielkontos nicht) – den Schlüssel deshalb wie ein Admin-Passwort
 behandeln.
 
+### Umzug aus Outlook
+
+Unter *Einstellungen → Firma → Umzug* lädt der Chef die Outlook-Dateien (PST) der Mitarbeiter
+hoch. Die Datei liegt bis zum Ende des Umzugs im Datenvolume von Sekretär und wird dann
+entpackt: Für eine 10-GB-PST also vorübergehend gut 20 GB frei haben. Ein großer Umzug läuft
+mehrere Stunden; der Fortschritt steht auf derselben Seite, auch nach einem Neustart.
+
 ### Wenn jemand sein Handy mit der Authenticator-App verliert
 
 Mitarbeiter schalten die Anmeldung mit Code selbst unter *Einstellungen → Passwort und Sicherheit*
