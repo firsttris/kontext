@@ -17,6 +17,7 @@ const EVENT_PROPERTIES = [
   "duration",
   "showWithoutTime",
   "locations",
+  "virtualLocations",
   "participants",
   "organizerCalendarAddress",
   "recurrenceRule",
