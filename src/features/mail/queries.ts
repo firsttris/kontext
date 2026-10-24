@@ -143,29 +143,43 @@ export const useQuota = (accountId: string) => {
 type ListData = InfiniteData<EmailPage, number>;
 
 /** Applies a change to the emails in every cached list of the account, for instant feedback. */
+/**
+ * A paged mail list. Other queries share the `[accountId, "emails"]` prefix with a plain array
+ * (the last mails with a person, sender-panel.tsx and the contact view); they are left alone.
+ */
+const isListData = (data: unknown): data is ListData =>
+  typeof data === "object" && data !== null && "pages" in data;
+
+/** Applies a change to the given mails of one cached list; null drops a mail. */
+export const patchListData = <T>(
+  data: T,
+  ids: string[],
+  patch: (email: EmailSummary) => EmailSummary | null,
+): T => {
+  if (!isListData(data)) return data;
+  const wanted = new Set(ids);
+  return {
+    ...data,
+    pages: data.pages.map((page) => ({
+      ...page,
+      emails: page.emails.flatMap((email) => {
+        if (!wanted.has(email.id)) return [email];
+        const next = patch(email);
+        return next ? [next] : [];
+      }),
+    })),
+  };
+};
+
 const patchCachedEmails = (
   queryClient: ReturnType<typeof useQueryClient>,
   accountId: string,
   ids: string[],
   patch: (email: EmailSummary) => EmailSummary | null,
-) => {
-  const wanted = new Set(ids);
-  queryClient.setQueriesData<ListData>({ queryKey: [accountId, "emails"] }, (data) =>
-    data
-      ? {
-          ...data,
-          pages: data.pages.map((page) => ({
-            ...page,
-            emails: page.emails.flatMap((email) => {
-              if (!wanted.has(email.id)) return [email];
-              const next = patch(email);
-              return next ? [next] : [];
-            }),
-          })),
-        }
-      : data,
+) =>
+  queryClient.setQueriesData<unknown>({ queryKey: [accountId, "emails"] }, (data: unknown) =>
+    patchListData(data, ids, patch),
   );
-};
 
 /** Keeps the unread counters of the folders right while a read/unread change is on its way. */
 const adjustUnreadCounts = (
@@ -176,10 +190,11 @@ const adjustUnreadCounts = (
 ) => {
   const wanted = new Set(ids);
   const changed = new Map<string, EmailSummary>();
-  for (const [, data] of queryClient.getQueriesData<ListData>({
+  for (const [, data] of queryClient.getQueriesData<unknown>({
     queryKey: [accountId, "emails"],
   })) {
-    for (const email of data?.pages.flatMap((page) => page.emails) ?? []) {
+    const emails = isListData(data) ? data.pages.flatMap((page) => page.emails) : [];
+    for (const email of emails) {
       if (wanted.has(email.id) && Boolean(email.keywords.$seen) !== seen)
         changed.set(email.id, email);
     }
