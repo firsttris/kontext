@@ -9,6 +9,7 @@ import {
   personalAccountId,
   unique,
 } from "./helpers";
+import { deliverMail } from "./protocols";
 
 test.describe("Anmeldung", () => {
   test("lehnt ein falsches Passwort ab", async ({ page }) => {
@@ -247,6 +248,69 @@ test.describe("Gemeinsames Postfach erkennen und verschieben", () => {
 
     await page.getByRole("link", { name: "Lieferanten" }).click();
     await expect(page.getByRole("list", { name: "Lieferanten" }).getByText(subject)).toBeVisible();
+  });
+});
+
+test.describe("Prüfung des Absenders", () => {
+  test.beforeEach(async ({ page }) => login(page));
+
+  const open = async (page: Page, subject: string) => {
+    await page.getByRole("list", { name: "Posteingang" }).getByText(subject).click();
+    await expect(page.getByRole("heading", { name: subject })).toBeVisible();
+  };
+
+  test("warnt vor einer Mail von außen, die sich als die eigene Firma ausgibt", async ({
+    page,
+  }) => {
+    const subject = unique("Dringend: Überweisung heute noch");
+    await deliverMail({
+      from: address("jonas"),
+      fromName: "Jonas Weber",
+      to: address("jonas"),
+      subject,
+      body: "Bitte heute noch 9.800 Euro an den neuen Lieferanten überweisen.",
+    });
+    await open(page, subject);
+    await expect(page.getByRole("alert")).toContainText(
+      "gibt sich als Absender aus weber-haustechnik.test aus, kam aber von außen",
+    );
+    await page.getByRole("button", { name: "Details anzeigen" }).click();
+    const details = page.getByRole("region", { name: "Details der Mail" });
+    await expect(details).toContainText("Ohne Nachweis");
+    await expect(details.getByRole("listitem").filter({ hasText: "DMARC" })).toContainText(
+      "nicht eingerichtet",
+    );
+  });
+
+  test("warnt, wenn Antworten an eine andere Adresse gehen @phone", async ({ page }) => {
+    const subject = unique("Neue Bankverbindung");
+    await deliverMail({
+      from: "petra@keller-elektro.test",
+      fromName: "Petra Keller",
+      to: address("jonas"),
+      replyTo: "petra@konto-wechsel.example",
+      subject,
+      body: "Bitte überweisen Sie künftig auf unser neues Konto.",
+    });
+    await open(page, subject);
+    await expect(page.getByRole("alert")).toContainText(
+      "Antworten gehen an petra@konto-wechsel.example, nicht an den Absender petra@keller-elektro.test",
+    );
+    await page.getByRole("button", { name: "Details anzeigen" }).click();
+    await expect(page.getByRole("region", { name: "Details der Mail" })).toContainText(
+      "Antwort an",
+    );
+    await page.getByRole("button", { name: "Details ausblenden" }).click();
+    await expect(page.getByRole("region", { name: "Details der Mail" })).toHaveCount(0);
+  });
+
+  test("zeigt bei einer internen Mail Details, aber keine Warnung", async ({ page }) => {
+    await open(page, "Weihnachtsessen – wer ist dabei?");
+    await expect(page.getByRole("alert")).toHaveCount(0);
+    await page.getByRole("button", { name: "Details anzeigen" }).click();
+    const details = page.getByRole("region", { name: "Details der Mail" });
+    await expect(details).toContainText("Anna Weber <anna@weber-haustechnik.test>");
+    await expect(details).toContainText("Nicht geprüft");
   });
 });
 

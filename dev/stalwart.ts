@@ -101,6 +101,24 @@ const waitForHttp = async (port: number): Promise<void> => {
   throw new Error(`Stalwart did not answer on port ${port}`);
 };
 
+type Invocation = [string, Record<string, unknown>, string];
+
+/** Management calls as the admin (crates/registry/src/schema/structs.rs, as x:<Object>/get|set). */
+const adminRequest = async (port: number, methodCalls: Invocation[]): Promise<Invocation[]> => {
+  const response = await fetch(`http://127.0.0.1:${port}/jmap/`, {
+    method: "POST",
+    headers: { "content-type": "application/json", authorization: `Basic ${btoa(adminEnv)}` },
+    body: JSON.stringify({
+      using: ["urn:ietf:params:jmap:core", "urn:stalwart:jmap"],
+      methodCalls,
+    }),
+  });
+  const body = await response.text();
+  if (!response.ok || /"(error|notCreated|notUpdated)"/.test(body))
+    throw new Error(`Stalwart setup failed: ${body}`);
+  return (JSON.parse(body) as { methodResponses: Invocation[] }).methodResponses;
+};
+
 const createListeners = async (port: number): Promise<void> => {
   const listener = (name: string, protocol: string, listenPort: string) => ({
     name,
@@ -108,34 +126,98 @@ const createListeners = async (port: number): Promise<void> => {
     bind: { [`127.0.0.1:${listenPort}`]: true },
     useTls: false,
   });
-  const response = await fetch(`http://127.0.0.1:${port}/jmap/`, {
-    method: "POST",
-    headers: { "content-type": "application/json", authorization: `Basic ${btoa(adminEnv)}` },
-    body: JSON.stringify({
-      using: ["urn:ietf:params:jmap:core", "urn:stalwart:jmap"],
-      methodCalls: [
-        [
-          "x:NetworkListener/set",
-          {
-            create: {
-              http: listener("http", "http", args.http),
-              smtp: listener("smtp", "smtp", args.smtp),
-              imap: listener("imap", "imap", args.imap),
-            },
-          },
-          "0",
-        ],
-        // The dev listeners have no TLS; let IMAP clients (and the integration tests) log in
-        // anyway. Only for this local instance on 127.0.0.1.
-        ["x:Imap/set", { update: { singleton: { allowPlainTextAuth: true } } }, "1"],
-        // German stemming for the search index and for searches (see docs/installation.md).
-        ["x:Search/set", { update: { singleton: { defaultLanguage: "de-DE" } } }, "2"],
-      ],
-    }),
+  await adminRequest(port, [
+    [
+      "x:NetworkListener/set",
+      {
+        create: {
+          http: listener("http", "http", args.http),
+          smtp: listener("smtp", "smtp", args.smtp),
+          imap: listener("imap", "imap", args.imap),
+        },
+      },
+      "0",
+    ],
+    // The dev listeners have no TLS; let IMAP clients (and the integration tests) log in
+    // anyway. Only for this local instance on 127.0.0.1.
+    ["x:Imap/set", { update: { singleton: { allowPlainTextAuth: true } } }, "1"],
+    // German stemming for the search index and for searches (see docs/installation.md).
+    ["x:Search/set", { update: { singleton: { defaultLanguage: "de-DE" } } }, "2"],
+  ]);
+};
+
+/**
+ * Stalwart treats port 25 as mail from the internet: no login, SPF, DKIM, DMARC and reverse DNS
+ * checked, Authentication-Results and Received-SPF written. Its defaults say so as
+ * `local_port == 25` (crates/registry/src/schema/structs_impl.rs). The dev SMTP port cannot be 25,
+ * so these rules are read and widened to it; mail sent to it then looks like mail from outside,
+ * which the sender check in the reading pane needs. The spam filter (on for every session without
+ * login) is turned off there: it would put every mail from a .test domain into Spam and asks
+ * blocklists on the internet. Runs on every start and changes each rule once.
+ */
+type Expression = { match: Record<string, { if: string; then: string }>; else: string };
+type Rewrite = (expression: Expression, smtpPort: string) => Expression;
+
+const widenPort25: Rewrite = (expression, smtpPort) =>
+  JSON.parse(
+    JSON.stringify(expression)
+      .replaceAll("local_port == 25", `(local_port == 25 || local_port == ${smtpPort})`)
+      .replaceAll("local_port != 25", `(local_port != 25 && local_port != ${smtpPort})`),
+  );
+
+const notOnDevPort: Rewrite = (expression, smtpPort) => {
+  const off = (value: string) => `(${value}) && local_port != ${smtpPort}`;
+  return {
+    match: Object.fromEntries(
+      Object.entries(expression.match).map(([key, rule]) => [
+        key,
+        // biome-ignore lint/suspicious/noThenProperty: Stalwart's ExpressionMatch has "if" and "then".
+        { ...rule, then: off(rule.then) },
+      ]),
+    ),
+    else: off(expression.else),
+  };
+};
+
+const INBOUND_RULES: Record<string, Record<string, Rewrite>> = {
+  MtaStageAuth: { require: widenPort25 },
+  MtaStageData: {
+    addAuthResultsHeader: widenPort25,
+    addReceivedSpfHeader: widenPort25,
+    addReceivedHeader: widenPort25,
+    addReturnPathHeader: widenPort25,
+    enableSpamFilter: notOnDevPort,
+  },
+  SenderAuth: {
+    spfEhloVerify: widenPort25,
+    spfFromVerify: widenPort25,
+    dmarcVerify: widenPort25,
+    reverseIpVerify: widenPort25,
+  },
+};
+
+const treatSmtpAsInbound = async (port: number, smtpPort: string): Promise<void> => {
+  const objects = Object.entries(INBOUND_RULES);
+  const current = await adminRequest(
+    port,
+    objects.map(([object, rules], index) => [
+      `x:${object}/get`,
+      { ids: ["singleton"], properties: Object.keys(rules) },
+      String(index),
+    ]),
+  );
+  const updates = objects.flatMap(([object, rules], index): Invocation[] => {
+    const [settings = {}] = (current[index]![1].list ?? []) as Record<string, Expression>[];
+    const changed = Object.fromEntries(
+      Object.entries(rules)
+        .filter(([property]) => !JSON.stringify(settings[property]).includes(`= ${smtpPort}`))
+        .map(([property, rewrite]) => [property, rewrite(settings[property]!, smtpPort)]),
+    );
+    return Object.keys(changed).length
+      ? [[`x:${object}/set`, { update: { singleton: changed } }, String(index)]]
+      : [];
   });
-  const body = await response.text();
-  if (!response.ok || body.includes("notCreated") || body.includes("notUpdated"))
-    throw new Error(`Listener setup failed: ${body}`);
+  if (updates.length) await adminRequest(port, updates);
 };
 
 const stop = (child: ReturnType<typeof spawn>): Promise<void> =>
@@ -166,6 +248,7 @@ const main = async (): Promise<void> => {
 
   const server = startServer({ STALWART_HOSTNAME: "localhost" });
   await waitForHttp(httpPort);
+  await treatSmtpAsInbound(httpPort, args.smtp);
   console.log(
     `Stalwart ${STALWART_VERSION} läuft: http://127.0.0.1:${httpPort} (SMTP ${args.smtp}, IMAP ${args.imap}), Admin ${STALWART_ADMIN.user}`,
   );

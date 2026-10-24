@@ -60,6 +60,9 @@ export type EmailDetail = EmailSummary & {
   textBody: BodyPart[];
   attachments: BodyPart[];
   bodyValues: Record<string, { value: string; isTruncated?: boolean }>;
+  /** Headers the mail server adds on arrival, topmost first (src/lib/sender-check.ts). */
+  authenticationResults: string[] | null;
+  spamScore: string[] | null;
 };
 
 export type Identity = {

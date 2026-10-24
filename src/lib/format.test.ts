@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { displayName, firstName, formatSize, initials, listDate } from "./format";
+import { displayName, firstName, formatSize, fullAddress, initials, listDate } from "./format";
 
 const now = new Date("2026-10-23T12:00:00+02:00");
 
@@ -36,5 +36,14 @@ describe("formatSize", () => {
     expect(formatSize(512)).toBe("512 B");
     expect(formatSize(1536)).toBe("1,5 KB");
     expect(formatSize(4.6 * 1024 ** 3)).toBe("4,6 GB");
+  });
+});
+
+describe("fullAddress", () => {
+  it("shows name and address, or the address alone", () => {
+    expect(fullAddress({ name: "Petra Keller", email: "petra@keller.de" })).toBe(
+      "Petra Keller <petra@keller.de>",
+    );
+    expect(fullAddress({ name: " ", email: "petra@keller.de" })).toBe("petra@keller.de");
   });
 });

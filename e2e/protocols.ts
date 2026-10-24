@@ -1,6 +1,6 @@
 /**
- * Minimal IMAP and WebDAV clients for the integration tests: what a phone or Thunderbird does
- * with the same server, without the web app in between.
+ * Minimal IMAP, WebDAV and SMTP clients for the tests: what a phone or Thunderbird does with the
+ * same server, or a mail server on the internet delivering a mail, without the web app in between.
  */
 import { connect } from "node:net";
 import { DEV_PASSWORD } from "../dev/config";
@@ -38,6 +38,66 @@ export const imap = (user: string, commands: string[]): Promise<string[]> =>
       }
     });
     socket.on("end", () => resolve(responses.slice(1, -1)));
+    socket.on("error", reject);
+  });
+
+export const SMTP_PORT = 20025;
+
+const encodeWord = (text: string) => `=?UTF-8?B?${Buffer.from(text).toString("base64")}?=`;
+
+/**
+ * Delivers a mail over SMTP without logging in, like a mail server on the internet. The test
+ * Stalwart treats this port like port 25 (dev/stalwart.ts), so it checks the sender and writes
+ * Authentication-Results on top of the mail.
+ */
+export const deliverMail = (mail: {
+  from: string;
+  fromName: string;
+  to: string;
+  subject: string;
+  body: string;
+  replyTo?: string;
+}): Promise<void> =>
+  new Promise((resolve, reject) => {
+    const message = [
+      `From: ${encodeWord(mail.fromName)} <${mail.from}>`,
+      `To: <${mail.to}>`,
+      ...(mail.replyTo ? [`Reply-To: <${mail.replyTo}>`] : []),
+      `Subject: ${encodeWord(mail.subject)}`,
+      `Date: ${new Date().toUTCString()}`,
+      `Message-ID: <${crypto.randomUUID()}@mail.example.test>`,
+      "MIME-Version: 1.0",
+      "Content-Type: text/plain; charset=utf-8",
+      "Content-Transfer-Encoding: 8bit",
+      "",
+      mail.body,
+    ].join("\r\n");
+    const steps = [
+      "EHLO mail.example.test",
+      `MAIL FROM:<${mail.from}>`,
+      `RCPT TO:<${mail.to}>`,
+      "DATA",
+      `${message}\r\n.`,
+      "QUIT",
+    ];
+    const socket = connect(SMTP_PORT, "127.0.0.1");
+    let buffer = "";
+    let step = 0;
+    socket.setEncoding("utf8");
+    socket.setTimeout(10_000, () => socket.destroy(new Error("SMTP timeout")));
+    socket.on("data", (chunk: string) => {
+      buffer += chunk;
+      // A reply is complete with its last line: code, space, text.
+      const last = buffer.trimEnd().split("\r\n").at(-1) ?? "";
+      if (!/^\d{3} /.test(last)) return;
+      buffer = "";
+      if (!/^[23]/.test(last)) {
+        socket.destroy(new Error(`SMTP: ${last}`));
+        return;
+      }
+      if (step < steps.length) socket.write(`${steps[step++]}\r\n`);
+    });
+    socket.on("close", (failed) => (failed ? undefined : resolve()));
     socket.on("error", reject);
   });
 

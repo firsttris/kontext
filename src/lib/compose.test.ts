@@ -35,6 +35,8 @@ const original: EmailDetail = {
     },
   ],
   bodyValues: {},
+  authenticationResults: null,
+  spamScore: null,
 };
 
 describe("startCompose", () => {

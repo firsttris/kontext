@@ -68,6 +68,32 @@ Damit man sieht, wo eine Mail liegt, steht über dem Betreff „Gemeinsames Post
 Gruppen-Symbol, und die Seitenleiste nennt die Ordner eines gemeinsamen Postfachs „Ordner von
 info@“.
 
+## Prüfung des Absenders
+
+Kommt eine Mail aus dem Internet an (Port 25), prüft Stalwart den Absender und schreibt das
+Ergebnis als `Authentication-Results` (RFC 8601) oben in die Mail, dazu `X-Spam-Score`
+(`crates/smtp/src/inbound/data.rs`, `crates/spam-filter/src/analysis/score.rs`). Die App holt diese
+Header mit `header:…:asText:all` und nimmt jeweils den **obersten**: Ohne `:all` gäbe JMAP den
+untersten zurück (RFC 8621 §4.1.3), und alles unter Stalwarts Header kam mit der Mail und kann
+vom Absender gefälscht sein. Mails ohne diesen Header kamen nicht von außen (von Kollegen über
+den eigenen Server, oder aus einem Umzug); sie werden nicht bewertet.
+
+Die Regeln stehen in `src/lib/sender-check.ts`:
+
+| Warnung                                           | Wann                                                                                                   |
+| ------------------------------------------------- | ------------------------------------------------------------------------------------------------------ |
+| „gibt sich als Absender aus weber-haustechnik.de aus“ | Absender aus der eigenen Firma (Domain eines eigenen Postfachs), aber von außen und nicht bestätigt |
+| „Absender nicht bestätigt“                        | DMARC fehlgeschlagen, oder SPF hart fehlgeschlagen ohne gültige DKIM-Signatur                          |
+| „Antworten gehen an …“                            | `Reply-To` zeigt auf eine andere Domain als der Absender – ein Muster bei Rechnungsbetrug              |
+
+Bestätigt ist ein Absender, wenn DMARC bestanden hat oder SPF bzw. DKIM für seine Domain (auch
+Subdomain, RFC 7489 §3.1). Ein SPF-„softfail“ allein warnt nicht, weil weitergeleitete Mails das
+oft haben; „nicht eingerichtet“ ist bei kleinen Firmen häufig und steht nur in den Details.
+
+„Details anzeigen“ unter dem Absender klappt Absender, Empfänger, Antwort an, Datum, Größe,
+Anhänge und Nachrichten-ID auf, daneben die einzelnen Prüfungen (SPF, DKIM, DMARC, Reverse DNS)
+und die Spam-Bewertung (`src/features/mail/message-details.tsx`).
+
 ## Firmenverwaltung
 
 Unter *Einstellungen → Firma* verwaltet der Chef Mitarbeiter und gemeinsame Postfächer. Das läuft

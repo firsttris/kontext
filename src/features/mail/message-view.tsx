@@ -2,6 +2,7 @@
 import { Link, useNavigate } from "@tanstack/react-router";
 import {
   Archive,
+  ChevronDown,
   ChevronLeft,
   FolderInput,
   Forward,
@@ -13,7 +14,7 @@ import {
   Trash2,
   Users,
 } from "lucide-react";
-import { Fragment, useEffect, useRef } from "react";
+import { Fragment, useEffect, useRef, useState } from "react";
 import { useClient } from "@/auth/auth";
 import { Avatar } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -35,6 +36,7 @@ import { mailboxRights } from "@/lib/mailboxes";
 import { moveTargets } from "@/lib/move-targets";
 import { m } from "@/paraglide/messages";
 import { MailBody } from "./mail-body";
+import { MessageDetails, SenderWarnings } from "./message-details";
 import { useAllMailboxes, useEmail, useEmailActions, useMailAccounts } from "./queries";
 
 type Props = { accountId: string; mailbox: Mailbox; emailId: string | undefined };
@@ -45,6 +47,8 @@ export const MessageView = ({ accountId, mailbox, emailId }: Props) => {
   const markedFor = useRef<string | null>(null);
   const account = useMailAccounts().find((candidate) => candidate.id === accountId);
   const notice = account ? mailboxNotice(account) : undefined;
+  // Open for one mail; the next mail starts folded again.
+  const [detailsFor, setDetailsFor] = useState<string | null>(null);
 
   // Opening a mail marks it read, once per mail (if the mailbox allows it).
   const { canMarkSeen } = mailboxRights(mailbox);
@@ -64,6 +68,10 @@ export const MessageView = ({ accountId, mailbox, emailId }: Props) => {
   }
   if (isPending) return <div className="p-6 text-[14px] text-muted">{m.common_loading()}</div>;
   if (!email) return <div className="p-6 text-[14px] text-muted">{m.mail_pick()}</div>;
+  const showDetails = detailsFor === email.id;
+  const attachments = email.attachments.filter(
+    (part) => !part.cid || part.disposition === "attachment",
+  );
 
   return (
     <div className="flex h-full min-h-0 flex-col">
@@ -91,19 +99,29 @@ export const MessageView = ({ accountId, mailbox, emailId }: Props) => {
                   {email.from?.[0]?.email} → {formatAddressList(email.to)}
                   {email.cc?.length ? `, Cc: ${formatAddressList(email.cc)}` : ""}
                 </span>
+                <button
+                  type="button"
+                  aria-expanded={showDetails}
+                  onClick={() => setDetailsFor(showDetails ? null : email.id)}
+                  className="mt-0.5 flex items-center gap-1 self-start text-[12px] text-muted hover:text-fg"
+                >
+                  <ChevronDown
+                    size={13}
+                    aria-hidden="true"
+                    className={showDetails ? "rotate-180" : undefined}
+                  />
+                  {showDetails ? m.mail_details_hide() : m.mail_details_show()}
+                </button>
               </div>
               <span className="hidden shrink-0 text-[13px] text-muted sm:block">
                 {readingDate(email.receivedAt)}
               </span>
             </div>
           </header>
+          <SenderWarnings email={email} />
+          {showDetails ? <MessageDetails email={email} attachments={attachments} /> : null}
           <MailBody accountId={accountId} email={email} />
-          <Attachments
-            accountId={accountId}
-            parts={email.attachments.filter(
-              (part) => !part.cid || part.disposition === "attachment",
-            )}
-          />
+          <Attachments accountId={accountId} parts={attachments} />
           <div className="flex flex-wrap gap-2">
             <Button
               asChild

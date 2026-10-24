@@ -38,6 +38,20 @@ IMAP 10143) und startet dann normal. Der Admin ist `admin` / `sekretaer-admin-de
 | `--seed`                        | Testdaten einspielen, sobald der Server läuft       |
 | `--instance e2e --http 28080 …` | zweite, getrennte Instanz (so laufen die E2E-Tests) |
 
+Der SMTP-Port verhält sich wie Port 25 eines echten Servers: Mails kommen ohne Anmeldung an, wie
+von einem Mailserver im Internet, und Stalwart prüft SPF, DKIM, DMARC und Reverse DNS und schreibt
+`Authentication-Results` dazu. Stalwart knüpft das an `local_port == 25`; das Skript erweitert
+diese Regeln bei jedem Start um den Dev-Port. Der Spamfilter bleibt dort aus, weil er jede Mail
+von einer `.test`-Domain in den Spam legt. So probiert man die Warnungen in der Mail aus, etwa
+eine Mail, die sich als die eigene Firma ausgibt:
+
+```bash
+swaks --server 127.0.0.1:10025 --from chef@weber-haustechnik.test \
+  --to jonas@weber-haustechnik.test --header "Subject: Dringend: Überweisung"
+```
+
+Die E2E-Tests stellen solche Mails mit `deliverMail` aus `e2e/protocols.ts` zu.
+
 ## Datenbank des Servers
 
 Der Server speichert nur Sitzungen (und später Passkeys) in SQLite, Standard

@@ -67,6 +67,10 @@ export const initials = (text: string): string => {
 export const formatAddressList = (addresses: EmailAddress[] | null | undefined): string =>
   (addresses ?? []).map(displayName).join(", ");
 
+/** "Petra Keller <petra@keller-elektro.de>", or the bare address without a name. */
+export const fullAddress = (address: EmailAddress): string =>
+  address.name?.trim() ? `${address.name.trim()} <${address.email}>` : address.email;
+
 const units = ["B", "KB", "MB", "GB", "TB"];
 
 export const formatSize = (bytes: number): string => {

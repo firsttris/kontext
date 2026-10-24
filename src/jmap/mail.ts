@@ -32,6 +32,15 @@ const DETAIL_PROPERTIES = [
 
 const BODY_PROPERTIES = ["partId", "blobId", "type", "name", "size", "cid", "disposition"];
 
+/**
+ * Headers for the sender check, every instance (`:all`, topmost first, RFC 8621 §4.1.3): without
+ * it JMAP returns the bottommost one, which the sender may have written themselves.
+ */
+const CHECK_HEADERS = {
+  authenticationResults: "header:Authentication-Results:asText:all",
+  spamScore: "header:X-Spam-Score:asText:all",
+} as const;
+
 export const listMailboxes = async (client: JmapClient, accountId: string): Promise<Mailbox[]> => {
   const { list } = await client.call<{ list: Mailbox[] }>("Mailbox/get", {
     accountId,
@@ -104,16 +113,21 @@ export const getEmail = async (
   accountId: string,
   id: string,
 ): Promise<EmailDetail | null> => {
-  const { list } = await client.call<{ list: EmailDetail[] }>("Email/get", {
+  const { list } = await client.call<{ list: Record<string, unknown>[] }>("Email/get", {
     accountId,
     ids: [id],
-    properties: DETAIL_PROPERTIES,
+    properties: [...DETAIL_PROPERTIES, ...Object.values(CHECK_HEADERS)],
     bodyProperties: BODY_PROPERTIES,
     fetchHTMLBodyValues: true,
     fetchTextBodyValues: true,
     maxBodyValueBytes: 2_000_000,
   });
-  return list[0] ?? null;
+  const email = list[0];
+  if (!email) return null;
+  const headers = Object.fromEntries(
+    Object.entries(CHECK_HEADERS).map(([field, property]) => [field, email[property] ?? null]),
+  );
+  return { ...email, ...headers } as EmailDetail;
 };
 
 /** Emails exchanged with an address, newest first, for the contact view. */
