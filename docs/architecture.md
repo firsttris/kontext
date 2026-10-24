@@ -5,7 +5,7 @@ flowchart LR
   Browser["Browser / Handy<br>Kontext (React-SPA)"] -->|HTTPS| Caddy
   Caddy -->|"App, /api, /jmap"| Server["Kontext-Server<br>(Bun, Hono, Better Auth)"]
   Server -->|"JMAP mit Token"| Stalwart
-  Server --> SQLite[("Sitzungen")]
+  Server --> SQLite[("Sitzungen, Aufgaben, Chat")]
   Caddy -->|"/dav, /.well-known"| Stalwart
   Clients["Mailprogramme, Handys"] -->|"IMAP, SMTP, CalDAV, CardDAV"| Stalwart
   Internet["andere Mailserver"] -->|SMTP 25| Stalwart
@@ -354,8 +354,50 @@ oder Reihenfolge.
   Lesebereich.
 - **Schnelleingabe** (`src/lib/tasks.ts`): ein letztes Wort „heute“, „morgen“, „übermorgen“, ein
   Wochentag oder ein Datum wie „30.10.“ wird zur Fälligkeit.
-- **Abgleich im Team:** Die App lädt die Aufgaben alle 30 Sekunden und beim Zurückkehren neu;
-  Änderungen zeigt sie sofort und korrigiert sie, wenn der Server etwas anderes sagt.
+- **Abgleich im Team:** Nach jeder Änderung meldet der Server über die
+  [Live-Verbindung](#live-verbindung), welches Board sich geändert hat; alle, die dieses Postfach
+  öffnen können, laden die Aufgaben neu. Eigene Änderungen zeigt die App sofort und korrigiert
+  sie, wenn der Server etwas anderes sagt.
+
+## Team-Chat
+
+Der Chat (`src/features/chat/`, Server `server/chat/`) liegt in Kontexts SQLite
+(`chat_channels`, `chat_members`, `chat_messages`, `chat_reads`); Stalwart hat keinen Chat.
+Personen sind ihre persönliche Konto-ID aus der JMAP-Session (in Stalwart zugleich die
+Principal-ID), die Namen holt die App wie bei den Aufgaben über die Principals.
+
+- **Kanäle:** `#allgemein` für alle in der Firma; ein Kanal pro gemeinsamem Postfach (info@,
+  rechnung@), den sieht, wer das Postfach in seiner JMAP-Session hat – wer aus info@ austritt,
+  verliert auch den Kanal; eigene Kanäle mit ausgewählten Mitgliedern (Namen klein mit
+  Bindestrich, „Baustelle Hoffmann“ wird `#baustelle-hoffmann`); Direktnachrichten an eine oder
+  mehrere Personen – dieselben Personen landen immer in derselben Unterhaltung (`direct_key`).
+  `#allgemein` und die Postfach-Kanäle legt der Server beim ersten Blick in den Chat an.
+- **Wer was sieht:** `canSee` in `server/chat/chat.ts` – jede Anfrage und jedes Live-Ereignis
+  geht nur an Personen, die den Kanal sehen dürfen.
+- **Gelesen und Ungelesen:** pro Person und Kanal der Zeitpunkt, bis zu dem gelesen ist; was man
+  selbst schreibt, ist gelesen. Ungelesen und Erwähnungen zählt der Server, die App zeigt sie am
+  Chat in Leiste und Tab-Leiste und am App-Symbol. In Direktnachrichten steht „Gelesen“ unter der
+  eigenen letzten Nachricht.
+- **@Erwähnungen:** Beim Tippen schlägt die App Personen vor (in Kanälen und Direktnachrichten
+  nur Mitglieder) und schickt deren IDs mit; markiert werden nur Namen, die wirklich erwähnt
+  wurden. Eine Erwähnung oder Direktnachricht wird zur Benachrichtigung auf dem Gerät, wenn sie
+  dort eingeschaltet ist und Kontext im Hintergrund liegt.
+- **Verlauf:** 50 Nachrichten je Seite, ältere auf Knopfdruck; Nachrichten einer Person kurz
+  hintereinander stehen unter einem Namen, eine Linie „Neu“ zeigt, wo das Ungelesene beginnt.
+  Aufbewahrt wird unbegrenzt.
+
+## Live-Verbindung
+
+Jede offene App hält eine Verbindung `/api/live` (Server-Sent Events, `server/live/`). Der Server
+merkt sich nur, wer verbunden ist (`hub.ts`), und schickt jedes Ereignis an die, die es sehen
+dürfen: neue Nachrichten, „schreibt …“, Gelesen-Marken, geänderte Kanäle, wer online ist und
+geänderte Aufgaben-Boards. Mails meldet Stalwart weiter selbst (JMAP Push).
+
+- Alle 25 Sekunden ein Kommentar, damit Proxys die ruhige Verbindung nicht schließen; Caddy
+  komprimiert die beiden Streams nicht (`deploy/Caddyfile`), sonst kämen Ereignisse verzögert an.
+- Nach 15 Minuten beendet der Server die Verbindung, der Browser baut sie sofort neu auf – mit den
+  aktuellen Rechten aus der JMAP-Session. Nach einer Unterbrechung lädt die App Chat und Aufgaben
+  neu, damit nichts fehlt.
 
 ## Drucken
 

@@ -6,7 +6,10 @@
 }
 
 {$KONTEXT_DOMAIN} {
-	encode zstd gzip
+	# The live streams (Kontext's /api/live, Stalwart's JMAP push) uncompressed: a compressor
+	# may hold events back until its buffer is full.
+	@compressible not path /api/live /jmap/eventsource*
+	encode @compressible zstd gzip
 
 	# CalDAV/CardDAV and autoconfiguration for mail programs and phones, straight to Stalwart
 	@stalwart path /.well-known/* /dav/* /mail/config-v1.1.xml /autodiscover/*

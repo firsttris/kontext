@@ -3,9 +3,14 @@ import { createFileRoute, Outlet, redirect } from "@tanstack/react-router";
 import { useEffect } from "react";
 import { useClient } from "@/auth/auth";
 import { AppShell, railButton } from "@/components/shell/app-shell";
+import { useChannels } from "@/features/chat/queries";
+import { useChatAnnouncer } from "@/features/chat/use-chat-announcer";
+import { useLive } from "@/features/live/use-live";
 import { useInboxes } from "@/features/mail/queries";
 import { NotificationBell } from "@/features/notifications/notification-bell";
+import { useMe } from "@/features/tasks/queries";
 import { subscribeToChanges } from "@/jmap/push";
+import { totalUnread } from "@/lib/chat";
 import { useAppBadge } from "@/pwa/badge";
 
 export const Route = createFileRoute("/_app")({
@@ -32,8 +37,10 @@ const usePush = () => {
 
 function AppLayout() {
   usePush();
-  // Unread mail of all inboxes on the app's icon, as in "Alle Posteingänge".
-  useAppBadge(useInboxes().reduce((sum, inbox) => sum + inbox.mailbox.unreadEmails, 0));
+  useLive(useMe(), useChatAnnouncer());
+  // Unread mail of all inboxes and unread chat messages on the app's icon.
+  const unreadMail = useInboxes().reduce((sum, inbox) => sum + inbox.mailbox.unreadEmails, 0);
+  useAppBadge(unreadMail + totalUnread(useChannels().channels));
   return (
     <AppShell bell={<NotificationBell className={railButton(false)} />}>
       <Outlet />

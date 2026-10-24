@@ -10,6 +10,8 @@ import { serveStatic } from "hono/bun";
 import { type Auth, createAuth, createGrants, type Grants } from "./auth";
 import { createCategoryRoutes, type SessionAccount } from "./categories/routes";
 import { createCategoryStore } from "./categories/store";
+import { createChatRoutes, viewerOf } from "./chat/routes";
+import { createChatStore } from "./chat/store";
 import { createMailstore } from "./company/mailstore";
 import {
   createDownload,
@@ -22,6 +24,8 @@ import { createCompanySettings } from "./company/settings";
 import { createSealer } from "./crypto";
 import { type Db, openDatabase, schema } from "./db";
 import type { Env } from "./env";
+import { createHub } from "./live/hub";
+import { createLiveRoutes } from "./live/routes";
 import { createImporter } from "./migration/importer";
 import { createJobs } from "./migration/jobs";
 import { createGraph, type M365Credentials } from "./migration/m365/graph";
@@ -172,7 +176,29 @@ export const createApp = async (env: Env) => {
     app.route("/api/company", company);
   }
   const accountsOf = sessionAccountsOf(env, auth, grants);
-  app.route("/api/tasks", createTaskRoutes({ store: createTaskStore(db), accountsOf }));
+  const hub = createHub();
+  app.route(
+    "/api/live",
+    createLiveRoutes({
+      hub,
+      viewerOf: async (request) => {
+        const accounts = await accountsOf(request);
+        return accounts && viewerOf(accounts);
+      },
+    }),
+  );
+  app.route("/api/chat", createChatRoutes({ store: createChatStore(db), hub, accountsOf }));
+  app.route(
+    "/api/tasks",
+    createTaskRoutes({
+      store: createTaskStore(db),
+      accountsOf,
+      changed: (accountId) =>
+        hub.publish({ type: "tasks", accountId }, (viewer) =>
+          viewer.accountIds.includes(accountId),
+        ),
+    }),
+  );
   app.route(
     "/api/categories",
     createCategoryRoutes({

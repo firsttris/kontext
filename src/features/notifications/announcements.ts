@@ -21,7 +21,7 @@ import type { FeedEvent } from "./feed";
  * Through the service worker where there is one: installed apps on Android allow notifications
  * only that way, and a click then also reaches a closed window (src/sw/service-worker.ts).
  */
-const show = (
+export const showNotification = (
   title: string,
   body: string,
   tag: string,
@@ -58,7 +58,7 @@ export const useAnnouncements = (mails: InboxMail[], appointments: FeedEvent[]) 
       announced.current.add(`${mail.accountId}/${mail.email.id}`);
       // In front, the user sees it in the list; a system notification would only interrupt.
       if (document.visibilityState === "visible") continue;
-      show(
+      showNotification(
         m.notifications_new_mail({ name: displayName(mail.email.from?.[0]) }),
         mail.email.subject ?? "",
         `mail-${mail.email.id}`,
@@ -83,7 +83,7 @@ export const useAnnouncements = (mails: InboxMail[], appointments: FeedEvent[]) 
         window.setTimeout(() => {
           reminded.current.add(key);
           const place = locationName(event);
-          show(
+          showNotification(
             m.notifications_reminder({ minutes: REMINDER_MINUTES, title }),
             `${toLocal(start).slice(11, 16)}${place ? ` · ${place}` : ""}`,
             `event-${key}`,

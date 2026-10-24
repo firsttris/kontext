@@ -1,6 +1,6 @@
 /** The frame of every logged-in page: the app rail on the left (desktop), the page beside it. */
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
-import { Keyboard, LogOut, Settings } from "lucide-react";
+import { Ellipsis, Keyboard, LogOut, Settings } from "lucide-react";
 import { type ReactNode, useState } from "react";
 import { useAuth } from "@/auth/auth";
 import { ShortcutsDialog } from "@/components/shortcuts-dialog";
@@ -13,15 +13,17 @@ import {
   MenuTrigger,
 } from "@/components/ui/menu";
 import { useShortcuts } from "@/components/use-shortcuts";
+import { useChannels } from "@/features/chat/queries";
+import { totalUnread } from "@/lib/chat";
 import { cn } from "@/lib/cn";
 import { m } from "@/paraglide/messages";
 import { AccountAvatar, StorageSummary, storageText, useOwnQuota } from "./account-avatar";
-import { NAV_ITEMS } from "./nav-items";
+import { MORE_ITEMS, NAV_ITEMS, TAB_ITEMS } from "./nav-items";
 import { useSession } from "./session";
 
 export { useSession };
 
-const UserMenu = ({ side }: { side: "right" | "top" }) => {
+const UserMenu = () => {
   const { logout } = useAuth();
   const { data: session } = useSession();
   const name = session?.username ?? "";
@@ -33,9 +35,9 @@ const UserMenu = ({ side }: { side: "right" | "top" }) => {
         title={quota ? storageText(quota) : undefined}
         className="flex items-center justify-center rounded-full outline-offset-2"
       >
-        <AccountAvatar name={name} size={side === "top" ? 22 : 30} />
+        <AccountAvatar name={name} size={30} />
       </MenuTrigger>
-      <MenuContent side={side} align={side === "right" ? "end" : "end"}>
+      <MenuContent side="right" align="end">
         <MenuLabel>{name}</MenuLabel>
         <StorageSummary />
         <MenuSeparator />
@@ -58,8 +60,27 @@ export const railButton = (active: boolean) =>
     active ? "bg-subtle text-fg" : "text-muted hover:text-fg",
   );
 
+/** Unread chat messages, for the badge on "Chat". */
+const useChatUnread = (): number => totalUnread(useChannels().channels);
+
+const UnreadBadge = ({ count, className }: { count: number; className?: string }) =>
+  count > 0 ? (
+    <span
+      className={cn(
+        "absolute rounded-full bg-accent px-1 font-mono text-[10px] leading-[15px] font-medium text-white",
+        className,
+      )}
+    >
+      {count > 99 ? "99+" : count}
+    </span>
+  ) : null;
+
+const unreadLabel = (label: string, count: number) =>
+  count > 0 ? m.nav_unread({ label, count }) : label;
+
 const Rail = ({ onHelp, bell }: { onHelp: () => void; bell: ReactNode }) => {
   const pathname = useRouterState({ select: (state) => state.location.pathname });
+  const chatUnread = useChatUnread();
   return (
     <nav
       aria-label="Apps"
@@ -73,19 +94,21 @@ const Rail = ({ onHelp, bell }: { onHelp: () => void; bell: ReactNode }) => {
       </div>
       {NAV_ITEMS.map(({ to, label, icon: Icon }) => {
         const active = pathname.startsWith(to);
+        const unread = to === "/chat" ? chatUnread : 0;
         return (
           <Link
             key={to}
             to={to}
-            aria-label={label()}
+            aria-label={unreadLabel(label(), unread)}
             title={label()}
             aria-current={active ? "page" : undefined}
             className={cn(
-              "flex size-10 items-center justify-center rounded-[10px] hover:bg-hover",
+              "relative flex size-10 items-center justify-center rounded-[10px] hover:bg-hover",
               active ? "bg-subtle text-fg" : "text-muted",
             )}
           >
             <Icon size={18} strokeWidth={1.75} />
+            <UnreadBadge count={unread} className="top-0.5 right-0.5" />
           </Link>
         );
       })}
@@ -110,7 +133,7 @@ const Rail = ({ onHelp, bell }: { onHelp: () => void; bell: ReactNode }) => {
       >
         <Settings size={18} strokeWidth={1.75} />
       </Link>
-      <UserMenu side="right" />
+      <UserMenu />
     </nav>
   );
 };
@@ -119,7 +142,7 @@ const Rail = ({ onHelp, bell }: { onHelp: () => void; bell: ReactNode }) => {
 export const AppShell = ({ children, bell }: { children: ReactNode; bell?: ReactNode }) => {
   const navigate = useNavigate();
   const [help, setHelp] = useState(false);
-  // "?" shows all shortcuts, 1–4 switch between the apps.
+  // "?" shows all shortcuts, 1–5 switch between the apps.
   useShortcuts({
     "?": () => setHelp(true),
     ...Object.fromEntries(
@@ -135,35 +158,80 @@ export const AppShell = ({ children, bell }: { children: ReactNode; bell?: React
   );
 };
 
+/** "Mehr" in the tab bar: the other apps, the account and signing out. */
+const MoreMenu = () => {
+  const { logout } = useAuth();
+  const { data: session } = useSession();
+  const pathname = useRouterState({ select: (state) => state.location.pathname });
+  const active = [...MORE_ITEMS.map((entry) => entry.to), "/settings"].some((to) =>
+    pathname.startsWith(to),
+  );
+  return (
+    <MenuRoot>
+      <MenuTrigger
+        className={cn(
+          "flex w-16 flex-col items-center gap-1 text-[11px]",
+          active ? "font-medium text-fg" : "text-muted",
+        )}
+      >
+        <Ellipsis size={22} strokeWidth={1.75} />
+        {m.nav_more()}
+      </MenuTrigger>
+      <MenuContent side="top" align="end">
+        <MenuLabel>{session?.username ?? ""}</MenuLabel>
+        <StorageSummary />
+        <MenuSeparator />
+        {MORE_ITEMS.map(({ to, label, icon: Icon }) => (
+          <MenuItem key={to} asChild>
+            <Link to={to} className="text-fg no-underline">
+              <Icon size={15} /> {label()}
+            </Link>
+          </MenuItem>
+        ))}
+        <MenuItem asChild>
+          <Link to="/settings" search={{}} className="text-fg no-underline">
+            <Settings size={15} /> {m.nav_settings()}
+          </Link>
+        </MenuItem>
+        <MenuSeparator />
+        <MenuItem onSelect={logout}>
+          <LogOut size={15} /> {m.logout()}
+        </MenuItem>
+      </MenuContent>
+    </MenuRoot>
+  );
+};
+
 /** The tab bar of the phone views; each list screen places it at its bottom. */
 export const TabBar = () => {
   const pathname = useRouterState({ select: (state) => state.location.pathname });
+  const chatUnread = useChatUnread();
   return (
     <nav
       aria-label="Apps"
       className="flex shrink-0 justify-around border-t border-border bg-bg px-3 pt-2 safe-bottom md:hidden"
     >
-      {NAV_ITEMS.map(({ to, label, icon: Icon }) => {
+      {TAB_ITEMS.map(({ to, label, icon: Icon }) => {
         const active = pathname.startsWith(to);
+        const unread = to === "/chat" ? chatUnread : 0;
         return (
           <Link
             key={to}
             to={to}
+            aria-label={unreadLabel(label(), unread)}
             aria-current={active ? "page" : undefined}
             className={cn(
-              "flex w-16 flex-col items-center gap-1 text-[11px] no-underline",
+              "relative flex w-16 flex-col items-center gap-1 text-[11px] no-underline",
               active ? "font-medium text-fg" : "text-muted",
             )}
           >
             <Icon size={22} strokeWidth={1.75} />
             {label()}
+            <UnreadBadge count={unread} className="-top-1 left-[calc(50%+4px)]" />
           </Link>
         );
       })}
-      <div className="flex w-16 flex-col items-center gap-1 text-[11px] text-muted">
-        <UserMenu side="top" />
-        {m.nav_account()}
-      </div>
+      <MoreMenu />
     </nav>
   );
 };

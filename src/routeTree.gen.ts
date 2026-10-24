@@ -13,6 +13,7 @@ import { Route as AppRouteImport } from './routes/_app'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as AppIndexRouteImport } from './routes/_app/index'
 import { Route as AppCalendarRouteImport } from './routes/_app/calendar'
+import { Route as AppChatRouteImport } from './routes/_app/chat'
 import { Route as AppComposeRouteImport } from './routes/_app/compose'
 import { Route as AppContactsRouteImport } from './routes/_app/contacts'
 import { Route as AppSettingsRouteImport } from './routes/_app/settings'
@@ -37,6 +38,11 @@ const AppIndexRoute = AppIndexRouteImport.update({
 const AppCalendarRoute = AppCalendarRouteImport.update({
   id: '/calendar',
   path: '/calendar',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppChatRoute = AppChatRouteImport.update({
+  id: '/chat',
+  path: '/chat',
   getParentRoute: () => AppRoute,
 } as any)
 const AppComposeRoute = AppComposeRouteImport.update({
@@ -75,6 +81,7 @@ export interface FileRoutesByFullPath {
   '/': typeof AppIndexRoute
   '/login': typeof LoginRoute
   '/calendar': typeof AppCalendarRoute
+  '/chat': typeof AppChatRoute
   '/compose': typeof AppComposeRoute
   '/contacts': typeof AppContactsRoute
   '/settings': typeof AppSettingsRoute
@@ -85,6 +92,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/calendar': typeof AppCalendarRoute
+  '/chat': typeof AppChatRoute
   '/compose': typeof AppComposeRoute
   '/contacts': typeof AppContactsRoute
   '/settings': typeof AppSettingsRoute
@@ -98,6 +106,7 @@ export interface FileRoutesById {
   '/_app': typeof AppRouteWithChildren
   '/login': typeof LoginRoute
   '/_app/calendar': typeof AppCalendarRoute
+  '/_app/chat': typeof AppChatRoute
   '/_app/compose': typeof AppComposeRoute
   '/_app/contacts': typeof AppContactsRoute
   '/_app/settings': typeof AppSettingsRoute
@@ -112,6 +121,7 @@ export interface FileRouteTypes {
     | '/'
     | '/login'
     | '/calendar'
+    | '/chat'
     | '/compose'
     | '/contacts'
     | '/settings'
@@ -122,6 +132,7 @@ export interface FileRouteTypes {
   to:
     | '/login'
     | '/calendar'
+    | '/chat'
     | '/compose'
     | '/contacts'
     | '/settings'
@@ -134,6 +145,7 @@ export interface FileRouteTypes {
     | '/_app'
     | '/login'
     | '/_app/calendar'
+    | '/_app/chat'
     | '/_app/compose'
     | '/_app/contacts'
     | '/_app/settings'
@@ -176,6 +188,13 @@ declare module '@tanstack/react-router' {
       path: '/calendar'
       fullPath: '/calendar'
       preLoaderRoute: typeof AppCalendarRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/chat': {
+      id: '/_app/chat'
+      path: '/chat'
+      fullPath: '/chat'
+      preLoaderRoute: typeof AppChatRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/compose': {
@@ -225,6 +244,7 @@ declare module '@tanstack/react-router' {
 
 interface AppRouteChildren {
   AppCalendarRoute: typeof AppCalendarRoute
+  AppChatRoute: typeof AppChatRoute
   AppComposeRoute: typeof AppComposeRoute
   AppContactsRoute: typeof AppContactsRoute
   AppSettingsRoute: typeof AppSettingsRoute
@@ -236,6 +256,7 @@ interface AppRouteChildren {
 
 const AppRouteChildren: AppRouteChildren = {
   AppCalendarRoute: AppCalendarRoute,
+  AppChatRoute: AppChatRoute,
   AppComposeRoute: AppComposeRoute,
   AppContactsRoute: AppContactsRoute,
   AppSettingsRoute: AppSettingsRoute,

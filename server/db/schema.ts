@@ -174,3 +174,66 @@ export const taskLinks = sqliteTable(
     index("task_links_ref").on(table.ref),
   ],
 );
+
+/**
+ * Team chat (server/chat/): the channels, who belongs to the named and direct ones, the messages
+ * and up to when each person has read a channel. People are personal account ids.
+ */
+export const chatChannels = sqliteTable(
+  "chat_channels",
+  {
+    id: text("id").primaryKey(),
+    kind: text("kind").notNull(),
+    name: text("name"),
+    /** The shared mailbox of a mailbox channel: one channel per mailbox. */
+    accountId: text("account_id").unique(),
+    /** The sorted members of a direct channel: the same people find the same conversation. */
+    directKey: text("direct_key").unique(),
+    createdBy: text("created_by").notNull(),
+    lastMessageAt: integer("last_message_at", { mode: "timestamp_ms" }),
+    ...timestamps,
+  },
+  (table) => [index("chat_channels_kind").on(table.kind)],
+);
+
+export const chatMembers = sqliteTable(
+  "chat_members",
+  {
+    channelId: text("channel_id")
+      .notNull()
+      .references(() => chatChannels.id, { onDelete: "cascade" }),
+    memberId: text("member_id").notNull(),
+  },
+  (table) => [
+    primaryKey({ columns: [table.channelId, table.memberId] }),
+    index("chat_members_member").on(table.memberId),
+  ],
+);
+
+export const chatMessages = sqliteTable(
+  "chat_messages",
+  {
+    id: text("id").primaryKey(),
+    channelId: text("channel_id")
+      .notNull()
+      .references(() => chatChannels.id, { onDelete: "cascade" }),
+    authorId: text("author_id").notNull(),
+    text: text("text").notNull(),
+    /** JSON: the personal account ids mentioned with @. */
+    mentions: text("mentions").notNull(),
+    createdAt: integer("created_at", { mode: "timestamp_ms" }).notNull(),
+  },
+  (table) => [index("chat_messages_channel").on(table.channelId, table.createdAt)],
+);
+
+export const chatReads = sqliteTable(
+  "chat_reads",
+  {
+    channelId: text("channel_id")
+      .notNull()
+      .references(() => chatChannels.id, { onDelete: "cascade" }),
+    memberId: text("member_id").notNull(),
+    readAt: integer("read_at", { mode: "timestamp_ms" }).notNull(),
+  },
+  (table) => [primaryKey({ columns: [table.channelId, table.memberId] })],
+);

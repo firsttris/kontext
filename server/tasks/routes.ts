@@ -13,12 +13,19 @@ export type TaskDeps = {
   store: TaskStore;
   accountsOf: (request: Request) => Promise<SessionAccount[] | null>;
   now?: () => Date;
+  /** Told after every change, with the account (board) it touched. */
+  changed?: (accountId: string) => void;
 };
 
 /** Finished tasks stay in the lists this long. */
 const DONE_DAYS = 30;
 
-export const createTaskRoutes = ({ store, accountsOf, now = () => new Date() }: TaskDeps) => {
+export const createTaskRoutes = ({
+  store,
+  accountsOf,
+  now = () => new Date(),
+  changed = () => undefined,
+}: TaskDeps) => {
   const app = new Hono();
   const writable = (accounts: SessionAccount[], id: string) =>
     accounts.some((account) => account.id === id && !account.isReadOnly);
@@ -44,7 +51,9 @@ export const createTaskRoutes = ({ store, accountsOf, now = () => new Date() }: 
       return c.json({ error: "Dieses Postfach ist nur zum Lesen." }, 403);
     }
     const me = accounts.find((account) => account.isPersonal)?.id ?? parsed.data.accountId;
-    return c.json({ task: await store.create(parsed.data, me) }, 201);
+    const created = await store.create(parsed.data, me);
+    changed(created.accountId);
+    return c.json({ task: created }, 201);
   });
 
   app.patch("/:id", async (c) => {
@@ -60,7 +69,10 @@ export const createTaskRoutes = ({ store, accountsOf, now = () => new Date() }: 
     if (!writable(accounts, task.accountId) || !writable(accounts, target)) {
       return c.json({ error: "Dieses Postfach ist nur zum Lesen." }, 403);
     }
-    return c.json({ task: await store.update(task.id, parsed.data) });
+    const updated = await store.update(task.id, parsed.data);
+    changed(task.accountId);
+    if (target !== task.accountId) changed(target);
+    return c.json({ task: updated });
   });
 
   app.delete("/:id", async (c) => {
@@ -74,6 +86,7 @@ export const createTaskRoutes = ({ store, accountsOf, now = () => new Date() }: 
       return c.json({ error: "Dieses Postfach ist nur zum Lesen." }, 403);
     }
     await store.remove(task.id);
+    changed(task.accountId);
     return c.json({ ok: true });
   });
 

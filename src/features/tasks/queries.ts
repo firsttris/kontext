@@ -1,7 +1,7 @@
 /**
- * Tasks from Kontext's server (/api/tasks): all of them in one list, refreshed every 30 seconds
- * and when the window comes back, so a colleague's change shows up. Changes are shown at once and
- * corrected if the server says otherwise.
+ * Tasks from Kontext's server (/api/tasks): all of them in one list, refreshed when the live
+ * connection says a board changed (features/live) and when the window comes back. Changes are
+ * shown at once and corrected if the server says otherwise.
  */
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useSession } from "@/components/shell/app-shell";
@@ -29,7 +29,6 @@ export const useTasks = () => {
   const { data, isPending } = useQuery({
     queryKey: KEY,
     queryFn: async () => (await send<{ tasks: Task[] }>("GET", "")).tasks,
-    refetchInterval: 30_000,
   });
   return { tasks: data ?? [], isPending };
 };

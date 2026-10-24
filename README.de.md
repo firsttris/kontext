@@ -96,6 +96,15 @@ reicht ein VPS mit 2 vCPU und 4 GB RAM.
 - **Liste oder Kanban**: nach Fälligkeit gruppiert, oder als Board mit Offen, In Arbeit, Wartet, Erledigt – Karten zwischen den Spalten ziehen.
 - **Aus einer Mail**: „Aufgabe“ (oder `t`) macht aus einer Mail eine Aufgabe mit Betreff, Fälligkeit und Zuständigem; die Mail zeigt danach ihre Aufgabe.
 - **Schnelleingabe**: „Rückruf Hoffmann morgen“ ist morgen fällig; Checkliste, Notiz, Zuständige.
+- **Live**: Neue oder verschobene Aufgaben von Kollegen erscheinen sofort.
+
+### 💬 Team-Chat
+
+- **Kanäle**: #allgemein für alle, einer pro gemeinsamem Postfach (info@, rechnung@) für alle, die darin arbeiten, und eigene wie #baustelle-hoffmann mit ausgewählten Mitgliedern.
+- **Direktnachrichten** an eine Kollegin oder ein paar Kollegen, mit „Gelesen“.
+- **Live**: Nachrichten, „Sandra schreibt …“ und wer online ist, ohne Neuladen; Ungelesenes am Chat und am App-Symbol.
+- **@Erwähnungen** mit Vorschlägen beim Tippen; eine Erwähnung oder Direktnachricht wird zur Benachrichtigung auf dem Gerät, wenn Kontext im Hintergrund ist.
+- **Am Handy**: ein eigener Tab, Unterhaltungen als Sprechblasen.
 
 ### 📅 Kalender
 
@@ -134,7 +143,7 @@ Module, die ein Betrieb einschaltet, wenn er sie braucht – wer sie nicht brauc
 | --- | --- |
 | Mail, Kalender, Kontakte, Firmenverwaltung | ✅ verfügbar |
 | Aufgaben und Kanban-Board | ✅ verfügbar |
-| Team-Chat | geplant |
+| Team-Chat | ✅ verfügbar (Dateien und Mail-Karten folgen) |
 | Rapportzettel (Arbeitsnachweise, z. B. im Handwerk) | geplant |
 
 Was als Nächstes kommt, steht in der [Roadmap](ROADMAP.md).

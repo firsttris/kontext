@@ -9,8 +9,9 @@ ein Plan, kein Versprechen; Wünsche und Hinweise gern als
 | Funktion | Worum es geht |
 | --- | --- |
 | **Aufgaben überall im Kontext** | Offene Aufgaben am Kontakt, Fälliges im Kalender, Heute-Fälliges und neu Zugewiesenes in der Glocke, Erinnerungen als Benachrichtigung, „Aufgaben erstellen“ für mehrere Mails. |
-| **Team-Chat** | Kanäle pro Team bzw. gemeinsamem Postfach, Direktnachrichten, @Erwähnungen, Dateien; „Über diese Mail sprechen“ statt intern weiterzuleiten. |
-| **Benachrichtigungen bei geschlossener App** | Web Push: Stalwart kann ihn selbst senden (`urn:ietf:params:jmap:webpush-vapid`), damit das Handy auch bei ganz geschlossener App neue Mails meldet; der Chat braucht ihn ebenso. |
+| **Team-Chat: Fotos und Karten** | Fotos und Dateien (Kamera-Knopf am Handy, Ziehen am PC), Mails, Aufgaben und Kontakte als Karten im Verlauf, „Über diese Mail sprechen“ statt intern weiterzuleiten, „Aufgabe aus Nachricht“. |
+| **Team-Chat: Feinschliff** | Suche im Chat, eigene Nachrichten bearbeiten und löschen, Kanäle stummschalten und verlassen; später Antworten im Faden, Reaktionen, „Besprechung starten“. |
+| **Benachrichtigungen bei geschlossener App** | Web Push: Stalwart kann ihn selbst senden (`urn:ietf:params:jmap:webpush-vapid`), damit das Handy auch bei ganz geschlossener App neue Mails meldet; für Direktnachrichten und Erwähnungen im Chat sendet ihn der Kontext-Server. |
 | **Unterhaltungen** | Antworten zu einem Verlauf zusammenfassen: eine Zeile pro Unterhaltung in der Liste, alle Mails darin untereinander im Lesebereich. Die Daten (`threadId`) lädt die App schon. |
 | **Senden rückgängig** | Nach „Senden“ ein paar Sekunden, um es zurückzunehmen (Tippfehler, falscher Empfänger). |
 | **Später senden** | Eine Mail zu einem Zeitpunkt verschicken lassen, etwa morgen um 8 Uhr. |
@@ -34,8 +35,8 @@ Kleinere Dinge, die beim Bauen aufgefallen sind und noch erledigt werden.
 **Funktionen**
 
 - [ ] Aufgabe aus einer Mail mit dem **Kontakt** des Absenders verknüpfen (bisher nur sein Name an der Mail-Verknüpfung).
-- [ ] Aufgaben **live** zwischen Kollegen (heute alle 30 Sekunden) – kommt mit der Live-Verbindung des Chats.
-- [ ] **Tab-Leiste am Handy** für sechs Apps: Mail, Kalender, Chat, Aufgaben, „Mehr“ (Kontakte, Konto).
+- [ ] Chat: Wer neu in einen Kanal kommt, hat den ganzen bisherigen Verlauf als ungelesen.
+- [ ] Chat: einen eigenen Kanal verlassen oder löschen (heute nur Name und Mitglieder ändern).
 - [ ] **Regeln für Mitarbeiter** in der Firmenverwaltung (heute nur für gemeinsame Postfächer und die eigenen).
 - [ ] **App auf Englisch** und weiteren Sprachen (Texte liegen schon gesammelt in `messages/de.json`).
 - [ ] **Drucken mit Bildern aus dem Internet**, wenn sie in der Mail freigegeben wurden.
@@ -45,7 +46,8 @@ Kleinere Dinge, die beim Bauen aufgefallen sind und noch erledigt werden.
 
 - [ ] e2e: lesende Tests öffnen Mails aus den Testdaten. Kommen im Posteingang von Jonas über 50 Test-Mails dazu, rutschen diese auf die zweite Seite der Liste; dann auch dort eigene Mails anlegen.
 - [ ] Lokal fehlt `readpst` für den Outlook-Test (`sudo apt install pst-utils`).
-- [ ] README: Screenshots von Aufgaben, Board und Regeln ergänzen.
+- [ ] README: Screenshots von Aufgaben, Board, Regeln und Chat ergänzen; dafür Chat-Beispieldaten in den Testdaten (heute legt der Seed nur Stalwart-Daten an).
+- [ ] Der Server fragt für jede Chat- und Aufgaben-Anfrage (auch „schreibt …“) Stalwart nach der JMAP-Session; kurz zwischenspeichern.
 
 ## Bekannte Einschränkungen
 
@@ -61,6 +63,9 @@ Kleinere Dinge, die beim Bauen aufgefallen sind und noch erledigt werden.
 
 ## Zuletzt fertig geworden
 
+Team-Chat mit Kanälen (#allgemein, einer pro gemeinsamem Postfach, eigene), Direktnachrichten,
+@Erwähnungen, „schreibt …“, Gelesen und Ungelesen, live über eine eigene Verbindung, die auch
+Aufgaben sofort abgleicht; am Handy eine neue Tab-Leiste mit Chat und „Mehr“.
 Aufgaben mit Liste und Kanban-Board (eigene und pro gemeinsamem Postfach, aus Mails heraus, mit
 Checkliste, Zuständigen und Fälligkeit), Kontext als installierbare App (PWA),
 Regeln (auch für gemeinsame Postfächer und auf vorhandene Mails), Kategorien (im Team geteilt,

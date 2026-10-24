@@ -1,5 +1,5 @@
 import { readFile } from "node:fs/promises";
-import { expect, test } from "@playwright/test";
+import { expect, type Page, test } from "@playwright/test";
 import { login, unique } from "./helpers";
 
 test.describe("Kontakte", () => {
@@ -280,9 +280,15 @@ test.describe("Adressbücher teilen", () => {
 });
 
 test.describe("Kontakte am Handy @phone", () => {
+  /** Contacts are under "Mehr" in the tab bar. */
+  const openContacts = async (page: Page) => {
+    await page.getByRole("button", { name: "Mehr" }).click();
+    await page.getByRole("menuitem", { name: "Kontakte" }).click();
+  };
+
   test("Liste und Kontakt", async ({ page }) => {
     await login(page);
-    await page.getByRole("link", { name: "Kontakte" }).click();
+    await openContacts(page);
     await expect(page.getByRole("searchbox", { name: "Kontakte suchen" })).toBeVisible();
     await page.getByRole("link", { name: /Petra Keller/ }).click();
     await expect(page.getByRole("heading", { name: "Petra Keller" })).toBeVisible();
@@ -292,7 +298,7 @@ test.describe("Kontakte am Handy @phone", () => {
 
   test("Adressbücher", async ({ page }) => {
     await login(page);
-    await page.getByRole("link", { name: "Kontakte" }).click();
+    await openContacts(page);
     await page.getByRole("button", { name: "Adressbücher" }).click();
     await expect(
       page.getByRole("list", { name: "Meine Adressbücher" }).getByText("Meine Kontakte"),

@@ -96,6 +96,15 @@ fine on a VPS with 2 vCPUs and 4 GB RAM.
 - **List or Kanban**: grouped by due date, or as a board with Open, In progress, Waiting, Done – drag cards between columns.
 - **From a mail**: "Task" (or `t`) turns a mail into a task with its subject, due date and assignee; the mail then shows its task.
 - **Quick entry**: "Call Hoffmann tomorrow" in German ("Rückruf Hoffmann morgen") is due tomorrow; checklists, notes, assignees.
+- **Live**: a colleague's new or moved task shows up at once.
+
+### 💬 Team chat
+
+- **Channels**: #allgemein for everyone, one per shared mailbox (info@, rechnung@) for whoever works in it, and your own like #baustelle-hoffmann with chosen members.
+- **Direct messages** to one colleague or a few, with "read".
+- **Live**: messages, "Sandra is typing …" and who is online, without reloading; unread counts on Chat and on the app icon.
+- **@mentions** with suggestions while you type; a mention or a direct message becomes a device notification when Kontext is in the background.
+- **On the phone**: its own tab, conversations as bubbles.
 
 ### 📅 Calendar
 
@@ -134,7 +143,7 @@ business switches on when it needs them – whoever doesn't, never sees them.
 | --- | --- |
 | Mail, calendar, contacts, company admin | ✅ available |
 | Tasks and Kanban board | ✅ available |
-| Team chat | planned |
+| Team chat | ✅ available (files and mail cards next) |
 | Work reports (e.g. for trades) | planned |
 
 What comes next is in the [roadmap](ROADMAP.md) (German).
