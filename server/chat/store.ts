@@ -28,6 +28,8 @@ export type ChatStore = {
   /** Takes the person out of a named channel; the last one out removes it. */
   leave: (channelId: string, memberId: string) => Promise<void>;
   remove: (channelId: string) => Promise<void>;
+  /** Who has read in the channel, and who muted it – for the notifications. */
+  audience: (channelId: string) => Promise<{ readers: string[]; muted: string[] }>;
 };
 
 /** Without a read mark (someone new in #allgemein or info@), only this much counts as unread. */
@@ -266,6 +268,19 @@ export const createChatStore = (db: Db, messages: Pick<MessageStore, "last">): C
     },
     remove: async (channelId) => {
       await db.delete(schema.chatChannels).where(eq(schema.chatChannels.id, channelId));
+    },
+    audience: async (channelId) => {
+      const [reads, prefs] = await Promise.all([
+        db
+          .select({ memberId: schema.chatReads.memberId })
+          .from(schema.chatReads)
+          .where(eq(schema.chatReads.channelId, channelId)),
+        db
+          .select({ memberId: schema.chatPrefs.memberId })
+          .from(schema.chatPrefs)
+          .where(and(eq(schema.chatPrefs.channelId, channelId), eq(schema.chatPrefs.muted, true))),
+      ]);
+      return { readers: reads.map((r) => r.memberId), muted: prefs.map((p) => p.memberId) };
     },
     reads: async (channelId) => {
       const rows = await db

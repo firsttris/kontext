@@ -9,7 +9,9 @@ import type { Hub } from "../live/hub";
 import {
   type Channel,
   canSee,
+  channelLabel,
   channelPatchSchema,
+  chatNotice,
   editMessageSchema,
   INLINE_TYPES,
   MAX_FILE_BYTES,
@@ -18,6 +20,7 @@ import {
   newChannelSchema,
   newDirectSchema,
   newMessageSchema,
+  notifyWho,
   readSchema,
   searchSchema,
   type Viewer,
@@ -32,6 +35,10 @@ export type ChatDeps = {
   files: ChatFiles;
   hub: Hub;
   accountsOf: (request: Request) => Promise<SessionAccount[] | null>;
+  /** Tells people of a new message on their devices (Web Push); left out, nobody is told. */
+  notify?: (memberIds: string[], notice: ReturnType<typeof chatNotice>) => Promise<void>;
+  /** The display name of who is asking, for the notification. */
+  nameOf?: (request: Request) => Promise<string>;
 };
 
 const PAGE = 50;
@@ -42,7 +49,15 @@ export const viewerOf = (accounts: SessionAccount[]): Viewer | null => {
   return me ? { me, accountIds: accounts.map((account) => account.id) } : null;
 };
 
-export const createChatRoutes = ({ store, messages, files, hub, accountsOf }: ChatDeps) => {
+export const createChatRoutes = ({
+  store,
+  messages,
+  files,
+  hub,
+  accountsOf,
+  notify,
+  nameOf,
+}: ChatDeps) => {
   const app = new Hono<{ Variables: { viewer: Viewer; accounts: SessionAccount[] } }>();
 
   app.use(async (c, next) => {
@@ -132,6 +147,7 @@ export const createChatRoutes = ({ store, messages, files, hub, accountsOf }: Ch
     hub.publish({ type: "message", channelId: channel.id, message }, (other) =>
       canSee(channel, other),
     );
+    if (notify) void tell(c.req.raw, channel, message).catch(() => undefined);
     return c.json({ message }, 201);
   });
 
@@ -160,6 +176,16 @@ export const createChatRoutes = ({ store, messages, files, hub, accountsOf }: Ch
     );
     return c.json({ ok: true });
   });
+
+  /** Notifications for a new message on the devices of who it is for. */
+  const tell = async (request: Request, channel: Channel, message: Message) => {
+    const who = notifyWho(channel, message, await store.audience(channel.id));
+    if (!who.length || !notify) return;
+    const accounts = (await accountsOf(request)) ?? [];
+    const where = channelLabel(channel, (id) => accounts.find((a) => a.id === id)?.name);
+    const author = (await nameOf?.(request)) ?? "";
+    await notify(who, chatNotice(channel, message, author, where));
+  };
 
   /** One's own message in a channel one still sees, not yet deleted. */
   const ownMessage = async (id: string, viewer: Viewer) => {

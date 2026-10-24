@@ -103,7 +103,7 @@ reicht ein VPS mit 2 vCPU und 4 GB RAM.
 - **Kanäle**: #allgemein für alle, einer pro gemeinsamem Postfach (info@, rechnung@) für alle, die darin arbeiten, und eigene wie #baustelle-hoffmann mit ausgewählten Mitgliedern.
 - **Direktnachrichten** an eine Kollegin oder ein paar Kollegen, mit „Gelesen“.
 - **Live**: Nachrichten, „Sandra schreibt …“ und wer online ist, ohne Neuladen; Ungelesenes am Chat und am App-Symbol.
-- **@Erwähnungen** mit Vorschlägen beim Tippen; eine Erwähnung oder Direktnachricht wird zur Benachrichtigung auf dem Gerät, wenn Kontext im Hintergrund ist.
+- **@Erwähnungen** mit Vorschlägen beim Tippen; eine Erwähnung oder Direktnachricht kommt aufs Handy, auch wenn Kontext geschlossen ist.
 - **Fotos und Dateien**: mit der Handykamera, per Ziehen oder Einfügen; Fotos werden vor dem Senden verkleinert.
 - **Mails, Aufgaben und Kontakte als Karten**: „Besprechen“ an einer Mail (`b`) spricht im Kanal darüber, statt sie intern weiterzuleiten; die Mail zeigt danach, wo sie besprochen wurde. Öffnen kann die Karte nur, wer das Postfach sehen darf – kopiert wird nichts.
 - **Aufgabe aus einer Nachricht**, in beide Richtungen verknüpft.
@@ -127,7 +127,7 @@ reicht ein VPS mit 2 vCPU und 4 GB RAM.
 - **Signatur pro Absender**, **Abwesenheitsnotiz** mit Zeitraum, **Anmeldung mit Code** (Authenticator-App).
 - **Hell oder dunkel**, **Tastaturkürzel** wie in Gmail (`?` zeigt alle).
 - **Als App auf jedem Gerät**: Kontext aus dem Browser installieren (PC, Android, iPhone) – eigenes Fenster und Symbol, Ungelesen-Zahl am Symbol, startet auch ohne Netz; Fotos und Dateien aus anderen Apps direkt in eine neue Mail teilen; `mailto:`-Links öffnen Kontext. Neue Versionen kommen zuverlässig an und laden auf Klick auf „Neu laden“.
-- **Benachrichtigungen**: Glocke mit Einladungen, heutigen Terminen und neuen Mails; auf Wunsch als Benachrichtigung des Geräts.
+- **Benachrichtigungen**: Glocke mit Einladungen, heutigen Terminen und neuen Mails; auf deinen Geräten auch bei geschlossener App (Web Push, Ende-zu-Ende verschlüsselt): neue Mails, Direktnachrichten und @Erwähnungen.
 - **Speicherplatz im Blick**: ein feiner Ring um das eigene Bild zeigt, wie voll das Postfach ist.
 
 ### 🏢 Firmenverwaltung

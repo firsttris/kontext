@@ -2,29 +2,12 @@
  * Push of state changes (RFC 8620 §7.3). The browser's EventSource cannot send an Authorization
  * header, so the event stream is read with fetch. Reconnects with a growing delay.
  */
+import { parseEvents } from "../../server/jmap";
 import { fillTemplate, type JmapClient } from "./client";
 
-export type StateChange = Record<string, Record<string, string>>;
+export { parseEvents };
 
-/** Splits a server-sent-events buffer into complete events and the unfinished rest. */
-export const parseEvents = (
-  buffer: string,
-): { events: { type: string; data: string }[]; rest: string } => {
-  const blocks = buffer.replace(/\r\n/g, "\n").split("\n\n");
-  const rest = blocks.pop() ?? "";
-  const events = blocks
-    .map((block) => {
-      let type = "message";
-      const data: string[] = [];
-      for (const line of block.split("\n")) {
-        if (line.startsWith("event:")) type = line.slice(6).trim();
-        else if (line.startsWith("data:")) data.push(line.slice(5).trimStart());
-      }
-      return { type, data: data.join("\n") };
-    })
-    .filter((event) => event.data);
-  return { events, rest };
-};
+export type StateChange = Record<string, Record<string, string>>;
 
 export const subscribeToChanges = (
   client: JmapClient,

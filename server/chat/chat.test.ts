@@ -1,5 +1,13 @@
 import { describe, expect, it } from "vitest";
-import { canSee, channelName, directKey, newChannelSchema } from "./chat";
+import {
+  canSee,
+  channelLabel,
+  channelName,
+  chatNotice,
+  directKey,
+  newChannelSchema,
+  notifyWho,
+} from "./chat";
 
 const jonas = { me: "jonas", accountIds: ["jonas", "info"] };
 const max = { me: "max", accountIds: ["max"] };
@@ -37,5 +45,55 @@ describe("channelName", () => {
 describe("directKey", () => {
   it("is the same for the same people in any order", () => {
     expect(directKey(["b", "a", "b"])).toBe(directKey(["a", "b"]));
+  });
+});
+
+describe("notifyWho", () => {
+  const message = { authorId: "jonas", mentions: ["max", "anna", "jonas"] };
+  const none = { readers: [], muted: [] };
+
+  it("tells the others in a direct conversation, mentioned or not", () => {
+    expect(
+      notifyWho(
+        { kind: "direct", members: ["jonas", "sandra"] },
+        { ...message, mentions: [] },
+        none,
+      ),
+    ).toEqual(["sandra"]);
+  });
+
+  it("tells mentioned members of a channel only, never the author", () => {
+    expect(notifyWho({ kind: "channel", members: ["jonas", "max"] }, message, none)).toEqual([
+      "max",
+    ]);
+    expect(notifyWho({ kind: "team", members: [] }, message, none)).toEqual(["max", "anna"]);
+  });
+
+  it("in a mailbox channel only who has read in it, and nobody who muted it", () => {
+    expect(
+      notifyWho({ kind: "mailbox", members: [] }, message, {
+        readers: ["anna", "max"],
+        muted: ["max"],
+      }),
+    ).toEqual(["anna"]);
+  });
+});
+
+describe("chatNotice", () => {
+  it("names who wrote and where, and leads to the message", () => {
+    const channel = { id: "c1", kind: "channel" as const };
+    const message = { id: "m1", text: "Rohr bestellen", files: [], cards: [] };
+    expect(chatNotice(channel, message, "Jonas Weber", "#baustelle")).toEqual({
+      title: "Jonas Weber in #baustelle",
+      body: "Rohr bestellen",
+      url: "/chat?channel=c1&message=m1",
+      tag: "chat-c1",
+    });
+    expect(chatNotice({ id: "d", kind: "direct" }, message, "Sandra Klein", "").title).toBe(
+      "Sandra Klein",
+    );
+    expect(
+      channelLabel({ kind: "mailbox", name: null, accountId: "i" }, () => "info@weber.test"),
+    ).toBe("info@");
   });
 });

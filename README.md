@@ -103,7 +103,7 @@ fine on a VPS with 2 vCPUs and 4 GB RAM.
 - **Channels**: #allgemein for everyone, one per shared mailbox (info@, rechnung@) for whoever works in it, and your own like #baustelle-hoffmann with chosen members.
 - **Direct messages** to one colleague or a few, with "read".
 - **Live**: messages, "Sandra is typing …" and who is online, without reloading; unread counts on Chat and on the app icon.
-- **@mentions** with suggestions while you type; a mention or a direct message becomes a device notification when Kontext is in the background.
+- **@mentions** with suggestions while you type; a mention or a direct message reaches your phone, also with Kontext closed.
 - **Photos and files**: from the phone's camera, by drag and drop or paste; photos are made smaller before sending.
 - **Mails, tasks and contacts as cards**: "Discuss" on a mail (`b`) talks about it in a channel instead of forwarding it internally; the mail then shows where it was discussed. Only who may open the mailbox opens the card – nothing is copied.
 - **Task from a message**, linked both ways.
@@ -127,7 +127,7 @@ fine on a VPS with 2 vCPUs and 4 GB RAM.
 - **Signature per sender address**, **out-of-office reply** with dates, **two-factor sign-in** (authenticator app).
 - **Light or dark**, **keyboard shortcuts** like Gmail (`?` shows all).
 - **An app on every device**: install Kontext from the browser (desktop, Android, iPhone) with its own window and icon, unread count on the icon, starts without network; share photos and files from other apps straight into a new mail; open `mailto:` links in Kontext. New versions arrive reliably and load when you click "Reload".
-- **Notifications**: a bell with invitations, today's appointments and new mail; optionally as device notifications.
+- **Notifications**: a bell with invitations, today's appointments and new mail; on your devices also with Kontext closed (Web Push, end-to-end encrypted): new mail, direct messages and @mentions.
 - **Storage at a glance**: a thin ring around your avatar shows how full the mailbox is.
 
 ### 🏢 Company admin

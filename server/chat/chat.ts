@@ -147,3 +147,49 @@ export const muteSchema = z.object({ muted: z.boolean() });
 
 /** Search words: at least two letters, so a search is not the whole history. */
 export const searchSchema = z.string().trim().min(2).max(100);
+
+/**
+ * Who is told of a new message on their devices: in a direct conversation the others; elsewhere
+ * the people it mentions – if they belong there (for a mailbox channel: who has read in it, as
+ * the server cannot see anyone else's access). Never the author, never who muted the channel.
+ */
+export const notifyWho = (
+  channel: Pick<Channel, "kind" | "members">,
+  message: Pick<Message, "authorId" | "mentions">,
+  { readers, muted }: { readers: string[]; muted: string[] },
+): string[] => {
+  const candidates = channel.kind === "direct" ? channel.members : message.mentions;
+  const belongs = (id: string) =>
+    channel.kind === "team" ||
+    (channel.kind === "mailbox" ? readers.includes(id) : channel.members.includes(id));
+  return [...new Set(candidates)].filter(
+    (id) => id !== message.authorId && belongs(id) && !muted.includes(id),
+  );
+};
+
+/** A channel as the notification names it: "#baustelle-hoffmann", "info@". */
+export const channelLabel = (
+  channel: Pick<Channel, "kind" | "name" | "accountId">,
+  accountName: (id: string) => string | undefined,
+): string => {
+  if (channel.kind === "mailbox") {
+    return (accountName(channel.accountId ?? "") ?? "").replace(/@.*/, "@");
+  }
+  return channel.name ? `#${channel.name}` : "";
+};
+
+/** The notification for a message: who wrote, where, and what. */
+export const chatNotice = (
+  channel: Pick<Channel, "id" | "kind">,
+  message: Pick<Message, "id" | "text" | "files" | "cards">,
+  author: string,
+  where: string,
+) => {
+  const text = messageSummary(message);
+  return {
+    title: channel.kind === "direct" || !where ? author : `${author} in ${where}`,
+    body: text.length > 200 ? `${text.slice(0, 199)}…` : text,
+    url: `/chat?channel=${encodeURIComponent(channel.id)}&message=${encodeURIComponent(message.id)}`,
+    tag: `chat-${channel.id}`,
+  };
+};

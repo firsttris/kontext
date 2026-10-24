@@ -299,3 +299,23 @@ export const chatCards = sqliteTable(
     index("chat_cards_party").on(table.party),
   ],
 );
+
+/**
+ * Web Push subscriptions of the browsers that switched notifications on (server/push/). Each
+ * belongs to the sign-in session it was made in: signing out ends the pushes to that device.
+ */
+export const pushSubscriptions = sqliteTable(
+  "push_subscriptions",
+  {
+    endpoint: text("endpoint").primaryKey(),
+    p256dh: text("p256dh").notNull(),
+    auth: text("auth").notNull(),
+    /** The person's personal account id. */
+    memberId: text("member_id").notNull(),
+    sessionId: text("session_id")
+      .notNull()
+      .references(() => session.id, { onDelete: "cascade" }),
+    createdAt: integer("created_at", { mode: "timestamp_ms" }).notNull(),
+  },
+  (table) => [index("push_subscriptions_member").on(table.memberId)],
+);

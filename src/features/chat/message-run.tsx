@@ -110,7 +110,6 @@ const EditField = ({
       <textarea
         aria-label={m.chat_edit_message()}
         value={text}
-        // biome-ignore lint/a11y/noAutofocus: editing starts where one asked for it
         autoFocus
         onFocus={(event) => event.currentTarget.setSelectionRange(text.length, text.length)}
         onChange={(event) => setText(event.target.value)}

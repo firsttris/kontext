@@ -524,11 +524,26 @@ Ansicht; wer eine Mail am Handy liest, sieht sie hier verschwinden. Auf dem Serv
 gespeichert: Den Punkt an der Glocke gibt es für Mails, die nach dem letzten Öffnen kamen, und für
 Einladungen, die damals noch nicht da waren – beides merkt sich der Browser.
 
-„Auf diesem Gerät benachrichtigen“ (in der Glocke und unter Einstellungen → Darstellung) nutzt die
-Notification-API des Browsers: neue Mail, solange Kontext im Hintergrund ist, und eine Erinnerung
-15 Minuten vor einem Termin (`src/lib/notifications.ts`). Ob die Erlaubnis noch besteht, fragt die
-App über die Permissions-API ab; nimmt man sie im Browser zurück, schaltet sich der Schalter aus.
-Benachrichtigungen kommen nur, solange Kontext in einem Tab offen ist.
+„Auf diesem Gerät benachrichtigen“ (in der Glocke und unter Einstellungen → Darstellung) fragt den
+Browser um Erlaubnis und meldet das Gerät für **Web Push** an. Ob die Erlaubnis noch besteht, fragt
+die App über die Permissions-API ab; nimmt man sie im Browser zurück, schaltet sich der Schalter aus.
+
+- **Bei geschlossener App:** neue Mails in allen Posteingängen und Chat-Nachrichten an einen selbst
+  (Direktnachrichten, @Erwähnungen, nicht aus stummgeschalteten Kanälen) kommen als Push, auch
+  wenn Kontext ganz zu ist. Den Push sendet der Kontext-Server (`server/push/`): mit seinem
+  VAPID-Schlüssel (RFC 8292, beim ersten Start erzeugt und versiegelt in der Datenbank) und
+  Ende-zu-Ende verschlüsselt für das eine Gerät (RFC 8291) – der Push-Dienst von Google, Apple,
+  Mozilla oder Microsoft sieht den Inhalt nicht. Für Mails hört der Server dafür Stalwarts
+  JMAP-Event-Stream ab, je Person mit dem Token ihrer jüngsten Sitzung. (Stalwart könnte selbst
+  Push senden, aber ein Browser hat nur einen Absender-Schlüssel, und der ist schon der des Chats.)
+- **Wohin:** nur an die Push-Dienste der Browser (keine beliebige Adresse – der Server soll sich
+  nicht nach innen schicken lassen). Die Anmeldung eines Geräts gehört zu seiner Sitzung: Wer sich
+  abmeldet, bekommt dort keine Pushes mehr; beim nächsten Öffnen meldet sich das Gerät neu an.
+- **Vorne:** Ist Kontext offen und vorn, zeigt der Service Worker nichts; die App zeigt es selbst.
+  Mail und Chat tragen dasselbe `tag` wie die Meldungen der offenen App, so erscheint nichts doppelt.
+- **iPhone und iPad:** Web Push gibt es dort nur für die installierte App („Zum Home-Bildschirm“).
+- **Erinnerungen an Termine** (15 Minuten vorher, `src/lib/notifications.ts`) kommen weiterhin nur,
+  solange Kontext offen ist.
 
 ## Speicherplatz
 

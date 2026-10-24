@@ -59,6 +59,7 @@ const memoryStore = (): ChatStore => {
       const channel = channels.find((c) => c.id === channelId);
       if (channel) channel.members = channel.members.filter((m) => m !== memberId);
     },
+    audience: async () => ({ readers: [], muted: [] }),
     remove: async (channelId) => {
       channels.splice(
         channels.findIndex((c) => c.id === channelId),
@@ -159,12 +160,17 @@ const setup = () => {
   const hub = createHub();
   let signedIn: SessionAccount[] | null = person("jonas", ["info"]);
   const memory = memoryMessages();
+  const told: { who: string[]; title: string }[] = [];
   const app = createChatRoutes({
     store: memoryStore(),
     messages: memory.store,
     files: memory.files,
     hub,
     accountsOf: async () => signedIn,
+    notify: async (who, notice) => {
+      told.push({ who, title: notice.title });
+    },
+    nameOf: async () => "Jonas Weber",
   });
   const as = (accounts: SessionAccount[] | null) => {
     signedIn = accounts;
@@ -200,7 +206,7 @@ const setup = () => {
     });
     return { status: response.status, body: (await response.json()) as { file: ChatFile } };
   };
-  return { send, as, listen, upload, app };
+  return { send, as, listen, upload, app, told };
 };
 
 describe("/api/chat", () => {
@@ -339,5 +345,19 @@ describe("/api/chat", () => {
     as(person("jonas", ["info"]));
     expect((await send("DELETE", path)).status).toBe(200);
     expect((await send("GET", `${path}/messages`)).status).toBe(404);
+  });
+  it("tells the other in a direct conversation and the mentioned in a channel", async () => {
+    const { send, told } = setup();
+    const direct = (await send("POST", "/direct", { members: ["sandra"] })).body.channel;
+    await send("POST", `/channels/${direct.id}/messages`, { text: "Ruf mal an" });
+    const channel = (await send("POST", "/channels", { name: "lager", members: ["max", "anna"] }))
+      .body.channel;
+    await send("POST", `/channels/${channel.id}/messages`, { text: "Hallo alle" });
+    await send("POST", `/channels/${channel.id}/messages`, { text: "@Max", mentions: ["max"] });
+    await expect.poll(() => told.length).toBe(2);
+    expect(told).toEqual([
+      { who: ["sandra"], title: "Jonas Weber" },
+      { who: ["max"], title: "Jonas Weber in #lager" },
+    ]);
   });
 });

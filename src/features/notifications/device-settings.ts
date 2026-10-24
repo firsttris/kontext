@@ -4,6 +4,7 @@
  * missing (private window, blocked site data); everything then falls back to defaults.
  */
 import { useEffect, useSyncExternalStore } from "react";
+import { pushRegistration, subscribeToPush, unsubscribeFromPush } from "@/pwa/push";
 
 const SEEN = "kontext.notifications.seen";
 const DEVICE = "kontext.notifications.device";
@@ -81,10 +82,26 @@ export const useDeviceNotifications = (): boolean => {
 export const setDeviceNotifications = async (on: boolean): Promise<boolean> => {
   if (!on) {
     write(DEVICE, "off");
+    void keepPushSubscription();
     return true;
   }
   if (!notificationsSupported()) return false;
   const granted = (await Notification.requestPermission()) === "granted";
   write(DEVICE, granted ? "on" : "off");
+  if (granted) void keepPushSubscription();
   return granted;
+};
+
+/**
+ * With notifications on, this browser's push subscription is registered for the current
+ * sign-in (also after signing in anew); without, it is removed. Nothing happens without a
+ * service worker (development) or Web Push (older browsers).
+ */
+export const keepPushSubscription = async (): Promise<void> => {
+  const registration = await pushRegistration();
+  if (!registration || !notificationsSupported()) return;
+  const on = read(DEVICE) === "on" && Notification.permission === "granted";
+  await (on ? subscribeToPush(registration) : unsubscribeFromPush(registration)).catch(
+    () => undefined,
+  );
 };

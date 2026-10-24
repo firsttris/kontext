@@ -86,6 +86,7 @@ export default defineConfig({
         SIGN_IN_PER_MINUTE: "1000",
         // The move tests use the local Stalwart's IMAP (no TLS) as the "old provider".
         MAIL_SYNC_ALLOW_PLAIN: "true",
+        PUSH_ANY_ENDPOINT: "true",
         // Microsoft's sign-in and Graph: the stand-in below
         M365_LOGIN_URL: `http://127.0.0.1:${GRAPH_PORT}`,
         GRAPH_URL: `http://127.0.0.1:${GRAPH_PORT}/v1.0`,

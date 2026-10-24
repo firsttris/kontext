@@ -795,7 +795,7 @@ test.describe("Benachrichtigungen", () => {
     await expect(bell(page)).toHaveAccessibleName(/Benachrichtigungen, \d+ neu/);
     await bell(page).click();
     const panel = page.getByRole("dialog", { name: "Benachrichtigungen" });
-    await expect(panel.getByText("Neue Mails")).toBeVisible();
+    await expect(panel.getByRole("heading", { name: "Neue Mails" })).toBeVisible();
     await panel.getByRole("link", { name: new RegExp(subject) }).click();
     await expect(page.getByRole("heading", { name: subject })).toBeVisible();
     // Opened once, nothing is new any more.

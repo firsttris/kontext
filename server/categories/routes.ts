@@ -8,7 +8,13 @@ import { z } from "zod";
 import { categoriesSchema } from "./categories";
 import type { CategoryStore } from "./store";
 
-export type SessionAccount = { id: string; isReadOnly: boolean; isPersonal: boolean };
+/** An account of the JMAP session; `name` is its address (info@…), when known. */
+export type SessionAccount = {
+  id: string;
+  isReadOnly: boolean;
+  isPersonal: boolean;
+  name?: string;
+};
 
 export type CategoryDeps = {
   store: CategoryStore;

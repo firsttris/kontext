@@ -3,6 +3,7 @@
  * by the dev scripts under Bun, so it only relies on `fetch`.
  */
 import { z } from "zod";
+import { fillTemplate } from "../../server/jmap";
 
 export const CAPABILITIES = {
   core: "urn:ietf:params:jmap:core",
@@ -67,8 +68,7 @@ export type JmapClient = ReturnType<typeof createJmapClient>;
 export const toOrigin = (url: string, origin: string): string =>
   url.replace(/^[a-z]+:\/\/[^/]+/i, origin);
 
-export const fillTemplate = (template: string, values: Record<string, string>): string =>
-  template.replace(/\{([a-zA-Z]+)\}/g, (_, key: string) => encodeURIComponent(values[key] ?? ""));
+export { fillTemplate };
 
 export const basicAuth = ({ username, password }: Credentials): string =>
   `Basic ${btoa(String.fromCharCode(...new TextEncoder().encode(`${username}:${password}`)))}`;

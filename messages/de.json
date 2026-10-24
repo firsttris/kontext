@@ -411,7 +411,7 @@
   "notifications_more": "{count} weitere ungelesene Mails",
   "notifications_empty": "Alles erledigt: keine neuen Mails, Einladungen oder Termine für heute.",
   "notifications_device": "Auf diesem Gerät benachrichtigen",
-  "notifications_device_hint": "Bei neuen Mails, wenn Kontext im Hintergrund ist, und 15 Minuten vor Terminen.",
+  "notifications_device_hint": "Neue Mails und Chat-Nachrichten an dich – auch wenn Kontext geschlossen ist. Erinnerungen 15 Minuten vor Terminen, solange Kontext offen ist.",
   "notifications_device_denied": "Der Browser blockiert Benachrichtigungen für Kontext. Erlauben Sie sie in den Website-Einstellungen des Browsers.",
   "notifications_new_mail": "Neue Mail von {name}",
   "notifications_unsupported": "Dieser Browser kann keine Benachrichtigungen zeigen. Auf dem iPhone geht das, wenn Kontext zum Home-Bildschirm hinzugefügt ist.",

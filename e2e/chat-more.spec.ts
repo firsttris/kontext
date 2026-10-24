@@ -116,7 +116,8 @@ test.describe("Chat: bearbeiten, löschen, suchen, stummschalten", () => {
       .first()
       .getByRole("link", { name: slug });
     await expect(row.getByRole("img", { name: "Stummgeschaltet" })).toBeVisible();
-    await expect(row).not.toContainText("1");
+    // No unread count: the row holds just the name.
+    await expect(row).toHaveText(slug);
 
     // Max leaves; Jonas, who made it, deletes it.
     await row.click();

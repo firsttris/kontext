@@ -114,3 +114,77 @@ test.describe("App (PWA)", () => {
     expect(kept.keys.some((key) => key.endsWith("/0"))).toBe(true);
   });
 });
+
+test.describe("App (PWA): Push", () => {
+  test("zeigt einen Push als Benachrichtigung, außer Kontext ist vorn", async ({
+    page,
+    context,
+  }) => {
+    await controlled(page);
+    const origin = new URL(page.url()).origin;
+    const worker = context.serviceWorkers()[0] ?? (await context.waitForEvent("serviceworker"));
+    // Headless Chromium shows no system notifications; the worker's wish to is recorded instead.
+    const record = () =>
+      worker.evaluate(() => {
+        // Only what the test touches of the worker's global scope.
+        const scope = self as unknown as {
+          shown?: unknown[];
+          registration: {
+            showNotification: (
+              title: string,
+              options?: { body?: string; tag?: string; data?: { url?: string } },
+            ) => Promise<void>;
+          };
+        };
+        scope.shown = [];
+        scope.registration.showNotification = async (title, options) => {
+          scope.shown!.push({
+            title,
+            body: options?.body,
+            tag: options?.tag,
+            url: options?.data?.url,
+          });
+        };
+      });
+    const shown = () =>
+      worker.evaluate(() => (self as unknown as { shown?: unknown[] }).shown ?? []);
+    const cdp = await context.newCDPSession(page);
+    const registrations: { registrationId: string; scopeURL: string }[] = [];
+    cdp.on("ServiceWorker.workerRegistrationUpdated", (event) =>
+      registrations.push(...event.registrations),
+    );
+    await cdp.send("ServiceWorker.enable");
+    await expect.poll(() => registrations.length).toBeGreaterThan(0);
+    const { registrationId } = registrations.find((r) => r.scopeURL.startsWith(origin))!;
+    const deliver = (notice: object) =>
+      cdp.send("ServiceWorker.deliverPushMessage", {
+        origin,
+        registrationId,
+        data: JSON.stringify(notice),
+      });
+
+    // Kontext in front: the app shows it itself.
+    await record();
+    await page.bringToFront();
+    await deliver({ title: "Vorn", body: "", url: "/chat", tag: "chat-vorn" });
+    await page.waitForTimeout(500);
+    expect(await shown()).toEqual([]);
+
+    // Kontext not open: a system notification, leading to the message.
+    await page.goto("about:blank");
+    await deliver({
+      title: "Jonas Weber",
+      body: "Kommst du morgen früher?",
+      url: "/chat?channel=c1&message=m1",
+      tag: "chat-c1",
+    });
+    await expect.poll(shown).toEqual([
+      {
+        title: "Jonas Weber",
+        body: "Kommst du morgen früher?",
+        tag: "chat-c1",
+        url: "/chat?channel=c1&message=m1",
+      },
+    ]);
+  });
+});

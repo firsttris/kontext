@@ -22,6 +22,8 @@ const schema = z.object({
   STALWART_ADMIN_KEY: z.preprocess((v) => v || undefined, z.string().optional()),
   /** Tests only: moves over IMAP may use any port and servers without TLS (the local Stalwart). */
   MAIL_SYNC_ALLOW_PLAIN: z.stringbool().default(false),
+  /** Tests only: push to any address, not only to the browsers' push services. */
+  PUSH_ANY_ENDPOINT: z.stringbool().default(false),
   /** Tests only: a stand-in for Microsoft's sign-in and Graph (dev/fake-graph.ts). */
   M365_LOGIN_URL: z.url().default("https://login.microsoftonline.com"),
   GRAPH_URL: z.url().default("https://graph.microsoft.com/v1.0"),

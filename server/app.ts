@@ -8,7 +8,7 @@ import { eq } from "drizzle-orm";
 import { Hono } from "hono";
 import { serveStatic } from "hono/bun";
 import { type Auth, createAuth, createGrants, type Grants } from "./auth";
-import { createCategoryRoutes, type SessionAccount } from "./categories/routes";
+import { createCategoryRoutes } from "./categories/routes";
 import { createCategoryStore } from "./categories/store";
 import { createChatFiles } from "./chat/files";
 import { createMessageStore } from "./chat/messages";
@@ -34,6 +34,11 @@ import { createGraph, type M365Credentials } from "./migration/m365/graph";
 import { createRunner } from "./migration/runner";
 import { createSyncRunner } from "./migration/sync-runner";
 import { createSyncs } from "./migration/syncs";
+import { createMailWatch } from "./push/mail-watch";
+import { createPusher } from "./push/pusher";
+import { createPushRoutes } from "./push/routes";
+import { createPushStore, loadVapidKeys } from "./push/store";
+import { createSessionInfo } from "./session-info";
 import { createTaskRoutes } from "./tasks/routes";
 import { createTaskStore } from "./tasks/store";
 
@@ -89,41 +94,6 @@ export const createJmapProxy =
     responseHeaders.set("cache-control", responseHeaders.get("cache-control") ?? "no-store");
     return new Response(upstream.body, { status: upstream.status, headers: responseHeaders });
   };
-
-/** How long the accounts of a session are taken as they were ("schreibt …" asks every 3 s). */
-const ACCOUNTS_FRESH_MS = 30_000;
-
-/**
- * The accounts in the signed-in person's JMAP session, asked of Stalwart with their token and
- * kept for half a minute per session; a change of access (someone left info@) counts after that.
- */
-const sessionAccountsOf = (env: Env, auth: Auth, grants: Grants) => {
-  const known = new Map<string, { accounts: SessionAccount[]; until: number }>();
-  return async (request: Request): Promise<SessionAccount[] | null> => {
-    const session = await auth.api.getSession({ headers: request.headers });
-    if (!session) return null;
-    const now = Date.now();
-    const cached = known.get(session.session.id);
-    if (cached && cached.until > now) return cached.accounts;
-    const token = await grants.accessToken(session.session.id);
-    if (!token) return null;
-    const response = await fetch(`${env.STALWART_URL}/jmap/session`, {
-      headers: { authorization: `Bearer ${token}` },
-    });
-    if (!response.ok) return null;
-    const { accounts } = (await response.json()) as {
-      accounts: Record<string, { isReadOnly?: boolean; isPersonal?: boolean }>;
-    };
-    const list = Object.entries(accounts).map(([id, account]) => ({
-      id,
-      isReadOnly: Boolean(account.isReadOnly),
-      isPersonal: Boolean(account.isPersonal),
-    }));
-    for (const [id, entry] of known) if (entry.until <= now) known.delete(id);
-    known.set(session.session.id, { accounts: list, until: now + ACCOUNTS_FRESH_MS });
-    return list;
-  };
-};
 
 /** Ends all Kontext sessions of a user; their Stalwart tokens go with them (cascade). */
 const endSessionsOf = (db: Db) => async (email: string) => {
@@ -191,7 +161,7 @@ export const createApp = async (env: Env) => {
     });
     app.route("/api/company", company);
   }
-  const accountsOf = sessionAccountsOf(env, auth, grants);
+  const { accountsOf, infoOf } = createSessionInfo(env, auth, grants);
   const hub = createHub();
   app.route(
     "/api/live",
@@ -210,6 +180,30 @@ export const createApp = async (env: Env) => {
   pruneChatFiles();
   setInterval(pruneChatFiles, 3_600_000).unref();
   const messages = createMessageStore(db, chatFiles);
+
+  // Web Push: chat messages to oneself and new mail, also with Kontext closed.
+  const pushStore = createPushStore(db);
+  const vapid = await loadVapidKeys(db, await createSealer(env.BETTER_AUTH_SECRET, "web-push"));
+  const pusher = createPusher({
+    store: pushStore,
+    keys: vapid,
+    subject: new URL(env.BETTER_AUTH_URL).origin,
+  });
+  const mailWatch = createMailWatch({ env, grants, store: pushStore, pusher });
+  const watchMail = () => void mailWatch.refresh().catch(() => undefined);
+  watchMail();
+  // Sessions end (signing out removes their subscriptions): look again now and then.
+  setInterval(watchMail, 5 * 60_000).unref();
+  app.route(
+    "/api/push",
+    createPushRoutes({
+      store: pushStore,
+      publicKey: vapid.publicKey,
+      infoOf,
+      changed: watchMail,
+      anyEndpoint: env.PUSH_ANY_ENDPOINT,
+    }),
+  );
   app.route(
     "/api/chat",
     createChatRoutes({
@@ -218,6 +212,8 @@ export const createApp = async (env: Env) => {
       files: chatFiles,
       hub,
       accountsOf,
+      notify: pusher.notify,
+      nameOf: async (request) => (await infoOf(request))?.name ?? "",
     }),
   );
   app.route(

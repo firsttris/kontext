@@ -6,7 +6,9 @@
  *   being written is never swapped out under the user's hands;
  * - mail data (/jmap) and sign-in (/api) never touch a cache;
  * - shared files and texts (Web Share Target) are kept for the composer, and a click on a
- *   notification opens what it is about.
+ *   notification opens what it is about;
+ * - pushes from Kontext's server (chat messages to oneself, new mail) become notifications –
+ *   unless Kontext is open in front, where the app shows them itself.
  */
 import { clientsClaim } from "workbox-core";
 import {
@@ -16,6 +18,7 @@ import {
   precacheAndRoute,
 } from "workbox-precaching";
 import { NavigationRoute, registerRoute } from "workbox-routing";
+import { subscribeToPush } from "../pwa/push";
 import { SHARE_CACHE, SHARE_PATH, shareKey } from "../pwa/share-cache";
 
 declare const self: ServiceWorkerGlobalScope & {
@@ -93,4 +96,30 @@ self.addEventListener("notificationclick", (event) => {
       await self.clients.openWindow(target);
     })(),
   );
+});
+
+type Notice = { title: string; body: string; url: string; tag: string };
+
+self.addEventListener("push", (event) => {
+  const notice = event.data?.json() as Notice | undefined;
+  if (!notice) return;
+  event.waitUntil(
+    (async () => {
+      const windows = await self.clients.matchAll({ type: "window", includeUncontrolled: true });
+      // In front, the app shows it in place; a system notification would only interrupt.
+      if (windows.some((client) => client.visibilityState === "visible" && client.focused)) return;
+      await self.registration.showNotification(notice.title, {
+        body: notice.body,
+        tag: notice.tag,
+        icon: "/icon-192.png",
+        badge: "/icon-192.png",
+        data: { url: notice.url },
+      });
+    })(),
+  );
+});
+
+// The browser renewed the subscription (keys expire): tell the server the new one.
+self.addEventListener("pushsubscriptionchange", (event) => {
+  event.waitUntil(subscribeToPush(self.registration).catch(() => undefined));
 });

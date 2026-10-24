@@ -10,7 +10,6 @@ ein Plan, kein Versprechen; Wünsche und Hinweise gern als
 | --- | --- |
 | **Aufgaben überall im Kontext** | Offene Aufgaben am Kontakt, Fälliges im Kalender, Heute-Fälliges und neu Zugewiesenes in der Glocke, Erinnerungen als Benachrichtigung, „Aufgaben erstellen“ für mehrere Mails. |
 | **Team-Chat: mehr** | Antworten im Faden, Reaktionen, „Besprechung starten“ (Jitsi-Link), Aufbewahrungsfrist, die der Chef einstellt. |
-| **Benachrichtigungen bei geschlossener App** | Web Push: Stalwart kann ihn selbst senden (`urn:ietf:params:jmap:webpush-vapid`), damit das Handy auch bei ganz geschlossener App neue Mails meldet; für Direktnachrichten und Erwähnungen im Chat sendet ihn der Kontext-Server. |
 | **Unterhaltungen** | Antworten zu einem Verlauf zusammenfassen: eine Zeile pro Unterhaltung in der Liste, alle Mails darin untereinander im Lesebereich. Die Daten (`threadId`) lädt die App schon. |
 | **Senden rückgängig** | Nach „Senden“ ein paar Sekunden, um es zurückzunehmen (Tippfehler, falscher Empfänger). |
 | **Später senden** | Eine Mail zu einem Zeitpunkt verschicken lassen, etwa morgen um 8 Uhr. |
@@ -33,6 +32,8 @@ Kleinere Dinge, die beim Bauen aufgefallen sind und noch erledigt werden.
 
 **Funktionen**
 
+- [ ] Erinnerungen an Termine auch bei geschlossener App (heute nur, solange Kontext offen ist): der Server müsste die Kalender beobachten wie die Posteingänge.
+- [ ] Push für gemeinsame Postfächer abwählbar machen (heute meldet jede neue Mail in info@ sich bei allen, die darin arbeiten).
 - [ ] Chat-Suche: Umlaute in Groß- und Kleinschreibung („Ö“ findet „ö“ nicht), weil SQLite nur ASCII ohne Unterschied vergleicht.
 - [ ] Chat: „Ganze Mail teilen“ als Kopie, für Kolleginnen ohne Zugriff auf das Postfach (heute sehen sie nur die Karte).
 - [ ] Chat: Fotos als kleine Vorschaubilder auf dem Server erzeugen (heute lädt der Verlauf die verkleinerten Fotos in voller Größe).
@@ -62,6 +63,8 @@ Kleinere Dinge, die beim Bauen aufgefallen sind und noch erledigt werden.
 
 ## Zuletzt fertig geworden
 
+Benachrichtigungen bei geschlossener App (Web Push, Ende-zu-Ende verschlüsselt) für neue Mails,
+Direktnachrichten und @Erwähnungen.
 Team-Chat mit Kanälen (#allgemein, einer pro gemeinsamem Postfach, eigene), Direktnachrichten,
 @Erwähnungen, „schreibt …“, Gelesen und Ungelesen, Fotos und Dateien, Mails, Aufgaben und
 Kontakte als Karten, „Über diese Mail sprechen“, Aufgaben aus Nachrichten, Suche, Bearbeiten,
