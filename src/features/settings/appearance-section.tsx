@@ -1,10 +1,11 @@
-/** Light or dark (per device), and the keyboard shortcuts for reference. */
+/** Per device: light or dark, notifications; and the keyboard shortcuts for reference. */
 import { Monitor, Moon, Sun } from "lucide-react";
 import { ShortcutList } from "@/components/shortcuts-dialog";
 import { setThemeChoice, useTheme } from "@/components/theme/use-theme";
 import { cn } from "@/lib/cn";
 import type { ThemeChoice } from "@/lib/theme";
 import { m } from "@/paraglide/messages";
+import { DeviceSwitch } from "../notifications/device-switch";
 import { SettingsCard } from "./settings-page";
 
 const CHOICES: [ThemeChoice, () => string, typeof Sun][] = [
@@ -41,6 +42,9 @@ export const AppearanceSection = () => {
             </label>
           ))}
         </fieldset>
+      </SettingsCard>
+      <SettingsCard title={m.notifications_title()}>
+        <DeviceSwitch />
       </SettingsCard>
       <SettingsCard title={m.shortcuts_title()} description={m.shortcuts_hint()}>
         <ShortcutList />

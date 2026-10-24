@@ -18,9 +18,7 @@ import {
   type CalendarEvent,
   dateKey,
   eventTimes,
-  isOrganizer,
   isoWeek,
-  myParticipation,
   toLocal,
   weekDays,
 } from "@/lib/jscalendar";
@@ -30,7 +28,7 @@ import { CalendarList, CalendarsDialog } from "./calendar-list";
 import { EventDialog } from "./event-dialog";
 import { MiniMonth } from "./mini-month";
 import { MonthView, monthDays } from "./month-view";
-import { calendarOf, mayEdit, useEventMutations, useEvents } from "./queries";
+import { calendarOf, isInvitation, mayEdit, useEventMutations, useEvents } from "./queries";
 import type { Moved } from "./use-drag";
 import { WeekGrid } from "./week-grid";
 
@@ -145,13 +143,8 @@ export const CalendarPage = ({ search }: { search: Search }) => {
       },
     );
 
-  /** Only the user's own calendar holds invitations to answer; a colleague's are theirs. */
-  const isInvitation = (event: CalendarEvent) => {
-    if (!calendarOf(calendars, event)?.isPersonal) return false;
-    const me = myParticipation(event, mine);
-    return Boolean(me && !isOrganizer(event, mine) && me[1].participationStatus === "needs-action");
-  };
-  const invitations = events.filter(isInvitation);
+  const invited = (event: CalendarEvent) => isInvitation(calendars, event, mine);
+  const invitations = events.filter(invited);
   const open = search.event
     ? events.find(
         (event) =>
@@ -272,16 +265,16 @@ export const CalendarPage = ({ search }: { search: Search }) => {
             selected={selected}
             today={today}
             events={events}
-            isInvitation={isInvitation}
+            isInvitation={invited}
             compact={phone}
           />
         ) : view === "agenda" ? (
-          <AgendaView from={from} today={today} events={events} isInvitation={isInvitation} />
+          <AgendaView from={from} today={today} events={events} isInvitation={invited} />
         ) : (
           <WeekGrid
             days={days}
             events={events}
-            isInvitation={isInvitation}
+            isInvitation={invited}
             showDayHeader={!phone}
             canMove={canMove}
             onMove={onMove}

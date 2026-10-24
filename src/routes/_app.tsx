@@ -2,7 +2,8 @@ import { useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, Outlet, redirect } from "@tanstack/react-router";
 import { useEffect } from "react";
 import { useClient } from "@/auth/auth";
-import { AppShell } from "@/components/shell/app-shell";
+import { AppShell, railButton } from "@/components/shell/app-shell";
+import { NotificationBell } from "@/features/notifications/notification-bell";
 import { subscribeToChanges } from "@/jmap/push";
 
 export const Route = createFileRoute("/_app")({
@@ -30,7 +31,7 @@ const usePush = () => {
 function AppLayout() {
   usePush();
   return (
-    <AppShell>
+    <AppShell bell={<NotificationBell className={railButton(false)} />}>
       <Outlet />
     </AppShell>
   );

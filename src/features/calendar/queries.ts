@@ -33,6 +33,7 @@ import {
   eventKey,
   fromLocal,
   isOrganizer,
+  myParticipation,
 } from "@/lib/jscalendar";
 import type { ShareWith } from "@/lib/sharing";
 import { m } from "@/paraglide/messages";
@@ -142,6 +143,20 @@ export const calendarOf = (
   calendars.find(
     (calendar) => calendar.accountId === event.accountId && event.calendarIds[calendar.calendar.id],
   );
+
+/**
+ * An invitation still waiting for the user's answer. Only the user's own calendar holds
+ * invitations to answer; a colleague's shared calendar holds theirs.
+ */
+export const isInvitation = (
+  calendars: CalendarRef[],
+  event: CalendarEvent,
+  mine: string[],
+): boolean => {
+  if (!calendarOf(calendars, event)?.isPersonal) return false;
+  const me = myParticipation(event, mine);
+  return Boolean(me && !isOrganizer(event, mine) && me[1].participationStatus === "needs-action");
+};
 
 /**
  * May the user change the event? In a writable calendar, if they or the calendar's owner organize

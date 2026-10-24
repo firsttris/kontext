@@ -730,3 +730,80 @@ test.describe("Suche am Handy @phone", () => {
     await expect(page.getByRole("heading", { name: "Anfrage Wärmepumpe Neubau" })).toBeVisible();
   });
 });
+
+test.describe("Benachrichtigungen", () => {
+  const bell = (page: Page) =>
+    page
+      .getByRole("navigation", { name: "Apps" })
+      .getByRole("button", { name: /Benachrichtigungen/ });
+
+  test("zeigt neue Mails, öffnet sie und merkt sich, was gesehen ist", async ({ page }) => {
+    const subject = unique("Rückruf erbeten");
+    await deliverMail({
+      from: "c.sommer@example-privat.test",
+      fromName: "Claudia Sommer",
+      to: address("jonas"),
+      subject,
+      body: "Bitte rufen Sie mich zurück.",
+    });
+    await login(page);
+    await expect(bell(page)).toHaveAccessibleName(/Benachrichtigungen, \d+ neu/);
+    await bell(page).click();
+    const panel = page.getByRole("dialog", { name: "Benachrichtigungen" });
+    await expect(panel.getByText("Neue Mails")).toBeVisible();
+    await panel.getByRole("link", { name: new RegExp(subject) }).click();
+    await expect(page.getByRole("heading", { name: subject })).toBeVisible();
+    // Opened once, nothing is new any more.
+    await expect(bell(page)).toHaveAccessibleName("Benachrichtigungen");
+  });
+
+  test("schaltet Benachrichtigungen auf diesem Gerät ein", async ({ page }) => {
+    await page.context().grantPermissions(["notifications"]);
+    await login(page);
+    await bell(page).click();
+    const device = page.getByRole("switch", { name: "Auf diesem Gerät benachrichtigen" });
+    await expect(device).toHaveAttribute("aria-checked", "false");
+    await device.click();
+    await expect(device).toHaveAttribute("aria-checked", "true");
+    await page.reload();
+    await bell(page).click();
+    await expect(device).toHaveAttribute("aria-checked", "true");
+  });
+
+  test("schaltet sie am Handy in den Einstellungen ein @phone", async ({ page }) => {
+    await page.context().grantPermissions(["notifications"]);
+    await login(page);
+    await page.goto("/settings?section=appearance");
+    const device = page.getByRole("switch", { name: "Auf diesem Gerät benachrichtigen" });
+    await device.click();
+    await expect(device).toHaveAttribute("aria-checked", "true");
+  });
+
+  test("zeigt Anna die Einladung, die auf ihre Antwort wartet", async ({ page, browser }) => {
+    test.setTimeout(90_000);
+    const title = unique("Aufmaß Bad");
+    const day = new Intl.DateTimeFormat("sv-SE", { timeZone: "Europe/Berlin" }).format(
+      new Date(Date.now() + 2 * 86_400_000),
+    );
+    await login(page);
+    await page.goto(`/calendar?date=${day}&event=new&start=${day}T09:00`);
+    const dialog = page.getByRole("dialog");
+    await dialog.getByLabel("Titel").fill(title);
+    await dialog.getByLabel("Teilnehmer").fill(address("anna"));
+    await dialog.getByRole("button", { name: "Speichern" }).click();
+    await expect(page.getByRole("status")).toHaveText("Einladungen werden verschickt.");
+
+    const anna = await (
+      await browser.newContext({ locale: "de-DE", timezoneId: "Europe/Berlin" })
+    ).newPage();
+    await login(anna, "anna");
+    // Delivery to Anna's calendar runs in the background on the server; push brings it.
+    await expect(bell(anna)).toHaveAccessibleName(/\d+ neu/, { timeout: 30_000 });
+    await bell(anna).click();
+    const panel = anna.getByRole("dialog", { name: "Benachrichtigungen" });
+    await expect(panel).toContainText("Einladungen");
+    // The invitation itself; the invitation mail Stalwart sent is listed under the new mails.
+    await panel.getByRole("link", { name: new RegExp(`^${title}`) }).click();
+    await expect(anna.getByRole("button", { name: "Zusagen" })).toBeVisible();
+  });
+});

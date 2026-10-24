@@ -52,13 +52,13 @@ const UserMenu = ({ side }: { side: "right" | "top" }) => {
   );
 };
 
-const railButton = (active: boolean) =>
+export const railButton = (active: boolean) =>
   cn(
     "flex size-10 items-center justify-center rounded-[10px] hover:bg-hover",
     active ? "bg-subtle text-fg" : "text-muted hover:text-fg",
   );
 
-const Rail = ({ onHelp }: { onHelp: () => void }) => {
+const Rail = ({ onHelp, bell }: { onHelp: () => void; bell: ReactNode }) => {
   const pathname = useRouterState({ select: (state) => state.location.pathname });
   return (
     <nav
@@ -90,6 +90,7 @@ const Rail = ({ onHelp }: { onHelp: () => void }) => {
         );
       })}
       <div className="flex-1" />
+      {bell}
       <button
         type="button"
         onClick={onHelp}
@@ -114,7 +115,8 @@ const Rail = ({ onHelp }: { onHelp: () => void }) => {
   );
 };
 
-export const AppShell = ({ children }: { children: ReactNode }) => {
+/** `bell`: the notifications (features/notifications), placed in the rail by the route. */
+export const AppShell = ({ children, bell }: { children: ReactNode; bell?: ReactNode }) => {
   const navigate = useNavigate();
   const [help, setHelp] = useState(false);
   // "?" shows all shortcuts, 1–3 switch between the apps.
@@ -126,7 +128,7 @@ export const AppShell = ({ children }: { children: ReactNode }) => {
   });
   return (
     <div className="flex h-dvh overflow-hidden bg-bg text-fg safe-top md:pt-0">
-      <Rail onHelp={() => setHelp(true)} />
+      <Rail onHelp={() => setHelp(true)} bell={bell} />
       <div className="flex min-w-0 flex-1">{children}</div>
       <ShortcutsDialog open={help} onOpenChange={setHelp} />
     </div>

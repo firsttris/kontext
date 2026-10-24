@@ -77,6 +77,7 @@ und unter `https://<Ihre Domain>` anmelden. DNS-Einträge, Backups und Updates s
 - **Passwort und Anmeldung mit Code** (Authenticator-App); man bleibt auf dem Gerät angemeldet.
 - **Hell oder dunkel**: wie das Gerät, oder fest eingestellt.
 - **Tastaturkürzel** wie in Gmail: `j`/`k` durch die Mails, `r` antworten, `e` archivieren, `c` neu, `?` oder das Tastatur-Symbol links zeigt alle.
+- **Benachrichtigungen**: die Glocke links zeigt Einladungen, die auf Antwort warten, die heutigen Termine und neue Mails aus allen Postfächern; auf Wunsch meldet sich Sekretär auch als Benachrichtigung des Geräts – bei neuer Mail im Hintergrund und 15 Minuten vor einem Termin.
 - **Speicherplatz im Blick**: ein feiner Ring um das eigene Bild zeigt, wie voll das Postfach ist – gelb ab 80 %, rot ab 95 %.
 
 ### 🏢 Firmenverwaltung

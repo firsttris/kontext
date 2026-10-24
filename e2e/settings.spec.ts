@@ -25,7 +25,7 @@ test.describe("Einstellungen", () => {
     await page.goto("/settings?section=vacation");
     await page.getByLabel("Abwesenheitsnotiz einschalten").check();
     await page.getByLabel("Betreff").fill("Bin im Urlaub");
-    await page.getByLabel("Nachricht").fill("Ab Montag wieder da.");
+    await page.getByLabel("Nachricht", { exact: true }).fill("Ab Montag wieder da.");
     await page.getByRole("button", { name: "Speichern" }).click();
     await expect(page.getByRole("status").filter({ hasText: "eingeschaltet" })).toBeVisible();
 

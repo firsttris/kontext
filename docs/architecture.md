@@ -283,6 +283,22 @@ Tastaturkürzel sind einzelne Tasten wie in Gmail und stehen als Liste in `src/l
 die Hilfe (`?` oder das Tastatur-Symbol unten in der Leiste) und die Einstellungen zeigen dieselbe
 Liste. Solange ein Eingabefeld oder ein Dialog den Fokus hat, greift keine Taste.
 
+## Benachrichtigungen
+
+Die Glocke in der Leiste (`src/features/notifications/`) zeigt, was aus dem Stand des Servers
+folgt: ungelesene Mails der letzten drei Tage in allen Posteingängen (eigene und gemeinsame),
+Einladungen im eigenen Kalender, die noch auf Antwort warten (dieselbe Prüfung wie im Kalender,
+`isInvitation`), und die restlichen Termine des Tages. Push hält das aktuell wie jede andere
+Ansicht; wer eine Mail am Handy liest, sieht sie hier verschwinden. Auf dem Server wird nichts
+gespeichert: Den Punkt an der Glocke gibt es für Mails, die nach dem letzten Öffnen kamen, und für
+Einladungen, die damals noch nicht da waren – beides merkt sich der Browser.
+
+„Auf diesem Gerät benachrichtigen“ (in der Glocke und unter Einstellungen → Darstellung) nutzt die
+Notification-API des Browsers: neue Mail, solange Sekretär im Hintergrund ist, und eine Erinnerung
+15 Minuten vor einem Termin (`src/lib/notifications.ts`). Ob die Erlaubnis noch besteht, fragt die
+App über die Permissions-API ab; nimmt man sie im Browser zurück, schaltet sich der Schalter aus.
+Benachrichtigungen kommen nur, solange Sekretär in einem Tab offen ist.
+
 ## Speicherplatz
 
 Der Ring um das eigene Bild (Leiste, am Handy die Tableiste) zeigt den Speicher des eigenen
