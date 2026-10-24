@@ -387,7 +387,12 @@ test("sendet aus dem gemeinsamen Postfach als info@", async ({ page }) => {
   await page.getByRole("textbox", { name: "Ihre Nachricht …" }).click();
   await page.keyboard.type("Bitte Frau Sommer zurückrufen.");
   await page.getByRole("button", { name: "Senden" }).click();
-  await expect(page.getByRole("status")).toHaveText("Mail gesendet.");
+  // Sent, or an error toast; a failure then names the error instead of only timing out (this
+  // test failed now and then in full runs, showing just the composer's "Entwurf gespeichert").
+  await expect(
+    page.getByRole("status").filter({ hasText: "Mail gesendet." }).or(page.getByRole("alert")),
+  ).toBeVisible({ timeout: 15_000 });
+  expect(await page.getByRole("alert").allTextContents()).toEqual([]);
   await expect
     .poll(async () => (await inboxMails("anna")).find((mail) => mail.subject === subject)?.from)
     .toBe(address("info"));
