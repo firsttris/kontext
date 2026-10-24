@@ -10,6 +10,8 @@
  *
  * Read only: nothing changes at Microsoft.
  */
+
+import { outlookColor } from "../categories";
 import type { TargetFolder } from "../folders";
 import { type Importer, INLINE_LIMIT, type MailToImport } from "../importer";
 import { addCards, addEvents } from "../pim";
@@ -30,12 +32,13 @@ type GraphMessage = {
   internetMessageId?: string | null;
   isRead?: boolean;
   flag?: { flagStatus?: string } | null;
+  categories?: string[];
   receivedDateTime?: string | null;
   "@removed"?: unknown;
 };
 
 const BATCH = 25;
-const MESSAGE_FIELDS = "internetMessageId,isRead,flag,receivedDateTime";
+const MESSAGE_FIELDS = "internetMessageId,isRead,flag,categories,receivedDateTime";
 const EVENT_FIELDS =
   "iCalUId,subject,body,bodyPreview,start,end,isAllDay,showAs,location,recurrence,type";
 
@@ -94,8 +97,21 @@ const toKeywords = (message: GraphMessage): Record<string, true> => ({
   ...(message.flag?.flagStatus === "flagged" ? { $flagged: true as const } : {}),
 });
 
+/**
+ * Outlook's category colours. Reading them needs MailboxSettings.Read; without it the categories
+ * still come, in colours of their own.
+ */
+const categoryColors = async (graph: Graph, base: string) => {
+  const list = await graph
+    .all<{ displayName: string; color?: string }>(`${base}/outlook/masterCategories`)
+    .then((result) => result.items)
+    .catch(() => []);
+  return new Map(list.map((entry) => [entry.displayName.toLowerCase(), outlookColor(entry.color)]));
+};
+
 const syncMails = async (run: M365Run, base: string) => {
   const { graph, importer, accountId, state, counts, save } = run;
+  const colors = await categoryColors(graph, base);
   const known = await importer.knownMessageIds(accountId);
   const resolve = folderResolver(importer, accountId, await importer.folders(accountId));
   for (const { id, target } of await foldersOf(graph, base)) {
@@ -125,6 +141,10 @@ const syncMails = async (run: M365Run, base: string) => {
         raw,
         mailboxId,
         keywords: toKeywords(message),
+        categories: (message.categories ?? []).map((name) => ({
+          name,
+          color: colors.get(name.toLowerCase()),
+        })),
         receivedAt: message.receivedDateTime?.replace(/\.\d+Z$/, "Z") ?? null,
       });
       bytes += raw.length;

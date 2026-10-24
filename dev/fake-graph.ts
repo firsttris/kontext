@@ -36,14 +36,32 @@ const mime = (id: string, subject: string, day: string) =>
     "",
   ].join("\r\n");
 
-const messages: Record<string, { folder: string; subject: string; read: boolean; flag: boolean }> =
-  {
-    m1: { folder: "f-inbox", subject: "Anfrage Heizung Outlook", read: true, flag: false },
-    m2: { folder: "f-inbox", subject: "Rückfrage Angebot Outlook", read: false, flag: true },
-    m3: { folder: "f-projekte", subject: "Projekt Schule Outlook", read: true, flag: false },
-    m4: { folder: "f-sent", subject: "Angebot verschickt Outlook", read: true, flag: false },
-    m5: { folder: "f-deleted", subject: "Gelöscht Outlook", read: true, flag: false },
-  };
+type FakeMessage = {
+  folder: string;
+  subject: string;
+  read: boolean;
+  flag: boolean;
+  categories?: string[];
+};
+const messages: Record<string, FakeMessage> = {
+  m1: {
+    folder: "f-inbox",
+    subject: "Anfrage Heizung Outlook",
+    read: true,
+    flag: false,
+    categories: ["Rechnung"],
+  },
+  m2: {
+    folder: "f-inbox",
+    subject: "Rückfrage Angebot Outlook",
+    read: false,
+    flag: true,
+    categories: ["Großkunde", "Rechnung"],
+  },
+  m3: { folder: "f-projekte", subject: "Projekt Schule Outlook", read: true, flag: false },
+  m4: { folder: "f-sent", subject: "Angebot verschickt Outlook", read: true, flag: false },
+  m5: { folder: "f-deleted", subject: "Gelöscht Outlook", read: true, flag: false },
+};
 
 const folders = [
   { id: "f-inbox", displayName: "Posteingang", childFolderCount: 1 },
@@ -86,6 +104,10 @@ const graph = (url: URL, request: Request): Response => {
   const known = rest.match(/^\/mailFolders\/([a-z]+)$/);
   if (known) return wellKnown[known[1]!] ? json({ id: wellKnown[known[1]!] }) : notFound();
   if (rest === "/mailFolders") return json({ value: folders });
+  // Outlook's category list with colours; "Rechnung" is missing, as after a rename in Outlook.
+  if (rest === "/outlook/masterCategories") {
+    return json({ value: [{ id: "c1", displayName: "Großkunde", color: "preset4" }] });
+  }
   if (rest === "/mailFolders/f-inbox/childFolders") {
     return json({ value: [{ id: "f-projekte", displayName: "Projekte", childFolderCount: 0 }] });
   }
@@ -106,6 +128,7 @@ const graph = (url: URL, request: Request): Response => {
         internetMessageId: `<${id}@contoso.test>`,
         isRead: m.read,
         flag: { flagStatus: m.flag ? "flagged" : "notFlagged" },
+        categories: m.categories ?? [],
         receivedDateTime: "2026-10-20T07:00:00Z",
       }));
     // Two pages, so the paging is used.

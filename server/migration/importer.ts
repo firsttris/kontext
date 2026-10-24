@@ -4,7 +4,9 @@
  * ContactCard/parse and appointments with CalendarEvent/parse, then /set. Blobs go inline with
  * Blob/upload (RFC 9404) where they fit into one request (Stalwart: 10 MB per request).
  */
+import type { CategoryStore } from "../categories/store";
 import type { StalwartRequest, StalwartUpload } from "../company/management";
+import { resolveCategories, type SourceCategory } from "./categories";
 
 const CORE = "urn:ietf:params:jmap:core";
 const BLOB = "urn:ietf:params:jmap:blob";
@@ -33,6 +35,8 @@ export type MailToImport = {
   /** JMAP keywords such as $seen and $flagged. */
   keywords: Record<string, true>;
   receivedAt: string | null;
+  /** Categories of the old mailbox, by name; they become keywords of the account's categories. */
+  categories?: SourceCategory[];
 };
 export type Outcome = { imported: number; failed: string[] };
 /** Per mail of a batch the new email id, or null when Stalwart refused it. */
@@ -48,7 +52,36 @@ const failures = (result: Response, key: string): string[] =>
 const base64 = (data: Uint8Array | string) =>
   Buffer.from(typeof data === "string" ? new TextEncoder().encode(data) : data).toString("base64");
 
-export const createImporter = (request: StalwartRequest, upload: StalwartUpload) => {
+export const createImporter = (
+  request: StalwartRequest,
+  upload: StalwartUpload,
+  /** Without it, categories of the old mailbox are left out. */
+  categoryStore?: CategoryStore,
+) => {
+  /** The batch's categories as keywords; categories the account lacks are added first. */
+  const withCategories = async (
+    accountId: string,
+    mails: MailToImport[],
+  ): Promise<MailToImport[]> => {
+    const wanted = mails.flatMap((mail) => mail.categories ?? []);
+    if (!categoryStore || !wanted.length) return mails;
+    const existing = (await categoryStore.list([accountId]))[accountId] ?? [];
+    const { categories, keywords } = resolveCategories(existing, wanted);
+    if (categories.length !== existing.length) await categoryStore.save(accountId, categories);
+    return mails.map((mail) => ({
+      ...mail,
+      keywords: {
+        ...mail.keywords,
+        ...Object.fromEntries(
+          (mail.categories ?? []).flatMap((category) => {
+            const keyword = keywords.get(category.name.trim().toLowerCase());
+            return keyword ? [[keyword, true as const]] : [];
+          }),
+        ),
+      },
+    }));
+  };
+
   /** Some properties (and the id) of all objects a query finds, page by page. */
   const collect = async (
     accountId: string,
@@ -148,7 +181,8 @@ export const createImporter = (request: StalwartRequest, upload: StalwartUpload)
   });
 
   /** One batch of small mails in one request; a large mail alone through the upload. */
-  const importMails = async (accountId: string, mails: MailToImport[]): Promise<MailOutcome> => {
+  const importMails = async (accountId: string, given: MailToImport[]): Promise<MailOutcome> => {
+    const mails = await withCategories(accountId, given);
     if (mails.length === 1 && mails[0]!.raw.length > INLINE_LIMIT) {
       const mail = mails[0]!;
       const blobId = await upload(accountId, mail.raw, "message/rfc822").catch(() => null);

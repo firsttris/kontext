@@ -95,6 +95,7 @@ Unter *Einstellungen → Firma → Umzug* übernimmt der Chef die Daten der Mita
   [Microsoft Entra Admin Center](https://entra.microsoft.com) unter *App-Registrierungen* eine App
   „Sekretär Umzug“ anlegen, unter *API-Berechtigungen* die **Anwendungsberechtigungen**
   `Mail.Read`, `Contacts.Read`, `Calendars.Read` und `User.Read.All` für Microsoft Graph
+  (optional `MailboxSettings.Read`, damit Outlook-Kategorien ihre Farben behalten)
   hinzufügen und die Administratorzustimmung erteilen, unter *Zertifikate & Geheimnisse* einen
   geheimen Clientschlüssel erzeugen. Verzeichnis-ID, Anwendungs-ID und Schlüssel beim ersten
   „Postfach verbinden → Microsoft 365“ eintragen. Die App kann alle Postfächer des Mandanten

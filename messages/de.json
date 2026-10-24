@@ -611,7 +611,7 @@
   "company_sync_finished_domain": "Gehört die Adresse zur eigenen Domain, stattdessen den MX-Eintrag auf diesen Server umstellen.",
   "company_none": "Noch keine Umzüge.",
   "company_m365_setup": "Microsoft 365 einmal verbinden",
-  "company_m365_setup_hint": "Im Microsoft Entra Admin Center eine App registrieren, ihr die Anwendungsberechtigungen Mail.Read, Contacts.Read, Calendars.Read und User.Read.All geben, die Administratorzustimmung erteilen und einen geheimen Clientschlüssel erzeugen. Die Werte hier eintragen; der Schlüssel wird verschlüsselt gespeichert.",
+  "company_m365_setup_hint": "Im Microsoft Entra Admin Center eine App registrieren, ihr die Anwendungsberechtigungen Mail.Read, Contacts.Read, Calendars.Read und User.Read.All geben (optional MailboxSettings.Read für die Farben der Outlook-Kategorien), die Administratorzustimmung erteilen und einen geheimen Clientschlüssel erzeugen. Die Werte hier eintragen; der Schlüssel wird verschlüsselt gespeichert.",
   "company_m365_tenant": "Verzeichnis-ID (Mandant)",
   "company_m365_client": "Anwendungs-ID (Client)",
   "company_m365_secret": "Geheimer Clientschlüssel",

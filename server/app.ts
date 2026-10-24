@@ -127,7 +127,7 @@ export const createApp = async (env: Env) => {
     const upload = createUpload(env.STALWART_URL, env.STALWART_ADMIN_KEY);
     const jobs = createJobs(db);
     const workDir = join(dirname(env.DATABASE_PATH), "migrations");
-    const importer = createImporter(request, upload);
+    const importer = createImporter(request, upload, categories);
     const runner = createRunner({ jobs, importer, workDir });
     await runner.resume();
     const syncs = createSyncs(db);

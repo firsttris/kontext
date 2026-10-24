@@ -155,6 +155,13 @@ System, auf zwei Wegen. Beide schreiben mit dem Server-Schlüssel in das neue Po
 Kontakte mit gleichem Namen und gleicher erster Adresse, Termine mit bekannter UID. Ein Umzug
 lässt sich deshalb gefahrlos wiederholen.
 
+**Kategorien** kommen mit (`server/migration/categories.ts`): aus Microsoft 365 die Outlook-
+Kategorien der Mails, mit der Farbe aus `masterCategories` (dafür braucht die App zusätzlich
+`MailboxSettings.Read`; ohne bekommen sie eigene Farben); per IMAP die Schlagworte, Thunderbirds
+`$label1`–`$label5` unter ihren deutschen Namen („Wichtig“, „Arbeit“, …). Fehlt eine Kategorie im
+neuen Postfach, wird sie angelegt. Aus Outlook-Dateien (PST) nicht: `readpst` schreibt Kategorien
+nur für Kontakte und Termine aus, nicht für Mails.
+
 ### Postfach verbinden per IMAP (Gmail, GMX, WEB.DE, Telekom, IONOS, STRATO, eigener Server)
 
 Sekretär liest das alte Postfach per IMAP (`imapflow`), nur lesend, und gleicht es in eine Richtung
@@ -185,6 +192,7 @@ So läuft das alte Postfach parallel weiter, solange Absender noch die alte Adre
 Für Microsoft 365 gibt es kein IMAP mit Passwort mehr; Sekretär liest über Microsoft Graph mit
 einer App, die der Admin des Kunden einmal in seinem Mandanten registriert und freigibt
 (Anwendungsberechtigungen `Mail.Read`, `Contacts.Read`, `Calendars.Read`, `User.Read.All`,
+optional `MailboxSettings.Read` für die Farben der Kategorien,
 Token per Client Credentials). Die Zugangsdaten liegen verschlüsselt in Sekretärs SQLite
 (`company_setting`); danach ordnet der Chef pro Mitarbeiter ein Postfach aus dem Mandanten zu
 (vorgeschlagen wird das mit gleichem Namen vor dem @). `server/migration/m365/`:

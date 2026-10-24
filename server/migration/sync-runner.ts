@@ -5,6 +5,7 @@
  * Gmail lets IMAP download about 2.5 GB a day: a big mailbox simply takes several runs.
  */
 import type { Sealer } from "../crypto";
+import { imapCategories } from "./categories";
 import { folderOrder, imapTarget, keywordsOf } from "./imap-folders";
 import { type ImapSource, type MailHead, openImap } from "./imap-source";
 import { type Importer, INLINE_LIMIT, type MailToImport } from "./importer";
@@ -90,6 +91,7 @@ export const createSyncRunner = ({
                   raw: data,
                   mailboxId,
                   keywords: keywordsOf(head.flags),
+                  categories: imapCategories(head.flags),
                   receivedAt: head.internalDate?.toISOString().replace(/\.\d{3}Z$/, "Z") ?? null,
                 },
               ]

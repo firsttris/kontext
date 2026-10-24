@@ -1,7 +1,7 @@
 import { expect, test } from "@playwright/test";
 import { DEV_PASSWORD, STALWART_ADMIN } from "../dev/config";
 import { CAPABILITIES, createJmapClient } from "../src/jmap/client";
-import { newEmployee, stamp } from "./company-helpers";
+import { newEmployee, signInWith, stamp } from "./company-helpers";
 import { pstFixture } from "./fixtures";
 import { address, jmapAs, login, personalAccountId, STALWART } from "./helpers";
 
@@ -91,7 +91,8 @@ test.describe("Umzug", () => {
               x: {
                 blobId: "#x",
                 mailboxIds: { [folders.a!.id]: true, [folders.b!.id]: true },
-                keywords: { $seen: true, $flagged: true },
+                // Thunderbird's tag "Wichtig" and a tag of one's own.
+                keywords: { $seen: true, $flagged: true, $label1: true, angebot: true },
               },
               y: { blobId: "#y", mailboxIds: { [folders.a!.id]: true }, keywords: {} },
             },
@@ -126,7 +127,7 @@ test.describe("Umzug", () => {
     const imported = (await row.textContent())?.match(/(\d+) Mails übernommen/)?.[0] ?? "";
     expect(imported).not.toBe("");
 
-    // In the new mailbox: the mail with two labels once, in both folders, read and flagged.
+    // In the new mailbox: the mail with two labels once, in both folders, read, flagged, tagged.
     const admin = createJmapClient({
       origin: STALWART,
       credentials: { username: STALWART_ADMIN.user, password: STALWART_ADMIN.password },
@@ -162,7 +163,13 @@ test.describe("Umzug", () => {
         .map((box) => names[box])
         .sort(),
     ).toEqual([`Label A ${stamp_}`, `Label B ${stamp_}`]);
-    expect(twoLabels!.keywords).toEqual({ $seen: true, $flagged: true });
+    // Tags became categories of the new mailbox: Thunderbird's under its German name.
+    expect(twoLabels!.keywords).toEqual({
+      $seen: true,
+      $flagged: true,
+      wichtig: true,
+      angebot: true,
+    });
 
     // A second run brings nothing twice; then the move is finished.
     await row.getByRole("button", { name: "Jetzt abgleichen" }).click();
@@ -224,7 +231,7 @@ test.describe("Umzug", () => {
     test.setTimeout(90_000);
     const local = `petra-${stamp()}`;
     await login(page, "jonas");
-    await newEmployee(page, local, "Petra Wechsel");
+    const password = await newEmployee(page, local, "Petra Wechsel");
     await page.goto("/settings?section=migration");
     await page.getByRole("button", { name: "Postfach verbinden" }).click();
     const dialog = page.getByRole("dialog", { name: "Postfach verbinden" });
@@ -252,6 +259,41 @@ test.describe("Umzug", () => {
     const row = page.getByRole("listitem", { name: "petra@contoso.test" });
     await expect(row).toContainText("4 Mails übernommen", { timeout: 30_000 });
     await expect(row).toContainText("Kontakte: 1, Termine: 1");
+
+    // Outlook's categories came along: as keywords on the mails, with Outlook's colour.
+    const petra = createJmapClient({
+      origin: STALWART,
+      credentials: { username: address(local), password },
+    });
+    const accountId = Object.keys((await petra.getSession()).accounts)[0]!;
+    const [, got] = await petra.request([
+      ["Email/query", { accountId, filter: { subject: "Rückfrage Angebot Outlook" } }, "q"],
+      [
+        "Email/get",
+        {
+          accountId,
+          "#ids": { resultOf: "q", name: "Email/query", path: "/ids" },
+          properties: ["keywords"],
+        },
+        "g",
+      ],
+    ]);
+    expect(Object.keys((got![1].list as { keywords: object }[])[0]!.keywords).sort()).toEqual([
+      "$flagged",
+      "grosskunde",
+      "rechnung",
+    ]);
+    const asPetra = await (await page.context().browser()!.newContext()).newPage();
+    await signInWith(asPetra, address(local), password);
+    await expect(asPetra).toHaveURL(/\/mail\//);
+    const categories = await asPetra.evaluate(async () => (await fetch("/api/categories")).json());
+    expect(Object.values(categories)[0]).toEqual(
+      expect.arrayContaining([
+        { keyword: "grosskunde", name: "Großkunde", color: "green" },
+        expect.objectContaining({ keyword: "rechnung", name: "Rechnung" }),
+      ]),
+    );
+
     await row.getByRole("button", { name: "Jetzt abgleichen" }).click();
     await expect(row).toContainText("Letzter Abgleich");
     await expect(row).toContainText("4 Mails übernommen");
