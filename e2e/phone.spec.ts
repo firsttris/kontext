@@ -325,7 +325,8 @@ test.describe("Telefonie über die Telefonbox", () => {
       .toEqual({ type: "hold", call });
 
     await panel(page).getByRole("button", { name: "Weitervermitteln" }).click();
-    await panel(page).getByRole("radio", { name: "Dazuholen" }).click();
+    await panel(page).getByText("Dazuholen", { exact: true }).click();
+    await expect(panel(page).getByRole("radio", { name: "Dazuholen" })).toBeChecked();
     await panel(page).getByRole("button", { name: "Anna Weber" }).click();
     const asked = anna.page.getByRole("dialog", {
       name: "Jonas Weber holt dich dazu: 07223 81234",
@@ -452,12 +453,14 @@ test.describe("Telefonie über die Telefonbox", () => {
     await login(page);
     await page.goto("/settings?section=phone");
     const ring = page.getByRole("region", { name: "Wer klingelt" });
-    await ring.getByLabel("Klingeln").selectOption({ label: "Der Reihe nach, dann bei allen" });
+    await ring
+      .getByRole("combobox", { name: /^Klingeln/ })
+      .selectOption({ label: "Der Reihe nach, dann bei allen" });
     await expect(ring.getByRole("list", { name: "Reihenfolge" })).toContainText("Jonas Weber");
     await ring.getByLabel("Jeweils").selectOption({ label: "10 Sekunden" });
     await ring.getByLabel("Auch auf einem Handy klingeln lassen").check();
     await ring.getByLabel("Handynummer").fill("0171 2345678");
-    await ring.getByLabel("Nach", { exact: true }).selectOption({ label: "10 Sekunden" });
+    await ring.getByRole("combobox", { name: /^Nach/ }).selectOption({ label: "10 Sekunden" });
     await ring.getByRole("button", { name: "Speichern" }).click();
     await expect
       .poll(async () => (await box.state()).config)

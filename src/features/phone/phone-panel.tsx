@@ -13,7 +13,7 @@ import {
 import { useQueryClient } from "@tanstack/react-query";
 import { Track } from "livekit-client";
 import { ArrowRightLeft, Grid3x3, Mic, MicOff, Pause, PhoneOff, Play, Volume2 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Avatar } from "@/components/ui/avatar";
 import { useToast } from "@/components/ui/toast";
 import { useChatNames } from "@/features/chat/use-chat-names";
@@ -195,8 +195,11 @@ export const PhonePanel = ({ active }: { active: ActivePhone }) => {
   useEffect(() => {
     if (ended) leavePhone();
   }, [ended]);
-  // Handed to a colleague who is in the call now: I go.
-  const gone = call ? handedOver(call, me) : false;
+  // Handed to a colleague who is in the call now: I go – only if it was mine; a colleague who
+  // was asked to join stays.
+  const wasMine = useRef(false);
+  if (call?.member === me) wasMine.current = true;
+  const gone = call ? wasMine.current && handedOver(call, me) : false;
   const takenBy = call?.member ?? "";
   useEffect(() => {
     if (!gone) return;

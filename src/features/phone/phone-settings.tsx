@@ -157,8 +157,9 @@ export const PhoneSettingsSection = () => {
           <Boxes boxes={data.boxes} />
           <LineForm line={data.line} />
           <RingForm admin={data} />
-          <LinesForm lines={data.extraLines} />
-          <DesksForm desks={data.deskPhones} />
+          {/* Saved, the lists come back with their ids: the forms start again from them. */}
+          <LinesForm key={JSON.stringify(data.extraLines)} lines={data.extraLines} />
+          <DesksForm key={JSON.stringify(data.deskPhones)} desks={data.deskPhones} />
           <CallbacksForm board={data.callbackBoard} />
           <SoundsCard sounds={data.sounds} />
           <MailboxForm mailbox={data.mailbox} sounds={data.sounds} />

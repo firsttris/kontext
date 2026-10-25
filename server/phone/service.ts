@@ -30,7 +30,7 @@ import {
 } from "./phone";
 import type { BoxConfig, CallEvent, FromBox, ToBox } from "./protocol";
 import type { PhoneSettings, PhoneStore } from "./store";
-import { createTransfers } from "./transfer";
+import { createTransfers, type TransferTarget } from "./transfer";
 
 /** What telephony needs from the tasks: make "Zurückrufen" and tick it off. */
 export type CallbackTasks = {
@@ -285,6 +285,12 @@ export const createPhoneService = (deps: PhoneDeps) => {
 
   const transfers = createTransfers({ store, save, send, newId, now });
 
+  /** A call as the app gets it back from a request: with who is in its room. */
+  const shown = async (result: Promise<PhoneCall | Problem>): Promise<PhoneCall | Problem> => {
+    const call = await result;
+    return typeof call === "string" ? call : withPresence(call);
+  };
+
   /** Whoever has the call or is in its room may hold, resume and hang it up. */
   const inCall = (call: PhoneCall, me: string) =>
     call.member === me || presentIn(call.room).includes(me);
@@ -419,9 +425,8 @@ export const createPhoneService = (deps: PhoneDeps) => {
       await settle(room);
     },
 
-    hold: (callId: string, me: string): Promise<PhoneCall | Problem> => setHeld(callId, me, true),
-    resume: (callId: string, me: string): Promise<PhoneCall | Problem> =>
-      setHeld(callId, me, false),
+    hold: (callId: string, me: string) => shown(setHeld(callId, me, true)),
+    resume: (callId: string, me: string) => shown(setHeld(callId, me, false)),
 
     /** Who is on the phone and who does not take calls, as the app shows it. */
     people: async () => ({
@@ -454,9 +459,10 @@ export const createPhoneService = (deps: PhoneDeps) => {
       }
     },
 
-    transfer: transfers.transfer,
-    takeTransfer: transfers.take,
-    cancelTransfer: transfers.cancel,
+    transfer: (callId: string, me: string, target: TransferTarget) =>
+      shown(transfers.transfer(callId, me, target)),
+    takeTransfer: (callId: string, me: string) => shown(transfers.take(callId, me)),
+    cancelTransfer: (callId: string, me: string) => shown(transfers.cancel(callId, me)),
 
     /** The call changed outside the service (a message arrived): tell who sees it. */
     refresh: async (callId: string) => {
@@ -469,7 +475,7 @@ export const createPhoneService = (deps: PhoneDeps) => {
       if (!call || !canSeeCall(call, me)) return "not-found";
       const next = { ...call, note };
       await save(next);
-      return next;
+      return withPresence(next);
     },
   };
 };
