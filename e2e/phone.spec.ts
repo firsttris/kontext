@@ -483,6 +483,19 @@ test.describe("Telefonie über die Telefonbox", () => {
     ).toContainText("Am Tischtelefon angenommen (Empfang)");
   });
 
+  test("die Auswertung zeigt Anrufe, Verpasste nach Uhrzeit und wer angenommen hat", async ({
+    page,
+  }) => {
+    await login(page);
+    await page.getByRole("link", { name: "Telefon", exact: true }).click();
+    await page.getByRole("button", { name: "Auswertung" }).click();
+    const stats = page.getByRole("region", { name: "Auswertung" });
+    await expect(stats).toContainText("Anrufe in 30 Tagen");
+    await expect(stats).toContainText("Wann Anrufe verpasst wurden");
+    await expect(stats.getByRole("listitem").filter({ hasText: "Jonas Weber" })).toBeVisible();
+    await expect(stats.locator("td[style]").first()).toBeVisible();
+  });
+
   test("aus dem Kontakt anrufen geht über die Box", async ({ page }) => {
     await login(page);
     await page.getByRole("link", { name: "Kontakte" }).first().click();

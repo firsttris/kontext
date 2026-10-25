@@ -366,6 +366,16 @@ export const createPhoneStore = (db: Db, sealer: Sealer) => {
         .onConflictDoUpdate({ target: schema.phoneStatus.memberId, set: row });
     },
 
+    /** All calls since a moment, for the statistics. */
+    callsSince: async (since: Date): Promise<PhoneCall[]> =>
+      (
+        await db
+          .select()
+          .from(schema.phoneCalls)
+          .where(gt(schema.phoneCalls.startedAt, since))
+          .orderBy(desc(schema.phoneCalls.startedAt))
+      ).map(toCall),
+
     /** The latest calls; who may see which is decided by the caller. */
     recentCalls: async (limit: number): Promise<PhoneCall[]> =>
       (

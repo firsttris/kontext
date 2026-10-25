@@ -729,6 +729,9 @@ flowchart LR
   Nummern in jeder Form, in der die Fritzbox sie liefern kann (national, `+49`, `0049`, `49`,
   `numberForms`), und auf Wunsch unterdrückte. Sie meldet „blocked“ und weist ab (Ursache 21);
   Kontext legt den Anruf als „Gesperrt“ in die Liste, ohne Klingeln.
+- **Auswertung:** `GET /api/phone/stats` rechnet aus den Anrufen, die man sehen darf
+  (`server/phone/stats.ts`): Anrufe, angenommen und wie schnell, verpasst (nach Wochentag und
+  Stunde in Europe/Berlin), außerhalb der Zeiten, Nachrichten, wer angenommen hat.
 - **Präsenz:** Wer in einem Telefon-Raum ist oder am Tischtelefon spricht, „telefoniert“ – das
   geht als `phone-people` an alle (der Chat zeigt es an der Person). Bitte nicht stören und
   Abwesend (bis zu einer Zeit) liegen in `phone_status`; wer nicht erreichbar ist, fällt aus dem

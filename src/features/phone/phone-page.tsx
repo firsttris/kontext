@@ -17,6 +17,7 @@ import { listDate } from "@/lib/format";
 import { outcomeText, type PhoneCall, readableNumber } from "@/lib/phone";
 import { m } from "@/paraglide/messages";
 import { soundLength } from "../../../server/phone/sounds";
+import { PhoneStats } from "./phone-stats";
 import { PhoneStatus } from "./phone-status";
 import { usePhoneStore } from "./phone-store";
 import { blockNumber, dialPhone, savePhoneNote, usePhone } from "./queries";
@@ -191,8 +192,8 @@ export const PhonePage = () => {
   const { enabled, allowed, online, calls } = usePhone();
   const { dial, busy } = useDial();
   const [number, setNumber] = useState("");
-  const [onlyMissed, setOnlyMissed] = useState(false);
-  const shown = onlyMissed ? calls.filter((call) => call.outcome === "missed") : calls;
+  const [view, setView] = useState<"all" | "missed" | "stats">("all");
+  const shown = view === "missed" ? calls.filter((call) => call.outcome === "missed") : calls;
   const canDial = allowed && online && !busy;
   const submit = (event: FormEvent) => {
     event.preventDefault();
@@ -230,25 +231,30 @@ export const PhonePage = () => {
                 </Button>
               </form>
               <div className="flex items-center gap-2">
-                <h2 className="m-0 flex-1 text-[15px] font-semibold">{m.phone_recent()}</h2>
-                <Button
-                  size="sm"
-                  variant={onlyMissed ? "subtle" : "ghost"}
-                  aria-pressed={!onlyMissed}
-                  onClick={() => setOnlyMissed(false)}
-                >
-                  {m.phone_all()}
-                </Button>
-                <Button
-                  size="sm"
-                  variant={onlyMissed ? "subtle" : "ghost"}
-                  aria-pressed={onlyMissed}
-                  onClick={() => setOnlyMissed(true)}
-                >
-                  {m.phone_missed_filter()}
-                </Button>
+                <h2 className="m-0 flex-1 text-[15px] font-semibold">
+                  {view === "stats" ? m.phone_stats() : m.phone_recent()}
+                </h2>
+                {(
+                  [
+                    ["all", m.phone_all()],
+                    ["missed", m.phone_missed_filter()],
+                    ["stats", m.phone_stats()],
+                  ] as const
+                ).map(([id, label]) => (
+                  <Button
+                    key={id}
+                    size="sm"
+                    variant={view === id ? "subtle" : "ghost"}
+                    aria-pressed={view === id}
+                    onClick={() => setView(id)}
+                  >
+                    {label}
+                  </Button>
+                ))}
               </div>
-              {shown.length ? (
+              {view === "stats" ? (
+                <PhoneStats />
+              ) : shown.length ? (
                 <ul aria-label={m.phone_recent()} className="m-0 list-none p-0">
                   {shown.map((call) => (
                     <Row key={call.id} call={call} onDial={(n) => void dial(n)} canDial={canDial} />

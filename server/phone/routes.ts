@@ -24,6 +24,7 @@ import {
 } from "./phone";
 import { fromBoxSchema, parseMessage } from "./protocol";
 import { type PhoneService, type Problem, ringPlanOf } from "./service";
+import { callStats } from "./stats";
 import type { PhoneStore } from "./store";
 
 export type PhoneRouteDeps = {
@@ -159,6 +160,16 @@ export const createPhoneRoutes = (deps: PhoneRouteDeps) => {
     const bytes = await deps.files.readVoicemail(call.id);
     if (!bytes) return c.json({ error: "Nicht gefunden" }, 404);
     return wavResponse(bytes, { "cache-control": "private, max-age=86400" });
+  });
+
+  app.get("/stats", async (c) => {
+    const me = c.get("viewer").me;
+    const days = Math.min(365, Math.max(1, Number(c.req.query("days") ?? 30) || 30));
+    const now = new Date();
+    const calls = (await store.callsSince(new Date(now.getTime() - days * 86_400_000))).filter(
+      (call) => canSeeCall(call, me),
+    );
+    return c.json(callStats(calls, now, days));
   });
 
   app.post("/block", async (c) => {
