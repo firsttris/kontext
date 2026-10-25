@@ -75,3 +75,12 @@ export const ringingPhoneCall = (
       call.members.includes(me) &&
       !dismissed.includes(call.id),
   ) ?? null;
+
+const STAGE: Record<PhoneCall["state"], number> = { ringing: 0, talking: 1, ended: 2 };
+
+/**
+ * Which of two copies of a call to keep: the live update and the answer to a request can arrive
+ * in either order, and an older stage must not undo a newer one.
+ */
+export const laterCall = (current: PhoneCall | undefined, next: PhoneCall): PhoneCall =>
+  current && STAGE[current.state] > STAGE[next.state] ? current : next;

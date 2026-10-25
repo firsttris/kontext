@@ -123,6 +123,20 @@ describe("an incoming call", () => {
     expect(notices).toHaveLength(1);
   });
 
+  it("keeps the box's answer when it comes back before the request is done", async () => {
+    const { service, box, toBox, phoneEvents } = setup();
+    await box.receive(event(1, "ringing"));
+    // A box that answers at once, as the fake box and a quick Asterisk do.
+    const replies: Promise<void>[] = [];
+    const quick = service.connect("box-1", (message) => {
+      toBox.push(message);
+      if (message.type === "answer") replies.push(quick.receive(event(2, "answered")));
+    });
+    await service.answer("id-1", "anna");
+    await Promise.all(replies);
+    expect(phoneEvents().at(-1)!.event.call).toMatchObject({ state: "talking", member: "anna" });
+  });
+
   it("tells the line's people of a missed call, and nothing twice for a repeat", async () => {
     const { box, notices, phoneEvents } = setup();
     await box.receive(event(1, "ringing"));

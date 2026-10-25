@@ -146,9 +146,11 @@ export const createPhoneService = (deps: PhoneDeps) => {
       if (!call || !canSeeCall(call, me)) return "not-found";
       const taken = takeCall(call, me, newId());
       if (!taken) return "busy";
-      if (!send(taken, { type: "answer", call: taken.boxCallId, room: taken.room! }))
-        return "offline";
+      if (!connected.has(taken.boxId)) return "offline";
+      // Saved before the box hears of it: its "answered" may come back at once and must apply
+      // to the taken call, not be overwritten by it.
       await save(taken);
+      send(taken, { type: "answer", call: taken.boxCallId, room: taken.room! });
       return taken;
     },
 

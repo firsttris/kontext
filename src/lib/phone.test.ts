@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   contactOfNumber,
+  laterCall,
   outcomeText,
   type PhoneCall,
   readableNumber,
@@ -79,5 +80,17 @@ describe("ringingPhoneCall", () => {
     expect(ringingPhoneCall([call({ member: "anna" })], "jonas", [])).toBeNull();
     expect(ringingPhoneCall([call()], "jonas", ["c1"])).toBeNull();
     expect(ringingPhoneCall([call({ state: "ended" })], "jonas", [])).toBeNull();
+  });
+});
+
+describe("laterCall", () => {
+  it("keeps the newer stage when an older copy arrives last", () => {
+    const talking = call({ state: "talking", member: "anna" });
+    const ringing = call({ member: "anna" });
+    expect(laterCall(talking, ringing)).toBe(talking);
+    expect(laterCall(ringing, talking)).toBe(talking);
+    expect(laterCall(undefined, ringing)).toBe(ringing);
+    const noted = call({ state: "ended", note: "zurückrufen" });
+    expect(laterCall(call({ state: "ended" }), noted)).toBe(noted);
   });
 });

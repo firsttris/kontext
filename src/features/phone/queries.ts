@@ -3,7 +3,7 @@
  * dialling, hanging up and notes. The live connection keeps the list current (features/live).
  */
 import { type QueryClient, useQuery } from "@tanstack/react-query";
-import type { PhoneCall } from "@/lib/phone";
+import { laterCall, type PhoneCall } from "@/lib/phone";
 import { enterPhone } from "./phone-store";
 
 export const PHONE_KEY = ["phone"];
@@ -44,9 +44,13 @@ export const setPhoneCall = (queryClient: QueryClient, call: PhoneCall) => {
     data
       ? {
           ...data,
-          calls: [call, ...data.calls.filter((other) => other.id !== call.id)].sort((a, b) =>
-            b.startedAt.localeCompare(a.startedAt),
-          ),
+          calls: [
+            laterCall(
+              data.calls.find((other) => other.id === call.id),
+              call,
+            ),
+            ...data.calls.filter((other) => other.id !== call.id),
+          ].sort((a, b) => b.startedAt.localeCompare(a.startedAt)),
         }
       : data,
   );
