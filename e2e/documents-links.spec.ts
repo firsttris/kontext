@@ -58,9 +58,11 @@ test.describe("Dokumente in Chat, Aufgaben, Terminen und Kontakten", () => {
     await page.getByRole("textbox", { name: "Nachricht" }).fill("Das Aufmaß fürs Bad");
     await page.keyboard.press("Enter");
 
+    // The message shown at once and the server's answer may stand side by side for a moment.
     const card = page
       .getByRole("list", { name: "Nachrichten" })
-      .getByRole("link", { name: /Dokument/ });
+      .getByRole("link", { name: /Dokument/ })
+      .last();
     await expect(card).toContainText(name);
     await expect.poll(() => sharesOf(page, id)).toEqual({ [address("max")]: "view" });
     await card.click();
