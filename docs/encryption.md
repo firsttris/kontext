@@ -117,7 +117,8 @@ Ein Schalter für Mails nach außen; Kontext nimmt je Empfänger den besten Weg:
      des Absenders), oder man übernimmt sie aus einer Datei (.cer, .pem). Abgelaufene zählen nicht.
    - Eingehende S/MIME-Mails werden im Browser entschlüsselt; Unterschriften (getrennt oder
      eingepackt) werden geprüft, und die Mail sagt, wer bürgt: die ausstellende Stelle, oder
-     „selbst ausgestellt“.
+     „selbst ausgestellt“. Ob erst unterschrieben und dann verschlüsselt wurde oder umgekehrt,
+     ist gleich (RFC 8551 §3.7).
    - **Vertrauen:** Der Server prüft die Kette des Zertifikats (mit den Zwischenzertifikaten aus
      der Unterschrift) bis zu einer anerkannten Stelle – denen, die Bun mitbringt (Mozillas
      Liste), und eigenen aus `SMIME_ROOTS` (eine PEM-Datei, z. B. die Wurzel der
@@ -235,6 +236,9 @@ Was Kontext bewusst nicht schützt, oder (noch) nicht kann:
     Firmenverwaltung.
   - Sperrlisten (CRL) fragt Kontext nicht ab; bei Stellen ohne OCSP bleibt der Sperrstatus offen.
   - Verzeichnisse einzelner Stellen (LDAP) durchsucht Kontext nicht, nur SMIMEA im DNS.
+  - Mit AuthEnvelopedData (RFC 5083, `smime-type=authEnveloped-data`) verschlüsselte Mails
+    öffnet Kontext nicht (node-forge kann es nicht); die Mail sagt dann, dass sie sich nicht
+    entschlüsseln lässt.
   - Unterschriften prüft der Browser nur mit RSA-Zertifikaten (node-forge liest keine EC-Schlüssel);
     eine Unterschrift mit einem EC-Schlüssel zeigt die Mail als „nicht prüfbar“ an, nicht als
     gefälscht.

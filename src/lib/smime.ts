@@ -31,15 +31,38 @@ export type CertInfo = {
 
 export type SmimeKind = "encrypted" | "signed" | null;
 
-/** S/MIME by its Content-Type: enveloped data, or a signature (detached or wrapped). */
+/**
+ * S/MIME by its Content-Type: enveloped data, or a signature (detached or wrapped). RFC 8551 §3.2.2
+ * also names authEnveloped-data (RFC 5083): encrypted too, though node-forge cannot open it, so
+ * the mail says it cannot be decrypted rather than showing the cipher text as a file.
+ */
 export const smimeKind = (contentType: string | null | undefined): SmimeKind => {
   const type = (contentType ?? "").toLowerCase();
   const pkcs7 = /application\/(x-)?pkcs7-mime/.test(type);
-  if (pkcs7 && /smime-type\s*=\s*"?enveloped-data/.test(type)) return "encrypted";
+  if (pkcs7 && /smime-type\s*=\s*"?(auth)?enveloped-data/.test(type)) return "encrypted";
   if (pkcs7 && /smime-type\s*=\s*"?signed-data/.test(type)) return "signed";
   if (pkcs7 && !/smime-type/.test(type)) return "encrypted";
   if (type.includes("multipart/signed") && /pkcs7-signature/.test(type)) return "signed";
   return null;
+};
+
+/**
+ * Signed over an encrypted entity (encrypted, then signed; RFC 8551 §3.7), read as an encrypted
+ * mail: the signed content, the first part of the multipart/signed (RFC 1847 §2.1), is itself the
+ * smime.p7m. A .p7m file somewhere inside a signed mail (a CAdES-signed invoice) is not.
+ */
+export const signedOverEncrypted = (email: {
+  contentType: string | null;
+  bodyStructure: { subParts?: { type: string; name: string | null }[] | null } | null;
+}) => {
+  const signed = email.bodyStructure?.subParts?.[0];
+  return (
+    smimeKind(email.contentType) === "signed" &&
+    /multipart\/signed/i.test(email.contentType ?? "") &&
+    Boolean(signed) &&
+    smimeKind(signed!.type) === "encrypted" &&
+    (signed!.name ?? "smime.p7m").toLowerCase() === "smime.p7m"
+  );
 };
 
 const bytesToBinary = (bytes: Uint8Array) => {
@@ -411,6 +434,24 @@ const parsed = async (
 };
 
 /**
+ * The content under a signature. Encrypted, then signed (RFC 8551 §3.7 allows either order), it
+ * is decrypted with one's certificate and keeps the outer signature; without the certificate it
+ * stays as it is, the encrypted part a file, so the signature still shows.
+ */
+const readSigned = async (
+  entity: string,
+  signature: SmimeSignature,
+  own: OwnSmime | null,
+  depth: number,
+): Promise<SmimeRead> => {
+  if (depth < 2 && own && smimeKind(headerOf(entity, "Content-Type")) === "encrypted") {
+    const read = await readSmime(entity, own, depth + 1);
+    return read.signature.state === "none" ? { ...read, signature } : read;
+  }
+  return parsed(entity, signature, false);
+};
+
+/**
  * Reads an S/MIME mail (its whole raw text): decrypted with one's certificate where it is
  * encrypted, the signature checked where it is signed, either order.
  */
@@ -437,13 +478,13 @@ export const readSmime = async (
     const der = await pkcs7Part(raw, "signature");
     if (!signed || !der) return parsed(raw, { state: "invalid" }, false);
     const { signature } = await checkSignedData(der, new TextEncoder().encode(signed));
-    return parsed(signed, signature, false);
+    return readSigned(signed, signature, own, depth);
   }
   if (kind === "signed") {
     const der = await pkcs7Part(raw, "mime");
     const result = der ? await checkSignedData(der, null) : null;
     if (!result?.content) return parsed(raw, { state: "invalid" }, false);
-    return parsed(decoder.decode(result.content), result.signature, false);
+    return readSigned(decoder.decode(result.content), result.signature, own, depth);
   }
   return parsed(raw, { state: "none" }, false);
 };

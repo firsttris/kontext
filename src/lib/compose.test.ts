@@ -36,6 +36,7 @@ const original: EmailDetail = {
       disposition: "attachment",
     },
   ],
+  bodyStructure: null,
   bodyValues: {},
   authenticationResults: null,
   spamScore: null,

@@ -1544,6 +1544,7 @@
   "smime_no_cert": "Diese Mail ist mit S/MIME verschlüsselt. Öffnen lässt sie sich mit deinem Zertifikat – importiere es unter Einstellungen → Verschlüsselung.",
   "smime_unlock_hint": "Diese Mail ist mit S/MIME verschlüsselt. Gib das Passwort deines Zertifikats ein – es bleibt geöffnet, bis du Kontext neu lädst.",
   "smime_cannot_decrypt": "Diese Mail lässt sich mit deinem Zertifikat nicht öffnen – sie wurde an ein anderes verschlüsselt.",
+  "smime_auth_enveloped": "Diese Mail ist mit einem Verfahren verschlüsselt (AuthEnvelopedData), das Kontext noch nicht öffnen kann.",
   "smime_send_on": "Verschlüsselt und unterschrieben (S/MIME), auch der Betreff.",
   "smime_unlock_send_hint": "Zum Unterschreiben braucht Kontext dein Zertifikat. Es bleibt geöffnet, bis du Kontext neu lädst.",
   "secure_note_parts": "Vertraulich: {parts}.",

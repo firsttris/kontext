@@ -2,11 +2,15 @@
 import { readFileSync } from "node:fs";
 import forge from "node-forge";
 import { beforeAll, describe, expect, it } from "vitest";
+import { contentPart, withHeaders } from "./mime";
 import {
+  envelopeEntity,
   type OwnSmime,
   openP12,
   readCertificate,
   readSmime,
+  signEntity,
+  signedOverEncrypted,
   smimeKind,
   smimeMail,
   smimeSignedMail,
@@ -44,6 +48,31 @@ const envelope = {
   messageId: "antrag@weber.test",
 };
 
+/** An entity signed with its content inside the signature (smime-type=signed-data). */
+const opaqueSigned = (entity: string, own: OwnSmime) => {
+  const p7 = forge.pkcs7.createSignedData();
+  p7.content = forge.util.createBuffer(entity);
+  p7.addCertificate(own.cert);
+  p7.addSigner({
+    key: own.key,
+    certificate: own.cert,
+    digestAlgorithm: forge.pki.oids.sha256!,
+    authenticatedAttributes: [
+      { type: forge.pki.oids.contentType!, value: forge.pki.oids.data },
+      { type: forge.pki.oids.messageDigest! },
+    ],
+  });
+  p7.sign();
+  const der = forge.asn1.toDer(p7.toAsn1()).getBytes();
+  return [
+    'Content-Type: application/pkcs7-mime; smime-type=signed-data; name="smime.p7m"',
+    "Content-Transfer-Encoding: base64",
+    "",
+    btoa(der).replace(/.{76}/g, "$&\r\n"),
+    "",
+  ].join("\r\n");
+};
+
 let jonas: OwnSmime;
 let amt: OwnSmime;
 let amtPem: string;
@@ -61,6 +90,10 @@ describe("S/MIME", () => {
       "encrypted",
     );
     expect(smimeKind("application/x-pkcs7-mime; name=smime.p7m")).toBe("encrypted");
+    // RFC 8551 §3.2.2, RFC 5083: encrypted, though not to be opened here.
+    expect(
+      smimeKind('application/pkcs7-mime; smime-type=authEnveloped-data; name="smime.p7m"'),
+    ).toBe("encrypted");
     expect(smimeKind("application/pkcs7-mime; smime-type=signed-data")).toBe("signed");
     expect(
       smimeKind('multipart/signed; protocol="application/pkcs7-signature"; boundary="b"'),
@@ -181,5 +214,103 @@ describe("S/MIME", () => {
     const read = await readSmime(raw, null);
     expect(read.text.trim()).toBe("EC-Unterschrift");
     expect(read.signature.state).toBe("unsupported");
+  });
+
+  it("reads a mail encrypted, then signed (RFC 8551 §3.7: either order)", async () => {
+    const entity = contentPart(
+      { text: "Hallo Amt", html: "<p>Hallo Amt</p>", attachments: [] },
+      "x1",
+    );
+    const encrypted = await envelopeEntity(entity, [amtPem]);
+    const raw = withHeaders(envelope, await signEntity(encrypted, jonas, "x1"));
+    const read = await readSmime(raw, amt);
+    expect(read.signature).toMatchObject({ state: "valid", email: "jonas@weber.test" });
+    expect(read.encrypted).toBe(true);
+    expect(read.text).toContain("Hallo Amt");
+    // Without one's certificate the signature still shows, the content stays a file.
+    const closed = await readSmime(raw, null);
+    expect(closed.signature.state).toBe("valid");
+    expect(closed.encrypted).toBe(false);
+    // As JMAP shows it: the signed content, the first part, is the smime.p7m.
+    const contentType = raw.match(/^Content-Type: (.*)$/m)![1]!;
+    const tree = (first: { type: string; name: string | null }) => ({
+      contentType,
+      bodyStructure: {
+        subParts: [first, { type: "application/pkcs7-signature", name: "smime.p7s" }],
+      },
+    });
+    expect(signedOverEncrypted(tree({ type: "application/pkcs7-mime", name: "smime.p7m" }))).toBe(
+      true,
+    );
+    expect(signedOverEncrypted(tree({ type: "application/pdf", name: "a.pdf" }))).toBe(false);
+  });
+
+  it("reads a mail encrypted, then signed with the content inside the signature", async () => {
+    const entity = contentPart(
+      { text: "Hallo Amt", html: "<p>Hallo Amt</p>", attachments: [] },
+      "x2",
+    );
+    const raw = withHeaders(envelope, opaqueSigned(await envelopeEntity(entity, [amtPem]), jonas));
+    const read = await readSmime(raw, amt);
+    expect(read.signature).toMatchObject({ state: "valid", email: "jonas@weber.test" });
+    expect(read.encrypted).toBe(true);
+    expect(read.text).toContain("Hallo Amt");
+  });
+
+  it("cannot open AuthEnvelopedData (RFC 5083): says so instead of showing a file", async () => {
+    const { asn1 } = forge;
+    const info = asn1.create(asn1.Class.UNIVERSAL, asn1.Type.SEQUENCE, true, [
+      asn1.create(
+        asn1.Class.UNIVERSAL,
+        asn1.Type.OID,
+        false,
+        asn1.oidToDer("1.2.840.113549.1.9.16.1.23").getBytes(),
+      ),
+      asn1.create(asn1.Class.CONTEXT_SPECIFIC, 0, true, [
+        asn1.create(asn1.Class.UNIVERSAL, asn1.Type.SEQUENCE, true, []),
+      ]),
+    ]);
+    const raw = withHeaders(
+      envelope,
+      [
+        'Content-Type: application/pkcs7-mime; smime-type=authEnveloped-data; name="smime.p7m"',
+        "Content-Transfer-Encoding: base64",
+        "",
+        btoa(asn1.toDer(info).getBytes()),
+        "",
+      ].join("\r\n"),
+    );
+    await expect(readSmime(raw, amt)).rejects.toThrow();
+  });
+
+  it("does not take a signed mail with a .p7m file for an encrypted one", async () => {
+    // A CAdES-signed invoice, or an encrypted file forwarded without a note, under a signature.
+    const entity = [
+      'Content-Type: multipart/mixed; boundary="mix"',
+      "",
+      "--mix",
+      'Content-Type: application/pkcs7-mime; name="rechnung.xml.p7m"',
+      "Content-Transfer-Encoding: base64",
+      'Content-Disposition: attachment; filename="rechnung.xml.p7m"',
+      "",
+      btoa("not really cms"),
+      "--mix--",
+      "",
+    ].join("\r\n");
+    const raw = withHeaders(envelope, await signEntity(entity, jonas, "r1"));
+    const read = await readSmime(raw, amt);
+    expect(read.signature.state).toBe("valid");
+    expect(read.encrypted).toBe(false);
+    expect(read.attachments.map((file) => file.name)).toEqual(["rechnung.xml.p7m"]);
+    const contentType = raw.match(/^Content-Type: (.*)$/m)![1]!;
+    const p7m = { type: "application/pkcs7-mime", name: "rechnung.xml.p7m" };
+    const p7s = { type: "application/pkcs7-signature", name: "smime.p7s" };
+    const mixed = { type: "multipart/mixed", name: null, subParts: [p7m] };
+    expect(signedOverEncrypted({ contentType, bodyStructure: { subParts: [mixed, p7s] } })).toBe(
+      false,
+    );
+    expect(signedOverEncrypted({ contentType, bodyStructure: { subParts: [p7m, p7s] } })).toBe(
+      false,
+    );
   });
 });

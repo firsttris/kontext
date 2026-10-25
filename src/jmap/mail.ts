@@ -31,10 +31,21 @@ const DETAIL_PROPERTIES = [
   "htmlBody",
   "textBody",
   "attachments",
+  "bodyStructure",
   "bodyValues",
 ];
 
-const BODY_PROPERTIES = ["partId", "blobId", "type", "name", "size", "cid", "disposition"];
+const BODY_PROPERTIES = [
+  "partId",
+  "blobId",
+  "type",
+  "name",
+  "size",
+  "cid",
+  "disposition",
+  // bodyStructure's tree (signedOverEncrypted in src/lib/smime.ts); leaves have none.
+  "subParts",
+];
 
 /**
  * Headers for the sender check, every instance (`:all`, topmost first, RFC 8621 §4.1.3): without
