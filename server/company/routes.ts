@@ -10,6 +10,7 @@ import { syncRoutes } from "../migration/sync-routes";
 import { bad, bodyOf, type CompanyDeps, createLoader, type Env } from "./context";
 import { employeeRoutes } from "./employees";
 import { mailboxRoutes } from "./mailboxes";
+import { checkDomain, httpsCheck } from "./security";
 import { signatureRoutes } from "./signature-routes";
 
 export type { CompanyDeps };
@@ -45,6 +46,24 @@ export const createCompanyRoutes = (deps: CompanyDeps) => {
     if (!body || !deps.chatRetention) return bad("Angaben unvollständig.");
     await deps.chatRetention.setDays(body.days);
     return c.json({ days: body.days, removed: (await deps.pruneChat?.()) ?? 0 });
+  });
+  /** How safe the company's mail travels: DNS of every domain, and https for Kontext. */
+  app.get("/security", async (c) => {
+    const security = deps.security;
+    if (!security) return c.json({ https: null, domains: [] });
+    const fetchPolicy =
+      security.fetchPolicy ??
+      (async (url: string) => {
+        const response = await fetch(url, { signal: AbortSignal.timeout(8000) });
+        return response.ok ? response.text() : null;
+      });
+    const domains = c.get("loaded").company.domains.map((domain) => domain.name);
+    return c.json({
+      https: httpsCheck(security.publicUrl),
+      domains: await Promise.all(
+        domains.map((domain) => checkDomain(domain, security.resolve, fetchPolicy)),
+      ),
+    });
   });
   app.route("/migrations", migrationRoutes(deps.migrations));
   app.route("/syncs", syncRoutes(deps.syncs));

@@ -27,6 +27,7 @@ import {
   createUpload,
 } from "./company/management";
 import { createCompanyRoutes } from "./company/routes";
+import { dohResolver } from "./company/security";
 import { createCompanySettings } from "./company/settings";
 import { createSealer } from "./crypto";
 import { createDavAuth } from "./dav/auth";
@@ -199,6 +200,7 @@ export const createApp = async (env: Env) => {
       endSessions: endSessionsOf(db),
       chatRetention,
       pruneChat: chatPruner.tick,
+      security: { publicUrl: env.BETTER_AUTH_URL, resolve: dohResolver(env.DOH_URL) },
     });
     app.route("/api/company", company);
   }

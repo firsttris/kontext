@@ -8,7 +8,7 @@ ein Plan, kein Versprechen; Wünsche und Hinweise gern als
 
 | Funktion | Worum es geht |
 | --- | --- |
-| **Verschlüsselung** | Das [Konzept](docs/encryption.md) in fünf Bausteinen: Grundschutz (Schloss an Mails, Prüfung von MTA-STS und DANE in der Firmenverwaltung), persönlicher Schlüssel und PGP in Mails, „Vertraulich senden“ mit Link für Empfänger ohne Schlüssel, S/MIME für Behörden und Kanzleien, vertrauliche Unterhaltungen im Chat. |
+| **Verschlüsselung** | Das [Konzept](docs/encryption.md) in fünf Bausteinen; der Grundschutz ist fertig, als Nächstes persönlicher Schlüssel und PGP in Mails, „Vertraulich senden“ mit Link für Empfänger ohne Schlüssel, S/MIME für Behörden und Kanzleien, vertrauliche Unterhaltungen im Chat. |
 
 ## Danach
 
@@ -55,6 +55,8 @@ Kleinere Dinge, die beim Bauen aufgefallen sind und noch erledigt werden.
 
 ## Zuletzt fertig geworden
 
+Verschlüsselung, Baustein 1: Schloss an Mails (verschlüsselt angekommen?), Prüfung von SPF,
+DMARC, MTA-STS, TLS-RPT, DANE und HTTPS in der Firmenverwaltung, Anleitung für Platte und Backups.
 Lesebestätigung anfordern, beantworten und sehen.
 Newsletter abbestellen mit einem Klick, per Mail oder auf der Webseite des Absenders. Bilder je
 Absender, Domain oder für alle Kontakte erlauben.

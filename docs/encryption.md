@@ -6,7 +6,7 @@ Funktionen (Suche, Regeln, Benachrichtigungen mit Text, Aufgaben aus Mails) brau
 Server, der die Inhalte lesen kann. Ende-zu-Ende gibt es dort, wo es zählt: nach außen und für
 ausgewählte vertrauliche Unterhaltungen.
 
-Stand: Baustein 1 und 2 sind in Arbeit, 3 bis 5 geplant ([Roadmap](https://github.com/firsttris/kontext/blob/main/ROADMAP.md)).
+Stand: Baustein 1 ist umgesetzt, 2 in Arbeit, 3 bis 5 geplant ([Roadmap](https://github.com/firsttris/kontext/blob/main/ROADMAP.md)).
 
 ## Wovor geschützt wird
 
@@ -29,10 +29,15 @@ wer auf dem Server Administrator ist, kann alles außer Ende-zu-Ende-Verschlüss
   verschlüsselt abgelegt (z. B. restic). Das betrifft alles auf einmal: Stalwarts Postfächer,
   Kontexts Datenbank (Chat, Aufgaben) und die Dateien des Chats. Die
   [Installation](installation.md) beschreibt es.
-- **Sichtbar:** Eine Mail zeigt, ob sie verschlüsselt übertragen wurde (aus ihren
-  `Received`-Zeilen: `ESMTPS`/TLS bis zum eigenen Server), mit einem kleinen Schloss.
-- **Geprüft:** Die Firmenverwaltung zeigt, ob der Server so eingerichtet ist: HTTPS, Zertifikat,
-  MTA-STS und DANE der eigenen Domain.
+- **Sichtbar:** Eine Mail zeigt neben „Details anzeigen“, ob sie verschlüsselt beim eigenen
+  Server ankam – aus der obersten `Received`-Zeile, dem Protokoll nach `with` (RFC 3848: `ESMTPS`,
+  `ESMTPSA`; `src/lib/transport.ts`). Unverschlüsselt Angekommenes ist gelb markiert; was auf dem
+  Server selbst entstand (Einladungen, Mails unter Kolleginnen), zeigt nichts.
+- **Geprüft:** Die Firmenverwaltung („Sicherheit der Mails“) zeigt je Domain MX, SPF, DMARC,
+  MTA-STS samt Modus der Richtlinie, TLS-RPT und DANE (TLSA mit DNSSEC) und ob Kontext über HTTPS
+  läuft – jeweils mit dem, was zu tun ist. Abgefragt über DNS-over-HTTPS (`DOH_URL`, sonst
+  Cloudflare), das auch sagt, ob eine Antwort signiert ist (`server/company/security.ts`). Die
+  verschlüsselte Platte lässt sich von dort nicht sehen; die Seite verweist auf die Anleitung.
 
 ## Baustein 2: ein Schlüssel pro Person
 

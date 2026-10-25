@@ -10,6 +10,7 @@ import type {
   SharedMailbox,
 } from "../../../server/company/accounts";
 import type { FolderName } from "../../../server/company/mailstore";
+import type { Check } from "../../../server/company/security";
 import type { Job } from "../../../server/migration/jobs";
 import type { ProviderId } from "../../../server/migration/providers";
 import type { Sync } from "../../../server/migration/syncs";
@@ -105,6 +106,14 @@ export const offboard = (id: string, offboarding: Offboarding) =>
 export type SignatureTemplate = { html: string; text: string };
 
 export const getSignature = () => send<SignatureTemplate>("GET", "/signature");
+
+export type SecurityReport = {
+  https: Check | null;
+  domains: { domain: string; checks: Check[] }[];
+};
+
+/** How safe the company's mail travels (server/company/security.ts). */
+export const getSecurity = () => send<SecurityReport>("GET", "/security");
 
 /** How long the team chat keeps messages, in days; 0: for ever. */
 export const getChatRetention = () => send<{ days: number }>("GET", "/chat-retention");

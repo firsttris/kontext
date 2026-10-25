@@ -36,6 +36,12 @@ export type CompanyDeps = {
   /** How long the team chat keeps messages; changing it takes out what is older at once. */
   chatRetention?: { days: () => Promise<number>; setDays: (days: number) => Promise<void> };
   pruneChat?: () => Promise<number>;
+  /** For the check of the domains' mail security (security.ts). */
+  security?: {
+    publicUrl: string;
+    resolve: import("./security").Resolve;
+    fetchPolicy?: (url: string) => Promise<string | null>;
+  };
 };
 
 export type Loaded = {

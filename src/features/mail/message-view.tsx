@@ -29,6 +29,7 @@ import { useEmail, useMailAccounts } from "./queries";
 import { ReceiptRequest, ReceiptsReceived } from "./receipts";
 import { ScheduledNotice } from "./scheduled-notice";
 import { SenderPanel } from "./sender-panel";
+import { TransportNote } from "./transport-note";
 import { UnsubscribeButton } from "./unsubscribe";
 
 type Props = { accountId: string; mailbox: Mailbox; emailId: string | undefined };
@@ -140,6 +141,7 @@ export const MessageView = ({ accountId, mailbox, emailId }: Props) => {
                       />
                       {showDetails ? m.mail_details_hide() : m.mail_details_show()}
                     </button>
+                    <TransportNote received={email.received} />
                     <UnsubscribeButton accountId={accountId} mailboxId={mailbox.id} email={email} />
                   </div>
                 </div>

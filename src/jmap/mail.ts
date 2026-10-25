@@ -39,6 +39,8 @@ const BODY_PROPERTIES = ["partId", "blobId", "type", "name", "size", "cid", "dis
 const CHECK_HEADERS = {
   authenticationResults: "header:Authentication-Results:asText:all",
   spamScore: "header:X-Spam-Score:asText:all",
+  /** How it came to the own server, topmost first (src/lib/transport.ts). */
+  received: "header:Received:asText:all",
   /** Who asks for a read receipt (RFC 8098). */
   receiptTo: "header:Disposition-Notification-To:asAddresses",
   /** How to unsubscribe from a newsletter (RFC 2369, RFC 8058). */

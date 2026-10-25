@@ -63,6 +63,8 @@ export type EmailDetail = EmailSummary & {
   /** Headers the mail server adds on arrival, topmost first (src/lib/sender-check.ts). */
   authenticationResults: string[] | null;
   spamScore: string[] | null;
+  /** The Received lines, topmost first: whether it came encrypted. */
+  received: string[] | null;
   /** Who asks for a read receipt (Disposition-Notification-To), if anyone. */
   receiptTo: EmailAddress[] | null;
   /** The newsletter's ways to unsubscribe (List-Unsubscribe), and whether one click does it. */

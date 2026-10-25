@@ -15,6 +15,7 @@ import {
   Palmtree,
   PenLine,
   RefreshCw,
+  ShieldCheck,
   Signature,
   TextQuote,
   Truck,
@@ -28,6 +29,7 @@ import { EmployeesSection } from "@/features/company/employees-section";
 import { MailboxesSection } from "@/features/company/mailboxes-section";
 import { MigrationSection } from "@/features/company/migration-section";
 import { useIsCompanyAdmin } from "@/features/company/queries";
+import { SecuritySection as CompanySecuritySection } from "@/features/company/security-section";
 import { RulesSection } from "@/features/rules/rules-section";
 import { SnippetsSection } from "@/features/snippets/snippets-section";
 import { cn } from "@/lib/cn";
@@ -70,6 +72,7 @@ const COMPANY: Entry[] = [
   { id: "mailboxes", label: m.company_mailboxes, icon: Inbox },
   { id: "company-signature", label: m.company_signature, icon: Signature },
   { id: "company-chat", label: m.company_chat, icon: MessagesSquare },
+  { id: "company-security", label: m.company_security, icon: ShieldCheck },
   { id: "migration", label: m.company_migration, icon: Truck },
 ];
 
@@ -86,6 +89,7 @@ const CONTENT: Record<Section, () => ReactNode> = {
   mailboxes: () => <MailboxesSection />,
   "company-signature": () => <CompanySignatureSection />,
   "company-chat": () => <ChatSection />,
+  "company-security": () => <CompanySecuritySection />,
   migration: () => <MigrationSection />,
 };
 

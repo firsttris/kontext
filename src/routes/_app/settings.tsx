@@ -15,6 +15,7 @@ export const settingsSections = [
   "mailboxes",
   "company-signature",
   "company-chat",
+  "company-security",
   "migration",
 ] as const;
 
