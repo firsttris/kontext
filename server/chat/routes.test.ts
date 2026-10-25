@@ -217,7 +217,10 @@ const setup = () => {
       bodies.push(notice.body);
     },
     nameOf: async () => "Jonas Weber",
-    publicKeyOf: async (id) => (["jonas", "anna"].includes(id) ? `KEY-${id}` : null),
+    publicKeyOf: async (id) =>
+      ["jonas", "anna"].includes(id)
+        ? { publicKey: `KEY-${id}`, email: `${id}@weber.test`, fingerprint: `FP-${id}` }
+        : null,
   });
   const as = (accounts: SessionAccount[] | null) => {
     signedIn = accounts;
@@ -480,6 +483,11 @@ describe("/api/chat", () => {
     expect(
       (keys.body as unknown as { keys: { memberId: string }[] }).keys.map((k) => k.memberId),
     ).toEqual(["jonas", "anna"]);
+    expect((keys.body as unknown as { keys: object[] }).keys[1]).toMatchObject({
+      memberId: "anna",
+      email: "anna@weber.test",
+      fingerprint: "FP-anna",
+    });
     const path = `/channels/${sealed.id}/messages`;
     expect((await send("POST", path, { text: "Gehalt: 4.200 Euro" })).status).toBe(400);
     const armored = "-----BEGIN PGP MESSAGE-----\n\nwcBMA…\n-----END PGP MESSAGE-----";

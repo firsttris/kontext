@@ -13,7 +13,8 @@ import { isPrivateAddress } from "../unsubscribe/private-address";
 import { lockedPrivateKey, publicKeyInfo, wkdHash } from "./keys";
 import type { PgpStore } from "./store";
 
-const SOURCES = ["autocrypt", "attachment", "import", "keyserver", "wkd"] as const;
+/** colleague: a member's own key, seen in a confidential chat (docs/encryption.md, building block 5). */
+const SOURCES = ["autocrypt", "attachment", "import", "keyserver", "wkd", "colleague"] as const;
 const armored = z.string().min(50).max(200_000);
 const email = z.string().trim().toLowerCase().email().max(254);
 

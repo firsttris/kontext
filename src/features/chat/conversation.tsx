@@ -18,7 +18,7 @@ import { cn } from "@/lib/cn";
 import { m } from "@/paraglide/messages";
 import { useUnlockedKey } from "../pgp/queries";
 import { ChannelMenu } from "./channel-menu";
-import { ConfidentialUnlock, useSeal } from "./confidential";
+import { ChangedKeys, ConfidentialUnlock, useSeal } from "./confidential";
 import { MessageInput } from "./message-input";
 import { isPending, Run } from "./message-run";
 import { useChannels, useChatActions, useMessages } from "./queries";
@@ -252,6 +252,7 @@ export const Conversation = ({
           ) : null}
           <ChannelMenu channel={channel} me={me} title={`${prefix}${title}`} />
         </header>
+        {channel.confidential ? <ChangedKeys channel={channel} nameOf={nameOf} /> : null}
         <div
           ref={scroller}
           onScroll={(event) => {

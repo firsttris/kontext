@@ -312,7 +312,12 @@ export const createApp = async (env: Env) => {
       notify: pusher.notify,
       nameOf: async (request) => (await infoOf(request))?.name ?? "",
       retentionDays: chatRetention.days,
-      publicKeyOf: async (memberId) => (await createPgpStore(db).own(memberId))?.publicKey ?? null,
+      publicKeyOf: async (memberId) => {
+        const own = await createPgpStore(db).own(memberId);
+        return own
+          ? { publicKey: own.publicKey, email: own.email, fingerprint: own.fingerprint }
+          : null;
+      },
     }),
   );
   // Task reminders go out every minute, also with nobody signed in.

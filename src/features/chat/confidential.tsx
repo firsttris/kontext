@@ -5,18 +5,26 @@
  * the author's key.
  */
 import { type QueryClient, useQuery, useQueryClient } from "@tanstack/react-query";
-import { LockKeyhole, ShieldAlert } from "lucide-react";
-import { useMemo } from "react";
+import { KeyRound, LockKeyhole, ShieldAlert } from "lucide-react";
+import { useEffect, useMemo } from "react";
+import { Button } from "@/components/ui/button";
 import { type Channel, isSealed, type Message } from "@/lib/chat";
 import type { ChatFile } from "@/lib/chat-cards";
+import { groupFingerprint } from "@/lib/pgp";
 import { decodePayload, encodePayload, sealedFiles } from "@/lib/sealed-chat";
 import { m } from "@/paraglide/messages";
 import { Unlock } from "../pgp/pgp-mail";
-import { currentUnlocked, useUnlockedKey } from "../pgp/queries";
+import {
+  currentUnlocked,
+  useKnownKeysQuery,
+  useOwnKey,
+  usePgpActions,
+  useUnlockedKey,
+} from "../pgp/queries";
 import { send } from "./queries";
 import { fileUrl } from "./upload";
 
-type MemberKey = { memberId: string; publicKey: string };
+type MemberKey = { memberId: string; publicKey: string; email: string; fingerprint: string };
 type Opened = { text: string; signature: "valid" | "invalid" };
 
 /** What a message holds, as this person may see it. */
@@ -29,12 +37,14 @@ const opened = new Map<string, Opened>();
 
 const keysKey = (channelId: string) => ["chat", "keys", channelId];
 
+const fetchKeys = async (channelId: string) =>
+  (await send<{ keys: MemberKey[] }>("GET", `/channels/${encodeURIComponent(channelId)}/keys`))
+    .keys;
+
 const channelKeys = (queryClient: QueryClient, channelId: string) =>
   queryClient.fetchQuery({
     queryKey: keysKey(channelId),
-    queryFn: async () =>
-      (await send<{ keys: MemberKey[] }>("GET", `/channels/${encodeURIComponent(channelId)}/keys`))
-        .keys,
+    queryFn: () => fetchKeys(channelId),
     staleTime: 60_000,
   });
 
@@ -207,3 +217,72 @@ export const ConfidentialUnlock = () => (
     <Unlock hint={m.chat_confidential_unlock_hint()} />
   </div>
 );
+
+/**
+ * The members whose key is another than the one first seen (trust on first use): kept in one's
+ * keys of others (Settings → Verschlüsselung), so it holds on every device. A key seen for the
+ * first time is kept without asking; a changed one only once one confirms it.
+ */
+export const useChangedKeys = (channel: Pick<Channel, "id" | "confidential">) => {
+  const known = useKnownKeysQuery();
+  const { data: own } = useOwnKey();
+  const { remember } = usePgpActions();
+  const { data: keys = [] } = useQuery({
+    queryKey: keysKey(channel.id),
+    queryFn: () => fetchKeys(channel.id),
+    enabled: channel.confidential,
+  });
+  const others = keys.filter((key) => key.email !== own?.email);
+  const keep = (key: MemberKey) =>
+    remember({ publicKey: key.publicKey, source: "colleague", email: key.email });
+  const fresh = known.isSuccess
+    ? others.filter((key) => !known.data.some((entry) => entry.email === key.email))
+    : [];
+  const changed = known.isSuccess
+    ? others.filter((key) =>
+        known.data.some(
+          (entry) => entry.email === key.email && entry.fingerprint !== key.fingerprint,
+        ),
+      )
+    : [];
+  const freshIds = fresh.map((key) => key.fingerprint).join(",");
+  // biome-ignore lint/correctness/useExhaustiveDependencies: once per set of new keys
+  useEffect(() => {
+    for (const key of fresh) void keep(key).catch(() => undefined);
+  }, [freshIds]);
+  return { changed, confirm: keep };
+};
+
+/** Above a confidential conversation: whose key changed, to compare before writing. */
+export const ChangedKeys = ({
+  channel,
+  nameOf,
+}: {
+  channel: Pick<Channel, "id" | "confidential">;
+  nameOf: (id: string) => string;
+}) => {
+  const { changed, confirm } = useChangedKeys(channel);
+  if (!changed.length) return null;
+  return (
+    <div className="flex flex-col gap-2 px-4 pt-3 md:px-6">
+      {changed.map((key) => (
+        <div
+          key={key.memberId}
+          role="alert"
+          className="flex flex-wrap items-center gap-x-3 gap-y-1.5 rounded-xl border border-warn/40 bg-warn/5 px-3 py-2 text-[13px]"
+        >
+          <KeyRound size={15} className="shrink-0 text-warn" aria-hidden="true" />
+          <span className="min-w-0 flex-1">
+            {m.chat_key_changed({ name: nameOf(key.memberId) })}{" "}
+            <span className="font-mono text-[12px] break-all text-muted">
+              {groupFingerprint(key.fingerprint)}
+            </span>
+          </span>
+          <Button variant="outline" size="sm" onClick={() => void confirm(key)}>
+            {m.chat_key_confirm()}
+          </Button>
+        </div>
+      ))}
+    </div>
+  );
+};

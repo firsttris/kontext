@@ -28,13 +28,11 @@ test.describe("Verschlüsselung: PGP in Mails", () => {
     await page
       .getByRole("textbox", { name: "Ihre Nachricht …" })
       .fill("Messwerte: 42 Grad, alles vertraulich.");
-    await page
-      .locator('form input[type="file"][multiple]')
-      .setInputFiles({
-        name: "messung.csv",
-        mimeType: "text/csv",
-        buffer: Buffer.from("Grad;42\n"),
-      });
+    await page.locator('form input[type="file"][multiple]').setInputFiles({
+      name: "messung.csv",
+      mimeType: "text/csv",
+      buffer: Buffer.from("Grad;42\n"),
+    });
     await expect(page.getByText("messung.csv")).toBeVisible();
     await page.getByRole("button", { name: "Vertraulich senden" }).click();
     await expect(

@@ -163,6 +163,11 @@ markieren („Neue Nachricht“ → „Vertraulich – Ende-zu-Ende verschlüsse
   „Ende-zu-Ende verschlüsselt“, sobald LiveKit es für die eigene Seite meldet. Anrufen und
   Annehmen geht dort erst mit entsperrtem Schlüssel; Besprechungen über einen Link bleiben wie
   bisher.
+- **Neuer Schlüssel eines Mitglieds:** Kontext merkt sich den Schlüssel jedes Mitglieds beim ersten
+  Mal in den „Schlüsseln von anderen“ (Quelle „vertraulicher Chat“, gilt so auf jedem Gerät).
+  Ist es später ein anderer, steht über der Unterhaltung, wessen Schlüssel neu ist, mit
+  Fingerabdruck zum Vergleichen; erst „Neuen Schlüssel bestätigen“ nimmt ihn an. So fällt auf,
+  wenn jemand einen Schlüssel unterschiebt.
 - Gelesen wird nach dem Entsperren des eigenen Schlüssels; passt die Unterschrift nicht zum
   Absender, steht das unter der Nachricht.
 - Dafür: keine Suche, kein Text in Benachrichtigungen und in der Kanalliste (nur „Vertrauliche

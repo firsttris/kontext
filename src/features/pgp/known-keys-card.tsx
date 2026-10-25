@@ -18,6 +18,7 @@ const SOURCE_LABELS: Record<string, () => string> = {
   import: m.pgp_source_import,
   keyserver: m.pgp_source_keyserver,
   wkd: m.pgp_source_wkd,
+  colleague: m.pgp_source_colleague,
 };
 
 export const KnownKeysCard = () => {

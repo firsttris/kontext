@@ -30,11 +30,14 @@ export const useOwnKey = () =>
     queryFn: async () => (await send<{ key: OwnKey | null }>("GET", "/me")).key,
   });
 
-export const useKnownKeys = () =>
+/** The keys of others one knows; with whether they have come yet (`useKnownKeys` is empty then). */
+export const useKnownKeysQuery = () =>
   useQuery({
     queryKey: KNOWN,
     queryFn: async () => (await send<{ keys: KnownKey[] }>("GET", "/keys")).keys,
-  }).data ?? [];
+  });
+
+export const useKnownKeys = () => useKnownKeysQuery().data ?? [];
 
 export const usePgpActions = () => {
   const queryClient = useQueryClient();

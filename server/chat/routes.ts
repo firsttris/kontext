@@ -46,8 +46,8 @@ export type ChatDeps = {
   nameOf?: (request: Request) => Promise<string>;
   /** How many days the company keeps messages (0: for ever), to say so in the chat. */
   retentionDays?: () => Promise<number>;
-  /** A person's own OpenPGP public key (server/pgp/), for confidential channels. */
-  publicKeyOf?: (memberId: string) => Promise<string | null>;
+  /** A person's own OpenPGP key (server/pgp/): public part, address, fingerprint. */
+  publicKeyOf?: (memberId: string) => Promise<MemberKey | null>;
 };
 
 const NOT_SEALED =
@@ -56,6 +56,8 @@ const NOT_SEALED =
 const PAGE = 50;
 
 /** The person behind the session: their own account, and every account they can open. */
+export type MemberKey = { publicKey: string; email: string; fingerprint: string };
+
 export const viewerOf = (accounts: SessionAccount[]): Viewer | null => {
   const me = accounts.find((account) => account.isPersonal)?.id;
   return me ? { me, accountIds: accounts.map((account) => account.id) } : null;
@@ -170,10 +172,11 @@ export const createChatRoutes = ({
   app.get("/channels/:id/keys", async (c) => {
     const channel = await visible(c.req.param("id"), c.get("viewer"));
     if (!channel) return c.json({ error: "Unbekannter Kanal" }, 404);
-    const keys: { memberId: string; publicKey: string }[] = [];
+    // With address and fingerprint, so the app notices when someone's key changed.
+    const keys: (MemberKey & { memberId: string })[] = [];
     for (const memberId of channel.members) {
-      const publicKey = await publicKeyOf(memberId);
-      if (publicKey) keys.push({ memberId, publicKey });
+      const key = await publicKeyOf(memberId);
+      if (key) keys.push({ memberId, ...key });
     }
     return c.json({ keys });
   });

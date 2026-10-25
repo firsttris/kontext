@@ -47,8 +47,9 @@ test.describe("Chat: vertrauliche Unterhaltung", () => {
       .poll(async () => {
         const stored = (await (
           await page.request.get(`/api/chat/channels/${channel.id}/messages`)
-        ).json()) as { messages: { text: string }[] };
-        return stored.messages[0]?.text ?? "";
+        ).json()) as { messages: { text: string; call: unknown }[] };
+        // The newest written message (a call line from another test has no text).
+        return stored.messages.find((message) => !message.call)?.text ?? "";
       })
       .toMatch(/^-----BEGIN PGP MESSAGE-----/);
     const search = await page.request.get(`/api/chat/search?q=${encodeURIComponent("Gehalt")}`);
@@ -97,5 +98,46 @@ test.describe("Chat: vertrauliche Unterhaltung", () => {
     await max.keyboard.press("Enter");
     await expect(list).toContainText(answer);
     await max.context().close();
+  });
+
+  test("ein neuer Schlüssel eines Mitglieds fällt auf und wird erst nach Bestätigung angenommen", async ({
+    page,
+    browser,
+  }) => {
+    test.setTimeout(90_000);
+    await login(page, "anna");
+    await giveKey(page, "anna");
+    const context = await browser.newContext();
+    const max = await context.newPage();
+    await login(max, "max");
+    await giveKey(max, "max");
+
+    await page.getByRole("link", { name: /^Chat/ }).first().click();
+    await page.getByRole("button", { name: "Neue Nachricht" }).click();
+    const dialog = page.getByRole("dialog", { name: "Neue Nachricht" });
+    await dialog.getByText("Max Becker").click();
+    await dialog.getByLabel(/Vertraulich – Ende-zu-Ende verschlüsselt/).check();
+    await dialog.getByRole("button", { name: "Chat beginnen" }).click();
+    await expect(page.getByRole("heading", { name: "Max Becker" })).toBeVisible();
+    const changed = page.getByRole("alert").filter({ hasText: "hat einen neuen Schlüssel" });
+    // Known from before (another test gave Max a key): confirm that one first.
+    if (await changed.isVisible().catch(() => false)) {
+      await changed.getByRole("button", { name: "Neuen Schlüssel bestätigen" }).click();
+    }
+    await expect(changed).toHaveCount(0);
+    const url = page.url();
+
+    // Max makes a new key: Anna sees it the next time she opens the conversation.
+    await giveKey(max, "max");
+    await page.goto(url);
+    await expect(changed).toContainText("Max Becker hat einen neuen Schlüssel");
+    await expect(changed).toContainText(/([0-9A-F]{4} ){9}[0-9A-F]{4}/);
+    await changed.getByRole("button", { name: "Neuen Schlüssel bestätigen" }).click();
+    await expect(changed).toHaveCount(0);
+    await page.goto("/settings?section=encryption");
+    await expect(page.getByRole("region", { name: "Schlüssel von anderen" })).toContainText(
+      "Ein anderer Schlüssel als vorher",
+    );
+    await context.close();
   });
 });
