@@ -493,6 +493,8 @@ export const Composer = ({ accountId, mode, sourceEmailId, prefill }: Props) => 
         onEncrypt={setEncrypt}
         encryptBlocked={pgp.reason}
         encryptNote={pgp.note}
+        linkDays={pgp.viaLink.length ? pgp.linkDays : null}
+        onLinkDays={pgp.setLinkDays}
         onDiscard={() => void discard()}
       />
       {pgp.dialog}

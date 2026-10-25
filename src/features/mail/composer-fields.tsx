@@ -7,6 +7,7 @@ import type { EmailAddress, Identity } from "@/jmap/types";
 import { formatSize } from "@/lib/format";
 import type { Suggestion } from "@/lib/groups";
 import { m } from "@/paraglide/messages";
+import { LINK_DAY_CHOICES } from "../pgp/use-encrypted-send";
 import { RecipientField } from "./recipient-field";
 import { SendLater } from "./send-later";
 
@@ -157,6 +158,8 @@ export const ComposerActions = ({
   onEncrypt,
   encryptBlocked,
   encryptNote,
+  linkDays,
+  onLinkDays,
 }: {
   receipt: boolean;
   onReceipt: (on: boolean) => void;
@@ -166,6 +169,9 @@ export const ComposerActions = ({
   encryptBlocked: string | null;
   /** What happens to whom when sent confidentially. */
   encryptNote: string;
+  /** How long the links of "Vertraulich senden" stay; null when no one gets a link. */
+  linkDays: number | null;
+  onLinkDays: (days: number) => void;
   sending: boolean;
   canSend: boolean;
   onSendLater: (at: Date) => void;
@@ -243,6 +249,21 @@ export const ComposerActions = ({
         >
           {encryptBlocked ?? encryptNote}
         </span>
+      ) : null}
+      {encrypt && !encryptBlocked && linkDays !== null ? (
+        <select
+          aria-label={m.secure_link_days()}
+          title={m.secure_link_days()}
+          value={linkDays}
+          onChange={(event) => onLinkDays(Number(event.target.value))}
+          className="h-8 rounded-lg border border-border bg-bg px-2 text-[12px] text-fg"
+        >
+          {LINK_DAY_CHOICES.map((days) => (
+            <option key={days} value={days}>
+              {m.secure_link_days_option({ days })}
+            </option>
+          ))}
+        </select>
       ) : null}
       <div className="flex-1" />
       {savedAt ? (

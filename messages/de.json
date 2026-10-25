@@ -1228,6 +1228,8 @@
   "pgp_unlock_send_hint": "Zum Unterschreiben braucht Kontext deinen Schlüssel. Er bleibt entsperrt, bis du Kontext neu lädst.",
   "pgp_send_draft_hint": "Solange verschlüsselt wird, speichert Kontext keinen Entwurf auf dem Server.",
   "secure_note_link": "Vertraulich: per Link mit Code – keine Rückgängig-Frist.",
+  "secure_link_days": "Wie lange der Link gilt",
+  "secure_link_days_option": "Link {days} Tage gültig",
   "smime_own_title": "Mein S/MIME-Zertifikat",
   "smime_own_hint": "Manche Behörden, Kanzleien und Konzerne verschlüsseln mit S/MIME statt PGP. Dafür brauchst du ein Zertifikat einer Zertifizierungsstelle, als .p12-Datei mit Passwort. Kontext speichert die Datei so, wie sie ist – öffnen lässt sie sich nur mit dem Passwort.",
   "smime_import": "Zertifikat importieren",

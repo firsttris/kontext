@@ -79,6 +79,10 @@ test.describe("Vertraulich senden", () => {
       .fill("Ihre Abrechnung: 2.340 € netto.");
     await page.getByRole("button", { name: "Vertraulich senden" }).click();
     await expect(page.getByRole("status").filter({ hasText: "per Link mit Code" })).toBeVisible();
+    // A week is enough here (30 days are the usual).
+    const days = page.getByRole("combobox", { name: "Wie lange der Link gilt" });
+    await expect(days).toHaveValue("30");
+    await days.selectOption({ label: "Link 7 Tage gültig" });
     await page.getByRole("button", { name: "Senden", exact: true }).click();
 
     const codes = page.getByRole("dialog", { name: "Zugangscodes" });
@@ -90,6 +94,12 @@ test.describe("Vertraulich senden", () => {
     await expect.poll(async () => (link = await sentLink("jonas", customer))).toBeTruthy();
     // Only encrypted on the server: the amount is in no mail.
     expect(link).not.toContain("2.340");
+    const listed = (await (await page.request.get("/api/secure")).json()) as {
+      messages: { to: string; createdAt: string; expiresAt: string }[];
+    };
+    const sent = listed.messages.find((message) => message.to === customer)!;
+    const lifetime = Date.parse(sent.expiresAt) - Date.parse(sent.createdAt);
+    expect(Math.round(lifetime / 86_400_000)).toBe(7);
 
     const outside = await (await browser.newContext()).newPage();
     await outside.goto(link!);

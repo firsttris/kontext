@@ -27,7 +27,6 @@ Kleinere Dinge, die beim Bauen aufgefallen sind und noch erledigt werden.
 - [ ] Chat: Reaktionen mit beliebigen Emojis (heute die sieben Schnellwahlen), und im Thread „auch im Kanal zeigen“.
 - [ ] Aufgaben am Kontakt finden Mails nur über die letzten fünf Mails mit der Person im eigenen Postfach; ältere oder solche in info@ zählen nur, wenn die Aufgabe mit der Karte verknüpft ist (geschieht beim Anlegen aus der Mail). Die Verknüpfung „Termin“ wird noch nirgends angelegt.
 - [ ] Erinnerung an Aufgaben auch direkt im Dialog „Neue Aufgabe“ (heute in der geöffneten Aufgabe).
-- [ ] „Vertraulich senden“: Laufzeit des Links wählbar (heute 30 Tage).
 - [ ] PGP: nur unterschreiben (ohne Verschlüsseln) beim Senden; verschlüsselte Mails in der Unterhaltungsansicht und beim Weiterleiten mit Inhalt.
 - [ ] Vertraulicher Chat: ein bestehender Kanal nachträglich vertraulich, Schlüsselwechsel eines Mitglieds anzeigen.
 - [ ] S/MIME: Zertifikatsketten gegen eine Liste anerkannter Stellen prüfen und Sperrlisten (OCSP) abfragen (heute zeigt Kontext die ausstellende Stelle); Zertifikate anderer im Verzeichnis der Stelle suchen; nur unterschreiben beim Senden.
@@ -59,6 +58,7 @@ Kleinere Dinge, die beim Bauen aufgefallen sind und noch erledigt werden.
 
 ## Zuletzt fertig geworden
 
+„Vertraulich senden“: Laufzeit des Links beim Senden wählbar (7, 30 oder 90 Tage).
 Anrufe und Videocalls in vertraulichen Unterhaltungen gehen Ende-zu-Ende verschlüsselt (LiveKit E2EE, Schlüssel je Anruf an die Mitglieder verschlüsselt).
 Verschlüsselte Mails (PGP und S/MIME) verschlüsseln auch den Betreff; außen steht „Vertrauliche Nachricht“, nach dem Öffnen der echte.
 Vertraulicher Chat: Fotos und Dateien gehen Ende-zu-Ende verschlüsselt, ohne lesbaren Namen auf dem Server.

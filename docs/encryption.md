@@ -127,7 +127,8 @@ Ein Schalter für Mails nach außen; Kontext nimmt je Empfänger den besten Weg:
      bewahrt der Server mit dem persönlichen OpenPGP-Schlüssel des Absenders verschlüsselt auf
      (Baustein 2) – lesbar nur nach dem Entsperren. Beim ersten Öffnen und bei jeder Antwort kommt
      eine Benachrichtigung.
-   - Links gelten 30 Tage, dann löscht der Server die Nachricht; zurückziehen geht jederzeit.
+   - Links gelten 30 Tage, oder wie beim Senden gewählt 7 oder 90; dann löscht der Server die
+     Nachricht. Zurückziehen geht jederzeit.
    - Seite und Mail an Empfänger von außen sprechen mit „Sie“ an.
 
 Im Fenster „Neue Mail“ heißt das Schloss „Vertraulich senden“; der Hinweis daneben sagt, wie viele

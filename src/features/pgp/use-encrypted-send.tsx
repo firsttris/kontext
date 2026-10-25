@@ -37,7 +37,8 @@ import { keepUnlocked, useKnownKeys, useOwnKey, useUnlockedKey } from "./queries
 const foldHeader = (name: string, value: string) =>
   `${name}: ${value.replace(/(.{76})(?=.)/g, "$1\r\n ")}`;
 
-/** How long a link can be opened. */
+/** How long a link can be opened: the choices (as the server takes them), and the usual one. */
+export const LINK_DAY_CHOICES = [7, 30, 90] as const;
 const LINK_DAYS = 30;
 
 const untilLabel = (date: Date) =>
@@ -52,6 +53,7 @@ export const useEncryptedSend = (from: string | undefined, recipients: string[])
   const certs = useKnownCerts();
   const openCert = useOpenSmime();
   const [asking, setAsking] = useState<Asking | null>(null);
+  const [linkDays, setLinkDays] = useState<number>(LINK_DAYS);
 
   const lower = recipients.map((address) => address.toLowerCase());
   const ownAddress = own?.email;
@@ -124,11 +126,11 @@ export const useEncryptedSend = (from: string | undefined, recipients: string[])
       ciphertext: await seal(key, content),
       senderKey: await wrapForSender(key, own!.publicKey),
       code,
-      expiresDays: LINK_DAYS,
+      expiresDays: linkDays,
     });
     const link = `${window.location.origin}/s/${id}#${keyToFragment(key)}`;
     const name = mail.identity.name || mail.identity.email;
-    const until = untilLabel(new Date(Date.now() + LINK_DAYS * 86_400_000));
+    const until = untilLabel(new Date(Date.now() + linkDays * 86_400_000));
     const text = m.secure_mail_text({ name, link, until });
     await sendEmail(
       client,
@@ -278,7 +280,18 @@ export const useEncryptedSend = (from: string | undefined, recipients: string[])
     />
   ) : null;
 
-  return { available: !reason, reason, note, send, dialog, viaPgp, viaSmime, viaLink };
+  return {
+    available: !reason,
+    reason,
+    note,
+    send,
+    dialog,
+    viaPgp,
+    viaSmime,
+    viaLink,
+    linkDays,
+    setLinkDays,
+  };
 };
 
 type Asking = {
