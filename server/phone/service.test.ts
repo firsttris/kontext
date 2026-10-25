@@ -678,6 +678,25 @@ describe("found in review", () => {
     expect(toBox.filter((message) => message.type === "answer")).toHaveLength(1);
   });
 
+  it("keeps a call ended that the caller hangs up while it is being answered", async () => {
+    const { service, box } = setup();
+    await box.receive(event(1, "ringing"));
+    await Promise.all([
+      service.answer("id-1", "anna"),
+      box.receive(event(2, "ended", { cause: 16 })),
+    ]);
+    const [call] = await service.callsOf("anna");
+    expect(call?.state).toBe("ended");
+  });
+
+  it("does not answer a call that has already ended", async () => {
+    const { service, box, toBox } = setup();
+    await box.receive(event(1, "ringing"));
+    await box.receive(event(2, "ended", { cause: 16 }));
+    expect(await service.answer("id-1", "anna")).toBe("not-found");
+    expect(toBox.some((message) => message.type === "answer")).toBe(false);
+  });
+
   it("does not hand on a call answered at a desk phone (it has no room)", async () => {
     const { service, box, toBox } = setup({ deskPhones: [annasDesk] });
     await box.receive(event(1, "ringing"));
