@@ -28,6 +28,31 @@ describe("applyLiveEvent", () => {
     watching();
   });
 
+  it("fetches the calls anew when a change comes while they are fetched again", async () => {
+    const queryClient = new QueryClient();
+    const answers = [
+      { calls: [call("ringing")] },
+      { calls: [call("ringing")] },
+      { calls: [call("talking")] },
+    ];
+    const watching = new QueryObserver(queryClient, {
+      queryKey: PHONE_KEY,
+      queryFn: async () => {
+        const answer = answers.shift();
+        await new Promise((resolve) => setTimeout(resolve, 10));
+        return answer;
+      },
+    }).subscribe(() => undefined);
+    await expect.poll(() => queryClient.getQueryData(PHONE_KEY)).toBeDefined();
+    void queryClient.invalidateQueries({ queryKey: PHONE_KEY });
+    applyLiveEvent(queryClient, "anna", { type: "phone", call: call("talking") });
+    await new Promise((resolve) => setTimeout(resolve, 50));
+    expect(queryClient.getQueryData<{ calls: PhoneCall[] }>(PHONE_KEY)?.calls[0]?.state).toBe(
+      "talking",
+    );
+    watching();
+  });
+
   it("changes loaded calls in place", () => {
     const queryClient = new QueryClient();
     queryClient.setQueryData(PHONE_KEY, { calls: [call("ringing")] });

@@ -13,6 +13,8 @@ const CONTROL = "http://127.0.0.1:28096";
 
 const box = {
   process: null as ChildProcess | null,
+  /** The calls rung in the running test, hung up after it. */
+  rung: [] as string[],
   start: async (code: string) => {
     box.process = spawn(
       "bun",
@@ -25,13 +27,16 @@ const box = {
       })
       .toBe(true);
   },
-  ring: async (from: string, line?: string, choice?: string) =>
-    (await (
+  ring: async (from: string, line?: string, choice?: string) => {
+    const rung = (await (
       await fetch(`${CONTROL}/ring`, {
         method: "POST",
         body: JSON.stringify({ from, line, choice }),
       })
-    ).json()) as { call: string },
+    ).json()) as { call: string };
+    box.rung.push(rung.call);
+    return rung;
+  },
   hangup: (call: string, cause = 16) =>
     fetch(`${CONTROL}/hangup`, { method: "POST", body: JSON.stringify({ call, cause }) }),
   closed: async (from: string) =>
@@ -78,6 +83,11 @@ const panel = (page: Page) => page.getByRole("region", { name: /^Telefonat:/ });
 test.describe("Telefonie über die Telefonbox", () => {
   test.describe.configure({ mode: "serial" });
   test.afterAll(() => box.stop());
+  // A test that failed while it rang leaves no call ringing on the server for the next ones (they
+  // would see its card over everything); ended calls stay as they are (applyCallEvent).
+  test.afterEach(async () => {
+    for (const call of box.rung.splice(0)) await box.hangup(call).catch(() => undefined);
+  });
 
   test("Firmenverwaltung: Fritzbox-Anmeldung, wer klingelt, Box koppeln", async ({ page }) => {
     await login(page);

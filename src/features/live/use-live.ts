@@ -1,7 +1,8 @@
 /**
  * The live connection to Kontext's server (/api/live, Server-Sent Events): chat messages, typing,
  * read marks, presence, changed tasks and calls reach the open views at once. The browser reconnects by
- * itself; after a reconnect everything live is fetched again, in case something was missed.
+ * itself; after a reconnect everything live is fetched again, in case something was missed, and the
+ * calls also after the first connect, as the page may have fetched them before the server listened.
  */
 import { type QueryClient, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useRef } from "react";
@@ -25,15 +26,22 @@ const TASKS_KEY = ["tasks"];
 const RETRY_MS = 10_000;
 
 /**
- * A change for a list that is still loading: its first fetch may have been answered before the
- * change (a call answered while the page opened), so it is fetched anew instead of dropped. The
- * running fetch is cancelled first: without data, TanStack Query would join it, not start anew.
+ * Fetched anew, from now on. A running fetch is cancelled first: without data yet, TanStack
+ * Query would join it, and its answer may be older than what is known now.
  */
-const changeLoaded = (queryClient: QueryClient, key: readonly unknown[], change: () => void) => {
-  if (queryClient.getQueryData(key) !== undefined) return change();
+const fetchAnew = (queryClient: QueryClient, key: readonly unknown[]) =>
   void queryClient
     .cancelQueries({ queryKey: key })
     .then(() => queryClient.invalidateQueries({ queryKey: key }));
+
+/**
+ * A change for a list that is being fetched: the fetch may have been answered before the change
+ * (a call answered while the page opened) and would overwrite it, so it is fetched anew.
+ */
+const changeLoaded = (queryClient: QueryClient, key: readonly unknown[], change: () => void) => {
+  const loading = queryClient.getQueryData(key) === undefined;
+  if (!loading) change();
+  if (loading || queryClient.isFetching({ queryKey: key }) > 0) fetchAnew(queryClient, key);
 };
 
 export const applyLiveEvent = (queryClient: QueryClient, me: string, event: LiveEvent) => {
@@ -114,12 +122,14 @@ export const useLive = (me: string, onMessage?: (message: Message) => void) => {
     const connect = () => {
       source = new EventSource("/api/live", { withCredentials: true });
       source.onopen = () => {
+        // What rang before the server listened for this page is not in its events: the calls are
+        // fetched once more now that it does.
+        fetchAnew(queryClient, CALLS_KEY);
+        fetchAnew(queryClient, PHONE_KEY);
         if (!lost) return;
         lost = false;
         void queryClient.invalidateQueries({ queryKey: CHAT_KEY });
         void queryClient.invalidateQueries({ queryKey: TASKS_KEY });
-        void queryClient.invalidateQueries({ queryKey: CALLS_KEY });
-        void queryClient.invalidateQueries({ queryKey: PHONE_KEY });
       };
       source.onerror = () => {
         lost = true;
