@@ -1227,6 +1227,7 @@
   "pgp_send_cancelled": "Nicht gesendet: Schlüssel nicht entsperrt.",
   "pgp_unlock_send_hint": "Zum Unterschreiben braucht Kontext deinen Schlüssel. Er bleibt entsperrt, bis du Kontext neu lädst.",
   "pgp_send_draft_hint": "Solange verschlüsselt wird, speichert Kontext keinen Entwurf auf dem Server.",
+  "mail_forward_encrypted_closed": "Diese Mail ist verschlüsselt: Öffne sie zuerst (Schlüssel entsperren), dann geht sie mit Inhalt und Anhängen weiter.",
   "secure_note_link": "Vertraulich: per Link mit Code – keine Rückgängig-Frist.",
   "secure_link_days": "Wie lange der Link gilt",
   "secure_link_days_option": "Link {days} Tage gültig",

@@ -28,6 +28,14 @@ test.describe("Verschlüsselung: PGP in Mails", () => {
     await page
       .getByRole("textbox", { name: "Ihre Nachricht …" })
       .fill("Messwerte: 42 Grad, alles vertraulich.");
+    await page
+      .locator('form input[type="file"][multiple]')
+      .setInputFiles({
+        name: "messung.csv",
+        mimeType: "text/csv",
+        buffer: Buffer.from("Grad;42\n"),
+      });
+    await expect(page.getByText("messung.csv")).toBeVisible();
     await page.getByRole("button", { name: "Vertraulich senden" }).click();
     await expect(
       page.getByRole("status").filter({ hasText: "Verschlüsselt und unterschrieben" }),
@@ -73,15 +81,24 @@ test.describe("Verschlüsselung: PGP in Mails", () => {
     // Opened, the real subject shows in the mail and in the list.
     await expect(max.getByRole("heading", { name: subject })).toBeVisible();
     await expect(list).toContainText(subject);
-    // The answer goes encrypted too, without the cipher text quoted.
+    // The list shows the opened text instead of cipher text.
+    await expect(list).toContainText("Messwerte: 42 Grad");
+    // The answer goes encrypted too, quoting the opened text, never the cipher text.
     await max.getByRole("link", { name: "Antworten" }).first().click();
     await expect(max.getByRole("button", { name: "Vertraulich senden" })).toHaveAttribute(
       "aria-pressed",
       "true",
     );
-    await expect(max.getByRole("textbox", { name: "Ihre Nachricht …" })).not.toContainText(
-      "BEGIN PGP",
-    );
+    const editor = max.getByRole("textbox", { name: "Ihre Nachricht …" });
+    await expect(editor).toContainText("Messwerte: 42 Grad");
+    await expect(editor).not.toContainText("BEGIN PGP");
+    await expect(max.getByRole("textbox", { name: "Betreff" })).toHaveValue(`Re: ${subject}`);
+    await max.getByRole("button", { name: "Verwerfen" }).click();
+    // Forwarding takes the opened content and its file, not the encrypted parts.
+    await max.getByRole("link", { name: "Weiterleiten" }).first().click();
+    await expect(editor).toContainText("Messwerte: 42 Grad");
+    await expect(max.getByText("messung.csv")).toBeVisible();
+    await expect(max.getByText("encrypted.asc")).toHaveCount(0);
     await max.context().close();
   });
 

@@ -28,7 +28,7 @@ import { useEncryptedSend } from "../pgp/use-encrypted-send";
 import { SnippetMenu } from "../snippets/snippet-menu";
 import { AttachmentList, ComposerActions, ComposerFields } from "./composer-fields";
 import { EditorToolbar } from "./editor-toolbar";
-import { shownSubject } from "./protected-subjects";
+import { type OpenedMail, openedMail, shownSubject } from "./opened-mails";
 import { useEmail } from "./queries";
 import { useUndoSeconds } from "./send-settings";
 import { useTakeBack } from "./take-back";
@@ -123,19 +123,33 @@ export const Composer = ({ accountId, mode, sourceEmailId, prefill }: Props) => 
   // Fill the form once the original (for reply/forward) and the identities are loaded.
   // A form hidden by a suspending route gets a new editor when it shows again; the effect still
   // holds the destroyed one then and waits for the render with the new one.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: runs once (initialized); toast and upload are only called
   useEffect(() => {
     if (initialized.current || !editor || editor.isDestroyed || identities.length === 0) return;
     if (sourceEmailId && !source.data) return;
     let originalHtml = "";
+    // An encrypted original, opened here before: its real content (opened-mails.ts).
+    let opened: OpenedMail | undefined;
+    let encryptedOriginal = false;
     if (source.data) {
       const body = displayBody(source.data);
-      // An encrypted original is not quoted (it would be cipher text, or its content in clear);
-      // the answer goes encrypted too.
+      // An encrypted original is quoted (and forwarded with its files) only as it was opened here,
+      // never as cipher text; the answer goes encrypted too.
       if (
         pgpKind(source.data.contentType, body.value) === "encrypted" ||
         smimeKind(source.data.contentType) === "encrypted"
       ) {
         setEncrypt(true);
+        encryptedOriginal = true;
+        opened = openedMail(source.data.id);
+        if (opened) {
+          originalHtml = sanitizeMailHtml(opened.html ?? textToHtml(opened.text), {
+            allowRemote: false,
+            cidUrls: {},
+          }).html;
+        } else if (mode === "forward") {
+          toast.show(m.mail_forward_encrypted_closed());
+        }
       } else {
         originalHtml = sanitizeMailHtml(
           body.kind === "html" ? body.value : textToHtml(body.value),
@@ -169,7 +183,16 @@ export const Composer = ({ accountId, mode, sourceEmailId, prefill }: Props) => 
     setBcc(keep(start.bcc));
     if (start.cc.length || start.bcc.length || prefill?.cc) setShowCopies(true);
     setSubject((current) => current || prefill?.subject || start.subject);
-    setAttachments(start.attachments);
+    // The parts of an encrypted original are cipher text; its real files go along instead.
+    setAttachments(encryptedOriginal ? [] : start.attachments);
+    if (opened && mode === "forward") {
+      void upload(
+        opened.attachments.map(
+          (file) =>
+            new File([file.bytes as Uint8Array<ArrayBuffer>], file.name, { type: file.type }),
+        ),
+      );
+    }
     setThreading({ inReplyTo: start.inReplyTo, references: start.references });
     // A draft already has its signature; a new mail gets the one of the sender.
     const signature =

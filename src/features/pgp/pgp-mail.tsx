@@ -24,7 +24,7 @@ import { mailDocument, sanitizeMailHtml, textToHtml } from "@/lib/html";
 import { unlockKey } from "@/lib/pgp";
 import { checkSigned, type ReadMail, readEncrypted, type Signature } from "@/lib/pgp-mail";
 import { m } from "@/paraglide/messages";
-import { revealSubject } from "../mail/protected-subjects";
+import { rememberOpened } from "../mail/opened-mails";
 import { keepUnlocked, useKnownKeys, useOwnKey, useUnlockedKey } from "./queries";
 
 export const useRaw = (accountId: string, email: EmailDetail, enabled: boolean) => {
@@ -194,7 +194,9 @@ export const EncryptedMail = ({ accountId, email }: { accountId: string; email: 
     staleTime: Number.POSITIVE_INFINITY,
     retry: false,
   });
-  useEffect(() => revealSubject(email.id, read?.subject ?? null), [email.id, read]);
+  useEffect(() => {
+    if (read) rememberOpened(email.id, read);
+  }, [email.id, read]);
   return (
     <div className="flex flex-col gap-3">
       <div className="flex flex-wrap items-center gap-x-4 gap-y-1 rounded-lg border border-border px-3 py-2">

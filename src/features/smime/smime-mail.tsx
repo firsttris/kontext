@@ -13,7 +13,7 @@ import { cn } from "@/lib/cn";
 import { base64ToBytes } from "@/lib/secure";
 import { openP12, readSmime, type SmimeRead, type SmimeSignature } from "@/lib/smime";
 import { m } from "@/paraglide/messages";
-import { revealSubject } from "../mail/protected-subjects";
+import { rememberOpened } from "../mail/opened-mails";
 import { Body, Files, useRaw } from "../pgp/pgp-mail";
 import { keepSmimeOpen, useKnownCerts, useOpenSmime, useOwnCert, useSmimeActions } from "./queries";
 
@@ -158,7 +158,9 @@ export const SmimeMail = ({
     retry: false,
   });
   useCollect(email, read);
-  useEffect(() => revealSubject(email.id, read?.subject ?? null), [email.id, read]);
+  useEffect(() => {
+    if (read) rememberOpened(email.id, read);
+  }, [email.id, read]);
   const sender = email.from?.[0]?.email ?? "";
   return (
     <div className="flex flex-col gap-3">

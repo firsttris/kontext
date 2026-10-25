@@ -30,7 +30,7 @@ import { EarlierMails, LaterMails } from "./conversation";
 import { MailBody } from "./mail-body";
 import { MessageDetails, SenderWarnings } from "./message-details";
 import { Toolbar } from "./message-toolbar";
-import { useShownSubject } from "./protected-subjects";
+import { useShownSubject } from "./opened-mails";
 import { useEmail, useMailAccounts } from "./queries";
 import { ReceiptRequest, ReceiptsReceived } from "./receipts";
 import { ScheduledNotice } from "./scheduled-notice";

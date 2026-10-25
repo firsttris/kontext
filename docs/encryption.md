@@ -83,12 +83,15 @@ unterschreibt und entschlüsselt – und der später auch vertrauliche Chats tr�
   verschlüsselt sie und schickt sie über Stalwart (`Email/import`, `EmailSubmission`,
   `src/jmap/send-raw.ts`) – der Server sieht nur Verschlüsseltes. „Rückgängig“ und „Später
   senden“ gelten auch hier. Entwürfe werden dabei nicht gespeichert.
-- **Antworten:** Auf eine verschlüsselte Mail geht die Antwort ebenfalls verschlüsselt, ohne
-  Zitat.
+- **Antworten und Weiterleiten:** Auf eine verschlüsselte Mail geht die Antwort ebenfalls
+  verschlüsselt. Wurde die Mail hier geöffnet, wird ihr Text zitiert, und beim Weiterleiten gehen
+  Inhalt und Anhänge mit (nie die verschlüsselten Teile); sonst sagt Kontext, dass man sie erst
+  öffnen muss. Geöffnete Mails zeigen in Liste und Unterhaltung den Anfang ihres Textes statt
+  „Verschlüsselt“ (`src/features/mail/opened-mails.ts`, nur im Speicher).
 - **Betreff:** Er wird mitverschlüsselt (Protected Headers, wie Thunderbird es macht): Innen
   steht er im verschlüsselten Teil (`protectHeaders`, `src/lib/mime.ts`), außen nur „Vertrauliche
   Nachricht“. Sobald eine Mail geöffnet wurde, zeigen Liste, Ansicht und Antwort den echten
-  Betreff (`src/features/mail/protected-subjects.ts`, nur im Speicher). Gilt für PGP und S/MIME.
+  Betreff. Gilt für PGP und S/MIME.
 - **Grenzen:** Verschlüsselte Mails findet die Suche nur über Absender und Datum; Regeln sehen
   weder Inhalt noch Betreff. Nur unterschreiben, ohne zu
   verschlüsseln, kann Kontext noch nicht.

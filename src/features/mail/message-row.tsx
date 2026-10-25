@@ -24,7 +24,7 @@ import { useCategoryMap } from "../categories/queries";
 import { useTasks } from "../tasks/queries";
 import type { Row } from "./list-frame";
 import { type DraggedMail, startMailDrag } from "./mail-drag";
-import { useShownSubject } from "./protected-subjects";
+import { useOpenedPreview, useShownSubject } from "./opened-mails";
 import type { Answer, Group } from "./use-thread-info";
 
 export const MessageRow = ({
@@ -60,6 +60,7 @@ export const MessageRow = ({
 }) => {
   const unread = group ? group.unread : isUnread(email);
   const subject = useShownSubject(email);
+  const openedPreview = useOpenedPreview(email.id);
   // Combined lists name each row's account; a folder's list is the route's account.
   const routeAccount = useParams({ strict: false }).accountId;
   const categories = categoriesOn(
@@ -207,9 +208,12 @@ export const MessageRow = ({
             ) : null}
             <CategoryChips categories={categories} max={2} />
             {encryptedPreview(email.preview, email["header:Content-Type"]) ? (
-              <span className="flex shrink-0 items-center gap-1 text-accent">
-                <LockKeyhole size={12} aria-hidden="true" /> {m.pgp_encrypted()}
-              </span>
+              <>
+                <span className="flex shrink-0 items-center gap-1 text-accent">
+                  <LockKeyhole size={12} aria-hidden="true" /> {m.pgp_encrypted()}
+                </span>
+                {openedPreview ? <span className="truncate">{openedPreview}</span> : null}
+              </>
             ) : (
               <>
                 {email.hasAttachment ? (

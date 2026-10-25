@@ -5,7 +5,7 @@
  */
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
-import { ChevronRight, CornerDownRight } from "lucide-react";
+import { ChevronRight, CornerDownRight, LockKeyhole } from "lucide-react";
 import { useState } from "react";
 import { useClient } from "@/auth/auth";
 import { Avatar } from "@/components/ui/avatar";
@@ -15,7 +15,9 @@ import { cn } from "@/lib/cn";
 import { aroundMail, personOf } from "@/lib/conversation";
 import { displayName, listDate } from "@/lib/format";
 import { findRole } from "@/lib/mailboxes";
+import { encryptedPreview } from "@/lib/pgp-mail";
 import { m } from "@/paraglide/messages";
+import { useOpenedPreview } from "./opened-mails";
 import { useMailboxes } from "./queries";
 
 export const useThread = (accountId: string, threadId: string | undefined) => {
@@ -50,6 +52,9 @@ const Line = ({
   // An answer from a shared mailbox names the colleague: "Jonas Weber", not "(Allgemeine Anfragen)".
   const name = personOf(displayName(mail.from?.[0]));
   const ownAnswer = Boolean(sent && mail.mailboxIds[sent]);
+  // An encrypted one: its text where it was opened here, else only that it is encrypted.
+  const encrypted = encryptedPreview(mail.preview, mail["header:Content-Type"]);
+  const opened = useOpenedPreview(mail.id);
   return (
     <Link
       to="."
@@ -67,7 +72,12 @@ const Line = ({
             {m.mail_thread_sent()}
           </span>
         ) : null}
-        <span className="min-w-0 truncate text-muted">{mail.preview}</span>
+        {encrypted ? (
+          <LockKeyhole size={12} className="shrink-0 text-accent" aria-label={m.pgp_encrypted()} />
+        ) : null}
+        <span className="min-w-0 truncate text-muted">
+          {encrypted ? (opened ?? m.pgp_encrypted()) : mail.preview}
+        </span>
       </span>
       <span className="shrink-0 font-mono text-[12px] text-muted">
         {listDate(mail.receivedAt, new Date())}
