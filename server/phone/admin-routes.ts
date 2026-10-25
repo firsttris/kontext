@@ -8,7 +8,7 @@ import type { Env, Loaded } from "../company/context";
 import { toE164 } from "./numbers";
 import { hoursSchema, lineSchema } from "./protocol";
 import type { PhoneService } from "./service";
-import type { PhoneStore } from "./store";
+import { type PhoneStore, randomSecret } from "./store";
 
 const lineInput = lineSchema.extend({
   /** Left empty, the stored password stays. */
@@ -64,6 +64,25 @@ const linesSchema = z.object({
     )
     .max(9),
 });
+const desksSchema = z.object({
+  desks: z
+    .array(
+      z.object({
+        id: z
+          .string()
+          .regex(/^[a-z0-9]{1,12}$/)
+          .optional(),
+        label: z.string().trim().min(1).max(60),
+        mac: z
+          .string()
+          .transform((mac) => mac.toLowerCase().replace(/[^0-9a-f]/g, ""))
+          .pipe(z.string().length(12)),
+        extension: z.string().regex(/^[1-9]\d{1,3}$/),
+        member: z.string().min(1).max(64).nullable(),
+      }),
+    )
+    .max(30),
+});
 const boxSchema = z.object({ name: z.string().trim().min(1).max(60) });
 
 /** Short ids for the box's endpoint names ("fritzbox-<id>"). */
@@ -111,6 +130,7 @@ export const createPhoneAdminRoutes = ({
         : null,
       ring: settings.ring,
       extraLines: settings.extraLines.map(({ password: _, ...line }) => line),
+      deskPhones: settings.deskPhones.map(({ password: _, ...desk }) => desk),
       ringMode: settings.ringMode,
       ringStepSeconds: settings.ringStepSeconds,
       forward: settings.forward,
@@ -191,6 +211,34 @@ export const createPhoneAdminRoutes = ({
       extraLines.push({ ...line, id: before?.id ?? newLineId(), password });
     }
     await store.saveSettings({ ...settings, extraLines });
+    await service.reconfigure();
+    return c.body(null, 204);
+  });
+
+  // Desk phones at the box: each gets a password once; the box hands it to the phone with its
+  // provisioning file.
+  app.put("/desks", async (c) => {
+    const parsed = desksSchema.safeParse(await c.req.json().catch(() => ({})));
+    if (!parsed.success) return c.json({ error: "MAC-Adresse oder Nummer ungültig" }, 400);
+    const { desks } = parsed.data;
+    const known = new Set(c.get("loaded").company.employees.map((employee) => employee.id));
+    if (desks.some((desk) => desk.member && !known.has(desk.member))) {
+      return c.json({ error: "Unbekannte Person" }, 400);
+    }
+    const unique = (values: string[]) => new Set(values).size === values.length;
+    if (!unique(desks.map((desk) => desk.extension)) || !unique(desks.map((desk) => desk.mac))) {
+      return c.json({ error: "Jede Nummer und MAC-Adresse nur einmal" }, 400);
+    }
+    const settings = await store.settings();
+    const deskPhones = desks.map((desk) => {
+      const before = settings.deskPhones.find((other) => other.id === desk.id);
+      return {
+        ...desk,
+        id: before?.id ?? newLineId(),
+        password: before?.password ?? randomSecret(18),
+      };
+    });
+    await store.saveSettings({ ...settings, deskPhones });
     await service.reconfigure();
     return c.body(null, 204);
   });

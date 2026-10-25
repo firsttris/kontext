@@ -54,10 +54,30 @@ export const extraLineSchema = z.object({
   password: z.string().min(1).max(200),
 });
 
+/** A desk phone (Snom) that signs in at the box itself; it rings with Kontext. */
+export const deskPhoneSchema = z.object({
+  id: z.string().regex(/^[a-z0-9]{1,12}$/),
+  label: z.string().max(60),
+  /** For its provisioning file (http://<box>:8089/snom/<mac>.xml). */
+  mac: z.string().regex(/^[0-9a-f]{12}$/),
+  /** Its short number at the box: other desk phones and Kontext reach it by it. */
+  extension: z.string().regex(/^[1-9]\d{1,3}$/),
+  password: z.string().min(8).max(64),
+  /** The lines (the IP phones' user names at the Fritzbox) it rings for. */
+  lines: z.array(z.string().max(100)).max(10),
+  /** The extra line it calls out with (its id); else the first. */
+  outLine: z
+    .string()
+    .regex(/^[a-z0-9]{1,12}$/)
+    .nullable(),
+});
+export type DeskPhone = z.infer<typeof deskPhoneSchema>;
+
 /** Everything the box needs, whole and versioned: it always renders from all of it. */
 export const boxConfigSchema = z.object({
   line: lineSchema.nullable(),
   extraLines: z.array(extraLineSchema).max(9).default([]),
+  deskPhones: z.array(deskPhoneSchema).max(30).default([]),
   trunk: trunkSchema.nullable(),
   /** How long an incoming call may ring in Kontext before the box gives up. */
   ringSeconds: z.number().int().min(10).max(300),
@@ -129,6 +149,8 @@ export const callEventSchema = z.object({
   forwarded: z.boolean().optional(),
   /** Which IP phone of the box was called: its user name at the Fritzbox. */
   line: z.string().max(100).optional(),
+  /** Answered at, or dialled from, this desk phone (its id). */
+  desk: z.string().max(12).optional(),
   at: z.string().datetime(),
 });
 export type CallEvent = z.infer<typeof callEventSchema>;

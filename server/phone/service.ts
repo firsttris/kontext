@@ -6,7 +6,7 @@
  */
 import type { Hub } from "../live/hub";
 import { companyDay, type NewTaskData } from "../tasks/tasks";
-import { everyone, lineOf, outLineOf, ringPlanFor } from "./lines";
+import { deskCall, deskForBox, deskOf, everyone, lineOf, outLineOf, ringPlanFor } from "./lines";
 import { TRUNK_USER } from "./livekit-sip";
 import { toDialable, toE164 } from "./numbers";
 import {
@@ -86,6 +86,7 @@ export const desiredConfig = (
     extraLines: settings.line
       ? settings.extraLines.map(({ id, username, password }) => ({ id, username, password }))
       : [],
+    deskPhones: settings.deskPhones.map((desk) => deskForBox(settings, desk)),
     trunk: {
       host: trunkHost,
       port: trunkPort,
@@ -191,6 +192,11 @@ export const createPhoneService = (deps: PhoneDeps) => {
       });
       return;
     }
+    if (!known && event.state === "ringing" && event.direction === "out" && event.desk) {
+      // Dialled at a desk phone: in the list of its person (or the first line's people).
+      await save(deskCall(await store.settings(), boxId, event, newId(), now()));
+      return;
+    }
     if (!known) {
       // Calls appear when they ring here; dialled ones exist from the dial on.
       if (event.state !== "ringing" || event.direction !== "in") return;
@@ -206,7 +212,13 @@ export const createPhoneService = (deps: PhoneDeps) => {
       return;
     }
     const forwardTo = event.forwarded ? ((await store.settings()).forward?.number ?? null) : null;
-    const next = applyCallEvent(known, event, forwardTo);
+    const applied = applyCallEvent(known, event, forwardTo);
+    // Answered at a desk phone: whose it is, and which.
+    const desk =
+      event.desk && applied !== known ? deskOf(await store.settings(), event.desk) : null;
+    const next = desk
+      ? { ...applied, desk: desk.label, member: desk.member ?? applied.member }
+      : applied;
     if (next === known) return;
     await save(next);
     if (next.outcome === "missed") {

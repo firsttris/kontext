@@ -35,6 +35,8 @@ const box = {
     (await (
       await fetch(`${CONTROL}/closed`, { method: "POST", body: JSON.stringify({ from }) })
     ).json()) as { call: string },
+  event: (event: Record<string, string>) =>
+    fetch(`${CONTROL}/event`, { method: "POST", body: JSON.stringify(event) }),
   mailbox: (call: string, seconds: number) =>
     fetch(`${CONTROL}/mailbox`, { method: "POST", body: JSON.stringify({ call, seconds }) }),
   state: async () =>
@@ -43,6 +45,13 @@ const box = {
       config: {
         line: { username: string } | null;
         extraLines: { username: string; password: string }[];
+        deskPhones: {
+          id: string;
+          label: string;
+          mac: string;
+          extension: string;
+          lines: string[];
+        }[];
         hours: { open: { day: number; from: string; to: string }[] } | null;
       } | null;
       commands: { type: string; number?: string; call?: string }[];
@@ -369,6 +378,38 @@ test.describe("Telefonie über die Telefonbox", () => {
     await expect(page.getByRole("dialog", { name: /^Anruf von/ })).toHaveCount(0);
     await box.hangup(call);
     await anna.close();
+  });
+
+  test("ein Tischtelefon an der Box: richtet sich ein und nimmt Anrufe an", async ({ page }) => {
+    await login(page);
+    await page.goto("/settings?section=phone");
+    const desks = page.getByRole("region", { name: "Tischtelefone" });
+    await desks.getByRole("button", { name: "Tischtelefon hinzufügen" }).click();
+    const desk = desks.getByRole("group", { name: "Neues Tischtelefon" });
+    await desk.getByLabel("MAC-Adresse").fill("00:04:13:A1:B2:C3");
+    await expect(desk.getByLabel("Kurzwahl")).toHaveValue("21");
+    await desk.getByLabel("Name").fill("Empfang");
+    await desks.getByRole("button", { name: "Speichern" }).click();
+    await expect(desks).toContainText("http://<box>:8089/snom/000413a1b2c3.xml");
+    await expect
+      .poll(async () => (await box.state()).config?.deskPhones?.[0])
+      .toMatchObject({
+        label: "Empfang",
+        mac: "000413a1b2c3",
+        extension: "21",
+        lines: ["kontext620"],
+      });
+    const { id } = (await box.state()).config!.deskPhones[0]!;
+
+    const { call } = await box.ring("07223 81234");
+    await expect(page.getByRole("dialog", { name: /^Anruf von/ })).toBeVisible();
+    await box.event({ call, state: "answered", desk: id });
+    await expect(page.getByRole("dialog", { name: /^Anruf von/ })).toHaveCount(0);
+    await box.hangup(call);
+    await page.getByRole("link", { name: "Telefon", exact: true }).click();
+    await expect(
+      page.getByRole("list", { name: "Letzte Anrufe" }).getByRole("listitem").first(),
+    ).toContainText("Am Tischtelefon angenommen (Empfang)");
   });
 
   test("aus dem Kontakt anrufen geht über die Box", async ({ page }) => {

@@ -113,6 +113,11 @@ KONTEXT_URL=https://kontext.firma.de PAIRING_CODE=K7QM-4XPA \
   docker compose -f deploy/box.compose.yaml up -d
 ```
 
+**Tischtelefone (Snom):** in Kontext unter Telefonie → Tischtelefone mit MAC-Adresse anlegen,
+dann im Telefon (Weboberfläche → Erweitert → Update) als Einstellungs-URL
+`http://<box>:8089/snom/{mac}.xml` eintragen und neu starten; es holt sich Konto und Einstellungen
+von der Box. Die Box braucht dafür eine feste Adresse im LAN.
+
 Mit Podman: `deploy/quadlet/kontext-box.container`. Ohne Code beim Start zeigt die Box auf
 `http://<box>:8089` ein Formular für Kontexts Adresse und den Code. Die Box braucht keine offenen
 Ports nach außen; sie läuft im Host-Netz (SIP mit der Fritzbox auf 5070, Sprache auf

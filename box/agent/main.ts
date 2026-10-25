@@ -15,6 +15,7 @@ import { createBoxFiles } from "./files";
 import { type Credentials, pair } from "./link";
 import { createAsterisk } from "./pbx";
 import { type BoxState, runBox } from "./run";
+import { macOfPath, snomSettings } from "./snom";
 import { statusPage } from "./status-page";
 
 const VERSION = process.env.BOX_VERSION ?? "dev";
@@ -28,6 +29,8 @@ const AMI = {
 };
 const PATHS = { sounds: join(DATA_DIR, "sounds"), recordings: join(DATA_DIR, "recordings") };
 const credentialsFile = join(DATA_DIR, "kontext.json");
+/** Where desk phones sign in (asterisk-config.ts). */
+const SIP_PORT = 5070;
 const configFile = join(DATA_DIR, "config.json");
 
 const loadCredentials = async (): Promise<Credentials | null> =>
@@ -42,6 +45,7 @@ const saveCredentials = async (credentials: Credentials) => {
 
 let credentials = await loadCredentials();
 let state: (() => BoxState) | null = null;
+let currentConfig: (() => BoxConfig | null) | null = null;
 let pairingError: string | undefined;
 
 const start = async (paired: Credentials) => {
@@ -62,6 +66,7 @@ const start = async (paired: Credentials) => {
     remember: (config) => writeFile(configFile, JSON.stringify(config), { mode: 0o600 }),
   });
   state = box.state;
+  currentConfig = box.config;
 };
 
 const pairWith = async (url: string, code: string) => {
@@ -82,6 +87,15 @@ Bun.serve({
   port: STATUS_PORT,
   fetch: async (request) => {
     const url = new URL(request.url);
+    // A Snom desk phone fetching its settings (only phones Kontext knows, by MAC).
+    const mac = macOfPath(url.pathname);
+    if (mac) {
+      const desk = currentConfig?.()?.deskPhones.find((phone) => phone.mac === mac);
+      if (!desk) return new Response("unbekannt", { status: 404 });
+      return new Response(snomSettings(desk, url.hostname, SIP_PORT), {
+        headers: { "content-type": "application/xml; charset=utf-8" },
+      });
+    }
     if (request.method === "POST" && url.pathname === "/pair" && !credentials) {
       const form = await request.formData();
       pairingError = undefined;

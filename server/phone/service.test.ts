@@ -41,6 +41,7 @@ const SETTINGS: PhoneSettings = {
   ringStepSeconds: 15,
   forward: null,
   extraLines: [],
+  deskPhones: [],
 };
 
 const setup = (settings: Partial<PhoneSettings> = {}) => {
@@ -243,6 +244,40 @@ describe("an incoming call", () => {
     expect(toBox.at(-1)).toMatchObject({ type: "dial", line: "anna" });
     await service.dial("jonas", "07223 123456");
     expect(toBox.at(-1)).not.toHaveProperty("line");
+  });
+
+  it("files calls answered at, and dialled from, a desk phone", async () => {
+    const empfang = {
+      id: "empfang",
+      label: "Empfang",
+      mac: "000413a1b2c3",
+      extension: "21",
+      password: "p",
+      member: null,
+    };
+    const annas = { ...empfang, id: "anna", label: "Anna", extension: "22", member: "anna" };
+    const { box, phoneEvents } = setup({ deskPhones: [empfang, annas] });
+    await box.receive(event(1, "ringing"));
+    await box.receive(event(2, "answered", { desk: "anna" }));
+    expect(phoneEvents().at(-1)!.event.call).toMatchObject({
+      state: "talking",
+      member: "anna",
+      desk: "Anna",
+    });
+    await box.receive({
+      ...event(3, "ringing"),
+      call: "desk.1",
+      direction: "out",
+      remote: "0171 2345678",
+      desk: "empfang",
+    });
+    expect(phoneEvents().at(-1)!.event.call).toMatchObject({
+      direction: "out",
+      remote: "+491712345678",
+      desk: "Empfang",
+      member: null,
+      members: ["jonas", "anna"],
+    });
   });
 
   it("leaves Zurückrufen on the chosen board, done once someone talked to the number", async () => {

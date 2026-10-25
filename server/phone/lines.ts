@@ -3,7 +3,9 @@
  * ones for direct numbers, each with its own people. Which line a call came in on decides who
  * hears it; who calls out uses their own direct number when they have one. Pure.
  */
-import type { RingPlan } from "./phone";
+import { toE164 } from "./numbers";
+import { outgoingCall, type PhoneCall, type RingPlan } from "./phone";
+import type { CallEvent, DeskPhone } from "./protocol";
 import type { PhoneSettings } from "./store";
 
 export type ExtraLine = PhoneSettings["extraLines"][number];
@@ -26,3 +28,63 @@ export const everyone = (settings: PhoneSettings): string[] => [
 /** The direct line someone calls out with, so the other side sees that number. */
 export const outLineOf = (settings: PhoneSettings, me: string): ExtraLine | null =>
   settings.extraLines.find((line) => line.ring.includes(me)) ?? null;
+
+export type DeskSetting = PhoneSettings["deskPhones"][number];
+
+/**
+ * A desk phone as the box gets it: the lines it rings for – its person's lines, or the first
+ * line's when it belongs to nobody – and the direct line it calls out with.
+ */
+export const deskForBox = (settings: PhoneSettings, desk: DeskSetting): DeskPhone => {
+  const first = settings.line?.username;
+  const member = desk.member;
+  const lines = member
+    ? [
+        ...(settings.ring.includes(member) && first ? [first] : []),
+        ...settings.extraLines
+          .filter((line) => line.ring.includes(member))
+          .map((line) => line.username),
+      ]
+    : first
+      ? [first]
+      : [];
+  return {
+    id: desk.id,
+    label: desk.label,
+    mac: desk.mac,
+    extension: desk.extension,
+    password: desk.password,
+    lines,
+    outLine: member ? (outLineOf(settings, member)?.id ?? null) : null,
+  };
+};
+
+export const deskOf = (settings: PhoneSettings, id: string): DeskSetting | null =>
+  settings.deskPhones.find((desk) => desk.id === id) ?? null;
+
+/** A call dialled at a desk phone: its person's, or the first line's people see it. */
+export const deskCall = (
+  settings: PhoneSettings,
+  boxId: string,
+  event: CallEvent,
+  id: string,
+  now: Date,
+): PhoneCall => {
+  const desk = deskOf(settings, event.desk ?? "");
+  const member = desk?.member ?? null;
+  return {
+    ...outgoingCall({
+      id,
+      boxId,
+      member: member ?? "",
+      remote: toE164(event.remote) ?? event.remote,
+      room: "",
+      at: now.toISOString(),
+    }),
+    boxCallId: event.call,
+    member,
+    members: member ? [member] : settings.ring,
+    room: null,
+    desk: desk?.label ?? null,
+  };
+};

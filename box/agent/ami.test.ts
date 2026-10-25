@@ -103,11 +103,24 @@ describe("callEventOf", () => {
           Call: "c",
           State: "answered",
           Direction: "in",
-          Forwarded: "1",
+          Endpoint: "fritzbox",
         },
         now,
       ),
     ).toMatchObject({ state: "answered", forwarded: true });
+    expect(
+      callEventOf(
+        {
+          Event: "UserEvent",
+          UserEvent: "KontextCall",
+          Call: "c",
+          State: "answered",
+          Direction: "in",
+          Endpoint: "desk-empfang",
+        },
+        now,
+      ),
+    ).toMatchObject({ desk: "empfang" });
   });
 
   it("ignores other events and broken ones", () => {

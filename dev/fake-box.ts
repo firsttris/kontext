@@ -9,6 +9,7 @@
  *   curl -XPOST localhost:18096/hangup -d '{"call":"…","cause":16}'    # the caller hangs up
  *   curl -XPOST localhost:18096/mailbox -d '{"call":"…","seconds":5}'  # leaves a message (silence)
  *   curl -XPOST localhost:18096/closed -d '{"from":"07223 123456"}'    # calls outside the hours
+ *   curl -XPOST localhost:18096/event -d '{"call":"…","state":"answered","desk":"…"}'  # any step
  *   curl localhost:18096/state                                         # what Kontext told the box
  *
  * Answered calls and dialled ones are "answered" at once; nobody talks, there is no audio.
@@ -132,6 +133,19 @@ Bun.serve({
         remote: "",
         local: "",
         cause: Number(body.cause ?? 16),
+        at: now(),
+      });
+      return Response.json({ ok: true });
+    }
+    if (path === "/event") {
+      // Anything the PBX may report, e.g. answered at a desk phone ({"desk":"…"}).
+      events?.onCall({
+        call: String(body.call ?? `fake.${++counter}`),
+        state: body.state as "answered",
+        direction: body.direction === "out" ? "out" : "in",
+        remote: String(body.remote ?? ""),
+        local: "",
+        ...(body.desk ? { desk: String(body.desk) } : {}),
         at: now(),
       });
       return Response.json({ ok: true });

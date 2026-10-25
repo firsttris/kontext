@@ -46,6 +46,7 @@ export const outcomeText = (
   }
   switch (call.outcome) {
     case "answered":
+      if (call.desk && call.direction === "in") return m.phone_outcome_desk({ name: call.desk });
       if (call.forwardedTo) {
         return m.phone_outcome_forwarded({ number: readableNumber(call.forwardedTo) });
       }

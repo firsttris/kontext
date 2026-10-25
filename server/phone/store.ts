@@ -52,6 +52,20 @@ const settingsSchema = z.object({
       }),
     )
     .default([]),
+  /** Desk phones (Snom) that sign in at the box and ring with Kontext. */
+  deskPhones: z
+    .array(
+      z.object({
+        id: z.string(),
+        label: z.string(),
+        mac: z.string(),
+        extension: z.string(),
+        password: z.string(),
+        /** Whose phone it is: it rings for that person's lines; null: the first line's. */
+        member: z.string().nullable(),
+      }),
+    )
+    .default([]),
   /** All at once, or the people in `ring`'s order, each for stepSeconds, then all. */
   ringMode: z.enum(["all", "order"]).default("all"),
   ringStepSeconds: z.number().int().min(5).max(60).default(15),
@@ -133,6 +147,7 @@ const toCall = (row: CallDbRow): PhoneCall => ({
   present: [],
   forwardedTo: row.forwardedTo,
   line: row.line,
+  desk: row.desk,
 });
 
 const fromCall = ({ present: _, ...call }: PhoneCall): CallDbRow => ({

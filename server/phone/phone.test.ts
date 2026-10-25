@@ -225,6 +225,8 @@ describe("handing on", () => {
     expect(dialTarget("**610")).toEqual({ remote: "**610", dial: "**610" });
     expect(dialTarget("** 611")).toEqual({ remote: "**611", dial: "**611" });
     expect(dialTarget("*610")).toBeNull();
+    expect(dialTarget("21", ["21", "22"])).toEqual({ remote: "21", dial: "21" });
+    expect(dialTarget("21")).toBeNull();
     expect(dialTarget("abc")).toBeNull();
   });
 });

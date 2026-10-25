@@ -712,6 +712,14 @@ flowchart LR
   die gewählte Nummer, den Benutzernamen (`contact_user`, im Dialplan `${EXTEN}` → `Line`).
   Kontext lässt dann nur die Leute dieser Durchwahl klingeln (alle zugleich). Wer auf einer
   Durchwahl ist, ruft mit ihr an: Der Agent setzt beim Originate `KONTEXT_OUT=fritzbox-<id>`.
+- **Tischtelefone (Snom):** melden sich an der Box an, nicht an der Fritzbox (PJSIP-Endpunkt
+  `desk-<id>`, die Box ist ihr Registrar). Ihre Einstellungen holen sie sich von der Box
+  (`http://<box>:8089/snom/<mac>.xml`, `box/agent/snom.ts`): Konto, Sprache, Töne, Zeitzone. Sie
+  klingeln zusammen mit Kontext (`Dial` statt `Wait`, je Leitung ihre Telefone: das einer Person
+  bei deren Nummern, ein gemeinsames bei der ersten); wer abnimmt, meldet sich über
+  `kontext-answered-here` mit seinem Endpunkt. Untereinander erreichen sie sich per Kurzwahl;
+  Anrufe nach draußen gehen über die Fritzbox (mit der Durchwahl ihrer Person) und stehen in der
+  Liste. Kontext erreicht sie über die Kurzwahl, auch beim Weitervermitteln.
 - **Wer klingelt wann:** Alle gleichzeitig oder der Reihe nach (jede Person eine Weile, dann
   alle, `ringingFor`). Die Reihenfolge rechnet die App selbst aus Beginn und Plan (die Karte
   erscheint, wenn man dran ist); Web Push geht jeweils an die, die gerade dran sind. Ein Handy

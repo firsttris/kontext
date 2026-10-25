@@ -132,6 +132,7 @@ fine on a VPS with 2 vCPUs and 4 GB RAM.
   - **Hold, consult, three-way**: hold music for the caller, ask a colleague in first, bring the caller back and talk together, or leave the two of them to it.
   - **Who rings when**: everyone at once or one after another (then all), and a mobile phone that rings too after a while.
   - **Direct numbers**: more numbers of the line, each ringing for its own people, who also call out with it.
+  - **Snom desk phones** sign in at the box and set themselves up from it: they ring with Kontext, reach each other by short number, and calls can be handed to them.
 - **Search** across all your channels; edit or delete your own messages; mute, leave or delete channels.
 - **Retention** set by the company admin (30 days to 5 years, or for ever): older messages, photos and files are deleted by themselves.
 - **On the phone**: its own tab, conversations as bubbles.

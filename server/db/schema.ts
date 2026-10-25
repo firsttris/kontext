@@ -632,6 +632,7 @@ export const phoneCalls = sqliteTable(
     held: integer("held", { mode: "boolean" }).notNull().default(false),
     forwardedTo: text("forwarded_to"),
     line: text("line"),
+    desk: text("desk"),
   },
   (table) => [
     index("phone_calls_started").on(table.startedAt),

@@ -14,7 +14,7 @@
  *   leg is up, kontext-out dials the number through the Fritzbox, with the line the agent chose
  *   (${KONTEXT_OUT}: the first IP phone, or an extra one for a direct number).
  */
-import type { BoxConfig } from "../../server/phone/protocol";
+import type { BoxConfig, DeskPhone } from "../../server/phone/protocol";
 
 /** Where the box keeps the sounds from Kontext and the messages it records. */
 export type BoxPaths = { sounds: string; recordings: string };
@@ -48,6 +48,16 @@ const context = (name: string, ...extensions: string[][]) =>
  * room, on hold, on the mailbox – by a hangup handler, not by each context's "h".
  */
 const reportEnd = "Set(CHANNEL(hangup_handler_push)=kontext-ended,s,1)";
+
+/** A desk phone's endpoint (and its user name for signing in). */
+export const deskEndpoint = (id: string) => `desk-${id}`;
+
+/** The desk phones that ring for a line (by the IP phone's user name), as a Dial target. */
+const desksFor = (config: BoxConfig, line: string | null) =>
+  config.deskPhones
+    .filter((desk) => desk.lines.includes(line ?? config.line?.username ?? ""))
+    .map((desk) => `PJSIP/${deskEndpoint(desk.id)}`)
+    .join("&");
 
 /** Plays a sound from Kontext (Asterisk finds the .wav itself). */
 export const play = (paths: BoxPaths, id: string) => `Playback(${paths.sounds}/${id})`;
@@ -87,17 +97,49 @@ const hoursCheck = ({ hours }: BoxConfig): string[] => {
 };
 
 /**
- * While it rings in Kontext: wait – or, with a forwarding number, wait a while, then let that
- * number ring too until the ringing time is up. Answered there, the call ends with it; Kontext
- * can still take it while it rings (the agent's Redirect ends the Dial).
+ * While it rings in Kontext: the desk phones ring with it – and, with a forwarding number, after
+ * a while that number too, until the ringing time is up. Answered at one of them, the call ends
+ * with it (kontext-answered-here tells which); Kontext can still take it while it rings (the
+ * agent's Redirect ends the Dial).
  */
-const waitForAnswer = ({ ringSeconds, forward }: BoxConfig): string[] => {
-  if (!forward) return [`Wait(${ringSeconds})`];
+const waitForAnswer = ({ ringSeconds, forward }: BoxConfig, desks: string): string[] => {
+  const ring = (targets: string, seconds: number) =>
+    targets
+      ? [
+          `Dial(${targets},${seconds},U(kontext-answered-here))`,
+          `ExecIf($["\${DIALSTATUS}" = "ANSWER"]?Hangup(16))`,
+        ]
+      : [`Wait(${seconds})`];
+  if (!forward) return ring(desks, ringSeconds);
+  const mobile = `PJSIP/${forward.number}@fritzbox`;
   const rest = Math.max(5, ringSeconds - forward.afterSeconds);
   return [
-    ...(forward.afterSeconds ? [`Wait(${forward.afterSeconds})`] : []),
-    `Dial(PJSIP/${forward.number}@fritzbox,${rest},U(kontext-forward-answered))`,
-    `ExecIf($["\${DIALSTATUS}" = "ANSWER"]?Hangup(16))`,
+    ...(forward.afterSeconds ? ring(desks, forward.afterSeconds) : []),
+    ...ring([desks, mobile].filter(Boolean).join("&"), rest),
+  ];
+};
+
+/** Extension names from IP phones' user names; others keep the first line's desk phones. */
+const SAFE_EXTEN = /^[A-Za-z0-9_-]{1,64}$/;
+
+/**
+ * "ringing" for the first line, and "ringing-<user>" for an extra line whose desk phones differ:
+ * the call jumps there by the line it came in on.
+ */
+const ringingExtensions = (config: BoxConfig, caller: [string, string][]) => {
+  const steps = (line: string | null) => [
+    report("ringing", "in", caller),
+    "Ringing()",
+    ...waitForAnswer(config, desksFor(config, line)),
+    config.mailbox ? "Goto(kontext-mailbox,s,1)" : "Hangup(19)",
+  ];
+  const extras = config.extraLines
+    .map((line) => line.username)
+    .filter((name) => SAFE_EXTEN.test(name) && desksFor(config, name) !== desksFor(config, null));
+  const jump = `GotoIf($[\${DIALPLAN_EXISTS(kontext-in,ringing-\${KONTEXT_LINE},1)}]?ringing-\${KONTEXT_LINE},1)`;
+  return [
+    extension("ringing", [...(extras.length ? [jump] : []), ...steps(null)]),
+    ...extras.map((name) => extension(`ringing-${name}`, steps(name))),
   ];
 };
 
@@ -130,12 +172,7 @@ const incoming = (config: BoxConfig, paths: BoxPaths) => {
       reportEnd,
       ...(config.hours ? hoursCheck(config) : ["Goto(ringing,1)"]),
     ]),
-    extension("ringing", [
-      report("ringing", "in", caller),
-      "Ringing()",
-      ...waitForAnswer(config),
-      config.mailbox ? "Goto(kontext-mailbox,s,1)" : "Hangup(19)",
-    ]),
+    ...ringingExtensions(config, caller),
     closed,
   );
 };
@@ -170,12 +207,47 @@ const mailbox = (config: BoxConfig, paths: BoxPaths) => {
  * reports its own end (kontext-callee-answered); not answered (busy, no answer, cancelled), the
  * line into Kontext reports why (kontext-out-ended).
  */
-const dialOut = [
+const dialOut = (target: string, extra: [string, string][] = []) => [
   "Set(__KONTEXT_DIR=out)",
   "Set(CHANNEL(hangup_handler_push)=kontext-out-ended,s,1)",
-  report("ringing", "out", [["Remote", `\${EXTEN}`]]),
-  `Dial(PJSIP/\${EXTEN}@\${KONTEXT_OUT},60,U(kontext-callee-answered))`,
+  report("ringing", "out", [["Remote", `\${EXTEN}`], ...extra]),
+  `Dial(${target},60,U(kontext-callee-answered))`,
   "Hangup()",
+];
+
+const THROUGH_FRITZBOX = `PJSIP/\${EXTEN}@\${KONTEXT_OUT}`;
+
+/**
+ * Calls from a desk phone: other desk phones by their short number (not reported), everything
+ * else out through the Fritzbox – reported to Kontext like a call from it, with the desk phone.
+ */
+const fromDesks = (config: BoxConfig) => {
+  if (!config.deskPhones.length) return "";
+  const out = [
+    `Set(__KONTEXT_CALL=\${UNIQUEID})`,
+    `Set(KONTEXT_OUT=\${KONTEXT_DESK_LINE})`,
+    ...dialOut(THROUGH_FRITZBOX, [["Desk", `\${KONTEXT_DESK}`]]),
+  ];
+  return context(
+    "kontext-desk",
+    ...config.deskPhones.map((desk) =>
+      extension(desk.extension, [`Dial(PJSIP/${deskEndpoint(desk.id)},30)`, "Hangup()"]),
+    ),
+    extension("_X.", [...whichDesk(config.deskPhones), ...out]),
+    extension("_**X.", [...whichDesk(config.deskPhones), ...out]),
+  );
+};
+
+/** Which desk phone calls, and the line it calls out with. */
+const whichDesk = (desks: DeskPhone[]) => [
+  `Set(KONTEXT_DESK=\${CUT(CHANNEL(endpoint),-,2)})`,
+  `Set(KONTEXT_DESK_LINE=fritzbox)`,
+  ...desks
+    .filter((desk) => desk.outLine)
+    .map(
+      (desk) =>
+        `ExecIf($["\${KONTEXT_DESK}" = "${desk.id}"]?Set(KONTEXT_DESK_LINE=fritzbox-${desk.outLine}))`,
+    ),
 ];
 
 /** The dialplan. ${KONTEXT_ROOM} is set by the agent before it moves a call. */
@@ -199,15 +271,28 @@ export const extensionsConf = (config: BoxConfig, paths: BoxPaths): string =>
       "kontext-resume",
       extension("s", [`Dial(PJSIP/\${KONTEXT_ROOM}@livekit,30)`, "Hangup()"]),
     ),
-    // Numbers, and the Fritzbox's own telephones by their internal number ("**610").
-    context("kontext-out", extension("_X.", dialOut), extension("_**X.", dialOut)),
+    // Numbers, the Fritzbox's own telephones by their internal number ("**610") and the desk
+    // phones at the box by theirs.
+    context(
+      "kontext-out",
+      ...config.deskPhones.map((desk) =>
+        extension(desk.extension, dialOut(`PJSIP/${deskEndpoint(desk.id)}`)),
+      ),
+      extension("_X.", dialOut(THROUGH_FRITZBOX)),
+      extension("_**X.", dialOut(THROUGH_FRITZBOX)),
+    ),
+    fromDesks(config),
     context(
       "kontext-callee-answered",
       extension("s", [report("answered", "out"), reportEnd, "Return()"]),
     ),
+    // Answered while it rang here: at a desk phone ("desk-…") or the mobile phone ("fritzbox").
     context(
-      "kontext-forward-answered",
-      extension("s", [report("answered", "in", [["Forwarded", "1"]]), "Return()"]),
+      "kontext-answered-here",
+      extension("s", [
+        report("answered", "in", [["Endpoint", `\${CHANNEL(endpoint)}`]]),
+        "Return()",
+      ]),
     ),
     context(
       "kontext-ended",

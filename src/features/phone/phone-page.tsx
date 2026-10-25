@@ -115,6 +115,7 @@ const Row = ({
             caller.contact ? readableNumber(call.remote) : "",
             outcomeText(call, nameOf, me),
             call.line ?? "",
+            call.desk && call.direction === "out" ? m.phone_from_desk({ name: call.desk }) : "",
           ]
             .filter(Boolean)
             .join(" · ")}

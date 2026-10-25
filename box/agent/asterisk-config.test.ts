@@ -5,6 +5,7 @@ import { asteriskFiles, extensionsConf, managerConf, pjsipConf } from "./asteris
 const config: BoxConfig = {
   line: { registrar: "fritz.box", username: "kontext620", password: "geheim" },
   extraLines: [],
+  deskPhones: [],
   trunk: { host: "kontext.firma.de", port: 5060, username: "kontext-box", password: "trunk" },
   ringSeconds: 60,
   sounds: [],
@@ -109,13 +110,13 @@ describe("forwarding", () => {
     expect(conf).toContain(
       [
         " same => n,Wait(15)",
-        " same => n,Dial(PJSIP/01712345678@fritzbox,25,U(kontext-forward-answered))",
+        " same => n,Dial(PJSIP/01712345678@fritzbox,25,U(kontext-answered-here))",
         ` same => n,ExecIf($["\${DIALSTATUS}" = "ANSWER"]?Hangup(16))`,
         " same => n,Hangup(19)",
       ].join("\n"),
     );
-    expect(conf).toContain("[kontext-forward-answered]\nexten => s,1,UserEvent(KontextCall,");
-    expect(conf).toContain("State: answered,Direction: in,Forwarded: 1)");
+    expect(conf).toContain("[kontext-answered-here]\nexten => s,1,UserEvent(KontextCall,");
+    expect(conf).toContain(`State: answered,Direction: in,Endpoint: \${CHANNEL(endpoint)})`);
   });
 });
 
@@ -160,6 +161,53 @@ describe("opening hours", () => {
     expect(extensionsConf(config, paths)).toContain(
       "Set(CHANNEL(hangup_handler_push)=kontext-ended,s,1)\n same => n,Goto(ringing,1)",
     );
+  });
+});
+
+describe("desk phones", () => {
+  const desk = (id: string, extension: string, lines: string[], outLine: string | null = null) => ({
+    id,
+    label: id,
+    mac: "000413a1b2c3",
+    extension,
+    password: "tisch-geheim",
+    lines,
+    outLine,
+  });
+  const withDesks = {
+    ...config,
+    extraLines: [{ id: "anna", username: "kontext621", password: "zwei" }],
+    deskPhones: [
+      desk("empfang", "21", ["kontext620"]),
+      desk("anna", "22", ["kontext620", "kontext621"], "anna"),
+    ],
+  };
+
+  it("signs them in at the box", () => {
+    const conf = pjsipConf(withDesks);
+    expect(conf).toContain("[desk-empfang]\ntype=aor\nmax_contacts=1");
+    expect(conf).toContain(
+      "[desk-empfang]\ntype=endpoint\ntransport=transport-udp\ncontext=kontext-desk",
+    );
+    expect(conf).toContain('callerid="empfang" <21>');
+  });
+
+  it("rings them with Kontext, each for its lines", () => {
+    const conf = extensionsConf(withDesks, paths);
+    expect(conf).toContain("Dial(PJSIP/desk-empfang&PJSIP/desk-anna,60,U(kontext-answered-here))");
+    expect(conf).toContain("exten => ringing-kontext621,1,UserEvent(KontextCall");
+    expect(conf).toContain(" same => n,Dial(PJSIP/desk-anna,60,U(kontext-answered-here))");
+  });
+
+  it("lets them call each other, out with their line, and Kontext reach them", () => {
+    const conf = extensionsConf(withDesks, paths);
+    expect(conf).toContain("[kontext-desk]\nexten => 21,1,Dial(PJSIP/desk-empfang,30)");
+    expect(conf).toContain(
+      `ExecIf($["\${KONTEXT_DESK}" = "anna"]?Set(KONTEXT_DESK_LINE=fritzbox-anna))`,
+    );
+    expect(conf).toContain(`Desk: \${KONTEXT_DESK})`);
+    expect(conf).toMatch(/\[kontext-out\]\nexten => 21,1,Set\(__KONTEXT_DIR=out\)/);
+    expect(conf).toContain("Dial(PJSIP/desk-empfang,60,U(kontext-callee-answered))");
   });
 });
 

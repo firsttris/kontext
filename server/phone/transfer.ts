@@ -40,7 +40,8 @@ export const createTransfers = ({ store, save, send, newId, now }: TransferConte
   };
 
   const toNumber = async (call: PhoneCall, me: string, number: string) => {
-    const target = dialTarget(number);
+    const desks = (await store.settings()).deskPhones.map((desk) => desk.extension);
+    const target = dialTarget(number, desks);
     if (!target) return "bad-number" as const;
     const leg = outgoingCall({
       id: newId(),

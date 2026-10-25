@@ -132,6 +132,7 @@ reicht ein VPS mit 2 vCPU und 4 GB RAM.
   - **Halten, Rückfrage, Dreierkonferenz**: Wartemusik für den Anrufer, erst die Kollegin dazuholen, den Anrufer zurückholen und zu dritt sprechen – oder die beiden allein lassen.
   - **Wer klingelt wann**: alle gleichzeitig oder der Reihe nach (dann alle), und nach einer Weile auch ein Handy.
   - **Durchwahlen**: weitere Nummern des Anschlusses, die jeweils bei ihren Leuten klingeln; wer auf einer ist, ruft auch mit ihr an.
+  - **Snom-Tischtelefone** melden sich an der Box an und richten sich von dort selbst ein: Sie klingeln mit Kontext, erreichen sich per Kurzwahl, und Anrufe lassen sich dorthin weitervermitteln.
 - **Suche** über alle deine Kanäle; eigene Nachrichten bearbeiten oder löschen; Kanäle stummschalten, verlassen oder löschen.
 - **Aufbewahrung**, die die Firmenverwaltung festlegt (30 Tage bis 5 Jahre oder unbegrenzt): Ältere Nachrichten, Fotos und Dateien löscht Kontext von selbst.
 - **Am Handy**: ein eigener Tab, Unterhaltungen als Sprechblasen.

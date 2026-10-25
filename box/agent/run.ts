@@ -29,8 +29,9 @@ export const runBox = async ({
   lastConfig?: BoxConfig | null;
   /** Keeps each new configuration for the next start. */
   remember?: (config: BoxConfig) => Promise<void>;
-}): Promise<{ link: Link; state: () => BoxState }> => {
+}): Promise<{ link: Link; state: () => BoxState; config: () => BoxConfig | null }> => {
   let link: Link | null = null;
+  let current: BoxConfig | null = lastConfig ?? null;
   const state: BoxState = {
     connected: false,
     registered: false,
@@ -53,6 +54,7 @@ export const runBox = async ({
     try {
       if (command.type === "config") {
         await pbx.apply(command.config);
+        current = command.config;
         await remember?.(command.config);
         state.configVersion = command.version;
         state.error = null;
@@ -77,5 +79,6 @@ export const runBox = async ({
   return {
     link,
     state: () => ({ ...state, connected: link?.connected() ?? false }),
+    config: () => current,
   };
 };

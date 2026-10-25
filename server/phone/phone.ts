@@ -60,6 +60,8 @@ export type PhoneCall = {
   forwardedTo: string | null;
   /** The extra number it came in on or went out with (its name, "Durchwahl Anna"); null: the first. */
   line: string | null;
+  /** The desk phone at the box it was answered at or dialled from (its name). */
+  desk: string | null;
 };
 
 /** Phone rooms in LiveKit: "kontext-phone-<uuid>", which LiveKit SIP's dispatch rule matches. */
@@ -127,6 +129,7 @@ export const incomingCall = (
   present: [],
   forwardedTo: null,
   line: null,
+  desk: null,
 });
 
 /** A call outside the opening hours: filed at once, it never rings. */
@@ -175,6 +178,7 @@ export const outgoingCall = ({
   present: [],
   forwardedTo: null,
   line: null,
+  desk: null,
 });
 
 /** The call after one of the box's events; the same call when it changes nothing (a repeat). */
@@ -255,11 +259,17 @@ export const roomIsOver = (present: string[], liveCalls: PhoneCall[]) =>
 
 /**
  * Where a call is handed or dialled to: a number (E.164 for the list, national for the
- * Fritzbox) or a telephone at the Fritzbox itself ("**610" for the first DECT handset).
+ * Fritzbox), a telephone at the Fritzbox itself ("**610" for the first DECT handset) or a desk
+ * phone at the box by its short number.
  */
-export const dialTarget = (raw: string): { remote: string; dial: string } | null => {
+export const dialTarget = (
+  raw: string,
+  deskExtensions: string[] = [],
+): { remote: string; dial: string } | null => {
   const internal = raw.replace(/\s/g, "");
-  if (/^\*\*\d{2,4}$/.test(internal)) return { remote: internal, dial: internal };
+  if (/^\*\*\d{2,4}$/.test(internal) || deskExtensions.includes(internal)) {
+    return { remote: internal, dial: internal };
+  }
   const remote = toE164(raw);
   return remote ? { remote, dial: toDialable(remote) } : null;
 };

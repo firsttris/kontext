@@ -58,7 +58,10 @@ export const callEventOf = (frame: Frame, now: Date): Omit<CallEvent, "type" | "
     remote: frame.Remote ?? "",
     local: frame.Local ?? "",
     ...(Number.isFinite(cause) && (frame.Cause || frame.DialStatus) ? { cause } : {}),
-    ...(frame.Forwarded === "1" ? { forwarded: true } : {}),
+    // Answered at the mobile phone (through the Fritzbox) or a desk phone, not in Kontext.
+    ...(frame.Endpoint?.startsWith("fritzbox") ? { forwarded: true } : {}),
+    ...(frame.Endpoint?.startsWith("desk-") ? { desk: frame.Endpoint.slice(5) } : {}),
+    ...(frame.Desk ? { desk: frame.Desk } : {}),
     ...(frame.Line ? { line: frame.Line } : {}),
     at: now.toISOString(),
   };

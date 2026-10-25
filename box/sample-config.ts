@@ -14,6 +14,26 @@ const sound = "a1b2c3d4e5f6a1b2c3d4e5f6";
 export const sampleConfig: BoxConfig = {
   line: { registrar: "fritz.box", username: "kontext620", password: "geheim" },
   extraLines: [{ id: "anna", username: "kontext621", password: "zwei" }],
+  deskPhones: [
+    {
+      id: "empfang",
+      label: "Empfang",
+      mac: "000413a1b2c3",
+      extension: "21",
+      password: "tisch-geheim-21",
+      lines: ["kontext620"],
+      outLine: null,
+    },
+    {
+      id: "anna",
+      label: "Anna",
+      mac: "000413a1b2c4",
+      extension: "22",
+      password: "tisch-geheim-22",
+      lines: ["kontext620", "kontext621"],
+      outLine: "anna",
+    },
+  ],
   trunk: { host: "kontext.firma.de", port: 5060, username: "kontext-box", password: "trunk" },
   ringSeconds: 25,
   sounds: [sound],

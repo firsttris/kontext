@@ -4,8 +4,8 @@
  * and reports every step on the manager interface (AMI, localhost only) as a UserEvent the agent
  * turns into call events; the dialplan itself is in dialplan.ts. Pure.
  */
-import type { BoxConfig } from "../../server/phone/protocol";
-import { type BoxPaths, extensionsConf } from "./dialplan";
+import type { BoxConfig, DeskPhone } from "../../server/phone/protocol";
+import { type BoxPaths, deskEndpoint, extensionsConf } from "./dialplan";
 
 export type { BoxPaths };
 export { extensionsConf };
@@ -81,6 +81,36 @@ const fritzboxLine = (
   ];
 };
 
+/** A desk phone that signs in here (the box is its registrar); calls from it go to kontext-desk. */
+const deskPhone = (desk: DeskPhone) => {
+  const name = deskEndpoint(desk.id);
+  return [
+    section(`${name}-auth`, [
+      ["type", "auth"],
+      ["auth_type", "userpass"],
+      ["username", name],
+      ["password", safe(desk.password)],
+    ]),
+    section(name, [
+      ["type", "aor"],
+      ["max_contacts", 1],
+      ["remove_existing", "yes"],
+    ]),
+    section(name, [
+      ["type", "endpoint"],
+      ["transport", "transport-udp"],
+      ["context", "kontext-desk"],
+      ["disallow", "all"],
+      ["allow", "g722,alaw,ulaw"],
+      ["auth", `${name}-auth`],
+      ["aors", name],
+      ["callerid", `"${safe(desk.label).replace(/"/g, "")}" <${desk.extension}>`],
+      ["direct_media", "no"],
+      ["dtmf_mode", "rfc4733"],
+    ]),
+  ];
+};
+
 export const pjsipConf = (config: BoxConfig): string => {
   const parts = [
     section("transport-udp", [
@@ -111,6 +141,7 @@ export const pjsipConf = (config: BoxConfig): string => {
       );
     }
   }
+  for (const desk of config.deskPhones) parts.push(...deskPhone(desk));
   if (trunk) {
     parts.push(
       section("livekit-auth", [
