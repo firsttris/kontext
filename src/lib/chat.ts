@@ -8,7 +8,13 @@ import type { Channel, ChannelSummary, Message } from "../../server/chat/chat";
 import { dateKey } from "./jscalendar";
 import { shortAddress } from "./mail-accounts";
 
-export { channelName } from "../../server/chat/chat";
+export type { MailCopy, Reaction, Replies } from "../../server/chat/chat";
+export {
+  channelName,
+  MAIL_COPY_TYPE,
+  RETENTION_DAYS,
+  toggleReaction,
+} from "../../server/chat/chat";
 export type { Channel, ChannelSummary, Message };
 
 export type Person = { id: string; name: string };

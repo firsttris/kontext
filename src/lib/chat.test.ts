@@ -45,6 +45,9 @@ const message = (id: string, authorId: string, createdAt: string, text = "Hallo"
   cards: [],
   editedAt: null,
   deleted: false,
+  parentId: null,
+  reactions: [],
+  replies: null,
   call: null,
   createdAt,
 });

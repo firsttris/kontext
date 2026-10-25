@@ -1,8 +1,10 @@
 /**
  * A mail, task or contact shared in a message. Whoever may open it gets a link (a task shows its
- * current status); everyone else sees what it is about and where it lives, but not the content.
+ * current status); everyone else sees what it is about and where it lives, but not the content –
+ * unless a mail was shared as a copy, which they read from the card.
  */
 import { X } from "lucide-react";
+import { useState } from "react";
 import { useContacts } from "@/features/contacts/queries";
 import { ItemLink, LinkIcon } from "@/features/links/item-link";
 import { useMailAccounts } from "@/features/mail/queries";
@@ -15,6 +17,7 @@ import { dateKey } from "@/lib/jscalendar";
 import { shortAddress } from "@/lib/mail-accounts";
 import { dueLabel, STATUS_LABELS, type Task } from "@/lib/tasks";
 import { m } from "@/paraglide/messages";
+import { MailCopyDialog } from "./mail-copy";
 
 const KIND_LABEL = { mail: m.chat_card_mail, task: m.chat_card_task, contact: m.chat_card_contact };
 
@@ -48,6 +51,7 @@ const frame =
 
 export const MessageCard = ({ card, onRemove }: { card: Card; onRemove?: () => void }) => {
   const { open, task } = useCardAccess(card);
+  const [reading, setReading] = useState(false);
   const owner = useOwner(card.accountId);
   const today = dateKey(new Date());
   const detail = task
@@ -76,7 +80,9 @@ export const MessageCard = ({ card, onRemove }: { card: Card; onRemove?: () => v
         >
           {card.label}
         </span>
-        {!open && !onRemove ? (
+        {card.copyId && (!open || onRemove) ? (
+          <span className="truncate text-[12px] text-accent">{m.chat_card_copy()}</span>
+        ) : !open && !onRemove ? (
           <span className="truncate text-[12px] text-muted">
             {owner ? m.chat_card_elsewhere({ owner }) : m.chat_card_not_shared()}
           </span>
@@ -102,6 +108,20 @@ export const MessageCard = ({ card, onRemove }: { card: Card; onRemove?: () => v
           <X size={14} />
         </button>
       </div>
+    );
+  }
+  if (!open && card.copyId) {
+    return (
+      <>
+        <button
+          type="button"
+          onClick={() => setReading(true)}
+          className={cn(frame, "border-border hover:bg-hover")}
+        >
+          {body}
+        </button>
+        {reading ? <MailCopyDialog copyId={card.copyId} onClose={() => setReading(false)} /> : null}
+      </>
     );
   }
   if (!open) return <div className={cn(frame, "border-border")}>{body}</div>;

@@ -33,6 +33,9 @@ export type CompanyDeps = {
   /** Ends the user's Kontext sessions (after deactivating or a new password). */
   endSessions: (email: string) => Promise<void>;
   random?: (size: number) => Uint8Array;
+  /** How long the team chat keeps messages; changing it takes out what is older at once. */
+  chatRetention?: { days: () => Promise<number>; setDays: (days: number) => Promise<void> };
+  pruneChat?: () => Promise<number>;
 };
 
 export type Loaded = {

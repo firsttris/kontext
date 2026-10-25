@@ -10,6 +10,7 @@ import {
   KeyRound,
   ListFilter,
   type LucideIcon,
+  MessagesSquare,
   Palette,
   Palmtree,
   PenLine,
@@ -21,6 +22,7 @@ import {
 } from "lucide-react";
 import { lazy, type ReactNode, Suspense, useId } from "react";
 import { TabBar } from "@/components/shell/app-shell";
+import { ChatSection } from "@/features/company/chat-section";
 import { EmployeesSection } from "@/features/company/employees-section";
 import { MailboxesSection } from "@/features/company/mailboxes-section";
 import { MigrationSection } from "@/features/company/migration-section";
@@ -64,6 +66,7 @@ const COMPANY: Entry[] = [
   { id: "employees", label: m.company_employees, icon: Users },
   { id: "mailboxes", label: m.company_mailboxes, icon: Inbox },
   { id: "company-signature", label: m.company_signature, icon: Signature },
+  { id: "company-chat", label: m.company_chat, icon: MessagesSquare },
   { id: "migration", label: m.company_migration, icon: Truck },
 ];
 
@@ -78,6 +81,7 @@ const CONTENT: Record<Section, () => ReactNode> = {
   employees: () => <EmployeesSection />,
   mailboxes: () => <MailboxesSection />,
   "company-signature": () => <CompanySignatureSection />,
+  "company-chat": () => <ChatSection />,
   migration: () => <MigrationSection />,
 };
 

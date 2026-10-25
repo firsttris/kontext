@@ -111,9 +111,12 @@ fine on a VPS with 2 vCPUs and 4 GB RAM.
 - **@mentions** with suggestions while you type; a mention or a direct message reaches your phone, also with Kontext closed.
 - **Photos and files**: from the phone's camera, by drag and drop or paste; photos are made smaller before sending.
 - **Mails, tasks and contacts as cards**: "Discuss" on a mail (`b`) talks about it in a channel instead of forwarding it internally; the mail then shows where it was discussed. Only who may open the mailbox opens the card – nothing is copied.
+- **Threads and reactions**: answer a message in its thread without filling the channel; 👍 ✅ 🎉 instead of yet another "ok".
+- **Share a mail as a copy** with its attachments, for colleagues who cannot open the mailbox.
 - **Task from a message**, linked both ways.
 - **Calls and video calls** right from a conversation: ring a colleague, or start a meeting in a channel that others join; mute, camera, share your screen, and the call stays open while you switch to mail; missed calls and call lengths stay in the conversation. Runs on your own server ([LiveKit](https://github.com/livekit/livekit), optional).
 - **Search** across all your channels; edit or delete your own messages; mute, leave or delete channels.
+- **Retention** set by the company admin (30 days to 5 years, or for ever): older messages, photos and files are deleted by themselves.
 - **On the phone**: its own tab, conversations as bubbles.
 
 ### 📅 Calendar

@@ -8,13 +8,12 @@ ein Plan, kein Versprechen; Wünsche und Hinweise gern als
 
 | Funktion | Worum es geht |
 | --- | --- |
-| **Team-Chat: mehr** | Antworten im Faden, Reaktionen, Aufbewahrungsfrist, die der Chef einstellt. |
+| **Mehr für Aufgaben** | Eigene Spalten pro Board, wiederkehrende Aufgaben, Regel-Aktion „Aufgabe anlegen“, Abgleich mit Thunderbird und Handy-Apps über CalDAV (VTODO). |
 
 ## Danach
 
 | Funktion | Worum es geht |
 | --- | --- |
-| **Mehr für Aufgaben** | Eigene Spalten pro Board, wiederkehrende Aufgaben, Regel-Aktion „Aufgabe anlegen“, Abgleich mit Thunderbird und Handy-Apps über CalDAV (VTODO). |
 | **Newsletter abbestellen** | Ein Knopf an Mails mit `List-Unsubscribe`, der die Abmeldung erledigt. |
 | **Bilder je Absender erlauben** | Bilder aus dem Internet für bekannte Absender immer laden, statt bei jeder Mail neu zu fragen. |
 | **Lesebestätigung** | Anfordern und beantworten, wie bei Behörden und Steuerberatern üblich. |
@@ -28,9 +27,8 @@ Kleinere Dinge, die beim Bauen aufgefallen sind und noch erledigt werden.
 **Funktionen**
 
 - [ ] Erinnerungen an Termine auch bei geschlossener App (heute nur, solange Kontext offen ist): der Server müsste die Kalender beobachten wie die Posteingänge.
-- [ ] Chat-Suche: Umlaute in Groß- und Kleinschreibung („Ö“ findet „ö“ nicht), weil SQLite nur ASCII ohne Unterschied vergleicht.
-- [ ] Chat: „Ganze Mail teilen“ als Kopie, für Kolleginnen ohne Zugriff auf das Postfach (heute sehen sie nur die Karte).
-- [ ] Chat: Fotos als kleine Vorschaubilder auf dem Server erzeugen (heute lädt der Verlauf die verkleinerten Fotos in voller Größe).
+- [ ] Chat: Vorschaubilder für Fotos von vor diesem Stand fehlen (sie laden weiter in voller Größe); neue bekommen eins beim Hochladen.
+- [ ] Chat: Reaktionen mit beliebigen Emojis (heute die sieben Schnellwahlen), und im Thread „auch im Kanal zeigen“.
 - [ ] Aufgaben am Kontakt finden Mails nur über die letzten fünf Mails mit der Person im eigenen Postfach; ältere oder solche in info@ zählen nur, wenn die Aufgabe mit der Karte verknüpft ist (geschieht beim Anlegen aus der Mail). Die Verknüpfung „Termin“ wird noch nirgends angelegt.
 - [ ] Erinnerung an Aufgaben auch direkt im Dialog „Neue Aufgabe“ (heute in der geöffneten Aufgabe).
 - [ ] **Regeln für Mitarbeiter** in der Firmenverwaltung (heute nur für gemeinsame Postfächer und die eigenen).
@@ -59,6 +57,8 @@ Kleinere Dinge, die beim Bauen aufgefallen sind und noch erledigt werden.
 
 ## Zuletzt fertig geworden
 
+Team-Chat: Antworten im Thread, Reaktionen, Aufbewahrungsfrist in der Firmenverwaltung, Suche
+mit Umlauten, Vorschaubilder für Fotos, Mail als Kopie teilen.
 Aufgaben überall im Kontext: offene Aufgaben am Kontakt, Fälliges im Kalender, neu Zugewiesenes
 und heute Fälliges in der Glocke, Erinnerungen als Benachrichtigung auch bei geschlossener App,
 „Aufgaben erstellen“ für mehrere Mails.

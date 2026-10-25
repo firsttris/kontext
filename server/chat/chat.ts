@@ -39,8 +39,25 @@ export type ChannelSummary = Channel & {
   muted: boolean;
 };
 
-/** A photo or file in a message; the app loads it from /api/chat/files/:id. */
-export type ChatFile = { id: string; name: string; type: string; size: number };
+/**
+ * A photo or file in a message; the app loads it from /api/chat/files/:id, a photo's small
+ * picture (`thumb`) from /api/chat/files/:id?thumb=1.
+ */
+export type ChatFile = { id: string; name: string; type: string; size: number; thumb?: boolean };
+
+/** A mail shared as a copy: its content as a chat file of this type, never shown as a file. */
+export const MAIL_COPY_TYPE = "application/vnd.kontext.mail+json";
+
+/** What a copied mail holds; the HTML is cleaned again where it is shown. */
+export type MailCopy = {
+  subject: string;
+  from: string;
+  to: string;
+  cc: string;
+  receivedAt: string;
+  kind: "html" | "text";
+  body: string;
+};
 
 /**
  * A mail, task or contact in a message, as a card. The label and detail are a snapshot taken when
@@ -60,6 +77,8 @@ export const cardSchema = z.object({
   label: z.string().max(300),
   /** Sender and time, due date, company … */
   detail: z.string().max(300).default(""),
+  /** A mail shared as a copy: the uploaded file with its content (MAIL_COPY_TYPE). */
+  copyId: z.string().max(64).nullish(),
 });
 export type Card = z.infer<typeof cardSchema>;
 
@@ -77,9 +96,17 @@ export type CallRecord = {
   durationS: number | null;
 };
 
+/** The emojis of a message, each with who chose it, in the order they first came. */
+export type Reaction = { emoji: string; members: string[] };
+
+/** The answers to a message, as the channel shows them under it. */
+export type Replies = { count: number; lastAt: string; people: string[] };
+
 export type Message = {
   id: string;
   channelId: string;
+  /** An answer in the thread of this message; null in the channel itself. */
+  parentId: string | null;
   authorId: string;
   text: string;
   mentions: string[];
@@ -91,6 +118,9 @@ export type Message = {
   deleted: boolean;
   /** A call that ended in this conversation (written by the server, not by a person). */
   call: CallRecord | null;
+  reactions: Reaction[];
+  /** Of a message in the channel that has answers; null otherwise. */
+  replies: Replies | null;
 };
 
 /** What a message is about in one line: its text, else its card or file. */
@@ -159,6 +189,8 @@ export const newDirectSchema = z.object({ members: z.array(person).min(1).max(8)
 
 export const newMessageSchema = z
   .object({
+    /** An answer in the thread of this message. */
+    parentId: z.string().min(1).max(64).nullable().default(null),
     text: z.string().trim().max(4000).default(""),
     mentions: z.array(person).max(50).default([]),
     fileIds: z.array(z.string().min(1).max(64)).max(MAX_FILES).default([]),
@@ -176,20 +208,73 @@ export const editMessageSchema = z.object({
 
 export const muteSchema = z.object({ muted: z.boolean() });
 
+/** One emoji (with skin tone or joined parts), on or off. */
+export const reactionSchema = z.object({
+  emoji: z
+    .string()
+    .min(1)
+    .max(32)
+    .regex(/^(?:\p{Extended_Pictographic}|\p{Emoji_Component}|\u200d|\ufe0f)+$/u)
+    // Digits and "#" are emoji components too; one real picture is needed.
+    .regex(/\p{Extended_Pictographic}/u),
+  on: z.boolean(),
+});
+
+/** Adds or takes away one person's emoji, keeping the order the emojis first came in. */
+export const toggleReaction = (
+  reactions: Reaction[],
+  emoji: string,
+  member: string,
+  on: boolean,
+): Reaction[] => {
+  const has = reactions.find((reaction) => reaction.emoji === emoji);
+  if (on && !has) return [...reactions, { emoji, members: [member] }];
+  return reactions
+    .map((reaction) =>
+      reaction.emoji !== emoji
+        ? reaction
+        : {
+            emoji,
+            members: on
+              ? [...new Set([...reaction.members, member])]
+              : reaction.members.filter((id) => id !== member),
+          },
+    )
+    .filter((reaction) => reaction.members.length);
+};
+
+/** Text for the search: lower case as German writes it, so "Öl" finds "öl" and "ÖL". */
+export const fold = (text: string): string => text.toLocaleLowerCase("de-DE");
+
+/** How long messages stay, in days, as the Firmenverwaltung offers it; 0 is for ever. */
+export const RETENTION_DAYS = [0, 30, 90, 180, 365, 730, 1825] as const;
+export const retentionSchema = z.object({
+  days: z
+    .number()
+    .int()
+    .refine((days) => (RETENTION_DAYS as readonly number[]).includes(days)),
+});
+
+/** Messages from before this go; null: nothing goes. */
+export const retentionCutoff = (days: number, now: Date): Date | null =>
+  days > 0 ? new Date(now.getTime() - days * 86_400_000) : null;
+
 /** Search words: at least two letters, so a search is not the whole history. */
 export const searchSchema = z.string().trim().min(2).max(100);
 
 /**
  * Who is told of a new message on their devices: in a direct conversation the others; elsewhere
- * the people it mentions – if they belong there (for a mailbox channel: who has read in it, as
+ * the people it mentions and, for an answer, who wrote in the thread – if they belong there (for a mailbox channel: who has read in it, as
  * the server cannot see anyone else's access). Never the author, never who muted the channel.
  */
 export const notifyWho = (
   channel: Pick<Channel, "kind" | "members">,
   message: Pick<Message, "authorId" | "mentions">,
   { readers, muted }: { readers: string[]; muted: string[] },
+  /** For an answer: who wrote in its thread (the first message too), they hear of it. */
+  thread: string[] = [],
 ): string[] => {
-  const candidates = channel.kind === "direct" ? channel.members : message.mentions;
+  const candidates = channel.kind === "direct" ? channel.members : [...message.mentions, ...thread];
   const belongs = (id: string) =>
     channel.kind === "team" ||
     (channel.kind === "mailbox" ? readers.includes(id) : channel.members.includes(id));
@@ -212,15 +297,22 @@ export const channelLabel = (
 /** The notification for a message: who wrote, where, and what. */
 export const chatNotice = (
   channel: Pick<Channel, "id" | "kind">,
-  message: Pick<Message, "id" | "text" | "files" | "cards">,
+  message: Pick<Message, "id" | "text" | "files" | "cards"> & { parentId?: string | null },
   author: string,
   where: string,
 ) => {
   const text = messageSummary(message);
+  // An answer: its thread open beside the message it answers.
+  const shown = message.parentId ?? message.id;
+  const thread = message.parentId ? `&thread=${encodeURIComponent(message.parentId)}` : "";
   return {
-    title: channel.kind === "direct" || !where ? author : `${author} in ${where}`,
+    title: message.parentId
+      ? `${author} antwortet${where && channel.kind !== "direct" ? ` in ${where}` : ""}`
+      : channel.kind === "direct" || !where
+        ? author
+        : `${author} in ${where}`,
     body: text.length > 200 ? `${text.slice(0, 199)}…` : text,
-    url: `/chat?channel=${encodeURIComponent(channel.id)}&message=${encodeURIComponent(message.id)}`,
+    url: `/chat?channel=${encodeURIComponent(channel.id)}&message=${encodeURIComponent(shown)}${thread}`,
     tag: `chat-${channel.id}`,
   };
 };

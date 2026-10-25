@@ -14,7 +14,9 @@ import { createCallRoutes, createCallState } from "./calls/routes";
 import { createCategoryRoutes } from "./categories/routes";
 import { createCategoryStore } from "./categories/store";
 import { createChatFiles } from "./chat/files";
+import { backfillFolded } from "./chat/message-parts";
 import { createMessageStore } from "./chat/messages";
+import { createChatPruner, createChatRetention } from "./chat/retention";
 import { createChatRoutes, viewerOf } from "./chat/routes";
 import { createChatStore } from "./chat/store";
 import { createMailstore } from "./company/mailstore";
@@ -128,6 +130,23 @@ export const createApp = async (env: Env) => {
 
   const categories = createCategoryStore(db);
   const app = new Hono();
+
+  const chatFiles = createChatFiles(db, join(dirname(env.DATABASE_PATH), "chat-files"));
+  // Photos uploaded for a message that was never sent go after a day.
+  const pruneChatFiles = () =>
+    void chatFiles.pruneUnsent(new Date(Date.now() - 86_400_000)).catch(() => undefined);
+  pruneChatFiles();
+  setInterval(pruneChatFiles, 3_600_000).unref();
+  const messages = createMessageStore(db, chatFiles);
+  // Messages from before the search text was kept get it once.
+  void backfillFolded(db).catch((error: Error) => console.warn(`Chat-Suche: ${error.message}`));
+  // What is older than the company keeps goes, at start and every hour.
+  const chatRetention = createChatRetention(db);
+  const chatPruner = createChatPruner({ retention: chatRetention, messages });
+  const pruneChat = () =>
+    void chatPruner.tick().catch((error: Error) => console.warn(`Chat: ${error.message}`));
+  pruneChat();
+  setInterval(pruneChat, 3_600_000).unref();
   app.get("/healthz", (c) => c.text("ok"));
   app.on(["GET", "POST"], "/api/auth/*", (c) => auth.handler(c.req.raw));
   if (env.STALWART_ADMIN_KEY) {
@@ -173,6 +192,8 @@ export const createApp = async (env: Env) => {
       currentEmail: async (request) =>
         (await auth.api.getSession({ headers: request.headers }))?.user.email ?? null,
       endSessions: endSessionsOf(db),
+      chatRetention,
+      pruneChat: chatPruner.tick,
     });
     app.route("/api/company", company);
   }
@@ -188,13 +209,6 @@ export const createApp = async (env: Env) => {
       },
     }),
   );
-  const chatFiles = createChatFiles(db, join(dirname(env.DATABASE_PATH), "chat-files"));
-  // Photos uploaded for a message that was never sent go after a day.
-  const pruneChatFiles = () =>
-    void chatFiles.pruneUnsent(new Date(Date.now() - 86_400_000)).catch(() => undefined);
-  pruneChatFiles();
-  setInterval(pruneChatFiles, 3_600_000).unref();
-  const messages = createMessageStore(db, chatFiles);
 
   // Web Push: chat messages to oneself and new mail, also with Kontext closed.
   const pushStore = createPushStore(db);
@@ -284,6 +298,7 @@ export const createApp = async (env: Env) => {
       accountsOf,
       notify: pusher.notify,
       nameOf: async (request) => (await infoOf(request))?.name ?? "",
+      retentionDays: chatRetention.days,
     }),
   );
   // Task reminders go out every minute, also with nobody signed in.

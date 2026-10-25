@@ -17,7 +17,15 @@ import { useChatNames } from "./use-chat-names";
 
 type Editing = { channel?: Channel } | null;
 
-export const ChatPage = ({ channelId, messageId }: { channelId?: string; messageId?: string }) => {
+export const ChatPage = ({
+  channelId,
+  messageId,
+  threadId,
+}: {
+  channelId?: string;
+  messageId?: string;
+  threadId?: string;
+}) => {
   const navigate = useNavigate();
   const { channels, online, isPending } = useChannels();
   const { me, people } = useChatNames();
@@ -48,6 +56,7 @@ export const ChatPage = ({ channelId, messageId }: { channelId?: string; message
             channel={open}
             online={online}
             messageId={messageId}
+            threadId={threadId}
             onEdit={() => setEditing({ channel: open })}
           />
         ) : (

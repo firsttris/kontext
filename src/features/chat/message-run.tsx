@@ -1,9 +1,9 @@
 /**
  * Messages of one person close together: on a desktop under one name with the avatar, on a phone
  * as bubbles (the own on the right). Each message shows its text, photos, files and cards, the
- * tasks made from it, and its actions.
+ * tasks made from it, its reactions and answers, and its actions.
  */
-import { Ellipsis, ListChecks, Pencil, Trash2 } from "lucide-react";
+import { Ellipsis, ListChecks, MessageSquareReply, Pencil, Trash2 } from "lucide-react";
 import { type KeyboardEvent, useState } from "react";
 import { Avatar } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -13,12 +13,14 @@ import { ItemLink } from "@/features/links/item-link";
 import { useTasks } from "@/features/tasks/queries";
 import { firstName, keptMentions, type Message, type MessageRun, type Person } from "@/lib/chat";
 import { tasksOfMessage } from "@/lib/chat-cards";
+import { hasNewReplies } from "@/lib/chat-threads";
 import { cn } from "@/lib/cn";
 import { STATUS_LABELS } from "@/lib/tasks";
 import { m } from "@/paraglide/messages";
 import { MessageCard } from "./message-card";
 import { MessageFiles } from "./message-files";
 import { MessageText } from "./message-text";
+import { ReactionBar, ReactionPicker } from "./reactions";
 
 const time = (iso: string) =>
   new Date(iso).toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" });
@@ -35,6 +37,61 @@ type Props = {
   onMakeTask: (message: Message) => void;
   onEdit: (message: Message, text: string, mentions: string[]) => void;
   onDelete: (message: Message) => void;
+  onReact: (message: Message, emoji: string) => void;
+  /** Opens the thread of a message; left out within a thread (no answers to answers). */
+  onReply?: (message: Message) => void;
+  /** Answers after this are marked as new. */
+  readUpTo?: string | null;
+};
+
+const hoverButton =
+  "flex size-7 shrink-0 items-center justify-center rounded-md text-muted opacity-60 hover:bg-hover hover:text-fg focus-visible:opacity-100 md:opacity-0 md:group-hover:opacity-100 md:data-[state=open]:opacity-100";
+
+const replyTime = (iso: string) =>
+  new Date(iso).toLocaleString("de-DE", {
+    timeZone: "Europe/Berlin",
+    ...(new Date(iso).toDateString() === new Date().toDateString()
+      ? { hour: "2-digit", minute: "2-digit" }
+      : { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }),
+  });
+
+/** "3 Antworten · zuletzt 10:42", with who answered; opens the thread. */
+const RepliesLine = ({
+  message,
+  fresh,
+  nameOf,
+  onOpen,
+}: {
+  message: Message;
+  fresh: boolean;
+  nameOf: (id: string) => string;
+  onOpen: () => void;
+}) => {
+  const replies = message.replies!;
+  return (
+    <button
+      type="button"
+      onClick={onOpen}
+      className="flex max-w-full items-center gap-2 rounded-lg py-1 pr-2 text-left text-[13px] hover:bg-hover md:-ml-1 md:pl-1"
+    >
+      <span className="flex shrink-0 gap-0.5">
+        {replies.people.slice(0, 3).map((id) => (
+          <Avatar key={id} name={nameOf(id)} size={22} />
+        ))}
+      </span>
+      <span className="font-medium text-accent">
+        {replies.count === 1 ? m.chat_replies_one() : m.chat_replies({ count: replies.count })}
+      </span>
+      <span className="truncate text-muted">
+        {m.chat_replies_last({ when: replyTime(replies.lastAt) })}
+      </span>
+      {fresh ? (
+        <span className="shrink-0 rounded-full bg-accent px-1.5 text-[11px] font-medium text-white">
+          {m.chat_new_badge()}
+        </span>
+      ) : null}
+    </button>
+  );
 };
 
 const Actions = ({
@@ -134,11 +191,16 @@ const Item = ({
   own,
   me,
   people,
+  nameOf,
   highlight,
+  readUpTo = null,
   onMakeTask,
   onEdit,
   onDelete,
-}: { message: Message; own: boolean } & Omit<Props, "run" | "nameOf">) => {
+  onReact,
+  onReply,
+}: { message: Message; own: boolean } & Omit<Props, "run">) => {
+  const live = !isPending(message) && !message.deleted && !message.call;
   const { tasks } = useTasks();
   const made = tasksOfMessage(tasks, message.id);
   const [editing, setEditing] = useState(false);
@@ -183,6 +245,22 @@ const Item = ({
         ) : (
           <span className="hidden flex-1 md:block" />
         )}
+        {editing || !live ? null : (
+          <>
+            <ReactionPicker onPick={(emoji) => onReact(message, emoji)} className={hoverButton} />
+            {onReply ? (
+              <button
+                type="button"
+                aria-label={m.chat_reply()}
+                title={m.chat_reply()}
+                onClick={() => onReply(message)}
+                className={hoverButton}
+              >
+                <MessageSquareReply size={15} />
+              </button>
+            ) : null}
+          </>
+        )}
         {editing ? null : (
           <Actions
             message={message}
@@ -197,6 +275,20 @@ const Item = ({
       {message.cards.map((card) => (
         <MessageCard key={`${card.kind}-${card.ref}`} card={card} />
       ))}
+      <ReactionBar
+        message={message}
+        me={me}
+        nameOf={nameOf}
+        onReact={(emoji) => onReact(message, emoji)}
+      />
+      {message.replies && onReply ? (
+        <RepliesLine
+          message={message}
+          nameOf={nameOf}
+          fresh={hasNewReplies(message, me, readUpTo)}
+          onOpen={() => onReply(message)}
+        />
+      ) : null}
       {made.map((task) => (
         <ItemLink
           key={task.id}
@@ -211,7 +303,8 @@ const Item = ({
   );
 };
 
-export const Run = ({ run, nameOf, ...rest }: Props) => {
+export const Run = ({ run, ...rest }: Props) => {
+  const { nameOf } = rest;
   const own = run.authorId === rest.me;
   const name = nameOf(run.authorId);
   return (

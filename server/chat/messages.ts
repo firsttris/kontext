@@ -1,15 +1,33 @@
 /**
- * Chat messages in Kontext's SQLite, with their cards (mails, tasks, contacts) and files; and the
- * way back from a mail: where it was discussed, and where its sender was talked about before.
+ * Chat messages in Kontext's SQLite, with their cards (mails, tasks, contacts), files, reactions
+ * and answers (message-parts.ts); and the way back from a mail: where it was discussed, and where
+ * its sender was talked about before.
  */
-import { and, count, desc, eq, exists, gt, inArray, isNull, lt, or, sql } from "drizzle-orm";
+import { and, asc, count, desc, eq, gt, inArray, isNull, lt, or, sql } from "drizzle-orm";
 import type { Db } from "../db";
 import * as schema from "../db/schema";
-import { type CallRecord, type Card, type Message, messageSummary } from "./chat";
+import {
+  type CallRecord,
+  type Card,
+  fold,
+  MAIL_COPY_TYPE,
+  type Message,
+  messageSummary,
+} from "./chat";
 import type { ChatFiles } from "./files";
+import {
+  foldedOf,
+  pruneBefore,
+  reactionsOf,
+  repliesOf,
+  setReaction,
+  threadPeople,
+} from "./message-parts";
 
 export type NewPost = {
   channelId: string;
+  /** An answer in the thread of this message. */
+  parentId?: string | null;
   authorId: string;
   text: string;
   mentions: string[];
@@ -28,8 +46,15 @@ export type Discussion = {
 };
 
 export type MessageStore = {
-  /** The newest messages before `before` (all when null), newest first. */
+  /** The newest messages of the channel itself (no answers) before `before`, newest first. */
   page: (channelId: string, before: Date | null, limit: number) => Promise<Message[]>;
+  /** The answers in a message's thread, oldest first. */
+  replies: (parentId: string) => Promise<Message[]>;
+  /** Who wrote in a thread, its first message included. */
+  threadPeople: (parentId: string) => Promise<string[]>;
+  react: (id: string, memberId: string, emoji: string, on: boolean) => Promise<Message>;
+  /** Takes out what is older than the company keeps; returns how many messages went. */
+  prune: (cutoff: Date) => Promise<number>;
   post: (post: NewPost) => Promise<Message>;
   /** The last message of each channel, in one line. */
   last: (channelIds: string[]) => Promise<Map<string, { authorId: string; text: string }>>;
@@ -51,7 +76,16 @@ const likeWords = (words: string) => `%${words.replace(/[\\%_]/g, (c) => `\\${c}
 type MessageRow = typeof schema.chatMessages.$inferSelect;
 type CardRow = typeof schema.chatCards.$inferSelect;
 
-const toCard = ({ kind, accountId, ref, threadId, party, label, detail }: CardRow): Card => ({
+const toCard = ({
+  kind,
+  accountId,
+  ref,
+  threadId,
+  party,
+  label,
+  detail,
+  copyId,
+}: CardRow): Card => ({
   kind: kind as Card["kind"],
   accountId,
   ref,
@@ -59,6 +93,7 @@ const toCard = ({ kind, accountId, ref, threadId, party, label, detail }: CardRo
   party,
   label,
   detail,
+  copyId,
 });
 
 export const createMessageStore = (db: Db, files: ChatFiles): MessageStore => {
@@ -86,15 +121,25 @@ export const createMessageStore = (db: Db, files: ChatFiles): MessageStore => {
   /** Messages with their cards and files. */
   const complete = async (rows: MessageRow[]): Promise<Message[]> => {
     const ids = rows.map((row) => row.id);
-    const [cards, attached] = await Promise.all([cardsOf(ids), files.ofMessages(ids)]);
+    const firsts = rows.filter((row) => !row.parentId).map((row) => row.id);
+    const [cards, attached, reactions, replies] = await Promise.all([
+      cardsOf(ids),
+      files.ofMessages(ids),
+      reactionsOf(db, ids),
+      repliesOf(db, firsts),
+    ]);
     return rows.map((row) => ({
       id: row.id,
       channelId: row.channelId,
+      parentId: row.parentId,
       authorId: row.authorId,
       text: row.text,
       mentions: JSON.parse(row.mentions) as string[],
-      files: attached.get(row.id) ?? [],
+      // A mail's copy belongs to its card, not among the files.
+      files: (attached.get(row.id) ?? []).filter((file) => file.type !== MAIL_COPY_TYPE),
       cards: cards.get(row.id) ?? [],
+      reactions: reactions.get(row.id) ?? [],
+      replies: replies.get(row.id) ?? null,
       createdAt: row.createdAt.toISOString(),
       editedAt: row.editedAt?.toISOString() ?? null,
       deleted: Boolean(row.deletedAt),
@@ -115,6 +160,7 @@ export const createMessageStore = (db: Db, files: ChatFiles): MessageStore => {
         .where(
           and(
             eq(schema.chatMessages.channelId, channelId),
+            isNull(schema.chatMessages.parentId),
             before ? lt(schema.chatMessages.createdAt, before) : undefined,
           ),
         )
@@ -122,12 +168,37 @@ export const createMessageStore = (db: Db, files: ChatFiles): MessageStore => {
         .limit(limit);
       return complete(rows);
     },
-    post: async ({ channelId, authorId, text, mentions, cards, fileIds, call }) => {
+    replies: async (parentId) =>
+      complete(
+        await db
+          .select()
+          .from(schema.chatMessages)
+          .where(eq(schema.chatMessages.parentId, parentId))
+          .orderBy(asc(schema.chatMessages.createdAt)),
+      ),
+    threadPeople: (parentId) => threadPeople(db, parentId),
+    react: async (id, memberId, emoji, on) => {
+      await setReaction(db, id, memberId, emoji, on);
+      return (await get(id))!;
+    },
+    prune: (cutoff) => pruneBefore(db, files, cutoff),
+    post: async ({
+      channelId,
+      parentId = null,
+      authorId,
+      text,
+      mentions,
+      cards,
+      fileIds,
+      call,
+    }) => {
       const row = {
         id: crypto.randomUUID(),
         channelId,
+        parentId,
         authorId,
         text,
+        folded: foldedOf(text, cards),
         mentions: JSON.stringify([...new Set(mentions)]),
         createdAt: stamp(),
         editedAt: null,
@@ -135,21 +206,34 @@ export const createMessageStore = (db: Db, files: ChatFiles): MessageStore => {
         call: call ? JSON.stringify(call) : null,
       };
       await db.insert(schema.chatMessages).values(row);
+      // A copy counts only if it is one's own upload in this channel, given to this message.
+      const copies = cards.flatMap((card) => (card.copyId ? [card.copyId] : []));
+      const attached = await files.attach([...fileIds, ...copies], {
+        id: row.id,
+        channelId,
+        authorId,
+      });
+      const kept = new Set(
+        attached.filter((file) => file.type === MAIL_COPY_TYPE).map((file) => file.id),
+      );
       if (cards.length) {
         await db.insert(schema.chatCards).values(
           cards.map((card, position) => ({
             ...card,
+            copyId: card.copyId && kept.has(card.copyId) ? card.copyId : null,
             messageId: row.id,
             channelId,
             position,
           })),
         );
       }
-      await files.attach(fileIds, { id: row.id, channelId, authorId });
-      await db
-        .update(schema.chatChannels)
-        .set({ lastMessageAt: row.createdAt })
-        .where(eq(schema.chatChannels.id, channelId));
+      // An answer leaves the channel's order as it is.
+      if (!parentId) {
+        await db
+          .update(schema.chatChannels)
+          .set({ lastMessageAt: row.createdAt })
+          .where(eq(schema.chatChannels.id, channelId));
+      }
       return (await complete([row]))[0]!;
     },
     last: async (channelIds) => {
@@ -158,7 +242,9 @@ export const createMessageStore = (db: Db, files: ChatFiles): MessageStore => {
         const [row] = await db
           .select()
           .from(schema.chatMessages)
-          .where(eq(schema.chatMessages.channelId, channelId))
+          .where(
+            and(eq(schema.chatMessages.channelId, channelId), isNull(schema.chatMessages.parentId)),
+          )
           .orderBy(desc(schema.chatMessages.createdAt))
           .limit(1);
         if (!row) continue;
@@ -202,24 +288,32 @@ export const createMessageStore = (db: Db, files: ChatFiles): MessageStore => {
     },
     get,
     edit: async (id, text, mentions) => {
+      const cards = (await cardsOf([id])).get(id) ?? [];
       await db
         .update(schema.chatMessages)
-        .set({ text, mentions: JSON.stringify([...new Set(mentions)]), editedAt: new Date() })
+        .set({
+          text,
+          mentions: JSON.stringify([...new Set(mentions)]),
+          folded: foldedOf(text, cards),
+          editedAt: new Date(),
+        })
         .where(eq(schema.chatMessages.id, id));
       return (await get(id))!;
     },
     remove: async (id) => {
       await db
         .update(schema.chatMessages)
-        .set({ text: "", mentions: "[]", deletedAt: new Date(), call: null })
+        .set({ text: "", mentions: "[]", folded: "", deletedAt: new Date(), call: null })
         .where(eq(schema.chatMessages.id, id));
       await db.delete(schema.chatCards).where(eq(schema.chatCards.messageId, id));
+      await db.delete(schema.chatReactions).where(eq(schema.chatReactions.messageId, id));
       await files.removeOfMessage(id);
       return (await get(id))!;
     },
     search: async (channelIds, words, limit) => {
       if (!channelIds.length) return [];
-      const pattern = likeWords(words);
+      // The text was folded when written; the words are folded the same way.
+      const pattern = likeWords(fold(words));
       const rows = await db
         .select()
         .from(schema.chatMessages)
@@ -227,20 +321,7 @@ export const createMessageStore = (db: Db, files: ChatFiles): MessageStore => {
           and(
             inArray(schema.chatMessages.channelId, channelIds),
             isNull(schema.chatMessages.deletedAt),
-            or(
-              sql`${schema.chatMessages.text} like ${pattern} escape '\\'`,
-              exists(
-                db
-                  .select({ one: sql`1` })
-                  .from(schema.chatCards)
-                  .where(
-                    and(
-                      eq(schema.chatCards.messageId, schema.chatMessages.id),
-                      sql`${schema.chatCards.label} like ${pattern} escape '\\'`,
-                    ),
-                  ),
-              ),
-            ),
+            sql`${schema.chatMessages.folded} like ${pattern} escape '\\'`,
           ),
         )
         .orderBy(desc(schema.chatMessages.createdAt))

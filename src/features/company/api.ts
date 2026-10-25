@@ -106,6 +106,12 @@ export type SignatureTemplate = { html: string; text: string };
 
 export const getSignature = () => send<SignatureTemplate>("GET", "/signature");
 
+/** How long the team chat keeps messages, in days; 0: for ever. */
+export const getChatRetention = () => send<{ days: number }>("GET", "/chat-retention");
+
+export const saveChatRetention = (days: number) =>
+  send<{ days: number; removed: number }>("PUT", "/chat-retention", { days });
+
 export const saveSignature = (template: SignatureTemplate & { apply: boolean }) =>
   send<{ updated: number }>("PUT", "/signature", template);
 

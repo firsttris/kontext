@@ -64,7 +64,15 @@ export const ChatSearchResults = ({ words, onPick }: { words: string; onPick?: (
           <li key={message.id}>
             <Link
               to="/chat"
-              search={{ channel: message.channelId, message: message.id }}
+              search={
+                message.parentId
+                  ? {
+                      channel: message.channelId,
+                      message: message.parentId,
+                      thread: message.parentId,
+                    }
+                  : { channel: message.channelId, message: message.id }
+              }
               onClick={onPick}
               className="flex flex-col gap-0.5 rounded-lg px-2.5 py-2 text-fg no-underline hover:bg-hover"
             >

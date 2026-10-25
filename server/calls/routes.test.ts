@@ -63,6 +63,9 @@ const setup = () => {
           createdAt: new Date().toISOString(),
           editedAt: null,
           deleted: false,
+          parentId: null,
+          reactions: [],
+          replies: null,
           call,
         };
         posted.push(message);

@@ -18,10 +18,15 @@ export const CHAT_KEY = ["chat"];
 export const CHANNELS_KEY = ["chat", "channels"];
 export const DISCUSSED_KEY = ["chat", "discussed"];
 export const messagesKey = (channelId: string) => ["chat", "messages", channelId];
+/** The first message of a thread and its answers. */
+export const threadKey = (parentId: string) => ["chat", "thread", parentId];
+export type Thread = { message: Message; replies: Message[] };
 
 /** A message to send; `files` are already uploaded. */
 export type Post = {
   channelId: string;
+  /** An answer in the thread of this message. */
+  parentId?: string | null;
   text: string;
   mentions: string[];
   cards: Card[];
@@ -73,11 +78,16 @@ export const useSuggestions = (party: string) =>
     enabled: Boolean(party),
   }).data ?? [];
 
-export type ChannelsData = { channels: ChannelSummary[]; online: string[] };
+export type ChannelsData = {
+  channels: ChannelSummary[];
+  online: string[];
+  /** How long the company keeps messages, in days; 0: for ever. */
+  retentionDays?: number;
+};
 export type MessagePage = { messages: Message[]; hasMore: boolean; reads: Record<string, string> };
 type Messages = InfiniteData<MessagePage, string | null>;
 
-const send = async <T>(method: string, path: string, body?: unknown): Promise<T> => {
+export const send = async <T>(method: string, path: string, body?: unknown): Promise<T> => {
   const response = await fetch(`/api/chat${path}`, {
     method,
     credentials: "same-origin",
@@ -96,7 +106,12 @@ export const useChannels = () => {
     queryKey: CHANNELS_KEY,
     queryFn: () => send<ChannelsData>("GET", "/channels"),
   });
-  return { channels: data?.channels ?? [], online: data?.online ?? [], isPending };
+  return {
+    channels: data?.channels ?? [],
+    online: data?.online ?? [],
+    retentionDays: data?.retentionDays ?? 0,
+    isPending,
+  };
 };
 
 /** The messages of a channel, oldest first; older ones page in with `loadOlder`. */
@@ -122,8 +137,33 @@ export const useMessages = (channelId: string) => {
   };
 };
 
-/** Adds a message to the cached first page, once (the live event and the answer may both come). */
-export const addMessage = (queryClient: QueryClient, message: Message, replaces?: string) =>
+/**
+ * Puts a message where it shows, once (the live event and the answer may both come): an answer
+ * into its thread, any other into the cached first page of its channel and, when its thread is
+ * open, as the thread's first message.
+ */
+export const addMessage = (queryClient: QueryClient, message: Message, replaces?: string) => {
+  if (message.parentId) {
+    queryClient.setQueryData<Thread>(threadKey(message.parentId), (data) =>
+      data
+        ? {
+            ...data,
+            replies: [
+              ...data.replies.filter((m) => m.id !== message.id && m.id !== replaces),
+              message,
+            ].sort((a, b) => a.createdAt.localeCompare(b.createdAt)),
+          }
+        : data,
+    );
+    return;
+  }
+  queryClient.setQueryData<Thread>(threadKey(message.id), (data) =>
+    data ? { ...data, message } : data,
+  );
+  addToChannel(queryClient, message, replaces);
+};
+
+const addToChannel = (queryClient: QueryClient, message: Message, replaces?: string) =>
   queryClient.setQueryData<Messages>(messagesKey(message.channelId), (data) => {
     if (!data) return data;
     const [first, ...rest] = data.pages;
@@ -167,14 +207,15 @@ export const useChatActions = (me: string) => {
   const refreshChannels = () => queryClient.invalidateQueries({ queryKey: CHANNELS_KEY });
 
   const post = useMutation({
-    mutationFn: async ({ channelId, files, ...body }: Post) =>
+    mutationFn: async ({ channelId, files, parentId = null, ...body }: Post) =>
       (
         await send<{ message: Message }>("POST", `${channelPath(channelId)}/messages`, {
           ...body,
+          parentId,
           fileIds: files.map((file) => file.id),
         })
       ).message,
-    onMutate: ({ channelId, text, mentions, cards, files }) => {
+    onMutate: ({ channelId, parentId = null, text, mentions, cards, files }) => {
       const pending: Message = {
         id: `pending-${crypto.randomUUID()}`,
         channelId,
@@ -186,6 +227,9 @@ export const useChatActions = (me: string) => {
         createdAt: new Date().toISOString(),
         editedAt: null,
         deleted: false,
+        parentId,
+        reactions: [],
+        replies: null,
         call: null,
       };
       addMessage(queryClient, pending);
@@ -197,7 +241,9 @@ export const useChatActions = (me: string) => {
     },
     onError: (_error, input, context) => {
       if (context) {
-        void queryClient.invalidateQueries({ queryKey: messagesKey(input.channelId) });
+        void queryClient.invalidateQueries({
+          queryKey: input.parentId ? threadKey(input.parentId) : messagesKey(input.channelId),
+        });
       }
     },
     onSettled: refreshChannels,

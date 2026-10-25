@@ -1,7 +1,8 @@
 /**
  * Photos and files of the chat: the bytes in a directory next to the database (so the backup of
  * the data directory has them), the rest in `chat_files`. A file is uploaded first and belongs to
- * a message once that is sent; uploads never sent are removed after a day.
+ * a message once that is sent; uploads never sent are removed after a day. A photo may come with
+ * a small picture the app made (`<id>.thumb`), which lists and conversations load instead.
  */
 import { mkdirSync } from "node:fs";
 import { rm } from "node:fs/promises";
@@ -11,10 +12,23 @@ import type { Db } from "../db";
 import * as schema from "../db/schema";
 import type { ChatFile } from "./chat";
 
-export type StoredFile = ChatFile & { channelId: string; messageId: string | null; path: string };
+export type StoredFile = ChatFile & {
+  channelId: string;
+  messageId: string | null;
+  path: string;
+  /** The small picture, if there is one. */
+  thumbPath: string | null;
+};
 
 export type ChatFiles = {
-  save: (channelId: string, uploadedBy: string, file: File) => Promise<ChatFile>;
+  /** `type` overrides what the upload says (a mail's copy is JSON by its name). */
+  save: (
+    channelId: string,
+    uploadedBy: string,
+    file: File,
+    thumb?: File,
+    type?: string,
+  ) => Promise<ChatFile>;
   get: (id: string) => Promise<StoredFile | null>;
   /** Gives the uploads to the message: only unsent ones of this channel by this person. */
   attach: (
@@ -26,37 +40,60 @@ export type ChatFiles = {
   pruneUnsent: (before: Date) => Promise<number>;
   /** Removes the files of a deleted message, or of a whole channel. */
   removeOfMessage: (messageId: string) => Promise<void>;
+  removeOfMessages: (messageIds: string[]) => Promise<void>;
   removeOfChannel: (channelId: string) => Promise<void>;
 };
 
 type Row = typeof schema.chatFiles.$inferSelect;
-const toFile = ({ id, name, type, size }: Row): ChatFile => ({ id, name, type, size });
+const toFile = ({ id, name, type, size, hasThumb }: Row): ChatFile => ({
+  id,
+  name,
+  type,
+  size,
+  ...(hasThumb ? { thumb: true } : {}),
+});
+
+/** A small picture is a JPEG of at most this size. */
+export const MAX_THUMB_BYTES = 300_000;
 
 export const createChatFiles = (db: Db, dir: string): ChatFiles => {
   mkdirSync(dir, { recursive: true });
   // Ids are UUIDs made here, never names from the upload: no path tricks.
   const pathOf = (id: string) => join(dir, id);
+  const thumbOf = (id: string) => join(dir, `${id}.thumb`);
 
   /** Deletes the bytes and rows of the files `where` picks. */
   const removeWhere = async (where: SQL | undefined) => {
     const rows = await db.select({ id: schema.chatFiles.id }).from(schema.chatFiles).where(where);
-    for (const { id } of rows) await rm(pathOf(id), { force: true });
+    for (const { id } of rows) {
+      await rm(pathOf(id), { force: true });
+      await rm(thumbOf(id), { force: true });
+    }
     await db.delete(schema.chatFiles).where(where);
     return rows.length;
   };
 
   return {
-    save: async (channelId, uploadedBy, file) => {
+    save: async (channelId, uploadedBy, file, thumb, type = file.type) => {
       const id = crypto.randomUUID();
       await Bun.write(pathOf(id), file);
+      const hasThumb = Boolean(
+        thumb && thumb.type === "image/jpeg" && thumb.size <= MAX_THUMB_BYTES,
+      );
+      if (hasThumb) await Bun.write(thumbOf(id), thumb!);
       const row = {
         id,
         channelId,
         messageId: null,
         uploadedBy,
         name: file.name.slice(0, 200) || "Datei",
-        type: (file.type || "application/octet-stream").slice(0, 100),
+        // The bare media type: "text/plain;charset=utf-8" is "text/plain".
+        type: (type.split(";")[0]!.trim().toLowerCase() || "application/octet-stream").slice(
+          0,
+          100,
+        ),
         size: file.size,
+        hasThumb,
         createdAt: new Date(),
       };
       await db.insert(schema.chatFiles).values(row);
@@ -65,7 +102,13 @@ export const createChatFiles = (db: Db, dir: string): ChatFiles => {
     get: async (id) => {
       const [row] = await db.select().from(schema.chatFiles).where(eq(schema.chatFiles.id, id));
       return row
-        ? { ...toFile(row), channelId: row.channelId, messageId: row.messageId, path: pathOf(id) }
+        ? {
+            ...toFile(row),
+            channelId: row.channelId,
+            messageId: row.messageId,
+            path: pathOf(id),
+            thumbPath: row.hasThumb ? thumbOf(id) : null,
+          }
         : null;
     },
     attach: async (ids, message) => {
@@ -102,6 +145,9 @@ export const createChatFiles = (db: Db, dir: string): ChatFiles => {
       removeWhere(and(isNull(schema.chatFiles.messageId), lt(schema.chatFiles.createdAt, before))),
     removeOfMessage: async (messageId) => {
       await removeWhere(eq(schema.chatFiles.messageId, messageId));
+    },
+    removeOfMessages: async (messageIds) => {
+      if (messageIds.length) await removeWhere(inArray(schema.chatFiles.messageId, messageIds));
     },
     removeOfChannel: async (channelId) => {
       await removeWhere(eq(schema.chatFiles.channelId, channelId));

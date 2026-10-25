@@ -2,7 +2,14 @@
 import { describe, expect, it } from "vitest";
 import type { SessionAccount } from "../categories/routes";
 import { createHub, type LiveEvent } from "../live/hub";
-import { type Channel, type ChatFile, canSee, directKey, type Message } from "./chat";
+import {
+  type Channel,
+  type ChatFile,
+  canSee,
+  directKey,
+  type Message,
+  toggleReaction,
+} from "./chat";
 import type { ChatFiles, StoredFile } from "./files";
 import type { MessageStore } from "./messages";
 import { createChatRoutes } from "./routes";
@@ -86,7 +93,7 @@ const memoryMessages = () => {
         type: file.type,
         size: file.size,
       };
-      stored.push({ ...saved, channelId, messageId: null, path: "" });
+      stored.push({ ...saved, channelId, messageId: null, path: "", thumbPath: null });
       return saved;
     },
     get: async (id) => stored.find((file) => file.id === id) ?? null,
@@ -104,10 +111,24 @@ const memoryMessages = () => {
     ofMessages: async () => new Map(),
     pruneUnsent: async () => 0,
     removeOfMessage: async () => undefined,
+    removeOfMessages: async () => undefined,
     removeOfChannel: async () => undefined,
   };
   const store: MessageStore = {
-    page: async (channelId) => messages.filter((m) => m.channelId === channelId).reverse(),
+    page: async (channelId) =>
+      messages.filter((m) => m.channelId === channelId && !m.parentId).reverse(),
+    replies: async (parentId) => messages.filter((m) => m.parentId === parentId),
+    threadPeople: async (parentId) => [
+      ...new Set(
+        messages.filter((m) => m.id === parentId || m.parentId === parentId).map((m) => m.authorId),
+      ),
+    ],
+    react: async (id, memberId, emoji, on) => {
+      const message = messages.find((m) => m.id === id)!;
+      message.reactions = toggleReaction(message.reactions, emoji, memberId, on);
+      return message;
+    },
+    prune: async () => 0,
     post: async ({ fileIds, ...post }) => {
       const id = `m${messages.length + 1}`;
       const attached = await files.attach(fileIds, { id, ...post });
@@ -118,6 +139,9 @@ const memoryMessages = () => {
         createdAt: new Date().toISOString(),
         editedAt: null,
         deleted: false,
+        parentId: post.parentId ?? null,
+        reactions: [] as Message["reactions"],
+        replies: null,
         call: null,
       };
       messages.push(message);
@@ -360,5 +384,63 @@ describe("/api/chat", () => {
       { who: ["sandra"], title: "Jonas Weber" },
       { who: ["max"], title: "Jonas Weber in #lager" },
     ]);
+  });
+
+  it("answers in a thread: not in the channel, the first message counts them", async () => {
+    const { send, as, listen, told } = setup();
+    const channel = (await send("POST", "/channels", { name: "lager", members: ["max", "anna"] }))
+      .body.channel;
+    const path = `/channels/${channel.id}/messages`;
+    const first = (await send("POST", path, { text: "Wer holt das Rohr?" })).body.message;
+    const heard = listen("anna");
+    as(person("max"));
+    const answer = await send("POST", path, { text: "Ich", parentId: first.id });
+    expect(answer.status).toBe(201);
+    expect(answer.body.message.parentId).toBe(first.id);
+    // No answers to answers, none into another channel.
+    expect((await send("POST", path, { text: "x", parentId: answer.body.message.id })).status).toBe(
+      404,
+    );
+    expect((await send("GET", path)).body.messages.map((m) => m.id)).toEqual([first.id]);
+    const thread = await send("GET", `/messages/${first.id}/replies`);
+    expect((thread.body as unknown as { replies: Message[] }).replies.map((m) => m.text)).toEqual([
+      "Ich",
+    ]);
+    expect(heard.map((event) => event.type).filter((type) => type !== "presence")).toEqual([
+      "message",
+      "changed",
+    ]);
+    // Jonas wrote the first message: he hears of the answer.
+    await expect.poll(() => told.length).toBe(1);
+    expect(told[0]).toEqual({ who: ["jonas"], title: "Jonas Weber antwortet in #lager" });
+    as(person("sandra"));
+    expect((await send("GET", `/messages/${first.id}/replies`)).status).toBe(404);
+  });
+
+  it("puts reactions on and off, live for the others", async () => {
+    const { send, as, listen } = setup();
+    const channel = (await send("POST", "/channels", { name: "lager", members: ["max"] })).body
+      .channel;
+    const message = (
+      await send("POST", `/channels/${channel.id}/messages`, { text: "Rohr ist da" })
+    ).body.message;
+    const heard = listen("max");
+    const react = (emoji: string, on: boolean) =>
+      send("POST", `/messages/${message.id}/reactions`, { emoji, on });
+    expect((await react("👍", true)).body.message.reactions).toEqual([
+      { emoji: "👍", members: ["jonas"] },
+    ]);
+    as(person("max"));
+    await react("👍", true);
+    expect((await react("🎉", true)).body.message.reactions).toEqual([
+      { emoji: "👍", members: ["jonas", "max"] },
+      { emoji: "🎉", members: ["max"] },
+    ]);
+    expect((await react("🎉", false)).body.message.reactions).toHaveLength(1);
+    expect((await react("hallo", true)).status).toBe(400);
+    expect((await react("12", true)).status).toBe(400);
+    expect(heard.filter((event) => event.type === "changed")).toHaveLength(4);
+    as(person("anna"));
+    expect((await react("👍", true)).status).toBe(404);
   });
 });

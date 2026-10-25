@@ -14,6 +14,7 @@ import {
   chatNotice,
   editMessageSchema,
   INLINE_TYPES,
+  MAIL_COPY_TYPE,
   MAX_FILE_BYTES,
   type Message,
   muteSchema,
@@ -28,6 +29,7 @@ import {
 import type { ChatFiles } from "./files";
 import type { MessageStore } from "./messages";
 import type { ChatStore } from "./store";
+import { createThreadRoutes, publishChanged } from "./thread-routes";
 
 export type ChatDeps = {
   store: ChatStore;
@@ -39,6 +41,8 @@ export type ChatDeps = {
   notify?: (memberIds: string[], notice: ReturnType<typeof chatNotice>) => Promise<void>;
   /** The display name of who is asking, for the notification. */
   nameOf?: (request: Request) => Promise<string>;
+  /** How many days the company keeps messages (0: for ever), to say so in the chat. */
+  retentionDays?: () => Promise<number>;
 };
 
 const PAGE = 50;
@@ -57,6 +61,7 @@ export const createChatRoutes = ({
   accountsOf,
   notify,
   nameOf,
+  retentionDays = async () => 0,
 }: ChatDeps) => {
   const app = new Hono<{ Variables: { viewer: Viewer; accounts: SessionAccount[] } }>();
 
@@ -86,7 +91,11 @@ export const createChatRoutes = ({
       .get("accounts")
       .filter((account) => !account.isPersonal)
       .map((account) => account.id);
-    return c.json({ channels: await store.list(c.get("viewer"), shared), online: hub.online() });
+    return c.json({
+      channels: await store.list(c.get("viewer"), shared),
+      online: hub.online(),
+      retentionDays: await retentionDays(),
+    });
   });
 
   app.post("/channels", async (c) => {
@@ -137,6 +146,11 @@ export const createChatRoutes = ({
     if (!channel) return c.json({ error: "Unbekannter Kanal" }, 404);
     const parsed = newMessageSchema.safeParse(await c.req.json().catch(() => null));
     if (!parsed.success) return c.json({ error: "Die Nachricht ist leer." }, 400);
+    // An answer goes to a message of this channel itself, not to another answer.
+    const parent = parsed.data.parentId ? await messages.get(parsed.data.parentId) : null;
+    if (parsed.data.parentId && (!parent || parent.channelId !== channel.id || parent.parentId)) {
+      return c.json({ error: "Unbekannte Nachricht" }, 404);
+    }
     const message = await messages.post({
       ...parsed.data,
       channelId: channel.id,
@@ -147,6 +161,8 @@ export const createChatRoutes = ({
     hub.publish({ type: "message", channelId: channel.id, message }, (other) =>
       canSee(channel, other),
     );
+    // The first message of the thread shows one more answer.
+    if (parent) publishChanged(hub, channel, (await messages.get(parent.id))!);
     if (notify) void tell(c.req.raw, channel, message).catch(() => undefined);
     return c.json({ message }, 201);
   });
@@ -179,7 +195,8 @@ export const createChatRoutes = ({
 
   /** Notifications for a new message on the devices of who it is for. */
   const tell = async (request: Request, channel: Channel, message: Message) => {
-    const who = notifyWho(channel, message, await store.audience(channel.id));
+    const thread = message.parentId ? await messages.threadPeople(message.parentId) : [];
+    const who = notifyWho(channel, message, await store.audience(channel.id), thread);
     if (!who.length || !notify) return;
     const accounts = (await accountsOf(request)) ?? [];
     const where = channelLabel(channel, (id) => accounts.find((a) => a.id === id)?.name);
@@ -194,10 +211,7 @@ export const createChatRoutes = ({
     const channel = await visible(message.channelId, viewer);
     return channel ? { message, channel } : null;
   };
-  const changed = (channel: Channel, message: Message) =>
-    hub.publish({ type: "changed", channelId: channel.id, message }, (other) =>
-      canSee(channel, other),
-    );
+  const changed = (channel: Channel, message: Message) => publishChanged(hub, channel, message);
 
   app.patch("/messages/:id", async (c) => {
     const own = await ownMessage(c.req.param("id"), c.get("viewer"));
@@ -272,6 +286,7 @@ export const createChatRoutes = ({
     if (!channel) return c.json({ error: "Unbekannter Kanal" }, 404);
     const form = await c.req.formData().catch(() => null);
     const file = form?.get("file");
+    const thumb = form?.get("thumb");
     // A form field is text or a file.
     if (!file || typeof file === "string" || file.size === 0) {
       return c.json({ error: "Keine Datei." }, 400);
@@ -279,13 +294,27 @@ export const createChatRoutes = ({
     if (file.size > MAX_FILE_BYTES) {
       return c.json({ error: "Die Datei ist größer als 25 MB." }, 413);
     }
-    return c.json({ file: await files.save(channel.id, viewer.me, file) }, 201);
+    const small = thumb && typeof thumb !== "string" ? thumb : undefined;
+    // A mail shared as a copy says so; its content is shown only from its card.
+    const type = form?.get("kind") === "mail-copy" ? MAIL_COPY_TYPE : file.type;
+    return c.json({ file: await files.save(channel.id, viewer.me, file, small, type) }, 201);
   });
 
   app.get("/files/:id", async (c) => {
     const file = await files.get(c.req.param("id"));
     const channel = file && (await visible(file.channelId, c.get("viewer")));
     if (!file || !channel) return c.json({ error: "Unbekannte Datei" }, 404);
+    // The small picture of a photo, where there is one.
+    if (c.req.query("thumb") && file.thumbPath) {
+      return new Response(Bun.file(file.thumbPath), {
+        headers: {
+          "content-type": "image/jpeg",
+          "content-security-policy": "sandbox",
+          "x-content-type-options": "nosniff",
+          "cache-control": "private, max-age=31536000, immutable",
+        },
+      });
+    }
     // Photos show in the page; everything else is a download that cannot run in this origin.
     const inline = INLINE_TYPES.includes(file.type);
     return new Response(Bun.file(file.path), {
@@ -317,6 +346,8 @@ export const createChatRoutes = ({
     const seen = await Promise.all(ids.map((id) => visible(id, viewer)));
     return c.json({ channelIds: ids.filter((_, index) => seen[index]) });
   });
+
+  app.route("/", createThreadRoutes({ store, messages, hub }));
 
   return app;
 };

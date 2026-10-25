@@ -1,8 +1,16 @@
 /**
  * Sending photos and files to the chat. A phone photo (often 4–8 MB) is made smaller first, so it
- * arrives quickly on mobile data and does not fill the server; other files go as they are.
+ * arrives quickly on mobile data and does not fill the server, and gets a small picture along
+ * (a few dozen KB) that the conversation shows; other files go as they are.
  */
-import { type ChatFile, fitWithin, isPhoto, MAX_FILE_BYTES, PHOTO_SIDE } from "@/lib/chat-cards";
+import {
+  type ChatFile,
+  fitWithin,
+  isPhoto,
+  MAX_FILE_BYTES,
+  PHOTO_SIDE,
+  THUMB_SIDE,
+} from "@/lib/chat-cards";
 import { m } from "@/paraglide/messages";
 
 /** JPEG and PNG photos larger than this on a side are scaled down; GIFs keep their animation. */
@@ -32,11 +40,37 @@ export const shrinkPhoto = async (file: File): Promise<File> => {
   }
 };
 
-export const uploadFile = async (channelId: string, file: File): Promise<ChatFile> => {
+/** The small picture of a photo, as JPEG; none for GIFs (they keep moving) or when it fails. */
+export const thumbnailOf = async (file: File): Promise<File | null> => {
+  if (!isPhoto(file.type) || file.type === "image/gif") return null;
+  if (typeof createImageBitmap === "undefined") return null;
+  try {
+    const bitmap = await createImageBitmap(file, { imageOrientation: "from-image" });
+    const size = fitWithin(bitmap.width, bitmap.height, THUMB_SIDE);
+    const canvas = document.createElement("canvas");
+    canvas.width = size.width;
+    canvas.height = size.height;
+    canvas.getContext("2d")?.drawImage(bitmap, 0, 0, size.width, size.height);
+    bitmap.close();
+    const blob = await new Promise<Blob | null>((done) => canvas.toBlob(done, "image/jpeg", 0.8));
+    return blob ? new File([blob], "thumb.jpg", { type: "image/jpeg" }) : null;
+  } catch {
+    return null;
+  }
+};
+
+export const uploadFile = async (
+  channelId: string,
+  file: File,
+  { mailCopy = false }: { mailCopy?: boolean } = {},
+): Promise<ChatFile> => {
   const ready = isPhoto(file.type) ? await shrinkPhoto(file) : file;
   if (ready.size > MAX_FILE_BYTES) throw new Error(m.chat_file_too_large({ name: file.name }));
   const form = new FormData();
   form.append("file", ready);
+  const thumb = await thumbnailOf(ready);
+  if (thumb) form.append("thumb", thumb);
+  if (mailCopy) form.append("kind", "mail-copy");
   const response = await fetch(`/api/chat/channels/${encodeURIComponent(channelId)}/files`, {
     method: "POST",
     credentials: "same-origin",
@@ -48,3 +82,7 @@ export const uploadFile = async (channelId: string, file: File): Promise<ChatFil
 };
 
 export const fileUrl = (id: string) => `/api/chat/files/${encodeURIComponent(id)}`;
+
+/** The small picture where there is one, else the photo itself (sent before they were made). */
+export const thumbUrl = (file: ChatFile) =>
+  file.thumb ? `${fileUrl(file.id)}?thumb=1` : fileUrl(file.id);

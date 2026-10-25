@@ -385,7 +385,8 @@ oder Reihenfolge.
 ## Team-Chat
 
 Der Chat (`src/features/chat/`, Server `server/chat/`) liegt in Kontexts SQLite
-(`chat_channels`, `chat_members`, `chat_messages`, `chat_reads`); Stalwart hat keinen Chat.
+(`chat_channels`, `chat_members`, `chat_messages`, `chat_reads`, `chat_reactions`); Stalwart hat
+keinen Chat.
 Personen sind ihre persönliche Konto-ID aus der JMAP-Session (in Stalwart zugleich die
 Principal-ID), die Namen holt die App wie bei den Aufgaben über die Principals.
 
@@ -407,10 +408,25 @@ Principal-ID), die Namen holt die App wie bei den Aufgaben über die Principals.
   dort eingeschaltet ist und Kontext im Hintergrund liegt.
 - **Verlauf:** 50 Nachrichten je Seite, ältere auf Knopfdruck; Nachrichten einer Person kurz
   hintereinander stehen unter einem Namen, eine Linie „Neu“ zeigt, wo das Ungelesene beginnt.
-  Aufbewahrt wird unbegrenzt.
+- **Antworten im Thread:** „Antworten“ an einer Nachricht öffnet ihren Thread – auf breiten
+  Bildschirmen neben dem Gespräch, am Handy statt seiner. Antworten tragen `parent_id`, stehen
+  nicht im Kanal und zählen dort nicht als ungelesen; unter der Nachricht steht „3 Antworten ·
+  zuletzt 10:42“ mit den Köpfen, „Neu“, wenn seit dem letzten Lesen welche kamen. Wer im Thread
+  geschrieben hat (auch die erste Nachricht), bekommt neue Antworten aufs Gerät
+  (`notifyWho`). Antworten auf Antworten gibt es nicht.
+- **Reaktionen:** 👍 ❤️ 😂 🎉 👀 ✅ 🙏 über den Smiley an jeder Nachricht, jedes Emoji einmal pro
+  Person (`chat_reactions`); ein Klick auf eine Reaktion setzt oder nimmt die eigene, im Tooltip
+  steht, wer. Kommt bei allen sofort an, ohne Benachrichtigung.
+- **Aufbewahrung:** Die Firmenverwaltung stellt unter „Team-Chat“ ein, wie lange Nachrichten
+  bleiben (unbegrenzt, 30 Tage bis 5 Jahre; `company_setting` `chat_retention_days`). Der Server
+  löscht Älteres beim Speichern, beim Start und stündlich (`server/chat/retention.ts`) mit
+  Karten, Reaktionen, Fotos und Dateien; ein Thread geht erst, wenn auch seine letzte Antwort so
+  alt ist. Am Anfang des Verlaufs steht, wie lange Nachrichten bleiben.
 - **Fotos und Dateien:** bis 10 je Nachricht, 25 MB je Datei; über Büroklammer, Kamera (Handy),
   Ziehen auf die Unterhaltung oder Einfügen. Fotos verkleinert die App vorher (längere Seite
-  2048 px, JPEG), damit sie auch unterwegs schnell ankommen. Der Server legt sie unter
+  2048 px, JPEG), damit sie auch unterwegs schnell ankommen, und schickt ein Vorschaubild mit
+  (640 px, `<id>.thumb`), das der Verlauf statt des Fotos lädt; groß geöffnet kommt das Foto
+  selbst. Der Server legt sie unter
   `chat-files/` neben der Datenbank ab (`chat_files`, `server/chat/files.ts`) und gibt sie nur
   an Personen, die den Kanal sehen; Fotos (JPEG, PNG, WebP, GIF) zeigt der Browser an, alles andere
   wird heruntergeladen (`Content-Security-Policy: sandbox`, nie HTML oder SVG aus derselben
@@ -420,6 +436,12 @@ Principal-ID), die Namen holt die App wie bei den Aufgaben über die Principals.
   sie nur, wer die Mail, die Aufgabe oder den Kontakt ohnehin sehen darf. Alle anderen sehen
   „Liegt bei … – nur dort zu öffnen“; kopiert wird nichts. Eine Aufgaben-Karte zeigt ihren
   aktuellen Stand.
+- **Mail als Kopie:** Beim Besprechen einer geöffneten Mail lässt sie sich „Als Kopie teilen“:
+  Die App lädt Absender, Empfänger, Datum und Text als Datei hoch (Typ
+  `application/vnd.kontext.mail+json`, nicht unter den Dateien gezeigt), die Anhänge als
+  Dateien der Nachricht; die Karte zeigt auf die Kopie (`copy_id`). Wer das Postfach nicht öffnen
+  kann, liest sie über die Karte – den Text erneut bereinigt, Bilder aus dem Internet blockiert.
+  Die Kopie bleibt, auch wenn die Mail später gelöscht wird.
 - **Über eine Mail sprechen:** „Besprechen“ in der Werkzeugleiste der Mail (Taste `b`) schickt
   sie als Karte mit einer Nachricht in einen Kanal oder an eine Person, statt sie intern
   weiterzuleiten. Vorgeschlagen werden zuerst Kanäle, in denen dieselbe Unterhaltung
@@ -430,8 +452,10 @@ Principal-ID), die Namen holt die App wie bei den Aufgaben über die Principals.
   eine gelöschte behält ihren Platz („Nachricht gelöscht“), Text, Karten, Fotos und Dateien sind
   dann wirklich weg. Beides kommt bei den anderen sofort an.
 - **Suche:** über alle Kanäle, die man sieht – im Text und in den Karten (Betreff, Titel, Name),
-  ab zwei Buchstaben; ein Treffer führt an die Stelle im Verlauf. Groß und klein unterscheidet die
-  Suche bei Umlauten noch.
+  ab zwei Buchstaben; ein Treffer führt an die Stelle im Verlauf, eine Antwort in ihren Thread.
+  Groß und klein spielt keine Rolle, auch bei Umlauten: jede Nachricht trägt ihren Text und die
+  Titel ihrer Karten klein geschrieben (`folded`, für ältere Nachrichten beim Start ergänzt), da
+  SQLite nur bei ASCII ohne Unterschied vergleicht.
 - **Stummschalten, verlassen, löschen:** Stummgeschaltetes zählt nicht zum Ungelesenen am Chat
   und am App-Symbol und meldet sich nicht. Einen eigenen Kanal verlassen kann jedes Mitglied (der
   letzte nimmt ihn mit), löschen nur, wer ihn angelegt hat – mit allen Nachrichten und Dateien.

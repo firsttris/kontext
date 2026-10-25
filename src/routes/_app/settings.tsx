@@ -13,6 +13,7 @@ export const settingsSections = [
   "employees",
   "mailboxes",
   "company-signature",
+  "company-chat",
   "migration",
 ] as const;
 

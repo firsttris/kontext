@@ -1,19 +1,20 @@
 /**
  * "Über diese Mail sprechen": a message to a channel or a colleague with the mail as a card,
  * instead of forwarding it internally. The mail stays where it is; whoever may open its mailbox
- * opens it from the card. Suggested first: where it was already discussed, where its sender came
- * up before, the channel of its mailbox.
+ * opens it from the card – or, shared as a copy, everyone reads it there. Suggested first: where it
+ * was already discussed, where its sender came up before, the channel of its mailbox.
  */
 import { AtSign, Hash, Search } from "lucide-react";
 import { useState } from "react";
 import { Avatar } from "@/components/ui/avatar";
 import { Dialog } from "@/components/ui/dialog";
 import { useToast } from "@/components/ui/toast";
-import type { EmailSummary } from "@/jmap/types";
+import type { EmailDetail, EmailSummary } from "@/jmap/types";
 import type { ChannelSummary, Person } from "@/lib/chat";
 import { mailCard } from "@/lib/chat-cards";
 import { cn } from "@/lib/cn";
 import { m } from "@/paraglide/messages";
+import { useShareCopy } from "./mail-copy";
 import { MessageCard } from "./message-card";
 import { MessageInput } from "./message-input";
 import { useChannels, useChatActions, useDiscussions, useSuggestions } from "./queries";
@@ -60,9 +61,14 @@ export const DiscussDialog = ({
   onClose,
 }: {
   accountId: string;
-  email: EmailSummary;
+  /** With its content (opened), the mail can also go as a copy. */
+  email: EmailSummary | EmailDetail;
   onClose: () => void;
 }) => {
+  const shareCopy = useShareCopy();
+  const detail = "bodyValues" in email ? email : null;
+  const [asCopy, setAsCopy] = useState(false);
+  const [busy, setBusy] = useState(false);
   const toast = useToast();
   const { me, people, titleOf } = useChatNames();
   const actions = useChatActions(me);
@@ -81,17 +87,30 @@ export const DiscussDialog = ({
   const target = targets.find((t) => targetKey(t) === chosen) ?? (filter ? shown[0] : targets[0]);
 
   const send = async (text: string, mentions: string[]) => {
-    if (!target) return;
+    if (!target || busy) return;
+    setBusy(true);
     try {
       const channelId =
         target.kind === "channel"
           ? target.channel.id
           : (await actions.openDirect.mutateAsync([target.person.id])).id;
-      await actions.post.mutateAsync({ channelId, text, mentions, cards: [card], files: [] });
+      const shared =
+        asCopy && detail
+          ? await shareCopy(channelId, accountId, detail, card)
+          : { card, files: [] };
+      await actions.post.mutateAsync({
+        channelId,
+        text,
+        mentions,
+        cards: [shared.card],
+        files: shared.files,
+      });
       toast.show(m.chat_discuss_sent({ name: label(target) }));
       onClose();
     } catch (error) {
       toast.show(m.common_error({ message: (error as Error).message }), "error");
+    } finally {
+      setBusy(false);
     }
   };
 
@@ -147,7 +166,23 @@ export const DiscussDialog = ({
         </fieldset>
       </div>
       <MessageCard card={card} />
-      <p className="m-0 text-[12px] leading-normal text-muted">{m.chat_discuss_hint()}</p>
+      {detail ? (
+        <label className="flex items-start gap-2.5 text-[14px]">
+          <input
+            type="checkbox"
+            checked={asCopy}
+            onChange={(event) => setAsCopy(event.target.checked)}
+            className="mt-0.5 size-4 shrink-0 accent-[var(--primary)]"
+          />
+          <span className="flex flex-col gap-0.5">
+            {m.chat_discuss_copy()}
+            <span className="text-[12px] text-muted">{m.chat_discuss_copy_hint()}</span>
+          </span>
+        </label>
+      ) : null}
+      <p className="m-0 text-[12px] leading-normal text-muted">
+        {asCopy ? m.chat_discuss_copy_note() : m.chat_discuss_hint()}
+      </p>
       <MessageInput
         placeholder={m.chat_discuss_placeholder()}
         people={people}

@@ -120,7 +120,8 @@ export const createChatStore = (db: Db, messages: Pick<MessageStore, "last">): C
     const rows = await db
       .select({
         channelId: schema.chatMessages.channelId,
-        unread: sql<number>`count(*)`,
+        // Answers count only when they mention one: they live in their thread.
+        unread: sql<number>`sum(case when ${schema.chatMessages.parentId} is null then 1 else 0 end)`,
         mentions: sql<number>`sum(case when ${schema.chatMessages.mentions} like ${`%${JSON.stringify(me)}%`} then 1 else 0 end)`,
       })
       .from(schema.chatMessages)

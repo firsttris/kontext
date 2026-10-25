@@ -35,6 +35,9 @@ const message = (text: string): Message => ({
   cards: [],
   editedAt: null,
   deleted: false,
+  parentId: null,
+  reactions: [],
+  replies: null,
   call: null,
   createdAt: "2026-10-24T08:00:00Z",
 });

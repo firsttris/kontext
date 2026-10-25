@@ -9,7 +9,7 @@ import { type ChatFile, isPhoto } from "@/lib/chat-cards";
 import { cn } from "@/lib/cn";
 import { formatSize } from "@/lib/format";
 import { m } from "@/paraglide/messages";
-import { fileUrl } from "./upload";
+import { fileUrl, thumbUrl } from "./upload";
 
 const PhotoViewer = ({
   photos,
@@ -105,7 +105,7 @@ export const MessageFiles = ({ files }: { files: ChatFile[] }) => {
                 className="block overflow-hidden rounded-xl border border-border bg-subtle"
               >
                 <img
-                  src={fileUrl(photo.id)}
+                  src={thumbUrl(photo)}
                   alt=""
                   loading="lazy"
                   className={cn(

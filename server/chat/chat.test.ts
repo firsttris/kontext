@@ -5,9 +5,14 @@ import {
   channelName,
   chatNotice,
   directKey,
+  fold,
   messageSummary,
   newChannelSchema,
   notifyWho,
+  reactionSchema,
+  retentionCutoff,
+  retentionSchema,
+  toggleReaction,
 } from "./chat";
 
 const jonas = { me: "jonas", accountIds: ["jonas", "info"] };
@@ -113,5 +118,56 @@ describe("messageSummary of a call", () => {
     expect(line(60)).toBe("Anruf");
     expect(line(60, false, true)).toBe("Videoanruf");
     expect(line(60, true, true)).toBe("Besprechung");
+  });
+});
+
+describe("reactions, search, keeping", () => {
+  it("adds and takes away one person's emoji, in the order they came", () => {
+    let list = toggleReaction([], "👍", "jonas", true);
+    list = toggleReaction(list, "🎉", "max", true);
+    list = toggleReaction(list, "👍", "max", true);
+    list = toggleReaction(list, "👍", "max", true);
+    expect(list).toEqual([
+      { emoji: "👍", members: ["jonas", "max"] },
+      { emoji: "🎉", members: ["max"] },
+    ]);
+    expect(toggleReaction(list, "🎉", "max", false)).toEqual([
+      { emoji: "👍", members: ["jonas", "max"] },
+    ]);
+  });
+
+  it("takes emojis with skin tone or joined, not words or digits", () => {
+    const ok = (emoji: string) => reactionSchema.safeParse({ emoji, on: true }).success;
+    expect(["👍", "👍🏽", "❤️", "👩‍🔧", "✅"].every(ok)).toBe(true);
+    expect(["ok", "12", "#", "", "👍 ok"].some(ok)).toBe(false);
+  });
+
+  it("folds umlauts for the search", () => {
+    expect(fold("ÖLWECHSEL Übergabe Straße")).toBe("ölwechsel übergabe straße");
+  });
+
+  it("keeps for ever with 0 days, else cuts off by the days", () => {
+    const now = new Date("2026-10-25T12:00:00Z");
+    expect(retentionCutoff(0, now)).toBeNull();
+    expect(retentionCutoff(30, now)?.toISOString()).toBe("2026-09-25T12:00:00.000Z");
+    expect(retentionSchema.safeParse({ days: 365 }).success).toBe(true);
+    expect(retentionSchema.safeParse({ days: 7 }).success).toBe(false);
+  });
+
+  it("tells who wrote in the thread of an answer, and leads into it", () => {
+    const channel = { kind: "channel" as const, members: ["jonas", "max", "anna"] };
+    const who = notifyWho(channel, { authorId: "max", mentions: [] }, { readers: [], muted: [] }, [
+      "jonas",
+      "max",
+    ]);
+    expect(who).toEqual(["jonas"]);
+    const notice = chatNotice(
+      { id: "c1", kind: "channel" },
+      { id: "m2", text: "Ich", files: [], cards: [], parentId: "m1" },
+      "Max",
+      "#lager",
+    );
+    expect(notice.title).toBe("Max antwortet in #lager");
+    expect(notice.url).toBe("/chat?channel=c1&message=m1&thread=m1");
   });
 });

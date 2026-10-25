@@ -7,6 +7,8 @@ export const chatSearchSchema = z.object({
   channel: z.string().optional(),
   /** A message to show, e.g. the one a task was made from. */
   message: z.string().optional(),
+  /** The message whose thread is open beside the conversation. */
+  thread: z.string().optional(),
 });
 
 export const Route = createFileRoute("/_app/chat")({
@@ -16,5 +18,7 @@ export const Route = createFileRoute("/_app/chat")({
 
 function ChatRoute() {
   const search = Route.useSearch();
-  return <ChatPage channelId={search.channel} messageId={search.message} />;
+  return (
+    <ChatPage channelId={search.channel} messageId={search.message} threadId={search.thread} />
+  );
 }

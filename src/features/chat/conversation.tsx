@@ -2,9 +2,10 @@
  * One channel or direct conversation: the history (a list with names on a desktop, bubbles on a
  * phone), a line where the new messages begin, who is writing, and the field to write – with
  * photos and files (also dropped onto the conversation) and cards. What one sees counts as read.
+ * A message's thread opens beside it (on a phone instead of it).
  */
-import { Link } from "@tanstack/react-router";
-import { BellOff, ChevronLeft, ImageUp, Users } from "lucide-react";
+import { Link, useNavigate } from "@tanstack/react-router";
+import { BellOff, ChevronLeft, Clock, ImageUp, Users } from "lucide-react";
 import { type DragEvent, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { useMediaQuery } from "@/components/use-media-query";
@@ -12,11 +13,15 @@ import { CallButtons } from "@/features/calls/call-buttons";
 import { TaskDialog, type TaskStart } from "@/features/tasks/task-dialog";
 import { type ChannelSummary, firstName, type Message, readBy, timeline } from "@/lib/chat";
 import { taskFromMessage } from "@/lib/chat-cards";
+import { newestActivity, retentionText } from "@/lib/chat-threads";
+import { cn } from "@/lib/cn";
 import { m } from "@/paraglide/messages";
 import { ChannelMenu } from "./channel-menu";
 import { MessageInput } from "./message-input";
 import { isPending, Run } from "./message-run";
-import { useChatActions, useMessages } from "./queries";
+import { useChannels, useChatActions, useMessages } from "./queries";
+import { ThreadPanel } from "./thread-panel";
+import { useReact } from "./thread-queries";
 import { useTyping } from "./typing";
 import { useAttachments } from "./use-attachments";
 import { useChatNames } from "./use-chat-names";
@@ -48,14 +53,21 @@ export const Conversation = ({
   channel,
   online,
   messageId,
+  threadId,
   onEdit,
 }: {
   channel: ChannelSummary;
   online: string[];
   /** A message to show, e.g. the one a task was made from. */
   messageId?: string;
+  /** The message whose thread is open. */
+  threadId?: string;
   onEdit: () => void;
 }) => {
+  const navigate = useNavigate();
+  const openThread = (id: string | undefined) =>
+    void navigate({ to: "/chat", search: { channel: channel.id, thread: id } });
+  const { retentionDays } = useChannels();
   const { me, people, nameOf, titleOf } = useChatNames();
   const {
     messages,
@@ -66,6 +78,7 @@ export const Conversation = ({
     loadingOlder,
   } = useMessages(channel.id);
   const actions = useChatActions(me);
+  const react = useReact(me);
   const typing = useTyping(channel.id);
   const title = titleOf(channel);
   const desktop = useMediaQuery("(min-width: 768px)");
@@ -74,15 +87,15 @@ export const Conversation = ({
   // Where the new messages began when the channel was opened; stays while one reads.
   const [readUpTo] = useState(channel.readAt);
 
-  // Read: the newest message, whenever it is on screen in a visible tab.
-  const newest = messages.filter((message) => !isPending(message)).at(-1);
+  // Read: the newest message or answer, whenever it is on screen in a visible tab.
+  const newest = newestActivity(messages.filter((message) => !isPending(message)));
   const markRead = actions.markRead.mutate;
   useEffect(() => {
     if (!newest) return;
     const mark = () => {
       if (document.visibilityState !== "visible") return;
-      if (channel.readAt && channel.readAt >= newest.createdAt) return;
-      markRead({ channelId: channel.id, at: newest.createdAt });
+      if (channel.readAt && channel.readAt >= newest) return;
+      markRead({ channelId: channel.id, at: newest });
     };
     mark();
     document.addEventListener("visibilitychange", mark);
@@ -159,174 +172,200 @@ export const Conversation = ({
       : people;
 
   return (
-    <section
-      aria-label={title}
-      className="relative flex h-full min-h-0 flex-1 flex-col"
-      onDragOver={(event) => {
-        if (!carriesFiles(event)) return;
-        event.preventDefault();
-        setDragging(true);
-      }}
-      onDragLeave={(event) => {
-        if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setDragging(false);
-      }}
-      onDrop={(event) => {
-        if (!carriesFiles(event)) return;
-        event.preventDefault();
-        setDragging(false);
-        attachments.addFiles(event.dataTransfer.files);
-      }}
-    >
-      {dragging ? (
-        <div className="pointer-events-none absolute inset-2 z-10 flex flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-accent bg-bg/90 text-[15px] font-medium text-accent">
-          <ImageUp size={28} aria-hidden="true" />
-          {m.chat_drop_here({ name: `${prefix}${title}` })}
-        </div>
-      ) : null}
-      <header className="flex h-14 shrink-0 items-center gap-1 border-b border-border px-2 md:gap-3 md:px-5">
-        <Link
-          to="/chat"
-          search={{}}
-          aria-label={m.chat_back()}
-          className="flex size-11 items-center justify-center text-fg md:hidden"
-        >
-          <ChevronLeft size={20} />
-        </Link>
-        <div className="flex min-w-0 flex-1 flex-col md:flex-row md:items-baseline md:gap-3">
-          <h1 className="m-0 truncate text-[16px] font-semibold md:text-[17px]">
-            {prefix}
-            {title}
-          </h1>
-          {channel.muted ? (
-            <BellOff
-              size={14}
-              role="img"
-              aria-label={m.chat_muted()}
-              className="hidden shrink-0 text-muted md:block"
-            />
-          ) : null}
-          <span className="truncate text-[12px] text-muted">
-            {subtitle(channel, me, nameOf, online)}
-          </span>
-        </div>
-        <CallButtons channel={channel} />
-        {channel.kind === "channel" ? (
-          <Button
-            variant="ghost"
-            size="iconSm"
-            aria-label={m.chat_edit()}
-            title={m.chat_edit()}
-            onClick={onEdit}
-          >
-            <Users size={16} />
-          </Button>
-        ) : null}
-        <ChannelMenu channel={channel} me={me} title={`${prefix}${title}`} />
-      </header>
-      <div
-        ref={scroller}
-        onScroll={(event) => {
-          const element = event.currentTarget;
-          atBottom.current = element.scrollHeight - element.scrollTop - element.clientHeight < 80;
+    <div className="flex h-full min-h-0 flex-1">
+      <section
+        aria-label={title}
+        className={cn(
+          "relative h-full min-h-0 flex-1 flex-col",
+          threadId ? "hidden lg:flex" : "flex",
+        )}
+        onDragOver={(event) => {
+          if (!carriesFiles(event)) return;
+          event.preventDefault();
+          setDragging(true);
         }}
-        className="min-h-0 flex-1 overflow-y-auto px-3.5 py-4 md:px-6"
+        onDragLeave={(event) => {
+          if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setDragging(false);
+        }}
+        onDrop={(event) => {
+          if (!carriesFiles(event)) return;
+          event.preventDefault();
+          setDragging(false);
+          attachments.addFiles(event.dataTransfer.files);
+        }}
       >
-        {hasOlder ? (
-          <div className="flex justify-center pb-3">
-            <Button variant="ghost" size="sm" disabled={loadingOlder} onClick={older}>
-              {m.chat_older()}
-            </Button>
+        {dragging ? (
+          <div className="pointer-events-none absolute inset-2 z-10 flex flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-accent bg-bg/90 text-[15px] font-medium text-accent">
+            <ImageUp size={28} aria-hidden="true" />
+            {m.chat_drop_here({ name: `${prefix}${title}` })}
           </div>
         ) : null}
-        {!loading && messages.length === 0 ? (
-          <p className="m-0 py-10 text-center text-[14px] text-muted">{m.chat_empty()}</p>
-        ) : null}
-        <ol
-          aria-label={m.chat_messages()}
-          className="m-0 flex list-none flex-col gap-3.5 p-0 md:gap-4"
-        >
-          {items.map((item) => {
-            if (item.kind === "day") {
-              return (
-                <li
-                  key={item.key}
-                  className="flex items-center gap-2.5 text-[12px] text-muted before:h-px before:flex-1 before:bg-border after:h-px after:flex-1 after:bg-border"
-                >
-                  {item.label}
-                </li>
-              );
-            }
-            if (item.kind === "new") {
-              return (
-                <li
-                  key={item.key}
-                  className="flex items-center gap-2.5 text-[12px] font-medium text-accent after:h-px after:flex-1 after:bg-accent/40"
-                >
-                  {m.chat_new_badge()}
-                </li>
-              );
-            }
-            return (
-              <Run
-                key={item.messages[0]!.id}
-                run={item}
-                me={me}
-                people={people}
-                nameOf={nameOf}
-                highlight={highlight}
-                onMakeTask={makeTask}
-                onEdit={(message, text, mentions) =>
-                  actions.edit.mutate({ id: message.id, text, mentions })
-                }
-                onDelete={(message) => {
-                  if (window.confirm(m.chat_delete_message_confirm())) {
-                    actions.remove.mutate(message.id);
-                  }
-                }}
+        <header className="flex h-14 shrink-0 items-center gap-1 border-b border-border px-2 md:gap-3 md:px-5">
+          <Link
+            to="/chat"
+            search={{}}
+            aria-label={m.chat_back()}
+            className="flex size-11 items-center justify-center text-fg md:hidden"
+          >
+            <ChevronLeft size={20} />
+          </Link>
+          <div className="flex min-w-0 flex-1 flex-col md:flex-row md:items-baseline md:gap-3">
+            <h1 className="m-0 truncate text-[16px] font-semibold md:text-[17px]">
+              {prefix}
+              {title}
+            </h1>
+            {channel.muted ? (
+              <BellOff
+                size={14}
+                role="img"
+                aria-label={m.chat_muted()}
+                className="hidden shrink-0 text-muted md:block"
               />
-            );
-          })}
-        </ol>
-        {seenBy.length ? (
-          <p className="m-0 mt-1 text-right text-[11px] text-muted md:text-left md:pl-[46px]">
-            {others.length === 1
-              ? m.chat_seen()
-              : m.chat_seen_by({ names: seenBy.map((id) => firstName(nameOf(id))).join(", ") })}
-          </p>
-        ) : null}
-      </div>
-      <div className="flex h-6 shrink-0 items-center gap-2 px-4 text-[13px] text-muted md:px-6 md:pl-[70px]">
-        {typing.length ? (
-          <>
-            <span aria-hidden="true" className="size-1.5 animate-pulse rounded-full bg-accent" />
-            {typingLine(typing.map((id) => firstName(nameOf(id))))}
-          </>
-        ) : null}
-      </div>
-      <div className="shrink-0 border-t border-border px-2.5 pt-2 pb-3 safe-bottom md:border-0 md:px-5 md:pt-0 md:pb-4">
-        <MessageInput
-          key={channel.id}
-          placeholder={
-            desktop ? m.chat_placeholder({ name: `${prefix}${title}` }) : m.chat_placeholder_short()
-          }
-          people={mentionable}
-          me={me}
-          onTyping={() => actions.typing(channel.id)}
-          attachments={attachments}
-          onSend={(text, mentions) => {
-            atBottom.current = true;
-            actions.post.mutate({
-              channelId: channel.id,
-              text,
-              mentions,
-              cards: attachments.cards,
-              files: attachments.files.flatMap((file) => (file.uploaded ? [file.uploaded] : [])),
-            });
-            attachments.clear();
+            ) : null}
+            <span className="truncate text-[12px] text-muted">
+              {subtitle(channel, me, nameOf, online)}
+            </span>
+          </div>
+          <CallButtons channel={channel} />
+          {channel.kind === "channel" ? (
+            <Button
+              variant="ghost"
+              size="iconSm"
+              aria-label={m.chat_edit()}
+              title={m.chat_edit()}
+              onClick={onEdit}
+            >
+              <Users size={16} />
+            </Button>
+          ) : null}
+          <ChannelMenu channel={channel} me={me} title={`${prefix}${title}`} />
+        </header>
+        <div
+          ref={scroller}
+          onScroll={(event) => {
+            const element = event.currentTarget;
+            atBottom.current = element.scrollHeight - element.scrollTop - element.clientHeight < 80;
           }}
+          className="min-h-0 flex-1 overflow-y-auto px-3.5 py-4 md:px-6"
+        >
+          {!hasOlder && !loading && retentionDays ? (
+            <p className="m-0 flex items-center justify-center gap-1.5 pb-4 text-center text-[12px] text-muted">
+              <Clock size={13} aria-hidden="true" />
+              {m.chat_kept_for({ time: retentionText(retentionDays) })}
+            </p>
+          ) : null}
+          {hasOlder ? (
+            <div className="flex justify-center pb-3">
+              <Button variant="ghost" size="sm" disabled={loadingOlder} onClick={older}>
+                {m.chat_older()}
+              </Button>
+            </div>
+          ) : null}
+          {!loading && messages.length === 0 ? (
+            <p className="m-0 py-10 text-center text-[14px] text-muted">{m.chat_empty()}</p>
+          ) : null}
+          <ol
+            aria-label={m.chat_messages()}
+            className="m-0 flex list-none flex-col gap-3.5 p-0 md:gap-4"
+          >
+            {items.map((item) => {
+              if (item.kind === "day") {
+                return (
+                  <li
+                    key={item.key}
+                    className="flex items-center gap-2.5 text-[12px] text-muted before:h-px before:flex-1 before:bg-border after:h-px after:flex-1 after:bg-border"
+                  >
+                    {item.label}
+                  </li>
+                );
+              }
+              if (item.kind === "new") {
+                return (
+                  <li
+                    key={item.key}
+                    className="flex items-center gap-2.5 text-[12px] font-medium text-accent after:h-px after:flex-1 after:bg-accent/40"
+                  >
+                    {m.chat_new_badge()}
+                  </li>
+                );
+              }
+              return (
+                <Run
+                  key={item.messages[0]!.id}
+                  run={item}
+                  me={me}
+                  people={people}
+                  nameOf={nameOf}
+                  highlight={highlight}
+                  readUpTo={readUpTo}
+                  onMakeTask={makeTask}
+                  onReact={react}
+                  onReply={(message) => openThread(message.id)}
+                  onEdit={(message, text, mentions) =>
+                    actions.edit.mutate({ id: message.id, text, mentions })
+                  }
+                  onDelete={(message) => {
+                    if (window.confirm(m.chat_delete_message_confirm())) {
+                      actions.remove.mutate(message.id);
+                    }
+                  }}
+                />
+              );
+            })}
+          </ol>
+          {seenBy.length ? (
+            <p className="m-0 mt-1 text-right text-[11px] text-muted md:text-left md:pl-[46px]">
+              {others.length === 1
+                ? m.chat_seen()
+                : m.chat_seen_by({ names: seenBy.map((id) => firstName(nameOf(id))).join(", ") })}
+            </p>
+          ) : null}
+        </div>
+        <div className="flex h-6 shrink-0 items-center gap-2 px-4 text-[13px] text-muted md:px-6 md:pl-[70px]">
+          {typing.length ? (
+            <>
+              <span aria-hidden="true" className="size-1.5 animate-pulse rounded-full bg-accent" />
+              {typingLine(typing.map((id) => firstName(nameOf(id))))}
+            </>
+          ) : null}
+        </div>
+        <div className="shrink-0 border-t border-border px-2.5 pt-2 pb-3 safe-bottom md:border-0 md:px-5 md:pt-0 md:pb-4">
+          <MessageInput
+            key={channel.id}
+            placeholder={
+              desktop
+                ? m.chat_placeholder({ name: `${prefix}${title}` })
+                : m.chat_placeholder_short()
+            }
+            people={mentionable}
+            me={me}
+            onTyping={() => actions.typing(channel.id)}
+            attachments={attachments}
+            onSend={(text, mentions) => {
+              atBottom.current = true;
+              actions.post.mutate({
+                channelId: channel.id,
+                text,
+                mentions,
+                cards: attachments.cards,
+                files: attachments.files.flatMap((file) => (file.uploaded ? [file.uploaded] : [])),
+              });
+              attachments.clear();
+            }}
+          />
+        </div>
+      </section>
+      {threadId ? (
+        <ThreadPanel
+          key={threadId}
+          channel={channel}
+          parentId={threadId}
+          title={`${prefix}${title}`}
+          onClose={() => openThread(undefined)}
+          onMakeTask={makeTask}
         />
-      </div>
+      ) : null}
       {task ? <TaskDialog starts={[task]} onClose={() => setTask(null)} /> : null}
-    </section>
+    </div>
   );
 };

@@ -65,6 +65,8 @@ export const isPhoto = (type: string) => INLINE_TYPES.includes(type);
 
 /** Photos from a phone camera are large; their longer side shrinks to this before sending. */
 export const PHOTO_SIDE = 2048;
+/** The small picture the conversation shows: sharp enough for a tile on a sharp screen. */
+export const THUMB_SIDE = 640;
 
 /** The size a picture gets so that neither side is longer than `max`; never larger. */
 export const fitWithin = (width: number, height: number, max = PHOTO_SIDE) => {
