@@ -1,13 +1,16 @@
 import { describe, expect, it } from "vitest";
 import type { Principal } from "@/jmap/principals";
 import {
+  channelMailboxes,
   channelReaders,
   documentCard,
   documentHref,
   documentLink,
+  documentsOfContact,
   documentsOfLinks,
   eventReaders,
   taskReaders,
+  withContactDocuments,
   withDocuments,
 } from "./document-links";
 
@@ -62,5 +65,24 @@ describe("document links", () => {
     expect(eventReaders(["ANNA@weber.test", "kunde@example.org"], principals)).toEqual([
       "anna@weber.test",
     ]);
+  });
+
+  it("names the shared mailbox of a mailbox channel, whose people the server knows", () => {
+    expect(channelMailboxes({ kind: "mailbox", accountId: "g1" })).toEqual(["g1"]);
+    expect(channelMailboxes({ kind: "team", accountId: null })).toEqual([]);
+  });
+
+  it("keeps a contact's documents among its links, beside its web page", () => {
+    const offer = { id: "n7", name: "Angebot.docx", href: "https://k.test/documents/edit/n7" };
+    const page = { "@type": "Link" as const, uri: "https://weber.test" };
+    const links = withContactDocuments({ web: page, "kontext-document-old": { uri: "x" } }, [
+      offer,
+    ]);
+    expect(links).toEqual({
+      web: page,
+      "kontext-document-n7": { "@type": "Link", uri: offer.href, label: "Angebot.docx" },
+    });
+    expect(documentsOfContact(links)).toEqual([offer]);
+    expect(withContactDocuments({ "kontext-document-n7": { uri: "x" } }, [])).toBeNull();
   });
 });

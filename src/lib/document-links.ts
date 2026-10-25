@@ -1,6 +1,6 @@
 /**
  * Files of Dokumente (Schreibzeug) where they belong in Kontext: as cards in the chat, as links of a
- * task and of an appointment, and who should be able to open them there. Pure.
+ * task, an appointment and a contact, and who should be able to open them there. Pure.
  */
 import type { Principal } from "@/jmap/principals";
 import type { Card, Channel } from "../../server/chat/chat";
@@ -45,32 +45,66 @@ export type EventLink = { "@type"?: "Link"; href: string; title?: string };
 /** A document of an appointment: the file and the address its link has. */
 export type LinkedDocument = DocumentFile & { href: string };
 
-/** The appointment's links that are documents go by this key, followed by the file's id. */
+/** Links of appointments and contacts that are documents go by this key, then the file's id. */
 const DOCUMENT_KEY = "kontext-document-";
 
-/** The documents among an appointment's links. */
-export const documentsOfLinks = (links?: Record<string, EventLink> | null): LinkedDocument[] =>
-  Object.entries(links ?? {}).flatMap(([key, link]) =>
-    key.startsWith(DOCUMENT_KEY)
-      ? [{ id: key.slice(DOCUMENT_KEY.length), name: link.title ?? link.href, href: link.href }]
-      : [],
-  );
+/** Documents among links of any kind, read with how that kind names address and title. */
+const documentsAmong = <L>(
+  links: Record<string, L> | null | undefined,
+  read: (link: L) => { href: string; title?: string },
+): LinkedDocument[] =>
+  Object.entries(links ?? {}).flatMap(([key, link]) => {
+    if (!key.startsWith(DOCUMENT_KEY)) return [];
+    const { href, title } = read(link);
+    return [{ id: key.slice(DOCUMENT_KEY.length), name: title ?? href, href }];
+  });
 
-/** The appointment's links with these documents; other links (from an invitation) stay. */
-export const withDocuments = (
-  links: Record<string, EventLink> | null | undefined,
+/** The links with exactly these documents; other links (from an invitation, a vCard) stay. */
+const withDocumentsAmong = <L>(
+  links: Record<string, L> | null | undefined,
   documents: LinkedDocument[],
-): Record<string, EventLink> | null => {
+  write: (document: LinkedDocument) => L,
+): Record<string, L> | null => {
   const others = Object.entries(links ?? {}).filter(([key]) => !key.startsWith(DOCUMENT_KEY));
   const all = [
     ...others,
-    ...documents.map(({ id, name, href }): [string, EventLink] => [
-      `${DOCUMENT_KEY}${id}`,
-      { "@type": "Link", href, title: name },
-    ]),
+    ...documents.map((document): [string, L] => [`${DOCUMENT_KEY}${document.id}`, write(document)]),
   ];
   return all.length ? Object.fromEntries(all) : null;
 };
+
+/** The documents among an appointment's links. */
+export const documentsOfLinks = (links?: Record<string, EventLink> | null): LinkedDocument[] =>
+  documentsAmong(links, (link) => link);
+
+/** The appointment's links with these documents. */
+export const withDocuments = (
+  links: Record<string, EventLink> | null | undefined,
+  documents: LinkedDocument[],
+): Record<string, EventLink> | null =>
+  withDocumentsAmong(links, documents, ({ href, name }) => ({
+    "@type": "Link",
+    href,
+    title: name,
+  }));
+
+/** A contact's link (JSContact Link, RFC 9553 §2.6.3), as far as Kontext reads it. */
+export type ContactLink = { "@type"?: "Link"; uri: string; label?: string };
+
+/** The documents among a contact's links. */
+export const documentsOfContact = (links?: Record<string, ContactLink> | null): LinkedDocument[] =>
+  documentsAmong(links, (link) => ({ href: link.uri, title: link.label }));
+
+/** The contact's links with these documents. */
+export const withContactDocuments = (
+  links: Record<string, ContactLink> | null | undefined,
+  documents: LinkedDocument[],
+): Record<string, ContactLink> | null =>
+  withDocumentsAmong(links, documents, ({ href, name }) => ({
+    "@type": "Link",
+    uri: href,
+    label: name,
+  }));
 
 /** The addresses of people among the principals, by their account ids (or all of them). */
 const addressesOf = (principals: Principal[], ids?: string[]): string[] =>
@@ -82,7 +116,8 @@ const addressesOf = (principals: Principal[], ids?: string[]): string[] =>
 
 /**
  * Who reads a channel, by address: everyone in a team channel, the members of a named or direct
- * one. A shared mailbox's channel has no list of people here; its file is shared with nobody.
+ * one. A shared mailbox's channel has no list of people here: channelMailboxes names it, and
+ * Kontext's server knows its people.
  */
 export const channelReaders = (
   channel: Pick<Channel, "kind" | "members">,
@@ -92,6 +127,10 @@ export const channelReaders = (
   if (channel.kind === "mailbox") return [];
   return addressesOf(principals, channel.members);
 };
+
+/** The shared mailbox whose people read a mailbox channel. */
+export const channelMailboxes = (channel: Pick<Channel, "kind" | "accountId">): string[] =>
+  channel.kind === "mailbox" && channel.accountId ? [channel.accountId] : [];
 
 /** The people of a task: who it is assigned to. */
 export const taskReaders = (assigneeId: string | null, principals: Principal[]): string[] =>

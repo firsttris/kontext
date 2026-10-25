@@ -1,5 +1,6 @@
 // @vitest-environment node
 import { describe, expect, it } from "vitest";
+import type { MailboxFolders } from "./mailboxes";
 import { createDocumentsRoutes, type DocumentsDeps } from "./routes";
 import type { Person, Schreibzeug } from "./schreibzeug";
 
@@ -9,7 +10,7 @@ const jonas: Person = { id: "u1", email: "jonas@weber.test", name: "Jonas Weber"
 const fakes = () => {
   const stored: { person: Person; folderId: string | null; name: string; text: string }[] = [];
   const uploaded: { token: string; accountId: string; text: string; type: string }[] = [];
-  const shared: { nodeId: string; email: string; role: string }[] = [];
+  const shared: { owner: string; nodeId: string; email: string; role: string }[] = [];
   const schreibzeug: Schreibzeug = {
     list: async (_person, folderId) => ({
       folder: null,
@@ -23,10 +24,15 @@ const fakes = () => {
       return { id: "n1", kind: "file", name: file.name };
     },
     download: async () => new File(["Angebot"], "Angebot.docx", { type: "application/x-docx" }),
-    share: async (_person, nodeId, email, role) => {
-      if (nodeId === "foreign") throw new Error("Das darf nur, wem es gehört.");
-      shared.push({ nodeId, email, role });
+    share: async (person, nodeId, email, role) => {
+      const owner = nodeId === "info-file" ? "mailbox:m1" : "u1";
+      if (nodeId === "foreign" || person.id !== owner)
+        throw new Error("Das darf nur, wem es gehört.");
+      shared.push({ owner: person.id, nodeId, email, role });
     },
+    createFolder: async () => ({ id: "f2", kind: "folder", name: "Neu" }),
+    shares: async () => [],
+    unshare: async () => undefined,
     reachable: async () => true,
   };
   const deps: DocumentsDeps = {
@@ -34,6 +40,7 @@ const fakes = () => {
     schreibzeug,
     askerOf: async (request) =>
       request.headers.get("cookie") === "session" ? { person: jonas, stalwartToken: "st" } : null,
+    mailboxes: null,
     blobs: {
       download: async (_token, _accountId, blobId) => new Blob([`bytes of ${blobId}`]),
       upload: async (token, accountId, file) => {
@@ -114,8 +121,39 @@ describe("/api/documents", () => {
     const emails = ["anna@weber.test", "Jonas@weber.test", "ANNA@weber.test"];
     const reply = await app.request(post("/share", { fileId: "n1", emails }));
     expect(await reply.json()).toEqual({ shared: ["anna@weber.test"] });
-    expect(shared).toEqual([{ nodeId: "n1", email: "anna@weber.test", role: "view" }]);
+    expect(shared).toEqual([{ owner: "u1", nodeId: "n1", email: "anna@weber.test", role: "view" }]);
     const refused = await app.request(post("/share", { fileId: "foreign", emails }));
     expect(await refused.json()).toEqual({ error: "Das darf nur, wem es gehört." });
+  });
+
+  it("shares with a shared mailbox's people, as the mailbox for its own files", async () => {
+    const { deps, shared } = fakes();
+    const mailboxes: MailboxFolders = {
+      foldersFor: async () => [{ accountId: "m1", email: "info@weber.test", folderId: "fi" }],
+      peopleOf: async (_email, ids) =>
+        ids.includes("m1") ? ["jonas@weber.test", "sandra@weber.test"] : [],
+      ownersFor: async () => [
+        { id: "mailbox:m1", email: "info@weber.test", name: "info@weber.test" },
+      ],
+      changed: async () => undefined,
+    };
+    const app = createDocumentsRoutes({ ...deps, mailboxes });
+    const folders = await app.request("/mailboxes", { headers: { cookie: "session" } });
+    expect(await folders.json()).toEqual([
+      { accountId: "m1", email: "info@weber.test", folderId: "fi" },
+    ]);
+    const reply = await app.request(
+      post("/share", { fileId: "info-file", emails: [], mailboxes: ["m1"] }),
+    );
+    expect(await reply.json()).toEqual({ shared: ["sandra@weber.test"] });
+    expect(shared).toEqual([
+      { owner: "mailbox:m1", nodeId: "info-file", email: "sandra@weber.test", role: "view" },
+    ]);
+  });
+
+  it("has no mailbox folders without Stalwart's admin key", async () => {
+    const app = createDocumentsRoutes(fakes().deps);
+    const reply = await app.request("/mailboxes", { headers: { cookie: "session" } });
+    expect(await reply.json()).toEqual([]);
   });
 });

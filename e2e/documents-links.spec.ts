@@ -2,16 +2,22 @@ import { expect, type Page, test } from "@playwright/test";
 import { address, login, unique } from "./helpers";
 
 /**
- * Files of Dokumente where they belong in Kontext: as a card in the chat, linked to a task, and
- * with an appointment. Each time Kontext shares the file with the people there, to view
- * (the stand-in for Schreibzeug, dev/fake-schreibzeug.ts, records it).
+ * Files of Dokumente where they belong in Kontext: as a card in the chat, linked to a task, with
+ * an appointment and on a contact. Each time Kontext shares the file with the people there, to
+ * view (the stand-in for Schreibzeug, dev/fake-schreibzeug.ts, records it). A shared mailbox has a
+ * folder of its own, shared with its people.
  */
 const SCHREIBZEUG = "http://localhost:28096";
 
 /** A file in someone's Dokumente, made directly at the stand-in. */
-const fileOf = async (page: Page, owner: string, name: string): Promise<string> => {
+const fileOf = async (
+  page: Page,
+  owner: string,
+  name: string,
+  parentId: string | null = null,
+): Promise<string> => {
   const response = await page.request.post(`${SCHREIBZEUG}/e2e/files`, {
-    data: { owner: address(owner), name },
+    data: { owner: address(owner), name, parentId },
   });
   return ((await response.json()) as { id: string }).id;
 };
@@ -20,12 +26,18 @@ const fileOf = async (page: Page, owner: string, name: string): Promise<string> 
 const sharesOf = async (page: Page, id: string) =>
   (await page.request.get(`${SCHREIBZEUG}/e2e/shares/${id}`)).json();
 
+/** The folders at the top of someone's Dokumente. */
+const foldersOf = async (page: Page, owner: string) =>
+  (await page.request.get(`${SCHREIBZEUG}/e2e/folders/${address(owner)}`)).json() as Promise<
+    { id: string; name: string }[]
+  >;
+
 const tomorrow = () =>
   new Intl.DateTimeFormat("sv-SE", { timeZone: "Europe/Berlin" }).format(
     new Date(Date.now() + 86_400_000),
   );
 
-test.describe("Dokumente in Chat, Aufgaben und Terminen", () => {
+test.describe("Dokumente in Chat, Aufgaben, Terminen und Kontakten", () => {
   test("teilt ein Dokument im Chat; die Mitglieder dürfen es ansehen", async ({ page }) => {
     const name = `${unique("Aufmaß Bad")}.xlsx`;
     await login(page);
@@ -110,5 +122,57 @@ test.describe("Dokumente in Chat, Aufgaben und Terminen", () => {
     const documents = page.getByRole("list", { name: "Dokumente" });
     await documents.getByRole("link", { name }).click();
     await expect(page).toHaveURL(new RegExp(`/documents/edit/${id}$`));
+  });
+
+  test("legt einen Anhang aus info@ in den Ordner von info@; das Postfach-Team darf ihn ändern", async ({
+    page,
+  }) => {
+    await login(page);
+    await page.getByRole("link", { name: "info@" }).click();
+    await page
+      .getByRole("list", { name: "Posteingang" })
+      .getByText("Anfrage Wärmepumpe Neubau")
+      .click();
+    await page.getByRole("button", { name: "„Grundriss-EG.svg“ in Dokumente ablegen" }).click();
+    const dialog = page.getByRole("dialog", { name: "In Dokumente ablegen" });
+    // It opens in the mailbox's own folder.
+    await expect(dialog.getByRole("navigation", { name: "Ordnerpfad" })).toContainText(
+      address("info"),
+    );
+    await dialog.getByRole("button", { name: "Hier ablegen" }).click();
+    await expect(page.getByText("„Grundriss-EG.svg“ liegt jetzt in Dokumente.")).toBeVisible();
+
+    // The folder belongs to info@ and is shared with its members, not with Max.
+    const [folder] = await foldersOf(page, "info");
+    expect(folder?.name).toBe(address("info"));
+    expect(await sharesOf(page, folder!.id)).toEqual({
+      [address("jonas")]: "edit",
+      [address("anna")]: "edit",
+      [address("sandra")]: "edit",
+    });
+  });
+
+  test("verknüpft ein Dokument mit einem Kontakt", async ({ page }) => {
+    const name = `${unique("Angebot Hoffmann")}.docx`;
+    await login(page);
+    const id = await fileOf(page, "jonas", name);
+    await page.getByRole("link", { name: "Kontakte" }).first().click();
+    await page.getByRole("link", { name: /Markus Hoffmann/ }).click();
+    const documents = page.getByRole("region", { name: "Dokumente" });
+    await documents.getByRole("button", { name: "Dokument verknüpfen" }).click();
+    await page
+      .getByRole("dialog", { name: "Dokument wählen" })
+      .getByRole("button", { name })
+      .click();
+    await expect(documents.getByRole("link", { name })).toBeVisible();
+
+    // Stalwart keeps it on the card.
+    await page.reload();
+    await documents.getByRole("link", { name }).click();
+    await expect(page).toHaveURL(new RegExp(`/documents/edit/${id}$`));
+
+    await page.goBack();
+    await documents.getByRole("button", { name: `„${name}“ entfernen` }).click();
+    await expect(documents.getByRole("link", { name })).toHaveCount(0);
   });
 });

@@ -17,6 +17,8 @@ export type ContactCard = {
   phones?: Record<string, { number: string; features?: Record<string, boolean>; pref?: number }>;
   addresses?: Record<string, { components?: NameComponent[]; full?: string }>;
   notes?: Record<string, { note: string }>;
+  /** Links (RFC 9553 §2.6.3); Kontext keeps documents of Dokumente here (lib/document-links.ts). */
+  links?: Record<string, { "@type"?: "Link"; uri: string; label?: string }>;
   /** Groups only: the member cards' `uid`s. */
   members?: Record<string, boolean>;
   updated?: string;

@@ -20,7 +20,7 @@ import {
   readFrameMessage,
   splatOf,
 } from "./messages";
-import { useDocumentsUrl } from "./queries";
+import { useDocumentsUrl, useMailboxFolders } from "./queries";
 
 const isDocumentsPath = (pathname: string) =>
   pathname === DOCUMENTS_PATH || pathname.startsWith(`${DOCUMENTS_PATH}/`);
@@ -122,6 +122,8 @@ const Frame = ({ url, active }: { url: string; active: boolean }) => {
 /** Mounted beside the pages (routes/_app.tsx); shows the frame while a documents page is open. */
 export const DocumentsHost = () => {
   const url = useDocumentsUrl();
+  // Asked on start: it also opens the shared mailboxes' folders to who works in them now.
+  useMailboxFolders();
   const pathname = useRouterState({ select: (state) => state.location.pathname });
   const active = isDocumentsPath(pathname);
   const [visited, setVisited] = useState(active);

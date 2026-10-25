@@ -138,7 +138,8 @@ Dienst mit eigenen Daten und Versionen. `compose.yaml` startet ihn mit dem Profi
   Client ein, ohne Zustimmungsseite.
 
 Wer in Kontext angemeldet ist, ist es dann auch in Dokumente; Anhänge lassen sich dort ablegen und
-Dokumente an Mails hängen. Ohne `SCHREIBZEUG_URL` fehlt das Modul, alles andere läuft wie gehabt.
+Dokumente an Mails hängen. Jedes gemeinsame Postfach bekommt dort einen eigenen Ordner für seine
+Leute; dafür liest Kontext die Mitglieder mit `STALWART_ADMIN_KEY`, wie für die Firmenverwaltung. Ohne `SCHREIBZEUG_URL` fehlt das Modul, alles andere läuft wie gehabt.
 Schreibzeug läuft auch für sich unter seiner Adresse, mit „Anmelden mit Kontext“.
 
 Mit Podman: `deploy/quadlet/schreibzeug.container` mitkopieren, in

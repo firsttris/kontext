@@ -5,8 +5,9 @@
  * - its sign-in through Kontext: the OpenID Connect code flow with PKCE against Kontext's provider
  *   (silently, `prompt=none`), the id token checked against Kontext's keys;
  * - its side of the frame: the messages it sends and takes (Schreibzeug's apps/web/src/embed);
- * - its API for Kontext's server: a folder listing, uploads and downloads with a bearer token
- *   from Kontext, checked against Kontext's keys, issuer and this address as audience.
+ * - its API for Kontext's server: folders, listings, uploads, downloads and shares with a bearer
+ *   token from Kontext, checked against Kontext's keys, issuer and this address as audience; a
+ *   share on a folder holds for what is in it, as in Schreibzeug.
  *
  *   bun dev/fake-schreibzeug.ts                                        # http://localhost:18096
  *   bun dev/fake-schreibzeug.ts --port 28096 --kontext http://localhost:5174   # the e2e tests
@@ -35,8 +36,18 @@ const CLIENT_ID = "schreibzeug";
 type Person = { sub: string; email: string; name: string };
 const sessions = new Map<string, Person>();
 const pending = new Map<string, { verifier: string; path: string }>();
-/** Files by id, each with its owner's address (what Kontext's tokens name) and who it is shared with. */
-const files = new Map<string, { owner: string; file: File; sharedWith: Map<string, string> }>();
+/**
+ * Files and folders by id, each with its owner's address (what Kontext's tokens name), its folder
+ * and who it is shared with (address → "edit" or "view").
+ */
+type StoredNode = {
+  owner: string;
+  parentId: string | null;
+  name: string;
+  file: File | null;
+  sharedWith: Map<string, string>;
+};
+const nodes = new Map<string, StoredNode>();
 
 const base64url = (bytes: ArrayBuffer | Uint8Array) =>
   Buffer.from(bytes as Uint8Array).toString("base64url");
@@ -119,73 +130,120 @@ const bearerOf = async (request: Request): Promise<Person | null> => {
     : null;
 };
 
-const node = (id: string, file: File) => ({
+const node = (id: string, stored: StoredNode) => ({
   id,
-  kind: "file" as const,
-  name: file.name,
-  size: file.size,
+  kind: stored.file ? ("file" as const) : ("folder" as const),
+  name: stored.name,
+  size: stored.file?.size ?? null,
 });
+
+/** "owner", the strongest share on the node or a folder above it, or null. */
+const roleOf = (email: string, id: string | null): string | null => {
+  const stored = id ? nodes.get(id) : undefined;
+  if (!id || !stored) return null;
+  if (stored.owner === email) return "owner";
+  return stored.sharedWith.get(email) ?? roleOf(email, stored.parentId);
+};
+
+const failure = (status: number, kind: string, message = kind) =>
+  Response.json({ error: { kind, message } }, { status });
+
+const childrenOf = (parentId: string | null, owner?: string) =>
+  [...nodes.entries()].filter(
+    ([, stored]) => stored.parentId === parentId && (!owner || stored.owner === owner),
+  );
+
+const create = (person: Person, parentId: string | null, name: string, file: File | null) => {
+  const owner = parentId ? nodes.get(parentId)?.owner : person.email;
+  if (!owner || (parentId && !["owner", "edit"].includes(roleOf(person.email, parentId) ?? "")))
+    return failure(404, "not_found");
+  if (childrenOf(parentId, owner).some(([, stored]) => stored.name === name))
+    return failure(409, "name_taken", "In diesem Ordner gibt es schon etwas mit diesem Namen.");
+  const id = crypto.randomUUID();
+  const stored = { owner, parentId, name, file, sharedWith: new Map() };
+  nodes.set(id, stored);
+  return Response.json(node(id, stored), { status: 201 });
+};
+
+const sharesOf = (stored: StoredNode) =>
+  [...stored.sharedWith].map(([email, role]) => ({ userId: `user:${email}`, email, role }));
 
 const api = async (request: Request, url: URL) => {
   if (url.pathname === "/api/health") return Response.json({ ok: true });
   const person = await bearerOf(request);
-  if (!person)
-    return Response.json(
-      { error: { kind: "unauthorized", message: "Bitte melde dich an." } },
-      { status: 401 },
-    );
-  const own = [...files.entries()].filter(([, file]) => file.owner === person.email);
-  if (request.method === "GET" && url.pathname === "/api/nodes")
+  if (!person) return failure(401, "unauthorized", "Bitte melde dich an.");
+  if (request.method === "GET" && url.pathname === "/api/nodes") {
+    const parent = url.searchParams.get("parent");
+    const folderId = parent && parent !== "root" ? parent : null;
+    if (folderId && !roleOf(person.email, folderId)) return failure(404, "not_found");
+    const folder = folderId ? nodes.get(folderId) : undefined;
     return Response.json({
-      folder: null,
+      folder: folder && folderId ? node(folderId, folder) : null,
       path: [],
-      children: own.map(([id, stored]) => node(id, stored.file)),
+      children: childrenOf(folderId, folderId ? undefined : person.email).map(([id, stored]) =>
+        node(id, stored),
+      ),
     });
+  }
   if (request.method === "POST" && url.pathname === "/api/files") {
-    const upload = (await request.formData()).get("file") as File;
-    if (own.some(([, stored]) => stored.file.name === upload.name))
-      return Response.json(
-        {
-          error: {
-            kind: "name_taken",
-            message: "In diesem Ordner gibt es schon etwas mit diesem Namen.",
-          },
-        },
-        { status: 409 },
-      );
-    const id = crypto.randomUUID();
-    files.set(id, { owner: person.email, file: upload, sharedWith: new Map() });
-    return Response.json(node(id, upload), { status: 201 });
+    const form = await request.formData();
+    const upload = form.get("file") as File;
+    return create(person, (form.get("parentId") as string | null) ?? null, upload.name, upload);
+  }
+  if (request.method === "POST" && url.pathname === "/api/folders") {
+    const { parentId, name } = (await request.json()) as { parentId: string | null; name: string };
+    return create(person, parentId, name, null);
   }
   const id = url.pathname.match(/^\/api\/(?:nodes|files)\/([^/]+)/)?.[1] ?? "";
-  const stored = files.get(id);
-  if (!stored || stored.owner !== person.email)
-    return Response.json({ error: { kind: "not_found" } }, { status: 404 });
-  if (request.method === "PUT" && url.pathname.endsWith("/shares")) {
-    const { email, role } = (await request.json()) as { email: string; role: string };
-    stored.sharedWith.set(email, role);
-    return Response.json(
-      [...stored.sharedWith].map(([address, given]) => ({ email: address, role: given })),
-    );
+  const stored = nodes.get(id);
+  const role = roleOf(person.email, id);
+  if (!stored || !role) return failure(404, "not_found");
+  if (url.pathname.includes("/shares")) {
+    if (role !== "owner") return failure(403, "forbidden", "Das darf nur, wem es gehört.");
+    if (request.method === "PUT") {
+      const { email, role: given } = (await request.json()) as { email: string; role: string };
+      stored.sharedWith.set(email.toLowerCase(), given);
+    }
+    if (request.method === "DELETE")
+      stored.sharedWith.delete(decodeURIComponent(url.pathname.split("/").at(-1) ?? "").slice(5));
+    return Response.json(sharesOf(stored));
   }
-  if (url.pathname.endsWith("/content"))
+  if (url.pathname.endsWith("/content") && stored.file)
     return new Response(stored.file, { headers: { "content-type": stored.file.type } });
-  return Response.json(node(id, stored.file));
+  return Response.json(node(id, stored));
 };
 
 /**
- * For the tests only: a file of someone's (`POST /e2e/files` with `{ owner, name }`), and whom a
- * file was shared with (`GET /e2e/shares/<id>`).
+ * For the tests only: a file of someone's (`POST /e2e/files` with `{ owner, name }`, optionally in
+ * a folder `parentId`), whom a node was shared with (`GET /e2e/shares/<id>`), and someone's own
+ * folders at the top (`GET /e2e/folders/<address>`).
  */
 const e2e = async (request: Request, url: URL) => {
   if (request.method === "POST" && url.pathname === "/e2e/files") {
-    const { owner, name } = (await request.json()) as { owner: string; name: string };
+    const {
+      owner,
+      name,
+      parentId = null,
+    } = (await request.json()) as {
+      owner: string;
+      name: string;
+      parentId?: string | null;
+    };
     const id = crypto.randomUUID();
     const file = new File(["Inhalt"], name, { type: "application/octet-stream" });
-    files.set(id, { owner: owner.toLowerCase(), file, sharedWith: new Map() });
-    return Response.json(node(id, file), { status: 201 });
+    const stored = { owner: owner.toLowerCase(), parentId, name, file, sharedWith: new Map() };
+    nodes.set(id, stored);
+    return Response.json(node(id, stored), { status: 201 });
   }
-  const shared = files.get(url.pathname.replace("/e2e/shares/", ""));
+  if (url.pathname.startsWith("/e2e/folders/")) {
+    const owner = decodeURIComponent(url.pathname.replace("/e2e/folders/", "")).toLowerCase();
+    return Response.json(
+      childrenOf(null, owner)
+        .filter(([, stored]) => !stored.file)
+        .map(([id, stored]) => node(id, stored)),
+    );
+  }
+  const shared = nodes.get(url.pathname.replace("/e2e/shares/", ""));
   return Response.json(shared ? Object.fromEntries(shared.sharedWith) : null);
 };
 

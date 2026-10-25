@@ -2,12 +2,12 @@
  * Choosing in Dokumente: a folder to put something into, or a file to attach. One folder at a
  * time, with the way back above it, as in Schreibzeug.
  */
-import { ChevronRight, FileText, Folder } from "lucide-react";
+import { ChevronRight, FileText, Folder, Inbox } from "lucide-react";
 import { type ReactNode, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Dialog } from "@/components/ui/dialog";
 import { m } from "@/paraglide/messages";
-import { type DocumentNode, useFolder } from "./queries";
+import { type DocumentNode, useFolder, useMailboxFolders } from "./queries";
 
 type PickerProps = {
   open: boolean;
@@ -18,23 +18,39 @@ type PickerProps = {
   onFile?: (file: DocumentNode) => void;
   /** The buttons for the folder shown (mode "folder"). */
   actions?: (folderId: string | null) => ReactNode;
+  /** Where it opens; the person's own files without. */
+  startFolderId?: string | null;
 };
+
+type Entry = DocumentNode & { mailbox?: boolean };
 
 /**
  * One folder of Dokumente with the way back above it; mounted with the dialog that shows it, so it
- * starts at the top and reads afresh. Also the "Dokument" tab of the chat's link picker.
+ * starts at the top and reads afresh. Also the "Dokument" tab of the chat's link picker. At the top
+ * the shared mailboxes' folders come first.
  */
 export const DocumentBrowser = ({
   mode,
   onFile,
   actions,
   onCancel,
+  startFolderId = null,
 }: Omit<PickerProps, "open" | "onOpenChange" | "title"> & { onCancel: () => void }) => {
-  const [folderId, setFolderId] = useState<string | null>(null);
+  const [folderId, setFolderId] = useState<string | null>(startFolderId);
   const listing = useFolder(folderId);
-  const entries = (listing.data?.children ?? []).filter(
-    (node) => mode === "file" || node.kind === "folder",
-  );
+  const mailboxes = useMailboxFolders().data ?? [];
+  const mailboxEntries: Entry[] = folderId
+    ? []
+    : mailboxes.map((mailbox) => ({
+        id: mailbox.folderId,
+        kind: "folder",
+        name: mailbox.email,
+        mailbox: true,
+      }));
+  const entries: Entry[] = [
+    ...mailboxEntries,
+    ...(listing.data?.children ?? []).filter((node) => mode === "file" || node.kind === "folder"),
+  ];
   const crumbs = [
     { id: null, name: m.documents_mine() },
     ...(listing.data?.path ?? []).map((node) => ({
@@ -84,7 +100,9 @@ export const DocumentBrowser = ({
                 onClick={() => (node.kind === "folder" ? setFolderId(node.id) : onFile?.(node))}
                 className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-left text-[13px] hover:bg-hover"
               >
-                {node.kind === "folder" ? (
+                {node.mailbox ? (
+                  <Inbox size={15} className="text-muted" />
+                ) : node.kind === "folder" ? (
                   <Folder size={15} className="text-muted" />
                 ) : (
                   <FileText size={15} className="text-muted" />

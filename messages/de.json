@@ -1647,6 +1647,7 @@
   "documents_link": "Dokument verknüpfen",
   "documents_link_title": "Dokument wählen",
   "documents_shared_failed": "Die Datei ist verknüpft, aber nicht für alle freigegeben: {message}",
-  "calendar_documents": "Dokumente",
-  "calendar_document_remove": "„{name}“ entfernen"
+  "documents_linked": "Dokumente",
+  "documents_remove": "„{name}“ entfernen",
+  "contacts_no_documents": "Keine Dokumente verknüpft."
 }

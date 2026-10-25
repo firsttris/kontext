@@ -1170,22 +1170,40 @@ mit Schreibzeugs Meldung zurück.
 
 **Dokumente überall, wo sie hingehören.** Eine Datei aus Dokumente lässt sich im Chat als Karte
 teilen („Mail, Aufgabe oder Kontakt verknüpfen“, Reiter „Dokument“), mit einer Aufgabe verknüpfen
-(„Dokument verknüpfen“ in der Aufgabe) und an einen Termin hängen (im Termin-Editor). Ein Klick öffnet
-sie im Modul. Beim Termin ist sie ein Link des Termins (JSCalendar `links`, RFC 8984 §4.2.7, Schlüssel
-`kontext-document-<id>`) mit der Adresse `https://<Kontext>/documents/edit/<id>`, den auch
-Thunderbird und Handys zeigen; Links aus fremden Einladungen bleiben dabei stehen. Die Logik steht in
-`src/lib/document-links.ts`.
+(„Dokument verknüpfen“ in der Aufgabe), an einen Termin hängen (im Termin-Editor) und mit einem
+Kontakt verknüpfen (Abschnitt „Dokumente“ am Kontakt, wenn man das Adressbuch ändern darf). Ein Klick
+öffnet sie im Modul. Beim Termin ist sie ein Link des Termins (JSCalendar `links`, RFC 8984 §4.2.7,
+Schlüssel `kontext-document-<id>`) mit der Adresse `https://<Kontext>/documents/edit/<id>`, den auch
+Thunderbird und Handys zeigen; beim Kontakt ebenso ein Link der Karte (JSContact `links`, RFC 9553
+§2.6.3, `uri` und `label`). Links aus fremden Einladungen und vCards bleiben dabei stehen. Die Logik
+steht in `src/lib/document-links.ts`.
 
 Damit die anderen die Datei auch öffnen dürfen, gibt Kontext sie ihnen dabei in Schreibzeug zum
 Ansehen frei (`POST /api/documents/share`, `src/features/documents/use-share-with.ts`): im Chat
-allen Lesern des Kanals (beim Team-Kanal allen, bei benannten und direkten den Mitgliedern; im Kanal
-eines gemeinsamen Postfachs niemandem, weil Kontext dort keine Personenliste hat), bei einer Aufgabe
-der zuständigen Person (auch nach einem Wechsel), bei einem Termin den Eingeladenen aus der Firma
-(Leute von außen können sich bei Schreibzeug nicht anmelden). Wer noch nie in Dokumente war, hat
+allen Lesern des Kanals (beim Team-Kanal allen, bei benannten und direkten den Mitgliedern, im Kanal
+eines gemeinsamen Postfachs dessen Leuten), bei einer Aufgabe der zuständigen Person (auch nach einem
+Wechsel) und auf der Tafel eines gemeinsamen Postfachs dessen Leuten, bei einem Termin den
+Eingeladenen aus der Firma (Leute von außen können sich bei Schreibzeug nicht anmelden), bei einem
+Kontakt im Adressbuch eines gemeinsamen Postfachs dessen Leuten. Wer die Leute eines Postfachs sind,
+weiß nur Kontexts Server (unten); der Browser nennt nur das Konto. Wer noch nie in Dokumente war, hat
 dort noch kein Konto: Schreibzeug merkt die Freigabe für die Adresse vor und gibt sie bei der ersten
 Anmeldung über Kontext frei. Freigeben kann nur, wem die Datei gehört; sonst bleibt die Verknüpfung
 und eine Meldung sagt, warum die anderen sie nicht öffnen können. Ob jemand eine Karte öffnen darf,
 entscheidet Schreibzeug beim Öffnen.
+
+**Dokumente gemeinsamer Postfächer.** Jedes gemeinsame Postfach (info@, rechnung@) hat in Dokumente
+einen eigenen Ordner, benannt nach seiner Adresse (`server/documents/mailboxes.ts`). Er gehört dem
+Postfach selbst, nicht dem, der zuerst etwas ablegt: Kontext handelt dort als das Postfach, mit einem
+Token für `mailbox:<Konto-ID>` und die Adresse des Postfachs, das Schreibzeug wie eine Person führt.
+Den Ordner gibt Kontext den Leuten des Postfachs frei, wie Stalwart sie hat (mit dem Admin-Schlüssel
+gelesen wie in der Firmenverwaltung, `server/documents/company-mailboxes.ts`): Mitglieder dürfen
+ändern, wer nur liest, darf öffnen; wer nicht mehr dabei ist, verliert ihn. Abgeglichen wird beim Start
+der App (`GET /api/documents/mailboxes`, höchstens alle 30 Sekunden neu gelesen) und sofort, wenn die
+Firmenverwaltung Mitglieder oder Leser eines Postfachs ändert. In Kontext stehen die Ordner oben im
+Auswahldialog, ein Anhang einer Mail aus info@ landet zuerst in dessen Ordner; in Schreibzeug stehen
+sie unter „Für mich freigegeben“. Eine Datei darin gehört dem Postfach; Kontext gibt sie deshalb, wenn
+die Person selbst es nicht darf, als das Postfach frei, in dem sie arbeitet. Ohne
+`STALWART_ADMIN_KEY` gibt es keine Postfach-Ordner.
 
 ## Code
 

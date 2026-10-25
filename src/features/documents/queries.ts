@@ -54,6 +54,23 @@ export const useFolder = (folderId: string | null) =>
     staleTime: 0,
   });
 
+/** The folder of a shared mailbox (info@, rechnung@) the person works in. */
+export type MailboxFolder = { accountId: string; email: string; folderId: string };
+
+/**
+ * The shared mailboxes' folders of the person. Asking also gives them access as the
+ * Firmenverwaltung has it now (server/documents/mailboxes.ts), so the host asks on start.
+ */
+export const useMailboxFolders = () => {
+  const connected = useDocumentsConnected();
+  return useQuery({
+    queryKey: ["documents", "mailboxes"],
+    queryFn: () => send<MailboxFolder[]>("GET", "/mailboxes"),
+    enabled: connected,
+    staleTime: 5 * 60_000,
+  });
+};
+
 /** A mail's attachment into a folder of Dokumente; the stored file's id and name. */
 export const saveAttachment = (input: {
   accountId: string;
@@ -67,8 +84,11 @@ export const saveAttachment = (input: {
 export const attachDocument = (input: { accountId: string; fileId: string }) =>
   send<OutgoingAttachment>("POST", "/attach", input);
 
-/** Lets colleagues view a file of the one who asks; their addresses, the asker's own is skipped. */
-export const shareDocument = (input: { fileId: string; emails: string[] }) =>
+/**
+ * Lets colleagues view a file of the one who asks (or of a shared mailbox they work in): their
+ * addresses and the people of shared mailboxes by account id; the asker's own is skipped.
+ */
+export const shareDocument = (input: { fileId: string; emails: string[]; mailboxes?: string[] }) =>
   send<{ shared: string[] }>("POST", "/share", input);
 
 /**
@@ -78,10 +98,10 @@ export const shareDocument = (input: { fileId: string; emails: string[] }) =>
 export const useShareDocument = () => {
   const toast = useToast();
   return useCallback(
-    async (fileId: string, emails: string[]) => {
-      if (emails.length === 0) return;
+    async (fileId: string, emails: string[], mailboxes: string[] = []) => {
+      if (emails.length === 0 && mailboxes.length === 0) return;
       try {
-        await shareDocument({ fileId, emails });
+        await shareDocument({ fileId, emails, mailboxes });
       } catch (error) {
         toast.show(m.documents_shared_failed({ message: (error as Error).message }), "error");
       }

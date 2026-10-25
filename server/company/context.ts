@@ -39,6 +39,8 @@ export type CompanyDeps = {
   /** How long the team chat keeps messages; changing it takes out what is older at once. */
   chatRetention?: { days: () => Promise<number>; setDays: (days: number) => Promise<void> };
   pruneChat?: () => Promise<number>;
+  /** After a shared mailbox's members or readers changed (its folder in Dokumente follows). */
+  mailboxChanged?: (mailboxId: string) => void;
   /** For the check of the domains' mail security (security.ts). */
   security?: {
     publicUrl: string;

@@ -159,7 +159,7 @@ export const EventDetails = ({ event, series, onEdit, onDone }: Props) => {
         <p className="m-0 whitespace-pre-line text-[14px] text-muted">{event.description}</p>
       ) : null}
       {documents.length ? (
-        <ul aria-label={m.calendar_documents()} className="m-0 flex list-none flex-col gap-1.5 p-0">
+        <ul aria-label={m.documents_linked()} className="m-0 flex list-none flex-col gap-1.5 p-0">
           {documents.map((document) => (
             <li key={document.id}>
               <ItemLink

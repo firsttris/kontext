@@ -18,6 +18,7 @@ import {
   type DocumentNode,
   saveAttachment,
   useDocumentsConnected,
+  useMailboxFolders,
 } from "./queries";
 
 type Attachment = { blobId: string; name: string; type: string };
@@ -35,6 +36,8 @@ export const SaveToDocuments = ({
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
+  // A mail of info@ goes into info@'s folder first.
+  const mailboxFolder = useMailboxFolders().data?.find((folder) => folder.accountId === accountId);
   if (!connected) return null;
 
   const save = async (folderId: string | null, thenOpen: boolean) => {
@@ -68,6 +71,7 @@ export const SaveToDocuments = ({
         onOpenChange={setOpen}
         title={m.documents_save_title()}
         mode="folder"
+        startFolderId={mailboxFolder?.folderId ?? null}
         actions={(folderId) => (
           <>
             <Button disabled={busy} onClick={() => void save(folderId, true)}>
@@ -169,7 +173,7 @@ export const EventDocuments = ({
   if (!connected && documents.length === 0) return null;
   return (
     <div className="flex flex-col gap-2">
-      <span className="text-[13px] text-muted">{m.calendar_documents()}</span>
+      <span className="text-[13px] text-muted">{m.documents_linked()}</span>
       {documents.map((document) => (
         <span
           key={document.id}
@@ -180,7 +184,7 @@ export const EventDocuments = ({
           <Button
             variant="ghost"
             size="iconSm"
-            aria-label={m.calendar_document_remove({ name: document.name })}
+            aria-label={m.documents_remove({ name: document.name })}
             onClick={() => onChange(documents.filter((other) => other.id !== document.id))}
           >
             <X size={14} />

@@ -39,7 +39,12 @@ const applyBody = z.object({ rule: ruleSchema });
 
 const knownPeople = (loaded: Loaded, people: string[]) => people.every((id) => userOf(loaded, id));
 
-export const mailboxRoutes = ({ management, mailstore, categories }: CompanyDeps) => {
+export const mailboxRoutes = ({
+  management,
+  mailstore,
+  categories,
+  mailboxChanged,
+}: CompanyDeps) => {
   /** Members and readers of a mailbox; someone in both lists is a member. */
   const setAccess = async (
     loaded: Loaded,
@@ -82,6 +87,7 @@ export const mailboxRoutes = ({ management, mailstore, categories }: CompanyDeps
     if (!created.ok) return bad(created.error);
     const access = await setAccess(loaded, created.value, body);
     if (!access.ok) return bad(access.error);
+    mailboxChanged?.(created.value);
     return c.json({ id: created.value }, 201);
   });
 
@@ -107,6 +113,7 @@ export const mailboxRoutes = ({ management, mailstore, categories }: CompanyDeps
     }
     const access = await setAccess(loaded, id, change);
     if (!access.ok) return bad(access.error);
+    if (change.memberIds || change.readerIds) mailboxChanged?.(id);
     return c.json({ ok: true });
   });
 

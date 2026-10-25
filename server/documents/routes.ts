@@ -6,13 +6,16 @@
  * - `POST /save`: a mail's attachment into a folder of Dokumente (the mail stays as it is);
  * - `POST /attach`: a file of Dokumente as a blob for a mail being written;
  * - `GET /folders`: what a folder holds, for choosing where to put something or what to attach;
- * - `POST /share`: lets colleagues open a file that went into a chat, a task or an appointment.
+ * - `POST /share`: lets colleagues open a file that went into a chat, a task, an appointment or a
+ *   contact; for a shared mailbox's channel, board or address book, everyone who works in it;
+ * - `GET /mailboxes`: the folders of the shared mailboxes the person works in (mailboxes.ts).
  *
  * The mail side goes with the person's own Stalwart token, the documents side with a token for the
  * person (schreibzeug.ts): each side allows only what the person may do there.
  */
 import { Hono } from "hono";
 import { z } from "zod";
+import type { MailboxFolders } from "./mailboxes";
 import type { Person, Schreibzeug } from "./schreibzeug";
 
 /** Who asks, and their token for Stalwart. */
@@ -24,6 +27,8 @@ export type DocumentsDeps = {
   /** Its API, when Kontext signs people in there too (needs the client secret). */
   schreibzeug: Schreibzeug | null;
   askerOf: (request: Request) => Promise<Asker | null>;
+  /** The shared mailboxes' folders; null without Stalwart's admin key. */
+  mailboxes: MailboxFolders | null;
   /** Stalwart's JMAP blobs with the person's token (RFC 8620 §6). */
   blobs: {
     download: (token: string, accountId: string, blobId: string) => Promise<Blob>;
@@ -49,11 +54,36 @@ const attachSchema = z.object({
 const shareSchema = z.object({
   fileId: z.string().min(1).max(64),
   emails: z.array(z.email().max(320)).max(200),
+  /** Shared mailboxes (their account ids) whose people should open it too. */
+  mailboxes: z.array(z.string().min(1).max(128)).max(50).default([]),
 });
+
+/** Tries each in turn until one works; the first one's error otherwise. */
+const firstThat = async <T>(
+  each: T[],
+  attempt: (item: T) => Promise<void>,
+): Promise<{ ok: true } | { ok: false; error: unknown }> => {
+  let first: unknown = null;
+  for (const item of each) {
+    try {
+      await attempt(item);
+      return { ok: true };
+    } catch (error) {
+      first ??= error;
+    }
+  }
+  return { ok: false, error: first };
+};
 
 const message = (error: unknown) => (error instanceof Error ? error.message : String(error));
 
-export const createDocumentsRoutes = ({ url, schreibzeug, askerOf, blobs }: DocumentsDeps) => {
+export const createDocumentsRoutes = ({
+  url,
+  schreibzeug,
+  askerOf,
+  mailboxes,
+  blobs,
+}: DocumentsDeps) => {
   const app = new Hono<{ Variables: { asker: Asker; schreibzeug: Schreibzeug } }>();
   app.get("/", (c) => c.json({ url, connected: Boolean(schreibzeug) }));
 
@@ -71,6 +101,15 @@ export const createDocumentsRoutes = ({ url, schreibzeug, askerOf, blobs }: Docu
     if (!parent.success) return c.json({ error: "Unbekannter Ordner" }, 400);
     try {
       return c.json(await c.get("schreibzeug").list(c.get("asker").person, parent.data));
+    } catch (error) {
+      return c.json({ error: message(error) }, 502);
+    }
+  });
+
+  app.get("/mailboxes", async (c) => {
+    if (!mailboxes) return c.json([]);
+    try {
+      return c.json(await mailboxes.foldersFor(c.get("asker").person.email));
     } catch (error) {
       return c.json({ error: message(error) }, 502);
     }
@@ -111,11 +150,21 @@ export const createDocumentsRoutes = ({ url, schreibzeug, askerOf, blobs }: Docu
     if (!parsed.success) return c.json({ error: "Angaben unvollständig." }, 400);
     const { fileId, emails } = parsed.data;
     const { person } = c.get("asker");
-    const others = [...new Set(emails.map((email) => email.toLowerCase()))].filter(
-      (email) => email !== person.email.toLowerCase(),
-    );
     try {
-      for (const email of others) await c.get("schreibzeug").share(person, fileId, email, "view");
+      const ofMailboxes =
+        mailboxes && parsed.data.mailboxes.length
+          ? await mailboxes.peopleOf(person.email, parsed.data.mailboxes)
+          : [];
+      const others = [
+        ...new Set([...emails, ...ofMailboxes].map((email) => email.toLowerCase())),
+      ].filter((email) => email !== person.email.toLowerCase());
+      const shareAs = async (owner: Person) => {
+        for (const email of others) await c.get("schreibzeug").share(owner, fileId, email, "view");
+      };
+      // A file in a shared mailbox's folder belongs to the mailbox, which shares it then.
+      const owners = [person, ...(mailboxes ? await mailboxes.ownersFor(person.email) : [])];
+      const shared = await firstThat(owners, shareAs);
+      if (!shared.ok) throw shared.error;
       return c.json({ shared: others });
     } catch (error) {
       return c.json({ error: message(error) }, 502);

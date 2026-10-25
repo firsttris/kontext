@@ -36,6 +36,8 @@ import { createDavAuth } from "./dav/auth";
 import { createDavRoutes } from "./dav/routes";
 import { type Db, openDatabase, schema } from "./db";
 import { createSessionBlobs } from "./documents/blobs";
+import { createCompanyMailboxes } from "./documents/company-mailboxes";
+import { createMailboxFolders, type MailboxFolders } from "./documents/mailboxes";
 import { createDocumentsRoutes } from "./documents/routes";
 import { createSchreibzeug, type Schreibzeug } from "./documents/schreibzeug";
 import type { Env } from "./env";
@@ -167,6 +169,8 @@ export const createApp = async (env: Env) => {
   const auth = createAuth(env, db, grants, createNameOf(env));
   const schreibzeug = schreibzeugClientOf(env);
   if (schreibzeug) await registerClient(db, schreibzeug);
+  const documents = schreibzeug && createSchreibzeugOf(env, auth, schreibzeug);
+  let mailboxFolders: MailboxFolders | null = null;
   const proxy = createJmapProxy(env, auth, grants);
 
   const categories = createCategoryStore(db);
@@ -227,15 +231,31 @@ export const createApp = async (env: Env) => {
       },
     });
     await syncRunner.start();
+    const management = createManagement(request);
+    const mailstore = createMailstore(
+      request,
+      upload,
+      createDownload(env.STALWART_URL, env.STALWART_ADMIN_KEY),
+    );
+    // Each shared mailbox gets its own folder in Dokumente, shared with its people.
+    const companyMailboxes = createCompanyMailboxes({ management, mailstore });
+    if (documents) {
+      mailboxFolders = createMailboxFolders({
+        schreibzeug: documents,
+        load: companyMailboxes.load,
+      });
+    }
     const company = createCompanyRoutes({
       categories,
-      management: createManagement(request),
-      mailstore: createMailstore(
-        request,
-        upload,
-        createDownload(env.STALWART_URL, env.STALWART_ADMIN_KEY),
-      ),
+      management,
+      mailstore,
       calendars: createCalendars(request),
+      mailboxChanged: (mailboxId) => {
+        companyMailboxes.forget();
+        void mailboxFolders
+          ?.changed(mailboxId)
+          .catch((error: Error) => console.warn(`Dokumente: ${error.message}`));
+      },
       settings,
       migrations: { jobs, runner, workDir },
       syncs: { syncs, runner: syncRunner, sealer: syncSealer, allowPlain, microsoft },
@@ -440,7 +460,8 @@ export const createApp = async (env: Env) => {
     "/api/documents",
     createDocumentsRoutes({
       url: env.SCHREIBZEUG_URL?.replace(/\/+$/, "") ?? null,
-      schreibzeug: schreibzeug && createSchreibzeugOf(env, auth, schreibzeug),
+      schreibzeug: documents,
+      mailboxes: mailboxFolders,
       askerOf: async (request) => {
         const session = await auth.api.getSession({ headers: request.headers });
         const stalwartToken = session && (await grants.accessToken(session.session.id));

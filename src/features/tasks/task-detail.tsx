@@ -168,7 +168,8 @@ export const TaskDetail = ({ task, onClose }: { task: Task; onClose?: () => void
                   void save({ assigneeId });
                   // Whoever takes it over can open its documents too.
                   for (const link of task.links)
-                    if (link.kind === "document") shareWith.task(assigneeId, link.ref);
+                    if (link.kind === "document")
+                      shareWith.task(assigneeId, link.ref, task.accountId);
                 }}
               >
                 <option value="">{m.tasks_nobody()}</option>
@@ -295,7 +296,7 @@ export const TaskDetail = ({ task, onClose }: { task: Task; onClose?: () => void
                   if (task.links.some((link) => link.kind === "document" && link.ref === file.id))
                     return;
                   void save({ links: [...task.links, documentLink(file)] });
-                  shareWith.task(task.assigneeId, file.id);
+                  shareWith.task(task.assigneeId, file.id, task.accountId);
                 }}
               />
             </div>

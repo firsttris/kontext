@@ -30,6 +30,15 @@ const listingSchema = z.object({
 
 export type DocumentListing = z.infer<typeof listingSchema>;
 
+/** Who a node is shared with, as its owner sees it (Schreibzeug's shareSchema). */
+const shareSchema = z.object({
+  userId: z.string(),
+  email: z.string(),
+  role: z.enum(["edit", "view"]),
+});
+
+export type DocumentShare = z.infer<typeof shareSchema>;
+
 /** Schreibzeug's own message when it refuses, in German, or the status. */
 const failure = async (response: Response): Promise<Error> => {
   const body = (await response.json().catch(() => null)) as { error?: { message?: string } } | null;
@@ -106,6 +115,34 @@ export const createSchreibzeug = ({
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ email, role }),
       });
+    },
+    /** A new folder; `null` puts it into the person's own files. */
+    createFolder: async (
+      person: Person,
+      parentId: string | null,
+      name: string,
+    ): Promise<DocumentNode> =>
+      nodeSchema.parse(
+        await (
+          await call(person, "/folders", {
+            method: "POST",
+            headers: { "content-type": "application/json" },
+            body: JSON.stringify({ parentId, name }),
+          })
+        ).json(),
+      ),
+    /** Who a node of the person is shared with, also addresses still waiting for an account. */
+    shares: async (person: Person, nodeId: string): Promise<DocumentShare[]> =>
+      z
+        .array(shareSchema)
+        .parse(await (await call(person, `/nodes/${encodeURIComponent(nodeId)}/shares`)).json()),
+    /** Takes a share back (`userId` as `shares` lists it). */
+    unshare: async (person: Person, nodeId: string, userId: string) => {
+      await call(
+        person,
+        `/nodes/${encodeURIComponent(nodeId)}/shares/${encodeURIComponent(userId)}`,
+        { method: "DELETE" },
+      );
     },
     /** Whether Schreibzeug answers at all (checked once at start). */
     reachable: async (): Promise<boolean> =>
