@@ -913,7 +913,8 @@ dort liegt (`undoStatus: "canceled"`, RFC 8621 §7). Die Empfänger nimmt es dan
   je Gerät: aus, 5, 10, 20 oder 30 Sekunden; vorgegeben 10). So lange steht „Rückgängig“ an der
   Meldung; danach ist sie unterwegs („Zu spät – die Mail ist schon unterwegs“).
 - **Später senden:** der Pfeil neben „Senden“ – heute 13 oder 17 Uhr (solange das noch kommt),
-  morgen 8 Uhr, Montag 8 Uhr, oder ein Zeitpunkt nach Wahl. Die Mail liegt bis dahin im
+  morgen 8 Uhr, Montag 8 Uhr (montags vor 8 Uhr: heute 8 Uhr, nie mehr als die 7 Tage, die der
+  Server hält), oder ein Zeitpunkt nach Wahl. Die Mail liegt bis dahin im
   Gesendet-Ordner unter „Geplant“, mit Zeitpunkt in der Liste und „Nicht senden“ in der Mail.
 - **Zurückholen:** erst wird der Versand gestoppt, dann kommt die Mail zurück zu den Entwürfen und
   öffnet sich zum Ändern – nie liegt eine Mail bei den Entwürfen, die doch hinausging.

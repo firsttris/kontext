@@ -21,6 +21,20 @@ describe("sendChoices", () => {
       "Morgen 08:00",
     ]);
   });
+
+  it("offers Monday morning as today on a Monday before eight, never beyond the 7 days", () => {
+    // Monday, 26 October 2026, 07:00 in Berlin: next Monday 08:00 would be 7 days and 1 hour ahead.
+    const now = new Date("2026-10-26T06:00:00Z");
+    const choices = sendChoices(now);
+    expect(choices.map((c) => c.label)).toEqual([
+      "Heute 08:00",
+      "Heute 13:00",
+      "Heute 17:00",
+      "Morgen 08:00",
+    ]);
+    expect(choices[0]!.at.toISOString()).toBe("2026-10-26T07:00:00.000Z");
+    expect(choices.every((c) => validSendTime(c.at, now))).toBe(true);
+  });
 });
 
 describe("holdUntil and validSendTime", () => {
