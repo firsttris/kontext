@@ -13,20 +13,31 @@ export const escapeHtml = (text: string): string =>
     .replace(/"/g, "&quot;")
     .replace(/'/g, "&#39;");
 
-const URL_PATTERN = /\bhttps?:\/\/[^\s<>"']+[^\s<>"'.,;:!?)\]]/g;
+/**
+ * Captures the URL, so `split` puts the links at the odd indices. `'` is a sub-delim inside a URL
+ * (RFC 3986 2.2, `O'Brien`) but not its last character, so `'https://x'` keeps its quotes outside.
+ */
+const URL_PATTERN = /(\bhttps?:\/\/[^\s<>"]+[^\s<>"'.,;:!?)\]])/;
+
+/**
+ * Links are found in the raw text and each part escaped on its own: matched on escaped text, the
+ * pattern would run into the entities of `<URL>` or `"URL"` (`&gt`, `&quot`).
+ */
+const linkify = (text: string): string =>
+  text
+    .split(URL_PATTERN)
+    .map((part, index) => {
+      const escaped = escapeHtml(part);
+      return index % 2 === 1 ? `<a href="${escaped}">${escaped}</a>` : escaped;
+    })
+    .join("");
 
 /** Plain text to simple HTML: paragraphs, line breaks and clickable links. */
 export const textToHtml = (text: string): string =>
   text
     .replace(/\r\n/g, "\n")
     .split(/\n{2,}/)
-    .map((paragraph) => {
-      const escaped = escapeHtml(paragraph).replace(
-        URL_PATTERN,
-        (url) => `<a href="${url}">${url}</a>`,
-      );
-      return `<p>${escaped.replace(/\n/g, "<br>")}</p>`;
-    })
+    .map((paragraph) => `<p>${linkify(paragraph).replace(/\n/g, "<br>")}</p>`)
     .join("");
 
 export type SanitizedMail = { html: string; blockedImages: number };

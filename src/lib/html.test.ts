@@ -131,6 +131,25 @@ describe("text and HTML", () => {
       '<p>Hallo<br>Welt</p><p>Siehe <a href="https://x.test/a">https://x.test/a</a>.</p>',
     );
   });
+  it("keeps the brackets and quotes around a link out of it", () => {
+    expect(textToHtml("Link: <https://example.com/a>")).toBe(
+      '<p>Link: &lt;<a href="https://example.com/a">https://example.com/a</a>&gt;</p>',
+    );
+    expect(textToHtml('Link: "https://example.com/a"')).toBe(
+      '<p>Link: &quot;<a href="https://example.com/a">https://example.com/a</a>&quot;</p>',
+    );
+    expect(textToHtml("Link: 'https://example.com/a'")).toContain('href="https://example.com/a"');
+  });
+  it("keeps an apostrophe inside a link", () => {
+    expect(textToHtml("https://en.wikipedia.org/wiki/O'Brien")).toBe(
+      '<p><a href="https://en.wikipedia.org/wiki/O&#39;Brien">https://en.wikipedia.org/wiki/O&#39;Brien</a></p>',
+    );
+  });
+  it("keeps a query string with & in one link", () => {
+    expect(textToHtml("(https://x.test/?a=1&b=2), ok")).toBe(
+      '<p>(<a href="https://x.test/?a=1&amp;b=2">https://x.test/?a=1&amp;b=2</a>), ok</p>',
+    );
+  });
   it("turns HTML back into text", () => {
     expect(htmlToText("<p>Hallo</p><p>Welt<br>zwei</p>").trim()).toBe("Hallo\nWelt\nzwei");
   });
