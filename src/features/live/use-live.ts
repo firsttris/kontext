@@ -24,6 +24,18 @@ const TASKS_KEY = ["tasks"];
 /** When the server refused the connection (signed out, restarting): try again after this. */
 const RETRY_MS = 10_000;
 
+/**
+ * A change for a list that is still loading: its first fetch may have been answered before the
+ * change (a call answered while the page opened), so it is fetched anew instead of dropped. The
+ * running fetch is cancelled first: without data, TanStack Query would join it, not start anew.
+ */
+const changeLoaded = (queryClient: QueryClient, key: readonly unknown[], change: () => void) => {
+  if (queryClient.getQueryData(key) !== undefined) return change();
+  void queryClient
+    .cancelQueries({ queryKey: key })
+    .then(() => queryClient.invalidateQueries({ queryKey: key }));
+};
+
 export const applyLiveEvent = (queryClient: QueryClient, me: string, event: LiveEvent) => {
   switch (event.type) {
     case "message": {
@@ -66,10 +78,10 @@ export const applyLiveEvent = (queryClient: QueryClient, me: string, event: Live
       heardDeclined(event.channelId, event.memberId);
       return;
     case "phone":
-      setPhoneCall(queryClient, event.call);
+      changeLoaded(queryClient, PHONE_KEY, () => setPhoneCall(queryClient, event.call));
       return;
     case "phone-people":
-      setPhonePeople(queryClient, event);
+      changeLoaded(queryClient, PHONE_KEY, () => setPhonePeople(queryClient, event));
       return;
   }
 };
