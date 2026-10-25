@@ -125,8 +125,10 @@ Integrationstests sich verbinden können.
 ## CI und Releases
 
 - **CI** (`.github/workflows/ci.yml`): Typen, Lint, Unit-Tests, Build und `bun audit` in einem
-  Job; die E2E- und Integrationstests parallel im offiziellen Playwright-Image, Stalwart wird
-  gecacht. Nachts läuft alles noch einmal, damit neue Sicherheitsmeldungen auffallen.
+  Job; die E2E- und Integrationstests parallel im offiziellen Playwright-Image, in vier Teilen
+  gleichzeitig (`bun run e2e --shard=1/4` … `4/4`, jeder mit eigenem Stalwart und frischen
+  Testdaten; Dateien bleiben ganz in einem Teil), Stalwart wird gecacht. Der Check „End-to-end
+  tests (Stalwart + Playwright)“ fasst die vier zusammen. Nachts läuft alles noch einmal, damit neue Sicherheitsmeldungen auffallen.
 - **Screenshots**: Actions → _Update screenshots_ → Run workflow.
 - **Release**: Tag `vX.Y.Z` (Version in `package.json`) baut das Image `tristanteu/kontext`
   für amd64 und arm64 und legt das GitHub-Release an.

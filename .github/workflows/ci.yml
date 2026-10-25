@@ -96,10 +96,17 @@ jobs:
         with:
           lockfile: bun.lock
 
+  # The end-to-end tests in four parts at once, each with a Stalwart and seed of its own (the tests
+  # share one server within a part and run one after the other there). Playwright splits by files,
+  # so a file whose tests build on each other (e2e/phone.spec.ts) stays in one part.
   e2e:
-    name: End-to-end tests (Stalwart + Playwright)
+    name: End-to-end tests (${{ matrix.shard }}/4)
     needs: image
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2, 3, 4]
     container:
       image: ${{ needs.image.outputs.image }}
       options: --ipc=host
@@ -114,12 +121,21 @@ jobs:
           path: .dev/bin
           key: stalwart-${{ hashFiles('dev/config.ts') }}
       - run: bun install --frozen-lockfile
-      - run: bun run e2e
+      - run: bun run e2e --shard=${{ matrix.shard }}/4
       - if: failure()
         uses: actions/upload-artifact@v4
         with:
-          name: playwright-report
+          name: playwright-report-${{ matrix.shard }}
           path: |
             playwright-report
             test-results
           retention-days: 7
+
+  # One check under the old name for all parts, for branch rules and a quick look.
+  e2e-all:
+    name: End-to-end tests (Stalwart + Playwright)
+    needs: e2e
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - run: test "${{ needs.e2e.result }}" = success
