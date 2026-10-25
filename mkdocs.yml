@@ -1,16 +1,39 @@
+# Documentation as a website: https://firsttris.github.io/kontext/
+# Source is docs/, built with MkDocs Material (.github/workflows/docs.yml publishes it).
+# Locally: pip install mkdocs-material && mkdocs serve
 site_name: Kontext
-site_description: Mail, Kalender und Kontakte, die dir gehören – wie Google Workspace, nur auf dem eigenen Server
+site_description: >-
+  Mail, Kalender, Kontakte, Aufgaben, Team-Chat und Telefonie (CTI) auf dem eigenen Server – die
+  selbst gehostete Alternative zu Google Workspace und Microsoft 365, mit Stalwart als Mailserver.
+site_author: Tristan Teufel
 site_url: https://firsttris.github.io/kontext/
 repo_url: https://github.com/firsttris/kontext
+repo_name: firsttris/kontext
 edit_uri: edit/main/docs/
+copyright: Lizenz AGPL-3.0 · © Tristan Teufel und Mitwirkende
+# Pages as mail.html instead of mail/: keeps the relative image paths right, which also have to
+# work on GitHub
 use_directory_urls: false
+# Links to headings that don't exist fail the strict build
+validation:
+  anchors: warn
 theme:
   name: material
   language: de
+  icon:
+    repo: fontawesome/brands/github
   features:
     - navigation.instant
+    - navigation.instant.progress
+    - navigation.tracking
+    - navigation.sections
+    - navigation.top
+    - navigation.footer
+    - search.suggest
     - search.highlight
+    - toc.follow
     - content.code.copy
+    - content.action.edit
   palette:
     - media: "(prefers-color-scheme: light)"
       scheme: default
@@ -20,8 +43,13 @@ theme:
       scheme: slate
       primary: black
       toggle: { icon: material/weather-sunny, name: Hell }
+plugins:
+  - search:
+      lang: de
 markdown_extensions:
   - admonition
+  - attr_list
+  - md_in_html
   - tables
   - toc: { permalink: true }
   - pymdownx.superfences:
@@ -30,9 +58,25 @@ markdown_extensions:
           class: mermaid
           format: !!python/name:pymdownx.superfences.fence_code_format
   - pymdownx.details
+extra:
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/firsttris/kontext
+      name: Quellcode auf GitHub
 nav:
   - Start: index.md
-  - Installation: installation.md
-  - Architektur: architecture.md
-  - Verschlüsselung: encryption.md
-  - Entwicklung: development.md
+  - Funktionen:
+      - Mail: mail.md
+      - Kalender und Kontakte: calendar-contacts.md
+      - Aufgaben: tasks.md
+      - Team-Chat und Videocalls: chat.md
+      - Telefonie (CTI): telephony.md
+      - Dokumente: documents.md
+      - Verschlüsselung: encryption.md
+      - KI-Agenten (MCP): agents.md
+      - Firmenverwaltung und Umzug: company.md
+  - Betrieb:
+      - Installation: installation.md
+  - Technik:
+      - Architektur: architecture.md
+      - Entwicklung: development.md

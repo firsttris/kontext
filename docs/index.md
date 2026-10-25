@@ -1,35 +1,60 @@
-# Kontext
+---
+description: >-
+  Kontext: Mail, Kalender, Kontakte, Aufgaben, Team-Chat und Telefonie (CTI) auf dem eigenen
+  Server – eine selbst gehostete Alternative zu Google Workspace und Microsoft 365 für kleine
+  Betriebe, mit Stalwart als Mailserver. DSGVO, Open Source (AGPL).
+---
 
-Kontext ist **Mail, Kalender und Kontakte, die dir gehören** – wie Google Workspace, nur auf dem
-eigenen Server: gemeinsame Postfächer, ein Kalender fürs Team und Kontakte, die zu jedem Kunden die
-Mails und Termine zeigen. Für Freelancer, Handwerk, Kanzleien und den Mittelstand. Jede
-Installation hat ihren eigenen Mailserver [Stalwart](https://stalw.art); Kontext ist die Oberfläche
-im Browser und am Handy, die Daten bleiben auf dem eigenen Server (DSGVO, GoBD-gerechte
-Aufbewahrung).
+# Kontext – Mail, Kalender, Chat und Telefonie auf dem eigenen Server
 
-![Kontext: Posteingang mit gemeinsamen Postfächern und geöffneter Mail](screenshots/mail.png)
+Kontext ist **Mail, Kalender und Kontakte, die dir gehören** – wie Google Workspace oder
+Microsoft 365, nur auf dem eigenen Server: gemeinsame Postfächer wie info@, ein Kalender fürs Team,
+Kontakte, die zu jedem Kunden Mails, Termine und Aufgaben zeigen, dazu Team-Chat mit Videocalls und
+das Firmentelefon an der Fritzbox. Für Freelancer, Handwerk, Kanzleien, Praxen und den
+Mittelstand.
+
+Jede Installation hat ihren eigenen Mailserver [Stalwart](https://stalw.art); Kontext ist die
+Oberfläche im Browser und am Handy (installierbar als App) und spricht mit Stalwart über JMAP.
+Die Daten bleiben auf dem eigenen Server – DSGVO, GoBD-gerechte Aufbewahrung, keine Kosten pro
+Benutzer. Thunderbird, Outlook, iPhone und Android verbinden sich weiter per IMAP, SMTP, CalDAV und
+CardDAV.
+
+![Kontext im Browser: Posteingang mit gemeinsamen Postfächern info@ und rechnung@, Kategorien und geöffneter Mail](screenshots/mail.png)
 
 ## Was drin ist
 
-|              |                                                                                                                                                               |
-| ------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Mail**     | Suche über alle Ordner mit Operatoren wie in Gmail, alle Posteingänge in einer Liste, Ordner und Unterordner, Mails verschieben per Menü oder Ziehen (auch zwischen Postfächern), gemeinsame Postfächer (info@, rechnung@), weitere Postfächer (Gmail, GMX & Co. abrufen und als diese Adresse senden), Warnung vor gefälschten Absendern mit ausklappbaren Details, Regeln zum Einsortieren beim Eingang (auch aus einer Mail heraus), Kategorien (auch im Team in info@), Benachrichtigungen (Glocke und auf dem Gerät), Archiv, Suche, Schreiben mit Formatierung, Anhänge mit Vorschau (Fotos, erste PDF-Seite), Antworten mit Zitat, Push ohne Neuladen |
-| **Kalender** | Tag, Woche, Monat und Liste, Termine per Ziehen verschieben, wiederkehrende Termine, Kalender mit Kollegen teilen, Einladungen mit Zusage/Absage               |
-| **Aufgaben** | Meine Aufgaben, Heute, Demnächst; Liste oder Kanban-Board, eigenes Board und eins pro gemeinsamem Postfach, Aufgabe aus einer Mail, Schnelleingabe mit Datum, Checkliste, Zuständige |
-| **Kontakte** | Kunden-Ansicht mit letzten Mails und nächsten Terminen, Anlegen und Bearbeiten, Gruppen, vCard-Import/-Export, Adressbücher mit Kollegen teilen              |
-| **Firma**    | Mitarbeiter anlegen und sperren, Passwort und Anmeldung mit Code zurücksetzen, weitere Adressen, gemeinsame Postfächer mit Lese- oder Senderecht und eigenen Regeln, Abwesenheit mit Vertretung, Firmen-Signatur, Austritt mit Übergabe, Umzug von Microsoft 365, Gmail, GMX & Co., Outlook (PST) und Google-Export – für den Chef in den Einstellungen |
-| **Agenten**  | KI-Agenten wie Claude über MCP: Kundenüberblick, Mails, Termine und Aufgaben nachschlagen; auf Wunsch Entwürfe, Termine, Kontakte und Aufgaben anlegen – nie selbst senden oder löschen; Protokoll; Anmeldung im Browser (OAuth) oder Zugangsschlüssel |
-| **Handy**    | jede Ansicht als eigener Bildschirm mit Tab-Leiste                                                                                                            |
+| | |
+| --- | --- |
+| [**Mail**](mail.md) | gemeinsame Postfächer, alle Posteingänge in einer Liste, Kategorien und Regeln fürs Team, Suche wie in Gmail, Wiedervorlage, später senden, Textbausteine, Gmail und GMX abrufen und als diese Adresse senden, Warnung vor gefälschten Absendern |
+| [**Kalender und Kontakte**](calendar-contacts.md) | Tag, Woche, Monat, Serien, Einladungen, Verfügbarkeit der Kollegen wie in Outlook, Videobesprechung am Termin; Kunden-Ansicht mit letzten Mails und Terminen, Gruppen, vCard, geteilte Adressbücher |
+| [**Aufgaben**](tasks.md) | Liste und Kanban-Board pro Postfach, aus Mails, Chat und Regeln, wiederkehrend, Erinnerungen als Push, CalDAV für Thunderbird und Handy |
+| [**Team-Chat und Videocalls**](chat.md) | Kanäle pro gemeinsamem Postfach, Direktnachrichten, Threads, Mails als Karten, Anrufe, Videocalls und Bildschirm teilen über LiveKit |
+| [**Telefonie (CTI)**](telephony.md) | Fritzbox-Anrufe klingeln in Kontext mit Kontakt, letzter Mail und nächstem Termin; Softphone im Browser, Mailbox als Mail, Öffnungszeiten, Weitervermitteln, Snom-Tischtelefone, Fax als PDF |
+| [**Dokumente**](documents.md) | Word, Excel, PowerPoint und PDF im Browser (Schreibzeug), ein Ordner pro gemeinsamem Postfach, Anhänge ablegen und anhängen |
+| [**Verschlüsselung**](encryption.md) | OpenPGP und S/MIME im Browser, „Vertraulich senden“ an jeden Empfänger, Ende-zu-Ende verschlüsselter Chat |
+| [**KI-Agenten (MCP)**](agents.md) | Claude & Co. schlagen Kunden, Mails, Termine und Aufgaben nach und legen Entwürfe an – nie selbst senden oder löschen |
+| [**Firmenverwaltung und Umzug**](company.md) | Mitarbeiter, gemeinsame Postfächer mit Rechten, Abwesenheit mit Vertretung, Austritt, Umzug von Microsoft 365, Gmail, Outlook (PST) |
+| **Handy** | jede Ansicht als eigener Bildschirm mit Tab-Leiste; als App installierbar, Benachrichtigungen auch bei geschlossener App |
+
+## Betrieb
+
+Ein Server pro Firma: ein kleiner VPS (etwa bei IONOS oder Hetzner, ab rund 5 € im Monat) oder
+ein Rechner im eigenen Haus, mit Docker oder Podman. Kontext, Stalwart und Caddy starten mit einer
+Docker-Compose-Datei; Anrufe (LiveKit), Telefonie und Dokumente schaltet man dazu, wenn man sie
+braucht. Backups gehen verschlüsselt mit Restic auf S3 mit Object Lock.
+→ [Installation](installation.md)
 
 ## Wie es weitergeht
 
-1. **Kern ausbauen**: Mail, Kontakte und Kalender so gut machen, dass niemand etwas vermisst.
-2. **Umzug abrunden**: Senden als alte Adresse während des Parallelbetriebs, einzeln geänderte
-   Termine von Serien aus Microsoft 365.
-3. **Pilot** bei einem Kunden, vier Wochen parallel zum alten System.
-4. **Zusatzmodule**, eins nach dem anderen: Ticket-Postfach, Aufgaben mit Zeiterfassung,
-   Terminbuchung, Team-Chat, Belegarchiv.
-5. **Leitstand** für den Betreiber: alle Kunden-Server mit Status, Backups, Restore-Test und
-   Updates an einer Stelle.
+1. **Pilot** bei einem Kunden, vier Wochen parallel zum alten System, mit der Telefonie im Test.
+2. **Kern abrunden:** Erinnerungen an Termine auch bei geschlossener App, App-Passwörter für
+   CalDAV mit Anmeldung in zwei Schritten, Regeln für Mitarbeiter in der Firmenverwaltung.
+3. **Telefonie: mehr** – Anschluss direkt beim Anbieter (SIP-Trunk), SIP über TLS, Warteschleife,
+   weitere Tischtelefone.
+4. **Die App auf Englisch** und in weiteren Sprachen.
+5. **Zusatzmodule**, eins nach dem anderen: Arbeitsberichte fürs Handwerk, Belege, Terminbuchung,
+   Tickets; ein **Leitstand** für den Betreiber mit allen Kunden-Servern.
+
+Alles im Einzelnen: [Roadmap](https://github.com/firsttris/kontext/blob/main/ROADMAP.md).
 
 Weiter: [Installation](installation.md) · [Architektur](architecture.md) · [Entwicklung](development.md)

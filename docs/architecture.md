@@ -3,12 +3,17 @@
 ```mermaid
 flowchart LR
   Browser["Browser / Handy<br>Kontext (React-SPA)"] -->|HTTPS| Caddy
-  Caddy -->|"App, /api, /jmap"| Server["Kontext-Server<br>(Bun, Hono, Better Auth)"]
+  Caddy -->|"App, /api, /jmap, /mcp"| Server["Kontext-Server<br>(Bun, Hono, Better Auth)"]
+  Agenten["KI-Agenten (MCP)"] -->|"/mcp, OAuth"| Caddy
   Server -->|"JMAP mit Token"| Stalwart
-  Server --> SQLite[("Sitzungen, Aufgaben, Chat")]
+  Server --> SQLite[("Sitzungen, Aufgaben, Chat, Telefonie")]
   Caddy -->|"/rtc"| LiveKit["LiveKit<br>(Anrufe)"]
   Browser -.->|"Ton und Bild<br>UDP 7882, TCP 7881"| LiveKit
   LiveKit -->|Webhooks| Server
+  Box["Telefonbox im Büro<br>(Asterisk + Agent)"] -->|"WebSocket"| Server
+  Box -->|"SIP, RTP"| SIP["LiveKit SIP"] --> LiveKit
+  Caddy -->|"dokumente.firma.de"| Schreibzeug["Schreibzeug<br>(Dokumente)"]
+  Schreibzeug -->|"OpenID Connect"| Server
   Caddy -->|"/dav, /.well-known (außer OAuth)"| Stalwart
   Clients["Mailprogramme, Handys"] -->|"IMAP, SMTP, CalDAV, CardDAV"| Stalwart
   Internet["andere Mailserver"] -->|SMTP 25| Stalwart
@@ -31,6 +36,11 @@ flowchart LR
   Mailprogramme direkt an Stalwart.
 - **LiveKit** (Apache 2.0, optional) trägt die [Anrufe](#anrufe) im Chat: ein SFU, der Ton, Bild
   und geteilte Bildschirme zwischen den Browsern verteilt.
+- **Die Telefonbox** (optional, `box/`) steht im Büro des Kunden: Asterisk und ein kleiner Agent,
+  die sich als IP-Telefon an der Fritzbox anmelden und Anrufe über **LiveKit SIP** in Kontext
+  bringen (siehe [Telefonie](#telefonie)).
+- **Schreibzeug** (optional) ist das Modul [Dokumente](#dokumente), ein eigener Dienst unter einer
+  eigenen Adresse; Kontext ist sein Anmeldeanbieter.
 
 ## Gemeinsame Postfächer
 
@@ -448,8 +458,8 @@ das Manifest steht in `vite.config.ts`, der Service Worker in `src/sw/service-wo
   eigenen Cache ab und öffnet eine neue Mail damit; die Dateien sind dann schon Anhänge.
 - **Benachrichtigungen** gehen über den Service Worker (`showNotification`), weil installierte Apps
   auf Android nur so dürfen; ein Klick öffnet die Mail oder den Termin, auch bei geschlossenem
-  Fenster. Sie kommen, solange Kontext geöffnet ist (auch im Hintergrund); bei ganz geschlossener
-  App braucht es Web Push; Stalwart kann ihn selbst senden (`urn:ietf:params:jmap:webpush-vapid`), siehe [Roadmap](https://github.com/firsttris/kontext/blob/main/ROADMAP.md).
+  Fenster. Bei ganz geschlossener App kommen sie als Web Push vom Kontext-Server, siehe
+  [Benachrichtigungen](#benachrichtigungen).
 - **Ungelesen-Zahl am App-Symbol** (Badging API) als Summe aller Posteingänge.
 
 ## Aufgaben
@@ -1314,10 +1324,12 @@ der Person, die ihn verbunden hat (`server/mcp/`).
 | Ordner          | Inhalt                                                                                                                     |
 | --------------- | -------------------------------------------------------------------------------------------------------------------------- |
 | `src/jmap/`     | JMAP-Client (Session, Methoden, Upload/Download, Push) und die Aufrufe für Mail, Kalender, Kontakte                        |
-| `src/lib/`      | reine Funktionen: Ordnerbaum, Adressen, Antworten, HTML-Bereinigung, JSCalendar- und JSContact-Umrechnung – mit Unit-Tests |
-| `src/features/` | die Ansichten von Mail, Kalender, Kontakten und Firmenverwaltung, je mit ihren Daten-Hooks (`queries.ts`)                 |
-| `server/`       | Kontext-Server: Anmeldung, JMAP-Weiterleitung, Firmenverwaltung (`server/company/`), Anbieter für Schreibzeug (`server/oidc/`, `server/documents/`), Agenten über MCP (`server/mcp/`) |
+| `src/lib/`      | reine Funktionen: Ordnerbaum, Adressen, Antworten, Suche, HTML-Bereinigung, JSCalendar- und JSContact-Umrechnung, PGP und S/MIME – mit Unit-Tests |
+| `src/features/` | die Ansichten, je mit ihren Daten-Hooks (`queries.ts`): Mail, Kalender, Kontakte, Aufgaben, Chat, Anrufe (`calls/`), Telefonie (`phone/`), Dokumente, Agenten, Firmenverwaltung, Einstellungen, Verschlüsselung (`pgp/`, `smime/`, `secure/`) |
 | `src/routes/`   | TanStack-Router-Routen; der Zustand einer Ansicht steht in der URL (offene Mail, Ordner, Termin)                           |
-| `dev/`          | lokaler Stalwart, Testdaten (Seed)                                                                                         |
-| `deploy/`       | Caddy, Compose, Quadlets, Backup                                                                                           |
+| `src/sw/`       | Service Worker: App-Cache, Web Push, Teilen in Kontext                                                                     |
+| `server/`       | Kontext-Server: Anmeldung und JMAP-Weiterleitung, je Funktion ein Ordner – Firmenverwaltung (`company/`), Umzug (`migration/`), weitere Postfächer (`external/`), Regeln, Kategorien, Aufgaben und CalDAV (`tasks/`, `dav/`), Chat, Anrufe (`calls/`), Telefonie (`phone/`), Push, Live-Verbindung, Wiedervorlage, Textbausteine, Verschlüsselung (`pgp/`, `smime/`, `secure/`), Anbieter für Schreibzeug (`oidc/`, `documents/`), Agenten über MCP (`mcp/`) |
+| `box/`          | die Telefonbox: Asterisk und der Box-Agent, der Konfiguration und Dialplan schreibt                                        |
+| `dev/`          | lokaler Stalwart, Testdaten (Seed), Attrappen (Graph, Schreibzeug, Telefonbox)                                             |
+| `deploy/`       | Caddy, Compose, Quadlets, LiveKit, Backup                                                                                  |
 | `e2e/`          | Playwright-Tests gegen einen eigenen Stalwart                                                                              |
