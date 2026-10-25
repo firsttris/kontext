@@ -7,7 +7,7 @@ import { signOutFrame } from "@/features/documents/frame-store";
 import { createJmapClient, type JmapClient } from "@/jmap/client";
 import { signedOAuthQuery } from "./oauth-query";
 
-/** "continue": the sign-in was for Schreibzeug, and the browser is on its way back there. */
+/** "continue": the sign-in was for an OAuth client (Schreibzeug, an agent); the browser goes on. */
 export type SignInResult = "ok" | "mfa" | "failed" | "offline" | "continue";
 
 /**

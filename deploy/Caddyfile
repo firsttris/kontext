@@ -13,8 +13,12 @@
 	@compressible not path /api/live /jmap/eventsource*
 	encode @compressible zstd gzip
 
-	# CalDAV/CardDAV and autoconfiguration for mail programs and phones, straight to Stalwart
-	@stalwart path /.well-known/* /dav/* /mail/config-v1.1.xml /autodiscover/*
+	# CalDAV/CardDAV and autoconfiguration for mail programs and phones, straight to Stalwart;
+	# the OAuth discovery for agents (MCP, RFC 9728 / 8414) belongs to Kontext
+	@stalwart {
+		path /.well-known/* /dav/* /mail/config-v1.1.xml /autodiscover/*
+		not path /.well-known/oauth-protected-resource* /.well-known/oauth-authorization-server*
+	}
 	handle @stalwart {
 		reverse_proxy stalwart:8080 {
 			header_up X-Forwarded-For {remote_host}

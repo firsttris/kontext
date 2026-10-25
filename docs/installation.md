@@ -212,6 +212,22 @@ ein. Geht das Handy verloren, setzt der Chef sie unter *Einstellungen → Firma 
 Mitarbeiter zurück; danach meldet sich der Mitarbeiter wieder nur mit Passwort an und richtet den
 Code neu ein.
 
+### KI-Agenten
+
+Agenten wie Claude verbinden sich über MCP mit `https://<KONTEXT_DOMAIN>/mcp`; einzurichten ist
+nichts. Jede Person verbindet ihren Agenten selbst unter *Einstellungen → KI-Agenten* (Schlüssel)
+oder trägt die Adresse in Claude als Connector ein und meldet sich im Browser an (OAuth). Dafür
+gilt:
+
+- Caddy gibt `/mcp` und die OAuth-Discovery (`/.well-known/oauth-protected-resource`,
+  `/.well-known/oauth-authorization-server`) an Kontext, die übrigen `/.well-known`-Pfade weiter
+  an Stalwart (`deploy/Caddyfile`).
+- Der Kontext-Server muss ins Internet dürfen (HTTPS): Claude und andere Clients melden sich mit
+  einer Adresse an, unter der ihre Beschreibung liegt (Client ID Metadata Document), und Kontext
+  holt sie dort ab – nur öffentliche Adressen, ohne Weiterleitungen.
+- Wer einen Agenten nicht mehr will, trennt ihn in den Einstellungen; das Sperren eines
+  Mitarbeiters trennt alle seine Agenten.
+
 ## 4. Platte verschlüsseln
 
 Mails, Chat, Aufgaben und Dateien liegen auf der Platte des Servers. Verschlüsselt ist sie
@@ -259,6 +275,9 @@ Vorlage der Firmen-Signatur ist neu einzutragen; Aufgaben und Chat sind dann lee
 cd /opt/kontext && git pull
 docker compose -f deploy/compose.yaml pull && docker compose -f deploy/compose.yaml up -d
 ```
+
+Hat sich `deploy/Caddyfile` geändert (etwa für die KI-Agenten), Caddy neu laden:
+`docker compose -f deploy/compose.yaml restart caddy`.
 
 Vor einem Stalwart-Update mit neuer Hauptversion die `UPGRADING`-Hinweise von Stalwart lesen und
 vorher ein Backup machen.

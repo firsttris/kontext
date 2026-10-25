@@ -18,7 +18,7 @@ Aufbewahrung).
 | **Aufgaben** | Meine Aufgaben, Heute, Demnächst; Liste oder Kanban-Board, eigenes Board und eins pro gemeinsamem Postfach, Aufgabe aus einer Mail, Schnelleingabe mit Datum, Checkliste, Zuständige |
 | **Kontakte** | Kunden-Ansicht mit letzten Mails und nächsten Terminen, Anlegen und Bearbeiten, Gruppen, vCard-Import/-Export, Adressbücher mit Kollegen teilen              |
 | **Firma**    | Mitarbeiter anlegen und sperren, Passwort und Anmeldung mit Code zurücksetzen, weitere Adressen, gemeinsame Postfächer mit Lese- oder Senderecht und eigenen Regeln, Abwesenheit mit Vertretung, Firmen-Signatur, Austritt mit Übergabe, Umzug von Microsoft 365, Gmail, GMX & Co., Outlook (PST) und Google-Export – für den Chef in den Einstellungen |
-| **Agenten**  | KI-Agenten wie Claude über MCP: Kundenüberblick, Mails, Termine und Aufgaben nachschlagen; auf Wunsch Entwürfe, Termine, Kontakte und Aufgaben anlegen – nie selbst senden oder löschen; Protokoll, eigener Zugangsschlüssel |
+| **Agenten**  | KI-Agenten wie Claude über MCP: Kundenüberblick, Mails, Termine und Aufgaben nachschlagen; auf Wunsch Entwürfe, Termine, Kontakte und Aufgaben anlegen – nie selbst senden oder löschen; Protokoll; Anmeldung im Browser (OAuth) oder Zugangsschlüssel |
 | **Handy**    | jede Ansicht als eigener Bildschirm mit Tab-Leiste                                                                                                            |
 
 ## Wie es weitergeht

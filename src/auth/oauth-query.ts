@@ -1,7 +1,7 @@
 /**
- * Signing in for Schreibzeug: Kontext's provider sends people without a session to /login with
- * the authorization request in the query, signed (`sig`, the signed names in `ba_param`). The
- * sign-in sends it back as `oauth_query`, and the server answers with the way back to Schreibzeug.
+ * Signing in for an OAuth client (Schreibzeug, an agent): Kontext's provider sends people without a
+ * session to /login with the authorization request in the query, signed (`sig`, the signed names in
+ * `ba_param`). The sign-in sends it back as `oauth_query`, and the server answers with the way on.
  * The same selection as `buildSignedOAuthQuery` in @better-auth/oauth-provider (src/signed-query.ts),
  * whose client plugin would do this for Better Auth's own client.
  */

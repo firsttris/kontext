@@ -9,7 +9,7 @@ flowchart LR
   Caddy -->|"/rtc"| LiveKit["LiveKit<br>(Anrufe)"]
   Browser -.->|"Ton und Bild<br>UDP 7882, TCP 7881"| LiveKit
   LiveKit -->|Webhooks| Server
-  Caddy -->|"/dav, /.well-known"| Stalwart
+  Caddy -->|"/dav, /.well-known (außer OAuth)"| Stalwart
   Clients["Mailprogramme, Handys"] -->|"IMAP, SMTP, CalDAV, CardDAV"| Stalwart
   Internet["andere Mailserver"] -->|SMTP 25| Stalwart
   Stalwart --> Daten[("RocksDB-Volume")]
@@ -1114,8 +1114,9 @@ bleibt die App am Handy angemeldet, bis man sich abmeldet (Sitzung 90 Tage, bei 
 der Server in Stalwart ein App-Passwort für das Gerät an und speichert es verschlüsselt; eine
 Passkey-Anmeldung holt damit den Stalwart-Token. Am Rest ändert sich nichts.
 
-Kontext ist außerdem **Anmeldeanbieter** (OpenID Connect) für Schreibzeug, siehe
-[Dokumente](#dokumente). Den Namen, den Schreibzeug sieht, gleicht Kontext bei jeder Anmeldung mit
+Kontext ist außerdem **Anmeldeanbieter**: per OpenID Connect für Schreibzeug, siehe
+[Dokumente](#dokumente), und per OAuth 2.1 für KI-Agenten, siehe [Agenten (MCP)](#agenten-mcp).
+Beide teilen sich einen Anbieter (Better Auth erlaubt nur einen, `server/oidc/provider.ts`). Den Namen, den Schreibzeug sieht, gleicht Kontext bei jeder Anmeldung mit
 dem Absendernamen in Stalwart ab.
 
 ## Dokumente
@@ -1134,14 +1135,16 @@ flowchart LR
   KServer -->|"JMAP mit dem Token der Sitzung"| Stalwart
 ```
 
-**Anmeldung.** Better Auths Plugin `@better-auth/oauth-provider` (mit dem `jwt`-Plugin für die
-Schlüssel) macht Kontext zum Anbieter (`server/oidc/provider.ts`): Discovery unter
+**Anmeldung.** Better Auths Plugin `@better-auth/mcp` – `@better-auth/oauth-provider` mit der
+MCP-Ressource für die [Agenten](#agenten-mcp), dazu das `jwt`-Plugin für die Schlüssel – macht
+Kontext zum Anbieter (`server/oidc/provider.ts`): Discovery unter
 `/api/auth/.well-known/openid-configuration` (Caddy gibt das `/.well-known` der Wurzel an
-Stalwart), Autorisierung mit PKCE, Token, UserInfo und Schlüssel (JWKS) unter `/api/auth`. Der
-einzige Client ist Schreibzeug aus der Umgebung (`SCHREIBZEUG_URL`, `SCHREIBZEUG_CLIENT_ID`,
-`SCHREIBZEUG_CLIENT_SECRET`); der Server trägt ihn beim Start in die Datenbank ein, ohne
-Zustimmungsseite, weil beide Dienste zum selben Betreiber gehören. Über die API lässt sich kein
-Client anlegen oder ändern. Wer ohne Sitzung kommt, landet auf Kontexts Anmeldeseite; die schickt
+Stalwart, bis auf die OAuth-Discovery der Agenten), Autorisierung mit PKCE, Token, UserInfo und
+Schlüssel (JWKS) unter `/api/auth`. Schreibzeug ist ein fester Client aus der Umgebung
+(`SCHREIBZEUG_URL`, `SCHREIBZEUG_CLIENT_ID`, `SCHREIBZEUG_CLIENT_SECRET`); der Server trägt ihn
+beim Start in die Datenbank ein, ohne Zustimmungsseite, weil beide Dienste zum selben Betreiber
+gehören. Agenten registrieren sich selbst und brauchen die Zustimmung der Person; angemeldet lässt
+sich über die API kein Client anlegen oder ändern. Wer ohne Sitzung kommt, landet auf Kontexts Anmeldeseite; die schickt
 die signierte Anfrage mit der Anmeldung zurück (`src/auth/oauth-query.ts`), und der Server leitet
 weiter zu Schreibzeug. Im Rahmen fragt Schreibzeug mit `prompt=none`: mit Sitzung kommt der Code
 sofort zurück, ohne Sitzung `login_required`.
@@ -1267,18 +1270,39 @@ der Person, die ihn verbunden hat (`server/mcp/`).
 - **Protokoll und Grenze:** Jede Änderung steht mit ihrer Meldung in `mcp_log` und in den
   Einstellungen bei der Verbindung („Letzte Änderungen“). Mehr als 100 Änderungen pro Stunde
   lehnt der Server ab.
-- **Zugangsschlüssel:** In den Einstellungen unter „KI-Agenten“ legt man einen an und gibt dabei
-  sein Passwort (und den Code) noch einmal ein. Der Server meldet sich damit neu bei Stalwart an
-  und legt für den Schlüssel eine **eigene Sitzung mit eigenem Stalwart-Token** an
-  (`server/mcp/connections.ts`, Tabelle `mcp_key`); in SQLite liegt nur der SHA-256 des
-  Schlüssels, der Schlüssel selbst ist einmal zu sehen. Der Agent schickt ihn als
-  `Authorization: Bearer kontext_…`. Trennen löscht die Sitzung, mit ihr Schlüssel, Token und
-  Protokoll; das Sperren eines Mitarbeiters beendet alle seine Sitzungen und damit auch seine
-  Verbindungen. Stalwart verlängert den Refresh-Token, solange der Schlüssel benutzt wird; läuft
-  er ab, sagt `/mcp` „Zugang abgelaufen“ und man verbindet den Agenten neu.
+- **Verbinden, zwei Wege:** Beide geben dem Agenten eine **eigene Sitzung mit eigenem
+  Stalwart-Token** (`server/mcp/connections.ts`, Tabelle `mcp_key`): Man gibt dabei sein Passwort
+  (und den Code) noch einmal ein, der Server meldet sich damit neu bei Stalwart an. Die Verbindung
+  überlebt also das Abmelden im Browser und lässt sich einzeln trennen; Trennen löscht die
+  Sitzung, mit ihr Token und Protokoll. Das Sperren eines Mitarbeiters beendet alle seine Sitzungen
+  und damit auch seine Agenten. Stalwart verlängert den Refresh-Token, solange der Agent arbeitet.
+  - **Anmeldung (OAuth 2.1):** Für Claude (App, Desktop, claude.ai) und andere Clients, die nur
+    eine Adresse kennen. Kontext ist dafür der Autorisierungsserver: Better Auths MCP-Plugin
+    (`@better-auth/mcp` auf `@better-auth/oauth-provider`, `jwt` für die Schlüssel;
+    `server/mcp/oauth.ts`). Ablauf nach der MCP-Spezifikation: `/mcp` ohne Token antwortet 401 mit
+    `WWW-Authenticate: Bearer resource_metadata=…` (RFC 9728), der Client liest
+    `/.well-known/oauth-protected-resource/mcp` und `/.well-known/oauth-authorization-server/api/auth`
+    (RFC 8414), registriert sich – per Client ID Metadata Document (`@better-auth/cimd`, Abruf nur
+    öffentlicher Adressen ohne Weiterleitung) oder dynamisch (RFC 7591) – und schickt die Person
+    mit PKCE zu `/api/auth/oauth2/authorize`. Ohne Sitzung führt das zur Anmeldung (`/login` gibt
+    das signierte `oauth_query` mit, `src/auth/oauth-query.ts`), dann zur Zustimmung
+    (`/agent-consent`): welcher Agent, was er darf, „Darf anlegen und ändern“ nur, wenn er
+    `write` anfragt, und das Passwort. `POST /api/mcp-oauth/consent` (`server/mcp/oauth-routes.ts`)
+    prüft das Passwort, lässt den Provider die Zustimmung abschließen (er prüft die Signatur) und
+    legt erst dann die Verbindung an. Tokens sind JWTs mit `aud` = `<Adresse>/mcp` (RFC 8707), eine
+    Stunde gültig, mit Refresh-Token; `/mcp` prüft sie gegen die eigenen Schlüssel (JWKS, intern
+    über `127.0.0.1` gelesen) und sucht die Verbindung zu Person (`sub`) und Client (`azp`). Fehlt
+    sie (getrennt) oder ist ihr Stalwart-Token abgelaufen, bekommt der Client wieder die 401 mit
+    `resource_metadata` und fragt die Person neu; Zustimmung und Refresh-Tokens werden dabei
+    gelöscht. Nur `authorization_code` und `refresh_token`: hinter jedem Token steht eine Person.
+    Ein Client mit Redirect auf `localhost` (Claude Code) gilt als native App (RFC 8252).
+  - **Zugangsschlüssel:** Für Claude Code, Skripte und Clients ohne Anmeldung im Browser: unter
+    „KI-Agenten“ angelegt; in SQLite liegt nur der SHA-256, der Schlüssel selbst ist einmal zu
+    sehen. Der Agent schickt ihn als `Authorization: Bearer kontext_…`.
+- **Discovery und Caddy:** Die beiden `/.well-known/oauth-*`-Pfade liegen auf der Wurzel und gehen
+  an Better Auth (`server/app.ts`); Caddy gibt sie Kontext statt Stalwart (`deploy/Caddyfile`).
 
-**Später:** OAuth 2.1 nach der MCP-Spezifikation (Anmelden im Browser statt Schlüssel kopieren),
-Anrufe und Chat.
+**Später:** Anrufe und Chat als Werkzeuge.
 
 ## Code
 

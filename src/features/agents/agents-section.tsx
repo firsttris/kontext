@@ -56,6 +56,7 @@ const CopyField = ({ label, value, testId }: { label: string; value: string; tes
 const ConnectCard = () => (
   <SettingsCard title={m.agents_connect()} description={m.agents_hint()}>
     <CopyField label={m.agents_address()} value={mcpAddress(window.location.origin)} />
+    <p className="m-0 text-[13px] text-muted">{m.agents_oauth_hint()}</p>
     <p className="m-0 border-t border-border pt-3 text-[12px] text-muted">{m.agents_safety()}</p>
   </SettingsCard>
 );

@@ -122,6 +122,127 @@ test.describe("KI-Agenten (MCP)", () => {
   });
 });
 
+/** PKCE (RFC 7636): a verifier and its S256 challenge. */
+const pkce = async () => {
+  const verifier = Buffer.from(crypto.getRandomValues(new Uint8Array(32))).toString("base64url");
+  const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(verifier));
+  return { verifier, challenge: Buffer.from(digest).toString("base64url") };
+};
+
+/** An agent's own requests: plain fetch, no cookies of the browser. */
+const agentFetch = (base: string) => ({
+  json: async (path: string, init: RequestInit = {}) => {
+    const response = await fetch(new URL(path, base), init);
+    return { status: response.status, headers: response.headers, body: await response.json() };
+  },
+});
+
+test.describe("KI-Agenten mit Anmeldung (OAuth)", () => {
+  test("ein Agent meldet sich im Browser an, die Person erlaubt mit Passwort", async ({
+    page,
+    baseURL,
+  }) => {
+    const agent = agentFetch(baseURL!);
+    const callback = "http://127.0.0.1:9999/callback";
+    const name = unique("Test-Agent");
+    const json = { "content-type": "application/json" };
+    const callMcp = (token: string) =>
+      agent.json("/mcp", {
+        method: "POST",
+        headers: {
+          ...json,
+          authorization: `Bearer ${token}`,
+          accept: "application/json, text/event-stream",
+        },
+        body: JSON.stringify({ jsonrpc: "2.0", id: 1, method: "tools/list" }),
+      });
+
+    // The agent finds the sign-in from /mcp (RFC 9728) and registers itself (RFC 7591).
+    const challenge = await agent.json("/mcp", { method: "POST", headers: json, body: "{}" });
+    expect(challenge.status).toBe(401);
+    expect(challenge.headers.get("www-authenticate")).toContain("oauth-protected-resource/mcp");
+    const resource = (await agent.json("/.well-known/oauth-protected-resource/mcp")).body;
+    const issuer = resource.authorization_servers[0] as string;
+    const metadata = (
+      await agent.json(`/.well-known/oauth-authorization-server${new URL(issuer).pathname}`)
+    ).body;
+    const client = (
+      await agent.json(metadata.registration_endpoint, {
+        method: "POST",
+        headers: json,
+        body: JSON.stringify({
+          client_name: name,
+          redirect_uris: [callback],
+          token_endpoint_auth_method: "none",
+          grant_types: ["authorization_code", "refresh_token"],
+          scope: "openid offline_access read write",
+        }),
+      })
+    ).body;
+
+    // The browser: sign-in, then the consent page, then back to the agent with a code.
+    const { verifier, challenge: codeChallenge } = await pkce();
+    const authorize = new URL(metadata.authorization_endpoint);
+    for (const [key, value] of Object.entries({
+      response_type: "code",
+      client_id: client.client_id,
+      redirect_uri: callback,
+      scope: "openid offline_access read write",
+      state: "st",
+      code_challenge: codeChallenge,
+      code_challenge_method: "S256",
+      resource: resource.resource,
+    })) {
+      authorize.searchParams.set(key, value);
+    }
+    await page.route(`${callback}*`, (route) => route.fulfill({ body: "zurück beim Agenten" }));
+    await page.goto(authorize.toString());
+    await page.getByLabel("E-Mail-Adresse").fill("jonas@weber-haustechnik.test");
+    await page.getByLabel("Passwort").fill(DEV_PASSWORD);
+    await page.getByRole("button", { name: "Anmelden" }).click();
+    await expect(
+      page.getByRole("heading", { name: `${name} möchte mit Kontext arbeiten` }),
+    ).toBeVisible();
+    await page.getByLabel("Darf anlegen und ändern").check();
+    await page.getByLabel("Dein Passwort").fill(DEV_PASSWORD);
+    await page.getByRole("button", { name: "Erlauben" }).click();
+    await page.waitForURL(`${callback}*`);
+    const back = new URL(page.url());
+    expect(back.searchParams.get("state")).toBe("st");
+
+    const token = (
+      await agent.json(metadata.token_endpoint, {
+        method: "POST",
+        body: new URLSearchParams({
+          grant_type: "authorization_code",
+          code: back.searchParams.get("code")!,
+          redirect_uri: callback,
+          client_id: client.client_id,
+          code_verifier: verifier,
+          resource: resource.resource,
+        }),
+      })
+    ).body;
+    expect(token.access_token, JSON.stringify(token)).toBeTruthy();
+
+    // With the token the agent works, writing included; the settings list it.
+    const tools = (await callMcp(token.access_token)).body.result.tools as { name: string }[];
+    expect(tools.map((tool) => tool.name)).toContain("create_draft");
+    await page.goto("/settings?section=agents");
+    const listed = page.getByRole("listitem").filter({ hasText: name });
+    await expect(listed).toContainText("Anmeldung");
+    await expect(listed).toContainText("lesen, anlegen, ändern");
+
+    // Separated: the token no longer opens Kontext, the agent is told to sign in again.
+    await listed.getByRole("button", { name: "Trennen" }).click();
+    await listed.getByRole("button", { name: "Ja, weiter" }).click();
+    await expect(listed).toHaveCount(0);
+    const after = await callMcp(token.access_token);
+    expect(after.status).toBe(401);
+    expect(after.headers.get("www-authenticate")).toContain("resource_metadata");
+  });
+});
+
 test.describe("KI-Agenten am Handy @phone", () => {
   test("legt einen Schlüssel an @phone", async ({ page }) => {
     await login(page);

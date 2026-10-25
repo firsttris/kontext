@@ -53,6 +53,8 @@ import { createServerJmap } from "./jmap-server";
 import { createHub } from "./live/hub";
 import { createLiveRoutes } from "./live/routes";
 import { createConnections } from "./mcp/connections";
+import { createOAuthCaller, createRevokeClient } from "./mcp/oauth";
+import { createConsentRoutes } from "./mcp/oauth-routes";
 import { createMcpEndpoint, createMcpKeyRoutes, type McpDeps } from "./mcp/routes";
 import { taskApiOf } from "./mcp/writer";
 import { createImporter, type Importer } from "./migration/importer";
@@ -508,8 +510,15 @@ export const createApp = async (env: Env) => {
     }),
   );
   // Agents over MCP, with connections of their own; they reach what their owner may reach.
+  const connections = createConnections(db);
+  const oauthCaller = createOAuthCaller({
+    connections,
+    publicUrl: env.BETTER_AUTH_URL,
+    // The server's own signing keys, read on the inside rather than through the public address.
+    jwksUrl: `http://127.0.0.1:${env.PORT}/api/auth/jwks`,
+  });
   const mcp: McpDeps = {
-    connections: createConnections(db),
+    connections,
     grants,
     stalwartUrl: env.STALWART_URL,
     version: packageVersion,
@@ -519,8 +528,48 @@ export const createApp = async (env: Env) => {
     // The same task routes, as the agent's owner: the same rights, notices and live updates.
     tasksFor: (accounts, name) =>
       taskApiOf(createTaskRoutes({ ...taskNotices, accountsOf: accounts, nameOf: name })),
+    oauthCaller: (request) => oauthCaller(request),
+    revokeClient: createRevokeClient(db),
   };
   app.route("/api/mcp-keys", createMcpKeyRoutes(mcp));
+  app.route(
+    "/api/mcp-oauth",
+    createConsentRoutes({
+      ...mcp,
+      api: {
+        // As a request of its own: the provider continues the authorization from it.
+        consent: async (body, headers) => {
+          const response = await auth.handler(
+            new Request(`${env.BETTER_AUTH_URL}/api/auth/oauth2/consent`, {
+              method: "POST",
+              headers: {
+                cookie: headers.get("cookie") ?? "",
+                origin: new URL(env.BETTER_AUTH_URL).origin,
+                accept: "application/json",
+                "content-type": "application/json",
+              },
+              body: JSON.stringify(body),
+            }),
+          );
+          if (!response.ok) throw new Error(`Zustimmung: ${response.status}`);
+          return (await response.json()) as { url: string };
+        },
+        clientName: async (clientId, headers) =>
+          (await auth.api.getOAuthClientPublic({ query: { client_id: clientId }, headers }))
+            .client_name ?? null,
+      },
+    }),
+  );
+  // OAuth discovery for agents (RFC 9728, RFC 8414) lives at the root; Better Auth answers it.
+  app.on(
+    ["GET", "HEAD"],
+    [
+      "/.well-known/oauth-protected-resource",
+      "/.well-known/oauth-protected-resource/*",
+      "/.well-known/oauth-authorization-server/*",
+    ],
+    (c) => auth.handler(c.req.raw),
+  );
   const mcpEndpoint = createMcpEndpoint(mcp);
   app.all("/mcp", (c) => mcpEndpoint(c.req.raw));
   app.route("/api/snippets", createSnippetRoutes({ store: createSnippetStore(db), accountsOf }));

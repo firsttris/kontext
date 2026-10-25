@@ -13,8 +13,10 @@ const livekit = process.env.KONTEXT_LIVEKIT ?? "http://127.0.0.1:17880";
 const proxy = {
   "/jmap": { target: server },
   "/api": { target: server },
-  // Agents (MCP), so the address shown in the settings also works in dev.
+  // Agents (MCP), so the address shown in the settings also works in dev, and their OAuth discovery.
   "/mcp": { target: server },
+  "/.well-known/oauth-protected-resource": { target: server },
+  "/.well-known/oauth-authorization-server": { target: server },
   // Task lists for Thunderbird and phone apps (CalDAV), and where they look for them first.
   "/dav": { target: server },
   "/.well-known/caldav": { target: server },

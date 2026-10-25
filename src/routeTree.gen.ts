@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as AppRouteImport } from './routes/_app'
+import { Route as AgentConsentRouteImport } from './routes/agent-consent'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as AppIndexRouteImport } from './routes/_app/index'
 import { Route as AppCalendarRouteImport } from './routes/_app/calendar'
@@ -29,6 +30,11 @@ import { Route as AppMailAccountIdMailboxIdRouteImport } from './routes/_app/mai
 
 const AppRoute = AppRouteImport.update({
   id: '/_app',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AgentConsentRoute = AgentConsentRouteImport.update({
+  id: '/agent-consent',
+  path: '/agent-consent',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LoginRoute = LoginRouteImport.update({
@@ -115,6 +121,7 @@ const AppMailAccountIdMailboxIdRoute =
 
 export interface FileRoutesByFullPath {
   '/': typeof AppIndexRoute
+  '/agent-consent': typeof AgentConsentRoute
   '/login': typeof LoginRoute
   '/calendar': typeof AppCalendarRoute
   '/chat': typeof AppChatRoute
@@ -132,6 +139,7 @@ export interface FileRoutesByFullPath {
   '/mail/$accountId/$mailboxId': typeof AppMailAccountIdMailboxIdRoute
 }
 export interface FileRoutesByTo {
+  '/agent-consent': typeof AgentConsentRoute
   '/login': typeof LoginRoute
   '/calendar': typeof AppCalendarRoute
   '/chat': typeof AppChatRoute
@@ -152,6 +160,7 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/_app': typeof AppRouteWithChildren
+  '/agent-consent': typeof AgentConsentRoute
   '/login': typeof LoginRoute
   '/_app/calendar': typeof AppCalendarRoute
   '/_app/chat': typeof AppChatRoute
@@ -173,6 +182,7 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/agent-consent'
     | '/login'
     | '/calendar'
     | '/chat'
@@ -190,6 +200,7 @@ export interface FileRouteTypes {
     | '/mail/$accountId/$mailboxId'
   fileRoutesByTo: FileRoutesByTo
   to:
+    | '/agent-consent'
     | '/login'
     | '/calendar'
     | '/chat'
@@ -209,6 +220,7 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/_app'
+    | '/agent-consent'
     | '/login'
     | '/_app/calendar'
     | '/_app/chat'
@@ -229,6 +241,7 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   AppRoute: typeof AppRouteWithChildren
+  AgentConsentRoute: typeof AgentConsentRoute
   LoginRoute: typeof LoginRoute
   MeetIdRoute: typeof MeetIdRoute
   SIdRoute: typeof SIdRoute
@@ -241,6 +254,13 @@ declare module '@tanstack/react-router' {
       path: ''
       fullPath: '/'
       preLoaderRoute: typeof AppRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/agent-consent': {
+      id: '/agent-consent'
+      path: '/agent-consent'
+      fullPath: '/agent-consent'
+      preLoaderRoute: typeof AgentConsentRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/login': {
@@ -404,6 +424,7 @@ const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
 
 const rootRouteChildren: RootRouteChildren = {
   AppRoute: AppRouteWithChildren,
+  AgentConsentRoute: AgentConsentRoute,
   LoginRoute: LoginRoute,
   MeetIdRoute: MeetIdRoute,
   SIdRoute: SIdRoute,

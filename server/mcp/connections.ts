@@ -42,6 +42,8 @@ export type McpCaller = {
   sessionId: string;
   email: string;
   scopes: Scope[];
+  /** The OAuth client of the connection; null for an access key. */
+  clientId: string | null;
 };
 
 export const hashKey = async (key: string): Promise<string> =>
@@ -84,6 +86,7 @@ export const createConnections = (db: Db, now: () => Date = () => new Date()) =>
         userId: schema.mcpKey.userId,
         sessionId: schema.mcpKey.sessionId,
         scopes: schema.mcpKey.scopes,
+        clientId: schema.mcpKey.clientId,
         email: schema.user.email,
       })
       .from(schema.mcpKey)

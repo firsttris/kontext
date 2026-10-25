@@ -10,6 +10,7 @@ const caller: McpCaller = {
   sessionId: "s1",
   email: "jonas@weber-haustechnik.test",
   scopes: ["read"],
+  clientId: null,
 };
 const info = {
   id: "k2",

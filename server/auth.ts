@@ -16,7 +16,7 @@ import { z } from "zod";
 import type { Sealer } from "./crypto";
 import { type Db, schema } from "./db";
 import type { Env } from "./env";
-import { providerPlugins, schreibzeugClientOf } from "./oidc/provider";
+import { providerPlugins } from "./oidc/provider";
 import { loginAtStalwart, refreshAtStalwart, type StalwartTokens, whoAmI } from "./stalwart";
 
 const DAY = 24 * 60 * 60;
@@ -67,7 +67,7 @@ const signInBody = z.object({
     .trim()
     .regex(/^\d{6,8}$/)
     .optional(),
-  /** The signed authorization request when the sign-in is for Schreibzeug (oauth-provider). */
+  /** The signed authorization request when the sign-in is for an OAuth client (Schreibzeug, an agent). */
   oauth_query: z.string().max(8192).optional(),
 });
 
@@ -134,8 +134,8 @@ export const createAuth = (env: Env, db: Db, grants: Grants, nameOf: NameOf) =>
     },
     plugins: [
       stalwartSignIn(env.STALWART_URL, grants, nameOf),
-      // Kontext signs people in to Schreibzeug, when it is set up (oidc/provider.ts).
-      ...(schreibzeugClientOf(env) ? providerPlugins() : []),
+      // Kontext signs people in to Schreibzeug and agents to /mcp (oidc/provider.ts).
+      ...providerPlugins(env.BETTER_AUTH_URL),
     ],
   });
 

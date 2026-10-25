@@ -36,6 +36,8 @@ export type McpDeps = {
   tasksFor: (accounts: () => Promise<SessionAccount[]>, name: () => Promise<string>) => TaskApi;
   /** The caller behind a bearer token that is no access key (OAuth), or null. */
   oauthCaller?: (request: Request, token: string | null) => Promise<McpCaller | Response | null>;
+  /** Takes an OAuth client's consent and tokens away (a revoked or expired connection). */
+  revokeClient?: (userId: string, clientId: string) => Promise<void>;
   /** How many changes one connection may make per hour. */
   writesPerHour?: number;
   fetch?: typeof fetch;
@@ -90,12 +92,23 @@ export const createMcpEndpoint = (deps: McpDeps) => {
       oauth ?? unauthorized(token ? "Zugang unbekannt oder widerrufen" : "Zugangsschlüssel fehlt")
     );
   };
+  const expired = () => unauthorized("Zugang abgelaufen – bitte den Agenten neu verbinden");
+  const orChallenge = (found: McpCaller | Response | null) =>
+    found instanceof Response ? found : expired();
 
   return async (request: Request): Promise<Response> => {
     const caller = await callerOf(request);
     if (caller instanceof Response) return caller;
     const token = await grants.accessToken(caller.sessionId);
-    if (!token) return unauthorized("Zugang abgelaufen – bitte den Agenten neu verbinden");
+    if (!token) {
+      // An OAuth connection is forgotten, consent included, so the agent's next try asks again.
+      if (caller.clientId && deps.oauthCaller) {
+        await connections.remove(caller.userId, caller.connectionId);
+        await deps.revokeClient?.(caller.userId, caller.clientId);
+        return orChallenge(await deps.oauthCaller(new Request(request.url), null));
+      }
+      return expired();
+    }
     const client = clientWith(stalwartUrl, token, base);
     const sessionAccounts = async (): Promise<SessionAccount[]> =>
       accountsOf(await client.getSession()).map((account) => ({
@@ -126,9 +139,7 @@ export const createMcpEndpoint = (deps: McpDeps) => {
   };
 };
 
-export const createMcpKeyRoutes = (
-  deps: McpDeps & { revokeClient?: (userId: string, clientId: string) => Promise<void> },
-) => {
+export const createMcpKeyRoutes = (deps: McpDeps) => {
   const { connections, grants, userOf, login } = deps;
   const app = new Hono();
 

@@ -1,19 +1,24 @@
 /**
- * Kontext as the sign-in provider (OpenID Connect) of Schreibzeug: who is signed in here is signed
- * in there without a second password. Better Auth's `jwt` plugin keeps the signing keys (JWKS),
- * `@better-auth/oauth-provider` answers authorize, token and userinfo under /api/auth; the issuer is
- * `<BETTER_AUTH_URL>/api/auth`, so discovery is /api/auth/.well-known/openid-configuration (Caddy
- * gives the root /.well-known to Stalwart).
+ * Kontext as a sign-in provider, one for both who use it (Better Auth allows one):
+ * - Schreibzeug (OpenID Connect): who is signed in here is signed in there without a second
+ *   password. One fixed client, set by the environment and written into the database at start;
+ *   both services belong to the same operator, so it skips the consent screen.
+ * - Agents over MCP (OAuth 2.1, server/mcp/oauth.ts): Claude and other clients register
+ *   themselves and get nothing before a person allowed them on the consent page.
  *
- * There is one client, Schreibzeug, set by the environment and written into the database at
- * start. Both services belong to the same operator, so the client skips the consent screen, and
- * nobody can register or change clients through the API.
+ * Better Auth's `jwt` plugin keeps the signing keys (JWKS); `@better-auth/mcp` is
+ * `@better-auth/oauth-provider` with the MCP resource and answers authorize, token and userinfo
+ * under /api/auth. The issuer is `<BETTER_AUTH_URL>/api/auth`, so discovery is
+ * /api/auth/.well-known/openid-configuration; the agents' discovery at the root
+ * (/.well-known/oauth-*) is given to Kontext by Caddy, the rest of /.well-known to Stalwart.
+ * Nobody signed in can create or change clients through the API.
  */
-import { oauthProvider } from "@better-auth/oauth-provider";
+import { mcp } from "@better-auth/mcp";
 import { jwt } from "better-auth/plugins";
 import type { Db } from "../db";
 import { schema } from "../db";
 import type { Env } from "../env";
+import { AGENT_SCOPES, agentClientDiscovery, agentProviderOptions } from "../mcp/oauth";
 
 export type SchreibzeugClient = {
   /** Where browsers reach Schreibzeug, e.g. https://dokumente.firma.de (no trailing slash). */
@@ -48,21 +53,23 @@ export const hashSecret = async (secret: string): Promise<string> => {
   return Buffer.from(digest).toString("base64url");
 };
 
-/** The two plugins: signing keys, and the provider itself. */
-export const providerPlugins = () => [
-  // Sessions keep their cookie; the provider signs id tokens with these keys, nothing else does.
+/** The plugins: signing keys, the provider itself, and agents naming themselves by their metadata. */
+export const providerPlugins = (publicUrl: string) => [
+  // Sessions keep their cookie; the provider signs its tokens with these keys, nothing else does.
   jwt({ disableSettingJwtHeader: true }),
-  oauthProvider({
-    scopes: [...SCOPES],
-    grantTypes: ["authorization_code"],
+  mcp({
+    ...agentProviderOptions(publicUrl),
+    scopes: [...SCOPES, "offline_access", ...AGENT_SCOPES],
+    // Always a person behind a token: no client_credentials. Schreibzeug's client has no refresh.
+    grantTypes: ["authorization_code", "refresh_token"],
     // The login page continues the authorization after signing in (src/auth/oauth-query.ts).
     loginPage: "/login",
-    // The only client skips consent; a page for it would never be shown.
-    consentPage: "/login",
     storeClientSecret: { hash: hashSecret },
-    // No client is created, changed or listed through the API: the environment decides.
+    // No client is created, changed or listed by a signed-in person: Schreibzeug comes from the
+    // environment, agents register themselves (without a session).
     clientPrivileges: () => false,
   }),
+  agentClientDiscovery(),
 ];
 
 /** Writes Schreibzeug's client into the database, or brings it up to date with the environment. */

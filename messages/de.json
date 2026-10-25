@@ -1680,5 +1680,15 @@
   "agents_kind_oauth": "Anmeldung",
   "agents_scope_read": "nur lesen",
   "agents_scope_write": "lesen, anlegen, ändern",
-  "agents_recent": "Letzte Änderungen von {name}"
+  "agents_recent": "Letzte Änderungen von {name}",
+  "agents_oauth_hint": "Claude (App, Desktop, claude.ai) und andere Agenten mit Anmeldung: die Adresse als eigenen Connector eintragen. Kontext fragt dann im Browser nach deinem Passwort und danach, was der Agent darf.",
+  "agent_consent_title": "{name} möchte mit Kontext arbeiten",
+  "agent_consent_may": "Der Agent darf:",
+  "agent_consent_read": "Kunden, Mails, Termine und Aufgaben lesen, mit deinen Rechten",
+  "agent_consent_never": "nie selbst senden oder löschen",
+  "agent_consent_password": "Zur Bestätigung dein Passwort. Den Zugang kannst du jederzeit unter Einstellungen → KI-Agenten trennen.",
+  "agent_consent_allow": "Erlauben",
+  "agent_consent_deny": "Ablehnen",
+  "agent_consent_invalid": "Diese Seite gehört zu einer Anmeldung aus einem KI-Agenten. Bitte dort neu verbinden.",
+  "agent_consent_signed_out": "Du bist nicht mehr angemeldet. Bitte im Agenten neu verbinden."
 }

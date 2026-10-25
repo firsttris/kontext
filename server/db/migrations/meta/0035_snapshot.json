@@ -105,12 +105,8 @@
           "name": "account_user_id_user_id_fk",
           "tableFrom": "account",
           "tableTo": "user",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -203,23 +199,17 @@
       "indexes": {
         "chat_cards_ref": {
           "name": "chat_cards_ref",
-          "columns": [
-            "ref"
-          ],
+          "columns": ["ref"],
           "isUnique": false
         },
         "chat_cards_thread": {
           "name": "chat_cards_thread",
-          "columns": [
-            "thread_id"
-          ],
+          "columns": ["thread_id"],
           "isUnique": false
         },
         "chat_cards_party": {
           "name": "chat_cards_party",
-          "columns": [
-            "party"
-          ],
+          "columns": ["party"],
           "isUnique": false
         }
       },
@@ -228,22 +218,15 @@
           "name": "chat_cards_message_id_chat_messages_id_fk",
           "tableFrom": "chat_cards",
           "tableTo": "chat_messages",
-          "columnsFrom": [
-            "message_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["message_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
       },
       "compositePrimaryKeys": {
         "chat_cards_message_id_position_pk": {
-          "columns": [
-            "message_id",
-            "position"
-          ],
+          "columns": ["message_id", "position"],
           "name": "chat_cards_message_id_position_pk"
         }
       },
@@ -328,23 +311,17 @@
       "indexes": {
         "chat_channels_account_id_unique": {
           "name": "chat_channels_account_id_unique",
-          "columns": [
-            "account_id"
-          ],
+          "columns": ["account_id"],
           "isUnique": true
         },
         "chat_channels_direct_key_unique": {
           "name": "chat_channels_direct_key_unique",
-          "columns": [
-            "direct_key"
-          ],
+          "columns": ["direct_key"],
           "isUnique": true
         },
         "chat_channels_kind": {
           "name": "chat_channels_kind",
-          "columns": [
-            "kind"
-          ],
+          "columns": ["kind"],
           "isUnique": false
         }
       },
@@ -424,9 +401,7 @@
       "indexes": {
         "chat_files_message": {
           "name": "chat_files_message",
-          "columns": [
-            "message_id"
-          ],
+          "columns": ["message_id"],
           "isUnique": false
         }
       },
@@ -435,12 +410,8 @@
           "name": "chat_files_channel_id_chat_channels_id_fk",
           "tableFrom": "chat_files",
           "tableTo": "chat_channels",
-          "columnsFrom": [
-            "channel_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["channel_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -448,12 +419,8 @@
           "name": "chat_files_message_id_chat_messages_id_fk",
           "tableFrom": "chat_files",
           "tableTo": "chat_messages",
-          "columnsFrom": [
-            "message_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["message_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -483,9 +450,7 @@
       "indexes": {
         "chat_members_member": {
           "name": "chat_members_member",
-          "columns": [
-            "member_id"
-          ],
+          "columns": ["member_id"],
           "isUnique": false
         }
       },
@@ -494,22 +459,15 @@
           "name": "chat_members_channel_id_chat_channels_id_fk",
           "tableFrom": "chat_members",
           "tableTo": "chat_channels",
-          "columnsFrom": [
-            "channel_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["channel_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
       },
       "compositePrimaryKeys": {
         "chat_members_channel_id_member_id_pk": {
-          "columns": [
-            "channel_id",
-            "member_id"
-          ],
+          "columns": ["channel_id", "member_id"],
           "name": "chat_members_channel_id_member_id_pk"
         }
       },
@@ -600,18 +558,12 @@
       "indexes": {
         "chat_messages_channel": {
           "name": "chat_messages_channel",
-          "columns": [
-            "channel_id",
-            "created_at"
-          ],
+          "columns": ["channel_id", "created_at"],
           "isUnique": false
         },
         "chat_messages_parent": {
           "name": "chat_messages_parent",
-          "columns": [
-            "parent_id",
-            "created_at"
-          ],
+          "columns": ["parent_id", "created_at"],
           "isUnique": false
         }
       },
@@ -620,12 +572,8 @@
           "name": "chat_messages_channel_id_chat_channels_id_fk",
           "tableFrom": "chat_messages",
           "tableTo": "chat_channels",
-          "columnsFrom": [
-            "channel_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["channel_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -665,22 +613,15 @@
           "name": "chat_prefs_channel_id_chat_channels_id_fk",
           "tableFrom": "chat_prefs",
           "tableTo": "chat_channels",
-          "columnsFrom": [
-            "channel_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["channel_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
       },
       "compositePrimaryKeys": {
         "chat_prefs_channel_id_member_id_pk": {
-          "columns": [
-            "channel_id",
-            "member_id"
-          ],
+          "columns": ["channel_id", "member_id"],
           "name": "chat_prefs_channel_id_member_id_pk"
         }
       },
@@ -725,23 +666,15 @@
           "name": "chat_reactions_message_id_chat_messages_id_fk",
           "tableFrom": "chat_reactions",
           "tableTo": "chat_messages",
-          "columnsFrom": [
-            "message_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["message_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
       },
       "compositePrimaryKeys": {
         "chat_reactions_message_id_member_id_emoji_pk": {
-          "columns": [
-            "message_id",
-            "member_id",
-            "emoji"
-          ],
+          "columns": ["message_id", "member_id", "emoji"],
           "name": "chat_reactions_message_id_member_id_emoji_pk"
         }
       },
@@ -779,22 +712,15 @@
           "name": "chat_reads_channel_id_chat_channels_id_fk",
           "tableFrom": "chat_reads",
           "tableTo": "chat_channels",
-          "columnsFrom": [
-            "channel_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["channel_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
       },
       "compositePrimaryKeys": {
         "chat_reads_channel_id_member_id_pk": {
-          "columns": [
-            "channel_id",
-            "member_id"
-          ],
+          "columns": ["channel_id", "member_id"],
           "name": "chat_reads_channel_id_member_id_pk"
         }
       },
@@ -979,9 +905,7 @@
       "indexes": {
         "external_account_account": {
           "name": "external_account_account",
-          "columns": [
-            "account_id"
-          ],
+          "columns": ["account_id"],
           "isUnique": false
         }
       },
@@ -1019,10 +943,7 @@
       "foreignKeys": {},
       "compositePrimaryKeys": {
         "image_senders_member_id_address_pk": {
-          "columns": [
-            "member_id",
-            "address"
-          ],
+          "columns": ["member_id", "address"],
           "name": "image_senders_member_id_address_pk"
         }
       },
@@ -1270,24 +1191,17 @@
       "indexes": {
         "mcp_key_key_hash_unique": {
           "name": "mcp_key_key_hash_unique",
-          "columns": [
-            "key_hash"
-          ],
+          "columns": ["key_hash"],
           "isUnique": true
         },
         "mcp_key_user": {
           "name": "mcp_key_user",
-          "columns": [
-            "user_id"
-          ],
+          "columns": ["user_id"],
           "isUnique": false
         },
         "mcp_key_client": {
           "name": "mcp_key_client",
-          "columns": [
-            "user_id",
-            "client_id"
-          ],
+          "columns": ["user_id", "client_id"],
           "isUnique": false
         }
       },
@@ -1296,12 +1210,8 @@
           "name": "mcp_key_user_id_user_id_fk",
           "tableFrom": "mcp_key",
           "tableTo": "user",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -1309,12 +1219,8 @@
           "name": "mcp_key_session_id_session_id_fk",
           "tableFrom": "mcp_key",
           "tableTo": "session",
-          "columnsFrom": [
-            "session_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["session_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -1365,10 +1271,7 @@
       "indexes": {
         "mcp_log_connection": {
           "name": "mcp_log_connection",
-          "columns": [
-            "connection_id",
-            "created_at"
-          ],
+          "columns": ["connection_id", "created_at"],
           "isUnique": false
         }
       },
@@ -1377,12 +1280,8 @@
           "name": "mcp_log_connection_id_mcp_key_id_fk",
           "tableFrom": "mcp_log",
           "tableTo": "mcp_key",
-          "columnsFrom": [
-            "connection_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["connection_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -1549,10 +1448,7 @@
       "foreignKeys": {},
       "compositePrimaryKeys": {
         "pgp_keys_member_id_email_pk": {
-          "columns": [
-            "member_id",
-            "email"
-          ],
+          "columns": ["member_id", "email"],
           "name": "pgp_keys_member_id_email_pk"
         }
       },
@@ -1702,16 +1598,12 @@
       "indexes": {
         "phone_boxes_token_hash_unique": {
           "name": "phone_boxes_token_hash_unique",
-          "columns": [
-            "token_hash"
-          ],
+          "columns": ["token_hash"],
           "isUnique": true
         },
         "phone_boxes_pairing_hash_unique": {
           "name": "phone_boxes_pairing_hash_unique",
-          "columns": [
-            "pairing_hash"
-          ],
+          "columns": ["pairing_hash"],
           "isUnique": true
         }
       },
@@ -1933,17 +1825,12 @@
       "indexes": {
         "phone_calls_started": {
           "name": "phone_calls_started",
-          "columns": [
-            "started_at"
-          ],
+          "columns": ["started_at"],
           "isUnique": false
         },
         "phone_calls_box_call": {
           "name": "phone_calls_box_call",
-          "columns": [
-            "box_id",
-            "box_call_id"
-          ],
+          "columns": ["box_id", "box_call_id"],
           "isUnique": false
         }
       },
@@ -1952,12 +1839,8 @@
           "name": "phone_calls_box_id_phone_boxes_id_fk",
           "tableFrom": "phone_calls",
           "tableTo": "phone_boxes",
-          "columnsFrom": [
-            "box_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["box_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -2026,10 +1909,7 @@
       "foreignKeys": {},
       "compositePrimaryKeys": {
         "push_mailboxes_off_member_id_account_id_pk": {
-          "columns": [
-            "member_id",
-            "account_id"
-          ],
+          "columns": ["member_id", "account_id"],
           "name": "push_mailboxes_off_member_id_account_id_pk"
         }
       },
@@ -2085,9 +1965,7 @@
       "indexes": {
         "push_subscriptions_member": {
           "name": "push_subscriptions_member",
-          "columns": [
-            "member_id"
-          ],
+          "columns": ["member_id"],
           "isUnique": false
         }
       },
@@ -2096,12 +1974,8 @@
           "name": "push_subscriptions_session_id_session_id_fk",
           "tableFrom": "push_subscriptions",
           "tableTo": "session",
-          "columnsFrom": [
-            "session_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["session_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -2217,9 +2091,7 @@
       "indexes": {
         "secure_messages_member": {
           "name": "secure_messages_member",
-          "columns": [
-            "member_id"
-          ],
+          "columns": ["member_id"],
           "isUnique": false
         }
       },
@@ -2273,12 +2145,8 @@
           "name": "secure_replies_message_id_secure_messages_id_fk",
           "tableFrom": "secure_replies",
           "tableTo": "secure_messages",
-          "columnsFrom": [
-            "message_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["message_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -2350,9 +2218,7 @@
       "indexes": {
         "session_token_unique": {
           "name": "session_token_unique",
-          "columns": [
-            "token"
-          ],
+          "columns": ["token"],
           "isUnique": true
         }
       },
@@ -2361,12 +2227,8 @@
           "name": "session_user_id_user_id_fk",
           "tableFrom": "session",
           "tableTo": "user",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -2453,10 +2315,7 @@
       "foreignKeys": {},
       "compositePrimaryKeys": {
         "smime_certs_member_id_email_pk": {
-          "columns": [
-            "member_id",
-            "email"
-          ],
+          "columns": ["member_id", "email"],
           "name": "smime_certs_member_id_email_pk"
         }
       },
@@ -2585,9 +2444,7 @@
       "indexes": {
         "snippets_account": {
           "name": "snippets_account",
-          "columns": [
-            "account_id"
-          ],
+          "columns": ["account_id"],
           "isUnique": false
         }
       },
@@ -2645,9 +2502,7 @@
       "indexes": {
         "snoozes_until": {
           "name": "snoozes_until",
-          "columns": [
-            "until"
-          ],
+          "columns": ["until"],
           "isUnique": false
         }
       },
@@ -2656,22 +2511,15 @@
           "name": "snoozes_user_id_user_id_fk",
           "tableFrom": "snoozes",
           "tableTo": "user",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
       },
       "compositePrimaryKeys": {
         "snoozes_account_id_email_id_pk": {
-          "columns": [
-            "account_id",
-            "email_id"
-          ],
+          "columns": ["account_id", "email_id"],
           "name": "snoozes_account_id_email_id_pk"
         }
       },
@@ -2723,12 +2571,8 @@
           "name": "stalwart_grant_session_id_session_id_fk",
           "tableFrom": "stalwart_grant",
           "tableTo": "session",
-          "columnsFrom": [
-            "session_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["session_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -2824,9 +2668,7 @@
       "indexes": {
         "task_links_ref": {
           "name": "task_links_ref",
-          "columns": [
-            "ref"
-          ],
+          "columns": ["ref"],
           "isUnique": false
         }
       },
@@ -2835,23 +2677,15 @@
           "name": "task_links_task_id_tasks_id_fk",
           "tableFrom": "task_links",
           "tableTo": "tasks",
-          "columnsFrom": [
-            "task_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["task_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
       },
       "compositePrimaryKeys": {
         "task_links_task_id_kind_ref_pk": {
-          "columns": [
-            "task_id",
-            "kind",
-            "ref"
-          ],
+          "columns": ["task_id", "kind", "ref"],
           "name": "task_links_task_id_kind_ref_pk"
         }
       },
@@ -3012,24 +2846,17 @@
       "indexes": {
         "tasks_account": {
           "name": "tasks_account",
-          "columns": [
-            "account_id"
-          ],
+          "columns": ["account_id"],
           "isUnique": false
         },
         "tasks_remind_at": {
           "name": "tasks_remind_at",
-          "columns": [
-            "remind_at"
-          ],
+          "columns": ["remind_at"],
           "isUnique": false
         },
         "tasks_dav_name": {
           "name": "tasks_dav_name",
-          "columns": [
-            "account_id",
-            "dav_name"
-          ],
+          "columns": ["account_id", "dav_name"],
           "isUnique": false
         }
       },
@@ -3094,9 +2921,7 @@
       "indexes": {
         "user_email_unique": {
           "name": "user_email_unique",
-          "columns": [
-            "email"
-          ],
+          "columns": ["email"],
           "isUnique": true
         }
       },
@@ -3328,44 +3153,32 @@
       "indexes": {
         "oauth_access_token_token_unique": {
           "name": "oauth_access_token_token_unique",
-          "columns": [
-            "token"
-          ],
+          "columns": ["token"],
           "isUnique": true
         },
         "oauthAccessToken_clientId_idx": {
           "name": "oauthAccessToken_clientId_idx",
-          "columns": [
-            "client_id"
-          ],
+          "columns": ["client_id"],
           "isUnique": false
         },
         "oauthAccessToken_sessionId_idx": {
           "name": "oauthAccessToken_sessionId_idx",
-          "columns": [
-            "session_id"
-          ],
+          "columns": ["session_id"],
           "isUnique": false
         },
         "oauthAccessToken_userId_idx": {
           "name": "oauthAccessToken_userId_idx",
-          "columns": [
-            "user_id"
-          ],
+          "columns": ["user_id"],
           "isUnique": false
         },
         "oauthAccessToken_authorizationCodeId_idx": {
           "name": "oauthAccessToken_authorizationCodeId_idx",
-          "columns": [
-            "authorization_code_id"
-          ],
+          "columns": ["authorization_code_id"],
           "isUnique": false
         },
         "oauthAccessToken_refreshId_idx": {
           "name": "oauthAccessToken_refreshId_idx",
-          "columns": [
-            "refresh_id"
-          ],
+          "columns": ["refresh_id"],
           "isUnique": false
         }
       },
@@ -3374,12 +3187,8 @@
           "name": "oauth_access_token_client_id_oauth_client_client_id_fk",
           "tableFrom": "oauth_access_token",
           "tableTo": "oauth_client",
-          "columnsFrom": [
-            "client_id"
-          ],
-          "columnsTo": [
-            "client_id"
-          ],
+          "columnsFrom": ["client_id"],
+          "columnsTo": ["client_id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -3387,12 +3196,8 @@
           "name": "oauth_access_token_session_id_session_id_fk",
           "tableFrom": "oauth_access_token",
           "tableTo": "session",
-          "columnsFrom": [
-            "session_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["session_id"],
+          "columnsTo": ["id"],
           "onDelete": "set null",
           "onUpdate": "no action"
         },
@@ -3400,12 +3205,8 @@
           "name": "oauth_access_token_user_id_user_id_fk",
           "tableFrom": "oauth_access_token",
           "tableTo": "user",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -3413,12 +3214,8 @@
           "name": "oauth_access_token_refresh_id_oauth_refresh_token_id_fk",
           "tableFrom": "oauth_access_token",
           "tableTo": "oauth_refresh_token",
-          "columnsFrom": [
-            "refresh_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["refresh_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -3689,16 +3486,12 @@
       "indexes": {
         "oauth_client_client_id_unique": {
           "name": "oauth_client_client_id_unique",
-          "columns": [
-            "client_id"
-          ],
+          "columns": ["client_id"],
           "isUnique": true
         },
         "oauthClient_userId_idx": {
           "name": "oauthClient_userId_idx",
-          "columns": [
-            "user_id"
-          ],
+          "columns": ["user_id"],
           "isUnique": false
         }
       },
@@ -3707,12 +3500,8 @@
           "name": "oauth_client_user_id_user_id_fk",
           "tableFrom": "oauth_client",
           "tableTo": "user",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -3787,16 +3576,12 @@
       "indexes": {
         "oauthClientResource_clientId_idx": {
           "name": "oauthClientResource_clientId_idx",
-          "columns": [
-            "client_id"
-          ],
+          "columns": ["client_id"],
           "isUnique": false
         },
         "oauthClientResource_resourceId_idx": {
           "name": "oauthClientResource_resourceId_idx",
-          "columns": [
-            "resource_id"
-          ],
+          "columns": ["resource_id"],
           "isUnique": false
         }
       },
@@ -3805,12 +3590,8 @@
           "name": "oauth_client_resource_client_id_oauth_client_client_id_fk",
           "tableFrom": "oauth_client_resource",
           "tableTo": "oauth_client",
-          "columnsFrom": [
-            "client_id"
-          ],
-          "columnsTo": [
-            "client_id"
-          ],
+          "columnsFrom": ["client_id"],
+          "columnsTo": ["client_id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -3818,12 +3599,8 @@
           "name": "oauth_client_resource_resource_id_oauth_resource_identifier_fk",
           "tableFrom": "oauth_client_resource",
           "tableTo": "oauth_resource",
-          "columnsFrom": [
-            "resource_id"
-          ],
-          "columnsTo": [
-            "identifier"
-          ],
+          "columnsFrom": ["resource_id"],
+          "columnsTo": ["identifier"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -3902,16 +3679,12 @@
       "indexes": {
         "oauthConsent_clientId_idx": {
           "name": "oauthConsent_clientId_idx",
-          "columns": [
-            "client_id"
-          ],
+          "columns": ["client_id"],
           "isUnique": false
         },
         "oauthConsent_userId_idx": {
           "name": "oauthConsent_userId_idx",
-          "columns": [
-            "user_id"
-          ],
+          "columns": ["user_id"],
           "isUnique": false
         }
       },
@@ -3920,12 +3693,8 @@
           "name": "oauth_consent_client_id_oauth_client_client_id_fk",
           "tableFrom": "oauth_consent",
           "tableTo": "oauth_client",
-          "columnsFrom": [
-            "client_id"
-          ],
-          "columnsTo": [
-            "client_id"
-          ],
+          "columnsFrom": ["client_id"],
+          "columnsTo": ["client_id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -3933,12 +3702,8 @@
           "name": "oauth_consent_user_id_user_id_fk",
           "tableFrom": "oauth_consent",
           "tableTo": "user",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -4080,37 +3845,27 @@
       "indexes": {
         "oauth_refresh_token_token_unique": {
           "name": "oauth_refresh_token_token_unique",
-          "columns": [
-            "token"
-          ],
+          "columns": ["token"],
           "isUnique": true
         },
         "oauthRefreshToken_clientId_idx": {
           "name": "oauthRefreshToken_clientId_idx",
-          "columns": [
-            "client_id"
-          ],
+          "columns": ["client_id"],
           "isUnique": false
         },
         "oauthRefreshToken_sessionId_idx": {
           "name": "oauthRefreshToken_sessionId_idx",
-          "columns": [
-            "session_id"
-          ],
+          "columns": ["session_id"],
           "isUnique": false
         },
         "oauthRefreshToken_userId_idx": {
           "name": "oauthRefreshToken_userId_idx",
-          "columns": [
-            "user_id"
-          ],
+          "columns": ["user_id"],
           "isUnique": false
         },
         "oauthRefreshToken_authorizationCodeId_idx": {
           "name": "oauthRefreshToken_authorizationCodeId_idx",
-          "columns": [
-            "authorization_code_id"
-          ],
+          "columns": ["authorization_code_id"],
           "isUnique": false
         }
       },
@@ -4119,12 +3874,8 @@
           "name": "oauth_refresh_token_client_id_oauth_client_client_id_fk",
           "tableFrom": "oauth_refresh_token",
           "tableTo": "oauth_client",
-          "columnsFrom": [
-            "client_id"
-          ],
-          "columnsTo": [
-            "client_id"
-          ],
+          "columnsFrom": ["client_id"],
+          "columnsTo": ["client_id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -4132,12 +3883,8 @@
           "name": "oauth_refresh_token_session_id_session_id_fk",
           "tableFrom": "oauth_refresh_token",
           "tableTo": "session",
-          "columnsFrom": [
-            "session_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["session_id"],
+          "columnsTo": ["id"],
           "onDelete": "set null",
           "onUpdate": "no action"
         },
@@ -4145,12 +3892,8 @@
           "name": "oauth_refresh_token_user_id_user_id_fk",
           "tableFrom": "oauth_refresh_token",
           "tableTo": "user",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -4274,9 +4017,7 @@
       "indexes": {
         "oauth_resource_identifier_unique": {
           "name": "oauth_resource_identifier_unique",
-          "columns": [
-            "identifier"
-          ],
+          "columns": ["identifier"],
           "isUnique": true
         }
       },
