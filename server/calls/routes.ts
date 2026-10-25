@@ -58,6 +58,9 @@ export const createCallRoutes = (deps: CallDeps, state: CallState) => {
     hub.publish({ type: "call", channelId, call }, (viewer) => canSee(channel, viewer));
   };
 
+  /** The sealed key of each running confidential call (end-to-end encrypted, LiveKit E2EE). */
+  const callKeys = new Map<string, string>();
+
   /** Whom a call rang, and the caller's name (from the webhook: the name in their token). */
   const rung = new Map<string, { who: string[]; caller: string }>();
 
@@ -92,7 +95,11 @@ export const createCallRoutes = (deps: CallDeps, state: CallState) => {
     const call = state.all()[channelId] ?? null;
     await publishCall(channelId, call);
     if (started && call) void ring(call, event.participant?.name ?? "").catch(() => undefined);
-    if (ended) await logEnded(ended.call, ended.at).catch(() => undefined);
+    if (ended) {
+      // The next call gets a key of its own.
+      callKeys.delete(channelId);
+      await logEnded(ended.call, ended.at).catch(() => undefined);
+    }
   };
 
   // LiveKit's webhooks: signed with the API secret, no session.
@@ -138,7 +145,17 @@ export const createCallRoutes = (deps: CallDeps, state: CallState) => {
       room: roomOf(channel.id),
       metadata: participantMetadata(parsed.data.video),
     });
-    return c.json({ token, url: deps.publicUrl });
+    if (!channel.confidential) return c.json({ token, url: deps.publicUrl });
+    // The first key sent stays: everyone in the call encrypts with the same one.
+    if (parsed.data.sealedKey && !callKeys.has(channel.id)) {
+      callKeys.set(channel.id, parsed.data.sealedKey);
+    }
+    return c.json({
+      token,
+      url: deps.publicUrl,
+      confidential: true,
+      sealedKey: callKeys.get(channel.id) ?? null,
+    });
   });
 
   // Saying no: the caller hears it and stops ringing.

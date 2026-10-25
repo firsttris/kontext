@@ -10,7 +10,7 @@ import { type CallRecord, callLine } from "@/lib/calls";
 import { cn } from "@/lib/cn";
 import { m } from "@/paraglide/messages";
 import { useCallStore } from "./call-store";
-import { joinCall, useCalls } from "./queries";
+import { joinCall, joinFailure, useCalls } from "./queries";
 
 const iconOf = (call: CallRecord) =>
   call.durationS === null ? PhoneMissed : call.meeting ? Users : call.video ? Video : Phone;
@@ -35,8 +35,8 @@ export const CallLine = ({
     setCalling(true);
     try {
       await joinCall(channelId, call.video);
-    } catch {
-      toast.show(m.call_failed(), "error");
+    } catch (error) {
+      toast.show(joinFailure(error), "error");
     } finally {
       setCalling(false);
     }

@@ -1,7 +1,8 @@
 /**
  * The call one is in (LiveKit, loaded only when a call starts): a panel at the bottom right on a
  * desktop that can be made large, the whole screen on a phone. While a direct call rings, the
- * caller sees whom it rings for; a "no" from everyone or no answer ends it.
+ * caller sees whom it rings for; a "no" from everyone or no answer ends it. A call in a
+ * confidential channel goes end-to-end encrypted (LiveKit E2EE, key: call-key.ts).
  */
 import {
   LiveKitRoom,
@@ -11,8 +12,15 @@ import {
   useRemoteParticipants,
   useTracks,
 } from "@livekit/components-react";
-import { ConnectionState, Track } from "livekit-client";
-import { Maximize2, Minimize2, Volume2 } from "lucide-react";
+import {
+  ConnectionState,
+  ExternalE2EEKeyProvider,
+  type Participant,
+  Room,
+  RoomEvent,
+  Track,
+} from "livekit-client";
+import { LockKeyhole, Maximize2, Minimize2, Volume2 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useToast } from "@/components/ui/toast";
 import { useChannels } from "@/features/chat/queries";
@@ -129,11 +137,48 @@ const CallView = ({ active, expanded }: { active: ActiveCall; expanded: boolean 
   );
 };
 
+/**
+ * The room of an encrypted call: the key set and encryption on before it connects; undefined for
+ * an ordinary call (LiveKitRoom makes its own), null while it is being set up.
+ */
+const useEncryptedRoom = (key: string | undefined) => {
+  const [room, setRoom] = useState<Room | null | undefined>(key ? null : undefined);
+  const [encrypted, setEncrypted] = useState(false);
+  useEffect(() => {
+    if (!key) return;
+    let gone = false;
+    const keyProvider = new ExternalE2EEKeyProvider();
+    const worker = new Worker(new URL("livekit-client/e2ee-worker", import.meta.url), {
+      type: "module",
+    });
+    const made = new Room({ e2ee: { keyProvider, worker } });
+    // Shown only once LiveKit says one's own sound and picture go encrypted.
+    made.on(RoomEvent.ParticipantEncryptionStatusChanged, (on: boolean, who?: Participant) => {
+      if (!who || who === made.localParticipant) setEncrypted(on);
+    });
+    void keyProvider
+      .setKey(key)
+      .then(() => made.setE2EEEnabled(true))
+      .then(() => {
+        if (!gone) setRoom(made);
+      });
+    return () => {
+      gone = true;
+      void made.disconnect();
+      worker.terminate();
+    };
+  }, [key]);
+  return { room, encrypted };
+};
+
 export const CallPanel = ({ active, title }: { active: ActiveCall; title: string }) => {
   const toast = useToast();
   const [expanded, setExpanded] = useState(false);
+  const { room, encrypted } = useEncryptedRoom(active.e2eeKey);
+  if (room === null) return null;
   return (
     <LiveKitRoom
+      room={room}
       serverUrl={active.url}
       token={active.token}
       connect
@@ -154,6 +199,11 @@ export const CallPanel = ({ active, title }: { active: ActiveCall; title: string
     >
       <header className="flex shrink-0 items-center gap-2">
         <h2 className="m-0 min-w-0 flex-1 truncate text-[14px] font-semibold">{title}</h2>
+        {encrypted ? (
+          <span className="flex shrink-0 items-center gap-1 text-[12px] text-accent">
+            <LockKeyhole size={12} aria-hidden="true" /> {m.call_encrypted()}
+          </span>
+        ) : null}
         <button
           type="button"
           aria-label={expanded ? m.call_shrink() : m.call_expand()}

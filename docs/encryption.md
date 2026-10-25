@@ -151,6 +151,14 @@ markieren („Neue Nachricht“ → „Vertraulich – Ende-zu-Ende verschlüsse
   als „verschlüsselt“, ihre echten Namen und Typen stehen im verschlüsselten Text der Nachricht
   (`src/lib/sealed-chat.ts`). Kleine Vorschaubilder gibt es dort nicht, die Fotos werden (wie
   sonst auch) vor dem Hochladen verkleinert.
+- **Anrufe** in einer vertraulichen Unterhaltung gehen Ende-zu-Ende verschlüsselt (LiveKit E2EE):
+  Wer zuerst beitritt, macht einen zufälligen Schlüssel für den Anruf, verschlüsselt ihn an die
+  Schlüssel aller Mitglieder und unterschreibt ihn (`src/features/calls/call-key.ts`). Der Server
+  reicht ihn nur weiter (`sealedKey`, `server/calls/routes.ts`); die anderen nehmen ihn nur an,
+  wenn ein Mitglied unterschrieben hat. Jeder Anruf bekommt einen neuen. Im Gespräch steht
+  „Ende-zu-Ende verschlüsselt“, sobald LiveKit es für die eigene Seite meldet. Anrufen und
+  Annehmen geht dort erst mit entsperrtem Schlüssel; Besprechungen über einen Link bleiben wie
+  bisher.
 - Gelesen wird nach dem Entsperren des eigenen Schlüssels; passt die Unterschrift nicht zum
   Absender, steht das unter der Nachricht.
 - Dafür: keine Suche, kein Text in Benachrichtigungen und in der Kanalliste (nur „Vertrauliche

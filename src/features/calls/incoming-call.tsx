@@ -13,7 +13,7 @@ import { useChatNames } from "@/features/chat/use-chat-names";
 import { ringingCall } from "@/lib/calls";
 import { m } from "@/paraglide/messages";
 import { declineHere, useCallStore } from "./call-store";
-import { declineCall, joinCall, useCalls } from "./queries";
+import { declineCall, joinCall, joinFailure, useCalls } from "./queries";
 import { startRinging } from "./ringtone";
 
 export const IncomingCall = () => {
@@ -35,8 +35,8 @@ export const IncomingCall = () => {
     setAnswering(true);
     try {
       await joinCall(call.channelId, video);
-    } catch {
-      toast.show(m.call_failed(), "error");
+    } catch (error) {
+      toast.show(joinFailure(error), "error");
     } finally {
       setAnswering(false);
     }

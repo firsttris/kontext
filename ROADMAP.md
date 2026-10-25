@@ -59,6 +59,7 @@ Kleinere Dinge, die beim Bauen aufgefallen sind und noch erledigt werden.
 
 ## Zuletzt fertig geworden
 
+Anrufe und Videocalls in vertraulichen Unterhaltungen gehen Ende-zu-Ende verschlüsselt (LiveKit E2EE, Schlüssel je Anruf an die Mitglieder verschlüsselt).
 Verschlüsselte Mails (PGP und S/MIME) verschlüsseln auch den Betreff; außen steht „Vertrauliche Nachricht“, nach dem Öffnen der echte.
 Vertraulicher Chat: Fotos und Dateien gehen Ende-zu-Ende verschlüsselt, ohne lesbaren Namen auf dem Server.
 Verschlüsselung, Baustein 5: vertrauliche Direktnachrichten und Kanäle im Chat, Ende-zu-Ende

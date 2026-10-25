@@ -4,6 +4,7 @@
  */
 import { type QueryClient, useQuery } from "@tanstack/react-query";
 import type { Call } from "@/lib/calls";
+import { m } from "@/paraglide/messages";
 import { callEnded, enterCall } from "./call-store";
 
 export const CALLS_KEY = ["calls"];
@@ -47,16 +48,46 @@ export const setCall = (queryClient: QueryClient, channelId: string, call: Call 
 
 const channelPath = (id: string) => `/${encodeURIComponent(id)}`;
 
-/** Into the call of a channel (one opens it by joining): a ticket, then the call panel opens. */
-export const joinCall = async (channelId: string, video: boolean) => {
-  const { token, url } = await send<{ token: string; url: string | null }>(
-    "POST",
-    `${channelPath(channelId)}/join`,
-    { video },
-  );
-  const own = `${location.protocol === "https:" ? "wss" : "ws"}://${location.host}`;
-  enterCall({ channelId, token, url: url ?? own, video, joinedAt: Date.now() });
+type Ticket = {
+  token: string;
+  url: string | null;
+  /** A confidential channel: the call goes end-to-end encrypted with this sealed key. */
+  confidential?: boolean;
+  sealedKey?: string | null;
 };
+
+/**
+ * Into the call of a channel (one opens it by joining): a ticket, then the call panel opens. In
+ * a confidential channel with the call's key (src/features/calls/call-key.ts), made by whoever
+ * comes first.
+ */
+export const joinCall = async (channelId: string, video: boolean) => {
+  const path = `${channelPath(channelId)}/join`;
+  let ticket = await send<Ticket>("POST", path, { video });
+  let e2eeKey: string | undefined;
+  if (ticket.confidential) {
+    const { newCallKey, openCallKey } = await import("./call-key");
+    if (!ticket.sealedKey) {
+      ticket = await send<Ticket>("POST", path, { video, sealedKey: await newCallKey(channelId) });
+    }
+    e2eeKey = await openCallKey(channelId, ticket.sealedKey!);
+  }
+  const own = `${location.protocol === "https:" ? "wss" : "ws"}://${location.host}`;
+  enterCall({
+    channelId,
+    token: ticket.token,
+    url: ticket.url ?? own,
+    video,
+    joinedAt: Date.now(),
+    e2eeKey,
+  });
+};
+
+/** What to say when joining failed: a locked key is something one can fix. */
+export const joinFailure = (error: unknown) =>
+  (error as Error | undefined)?.message === m.call_confidential_locked()
+    ? m.call_confidential_locked()
+    : m.call_failed();
 
 export const declineCall = (channelId: string) =>
   send<unknown>("POST", `${channelPath(channelId)}/decline`).catch(() => undefined);

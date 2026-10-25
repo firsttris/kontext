@@ -892,6 +892,8 @@
   "call_minutes": "{minutes} Min",
   "call_hours": "{hours} Std {minutes} Min",
   "call_again": "Nochmal anrufen",
+  "call_encrypted": "Ende-zu-Ende verschlüsselt",
+  "call_confidential_locked": "Für einen vertraulichen Anruf entsperre zuerst deinen Schlüssel – im Chat dieser Unterhaltung.",
   "meeting_add": "Videobesprechung hinzufügen",
   "meeting_label": "Videobesprechung",
   "meeting_remove": "Videobesprechung entfernen",

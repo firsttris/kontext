@@ -9,7 +9,7 @@ import { useToast } from "@/components/ui/toast";
 import type { ChannelSummary } from "@/lib/chat";
 import { m } from "@/paraglide/messages";
 import { useCallStore } from "./call-store";
-import { joinCall, useCall, useCalls } from "./queries";
+import { joinCall, joinFailure, useCall, useCalls } from "./queries";
 
 export const CallButtons = ({ channel }: { channel: ChannelSummary }) => {
   const { enabled } = useCalls();
@@ -28,8 +28,8 @@ export const CallButtons = ({ channel }: { channel: ChannelSummary }) => {
     setJoining(true);
     try {
       await joinCall(channel.id, video);
-    } catch {
-      toast.show(m.call_failed(), "error");
+    } catch (error) {
+      toast.show(joinFailure(error), "error");
     } finally {
       setJoining(false);
     }

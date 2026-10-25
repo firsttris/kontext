@@ -31,7 +31,18 @@ export const roomOf = (channelId: string) => `${ROOM_PREFIX}${channelId}`;
 export const channelOfRoom = (room: string): string | null =>
   room.startsWith(ROOM_PREFIX) ? room.slice(ROOM_PREFIX.length) || null : null;
 
-export const joinSchema = z.object({ video: z.boolean().default(false) });
+export const joinSchema = z.object({
+  video: z.boolean().default(false),
+  /**
+   * In a confidential channel: the call's key, encrypted in the app to every member's own key
+   * (OpenPGP). The first one sent counts for the whole call; the server cannot open it.
+   */
+  sealedKey: z
+    .string()
+    .max(50_000)
+    .refine((text) => text.startsWith("-----BEGIN PGP MESSAGE-----"))
+    .optional(),
+});
 
 /** What a token carries for the webhooks (LiveKit passes participant metadata through). */
 export const participantMetadata = (video: boolean) => JSON.stringify({ video });

@@ -28,6 +28,7 @@ const channel = (id: string, kind: Channel["kind"], members: string[]): Channel 
 const CHANNELS = [
   channel("dm", "direct", ["jonas", "anna"]),
   channel("baustelle", "channel", ["jonas", "max"]),
+  { ...channel("geheim", "direct", ["jonas", "anna"]), confidential: true },
 ];
 
 /** The person in the "x-who" header; the session check of the real server is not under test. */
@@ -261,5 +262,35 @@ describe("verifyWebhook", () => {
     expect(await verifyWebhook(livekit, body, `Bearer ${token}`)).toMatchObject({
       event: "participant_joined",
     });
+  });
+
+  it("keeps one sealed key per confidential call, the first one sent, until the call ends", async () => {
+    const { call } = setup();
+    const join = async (who: string, body: unknown) =>
+      (await (
+        await call("/geheim/join", who, { method: "POST", body: JSON.stringify(body) })
+      ).json()) as { confidential?: boolean; sealedKey?: string | null };
+    const sealed = (n: number) =>
+      `-----BEGIN PGP MESSAGE-----\n\nkey ${n}\n-----END PGP MESSAGE-----`;
+    // An ordinary call says nothing of keys.
+    const ordinary = await call("/dm/join", "jonas", { method: "POST", body: "{}" });
+    expect((await ordinary.json()) as object).not.toHaveProperty("sealedKey");
+    expect(await join("jonas", {})).toMatchObject({ confidential: true, sealedKey: null });
+    expect(await join("jonas", { sealedKey: sealed(1) })).toMatchObject({ sealedKey: sealed(1) });
+    expect(await join("anna", { sealedKey: sealed(2) })).toMatchObject({ sealedKey: sealed(1) });
+    // Only encrypted text is taken as a key.
+    const plain = await call("/geheim/join", "anna", {
+      method: "POST",
+      body: JSON.stringify({ sealedKey: "geheim" }),
+    });
+    expect(plain.status).toBe(400);
+    for (const event of [
+      joined("jonas", roomOf("geheim")),
+      { event: "room_finished", room: { name: roomOf("geheim") } },
+    ] as RoomEvent[]) {
+      const { body, token } = await signedWebhook(event);
+      await postWebhook(call, body, token);
+    }
+    expect(await join("anna", {})).toMatchObject({ sealedKey: null });
   });
 });

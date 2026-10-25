@@ -12,6 +12,8 @@ export type ActiveCall = {
   video: boolean;
   /** When this app joined (ms), for how long it has been ringing. */
   joinedAt: number;
+  /** A confidential channel's call: sound and picture end-to-end encrypted with this key. */
+  e2eeKey?: string;
 };
 
 type State = {
