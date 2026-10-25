@@ -137,11 +137,7 @@ export const CalendarPage = ({ search }: { search: Search }) => {
         event,
         start,
         end,
-        patch: movePatch(
-          event,
-          start,
-          resized ? Math.round((end.getTime() - start.getTime()) / 60_000) : undefined,
-        ),
+        patch: movePatch(event, start, resized ? end : undefined),
       },
       {
         onSuccess: () => toast.show(m.calendar_moved()),

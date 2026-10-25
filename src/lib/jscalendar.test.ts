@@ -56,6 +56,20 @@ describe("durations", () => {
   });
 });
 
+describe("timed events across the clock change, as Stalwart reads them", () => {
+  // Stalwart adds the duration to the local start on the wall clock, a day as 24 hours.
+  it("ends P1D and PT24H from Saturday 12:00 on Sunday 12:00 without utcEnd", () => {
+    const p1d = eventTimes(event("x", "2026-10-24T12:00:00", "P1D"));
+    const pt24h = eventTimes(event("y", "2026-10-24T12:00:00", "PT24H"));
+    expect(p1d.end.toISOString()).toBe("2026-10-25T11:00:00.000Z");
+    expect(pt24h.end.toISOString()).toBe("2026-10-25T11:00:00.000Z");
+  });
+  it("ends PT8H from Saturday 22:00 on Sunday 06:00 without utcEnd", () => {
+    const { end } = eventTimes(event("z", "2026-10-24T22:00:00", "PT8H"));
+    expect(toLocal(end)).toBe("2026-10-25T06:00:00");
+  });
+});
+
 describe("weeks", () => {
   it("starts on Monday and counts ISO weeks", () => {
     expect(weekDays("2026-10-23")[0]).toBe("2026-10-19");

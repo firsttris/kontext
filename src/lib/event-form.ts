@@ -7,9 +7,11 @@ import {
   eventTimes,
   fromLocal,
   isMeetingLink,
+  localDiff,
   locationName,
   meetingLink,
   participantEmail,
+  shiftLocal,
   toDuration,
   toLocal,
   ZONE,
@@ -121,14 +123,8 @@ export const formToEvent = (
   const minutes = form.allDay
     ? Math.max(1, Math.round((Date.parse(form.endDate) - Date.parse(form.date)) / 86_400_000) + 1) *
       1440
-    : Math.max(
-        0,
-        Math.round(
-          (fromLocal(`${form.endDate}T${form.endTime}:00`).getTime() -
-            fromLocal(startLocal).getTime()) /
-            60_000,
-        ),
-      );
+    : // On the wall clock, the way Stalwart reads it back (see localEnd in jscalendar.ts).
+      Math.max(0, localDiff(startLocal, `${form.endDate}T${form.endTime}:00`));
   const emails = attendeeEmails(form.attendees);
   const previous = new Map(
     attendees(existing ?? ({} as CalendarEvent)).map(([id, p]) => [
@@ -239,14 +235,6 @@ export const removeMeetingNote = (description: string, url: string): string =>
     .replace(/\n{3,}/g, "\n\n")
     .trim();
 
-/** Adds minutes to a local date-time as on a wall clock ("…T09:00:00" + 30 → "…T09:30:00"). */
-export const shiftLocal = (local: string, minutes: number): string =>
-  new Date(Date.parse(`${local}Z`) + minutes * 60_000).toISOString().slice(0, 19);
-
-/** Minutes between two local date-times, on the wall clock. */
-export const localDiff = (from: string, to: string): number =>
-  Math.round((Date.parse(`${to}Z`) - Date.parse(`${from}Z`)) / 60_000);
-
 /**
  * Where the series starts after one of its instances was moved from `before` to `after` (local
  * date-times): by the same amount, so changing 9:00 to 10:00 on any Monday moves all Mondays.
@@ -255,14 +243,17 @@ export const seriesStart = (seriesStartLocal: string, before: string, after: str
   shiftLocal(seriesStartLocal, localDiff(before, after));
 
 /**
- * The patch that moves a timed event to a new start (and optionally a new length), kept in the
+ * The patch that moves a timed event to a new start (and, when resized, a new end), kept in the
  * event's own time zone. Dragging in the grid uses it.
  */
 export const movePatch = (
   event: CalendarEvent,
   start: Date,
-  minutes?: number,
-): Record<string, unknown> => ({
-  start: toLocal(start, event.timeZone ?? ZONE),
-  ...(minutes !== undefined ? { duration: toDuration(Math.max(15, minutes)) } : {}),
-});
+  end?: Date,
+): Record<string, unknown> => {
+  const zone = event.timeZone ?? ZONE;
+  const startLocal = toLocal(start, zone);
+  // The length on the wall clock, the way Stalwart reads it back (see localEnd in jscalendar.ts).
+  const minutes = end && Math.max(15, localDiff(startLocal, toLocal(end, zone)));
+  return { start: startLocal, ...(minutes ? { duration: toDuration(minutes) } : {}) };
+};

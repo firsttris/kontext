@@ -117,6 +117,25 @@ export const toDuration = (minutes: number): string => {
   return `P${days ? `${days}D` : ""}${time ? `T${time}` : ""}`;
 };
 
+/** Adds minutes to a local date-time as on a wall clock ("…T09:00:00" + 30 → "…T09:30:00"). */
+export const shiftLocal = (local: string, minutes: number): string =>
+  new Date(Date.parse(`${local}Z`) + minutes * 60_000).toISOString().slice(0, 19);
+
+/** Minutes between two local date-times, on the wall clock. */
+export const localDiff = (from: string, to: string): number =>
+  Math.round((Date.parse(`${to}Z`) - Date.parse(`${from}Z`)) / 60_000);
+
+/**
+ * The end of a timed event: its duration added to the local start on the wall clock, a day as
+ * 24 hours, then resolved in the event's zone. This is how Stalwart 0.16.27 computes utcEnd
+ * (crates/groupware/src/calendar/dates.rs `start_timestamp_naive + delta` with calcard 0.3.14's
+ * `as_seconds`, resolved by expand.rs `resolve_local`) and how it writes DTEND for CalDAV clients
+ * (calcard jscalendar/export/convert.rs). It deviates from RFC 5545 §3.3.6, where only days are
+ * nominal; the app follows the server so that saving and reading agree across the clock change.
+ */
+const localEnd = (event: CalendarEvent): Date =>
+  fromLocal(shiftLocal(event.start, durationMinutes(event.duration)), event.timeZone);
+
 export type Timed = { start: Date; end: Date; allDay: boolean };
 
 /**
@@ -159,8 +178,7 @@ export const withAllDayOf =
 export const eventTimes = (event: CalendarEvent): Timed => {
   if (event.showWithoutTime) return allDayTimes(event);
   const start = event.utcStart ? new Date(event.utcStart) : fromLocal(event.start, event.timeZone);
-  const minutes = durationMinutes(event.duration);
-  const end = event.utcEnd ? new Date(event.utcEnd) : new Date(start.getTime() + minutes * 60_000);
+  const end = event.utcEnd ? new Date(event.utcEnd) : localEnd(event);
   return { start, end, allDay: false };
 };
 

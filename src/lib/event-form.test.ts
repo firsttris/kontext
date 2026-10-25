@@ -3,16 +3,21 @@ import {
   addMeetingNote,
   eventToForm,
   formToEvent,
-  localDiff,
   meetingNote,
   movePatch,
   newEventForm,
   removeMeetingNote,
   seriesStart,
-  shiftLocal,
   validateEventForm,
 } from "./event-form";
-import { type CalendarEvent, withAllDayOf } from "./jscalendar";
+import {
+  type CalendarEvent,
+  durationMinutes,
+  fromLocal,
+  localDiff,
+  shiftLocal,
+  withAllDayOf,
+} from "./jscalendar";
 
 describe("forms", () => {
   const me = { email: "jonas@weber.test", name: "Jonas" };
@@ -187,10 +192,70 @@ describe("movePatch", () => {
     expect(movePatch(event, new Date("2026-10-24T07:15:00Z"))).toEqual({
       start: "2026-10-24T09:15:00",
     });
-    expect(movePatch(event, new Date("2026-10-24T07:15:00Z"), 5)).toEqual({
+    expect(
+      movePatch(event, new Date("2026-10-24T07:15:00Z"), new Date("2026-10-24T07:20:00Z")),
+    ).toEqual({
       start: "2026-10-24T09:15:00",
       duration: "PT15M",
     });
+  });
+  it("writes the length on the wall clock across the clock change", () => {
+    const event = {
+      id: "x",
+      calendarIds: {},
+      start: "2026-10-24T22:00:00",
+      timeZone: "Europe/Berlin",
+    } as CalendarEvent;
+    // Saturday 22:00 to Sunday 06:00 in Berlin on 24/25 October: 9 real hours, 8 on the clock.
+    expect(
+      movePatch(event, new Date("2026-10-24T20:00:00Z"), new Date("2026-10-25T05:00:00Z")),
+    ).toEqual({ start: "2026-10-24T22:00:00", duration: "PT8H" });
+  });
+});
+
+/**
+ * utcEnd as Stalwart 0.16.27 computes it: the duration (a day as 86400 s, calcard 0.3.14
+ * `as_seconds`) added to the local start on the wall clock, then resolved in the event's zone
+ * (crates/groupware/src/calendar/dates.rs, expand.rs `resolve_local`).
+ */
+const stalwartUtcEnd = (start: string, duration: string, zone: string): string =>
+  fromLocal(shiftLocal(start, durationMinutes(duration)), zone).toISOString();
+
+describe("timed events across the clock change, saved and opened again", () => {
+  const me = { email: "jonas@weber.test" };
+  const reopenedEnd = (start: string, endDate: string, endTime: string) => {
+    const form = { ...newEventForm(start), title: "Notdienst", endDate, endTime };
+    const written = formToEvent(form, me) as { start: string; duration: string; timeZone: string };
+    const stored = {
+      ...(written as unknown as CalendarEvent),
+      id: "x",
+      calendarIds: {},
+      utcStart: fromLocal(written.start, written.timeZone).toISOString(),
+      utcEnd: stalwartUtcEnd(written.start, written.duration, written.timeZone),
+    };
+    const read = eventToForm(stored, [me.email]);
+    return { duration: written.duration, end: `${read.endDate} ${read.endTime}` };
+  };
+  it("keeps Saturday 12:00 to Sunday 12:00 on 24/25 October one day long", () => {
+    expect(reopenedEnd("2026-10-24T12:00:00", "2026-10-25", "12:00")).toEqual({
+      duration: "P1D",
+      end: "2026-10-25 12:00",
+    });
+  });
+  it("keeps the end of an overnight shift on 24/25 October and 28/29 March", () => {
+    expect(reopenedEnd("2026-10-24T22:00:00", "2026-10-25", "06:00").end).toBe("2026-10-25 06:00");
+    expect(reopenedEnd("2026-03-28T22:00:00", "2026-03-29", "06:00").end).toBe("2026-03-29 06:00");
+  });
+  it("keeps the end of Saturday 12:00 to Sunday 11:30 on 24/25 October", () => {
+    expect(reopenedEnd("2026-10-24T12:00:00", "2026-10-25", "11:30").end).toBe("2026-10-25 11:30");
+  });
+  it("writes the same durations as before away from the clock change", () => {
+    const duration = (endDate: string, endTime: string) =>
+      reopenedEnd("2026-10-20T10:00:00", endDate, endTime).duration;
+    expect(duration("2026-10-20", "10:30")).toBe("PT30M");
+    expect(duration("2026-10-21", "10:00")).toBe("P1D");
+    expect(duration("2026-10-21", "12:00")).toBe("P1DT2H");
+    expect(duration("2026-10-20", "10:00")).toBe("PT0S");
   });
 });
 
