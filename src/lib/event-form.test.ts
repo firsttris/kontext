@@ -12,7 +12,7 @@ import {
   shiftLocal,
   validateEventForm,
 } from "./event-form";
-import type { CalendarEvent } from "./jscalendar";
+import { type CalendarEvent, withAllDayOf } from "./jscalendar";
 
 describe("forms", () => {
   const me = { email: "jonas@weber.test", name: "Jonas" };
@@ -63,6 +63,50 @@ describe("forms", () => {
       showWithoutTime: true,
       participants: null,
     });
+  });
+  it("keeps an all-day event of the expanded query all-day when saved unchanged", () => {
+    // As queryEvents gets it from Stalwart: an instance in the request's zone, flag from its base.
+    const instance: CalendarEvent = {
+      id: "h1pnmeaaaaac",
+      calendarIds: { c: true },
+      title: "Betriebsausflug",
+      start: "2026-11-03T00:00:00",
+      timeZone: "Europe/Berlin",
+      duration: "P1D",
+      baseEventId: "c",
+      utcStart: "2026-11-02T23:00:00Z",
+      utcEnd: "2026-11-03T23:00:00Z",
+    };
+    const loaded = withAllDayOf(new Map([["c", { showWithoutTime: true }]]))(instance);
+    const form = eventToForm(loaded, [me.email]);
+    expect({ allDay: form.allDay, endDate: form.endDate }).toEqual({
+      allDay: true,
+      endDate: "2026-11-03",
+    });
+    expect(formToEvent(form, me, loaded)).toMatchObject({
+      showWithoutTime: true,
+      timeZone: null,
+      duration: "P1D",
+    });
+  });
+  it("keeps an all-day event one day long when saved unchanged", () => {
+    // As Stalwart returns it when floating times are resolved in UTC.
+    const stored: CalendarEvent = {
+      id: "j",
+      calendarIds: { c: true },
+      title: "Betriebsausflug",
+      start: "2026-10-23T00:00:00",
+      showWithoutTime: true,
+      duration: "P1D",
+      utcStart: "2026-10-23T00:00:00Z",
+      utcEnd: "2026-10-24T00:00:00Z",
+    };
+    const form = eventToForm(stored, [me.email]);
+    expect({ date: form.date, endDate: form.endDate }).toEqual({
+      date: "2026-10-23",
+      endDate: "2026-10-23",
+    });
+    expect(formToEvent(form, me).duration).toBe("P1D");
   });
 });
 

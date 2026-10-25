@@ -119,15 +119,49 @@ export const toDuration = (minutes: number): string => {
 
 export type Timed = { start: Date; end: Date; allDay: boolean };
 
+/**
+ * An all-day event spans whole local days: from midnight of its start date to midnight `duration`
+ * calendar days later (at least one). Its utcStart/utcEnd are not used: they depend on the zone the
+ * server resolved the floating times in (Stalwart takes UTC when CalendarEvent/get has no
+ * `timeZone` argument, crates/jmap/src/calendar_event/get.rs), which shifted the event by hours.
+ */
+const allDayTimes = (event: CalendarEvent): Timed => {
+  const date = event.start.slice(0, 10);
+  const days = Math.max(1, Math.ceil(durationMinutes(event.duration) / 1440));
+  return {
+    start: fromLocal(`${date}T00:00:00`),
+    end: fromLocal(`${addDays(date, days)}T00:00:00`),
+    allDay: true,
+  };
+};
+
+/**
+ * Gives an expanded instance back the all-day flag of its stored event. With `expandRecurrences`
+ * every event of the query is an instance (single ones too), and Stalwart writes an instance's
+ * start as a date-time in the request's zone: a floating all-day event comes back as 00:00 to
+ * 00:00 in Berlin without showWithoutTime (crates/jmap/src/calendar_event/get.rs,
+ * `expand_from_ids`). A date changed on its own (it carries showWithoutTime: false) or moved to
+ * a time of day stays timed.
+ */
+export const withAllDayOf =
+  (bases: Map<string, Pick<CalendarEvent, "showWithoutTime" | "timeZone">>) =>
+  (event: CalendarEvent): CalendarEvent => {
+    const base = event.baseEventId ? bases.get(event.baseEventId) : undefined;
+    // A changed date (an override) states its own showWithoutTime; only plain instances lack it.
+    const ownFlag = event.showWithoutTime !== undefined;
+    if (!base?.showWithoutTime || ownFlag || !event.start.endsWith("T00:00:00")) {
+      return event;
+    }
+    return { ...event, showWithoutTime: true, timeZone: base.timeZone ?? null };
+  };
+
 /** Start and end as instants. All-day events span whole local days. */
 export const eventTimes = (event: CalendarEvent): Timed => {
-  const allDay = Boolean(event.showWithoutTime);
-  const start = event.utcStart
-    ? new Date(event.utcStart)
-    : fromLocal(event.start, allDay ? ZONE : event.timeZone);
-  const minutes = durationMinutes(event.duration) || (allDay ? 1440 : 0);
+  if (event.showWithoutTime) return allDayTimes(event);
+  const start = event.utcStart ? new Date(event.utcStart) : fromLocal(event.start, event.timeZone);
+  const minutes = durationMinutes(event.duration);
   const end = event.utcEnd ? new Date(event.utcEnd) : new Date(start.getTime() + minutes * 60_000);
-  return { start, end, allDay };
+  return { start, end, allDay: false };
 };
 
 export const addDays = (key: string, days: number): string => {
