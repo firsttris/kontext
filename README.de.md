@@ -77,6 +77,7 @@ reicht ein VPS mit 2 vCPU und 4 GB RAM.
 
 - **Gemeinsame Postfächer**: info@ & Co. stehen bei jedem Mitglied in der Seitenleiste; eine Mail daraus sagt „Gemeinsames Postfach info@…“. Antworten gehen als info@ raus, mit dem Namen der Person, die geantwortet hat. Postfächer nur zum Lesen zeigen nur, was erlaubt ist.
 - **Alle Posteingänge in einer Liste**: eigene Mails und die aus info@ & Co. zusammen.
+- **Lesebestätigung**: beim Senden anfordern, auf Nachfrage mit einem Klick bestätigen – nie von selbst.
 - **Newsletter abbestellen** mit einem Klick, direkt an der Mail.
 - **Bilder aus dem Internet** nur auf Wunsch – oder gleich bei Absendern, denen du vertraust (auch deinen Kontakten), wenn die Mail wirklich von ihnen kommt.
 - **Kategorien**: farbige Markierungen wie „In Bearbeitung“, „Wartet auf Antwort“, „Erledigt“ – mehrere je Mail, eigene anlegbar, per Regel automatisch. In info@ & Co. sieht das ganze Team sie: ein kleines Aufgabenbrett.

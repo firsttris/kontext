@@ -26,6 +26,7 @@ import { MailBody } from "./mail-body";
 import { MessageDetails, SenderWarnings } from "./message-details";
 import { Toolbar } from "./message-toolbar";
 import { useEmail, useMailAccounts } from "./queries";
+import { ReceiptRequest, ReceiptsReceived } from "./receipts";
 import { ScheduledNotice } from "./scheduled-notice";
 import { SenderPanel } from "./sender-panel";
 import { UnsubscribeButton } from "./unsubscribe";
@@ -156,6 +157,11 @@ export const MessageView = ({ accountId, mailbox, emailId }: Props) => {
               />
             ) : null}
             <SenderWarnings email={email} />
+            {mailbox.role === "sent" ? (
+              <ReceiptsReceived accountId={accountId} email={email} />
+            ) : (
+              <ReceiptRequest accountId={accountId} email={email} />
+            )}
             {showDetails ? <MessageDetails email={email} attachments={attachments} /> : null}
             <MailBody accountId={accountId} email={email} />
             <Attachments accountId={accountId} parts={attachments} />

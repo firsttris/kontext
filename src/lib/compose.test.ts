@@ -38,6 +38,7 @@ const original: EmailDetail = {
   authenticationResults: null,
   spamScore: null,
   unsubscribe: null,
+  receiptTo: null,
   unsubscribePost: null,
 };
 

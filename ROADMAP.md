@@ -8,7 +8,6 @@ ein Plan, kein Versprechen; Wünsche und Hinweise gern als
 
 | Funktion | Worum es geht |
 | --- | --- |
-| **Lesebestätigung** | Anfordern und beantworten, wie bei Behörden und Steuerberatern üblich. |
 | **Verschlüsselung** | S/MIME oder PGP für Betriebe mit vertraulichen Kunden- oder Gesundheitsdaten. |
 
 ## Danach
@@ -32,6 +31,7 @@ Kleinere Dinge, die beim Bauen aufgefallen sind und noch erledigt werden.
 - [ ] **Regeln für Mitarbeiter** in der Firmenverwaltung (heute nur für gemeinsame Postfächer und die eigenen).
 - [ ] **App auf Englisch** und weiteren Sprachen (Texte liegen schon gesammelt in `messages/de.json`).
 - [ ] Wiedervorlage für mehrere ausgewählte Mails auf einmal (heute aus der geöffneten Mail) und „Wieder vorgelegt“ auch in „Alle Posteingänge“ (heute im Posteingang des Postfachs).
+- [ ] Lesebestätigungen von Programmen, die kein `In-Reply-To` setzen, erkennt die gesendete Mail noch nicht (dazu müsste Kontext `Original-Message-ID` im Bericht lesen); eingegangene Bestätigungen könnten von selbst gelesen und still abgelegt werden.
 - [ ] **Drucken mit Bildern aus dem Internet**, wenn sie in der Mail freigegeben wurden.
 - [ ] Ideen aus dem ersten Entwurf, noch nicht eingeplant: **Belege**, **Buchung**, **Leitstand**, **Tickets**.
 
@@ -55,6 +55,7 @@ Kleinere Dinge, die beim Bauen aufgefallen sind und noch erledigt werden.
 
 ## Zuletzt fertig geworden
 
+Lesebestätigung anfordern, beantworten und sehen.
 Newsletter abbestellen mit einem Klick, per Mail oder auf der Webseite des Absenders. Bilder je
 Absender, Domain oder für alle Kontakte erlauben.
 Aufgaben: eigene Spalten pro Board, wiederkehrende Aufgaben, Regel-Aktion „Aufgabe anlegen“,

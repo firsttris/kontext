@@ -85,6 +85,23 @@ dessen Domain bestätigt sein (DMARC, oder SPF/DKIM passend); eine ohne jede Pr�
 (importiert, von Kolleginnen) zählt mit, eine durchgefallene nie – ein gefälschter Absender
 schaltet keine Bilder frei.
 
+## Lesebestätigung
+
+Stalwart kennt JMAP-MDN (RFC 9007) nicht; Kontext baut Lesebestätigungen nach RFC 8098 selbst
+(`src/lib/mdn.ts`, `src/features/mail/receipts.tsx`):
+
+- **Anfordern:** Der Schalter mit dem Häkchen-Brief im Fenster „Neue Mail“ setzt
+  `Disposition-Notification-To` auf die eigene Adresse.
+- **Beantworten:** Eine Mail mit der Bitte zeigt „… bittet um eine Lesebestätigung“ mit
+  „Senden“ und „Nicht senden“ – nie von selbst. Die App baut die Bestätigung als
+  `multipart/report` (ein Satz für Menschen, `message/disposition-notification` für Programme,
+  `In-Reply-To` auf die Mail), legt sie per `Email/import` in „Gesendet“ und verschickt sie von der
+  Adresse, an die die Mail ging. Beides setzt `$MDNSent` (RFC 3503), danach fragt keiner mehr –
+  Stalwart gibt Schlagworte klein zurück, verglichen wird ohne Groß und Klein.
+- **Sehen:** Eine gesendete Mail mit der Bitte zeigt „Gelesen von … · Zeit“. Stalwart durchsucht
+  `In-Reply-To` nicht; gesucht wird nach dem Betreff, behalten wird, was eine Bestätigung ist
+  und auf genau diese Mail zeigt. Die Bestätigungen selbst liegen als Mails im Posteingang.
+
 ## Newsletter abbestellen
 
 Hat eine Mail `List-Unsubscribe` (RFC 2369), steht neben „Details anzeigen“ „Abbestellen“

@@ -77,6 +77,7 @@ fine on a VPS with 2 vCPUs and 4 GB RAM.
 
 - **Shared mailboxes**: info@ and co. appear in every member's sidebar and are labelled as such; replies go out as info@, with the name of the person who answered. Read-only mailboxes show only what is allowed.
 - **All inboxes in one list**: your own mail and info@'s together.
+- **Read receipts**: ask for one when sending; answer one with a click, never by itself.
 - **Unsubscribe** from newsletters with one click, right at the mail.
 - **Pictures from the internet** load only when you ask – or at once for senders you trust (also your contacts), if the mail really comes from them.
 - **Categories**: coloured tags like "In progress", "Waiting for reply", "Done" – several per mail, your own ones too, set by rules. In shared mailboxes the whole team sees them: a small task board.

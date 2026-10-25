@@ -1,5 +1,5 @@
 /** The parts of the composer around the editor: header fields, attachments, action bar. */
-import { Paperclip, Send, Trash2, X } from "lucide-react";
+import { MailCheck, Paperclip, Send, Trash2, X } from "lucide-react";
 import { useRef } from "react";
 import { Button } from "@/components/ui/button";
 import type { OutgoingAttachment } from "@/jmap/mail";
@@ -151,7 +151,11 @@ export const ComposerActions = ({
   onAttach,
   onSaveDraft,
   onDiscard,
+  receipt,
+  onReceipt,
 }: {
+  receipt: boolean;
+  onReceipt: (on: boolean) => void;
   sending: boolean;
   canSend: boolean;
   onSendLater: (at: Date) => void;
@@ -189,6 +193,17 @@ export const ComposerActions = ({
         onClick={() => fileInput.current?.click()}
       >
         <Paperclip size={16} />
+      </Button>
+      <Button
+        variant="ghost"
+        size="icon"
+        aria-label={m.mail_receipt_request()}
+        title={m.mail_receipt_request()}
+        aria-pressed={receipt}
+        onClick={() => onReceipt(!receipt)}
+        className={receipt ? "bg-accent/10 text-accent hover:bg-accent/15" : undefined}
+      >
+        <MailCheck size={16} />
       </Button>
       <div className="flex-1" />
       {savedAt ? (

@@ -199,6 +199,7 @@ export const Composer = ({ accountId, mode, sourceEmailId, prefill }: Props) => 
       }),
     });
 
+  const [receipt, setReceipt] = useState(false);
   const outgoing = () => {
     const html = editor?.getHTML() ?? "";
     return {
@@ -217,6 +218,7 @@ export const Composer = ({ accountId, mode, sourceEmailId, prefill }: Props) => 
       inReplyTo: threading.inReplyTo,
       references: threading.references,
       draftId: draftId.current,
+      requestReceipt: receipt,
     };
   };
 
@@ -454,6 +456,8 @@ export const Composer = ({ accountId, mode, sourceEmailId, prefill }: Props) => 
         savedAt={savedAt}
         onAttach={(files) => void upload(files)}
         onSaveDraft={() => void storeDraft()}
+        receipt={receipt}
+        onReceipt={setReceipt}
         onDiscard={() => void discard()}
       />
     </form>

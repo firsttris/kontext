@@ -39,6 +39,8 @@ const BODY_PROPERTIES = ["partId", "blobId", "type", "name", "size", "cid", "dis
 const CHECK_HEADERS = {
   authenticationResults: "header:Authentication-Results:asText:all",
   spamScore: "header:X-Spam-Score:asText:all",
+  /** Who asks for a read receipt (RFC 8098). */
+  receiptTo: "header:Disposition-Notification-To:asAddresses",
   /** How to unsubscribe from a newsletter (RFC 2369, RFC 8058). */
   unsubscribe: "header:List-Unsubscribe:asURLs",
   unsubscribePost: "header:List-Unsubscribe-Post:asText",
@@ -318,6 +320,8 @@ export type OutgoingEmail = {
   references?: string[] | null;
   /** A saved draft this mail replaces; it is removed after sending. */
   draftId?: string | null;
+  /** Ask for a read receipt (Disposition-Notification-To, RFC 8098), to the sender. */
+  requestReceipt?: boolean;
 };
 
 const emailCreate = (mail: OutgoingEmail, mailboxIds: Record<string, boolean>, draft: boolean) => ({
@@ -329,6 +333,13 @@ const emailCreate = (mail: OutgoingEmail, mailboxIds: Record<string, boolean>, d
   bcc: mail.bcc,
   ...(mail.identity.replyTo?.length ? { replyTo: mail.identity.replyTo } : {}),
   subject: mail.subject,
+  ...(mail.requestReceipt
+    ? {
+        "header:Disposition-Notification-To:asAddresses": [
+          { name: mail.identity.name, email: mail.identity.email },
+        ],
+      }
+    : {}),
   ...(mail.inReplyTo?.length ? { inReplyTo: mail.inReplyTo } : {}),
   ...(mail.references?.length || mail.inReplyTo?.length
     ? { references: [...(mail.references ?? []), ...(mail.inReplyTo ?? [])] }

@@ -1111,5 +1111,13 @@
   "images_remove": "{sender} entfernen",
   "images_add_label": "Absender oder Domain",
   "images_add_placeholder": "news@firma.de oder @firma.de",
-  "images_add": "Hinzufügen"
+  "images_add": "Hinzufügen",
+  "mail_receipt_request": "Lesebestätigung anfordern",
+  "mail_receipt_asked": "{name} bittet um eine Lesebestätigung.",
+  "mail_receipt_send": "Senden",
+  "mail_receipt_decline": "Nicht senden",
+  "mail_receipt_sent": "Lesebestätigung an {name} geschickt.",
+  "mail_receipt_failed": "Die Lesebestätigung ließ sich nicht verschicken.",
+  "mail_receipt_by": "Gelesen von {name} · {when}",
+  "mail_receipt_waiting": "Lesebestätigung angefordert – noch keine eingegangen."
 }
