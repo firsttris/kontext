@@ -75,6 +75,9 @@ export const contentPart = (
   ]);
 };
 
+/** The subject an encrypted mail shows outside: the real one is inside (Protected Headers). */
+export const PROTECTED_SUBJECT = "Vertrauliche Nachricht";
+
 export type Envelope = {
   from: MimeAddress;
   to: MimeAddress[];
@@ -106,6 +109,30 @@ const headers = (mail: Envelope) => [
   ...(mail.extra ?? []),
   "MIME-Version: 1.0",
 ];
+
+/**
+ * The content part with the mail's own headers inside it, marked as protected headers
+ * (draft-ietf-lamps-header-protection, as Thunderbird does): after decrypting, the real subject
+ * is there, while the outer one is only `PROTECTED_SUBJECT`.
+ */
+export const protectHeaders = (entity: string, mail: Envelope): string => {
+  const [first = "", ...rest] = entity.split("\r\n");
+  return [
+    `${first}; protected-headers="v1"`,
+    `Subject: ${encodeWord(mail.subject)}`,
+    `From: ${mailbox(mail.from)}`,
+    ...(mail.to.length ? [`To: ${mail.to.map(mailbox).join(", ")}`] : []),
+    ...(mail.cc.length ? [`Cc: ${mail.cc.map(mailbox).join(", ")}`] : []),
+    `Message-ID: <${mail.messageId}>`,
+    ...rest,
+  ].join("\r\n");
+};
+
+/** The envelope as it goes outside an encrypted mail: the subject hidden. */
+export const outerEnvelope = (mail: Envelope): Envelope => ({
+  ...mail,
+  subject: PROTECTED_SUBJECT,
+});
 
 /** The whole mail around an entity S/MIME made (RFC 8551): what goes to the server. */
 export const withHeaders = (mail: Envelope, entity: string): string =>

@@ -24,6 +24,8 @@ const certificateFor = (user: string) => {
   return { p12: Buffer.from(der, "binary"), pem: forge.pki.certificateToPem(cert) };
 };
 
+const STAND_IN = "Vertrauliche Nachricht";
+
 test.describe("Verschlüsselung: S/MIME", () => {
   test("Zertifikat importieren, verschlüsselt senden, beim Empfänger lesen und das Zertifikat merken", async ({
     page,
@@ -81,28 +83,35 @@ test.describe("Verschlüsselung: S/MIME", () => {
     await expect(
       page.getByRole("status").filter({ hasText: "Verschlüsselt und unterschrieben (S/MIME)" }),
     ).toBeVisible();
+    const before = (await inboxSubjects("max")).filter((s) => s === STAND_IN).length;
     await page.getByRole("button", { name: "Senden", exact: true }).click();
     // The page was loaded anew: the certificate is closed again.
     const unlock = page.getByRole("dialog", { name: "Entsperren" });
     await unlock.getByLabel("Passwort des Zertifikats").fill(PASSWORD);
     await unlock.getByRole("button", { name: "Entsperren" }).click();
     await expect(page.getByRole("status").filter({ hasText: "Mail gesendet." })).toBeVisible();
-    await expect.poll(() => inboxSubjects("max")).toContain(subject);
+    // The subject went inside; outside it says "Vertrauliche Nachricht" (Protected Headers).
+    await expect
+      .poll(async () => (await inboxSubjects("max")).filter((s) => s === STAND_IN).length)
+      .toBe(before + 1);
+    expect(await inboxSubjects("max")).not.toContain(subject);
 
     const client = jmapAs("max");
     const session = await client.getSession();
     const accountId = session.primaryAccounts["urn:ietf:params:jmap:mail"]!;
     const [found] = await client.request([
-      ["Email/query", { accountId, filter: { text: "vertraulich" } }, "q"],
+      ["Email/query", { accountId, filter: { text: "Bescheid" } }, "q"],
     ]);
     expect((found![1] as { ids: string[] }).ids).toHaveLength(0);
 
     await other.goto("/mail");
     const row = other
       .getByRole("list", { name: "Posteingang" })
-      .getByRole("link", { name: new RegExp(subject) });
+      .getByRole("link", { name: new RegExp(STAND_IN) })
+      .first();
     await expect(row).toContainText("Verschlüsselt");
     await row.click();
+    const list = other.getByRole("list", { name: "Posteingang" });
     await expect(other.getByText("Verschlüsselt (S/MIME)", { exact: true })).toBeVisible();
     await other.getByLabel("Passwort des Zertifikats").fill(PASSWORD);
     await other.getByRole("button", { name: "Entsperren" }).click();
@@ -112,6 +121,9 @@ test.describe("Verschlüsselung: S/MIME", () => {
     await expect(
       other.getByText(`Unterschrieben von sandra@${DEV_DOMAIN} – selbst ausgestelltes Zertifikat`),
     ).toBeVisible();
+    // Opened, the real subject shows in the mail and in the list.
+    await expect(other.getByRole("heading", { name: subject })).toBeVisible();
+    await expect(list).toContainText(subject);
     // Sandra's certificate came with her signature.
     await expect
       .poll(async () =>

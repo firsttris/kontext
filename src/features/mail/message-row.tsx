@@ -24,6 +24,7 @@ import { useCategoryMap } from "../categories/queries";
 import { useTasks } from "../tasks/queries";
 import type { Row } from "./list-frame";
 import { type DraggedMail, startMailDrag } from "./mail-drag";
+import { useShownSubject } from "./protected-subjects";
 import type { Answer, Group } from "./use-thread-info";
 
 export const MessageRow = ({
@@ -58,6 +59,7 @@ export const MessageRow = ({
   group?: Group;
 }) => {
   const unread = group ? group.unread : isUnread(email);
+  const subject = useShownSubject(email);
   // Combined lists name each row's account; a folder's list is the route's account.
   const routeAccount = useParams({ strict: false }).accountId;
   const categories = categoriesOn(
@@ -87,7 +89,7 @@ export const MessageRow = ({
           type="checkbox"
           checked={selected}
           readOnly
-          aria-label={m.mail_select({ subject: email.subject || m.mail_no_subject() })}
+          aria-label={m.mail_select({ subject: subject || m.mail_no_subject() })}
           onClick={(event) => onPick(event.shiftKey)}
           className="size-4 cursor-pointer accent-[var(--primary)]"
         />
@@ -148,7 +150,7 @@ export const MessageRow = ({
             </span>
           </span>
           <span className={cn("truncate", unread && "font-semibold")}>
-            <Highlighted text={email.subject || m.mail_no_subject()} terms={highlight} />
+            <Highlighted text={subject || m.mail_no_subject()} terms={highlight} />
           </span>
           <span className="flex items-center gap-1.5 text-[13px] text-muted">
             {folder ? (

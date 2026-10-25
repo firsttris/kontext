@@ -4,7 +4,14 @@
  * one. OpenPGP.js and postal-mime are loaded only when a mail needs them.
  */
 import type { PrivateKey } from "openpgp";
-import { contentPart, type Envelope, encryptedMail, type MimeAttachment } from "./mime";
+import {
+  contentPart,
+  type Envelope,
+  encryptedMail,
+  type MimeAttachment,
+  outerEnvelope,
+  protectHeaders,
+} from "./mime";
 
 const openpgp = () => import("openpgp");
 const postal = async () => (await import("postal-mime")).default;
@@ -39,6 +46,8 @@ export type Signature =
   | { state: "none" };
 
 export type ReadMail = {
+  /** The real subject, from the protected headers inside; null when there are none. */
+  subject: string | null;
   text: string;
   html: string | null;
   attachments: { name: string; type: string; bytes: Uint8Array }[];
@@ -102,10 +111,11 @@ export const readEncrypted = async (
   const signature = await check(signatures, senderKeys);
   // PGP/MIME holds a whole MIME part; inline PGP only text.
   if (!/^[\w-]+:/m.test(data.slice(0, 500)) || !/content-type:/i.test(data.slice(0, 2000))) {
-    return { text: data, html: null, attachments: [], signature };
+    return { subject: null, text: data, html: null, attachments: [], signature };
   }
   const inner = await (await postal()).parse(`MIME-Version: 1.0\r\n${data}`);
   return {
+    subject: inner.subject ?? null,
     text: inner.text ?? "",
     html: inner.html ?? null,
     attachments: inner.attachments.map((file) => ({
@@ -176,9 +186,9 @@ export const encryptMail = async ({
     ownKey.toPublic(),
   ];
   const armored = await encrypt({
-    message: await createMessage({ text: contentPart(content, id) }),
+    message: await createMessage({ text: protectHeaders(contentPart(content, id), envelope) }),
     encryptionKeys,
     signingKeys: ownKey,
   });
-  return encryptedMail(envelope, armored as string, id);
+  return encryptedMail(outerEnvelope(envelope), armored as string, id);
 };

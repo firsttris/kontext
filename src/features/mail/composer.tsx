@@ -28,6 +28,7 @@ import { useEncryptedSend } from "../pgp/use-encrypted-send";
 import { SnippetMenu } from "../snippets/snippet-menu";
 import { AttachmentList, ComposerActions, ComposerFields } from "./composer-fields";
 import { EditorToolbar } from "./editor-toolbar";
+import { shownSubject } from "./protected-subjects";
 import { useEmail } from "./queries";
 import { useUndoSeconds } from "./send-settings";
 import { useTakeBack } from "./take-back";
@@ -145,7 +146,11 @@ export const Composer = ({ accountId, mode, sourceEmailId, prefill }: Props) => 
         ).html;
       }
     }
-    const start = startCompose(mode, source.data, originalHtml, myAddresses);
+    // An encrypted original: "Re:" to its real subject, where it was opened (not to the stand-in).
+    const original = source.data
+      ? { ...source.data, subject: shownSubject(source.data) }
+      : source.data;
+    const start = startCompose(mode, original, originalHtml, myAddresses);
     const identity = defaultIdentity(
       identities,
       start.from ??

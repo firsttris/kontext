@@ -30,6 +30,7 @@ import { EarlierMails, LaterMails } from "./conversation";
 import { MailBody } from "./mail-body";
 import { MessageDetails, SenderWarnings } from "./message-details";
 import { Toolbar } from "./message-toolbar";
+import { useShownSubject } from "./protected-subjects";
 import { useEmail, useMailAccounts } from "./queries";
 import { ReceiptRequest, ReceiptsReceived } from "./receipts";
 import { ScheduledNotice } from "./scheduled-notice";
@@ -51,6 +52,7 @@ export const MessageView = ({ accountId, mailbox, emailId }: Props) => {
   const accountCategories = useCategories(accountId);
   const { tasks } = useTasks();
   const statusLabel = useStatusLabel();
+  const subject = useShownSubject({ id: email?.id ?? "", subject: email?.subject ?? null });
 
   // Opening a mail marks it read, once per mail (if the mailbox allows it).
   const { canMarkSeen } = mailboxRights(mailbox);
@@ -105,7 +107,7 @@ export const MessageView = ({ accountId, mailbox, emailId }: Props) => {
                 </p>
               ) : null}
               <h2 className="m-0 text-[21px] leading-snug font-semibold tracking-tight">
-                {email.subject || m.mail_no_subject()}
+                {subject || m.mail_no_subject()}
               </h2>
               {mailTasks.map((task) => (
                 <Link

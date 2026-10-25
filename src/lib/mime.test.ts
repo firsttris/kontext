@@ -1,7 +1,14 @@
 // @vitest-environment node
 import PostalMime from "postal-mime";
 import { describe, expect, it } from "vitest";
-import { contentPart, encodeWord, encryptedMail, mailbox } from "./mime";
+import {
+  contentPart,
+  encodeWord,
+  encryptedMail,
+  mailbox,
+  outerEnvelope,
+  protectHeaders,
+} from "./mime";
 
 describe("MIME built in the app", () => {
   it("a content part a mail program reads back: text, HTML, an attachment with umlauts", async () => {
@@ -53,5 +60,27 @@ describe("MIME built in the app", () => {
     expect(encodeWord("Grüße")).toMatch(/^=\?UTF-8\?B\?/);
     expect(mailbox({ name: "Weber, Jonas", email: "j@w.test" })).toBe('"Weber, Jonas" <j@w.test>');
     expect(mailbox({ name: null, email: "j@w.test" })).toBe("<j@w.test>");
+  });
+
+  it("puts the subject inside, marked as protected, and hides it outside", async () => {
+    const mail = {
+      from: { name: "Jonas", email: "jonas@w.test" },
+      to: [{ name: null, email: "petra@k.test" }],
+      cc: [],
+      subject: "Kündigung Müller",
+      date: new Date("2026-10-25T08:00:00Z"),
+      messageId: "m1@w.test",
+    };
+    const inner = protectHeaders(
+      contentPart({ text: "x", html: "<p>x</p>", attachments: [] }, "p1"),
+      mail,
+    );
+    expect(inner.split("\r\n")[0]).toMatch(
+      /^Content-Type: multipart\/alternative; .*protected-headers="v1"$/,
+    );
+    const parsed = await PostalMime.parse(`MIME-Version: 1.0\r\n${inner}`);
+    expect(parsed.subject).toBe("Kündigung Müller");
+    expect(parsed.text?.trim()).toBe("x");
+    expect(outerEnvelope(mail).subject).toBe("Vertrauliche Nachricht");
   });
 });

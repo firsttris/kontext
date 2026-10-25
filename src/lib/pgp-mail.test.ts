@@ -55,8 +55,12 @@ describe("PGP in mails", () => {
       ownKey: jonas.privateKey,
       id: "t1",
     });
-    expect(raw).not.toContain("Vertraulich");
+    expect(raw).not.toContain("Werte im Anhang");
+    // The subject goes inside; outside only a stand-in (Protected Headers).
+    expect(raw).toContain("Subject: Vertrauliche Nachricht");
+    expect(raw).not.toContain("Befund");
     const read = await readEncrypted(raw, petra.privateKey, [jonas.publicKey]);
+    expect(read.subject).toBe("Befund");
     expect(read.text).toContain("Vertraulich: Werte im Anhang.");
     expect(read.html).toContain("<p>Vertraulich");
     expect(read.attachments[0]).toMatchObject({ name: "Werte.pdf", type: "application/pdf" });

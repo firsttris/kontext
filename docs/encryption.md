@@ -85,8 +85,12 @@ unterschreibt und entschlüsselt – und der später auch vertrauliche Chats tr�
   senden“ gelten auch hier. Entwürfe werden dabei nicht gespeichert.
 - **Antworten:** Auf eine verschlüsselte Mail geht die Antwort ebenfalls verschlüsselt, ohne
   Zitat.
-- **Grenzen:** Der Betreff bleibt lesbar, wie in PGP üblich. Verschlüsselte Mails findet die
-  Suche nur über Betreff und Absender; Regeln sehen den Inhalt nicht. Nur unterschreiben, ohne zu
+- **Betreff:** Er wird mitverschlüsselt (Protected Headers, wie Thunderbird es macht): Innen
+  steht er im verschlüsselten Teil (`protectHeaders`, `src/lib/mime.ts`), außen nur „Vertrauliche
+  Nachricht“. Sobald eine Mail geöffnet wurde, zeigen Liste, Ansicht und Antwort den echten
+  Betreff (`src/features/mail/protected-subjects.ts`, nur im Speicher). Gilt für PGP und S/MIME.
+- **Grenzen:** Verschlüsselte Mails findet die Suche nur über Absender und Datum; Regeln sehen
+  weder Inhalt noch Betreff. Nur unterschreiben, ohne zu
   verschlüsseln, kann Kontext noch nicht.
 
 ## Baustein 4: „Vertraulich senden“ – für alle Empfänger

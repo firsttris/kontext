@@ -6,7 +6,14 @@
  * needed.
  */
 import type { asn1 as forgeAsn1, pkcs7, pki, util } from "node-forge";
-import { contentPart, type Envelope, type MimeAttachment, withHeaders } from "./mime";
+import {
+  contentPart,
+  type Envelope,
+  type MimeAttachment,
+  outerEnvelope,
+  protectHeaders,
+  withHeaders,
+} from "./mime";
 
 type Asn1 = forgeAsn1.Asn1;
 
@@ -287,6 +294,8 @@ export const envelopeEntity = async (entity: string, certPems: string[]): Promis
 };
 
 export type SmimeRead = {
+  /** The real subject, from the protected headers inside; null when there are none. */
+  subject: string | null;
   text: string;
   html: string | null;
   attachments: MimeAttachment[];
@@ -341,6 +350,7 @@ const parsed = async (
     /^mime-version:/im.test(entity) ? entity : `MIME-Version: 1.0\r\n${entity}`,
   );
   return {
+    subject: inner.subject ?? null,
     text: inner.text ?? "",
     html: inner.html ?? null,
     attachments: inner.attachments
@@ -410,9 +420,12 @@ export const smimeMail = async ({
   own: OwnSmime;
   id: string;
 }): Promise<string> => {
-  const signed = await signEntity(contentPart(content, id), own, id);
+  const signed = await signEntity(protectHeaders(contentPart(content, id), envelope), own, id);
   const ownPem = await certToPem(own.cert);
-  return withHeaders(envelope, await envelopeEntity(signed, [...recipientCerts, ownPem]));
+  return withHeaders(
+    outerEnvelope(envelope),
+    await envelopeEntity(signed, [...recipientCerts, ownPem]),
+  );
 };
 
 export { binaryToBytes, bytesToBinary };

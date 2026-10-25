@@ -89,9 +89,12 @@ describe("S/MIME", () => {
     expect(raw).toMatch(/^From: Jonas Weber <jonas@weber.test>/);
     expect(raw).toContain("smime-type=enveloped-data");
     expect(raw).not.toContain("vertraulich");
+    expect(raw).toContain("Subject: Vertrauliche Nachricht");
+    expect(raw).not.toContain("Antrag");
     for (const reader of [amt, jonas]) {
       const read = await readSmime(raw, reader);
       expect(read.text.trim()).toBe("Anbei der Antrag – vertraulich.");
+      expect(read.subject).toBe("Antrag");
       expect(read.encrypted).toBe(true);
       expect(read.signature).toMatchObject({ state: "valid", email: "jonas@weber.test" });
     }
