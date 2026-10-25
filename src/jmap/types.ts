@@ -36,6 +36,8 @@ export type EmailSummary = {
   preview: string;
   hasAttachment: boolean;
   size: number;
+  /** The raw Content-Type, where loaded: an encrypted mail in the list. */
+  "header:Content-Type"?: string | null;
 };
 
 export type BodyPart = {
@@ -63,6 +65,10 @@ export type EmailDetail = EmailSummary & {
   /** Headers the mail server adds on arrival, topmost first (src/lib/sender-check.ts). */
   authenticationResults: string[] | null;
   spamScore: string[] | null;
+  /** The whole message as sent, to read an encrypted or signed one. */
+  blobId: string;
+  /** The raw Content-Type: multipart/encrypted or multipart/signed for PGP/MIME. */
+  contentType: string | null;
   /** The sender's key, if sent along (Autocrypt). */
   autocrypt: string | null;
   /** The Received lines, topmost first: whether it came encrypted. */

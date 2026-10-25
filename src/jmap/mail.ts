@@ -13,10 +13,13 @@ export const SUMMARY_PROPERTIES = [
   "preview",
   "hasAttachment",
   "size",
+  // Raw, as Stalwart names it: shows an encrypted mail in the list (src/lib/pgp-mail.ts).
+  "header:Content-Type",
 ];
 
 const DETAIL_PROPERTIES = [
   ...SUMMARY_PROPERTIES,
+  "blobId",
   "cc",
   "bcc",
   "replyTo",
@@ -39,6 +42,8 @@ const BODY_PROPERTIES = ["partId", "blobId", "type", "name", "size", "cid", "dis
 const CHECK_HEADERS = {
   authenticationResults: "header:Authentication-Results:asText:all",
   spamScore: "header:X-Spam-Score:asText:all",
+  /** Its type, raw (Stalwart names raw headers without ":asRaw"): an encrypted or signed mail. */
+  contentType: "header:Content-Type",
   /** The sender's public key, if they send it along (src/lib/pgp.ts). */
   autocrypt: "header:Autocrypt:asText",
   /** How it came to the own server, topmost first (src/lib/transport.ts). */

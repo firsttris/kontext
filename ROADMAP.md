@@ -8,7 +8,7 @@ ein Plan, kein Versprechen; Wünsche und Hinweise gern als
 
 | Funktion | Worum es geht |
 | --- | --- |
-| **Verschlüsselung** | Das [Konzept](docs/encryption.md) in fünf Bausteinen; Grundschutz und persönlicher Schlüssel sind fertig, als Nächstes PGP in Mails (lesen, unterschreiben, verschlüsseln), „Vertraulich senden“ mit Link für Empfänger ohne Schlüssel, S/MIME für Behörden und Kanzleien, vertrauliche Unterhaltungen im Chat. |
+| **Verschlüsselung** | Das [Konzept](docs/encryption.md) in fünf Bausteinen; Grundschutz, persönlicher Schlüssel und PGP in Mails sind fertig, als Nächstes „Vertraulich senden“ mit Link für Empfänger ohne Schlüssel, S/MIME für Behörden und Kanzleien, vertrauliche Unterhaltungen im Chat. |
 
 ## Danach
 
@@ -27,6 +27,7 @@ Kleinere Dinge, die beim Bauen aufgefallen sind und noch erledigt werden.
 - [ ] Chat: Reaktionen mit beliebigen Emojis (heute die sieben Schnellwahlen), und im Thread „auch im Kanal zeigen“.
 - [ ] Aufgaben am Kontakt finden Mails nur über die letzten fünf Mails mit der Person im eigenen Postfach; ältere oder solche in info@ zählen nur, wenn die Aufgabe mit der Karte verknüpft ist (geschieht beim Anlegen aus der Mail). Die Verknüpfung „Termin“ wird noch nirgends angelegt.
 - [ ] Erinnerung an Aufgaben auch direkt im Dialog „Neue Aufgabe“ (heute in der geöffneten Aufgabe).
+- [ ] PGP: nur unterschreiben (ohne Verschlüsseln) beim Senden; den Betreff mitverschlüsseln (Protected Headers); verschlüsselte Mails in der Unterhaltungsansicht und beim Weiterleiten mit Inhalt.
 - [ ] CalDAV für Aufgaben mit Bestätigung in zwei Schritten: App-Passwörter anlegen können (Thunderbird und Handy fragen keinen Code ab); dazu `sync-collection` für schnelleren Abgleich auf dem iPhone.
 - [ ] **Regeln für Mitarbeiter** in der Firmenverwaltung (heute nur für gemeinsame Postfächer und die eigenen).
 - [ ] **App auf Englisch** und weiteren Sprachen (Texte liegen schon gesammelt in `messages/de.json`).
@@ -55,6 +56,8 @@ Kleinere Dinge, die beim Bauen aufgefallen sind und noch erledigt werden.
 
 ## Zuletzt fertig geworden
 
+Verschlüsselung, Baustein 3: PGP-Mails lesen (entschlüsseln im Browser, Unterschrift prüfen) und
+verschlüsselt und unterschrieben senden, mit Anhängen; Antworten darauf gehen verschlüsselt.
 Verschlüsselung, Baustein 2: persönlicher OpenPGP-Schlüssel (anlegen, importieren, mit Passphrase
 und Wiederherstellungscode), Schlüssel anderer aus Autocrypt, WKD, keys.openpgp.org und Dateien, WKD
 für die eigenen Leute.

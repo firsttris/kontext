@@ -51,6 +51,7 @@
     "livekit-client": "^2.23.0",
     "lucide-react": "^1.61.0",
     "openpgp": "6.3.2",
+    "postal-mime": "2.7.6",
     "react": "^19.3.1",
     "react-dom": "^19.3.1",
     "tailwind-merge": "^3.7.0",

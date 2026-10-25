@@ -18,10 +18,12 @@ import { groupSuggestions } from "@/lib/groups";
 import { htmlToText, sanitizeMailHtml, textToHtml } from "@/lib/html";
 import { contactAddresses } from "@/lib/jscontact";
 import { findRole } from "@/lib/mailboxes";
+import { pgpKind } from "@/lib/pgp-mail";
 import { holdUntil, sendTimeLabel } from "@/lib/schedule";
 import { m } from "@/paraglide/messages";
 import { useContacts } from "../contacts/queries";
 import { useAutocryptHeader } from "../pgp/autocrypt";
+import { useEncryptedSend } from "../pgp/use-encrypted-send";
 import { SnippetMenu } from "../snippets/snippet-menu";
 import { AttachmentList, ComposerActions, ComposerFields } from "./composer-fields";
 import { EditorToolbar } from "./editor-toolbar";
@@ -125,10 +127,19 @@ export const Composer = ({ accountId, mode, sourceEmailId, prefill }: Props) => 
     let originalHtml = "";
     if (source.data) {
       const body = displayBody(source.data);
-      originalHtml = sanitizeMailHtml(body.kind === "html" ? body.value : textToHtml(body.value), {
-        allowRemote: false,
-        cidUrls: {},
-      }).html;
+      // An encrypted original is not quoted (it would be cipher text, or its content in clear);
+      // the answer goes encrypted too.
+      if (pgpKind(source.data.contentType, body.value) === "encrypted") {
+        setEncrypt(true);
+      } else {
+        originalHtml = sanitizeMailHtml(
+          body.kind === "html" ? body.value : textToHtml(body.value),
+          {
+            allowRemote: false,
+            cidUrls: {},
+          },
+        ).html;
+      }
     }
     const start = startCompose(mode, source.data, originalHtml, myAddresses);
     const identity = defaultIdentity(
@@ -202,6 +213,11 @@ export const Composer = ({ accountId, mode, sourceEmailId, prefill }: Props) => 
 
   const [receipt, setReceipt] = useState(false);
   const autocrypt = useAutocryptHeader(identity?.email);
+  const [encrypt, setEncrypt] = useState(false);
+  const pgp = useEncryptedSend(
+    identity?.email,
+    [...to, ...cc, ...bcc].map((address) => address.email),
+  );
   const outgoing = () => {
     const html = editor?.getHTML() ?? "";
     return {
@@ -234,7 +250,8 @@ export const Composer = ({ accountId, mode, sourceEmailId, prefill }: Props) => 
   /** Saves the current state as the draft (replacing the previous one); one save at a time. */
   const autosave = async (): Promise<void> => {
     if (saving.current) await saving.current;
-    if (!identity || !drafts || isEmpty()) return;
+    // An encrypted mail is not kept on the server unencrypted, not even as a draft.
+    if (!identity || !drafts || isEmpty() || encrypt) return;
     const run = (async () => {
       draftId.current = await saveDraft(client, outgoing(), drafts.id);
       setSavedAt(new Date());
@@ -297,12 +314,10 @@ export const Composer = ({ accountId, mode, sourceEmailId, prefill }: Props) => 
         : undoSeconds > 0
           ? { seconds: undoSeconds }
           : undefined;
-      const held = await sendEmail(
-        client,
-        outgoing(),
-        { draftsId: drafts.id, sentId: sent.id },
-        hold,
-      );
+      const folders = { draftsId: drafts.id, sentId: sent.id };
+      const held = encrypt
+        ? await pgp.send(outgoing(), folders, hold)
+        : await sendEmail(client, outgoing(), folders, hold);
       if ((mode === "reply" || mode === "replyAll") && sourceEmailId) {
         // RFC 8621: mark the original as answered.
         // Mailboxes shared only for reading may not allow it; the mail is sent anyway.
@@ -461,8 +476,12 @@ export const Composer = ({ accountId, mode, sourceEmailId, prefill }: Props) => 
         onSaveDraft={() => void storeDraft()}
         receipt={receipt}
         onReceipt={setReceipt}
+        encrypt={encrypt}
+        onEncrypt={setEncrypt}
+        encryptBlocked={pgp.reason}
         onDiscard={() => void discard()}
       />
+      {pgp.dialog}
     </form>
   );
 };

@@ -77,6 +77,7 @@ fine on a VPS with 2 vCPUs and 4 GB RAM.
 
 - **Shared mailboxes**: info@ and co. appear in every member's sidebar and are labelled as such; replies go out as info@, with the name of the person who answered. Read-only mailboxes show only what is allowed.
 - **All inboxes in one list**: your own mail and info@'s together.
+- **Encryption**: your own OpenPGP key, kept locked; send encrypted and signed, read encrypted mail and check signatures right in the browser; keys of others from their mails (Autocrypt), WKD or keys.openpgp.org. See the [concept](docs/encryption.md).
 - **Read receipts**: ask for one when sending; answer one with a click, never by itself.
 - **Unsubscribe** from newsletters with one click, right at the mail.
 - **Pictures from the internet** load only when you ask – or at once for senders you trust (also your contacts), if the mail really comes from them.

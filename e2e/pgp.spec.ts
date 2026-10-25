@@ -10,7 +10,7 @@ test.describe("Verschlüsselung: persönlicher Schlüssel", () => {
     browser,
   }) => {
     test.setTimeout(90_000);
-    await login(page, "anna");
+    await login(page);
     await page.goto("/settings?section=encryption");
     const own = page.getByRole("region", { name: "Mein Schlüssel" });
     await own.getByRole("button", { name: "Schlüssel anlegen" }).click();
@@ -32,7 +32,7 @@ test.describe("Verschlüsselung: persönlicher Schlüssel", () => {
     await expect(
       page.getByRole("status").filter({ hasText: "Schlüssel gespeichert." }),
     ).toBeVisible();
-    await expect(own).toContainText(`anna@${DEV_DOMAIN}`);
+    await expect(own).toContainText(`jonas@${DEV_DOMAIN}`);
     await expect(own).toContainText(/([0-9A-F]{4} ){9}[0-9A-F]{4}/);
 
     // Passphrase forgotten: the recovery code sets a new one.
@@ -48,11 +48,11 @@ test.describe("Verschlüsselung: persönlicher Schlüssel", () => {
 
     // WKD: Thunderbird finds the key at the company's address.
     const wkd = await page.request.get(
-      `/.well-known/openpgpkey/${DEV_DOMAIN}/hu/${await wkdHash("anna")}?l=anna`,
+      `/.well-known/openpgpkey/${DEV_DOMAIN}/hu/${await wkdHash("jonas")}?l=jonas`,
     );
     expect(wkd.status()).toBe(200);
     const key = await readKey({ binaryKey: new Uint8Array(await wkd.body()) });
-    expect(key.getUserIDs()[0]).toContain(`anna@${DEV_DOMAIN}`);
+    expect(key.getUserIDs()[0]).toContain(`jonas@${DEV_DOMAIN}`);
 
     // A mail from Anna carries the key; Max's Kontext takes it over when he opens it.
     const subject = unique("Mit Schlüssel");
@@ -72,7 +72,7 @@ test.describe("Verschlüsselung: persönlicher Schlüssel", () => {
     await expect(max.getByRole("heading", { name: subject })).toBeVisible();
     await max.goto("/settings?section=encryption");
     const known = max.getByRole("region", { name: "Schlüssel von anderen" });
-    await expect(known).toContainText(`anna@${DEV_DOMAIN}`);
+    await expect(known).toContainText(`jonas@${DEV_DOMAIN}`);
     await expect(known).toContainText("Aus einer Mail (Autocrypt)");
     await max.context().close();
   });

@@ -1,5 +1,5 @@
 /** The parts of the composer around the editor: header fields, attachments, action bar. */
-import { MailCheck, Paperclip, Send, Trash2, X } from "lucide-react";
+import { LockKeyhole, LockKeyholeOpen, MailCheck, Paperclip, Send, Trash2, X } from "lucide-react";
 import { useRef } from "react";
 import { Button } from "@/components/ui/button";
 import type { OutgoingAttachment } from "@/jmap/mail";
@@ -153,9 +153,16 @@ export const ComposerActions = ({
   onDiscard,
   receipt,
   onReceipt,
+  encrypt,
+  onEncrypt,
+  encryptBlocked,
 }: {
   receipt: boolean;
   onReceipt: (on: boolean) => void;
+  encrypt: boolean;
+  onEncrypt: (on: boolean) => void;
+  /** Why it cannot be encrypted now, or null. */
+  encryptBlocked: string | null;
   sending: boolean;
   canSend: boolean;
   onSendLater: (at: Date) => void;
@@ -205,6 +212,35 @@ export const ComposerActions = ({
       >
         <MailCheck size={16} />
       </Button>
+      <Button
+        variant="ghost"
+        size="icon"
+        aria-label={m.pgp_send_toggle()}
+        title={
+          encrypt
+            ? (encryptBlocked ?? `${m.pgp_send_on()} ${m.pgp_send_draft_hint()}`)
+            : m.pgp_send_toggle()
+        }
+        aria-pressed={encrypt}
+        onClick={() => onEncrypt(!encrypt)}
+        className={
+          encrypt
+            ? encryptBlocked
+              ? "bg-warn/10 text-warn hover:bg-warn/15"
+              : "bg-accent/10 text-accent hover:bg-accent/15"
+            : undefined
+        }
+      >
+        {encrypt ? <LockKeyhole size={16} /> : <LockKeyholeOpen size={16} />}
+      </Button>
+      {encrypt ? (
+        <span
+          role="status"
+          className={`hidden min-w-0 truncate text-[12px] sm:inline ${encryptBlocked ? "text-warn" : "text-accent"}`}
+        >
+          {encryptBlocked ?? m.pgp_send_on()}
+        </span>
+      ) : null}
       <div className="flex-1" />
       {savedAt ? (
         <span role="status" className="hidden text-[12px] text-muted sm:inline">

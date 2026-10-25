@@ -5,6 +5,7 @@ import {
   CalendarClock,
   CornerUpLeft,
   ListChecks,
+  LockKeyhole,
   Paperclip,
   Star,
   Users,
@@ -14,6 +15,7 @@ import { isFlagged, isUnread } from "@/jmap/mail";
 import { categoriesOn } from "@/lib/categories";
 import { cn } from "@/lib/cn";
 import { displayName, formatAddressList, listDate } from "@/lib/format";
+import { encryptedPreview } from "@/lib/pgp-mail";
 import { sendTimeLabel } from "@/lib/schedule";
 import { tasksOfMail } from "@/lib/tasks";
 import { m } from "@/paraglide/messages";
@@ -202,12 +204,20 @@ export const MessageRow = ({
               </span>
             ) : null}
             <CategoryChips categories={categories} max={2} />
-            {email.hasAttachment ? (
-              <Paperclip size={12} className="shrink-0" aria-label={m.mail_attachments()} />
-            ) : null}
-            <span className="truncate">
-              <Highlighted text={email.preview} terms={highlight} />
-            </span>
+            {encryptedPreview(email.preview, email["header:Content-Type"]) ? (
+              <span className="flex shrink-0 items-center gap-1 text-accent">
+                <LockKeyhole size={12} aria-hidden="true" /> {m.pgp_encrypted()}
+              </span>
+            ) : (
+              <>
+                {email.hasAttachment ? (
+                  <Paperclip size={12} className="shrink-0" aria-label={m.mail_attachments()} />
+                ) : null}
+                <span className="truncate">
+                  <Highlighted text={email.preview} terms={highlight} />
+                </span>
+              </>
+            )}
           </span>
         </span>
       </Link>

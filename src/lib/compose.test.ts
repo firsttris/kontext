@@ -41,6 +41,8 @@ const original: EmailDetail = {
   receiptTo: null,
   received: null,
   autocrypt: null,
+  blobId: "b",
+  contentType: null,
   unsubscribePost: null,
 };
 

@@ -6,7 +6,7 @@ Funktionen (Suche, Regeln, Benachrichtigungen mit Text, Aufgaben aus Mails) brau
 Server, der die Inhalte lesen kann. Ende-zu-Ende gibt es dort, wo es zählt: nach außen und für
 ausgewählte vertrauliche Unterhaltungen.
 
-Stand: Baustein 1 und 2 sind umgesetzt, 3 in Arbeit, 4 und 5 geplant ([Roadmap](https://github.com/firsttris/kontext/blob/main/ROADMAP.md)).
+Stand: Baustein 1 bis 3 sind umgesetzt, 4 und 5 geplant ([Roadmap](https://github.com/firsttris/kontext/blob/main/ROADMAP.md)).
 
 ## Wovor geschützt wird
 
@@ -68,16 +68,26 @@ unterschreibt und entschlüsselt – und der später auch vertrauliche Chats tr�
 
 ## Baustein 3: PGP in Mails
 
-- **Lesen:** PGP/MIME (`multipart/encrypted`) und eingebettetes PGP werden nach dem Entsperren
-  im Browser entschlüsselt und wie jede Mail gezeigt, mit Anhängen. Unterschriften werden
-  geprüft: „Unterschrieben von … – geprüft“, oder eine Warnung.
-- **Senden:** Ein Schloss im Fenster „Neue Mail“ verschlüsselt an alle Empfänger und an sich
-  selbst (so ist die Kopie in „Gesendet“ lesbar); unterschrieben wird immer, wenn ein Schlüssel
-  da ist. Die App baut die ganze Mail (Text, HTML, Anhänge) als MIME, verschlüsselt sie und
-  schickt sie über Stalwart (`Email/import`, `EmailSubmission`) – der Server sieht nur
-  Verschlüsseltes. Der Betreff bleibt sichtbar, wie in PGP üblich; ein Hinweis sagt das.
-- **Grenzen:** Verschlüsselte Mails findet die Suche nur über Betreff und Absender; Regeln
-  sehen den Inhalt nicht.
+- **Lesen:** Eine PGP/MIME-Mail (`multipart/encrypted`, RFC 3156) oder eine mit eingebettetem
+  PGP zeigt „Verschlüsselt“ – in der Liste mit Schloss statt Vorschau. Nach dem Entsperren des
+  eigenen Schlüssels (er bleibt bis zum Neuladen im Speicher des Tabs) lädt die App die Mail im
+  Ganzen, entschlüsselt sie im Browser und zerlegt den inneren Teil (postal-mime): Text oder HTML
+  (bereinigt, ohne Bilder aus dem Internet) und Anhänge zum Herunterladen.
+- **Unterschriften:** Mit dem bekannten Schlüssel des Absenders geprüft – „Unterschrieben von …
+  – geprüft“; passt sie nicht, eine rote Warnung; fehlt sein Schlüssel, ein Hinweis. Auch nur
+  unterschriebene Mails (`multipart/signed`) werden so geprüft.
+- **Senden:** Das Schloss im Fenster „Neue Mail“ verschlüsselt an alle Empfänger und an sich
+  selbst (so bleibt die Kopie in „Gesendet“ lesbar) und unterschreibt. Es geht, wenn man einen
+  eigenen Schlüssel für die Absenderadresse hat und für jeden Empfänger einen kennt; sonst sagt
+  es, für wen einer fehlt. Die App baut die ganze Mail (Text, HTML, Anhänge) als MIME,
+  verschlüsselt sie und schickt sie über Stalwart (`Email/import`, `EmailSubmission`,
+  `src/jmap/send-raw.ts`) – der Server sieht nur Verschlüsseltes. „Rückgängig“ und „Später
+  senden“ gelten auch hier. Entwürfe werden dabei nicht gespeichert.
+- **Antworten:** Auf eine verschlüsselte Mail geht die Antwort ebenfalls verschlüsselt, ohne
+  Zitat.
+- **Grenzen:** Der Betreff bleibt lesbar, wie in PGP üblich. Verschlüsselte Mails findet die
+  Suche nur über Betreff und Absender; Regeln sehen den Inhalt nicht. Nur unterschreiben, ohne zu
+  verschlüsseln, kann Kontext noch nicht.
 
 ## Baustein 4: „Vertraulich senden“ – für alle Empfänger
 
