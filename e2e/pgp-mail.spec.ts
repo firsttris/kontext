@@ -51,7 +51,9 @@ test.describe("Verschlüsselung: PGP in Mails", () => {
       .getByRole("textbox", { name: "Ihre Nachricht …" })
       .fill("Messwerte: 42 Grad, alles vertraulich.");
     await page.getByRole("button", { name: "Verschlüsselt senden" }).click();
-    await expect(page.getByRole("status").filter({ hasText: "Verschlüsselt und unterschrieben" })).toBeVisible();
+    await expect(
+      page.getByRole("status").filter({ hasText: "Verschlüsselt und unterschrieben" }),
+    ).toBeVisible();
     await page.getByRole("button", { name: "Senden", exact: true }).click();
     const unlock = page.getByRole("dialog", { name: "Entsperren" });
     await unlock.getByLabel("Passphrase deines Schlüssels").fill(PASSPHRASE);
