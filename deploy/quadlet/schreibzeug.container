@@ -1,0 +1,24 @@
+# Podman Quadlet: copy to /etc/containers/systemd/ and run `systemctl daemon-reload`.
+# Documents (Schreibzeug), signed in through Kontext. Set SCHREIBZEUG_URL (its address),
+# SCHREIBZEUG_EMBED_ORIGIN (https://<KONTEXT_DOMAIN>), OIDC_ISSUER (https://<KONTEXT_DOMAIN>/api/auth)
+# and OIDC_CLIENT_SECRET (Kontext's SCHREIBZEUG_CLIENT_SECRET) in
+# /opt/kontext/deploy/schreibzeug.env (Quadlet does not expand variables).
+[Unit]
+Description=Schreibzeug (documents for Kontext)
+After=kontext.service
+Wants=kontext.service
+
+[Container]
+Image=docker.io/tristanteu/schreibzeug:latest
+ContainerName=schreibzeug
+Network=kontext.network
+Volume=schreibzeug-data:/data
+Environment=OIDC_CLIENT_ID=schreibzeug
+EnvironmentFile=/opt/kontext/deploy/schreibzeug.env
+AutoUpdate=registry
+
+[Service]
+Restart=always
+
+[Install]
+WantedBy=multi-user.target

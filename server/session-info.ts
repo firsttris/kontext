@@ -44,6 +44,15 @@ const displayName = async (env: Env, token: string, session: JmapSession, email:
   return own?.name || identities[0]?.name || email;
 };
 
+/** The display name behind a Stalwart token: what the person sends mail as, else the address. */
+export const createNameOf = (env: Env) => async (token: string, email: string) => {
+  const response = await fetch(`${env.STALWART_URL}/jmap/session`, {
+    headers: { authorization: `Bearer ${token}` },
+  }).catch(() => null);
+  if (!response?.ok) return email;
+  return displayName(env, token, (await response.json()) as JmapSession, email);
+};
+
 export const createSessionInfo = (env: Env, auth: Auth, grants: Grants) => {
   const known = new Map<string, { info: SessionInfo; until: number }>();
 

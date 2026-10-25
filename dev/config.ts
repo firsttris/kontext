@@ -14,3 +14,6 @@ export const LIVEKIT_DEV_KEY = {
   key: "kontext-dev",
   secret: "kontext-dev-secret-only-for-local-calls-0123",
 } as const;
+
+/** The secret Schreibzeug (or its stand-in, dev/fake-schreibzeug.ts) signs in to Kontext with. */
+export const SCHREIBZEUG_DEV_SECRET = "schreibzeug-dev-secret-only-for-local-tests-0123";

@@ -3,7 +3,11 @@ import { mkdirSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { drizzle } from "drizzle-orm/bun-sqlite";
 import { migrate } from "drizzle-orm/bun-sqlite/migrator";
-import * as schema from "./schema";
+import * as oauthSchema from "./oauth-schema";
+import * as coreSchema from "./schema";
+
+/** All tables: the server's own and those of the sign-in provider (Better Auth's plugins). */
+const schema = { ...coreSchema, ...oauthSchema };
 
 export type Db = ReturnType<typeof openDatabase>;
 

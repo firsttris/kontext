@@ -144,6 +144,11 @@ reicht ein VPS mit 2 vCPU und 4 GB RAM.
 - **Aufbewahrung**, die die Firmenverwaltung festlegt (30 Tage bis 5 Jahre oder unbegrenzt): Ältere Nachrichten, Fotos und Dateien löscht Kontext von selbst.
 - **Am Handy**: ein eigener Tab, Unterhaltungen als Sprechblasen.
 
+### 📄 Dokumente
+
+- **Word, Excel, PowerPoint und PDF** im Fenster von Kontext, mit [Schreibzeug](https://github.com/firsttris/schreibzeug) als Modul „Dokumente“ (optional, ein eigener Dienst): keine zweite Anmeldung, hell oder dunkel wie Kontext, ein offenes Dokument bleibt offen, während du eine Mail beantwortest.
+- **Anhänge in Dokumente**: den Anhang einer Mail in einen Ordner ablegen oder gleich dort öffnen; beim Schreiben **aus Dokumente anhängen**. Die Dateien gehen von Server zu Server, mit den Rechten der jeweiligen Person.
+
 ### 📅 Kalender
 
 - **Tag, Woche, Monat und Liste**, Termine mit der Maus verschieben, wiederkehrende Termine mit Ausnahmen.
@@ -186,6 +191,7 @@ Module, die ein Betrieb einschaltet, wenn er sie braucht – wer sie nicht brauc
 | Team-Chat | ✅ verfügbar |
 | Anrufe und Videobesprechungen im Chat | ✅ verfügbar |
 | Telefonie über die Fritzbox (Telefonbox) | 🧪 im Test |
+| Dokumente (Schreibzeug) | ✅ verfügbar |
 | Rapportzettel (Arbeitsnachweise, z. B. im Handwerk) | geplant |
 
 Was als Nächstes kommt, steht in der [Roadmap](ROADMAP.md).

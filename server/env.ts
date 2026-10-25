@@ -57,6 +57,14 @@ const schema = z.object({
    */
   PHONE_SIP_HOST: z.preprocess((v) => v || undefined, z.string().optional()),
   PHONE_SIP_PORT: z.coerce.number().default(5060),
+  /**
+   * Schreibzeug, the documents: where browsers reach it (https://dokumente.firma.de). With it Kontext
+   * shows the module "Dokumente"; with the client secret too, Schreibzeug signs in through Kontext.
+   */
+  SCHREIBZEUG_URL: z.preprocess((v) => v || undefined, z.url().optional()),
+  SCHREIBZEUG_CLIENT_ID: z.string().min(1).default("schreibzeug"),
+  /** The secret Schreibzeug sends with the code (its OIDC_CLIENT_SECRET), at least 32 characters. */
+  SCHREIBZEUG_CLIENT_SECRET: z.preprocess((v) => v || undefined, z.string().min(32).optional()),
   /** The built app (dist/); when set, the server delivers it too. Empty in dev (Vite does). */
   STATIC_DIR: z.string().optional(),
 });

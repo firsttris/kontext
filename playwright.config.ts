@@ -1,4 +1,5 @@
 import { defineConfig, devices } from "@playwright/test";
+import { SCHREIBZEUG_DEV_SECRET } from "./dev/config";
 
 /**
  * E2E tests run against their own Stalwart (port 28080, fresh data, seeded), their own Kontext
@@ -9,6 +10,7 @@ const SERVER_PORT = 28090;
 const APP_PORT = 5174;
 const GRAPH_PORT = 28095;
 const LIVEKIT_PORT = 27880;
+const SCHREIBZEUG_PORT = 28096;
 
 const launchOptions = {
   ...(process.env.PW_CHROMIUM_PATH ? { executablePath: process.env.PW_CHROMIUM_PATH } : {}),
@@ -83,6 +85,12 @@ export default defineConfig({
       reuseExistingServer: false,
     },
     {
+      // Documents: a stand-in for Schreibzeug that signs in through Kontext (dev/fake-schreibzeug.ts).
+      command: `bun dev/fake-schreibzeug.ts --port ${SCHREIBZEUG_PORT} --kontext http://localhost:${APP_PORT}`,
+      url: `http://localhost:${SCHREIBZEUG_PORT}/api/health`,
+      reuseExistingServer: false,
+    },
+    {
       command: "rm -rf .dev/e2e-server && bun server/main.ts",
       url: `http://127.0.0.1:${SERVER_PORT}/healthz`,
       env: {
@@ -108,6 +116,8 @@ export default defineConfig({
         // Microsoft's sign-in and Graph: the stand-in below
         M365_LOGIN_URL: `http://127.0.0.1:${GRAPH_PORT}`,
         GRAPH_URL: `http://127.0.0.1:${GRAPH_PORT}/v1.0`,
+        SCHREIBZEUG_URL: `http://localhost:${SCHREIBZEUG_PORT}`,
+        SCHREIBZEUG_CLIENT_SECRET: SCHREIBZEUG_DEV_SECRET,
       },
       reuseExistingServer: false,
       timeout: 60_000,

@@ -3,26 +3,42 @@
  * in use) and Stalwart's tokens; the browser only knows whether it is signed in.
  */
 import { createContext, type ReactNode, useCallback, useContext, useMemo, useState } from "react";
+import { signOutFrame } from "@/features/documents/frame-store";
 import { createJmapClient, type JmapClient } from "@/jmap/client";
+import { signedOAuthQuery } from "./oauth-query";
 
-export type SignInResult = "ok" | "mfa" | "failed" | "offline";
+/** "continue": the sign-in was for Schreibzeug, and the browser is on its way back there. */
+export type SignInResult = "ok" | "mfa" | "failed" | "offline" | "continue";
 
-/** Signs in at the server; "mfa" means the account needs the code from the authenticator app. */
+/**
+ * Signs in at the server; "mfa" means the account needs the code from the authenticator app.
+ * A page opened by Kontext's sign-in provider carries the request it continues (oauth-query.ts).
+ */
 export const signIn = async (
   email: string,
   password: string,
   code?: string,
 ): Promise<SignInResult> => {
+  const oauthQuery = signedOAuthQuery(window.location.search);
   try {
     const response = await fetch("/api/auth/sign-in/stalwart", {
       method: "POST",
       headers: { "content-type": "application/json" },
       credentials: "same-origin",
-      body: JSON.stringify({ email, password, ...(code ? { code } : {}) }),
+      body: JSON.stringify({
+        email,
+        password,
+        ...(code ? { code } : {}),
+        ...(oauthQuery ? { oauth_query: oauthQuery } : {}),
+      }),
     });
     if (response.status === 401 || response.status === 400) return "failed";
     if (!response.ok) return "offline";
-    const body = (await response.json()) as { status: "ok" | "mfa" };
+    const body = (await response.json()) as { status: "ok" | "mfa" } | { url: string };
+    if ("url" in body) {
+      window.location.assign(body.url);
+      return "continue";
+    }
     return body.status;
   } catch {
     return "offline";
@@ -87,6 +103,8 @@ export const AuthProvider = ({
   );
 
   const logout = useCallback(async () => {
+    // Schreibzeug in its frame signs out first, while the frame is still there.
+    await signOutFrame();
     await signOut();
     setClient(null);
     onChange(null);

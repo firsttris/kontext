@@ -4,6 +4,7 @@
  */
 
 import { dirname, join } from "node:path";
+import { oauthProviderOpenIdConfigMetadata } from "@better-auth/oauth-provider";
 import { eq } from "drizzle-orm";
 import { Hono } from "hono";
 import { serveStatic } from "hono/bun";
@@ -34,6 +35,9 @@ import { createSealer } from "./crypto";
 import { createDavAuth } from "./dav/auth";
 import { createDavRoutes } from "./dav/routes";
 import { type Db, openDatabase, schema } from "./db";
+import { createSessionBlobs } from "./documents/blobs";
+import { createDocumentsRoutes } from "./documents/routes";
+import { createSchreibzeug, type Schreibzeug } from "./documents/schreibzeug";
 import type { Env } from "./env";
 import { createFetcher } from "./external/fetcher";
 import { createExternalRoutes } from "./external/routes";
@@ -50,6 +54,7 @@ import { createGraph, type M365Credentials } from "./migration/m365/graph";
 import { createRunner } from "./migration/runner";
 import { createSyncRunner } from "./migration/sync-runner";
 import { createSyncs } from "./migration/syncs";
+import { registerClient, type SchreibzeugClient, schreibzeugClientOf } from "./oidc/provider";
 import { createPgpRoutes, createWkdRoutes } from "./pgp/routes";
 import { createPgpStore } from "./pgp/store";
 import { createPhone } from "./phone/setup";
@@ -59,7 +64,7 @@ import { createPushRoutes } from "./push/routes";
 import { createPushStore, loadVapidKeys } from "./push/store";
 import { createSecurePublicRoutes, createSecureRoutes } from "./secure/routes";
 import { createSecureStore } from "./secure/store";
-import { createSessionInfo } from "./session-info";
+import { createNameOf, createSessionInfo } from "./session-info";
 import { createSmimeRoutes, trustedRoots } from "./smime/routes";
 import { createSmimeStore } from "./smime/store";
 import { createSnippetRoutes } from "./snippets/routes";
@@ -132,6 +137,20 @@ const endSessionsOf = (db: Db) => async (email: string) => {
   if (found) await db.delete(schema.session).where(eq(schema.session.userId, found.id));
 };
 
+/** Schreibzeug's API for the server, with tokens signed by Kontext's keys for its address. */
+const createSchreibzeugOf = (env: Env, auth: Auth, client: SchreibzeugClient): Schreibzeug => {
+  const schreibzeug = createSchreibzeug({
+    url: client.url,
+    issuer: `${env.BETTER_AUTH_URL.replace(/\/+$/, "")}/api/auth`,
+    sign: async (payload) => (await auth.api.signJWT({ body: { payload } })).token,
+  });
+  // Only a note: Schreibzeug may start after Kontext.
+  void schreibzeug.reachable().then((reachable) => {
+    if (!reachable) console.warn(`Schreibzeug antwortet nicht: ${client.url}`);
+  });
+  return schreibzeug;
+};
+
 /** LiveKit, when all three settings are there; calls are off otherwise. */
 const liveKitOf = (env: Env): LiveKitConfig | null =>
   env.LIVEKIT_URL && env.LIVEKIT_API_KEY && env.LIVEKIT_API_SECRET
@@ -145,7 +164,9 @@ export const createApp = async (env: Env) => {
     await createSealer(env.BETTER_AUTH_SECRET, "stalwart-grant"),
     env.STALWART_URL,
   );
-  const auth = createAuth(env, db, grants);
+  const auth = createAuth(env, db, grants, createNameOf(env));
+  const schreibzeug = schreibzeugClientOf(env);
+  if (schreibzeug) await registerClient(db, schreibzeug);
   const proxy = createJmapProxy(env, auth, grants);
 
   const categories = createCategoryStore(db);
@@ -168,6 +189,11 @@ export const createApp = async (env: Env) => {
   pruneChat();
   setInterval(pruneChat, 3_600_000).unref();
   app.get("/healthz", (c) => c.text("ok"));
+  if (schreibzeug) {
+    // Better Auth keeps discovery server-only; Schreibzeug reads it here (issuer + well-known path).
+    const discovery = oauthProviderOpenIdConfigMetadata(auth);
+    app.get("/api/auth/.well-known/openid-configuration", (c) => discovery(c.req.raw));
+  }
   app.on(["GET", "POST"], "/api/auth/*", (c) => auth.handler(c.req.raw));
   /** Fetching for external accounts imports with the server's key, like a move. */
   let externalImporter: Importer | null = null;
@@ -408,6 +434,21 @@ export const createApp = async (env: Env) => {
           { type: "tasks", accountId },
           (viewer) => viewer.accountIds.includes(accountId) || assignees.includes(viewer.me),
         ),
+    }),
+  );
+  app.route(
+    "/api/documents",
+    createDocumentsRoutes({
+      url: env.SCHREIBZEUG_URL?.replace(/\/+$/, "") ?? null,
+      schreibzeug: schreibzeug && createSchreibzeugOf(env, auth, schreibzeug),
+      askerOf: async (request) => {
+        const session = await auth.api.getSession({ headers: request.headers });
+        const stalwartToken = session && (await grants.accessToken(session.session.id));
+        if (!session || !stalwartToken) return null;
+        const { id, email, name } = session.user;
+        return { person: { id, email, name }, stalwartToken };
+      },
+      blobs: createSessionBlobs(env.STALWART_URL),
     }),
   );
   app.route("/api/snippets", createSnippetRoutes({ store: createSnippetStore(db), accountsOf }));

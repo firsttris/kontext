@@ -1628,5 +1628,19 @@
   "phone_recording_hint": "Wer telefoniert, kann das Gespräch im Anruf-Fenster aufnehmen. Die Aufnahme steht danach beim Anruf. Ein Gespräch aufzunehmen ist nur mit Einverständnis der anderen Seite erlaubt (§ 201 StGB): Die Box spielt vor der Aufnahme die gewählte Ansage ab, zum Beispiel „Dieses Gespräch wird aufgezeichnet“.",
   "phone_recording_enabled": "Aufnehmen erlauben",
   "phone_recording_notice": "Ansage vor der Aufnahme",
-  "phone_recording_no_notice": "Keine Ansage"
+  "phone_recording_no_notice": "Keine Ansage",
+  "nav_documents": "Dokumente",
+  "nav_documents_unsaved": "Dokumente, ungespeicherte Änderungen",
+  "documents_missing": "Dokumente sind auf diesem Server nicht eingerichtet.",
+  "documents_mine": "Meine Dateien",
+  "documents_path": "Ordnerpfad",
+  "documents_content": "Inhalt des Ordners",
+  "documents_empty": "Hier liegt noch nichts.",
+  "documents_cancel": "Abbrechen",
+  "documents_save": "„{name}“ in Dokumente ablegen",
+  "documents_save_title": "In Dokumente ablegen",
+  "documents_save_here": "Hier ablegen",
+  "documents_save_open": "Ablegen und öffnen",
+  "documents_saved": "„{name}“ liegt jetzt in Dokumente.",
+  "documents_attach": "Aus Dokumente anhängen"
 }

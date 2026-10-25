@@ -16,6 +16,7 @@ import { z } from "zod";
 import type { Sealer } from "./crypto";
 import { type Db, schema } from "./db";
 import type { Env } from "./env";
+import { providerPlugins, schreibzeugClientOf } from "./oidc/provider";
 import { loginAtStalwart, refreshAtStalwart, type StalwartTokens, whoAmI } from "./stalwart";
 
 const DAY = 24 * 60 * 60;
@@ -66,9 +67,14 @@ const signInBody = z.object({
     .trim()
     .regex(/^\d{6,8}$/)
     .optional(),
+  /** The signed authorization request when the sign-in is for Schreibzeug (oauth-provider). */
+  oauth_query: z.string().max(8192).optional(),
 });
 
-const stalwartSignIn = (stalwartUrl: string, grants: Grants) =>
+/** The name the person sends mail as, from their Stalwart account (session-info.ts). */
+export type NameOf = (accessToken: string, email: string) => Promise<string>;
+
+const stalwartSignIn = (stalwartUrl: string, grants: Grants, nameOf: NameOf) =>
   ({
     id: "stalwart-sign-in",
     endpoints: {
@@ -84,13 +90,17 @@ const stalwartSignIn = (stalwartUrl: string, grants: Grants) =>
           // Stalwart may accept a bare name; the account's real address comes from the session.
           const { email } = await whoAmI(stalwartUrl, result.tokens.accessToken);
           const adapter = ctx.context.internalAdapter;
+          const name = await nameOf(result.tokens.accessToken, email);
           const found = await adapter.findUserByEmail(email);
-          const user =
-            found?.user ??
-            (await adapter.createUser(
-              { email, name: email, emailVerified: true },
-              { method: "stalwart" },
-            ));
+          // The name goes to Schreibzeug with the sign-in; it follows the one in Stalwart.
+          const user = found
+            ? found.user.name === name
+              ? found.user
+              : await adapter.updateUser(found.user.id, { name })
+            : await adapter.createUser(
+                { email, name, emailVerified: true },
+                { method: "stalwart" },
+              );
           const session = await adapter.createSession(user.id);
           await grants.save(session.id, result.tokens);
           await setSessionCookie(ctx, { session, user });
@@ -100,7 +110,7 @@ const stalwartSignIn = (stalwartUrl: string, grants: Grants) =>
     },
   }) satisfies BetterAuthPlugin;
 
-export const createAuth = (env: Env, db: Db, grants: Grants) =>
+export const createAuth = (env: Env, db: Db, grants: Grants, nameOf: NameOf) =>
   betterAuth({
     baseURL: env.BETTER_AUTH_URL,
     basePath: "/api/auth",
@@ -122,7 +132,11 @@ export const createAuth = (env: Env, db: Db, grants: Grants) =>
       ipAddress: { ipAddressHeaders: ["x-forwarded-for"] },
       useSecureCookies: env.BETTER_AUTH_URL.startsWith("https://"),
     },
-    plugins: [stalwartSignIn(env.STALWART_URL, grants)],
+    plugins: [
+      stalwartSignIn(env.STALWART_URL, grants, nameOf),
+      // Kontext signs people in to Schreibzeug, when it is set up (oidc/provider.ts).
+      ...(schreibzeugClientOf(env) ? providerPlugins() : []),
+    ],
   });
 
 export type Auth = ReturnType<typeof createAuth>;

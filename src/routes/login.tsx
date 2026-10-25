@@ -30,6 +30,8 @@ function LoginPage() {
     setBusy(true);
     setError(null);
     const result = await login(username.trim(), password, needsCode ? code : undefined);
+    // Back to Schreibzeug: the page is leaving, the button stays busy.
+    if (result === "continue") return;
     setBusy(false);
     if (result === "ok") {
       await navigate({ to: target?.startsWith("/") ? target : "/" });

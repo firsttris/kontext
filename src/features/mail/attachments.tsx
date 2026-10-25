@@ -21,6 +21,7 @@ import { useEffect, useState } from "react";
 import { useClient } from "@/auth/auth";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/toast";
+import { SaveToDocuments } from "@/features/documents/document-actions";
 import type { BodyPart } from "@/jmap/types";
 import {
   type AttachmentKind,
@@ -180,6 +181,12 @@ const AttachmentCard = ({ accountId, part }: { accountId: string; part: BodyPart
             {extension.slice(0, 5)} · <span className="normal-case">{formatSize(part.size)}</span>
           </span>
         </span>
+        {part.blobId ? (
+          <SaveToDocuments
+            accountId={accountId}
+            attachment={{ blobId: part.blobId, name, type: part.type }}
+          />
+        ) : null}
         <Button
           variant="ghost"
           size="iconSm"
