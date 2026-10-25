@@ -77,7 +77,7 @@ export const SignedNote = ({ accountId, email }: { accountId: string; email: Ema
   );
 };
 
-export const Unlock = () => {
+export const Unlock = ({ hint }: { hint?: string }) => {
   const { data: own } = useOwnKey();
   const [passphrase, setPassphrase] = useState("");
   const [wrong, setWrong] = useState(false);
@@ -97,7 +97,7 @@ export const Unlock = () => {
   if (!own) return <p className="m-0 text-[14px] text-muted">{m.pgp_no_key()}</p>;
   return (
     <form onSubmit={(event) => void submit(event)} className="flex flex-col gap-2">
-      <span className="text-[14px]">{m.pgp_unlock_hint()}</span>
+      <span className="text-[14px]">{hint ?? m.pgp_unlock_hint()}</span>
       <div className="flex max-w-[460px] gap-2">
         <Input
           type="password"

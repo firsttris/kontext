@@ -6,7 +6,7 @@ Funktionen (Suche, Regeln, Benachrichtigungen mit Text, Aufgaben aus Mails) brau
 Server, der die Inhalte lesen kann. Ende-zu-Ende gibt es dort, wo es zählt: nach außen und für
 ausgewählte vertrauliche Unterhaltungen.
 
-Stand: Baustein 1 bis 4 sind umgesetzt, 5 geplant ([Roadmap](https://github.com/firsttris/kontext/blob/main/ROADMAP.md)).
+Stand: alle fünf Bausteine sind umgesetzt ([Roadmap](https://github.com/firsttris/kontext/blob/main/ROADMAP.md)).
 
 ## Wovor geschützt wird
 
@@ -132,10 +132,24 @@ Empfänger PGP, S/MIME und einen Link bekommen. Mit Links gibt es keine „Rück
 ## Baustein 5: vertrauliche Unterhaltungen im Chat
 
 Der Chat bleibt im Alltag wie er ist – geschützt durch Baustein 1, mit Suche, Benachrichtigungen
-und Karten. Einzelne Direktnachrichten und Kanäle lassen sich als **vertraulich** anlegen: Dann
-verschlüsselt Kontext Ende-zu-Ende mit den persönlichen Schlüsseln der Mitglieder (Baustein 2);
-nicht einmal der Admin kann sie lesen. Dafür gibt es dort keine Suche, Benachrichtigungen nur als
-„Neue Nachricht“, und wer neu dazukommt, sieht die Nachrichten ab dann.
+und Karten. Einzelne Direktnachrichten und Kanäle lassen sich beim Anlegen als **vertraulich**
+markieren („Neue Nachricht“ → „Vertraulich – Ende-zu-Ende verschlüsselt“). Umgesetzt so:
+
+- Jedes Mitglied braucht einen eigenen Schlüssel (Baustein 2); sonst lehnt der Server das Anlegen
+  ab, ebenso das Hinzufügen von jemandem ohne Schlüssel. Eine vertrauliche Direktnachricht ist
+  eine andere als die gewohnte mit denselben Leuten.
+- Der Browser verschlüsselt den Text jeder Nachricht (auch Antworten im Thread und Änderungen) an
+  die öffentlichen Schlüssel aller Mitglieder und unterschreibt ihn mit dem eigenen
+  (`src/features/chat/confidential.tsx`, OpenPGP). Der Server nimmt in solchen Kanälen nur
+  verschlüsselten Text an (`fitsConfidential`, `server/chat/chat.ts`) – nicht einmal der Admin
+  kann mitlesen.
+- Gelesen wird nach dem Entsperren des eigenen Schlüssels; passt die Unterschrift nicht zum
+  Absender, steht das unter der Nachricht.
+- Dafür: keine Suche, kein Text in Benachrichtigungen und in der Kanalliste (nur „Vertrauliche
+  Nachricht“), keine Anhänge und Karten (sie wären lesbar), Aufgaben aus einer Nachricht nur mit
+  Verweis. Wer neu dazukommt, liest ab dann; frühere Nachrichten waren nicht an seinen Schlüssel
+  verschlüsselt. Wer erwähnt wird, wer reagiert und wann geschrieben wurde, sieht der Server
+  weiterhin.
 
 ## Reihenfolge
 
@@ -144,3 +158,5 @@ nicht einmal der Admin kann sie lesen. Dafür gibt es dort keine Suche, Benachri
 3. „Vertraulich senden“ mit dem Link für Empfänger ohne Schlüssel.
 4. S/MIME für Behörden und Kanzleien.
 5. Vertrauliche Unterhaltungen im Chat.
+
+Alle fünf sind umgesetzt.

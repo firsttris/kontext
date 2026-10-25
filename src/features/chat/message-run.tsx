@@ -16,6 +16,7 @@ import { tasksOfMessage } from "@/lib/chat-cards";
 import { hasNewReplies } from "@/lib/chat-threads";
 import { cn } from "@/lib/cn";
 import { m } from "@/paraglide/messages";
+import { ForgedNote, SealedLine, useOpened } from "./confidential";
 import { MessageCard } from "./message-card";
 import { MessageFiles } from "./message-files";
 import { MessageText } from "./message-text";
@@ -186,7 +187,7 @@ const EditField = ({
 };
 
 const Item = ({
-  message,
+  message: stored,
   own,
   me,
   people,
@@ -199,6 +200,9 @@ const Item = ({
   onReact,
   onReply,
 }: { message: Message; own: boolean } & Omit<Props, "run">) => {
+  // In a confidential channel: the text as opened here; what leaves the chat (a task) is told
+  // only that there was a message.
+  const message = useOpened(stored);
   const live = !isPending(message) && !message.deleted && !message.call;
   const { tasks } = useTasks();
   const statusLabel = useStatusLabel();
@@ -233,6 +237,8 @@ const Item = ({
           <p className="m-0 rounded-2xl border border-dashed border-border px-3 py-1.5 text-[14px] text-muted italic md:border-0 md:p-0">
             {m.chat_message_deleted()}
           </p>
+        ) : message.sealed && message.sealed !== "valid" && message.sealed !== "invalid" ? (
+          <SealedLine state={message.sealed} />
         ) : message.text ? (
           <div
             className={cn(
@@ -265,12 +271,13 @@ const Item = ({
           <Actions
             message={message}
             own={own}
-            onMakeTask={() => onMakeTask(message)}
+            onMakeTask={() => onMakeTask(stored)}
             onEdit={() => setEditing(true)}
             onDelete={() => onDelete(message)}
           />
         )}
       </div>
+      {message.sealed === "invalid" ? <ForgedNote /> : null}
       <MessageFiles files={message.files} />
       {message.cards.map((card) => (
         <MessageCard key={`${card.kind}-${card.ref}`} card={card} />

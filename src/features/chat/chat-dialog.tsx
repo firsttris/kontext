@@ -1,6 +1,7 @@
 /**
  * "Neue Nachricht": a direct conversation with one or a few colleagues, or a named channel with
- * chosen members. Also changes the name and the members of a channel.
+ * chosen members, either of them confidential (end-to-end encrypted). Also changes the name and
+ * the members of a channel.
  */
 import { Check, Search } from "lucide-react";
 import { type FormEvent, useId, useState } from "react";
@@ -21,8 +22,8 @@ type Props = {
   /** The channel to change; a new conversation or channel when left out. */
   channel?: Channel;
   onClose: () => void;
-  onDirect: (members: string[]) => Promise<Channel>;
-  onCreate: (name: string, members: string[]) => Promise<Channel>;
+  onDirect: (members: string[], confidential: boolean) => Promise<Channel>;
+  onCreate: (name: string, members: string[], confidential: boolean) => Promise<Channel>;
   onUpdate: (id: string, name: string, members: string[]) => Promise<Channel>;
   onOpen: (channel: Channel) => void;
 };
@@ -100,6 +101,7 @@ export const ChatDialog = ({
     channel?.members.filter((member) => member !== me) ?? [],
   );
   const [busy, setBusy] = useState(false);
+  const [confidential, setConfidential] = useState(false);
   const others = people.filter((person) => person.id !== me);
   const toggle = (id: string) =>
     setChosen((current) =>
@@ -116,8 +118,8 @@ export const ChatDialog = ({
       const result = channel
         ? await onUpdate(channel.id, name, [me, ...chosen])
         : mode === "direct"
-          ? await onDirect(chosen)
-          : await onCreate(name, chosen);
+          ? await onDirect(chosen, confidential)
+          : await onCreate(name, chosen, confidential);
       onOpen(result);
       onClose();
     } catch (error) {
@@ -179,6 +181,20 @@ export const ChatDialog = ({
           </span>
           <PersonPicker people={others} chosen={chosen} onToggle={toggle} />
         </div>
+        {editing ? null : (
+          <label className="flex items-start gap-2.5 text-[14px]">
+            <input
+              type="checkbox"
+              checked={confidential}
+              onChange={(event) => setConfidential(event.target.checked)}
+              className="mt-0.5 size-4 accent-[var(--primary)]"
+            />
+            <span className="flex flex-col gap-0.5">
+              {m.chat_confidential_toggle()}
+              <span className="text-[12px] text-muted">{m.chat_confidential_toggle_hint()}</span>
+            </span>
+          </label>
+        )}
         <div className="flex justify-end gap-2">
           <Button variant="ghost" onClick={onClose}>
             {m.chat_cancel()}

@@ -11,6 +11,7 @@ import { shortAddress } from "./mail-accounts";
 export type { MailCopy, Reaction, Replies } from "../../server/chat/chat";
 export {
   channelName,
+  isSealed,
   MAIL_COPY_TYPE,
   RETENTION_DAYS,
   toggleReaction,

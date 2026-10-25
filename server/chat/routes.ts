@@ -13,6 +13,7 @@ import {
   channelPatchSchema,
   chatNotice,
   editMessageSchema,
+  fitsConfidential,
   INLINE_TYPES,
   MAIL_COPY_TYPE,
   MAX_FILE_BYTES,
@@ -43,7 +44,12 @@ export type ChatDeps = {
   nameOf?: (request: Request) => Promise<string>;
   /** How many days the company keeps messages (0: for ever), to say so in the chat. */
   retentionDays?: () => Promise<number>;
+  /** A person's own OpenPGP public key (server/pgp/), for confidential channels. */
+  publicKeyOf?: (memberId: string) => Promise<string | null>;
 };
+
+const NOT_SEALED =
+  "In einem vertraulichen Kanal gehen nur verschlüsselte Nachrichten, ohne Karten und Dateien.";
 
 const PAGE = 50;
 
@@ -62,6 +68,7 @@ export const createChatRoutes = ({
   notify,
   nameOf,
   retentionDays = async () => 0,
+  publicKeyOf = async () => null,
 }: ChatDeps) => {
   const app = new Hono<{ Variables: { viewer: Viewer; accounts: SessionAccount[] } }>();
 
@@ -98,11 +105,31 @@ export const createChatRoutes = ({
     });
   });
 
+  /** Who of these has no own key yet: none may be in a confidential channel without one. */
+  const withoutKey = async (members: string[]) => {
+    const missing: string[] = [];
+    for (const id of new Set(members)) if (!(await publicKeyOf(id))) missing.push(id);
+    return missing;
+  };
+  const keyProblem = (missing: string[]) => ({
+    error: "Für einen vertraulichen Kanal braucht jedes Mitglied einen eigenen Schlüssel.",
+    missing,
+  });
+
   app.post("/channels", async (c) => {
     const parsed = newChannelSchema.safeParse(await c.req.json().catch(() => null));
     if (!parsed.success) return c.json({ error: "Bitte einen Namen angeben." }, 400);
     const { me } = c.get("viewer");
-    const channel = await store.createChannel(parsed.data.name, parsed.data.members, me);
+    if (parsed.data.confidential) {
+      const missing = await withoutKey([me, ...parsed.data.members]);
+      if (missing.length) return c.json(keyProblem(missing), 400);
+    }
+    const channel = await store.createChannel(
+      parsed.data.name,
+      parsed.data.members,
+      me,
+      parsed.data.confidential,
+    );
     announce(channel);
     return c.json({ channel }, 201);
   });
@@ -110,7 +137,12 @@ export const createChatRoutes = ({
   app.post("/direct", async (c) => {
     const parsed = newDirectSchema.safeParse(await c.req.json().catch(() => null));
     if (!parsed.success) return c.json({ error: "Bitte mindestens eine Person wählen." }, 400);
-    const channel = await store.direct(parsed.data.members, c.get("viewer").me);
+    const { me } = c.get("viewer");
+    if (parsed.data.confidential) {
+      const missing = await withoutKey([me, ...parsed.data.members]);
+      if (missing.length) return c.json(keyProblem(missing), 400);
+    }
+    const channel = await store.direct(parsed.data.members, me, parsed.data.confidential);
     announce(channel);
     return c.json({ channel });
   });
@@ -123,9 +155,25 @@ export const createChatRoutes = ({
     }
     const parsed = channelPatchSchema.safeParse(await c.req.json().catch(() => null));
     if (!parsed.success) return c.json({ error: "Angaben unvollständig." }, 400);
+    if (channel.confidential && parsed.data.members) {
+      const missing = await withoutKey(parsed.data.members);
+      if (missing.length) return c.json(keyProblem(missing), 400);
+    }
     const updated = await store.update(channel.id, parsed.data);
     announce(updated!, channel.members);
     return c.json({ channel: updated });
+  });
+
+  /** The members' public keys, to encrypt to all of them and check who signed. */
+  app.get("/channels/:id/keys", async (c) => {
+    const channel = await visible(c.req.param("id"), c.get("viewer"));
+    if (!channel) return c.json({ error: "Unbekannter Kanal" }, 404);
+    const keys: { memberId: string; publicKey: string }[] = [];
+    for (const memberId of channel.members) {
+      const publicKey = await publicKeyOf(memberId);
+      if (publicKey) keys.push({ memberId, publicKey });
+    }
+    return c.json({ keys });
   });
 
   app.get("/channels/:id/messages", async (c) => {
@@ -146,6 +194,9 @@ export const createChatRoutes = ({
     if (!channel) return c.json({ error: "Unbekannter Kanal" }, 404);
     const parsed = newMessageSchema.safeParse(await c.req.json().catch(() => null));
     if (!parsed.success) return c.json({ error: "Die Nachricht ist leer." }, 400);
+    if (channel.confidential && !fitsConfidential(parsed.data)) {
+      return c.json({ error: NOT_SEALED }, 400);
+    }
     // An answer goes to a message of this channel itself, not to another answer.
     const parent = parsed.data.parentId ? await messages.get(parsed.data.parentId) : null;
     if (parsed.data.parentId && (!parent || parent.channelId !== channel.id || parent.parentId)) {
@@ -218,6 +269,9 @@ export const createChatRoutes = ({
     if (!own) return c.json({ error: "Nur eigene Nachrichten lassen sich ändern." }, 404);
     const parsed = editMessageSchema.safeParse(await c.req.json().catch(() => null));
     if (!parsed.success) return c.json({ error: "Die Nachricht ist leer." }, 400);
+    if (own.channel.confidential && !fitsConfidential(parsed.data)) {
+      return c.json({ error: NOT_SEALED }, 400);
+    }
     const message = await messages.edit(own.message.id, parsed.data.text, parsed.data.mentions);
     changed(own.channel, message);
     return c.json({ message });

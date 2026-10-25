@@ -72,8 +72,12 @@ export const ChatPage = ({
           me={me}
           channel={editing.channel}
           onClose={() => setEditing(null)}
-          onDirect={(members) => actions.openDirect.mutateAsync(members)}
-          onCreate={(name, members) => actions.createChannel.mutateAsync({ name, members })}
+          onDirect={(members, confidential) =>
+            actions.openDirect.mutateAsync({ members, confidential })
+          }
+          onCreate={(name, members, confidential) =>
+            actions.createChannel.mutateAsync({ name, members, confidential })
+          }
           onUpdate={(id, name, members) => actions.updateChannel.mutateAsync({ id, name, members })}
           onOpen={show}
         />

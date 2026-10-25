@@ -16,6 +16,7 @@ const livekit: LiveKitConfig = {
 const channel = (id: string, kind: Channel["kind"], members: string[]): Channel => ({
   id,
   kind,
+  confidential: false,
   name: kind === "channel" ? id : null,
   accountId: null,
   members,

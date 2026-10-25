@@ -206,11 +206,22 @@ export const useChatActions = (me: string) => {
   const queryClient = useQueryClient();
   const refreshChannels = () => queryClient.invalidateQueries({ queryKey: CHANNELS_KEY });
 
+  /** A confidential channel's text goes encrypted (src/features/chat/confidential.tsx). */
+  const textFor = async (channelId: string, text: string) => {
+    const channel = queryClient
+      .getQueryData<ChannelsData>(CHANNELS_KEY)
+      ?.channels.find((candidate) => candidate.id === channelId);
+    if (!channel?.confidential) return text;
+    const { sealText } = await import("./confidential");
+    return sealText(queryClient, channelId, text);
+  };
+
   const post = useMutation({
     mutationFn: async ({ channelId, files, parentId = null, ...body }: Post) =>
       (
         await send<{ message: Message }>("POST", `${channelPath(channelId)}/messages`, {
           ...body,
+          text: await textFor(channelId, body.text),
           parentId,
           fileIds: files.map((file) => file.id),
         })
@@ -264,7 +275,7 @@ export const useChatActions = (me: string) => {
   });
 
   const createChannel = useMutation({
-    mutationFn: async (input: { name: string; members: string[] }) =>
+    mutationFn: async (input: { name: string; members: string[]; confidential?: boolean }) =>
       (await send<{ channel: Channel }>("POST", "/channels", input)).channel,
     onSettled: refreshChannels,
   });
@@ -276,8 +287,14 @@ export const useChatActions = (me: string) => {
   });
 
   const openDirect = useMutation({
-    mutationFn: async (members: string[]) =>
-      (await send<{ channel: Channel }>("POST", "/direct", { members })).channel,
+    mutationFn: async (input: string[] | { members: string[]; confidential: boolean }) =>
+      (
+        await send<{ channel: Channel }>(
+          "POST",
+          "/direct",
+          Array.isArray(input) ? { members: input } : input,
+        )
+      ).channel,
     onSettled: refreshChannels,
   });
 
@@ -294,10 +311,20 @@ export const useChatActions = (me: string) => {
   const replaced = (message: Message) => addMessage(queryClient, message);
 
   const edit = useMutation({
-    mutationFn: async ({ id, text, mentions }: { id: string; text: string; mentions: string[] }) =>
+    mutationFn: async ({
+      id,
+      channelId,
+      text,
+      mentions,
+    }: {
+      id: string;
+      channelId: string;
+      text: string;
+      mentions: string[];
+    }) =>
       (
         await send<{ message: Message }>("PATCH", `/messages/${encodeURIComponent(id)}`, {
-          text,
+          text: await textFor(channelId, text),
           mentions,
         })
       ).message,

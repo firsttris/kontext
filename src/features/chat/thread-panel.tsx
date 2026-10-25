@@ -7,6 +7,8 @@ import { ChevronLeft, X } from "lucide-react";
 import { useEffect, useLayoutEffect, useRef } from "react";
 import { type ChannelSummary, firstName, type Message, timeline } from "@/lib/chat";
 import { m } from "@/paraglide/messages";
+import { useUnlockedKey } from "../pgp/queries";
+import { ConfidentialUnlock } from "./confidential";
 import { MessageInput } from "./message-input";
 import { isPending, Run } from "./message-run";
 import { useChatActions } from "./queries";
@@ -33,6 +35,7 @@ export const ThreadPanel = ({
   const actions = useChatActions(me);
   const react = useReact(me);
   const attachments = useAttachments(channel.id);
+  const unlocked = useUnlockedKey();
   const replies = thread?.replies ?? [];
 
   // Opened: read up to its newest answer, so the channel shows no "neu" on it any more.
@@ -57,7 +60,7 @@ export const ThreadPanel = ({
     onMakeTask,
     onReact: react,
     onEdit: (message: Message, text: string, mentions: string[]) =>
-      actions.edit.mutate({ id: message.id, text, mentions }),
+      actions.edit.mutate({ id: message.id, channelId: message.channelId, text, mentions }),
     onDelete: (message: Message) => {
       if (window.confirm(m.chat_delete_message_confirm())) actions.remove.mutate(message.id);
     },
@@ -125,30 +128,34 @@ export const ThreadPanel = ({
         ) : null}
       </div>
       <div className="shrink-0 px-2.5 pt-2 pb-3 safe-bottom md:px-4 md:pb-4">
-        <MessageInput
-          key={parentId}
-          placeholder={
-            !thread || thread.message.authorId === me
-              ? m.chat_reply_placeholder_own()
-              : m.chat_reply_placeholder({ name: firstName(nameOf(thread.message.authorId)) })
-          }
-          people={mentionable}
-          me={me}
-          autoFocus
-          onTyping={() => undefined}
-          attachments={attachments}
-          onSend={(text, mentions) => {
-            actions.post.mutate({
-              channelId: channel.id,
-              parentId,
-              text,
-              mentions,
-              cards: attachments.cards,
-              files: attachments.files.flatMap((file) => (file.uploaded ? [file.uploaded] : [])),
-            });
-            attachments.clear();
-          }}
-        />
+        {channel.confidential && !unlocked ? (
+          <ConfidentialUnlock />
+        ) : (
+          <MessageInput
+            key={parentId}
+            placeholder={
+              !thread || thread.message.authorId === me
+                ? m.chat_reply_placeholder_own()
+                : m.chat_reply_placeholder({ name: firstName(nameOf(thread.message.authorId)) })
+            }
+            people={mentionable}
+            me={me}
+            autoFocus
+            onTyping={() => undefined}
+            attachments={channel.confidential ? undefined : attachments}
+            onSend={(text, mentions) => {
+              actions.post.mutate({
+                channelId: channel.id,
+                parentId,
+                text,
+                mentions,
+                cards: attachments.cards,
+                files: attachments.files.flatMap((file) => (file.uploaded ? [file.uploaded] : [])),
+              });
+              attachments.clear();
+            }}
+          />
+        )}
       </div>
     </aside>
   );

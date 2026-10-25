@@ -1,0 +1,1 @@
+ALTER TABLE `chat_channels` ADD `confidential` integer DEFAULT false NOT NULL;

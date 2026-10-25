@@ -4,7 +4,7 @@
  * the last message of each.
  */
 import { Link } from "@tanstack/react-router";
-import { AtSign, BellOff, Hash, Plus } from "lucide-react";
+import { AtSign, BellOff, Hash, LockKeyhole, Plus } from "lucide-react";
 import { useState } from "react";
 import { Avatar } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -42,6 +42,17 @@ const ChannelIcon = ({ channel, size }: { channel: ChannelSummary; size: number 
   ) : (
     <Hash size={size} strokeWidth={1.75} aria-hidden="true" />
   );
+
+/** A confidential channel: a small lock after its name. */
+const Sealed = ({ channel }: { channel: ChannelSummary }) =>
+  channel.confidential ? (
+    <LockKeyhole
+      size={12}
+      role="img"
+      aria-label={m.chat_confidential()}
+      className="shrink-0 text-muted"
+    />
+  ) : null;
 
 const PersonIcon = ({ name, online, size }: { name: string; online: boolean; size: number }) => (
   <span className="relative inline-flex">
@@ -121,6 +132,7 @@ export const ChannelSidebar = ({ channels, online, activeId, onNew }: Props) => 
                   <ChannelIcon channel={channel} size={14} />
                 </span>
                 <span className="flex-1 truncate">{title}</span>
+                <Sealed channel={channel} />
                 <Badge channel={channel} />
               </Link>
             ))}
@@ -146,6 +158,7 @@ export const ChannelSidebar = ({ channels, online, activeId, onNew }: Props) => 
                   size={22}
                 />
                 <span className="flex-1 truncate">{title}</span>
+                <Sealed channel={channel} />
                 <Badge channel={channel} />
               </Link>
             ))}
@@ -177,6 +190,7 @@ const PhoneRow = ({ row }: { row: ReturnType<typeof useRows>["named"][number] })
           <span className={cn("flex-1 truncate", unread ? "font-semibold" : "font-medium")}>
             {title}
           </span>
+          <Sealed channel={channel} />
           {channel.lastMessageAt ? (
             <span className="font-mono text-[12px] text-muted">
               {shortTime(channel.lastMessageAt)}

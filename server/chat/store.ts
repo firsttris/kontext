@@ -16,9 +16,17 @@ export type ChatStore = {
   /** The channels this person sees, with what is unread; creates #allgemein and the mailbox ones. */
   list: (viewer: Viewer, sharedAccountIds: string[]) => Promise<ChannelSummary[]>;
   get: (id: string) => Promise<Channel | null>;
-  createChannel: (name: string, members: string[], createdBy: string) => Promise<Channel>;
-  /** The direct conversation of exactly these people, made when there is none yet. */
-  direct: (members: string[], createdBy: string) => Promise<Channel>;
+  createChannel: (
+    name: string,
+    members: string[],
+    createdBy: string,
+    confidential?: boolean,
+  ) => Promise<Channel>;
+  /**
+   * The direct conversation of exactly these people, made when there is none yet; the
+   * confidential one is another than the usual one.
+   */
+  direct: (members: string[], createdBy: string, confidential?: boolean) => Promise<Channel>;
   update: (id: string, patch: { name?: string; members?: string[] }) => Promise<Channel | null>;
   /** Marks read up to `at`; never moves the mark back. Returns the mark. */
   markRead: (channelId: string, memberId: string, at: Date) => Promise<Date>;
@@ -47,6 +55,7 @@ const toChannel = (row: ChannelRow, members: string[]): Channel => ({
   name: row.name,
   accountId: row.accountId,
   members,
+  confidential: row.confidential,
   createdBy: row.createdBy,
   createdAt: row.createdAt.toISOString(),
   lastMessageAt: row.lastMessageAt?.toISOString() ?? null,
@@ -72,7 +81,8 @@ export const createChatStore = (db: Db, messages: Pick<MessageStore, "last">): C
   };
 
   const insertChannel = async (
-    values: Pick<ChannelRow, "kind" | "name" | "accountId" | "directKey" | "createdBy">,
+    values: Pick<ChannelRow, "kind" | "name" | "accountId" | "directKey" | "createdBy"> &
+      Partial<Pick<ChannelRow, "confidential">>,
     members: string[],
     id: string = crypto.randomUUID(),
   ) => {
@@ -183,20 +193,20 @@ export const createChatStore = (db: Db, messages: Pick<MessageStore, "last">): C
       }));
     },
     get,
-    createChannel: async (name, members, createdBy) => {
+    createChannel: async (name, members, createdBy, confidential = false) => {
       const everyone = [...new Set([createdBy, ...members])];
       const id = await insertChannel(
-        { kind: "channel", name, accountId: null, directKey: null, createdBy },
+        { kind: "channel", name, accountId: null, directKey: null, createdBy, confidential },
         everyone,
       );
       await joined(id!, everyone);
       return (await get(id!))!;
     },
-    direct: async (members, createdBy) => {
+    direct: async (members, createdBy, confidential = false) => {
       const everyone = [...new Set([createdBy, ...members])];
-      const key = directKey(everyone);
+      const key = `${confidential ? "c:" : ""}${directKey(everyone)}`;
       await insertChannel(
-        { kind: "direct", name: null, accountId: null, directKey: key, createdBy },
+        { kind: "direct", name: null, accountId: null, directKey: key, createdBy, confidential },
         everyone,
       );
       const [row] = await db

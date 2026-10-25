@@ -79,6 +79,9 @@ const tell = () => {
   for (const listener of listeners) listener();
 };
 
+/** The unlocked key, outside React (null when locked). */
+export const currentUnlocked = () => unlocked;
+
 export const keepUnlocked = (key: PrivateKey) => {
   unlocked = key;
   tell();

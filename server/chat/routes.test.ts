@@ -42,13 +42,32 @@ const memoryStore = (): ChatStore => {
           muted: false,
         })),
     get: async (id) => channels.find((channel) => channel.id === id) ?? null,
-    createChannel: async (name, members, createdBy) =>
-      add({ kind: "channel", name, accountId: null, members: [createdBy, ...members], createdBy }),
-    direct: async (members, createdBy) => {
+    createChannel: async (name, members, createdBy, confidential = false) =>
+      add({
+        kind: "channel",
+        name,
+        accountId: null,
+        members: [createdBy, ...members],
+        createdBy,
+        confidential,
+      }),
+    direct: async (members, createdBy, confidential = false) => {
       const everyone = [...new Set([createdBy, ...members])];
       return (
-        channels.find((c) => c.kind === "direct" && directKey(c.members) === directKey(everyone)) ??
-        add({ kind: "direct", name: null, accountId: null, members: everyone, createdBy })
+        channels.find(
+          (c) =>
+            c.kind === "direct" &&
+            c.confidential === confidential &&
+            directKey(c.members) === directKey(everyone),
+        ) ??
+        add({
+          kind: "direct",
+          name: null,
+          accountId: null,
+          members: everyone,
+          createdBy,
+          confidential,
+        })
       );
     },
     update: async (id, patch) => {
@@ -186,6 +205,7 @@ const setup = () => {
   let signedIn: SessionAccount[] | null = person("jonas", ["info"]);
   const memory = memoryMessages();
   const told: { who: string[]; title: string }[] = [];
+  const bodies: string[] = [];
   const app = createChatRoutes({
     store: memoryStore(),
     messages: memory.store,
@@ -194,8 +214,10 @@ const setup = () => {
     accountsOf: async () => signedIn,
     notify: async (who, notice) => {
       told.push({ who, title: notice.title });
+      bodies.push(notice.body);
     },
     nameOf: async () => "Jonas Weber",
+    publicKeyOf: async (id) => (["jonas", "anna"].includes(id) ? `KEY-${id}` : null),
   });
   const as = (accounts: SessionAccount[] | null) => {
     signedIn = accounts;
@@ -231,7 +253,7 @@ const setup = () => {
     });
     return { status: response.status, body: (await response.json()) as { file: ChatFile } };
   };
-  return { send, as, listen, upload, app, told };
+  return { send, as, listen, upload, app, told, bodies };
 };
 
 describe("/api/chat", () => {
@@ -442,5 +464,31 @@ describe("/api/chat", () => {
     expect(heard.filter((event) => event.type === "changed")).toHaveLength(4);
     as(person("anna"));
     expect((await react("👍", true)).status).toBe(404);
+  });
+
+  it("keeps confidential channels to members with a key, and to encrypted text", async () => {
+    const { send, told, bodies } = setup();
+    const refused = await send("POST", "/direct", { members: ["max"], confidential: true });
+    expect(refused.status).toBe(400);
+    expect((refused.body as unknown as { missing: string[] }).missing).toEqual(["max"]);
+    const plain = (await send("POST", "/direct", { members: ["anna"] })).body.channel;
+    const sealed = (await send("POST", "/direct", { members: ["anna"], confidential: true })).body
+      .channel;
+    expect(sealed.confidential).toBe(true);
+    expect(sealed.id).not.toBe(plain.id);
+    const keys = await send("GET", `/channels/${sealed.id}/keys`);
+    expect(
+      (keys.body as unknown as { keys: { memberId: string }[] }).keys.map((k) => k.memberId),
+    ).toEqual(["jonas", "anna"]);
+    const path = `/channels/${sealed.id}/messages`;
+    expect((await send("POST", path, { text: "Gehalt: 4.200 Euro" })).status).toBe(400);
+    const armored = "-----BEGIN PGP MESSAGE-----\n\nwcBMA…\n-----END PGP MESSAGE-----";
+    const posted = await send("POST", path, { text: armored });
+    expect(posted.status).toBe(201);
+    expect(told.at(-1)?.who).toEqual(["anna"]);
+    expect(bodies.at(-1)).toBe("Vertrauliche Nachricht");
+    expect(
+      (await send("PATCH", `/messages/${posted.body.message.id}`, { text: "jetzt lesbar" })).status,
+    ).toBe(400);
   });
 });

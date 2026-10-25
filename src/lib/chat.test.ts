@@ -24,6 +24,7 @@ const people = [
 const nameOf = (id: string) => people.find((person) => person.id === id)?.name ?? "?";
 
 const channel = (over: Partial<Channel>): Channel => ({
+  confidential: false,
   id: "c",
   kind: "channel",
   name: null,

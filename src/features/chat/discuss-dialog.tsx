@@ -29,7 +29,8 @@ const targetKey = (target: Target) =>
 
 /** Suggestions first, then every other channel, then the colleagues. */
 const useTargets = (accountId: string, email: EmailSummary): Target[] => {
-  const { channels } = useChannels();
+  // Not into confidential channels: a mail goes there as a card, which is not encrypted.
+  const channels = useChannels().channels.filter((channel) => !channel.confidential);
   const { me, people } = useChatNames();
   const discussed = useDiscussions(email.id, email.threadId ?? null).map((d) => d.channelId);
   const sameSender = useSuggestions(email.from?.[0]?.email ?? "");

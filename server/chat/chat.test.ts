@@ -5,6 +5,7 @@ import {
   channelName,
   chatNotice,
   directKey,
+  fitsConfidential,
   fold,
   messageSummary,
   newChannelSchema,
@@ -169,5 +170,17 @@ describe("reactions, search, keeping", () => {
     );
     expect(notice.title).toBe("Max antwortet in #lager");
     expect(notice.url).toBe("/chat?channel=c1&message=m1&thread=m1");
+  });
+});
+
+describe("confidential messages", () => {
+  const armored = "-----BEGIN PGP MESSAGE-----\n\nwcBMA\n-----END PGP MESSAGE-----";
+  it("are named, never shown, and not searchable", async () => {
+    const { foldedOf } = await import("./message-parts");
+    expect(messageSummary({ text: armored, files: [], cards: [] })).toBe("Vertrauliche Nachricht");
+    expect(foldedOf(armored, [])).toBe("");
+    expect(fitsConfidential({ text: armored })).toBe(true);
+    expect(fitsConfidential({ text: "Gehalt" })).toBe(false);
+    expect(fitsConfidential({ text: armored, fileIds: ["f"] })).toBe(false);
   });
 });

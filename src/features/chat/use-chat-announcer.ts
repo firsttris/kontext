@@ -7,6 +7,7 @@ import { useCallback } from "react";
 import { showNotification } from "@/features/notifications/announcements";
 import { useDeviceNotifications } from "@/features/notifications/device-settings";
 import type { Message } from "@/lib/chat";
+import { messageSummary } from "@/lib/chat-cards";
 import { m } from "@/paraglide/messages";
 import { useChannels } from "./queries";
 import { useChatNames } from "./use-chat-names";
@@ -29,7 +30,7 @@ export const useChatAnnouncer = () => {
         direct || !channel
           ? author
           : m.chat_notification_in({ name: author, channel: titleOf(channel) }),
-        message.text,
+        messageSummary(message),
         `chat-${message.channelId}`,
         router.buildLocation({ to: "/chat", search: { channel: message.channelId } }).href,
         (href) => void navigate({ href }),

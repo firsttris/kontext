@@ -5,7 +5,7 @@
  * A message's thread opens beside it (on a phone instead of it).
  */
 import { Link, useNavigate } from "@tanstack/react-router";
-import { BellOff, ChevronLeft, Clock, ImageUp, Users } from "lucide-react";
+import { BellOff, ChevronLeft, Clock, ImageUp, LockKeyhole, Users } from "lucide-react";
 import { type DragEvent, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { useMediaQuery } from "@/components/use-media-query";
@@ -16,7 +16,9 @@ import { taskFromMessage } from "@/lib/chat-cards";
 import { newestActivity, retentionText } from "@/lib/chat-threads";
 import { cn } from "@/lib/cn";
 import { m } from "@/paraglide/messages";
+import { useUnlockedKey } from "../pgp/queries";
 import { ChannelMenu } from "./channel-menu";
+import { ConfidentialUnlock } from "./confidential";
 import { MessageInput } from "./message-input";
 import { isPending, Run } from "./message-run";
 import { useChannels, useChatActions, useMessages } from "./queries";
@@ -171,6 +173,10 @@ export const Conversation = ({
       ? people.filter((person) => channel.members.includes(person.id))
       : people;
 
+  // Confidential: only text, encrypted here, so the key must be open; no files or cards.
+  const unlocked = useUnlockedKey();
+  const locked = channel.confidential && !unlocked;
+
   return (
     <div className="flex h-full min-h-0 flex-1">
       <section
@@ -180,7 +186,7 @@ export const Conversation = ({
           threadId ? "hidden lg:flex" : "flex",
         )}
         onDragOver={(event) => {
-          if (!carriesFiles(event)) return;
+          if (!carriesFiles(event) || channel.confidential) return;
           event.preventDefault();
           setDragging(true);
         }}
@@ -188,7 +194,7 @@ export const Conversation = ({
           if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setDragging(false);
         }}
         onDrop={(event) => {
-          if (!carriesFiles(event)) return;
+          if (!carriesFiles(event) || channel.confidential) return;
           event.preventDefault();
           setDragging(false);
           attachments.addFiles(event.dataTransfer.files);
@@ -214,6 +220,11 @@ export const Conversation = ({
               {prefix}
               {title}
             </h1>
+            {channel.confidential ? (
+              <span className="hidden shrink-0 items-center gap-1 self-center rounded-md bg-accent/10 px-1.5 py-0.5 text-[12px] font-medium text-accent md:flex">
+                <LockKeyhole size={12} aria-hidden="true" /> {m.chat_confidential()}
+              </span>
+            ) : null}
             {channel.muted ? (
               <BellOff
                 size={14}
@@ -302,7 +313,12 @@ export const Conversation = ({
                   onReact={react}
                   onReply={(message) => openThread(message.id)}
                   onEdit={(message, text, mentions) =>
-                    actions.edit.mutate({ id: message.id, text, mentions })
+                    actions.edit.mutate({
+                      id: message.id,
+                      channelId: message.channelId,
+                      text,
+                      mentions,
+                    })
                   }
                   onDelete={(message) => {
                     if (window.confirm(m.chat_delete_message_confirm())) {
@@ -330,29 +346,35 @@ export const Conversation = ({
           ) : null}
         </div>
         <div className="shrink-0 border-t border-border px-2.5 pt-2 pb-3 safe-bottom md:border-0 md:px-5 md:pt-0 md:pb-4">
-          <MessageInput
-            key={channel.id}
-            placeholder={
-              desktop
-                ? m.chat_placeholder({ name: `${prefix}${title}` })
-                : m.chat_placeholder_short()
-            }
-            people={mentionable}
-            me={me}
-            onTyping={() => actions.typing(channel.id)}
-            attachments={attachments}
-            onSend={(text, mentions) => {
-              atBottom.current = true;
-              actions.post.mutate({
-                channelId: channel.id,
-                text,
-                mentions,
-                cards: attachments.cards,
-                files: attachments.files.flatMap((file) => (file.uploaded ? [file.uploaded] : [])),
-              });
-              attachments.clear();
-            }}
-          />
+          {locked ? (
+            <ConfidentialUnlock />
+          ) : (
+            <MessageInput
+              key={channel.id}
+              placeholder={
+                desktop
+                  ? m.chat_placeholder({ name: `${prefix}${title}` })
+                  : m.chat_placeholder_short()
+              }
+              people={mentionable}
+              me={me}
+              onTyping={() => actions.typing(channel.id)}
+              attachments={channel.confidential ? undefined : attachments}
+              onSend={(text, mentions) => {
+                atBottom.current = true;
+                actions.post.mutate({
+                  channelId: channel.id,
+                  text,
+                  mentions,
+                  cards: attachments.cards,
+                  files: attachments.files.flatMap((file) =>
+                    file.uploaded ? [file.uploaded] : [],
+                  ),
+                });
+                attachments.clear();
+              }}
+            />
+          )}
         </div>
       </section>
       {threadId ? (

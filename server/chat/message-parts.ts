@@ -5,12 +5,13 @@
 import { and, asc, count, eq, inArray, isNotNull, isNull, lt, max, or, sql } from "drizzle-orm";
 import type { Db } from "../db";
 import * as schema from "../db/schema";
-import { type Card, fold, type Reaction, type Replies } from "./chat";
+import { type Card, fold, isSealed, type Reaction, type Replies } from "./chat";
 import type { ChatFiles } from "./files";
 
 /** The text the search looks through: the message and the titles of its cards. */
 export const foldedOf = (text: string, cards: Pick<Card, "label">[]): string =>
-  fold([text, ...cards.map((card) => card.label)].filter(Boolean).join("\n"));
+  // Encrypted text is not searchable; the server could not read it anyway.
+  fold([isSealed(text) ? "" : text, ...cards.map((card) => card.label)].filter(Boolean).join("\n"));
 
 export const reactionsOf = async (db: Db, ids: string[]) => {
   const byMessage = new Map<string, Reaction[]>();

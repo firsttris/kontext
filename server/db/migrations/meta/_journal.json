@@ -127,6 +127,13 @@
       "when": 1792911775633,
       "tag": "0017_smime",
       "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "6",
+      "when": 1792912416650,
+      "tag": "0018_chat_confidential",
+      "breakpoints": true
     }
   ]
 }

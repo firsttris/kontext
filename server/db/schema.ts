@@ -214,6 +214,8 @@ export const chatChannels = sqliteTable(
     accountId: text("account_id").unique(),
     /** The sorted members of a direct channel: the same people find the same conversation. */
     directKey: text("direct_key").unique(),
+    /** End-to-end encrypted (docs/encryption.md, building block 5): the server holds only cipher text. */
+    confidential: integer("confidential", { mode: "boolean" }).notNull().default(false),
     createdBy: text("created_by").notNull(),
     lastMessageAt: integer("last_message_at", { mode: "timestamp_ms" }),
     ...timestamps,

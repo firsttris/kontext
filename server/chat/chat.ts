@@ -23,6 +23,11 @@ export type Channel = {
   accountId: string | null;
   /** The members of a named or direct channel; empty for team and mailbox channels. */
   members: string[];
+  /**
+   * End-to-end encrypted with the members' own keys (docs/encryption.md, building block 5): the
+   * text of every message is an OpenPGP message only they can open.
+   */
+  confidential: boolean;
   createdBy: string;
   createdAt: string;
   lastMessageAt: string | null;
@@ -123,11 +128,16 @@ export type Message = {
   replies: Replies | null;
 };
 
+/** The text of a message in a confidential channel: encrypted, for the members only. */
+export const isSealed = (text: string): boolean => text.startsWith("-----BEGIN PGP MESSAGE-----");
+
+export const SEALED_SUMMARY = "Vertrauliche Nachricht";
+
 /** What a message is about in one line: its text, else its card or file. */
 export const messageSummary = (
   message: Pick<Message, "text" | "files" | "cards"> & { call?: CallRecord | null },
 ): string =>
-  message.text ||
+  (isSealed(message.text) ? SEALED_SUMMARY : message.text) ||
   message.cards[0]?.label ||
   message.files[0]?.name ||
   (message.call ? callSummary(message.call) : "");
@@ -179,13 +189,24 @@ const person = z.string().min(1).max(64);
 export const newChannelSchema = z.object({
   name: z.string().max(80).transform(channelName).pipe(z.string().min(1).max(60)),
   members: z.array(person).max(200),
+  confidential: z.boolean().default(false),
 });
 
 export const channelPatchSchema = z
   .object({ name: newChannelSchema.shape.name, members: newChannelSchema.shape.members })
   .partial();
 
-export const newDirectSchema = z.object({ members: z.array(person).min(1).max(8) });
+export const newDirectSchema = z.object({
+  members: z.array(person).min(1).max(8),
+  confidential: z.boolean().default(false),
+});
+
+/** In a confidential channel: only encrypted text, no cards or files (they would be readable). */
+export const fitsConfidential = (message: {
+  text: string;
+  cards?: unknown[];
+  fileIds?: string[];
+}): boolean => isSealed(message.text) && !message.cards?.length && !message.fileIds?.length;
 
 export const newMessageSchema = z
   .object({
