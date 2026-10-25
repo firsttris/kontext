@@ -126,7 +126,6 @@ Module, die ein Betrieb einschaltet, wenn er sie braucht – wer sie nicht brauc
 | Anrufe und Videobesprechungen im Chat | ✅ verfügbar |
 | Telefonie über die Fritzbox (Telefonbox) | 🧪 im Test |
 | Dokumente (Schreibzeug) | ✅ verfügbar |
-| Rapportzettel (Arbeitsnachweise, z. B. im Handwerk) | geplant |
 
 Was als Nächstes kommt, steht in der [Roadmap](https://github.com/firsttris/kontext/blob/main/ROADMAP.md).
 
