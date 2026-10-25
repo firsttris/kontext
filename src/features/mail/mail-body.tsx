@@ -1,16 +1,22 @@
 /**
  * Shows a mail body in a sandboxed iframe: no scripts, its own styles, height fitted to the
- * content. Inline images (cid:) are loaded as blobs, remote images only on request.
+ * content. Inline images (cid:) are loaded as blobs, remote images only on request – or at once
+ * for a sender one trusts (image-senders.tsx), when the sender check confirms them.
  */
-import { Ellipsis, ImageOff } from "lucide-react";
+import { Ellipsis } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useClient } from "@/auth/auth";
 import { useTheme } from "@/components/theme/use-theme";
 import { displayBody } from "@/jmap/mail";
 import type { EmailDetail } from "@/jmap/types";
 import { splitQuote, splitTextQuote } from "@/lib/conversation";
+import { findContact } from "@/lib/correspondent";
 import { mailDocument, sanitizeMailHtml, textToHtml } from "@/lib/html";
+import { imageState } from "@/lib/remote-images";
 import { m } from "@/paraglide/messages";
+import { trusts } from "../../../server/images/senders";
+import { useContacts } from "../contacts/queries";
+import { ImagesLine, useImageSenders } from "./image-senders";
 
 /** Object URLs for the inline images of a mail, keyed by Content-ID. */
 const useInlineImages = (accountId: string, email: EmailDetail): Record<string, string> => {
@@ -43,13 +49,23 @@ const useInlineImages = (accountId: string, email: EmailDetail): Record<string, 
 
 export const MailBody = ({ accountId, email }: { accountId: string; email: EmailDetail }) => {
   const dark = useTheme().theme === "dark";
-  const [allowRemote, setAllowRemote] = useState(false);
+  const [loadNow, setLoadNow] = useState(false);
+  const { senders } = useImageSenders();
+  const { data: contacts } = useContacts();
+  const sender = email.from?.[0]?.email ?? "";
+  const trusted = sender !== "" && trusts(senders, sender, Boolean(findContact(contacts, sender)));
+  const state = imageState(trusted, sender, email.authenticationResults);
+  const allowRemote = loadNow || state === "load";
   const cidUrls = useInlineImages(accountId, email);
   const frame = useRef<HTMLIFrameElement>(null);
   const [height, setHeight] = useState(120);
 
   // The quoted original below a reply is folded; the earlier mails stand above (conversation.tsx).
   const [showQuote, setShowQuote] = useState(false);
+  const hasRemote = useMemo(
+    () => /<img[^>]+src\s*=\s*["']?https?:/i.test(displayBody(email).value),
+    [email],
+  );
   const { html, blockedImages, folded } = useMemo(() => {
     const body = displayBody(email);
     const parts =
@@ -93,13 +109,13 @@ export const MailBody = ({ accountId, email }: { accountId: string; email: Email
   return (
     <div className="flex flex-col gap-3">
       {blockedImages > 0 && !allowRemote ? (
-        <button
-          type="button"
-          onClick={() => setAllowRemote(true)}
-          className="flex items-center gap-2 self-start rounded-lg border border-border px-3 py-1.5 text-[13px] text-muted hover:bg-hover hover:text-fg"
-        >
-          <ImageOff size={14} /> {m.mail_remote_blocked()}
-        </button>
+        <ImagesLine
+          state={state === "unconfirmed" ? "unconfirmed" : "blocked"}
+          sender={sender}
+          onLoad={() => setLoadNow(true)}
+        />
+      ) : state === "load" && !loadNow && hasRemote ? (
+        <ImagesLine state="trusted" sender={sender} onLoad={() => undefined} />
       ) : null}
       <iframe
         ref={frame}

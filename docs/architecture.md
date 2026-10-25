@@ -73,6 +73,18 @@ Damit man sieht, wo eine Mail liegt, steht über dem Betreff „Gemeinsames Post
 Gruppen-Symbol, und die Seitenleiste nennt die Ordner eines gemeinsamen Postfachs „Ordner von
 info@“.
 
+## Bilder aus dem Internet
+
+Bilder aus dem Internet verraten dem Absender, dass die Mail geöffnet wurde. Die Mail zeigt sie
+erst auf Wunsch („Laden“); „Immer von …“ merkt sich den Absender auf dem Kontext-Server
+(`image_senders`, `/api/image-senders`, je Person auf allen Geräten). Erlaubt werden Adressen,
+ganze Domains (`@firma.de`) und auf Wunsch alle Absender aus den eigenen Kontakten
+(`@contacts`), in den Einstellungen unter „Passwort und Sicherheit“. Sofort geladen wird nur, wenn
+die Mail wirklich vom Absender kommt (`src/lib/remote-images.ts`): Eine Mail von außen muss für
+dessen Domain bestätigt sein (DMARC, oder SPF/DKIM passend); eine ohne jede Prüfung
+(importiert, von Kolleginnen) zählt mit, eine durchgefallene nie – ein gefälschter Absender
+schaltet keine Bilder frei.
+
 ## Newsletter abbestellen
 
 Hat eine Mail `List-Unsubscribe` (RFC 2369), steht neben „Details anzeigen“ „Abbestellen“

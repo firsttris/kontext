@@ -33,6 +33,7 @@ import { createDavAuth } from "./dav/auth";
 import { createDavRoutes } from "./dav/routes";
 import { type Db, openDatabase, schema } from "./db";
 import type { Env } from "./env";
+import { createImageSenderRoutes } from "./images/routes";
 import { createHub } from "./live/hub";
 import { createLiveRoutes } from "./live/routes";
 import { createImporter } from "./migration/importer";
@@ -330,6 +331,7 @@ export const createApp = async (env: Env) => {
   setInterval(() => void waker.tick(), env.SNOOZE_TICK_MS).unref();
   app.route("/api/snoozes", createSnoozeRoutes({ store: snoozes, infoOf }));
   app.route("/api/unsubscribe", createUnsubscribeRoutes({ env, grants, infoOf }));
+  app.route("/api/image-senders", createImageSenderRoutes({ db, accountsOf }));
   // The task boards for Thunderbird and phone apps (CalDAV), signed in with the mail password.
   app.all("/.well-known/caldav", (c) => c.redirect("/dav/", 301));
   app.route(

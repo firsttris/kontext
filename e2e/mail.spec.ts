@@ -564,7 +564,8 @@ test.describe("Sicherheit", () => {
     const body = page.frameLocator('iframe[title="Inhalt der Mail"]');
     await expect(body.getByRole("heading", { name: "Herbstaktion Wärmepumpen" })).toBeVisible();
     await expect(body.locator('img[src^="https:"]')).toHaveCount(0);
-    await page.getByRole("button", { name: /Bilder aus dem Internet sind blockiert/ }).click();
+    await expect(page.getByText("Bilder aus dem Internet sind blockiert.")).toBeVisible();
+    await page.getByRole("button", { name: "Laden", exact: true }).click();
     await expect(body.locator('img[src^="https:"]')).not.toHaveCount(0);
   });
 });

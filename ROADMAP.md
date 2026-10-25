@@ -8,7 +8,6 @@ ein Plan, kein Versprechen; Wünsche und Hinweise gern als
 
 | Funktion | Worum es geht |
 | --- | --- |
-| **Bilder je Absender erlauben** | Bilder aus dem Internet für bekannte Absender immer laden, statt bei jeder Mail neu zu fragen. |
 | **Lesebestätigung** | Anfordern und beantworten, wie bei Behörden und Steuerberatern üblich. |
 | **Verschlüsselung** | S/MIME oder PGP für Betriebe mit vertraulichen Kunden- oder Gesundheitsdaten. |
 
@@ -56,7 +55,8 @@ Kleinere Dinge, die beim Bauen aufgefallen sind und noch erledigt werden.
 
 ## Zuletzt fertig geworden
 
-Newsletter abbestellen mit einem Klick, per Mail oder auf der Webseite des Absenders.
+Newsletter abbestellen mit einem Klick, per Mail oder auf der Webseite des Absenders. Bilder je
+Absender, Domain oder für alle Kontakte erlauben.
 Aufgaben: eigene Spalten pro Board, wiederkehrende Aufgaben, Regel-Aktion „Aufgabe anlegen“,
 Abgleich mit Thunderbird und Handy-Apps über CalDAV.
 Team-Chat: Antworten im Thread, Reaktionen, Aufbewahrungsfrist in der Firmenverwaltung, Suche

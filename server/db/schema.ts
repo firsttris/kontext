@@ -421,3 +421,17 @@ export const snoozes = sqliteTable(
     index("snoozes_until").on(table.until),
   ],
 );
+
+/**
+ * Whose pictures from the internet one's mails show at once: an address, "@domain", or "@contacts"
+ * for everyone in one's address books (server/images/).
+ */
+export const imageSenders = sqliteTable(
+  "image_senders",
+  {
+    memberId: text("member_id").notNull(),
+    address: text("address").notNull(),
+    createdAt: integer("created_at", { mode: "timestamp_ms" }).notNull(),
+  },
+  (table) => [primaryKey({ columns: [table.memberId, table.address] })],
+);

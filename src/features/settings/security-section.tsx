@@ -1,4 +1,7 @@
-/** Password and two-factor sign-in; both need the current password, Stalwart checks it. */
+/**
+ * Password and two-factor sign-in (both need the current password, Stalwart checks it), and whose
+ * pictures from the internet load at once.
+ */
 
 import { useNavigate } from "@tanstack/react-router";
 import { type FormEvent, useMemo, useState } from "react";
@@ -11,6 +14,7 @@ import { useToast } from "@/components/ui/toast";
 import { changePassword, disableTwoFactor, enableTwoFactor } from "@/jmap/settings";
 import { newSecret, otpauthUrl, verifyTotp } from "@/lib/totp";
 import { m } from "@/paraglide/messages";
+import { ImageSendersCard } from "./image-senders-card";
 import { useSave, useTwoFactor } from "./queries";
 import { SettingsCard } from "./settings-page";
 
@@ -49,6 +53,7 @@ export const SecuritySection = () => (
   <>
     <PasswordCard />
     <TwoFactorCard />
+    <ImageSendersCard />
   </>
 );
 
