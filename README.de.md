@@ -129,6 +129,7 @@ reicht ein VPS mit 2 vCPU und 4 GB RAM.
   - **Mailbox**: Nimmt niemand ab, spielt die Box eure Ansage (im Browser gesprochen oder hochgeladen) und nimmt eine Nachricht auf; sie kommt als Mail mit der Aufnahme an und lässt sich beim Anruf anhören.
   - **Öffnungszeiten** mit Mittagspause, geschlossenen Tagen und den Feiertagen auf einen Klick: Außerhalb klingelt nichts, Anrufer hören eure Ansage und können eine Nachricht hinterlassen. Die Box entscheidet selbst, auch wenn Kontext gerade nicht erreichbar ist.
   - **Weitervermitteln** an Kolleginnen (es klingelt bei ihnen, du gehst, sobald sie dran sind) oder an jede Nummer und an Telefone der Fritzbox (`**610`): Die Box wählt sie zum Gespräch dazu, und du übergibst, sobald abgenommen ist.
+  - **Halten, Rückfrage, Dreierkonferenz**: Wartemusik für den Anrufer, erst die Kollegin dazuholen, den Anrufer zurückholen und zu dritt sprechen – oder die beiden allein lassen.
   - **Wer klingelt wann**: alle gleichzeitig oder der Reihe nach (dann alle), und nach einer Weile auch ein Handy.
   - **Durchwahlen**: weitere Nummern des Anschlusses, die jeweils bei ihren Leuten klingeln; wer auf einer ist, ruft auch mit ihr an.
 - **Suche** über alle deine Kanäle; eigene Nachrichten bearbeiten oder löschen; Kanäle stummschalten, verlassen oder löschen.

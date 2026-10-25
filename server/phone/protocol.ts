@@ -96,6 +96,10 @@ export const toBoxSchema = z.discriminatedUnion("type", [
       .optional(),
   }),
   z.object({ type: z.literal("hangup"), call: callId }),
+  /** Music for the line outside, out of Kontext's room … */
+  z.object({ type: z.literal("hold"), call: callId }),
+  /** … and back into this room. */
+  z.object({ type: z.literal("resume"), call: callId, room: z.string().uuid() }),
   /** Events up to this number arrived; the box need not send them again. */
   z.object({ type: z.literal("ack"), seq: z.number().int() }),
 ]);

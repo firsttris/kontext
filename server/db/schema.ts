@@ -628,6 +628,8 @@ export const phoneCalls = sqliteTable(
     voicemailSeconds: integer("voicemail_seconds"),
     offeredTo: text("offered_to"),
     offeredBy: text("offered_by"),
+    offeredJoin: integer("offered_join", { mode: "boolean" }).notNull().default(false),
+    held: integer("held", { mode: "boolean" }).notNull().default(false),
     forwardedTo: text("forwarded_to"),
     line: text("line"),
   },

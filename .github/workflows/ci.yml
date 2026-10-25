@@ -65,6 +65,20 @@ jobs:
           curl -fsS http://127.0.0.1:8089/ | grep -q "noch nicht mit Kontext gekoppelt"
           docker exec box asterisk -rx "module show like res_pjsip.so" | grep -q "res_pjsip.so"
           docker exec box asterisk -rx "manager show users" | grep -q "kontext-agent"
+      # Everything the agent may write, with every feature on: Asterisk must read all of it.
+      - run: |
+          docker run --rm -v "$PWD":/src -w /src docker.io/oven/bun:1.4-alpine \
+            bun box/sample-config.ts /src/.box-sample
+          docker cp .box-sample/pjsip.conf box:/etc/asterisk/pjsip.conf
+          docker cp .box-sample/extensions.conf box:/etc/asterisk/extensions.conf
+          docker exec box asterisk -rx "core reload"
+          sleep 2
+          for context in kontext-in kontext-mailbox kontext-record kontext-hold kontext-resume kontext-out kontext-ended kontext-out-ended; do
+            docker exec box asterisk -rx "dialplan show $context" | grep -q "\[ Context '$context'" || { echo "missing $context"; exit 1; }
+          done
+          docker exec box asterisk -rx "dialplan show ring@kontext-in" | grep -q "GotoIfTime"
+          docker exec box asterisk -rx "pjsip show endpoints" | grep -q "fritzbox-anna"
+          docker exec box asterisk -rx "moh show classes" | grep -q "Class: default"
       - if: always()
         run: docker logs box || true
 

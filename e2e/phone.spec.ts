@@ -299,6 +299,52 @@ test.describe("Telefonie über die Telefonbox", () => {
       .toContainEqual({ type: "hangup", call: dialled.call });
   });
 
+  test("halten, Anna dazuholen, dann verlässt Jonas das Gespräch", async ({ page, browser }) => {
+    await login(page);
+    const anna = await colleague(browser, "anna");
+    const { call } = await box.ring("07223 81234");
+    await page
+      .getByRole("dialog", { name: "Anruf von Petra Keller" })
+      .getByRole("button", { name: "Annehmen" })
+      .click();
+    await expect(panel(page).getByRole("status")).toHaveText(/^\d+:\d\d$/, { timeout: 15_000 });
+
+    await panel(page).getByRole("button", { name: "Halten" }).click();
+    await expect(panel(page).getByRole("status")).toHaveText(/^Gehalten/);
+    await expect
+      .poll(async () => (await box.state()).commands.at(-1))
+      .toEqual({ type: "hold", call });
+
+    await panel(page).getByRole("button", { name: "Weitervermitteln" }).click();
+    await panel(page).getByRole("radio", { name: "Dazuholen" }).click();
+    await panel(page).getByRole("button", { name: "Anna Weber" }).click();
+    const asked = anna.page.getByRole("dialog", {
+      name: "Jonas Weber holt dich dazu: 07223 81234",
+    });
+    await asked.getByRole("button", { name: "Annehmen" }).click();
+    await expect(panel(anna.page)).toBeVisible();
+    // Asked to join, not handed over: Jonas stays until he leaves.
+    await expect(panel(page).getByRole("button", { name: "Gespräch verlassen" })).toBeVisible({
+      timeout: 15_000,
+    });
+
+    await panel(page).getByRole("button", { name: "Fortsetzen" }).click();
+    await expect
+      .poll(async () => (await box.state()).commands.at(-1))
+      .toMatchObject({
+        type: "resume",
+        call,
+      });
+    await panel(page).getByRole("button", { name: "Gespräch verlassen" }).click();
+    await expect(panel(page)).toHaveCount(0);
+    expect((await box.state()).commands).not.toContainEqual({ type: "hangup", call });
+    await panel(anna.page).getByRole("button", { name: "Auflegen" }).click();
+    await expect
+      .poll(async () => (await box.state()).commands)
+      .toContainEqual({ type: "hangup", call });
+    await anna.close();
+  });
+
   test("eine Durchwahl klingelt nur bei Anna", async ({ page, browser }) => {
     await login(page);
     await page.goto("/settings?section=phone");

@@ -10,8 +10,9 @@ import {
   useLocalParticipant,
   useTrackToggle,
 } from "@livekit/components-react";
+import { useQueryClient } from "@tanstack/react-query";
 import { Track } from "livekit-client";
-import { ArrowRightLeft, Grid3x3, Mic, MicOff, PhoneOff, Volume2 } from "lucide-react";
+import { ArrowRightLeft, Grid3x3, Mic, MicOff, Pause, PhoneOff, Play, Volume2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Avatar } from "@/components/ui/avatar";
 import { useToast } from "@/components/ui/toast";
@@ -22,7 +23,7 @@ import { cn } from "@/lib/cn";
 import { handedOver, linesOf, type PhoneCall, readableNumber } from "@/lib/phone";
 import { m } from "@/paraglide/messages";
 import { type ActivePhone, leavePhone } from "./phone-store";
-import { hangupPhone, usePhone } from "./queries";
+import { hangupPhone, holdPhone, usePhone } from "./queries";
 import { HandoverStatus, TransferForm } from "./transfer";
 import { useCallerName } from "./use-caller";
 
@@ -52,9 +53,21 @@ const Controls = ({ call }: { call: PhoneCall }) => {
   const [transfer, setTransfer] = useState(false);
   const { canPlayAudio, startAudio } = useAudioPlayback();
   const { calls } = usePhone();
+  const queryClient = useQueryClient();
+  const toast = useToast();
+  const hold = () =>
+    void holdPhone(queryClient, call.id, !call.held).catch((error: Error) =>
+      toast.show(m.phone_failed({ message: error.message }), "error"),
+    );
   // Hanging up ends the call and the lines dialled into it.
+  const me = useMe();
+  // With a colleague still in the call, one only leaves; otherwise hanging up ends the call and
+  // the lines dialled into it.
+  const othersHere = call.present.some((person) => person !== me);
   const hangup = () => {
-    for (const line of [call, ...linesOf(calls, call)]) void hangupPhone(line.id);
+    if (!othersHere) {
+      for (const line of [call, ...linesOf(calls, call)]) void hangupPhone(line.id);
+    }
     leavePhone();
   };
   return (
@@ -108,6 +121,17 @@ const Controls = ({ call }: { call: PhoneCall }) => {
         </button>
         <button
           type="button"
+          aria-label={call.held ? m.phone_resume() : m.phone_hold()}
+          title={call.held ? m.phone_resume() : m.phone_hold()}
+          aria-pressed={call.held}
+          disabled={call.state !== "talking"}
+          onClick={hold}
+          className={cn(roundButton(!call.held), "disabled:opacity-40")}
+        >
+          {call.held ? <Play size={18} /> : <Pause size={18} />}
+        </button>
+        <button
+          type="button"
           aria-label={m.phone_transfer()}
           title={m.phone_transfer()}
           aria-pressed={transfer}
@@ -119,8 +143,8 @@ const Controls = ({ call }: { call: PhoneCall }) => {
         </button>
         <button
           type="button"
-          aria-label={m.call_leave()}
-          title={m.call_leave()}
+          aria-label={othersHere ? m.phone_leave_call() : m.call_leave()}
+          title={othersHere ? m.phone_leave_call() : m.call_leave()}
           onClick={hangup}
           className="flex size-12 items-center justify-center rounded-full bg-danger text-white hover:opacity-90"
         >
@@ -134,8 +158,9 @@ const Controls = ({ call }: { call: PhoneCall }) => {
 const PhoneView = ({ call }: { call: PhoneCall }) => {
   const caller = useCallerName(call.remote);
   const now = useNow();
-  const status =
-    call.state === "talking" && call.answeredAt
+  const status = call.held
+    ? m.phone_held()
+    : call.state === "talking" && call.answeredAt
       ? callDuration(call.answeredAt, now)
       : call.direction === "out"
         ? m.phone_dialing()

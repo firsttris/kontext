@@ -81,6 +81,12 @@ const box = await runBox({
           300,
         );
       },
+      hold: async (call) => {
+        commands.push({ type: "hold", call });
+      },
+      resume: async (call, room) => {
+        commands.push({ type: "resume", call, room });
+      },
       hangup: async (call) => {
         commands.push({ type: "hangup", call });
         pbxEvents.onCall({

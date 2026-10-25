@@ -50,6 +50,10 @@ export type PhoneCall = {
   /** Handed over: the colleague it rings for, and who hands it over. */
   offeredTo: string | null;
   offeredBy: string | null;
+  /** Not handed over but asked to join (Rückfrage, three-way): the call stays with offeredBy. */
+  offeredJoin: boolean;
+  /** The line outside hears music, out of the room. */
+  held: boolean;
   /** The people of Kontext in its room now (LiveKit's webhooks); not stored. */
   present: string[];
   /** Answered at the forwarding number (a mobile phone) while it rang in Kontext. */
@@ -118,6 +122,8 @@ export const incomingCall = (
   voicemailSeconds: null,
   offeredTo: null,
   offeredBy: null,
+  offeredJoin: false,
+  held: false,
   present: [],
   forwardedTo: null,
   line: null,
@@ -164,6 +170,8 @@ export const outgoingCall = ({
   voicemailSeconds: null,
   offeredTo: null,
   offeredBy: null,
+  offeredJoin: false,
+  held: false,
   present: [],
   forwardedTo: null,
   line: null,
@@ -208,21 +216,30 @@ export const takeCall = (call: PhoneCall, member: string, room: string): PhoneCa
 export const canSeeCall = (call: Pick<PhoneCall, "members" | "member" | "offeredTo">, me: string) =>
   call.members.includes(me) || call.member === me || call.offeredTo === me;
 
-/** Hand a call one is talking on to a colleague; it rings for them until they take it. */
-export const offerCall = (call: PhoneCall, me: string, to: string): PhoneCall | null =>
+/**
+ * Hand a call one is talking on to a colleague, or ask them to join it (`join`); it rings for
+ * them until they take it.
+ */
+export const offerCall = (
+  call: PhoneCall,
+  me: string,
+  to: string,
+  join = false,
+): PhoneCall | null =>
   call.state === "talking" && call.member === me && to !== me
-    ? { ...call, offeredTo: to, offeredBy: me }
+    ? { ...call, offeredTo: to, offeredBy: me, offeredJoin: join }
     : null;
 
-/** The colleague takes the handed-over call; from now on it is theirs. */
+/** The colleague takes the call: handed over, it is theirs now; asked to join, they are in it. */
 export const takeOffer = (call: PhoneCall, me: string): PhoneCall | null =>
   call.state === "talking" && call.offeredTo === me
     ? {
         ...call,
-        member: me,
+        member: call.offeredJoin ? call.member : me,
         members: [...new Set([...call.members, me])],
         offeredTo: null,
         offeredBy: null,
+        offeredJoin: false,
       }
     : null;
 
@@ -310,7 +327,7 @@ export const answeredCallbacks = (calls: PhoneCall[], talked: PhoneCall): PhoneC
 export const dialSchema = z.object({ number: z.string().trim().min(3).max(40) });
 /** To a colleague (`to`) or to a number (`number`), one of the two. */
 export const transferSchema = z.union([
-  z.object({ to: z.string().min(1).max(64) }),
+  z.object({ to: z.string().min(1).max(64), join: z.boolean().default(false) }),
   z.object({ number: z.string().trim().min(3).max(40) }),
 ]);
 export const noteSchema = z.object({ note: z.string().max(2000) });

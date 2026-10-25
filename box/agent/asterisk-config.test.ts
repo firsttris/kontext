@@ -65,11 +65,18 @@ describe("extensionsConf", () => {
     expect(conf).not.toContain("kontext-mailbox");
     expect(conf).toContain(`Set(__KONTEXT_CALL=\${UNIQUEID})`);
     expect(conf).toContain(`Dial(PJSIP/\${KONTEXT_ROOM}@livekit,30)`);
-    expect(conf).toContain("exten => _**X.,1,UserEvent(KontextCall");
+    expect(conf).toContain("exten => _**X.,1,Set(__KONTEXT_DIR=out)");
     expect(conf).toContain(`Dial(PJSIP/\${EXTEN}@\${KONTEXT_OUT},60`);
     expect(conf).toContain(`exten => _[+0-9a-zA-Z].,1,Set(__KONTEXT_LINE=\${EXTEN})`);
     expect(conf).toContain(`Line: \${KONTEXT_LINE})`);
-    expect(conf).toMatch(/\[kontext-in\][\s\S]*exten => h,1,UserEvent\(KontextCall,.*State: ended/);
+    // The line outside reports its end wherever it is, by a hangup handler.
+    expect(conf).toContain(
+      `exten => ring,1,Set(__KONTEXT_CALL=\${UNIQUEID})\n same => n,Set(__KONTEXT_DIR=in)\n same => n,Set(CHANNEL(hangup_handler_push)=kontext-ended,s,1)`,
+    );
+    expect(conf).toMatch(
+      /\[kontext-ended\]\nexten => s,1,UserEvent\(KontextCall,.*State: ended,Direction: \$\{KONTEXT_DIR\}/,
+    );
+    expect(conf).not.toContain("exten => h,");
   });
 });
 
@@ -83,7 +90,7 @@ describe("the mailbox", () => {
     expect(conf).toContain(`State: mailbox,Direction: in`);
     expect(conf).toContain(`Playback(/data/sounds/${greeting})`);
     expect(conf).toContain(`Record(/data/recordings/\${KONTEXT_CALL}.wav,4,120,k)`);
-    expect(conf).toMatch(/\[kontext-mailbox\][\s\S]*exten => h,1,.*Recording: \$\{RECORDED_FILE\}/);
+    expect(conf).toContain(`Recording: \${RECORDED_FILE})`);
   });
 
   it("only beeps without a greeting", () => {
@@ -128,7 +135,7 @@ describe("opening hours", () => {
     const conf = extensionsConf({ ...config, hours }, paths);
     expect(conf).toContain(
       [
-        `exten => ring,1,Set(__KONTEXT_CALL=\${UNIQUEID})`,
+        "Set(CHANNEL(hangup_handler_push)=kontext-ended,s,1)",
         " same => n,GotoIfTime(*,*,24,dec,Europe/Berlin?closed,1)",
         " same => n,GotoIfTime(08:00-12:00,mon,*,*,Europe/Berlin?ringing,1)",
         " same => n,GotoIfTime(13:00-17:00,mon,*,*,Europe/Berlin?ringing,1)",
@@ -151,7 +158,31 @@ describe("opening hours", () => {
 
   it("rings straight away without hours", () => {
     expect(extensionsConf(config, paths)).toContain(
-      `exten => ring,1,Set(__KONTEXT_CALL=\${UNIQUEID})\n same => n,Goto(ringing,1)`,
+      "Set(CHANNEL(hangup_handler_push)=kontext-ended,s,1)\n same => n,Goto(ringing,1)",
+    );
+  });
+});
+
+describe("holding and calls out", () => {
+  it("moves a held line to music and back into the room", () => {
+    const conf = extensionsConf(config, paths);
+    expect(conf).toContain("[kontext-hold]\nexten => s,1,MusicOnHold()");
+    expect(conf).toContain(
+      `[kontext-resume]\nexten => s,1,Dial(PJSIP/\${KONTEXT_ROOM}@livekit,30)`,
+    );
+  });
+
+  it("reports an unanswered call out from the line into Kontext, an answered one from outside", () => {
+    const conf = extensionsConf(config, paths);
+    expect(conf).toContain(
+      "exten => _X.,1,Set(__KONTEXT_DIR=out)\n same => n,Set(CHANNEL(hangup_handler_push)=kontext-out-ended,s,1)",
+    );
+    expect(conf).toContain(
+      `[kontext-out-ended]\nexten => s,1,GotoIf($["\${DIALSTATUS}" = "ANSWER"]?done)`,
+    );
+    expect(conf).toContain(" same => n(done),Return()");
+    expect(conf).toMatch(
+      /\[kontext-callee-answered\]\n.*State: answered,Direction: out\)\n same => n,Set\(CHANNEL\(hangup_handler_push\)=kontext-ended,s,1\)/,
     );
   });
 });

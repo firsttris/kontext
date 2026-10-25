@@ -15,6 +15,8 @@ export type Pbx = {
   answer: (call: string, room: string) => Promise<void>;
   dial: (call: string, room: string, number: string, line?: string) => Promise<void>;
   hangup: (call: string) => Promise<void>;
+  hold: (call: string) => Promise<void>;
+  resume: (call: string, room: string) => Promise<void>;
 };
 
 export type PbxEvents = {
@@ -38,8 +40,11 @@ export const createAsterisk = async ({
   ami: AmiLogin;
   events: PbxEvents;
 }): Promise<Pbx & { close: () => void }> => {
-  // The channel of each call, from its first event: AMI acts on channels, Kontext on calls.
-  const channels = new Map<string, string>();
+  // AMI acts on channels, Kontext on calls. The line outside (to the Fritzbox) is what one
+  // holds, moves and hangs up; for a call out, before it is answered, there is only the line
+  // into Kontext's room.
+  const outside = new Map<string, string>();
+  const intoRoom = new Map<string, string>();
   /** A call that ended on the mailbox: its message goes up before Kontext hears of the end. */
   const ended = async (event: Omit<CallEvent, "type" | "seq">, recording: string | undefined) => {
     if (recording) await files.sendRecording(event.call, recording).catch(() => false);
@@ -48,11 +53,16 @@ export const createAsterisk = async ({
   const onFrame = (frame: Frame) => {
     const event = callEventOf(frame, new Date());
     if (event) {
-      if (frame.Channel && event.state !== "ended") channels.set(event.call, frame.Channel);
       if (event.state === "ended") {
-        channels.delete(event.call);
+        outside.delete(event.call);
+        intoRoom.delete(event.call);
         void ended(event, frame.Recording || undefined);
         return;
+      }
+      if (frame.Channel && event.direction === "out" && event.state === "ringing") {
+        intoRoom.set(event.call, frame.Channel);
+      } else if (frame.Channel && !event.forwarded) {
+        outside.set(event.call, frame.Channel);
       }
       events.onCall(event);
       return;
@@ -73,10 +83,29 @@ export const createAsterisk = async ({
     REGISTRATION_CHECK_MS,
   );
 
-  const channelOf = (call: string) => {
-    const channel = channels.get(call);
+  const lineOf = (call: string) => {
+    const channel = outside.get(call);
     if (!channel) throw new Error(`Kein Kanal für ${call}`);
     return channel;
+  };
+  /** Sets ${KONTEXT_ROOM} and moves the line outside into a context of the dialplan. */
+  const moveTo = async (call: string, context: string, exten: string, room?: string) => {
+    const channel = lineOf(call);
+    if (room) {
+      await ami.action([
+        ["Action", "Setvar"],
+        ["Channel", channel],
+        ["Variable", "KONTEXT_ROOM"],
+        ["Value", room],
+      ]);
+    }
+    await ami.action([
+      ["Action", "Redirect"],
+      ["Channel", channel],
+      ["Context", context],
+      ["Exten", exten],
+      ["Priority", "1"],
+    ]);
   };
 
   return {
@@ -94,22 +123,9 @@ export const createAsterisk = async ({
       ]);
       await ami.action([["Action", "PJSIPShowRegistrationsOutbound"]]);
     },
-    answer: async (call, room) => {
-      const channel = channelOf(call);
-      await ami.action([
-        ["Action", "Setvar"],
-        ["Channel", channel],
-        ["Variable", "KONTEXT_ROOM"],
-        ["Value", room],
-      ]);
-      await ami.action([
-        ["Action", "Redirect"],
-        ["Channel", channel],
-        ["Context", "kontext-answer"],
-        ["Exten", "answer"],
-        ["Priority", "1"],
-      ]);
-    },
+    answer: (call, room) => moveTo(call, "kontext-answer", "answer", room),
+    hold: (call) => moveTo(call, "kontext-hold", "s"),
+    resume: (call, room) => moveTo(call, "kontext-resume", "s", room),
     dial: async (call, room, number, line) => {
       // First the leg into Kontext's room (LiveKit SIP answers at once), then the number.
       await ami.action([
@@ -125,7 +141,7 @@ export const createAsterisk = async ({
       ]);
     },
     hangup: async (call) => {
-      const channel = channels.get(call);
+      const channel = outside.get(call) ?? intoRoom.get(call);
       if (!channel) return;
       await ami.action([
         ["Action", "Hangup"],

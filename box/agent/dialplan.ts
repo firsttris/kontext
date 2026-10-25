@@ -19,10 +19,8 @@ import type { BoxConfig } from "../../server/phone/protocol";
 /** Where the box keeps the sounds from Kontext and the messages it records. */
 export type BoxPaths = { sounds: string; recordings: string };
 
-type Direction = "in" | "out";
-
 /** A call step for the agent; values are dialplan expressions. */
-export const report = (state: string, direction: Direction, extra: [string, string][] = []) =>
+export const report = (state: string, direction: string, extra: [string, string][] = []) =>
   `UserEvent(KontextCall,${[
     ["Call", `\${KONTEXT_CALL}`],
     ["State", state],
@@ -32,15 +30,24 @@ export const report = (state: string, direction: Direction, extra: [string, stri
     .map(([key, value]) => `${key}: ${value}`)
     .join(",")})`;
 
-/** A context: its first line starts the extension, `same =>` continues it. */
+/**
+ * An extension: its first step starts it, `same =>` continues it. A step may carry a label to
+ * jump to, written "(label)Step()".
+ */
 const extension = (exten: string, steps: string[]) =>
-  steps.map((step, i) => (i === 0 ? `exten => ${exten},1,${step}` : ` same => n,${step}`));
+  steps.map((step, i) => {
+    const [, label, app] = step.match(/^(?:\((\w+)\))?(.*)$/)!;
+    return i === 0 ? `exten => ${exten},1,${app}` : ` same => n${label ? `(${label})` : ""},${app}`;
+  });
 
 const context = (name: string, ...extensions: string[][]) =>
   [`[${name}]`, ...extensions.flat(), ""].join("\n");
 
-const ended = (direction: Direction, extra: [string, string][] = []) =>
-  extension("h", [report("ended", direction, [["Cause", `\${HANGUPCAUSE}`], ...extra])]);
+/**
+ * The line to the outside reports its end wherever it is when it hangs up – ringing, in Kontext's
+ * room, on hold, on the mailbox – by a hangup handler, not by each context's "h".
+ */
+const reportEnd = "Set(CHANNEL(hangup_handler_push)=kontext-ended,s,1)";
 
 /** Plays a sound from Kontext (Asterisk finds the .wav itself). */
 export const play = (paths: BoxPaths, id: string) => `Playback(${paths.sounds}/${id})`;
@@ -119,6 +126,8 @@ const incoming = (config: BoxConfig, paths: BoxPaths) => {
     extension("s", ["Goto(ring,1)"]),
     extension("ring", [
       `Set(__KONTEXT_CALL=\${UNIQUEID})`,
+      "Set(__KONTEXT_DIR=in)",
+      reportEnd,
       ...(config.hours ? hoursCheck(config) : ["Goto(ringing,1)"]),
     ]),
     extension("ringing", [
@@ -128,7 +137,6 @@ const incoming = (config: BoxConfig, paths: BoxPaths) => {
       config.mailbox ? "Goto(kontext-mailbox,s,1)" : "Hangup(19)",
     ]),
     closed,
-    ended("in"),
   );
 };
 
@@ -153,13 +161,18 @@ const mailbox = (config: BoxConfig, paths: BoxPaths) => {
         `Record(${paths.recordings}/\${KONTEXT_CALL}.wav,4,${maxSeconds},k)`,
         "Hangup(16)",
       ]),
-      ended("in", [["Recording", `\${RECORDED_FILE}`]]),
     ),
   ].join("\n");
 };
 
-/** Out through the Fritzbox, once the line into Kontext's room is up. */
+/**
+ * Out through the Fritzbox, once the line into Kontext's room is up. Answered, the line outside
+ * reports its own end (kontext-callee-answered); not answered (busy, no answer, cancelled), the
+ * line into Kontext reports why (kontext-out-ended).
+ */
 const dialOut = [
+  "Set(__KONTEXT_DIR=out)",
+  "Set(CHANNEL(hangup_handler_push)=kontext-out-ended,s,1)",
   report("ringing", "out", [["Remote", `\${EXTEN}`]]),
   `Dial(PJSIP/\${EXTEN}@\${KONTEXT_OUT},60,U(kontext-callee-answered))`,
   "Hangup()",
@@ -178,19 +191,44 @@ export const extensionsConf = (config: BoxConfig, paths: BoxPaths): string =>
         `Dial(PJSIP/\${KONTEXT_ROOM}@livekit,30)`,
         "Hangup()",
       ]),
-      ended("in"),
+    ),
+    // Held: the line outside hears music, out of Kontext's room …
+    context("kontext-hold", extension("s", ["MusicOnHold()"])),
+    // … and back into it (the agent sets ${KONTEXT_ROOM} again).
+    context(
+      "kontext-resume",
+      extension("s", [`Dial(PJSIP/\${KONTEXT_ROOM}@livekit,30)`, "Hangup()"]),
     ),
     // Numbers, and the Fritzbox's own telephones by their internal number ("**610").
+    context("kontext-out", extension("_X.", dialOut), extension("_**X.", dialOut)),
     context(
-      "kontext-out",
-      extension("_X.", dialOut),
-      extension("_**X.", dialOut),
-      ended("out", [["DialStatus", `\${DIALSTATUS}`]]),
+      "kontext-callee-answered",
+      extension("s", [report("answered", "out"), reportEnd, "Return()"]),
     ),
-    context("kontext-callee-answered", extension("s", [report("answered", "out"), "Return()"])),
     context(
       "kontext-forward-answered",
       extension("s", [report("answered", "in", [["Forwarded", "1"]]), "Return()"]),
+    ),
+    context(
+      "kontext-ended",
+      extension("s", [
+        report("ended", `\${KONTEXT_DIR}`, [
+          ["Cause", `\${HANGUPCAUSE}`],
+          ["Recording", `\${RECORDED_FILE}`],
+        ]),
+        "Return()",
+      ]),
+    ),
+    context(
+      "kontext-out-ended",
+      extension("s", [
+        `GotoIf($["\${DIALSTATUS}" = "ANSWER"]?done)`,
+        report("ended", "out", [
+          ["Cause", `\${HANGUPCAUSE}`],
+          ["DialStatus", `\${DIALSTATUS}`],
+        ]),
+        "(done)Return()",
+      ]),
     ),
     // LiveKit never calls in on its own; anything from it ends there.
     context("kontext-refuse", extension("_.", ["Hangup(21)"])),

@@ -21,7 +21,7 @@ export type TransferContext = {
   now: () => Date;
 };
 
-export type TransferTarget = { to: string } | { number: string };
+export type TransferTarget = { to: string; join?: boolean } | { number: string };
 
 export const createTransfers = ({ store, save, send, newId, now }: TransferContext) => {
   /** The call I am talking on, or why not. */
@@ -31,9 +31,9 @@ export const createTransfers = ({ store, save, send, newId, now }: TransferConte
     return call.state === "talking" ? call : "busy";
   };
 
-  const toColleague = async (call: PhoneCall, me: string, to: string) => {
+  const toColleague = async (call: PhoneCall, me: string, to: string, join: boolean) => {
     if (!everyone(await store.settings()).includes(to)) return "not-allowed" as const;
-    const offered = offerCall(call, me, to);
+    const offered = offerCall(call, me, to, join);
     if (!offered) return "busy" as const;
     await save(offered);
     return offered;
@@ -66,7 +66,9 @@ export const createTransfers = ({ store, save, send, newId, now }: TransferConte
     ): Promise<PhoneCall | Problem> => {
       const call = await mine(callId, me);
       if (typeof call === "string") return call;
-      return "to" in target ? toColleague(call, me, target.to) : toNumber(call, me, target.number);
+      return "to" in target
+        ? toColleague(call, me, target.to, target.join ?? false)
+        : toNumber(call, me, target.number);
     },
 
     /** The colleague takes the call handed to them. */
@@ -83,7 +85,7 @@ export const createTransfers = ({ store, save, send, newId, now }: TransferConte
     cancel: async (callId: string, me: string): Promise<PhoneCall | Problem> => {
       const call = await store.call(callId);
       if (!call || (call.offeredBy !== me && call.offeredTo !== me)) return "not-found";
-      const kept = { ...call, offeredTo: null, offeredBy: null };
+      const kept = { ...call, offeredTo: null, offeredBy: null, offeredJoin: false };
       await save(kept);
       return kept;
     },

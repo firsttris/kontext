@@ -128,6 +128,8 @@ const toCall = (row: CallDbRow): PhoneCall => ({
   voicemailSeconds: row.voicemailSeconds,
   offeredTo: row.offeredTo,
   offeredBy: row.offeredBy,
+  offeredJoin: row.offeredJoin,
+  held: row.held,
   present: [],
   forwardedTo: row.forwardedTo,
   line: row.line,

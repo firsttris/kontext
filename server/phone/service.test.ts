@@ -325,6 +325,37 @@ describe("handing a call on", () => {
     expect(toBox).toContainEqual({ type: "hangup", call: "1729850000.12" });
   });
 
+  it("holds the caller with music and brings them back into the room", async () => {
+    const { service, toBox, room } = await talking();
+    expect(await service.hold("id-1", "max")).toBe("not-found");
+    expect(await service.hold("id-1", "jonas")).toMatchObject({ held: true });
+    expect(toBox.at(-1)).toEqual({ type: "hold", call: "1729850000.12" });
+    expect(await service.hold("id-1", "jonas")).toBe("busy");
+    // Held, the caller is out of the room but still a side: Jonas alone does not end it.
+    expect(toBox.some((m) => m.type === "hangup")).toBe(false);
+    expect(await service.resume("id-1", "jonas")).toMatchObject({ held: false });
+    expect(toBox.at(-1)).toEqual({ type: "resume", call: "1729850000.12", room });
+  });
+
+  it("asks a colleague to join (Rückfrage, three-way): the call stays Jonas's", async () => {
+    const { service, toBox, room } = await talking();
+    await service.hold("id-1", "jonas");
+    expect(await service.transfer("id-1", "jonas", { to: "anna", join: true })).toMatchObject({
+      offeredTo: "anna",
+      offeredJoin: true,
+    });
+    expect(await service.takeTransfer("id-1", "anna")).toMatchObject({
+      member: "jonas",
+      offeredJoin: false,
+    });
+    await service.joinedRoom(room, "anna");
+    await service.resume("id-1", "jonas");
+    await service.leftRoom(room, "jonas");
+    // Anna is in the room, so she may end it.
+    expect(await service.hangup("id-1", "anna")).toMatchObject({ id: "id-1" });
+    expect(toBox.at(-1)).toEqual({ type: "hangup", call: "1729850000.12" });
+  });
+
   it("can be taken back before the colleague answers", async () => {
     const { service } = await talking();
     await service.transfer("id-1", "jonas", { to: "anna" });

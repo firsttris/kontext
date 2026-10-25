@@ -13,9 +13,9 @@ COPY box/agent ./box/agent
 RUN bun build box/agent/main.ts --target=bun --outfile=/out/agent.js
 
 FROM docker.io/oven/bun:1.4-alpine
-# Asterisk with PJSIP (Alpine's package) and its English core sounds for the beep before a
-# message; greetings in German come from Kontext.
-RUN apk add --no-cache asterisk asterisk-sounds-en tini
+# Asterisk with PJSIP (Alpine's package), its English core sounds for the beep before a message
+# and music for held calls; greetings in German come from Kontext.
+RUN apk add --no-cache asterisk asterisk-sounds-en asterisk-sounds-moh tini
 COPY box/asterisk/ /etc/asterisk/
 COPY box/entrypoint.sh /entrypoint.sh
 COPY --from=build /out/agent.js /app/agent.js

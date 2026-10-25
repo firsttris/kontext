@@ -205,6 +205,12 @@ describe("handing on", () => {
     });
   });
 
+  it("asks a colleague to join without handing the call over", () => {
+    const asked = offerCall(talking, "jonas", "max", true)!;
+    expect(asked.offeredJoin).toBe(true);
+    expect(takeOffer(asked, "max")).toMatchObject({ member: "jonas", offeredJoin: false });
+  });
+
   it("knows people from LiveKit SIP's lines and when a room is over", () => {
     expect(isPerson("jonas")).toBe(true);
     expect(isPerson("sip_07223123456")).toBe(false);

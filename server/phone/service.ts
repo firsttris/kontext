@@ -237,6 +237,24 @@ export const createPhoneService = (deps: PhoneDeps) => {
 
   const transfers = createTransfers({ store, save, send, newId, now });
 
+  /** Whoever has the call or is in its room may hold, resume and hang it up. */
+  const inCall = (call: PhoneCall, me: string) =>
+    call.member === me || presentIn(call.room).includes(me);
+
+  /** Music for the line outside and out of the room, or back in. */
+  const setHeld = async (callId: string, me: string, held: boolean) => {
+    const call = await store.call(callId);
+    if (!call || !inCall(call, me) || !call.room) return "not-found" as const;
+    if (call.state !== "talking" || call.held === held) return "busy" as const;
+    const message: ToBox = held
+      ? { type: "hold", call: call.boxCallId }
+      : { type: "resume", call: call.boxCallId, room: call.room };
+    if (!send(call, message)) return "offline" as const;
+    const next = { ...call, held };
+    await save(next);
+    return next;
+  };
+
   const allowed = async (me: string) => everyone(await store.settings()).includes(me);
 
   return {
@@ -326,7 +344,7 @@ export const createPhoneService = (deps: PhoneDeps) => {
 
     hangup: async (callId: string, me: string): Promise<PhoneCall | Problem> => {
       const call = await store.call(callId);
-      if (!call || call.member !== me) return "not-found";
+      if (!call || !inCall(call, me)) return "not-found";
       if (call.state !== "ended") send(call, { type: "hangup", call: call.boxCallId });
       return call;
     },
@@ -350,6 +368,10 @@ export const createPhoneService = (deps: PhoneDeps) => {
       for (const call of await store.callsOfRoom(room)) publish(call);
       await settle(room);
     },
+
+    hold: (callId: string, me: string): Promise<PhoneCall | Problem> => setHeld(callId, me, true),
+    resume: (callId: string, me: string): Promise<PhoneCall | Problem> =>
+      setHeld(callId, me, false),
 
     transfer: transfers.transfer,
     takeTransfer: transfers.take,

@@ -31,6 +31,18 @@ export const parseFrames = (buffer: string): { frames: Frame[]; rest: string } =
 export const formatAction = (fields: [string, string][]): string =>
   `${fields.map(([key, value]) => `${key}: ${value.replace(/[\r\n]/g, "")}`).join("\r\n")}\r\n\r\n`;
 
+/**
+ * Why a call out was not answered, as Q.850 (Dial's DIALSTATUS): the hangup handler of the line
+ * into Kontext only knows its own cause.
+ */
+const DIAL_CAUSES: Record<string, number> = {
+  BUSY: 17,
+  NOANSWER: 19,
+  CANCEL: 19,
+  CONGESTION: 34,
+  CHANUNAVAIL: 34,
+};
+
 /** The dialplan's report of a call step, as a call event for Kontext; null for anything else. */
 export const callEventOf = (frame: Frame, now: Date): Omit<CallEvent, "type" | "seq"> | null => {
   if (frame.Event !== "UserEvent" || frame.UserEvent !== "KontextCall") return null;
@@ -38,14 +50,14 @@ export const callEventOf = (frame: Frame, now: Date): Omit<CallEvent, "type" | "
   const direction = frame.Direction;
   if (!frame.Call || !(CALL_STATES as readonly string[]).includes(state ?? "")) return null;
   if (direction !== "in" && direction !== "out") return null;
-  const cause = Number(frame.Cause);
+  const cause = DIAL_CAUSES[frame.DialStatus ?? ""] ?? Number(frame.Cause);
   return {
     call: frame.Call,
     state: state as CallEvent["state"],
     direction,
     remote: frame.Remote ?? "",
     local: frame.Local ?? "",
-    ...(Number.isFinite(cause) && frame.Cause ? { cause } : {}),
+    ...(Number.isFinite(cause) && (frame.Cause || frame.DialStatus) ? { cause } : {}),
     ...(frame.Forwarded === "1" ? { forwarded: true } : {}),
     ...(frame.Line ? { line: frame.Line } : {}),
     at: now.toISOString(),

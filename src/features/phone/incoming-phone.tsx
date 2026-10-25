@@ -78,7 +78,9 @@ const Ringing = ({
             <div className="flex min-w-0 flex-1 flex-col">
               <DialogPrimitive.Title className="m-0 truncate text-[15px] font-semibold">
                 {handedBy
-                  ? m.phone_handed({ by: handedBy, name: caller.name })
+                  ? call.offeredJoin
+                    ? m.phone_joining({ by: handedBy, name: caller.name })
+                    : m.phone_handed({ by: handedBy, name: caller.name })
                   : m.phone_incoming({ name: caller.name })}
               </DialogPrimitive.Title>
               <span className="truncate text-[13px] text-muted">

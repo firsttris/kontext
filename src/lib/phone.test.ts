@@ -31,6 +31,8 @@ const call = (extra: Partial<PhoneCall> = {}): PhoneCall => ({
   voicemailSeconds: null,
   offeredTo: null,
   offeredBy: null,
+  offeredJoin: false,
+  held: false,
   present: [],
   forwardedTo: null,
   line: null,

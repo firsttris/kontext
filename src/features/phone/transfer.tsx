@@ -20,7 +20,9 @@ export const TransferForm = ({ call, onDone }: { call: PhoneCall; onDone: () => 
   const { colleagues } = usePhone();
   const { nameOf } = useChatNames();
   const [number, setNumber] = useState("");
-  const hand = async (target: { to: string } | { number: string }) => {
+  // Hand over (it is theirs) or ask to join (Rückfrage, three-way: it stays mine).
+  const [join, setJoin] = useState(false);
+  const hand = async (target: { to: string; join?: boolean } | { number: string }) => {
     try {
       await transferPhone(queryClient, call.id, target);
       onDone();
@@ -35,13 +37,37 @@ export const TransferForm = ({ call, onDone }: { call: PhoneCall; onDone: () => 
   return (
     <section aria-label={m.phone_transfer()} className="flex flex-col gap-2">
       {colleagues.length ? (
-        <div className="flex flex-wrap gap-1.5">
-          {colleagues.map((id) => (
-            <Button key={id} size="sm" onClick={() => void hand({ to: id })}>
-              {nameOf(id)}
-            </Button>
-          ))}
-        </div>
+        <>
+          <fieldset className="m-0 flex gap-1 border-0 p-0">
+            <legend className="sr-only">{m.phone_transfer_how()}</legend>
+            {[false, true].map((value) => (
+              <label
+                key={String(value)}
+                className={
+                  join === value
+                    ? "cursor-pointer rounded-md bg-subtle px-2 py-1 text-[12px] font-medium"
+                    : "cursor-pointer rounded-md px-2 py-1 text-[12px] text-muted hover:bg-hover"
+                }
+              >
+                <input
+                  type="radio"
+                  name="transfer-how"
+                  checked={join === value}
+                  onChange={() => setJoin(value)}
+                  className="sr-only"
+                />
+                {value ? m.phone_transfer_join() : m.phone_transfer_hand()}
+              </label>
+            ))}
+          </fieldset>
+          <div className="flex flex-wrap gap-1.5">
+            {colleagues.map((id) => (
+              <Button key={id} size="sm" onClick={() => void hand({ to: id, join })}>
+                {nameOf(id)}
+              </Button>
+            ))}
+          </div>
+        </>
       ) : null}
       <form onSubmit={submit} className="flex gap-1.5">
         <Input

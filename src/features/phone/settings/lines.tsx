@@ -98,7 +98,6 @@ export const LinesForm = ({ lines }: { lines: Admin["extraLines"] }) => {
     <SettingsCard title={m.phone_lines()} description={m.phone_lines_hint()}>
       {drafts.map((draft, index) => (
         <LineEditor
-          // biome-ignore lint/suspicious/noArrayIndexKey: new lines have no id yet
           key={draft.id ?? index}
           draft={draft}
           onChange={(next) => update(index, next)}

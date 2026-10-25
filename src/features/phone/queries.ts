@@ -86,7 +86,7 @@ export const hangupPhone = (callId: string) =>
 export const transferPhone = async (
   queryClient: QueryClient,
   callId: string,
-  target: { to: string } | { number: string },
+  target: { to: string; join?: boolean } | { number: string },
 ) => {
   const { call } = await send<{ call: PhoneCall }>(
     "POST",
@@ -107,6 +107,15 @@ export const cancelPhoneTransfer = async (queryClient: QueryClient, callId: stri
   const { call } = await send<{ call: PhoneCall }>(
     "POST",
     `/calls/${encodeURIComponent(callId)}/transfer/cancel`,
+  );
+  setPhoneCall(queryClient, call);
+};
+
+/** Music for the caller and out of the room, or back in. */
+export const holdPhone = async (queryClient: QueryClient, callId: string, held: boolean) => {
+  const { call } = await send<{ call: PhoneCall }>(
+    "POST",
+    `/calls/${encodeURIComponent(callId)}/${held ? "hold" : "resume"}`,
   );
   setPhoneCall(queryClient, call);
 };

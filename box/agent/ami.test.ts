@@ -87,6 +87,20 @@ describe("callEventOf", () => {
           Event: "UserEvent",
           UserEvent: "KontextCall",
           Call: "c",
+          State: "ended",
+          Direction: "out",
+          Cause: "16",
+          DialStatus: "BUSY",
+        },
+        now,
+      ),
+    ).toMatchObject({ cause: 17 });
+    expect(
+      callEventOf(
+        {
+          Event: "UserEvent",
+          UserEvent: "KontextCall",
+          Call: "c",
           State: "answered",
           Direction: "in",
           Forwarded: "1",
