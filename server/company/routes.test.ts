@@ -171,7 +171,8 @@ describe("Firmenverwaltung", () => {
       stop: false,
     };
     expect((await send("PUT", "/mailboxes/g/rules", { rules: [rule] })).status).toBe(200);
-    expect(rules).toEqual([{ accountId: "g", rules: [rule] }]);
+    // A rule from before "Aufgabe anlegen" gets it switched off.
+    expect(rules).toEqual([{ accountId: "g", rules: [{ ...rule, createTask: false }] }]);
     expect((await send("PUT", "/mailboxes/2/rules", { rules: [rule] })).status).toBe(404);
     expect((await send("PUT", "/mailboxes/g/rules", { rules: [{ id: 1 }] })).status).toBe(400);
     expect(await (await send("POST", "/mailboxes/g/rules/apply", { rule })).json()).toEqual({

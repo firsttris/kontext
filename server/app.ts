@@ -49,6 +49,7 @@ import { createSnippetStore } from "./snippets/store";
 import { createSnoozeRoutes } from "./snooze/routes";
 import { createSnoozeStore } from "./snooze/store";
 import { createSnoozeWaker } from "./snooze/waker";
+import { createRuleTasks } from "./tasks/from-rules";
 import { createTaskReminder } from "./tasks/notices";
 import { createTaskRoutes } from "./tasks/routes";
 import { createTaskStore } from "./tasks/store";
@@ -325,6 +326,16 @@ export const createApp = async (env: Env) => {
   const waker = createSnoozeWaker({ env, grants, store: snoozes, notify: pusher.notify });
   setInterval(() => void waker.tick(), env.SNOOZE_TICK_MS).unref();
   app.route("/api/snoozes", createSnoozeRoutes({ store: snoozes, infoOf }));
+  // Mails a rule marked "Aufgabe anlegen" become tasks, every minute, also with nobody signed in.
+  const ruleTasks = createRuleTasks({
+    env,
+    grants,
+    sessions: () => snoozes.sessionsFor(""),
+    store: tasks,
+    changed: (accountId) =>
+      hub.publish({ type: "tasks", accountId }, (viewer) => viewer.accountIds.includes(accountId)),
+  });
+  setInterval(() => void ruleTasks.tick(), env.RULE_TASK_TICK_MS).unref();
   app.route(
     "/api/categories",
     createCategoryRoutes({

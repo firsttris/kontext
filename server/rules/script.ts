@@ -13,11 +13,16 @@
  * - Every enabled rule that matches applies its marks and forwarding, top to bottom. The first
  *   folder wins, so a mail is filed once and not copied into several folders. "Stop" skips the
  *   rules below.
+ * - "Aufgabe anlegen" marks the mail with TASK_KEYWORD; Kontext's server makes the task and takes
+ *   the mark away (server/tasks/from-rules.ts).
  */
 import { z } from "zod";
 import { categorySchema } from "../categories/categories";
 
 export const RULES_SCRIPT = "kontext-regeln";
+
+/** The mark a rule puts on a mail that should become a task. */
+export const TASK_KEYWORD = "kontext.task";
 
 const condition = z.object({
   field: z.enum(["from", "to", "subject", "body"]),
@@ -38,6 +43,8 @@ const rule = z.object({
   forwardTo: z.string().nullable(),
   /** Category keywords to set (categories/categories.ts); older rules have none. */
   categories: z.array(categorySchema.shape.keyword).max(10).default([]),
+  /** Make a task of the mail (older rules have none). */
+  createTask: z.boolean().default(false),
   stop: z.boolean(),
 });
 
@@ -56,7 +63,14 @@ const MARKER = "# kontext:";
 export const isEffective = (rule: Rule): boolean =>
   rule.enabled &&
   rule.conditions.some((condition) => condition.value.trim() !== "") &&
-  Boolean(rule.moveTo || rule.markRead || rule.flag || rule.forwardTo || rule.categories.length);
+  Boolean(
+    rule.moveTo ||
+      rule.markRead ||
+      rule.flag ||
+      rule.forwardTo ||
+      rule.categories.length ||
+      rule.createTask,
+  );
 
 /** A reference to a Sieve variable (RFC 5229), "${name}". */
 const variable = (name: string) => `$\{${name}}`;
@@ -98,6 +112,7 @@ const ruleBlock = (rule: Rule): string[] => [
   ...(rule.markRead ? ['  addflag "\\\\Seen";'] : []),
   ...(rule.flag ? ['  addflag "\\\\Flagged";'] : []),
   ...rule.categories.map((keyword) => `  addflag ${quoted(keyword)};`),
+  ...(rule.createTask ? [`  addflag ${quoted(TASK_KEYWORD)};`] : []),
   ...(rule.forwardTo ? [`  redirect :copy ${quoted(rule.forwardTo.trim())};`] : []),
   ...(rule.moveTo
     ? [

@@ -99,6 +99,7 @@ fine on a VPS with 2 vCPUs and 4 GB RAM.
 - **Tasks for you and the team**: My tasks, Today, Upcoming, Done; a board for your own mailbox and one per shared mailbox (info@, rechnung@).
 - **List or Kanban**: grouped by due date, or as a board with Open, In progress, Waiting, Done – drag cards between columns.
 - **From a mail**: "Task" (or `t`) turns a mail into a task with its subject, due date and assignee; the mail then shows its task.
+- **Tasks from rules**: a mail rule can make a task of every matching mail, also with Kontext closed.
 - **Your own columns** per board ("Material ordered" …) and **repeating tasks** (daily, on workdays, weekly, monthly, yearly).
 - **Quick entry**: "Call Hoffmann tomorrow" in German ("Rückruf Hoffmann morgen") is due tomorrow; checklists, notes, assignees.
 - **Everywhere in Kontext**: a contact shows their open tasks, the calendar shows what is due on each day, the bell shows tasks given to you and what is due today. Reminders arrive as notifications even with Kontext closed. "Create tasks" makes one task per selected mail.

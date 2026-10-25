@@ -250,7 +250,12 @@ ins eigene Konto. So wirken sie auch, wenn niemand angemeldet ist, und gleich au
   eine davon.
 - **Aktionen:** in einen Ordner (`fileinto :mailboxid`, mit dem Pfad als Ersatz, falls die Id
   fehlt), als gelesen markieren oder markieren (`addflag`), weiterleiten mit Kopie
-  (`redirect :copy`; Stalwart leitet eine Mail höchstens einmal weiter), keine weiteren Regeln.
+  (`redirect :copy`; Stalwart leitet eine Mail höchstens einmal weiter), keine weiteren Regeln,
+  **Aufgabe anlegen**: Das Skript setzt das Schlagwort `kontext.task`; der Kontext-Server sucht
+  jede Minute in allen Postfächern, in die jemand Angemeldetes schreiben darf, nach so markierten
+  Mails, nimmt die Markierung weg und legt die Aufgabe an – auf dem Board des Postfachs, verknüpft
+  mit der Mail, im eigenen Postfach für die Inhaberin (`server/tasks/from-rules.ts`). Auf
+  vorhandene Mails angewendet entsteht keine Aufgabe, wie auch nichts weitergeleitet wird.
 - **Reihenfolge:** Alle passenden Regeln wirken von oben nach unten; der **erste Ordner
   gewinnt**, damit eine Mail nicht als Kopie in mehreren Ordnern landet. Das Skript merkt sich
   Ordner und „fertig“ in Variablen (RFC 5229) und legt am Ende einmal ab.

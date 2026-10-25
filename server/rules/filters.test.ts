@@ -22,6 +22,7 @@ const rule: Rule = {
   flag: false,
   forwardTo: null,
   categories: [],
+  createTask: false,
   stop: false,
 };
 

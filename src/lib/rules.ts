@@ -47,6 +47,7 @@ export const newRule = (id: string, conditions = [emptyCondition()]): Rule => ({
   flag: false,
   forwardTo: null,
   categories: [],
+  createTask: false,
   stop: false,
 });
 
@@ -120,6 +121,7 @@ export const thenText = (
     m.rules_then_category({ name: categoryName(keyword) ?? keyword }),
   ),
   ...(rule.forwardTo ? [m.rules_then_forward({ address: rule.forwardTo })] : []),
+  ...(rule.createTask ? [m.rules_then_task()] : []),
   ...(rule.stop ? [m.rules_then_stop()] : []),
 ];
 
@@ -128,7 +130,14 @@ const ADDRESS = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 /** What keeps the rule from being saved, or null. */
 export const ruleProblem = (rule: Rule): string | null => {
   if (!filled(rule).length) return m.rules_problem_condition();
-  if (!rule.moveTo && !rule.markRead && !rule.flag && !rule.forwardTo && !rule.categories.length)
+  if (
+    !rule.moveTo &&
+    !rule.markRead &&
+    !rule.flag &&
+    !rule.forwardTo &&
+    !rule.categories.length &&
+    !rule.createTask
+  )
     return m.rules_problem_action();
   if (rule.forwardTo !== null && !ADDRESS.test(rule.forwardTo.trim()))
     return m.rules_problem_address();

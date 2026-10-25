@@ -13,6 +13,7 @@ const rule = (patch: Partial<Rule> = {}): Rule => ({
   flag: false,
   forwardTo: "nie@example.test",
   categories: [],
+  createTask: false,
   stop: false,
   ...patch,
 });

@@ -8,7 +8,7 @@ ein Plan, kein Versprechen; Wünsche und Hinweise gern als
 
 | Funktion | Worum es geht |
 | --- | --- |
-| **Mehr für Aufgaben** | Regel-Aktion „Aufgabe anlegen“, Abgleich mit Thunderbird und Handy-Apps über CalDAV (VTODO). |
+| **Mehr für Aufgaben** | Abgleich mit Thunderbird und Handy-Apps über CalDAV (VTODO). |
 
 ## Danach
 
@@ -57,7 +57,7 @@ Kleinere Dinge, die beim Bauen aufgefallen sind und noch erledigt werden.
 
 ## Zuletzt fertig geworden
 
-Aufgaben: eigene Spalten pro Board, wiederkehrende Aufgaben.
+Aufgaben: eigene Spalten pro Board, wiederkehrende Aufgaben, Regel-Aktion „Aufgabe anlegen“.
 Team-Chat: Antworten im Thread, Reaktionen, Aufbewahrungsfrist in der Firmenverwaltung, Suche
 mit Umlauten, Vorschaubilder für Fotos, Mail als Kopie teilen.
 Aufgaben überall im Kontext: offene Aufgaben am Kontakt, Fälliges im Kalender, neu Zugewiesenes

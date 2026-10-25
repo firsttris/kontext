@@ -1,5 +1,6 @@
 import { expect, type Page, test } from "@playwright/test";
-import { login, unique } from "./helpers";
+import { address, login, unique } from "./helpers";
+import { deliverMail } from "./protocols";
 
 type ApiTask = {
   id: string;
@@ -78,5 +79,46 @@ test.describe("Aufgaben: eigene Spalten und Wiederholung", () => {
     expect(next).toMatchObject({ dueDate: day(7), repeat: "weekly" });
     await page.getByRole("link", { name: "Demnächst" }).first().click();
     await expect(page.getByRole("link", { name: new RegExp(title) })).toBeVisible();
+  });
+
+  test("eine Regel legt aus einer neuen Mail eine Aufgabe an", async ({ page }) => {
+    const token = unique("Reklamation");
+    await login(page, "max");
+    await page.goto("/settings?section=rules");
+    await page.getByRole("button", { name: "Neue Regel" }).click();
+    const dialog = page.getByRole("dialog", { name: "Neue Regel" });
+    await dialog.getByLabel("Feld").selectOption("subject");
+    await dialog.getByLabel("Wert").fill(token);
+    await dialog.getByLabel("Aufgabe anlegen").check();
+    await dialog.getByRole("button", { name: "Regel speichern" }).click();
+    await expect(page.getByRole("list", { name: "Regeln" })).toContainText("Aufgabe anlegen");
+
+    await deliverMail({
+      from: "kunde@example.test",
+      fromName: "Petra Kunde",
+      to: address("max"),
+      subject: `AW: ${token} Heizung`,
+      body: "Die Heizung ist wieder kalt.",
+    });
+    await expect
+      .poll(
+        async () => {
+          const task = (await serverTasks(page)).find((t) => t.title === `${token} Heizung`);
+          return task
+            ? [task.status, (task as unknown as { links: { kind: string }[] }).links[0]?.kind]
+            : null;
+        },
+        { timeout: 20_000 },
+      )
+      .toEqual(["open", "mail"]);
+    // In the list, with the mail it came from.
+    await page.goto("/tasks");
+    await expect(page.getByRole("link", { name: new RegExp(token) })).toContainText("Petra Kunde");
+
+    await page.goto("/settings?section=rules");
+    await page.getByRole("button", { name: new RegExp(token) }).click();
+    const edit = page.getByRole("dialog", { name: "Regel bearbeiten" });
+    await edit.getByRole("button", { name: "Regel löschen" }).click();
+    await edit.getByRole("button", { name: "Wirklich löschen?" }).click();
   });
 });

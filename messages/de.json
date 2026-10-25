@@ -1070,5 +1070,7 @@
   "tasks_column_down": "„{name}“ nach rechts",
   "tasks_column_remove": "„{name}“ löschen",
   "tasks_column_add": "Spalte hinzufügen",
-  "tasks_columns_saved": "Spalten gespeichert."
+  "tasks_columns_saved": "Spalten gespeichert.",
+  "rules_action_task": "Aufgabe anlegen",
+  "rules_then_task": "Aufgabe anlegen"
 }

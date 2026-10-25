@@ -13,6 +13,7 @@ const rule = (patch: Partial<Rule> = {}): Rule => ({
   flag: false,
   forwardTo: null,
   categories: [],
+  createTask: false,
   stop: false,
   ...patch,
 });
@@ -145,5 +146,14 @@ describe("isEffective", () => {
     expect(isEffective(rule({ enabled: false }))).toBe(false);
     expect(isEffective(rule({ moveTo: null }))).toBe(false);
     expect(isEffective(rule({ moveTo: null, flag: true }))).toBe(true);
+  });
+
+  it("marks a mail for a task", () => {
+    const script = rulesScript({
+      vacation: false,
+      rules: [rule({ moveTo: null, createTask: true })],
+    });
+    expect(script).toContain('addflag "kontext.task";');
+    expect(isEffective(rule({ moveTo: null, createTask: true }))).toBe(true);
   });
 });

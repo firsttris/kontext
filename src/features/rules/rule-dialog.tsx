@@ -269,6 +269,11 @@ export const RuleDialog = ({
             checked={rule.flag}
             onChange={(flag) => set({ flag })}
           />
+          <Action
+            label={m.rules_action_task()}
+            checked={rule.createTask}
+            onChange={(createTask) => set({ createTask })}
+          />
           {categories.length ? (
             <Action
               label={m.rules_action_category()}
