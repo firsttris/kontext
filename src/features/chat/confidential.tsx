@@ -6,11 +6,15 @@
  */
 import { type QueryClient, useQuery, useQueryClient } from "@tanstack/react-query";
 import { LockKeyhole, ShieldAlert } from "lucide-react";
-import { isSealed, type Message } from "@/lib/chat";
+import { useMemo } from "react";
+import { type Channel, isSealed, type Message } from "@/lib/chat";
+import type { ChatFile } from "@/lib/chat-cards";
+import { decodePayload, encodePayload, sealedFiles } from "@/lib/sealed-chat";
 import { m } from "@/paraglide/messages";
 import { Unlock } from "../pgp/pgp-mail";
 import { currentUnlocked, useUnlockedKey } from "../pgp/queries";
 import { send } from "./queries";
+import { fileUrl } from "./upload";
 
 type MemberKey = { memberId: string; publicKey: string };
 type Opened = { text: string; signature: "valid" | "invalid" };
@@ -34,21 +38,95 @@ const channelKeys = (queryClient: QueryClient, channelId: string) =>
     staleTime: 60_000,
   });
 
-/** The text encrypted to every member and signed with one's key. */
-export const sealText = async (queryClient: QueryClient, channelId: string, text: string) => {
+const membersKeys = async (queryClient: QueryClient, channelId: string) => {
   const key = currentUnlocked();
   if (!key) throw new Error(m.chat_confidential_locked());
+  const { readKey } = await openpgp();
   const keys = await channelKeys(queryClient, channelId);
-  const { createMessage, encrypt, readKey } = await openpgp();
-  const armored = (await encrypt({
-    message: await createMessage({ text }),
+  return {
+    key,
     encryptionKeys: await Promise.all(
       keys.map((entry) => readKey({ armoredKey: entry.publicKey })),
     ),
+  };
+};
+
+/**
+ * The text encrypted to every member and signed with one's key; with files, their real names go
+ * inside (src/lib/sealed-chat.ts).
+ */
+export const sealText = async (
+  queryClient: QueryClient,
+  channelId: string,
+  text: string,
+  files: ChatFile[] = [],
+) => {
+  const { key, encryptionKeys } = await membersKeys(queryClient, channelId);
+  const { createMessage, encrypt } = await openpgp();
+  const plain = encodePayload(text, files);
+  const armored = (await encrypt({
+    message: await createMessage({ text: plain }),
+    encryptionKeys,
     signingKeys: key,
   })) as string;
-  opened.set(armored, { text, signature: "valid" });
+  opened.set(armored, { text: plain, signature: "valid" });
   return armored;
+};
+
+/** A file's bytes encrypted to every member, as the server keeps them. */
+export const sealFile = async (queryClient: QueryClient, channelId: string, file: File) => {
+  const { key, encryptionKeys } = await membersKeys(queryClient, channelId);
+  const { createMessage, encrypt } = await openpgp();
+  const bytes = (await encrypt({
+    message: await createMessage({ binary: new Uint8Array(await file.arrayBuffer()) }),
+    encryptionKeys,
+    signingKeys: key,
+    format: "binary",
+  })) as Uint8Array;
+  return new File([bytes as Uint8Array<ArrayBuffer>], "verschlüsselt", {
+    type: "application/octet-stream",
+  });
+};
+
+/** How files go up in this channel: encrypted in a confidential one, as they are elsewhere. */
+export const useSeal = (channel: Pick<Channel, "id" | "confidential">) => {
+  const queryClient = useQueryClient();
+  return useMemo(
+    () =>
+      channel.confidential ? (file: File) => sealFile(queryClient, channel.id, file) : undefined,
+    [queryClient, channel.id, channel.confidential],
+  );
+};
+
+/** Local addresses of a message's files, opened here; empty until they are. */
+export const useSealedUrls = (files: ChatFile[], enabled: boolean) => {
+  const key = useUnlockedKey();
+  const ids = files.map((file) => file.id).join(",");
+  const { data } = useQuery({
+    queryKey: ["chat", "sealed-files", ids, key?.getFingerprint()],
+    queryFn: async () => {
+      const { decrypt, readMessage } = await openpgp();
+      const urls: Record<string, string> = {};
+      for (const file of files) {
+        const response = await fetch(fileUrl(file.id), { credentials: "same-origin" });
+        const { data: bytes } = await decrypt({
+          message: await readMessage({
+            binaryMessage: new Uint8Array(await response.arrayBuffer()),
+          }),
+          decryptionKeys: key!,
+          format: "binary",
+        });
+        urls[file.id] = URL.createObjectURL(
+          new Blob([bytes as Uint8Array<ArrayBuffer>], { type: file.type }),
+        );
+      }
+      return urls;
+    },
+    enabled: enabled && Boolean(key) && files.length > 0,
+    staleTime: Number.POSITIVE_INFINITY,
+    retry: false,
+  });
+  return useMemo(() => data ?? {}, [data]);
 };
 
 const openText = async (queryClient: QueryClient, message: Message): Promise<Opened> => {
@@ -88,8 +166,21 @@ export const useOpened = (message: Message): Shown => {
   });
   if (!sealed) return message;
   const result = known ?? data;
-  if (result) return { ...message, text: result.text, sealed: result.signature };
-  return { ...message, text: "", sealed: !key ? "locked" : isError ? "failed" : "opening" };
+  if (result) {
+    const payload = decodePayload(result.text);
+    return {
+      ...message,
+      text: payload.text,
+      files: sealedFiles(payload, message.files),
+      sealed: result.signature,
+    };
+  }
+  return {
+    ...message,
+    text: "",
+    files: [],
+    sealed: !key ? "locked" : isError ? "failed" : "opening",
+  };
 };
 
 /** In place of a text that is not open (yet). */

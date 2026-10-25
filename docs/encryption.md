@@ -143,10 +143,14 @@ markieren („Neue Nachricht“ → „Vertraulich – Ende-zu-Ende verschlüsse
   (`src/features/chat/confidential.tsx`, OpenPGP). Der Server nimmt in solchen Kanälen nur
   verschlüsselten Text an (`fitsConfidential`, `server/chat/chat.ts`) – nicht einmal der Admin
   kann mitlesen.
+- Fotos und Dateien gehen genauso verschlüsselt hoch (`kind=sealed`); der Server kennt sie nur
+  als „verschlüsselt“, ihre echten Namen und Typen stehen im verschlüsselten Text der Nachricht
+  (`src/lib/sealed-chat.ts`). Kleine Vorschaubilder gibt es dort nicht, die Fotos werden (wie
+  sonst auch) vor dem Hochladen verkleinert.
 - Gelesen wird nach dem Entsperren des eigenen Schlüssels; passt die Unterschrift nicht zum
   Absender, steht das unter der Nachricht.
 - Dafür: keine Suche, kein Text in Benachrichtigungen und in der Kanalliste (nur „Vertrauliche
-  Nachricht“), keine Anhänge und Karten (sie wären lesbar), Aufgaben aus einer Nachricht nur mit
+  Nachricht“), keine Karten (sie wären lesbar), Aufgaben aus einer Nachricht nur mit
   Verweis. Wer neu dazukommt, liest ab dann; frühere Nachrichten waren nicht an seinen Schlüssel
   verschlüsselt. Wer erwähnt wird, wer reagiert und wann geschrieben wurde, sieht der Server
   weiterhin.

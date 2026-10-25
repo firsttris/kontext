@@ -19,7 +19,11 @@ export type PendingFile = {
 
 export type Attachments = ReturnType<typeof useAttachments>;
 
-export const useAttachments = (channelId: string) => {
+/** `seal`: files go encrypted (a confidential channel, src/features/chat/confidential.tsx). */
+export const useAttachments = (
+  channelId: string,
+  { seal }: { seal?: (file: File) => Promise<File> } = {},
+) => {
   const toast = useToast();
   const [files, setFiles] = useState<PendingFile[]>([]);
   const [cards, setCards] = useState<Card[]>([]);
@@ -58,7 +62,7 @@ export const useAttachments = (channelId: string) => {
           ...current,
           { key, name: file.name, type: file.type, preview, uploaded: null },
         ]);
-        uploadFile(channelId, file).then(
+        uploadFile(channelId, file, { seal }).then(
           (uploaded) =>
             setFiles((current) =>
               current.map((item) => (item.key === key ? { ...item, uploaded } : item)),
@@ -70,7 +74,7 @@ export const useAttachments = (channelId: string) => {
         );
       }
     },
-    [channelId, files.length, toast, drop],
+    [channelId, files.length, toast, drop, seal],
   );
 
   const addCard = useCallback(

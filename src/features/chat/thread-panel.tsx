@@ -8,7 +8,7 @@ import { useEffect, useLayoutEffect, useRef } from "react";
 import { type ChannelSummary, firstName, type Message, timeline } from "@/lib/chat";
 import { m } from "@/paraglide/messages";
 import { useUnlockedKey } from "../pgp/queries";
-import { ConfidentialUnlock } from "./confidential";
+import { ConfidentialUnlock, useSeal } from "./confidential";
 import { MessageInput } from "./message-input";
 import { isPending, Run } from "./message-run";
 import { useChatActions } from "./queries";
@@ -34,7 +34,8 @@ export const ThreadPanel = ({
   const { thread, isError } = useThread(parentId);
   const actions = useChatActions(me);
   const react = useReact(me);
-  const attachments = useAttachments(channel.id);
+  const seal = useSeal(channel);
+  const attachments = useAttachments(channel.id, { seal });
   const unlocked = useUnlockedKey();
   const replies = thread?.replies ?? [];
 
@@ -60,7 +61,13 @@ export const ThreadPanel = ({
     onMakeTask,
     onReact: react,
     onEdit: (message: Message, text: string, mentions: string[]) =>
-      actions.edit.mutate({ id: message.id, channelId: message.channelId, text, mentions }),
+      actions.edit.mutate({
+        id: message.id,
+        channelId: message.channelId,
+        text,
+        mentions,
+        files: message.files,
+      }),
     onDelete: (message: Message) => {
       if (window.confirm(m.chat_delete_message_confirm())) actions.remove.mutate(message.id);
     },
@@ -142,7 +149,8 @@ export const ThreadPanel = ({
             me={me}
             autoFocus
             onTyping={() => undefined}
-            attachments={channel.confidential ? undefined : attachments}
+            attachments={attachments}
+            cards={!channel.confidential}
             onSend={(text, mentions) => {
               actions.post.mutate({
                 channelId: channel.id,

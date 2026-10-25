@@ -207,13 +207,13 @@ export const useChatActions = (me: string) => {
   const refreshChannels = () => queryClient.invalidateQueries({ queryKey: CHANNELS_KEY });
 
   /** A confidential channel's text goes encrypted (src/features/chat/confidential.tsx). */
-  const textFor = async (channelId: string, text: string) => {
+  const textFor = async (channelId: string, text: string, files: ChatFile[] = []) => {
     const channel = queryClient
       .getQueryData<ChannelsData>(CHANNELS_KEY)
       ?.channels.find((candidate) => candidate.id === channelId);
     if (!channel?.confidential) return text;
     const { sealText } = await import("./confidential");
-    return sealText(queryClient, channelId, text);
+    return sealText(queryClient, channelId, text, files);
   };
 
   const post = useMutation({
@@ -221,7 +221,7 @@ export const useChatActions = (me: string) => {
       (
         await send<{ message: Message }>("POST", `${channelPath(channelId)}/messages`, {
           ...body,
-          text: await textFor(channelId, body.text),
+          text: await textFor(channelId, body.text, files),
           parentId,
           fileIds: files.map((file) => file.id),
         })
@@ -316,15 +316,18 @@ export const useChatActions = (me: string) => {
       channelId,
       text,
       mentions,
+      files = [],
     }: {
       id: string;
       channelId: string;
       text: string;
       mentions: string[];
+      /** In a confidential channel the files' names go inside the text again. */
+      files?: ChatFile[];
     }) =>
       (
         await send<{ message: Message }>("PATCH", `/messages/${encodeURIComponent(id)}`, {
-          text: await textFor(channelId, text),
+          text: await textFor(channelId, text, files),
           mentions,
         })
       ).message,

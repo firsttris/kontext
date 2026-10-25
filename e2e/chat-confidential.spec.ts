@@ -2,6 +2,12 @@ import { expect, test } from "@playwright/test";
 import { login, unique } from "./helpers";
 import { giveKey, PASSPHRASE } from "./pgp-key";
 
+/** A picture of one pixel. */
+const PNG = Buffer.from(
+  "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==",
+  "base64",
+);
+
 test.describe("Chat: vertrauliche Unterhaltung", () => {
   test("Ende-zu-Ende verschlüsselt: auf dem Server unlesbar, bei Max nach dem Entsperren", async ({
     page,
@@ -60,6 +66,31 @@ test.describe("Chat: vertrauliche Unterhaltung", () => {
     await max.getByLabel("Passphrase deines Schlüssels").fill(PASSPHRASE);
     await max.getByRole("button", { name: "Entsperren" }).click();
     await expect(theirs).toContainText(text);
+    // Photos and files go encrypted too: on the server without name, at Max opened.
+    await page.locator('input[type="file"][multiple]').setInputFiles([
+      { name: "lohn.png", mimeType: "image/png", buffer: PNG },
+      {
+        name: "vertrag.pdf",
+        mimeType: "application/pdf",
+        buffer: Buffer.from("%PDF-1.4\n%%EOF\n"),
+      },
+    ]);
+    const tray = page.getByRole("region", { name: "Angehängt" });
+    await expect(tray.getByRole("status")).toHaveCount(0);
+    await page.keyboard.press("Enter");
+    await expect(tray).toHaveCount(0);
+    const photo = max.getByRole("button", { name: "Foto lohn.png groß zeigen" }).locator("img");
+    await expect.poll(() => photo.evaluate((img: HTMLImageElement) => img.naturalWidth)).toBe(1);
+    const pdf = max.getByRole("link", { name: /vertrag\.pdf/ });
+    await expect(pdf).toHaveAttribute("href", /^blob:/);
+    const stored = (await (
+      await page.request.get(`/api/chat/channels/${channel.id}/messages`)
+    ).json()) as { messages: { files: { id: string; name: string }[] }[] };
+    const files = stored.messages[0]!.files;
+    expect(files.map((file) => file.name)).toEqual(["verschlüsselt", "verschlüsselt"]);
+    const raw = await page.request.get(`/api/chat/files/${files[1]!.id}`);
+    expect((await raw.body()).toString("latin1")).not.toContain("%PDF");
+
     // An answer goes the same way, live to Anna.
     const answer = unique("Passt, 10 Uhr");
     await max.getByRole("textbox", { name: "Nachricht" }).fill(answer);

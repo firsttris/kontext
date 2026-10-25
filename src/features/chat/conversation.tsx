@@ -18,7 +18,7 @@ import { cn } from "@/lib/cn";
 import { m } from "@/paraglide/messages";
 import { useUnlockedKey } from "../pgp/queries";
 import { ChannelMenu } from "./channel-menu";
-import { ConfidentialUnlock } from "./confidential";
+import { ConfidentialUnlock, useSeal } from "./confidential";
 import { MessageInput } from "./message-input";
 import { isPending, Run } from "./message-run";
 import { useChannels, useChatActions, useMessages } from "./queries";
@@ -145,7 +145,8 @@ export const Conversation = ({
     }
   });
 
-  const attachments = useAttachments(channel.id);
+  const seal = useSeal(channel);
+  const attachments = useAttachments(channel.id, { seal });
   const [dragging, setDragging] = useState(false);
   const [task, setTask] = useState<TaskStart | null>(null);
   const makeTask = (message: Message) => {
@@ -186,7 +187,7 @@ export const Conversation = ({
           threadId ? "hidden lg:flex" : "flex",
         )}
         onDragOver={(event) => {
-          if (!carriesFiles(event) || channel.confidential) return;
+          if (!carriesFiles(event)) return;
           event.preventDefault();
           setDragging(true);
         }}
@@ -194,7 +195,7 @@ export const Conversation = ({
           if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setDragging(false);
         }}
         onDrop={(event) => {
-          if (!carriesFiles(event) || channel.confidential) return;
+          if (!carriesFiles(event)) return;
           event.preventDefault();
           setDragging(false);
           attachments.addFiles(event.dataTransfer.files);
@@ -318,6 +319,7 @@ export const Conversation = ({
                       channelId: message.channelId,
                       text,
                       mentions,
+                      files: message.files,
                     })
                   }
                   onDelete={(message) => {
@@ -359,7 +361,8 @@ export const Conversation = ({
               people={mentionable}
               me={me}
               onTyping={() => actions.typing(channel.id)}
-              attachments={channel.confidential ? undefined : attachments}
+              attachments={attachments}
+              cards={!channel.confidential}
               onSend={(text, mentions) => {
                 atBottom.current = true;
                 actions.post.mutate({

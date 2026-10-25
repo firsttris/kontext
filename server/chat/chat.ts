@@ -201,12 +201,24 @@ export const newDirectSchema = z.object({
   confidential: z.boolean().default(false),
 });
 
-/** In a confidential channel: only encrypted text, no cards or files (they would be readable). */
-export const fitsConfidential = (message: {
-  text: string;
-  cards?: unknown[];
-  fileIds?: string[];
-}): boolean => isSealed(message.text) && !message.cards?.length && !message.fileIds?.length;
+/**
+ * A file encrypted in the app for a confidential channel: OpenPGP bytes the server cannot open;
+ * its name and type travel inside the message's encrypted text.
+ */
+export const SEALED_FILE_TYPE = "application/vnd.kontext.sealed";
+
+/** Binary OpenPGP data begins with a packet header, whose highest bit is set (RFC 9580 §4.2). */
+export const looksSealed = (firstByte: number | undefined): boolean =>
+  firstByte !== undefined && (firstByte & 0x80) !== 0;
+
+/**
+ * In a confidential channel: only encrypted text, no cards (they would be readable); files only
+ * encrypted ones (`sealedFiles`: whether all of them are).
+ */
+export const fitsConfidential = (
+  message: { text: string; cards?: unknown[]; fileIds?: string[] },
+  sealedFiles = !message.fileIds?.length,
+): boolean => isSealed(message.text) && !message.cards?.length && sealedFiles;
 
 export const newMessageSchema = z
   .object({

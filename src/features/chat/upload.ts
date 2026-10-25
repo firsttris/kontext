@@ -59,18 +59,24 @@ export const thumbnailOf = async (file: File): Promise<File | null> => {
   }
 };
 
+/**
+ * `seal`: in a confidential channel the file goes encrypted, without a small picture; what comes
+ * back carries its real name and type for the message's encrypted text.
+ */
 export const uploadFile = async (
   channelId: string,
   file: File,
-  { mailCopy = false }: { mailCopy?: boolean } = {},
+  { mailCopy = false, seal }: { mailCopy?: boolean; seal?: (file: File) => Promise<File> } = {},
 ): Promise<ChatFile> => {
   const ready = isPhoto(file.type) ? await shrinkPhoto(file) : file;
-  if (ready.size > MAX_FILE_BYTES) throw new Error(m.chat_file_too_large({ name: file.name }));
+  const sent = seal ? await seal(ready) : ready;
+  if (sent.size > MAX_FILE_BYTES) throw new Error(m.chat_file_too_large({ name: file.name }));
   const form = new FormData();
-  form.append("file", ready);
-  const thumb = await thumbnailOf(ready);
+  form.append("file", sent);
+  const thumb = seal ? null : await thumbnailOf(ready);
   if (thumb) form.append("thumb", thumb);
   if (mailCopy) form.append("kind", "mail-copy");
+  if (seal) form.append("kind", "sealed");
   const response = await fetch(`/api/chat/channels/${encodeURIComponent(channelId)}/files`, {
     method: "POST",
     credentials: "same-origin",
@@ -78,7 +84,14 @@ export const uploadFile = async (
   });
   const result = (await response.json().catch(() => ({}))) as { file?: ChatFile; error?: string };
   if (!response.ok || !result.file) throw new Error(result.error ?? String(response.status));
-  return result.file;
+  return seal
+    ? {
+        ...result.file,
+        name: ready.name,
+        type: ready.type || "application/octet-stream",
+        size: ready.size,
+      }
+    : result.file;
 };
 
 export const fileUrl = (id: string) => `/api/chat/files/${encodeURIComponent(id)}`;

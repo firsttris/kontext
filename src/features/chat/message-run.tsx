@@ -16,7 +16,7 @@ import { tasksOfMessage } from "@/lib/chat-cards";
 import { hasNewReplies } from "@/lib/chat-threads";
 import { cn } from "@/lib/cn";
 import { m } from "@/paraglide/messages";
-import { ForgedNote, SealedLine, useOpened } from "./confidential";
+import { ForgedNote, SealedLine, useOpened, useSealedUrls } from "./confidential";
 import { MessageCard } from "./message-card";
 import { MessageFiles } from "./message-files";
 import { MessageText } from "./message-text";
@@ -203,6 +203,7 @@ const Item = ({
   // In a confidential channel: the text as opened here; what leaves the chat (a task) is told
   // only that there was a message.
   const message = useOpened(stored);
+  const sealedUrls = useSealedUrls(message.files, Boolean(message.sealed));
   const live = !isPending(message) && !message.deleted && !message.call;
   const { tasks } = useTasks();
   const statusLabel = useStatusLabel();
@@ -278,7 +279,7 @@ const Item = ({
         )}
       </div>
       {message.sealed === "invalid" ? <ForgedNote /> : null}
-      <MessageFiles files={message.files} />
+      <MessageFiles files={message.files} urls={message.sealed ? sealedUrls : undefined} />
       {message.cards.map((card) => (
         <MessageCard key={`${card.kind}-${card.ref}`} card={card} />
       ))}

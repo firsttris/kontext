@@ -15,6 +15,7 @@ import {
   editMessageSchema,
   fitsConfidential,
   INLINE_TYPES,
+  looksSealed,
   MAIL_COPY_TYPE,
   MAX_FILE_BYTES,
   type Message,
@@ -24,6 +25,7 @@ import {
   newMessageSchema,
   notifyWho,
   readSchema,
+  SEALED_FILE_TYPE,
   searchSchema,
   type Viewer,
 } from "./chat";
@@ -49,7 +51,7 @@ export type ChatDeps = {
 };
 
 const NOT_SEALED =
-  "In einem vertraulichen Kanal gehen nur verschlüsselte Nachrichten, ohne Karten und Dateien.";
+  "In einem vertraulichen Kanal gehen nur verschlüsselte Nachrichten und Dateien, ohne Karten.";
 
 const PAGE = 50;
 
@@ -194,8 +196,10 @@ export const createChatRoutes = ({
     if (!channel) return c.json({ error: "Unbekannter Kanal" }, 404);
     const parsed = newMessageSchema.safeParse(await c.req.json().catch(() => null));
     if (!parsed.success) return c.json({ error: "Die Nachricht ist leer." }, 400);
-    if (channel.confidential && !fitsConfidential(parsed.data)) {
-      return c.json({ error: NOT_SEALED }, 400);
+    if (channel.confidential) {
+      const uploads = await Promise.all(parsed.data.fileIds.map((id) => files.get(id)));
+      const sealed = uploads.every((file) => file?.type === SEALED_FILE_TYPE);
+      if (!fitsConfidential(parsed.data, sealed)) return c.json({ error: NOT_SEALED }, 400);
     }
     // An answer goes to a message of this channel itself, not to another answer.
     const parent = parsed.data.parentId ? await messages.get(parsed.data.parentId) : null;
@@ -347,6 +351,18 @@ export const createChatRoutes = ({
     }
     if (file.size > MAX_FILE_BYTES) {
       return c.json({ error: "Die Datei ist größer als 25 MB." }, 413);
+    }
+    const sealed = form?.get("kind") === "sealed";
+    // In a confidential channel only encrypted files, without a readable name or small picture.
+    if (sealed !== channel.confidential) return c.json({ error: NOT_SEALED }, 400);
+    if (sealed) {
+      const [first] = new Uint8Array(await file.slice(0, 1).arrayBuffer());
+      if (!looksSealed(first)) return c.json({ error: NOT_SEALED }, 400);
+      const blind = new File([file], "verschlüsselt", { type: SEALED_FILE_TYPE });
+      return c.json(
+        { file: await files.save(channel.id, viewer.me, blind, undefined, SEALED_FILE_TYPE) },
+        201,
+      );
     }
     const small = thumb && typeof thumb !== "string" ? thumb : undefined;
     // A mail shared as a copy says so; its content is shown only from its card.

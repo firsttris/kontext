@@ -29,7 +29,7 @@ Kleinere Dinge, die beim Bauen aufgefallen sind und noch erledigt werden.
 - [ ] Erinnerung an Aufgaben auch direkt im Dialog „Neue Aufgabe“ (heute in der geöffneten Aufgabe).
 - [ ] „Vertraulich senden“: Laufzeit des Links wählbar (heute 30 Tage).
 - [ ] PGP: nur unterschreiben (ohne Verschlüsseln) beim Senden; den Betreff mitverschlüsseln (Protected Headers); verschlüsselte Mails in der Unterhaltungsansicht und beim Weiterleiten mit Inhalt.
-- [ ] Vertraulicher Chat: Fotos und Dateien verschlüsselt (heute nur Text), ein bestehender Kanal nachträglich vertraulich, Schlüsselwechsel eines Mitglieds anzeigen.
+- [ ] Vertraulicher Chat: ein bestehender Kanal nachträglich vertraulich, Schlüsselwechsel eines Mitglieds anzeigen.
 - [ ] S/MIME: Zertifikatsketten gegen eine Liste anerkannter Stellen prüfen und Sperrlisten (OCSP) abfragen (heute zeigt Kontext die ausstellende Stelle); Zertifikate anderer im Verzeichnis der Stelle suchen; nur unterschreiben beim Senden.
 - [ ] CalDAV für Aufgaben mit Bestätigung in zwei Schritten: App-Passwörter anlegen können (Thunderbird und Handy fragen keinen Code ab); dazu `sync-collection` für schnelleren Abgleich auf dem iPhone.
 - [ ] **Regeln für Mitarbeiter** in der Firmenverwaltung (heute nur für gemeinsame Postfächer und die eigenen).
@@ -59,6 +59,7 @@ Kleinere Dinge, die beim Bauen aufgefallen sind und noch erledigt werden.
 
 ## Zuletzt fertig geworden
 
+Vertraulicher Chat: Fotos und Dateien gehen Ende-zu-Ende verschlüsselt, ohne lesbaren Namen auf dem Server.
 Verschlüsselung, Baustein 5: vertrauliche Direktnachrichten und Kanäle im Chat, Ende-zu-Ende
 verschlüsselt mit den persönlichen Schlüsseln, unterschrieben; der Server sieht nur Verschlüsseltes.
 Verschlüsselung, S/MIME: eigenes Zertifikat (.p12) importieren, Zertifikate anderer aus

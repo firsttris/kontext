@@ -1,6 +1,7 @@
 /**
  * Photos and files of a message: photos as tiles (one large, several in a grid) that open big
- * with arrows between them, other files as rows to download.
+ * with arrows between them, other files as rows to download. Files of a confidential channel come
+ * with `urls`: opened in the app, they have local addresses (empty while they open).
  */
 import * as DialogPrimitive from "@radix-ui/react-dialog";
 import { ChevronLeft, ChevronRight, Download, FileText, X } from "lucide-react";
@@ -11,13 +12,20 @@ import { formatSize } from "@/lib/format";
 import { m } from "@/paraglide/messages";
 import { fileUrl, thumbUrl } from "./upload";
 
+type Urls = Record<string, string> | undefined;
+
+const full = (file: ChatFile, urls: Urls) => (urls ? urls[file.id] : fileUrl(file.id));
+const small = (file: ChatFile, urls: Urls) => (urls ? urls[file.id] : thumbUrl(file));
+
 const PhotoViewer = ({
   photos,
   start,
+  urls,
   onClose,
 }: {
   photos: ChatFile[];
   start: number;
+  urls: Urls;
   onClose: () => void;
 }) => {
   const [index, setIndex] = useState(start);
@@ -43,7 +51,7 @@ const PhotoViewer = ({
               {photo.name}
             </DialogPrimitive.Title>
             <a
-              href={fileUrl(photo.id)}
+              href={full(photo, urls)}
               download={photo.name}
               aria-label={m.chat_download()}
               className={button}
@@ -66,7 +74,7 @@ const PhotoViewer = ({
               </button>
             ) : null}
             <img
-              src={fileUrl(photo.id)}
+              src={full(photo, urls)}
               alt={photo.name}
               className="max-h-full min-w-0 max-w-full rounded-lg object-contain"
             />
@@ -87,7 +95,7 @@ const PhotoViewer = ({
   );
 };
 
-export const MessageFiles = ({ files }: { files: ChatFile[] }) => {
+export const MessageFiles = ({ files, urls }: { files: ChatFile[]; urls?: Urls }) => {
   const [open, setOpen] = useState<number | null>(null);
   const photos = files.filter((file) => isPhoto(file.type));
   const others = files.filter((file) => !isPhoto(file.type));
@@ -105,7 +113,7 @@ export const MessageFiles = ({ files }: { files: ChatFile[] }) => {
                 className="block overflow-hidden rounded-xl border border-border bg-subtle"
               >
                 <img
-                  src={thumbUrl(photo)}
+                  src={small(photo, urls)}
                   alt=""
                   loading="lazy"
                   className={cn(
@@ -123,7 +131,7 @@ export const MessageFiles = ({ files }: { files: ChatFile[] }) => {
       {others.map((file) => (
         <a
           key={file.id}
-          href={fileUrl(file.id)}
+          href={full(file, urls)}
           download={file.name}
           className="flex max-w-[360px] items-center gap-3 rounded-xl border border-border bg-bg px-3 py-2 text-fg no-underline hover:bg-hover"
         >
@@ -138,7 +146,7 @@ export const MessageFiles = ({ files }: { files: ChatFile[] }) => {
         </a>
       ))}
       {open !== null ? (
-        <PhotoViewer photos={photos} start={open} onClose={() => setOpen(null)} />
+        <PhotoViewer photos={photos} start={open} urls={urls} onClose={() => setOpen(null)} />
       ) : null}
     </div>
   );

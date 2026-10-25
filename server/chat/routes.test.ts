@@ -105,11 +105,11 @@ const memoryMessages = () => {
   const messages: Message[] = [];
   const stored: StoredFile[] = [];
   const files: ChatFiles = {
-    save: async (channelId, _by, file) => {
+    save: async (channelId, _by, file, _thumb, type = file.type) => {
       const saved = {
         id: `f${stored.length + 1}`,
         name: file.name,
-        type: file.type,
+        type,
         size: file.size,
       };
       stored.push({ ...saved, channelId, messageId: null, path: "", thumbPath: null });
@@ -489,6 +489,40 @@ describe("/api/chat", () => {
     expect(bodies.at(-1)).toBe("Vertrauliche Nachricht");
     expect(
       (await send("PATCH", `/messages/${posted.body.message.id}`, { text: "jetzt lesbar" })).status,
+    ).toBe(400);
+  });
+
+  it("takes only encrypted files in a confidential channel, without their names", async () => {
+    const { send, app } = setup();
+    const plain = (await send("POST", "/direct", { members: ["anna"] })).body.channel;
+    const sealed = (await send("POST", "/direct", { members: ["anna"], confidential: true })).body
+      .channel;
+    const upload = (channelId: string, bytes: number[], kind?: string) => {
+      const form = new FormData();
+      form.append("file", new File([new Uint8Array(bytes)], "Gehaltsliste.pdf"));
+      if (kind) form.append("kind", kind);
+      return app.request(`/channels/${channelId}/files`, { method: "POST", body: form });
+    };
+    expect((await upload(sealed.id, [0x25, 0x50, 0x44, 0x46])).status).toBe(400);
+    expect((await upload(sealed.id, [0x25, 0x50], "sealed")).status).toBe(400);
+    expect((await upload(plain.id, [0xc1, 0x01], "sealed")).status).toBe(400);
+    const done = await upload(sealed.id, [0xc1, 0x01, 0x02], "sealed");
+    expect(done.status).toBe(201);
+    const { file } = (await done.json()) as { file: { id: string; name: string; type: string } };
+    expect(file).toMatchObject({ name: "verschlüsselt", type: "application/vnd.kontext.sealed" });
+    const armored = "-----BEGIN PGP MESSAGE-----\n\nwcBMA…\n-----END PGP MESSAGE-----";
+    const posted = await send("POST", `/channels/${sealed.id}/messages`, {
+      text: armored,
+      fileIds: [file.id],
+    });
+    expect(posted.status).toBe(201);
+    expect(posted.body.message.files).toHaveLength(1);
+    // A file that went up readable (in another channel) does not go into a confidential one.
+    const open = await upload(plain.id, [0x25, 0x50]);
+    const openId = ((await open.json()) as { file: { id: string } }).file.id;
+    expect(
+      (await send("POST", `/channels/${sealed.id}/messages`, { text: armored, fileIds: [openId] }))
+        .status,
     ).toBe(400);
   });
 });

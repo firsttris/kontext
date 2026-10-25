@@ -30,6 +30,8 @@ type Props = {
   attachments?: Attachments;
   /** Something goes along anyway (a mail being discussed), so a message without text is fine. */
   allowEmpty?: boolean;
+  /** Mails, tasks and contacts as cards; not in a confidential channel (they are not encrypted). */
+  cards?: boolean;
   autoFocus?: boolean;
 };
 
@@ -41,6 +43,7 @@ export const MessageInput = ({
   onTyping,
   attachments,
   allowEmpty = false,
+  cards = true,
   autoFocus = false,
 }: Props) => {
   const field = useRef<HTMLTextAreaElement>(null);
@@ -208,9 +211,11 @@ export const MessageInput = ({
                 <MenuItem onSelect={() => filePicker.current?.click()}>
                   <Paperclip size={15} /> {m.chat_attach()}
                 </MenuItem>
-                <MenuItem onSelect={() => setLinking(true)}>
-                  <Link2 size={15} /> {m.chat_link()}
-                </MenuItem>
+                {cards ? (
+                  <MenuItem onSelect={() => setLinking(true)}>
+                    <Link2 size={15} /> {m.chat_link()}
+                  </MenuItem>
+                ) : null}
               </MenuContent>
             </MenuRoot>
           ) : null}
@@ -246,16 +251,18 @@ export const MessageInput = ({
                 >
                   <Paperclip size={16} />
                 </Button>
-                <Button
-                  variant="ghost"
-                  size="iconSm"
-                  aria-label={m.chat_link()}
-                  title={m.chat_link()}
-                  className="hidden md:inline-flex"
-                  onClick={() => setLinking(true)}
-                >
-                  <Link2 size={16} />
-                </Button>
+                {cards ? (
+                  <Button
+                    variant="ghost"
+                    size="iconSm"
+                    aria-label={m.chat_link()}
+                    title={m.chat_link()}
+                    className="hidden md:inline-flex"
+                    onClick={() => setLinking(true)}
+                  >
+                    <Link2 size={16} />
+                  </Button>
+                ) : null}
               </>
             ) : null}
             <Button
