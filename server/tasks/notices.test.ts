@@ -86,6 +86,12 @@ describe("repeating tasks", () => {
     });
   });
 
+  it("a Berlin time that comes twice is the first, one that does not exist is summer time", () => {
+    expect(berlinInstant("2026-10-25", "02:30").toISOString()).toBe("2026-10-25T00:30:00.000Z");
+    expect(berlinInstant("2026-03-29", "02:30").toISOString()).toBe("2026-03-29T01:30:00.000Z");
+    expect(berlinInstant("2026-03-29", "03:30").toISOString()).toBe("2026-03-29T01:30:00.000Z");
+  });
+
   it("keeps the reminder's local time across the change to winter time", () => {
     expect(berlinInstant("2026-10-24", "08:45").toISOString()).toBe("2026-10-24T06:45:00.000Z");
     expect(berlinInstant("2026-10-26", "08:45").toISOString()).toBe("2026-10-26T07:45:00.000Z");

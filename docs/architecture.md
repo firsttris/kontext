@@ -521,8 +521,9 @@ oder Reihenfolge.
   Antwort fünf Minuten. Clients lesen per PROPFIND (mit `getctag`) und REPORT
   `calendar-multiget`/`calendar-query`, schreiben mit PUT (`If-Match` auf den ETag) und löschen
   mit DELETE; `sync-collection` gibt es nicht, die Clients fallen auf den ctag zurück. Titel,
-  Notiz, Fälligkeit (Zeiten in UTC hinaus, ohne Zone hinein als Berliner Zeit), Erledigt,
-  Wiederholung (`RRULE`, nur was Kontext kennt) und Erinnerung (`VALARM`) gehen hin und her;
+  Notiz, Fälligkeit (Zeiten in UTC hinaus; hinein in der Zone der `TZID`, ohne oder mit
+  unbekannter Zone als Berliner Zeit), Erledigt, Wiederholung (`RRULE`, nur was Kontext kennt)
+  und Erinnerung (`VALARM`) gehen hin und her;
   „in Arbeit“ ist im Client `IN-PROCESS` und in Kontext die erste Spalte nach „Offen“. Checkliste
   und Verknüpfungen bleiben in Kontext. Was ein Client anlegt, behält seinen Dateinamen und seine
   UID (`dav_name`, `dav_uid`). Mit Bestätigung in zwei Schritten klappt die Anmeldung noch nicht.

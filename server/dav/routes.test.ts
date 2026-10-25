@@ -164,6 +164,24 @@ describe("CalDAV", () => {
     expect(tasks.map((task) => task.title)).toEqual(["Halb"]);
   });
 
+  it("a due day that does not exist is stored as none, not as given, and is no 500", async () => {
+    const { tasks, call } = setup();
+    const april = await call(
+      "PUT",
+      "/dav/tasks/jonas/april.ics",
+      vtodo("Rechnung prüfen", ["DUE;VALUE=DATE:20260431"]),
+    );
+    expect(april.status).toBe(201);
+    expect(tasks[0]).toMatchObject({ title: "Rechnung prüfen", dueDate: null, dueTime: null });
+    const month13 = await call(
+      "PUT",
+      "/dav/tasks/jonas/month13.ics",
+      vtodo("Anruf", ["DUE;VALUE=DATE:20261305"]),
+    );
+    expect(month13.status).toBe(201);
+    expect(tasks.find((task) => task.title === "Anruf")).toMatchObject({ dueDate: null });
+  });
+
   it("a board one may only read stays as it is", async () => {
     const { call } = setup();
     expect((await call("PUT", "/dav/tasks/chef/x.ics", vtodo("Nein"))).status).toBe(403);
