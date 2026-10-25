@@ -2,7 +2,9 @@
  * Push of state changes (RFC 8620 §7.3). The browser's EventSource cannot send an Authorization
  * header, so the event stream is read with fetch. Reconnects with a growing delay. Stalwart tells
  * only of changes after the stream is up (crates/jmap/src/api/event_source.rs), so `onConnected`
- * lets the app catch up on what happened before – on the first connect and after every drop.
+ * lets the app catch up on what happened before – on the first connect and after every drop. It
+ * runs twice: when the answer arrives and once more a little later, as a change in the moment
+ * between the answer and Stalwart listening for this stream is told to nobody.
  */
 import { parseEvents } from "../../server/jmap";
 import { fillTemplate, type JmapClient } from "./client";
@@ -10,6 +12,9 @@ import { fillTemplate, type JmapClient } from "./client";
 export { parseEvents };
 
 export type StateChange = Record<string, Record<string, string>>;
+
+/** When the second catch-up after connecting runs. */
+export const CATCH_UP_AGAIN_MS = 2000;
 
 export const subscribeToChanges = (
   client: JmapClient,
@@ -30,6 +35,8 @@ export const subscribeToChanges = (
     if (!response.ok || !response.body) throw new Error(`Push ${response.status}`);
     delay = 1000;
     onConnected();
+    const again = setTimeout(onConnected, CATCH_UP_AGAIN_MS);
+    controller.signal.addEventListener("abort", () => clearTimeout(again), { once: true });
     const reader = response.body.pipeThrough(new TextDecoderStream()).getReader();
     let buffer = "";
     for (;;) {
