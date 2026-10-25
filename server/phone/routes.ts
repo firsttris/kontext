@@ -46,6 +46,7 @@ const STATUS: Record<Problem, 400 | 403 | 404 | 409 | 503> = {
   busy: 409,
   offline: 503,
   "bad-number": 400,
+  full: 409,
 };
 
 const MESSAGES: Record<Problem, string> = {
@@ -54,6 +55,7 @@ const MESSAGES: Record<Problem, string> = {
   busy: "Schon angenommen",
   offline: "Telefonbox nicht verbunden",
   "bad-number": "Keine gültige Nummer",
+  full: "Die Sperrliste ist voll",
 };
 
 const pairSchema = z.object({ code: z.string().trim().min(4).max(20) });

@@ -26,10 +26,12 @@ import {
   callbackTask,
   canSeeCall,
   closedCall,
+  dialTarget,
   faxCall,
   incomingCall,
   isDoor,
   isPerson,
+  menuMailboxCall,
   outgoingCall,
   type PhoneCall,
   type PhoneStatus,
@@ -41,7 +43,13 @@ import {
   unavailableAt,
   withoutUnavailable,
 } from "./phone";
-import type { BoxConfig, CallEvent, FromBox, ToBox } from "./protocol";
+import {
+  type BoxConfig,
+  type CallEvent,
+  type FromBox,
+  MAX_BLOCKED_NUMBERS,
+  type ToBox,
+} from "./protocol";
 import type { PhoneSettings, PhoneStore } from "./store";
 import { createTransfers, type TransferTarget } from "./transfer";
 
@@ -69,7 +77,7 @@ export type PhoneDeps = {
   now?: () => Date;
 };
 
-export type Problem = "not-allowed" | "offline" | "not-found" | "busy" | "bad-number";
+export type Problem = "not-allowed" | "offline" | "not-found" | "busy" | "bad-number" | "full";
 
 /** How long a message on the mailbox may be. */
 const MAILBOX_SECONDS = 120;
@@ -81,9 +89,14 @@ const knownSound = (settings: PhoneSettings, id: string | null) =>
 /** The company's time zone; the box compares opening hours in it. */
 const TIMEZONE = "Europe/Berlin";
 
-/** Closed days from today on (Asterisk knows no years, so past ones would come back). */
-const comingDays = (days: { day: string }[], today: string) =>
-  days.map((entry) => entry.day).filter((day) => day >= today);
+/**
+ * Closed days from today on, for the year ahead: Asterisk knows no years, so a past day would come
+ * back, and one a year or more ahead would close the same date this year.
+ */
+const comingDays = (days: { day: string }[], today: string) => {
+  const yearAhead = `${Number(today.slice(0, 4)) + 1}${today.slice(4)}`;
+  return days.map((entry) => entry.day).filter((day) => day >= today && day < yearAhead);
+};
 
 /** The first line's ring plan, as the app sees it. */
 export const ringPlanOf = (settings: PhoneSettings): RingPlan => ringPlanFor(settings, null);
@@ -218,6 +231,29 @@ export const createPhoneService = (deps: PhoneDeps) => {
     });
   };
 
+  /**
+   * When the next "Abwesend bis" runs out, the boxes get a new config (the desk phone rings
+   * again) and everyone sees the person back. Looked at anew with every config, so a restart or a
+   * long away is covered; long waits are cut into steps, as timers do not reach that far.
+   */
+  let statusTimer: ReturnType<typeof setTimeout> | null = null;
+  const watchStatuses = async () => {
+    if (statusTimer) clearTimeout(statusTimer);
+    statusTimer = null;
+    const ends = (await store.statuses())
+      .map((status) => (status.until ? Date.parse(status.until) - now().getTime() : 0))
+      .filter((left) => left > 0);
+    if (!ends.length) return;
+    statusTimer = setTimeout(
+      () => {
+        void publishPeople();
+        void sendConfig();
+      },
+      Math.min(...ends, 6 * 3_600_000),
+    );
+    statusTimer.unref?.();
+  };
+
   const sendConfig = async (boxId?: string) => {
     const message: ToBox = {
       type: "config",
@@ -231,6 +267,7 @@ export const createPhoneService = (deps: PhoneDeps) => {
       ),
     };
     for (const [id, send] of connected) if (!boxId || id === boxId) send(message);
+    await watchStatuses();
   };
 
   const onEvent = async (boxId: string, event: CallEvent) => {
@@ -243,6 +280,22 @@ export const createPhoneService = (deps: PhoneDeps) => {
       await save({
         ...closedCall(event, { id: newId(), boxId, members }),
         line: line?.label ?? null,
+      });
+      return;
+    }
+    if (!known && event.state === "mailbox" && event.direction === "in") {
+      // Chose the mailbox in the voice menu: it never rang, the message belongs to this call.
+      const settings = await store.settings();
+      const line = lineOf(settings, event.line);
+      const choice = choiceOf(settings, event.choice);
+      await save({
+        ...menuMailboxCall(event, {
+          id: newId(),
+          boxId,
+          members: ringPlanForCall(settings, line, choice).order,
+        }),
+        line: line?.label ?? null,
+        topic: choice?.label ?? null,
       });
       return;
     }
@@ -368,6 +421,21 @@ export const createPhoneService = (deps: PhoneDeps) => {
 
   const allowed = async (me: string) => everyone(await store.settings()).includes(me);
 
+  /**
+   * One at a time per call: two people pressing "Annehmen" at once would both read it as ringing
+   * before either is saved. The second one waits and then finds it taken.
+   */
+  const queues = new Map<string, Promise<unknown>>();
+  const oneAtATime = <T>(callId: string, work: () => Promise<T>): Promise<T> => {
+    const next = (queues.get(callId) ?? Promise.resolve()).then(work, work);
+    const settled = next.catch(() => undefined);
+    queues.set(callId, settled);
+    void settled.then(() => {
+      if (queues.get(callId) === settled) queues.delete(callId);
+    });
+    return next;
+  };
+
   return {
     /** A box came online; the function it returns handles what the box says. */
     connect: (boxId: string, sendToBox: (message: ToBox) => void) => {
@@ -410,33 +478,38 @@ export const createPhoneService = (deps: PhoneDeps) => {
         .map(withPresence),
 
     /** Take a ringing call in Kontext: the box puts it into a new room, which the caller joins. */
-    answer: async (callId: string, me: string): Promise<PhoneCall | Problem> => {
-      const call = await store.call(callId);
-      if (!call || !canSeeCall(call, me)) return "not-found";
-      const taken = takeCall(call, me, newId());
-      if (!taken) return "busy";
-      if (!connected.has(taken.boxId)) return "offline";
-      // Saved before the box hears of it: its "answered" may come back at once and must apply
-      // to the taken call, not be overwritten by it.
-      await save(taken);
-      send(taken, { type: "answer", call: taken.boxCallId, room: taken.room! });
-      return taken;
-    },
+    answer: (callId: string, me: string): Promise<PhoneCall | Problem> =>
+      oneAtATime(callId, async () => {
+        const call = await store.call(callId);
+        if (!call || !canSeeCall(call, me)) return "not-found";
+        const taken = takeCall(call, me, newId());
+        if (!taken) return "busy";
+        if (!connected.has(taken.boxId)) return "offline";
+        // Saved before the box hears of it: its "answered" may come back at once and must apply
+        // to the taken call, not be overwritten by it.
+        await save(taken);
+        send(taken, { type: "answer", call: taken.boxCallId, room: taken.room! });
+        return taken;
+      }),
 
     /** Call a number from Kontext, through a box that is online. */
     dial: async (me: string, number: string): Promise<PhoneCall | Problem> => {
       if (!(await allowed(me))) return "not-allowed";
-      const remote = toE164(number);
-      if (!remote) return "bad-number";
+      const settings = await store.settings();
+      const target = dialTarget(
+        number,
+        settings.deskPhones.map((desk) => desk.extension),
+      );
+      if (!target) return "bad-number";
       const boxId = connected.keys().next().value;
       if (!boxId) return "offline";
-      const line = outLineOf(await store.settings(), me);
+      const line = outLineOf(settings, me);
       const call = {
         ...outgoingCall({
           id: newId(),
           boxId,
           member: me,
-          remote,
+          remote: target.remote,
           room: newId(),
           at: now().toISOString(),
         }),
@@ -447,7 +520,7 @@ export const createPhoneService = (deps: PhoneDeps) => {
         type: "dial",
         call: call.id,
         room: call.room!,
-        number: toDialable(remote),
+        number: target.dial,
         ...(line ? { line: line.id } : {}),
       });
       return call;
@@ -505,15 +578,8 @@ export const createPhoneService = (deps: PhoneDeps) => {
     setStatus: async (status: PhoneStatus) => {
       await store.setStatus(status, now());
       await publishPeople();
+      // Also sets the timer for when the away runs out (watchStatuses).
       await sendConfig();
-      const left = status.until ? Date.parse(status.until) - now().getTime() : 0;
-      // When the away runs out, the desk phone rings again (and the app shows them back).
-      if (left > 0 && left < 86_400_000) {
-        setTimeout(() => {
-          void publishPeople();
-          void sendConfig();
-        }, left).unref?.();
-      }
     },
 
     /** Start or stop recording a call one is in (if the Firmenverwaltung allows it). */
@@ -554,6 +620,7 @@ export const createPhoneService = (deps: PhoneDeps) => {
       if (!e164) return "bad-number";
       const settings = await store.settings();
       if (!settings.blocked.numbers.some((entry) => entry.number === e164)) {
+        if (settings.blocked.numbers.length >= MAX_BLOCKED_NUMBERS) return "full";
         const entry = { number: e164, by: me, at: now().toISOString() };
         await store.saveSettings({
           ...settings,
@@ -566,7 +633,8 @@ export const createPhoneService = (deps: PhoneDeps) => {
 
     transfer: (callId: string, me: string, target: TransferTarget) =>
       shown(transfers.transfer(callId, me, target)),
-    takeTransfer: (callId: string, me: string) => shown(transfers.take(callId, me)),
+    takeTransfer: (callId: string, me: string) =>
+      oneAtATime(callId, () => shown(transfers.take(callId, me))),
     cancelTransfer: (callId: string, me: string) => shown(transfers.cancel(callId, me)),
 
     /** The call changed outside the service (a message arrived): tell who sees it. */

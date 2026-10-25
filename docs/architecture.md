@@ -704,7 +704,9 @@ flowchart LR
   (`box/agent/dialplan.ts`). Außerhalb meldet sie „closed“ statt „klingelt“ – Kontext legt den
   Anruf ohne Klingeln und ohne Web Push als „Außerhalb der Öffnungszeiten“ an –, spielt die Ansage
   und nimmt, wenn die Mailbox an ist, eine Nachricht auf. Asterisk kennt bei Tagen keine Jahre;
-  Kontext schickt deshalb nur kommende Tage und die Konfiguration einmal täglich neu. Die
+  Kontext schickt deshalb nur Tage von heute bis vor demselben Datum im nächsten Jahr (ein Tag
+  weiter weg würde dasselbe Datum in diesem Jahr schließen) und die Konfiguration einmal täglich
+  neu. Tage, die es nicht gibt („2026-02-30“), nimmt die Firmenverwaltung nicht an. Die
   Feiertage für Baden-Württemberg rechnet `server/phone/holidays.ts` aus (Ostern nach Gauß).
 - **Durchwahlen:** Jede weitere Nummer ist ein weiteres IP-Telefon an derselben Fritzbox, das dort
   nur auf diese Nummer reagiert; die Box meldet sich mit jedem an (`fritzbox-<id>`). Anrufe
@@ -723,12 +725,14 @@ flowchart LR
 - **Sprachmenü:** Nach den Öffnungszeiten nimmt die Box ab (`kontext-menu`), spielt die Ansage
   mit `Background()` und wartet auf eine Taste. Eine Taste setzt `KONTEXT_CHOICE` und klingelt
   (Kontext lässt die Leute dieser Taste klingeln, alle zugleich, und zeigt das Thema am Anruf) oder
-  führt auf die Mailbox; ohne Taste klingelt es wie sonst. Weil der Anruf dann schon angenommen
+  führt auf die Mailbox (über `kontext-in,mailbox`, das „mailbox“ mit Anrufer und Taste meldet,
+  sodass Kontext den Anruf anlegt, zu dem die Nachricht gehört); ohne Taste klingelt es wie sonst. Weil der Anruf dann schon angenommen
   ist, spielt die Box den Klingelton selbst (`Playtones(ring)`).
 - **Sperrliste:** prüft die Box ganz am Anfang, vor Öffnungszeiten und Klingeln: die gesperrten
   Nummern in jeder Form, in der die Fritzbox sie liefern kann (national, `+49`, `0049`, `49`,
   `numberForms`), und auf Wunsch unterdrückte. Sie meldet „blocked“ und weist ab (Ursache 21);
-  Kontext legt den Anruf als „Gesperrt“ in die Liste, ohne Klingeln.
+  Kontext legt den Anruf als „Gesperrt“ in die Liste, ohne Klingeln. Höchstens 1000 Nummern
+  (`MAX_BLOCKED_NUMBERS`), damit die Konfiguration mit allen Formen in das Protokoll passt.
 - **Auswertung:** `GET /api/phone/stats` rechnet aus den Anrufen, die man sehen darf
   (`server/phone/stats.ts`): Anrufe, angenommen und wie schnell, verpasst (nach Wochentag und
   Stunde in Europe/Berlin), außerhalb der Zeiten, Nachrichten, wer angenommen hat.
@@ -755,12 +759,13 @@ flowchart LR
   Abwesend (bis zu einer Zeit) liegen in `phone_status`; wer nicht erreichbar ist, fällt aus dem
   Klingelplan (`withoutUnavailable`, auch bei „der Reihe nach“), bekommt keinen Web Push, und sein
   Tischtelefon klingelt nicht (die Box bekommt eine neue Konfiguration, auch wenn „Abwesend bis“
-  abläuft).
+  abläuft: mit jeder Konfiguration stellt der Dienst einen Wecker auf das nächste Ende, höchstens
+  sechs Stunden, und nach einem Neustart schickt er sie beim Verbinden der Box ohnehin).
 - **Wer klingelt wann:** Alle gleichzeitig oder der Reihe nach (jede Person eine Weile, dann
   alle, `ringingFor`). Die Reihenfolge rechnet die App selbst aus Beginn und Plan (die Karte
   erscheint, wenn man dran ist); Web Push geht jeweils an die, die gerade dran sind. Ein Handy
   ruft die Box nach der eingestellten Zeit über die Fritzbox mit an (`Dial` in `kontext-in`,
-  zweite Leitung); nimmt es ab, meldet die Box „angenommen“ mit `forwarded` und der Anruf steht
+  zweite Leitung; liegt die Zeit hinter der Klingeldauer, klingelt es nicht); nimmt es ab, meldet die Box „angenommen“ mit `forwarded` und der Anruf steht
   als „Am Handy angenommen“ in der Liste. Solange es klingelt, kann man ihn in Kontext noch
   annehmen (Redirect beendet das `Dial`).
 - **Weitervermitteln:** Ein Gespräch lebt in seinem LiveKit-Raum, Weitervermitteln heißt also, wer
@@ -789,8 +794,9 @@ flowchart LR
 - **LiveKit SIP** braucht Redis (zur Absprache mit LiveKit). Kontext richtet beim Start einen
   Eingangs-Trunk mit Passwort (nur die Boxen) und die Dispatch-Regel ein
   (`server/phone/livekit-sip.ts`); ob das klappt, zeigt die Firmenverwaltung.
-- **Notruf:** 110 und 112 bleiben über die Fritzbox und die Tischtelefone; Kontext wählt sie
-  nicht.
+- **Notruf und Kurzwahlen:** 110, 112 und andere Kurzwahlen (115, 116117, 11880) wählt die Box
+  so, wie sie sind, über die Fritzbox – derselbe Anschluss wie bei den Tischtelefonen
+  (`dialTarget`). Fällt das Internet aus, bleiben die Telefone an der Fritzbox.
 
 ## Live-Verbindung
 

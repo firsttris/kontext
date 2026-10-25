@@ -1,9 +1,10 @@
 // @vitest-environment node
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
+import { extensionsConf } from "../../box/agent/dialplan";
 import { createHub, type LiveEvent } from "../live/hub";
 import type { NewTaskData } from "../tasks/tasks";
 import type { PhoneCall, PhoneStatus } from "./phone";
-import type { CallEvent, ToBox } from "./protocol";
+import { type CallEvent, parseMessage, type ToBox, toBoxSchema } from "./protocol";
 import { createPhoneService, desiredConfig } from "./service";
 import type { PhoneSettings, PhoneStore } from "./store";
 
@@ -555,7 +556,7 @@ describe("dialling", () => {
   it("lets the line's people call out through the box, in the Fritzbox's way of dialling", async () => {
     const { service, toBox } = setup();
     expect(await service.dial("max", "07223 123456")).toBe("not-allowed");
-    expect(await service.dial("jonas", "**610")).toBe("bad-number");
+    expect(await service.dial("jonas", "Bäckerei")).toBe("bad-number");
     const call = await service.dial("jonas", "+49 7223 123456");
     expect(call).toMatchObject({ direction: "out", member: "jonas", remote: "+497223123456" });
     expect(toBox).toContainEqual({
@@ -583,5 +584,144 @@ describe("dialling", () => {
     box.close();
     expect(await service.dial("jonas", "07223 123456")).toBe("offline");
     expect(service.online()).toEqual([]);
+  });
+});
+
+describe("found in review", () => {
+  const PATHS = { sounds: "/data/sounds", recordings: "/data/recordings" };
+  const MENU = "c1b2c3d4e5f6a1b2c3d4e5f6";
+  const annasDesk = {
+    id: "anna",
+    label: "Anna",
+    mac: "000413a1b2c4",
+    extension: "22",
+    password: "p",
+    member: "anna",
+  };
+
+  it("files a caller who chose the mailbox in the voice menu, so the message has a call", async () => {
+    const settings = {
+      sounds: [{ id: MENU, name: "Menü", seconds: 6 }],
+      mailbox: { enabled: true, ringSeconds: 25, greeting: null, deliverTo: null },
+      menu: {
+        enabled: true,
+        greeting: MENU,
+        options: [{ digit: "9", label: "Nachricht", members: [], mailbox: true }],
+      },
+    };
+    const conf = extensionsConf(
+      desiredConfig({ ...SETTINGS, ...settings }, "kontext.firma.de", 5060),
+      PATHS,
+    );
+    expect(conf).toContain(
+      "exten => 9,1,Set(__KONTEXT_CHOICE=9)\n same => n,Goto(kontext-in,mailbox,1)",
+    );
+    expect(conf).toContain(
+      `exten => mailbox,1,UserEvent(KontextCall,Call: \${KONTEXT_CALL},State: mailbox,Direction: in,Remote: \${CALLERID(num)}`,
+    );
+    const { service, box } = setup(settings);
+    await box.receive(event(1, "mailbox", { choice: "9" }));
+    await box.receive(event(2, "mailbox", { remote: "", local: "" }));
+    await box.receive(event(3, "ended", { cause: 16 }));
+    expect(await service.callsOf("jonas")).toMatchObject([
+      { remote: "+497223123456", topic: "Nachricht", state: "ended" },
+    ]);
+  });
+
+  it("keeps the block list within what the box accepts", async () => {
+    const numbers = Array.from({ length: 1000 }, (_, i) => ({
+      number: `+49172${1000000 + i}`,
+      by: "jonas",
+      at: "2026-10-25T09:00:00.000Z",
+    }));
+    const config = desiredConfig(
+      { ...SETTINGS, blocked: { numbers, anonymous: false } },
+      "kontext.firma.de",
+      5060,
+    );
+    const message = JSON.stringify({ type: "config", version: 1, config });
+    expect(parseMessage(toBoxSchema, message)).not.toBeNull();
+    const { service } = setup({ blocked: { numbers, anonymous: false } });
+    expect(await service.block("jonas", "0171 2345678")).toBe("full");
+  });
+
+  it("sends closed days only for the year ahead (Asterisk compares day and month)", () => {
+    const config = desiredConfig(
+      {
+        ...SETTINGS,
+        hours: {
+          enabled: true,
+          open: [],
+          closedDays: [
+            { day: "2026-12-24", name: "Heiligabend" },
+            { day: "2027-10-25", name: "In einem Jahr" },
+            { day: "2027-12-24", name: "Heiligabend" },
+          ],
+          greeting: null,
+        },
+      },
+      "kontext.firma.de",
+      5060,
+      "2026-10-25",
+    );
+    expect(config.hours?.closedDays).toEqual(["2026-12-24"]);
+  });
+
+  it("gives a call to only one of two people answering at the same moment", async () => {
+    const { service, box, toBox } = setup();
+    await box.receive(event(1, "ringing"));
+    const results = await Promise.all([
+      service.answer("id-1", "jonas"),
+      service.answer("id-1", "anna"),
+    ]);
+    expect(results[1]).toBe("busy");
+    expect(toBox.filter((message) => message.type === "answer")).toHaveLength(1);
+  });
+
+  it("does not hand on a call answered at a desk phone (it has no room)", async () => {
+    const { service, box, toBox } = setup({ deskPhones: [annasDesk] });
+    await box.receive(event(1, "ringing"));
+    await box.receive(event(2, "answered", { desk: "anna" }));
+    expect(await service.transfer("id-1", "anna", { number: "0171 2345678" })).toBe("not-found");
+    expect(await service.transfer("id-1", "anna", { to: "jonas" })).toBe("not-found");
+    expect(toBox.some((message) => message.type === "dial")).toBe(false);
+  });
+
+  it("dials short numbers like 112 as they are", async () => {
+    const { service, toBox } = setup();
+    expect(await service.dial("jonas", "112")).toMatchObject({ remote: "112" });
+    expect(toBox.at(-1)).toMatchObject({ type: "dial", number: "112" });
+  });
+
+  it("lets the desk phone ring again when an away of days runs out", async () => {
+    vi.useFakeTimers();
+    try {
+      let clock = new Date("2026-10-23T15:00:00.000Z");
+      const service = createPhoneService({
+        store: memoryStore({ ...SETTINGS, deskPhones: [annasDesk] }),
+        hub: createHub(),
+        trunkHost: "kontext.firma.de",
+        trunkPort: 5060,
+        now: () => clock,
+      });
+      const toBox: ToBox[] = [];
+      service.connect("box-1", (message) => toBox.push(message));
+      await service.setStatus({
+        memberId: "anna",
+        mode: "away",
+        until: "2026-10-26T07:00:00.000Z",
+      });
+      const lines = () =>
+        (toBox.filter((m) => m.type === "config").at(-1) as Extract<ToBox, { type: "config" }>)
+          .config.deskPhones[0]!.lines;
+      expect(lines()).toEqual([]);
+      for (let hours = 6; hours <= 72; hours += 6) {
+        clock = new Date(Date.parse("2026-10-23T15:00:00.000Z") + hours * 3_600_000);
+        await vi.advanceTimersByTimeAsync(6 * 3_600_000);
+      }
+      expect(lines()).toEqual(["kontext"]);
+    } finally {
+      vi.useRealTimers();
+    }
   });
 });

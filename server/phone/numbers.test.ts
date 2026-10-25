@@ -2,6 +2,11 @@ import { describe, expect, it } from "vitest";
 import { sameNumber, toDialable, toE164 } from "./numbers";
 
 describe("toE164", () => {
+  it("drops the trunk 0 written after the country code", () => {
+    expect(toE164("+49 07223 123456")).toBe("+497223123456");
+    expect(toE164("0049 07223 123456")).toBe("+497223123456");
+  });
+
   it("reads German numbers however they were written", () => {
     expect(toE164("07223 12 34 56")).toBe("+497223123456");
     expect(toE164("+49 (0) 7223/123456")).toBe("+497223123456");

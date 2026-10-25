@@ -6,7 +6,7 @@ import { Hono } from "hono";
 import { z } from "zod";
 import type { Env, Loaded } from "../company/context";
 import { toE164 } from "./numbers";
-import { hoursSchema, lineSchema } from "./protocol";
+import { calendarDay, hoursSchema, lineSchema, MAX_BLOCKED_NUMBERS } from "./protocol";
 import type { PhoneService } from "./service";
 import { type PhoneStore, randomSecret } from "./store";
 
@@ -40,7 +40,7 @@ const hoursInput = z.object({
   closedDays: z
     .array(
       z.object({
-        day: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+        day: calendarDay,
         name: z.string().trim().max(60),
       }),
     )
@@ -98,7 +98,7 @@ const menuInput = z.object({
     .max(10),
 });
 const blockedInput = z.object({
-  numbers: z.array(z.string().trim().min(3).max(40)).max(1000),
+  numbers: z.array(z.string().trim().min(3).max(40)).max(MAX_BLOCKED_NUMBERS),
   anonymous: z.boolean(),
 });
 const doorInput = z.object({

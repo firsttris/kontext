@@ -28,7 +28,9 @@ export const toE164 = (raw: string, country = DEFAULT_COUNTRY): string | null =>
       : number.startsWith("0")
         ? `+${country}${number.slice(1)}`
         : null;
-  return e164 && /^\+[1-9]\d{6,14}$/.test(e164) ? e164 : null;
+  // "+49 (0)7223 …" without the brackets: the trunk prefix 0 does not belong after the code.
+  const own = e164?.replace(new RegExp(`^\\+${country}0`), `+${country}`) ?? null;
+  return own && /^\+[1-9]\d{6,14}$/.test(own) ? own : null;
 };
 
 /** How the Fritzbox wants to dial it: national with 0, abroad with 00. */

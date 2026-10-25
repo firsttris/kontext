@@ -111,9 +111,10 @@ const waitForAnswer = ({ ringSeconds, forward }: BoxConfig, desks: string): stri
           `ExecIf($["\${DIALSTATUS}" = "ANSWER"]?Hangup(16))`,
         ]
       : [`Wait(${seconds})`];
-  if (!forward) return ring(desks, ringSeconds);
+  // The ringing time is the limit: a mobile phone due later than that does not ring at all.
+  if (!forward || forward.afterSeconds >= ringSeconds) return ring(desks, ringSeconds);
   const mobile = `PJSIP/${forward.number}@fritzbox`;
-  const rest = Math.max(5, ringSeconds - forward.afterSeconds);
+  const rest = ringSeconds - forward.afterSeconds;
   return [
     ...(forward.afterSeconds ? ring(desks, forward.afterSeconds) : []),
     ...ring([desks, mobile].filter(Boolean).join("&"), rest),
@@ -195,7 +196,7 @@ const menuContext = (config: BoxConfig, paths: BoxPaths) => {
       extension(option.digit, [
         `Set(__KONTEXT_CHOICE=${option.digit})`,
         option.mailbox && config.mailbox
-          ? "Goto(kontext-mailbox,s,1)"
+          ? "Goto(kontext-in,mailbox,1)"
           : "Goto(kontext-in,ringing,1)",
       ]),
     ),
@@ -255,6 +256,13 @@ const incoming = (config: BoxConfig, paths: BoxPaths) => {
         : [config.menu ? "Goto(kontext-menu,s,1)" : "Goto(ringing,1)"]),
     ]),
     ...ringingExtensions(config, caller),
+    // Straight to the mailbox from the voice menu: reported with the caller, so Kontext files it.
+    config.menu?.options.some((option) => option.mailbox) && config.mailbox
+      ? extension("mailbox", [
+          report("mailbox", "in", [...caller, ["Choice", `\${KONTEXT_CHOICE}`]]),
+          "Goto(kontext-mailbox,s,1)",
+        ])
+      : [],
     closed,
     config.blocked.numbers.length || config.blocked.anonymous
       ? extension("blocked", [report("blocked", "in", caller), "Hangup(21)"])

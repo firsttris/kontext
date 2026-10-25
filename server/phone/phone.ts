@@ -184,6 +184,12 @@ export const closedCall = (
   ids: { id: string; boxId: string; members: string[] },
 ): PhoneCall => ({ ...incomingCall(event, ids), state: "mailbox", outcome: "closed" });
 
+/** A caller who chose the mailbox in the voice menu: straight there, it never rang. */
+export const menuMailboxCall = (
+  event: CallEvent,
+  ids: { id: string; boxId: string; members: string[] },
+): PhoneCall => ({ ...incomingCall(event, ids), state: "mailbox" });
+
 /** Whether the door intercom calls: its internal number as the Fritzbox delivers it ("**11"). */
 export const isDoor = (door: { enabled: boolean; number: string }, remote: string) =>
   door.enabled && remote.replace(/\s/g, "") === door.number.replace(/\s/g, "");
@@ -339,14 +345,16 @@ export const roomIsOver = (present: string[], liveCalls: PhoneCall[]) =>
 /**
  * Where a call is handed or dialled to: a number (E.164 for the list, national for the
  * Fritzbox), a telephone at the Fritzbox itself ("**610" for the first DECT handset) or a desk
- * phone at the box by its short number.
+ * phone at the box by its short number; short numbers like 110 or 112 as they are.
  */
 export const dialTarget = (
   raw: string,
   deskExtensions: string[] = [],
 ): { remote: string; dial: string } | null => {
   const internal = raw.replace(/\s/g, "");
-  if (/^\*\*\d{2,4}$/.test(internal) || deskExtensions.includes(internal)) {
+  // Short numbers (110, 112, 115, 116117, 11880) are dialled as they are.
+  const short = /^1\d{2,5}$/.test(internal);
+  if (short || /^\*\*\d{2,4}$/.test(internal) || deskExtensions.includes(internal)) {
     return { remote: internal, dial: internal };
   }
   const remote = toE164(raw);

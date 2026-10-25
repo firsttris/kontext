@@ -20,7 +20,7 @@ import {
   unavailableAt,
   withoutUnavailable,
 } from "./phone";
-import type { CallEvent } from "./protocol";
+import { type CallEvent, calendarDay } from "./protocol";
 
 const event = (state: CallEvent["state"], extra: Partial<CallEvent> = {}): CallEvent => ({
   type: "event",
@@ -225,6 +225,8 @@ describe("handing on", () => {
   it("dials numbers the Fritzbox's way and its own telephones by their internal number", () => {
     expect(dialTarget("0171 2345678")).toEqual({ remote: "+491712345678", dial: "01712345678" });
     expect(dialTarget("**610")).toEqual({ remote: "**610", dial: "**610" });
+    expect(dialTarget("112")).toEqual({ remote: "112", dial: "112" });
+    expect(dialTarget("116 117")).toEqual({ remote: "116117", dial: "116117" });
     expect(dialTarget("** 611")).toEqual({ remote: "**611", dial: "**611" });
     expect(dialTarget("*610")).toBeNull();
     expect(dialTarget("21", ["21", "22"])).toEqual({ remote: "21", dial: "21" });
@@ -265,5 +267,13 @@ describe("who takes calls", () => {
     expect(
       withoutUnavailable({ mode: "order", stepSeconds: 15, order: ["jonas", "max"] }, ["jonas"]),
     ).toEqual({ mode: "order", stepSeconds: 15, order: ["max"] });
+  });
+});
+
+describe("calendarDay", () => {
+  it("takes only days that exist", () => {
+    expect(calendarDay.safeParse("2028-02-29").success).toBe(true);
+    expect(calendarDay.safeParse("2026-13-40").success).toBe(false);
+    expect(calendarDay.safeParse("2026-02-30").success).toBe(false);
   });
 });

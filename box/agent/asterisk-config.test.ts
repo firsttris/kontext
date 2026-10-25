@@ -124,6 +124,15 @@ describe("forwarding", () => {
     expect(conf).toContain("[kontext-answered-here]\nexten => s,1,UserEvent(KontextCall,");
     expect(conf).toContain(`State: answered,Direction: in,Endpoint: \${CHANNEL(endpoint)})`);
   });
+
+  it("keeps to the ringing time: a mobile phone due later does not ring", () => {
+    const conf = extensionsConf(
+      { ...config, ringSeconds: 20, forward: { number: "01712345678", afterSeconds: 30 } },
+      paths,
+    );
+    expect(conf).toContain(" same => n,Wait(20)\n same => n,Hangup(19)");
+    expect(conf).not.toContain("01712345678");
+  });
 });
 
 describe("opening hours", () => {
@@ -216,7 +225,11 @@ describe("the voice menu", () => {
       "exten => 1,1,Set(__KONTEXT_CHOICE=1)\n same => n,Goto(kontext-in,ringing,1)",
     );
     expect(conf).toContain(
-      "exten => 9,1,Set(__KONTEXT_CHOICE=9)\n same => n,Goto(kontext-mailbox,s,1)",
+      "exten => 9,1,Set(__KONTEXT_CHOICE=9)\n same => n,Goto(kontext-in,mailbox,1)",
+    );
+    // Reported with the caller on the way, so Kontext files the call the message belongs to.
+    expect(conf).toContain(
+      `exten => mailbox,1,UserEvent(KontextCall,Call: \${KONTEXT_CALL},State: mailbox,Direction: in,Remote: \${CALLERID(num)},Local: \${CALLERID(dnid)},Line: \${KONTEXT_LINE},Choice: \${KONTEXT_CHOICE})\n same => n,Goto(kontext-mailbox,s,1)`,
     );
     expect(conf).toContain("exten => t,1,Goto(kontext-in,ringing,1)");
     expect(conf).toContain(`Choice: \${KONTEXT_CHOICE})`);

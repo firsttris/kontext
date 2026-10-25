@@ -27,7 +27,8 @@ export const createTransfers = ({ store, save, send, newId, now }: TransferConte
   /** The call I am talking on, or why not. */
   const mine = async (callId: string, me: string): Promise<PhoneCall | Problem> => {
     const call = await store.call(callId);
-    if (!call || call.member !== me) return "not-found";
+    // Answered at a desk phone, a call has no room to bring anyone into.
+    if (!call || call.member !== me || !call.room) return "not-found";
     return call.state === "talking" ? call : "busy";
   };
 

@@ -35,6 +35,18 @@ export const mailboxSchema = z.object({
 
 const clock = z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/);
 
+/** A day that exists in the calendar, "YYYY-MM-DD" (not "2026-13-40" or "2026-02-30"). */
+export const calendarDay = z
+  .string()
+  .regex(/^\d{4}-\d{2}-\d{2}$/)
+  .refine((day) => {
+    const time = Date.parse(`${day}T00:00:00Z`);
+    return !Number.isNaN(time) && new Date(time).toISOString().startsWith(day);
+  }, "Kein Datum");
+
+/** Numbers on the block list; the box gets each in up to four forms (numberForms). */
+export const MAX_BLOCKED_NUMBERS = 1000;
+
 /** When the phone is answered at all; the box decides by itself, also without Kontext. */
 export const hoursSchema = z.object({
   /** IANA name; Asterisk compares in it (GotoIfTime). */
@@ -42,7 +54,7 @@ export const hoursSchema = z.object({
   /** Open ranges; `day` counts from Sunday (0) like Asterisk's weekday names. */
   open: z.array(z.object({ day: z.number().int().min(0).max(6), from: clock, to: clock })).max(28),
   /** Closed all day (holidays, company holidays), "YYYY-MM-DD". */
-  closedDays: z.array(z.string().regex(/^\d{4}-\d{2}-\d{2}$/)).max(60),
+  closedDays: z.array(calendarDay).max(60),
   /** Played outside the hours, before the mailbox (if there is one). */
   greeting: soundIdSchema.nullable(),
 });
@@ -110,7 +122,7 @@ export const boxConfigSchema = z.object({
   /** Calls the box turns away at once: these numbers (in every way they may come) and withheld ones. */
   blocked: z
     .object({
-      numbers: z.array(z.string().regex(/^\+?[0-9]{3,20}$/)).max(1000),
+      numbers: z.array(z.string().regex(/^\+?[0-9]{3,20}$/)).max(MAX_BLOCKED_NUMBERS * 4),
       anonymous: z.boolean(),
     })
     .default({ numbers: [], anonymous: false }),
