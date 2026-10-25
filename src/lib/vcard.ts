@@ -65,6 +65,13 @@ const component = (
     .map((c) => escapeText(c.value))
     .join(",") ?? "";
 
+/**
+ * The vCard TYPE for a JSContact context: RFC 9555 maps TYPE=home to the context "private" and
+ * "work" to "work" (as Stalwart's calcard does, `src/jscontact/{import,export}/params.rs`), so a
+ * home address read by `ContactCard/parse` goes back out as home.
+ */
+const contextType = (context: string): string => (context === "private" ? "home" : context);
+
 /** One card as vCard 4.0. */
 export const toVCard = (card: ContactCard): string => {
   const lines = ["BEGIN:VCARD", "VERSION:4.0"];
@@ -76,7 +83,8 @@ export const toVCard = (card: ContactCard): string => {
   for (const org of Object.values(card.organizations ?? {}))
     if (org.name) lines.push(`ORG:${escapeText(org.name)}`);
   for (const email of Object.values(card.emails ?? {})) {
-    const type = Object.keys(email.contexts ?? {})[0];
+    const context = Object.keys(email.contexts ?? {})[0];
+    const type = context && contextType(context);
     lines.push(`EMAIL${type ? `;TYPE=${type}` : ""}:${email.address}`);
   }
   for (const phone of Object.values(card.phones ?? {})) {

@@ -48,6 +48,13 @@ describe("vCard", () => {
     expect(text).toContain(`${String.raw`NOTE:Wartung\; zweimal im Jahr\nimmer dienstags`}\r\n`);
     expect(text.endsWith("END:VCARD\r\n")).toBe(true);
   });
+  it('writes the context "private" as TYPE=home (RFC 9555)', () => {
+    const home = {
+      ...petra,
+      emails: { e: { address: "petra@privat.test", contexts: { private: true } } },
+    };
+    expect(toVCard(home)).toContain("EMAIL;TYPE=home:petra@privat.test\r\n");
+  });
   it("writes groups with their members", () => {
     const group: ContactCard = {
       id: "g",
