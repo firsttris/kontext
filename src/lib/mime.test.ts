@@ -83,6 +83,35 @@ describe("MIME built in the app", () => {
     );
   });
 
+  it("keeps every encoded-word within 75 characters (RFC 2047 §2) and reads back whole", async () => {
+    const subject = "Rückfrage zur Rechnung über die Heizungsanlage im Büro – bitte prüfen 🔧ÄÖÜß";
+    const name = "Jürgen Müller-Lüdenscheidt Größenwahn Hausverwaltung Süd 🏠 GmbH & Co. KG";
+    const encoded = encodeWord(subject);
+    const words = encoded.split("\r\n ");
+    expect(words.length).toBeGreaterThan(1);
+    for (const word of words) {
+      expect(word).toMatch(/^=\?UTF-8\?B\?[A-Za-z0-9+/=]+\?=$/);
+      expect(word.length).toBeLessThanOrEqual(75);
+    }
+    const raw = encryptedMail(
+      {
+        from: { name, email: "j@w.test" },
+        to: [{ name, email: "p@k.test" }],
+        cc: [],
+        subject,
+        date: new Date("2026-10-25T09:00:00Z"),
+        messageId: "m2@w.test",
+      },
+      "-----BEGIN PGP MESSAGE-----\nxyz\n-----END PGP MESSAGE-----",
+      "e2",
+    );
+    const parsed = await PostalMime.parse(raw);
+    expect(parsed.subject).toBe(subject);
+    expect(parsed.from?.name).toBe(name);
+    expect(parsed.to?.[0]?.name).toBe(name);
+    expect(parsed.to?.[0]?.address).toBe("p@k.test");
+  });
+
   it("puts the subject inside, marked as protected, and hides it outside", async () => {
     const mail = {
       from: { name: "Jonas", email: "jonas@w.test" },
