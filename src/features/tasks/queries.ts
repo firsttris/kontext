@@ -6,7 +6,13 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useSession } from "@/components/shell/app-shell";
 import { CAPABILITIES } from "@/jmap/client";
-import type { NewTask, Task } from "@/lib/tasks";
+import {
+  type BoardColumn,
+  columnLabel,
+  DEFAULT_COLUMNS,
+  type NewTask,
+  type Task,
+} from "@/lib/tasks";
 import type { TaskPatch } from "../../../server/tasks/tasks";
 import { useMailAccounts } from "../mail/queries";
 import { usePrincipals } from "../sharing/queries";
@@ -25,12 +31,26 @@ const send = async <T>(method: string, path: string, body?: unknown): Promise<T>
   return result;
 };
 
+type TasksData = { tasks: Task[]; boards: Record<string, BoardColumn[]> };
+
+const useTasksData = () => useQuery({ queryKey: KEY, queryFn: () => send<TasksData>("GET", "") });
+
 export const useTasks = () => {
-  const { data, isPending } = useQuery({
-    queryKey: KEY,
-    queryFn: async () => (await send<{ tasks: Task[] }>("GET", "")).tasks,
-  });
-  return { tasks: data ?? [], isPending };
+  const { data, isPending } = useTasksData();
+  return { tasks: data?.tasks ?? [], isPending };
+};
+
+/** A board's columns, the built-in ones until it has its own. */
+export const useColumns = (accountId: string): BoardColumn[] =>
+  useTasksData().data?.boards[accountId] ?? DEFAULT_COLUMNS;
+
+/** The name of a task's column on its board ("In Arbeit", "Bestellt"). */
+export const useStatusLabel = () => {
+  const boards = useTasksData().data?.boards ?? {};
+  return (task: Pick<Task, "accountId" | "status">) => {
+    const column = (boards[task.accountId] ?? DEFAULT_COLUMNS).find((c) => c.id === task.status);
+    return column ? columnLabel(column) : columnLabel({ id: "open", name: "" });
+  };
 };
 
 /** The signed-in person: their own account id, which is also how tasks are assigned. */
@@ -64,7 +84,9 @@ export const useTaskActions = () => {
   const queryClient = useQueryClient();
   const settle = () => queryClient.invalidateQueries({ queryKey: KEY });
   const patchCache = (change: (tasks: Task[]) => Task[]) =>
-    queryClient.setQueryData<Task[]>(KEY, (tasks) => change(tasks ?? []));
+    queryClient.setQueryData<TasksData>(KEY, (data) =>
+      data ? { ...data, tasks: change(data.tasks) } : data,
+    );
 
   const create = useMutation({
     mutationFn: async (task: NewTask) => (await send<{ task: Task }>("POST", "", task)).task,
@@ -103,7 +125,21 @@ export const useTaskActions = () => {
     onSettled: settle,
   });
 
+  const columns = useMutation({
+    mutationFn: ({ accountId, columns }: { accountId: string; columns: BoardColumn[] }) =>
+      send<{ columns: BoardColumn[] }>("PUT", `/boards/${encodeURIComponent(accountId)}`, {
+        columns,
+      }),
+    onMutate: ({ accountId, columns }) =>
+      queryClient.setQueryData<TasksData>(KEY, (data) =>
+        data ? { ...data, boards: { ...data.boards, [accountId]: columns } } : data,
+      ),
+    onSettled: settle,
+  });
+
   return {
+    setColumns: (accountId: string, value: BoardColumn[]) =>
+      columns.mutateAsync({ accountId, columns: value }),
     create: (task: NewTask) => create.mutateAsync(task),
     update: (id: string, patch: TaskPatch) => update.mutateAsync({ id, patch }),
     remove: (id: string) => remove.mutateAsync(id),

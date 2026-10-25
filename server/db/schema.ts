@@ -154,6 +154,8 @@ export const tasks = sqliteTable(
     /** When to remind the assignee by push; `remindedAt` once that happened. */
     remindAt: integer("remind_at", { mode: "timestamp_ms" }),
     remindedAt: integer("reminded_at", { mode: "timestamp_ms" }),
+    /** daily, weekdays, weekly, monthly, yearly: done, it comes again (server/tasks/tasks.ts). */
+    repeat: text("repeat"),
     ...timestamps,
   },
   (table) => [
@@ -161,6 +163,13 @@ export const tasks = sqliteTable(
     index("tasks_remind_at").on(table.remindAt),
   ],
 );
+
+/** A board's own columns, as JSON; a board without a row has the four built-in ones. */
+export const taskBoards = sqliteTable("task_boards", {
+  accountId: text("account_id").primaryKey(),
+  columns: text("columns").notNull(),
+  updatedAt: integer("updated_at", { mode: "timestamp_ms" }).notNull(),
+});
 
 /** What a task is about: a mail (with its thread), a contact, an appointment. */
 export const taskLinks = sqliteTable(

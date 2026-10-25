@@ -20,5 +20,6 @@ export const sampleTask = (patch: Partial<Task> = {}): Task => ({
   assignedBy: null,
   assignedAt: null,
   remindAt: null,
+  repeat: null,
   ...patch,
 });

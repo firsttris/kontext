@@ -12,10 +12,11 @@ import { ItemLink, LinkIcon } from "@/features/links/item-link";
 import { cn } from "@/lib/cn";
 import { shortAddress } from "@/lib/mail-accounts";
 import { shiftedReminder } from "@/lib/task-reminders";
-import { STATUS_LABELS, TASK_STATUSES, type Task } from "@/lib/tasks";
+import { columnLabel, dueLabel, REPEAT_LABELS, REPEATS, type Repeat, type Task } from "@/lib/tasks";
 import { m } from "@/paraglide/messages";
 import type { TaskPatch } from "../../../server/tasks/tasks";
-import { useBoards, useMe, usePeople, useTaskActions } from "./queries";
+import { companyDay, nextDue } from "../../../server/tasks/tasks";
+import { useBoards, useColumns, useMe, usePeople, useTaskActions } from "./queries";
 import { TaskChecklist } from "./task-checklist";
 import { TaskReminder } from "./task-reminder";
 
@@ -34,6 +35,7 @@ export const TaskDetail = ({ task, onClose }: { task: Task; onClose?: () => void
   const people = usePeople();
   const boards = useBoards();
   const me = useMe();
+  const columns = useColumns(task.accountId);
   const [title, setTitle] = useState(task.title);
   const [notes, setNotes] = useState(task.notes);
   const [confirm, setConfirm] = useState(false);
@@ -133,20 +135,20 @@ export const TaskDetail = ({ task, onClose }: { task: Task; onClose?: () => void
           />
           <fieldset className="m-0 flex flex-wrap gap-0.5 self-start rounded-[9px] border-0 bg-subtle p-[3px]">
             <legend className="sr-only">Status</legend>
-            {TASK_STATUSES.map((status) => (
+            {columns.map((column) => (
               <button
-                key={status}
+                key={column.id}
                 type="button"
-                aria-pressed={task.status === status}
-                onClick={() => void save({ status })}
+                aria-pressed={task.status === column.id}
+                onClick={() => void save({ status: column.id })}
                 className={cn(
                   "h-7 rounded-[7px] px-3 text-[13px]",
-                  task.status === status
+                  task.status === column.id
                     ? "bg-bg font-medium text-fg shadow-sm"
                     : "text-muted hover:text-fg",
                 )}
               >
-                {STATUS_LABELS[status]()}
+                {columnLabel(column)}
               </button>
             ))}
           </fieldset>
@@ -204,6 +206,35 @@ export const TaskDetail = ({ task, onClose }: { task: Task; onClose?: () => void
               />
             </Label>
           </div>
+          {done ? null : (
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              <Label>
+                {m.tasks_repeat()}
+                <Select
+                  value={task.repeat ?? ""}
+                  onChange={(e) => void save({ repeat: (e.target.value || null) as Repeat | null })}
+                >
+                  <option value="">{m.tasks_repeat_none()}</option>
+                  {REPEATS.map((repeat) => (
+                    <option key={repeat} value={repeat}>
+                      {REPEAT_LABELS[repeat]()}
+                    </option>
+                  ))}
+                </Select>
+              </Label>
+              {task.repeat ? (
+                <p className="m-0 self-end pb-2 text-[12px] text-muted">
+                  {m.tasks_repeat_next({
+                    when: dueLabel(
+                      nextDue(task.dueDate, task.repeat, companyDay(new Date())),
+                      null,
+                      companyDay(new Date()),
+                    ),
+                  })}
+                </p>
+              ) : null}
+            </div>
+          )}
           {done ? null : (
             <TaskReminder
               key={`${task.id}-${task.dueDate}-${task.dueTime}`}

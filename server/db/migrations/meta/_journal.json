@@ -85,6 +85,13 @@
       "when": 1792901972438,
       "tag": "0011_chat_more",
       "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "6",
+      "when": 1792904356750,
+      "tag": "0012_task_boards",
+      "breakpoints": true
     }
   ]
 }

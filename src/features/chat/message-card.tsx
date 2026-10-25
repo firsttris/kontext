@@ -9,13 +9,13 @@ import { useContacts } from "@/features/contacts/queries";
 import { ItemLink, LinkIcon } from "@/features/links/item-link";
 import { useMailAccounts } from "@/features/mail/queries";
 import { usePrincipals } from "@/features/sharing/queries";
-import { useTasks } from "@/features/tasks/queries";
+import { useStatusLabel, useTasks } from "@/features/tasks/queries";
 import { principalName } from "@/jmap/principals";
 import type { Card } from "@/lib/chat-cards";
 import { cn } from "@/lib/cn";
 import { dateKey } from "@/lib/jscalendar";
 import { shortAddress } from "@/lib/mail-accounts";
-import { dueLabel, STATUS_LABELS, type Task } from "@/lib/tasks";
+import { dueLabel, type Task } from "@/lib/tasks";
 import { m } from "@/paraglide/messages";
 import { MailCopyDialog } from "./mail-copy";
 
@@ -53,6 +53,7 @@ export const MessageCard = ({ card, onRemove }: { card: Card; onRemove?: () => v
   const { open, task } = useCardAccess(card);
   const [reading, setReading] = useState(false);
   const owner = useOwner(card.accountId);
+  const statusLabel = useStatusLabel();
   const today = dateKey(new Date());
   const detail = task
     ? [dueLabel(task.dueDate, task.dueTime, today)].filter(Boolean).join(" · ")
@@ -90,7 +91,7 @@ export const MessageCard = ({ card, onRemove }: { card: Card; onRemove?: () => v
       </span>
       {task ? (
         <span className="shrink-0 rounded-md bg-subtle px-1.5 py-0.5 text-[11px] font-medium text-muted">
-          {STATUS_LABELS[task.status]()}
+          {statusLabel(task)}
         </span>
       ) : null}
     </>

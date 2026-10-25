@@ -99,6 +99,7 @@ reicht ein VPS mit 2 vCPU und 4 GB RAM.
 - **Aufgaben für dich und das Team**: Meine Aufgaben, Heute, Demnächst, Erledigt; ein Board fürs eigene Postfach und eins pro gemeinsamem Postfach (info@, rechnung@).
 - **Liste oder Kanban**: nach Fälligkeit gruppiert, oder als Board mit Offen, In Arbeit, Wartet, Erledigt – Karten zwischen den Spalten ziehen.
 - **Aus einer Mail**: „Aufgabe“ (oder `t`) macht aus einer Mail eine Aufgabe mit Betreff, Fälligkeit und Zuständigem; die Mail zeigt danach ihre Aufgabe.
+- **Eigene Spalten** pro Board („Material bestellt“ …) und **wiederkehrende Aufgaben** (täglich, an Werktagen, wöchentlich, monatlich, jährlich).
 - **Schnelleingabe**: „Rückruf Hoffmann morgen“ ist morgen fällig; Checkliste, Notiz, Zuständige.
 - **Überall in Kontext**: Der Kontakt zeigt seine offenen Aufgaben, der Kalender das Fällige am Tag, die Glocke neu Zugewiesenes und heute Fälliges. Erinnerungen kommen als Benachrichtigung, auch bei geschlossener App. „Aufgaben erstellen“ macht aus mehreren ausgewählten Mails je eine Aufgabe.
 - **Live**: Neue oder verschobene Aufgaben von Kollegen erscheinen sofort.

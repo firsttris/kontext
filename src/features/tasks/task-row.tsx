@@ -1,6 +1,6 @@
 /** One task in a list: its box to tick off, title, due date, what it is about, who does it. */
 import { Link } from "@tanstack/react-router";
-import { BellRing, Mail } from "lucide-react";
+import { BellRing, Mail, Repeat } from "lucide-react";
 import { Avatar } from "@/components/ui/avatar";
 import { cn } from "@/lib/cn";
 import { shortAddress } from "@/lib/mail-accounts";
@@ -62,6 +62,9 @@ export const TaskRow = ({
             <span className={cn("shrink-0 font-medium", dueTone(task, today))}>
               {dueLabel(task.dueDate, task.dueTime, today)}
             </span>
+          ) : null}
+          {task.repeat && !done ? (
+            <Repeat size={12} className="shrink-0" aria-label={m.tasks_repeat()} />
           ) : null}
           {task.remindAt && !done ? (
             <BellRing size={12} className="shrink-0" aria-label={m.tasks_remind()} />

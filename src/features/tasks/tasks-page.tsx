@@ -3,15 +3,17 @@
  * at a time, chosen by the URL; views and boards are chips above the list.
  */
 import { Link, useNavigate } from "@tanstack/react-router";
-import { List, SquareKanban } from "lucide-react";
+import { Columns3, List, SquareKanban } from "lucide-react";
 import { useState } from "react";
 import { TabBar } from "@/components/shell/app-shell";
+import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/cn";
 import { dateKey } from "@/lib/jscalendar";
 import { shortAddress } from "@/lib/mail-accounts";
 import { inView, type TaskView } from "@/lib/tasks";
 import { m } from "@/paraglide/messages";
 import type { TasksSearch } from "@/routes/_app/tasks";
+import { ColumnsDialog } from "./columns-dialog";
 import { useBoards, useMe, useTasks } from "./queries";
 import { TaskBoard } from "./task-board";
 import { TaskDetail } from "./task-detail";
@@ -58,6 +60,7 @@ export const TasksPage = ({ search }: { search: TasksSearch }) => {
   const allBoards = useBoards();
   const today = dateKey(new Date());
   const [creating, setCreating] = useState(false);
+  const [editingColumns, setEditingColumns] = useState(false);
 
   const board = search.board
     ? allBoards.find((candidate) => candidate.id === search.board)
@@ -138,6 +141,15 @@ export const TasksPage = ({ search }: { search: TasksSearch }) => {
                 <h1 className="m-0 flex-1 truncate text-[30px] leading-tight font-semibold tracking-tight md:text-[18px]">
                   {title}
                 </h1>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setEditingColumns(true)}
+                  aria-label={m.tasks_columns_edit()}
+                >
+                  <Columns3 size={15} />
+                  <span className="hidden sm:inline">{m.tasks_columns_edit()}</span>
+                </Button>
                 <ModeSwitch board={board.id} mode="board" />
               </div>
               {phoneChips}
@@ -183,6 +195,13 @@ export const TasksPage = ({ search }: { search: TasksSearch }) => {
           </main>
         </>
       )}
+      {editingColumns && board ? (
+        <ColumnsDialog
+          accountId={board.id}
+          title={title}
+          onClose={() => setEditingColumns(false)}
+        />
+      ) : null}
       {creating ? (
         <TaskDialog
           starts={[{ title: "", accountId: board?.id ?? me }]}

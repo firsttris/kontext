@@ -1,10 +1,10 @@
 /**
- * The board of one account: a column per status, cards in their order. Cards are dragged between
- * and within columns (the new place is set between its neighbours); on a phone the columns scroll
- * sideways and the status is changed in the task.
+ * The board of one account: its columns (built-in or its own), cards in their order. Cards are
+ * dragged between and within columns (the new place is set between its neighbours); on a phone the
+ * columns scroll sideways and the status is changed in the task.
  */
 import { Link } from "@tanstack/react-router";
-import { Mail, Plus } from "lucide-react";
+import { Mail, Plus, Repeat } from "lucide-react";
 import { type DragEvent, type FormEvent, useState } from "react";
 import { Avatar } from "@/components/ui/avatar";
 import { useToast } from "@/components/ui/toast";
@@ -12,24 +12,25 @@ import { cn } from "@/lib/cn";
 import { dateKey } from "@/lib/jscalendar";
 import {
   column,
+  columnLabel,
   dueLabel,
   parseQuickAdd,
   positionBetween,
-  STATUS_LABELS,
-  TASK_STATUSES,
   type Task,
   type TaskStatus,
 } from "@/lib/tasks";
 import { m } from "@/paraglide/messages";
-import { usePeople, useTaskActions } from "./queries";
+import { useColumns, usePeople, useTaskActions } from "./queries";
 import { dueTone } from "./task-row";
 
-const DOTS: Record<TaskStatus, string> = {
+const DOTS: Record<string, string> = {
   open: "bg-zinc-400",
   doing: "bg-blue-500",
   waiting: "bg-amber-500",
   done: "bg-emerald-500",
 };
+/** Columns a team added take these in turn. */
+const OWN_DOTS = ["bg-violet-500", "bg-sky-500", "bg-rose-500", "bg-teal-500", "bg-orange-500"];
 
 type Drop = { status: TaskStatus; index: number };
 
@@ -46,6 +47,7 @@ export const TaskBoard = ({
   const actions = useTaskActions();
   const toast = useToast();
   const people = usePeople();
+  const columns = useColumns(accountId);
   const [dragged, setDragged] = useState<string | null>(null);
   const [drop, setDrop] = useState<Drop | null>(null);
   const [adding, setAdding] = useState<TaskStatus | null>(null);
@@ -87,10 +89,16 @@ export const TaskBoard = ({
   };
 
   return (
-    <div className="flex min-h-0 flex-1 snap-x snap-mandatory gap-3 overflow-x-auto bg-side px-4 py-4 md:grid md:snap-none md:grid-cols-4 md:overflow-x-visible md:px-6">
-      {TASK_STATUSES.map((status) => {
+    <div
+      className="flex min-h-0 flex-1 snap-x snap-mandatory gap-3 overflow-x-auto bg-side px-4 py-4 md:grid md:snap-none md:px-6"
+      style={{ gridTemplateColumns: `repeat(${columns.length}, minmax(220px, 1fr))` }}
+    >
+      {columns.map((boardColumn, columnIndex) => {
+        const status = boardColumn.id;
         const cards = column(tasks, status).filter((task) => task.id !== dragged || drop === null);
-        const label = STATUS_LABELS[status]();
+        const label = columnLabel(boardColumn);
+        const own = columns.slice(0, columnIndex).filter((c) => !(c.id in DOTS)).length;
+        const dot = DOTS[status] ?? OWN_DOTS[own % OWN_DOTS.length]!;
         return (
           <section
             key={status}
@@ -106,7 +114,7 @@ export const TaskBoard = ({
             className="flex w-[82vw] shrink-0 snap-start flex-col gap-2 self-start rounded-[14px] bg-subtle p-2.5 md:w-auto"
           >
             <h2 className="m-0 flex items-center gap-2 px-1 pt-0.5 pb-1 text-[13px] font-semibold">
-              <span aria-hidden="true" className={cn("size-2 rounded-full", DOTS[status])} />
+              <span aria-hidden="true" className={cn("size-2 rounded-full", dot)} />
               {label}
               <span className="font-mono text-[12px] font-normal text-muted">
                 {column(tasks, status).length}
@@ -148,6 +156,13 @@ export const TaskBoard = ({
                         )}
                       >
                         {task.title}
+                        {task.repeat ? (
+                          <Repeat
+                            size={12}
+                            className="ml-1.5 inline text-muted"
+                            aria-label={m.tasks_repeat()}
+                          />
+                        ) : null}
                       </span>
                       {mail ? (
                         <span className="flex min-w-0 items-center gap-1.5 text-[12px] text-muted">

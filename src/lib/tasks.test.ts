@@ -3,11 +3,13 @@ import type { EmailSummary } from "@/jmap/types";
 import { sampleTask } from "../../server/tasks/sample-task";
 import {
   column,
+  columnLabel,
   dueGroup,
   dueLabel,
   groupByDue,
   inView,
   mailLink,
+  newColumnId,
   parseQuickAdd,
   plainSubject,
   positionBetween,
@@ -148,5 +150,21 @@ describe("tasks and mails", () => {
     const tasks = [task({ links: [link] }), task({ id: "x" })];
     expect(tasksOfMail(tasks, "m2", "th1")).toHaveLength(1);
     expect(tasksOfMail(tasks, "m3", "other")).toHaveLength(0);
+  });
+});
+
+describe("columns", () => {
+  it("names built-in columns unless renamed", () => {
+    expect(columnLabel({ id: "doing", name: "" })).toBe("In Arbeit");
+    expect(columnLabel({ id: "done", name: "Fertig" })).toBe("Fertig");
+    expect(columnLabel({ id: "c-bestellt", name: "Bestellt" })).toBe("Bestellt");
+  });
+
+  it("makes a column id from its name, unique on the board", () => {
+    expect(newColumnId("Bestellt", [])).toBe("c-bestellt");
+    expect(newColumnId("Bestellt", ["c-bestellt"])).toBe("c-bestellt2");
+    expect(newColumnId("Prüfen", [])).toBe("c-prufen");
+    expect(newColumnId("?!", [])).toBe("c-spalte");
+    expect(newColumnId("Ab", [])).toBe("c-abxx");
   });
 });

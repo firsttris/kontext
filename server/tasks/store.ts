@@ -1,8 +1,17 @@
 /** Tasks in Kontext's SQLite: one row per task, its links to mails, contacts and appointments. */
-import { and, asc, eq, gte, inArray, isNull, lte, max, ne, or } from "drizzle-orm";
+import { and, asc, eq, gte, inArray, isNull, lte, max, ne, notInArray, or } from "drizzle-orm";
 import type { Db } from "../db";
 import * as schema from "../db/schema";
-import type { CheckItem, NewTaskData, Task, TaskLink, TaskPatch, TaskStatus } from "./tasks";
+import {
+  type BoardColumn,
+  type CheckItem,
+  DEFAULT_COLUMNS,
+  type NewTaskData,
+  type Repeat,
+  type Task,
+  type TaskLink,
+  type TaskPatch,
+} from "./tasks";
 
 export type TaskStore = {
   /**
@@ -18,6 +27,10 @@ export type TaskStore = {
   /** Open tasks whose reminder is due and not yet sent, the oldest first. */
   dueReminders: (now: Date) => Promise<Task[]>;
   markReminded: (id: string, at: Date) => Promise<void>;
+  /** The columns of these boards; built-in ones where a board has none of its own. */
+  columns: (accountIds: string[]) => Promise<Record<string, BoardColumn[]>>;
+  /** New columns; tasks in a column that went move to the end of "open". */
+  setColumns: (accountId: string, columns: BoardColumn[]) => Promise<void>;
 };
 
 type Row = typeof schema.tasks.$inferSelect;
@@ -28,7 +41,7 @@ const toTask = (row: Row, links: LinkRow[]): Task => ({
   accountId: row.accountId,
   title: row.title,
   notes: row.notes,
-  status: row.status as TaskStatus,
+  status: row.status,
   position: row.position,
   assigneeId: row.assigneeId,
   dueDate: row.dueDate,
@@ -49,6 +62,7 @@ const toTask = (row: Row, links: LinkRow[]): Task => ({
   assignedBy: row.assignedBy,
   assignedAt: row.assignedAt?.toISOString() ?? null,
   remindAt: row.remindAt?.toISOString() ?? null,
+  repeat: (row.repeat as Repeat | null) ?? null,
 });
 
 const instant = (value: string | null) => (value ? new Date(value) : null);
@@ -131,6 +145,7 @@ export const createTaskStore = (db: Db): TaskStore => {
         assignedBy: task.assigneeId ? createdBy : null,
         assignedAt: task.assigneeId ? now : null,
         remindAt: instant(task.remindAt),
+        repeat: task.repeat,
         createdAt: now,
         updatedAt: now,
       });
@@ -201,6 +216,39 @@ export const createTaskStore = (db: Db): TaskStore => {
     },
     markReminded: async (id, at) => {
       await db.update(schema.tasks).set({ remindedAt: at }).where(eq(schema.tasks.id, id));
+    },
+    columns: async (accountIds) => {
+      const rows = accountIds.length
+        ? await db
+            .select()
+            .from(schema.taskBoards)
+            .where(inArray(schema.taskBoards.accountId, accountIds))
+        : [];
+      return Object.fromEntries(
+        accountIds.map((id) => {
+          const row = rows.find((candidate) => candidate.accountId === id);
+          return [id, row ? (JSON.parse(row.columns) as BoardColumn[]) : DEFAULT_COLUMNS];
+        }),
+      );
+    },
+    setColumns: async (accountId, columns) => {
+      const row = { accountId, columns: JSON.stringify(columns), updatedAt: new Date() };
+      await db
+        .insert(schema.taskBoards)
+        .values(row)
+        .onConflictDoUpdate({ target: schema.taskBoards.accountId, set: row });
+      const kept = columns.map((column) => column.id);
+      const orphans = await db
+        .select({ id: schema.tasks.id })
+        .from(schema.tasks)
+        .where(and(eq(schema.tasks.accountId, accountId), notInArray(schema.tasks.status, kept)));
+      let position = await nextPosition(accountId, "open");
+      for (const { id } of orphans) {
+        await db
+          .update(schema.tasks)
+          .set({ status: "open", position: position++, updatedAt: new Date() })
+          .where(eq(schema.tasks.id, id));
+      }
     },
   };
 };

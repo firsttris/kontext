@@ -10,12 +10,11 @@ import { Button } from "@/components/ui/button";
 import { MenuContent, MenuItem, MenuRoot, MenuTrigger } from "@/components/ui/menu";
 import { CallLine } from "@/features/calls/call-line";
 import { ItemLink } from "@/features/links/item-link";
-import { useTasks } from "@/features/tasks/queries";
+import { useStatusLabel, useTasks } from "@/features/tasks/queries";
 import { firstName, keptMentions, type Message, type MessageRun, type Person } from "@/lib/chat";
 import { tasksOfMessage } from "@/lib/chat-cards";
 import { hasNewReplies } from "@/lib/chat-threads";
 import { cn } from "@/lib/cn";
-import { STATUS_LABELS } from "@/lib/tasks";
 import { m } from "@/paraglide/messages";
 import { MessageCard } from "./message-card";
 import { MessageFiles } from "./message-files";
@@ -202,6 +201,7 @@ const Item = ({
 }: { message: Message; own: boolean } & Omit<Props, "run">) => {
   const live = !isPending(message) && !message.deleted && !message.call;
   const { tasks } = useTasks();
+  const statusLabel = useStatusLabel();
   const made = tasksOfMessage(tasks, message.id);
   const [editing, setEditing] = useState(false);
   return (
@@ -296,7 +296,7 @@ const Item = ({
           className="flex items-center gap-1.5 text-[12px] text-muted no-underline hover:text-fg"
         >
           <ListChecks size={13} aria-hidden="true" />
-          {m.chat_task_made({ title: task.title, status: STATUS_LABELS[task.status]() })}
+          {m.chat_task_made({ title: task.title, status: statusLabel(task) })}
         </ItemLink>
       ))}
     </div>

@@ -11,14 +11,14 @@ import { categoriesOn } from "@/lib/categories";
 import { displayName, firstName, formatAddressList, readingDate } from "@/lib/format";
 import { mailboxNotice } from "@/lib/mail-accounts";
 import { mailboxRights } from "@/lib/mailboxes";
-import { STATUS_LABELS, tasksOfMail } from "@/lib/tasks";
+import { tasksOfMail } from "@/lib/tasks";
 import { m } from "@/paraglide/messages";
 import { CategoryChips } from "../categories/category-chips";
 import { useCategories } from "../categories/queries";
 import { DiscussedNotice } from "../chat/discussed-notice";
 import { RESURFACED } from "../snooze/queries";
 import { SnoozeNotice } from "../snooze/snooze-notice";
-import { useTasks } from "../tasks/queries";
+import { useStatusLabel, useTasks } from "../tasks/queries";
 import { useEmailActions } from "./actions";
 import { Attachments } from "./attachments";
 import { EarlierMails, LaterMails } from "./conversation";
@@ -42,6 +42,7 @@ export const MessageView = ({ accountId, mailbox, emailId }: Props) => {
   const wide = useMediaQuery("(min-width: 1536px)");
   const accountCategories = useCategories(accountId);
   const { tasks } = useTasks();
+  const statusLabel = useStatusLabel();
 
   // Opening a mail marks it read, once per mail (if the mailbox allows it).
   const { canMarkSeen } = mailboxRights(mailbox);
@@ -104,7 +105,7 @@ export const MessageView = ({ accountId, mailbox, emailId }: Props) => {
                     {m.tasks_on_mail_open({ title: task.title })}
                   </span>
                   <span className="rounded-md bg-subtle px-1.5 text-[11px] font-medium text-muted">
-                    {STATUS_LABELS[task.status]()}
+                    {statusLabel(task)}
                   </span>
                 </Link>
               ))}

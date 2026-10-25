@@ -1,0 +1,82 @@
+import { expect, type Page, test } from "@playwright/test";
+import { login, unique } from "./helpers";
+
+type ApiTask = {
+  id: string;
+  title: string;
+  status: string;
+  dueDate: string | null;
+  repeat: string | null;
+};
+
+const serverTasks = (page: Page): Promise<ApiTask[]> =>
+  page.evaluate(async () => (await (await fetch("/api/tasks")).json()).tasks);
+
+const personalId = (page: Page) =>
+  page.evaluate(
+    async () =>
+      (await (await fetch("/jmap/session")).json()).primaryAccounts[
+        "urn:ietf:params:jmap:mail"
+      ] as string,
+  );
+
+const day = (offset = 0) =>
+  new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Berlin" }).format(
+    new Date(Date.now() + offset * 86_400_000),
+  );
+
+test.describe("Aufgaben: eigene Spalten und Wiederholung", () => {
+  test("eine eigene Spalte anlegen, benutzen und wieder löschen", async ({ page }) => {
+    const title = unique("Fliesen Hoffmann");
+    await login(page);
+    const me = await personalId(page);
+    await page.goto(`/tasks?board=${me}&mode=board`);
+    await page.getByRole("button", { name: "Spalten" }).click();
+    const dialog = page.getByRole("dialog", { name: /^Spalten von/ });
+    await dialog.getByRole("button", { name: "Spalte hinzufügen" }).click();
+    await dialog.getByLabel("Name der Spalte 4").fill("Bestellt");
+    await dialog.getByRole("button", { name: "„Bestellt“ nach links" }).click();
+    await dialog.getByRole("button", { name: "Speichern" }).click();
+    await expect(
+      page.getByRole("status").filter({ hasText: "Spalten gespeichert." }),
+    ).toBeVisible();
+
+    const bestellt = page.getByRole("region", { name: "Bestellt" });
+    await expect(bestellt).toBeVisible();
+    await bestellt.getByRole("button", { name: "Aufgabe in „Bestellt“" }).click();
+    await bestellt.getByRole("textbox", { name: "Aufgabe in „Bestellt“" }).fill(title);
+    await page.keyboard.press("Enter");
+    await expect(bestellt).toContainText(title);
+    await expect
+      .poll(async () => (await serverTasks(page)).find((t) => t.title === title)?.status)
+      .toBe("c-bestellt");
+
+    // Removed again: its task goes back to "Offen".
+    await page.getByRole("button", { name: "Spalten" }).click();
+    await dialog.getByRole("button", { name: "„Bestellt“ löschen" }).click();
+    await dialog.getByRole("button", { name: "Speichern" }).click();
+    await expect(page.getByRole("region", { name: "Bestellt" })).toHaveCount(0);
+    await expect(page.getByRole("region", { name: "Offen" })).toContainText(title);
+  });
+
+  test("eine wiederkehrende Aufgabe kommt erledigt wieder", async ({ page }) => {
+    const title = unique("Zählerstand ablesen");
+    await login(page);
+    const response = await page.request.post("/api/tasks", {
+      data: { accountId: await personalId(page), title, dueDate: day(), repeat: "weekly" },
+    });
+    const { task } = (await response.json()) as { task: ApiTask };
+    await page.goto(`/tasks?task=${task.id}`);
+    const detail = page.getByRole("article", { name: title });
+    await expect(detail.getByRole("combobox", { name: /^Wiederholen/ })).toHaveValue("weekly");
+    await expect(detail).toContainText("Erledigt kommt sie wieder");
+    await detail.getByRole("button", { name: "Erledigt", exact: true }).first().click();
+    await expect
+      .poll(async () => (await serverTasks(page)).filter((t) => t.title === title).length)
+      .toBe(2);
+    const next = (await serverTasks(page)).find((t) => t.title === title && t.status === "open");
+    expect(next).toMatchObject({ dueDate: day(7), repeat: "weekly" });
+    await page.getByRole("link", { name: "Demnächst" }).first().click();
+    await expect(page.getByRole("link", { name: new RegExp(title) })).toBeVisible();
+  });
+});

@@ -352,8 +352,17 @@ oder Reihenfolge.
   Kollegin; verschieben und löschen darf dort nur sie. Erledigtes bleibt 30 Tage in den Listen.
 - **Ansichten:** „Meine Aufgaben“ sind mir zugewiesene und die im eigenen Postfach ohne
   Zuständigen; „Heute“ nimmt Überfälliges mit, heute Erledigtes bleibt durchgestrichen stehen. Ein
-  Board pro Postfach mit den festen Spalten Offen, In Arbeit, Wartet, Erledigt (`status`); die
+  Board pro Postfach mit den Spalten Offen, In Arbeit, Wartet, Erledigt (`status`); die
   Reihenfolge ist `position`, beim Ziehen wird zwischen die Nachbarn gesetzt.
+- **Eigene Spalten:** „Spalten“ am Board benennt um, ergänzt (bis zehn), verschiebt und löscht
+  (`task_boards`, JSON). „Offen“ bleibt vorn, „Erledigt“ hinten, nur „Erledigt“ zählt als fertig;
+  eigene Spalten heißen `c-…`. Aufgaben einer gelöschten Spalte und Aufgaben, die auf ein Board
+  ohne ihre Spalte wandern, landen in „Offen“.
+- **Wiederholen:** täglich, an Werktagen, wöchentlich, monatlich, jährlich (`repeat`). Erledigt,
+  legt der Server sofort die nächste an – offen, Schritte nicht abgehakt, fällig am nächsten Tag
+  nach der alten Fälligkeit, aber nie in der Vergangenheit (`nextDue`); die Erinnerung behält
+  ihren Abstand in Ortszeit. Die erledigte wiederholt sich danach nicht mehr, so entsteht beim
+  Wiederöffnen keine doppelte.
 - **Aus einer Mail:** „Aufgabe“ in der Werkzeugleiste (Taste `t`): Titel aus dem Betreff ohne
   „AW:/Re:“, verknüpft mit der Mail und ihrer Unterhaltung (`threadId`), auf Wunsch wird die
   Mail danach archiviert (merkt sich der Browser). Die Mail zeigt ihre Aufgabe in Liste und

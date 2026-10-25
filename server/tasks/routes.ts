@@ -10,7 +10,14 @@ import type { SessionAccount } from "../categories/routes";
 import type { Notice } from "../push/pusher";
 import { assignedNotice } from "./notices";
 import type { TaskStore } from "./store";
-import { newTaskSchema, type Task, taskPatchSchema } from "./tasks";
+import {
+  columnsSchema,
+  companyDay,
+  newTaskSchema,
+  nextOccurrence,
+  type Task,
+  taskPatchSchema,
+} from "./tasks";
 
 export type TaskDeps = {
   store: TaskStore;
@@ -53,17 +60,39 @@ export const createTaskRoutes = ({
     void notify([task.assigneeId], notice).catch(() => undefined);
   };
 
+  /** Whether a board has this column. */
+  const hasColumn = async (accountId: string, status: string) =>
+    ((await store.columns([accountId]))[accountId] ?? []).some((column) => column.id === status);
+
   app.get("/", async (c) => {
     const accounts = await accountsOf(c.req.raw);
     if (!accounts) return c.json({ error: "Nicht angemeldet" }, 401);
     const since = new Date(now().getTime() - DONE_DAYS * 86_400_000);
-    return c.json({
-      tasks: await store.list(
-        accounts.map((account) => account.id),
-        since,
-        personal(accounts),
-      ),
-    });
+    const tasks = await store.list(
+      accounts.map((account) => account.id),
+      since,
+      personal(accounts),
+    );
+    // The columns of every board one sees a task of.
+    const boardIds = [
+      ...new Set([...accounts.map((account) => account.id), ...tasks.map((t) => t.accountId)]),
+    ];
+    return c.json({ tasks, boards: await store.columns(boardIds) });
+  });
+
+  /** A board's own columns: renamed, added, removed, in another order. */
+  app.put("/boards/:accountId", async (c) => {
+    const accounts = await accountsOf(c.req.raw);
+    if (!accounts) return c.json({ error: "Nicht angemeldet" }, 401);
+    const accountId = c.req.param("accountId");
+    if (!writable(accounts, accountId)) {
+      return c.json({ error: "Dieses Postfach ist nur zum Lesen." }, 403);
+    }
+    const parsed = columnsSchema.safeParse((await c.req.json().catch(() => null))?.columns);
+    if (!parsed.success) return c.json({ error: "Die Spalten passen nicht." }, 400);
+    await store.setColumns(accountId, parsed.data);
+    changed(accountId, []);
+    return c.json({ columns: parsed.data });
   });
 
   app.post("/", async (c) => {
@@ -73,6 +102,9 @@ export const createTaskRoutes = ({
     if (!parsed.success) return c.json({ error: "Angaben unvollständig." }, 400);
     if (!writable(accounts, parsed.data.accountId)) {
       return c.json({ error: "Dieses Postfach ist nur zum Lesen." }, 403);
+    }
+    if (!(await hasColumn(parsed.data.accountId, parsed.data.status))) {
+      return c.json({ error: "Diese Spalte gibt es nicht." }, 400);
     }
     const me = personal(accounts) ?? parsed.data.accountId;
     const created = await store.create(parsed.data, me);
@@ -99,9 +131,24 @@ export const createTaskRoutes = ({
     if (!mayChange) {
       return c.json({ error: "Dieses Postfach ist nur zum Lesen." }, 403);
     }
+    const patch = { ...parsed.data };
+    if (patch.status && !(await hasColumn(target, patch.status))) {
+      return c.json({ error: "Diese Spalte gibt es nicht." }, 400);
+    }
+    // Onto a board without its column: into "open" there.
+    if (!patch.status && target !== task.accountId && !(await hasColumn(target, task.status))) {
+      patch.status = "open";
+    }
     const me = personal(accounts) ?? task.accountId;
     const before = task.assigneeId;
-    const updated = await store.update(task.id, parsed.data, me);
+    const wasDone = task.status === "done";
+    let updated = await store.update(task.id, patch, me);
+    // A repeating task done: the next one is there at once, this one repeats no more.
+    if (updated && updated.status === "done" && !wasDone && updated.repeat) {
+      const next = nextOccurrence(updated, companyDay(now()));
+      if (next) await store.create(next, updated.createdBy);
+      updated = await store.update(updated.id, { repeat: null }, me);
+    }
     const assignees = told(task, updated?.assigneeId ?? null);
     changed(task.accountId, assignees);
     if (target !== task.accountId) changed(target, assignees);

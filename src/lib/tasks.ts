@@ -5,20 +5,63 @@
  */
 import type { EmailSummary } from "@/jmap/types";
 import { m } from "@/paraglide/messages";
-import type { NewTask, Task, TaskLink, TaskStatus } from "../../server/tasks/tasks";
-import { TASK_STATUSES } from "../../server/tasks/tasks";
+import type {
+  BoardColumn,
+  NewTask,
+  Repeat,
+  Task,
+  TaskLink,
+  TaskStatus,
+} from "../../server/tasks/tasks";
+import { DEFAULT_COLUMNS, REPEATS, TASK_STATUSES } from "../../server/tasks/tasks";
 import { displayName } from "./format";
 import { addDays, dateKey } from "./jscalendar";
 
-export { type NewTask, TASK_STATUSES, type Task, type TaskLink, type TaskStatus };
+export {
+  type BoardColumn,
+  DEFAULT_COLUMNS,
+  type NewTask,
+  REPEATS,
+  type Repeat,
+  TASK_STATUSES,
+  type Task,
+  type TaskLink,
+  type TaskStatus,
+};
 
 export type TaskView = "mine" | "today" | "upcoming" | "done";
 
-export const STATUS_LABELS: Record<TaskStatus, () => string> = {
+const BUILT_IN_LABELS: Record<string, () => string> = {
   open: m.tasks_status_open,
   doing: m.tasks_status_doing,
   waiting: m.tasks_status_waiting,
   done: m.tasks_status_done,
+};
+
+/** A column's name: its own, else the app's for a built-in one. */
+export const columnLabel = (column: BoardColumn): string =>
+  column.name || BUILT_IN_LABELS[column.id]?.() || column.id;
+
+export const REPEAT_LABELS: Record<Repeat, () => string> = {
+  daily: m.tasks_repeat_daily,
+  weekdays: m.tasks_repeat_weekdays,
+  weekly: m.tasks_repeat_weekly,
+  monthly: m.tasks_repeat_monthly,
+  yearly: m.tasks_repeat_yearly,
+};
+
+/** A new column's id: "c-" and letters from its name, made unique. */
+export const newColumnId = (name: string, taken: string[]): string => {
+  const base = `c-${
+    name
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[^a-z0-9]/g, "")
+      .slice(0, 16) || "spalte"
+  }`.padEnd(6, "x");
+  let id = base;
+  for (let n = 2; taken.includes(id); n++) id = `${base}${n}`;
+  return id;
 };
 
 /** Assigned to me, or in my own mailbox with nobody assigned. */
