@@ -1292,13 +1292,18 @@ der Person, die ihn verbunden hat (`server/mcp/`).
     legt erst dann die Verbindung an. Tokens sind JWTs mit `aud` = `<Adresse>/mcp` (RFC 8707), eine
     Stunde gültig, mit Refresh-Token; `/mcp` prüft sie gegen die eigenen Schlüssel (JWKS, intern
     über `127.0.0.1` gelesen) und sucht die Verbindung zu Person (`sub`) und Client (`azp`). Fehlt
-    sie (getrennt) oder ist ihr Stalwart-Token abgelaufen, bekommt der Client wieder die 401 mit
-    `resource_metadata` und fragt die Person neu; Zustimmung und Refresh-Tokens werden dabei
-    gelöscht. Nur `authorization_code` und `refresh_token`: hinter jedem Token steht eine Person.
+    sie (getrennt, oder mit allen Sitzungen der Person beendet: neues Passwort, gesperrt, Austritt)
+    oder ist ihr Stalwart-Token abgelaufen, bekommt der Client wieder die 401 mit
+    `resource_metadata`; Zustimmung und Refresh-Tokens werden dabei gelöscht, so dass die Person
+    wieder gefragt wird. Nur `authorization_code` und `refresh_token`: hinter jedem Token steht eine Person.
     Ein Client mit Redirect auf `localhost` (Claude Code) gilt als native App (RFC 8252).
   - **Zugangsschlüssel:** Für Claude Code, Skripte und Clients ohne Anmeldung im Browser: unter
     „KI-Agenten“ angelegt; in SQLite liegt nur der SHA-256, der Schlüssel selbst ist einmal zu
     sehen. Der Agent schickt ihn als `Authorization: Bearer kontext_…`.
+- **Passwort-Versuche:** Schlüssel anlegen und Zustimmen prüfen das Passwort bei Stalwart; beide
+  zählen pro Person gegen dasselbe Limit wie die Anmeldung (`SIGN_IN_PER_MINUTE`,
+  `server/mcp/attempts.ts`), damit ein offen gelassener, angemeldeter Browser kein Weg ist,
+  Passwort oder Code zu erraten.
 - **Discovery und Caddy:** Die beiden `/.well-known/oauth-*`-Pfade liegen auf der Wurzel und gehen
   an Better Auth (`server/app.ts`); Caddy gibt sie Kontext statt Stalwart (`deploy/Caddyfile`).
 

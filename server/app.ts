@@ -52,8 +52,9 @@ import { createImageSenderRoutes } from "./images/routes";
 import { createServerJmap } from "./jmap-server";
 import { createHub } from "./live/hub";
 import { createLiveRoutes } from "./live/routes";
+import { createAttempts } from "./mcp/attempts";
 import { createConnections } from "./mcp/connections";
-import { createOAuthCaller, createRevokeClient } from "./mcp/oauth";
+import { createOAuthCaller, createRevokeClient, jwtVerifier } from "./mcp/oauth";
 import { createConsentRoutes } from "./mcp/oauth-routes";
 import { createMcpEndpoint, createMcpKeyRoutes, type McpDeps } from "./mcp/routes";
 import { taskApiOf } from "./mcp/writer";
@@ -511,12 +512,15 @@ export const createApp = async (env: Env) => {
   );
   // Agents over MCP, with connections of their own; they reach what their owner may reach.
   const connections = createConnections(db);
+  const revokeClient = createRevokeClient(db);
   const oauthCaller = createOAuthCaller({
     connections,
-    publicUrl: env.BETTER_AUTH_URL,
+    revokeClient,
     // The server's own signing keys, read on the inside rather than through the public address.
-    jwksUrl: `http://127.0.0.1:${env.PORT}/api/auth/jwks`,
+    verify: jwtVerifier(env.BETTER_AUTH_URL, `http://127.0.0.1:${env.PORT}/api/auth/jwks`),
   });
+  // Guessing a password through an agent's sign-in counts like signing in (SIGN_IN_PER_MINUTE).
+  const passwordAttempts = createAttempts(env.SIGN_IN_PER_MINUTE);
   const mcp: McpDeps = {
     connections,
     grants,
@@ -529,13 +533,15 @@ export const createApp = async (env: Env) => {
     tasksFor: (accounts, name) =>
       taskApiOf(createTaskRoutes({ ...taskNotices, accountsOf: accounts, nameOf: name })),
     oauthCaller: (request) => oauthCaller(request),
-    revokeClient: createRevokeClient(db),
+    revokeClient,
+    mayTryPassword: passwordAttempts,
   };
   app.route("/api/mcp-keys", createMcpKeyRoutes(mcp));
   app.route(
     "/api/mcp-oauth",
     createConsentRoutes({
       ...mcp,
+      revokeClient,
       api: {
         // As a request of its own: the provider continues the authorization from it.
         consent: async (body, headers) => {

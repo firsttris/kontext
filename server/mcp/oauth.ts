@@ -65,49 +65,62 @@ export const clientOf = (claims: JWTPayload): string | null =>
       ? claims.client_id
       : null;
 
-export type OAuthCallerDeps = {
-  connections: Pick<Connections, "resolveClient">;
-  publicUrl: string;
-  /** Where the server reads its own signing keys, without going out through the internet. */
-  jwksUrl: string;
-};
+/** A token's claims, or the response to send instead (RFC 9728's challenge, a bad token). */
+export type VerifyToken = (request: Request) => Promise<JWTPayload | Response>;
 
-/**
- * The caller behind an OAuth token, or the response that tells the client to (re)authorize:
- * RFC 9728's challenge for a missing or bad token, and the same for a token whose connection
- * was revoked, so the client starts over and the person is asked again.
- */
-export const createOAuthCaller = ({ connections, publicUrl, jwksUrl }: OAuthCallerDeps) => {
-  const resource = mcpResource(publicUrl);
-  const verify = (claimsOut: { claims?: JWTPayload }) =>
+/** Checks the bearer JWT against the server's own keys: issuer, audience `<URL>/mcp`, `azp`. */
+export const jwtVerifier = (publicUrl: string, jwksUrl: string): VerifyToken => {
+  const handler = (out: { claims?: JWTPayload }) =>
     createMcpProtectedRequestHandler(
       {
         issuer: `${publicUrl.replace(/\/$/, "")}/api/auth`,
-        audience: resource,
+        audience: mcpResource(publicUrl),
         jwksUrl,
         jwtVerifyOptions: { requiredClaims: ["azp"] },
         challengeScopes: ["read"],
       },
       async (_request, claims) => {
-        claimsOut.claims = claims;
+        out.claims = claims;
         return new Response(null, { status: 204 });
       },
     );
-  return async (request: Request): Promise<McpCaller | Response> => {
+  return async (request) => {
     const out: { claims?: JWTPayload } = {};
-    const response = await verify(out)(request);
-    if (!out.claims) return response;
-    const clientId = clientOf(out.claims);
-    const found =
-      out.claims.sub && clientId ? await connections.resolveClient(out.claims.sub, clientId) : null;
-    if (!found) {
-      // Like a missing token: the client asks the person again.
-      const fresh = new Request(request.url, { method: request.method });
-      return verify({})(fresh);
-    }
-    return { ...found, scopes: grantedScopes(found.scopes.join(" "), out.claims.scope) };
+    const response = await handler(out)(request);
+    return out.claims ?? response;
   };
 };
+
+export type OAuthCallerDeps = {
+  connections: Pick<Connections, "resolveClient">;
+  /** Takes a client's consent and tokens away from a person (createRevokeClient). */
+  revokeClient: (userId: string, clientId: string) => Promise<void>;
+  verify: VerifyToken;
+};
+
+/**
+ * The caller behind an OAuth token, or the response that tells the client to (re)authorize:
+ * RFC 9728's challenge for a missing or bad token, and the same for a valid token whose
+ * connection is gone. A connection also goes with its session when all of a person's sessions end
+ * (new password, locked, left the company) while Better Auth keeps the consent; that consent is
+ * taken away here, or the provider would hand out codes without asking and /mcp refuse them for
+ * ever.
+ */
+export const createOAuthCaller =
+  ({ connections, revokeClient, verify }: OAuthCallerDeps) =>
+  async (request: Request): Promise<McpCaller | Response> => {
+    const claims = await verify(request);
+    if (claims instanceof Response) return claims;
+    const clientId = clientOf(claims);
+    const found =
+      claims.sub && clientId ? await connections.resolveClient(claims.sub, clientId) : null;
+    if (!found) {
+      if (claims.sub && clientId) await revokeClient(claims.sub, clientId);
+      // Like a missing token: the client asks the person again.
+      return (await verify(new Request(request.url, { method: request.method }))) as Response;
+    }
+    return { ...found, scopes: grantedScopes(found.scopes.join(" "), claims.scope) };
+  };
 
 /**
  * Takes a client's consent and tokens away from a person, so the next authorization asks them

@@ -44,6 +44,7 @@ const deps = (patch: Partial<McpDeps> = {}): McpDeps => ({
   userOf: async () => ({ id: "u1", email: "jonas@weber-haustechnik.test" }),
   login: async () => ({ status: "ok", tokens }),
   tasksFor: () => async () => ({ status: 200, body: { tasks: [] } }),
+  mayTryPassword: () => true,
   ...patch,
 });
 
@@ -133,6 +134,14 @@ describe("/api/mcp-keys", () => {
     expect(own.createKey).toHaveBeenCalledWith("u1", "s2", "Claude", ["read", "write"]);
     await app.request(post({ name: "Nur lesen", password: "geheim" }));
     expect(own.createKey).toHaveBeenLastCalledWith("u1", "s2", "Nur lesen", ["read"]);
+  });
+
+  it("lets nobody guess the password: tries count like signing in", async () => {
+    const login = vi.fn(async () => ({ status: "failed" as const }));
+    const app = createMcpKeyRoutes(deps({ login, mayTryPassword: () => false }));
+    const response = await app.request(post({ name: "C", password: "p" }));
+    expect(response.status).toBe(429);
+    expect(login).not.toHaveBeenCalled();
   });
 
   it("asks for the code, and refuses a wrong password", async () => {

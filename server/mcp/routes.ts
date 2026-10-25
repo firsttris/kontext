@@ -32,6 +32,8 @@ export type McpDeps = {
   /** The signed-in person (cookie session), or null. */
   userOf: (request: Request) => Promise<{ id: string; email: string } | null>;
   login: (credentials: { email: string; password: string; code?: string }) => Promise<LoginResult>;
+  /** Whether this person may try a password once more now (server/mcp/attempts.ts). */
+  mayTryPassword: (userId: string) => boolean;
   /** The task routes as someone with these accounts and this name (for notices). */
   tasksFor: (accounts: () => Promise<SessionAccount[]>, name: () => Promise<string>) => TaskApi;
   /** The caller behind a bearer token that is no access key (OAuth), or null. */
@@ -140,7 +142,7 @@ export const createMcpEndpoint = (deps: McpDeps) => {
 };
 
 export const createMcpKeyRoutes = (deps: McpDeps) => {
-  const { connections, grants, userOf, login } = deps;
+  const { connections, grants, userOf, login, mayTryPassword } = deps;
   const app = new Hono();
 
   app.get("/", async (c) => {
@@ -155,6 +157,9 @@ export const createMcpKeyRoutes = (deps: McpDeps) => {
     const parsed = newKeySchema.safeParse(await c.req.json().catch(() => null));
     if (!parsed.success) return c.json({ error: "Name und Passwort fehlen." }, 400);
     const { name, password, code, write } = parsed.data;
+    if (!mayTryPassword(user.id)) {
+      return c.json({ error: "Zu viele Versuche – bitte in einer Minute noch einmal." }, 429);
+    }
     const result = await login({ email: user.email, password, code });
     if (result.status === "mfa") return c.json({ status: "mfa" as const });
     if (result.status === "failed") return c.json({ error: "Passwort oder Code falsch." }, 401);

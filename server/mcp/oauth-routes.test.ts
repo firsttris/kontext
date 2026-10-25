@@ -24,15 +24,18 @@ const deps = (patch: Partial<ConsentDeps> = {}) => {
     clientName: vi.fn(async () => "Claude"),
   };
   const save = vi.fn(async () => undefined);
+  const revokeClient = vi.fn(async () => undefined);
   const all: ConsentDeps = {
     api,
     connections,
     grants: { save },
     userOf: async () => ({ id: "u1", email: "jonas@weber-haustechnik.test" }),
     login: async () => ({ status: "ok", tokens }),
+    mayTryPassword: () => true,
+    revokeClient,
     ...patch,
   };
-  return { all, api, connections, save };
+  return { all, api, connections, save, revokeClient };
 };
 
 const post = (body: unknown) =>
@@ -95,6 +98,31 @@ describe("/api/mcp-oauth/consent", () => {
     );
     expect(response.status).toBe(400);
     expect(connections.openSession).not.toHaveBeenCalled();
+  });
+
+  it("takes the consent back when the connection cannot be made after it", async () => {
+    const { all, revokeClient, connections } = deps();
+    all.grants = {
+      save: async () => {
+        throw new Error("disk full");
+      },
+    };
+    const response = await createConsentRoutes(all).request(
+      post({ oauth_query: query, accept: true, password: "geheim" }),
+    );
+    expect(response.status).toBe(500);
+    expect(connections.dropSession).toHaveBeenCalledWith("s2");
+    expect(revokeClient).toHaveBeenCalledWith("u1", "claude");
+  });
+
+  it("lets nobody guess the password: tries count like signing in", async () => {
+    const login = vi.fn(async () => ({ status: "failed" as const }));
+    const { all } = deps({ login, mayTryPassword: () => false });
+    const response = await createConsentRoutes(all).request(
+      post({ oauth_query: query, accept: true, password: "p" }),
+    );
+    expect(response.status).toBe(429);
+    expect(login).not.toHaveBeenCalled();
   });
 
   it("wants a signed-in person and a request", async () => {

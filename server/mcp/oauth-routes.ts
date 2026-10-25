@@ -27,6 +27,10 @@ export type ConsentDeps = {
   grants: Pick<Grants, "save">;
   userOf: (request: Request) => Promise<{ id: string; email: string } | null>;
   login: (credentials: { email: string; password: string; code?: string }) => Promise<LoginResult>;
+  /** Whether this person may try a password once more now (server/mcp/attempts.ts). */
+  mayTryPassword: (userId: string) => boolean;
+  /** Takes the consent back when the connection could not be made after it. */
+  revokeClient: (userId: string, clientId: string) => Promise<void>;
 };
 
 const consentSchema = z.object({
@@ -48,7 +52,15 @@ export const acceptedScopes = (requested: string | null, write: boolean): string
     .filter((scope) => scope && (scope !== "write" || write))
     .join(" ");
 
-export const createConsentRoutes = ({ api, connections, grants, userOf, login }: ConsentDeps) => {
+export const createConsentRoutes = ({
+  api,
+  connections,
+  grants,
+  userOf,
+  login,
+  mayTryPassword,
+  revokeClient,
+}: ConsentDeps) => {
   const app = new Hono();
 
   app.post("/consent", async (c) => {
@@ -65,6 +77,9 @@ export const createConsentRoutes = ({ api, connections, grants, userOf, login }:
     if (!accept) return c.json(await api.consent({ accept: false, oauth_query }, headers));
 
     if (!password) return c.json({ error: "Passwort fehlt." }, 400);
+    if (!mayTryPassword(user.id)) {
+      return c.json({ error: "Zu viele Versuche – bitte in einer Minute noch einmal." }, 429);
+    }
     const result = await login({ email: user.email, password, code });
     if (result.status === "mfa") return c.json({ status: "mfa" as const });
     if (result.status === "failed") return c.json({ error: "Passwort oder Code falsch." }, 401);
@@ -74,15 +89,21 @@ export const createConsentRoutes = ({ api, connections, grants, userOf, login }:
     if (!next)
       return c.json({ error: "Die Anfrage ist abgelaufen – bitte im Agenten neu verbinden." }, 400);
 
+    // The consent stands now; without its connection it must go again, or the agent would get
+    // codes without the person being asked (server/mcp/oauth.ts).
     const name = (await api.clientName(clientId, headers).catch(() => null)) || clientId;
-    const sessionId = await connections.openSession(user.id, name);
+    const sessionId = await connections.openSession(user.id, name).catch(async (error) => {
+      await revokeClient(user.id, clientId);
+      throw error;
+    });
     try {
       await grants.save(sessionId, result.tokens);
+      await connections.createOAuth(user.id, sessionId, name, clientId, scopesFor(write));
     } catch (error) {
       await connections.dropSession(sessionId);
+      await revokeClient(user.id, clientId);
       throw error;
     }
-    await connections.createOAuth(user.id, sessionId, name, clientId, scopesFor(write));
     return c.json({ url: next.url });
   });
 
