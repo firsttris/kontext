@@ -64,6 +64,13 @@ im Postfach hat (Stalwart gibt Identitäten nur Mitgliedern), antwortet vom eige
 Antwort liegt dann im eigenen Gesendet-Ordner. Beide Stufen setzt die Firmenverwaltung; „Nur
 lesen“ teilt dabei alle vorhandenen Ordner des Postfachs (später angelegte Ordner nicht).
 
+Der Server (Aufgaben, Kategorien, Textbausteine, Chat, DAV) liest die Stufe nicht aus `isReadOnly`
+der Session: Stalwart 0.16 schickt jedes weitere Konto mit `isReadOnly: false` und `isPersonal:
+false`, auch das einer Kollegin, die nur ein Adressbuch teilt. Mitglied einer Gruppe ist, bei
+wessen Konto Stalwart `mayCreateCalendar` (bzw. `mayCreateAddressBook`) setzt; für alle anderen
+fragt `server/account-rights.ts` per `Mailbox/get` die Ordner ab: ohne Ordner kein Postfach,
+schreiben darf, wem der Posteingang `mayAddItems` gibt.
+
 ### Verschieben zwischen Postfächern
 
 „Verschieben nach …“ zeigt die Ordner aller Postfächer, nach Postfach gruppiert, das der Mail

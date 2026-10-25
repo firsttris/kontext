@@ -1,7 +1,8 @@
 // @vitest-environment node
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import type { SessionAccount } from "../categories/routes";
 import type { Notice } from "../push/pusher";
+import { readOnlyInbox, sampleSessionInfo } from "../sample-session";
 import { memoryTaskStore } from "./memory-store";
 import { createTaskRoutes } from "./routes";
 import { isCalendarDay, type Task } from "./tasks";
@@ -171,5 +172,45 @@ describe("columns and repeating tasks", () => {
     expect(tasks[0]!.repeat).toBeNull();
     expect(tasks[1]).toMatchObject({ title: "Zählerstand", status: "open", repeat: "monthly" });
     expect(tasks[1]!.dueDate! > "2020-01-31").toBe(true);
+  });
+});
+
+describe("task rights from Stalwart's session", () => {
+  afterEach(() => vi.unstubAllGlobals());
+
+  const setupWith = (people: Parameters<typeof sampleSessionInfo>[0]) => {
+    const { accountsOf } = sampleSessionInfo(people);
+    const { tasks, store } = memoryTaskStore();
+    const app = createTaskRoutes({ store, accountsOf });
+    const call = (who: string, method: string, path: string, body?: unknown) =>
+      app.request(path, {
+        method,
+        headers: { "x-who": who, "content-type": "application/json" },
+        body: body === undefined ? undefined : JSON.stringify(body),
+      });
+    return { tasks, call };
+  };
+
+  it("lets who only reads info@ look at its tasks, not delete them", async () => {
+    const { tasks, call } = setupWith({
+      jonas: { info: { member: true } },
+      max: { info: { folders: [readOnlyInbox] } },
+    });
+    expect((await call("jonas", "POST", "/", { accountId: "info", title: "Angebot" })).status).toBe(
+      201,
+    );
+    const listed = (await (await call("max", "GET", "/")).json()) as { tasks: Task[] };
+    expect(listed.tasks.map((task) => task.title)).toEqual(["Angebot"]);
+    expect((await call("max", "DELETE", `/${tasks[0]!.id}`)).status).toBe(403);
+    expect(tasks).toHaveLength(1);
+  });
+
+  it("gives no colleague's own board to who only sees her shared address book", async () => {
+    const { tasks, call } = setupWith({ anna: {}, jonas: { anna: { folders: [] } } });
+    await call("anna", "POST", "/", { accountId: "anna", title: "Arzttermin" });
+    const listed = (await (await call("jonas", "GET", "/")).json()) as { tasks: Task[] };
+    expect(listed.tasks).toEqual([]);
+    expect((await call("jonas", "DELETE", `/${tasks[0]!.id}`)).status).not.toBe(200);
+    expect(tasks).toHaveLength(1);
   });
 });
