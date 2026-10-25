@@ -19,7 +19,7 @@ import { m } from "@/paraglide/messages";
 import { soundLength } from "../../../server/phone/sounds";
 import { PhoneStatus } from "./phone-status";
 import { usePhoneStore } from "./phone-store";
-import { dialPhone, savePhoneNote, usePhone } from "./queries";
+import { blockNumber, dialPhone, savePhoneNote, usePhone } from "./queries";
 import { useCallerName } from "./use-caller";
 
 const useDial = () => {
@@ -65,6 +65,31 @@ const Note = ({ call }: { call: PhoneCall }) => {
       }}
       className="w-full rounded-md border border-transparent bg-transparent px-1 py-0.5 text-[13px] text-muted outline-none hover:border-border focus:border-muted focus:text-fg"
     />
+  );
+};
+
+/** "Sperren": the box turns the number away from now on (Firmenverwaltung lists and lifts it). */
+const BlockButton = ({ number }: { number: string }) => {
+  const toast = useToast();
+  const [blocked, setBlocked] = useState(false);
+  if (blocked) return <span className="text-[12px] text-muted">{m.phone_blocked()}</span>;
+  return (
+    <Button
+      size="sm"
+      variant="ghost"
+      className="text-muted"
+      onClick={async () => {
+        try {
+          await blockNumber(number);
+          setBlocked(true);
+          toast.show(m.phone_block_done({ number: readableNumber(number) }));
+        } catch (error) {
+          toast.show(m.common_error({ message: (error as Error).message }), "error");
+        }
+      }}
+    >
+      {m.phone_block()}
+    </Button>
   );
 };
 
@@ -148,11 +173,16 @@ const Row = ({
         ) : null}
         {call.state === "ended" ? <Note call={call} /> : null}
       </div>
-      {canDial && call.remote ? (
-        <Button size="sm" variant="ghost" onClick={() => onDial(call.remote)}>
-          {missed ? m.phone_call_back() : m.phone_dial()}
-        </Button>
-      ) : null}
+      <div className="flex flex-col items-end gap-1">
+        {canDial && call.remote ? (
+          <Button size="sm" variant="ghost" onClick={() => onDial(call.remote)}>
+            {missed ? m.phone_call_back() : m.phone_dial()}
+          </Button>
+        ) : null}
+        {call.direction === "in" && call.remote && call.outcome !== "blocked" ? (
+          <BlockButton number={call.remote} />
+        ) : null}
+      </div>
     </li>
   );
 };

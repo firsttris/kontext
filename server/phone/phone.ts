@@ -17,6 +17,8 @@ export const OUTCOMES = [
   "failed",
   /** Outside the opening hours. */
   "closed",
+  /** On the block list: turned away by the box. */
+  "blocked",
 ] as const;
 export type Outcome = (typeof OUTCOMES)[number];
 
@@ -168,6 +170,19 @@ export const closedCall = (
   event: CallEvent,
   ids: { id: string; boxId: string; members: string[] },
 ): PhoneCall => ({ ...incomingCall(event, ids), state: "mailbox", outcome: "closed" });
+
+/** A call the box turned away (block list): filed as over at once. */
+export const blockedCall = (
+  event: CallEvent,
+  ids: { id: string; boxId: string; members: string[] },
+): PhoneCall => ({
+  ...incomingCall(event, ids),
+  state: "ended",
+  outcome: "blocked",
+  endedAt: event.at,
+});
+
+export const blockSchema = z.object({ number: z.string().trim().min(3).max(40) });
 
 /** A call dialled from Kontext, before the box has done anything. */
 export const outgoingCall = ({

@@ -100,6 +100,13 @@ export const boxConfigSchema = z.object({
   mailbox: mailboxSchema.nullable().default(null),
   hours: hoursSchema.nullable().default(null),
   menu: menuSchema.nullable().default(null),
+  /** Calls the box turns away at once: these numbers (in every way they may come) and withheld ones. */
+  blocked: z
+    .object({
+      numbers: z.array(z.string().regex(/^\+?[0-9]{3,20}$/)).max(1000),
+      anonymous: z.boolean(),
+    })
+    .default({ numbers: [], anonymous: false }),
   /** While it rings in Kontext, after a while also this number (a mobile phone) rings. */
   forward: z
     .object({
@@ -143,8 +150,16 @@ export type ToBox = z.infer<typeof toBoxSchema>;
 /**
  * "mailbox": nobody answered, the caller hears the greeting and may leave a message. "closed": a
  * call outside the opening hours; it does not ring, the caller hears the closing greeting.
+ * "blocked": a number on the block list (or withheld, if those are blocked); turned away at once.
  */
-export const CALL_STATES = ["ringing", "answered", "mailbox", "closed", "ended"] as const;
+export const CALL_STATES = [
+  "ringing",
+  "answered",
+  "mailbox",
+  "closed",
+  "blocked",
+  "ended",
+] as const;
 
 /** One step of a call, as the box saw it. */
 export const callEventSchema = z.object({

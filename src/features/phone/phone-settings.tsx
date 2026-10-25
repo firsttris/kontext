@@ -10,6 +10,7 @@ import { useToast } from "@/components/ui/toast";
 import { SettingsCard } from "@/features/settings/settings-page";
 import { m } from "@/paraglide/messages";
 import { ADMIN_KEY, type Admin, send, useAdminChange } from "./settings/api";
+import { BlockedForm } from "./settings/blocked";
 import { CallbacksForm } from "./settings/callbacks";
 import { DesksForm } from "./settings/desks";
 import { HoursForm } from "./settings/hours";
@@ -166,6 +167,7 @@ export const PhoneSettingsSection = () => {
           <MailboxForm mailbox={data.mailbox} sounds={data.sounds} />
           <HoursForm hours={data.hours} sounds={data.sounds} />
           <MenuForm menu={data.menu} sounds={data.sounds} />
+          <BlockedForm key={JSON.stringify(data.blocked)} blocked={data.blocked} />
         </>
       ) : null}
     </>

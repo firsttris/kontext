@@ -97,6 +97,10 @@ const menuInput = z.object({
     )
     .max(10),
 });
+const blockedInput = z.object({
+  numbers: z.array(z.string().trim().min(3).max(40)).max(1000),
+  anonymous: z.boolean(),
+});
 const boxSchema = z.object({ name: z.string().trim().min(1).max(60) });
 
 /** Short ids for the box's endpoint names ("fritzbox-<id>"). */
@@ -158,6 +162,7 @@ export const createPhoneAdminRoutes = ({
       },
       hours: settings.hours,
       menu: settings.menu,
+      blocked: settings.blocked,
       sip,
     });
   });
@@ -276,6 +281,32 @@ export const createPhoneAdminRoutes = ({
       return c.json({ error: "Unbekannte Person" }, 400);
     }
     await store.saveSettings({ ...settings, menu: parsed.data });
+    await service.reconfigure();
+    return c.body(null, 204);
+  });
+
+  app.put("/blocked", async (c) => {
+    const parsed = blockedInput.safeParse(await c.req.json().catch(() => ({})));
+    if (!parsed.success) return c.json({ error: "Ungültig" }, 400);
+    const numbers = parsed.data.numbers.map((raw) => toE164(raw));
+    if (numbers.some((number) => !number)) return c.json({ error: "Keine gültige Nummer" }, 400);
+    const settings = await store.settings();
+    const kept = settings.blocked.numbers;
+    const me = c.get("loaded").selfId;
+    await store.saveSettings({
+      ...settings,
+      blocked: {
+        anonymous: parsed.data.anonymous,
+        numbers: [...new Set(numbers as string[])].map(
+          (number) =>
+            kept.find((entry) => entry.number === number) ?? {
+              number,
+              by: me,
+              at: new Date().toISOString(),
+            },
+        ),
+      },
+    });
     await service.reconfigure();
     return c.body(null, 204);
   });

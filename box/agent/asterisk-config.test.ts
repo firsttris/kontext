@@ -12,6 +12,7 @@ const config: BoxConfig = {
   mailbox: null,
   hours: null,
   menu: null,
+  blocked: { numbers: [], anonymous: false },
   forward: null,
 };
 const paths = { sounds: "/data/sounds", recordings: "/data/recordings" };
@@ -162,6 +163,28 @@ describe("opening hours", () => {
     expect(extensionsConf(config, paths)).toContain(
       "Set(CHANNEL(hangup_handler_push)=kontext-ended,s,1)\n same => n,Goto(ringing,1)",
     );
+  });
+});
+
+describe("the block list", () => {
+  it("turns blocked and withheld numbers away before anything rings", () => {
+    const conf = extensionsConf(
+      { ...config, blocked: { numbers: ["+497223123456", "07223123456"], anonymous: true } },
+      paths,
+    );
+    expect(conf).toContain(`GotoIf($["\${CALLERID(num)}" = ""]?blocked,1)`);
+    expect(conf).toContain(`GotoIf($["\${CALLERID(num)}" = "07223123456"]?blocked,1)`);
+    expect(conf).toMatch(
+      /exten => blocked,1,UserEvent\(KontextCall,.*State: blocked,.*\n same => n,Hangup\(21\)/,
+    );
+    // Before the end is reported: a blocked call is over when it is turned away.
+    expect(conf.indexOf("?blocked,1)")).toBeLessThan(
+      conf.indexOf("hangup_handler_push)=kontext-ended"),
+    );
+  });
+
+  it("checks nothing without a block list", () => {
+    expect(extensionsConf(config, paths)).not.toContain("blocked");
   });
 });
 

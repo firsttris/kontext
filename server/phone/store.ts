@@ -67,6 +67,13 @@ const settingsSchema = z.object({
       ),
     })
     .default({ enabled: false, greeting: null, options: [] }),
+  /** Numbers the box turns away (E.164), and whether withheld numbers are turned away too. */
+  blocked: z
+    .object({
+      numbers: z.array(z.object({ number: z.string(), by: z.string(), at: z.string() })),
+      anonymous: z.boolean(),
+    })
+    .default({ numbers: [], anonymous: false }),
   /** Desk phones (Snom) that sign in at the box and ring with Kontext. */
   deskPhones: z
     .array(

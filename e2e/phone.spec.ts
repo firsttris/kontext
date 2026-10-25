@@ -57,6 +57,7 @@ const box = {
         }[];
         hours: { open: { day: number; from: string; to: string }[] } | null;
         menu: { options: { digit: string; mailbox: boolean }[] } | null;
+        blocked: { numbers: string[]; anonymous: boolean };
       } | null;
       commands: { type: string; number?: string; call?: string }[];
     },
@@ -248,6 +249,25 @@ test.describe("Telefonie über die Telefonbox", () => {
     await expect(item).toContainText("07112 223334");
     await expect(item).toContainText("Außerhalb der Öffnungszeiten");
     await expect(page.getByRole("dialog", { name: /^Anruf von/ })).toHaveCount(0);
+  });
+
+  test("eine Nummer sperren: die Box weist sie ab, die Liste zeigt es", async ({ page }) => {
+    await login(page);
+    await page.getByRole("link", { name: "Telefon", exact: true }).click();
+    const item = page
+      .getByRole("list", { name: "Letzte Anrufe" })
+      .getByRole("listitem")
+      .filter({ hasText: "07112 223334" })
+      .first();
+    await item.getByRole("button", { name: "Sperren" }).click();
+    await expect(page.getByText("07112 223334 wird ab jetzt abgewiesen.")).toBeVisible();
+    await expect
+      .poll(async () => (await box.state()).config?.blocked?.numbers)
+      .toContain("07112223334");
+    await box.event({ state: "blocked", remote: "07112223334" });
+    await expect(
+      page.getByRole("list", { name: "Letzte Anrufe" }).getByRole("listitem").first(),
+    ).toContainText("Gesperrt");
   });
 
   test("weitervermitteln an Anna: es klingelt bei ihr, sie nimmt an, Jonas ist raus", async ({

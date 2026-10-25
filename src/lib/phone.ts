@@ -68,6 +68,8 @@ export const outcomeText = (
       return m.phone_outcome_unanswered();
     case "closed":
       return m.phone_outcome_closed();
+    case "blocked":
+      return m.phone_outcome_blocked();
     default:
       return m.phone_outcome_failed();
   }

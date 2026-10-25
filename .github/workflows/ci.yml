@@ -81,8 +81,7 @@ jobs:
           docker exec box asterisk -rx "dialplan show ring@kontext-in" | grep -q "GotoIfTime" || fail "dialplan: no opening hours"
           docker exec box asterisk -rx "pjsip show endpoints" | grep -q "fritzbox-anna" || fail "pjsip: extra line missing"
           docker exec box asterisk -rx "pjsip show endpoints" | grep -q "desk-empfang" || fail "pjsip: desk phone missing"
-          docker exec box asterisk -rx "moh show classes" | grep -q "Class: default" || fail "music on hold: $(docker exec box asterisk -rx 'moh show classes' | tr '\n' ' ')"
-          docker exec box ls /var/lib/asterisk/moh >/dev/null 2>&1 || fail "music on hold: no files in /var/lib/asterisk/moh ($(docker exec box sh -c 'ls -d /usr/share/asterisk/* /var/lib/asterisk/* 2>/dev/null' | tr '\n' ' '))"
+          docker exec box asterisk -rx "moh show classes" | grep -q "Class: default" || fail "music on hold: no class ($(docker exec box sh -c 'ls /usr/share/asterisk/moh | head -5; asterisk -rx "module show like musiconhold"' | tr '\n' ' '))"
           exit $failed
       - if: always()
         run: docker logs box || true

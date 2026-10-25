@@ -49,6 +49,7 @@ const SETTINGS: PhoneSettings = {
   extraLines: [],
   deskPhones: [],
   menu: { enabled: false, greeting: null, options: [] },
+  blocked: { numbers: [], anonymous: false },
 };
 
 const setup = (settings: Partial<PhoneSettings> = {}) => {
@@ -337,6 +338,24 @@ describe("an incoming call", () => {
     await box.receive({ ...event(1, "ringing"), choice: "1" });
     expect(notices).toEqual([{ members: ["anna"], title: "Anruf" }]);
     expect(phoneEvents().at(-1)!.event.call.topic).toBe("Kundendienst");
+  });
+
+  it("blocks a number for the box and files calls it turned away", async () => {
+    const { service, box, toBox, notices, phoneEvents } = setup();
+    expect(await service.block("max", "07223 123456")).toBe("not-allowed");
+    expect(await service.block("jonas", "07223 123456")).toBe("ok");
+    const config = toBox.filter((message) => message.type === "config").at(-1);
+    expect(config).toMatchObject({
+      config: {
+        blocked: {
+          numbers: ["+497223123456", "00497223123456", "497223123456", "07223123456"],
+          anonymous: false,
+        },
+      },
+    });
+    await box.receive(event(1, "blocked"));
+    expect(notices).toEqual([]);
+    expect(phoneEvents().at(-1)!.event.call).toMatchObject({ state: "ended", outcome: "blocked" });
   });
 
   it("leaves Zurückrufen on the chosen board, done once someone talked to the number", async () => {

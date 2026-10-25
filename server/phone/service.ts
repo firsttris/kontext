@@ -18,10 +18,11 @@ import {
   ringPlanForCall,
 } from "./lines";
 import { TRUNK_USER } from "./livekit-sip";
-import { toDialable, toE164 } from "./numbers";
+import { numberForms, toDialable, toE164 } from "./numbers";
 import {
   answeredCallbacks,
   applyCallEvent,
+  blockedCall,
   callbackTask,
   canSeeCall,
   closedCall,
@@ -130,6 +131,10 @@ export const desiredConfig = (
           greeting: closedGreeting,
         }
       : null,
+    blocked: {
+      numbers: [...new Set(settings.blocked.numbers.flatMap((entry) => numberForms(entry.number)))],
+      anonymous: settings.blocked.anonymous,
+    },
     // Without a greeting there is no menu to hear.
     menu:
       menuGreeting && settings.menu.options.length
@@ -231,6 +236,12 @@ export const createPhoneService = (deps: PhoneDeps) => {
         ...closedCall(event, { id: newId(), boxId, members }),
         line: line?.label ?? null,
       });
+      return;
+    }
+    if (!known && event.state === "blocked") {
+      // Turned away by the block list: in the list, as it happened, without ringing.
+      const { ring } = await store.settings();
+      await save(blockedCall(event, { id: newId(), boxId, members: ring }));
       return;
     }
     if (!known && event.state === "ringing" && event.direction === "out" && event.desk) {
@@ -485,6 +496,23 @@ export const createPhoneService = (deps: PhoneDeps) => {
           void sendConfig();
         }, left).unref?.();
       }
+    },
+
+    /** Someone of the line blocks a number from the list: the box turns it away from now on. */
+    block: async (me: string, number: string): Promise<"ok" | Problem> => {
+      if (!(await allowed(me))) return "not-allowed";
+      const e164 = toE164(number);
+      if (!e164) return "bad-number";
+      const settings = await store.settings();
+      if (!settings.blocked.numbers.some((entry) => entry.number === e164)) {
+        const entry = { number: e164, by: me, at: now().toISOString() };
+        await store.saveSettings({
+          ...settings,
+          blocked: { ...settings.blocked, numbers: [...settings.blocked.numbers, entry] },
+        });
+        await sendConfig();
+      }
+      return "ok";
     },
 
     transfer: (callId: string, me: string, target: TransferTarget) =>

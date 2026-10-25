@@ -13,6 +13,7 @@ import { bearer } from "./box-routes";
 import { type PhoneFiles, wavResponse } from "./files";
 import { everyone } from "./lines";
 import {
+  blockSchema,
   canSeeCall,
   dialSchema,
   noteSchema,
@@ -158,6 +159,14 @@ export const createPhoneRoutes = (deps: PhoneRouteDeps) => {
     const bytes = await deps.files.readVoicemail(call.id);
     if (!bytes) return c.json({ error: "Nicht gefunden" }, 404);
     return wavResponse(bytes, { "cache-control": "private, max-age=86400" });
+  });
+
+  app.post("/block", async (c) => {
+    const parsed = blockSchema.safeParse(await c.req.json().catch(() => ({})));
+    if (!parsed.success) return c.json({ error: MESSAGES["bad-number"] }, 400);
+    const result = await service.block(c.get("viewer").me, parsed.data.number);
+    if (result !== "ok") return c.json({ error: MESSAGES[result] }, STATUS[result]);
+    return c.body(null, 204);
   });
 
   app.put("/status", async (c) => {

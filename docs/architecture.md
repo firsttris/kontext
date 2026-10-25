@@ -725,6 +725,10 @@ flowchart LR
   (Kontext lässt die Leute dieser Taste klingeln, alle zugleich, und zeigt das Thema am Anruf) oder
   führt auf die Mailbox; ohne Taste klingelt es wie sonst. Weil der Anruf dann schon angenommen
   ist, spielt die Box den Klingelton selbst (`Playtones(ring)`).
+- **Sperrliste:** prüft die Box ganz am Anfang, vor Öffnungszeiten und Klingeln: die gesperrten
+  Nummern in jeder Form, in der die Fritzbox sie liefern kann (national, `+49`, `0049`, `49`,
+  `numberForms`), und auf Wunsch unterdrückte. Sie meldet „blocked“ und weist ab (Ursache 21);
+  Kontext legt den Anruf als „Gesperrt“ in die Liste, ohne Klingeln.
 - **Präsenz:** Wer in einem Telefon-Raum ist oder am Tischtelefon spricht, „telefoniert“ – das
   geht als `phone-people` an alle (der Chat zeigt es an der Person). Bitte nicht stören und
   Abwesend (bis zu einer Zeit) liegen in `phone_status`; wer nicht erreichbar ist, fällt aus dem

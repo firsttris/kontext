@@ -135,6 +135,7 @@ fine on a VPS with 2 vCPUs and 4 GB RAM.
   - **Snom desk phones** sign in at the box and set themselves up from it: they ring with Kontext, reach each other by short number, and calls can be handed to them.
   - **Presence**: "on the phone" next to colleagues in the chat; *Do not disturb* or *Away until …* and it rings for the others instead (your desk phone stays quiet too).
   - **Voice menu**: "For service press 1 …" – each key rings for its people or goes to the mailbox.
+  - **Block list**: "Block" in the call list, or withheld numbers altogether; the box turns them away before anything rings.
 - **Search** across all your channels; edit or delete your own messages; mute, leave or delete channels.
 - **Retention** set by the company admin (30 days to 5 years, or for ever): older messages, photos and files are deleted by themselves.
 - **On the phone**: its own tab, conversations as bubbles.

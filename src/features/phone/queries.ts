@@ -62,6 +62,9 @@ export const setPhonePeople = (
 ) =>
   queryClient.setQueryData<PhoneData>(PHONE_KEY, (data) => (data ? { ...data, ...people } : data));
 
+/** The box turns this number away from now on. */
+export const blockNumber = (number: string) => send<unknown>("POST", "/block", { number });
+
 /** Bitte nicht stören, Abwesend bis …, or back. */
 export const setPhoneStatus = async (
   queryClient: QueryClient,

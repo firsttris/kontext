@@ -170,6 +170,20 @@ const menuContext = (config: BoxConfig, paths: BoxPaths) => {
   );
 };
 
+/**
+ * The block list, before anything rings: a number as the Fritzbox delivers it, in any of its
+ * forms, or – when withheld numbers are blocked – none at all. Turned away with "rejected" (21).
+ */
+const blockCheck = ({ blocked }: BoxConfig): string[] => [
+  ...(blocked.anonymous
+    ? [
+        `GotoIf($["\${CALLERID(num)}" = ""]?blocked,1)`,
+        `GotoIf($["\${TOLOWER(\${CALLERID(num)})}" = "anonymous"]?blocked,1)`,
+      ]
+    : []),
+  ...blocked.numbers.map((number) => `GotoIf($["\${CALLERID(num)}" = "${number}"]?blocked,1)`),
+];
+
 /** Asks the mailbox for a message, or ends the call when there is none. */
 const toMailbox = (config: BoxConfig) =>
   config.mailbox ? "Goto(kontext-record,s,1)" : "Hangup(16)";
@@ -196,6 +210,7 @@ const incoming = (config: BoxConfig, paths: BoxPaths) => {
     extension("ring", [
       `Set(__KONTEXT_CALL=\${UNIQUEID})`,
       "Set(__KONTEXT_DIR=in)",
+      ...blockCheck(config),
       reportEnd,
       ...(config.hours
         ? hoursCheck(config)
@@ -203,6 +218,9 @@ const incoming = (config: BoxConfig, paths: BoxPaths) => {
     ]),
     ...ringingExtensions(config, caller),
     closed,
+    config.blocked.numbers.length || config.blocked.anonymous
+      ? extension("blocked", [report("blocked", "in", caller), "Hangup(21)"])
+      : [],
   );
 };
 

@@ -44,6 +44,16 @@ export const readableNumber = (number: string, country = DEFAULT_COUNTRY): strin
   return `${national.slice(0, 5)} ${national.slice(5)}`;
 };
 
+/**
+ * The ways a number may come from the Fritzbox – national, international with "+" or "00", or
+ * without either – for matching it as delivered (the block list in the box).
+ */
+export const numberForms = (e164: string, country = DEFAULT_COUNTRY): string[] => {
+  const digits = e164.slice(1);
+  const national = e164.startsWith(`+${country}`) ? [`0${e164.slice(country.length + 1)}`] : [];
+  return [e164, `00${digits}`, digits, ...national];
+};
+
 /** Two numbers that reach the same line. */
 export const sameNumber = (a: string, b: string, country = DEFAULT_COUNTRY): boolean => {
   const left = toE164(a, country);
