@@ -3,7 +3,7 @@
 <h1>Kontext: self-hosted email, calendar and team chat for small businesses</h1>
 
 **The open-source alternative to Google Workspace and Microsoft 365 that runs on your own server.**<br>
-Mail with shared mailboxes, calendar, contacts, tasks and team chat in one web app for desktop and phone, every customer's mails and appointments at a glance.<br>
+Mail with shared mailboxes, calendar, contacts, tasks, team chat, telephony (CTI) and documents in one web app for desktop and phone, every customer's mails, calls and appointments at a glance.<br>
 No per-user fees, no US cloud: GDPR-friendly, built on the Stalwart mail server, installed with Docker Compose.
 
 **English** · [Deutsch](README.de.md)
@@ -42,7 +42,8 @@ your own.
 - **Your data stays yours**: mails, appointments and contacts live on your server, in Europe if you like. No trackers, no ads.
 - **No per-seat pricing**: ten people cost the same as one; you only pay for the server.
 - **Everything about a customer in one place**: open a contact and see their latest mails, next appointments and open tasks. A small CRM without another tool.
-- **Made for teams**: shared mailboxes like info@ and invoices@, a team calendar, tasks on a Kanban board and a team chat with calls.
+- **Made for teams**: shared mailboxes like info@ and invoices@, a team calendar, tasks on a Kanban board, a team chat with video calls and documents shared in the team.
+- **The phone knows the customer**: calls from your Fritzbox ring in Kontext with the caller's contact, last mail and next appointment (CTI).
 - **Works with what you have**: open standards (JMAP, IMAP, CalDAV, CardDAV), so Outlook, Thunderbird, iPhone and Android keep working. Moving in from Gmail, Microsoft 365 and Outlook is built in.
 
 Kontext is made for freelancers, trades, law firms, practices and small and mid-sized businesses,
@@ -83,13 +84,30 @@ Every feature in detail: [Features](https://firsttris.github.io/kontext/features
 - **Contacts** with a customer view, groups, shared address books and vCard import.
 - **Tasks and Kanban boards** for you and per shared mailbox; turn a mail into a task with one key.
 
-### 💬 Team chat, calls and documents
+### 💬 Team chat and video calls
 
 - **Channels and direct messages**, threads, reactions, @mentions, photos and files.
 - **Discuss a mail** in a channel instead of forwarding it internally.
-- **Calls and video meetings** in the browser, on your own server ([LiveKit](https://github.com/livekit/livekit)).
-- **Phone calls through your Fritzbox**: incoming calls ring in Kontext with the caller's latest mail and next appointment; voicemail, opening hours and call statistics.
-- **Word, Excel and PDF** in Kontext with [Schreibzeug](https://github.com/firsttris/schreibzeug).
+- **Calls and video meetings** in the browser, on your own server ([LiveKit](https://github.com/livekit/livekit)); customers join a meeting from the calendar without an account.
+
+### 📞 Telephony and CTI with the Fritzbox
+
+A small telephone box in the office joins your Fritzbox as an IP phone (in testing).
+
+- **Caller ID with your CRM**: incoming calls ring in Kontext with the contact, company, last mail and next appointment.
+- **Click to call** from any contact, answer in the browser or at the desk phone; Snom desk phones set themselves up.
+- **Voicemail as mail**, opening hours with public holidays, a voice menu ("press 1 for service") and fax as PDF.
+- **Hand calls on**, hold, consult and three-way calls; presence and *Do not disturb* in the chat.
+- **Missed calls become tasks** that tick themselves off once someone called back; call statistics for the team.
+
+### 📄 Documents and files
+
+With [Schreibzeug](https://github.com/firsttris/schreibzeug), the open-source office suite in the browser (optional).
+
+- **Word, Excel, PowerPoint and PDF** open and edit in Kontext, without a second sign-in; real .docx, .xlsx and .pptx files, edited together in real time.
+- **A folder per shared mailbox**: info@ and invoices@ get their own documents, with the mailbox's rights.
+- **Attachments into Documents** and back: save a mail's attachment to a folder, attach a file from Documents.
+- **Files where they belong**: share a document in the chat, link it to a task, a contact or an appointment.
 
 ### 🤖 AI agents (MCP)
 
@@ -145,7 +163,7 @@ Gmail and Outlook.
 | [Microsoft 365](https://www.microsoft.com/microsoft-365) | Outlook and Office as a per-user subscription | runs in the browser without Outlook, data on your own server |
 | [Nextcloud](https://nextcloud.com) | file sync with mail, calendar and Talk as apps | mail first: shared mailboxes, rules and the customer view at the centre |
 | [Roundcube](https://roundcube.net), [SOGo](https://www.sogo.nu) | proven webmail and groupware | modern interface, built for the phone, tasks and chat included |
-| Bulwark | JMAP webmail for Stalwart | calendar, contacts, tasks, chat, company admin and team rules |
+| Bulwark | JMAP webmail with calendar and contacts for Stalwart | tasks, team chat, telephony (CTI), documents, AI agents and a company admin area |
 
 ## ❓ FAQ
 
@@ -156,7 +174,7 @@ someone who sets it up and keeps it updated.
 
 ### Is it a self-hosted alternative to Google Workspace or Microsoft 365?
 
-Yes. Mail, calendar, contacts, tasks, chat and documents run on your own server, in the browser and
+Yes. Mail, calendar, contacts, tasks, chat, telephony and documents run on your own server, in the browser and
 on the phone, without a fee per user.
 
 ### Is it GDPR compliant?
@@ -179,6 +197,16 @@ Microsoft 365, Outlook PST files and Google exports with contacts and calendars.
 
 Only if you connect an agent. Kontext is an MCP server: an agent sees what you may see, writes at
 most drafts and never sends. You can revoke every connection in the settings.
+
+### Does Kontext work with my Fritzbox and desk phones?
+
+Yes. The telephone box joins the Fritzbox as an IP phone: calls ring in Kontext and at Snom desk
+phones, with the caller's contact and latest mail. It is in testing right now.
+
+### Can I edit Word and Excel files in Kontext?
+
+Yes, with the optional Documents module ([Schreibzeug](https://github.com/firsttris/schreibzeug)):
+Word, Excel, PowerPoint and PDF in the browser, with folders per shared mailbox.
 
 ### Can it run on my own PC?
 

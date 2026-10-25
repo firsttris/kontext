@@ -3,7 +3,7 @@
 <h1>Kontext: Mail, Kalender und Team-Chat für kleine Firmen, selbst gehostet</h1>
 
 **Die Open-Source-Alternative zu Google Workspace und Microsoft 365, die auf deinem eigenen Server läuft.**<br>
-Mail mit gemeinsamen Postfächern, Kalender, Kontakte, Aufgaben und Team-Chat in einer Web-App für PC und Handy, zu jedem Kunden die Mails und Termine auf einen Blick.<br>
+Mail mit gemeinsamen Postfächern, Kalender, Kontakte, Aufgaben, Team-Chat, Telefonie (CTI) und Dokumente in einer Web-App für PC und Handy, zu jedem Kunden die Mails, Anrufe und Termine auf einen Blick.<br>
 Keine Kosten pro Benutzer, keine US-Cloud: DSGVO-freundlich, auf dem Mailserver Stalwart, installiert mit Docker Compose.
 
 [English](README.md) · **Deutsch**
@@ -42,7 +42,8 @@ einem eigenen Rechner.
 - **Deine Daten bleiben bei dir**: Mails, Termine und Kontakte liegen auf deinem Server, auf Wunsch in einem deutschen Rechenzentrum. Keine Tracker, keine Werbung.
 - **Keine Kosten pro Kopf**: zehn Mitarbeiter kosten dasselbe wie einer; du bezahlst nur den Server.
 - **Alles zu einem Kunden an einem Ort**: ein Kontakt zeigt seine letzten Mails, nächsten Termine und offenen Aufgaben. Ein kleines CRM ohne Extra-Tool.
-- **Fürs Team gemacht**: gemeinsame Postfächer wie info@ und rechnung@, ein Teamkalender, Aufgaben auf dem Kanban-Board und ein Team-Chat mit Anrufen.
+- **Fürs Team gemacht**: gemeinsame Postfächer wie info@ und rechnung@, ein Teamkalender, Aufgaben auf dem Kanban-Board, ein Team-Chat mit Videoanrufen und Dokumente im Team.
+- **Das Telefon kennt den Kunden**: Anrufe über die Fritzbox klingeln in Kontext, mit Kontakt, letzter Mail und nächstem Termin des Anrufers (CTI).
 - **Passt zu dem, was du hast**: offene Standards (JMAP, IMAP, CalDAV, CardDAV), Outlook, Thunderbird, iPhone und Android funktionieren weiter. Der Umzug von Gmail, Microsoft 365 und Outlook ist eingebaut.
 - **GoBD-gerechte Aufbewahrung**: beim Austritt wird nichts gelöscht, Backups gehen verschlüsselt und unveränderbar auf S3 mit Object Lock.
 
@@ -85,13 +86,30 @@ Alle Funktionen im Detail: [Funktionen](https://firsttris.github.io/kontext/feat
 - **Kontakte** mit Kunden-Ansicht, Gruppen, geteilten Adressbüchern und vCard-Import.
 - **Aufgaben und Kanban-Boards** für dich und pro gemeinsamem Postfach; aus einer Mail wird mit einer Taste eine Aufgabe.
 
-### 💬 Team-Chat, Telefon und Dokumente
+### 💬 Team-Chat und Videoanrufe
 
 - **Kanäle und Direktnachrichten**, Threads, Reaktionen, @-Erwähnungen, Fotos und Dateien.
 - **Eine Mail besprechen** im Kanal, statt sie intern weiterzuleiten.
-- **Anrufe und Videobesprechungen** im Browser, auf deinem eigenen Server ([LiveKit](https://github.com/livekit/livekit)).
-- **Telefonieren über die Fritzbox**: Anrufe klingeln in Kontext, mit der letzten Mail und dem nächsten Termin des Anrufers; Anrufbeantworter, Öffnungszeiten und Anrufstatistik.
-- **Word, Excel und PDF** in Kontext mit [Schreibzeug](https://github.com/firsttris/schreibzeug).
+- **Anrufe und Videobesprechungen** im Browser, auf deinem eigenen Server ([LiveKit](https://github.com/livekit/livekit)); Kunden kommen über den Termin im Kalender ohne Konto dazu.
+
+### 📞 Telefonie und CTI mit der Fritzbox
+
+Eine kleine Telefonbox im Büro meldet sich an der Fritzbox als IP-Telefon an (im Test).
+
+- **Anrufer erkennen mit dem CRM**: Anrufe klingeln in Kontext, mit Kontakt, Firma, letzter Mail und nächstem Termin.
+- **Klick zum Anrufen** aus jedem Kontakt, annehmen im Browser oder am Tischtelefon; Snom-Telefone richten sich selbst ein.
+- **Anrufbeantworter als Mail**, Öffnungszeiten mit Feiertagen, Sprachmenü („für den Service die 1“) und Fax als PDF.
+- **Weiterleiten**, Halten, Rückfrage und Dreierkonferenz; Anwesenheit und *Nicht stören* im Chat.
+- **Verpasste Anrufe werden Aufgaben**, die sich nach dem Rückruf selbst abhaken; Anrufstatistik fürs Team.
+
+### 📄 Dokumente und Dateien
+
+Mit [Schreibzeug](https://github.com/firsttris/schreibzeug), der Open-Source-Office-Suite im Browser (optional).
+
+- **Word, Excel, PowerPoint und PDF** in Kontext öffnen und bearbeiten, ohne zweite Anmeldung; echte .docx-, .xlsx- und .pptx-Dateien, gemeinsam in Echtzeit bearbeitet.
+- **Ein Ordner pro gemeinsamem Postfach**: info@ und rechnung@ haben eigene Dokumente, mit den Rechten des Postfachs.
+- **Anhänge in die Dokumente** und zurück: den Anhang einer Mail in einen Ordner legen, eine Datei aus den Dokumenten anhängen.
+- **Dateien, wo sie hingehören**: ein Dokument im Chat teilen, mit einer Aufgabe, einem Kontakt oder einem Termin verknüpfen.
 
 ### 🤖 KI-Agenten (MCP)
 
@@ -147,7 +165,7 @@ Gmail und Outlook zu verzichten.
 | [Microsoft 365](https://www.microsoft.com/microsoft-365) | Outlook und Office als Abo pro Benutzer | läuft im Browser ohne Outlook, Daten auf dem eigenen Server |
 | [Nextcloud](https://nextcloud.com) | Dateiablage mit Mail, Kalender und Talk als Apps | Mail zuerst: gemeinsame Postfächer, Regeln und die Kunden-Ansicht im Mittelpunkt |
 | [Roundcube](https://roundcube.net), [SOGo](https://www.sogo.nu) | bewährtes Webmail und Groupware | moderne Oberfläche, fürs Handy gebaut, Aufgaben und Chat inklusive |
-| Bulwark | JMAP-Webmail für Stalwart | Kalender, Kontakte, Aufgaben, Chat, Firmenverwaltung und Team-Regeln |
+| Bulwark | JMAP-Webmail mit Kalender und Kontakten für Stalwart | Aufgaben, Team-Chat, Telefonie (CTI), Dokumente, KI-Agenten und eine Firmenverwaltung |
 
 ## ❓ FAQ
 
@@ -158,7 +176,7 @@ Monat, und jemanden, der ihn einrichtet und aktualisiert.
 
 ### Ist Kontext eine selbst gehostete Alternative zu Google Workspace oder Microsoft 365?
 
-Ja. Mail, Kalender, Kontakte, Aufgaben, Chat und Dokumente laufen auf deinem eigenen Server, im
+Ja. Mail, Kalender, Kontakte, Aufgaben, Chat, Telefonie und Dokumente laufen auf deinem eigenen Server, im
 Browser und am Handy, ohne Gebühr pro Benutzer.
 
 ### Ist das DSGVO-konform?
@@ -189,6 +207,16 @@ Kalendern.
 Nur wenn du einen Agenten verbindest. Kontext ist ein MCP-Server: ein Agent sieht, was du sehen
 darfst, schreibt höchstens Entwürfe und sendet nie. Jede Verbindung lässt sich in den
 Einstellungen trennen.
+
+### Funktioniert Kontext mit meiner Fritzbox und meinen Tischtelefonen?
+
+Ja. Die Telefonbox meldet sich an der Fritzbox als IP-Telefon an: Anrufe klingeln in Kontext und an
+Snom-Tischtelefonen, mit Kontakt und letzter Mail des Anrufers. Sie ist gerade im Test.
+
+### Kann ich Word- und Excel-Dateien in Kontext bearbeiten?
+
+Ja, mit dem optionalen Modul Dokumente ([Schreibzeug](https://github.com/firsttris/schreibzeug)):
+Word, Excel, PowerPoint und PDF im Browser, mit einem Ordner pro gemeinsamem Postfach.
 
 ### Geht es auch auf meinem eigenen PC?
 
