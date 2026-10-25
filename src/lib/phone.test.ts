@@ -24,6 +24,7 @@ const call = (extra: Partial<PhoneCall> = {}): PhoneCall => ({
   answeredAt: null,
   endedAt: null,
   note: "",
+  callbackTaskId: null,
   ...extra,
 });
 

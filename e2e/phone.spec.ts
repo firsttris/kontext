@@ -65,6 +65,12 @@ test.describe("Telefonie über die Telefonbox", () => {
     await ring.getByLabel("Anna Weber").check();
     await ring.getByRole("button", { name: "Speichern" }).click();
 
+    const callbacks = page.getByRole("region", { name: "Verpasste Anrufe" });
+    await callbacks
+      .getByLabel("Aufgabe anlegen auf dem Board")
+      .selectOption({ label: "Jonas Weber" });
+    await callbacks.getByRole("button", { name: "Speichern" }).click();
+
     const boxes = page.getByRole("region", { name: "Telefonbox" });
     await boxes.getByRole("button", { name: "Box koppeln" }).click();
     const code = (await boxes.getByText(/^Kopplungscode: /).textContent())!.replace(
@@ -134,12 +140,19 @@ test.describe("Telefonie über die Telefonbox", () => {
     await missed.getByLabel("Notiz").press("Enter");
     await expect(page.getByText("Notiz gespeichert")).toBeVisible();
 
+    // The missed call left a task on Jonas's board …
+    await missed.getByRole("link", { name: "Aufgabe „Zurückrufen“ öffnen" }).click();
+    await expect(page.getByRole("article", { name: "Zurückrufen: 01717 654321" })).toBeVisible();
+    await page.goBack();
+
     await missed.getByRole("button", { name: "Zurückrufen" }).click();
     await expect(panel(page)).toBeVisible();
     await expect
       .poll(async () => (await box.state()).commands.at(-1))
       .toMatchObject({ type: "dial", number: "01717654321" });
     await expect(panel(page).getByRole("status")).toHaveText(/^\d+:\d\d$/, { timeout: 15_000 });
+    // … which is done now that someone talked to the number.
+    await expect(page.getByRole("link", { name: "Aufgabe „Zurückrufen“ öffnen" })).toHaveCount(0);
     await panel(page).getByRole("button", { name: "Auflegen" }).click();
     await expect(panel(page)).toHaveCount(0);
   });

@@ -2,21 +2,26 @@
  * Telephony in Kontext's SQLite: the boxes (paired by a code, then known by a token, both only as
  * hashes), the settings of the line (the Fritzbox login sealed at rest) and the calls.
  */
-import { and, desc, eq, gt } from "drizzle-orm";
+import { and, desc, eq, gt, isNotNull } from "drizzle-orm";
+import { z } from "zod";
 import type { Sealer } from "../crypto";
 import type { Db } from "../db";
 import * as schema from "../db/schema";
 import type { PhoneCall } from "./phone";
-import type { Line } from "./protocol";
+import { lineSchema } from "./protocol";
 
-export type PhoneSettings = {
+/** Stored settings; what later versions added comes with its default when it is missing. */
+const settingsSchema = z.object({
   /** The box's login at the Fritzbox (an IP phone there). */
-  line: Line | null;
+  line: lineSchema.nullable().default(null),
   /** Who hears an incoming call ring and sees the calls (personal account ids). */
-  ring: string[];
+  ring: z.array(z.string()).default([]),
   /** The password of the SIP trunk from the boxes to LiveKit SIP; made once. */
-  trunkPassword: string;
-};
+  trunkPassword: z.string().min(1),
+  /** The board (an account id) a missed call leaves "Zurückrufen" on; null for none. */
+  callbackBoard: z.string().nullable().default(null),
+});
+export type PhoneSettings = z.infer<typeof settingsSchema>;
 
 export type BoxRow = {
   id: string;
@@ -79,6 +84,7 @@ const toCall = (row: CallDbRow): PhoneCall => ({
   answeredAt: iso(row.answeredAt),
   endedAt: iso(row.endedAt),
   note: row.note,
+  callbackTaskId: row.callbackTaskId,
 });
 
 const fromCall = (call: PhoneCall): CallDbRow => ({
@@ -97,8 +103,8 @@ export const createPhoneStore = (db: Db, sealer: Sealer) => {
       .select()
       .from(schema.companySetting)
       .where(eq(schema.companySetting.key, SETTINGS_KEY));
-    if (row) return JSON.parse(await sealer.open(row.value)) as PhoneSettings;
-    const fresh: PhoneSettings = { line: null, ring: [], trunkPassword: randomSecret() };
+    if (row) return settingsSchema.parse(JSON.parse(await sealer.open(row.value)));
+    const fresh = settingsSchema.parse({ trunkPassword: randomSecret() });
     await saveSettings(fresh);
     return fresh;
   };
@@ -230,6 +236,17 @@ export const createPhoneStore = (db: Db, sealer: Sealer) => {
         .values(row)
         .onConflictDoUpdate({ target: schema.phoneCalls.id, set: row });
     },
+
+    /** Earlier calls with this number that still have an open "Zurückrufen". */
+    callbacksOf: async (remote: string): Promise<PhoneCall[]> =>
+      (
+        await db
+          .select()
+          .from(schema.phoneCalls)
+          .where(
+            and(eq(schema.phoneCalls.remote, remote), isNotNull(schema.phoneCalls.callbackTaskId)),
+          )
+      ).map(toCall),
 
     /** The latest calls; who may see which is decided by the caller. */
     recentCalls: async (limit: number): Promise<PhoneCall[]> =>

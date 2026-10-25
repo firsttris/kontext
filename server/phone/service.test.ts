@@ -1,6 +1,7 @@
 // @vitest-environment node
 import { describe, expect, it } from "vitest";
 import { createHub, type LiveEvent } from "../live/hub";
+import type { NewTaskData } from "../tasks/tasks";
 import type { PhoneCall } from "./phone";
 import type { CallEvent, ToBox } from "./protocol";
 import { createPhoneService, desiredConfig } from "./service";
@@ -21,6 +22,8 @@ const memoryStore = (settings: PhoneSettings) => {
       [...calls.values()].find((c) => c.boxId === boxId && c.boxCallId === boxCallId) ?? null,
     callOfRoom: async (room: string) => [...calls.values()].find((c) => c.room === room) ?? null,
     saveCall: async (call: PhoneCall) => void calls.set(call.id, call),
+    callbacksOf: async (remote: string) =>
+      [...calls.values()].filter((c) => c.remote === remote && c.callbackTaskId),
     recentCalls: async () => [...calls.values()].reverse(),
   };
   return store as unknown as PhoneStore;
@@ -30,9 +33,10 @@ const SETTINGS: PhoneSettings = {
   line: { registrar: "fritz.box", username: "kontext", password: "geheim" },
   ring: ["jonas", "anna"],
   trunkPassword: "trunk-secret",
+  callbackBoard: null,
 };
 
-const setup = () => {
+const setup = (settings: Partial<PhoneSettings> = {}) => {
   const hub = createHub();
   const heard: { who: string; event: LiveEvent }[] = [];
   for (const me of ["jonas", "anna", "max"]) {
@@ -40,12 +44,20 @@ const setup = () => {
   }
   const notices: { members: string[]; title: string }[] = [];
   let ids = 0;
+  const tasks = { made: [] as NewTaskData[], done: [] as string[] };
   const service = createPhoneService({
-    store: memoryStore(SETTINGS),
+    store: memoryStore({ ...SETTINGS, ...settings }),
     hub,
     trunkHost: "kontext.firma.de",
     trunkPort: 5060,
     notify: async (members, notice) => void notices.push({ members, title: notice.title }),
+    tasks: {
+      create: async (task) => {
+        tasks.made.push(task);
+        return { id: `task-${tasks.made.length}` };
+      },
+      complete: async (id) => void tasks.done.push(id),
+    },
     newId: () => `id-${++ids}`,
     now: () => new Date("2026-10-25T09:00:00.000Z"),
   });
@@ -56,7 +68,7 @@ const setup = () => {
       who: string;
       event: { call: PhoneCall };
     }[];
-  return { service, box, toBox, heard, notices, phoneEvents };
+  return { service, box, toBox, heard, notices, phoneEvents, tasks };
 };
 
 const event = (
@@ -144,6 +156,32 @@ describe("an incoming call", () => {
     await box.receive(event(2, "ended", { cause: 16 }));
     expect(notices.map((n) => n.title)).toEqual(["Anruf", "Verpasster Anruf"]);
     expect(phoneEvents().filter(({ who }) => who === "jonas")).toHaveLength(2);
+  });
+
+  it("leaves Zurückrufen on the chosen board, done once someone talked to the number", async () => {
+    const off = setup();
+    await off.box.receive(event(1, "ringing"));
+    await off.box.receive(event(2, "ended", { cause: 16 }));
+    expect(off.tasks.made).toEqual([]);
+
+    const { service, box, tasks, phoneEvents } = setup({ callbackBoard: "info" });
+    await box.receive(event(1, "ringing"));
+    await box.receive(event(2, "ended", { cause: 16 }));
+    expect(tasks.made).toHaveLength(1);
+    expect(tasks.made[0]).toMatchObject({
+      accountId: "info",
+      title: "Zurückrufen: 07223 123456",
+      dueDate: "2026-10-25",
+      links: [{ kind: "call", ref: "id-1", label: "07223 123456" }],
+    });
+    expect(phoneEvents().at(-1)!.event.call.callbackTaskId).toBe("task-1");
+
+    const back = (await service.dial("jonas", "07223 123456")) as PhoneCall;
+    await box.receive({ ...event(3, "answered"), call: back.boxCallId, direction: "out" });
+    expect(tasks.done).toEqual(["task-1"]);
+    expect(
+      phoneEvents().find(({ event: e }) => e.call.id === "id-1" && !e.call.callbackTaskId),
+    ).toBeDefined();
   });
 
   it("files a call taken at a desk phone", async () => {

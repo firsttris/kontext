@@ -14,6 +14,7 @@ const lineInput = lineSchema.extend({
   password: z.string().max(200).default(""),
 });
 const ringSchema = z.object({ members: z.array(z.string().min(1).max(64)).max(200) });
+const callbacksSchema = z.object({ board: z.string().min(1).max(64).nullable() });
 const boxSchema = z.object({ name: z.string().trim().min(1).max(60) });
 
 export const createPhoneAdminRoutes = ({
@@ -45,6 +46,7 @@ export const createPhoneAdminRoutes = ({
           }
         : null,
       ring: settings.ring,
+      callbackBoard: settings.callbackBoard,
       sip,
     });
   });
@@ -69,6 +71,19 @@ export const createPhoneAdminRoutes = ({
     }
     const settings = await store.settings();
     await store.saveSettings({ ...settings, ring: [...new Set(parsed.data.members)] });
+    return c.body(null, 204);
+  });
+
+  // Missed calls leave "Zurückrufen" on this board: a person's own or a shared mailbox's.
+  app.put("/callbacks", async (c) => {
+    const parsed = callbacksSchema.safeParse(await c.req.json().catch(() => ({})));
+    if (!parsed.success) return c.json({ error: "Ungültig" }, 400);
+    const { employees, mailboxes } = c.get("loaded").company;
+    const boards = new Set([...employees, ...mailboxes].map((owner) => owner.id));
+    if (parsed.data.board && !boards.has(parsed.data.board)) {
+      return c.json({ error: "Unbekanntes Board" }, 400);
+    }
+    await store.saveSettings({ ...(await store.settings()), callbackBoard: parsed.data.board });
     return c.body(null, 204);
   });
 

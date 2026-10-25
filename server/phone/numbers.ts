@@ -35,6 +35,15 @@ export const toE164 = (raw: string, country = DEFAULT_COUNTRY): string | null =>
 export const toDialable = (e164: string, country = DEFAULT_COUNTRY): string =>
   e164.startsWith(`+${country}`) ? `0${e164.slice(country.length + 1)}` : `00${e164.slice(1)}`;
 
+/** "+497223123456" → "07223 123456" for German numbers; others stay international. */
+export const readableNumber = (number: string, country = DEFAULT_COUNTRY): string => {
+  if (!number.startsWith(`+${country}`)) return number;
+  const national = `0${number.slice(country.length + 1)}`;
+  // Mobile numbers (015x–017x) after four digits, landlines after the area code is not known
+  // here: a space after the first five keeps it readable without pretending to know.
+  return `${national.slice(0, 5)} ${national.slice(5)}`;
+};
+
 /** Two numbers that reach the same line. */
 export const sameNumber = (a: string, b: string, country = DEFAULT_COUNTRY): boolean => {
   const left = toE164(a, country);

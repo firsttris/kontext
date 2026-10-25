@@ -13,7 +13,7 @@ import { createPhoneAdminRoutes } from "./admin-routes";
 import { ensureSipRouting } from "./livekit-sip";
 import { type phoneNotice, roomOfPhoneRoom } from "./phone";
 import { createPhoneRoutes } from "./routes";
-import { createPhoneService } from "./service";
+import { type CallbackTasks, createPhoneService } from "./service";
 import { createPhoneStore } from "./store";
 
 export type PhoneSetup = {
@@ -27,6 +27,7 @@ export type PhoneSetup = {
   viewerOf: (request: Request) => Promise<Viewer | null>;
   nameOf: (request: Request) => Promise<string>;
   notify?: (members: string[], notice: ReturnType<typeof phoneNotice>) => Promise<void>;
+  tasks?: CallbackTasks;
 };
 
 /** Bun's WebSocket for the boxes; Bun.serve needs `websocket` (server/main.ts). */
@@ -43,6 +44,7 @@ export const createPhone = (setup: PhoneSetup) => {
     trunkHost: setup.trunkHost,
     trunkPort: setup.trunkPort,
     notify: setup.notify,
+    tasks: setup.tasks,
     ensureSip,
   });
   // LiveKit SIP may still be starting; a failure shows in the Firmenverwaltung.

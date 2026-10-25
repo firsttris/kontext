@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import {
+  answeredCallbacks,
   applyCallEvent,
+  callbackTask,
   canSeeCall,
   incomingCall,
   outcomeOf,
@@ -143,5 +145,30 @@ describe("rooms and notices", () => {
       title: "Verpasster Anruf",
       body: "Unbekannte Nummer",
     });
+  });
+});
+
+describe("callbackTask", () => {
+  const now = new Date("2026-10-25T10:00:00.000Z");
+  it("is due today on the chosen board, linked to the missed call", () => {
+    const missed = { id: "c1", remote: "+497223123456", startedAt: now.toISOString() };
+    const task = callbackTask({ ...missed, outcome: "missed" }, "info", now);
+    expect(task).toMatchObject({
+      accountId: "info",
+      title: "Zurückrufen: 07223 123456",
+      dueDate: "2026-10-25",
+      assigneeId: null,
+      links: [{ kind: "call", ref: "c1", detail: "Verpasster Anruf · 25. Okt., 11:00" }],
+    });
+    expect(callbackTask({ ...missed, outcome: "answered" }, "info", now)).toBeNull();
+    expect(callbackTask({ ...missed, remote: "", outcome: "missed" }, "info", now)).toBeNull();
+  });
+
+  it("is done when the number was talked to again, in or out", () => {
+    const missed = { ...ringing(), callbackTaskId: "t1" };
+    const other = { ...ringing(), id: "c9", remote: "+4930123456", callbackTaskId: "t2" };
+    const talked = { ...ringing(), id: "c2", state: "talking" as const };
+    expect(answeredCallbacks([missed, other], talked)).toEqual([missed]);
+    expect(answeredCallbacks([missed], { ...talked, state: "ringing" })).toEqual([]);
   });
 });

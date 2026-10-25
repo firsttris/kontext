@@ -3,7 +3,7 @@
  * ended, and numbers in a readable form. Pure; what a call is: server/phone/phone.ts.
  */
 import { m } from "@/paraglide/messages";
-import { toE164 } from "../../server/phone/numbers";
+import { readableNumber as readable, toE164 } from "../../server/phone/numbers";
 import type { PhoneCall } from "../../server/phone/phone";
 import type { ContactCard } from "./jscontact";
 
@@ -25,14 +25,8 @@ export const contactOfNumber = <C extends Pick<ContactCard, "phones">>(
 };
 
 /** "+497223123456" → "07223 123456" for German numbers; others stay international. */
-export const readableNumber = (number: string): string => {
-  if (!number) return m.phone_unknown();
-  if (!number.startsWith("+49")) return number;
-  const national = `0${number.slice(3)}`;
-  // Mobile numbers (015x–017x) after four digits, landlines after the area code is not known
-  // here: a space after the first five keeps it readable without pretending to know.
-  return `${national.slice(0, 5)} ${national.slice(5)}`;
-};
+export const readableNumber = (number: string): string =>
+  number ? readable(number) : m.phone_unknown();
 
 /** How a call ended, for the list. */
 export const outcomeText = (

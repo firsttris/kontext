@@ -2,7 +2,7 @@
  * Firmenverwaltung → Telefonie: couple the telephone box, its login at the Fritzbox, and who
  * hears calls ring in Kontext. The box itself has nothing to set; it gets all of this from here.
  */
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { type FormEvent, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input, Label } from "@/components/ui/input";
@@ -10,42 +10,8 @@ import { useToast } from "@/components/ui/toast";
 import { useCompany } from "@/features/company/queries";
 import { SettingsCard } from "@/features/settings/settings-page";
 import { m } from "@/paraglide/messages";
-import type { BoxRow } from "../../../server/phone/store";
-import { PHONE_KEY } from "./queries";
-
-type Admin = {
-  boxes: (BoxRow & { online: boolean })[];
-  line: { registrar: string; username: string; hasPassword: boolean } | null;
-  ring: string[];
-  sip: { ok: true } | { ok: false; error: string };
-};
-
-const ADMIN_KEY = ["company", "phone"];
-
-const send = async <T,>(method: string, path: string, body?: unknown): Promise<T> => {
-  const response = await fetch(`/api/company/phone${path}`, {
-    method,
-    credentials: "same-origin",
-    headers: body === undefined ? undefined : { "content-type": "application/json" },
-    body: body === undefined ? undefined : JSON.stringify(body),
-  });
-  const result = (await response.json().catch(() => ({}))) as T & { error?: string };
-  if (!response.ok) throw new Error(result.error ?? String(response.status));
-  return result;
-};
-
-const useAdminChange = <T,>(change: (value: T) => Promise<unknown>) => {
-  const queryClient = useQueryClient();
-  const toast = useToast();
-  return useMutation({
-    mutationFn: change,
-    onError: (error) => toast.show(m.common_error({ message: error.message }), "error"),
-    onSettled: async () => {
-      await queryClient.invalidateQueries({ queryKey: ADMIN_KEY });
-      await queryClient.invalidateQueries({ queryKey: PHONE_KEY });
-    },
-  });
-};
+import { ADMIN_KEY, type Admin, send, useAdminChange } from "./settings/api";
+import { CallbacksForm } from "./settings/callbacks";
 
 const boxState = (box: Admin["boxes"][number]) =>
   !box.paired
@@ -229,6 +195,7 @@ export const PhoneSettingsSection = () => {
           <Boxes boxes={data.boxes} />
           <LineForm line={data.line} />
           <RingForm ring={data.ring} />
+          <CallbacksForm board={data.callbackBoard} />
         </>
       ) : null}
     </>

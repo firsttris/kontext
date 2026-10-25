@@ -4,7 +4,8 @@
  * angenommen"). Pure.
  */
 import { z } from "zod";
-import { toE164 } from "./numbers";
+import { companyDay, type NewTaskData } from "../tasks/tasks";
+import { readableNumber, toE164 } from "./numbers";
 import type { CallEvent } from "./protocol";
 
 export const OUTCOMES = [
@@ -39,6 +40,8 @@ export type PhoneCall = {
   answeredAt: string | null;
   endedAt: string | null;
   note: string;
+  /** The task "Zurückrufen" a missed call made; cleared once someone talked to the number. */
+  callbackTaskId: string | null;
 };
 
 /** Phone rooms in LiveKit: "kontext-phone-<uuid>", which LiveKit SIP's dispatch rule matches. */
@@ -87,6 +90,7 @@ export const incomingCall = (
   answeredAt: null,
   endedAt: null,
   note: "",
+  callbackTaskId: null,
 });
 
 /** A call dialled from Kontext, before the box has done anything. */
@@ -120,6 +124,7 @@ export const outgoingCall = ({
   answeredAt: null,
   endedAt: null,
   note: "",
+  callbackTaskId: null,
 });
 
 /** The call after one of the box's events; the same call when it changes nothing (a repeat). */
@@ -158,6 +163,58 @@ export const phoneNotice = (call: Pick<PhoneCall, "id" | "remote" | "outcome">) 
   url: "/phone",
   tag: `phone-${call.id}`,
 });
+
+const timeOfDay = (iso: string) =>
+  new Date(iso).toLocaleString("de-DE", {
+    timeZone: "Europe/Berlin",
+    day: "numeric",
+    month: "short",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+
+/**
+ * The task a missed call leaves on the chosen board, due today and linked to the call; none for a
+ * withheld number, which nobody can call back.
+ */
+export const callbackTask = (
+  call: Pick<PhoneCall, "id" | "remote" | "startedAt" | "outcome">,
+  board: string,
+  now: Date,
+): NewTaskData | null => {
+  if (call.outcome !== "missed" || !toE164(call.remote)) return null;
+  const number = readableNumber(call.remote);
+  return {
+    accountId: board,
+    title: `Zurückrufen: ${number}`,
+    notes: "",
+    status: "open",
+    assigneeId: null,
+    dueDate: companyDay(now),
+    dueTime: null,
+    checklist: [],
+    links: [
+      {
+        kind: "call",
+        accountId: board,
+        ref: call.id,
+        threadId: null,
+        label: number,
+        detail: `Verpasster Anruf · ${timeOfDay(call.startedAt)}`,
+      },
+    ],
+    remindAt: null,
+    repeat: null,
+  };
+};
+
+/** Someone talked to the number again: the missed calls whose callback task is now done. */
+export const answeredCallbacks = (calls: PhoneCall[], talked: PhoneCall): PhoneCall[] =>
+  talked.state === "talking"
+    ? calls.filter(
+        (call) => call.id !== talked.id && call.callbackTaskId && call.remote === talked.remote,
+      )
+    : [];
 
 export const dialSchema = z.object({ number: z.string().trim().min(3).max(40) });
 export const noteSchema = z.object({ note: z.string().max(2000) });

@@ -5,10 +5,13 @@
  * people with Kontext closed (Web Push).
  */
 import type { Hub } from "../live/hub";
+import type { NewTaskData } from "../tasks/tasks";
 import { TRUNK_USER } from "./livekit-sip";
 import { toDialable, toE164 } from "./numbers";
 import {
+  answeredCallbacks,
   applyCallEvent,
+  callbackTask,
   canSeeCall,
   incomingCall,
   outgoingCall,
@@ -18,6 +21,12 @@ import {
 } from "./phone";
 import type { BoxConfig, CallEvent, FromBox, ToBox } from "./protocol";
 import type { PhoneSettings, PhoneStore } from "./store";
+
+/** What telephony needs from the tasks: make "Zurückrufen" and tick it off. */
+export type CallbackTasks = {
+  create: (task: NewTaskData) => Promise<{ id: string }>;
+  complete: (id: string) => Promise<void>;
+};
 
 /** How long an incoming call rings in Kontext before the box lets go of it. */
 const RING_SECONDS = 60;
@@ -31,6 +40,8 @@ export type PhoneDeps = {
   notify?: (members: string[], notice: ReturnType<typeof phoneNotice>) => Promise<void>;
   /** Re-creates LiveKit SIP's trunk when the password changes. */
   ensureSip?: (password: string) => Promise<unknown>;
+  /** Missed calls become tasks on the chosen board (Firmenverwaltung). */
+  tasks?: CallbackTasks;
   newId?: () => string;
   now?: () => Date;
 };
@@ -66,6 +77,24 @@ export const createPhoneService = (deps: PhoneDeps) => {
     publish(call);
   };
 
+  /** A missed call leaves "Zurückrufen" on the chosen board. */
+  const leaveCallback = async (call: PhoneCall) => {
+    const { callbackBoard } = await store.settings();
+    const task = callbackBoard && deps.tasks && callbackTask(call, callbackBoard, now());
+    if (!task || !deps.tasks) return;
+    const { id } = await deps.tasks.create(task);
+    await save({ ...call, callbackTaskId: id });
+  };
+
+  /** Someone talked to the number: earlier "Zurückrufen" for it are done. */
+  const closeCallbacks = async (talked: PhoneCall) => {
+    if (!deps.tasks) return;
+    for (const call of answeredCallbacks(await store.callbacksOf(talked.remote), talked)) {
+      await deps.tasks.complete(call.callbackTaskId!);
+      await save({ ...call, callbackTaskId: null });
+    }
+  };
+
   const sendConfig = async (boxId?: string) => {
     const message: ToBox = {
       type: "config",
@@ -91,6 +120,10 @@ export const createPhoneService = (deps: PhoneDeps) => {
     await save(next);
     if (next.outcome === "missed") {
       void deps.notify?.(next.members, phoneNotice(next)).catch(() => undefined);
+      await leaveCallback(next).catch(() => undefined);
+    }
+    if (next.state === "talking" && known.state !== "talking") {
+      await closeCallbacks(next).catch(() => undefined);
     }
   };
 

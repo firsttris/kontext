@@ -114,6 +114,15 @@ const Row = ({
             .filter(Boolean)
             .join(" · ")}
         </span>
+        {call.callbackTaskId ? (
+          <Link
+            to="/tasks"
+            search={{ task: call.callbackTaskId }}
+            className="self-start text-[13px] text-accent no-underline hover:underline"
+          >
+            {m.phone_callback_task()}
+          </Link>
+        ) : null}
         {call.state === "ended" ? <Note call={call} /> : null}
       </div>
       {canDial && call.remote ? (

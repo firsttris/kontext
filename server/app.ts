@@ -276,6 +276,10 @@ export const createApp = async (env: Env) => {
     }),
   );
   const chatStore = createChatStore(db, messages);
+  const tasks = createTaskStore(db);
+  /** A board got tasks the server made (telephony, CalDAV, rules): tell who sees it. */
+  const tasksChanged = (accountId: string) =>
+    hub.publish({ type: "tasks", accountId }, (viewer) => viewer.accountIds.includes(accountId));
   const livekit = liveKitOf(env);
   if (livekit) {
     const callState = createCallState();
@@ -295,6 +299,17 @@ export const createApp = async (env: Env) => {
       viewerOf: viewerOfRequest,
       nameOf: nameOfRequest,
       notify: pusher.notify,
+      tasks: {
+        create: async (task) => {
+          const made = await tasks.create(task, task.accountId);
+          tasksChanged(task.accountId);
+          return made;
+        },
+        complete: async (id) => {
+          const done = await tasks.update(id, { status: "done" }, "phone");
+          if (done) tasksChanged(done.accountId);
+        },
+      },
     });
     app.route("/api/phone", phone.routes);
     // Behind the Firmenverwaltung's check, which runs first for every /api/company path.
@@ -369,7 +384,6 @@ export const createApp = async (env: Env) => {
     }),
   );
   // Task reminders go out every minute, also with nobody signed in.
-  const tasks = createTaskStore(db);
   const reminder = createTaskReminder({ store: tasks, notify: pusher.notify });
   setInterval(() => void reminder.tick(), env.REMINDER_TICK_MS).unref();
   app.route(
@@ -424,10 +438,7 @@ export const createApp = async (env: Env) => {
     createDavRoutes({
       auth: createDavAuth(env),
       store: tasks,
-      changed: (accountId) =>
-        hub.publish({ type: "tasks", accountId }, (viewer) =>
-          viewer.accountIds.includes(accountId),
-        ),
+      changed: tasksChanged,
     }),
   );
   // Mails a rule marked "Aufgabe anlegen" become tasks, every minute, also with nobody signed in.
@@ -436,8 +447,7 @@ export const createApp = async (env: Env) => {
     grants,
     sessions: () => snoozes.sessionsFor(""),
     store: tasks,
-    changed: (accountId) =>
-      hub.publish({ type: "tasks", accountId }, (viewer) => viewer.accountIds.includes(accountId)),
+    changed: tasksChanged,
   });
   setInterval(() => void ruleTasks.tick(), env.RULE_TASK_TICK_MS).unref();
   app.route(
