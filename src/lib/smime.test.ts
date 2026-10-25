@@ -1,4 +1,5 @@
 // @vitest-environment node
+import { readFileSync } from "node:fs";
 import forge from "node-forge";
 import { beforeAll, describe, expect, it } from "vitest";
 import {
@@ -173,5 +174,12 @@ describe("S/MIME", () => {
     const changed = raw.replace(base64, tampered);
     expect((await readSmime(raw, null)).signature.state).toBe("valid");
     expect((await readSmime(changed, null)).signature.state).toBe("invalid");
+  });
+
+  it("calls an EC signature not checkable, not forged (made with OpenSSL)", async () => {
+    const raw = readFileSync(new URL("./fixtures/smime-ec-signed.eml", import.meta.url), "utf8");
+    const read = await readSmime(raw, null);
+    expect(read.text.trim()).toBe("EC-Unterschrift");
+    expect(read.signature.state).toBe("unsupported");
   });
 });

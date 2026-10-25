@@ -48,6 +48,13 @@ export const SmimeSignatureNote = ({
 }) => {
   const trust = useTrust(signature);
   if (signature.state === "none") return null;
+  if (signature.state === "unsupported") {
+    return (
+      <span className="flex items-center gap-1.5 text-[13px] text-muted">
+        <ShieldQuestion size={15} aria-hidden="true" /> {m.smime_signed_unsupported({ sender })}
+      </span>
+    );
+  }
   const valid = signature.state === "valid";
   const other = valid && signature.email !== sender.toLowerCase();
   const issuer = valid ? signature.info.issuer : "";

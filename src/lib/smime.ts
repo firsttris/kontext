@@ -166,6 +166,8 @@ export type SmimeSignature =
       chain: string[];
     }
   | { state: "invalid" }
+  /** Signed with a key forge cannot check (EC): neither good nor forged. */
+  | { state: "unsupported" }
   | { state: "none" };
 
 /**
@@ -211,9 +213,13 @@ export const checkSignedData = async (
     const signerInfo = (parts.at(-1)!.value as Asn1[])[0]!.value as Asn1[];
     const sid = signerInfo[1]!;
     const serial = forge.util.createBuffer((sid.value as Asn1[])[1]!.value as string).toHex();
-    const signer =
-      certs.find((cert) => cert.serialNumber.replace(/^0+/, "") === serial.replace(/^0+/, "")) ??
-      certs[0];
+    const sameSerial = (cert: pki.Certificate) =>
+      cert.serialNumber.replace(/^0+/, "") === serial.replace(/^0+/, "");
+    // The signer's certificate not readable here (an EC key): say so, not "forged".
+    if (!certs.some(sameSerial) && brought.some((entry) => !entry.cert)) {
+      return { signature: { state: "unsupported" }, content };
+    }
+    const signer = certs.find(sameSerial) ?? certs[0];
     const digestOid = asn1.derToOid((signerInfo[2]!.value as Asn1[])[0]!.value as string);
     const md = () =>
       digestOid === OIDS.sha1

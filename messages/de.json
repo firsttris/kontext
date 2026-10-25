@@ -1278,6 +1278,7 @@
   "smime_signed_not_for_mail": "Unterschrieben von {sender} mit einem Zertifikat, das nicht für Mails gedacht ist.",
   "smime_signed_unknown_ca": "Unterschrieben von {sender} – ausgestellt von {issuer}, einer Stelle, die Kontext nicht als anerkannt kennt.",
   "smime_signed_checking": "Unterschrieben von {sender} – wird geprüft …",
+  "smime_signed_unsupported": "Unterschrieben von {sender} – mit einem Verfahren (EC-Schlüssel), das Kontext noch nicht prüfen kann.",
   "smime_signed_self": "Unterschrieben von {sender} – selbst ausgestelltes Zertifikat, niemand bürgt dafür.",
   "smime_signed_other": "Unterschrieben von {signer}, nicht vom Absender {sender} – Vorsicht.",
   "smime_no_cert": "Diese Mail ist mit S/MIME verschlüsselt. Öffnen lässt sie sich mit deinem Zertifikat – importiere es unter Einstellungen → Verschlüsselung.",

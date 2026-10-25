@@ -198,6 +198,47 @@ markieren („Neue Nachricht“ → „Vertraulich – Ende-zu-Ende verschlüsse
   verschlüsselt. Wer erwähnt wird, wer reagiert und wann geschrieben wurde, sieht der Server
   weiterhin.
 
+## Grenzen und offene Punkte
+
+Was Kontext bewusst nicht schützt, oder (noch) nicht kann:
+
+- **Suche:** Verschlüsselte Mails findet die Suche nur über Absender und Datum, nicht über Inhalt
+  oder Betreff; Regeln sehen beides nicht. Vertrauliche Chat-Nachrichten sind gar nicht
+  durchsuchbar. Der Server kann den Text ja nicht lesen.
+- **Geöffnete Mails nur bis zum Neuladen:** Text und Betreff einer geöffneten verschlüsselten Mail
+  (für Liste, Unterhaltung, Antworten, Weiterleiten) hält Kontext nur im Speicher des Tabs; nach
+  dem Neuladen steht dort wieder „Verschlüsselt“, bis man sie erneut öffnet. Ebenso bleiben der
+  Schlüssel und das S/MIME-Zertifikat nur bis zum Neuladen entsperrt.
+- **Anhänge verschlüsselter Mails:** Beim Schreiben gehen Anhänge wie sonst zuerst als Datei an
+  Stalwart (JMAP-Upload); erst beim Senden lädt der Browser sie wieder herunter und verschlüsselt
+  sie mit der Mail. Bis dahin liegen sie unverschlüsselt im Zwischenspeicher von Stalwart, der
+  nicht verwendete Uploads nach einiger Zeit selbst löscht. Gegen den eigenen Server schützt das
+  also nur eingeschränkt; gegen alle unterwegs und beim Empfänger voll. Dasselbe gilt für Anhänge,
+  die beim Weiterleiten einer geöffneten verschlüsselten Mail mitgehen.
+- **Entwürfe:** Solange „Vertraulich senden“ an ist, speichert Kontext keinen Entwurf auf dem
+  Server; ein Fenster, das man schließt, ist weg.
+- **Was der Server im vertraulichen Chat sieht:** wer Mitglied ist, wer wann schreibt, wer erwähnt
+  wird, wer reagiert und wie groß Dateien sind – nur nicht, was drinsteht. Benachrichtigungen sagen
+  deshalb nur „Vertrauliche Nachricht“.
+- **Wer später dazukommt** (in einen vertraulichen Kanal), liest erst ab dann; frühere Nachrichten
+  waren nicht an seinen Schlüssel verschlüsselt. „Vertraulich weiterführen“ verschlüsselt den
+  alten Verlauf nicht nachträglich.
+- **Besprechungen über einen Link** (mit Gästen ohne Konto) laufen nicht Ende-zu-Ende
+  verschlüsselt, nur Anrufe in vertraulichen Unterhaltungen; Gäste haben keinen Schlüssel.
+- **Vertrauen in die Schlüssel der Kollegen:** Ihre öffentlichen Schlüssel liefert der eigene
+  Server. Dass er keinen fremden unterschiebt, sichert der Hinweis bei einem neuen Schlüssel
+  (Vergleich des Fingerabdrucks); beim allerersten Mal vertraut Kontext dem, was kommt.
+- **„Vertraulich senden“ per Link:** Den Code gibt der Absender selbst auf anderem Weg weiter
+  (Telefon, persönlich); einen Versand per SMS gibt es bewusst nicht.
+- **S/MIME, offen:**
+  - Eigene anerkannte Stellen pflegt man heute über `SMIME_ROOTS` auf dem Server, noch nicht in der
+    Firmenverwaltung.
+  - Sperrlisten (CRL) fragt Kontext nicht ab; bei Stellen ohne OCSP bleibt der Sperrstatus offen.
+  - Verzeichnisse einzelner Stellen (LDAP) durchsucht Kontext nicht, nur SMIMEA im DNS.
+  - Unterschriften prüft der Browser nur mit RSA-Zertifikaten (node-forge liest keine EC-Schlüssel);
+    eine Unterschrift mit einem EC-Schlüssel zeigt die Mail als „nicht prüfbar“ an, nicht als
+    gefälscht.
+
 ## Reihenfolge
 
 1. Grundschutz: Schloss an Mails, Prüfung in der Firmenverwaltung, Anleitung.
@@ -206,4 +247,4 @@ markieren („Neue Nachricht“ → „Vertraulich – Ende-zu-Ende verschlüsse
 4. S/MIME für Behörden und Kanzleien.
 5. Vertrauliche Unterhaltungen im Chat.
 
-Alle fünf sind umgesetzt.
+Alle fünf sind umgesetzt; was offen ist, steht unter „Grenzen und offene Punkte“.
