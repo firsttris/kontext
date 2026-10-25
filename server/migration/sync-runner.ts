@@ -5,18 +5,16 @@
  * Gmail lets IMAP download about 2.5 GB a day: a big mailbox simply takes several runs.
  */
 import type { Sealer } from "../crypto";
-import { imapCategories } from "./categories";
-import { folderOrder, imapTarget, keywordsOf } from "./imap-folders";
-import { type ImapSource, type MailHead, openImap } from "./imap-source";
-import { type Importer, INLINE_LIMIT, type MailToImport } from "./importer";
+import { syncFolder } from "./folder-sync";
+import { folderOrder, imapTarget } from "./imap-folders";
+import { openImap } from "./imap-source";
+import type { Importer } from "./importer";
 import type { Graph } from "./m365/graph";
 import { runM365 } from "./m365/sync";
 import { folderResolver } from "./resolve";
 import type { Sync, SyncCounts, Syncs } from "./syncs";
 
 export const SYNC_EVERY_MS = 15 * 60 * 1000;
-const HEADS_PAGE = 200;
-const BATCH = 25;
 
 export type SyncRunnerDeps = {
   syncs: Syncs;
@@ -28,24 +26,6 @@ export type SyncRunnerDeps = {
   microsoft?: () => Promise<Graph | null>;
 };
 
-/** Mails of one page split into batches of at most 25 mails or 6 MB. */
-export const batchesOf = (heads: MailHead[]): MailHead[][] => {
-  const batches: MailHead[][] = [];
-  let current: MailHead[] = [];
-  let bytes = 0;
-  for (const head of heads) {
-    if (current.length && (current.length >= BATCH || bytes + head.size > INLINE_LIMIT)) {
-      batches.push(current);
-      current = [];
-      bytes = 0;
-    }
-    current.push(head);
-    bytes += head.size;
-  }
-  if (current.length) batches.push(current);
-  return batches;
-};
-
 export const createSyncRunner = ({
   syncs,
   importer,
@@ -53,64 +33,6 @@ export const createSyncRunner = ({
   allowPlain = false,
   microsoft,
 }: SyncRunnerDeps) => {
-  /** One folder: new UIDs in pages, known mails get the folder, new ones are imported. */
-  const syncFolder = async (
-    sync: Sync,
-    source: ImapSource,
-    path: string,
-    mailboxId: string,
-    known: Map<string, string>,
-    counts: SyncCounts,
-  ) => {
-    const previous = sync.state[path];
-    let listed = await source.newUids(path, previous?.lastUid ?? 0);
-    // A new UIDVALIDITY means the folder was rebuilt: start over (duplicates are skipped).
-    if (previous && listed.uidValidity !== previous.uidValidity)
-      listed = await source.newUids(path, 0);
-    const after = previous?.uidValidity === listed.uidValidity ? previous.lastUid : 0;
-    const uids = listed.uids;
-    for (let start = 0; start < uids.length; start += HEADS_PAGE) {
-      const heads = await source.heads(path, uids.slice(start, start + HEADS_PAGE));
-      const fresh = heads.filter((head) => !head.messageId || !known.has(head.messageId));
-      const again = heads.filter((head) => head.messageId && known.get(head.messageId));
-      await importer.addToFolders(
-        sync.accountId,
-        Object.fromEntries(again.map((head) => [known.get(head.messageId!)!, mailboxId])),
-      );
-      counts.added += again.length;
-      for (const batch of batchesOf(fresh)) {
-        const raw = await source.sources(
-          path,
-          batch.map((head) => head.uid),
-        );
-        const mails: MailToImport[] = batch.flatMap((head) => {
-          const data = raw.get(head.uid);
-          return data
-            ? [
-                {
-                  raw: data,
-                  mailboxId,
-                  keywords: keywordsOf(head.flags),
-                  categories: imapCategories(head.flags),
-                  receivedAt: head.internalDate?.toISOString().replace(/\.\d{3}Z$/, "Z") ?? null,
-                },
-              ]
-            : [];
-        });
-        const outcome = await importer.importMails(sync.accountId, mails);
-        counts.imported += outcome.imported;
-        counts.failed += batch.length - outcome.imported;
-        batch.forEach((head, i) => {
-          const id = outcome.ids[i];
-          if (head.messageId && id) known.set(head.messageId, id);
-        });
-      }
-      sync.state[path] = { uidValidity: listed.uidValidity, lastUid: heads.at(-1)?.uid ?? after };
-      await syncs.update(sync.id, { state: sync.state, counts });
-    }
-    if (!uids.length) sync.state[path] = { uidValidity: listed.uidValidity, lastUid: after };
-  };
-
   /** A run from an IMAP mailbox (Gmail & Co.). */
   const runImap = async (sync: Sync, counts: SyncCounts): Promise<string | null> => {
     const opened = await openImap(
@@ -137,7 +59,20 @@ export const createSyncRunner = ({
         })
         .sort((a, b) => folderOrder(a.target, b.target));
       for (const { folder, target } of folders) {
-        await syncFolder(sync, source, folder.path, await resolve(target), known, counts);
+        sync.state[folder.path] = await syncFolder({
+          importer,
+          source,
+          accountId: sync.accountId,
+          path: folder.path,
+          mailboxId: await resolve(target),
+          known,
+          counts,
+          previous: sync.state[folder.path],
+          save: async (state) => {
+            sync.state[folder.path] = state;
+            await syncs.update(sync.id, { state: sync.state, counts });
+          },
+        });
       }
       return null;
     } finally {

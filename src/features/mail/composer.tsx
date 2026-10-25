@@ -10,6 +10,7 @@ import { useClient } from "@/auth/auth";
 import { useSession } from "@/components/shell/app-shell";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/toast";
+import { externalIdOf, replyingExternal, sendThroughExternal } from "@/features/external/api";
 import { displayBody, type OutgoingAttachment, saveDraft, sendEmail } from "@/jmap/mail";
 import type { EmailAddress, Identity } from "@/jmap/types";
 import { parseAddresses } from "@/lib/addresses";
@@ -62,7 +63,8 @@ export const Composer = ({ accountId, mode, sourceEmailId, prefill }: Props) => 
   const navigate = useNavigate();
   const toast = useToast();
   const { data: session } = useSession();
-  const { account, own, sendAccountId, identities, mailboxes, myName } = useSendAccount(accountId);
+  const { account, own, sendAccountId, identities, mailboxes, myName, sendersReady } =
+    useSendAccount(accountId, true);
   const { data: contacts = [] } = useContacts();
   const source = useEmail(accountId, sourceEmailId);
   const suggestions = useMemo(
@@ -126,6 +128,7 @@ export const Composer = ({ accountId, mode, sourceEmailId, prefill }: Props) => 
   // biome-ignore lint/correctness/useExhaustiveDependencies: runs once (initialized); toast and upload are only called
   useEffect(() => {
     if (initialized.current || !editor || editor.isDestroyed || identities.length === 0) return;
+    if (!sendersReady) return;
     if (sourceEmailId && !source.data) return;
     let originalHtml = "";
     // An encrypted original, opened here before: its real content (opened-mails.ts).
@@ -165,13 +168,16 @@ export const Composer = ({ accountId, mode, sourceEmailId, prefill }: Props) => 
       ? { ...source.data, subject: shownSubject(source.data) }
       : source.data;
     const start = startCompose(mode, original, originalHtml, myAddresses);
-    const identity = defaultIdentity(
-      identities,
-      start.from ??
-        (sendAccountId !== accountId || account?.isPersonal
-          ? (session?.username ?? "")
-          : (account?.name ?? "")),
-    );
+    const answering = (mode === "reply" || mode === "replyAll") && source.data;
+    const identity =
+      (answering ? replyingExternal(identities, source.data!) : null) ??
+      defaultIdentity(
+        identities,
+        start.from ??
+          (sendAccountId !== accountId || account?.isPersonal
+            ? (session?.username ?? "")
+            : (account?.name ?? "")),
+      );
     if (identity) setIdentityId(identity.id);
     // What the user typed while the identities were loading wins over the prefill.
     const keep =
@@ -210,6 +216,7 @@ export const Composer = ({ accountId, mode, sourceEmailId, prefill }: Props) => 
   }, [
     editor,
     identities,
+    sendersReady,
     source.data,
     sourceEmailId,
     mode,
@@ -333,6 +340,21 @@ export const Composer = ({ accountId, mode, sourceEmailId, prefill }: Props) => 
     await leave();
   };
 
+  /**
+   * Through another mailbox's server: saved as the draft, then sent by the Kontext server; the
+   * draft stays the current one, so a failed send can simply be tried again. Returns the
+   * recipients the provider turned down.
+   */
+  const sendExternal = async (
+    externalId: string,
+    mail: ReturnType<typeof outgoing>,
+    folders: { draftsId: string; sentId: string },
+  ) => {
+    const emailId = await saveDraft(client, mail, folders.draftsId);
+    draftId.current = emailId;
+    return (await sendThroughExternal(externalId, { emailId, ...folders })).refused;
+  };
+
   /** Now (held for the seconds of "Rückgängig"), or `later` at that time. */
   const send = async (later?: Date) => {
     if (to.length + cc.length + bcc.length === 0) {
@@ -340,21 +362,33 @@ export const Composer = ({ accountId, mode, sourceEmailId, prefill }: Props) => 
       return;
     }
     if (!identity || !drafts || !sent) return;
+    // Another mailbox sends at once through its own server: no holding back, no encrypting or
+    // signing yet.
+    const externalId = externalIdOf(identity);
+    if (externalId && (later || encrypt || sign)) {
+      toast.show(later ? m.external_no_later() : m.external_no_encrypt(), "error");
+      return;
+    }
     setSending(true);
     try {
       if (saving.current) await saving.current;
-      const hold = later
-        ? { until: holdUntil(later) }
-        : undoSeconds > 0
-          ? { seconds: undoSeconds }
-          : undefined;
+      const hold = externalId
+        ? undefined
+        : later
+          ? { until: holdUntil(later) }
+          : undoSeconds > 0
+            ? { seconds: undoSeconds }
+            : undefined;
       const folders = { draftsId: drafts.id, sentId: sent.id };
-      const held = encrypt
-        ? await pgp.send(outgoing(), folders, hold)
-        : sign
-          ? await pgp.sendSigned(outgoing(), folders, hold)
-          : await sendEmail(client, outgoing(), folders, hold);
-      // Links go out at once: nothing to take back, nothing held.
+      const refused = externalId ? await sendExternal(externalId, outgoing(), folders) : [];
+      const held = externalId
+        ? null
+        : encrypt
+          ? await pgp.send(outgoing(), folders, hold)
+          : sign
+            ? await pgp.sendSigned(outgoing(), folders, hold)
+            : await sendEmail(client, outgoing(), folders, hold);
+      // Links and other mailboxes go out at once: nothing to take back, nothing held.
       const kept = held && !(encrypt && pgp.viaLink.length) ? held : null;
       if ((mode === "reply" || mode === "replyAll") && sourceEmailId) {
         // RFC 8621: mark the original as answered.
@@ -372,7 +406,9 @@ export const Composer = ({ accountId, mode, sourceEmailId, prefill }: Props) => 
         run: () => (kept ? takeBack(sendAccountId, kept, drafts.id) : Promise.resolve()),
       };
       if (!kept) {
-        toast.show(m.secure_sent_toast());
+        if (refused.length)
+          toast.show(m.external_refused({ addresses: refused.join(", ") }), "error");
+        else toast.show(externalId ? m.mail_sent_toast() : m.secure_sent_toast());
       } else if (later) {
         toast.show(m.mail_scheduled_toast({ when: sendTimeLabel(later) }), "info", {
           action: back,

@@ -6,7 +6,9 @@ Outlook braucht der Server `readpst` (`sudo apt install pst-utils`, macOS: `brew
 Die PST-Dateien für die Tests lädt `e2e/fixtures.ts` beim ersten Lauf nach `.dev/fixtures/`.
 Den Umzug per IMAP probiert man lokal mit dem eigenen Stalwart als „altem Anbieter“ (Anderer
 Server, `127.0.0.1`, Port 10143): dafür mit `MAIL_SYNC_ALLOW_PLAIN=true bun run dev` starten,
-sonst verlangt er TLS und einen IMAP-Port. Für Microsoft 365 ersetzt `bun dev/fake-graph.ts`
+sonst verlangt er TLS und einen IMAP-Port. Weitere Postfächer gehen genauso; als SMTP-Server
+dient dort ein Ersatz (`e2e/fake-smtp.ts`), weil Stalwart auf seinem Entwicklungs-Port keine
+Anmeldung zum Senden annimmt. Für Microsoft 365 ersetzt `bun dev/fake-graph.ts`
 (Port 18095) Microsofts Anmeldung und Graph; `bun run dev` dann zusätzlich mit
 `M365_LOGIN_URL=http://127.0.0.1:18095 GRAPH_URL=http://127.0.0.1:18095/v1.0` starten und
 Mandant `contoso`, Anwendung `kontext-test`, Schlüssel `geheim` eintragen.

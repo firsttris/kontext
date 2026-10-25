@@ -28,7 +28,17 @@ export type SyncDeps = {
 
 const newSync = z.object({
   accountId: z.string().max(64),
-  provider: z.enum(["gmail", "gmx", "webde", "t-online", "ionos", "strato", "other", "m365"]),
+  provider: z.enum([
+    "gmail",
+    "gmx",
+    "webde",
+    "t-online",
+    "ionos",
+    "strato",
+    "1und1",
+    "other",
+    "m365",
+  ]),
   host: z.string().max(255).optional(),
   port: z.number().int().positive().max(65535).optional(),
   login: z.string().trim().min(3).max(320),

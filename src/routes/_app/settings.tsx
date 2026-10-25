@@ -5,6 +5,7 @@ import { SettingsPage } from "@/features/settings/settings-page";
 export const settingsSections = [
   "profile",
   "signature",
+  "accounts",
   "vacation",
   "rules",
   "snippets",

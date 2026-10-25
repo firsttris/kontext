@@ -78,6 +78,7 @@ reicht ein VPS mit 2 vCPU und 4 GB RAM.
 - **Gemeinsame Postfächer**: info@ & Co. stehen bei jedem Mitglied in der Seitenleiste; eine Mail daraus sagt „Gemeinsames Postfach info@…“. Antworten gehen als info@ raus, mit dem Namen der Person, die geantwortet hat. Postfächer nur zum Lesen zeigen nur, was erlaubt ist.
 - **Alle Posteingänge in einer Liste**: eigene Mails und die aus info@ & Co. zusammen.
 - **Vertraulich senden** an alle: Wer einen Schlüssel hat, bekommt PGP, alle anderen einen Link auf deinen eigenen Server und einen Code, den du am Telefon weitergibst – lesen, Anhänge laden und antworten geht dort.
+- **Weitere Postfächer**: Gmail, GMX, WEB.DE & Co. behalten – neue Mails kommen alle zwei Minuten herein, gesendet wird als diese Adresse über ihren eigenen Server, Antworten gehen automatisch von der Adresse, an die die Mail ging.
 - **Verschlüsselung**: dein eigener OpenPGP-Schlüssel, sicher verwahrt; verschlüsselt und unterschrieben senden, verschlüsselte Mails lesen und Unterschriften prüfen – direkt im Browser; Schlüssel anderer aus ihren Mails (Autocrypt), per WKD oder von keys.openpgp.org. Mehr im [Konzept](docs/encryption.md).
 - **Lesebestätigung**: beim Senden anfordern, auf Nachfrage mit einem Klick bestätigen – nie von selbst.
 - **Newsletter abbestellen** mit einem Klick, direkt an der Mail.
@@ -244,6 +245,12 @@ direkt verbinden. Kontext ist die Oberfläche im Browser dazu.
 Ja, unter *Einstellungen → Firma → Umzug*: IMAP-Postfächer verbinden (läuft parallel weiter, bis
 der Umzug abgeschlossen ist), Microsoft 365 über eine App im Microsoft-Konto der Firma, Outlook als
 PST-Datei, Kontakte und Kalender aus dem Google-Export.
+
+### Kann ich meine Gmail-Adresse weiter benutzen?
+
+Ja, unter *Einstellungen → Weitere Postfächer*: Adresse und (App-)Passwort eintragen. Neue Mails
+kommen in Kontext an, und du sendest als diese Adresse über den Server des Anbieters – so kommen
+die Mails auch beim Empfänger als echt an. Beim Anbieter wird nichts gelöscht.
 
 ### In welcher Sprache ist die App?
 

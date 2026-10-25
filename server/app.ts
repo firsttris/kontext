@@ -34,10 +34,15 @@ import { createDavAuth } from "./dav/auth";
 import { createDavRoutes } from "./dav/routes";
 import { type Db, openDatabase, schema } from "./db";
 import type { Env } from "./env";
+import { createFetcher } from "./external/fetcher";
+import { createExternalRoutes } from "./external/routes";
+import { createSmtp } from "./external/smtp";
+import { createExternalStore } from "./external/store";
+import { createUserJmap } from "./external/user-jmap";
 import { createImageSenderRoutes } from "./images/routes";
 import { createHub } from "./live/hub";
 import { createLiveRoutes } from "./live/routes";
-import { createImporter } from "./migration/importer";
+import { createImporter, type Importer } from "./migration/importer";
 import { createJobs } from "./migration/jobs";
 import { createGraph, type M365Credentials } from "./migration/m365/graph";
 import { createRunner } from "./migration/runner";
@@ -161,12 +166,15 @@ export const createApp = async (env: Env) => {
   setInterval(pruneChat, 3_600_000).unref();
   app.get("/healthz", (c) => c.text("ok"));
   app.on(["GET", "POST"], "/api/auth/*", (c) => auth.handler(c.req.raw));
+  /** Fetching for external accounts imports with the server's key, like a move. */
+  let externalImporter: Importer | null = null;
   if (env.STALWART_ADMIN_KEY) {
     const request = createRequest(env.STALWART_URL, env.STALWART_ADMIN_KEY);
     const upload = createUpload(env.STALWART_URL, env.STALWART_ADMIN_KEY);
     const jobs = createJobs(db);
     const workDir = join(dirname(env.DATABASE_PATH), "migrations");
     const importer = createImporter(request, upload, categories);
+    externalImporter = importer;
     const runner = createRunner({ jobs, importer, workDir });
     await runner.resume();
     const syncs = createSyncs(db);
@@ -211,6 +219,26 @@ export const createApp = async (env: Env) => {
     app.route("/api/company", company);
   }
   const { accountsOf, infoOf } = createSessionInfo(env, auth, grants);
+  if (externalImporter) {
+    // Other mailboxes of a person (Gmail, GMX, …): fetched into Kontext, sent through them.
+    const store = createExternalStore(db);
+    const sealer = await createSealer(env.BETTER_AUTH_SECRET, "external-account");
+    const allowPlain = env.MAIL_SYNC_ALLOW_PLAIN;
+    const fetcher = createFetcher({ store, importer: externalImporter, sealer, allowPlain });
+    (await fetcher.start()).unref();
+    app.route(
+      "/api/external-accounts",
+      createExternalRoutes({
+        store,
+        fetcher,
+        sealer,
+        smtp: createSmtp(allowPlain),
+        infoOf,
+        jmapFor: createUserJmap(env, grants),
+        allowPlain,
+      }),
+    );
+  }
   const hub = createHub();
   app.route(
     "/api/live",

@@ -545,3 +545,41 @@ export const secureReplies = sqliteTable("secure_replies", {
   createdAt: integer("created_at", { mode: "timestamp_ms" }).notNull(),
   readAt: integer("read_at", { mode: "timestamp_ms" }),
 });
+
+/**
+ * Another mailbox a person keeps using from Kontext (their Gmail, GMX, web.de, …): new mails are
+ * fetched over IMAP into their Stalwart account, mail from that address goes out through the
+ * provider's SMTP server. Kontext leads; nothing is changed or deleted at the provider.
+ */
+export const externalAccount = sqliteTable(
+  "external_account",
+  {
+    id: text("id").primaryKey(),
+    /** The person's own Stalwart account the mails go into. */
+    accountId: text("account_id").notNull(),
+    /** The external address, sent from; the display name with it. */
+    email: text("email").notNull(),
+    name: text("name").notNull(),
+    provider: text("provider").notNull(),
+    imapHost: text("imap_host").notNull(),
+    imapPort: integer("imap_port").notNull(),
+    smtpHost: text("smtp_host").notNull(),
+    smtpPort: integer("smtp_port").notNull(),
+    /** The login at the provider, usually the address. */
+    login: text("login").notNull(),
+    /** The (app) password, sealed with the server secret. */
+    secret: text("secret").notNull(),
+    /** Into the inbox, or into a folder of its own (`folderId`, named after the address). */
+    target: text("target", { enum: ["inbox", "folder"] }).notNull(),
+    folderId: text("folder_id"),
+    status: text("status", { enum: ["active", "running", "login-failed"] }).notNull(),
+    /** JSON: the provider's inbox, its UIDVALIDITY and the last UID fetched. */
+    state: text("state").notNull(),
+    /** JSON: fetched, already there, failed. */
+    counts: text("counts").notNull(),
+    lastRunAt: integer("last_run_at", { mode: "timestamp_ms" }),
+    lastError: text("last_error"),
+    ...timestamps,
+  },
+  (table) => [index("external_account_account").on(table.accountId)],
+);

@@ -236,8 +236,12 @@ So läuft das alte Postfach parallel weiter, solange Absender noch die alte Adre
 - **Grenzen**: Gmail gibt per IMAP etwa 2,5 GB am Tag heraus; ein großes Postfach braucht
   mehrere Tage, der Abgleich macht von selbst weiter. Bei „Anderer Server“ sind nur die IMAP-Ports
   993 (TLS) und 143 (STARTTLS) erlaubt.
-- **Nicht dabei**: Senden als alte Adresse über den alten Anbieter (Relay) und ein Abgleich in
-  beide Richtungen. Kontakte und Kalender kommen bei Gmail über den Google-Export (siehe unten).
+- **Nicht dabei**: Senden als alte Adresse und ein Abgleich in beide Richtungen. Wer die alte
+  Adresse dauerhaft behalten will, verbindet sie selbst als [weiteres Postfach](#weitere-postfacher).
+  Kontakte und Kalender kommen bei Gmail über den Google-Export (siehe unten).
+
+Den Abgleich eines Ordners teilen sich Umzug und weitere Postfächer
+(`server/migration/folder-sync.ts`).
 
 ### Microsoft 365
 
@@ -285,6 +289,56 @@ nacheinander ab (`server/migration/runner.ts`), auch nach einem Neustart:
 
 Der Fortschritt steht in SQLite (`migration_job`); die Datei liegt bis zum Ende neben der
 Datenbank unter `migrations/` und wird nach einem erfolgreichen Umzug gelöscht.
+
+## Weitere Postfächer
+
+Unter *Einstellungen → Weitere Postfächer* verbindet jede Person ihre anderen Adressen (Gmail, GMX,
+WEB.DE, Telekom, IONOS, STRATO, 1&1 oder ein eigener Server), um sie dauerhaft aus Kontext zu
+nutzen – anders als der [Umzug](#umzug), den der Chef für einen Wechsel einrichtet.
+`server/external/`, Tabelle `external_account`, Routen unter `/api/external-accounts` (nur die
+eigenen Konten, erkannt am persönlichen Konto der JMAP-Session).
+
+Stalwart ist ein Mailserver, kein Mailprogramm: Es holt keine fremden Postfächer ab, und eine Mail
+„von @gmail.com“ darf nicht über den eigenen Server hinaus, sonst scheitert sie beim Empfänger an
+SPF und DMARC. Beides macht deshalb der Kontext-Server:
+
+- **Empfangen** (`fetcher.ts`): alle zwei Minuten (oder „Jetzt abrufen“) der Posteingang des
+  Anbieters per IMAP, nur lesend, mit demselben Ordner-Abgleich wie der Umzug. Geholt wird nur, was
+  nach dem Verbinden ankommt – auf Wunsch auch der jetzige Posteingang. Die Mails landen per
+  `Email/import` (Server-Schlüssel) im Posteingang oder in einem eigenen Ordner mit der Adresse als
+  Namen; Doppeltes fällt über die Message-ID heraus. Verglichen wird mit den Mails ab einem Tag
+  vor der ältesten neuen, nicht mit dem ganzen Konto (`Email/query` mit `after`; eine Suche nach
+  der Message-ID bräuchte Stalwarts Header-Index, der ab Werk aus ist). Beim ersten Lauf und wenn
+  der Anbieter den Posteingang neu aufgebaut hat (neue `UIDVALIDITY`, alle Mails erscheinen
+  wieder), vergleicht Kontext mit dem ganzen Konto. Mails und Push erscheinen wie jede
+  andere Mail, auch auf dem Handy und im Mailprogramm.
+- **Kontext führt**: Gelesen, Verschieben und Löschen bleiben in Kontext; beim Anbieter wird nichts
+  geändert oder gelöscht. Damit entfällt ein Abgleich in beide Richtungen; wer zurück will, nimmt
+  beim Anbieter alles mit.
+- **Senden** (`send.ts`): Im Fenster „Neue Mail“ stehen die Adressen unter „Von“ (Kennung
+  `external:<id>`, mit der Signatur der eigenen Adresse); beim Antworten wird die Adresse gewählt,
+  an die die Mail ging. Die App legt die Mail wie sonst als Entwurf ab und ruft
+  `POST /api/external-accounts/:id/send` auf. Der Server liest sie mit dem Token der Sitzung,
+  prüft, dass „Von“ die Adresse des Kontos ist, nimmt den `Bcc`-Header heraus (RFC 5322 §3.6.3),
+  liefert sie beim SMTP-Server des Anbieters ein (465 mit TLS oder 587 mit STARTTLS, nodemailer,
+  `smtp.ts`) und legt sie danach unter Gesendet ab. Lehnt der Anbieter einzelne Empfänger ab und
+  nimmt die anderen an, gilt die Mail als gesendet (sie ist bei den anderen angekommen, ein
+  zweites Senden käme dort doppelt an); die App nennt die abgelehnten Adressen. Gmail legt selbst eine Kopie in seinen
+  Gesendet-Ordner, die anderen nicht.
+- **Anmeldung**: Adresse und (App-)Passwort; Kontext prüft beim Verbinden IMAP und SMTP und
+  speichert das Passwort verschlüsselt (AES-GCM mit dem Server-Geheimnis). Bei „Anderer Server“
+  nur IMAP 993/143 und SMTP 465/587.
+- **Grenzen**: Rückgängig, „Später senden“, Verschlüsseln und Unterschreiben gehen über ein weiteres Postfach noch
+  nicht (der Server sendet sofort); Lesebestätigungen und Abmelde-Mails gehen weiter von der
+  eigenen Adresse. Senden als diese Adresse geht nur in Kontext, nicht aus Thunderbird oder der
+  Mail-App des Handys, die direkt an Stalwart hängen. Gmail per OAuth („Mit Google anmelden“)
+  bräuchte Googles Prüfung der App; bis dahin ein App-Passwort. Regeln laufen in Stalwart beim
+  Eingang per SMTP, abgeholte Mails durchlaufen sie nicht.
+
+Ohne Stalwart-Schlüssel (`STALWART_ADMIN_KEY`) gibt es die Funktion nicht; der Eintrag in den
+Einstellungen fehlt dann (die Route fehlt, der Server antwortet mit 404 oder, mit `STATIC_DIR`,
+mit der `index.html` der App – beides heißt für die App „nicht angeboten“). Das Fenster „Neue
+Mail“ wählt den Absender erst, wenn auch die weiteren Postfächer geladen sind.
 
 ## Regeln
 

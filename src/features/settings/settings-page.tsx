@@ -4,6 +4,7 @@
  */
 import { Link } from "@tanstack/react-router";
 import {
+  AtSign,
   ChevronLeft,
   ChevronRight,
   Inbox,
@@ -31,6 +32,8 @@ import { MailboxesSection } from "@/features/company/mailboxes-section";
 import { MigrationSection } from "@/features/company/migration-section";
 import { useIsCompanyAdmin } from "@/features/company/queries";
 import { SecuritySection as CompanySecuritySection } from "@/features/company/security-section";
+import { ExternalSection } from "@/features/external/external-section";
+import { useExternalAccounts } from "@/features/external/queries";
 import { RulesSection } from "@/features/rules/rules-section";
 import { SnippetsSection } from "@/features/snippets/snippets-section";
 import { cn } from "@/lib/cn";
@@ -63,6 +66,7 @@ type Entry = { id: Section; label: () => string; icon: LucideIcon };
 const OWN: Entry[] = [
   { id: "profile", label: m.settings_profile, icon: User },
   { id: "signature", label: m.settings_signature, icon: PenLine },
+  { id: "accounts", label: m.settings_external, icon: AtSign },
   { id: "vacation", label: m.settings_vacation, icon: Palmtree },
   { id: "rules", label: m.settings_rules, icon: ListFilter },
   { id: "snippets", label: m.settings_snippets, icon: TextQuote },
@@ -85,6 +89,7 @@ const COMPANY: Entry[] = [
 const CONTENT: Record<Section, () => ReactNode> = {
   profile: () => <ProfileSection />,
   signature: () => <SignatureSection />,
+  accounts: () => <ExternalSection />,
   vacation: () => <VacationSection />,
   rules: () => <RulesSection />,
   snippets: () => <SnippetsSection />,
@@ -126,6 +131,9 @@ const SectionLinks = ({ entries, current }: { entries: Entry[]; current: Section
 export const SettingsPage = ({ section }: { section: Section | undefined }) => {
   const current = section ?? "profile";
   const admin = useIsCompanyAdmin();
+  // Other mailboxes need the server's Stalwart key; without it the entry is left out.
+  const { data: external } = useExternalAccounts();
+  const own = external === null ? OWN.filter((entry) => entry.id !== "accounts") : OWN;
   const title = [...OWN, ...COMPANY].find((s) => s.id === current)!.label();
   return (
     <>
@@ -141,7 +149,7 @@ export const SettingsPage = ({ section }: { section: Section | undefined }) => {
         </h1>
         <div className="px-2.5 text-[12px] font-medium text-muted">{m.settings_my_account()}</div>
         <div className="flex flex-1 flex-col gap-4">
-          <SectionLinks entries={OWN} current={current} />
+          <SectionLinks entries={own} current={current} />
           {admin ? (
             <div className="flex flex-col gap-1">
               <div className="px-2.5 text-[12px] font-medium text-muted">{m.company_heading()}</div>

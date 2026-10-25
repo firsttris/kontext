@@ -10,6 +10,7 @@ export type ProviderId =
   | "t-online"
   | "ionos"
   | "strato"
+  | "1und1"
   | "other";
 
 export type Provider = { id: ProviderId; name: string; host: string; port: number };
@@ -28,6 +29,7 @@ export const PROVIDERS: Provider[] = [
   { id: "t-online", name: "Telekom (T-Online)", host: "secureimap.t-online.de", port: 993 },
   { id: "ionos", name: "IONOS", host: "imap.ionos.de", port: 993 },
   { id: "strato", name: "STRATO", host: "imap.strato.de", port: 993 },
+  { id: "1und1", name: "1&1", host: "imap.1und1.de", port: 993 },
   { id: "other", name: "Anderer Server", host: "", port: 993 },
 ];
 

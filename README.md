@@ -78,6 +78,7 @@ fine on a VPS with 2 vCPUs and 4 GB RAM.
 - **Shared mailboxes**: info@ and co. appear in every member's sidebar and are labelled as such; replies go out as info@, with the name of the person who answered. Read-only mailboxes show only what is allowed.
 - **All inboxes in one list**: your own mail and info@'s together.
 - **Send confidentially** to anyone: recipients with a key get PGP, everyone else a link to your own server and a code you pass on by phone – they read, download and answer there.
+- **Other mailboxes**: keep Gmail, GMX, WEB.DE and the like – new mail comes in every two minutes, mail goes out as that address through its own server, and replies go from the address the mail was sent to.
 - **Encryption**: your own OpenPGP key, kept locked; send encrypted and signed, read encrypted mail and check signatures right in the browser; keys of others from their mails (Autocrypt), WKD or keys.openpgp.org. See the [concept](docs/encryption.md).
 - **Read receipts**: ask for one when sending; answer one with a click, never by itself.
 - **Unsubscribe** from newsletters with one click, right at the mail.
@@ -238,6 +239,12 @@ directly. Kontext is the browser interface on top.
 Yes, under *Settings → Company → Move*: connect IMAP mailboxes (kept in sync until the move is
 finished), Microsoft 365 through an app in the company's Microsoft account, Outlook as a PST file,
 contacts and calendars from a Google export.
+
+### Can I keep using my Gmail address?
+
+Yes, under *Settings → Other mailboxes*: enter the address and an (app) password. New mail comes
+into Kontext, and you send as that address through the provider's server, so recipients see it as
+genuine. Nothing is deleted at the provider.
 
 ### Which languages?
 

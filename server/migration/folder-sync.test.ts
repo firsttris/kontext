@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
+import { batchesOf } from "./folder-sync";
 import { INLINE_LIMIT } from "./importer";
-import { batchesOf } from "./sync-runner";
 
 const head = (uid: number, size = 1000) => ({
   uid,

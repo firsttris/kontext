@@ -88,12 +88,17 @@ export const createImporter = (
     method: "Email" | "ContactCard" | "CalendarEvent",
     properties: string[],
     using: string[],
+    filter?: Record<string, unknown>,
   ): Promise<Record<string, unknown>[]> => {
     const values: Record<string, unknown>[] = [];
     for (let position = 0; ; position += PAGE) {
       const [query, get] = await request(
         [
-          [`${method}/query`, { accountId, position, limit: PAGE }, "q"],
+          [
+            `${method}/query`,
+            { accountId, position, limit: PAGE, ...(filter ? { filter } : {}) },
+            "q",
+          ],
           [
             `${method}/get`,
             {
@@ -112,10 +117,15 @@ export const createImporter = (
     }
   };
 
-  /** Message-ID → email id of the mails already in the account, against duplicates. */
-  const knownMessageIds = async (accountId: string): Promise<Map<string, string>> => {
+  /**
+   * Message-ID → email id of the mails already in the account, against duplicates; with `after`
+   * only those received since then (RFC 8621 §4.4.1), for a few new mails instead of the whole
+   * account. A Message-ID search would need Stalwart's header index, which is off by default.
+   */
+  const knownMessageIds = async (accountId: string, after?: Date): Promise<Map<string, string>> => {
     const known = new Map<string, string>();
-    for (const email of await collect(accountId, "Email", ["messageId"], MAIL)) {
+    const filter = after ? { after: after.toISOString().replace(/\.\d{3}Z$/, "Z") } : undefined;
+    for (const email of await collect(accountId, "Email", ["messageId"], MAIL, filter)) {
       for (const messageId of (email.messageId as string[] | null) ?? []) {
         known.set(messageId, email.id as string);
       }
