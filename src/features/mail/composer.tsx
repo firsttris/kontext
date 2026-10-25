@@ -21,6 +21,7 @@ import { findRole } from "@/lib/mailboxes";
 import { holdUntil, sendTimeLabel } from "@/lib/schedule";
 import { m } from "@/paraglide/messages";
 import { useContacts } from "../contacts/queries";
+import { useAutocryptHeader } from "../pgp/autocrypt";
 import { SnippetMenu } from "../snippets/snippet-menu";
 import { AttachmentList, ComposerActions, ComposerFields } from "./composer-fields";
 import { EditorToolbar } from "./editor-toolbar";
@@ -200,6 +201,7 @@ export const Composer = ({ accountId, mode, sourceEmailId, prefill }: Props) => 
     });
 
   const [receipt, setReceipt] = useState(false);
+  const autocrypt = useAutocryptHeader(identity?.email);
   const outgoing = () => {
     const html = editor?.getHTML() ?? "";
     return {
@@ -219,6 +221,7 @@ export const Composer = ({ accountId, mode, sourceEmailId, prefill }: Props) => 
       references: threading.references,
       draftId: draftId.current,
       requestReceipt: receipt,
+      autocrypt,
     };
   };
 

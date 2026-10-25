@@ -16,6 +16,8 @@ const proxy = {
   // Task lists for Thunderbird and phone apps (CalDAV), and where they look for them first.
   "/dav": { target: server },
   "/.well-known/caldav": { target: server },
+  // OpenPGP keys of the company's people, for Thunderbird and others (WKD).
+  "/.well-known/openpgpkey": { target: server },
   "/rtc": { target: livekit, ws: true },
 };
 

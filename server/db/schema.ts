@@ -435,3 +435,37 @@ export const imageSenders = sqliteTable(
   },
   (table) => [primaryKey({ columns: [table.memberId, table.address] })],
 );
+
+/**
+ * A person's own OpenPGP key (docs/encryption.md, building block 2). The secret part only as the
+ * browser encrypted it: once with the person's passphrase, once with their recovery code; the
+ * server cannot open either.
+ */
+export const pgpOwn = sqliteTable("pgp_own", {
+  memberId: text("member_id").primaryKey(),
+  email: text("email").notNull(),
+  fingerprint: text("fingerprint").notNull(),
+  publicKey: text("public_key").notNull(),
+  privateKey: text("private_key").notNull(),
+  recoveryKey: text("recovery_key").notNull(),
+  createdAt: integer("created_at", { mode: "timestamp_ms" }).notNull(),
+  updatedAt: integer("updated_at", { mode: "timestamp_ms" }).notNull(),
+});
+
+/** Other people's public keys a person knows, by address: where from, and an earlier one. */
+export const pgpKeys = sqliteTable(
+  "pgp_keys",
+  {
+    memberId: text("member_id").notNull(),
+    email: text("email").notNull(),
+    fingerprint: text("fingerprint").notNull(),
+    publicKey: text("public_key").notNull(),
+    /** autocrypt, attachment, import, keyserver, wkd */
+    source: text("source").notNull(),
+    /** The key before, when another came for the same address. */
+    previousFingerprint: text("previous_fingerprint"),
+    createdAt: integer("created_at", { mode: "timestamp_ms" }).notNull(),
+    updatedAt: integer("updated_at", { mode: "timestamp_ms" }).notNull(),
+  },
+  (table) => [primaryKey({ columns: [table.memberId, table.email] })],
+);

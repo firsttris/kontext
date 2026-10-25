@@ -63,6 +63,8 @@ export type EmailDetail = EmailSummary & {
   /** Headers the mail server adds on arrival, topmost first (src/lib/sender-check.ts). */
   authenticationResults: string[] | null;
   spamScore: string[] | null;
+  /** The sender's key, if sent along (Autocrypt). */
+  autocrypt: string | null;
   /** The Received lines, topmost first: whether it came encrypted. */
   received: string[] | null;
   /** Who asks for a read receipt (Disposition-Notification-To), if anyone. */

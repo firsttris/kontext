@@ -6,7 +6,7 @@ Funktionen (Suche, Regeln, Benachrichtigungen mit Text, Aufgaben aus Mails) brau
 Server, der die Inhalte lesen kann. Ende-zu-Ende gibt es dort, wo es zählt: nach außen und für
 ausgewählte vertrauliche Unterhaltungen.
 
-Stand: Baustein 1 ist umgesetzt, 2 in Arbeit, 3 bis 5 geplant ([Roadmap](https://github.com/firsttris/kontext/blob/main/ROADMAP.md)).
+Stand: Baustein 1 und 2 sind umgesetzt, 3 in Arbeit, 4 und 5 geplant ([Roadmap](https://github.com/firsttris/kontext/blob/main/ROADMAP.md)).
 
 ## Wovor geschützt wird
 
@@ -44,21 +44,27 @@ wer auf dem Server Administrator ist, kann alles außer Ende-zu-Ende-Verschlüss
 Jede Person hat einen persönlichen OpenPGP-Schlüssel (Curve25519), mit dem sie Mails
 unterschreibt und entschlüsselt – und der später auch vertrauliche Chats trägt (Baustein 5).
 
-- **Entstehen:** Kontext legt ihn beim ersten Mal an, im Browser; oder man bringt einen
-  vorhandenen mit (z. B. aus Thunderbird) und importiert ihn.
+- **Entstehen:** unter *Einstellungen → Verschlüsselung*, im Browser (OpenPGP.js, Curve25519 als
+  v4-Schlüssel, den auch GnuPG und Thunderbird lesen); oder man bringt einen vorhandenen mit
+  (z. B. aus Thunderbird) und importiert ihn mit seiner bisherigen Passphrase.
 - **Aufbewahren:** Der geheime Teil verlässt den Browser nur verschlüsselt – mit einer
   Passphrase, die nur die Person kennt – und liegt so auf dem Kontext-Server, damit er auf allen
   Geräten da ist. Der Server kann ihn nicht öffnen. Im Browser bleibt er nach dem Entsperren nur
   im Speicher des Tabs.
-- **Wiederherstellen:** Beim Anlegen gibt es einen Wiederherstellungscode zum Ausdrucken; ohne
-  Passphrase und Code ist der Schlüssel verloren – und mit ihm, was an ihn verschlüsselt war.
-- **Verteilen:** Der öffentliche Teil geht mit jeder Mail mit (`Autocrypt`-Kopfzeile), lässt
-  sich herunterladen und wird – wenn die Domain mitspielt – per WKD gefunden, wie Thunderbird
-  und andere es tun.
-- **Schlüssel der anderen:** Kontext sammelt sie aus eingehenden Mails (`Autocrypt`, angehängte
-  Schlüssel), sucht sie auf keys.openpgp.org und per WKD und nimmt sie von Hand entgegen. Sie
-  liegen je Person auf dem Server, mit Herkunft und Fingerabdruck; ein neuer Schlüssel für eine
-  bekannte Adresse wird angezeigt, nicht still übernommen.
+- **Wiederherstellen:** Beim Anlegen gibt es einen Wiederherstellungscode zum Ausdrucken (24
+  Zeichen aus Buchstaben und Ziffern, die sich nicht verwechseln lassen). Der geheime Schlüssel
+  liegt zweimal auf dem Server: mit der Passphrase und mit dem Code verschlüsselt; mit dem Code
+  lässt sich eine neue Passphrase setzen. Ohne beides ist der Schlüssel verloren – und mit ihm,
+  was an ihn verschlüsselt war.
+- **Verteilen:** Der öffentliche Teil geht mit jeder Mail von der Adresse des Schlüssels mit
+  (`Autocrypt`-Kopfzeile), lässt sich herunterladen und wird per WKD gefunden: Kontext liefert
+  ihn unter `/.well-known/openpgpkey/<domain>/hu/<hash>` aus – zeigt `openpgpkey.firma.de` auf den
+  Kontext-Server, finden Thunderbird und andere ihn von selbst.
+- **Schlüssel der anderen:** Kontext übernimmt sie beim Öffnen einer Mail aus ihrem
+  `Autocrypt`-Kopf (nur für die Absenderadresse), sucht sie per WKD der Empfänger-Domain und auf
+  keys.openpgp.org (vom Server aus, nur https ins Internet) und nimmt sie von Hand oder als Datei
+  entgegen. Sie liegen je Person auf dem Server (`pgp_keys`), mit Herkunft und Fingerabdruck; kommt
+  für eine bekannte Adresse ein anderer Schlüssel, steht das deutlich daneben.
 
 ## Baustein 3: PGP in Mails
 

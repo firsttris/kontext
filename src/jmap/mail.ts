@@ -39,6 +39,8 @@ const BODY_PROPERTIES = ["partId", "blobId", "type", "name", "size", "cid", "dis
 const CHECK_HEADERS = {
   authenticationResults: "header:Authentication-Results:asText:all",
   spamScore: "header:X-Spam-Score:asText:all",
+  /** The sender's public key, if they send it along (src/lib/pgp.ts). */
+  autocrypt: "header:Autocrypt:asText",
   /** How it came to the own server, topmost first (src/lib/transport.ts). */
   received: "header:Received:asText:all",
   /** Who asks for a read receipt (RFC 8098). */
@@ -324,7 +326,12 @@ export type OutgoingEmail = {
   draftId?: string | null;
   /** Ask for a read receipt (Disposition-Notification-To, RFC 8098), to the sender. */
   requestReceipt?: boolean;
+  /** One's public key along with the mail (the Autocrypt header's value). */
+  autocrypt?: string | null;
 };
+
+/** A long header value folded into lines (RFC 5322 §2.2.3), as the raw form needs it. */
+const folded = (value: string) => ` ${value.replace(/(.{76})(?=.)/g, "$1\r\n ")}`;
 
 const emailCreate = (mail: OutgoingEmail, mailboxIds: Record<string, boolean>, draft: boolean) => ({
   mailboxIds,
@@ -342,6 +349,7 @@ const emailCreate = (mail: OutgoingEmail, mailboxIds: Record<string, boolean>, d
         ],
       }
     : {}),
+  ...(mail.autocrypt ? { "header:Autocrypt:asRaw": folded(mail.autocrypt) } : {}),
   ...(mail.inReplyTo?.length ? { inReplyTo: mail.inReplyTo } : {}),
   ...(mail.references?.length || mail.inReplyTo?.length
     ? { references: [...(mail.references ?? []), ...(mail.inReplyTo ?? [])] }

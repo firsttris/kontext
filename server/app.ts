@@ -43,6 +43,8 @@ import { createGraph, type M365Credentials } from "./migration/m365/graph";
 import { createRunner } from "./migration/runner";
 import { createSyncRunner } from "./migration/sync-runner";
 import { createSyncs } from "./migration/syncs";
+import { createPgpRoutes, createWkdRoutes } from "./pgp/routes";
+import { createPgpStore } from "./pgp/store";
 import { createMailWatch } from "./push/mail-watch";
 import { createPusher } from "./push/pusher";
 import { createPushRoutes } from "./push/routes";
@@ -334,6 +336,10 @@ export const createApp = async (env: Env) => {
   app.route("/api/snoozes", createSnoozeRoutes({ store: snoozes, infoOf }));
   app.route("/api/unsubscribe", createUnsubscribeRoutes({ env, grants, infoOf }));
   app.route("/api/image-senders", createImageSenderRoutes({ db, accountsOf }));
+  // OpenPGP: one's own key (locked in the browser), others' keys, and WKD for the company.
+  const pgp = createPgpStore(db);
+  app.route("/api/pgp", createPgpRoutes({ store: pgp, accountsOf }));
+  app.route("/.well-known/openpgpkey", createWkdRoutes(pgp));
   // The task boards for Thunderbird and phone apps (CalDAV), signed in with the mail password.
   app.all("/.well-known/caldav", (c) => c.redirect("/dav/", 301));
   app.route(

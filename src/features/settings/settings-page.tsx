@@ -9,6 +9,7 @@ import {
   Inbox,
   KeyRound,
   ListFilter,
+  LockKeyhole,
   type LucideIcon,
   MessagesSquare,
   Palette,
@@ -41,6 +42,10 @@ import { SecuritySection } from "./security-section";
 import { SyncSection } from "./sync-section";
 import { VacationSection } from "./vacation-section";
 
+// OpenPGP comes with its section only.
+const EncryptionSection = lazy(() =>
+  import("./encryption-section").then((module) => ({ default: module.EncryptionSection })),
+);
 // The signature editors bring the mail editor (Tiptap): loaded when their section opens.
 const SignatureSection = lazy(() =>
   import("./signature-section").then((module) => ({ default: module.SignatureSection })),
@@ -63,6 +68,7 @@ const OWN: Entry[] = [
   { id: "snippets", label: m.settings_snippets, icon: TextQuote },
   { id: "sync", label: m.settings_sync, icon: RefreshCw },
   { id: "security", label: m.settings_security, icon: KeyRound },
+  { id: "encryption", label: m.settings_encryption, icon: LockKeyhole },
   { id: "appearance", label: m.settings_appearance, icon: Palette },
 ];
 
@@ -84,6 +90,7 @@ const CONTENT: Record<Section, () => ReactNode> = {
   snippets: () => <SnippetsSection />,
   sync: () => <SyncSection />,
   security: () => <SecuritySection />,
+  encryption: () => <EncryptionSection />,
   appearance: () => <AppearanceSection />,
   employees: () => <EmployeesSection />,
   mailboxes: () => <MailboxesSection />,

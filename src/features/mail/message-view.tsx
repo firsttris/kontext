@@ -16,6 +16,7 @@ import { m } from "@/paraglide/messages";
 import { CategoryChips } from "../categories/category-chips";
 import { useCategories } from "../categories/queries";
 import { DiscussedNotice } from "../chat/discussed-notice";
+import { AutocryptCollector } from "../pgp/autocrypt";
 import { RESURFACED } from "../snooze/queries";
 import { SnoozeNotice } from "../snooze/snooze-notice";
 import { useStatusLabel, useTasks } from "../tasks/queries";
@@ -159,6 +160,7 @@ export const MessageView = ({ accountId, mailbox, emailId }: Props) => {
               />
             ) : null}
             <SenderWarnings email={email} />
+            <AutocryptCollector email={email} />
             {mailbox.role === "sent" ? (
               <ReceiptsReceived accountId={accountId} email={email} />
             ) : (

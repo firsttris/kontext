@@ -40,6 +40,7 @@ const original: EmailDetail = {
   unsubscribe: null,
   receiptTo: null,
   received: null,
+  autocrypt: null,
   unsubscribePost: null,
 };
 
