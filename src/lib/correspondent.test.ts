@@ -50,4 +50,34 @@ describe("contactFormFor", () => {
     });
     expect(contactFormFor({ name: null, email: "b@w.test" })).toMatchObject({ given: "" });
   });
+
+  it('reads "Keller, Petra" (surname first, as Outlook shows it) as given Petra, surname Keller', () => {
+    expect(contactFormFor({ name: "Keller, Petra", email: petra.email })).toMatchObject({
+      given: "Petra",
+      surname: "Keller",
+    });
+    expect(contactFormFor({ name: "Weber,  Anna Maria ", email: "a@w.test" })).toMatchObject({
+      given: "Anna Maria",
+      surname: "Weber",
+    });
+    expect(contactFormFor({ name: "von der Heide, Anna", email: "a@w.test" })).toMatchObject({
+      given: "Anna",
+      surname: "von der Heide",
+    });
+    expect(contactFormFor({ name: "Müller-Lüdenscheidt, Max", email: "m@w.test" })).toMatchObject({
+      given: "Max",
+      surname: "Müller-Lüdenscheidt",
+    });
+  });
+
+  it("leaves out a suffix after the comma when the part before it is no surname", () => {
+    expect(contactFormFor({ name: "Jonas Weber, MBA", email: "j@w.test" })).toMatchObject({
+      given: "Jonas",
+      surname: "Weber",
+    });
+    expect(contactFormFor({ name: "Müller GmbH, Vertrieb", email: "v@w.test" })).toMatchObject({
+      given: "Müller",
+      surname: "GmbH",
+    });
+  });
 });
