@@ -33,6 +33,20 @@ export const mailboxSchema = z.object({
   maxSeconds: z.number().int().min(10).max(180),
 });
 
+const clock = z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/);
+
+/** When the phone is answered at all; the box decides by itself, also without Kontext. */
+export const hoursSchema = z.object({
+  /** IANA name; Asterisk compares in it (GotoIfTime). */
+  timezone: z.string().regex(/^[A-Za-z_]+\/[A-Za-z_]+$/),
+  /** Open ranges; `day` counts from Sunday (0) like Asterisk's weekday names. */
+  open: z.array(z.object({ day: z.number().int().min(0).max(6), from: clock, to: clock })).max(28),
+  /** Closed all day (holidays, company holidays), "YYYY-MM-DD". */
+  closedDays: z.array(z.string().regex(/^\d{4}-\d{2}-\d{2}$/)).max(60),
+  /** Played outside the hours, before the mailbox (if there is one). */
+  greeting: soundIdSchema.nullable(),
+});
+
 /** Everything the box needs, whole and versioned: it always renders from all of it. */
 export const boxConfigSchema = z.object({
   line: lineSchema.nullable(),
@@ -42,6 +56,7 @@ export const boxConfigSchema = z.object({
   /** The sounds the dialplan plays; the box has them before it applies the rest. */
   sounds: z.array(soundIdSchema).default([]),
   mailbox: mailboxSchema.nullable().default(null),
+  hours: hoursSchema.nullable().default(null),
 });
 export type BoxConfig = z.infer<typeof boxConfigSchema>;
 
@@ -65,8 +80,11 @@ export const toBoxSchema = z.discriminatedUnion("type", [
 ]);
 export type ToBox = z.infer<typeof toBoxSchema>;
 
-/** "mailbox": nobody answered, the caller hears the greeting and may leave a message. */
-export const CALL_STATES = ["ringing", "answered", "mailbox", "ended"] as const;
+/**
+ * "mailbox": nobody answered, the caller hears the greeting and may leave a message. "closed": a
+ * call outside the opening hours; it does not ring, the caller hears the closing greeting.
+ */
+export const CALL_STATES = ["ringing", "answered", "mailbox", "closed", "ended"] as const;
 
 /** One step of a call, as the box saw it. */
 export const callEventSchema = z.object({

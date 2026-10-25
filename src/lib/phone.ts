@@ -37,6 +37,9 @@ export const outcomeText = (
   if (call.state === "ringing")
     return call.direction === "in" ? m.phone_ringing() : m.phone_dialing();
   if (call.state === "talking") return m.phone_talking();
+  if (call.state === "mailbox") {
+    return call.outcome === "closed" ? m.phone_outcome_closed() : m.phone_on_mailbox();
+  }
   switch (call.outcome) {
     case "answered":
       return call.direction === "in" && call.member && call.member !== me
@@ -50,6 +53,8 @@ export const outcomeText = (
       return m.phone_outcome_busy();
     case "unanswered":
       return m.phone_outcome_unanswered();
+    case "closed":
+      return m.phone_outcome_closed();
     default:
       return m.phone_outcome_failed();
   }

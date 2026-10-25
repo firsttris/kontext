@@ -699,6 +699,13 @@ flowchart LR
   beim Anruf ab (`phone/voicemail/`, abspielbar in der Liste) und legt eine Mail mit der Aufnahme
   in das gewählte Postfach: mit `Email/import` über die Anmeldung von jemandem, der dort schreiben
   darf (`server/jmap-server.ts`), so wie die Aufgaben aus Regeln.
+- **Öffnungszeiten:** prüft die Box selbst, damit sie auch ohne Kontext gelten: am Anfang jedes
+  Anrufs geschlossene Tage, dann die offenen Zeiträume, beides mit `GotoIfTime` in Europe/Berlin
+  (`box/agent/dialplan.ts`). Außerhalb meldet sie „closed“ statt „klingelt“ – Kontext legt den
+  Anruf ohne Klingeln und ohne Web Push als „Außerhalb der Öffnungszeiten“ an –, spielt die Ansage
+  und nimmt, wenn die Mailbox an ist, eine Nachricht auf. Asterisk kennt bei Tagen keine Jahre;
+  Kontext schickt deshalb nur kommende Tage und die Konfiguration einmal täglich neu. Die
+  Feiertage für Baden-Württemberg rechnet `server/phone/holidays.ts` aus (Ostern nach Gauß).
 - **Auflegen:** in Kontext (Box legt auf), beim Anrufer (Box meldet das Ende) oder wenn die
   Person den Raum verlässt, etwa weil der Tab zu ist (LiveKits Webhook).
 - **LiveKit SIP** braucht Redis (zur Absprache mit LiveKit). Kontext richtet beim Start einen

@@ -5,7 +5,7 @@
 import { Hono } from "hono";
 import { z } from "zod";
 import type { Env, Loaded } from "../company/context";
-import { lineSchema } from "./protocol";
+import { hoursSchema, lineSchema } from "./protocol";
 import type { PhoneService } from "./service";
 import type { PhoneStore } from "./store";
 
@@ -21,6 +21,19 @@ const mailboxSchema = z.object({
   greeting: z.string().max(64).nullable(),
   /** The account whose inbox gets the messages: a shared mailbox or a person. */
   deliverTo: z.string().min(1).max(64).nullable(),
+});
+const hoursInput = z.object({
+  enabled: z.boolean(),
+  open: hoursSchema.shape.open,
+  closedDays: z
+    .array(
+      z.object({
+        day: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+        name: z.string().trim().max(60),
+      }),
+    )
+    .max(100),
+  greeting: z.string().max(64).nullable(),
 });
 const boxSchema = z.object({ name: z.string().trim().min(1).max(60) });
 
@@ -70,6 +83,7 @@ export const createPhoneAdminRoutes = ({
         greeting: settings.mailbox.greeting,
         deliverTo: settings.mailbox.deliverTo?.accountId ?? null,
       },
+      hours: settings.hours,
       sip,
     });
   });
@@ -125,6 +139,25 @@ export const createPhoneAdminRoutes = ({
         deliverTo: owner ? { accountId: owner.id, email: owner.email } : null,
       },
     });
+    await service.reconfigure();
+    return c.body(null, 204);
+  });
+
+  app.put("/hours", async (c) => {
+    const parsed = hoursInput.safeParse(await c.req.json().catch(() => ({})));
+    if (!parsed.success) return c.json({ error: "Ungültige Zeiten" }, 400);
+    const settings = await store.settings();
+    const { greeting, open, closedDays } = parsed.data;
+    if (greeting && !settings.sounds.some((sound) => sound.id === greeting)) {
+      return c.json({ error: "Unbekannte Ansage" }, 400);
+    }
+    if (open.some((range) => range.from >= range.to)) {
+      return c.json({ error: "„Bis“ muss nach „von“ liegen" }, 400);
+    }
+    const days = [...new Map(closedDays.map((entry) => [entry.day, entry])).values()].sort(
+      (left, right) => left.day.localeCompare(right.day),
+    );
+    await store.saveSettings({ ...settings, hours: { ...parsed.data, closedDays: days } });
     await service.reconfigure();
     return c.body(null, 204);
   });

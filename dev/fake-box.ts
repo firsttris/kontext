@@ -7,6 +7,7 @@
  *   curl -XPOST localhost:18096/ring -d '{"from":"07223 123456"}'      # someone calls
  *   curl -XPOST localhost:18096/hangup -d '{"call":"…","cause":16}'    # the caller hangs up
  *   curl -XPOST localhost:18096/mailbox -d '{"call":"…","seconds":5}'  # leaves a message (silence)
+ *   curl -XPOST localhost:18096/closed -d '{"from":"07223 123456"}'    # calls outside the hours
  *   curl localhost:18096/state                                         # what Kontext told the box
  *
  * Answered calls and dialled ones are "answered" at once; nobody talks, there is no audio.
@@ -126,6 +127,19 @@ Bun.serve({
         at: now(),
       });
       return Response.json({ ok: true });
+    }
+    if (path === "/closed") {
+      // What Asterisk's opening-hours check does; the fake box does not look at the clock.
+      const call = `fake.${++counter}`;
+      events?.onCall({
+        call,
+        state: "closed",
+        direction: "in",
+        remote: String(body.from ?? ""),
+        local: "",
+        at: now(),
+      });
+      return Response.json({ call });
     }
     if (path === "/mailbox") {
       // As Asterisk does it: the mailbox picks up, the message goes up, then the call ends.

@@ -15,6 +15,8 @@ export const OUTCOMES = [
   "busy",
   "unanswered",
   "failed",
+  /** Outside the opening hours. */
+  "closed",
 ] as const;
 export type Outcome = (typeof OUTCOMES)[number];
 
@@ -97,6 +99,12 @@ export const incomingCall = (
   voicemailSeconds: null,
 });
 
+/** A call outside the opening hours: filed at once, it never rings. */
+export const closedCall = (
+  event: CallEvent,
+  ids: { id: string; boxId: string; members: string[] },
+): PhoneCall => ({ ...incomingCall(event, ids), state: "mailbox", outcome: "closed" });
+
 /** A call dialled from Kontext, before the box has done anything. */
 export const outgoingCall = ({
   id,
@@ -146,7 +154,8 @@ export const applyCallEvent = (call: PhoneCall, event: CallEvent): PhoneCall => 
       ...call,
       state: "ended",
       endedAt: event.at,
-      outcome: outcomeOf(call, event.cause),
+      // A call outside the hours stays that.
+      outcome: call.outcome ?? outcomeOf(call, event.cause),
     };
   }
   return call;
@@ -190,7 +199,7 @@ export const callbackTask = (
   board: string,
   now: Date,
 ): NewTaskData | null => {
-  if (call.outcome !== "missed" || !toE164(call.remote)) return null;
+  if ((call.outcome !== "missed" && call.outcome !== "closed") || !toE164(call.remote)) return null;
   const number = readableNumber(call.remote);
   return {
     accountId: board,
@@ -208,7 +217,7 @@ export const callbackTask = (
         ref: call.id,
         threadId: null,
         label: number,
-        detail: `Verpasster Anruf · ${timeOfDay(call.startedAt)}`,
+        detail: `${call.outcome === "closed" ? "Außerhalb der Öffnungszeiten" : "Verpasster Anruf"} · ${timeOfDay(call.startedAt)}`,
       },
     ],
     remindAt: null,

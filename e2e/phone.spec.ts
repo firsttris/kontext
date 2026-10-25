@@ -31,12 +31,19 @@ const box = {
     ).json()) as { call: string },
   hangup: (call: string, cause = 16) =>
     fetch(`${CONTROL}/hangup`, { method: "POST", body: JSON.stringify({ call, cause }) }),
+  closed: async (from: string) =>
+    (await (
+      await fetch(`${CONTROL}/closed`, { method: "POST", body: JSON.stringify({ from }) })
+    ).json()) as { call: string },
   mailbox: (call: string, seconds: number) =>
     fetch(`${CONTROL}/mailbox`, { method: "POST", body: JSON.stringify({ call, seconds }) }),
   state: async () =>
     (await (await fetch(`${CONTROL}/state`)).json()) as {
       connected: boolean;
-      config: { line: { username: string } | null } | null;
+      config: {
+        line: { username: string } | null;
+        hours: { open: { day: number; from: string; to: string }[] } | null;
+      } | null;
       commands: { type: string; number?: string }[];
     },
   stop: () => box.process?.kill(),
@@ -90,6 +97,17 @@ test.describe("Telefonie über die Telefonbox", () => {
     await mailbox.getByLabel("Nachrichten als Mail an").selectOption({ label: "Jonas Weber" });
     await mailbox.getByRole("button", { name: "Speichern" }).click();
 
+    const hours = page.getByRole("region", { name: "Öffnungszeiten" });
+    await hours.getByLabel("Öffnungszeiten beachten").check();
+    await expect(hours.getByLabel("Montag von")).toHaveValue("08:00");
+    await hours.getByLabel("Samstag", { exact: true }).check();
+    await hours.getByLabel("Samstag bis").fill("12:00");
+    await hours.getByRole("button", { name: "Feiertage (Baden-Württemberg) eintragen" }).click();
+    await expect(hours.getByRole("list", { name: "Geschlossene Tage" })).toContainText(
+      "1. Weihnachtstag",
+    );
+    await hours.getByRole("button", { name: "Speichern" }).click();
+
     const boxes = page.getByRole("region", { name: "Telefonbox" });
     await boxes.getByRole("button", { name: "Box koppeln" }).click();
     const code = (await boxes.getByText(/^Kopplungscode: /).textContent())!.replace(
@@ -102,6 +120,9 @@ test.describe("Telefonie über die Telefonbox", () => {
       ringSeconds: 20,
       mailbox: { maxSeconds: 120 },
     });
+    await expect
+      .poll(async () => (await box.state()).config?.hours?.open)
+      .toContainEqual({ day: 6, from: "08:00", to: "12:00" });
     await page.reload();
     await expect(page.getByRole("region", { name: "Telefonbox" })).toContainText(
       "verbunden · an der Fritzbox angemeldet",
@@ -200,6 +221,19 @@ test.describe("Telefonie über die Telefonbox", () => {
         timeout: 5_000,
       });
     }).toPass({ timeout: 30_000 });
+  });
+
+  test("außerhalb der Öffnungszeiten klingelt nichts, der Anruf steht in der Liste", async ({
+    page,
+  }) => {
+    await login(page);
+    const { call } = await box.closed("0711 2223334");
+    await box.hangup(call);
+    await page.getByRole("link", { name: "Telefon", exact: true }).click();
+    const item = page.getByRole("list", { name: "Letzte Anrufe" }).getByRole("listitem").first();
+    await expect(item).toContainText("07112 223334");
+    await expect(item).toContainText("Außerhalb der Öffnungszeiten");
+    await expect(page.getByRole("dialog", { name: /^Anruf von/ })).toHaveCount(0);
   });
 
   test("aus dem Kontakt anrufen geht über die Box", async ({ page }) => {

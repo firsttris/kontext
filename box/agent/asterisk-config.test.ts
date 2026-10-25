@@ -8,6 +8,7 @@ const config: BoxConfig = {
   ringSeconds: 60,
   sounds: [],
   mailbox: null,
+  hours: null,
 };
 const paths = { sounds: "/data/sounds", recordings: "/data/recordings" };
 const greeting = "a1b2c3d4e5f6a1b2c3d4e5f6";
@@ -71,6 +72,50 @@ describe("the mailbox", () => {
     const conf = extensionsConf({ ...config, mailbox: { greeting: null, maxSeconds: 60 } }, paths);
     expect(conf).not.toContain("Playback(");
     expect(conf).toContain(",4,60,k)");
+  });
+});
+
+describe("opening hours", () => {
+  const closedGreeting = "b1b2c3d4e5f6a1b2c3d4e5f6";
+  const hours = {
+    timezone: "Europe/Berlin",
+    open: [
+      { day: 1, from: "08:00", to: "12:00" },
+      { day: 1, from: "13:00", to: "17:00" },
+    ],
+    closedDays: ["2026-12-24"],
+    greeting: closedGreeting,
+  };
+
+  it("checks closed days, then the open ranges, in the company's time zone", () => {
+    const conf = extensionsConf({ ...config, hours }, paths);
+    expect(conf).toContain(
+      [
+        `exten => ring,1,Set(__KONTEXT_CALL=\${UNIQUEID})`,
+        " same => n,GotoIfTime(*,*,24,dec,Europe/Berlin?closed,1)",
+        " same => n,GotoIfTime(08:00-12:00,mon,*,*,Europe/Berlin?ringing,1)",
+        " same => n,GotoIfTime(13:00-17:00,mon,*,*,Europe/Berlin?ringing,1)",
+        " same => n,Goto(closed,1)",
+      ].join("\n"),
+    );
+    expect(conf).toContain(`State: closed,Direction: in`);
+    expect(conf).toContain(`Playback(/data/sounds/${closedGreeting})\n same => n,Hangup(16)`);
+  });
+
+  it("takes a message outside the hours when the mailbox is on", () => {
+    const conf = extensionsConf(
+      { ...config, hours, mailbox: { greeting: null, maxSeconds: 120 } },
+      paths,
+    );
+    expect(conf).toContain(
+      `Playback(/data/sounds/${closedGreeting})\n same => n,Goto(kontext-record,s,1)`,
+    );
+  });
+
+  it("rings straight away without hours", () => {
+    expect(extensionsConf(config, paths)).toContain(
+      `exten => ring,1,Set(__KONTEXT_CALL=\${UNIQUEID})\n same => n,Goto(ringing,1)`,
+    );
   });
 });
 

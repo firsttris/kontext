@@ -127,6 +127,7 @@ reicht ein VPS mit 2 vCPU und 4 GB RAM.
 - **Telefonieren in Kontext**: Eine kleine Telefonbox im Büro meldet sich als IP-Telefon an der Fritzbox an. Anrufe klingeln in Kontext mit dem Wichtigsten zum Anrufer (Kontakt, Firma, letzte Mail, nächster Termin), du nimmst im Browser oder am Tischtelefon ab, rufst aus jedem Kontakt an, und verpasste Anrufe stehen mit Notiz und „Zurückrufen“ in einer Liste.
   - Ein verpasster Anruf legt die Aufgabe „Zurückrufen“ auf dem gewählten Board an; sie erledigt sich, sobald jemand mit der Nummer gesprochen hat.
   - **Mailbox**: Nimmt niemand ab, spielt die Box eure Ansage (im Browser gesprochen oder hochgeladen) und nimmt eine Nachricht auf; sie kommt als Mail mit der Aufnahme an und lässt sich beim Anruf anhören.
+  - **Öffnungszeiten** mit Mittagspause, geschlossenen Tagen und den Feiertagen auf einen Klick: Außerhalb klingelt nichts, Anrufer hören eure Ansage und können eine Nachricht hinterlassen. Die Box entscheidet selbst, auch wenn Kontext gerade nicht erreichbar ist.
 - **Suche** über alle deine Kanäle; eigene Nachrichten bearbeiten oder löschen; Kanäle stummschalten, verlassen oder löschen.
 - **Aufbewahrung**, die die Firmenverwaltung festlegt (30 Tage bis 5 Jahre oder unbegrenzt): Ältere Nachrichten, Fotos und Dateien löscht Kontext von selbst.
 - **Am Handy**: ein eigener Tab, Unterhaltungen als Sprechblasen.

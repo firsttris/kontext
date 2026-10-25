@@ -20,6 +20,10 @@ export const withoutSound = (settings: PhoneSettings, id: string): PhoneSettings
     ...settings.mailbox,
     greeting: settings.mailbox.greeting === id ? null : settings.mailbox.greeting,
   },
+  hours: {
+    ...settings.hours,
+    greeting: settings.hours.greeting === id ? null : settings.hours.greeting,
+  },
 });
 
 export const createPhoneSoundRoutes = ({

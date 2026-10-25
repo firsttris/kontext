@@ -5,7 +5,7 @@
  * people with Kontext closed (Web Push).
  */
 import type { Hub } from "../live/hub";
-import type { NewTaskData } from "../tasks/tasks";
+import { companyDay, type NewTaskData } from "../tasks/tasks";
 import { TRUNK_USER } from "./livekit-sip";
 import { toDialable, toE164 } from "./numbers";
 import {
@@ -13,6 +13,7 @@ import {
   applyCallEvent,
   callbackTask,
   canSeeCall,
+  closedCall,
   incomingCall,
   outgoingCall,
   type PhoneCall,
@@ -55,13 +56,22 @@ const MAILBOX_SECONDS = 120;
 const knownSound = (settings: PhoneSettings, id: string | null) =>
   id && settings.sounds.some((sound) => sound.id === id) ? id : null;
 
+/** The company's time zone; the box compares opening hours in it. */
+const TIMEZONE = "Europe/Berlin";
+
+/** Closed days from today on (Asterisk knows no years, so past ones would come back). */
+const comingDays = (days: { day: string }[], today: string) =>
+  days.map((entry) => entry.day).filter((day) => day >= today);
+
 export const desiredConfig = (
   settings: PhoneSettings,
   trunkHost: string,
   trunkPort: number,
+  today = companyDay(new Date()),
 ): BoxConfig => {
-  const { mailbox } = settings;
+  const { mailbox, hours } = settings;
   const greeting = knownSound(settings, mailbox.greeting);
+  const closedGreeting = knownSound(settings, hours.greeting);
   return {
     line: settings.line,
     trunk: {
@@ -71,8 +81,19 @@ export const desiredConfig = (
       password: settings.trunkPassword,
     },
     ringSeconds: mailbox.enabled ? mailbox.ringSeconds : RING_SECONDS,
-    sounds: mailbox.enabled && greeting ? [greeting] : [],
+    sounds: [
+      ...(mailbox.enabled && greeting ? [greeting] : []),
+      ...(hours.enabled && closedGreeting && closedGreeting !== greeting ? [closedGreeting] : []),
+    ],
     mailbox: mailbox.enabled ? { greeting, maxSeconds: MAILBOX_SECONDS } : null,
+    hours: hours.enabled
+      ? {
+          timezone: TIMEZONE,
+          open: hours.open,
+          closedDays: comingDays(hours.closedDays, today).slice(0, 60),
+          greeting: closedGreeting,
+        }
+      : null,
   };
 };
 
@@ -119,6 +140,12 @@ export const createPhoneService = (deps: PhoneDeps) => {
 
   const onEvent = async (boxId: string, event: CallEvent) => {
     const known = await store.callOfBox(boxId, event.call);
+    if (!known && event.state === "closed" && event.direction === "in") {
+      // Outside the opening hours: in the list, but nobody hears it ring.
+      const { ring } = await store.settings();
+      await save(closedCall(event, { id: newId(), boxId, members: ring }));
+      return;
+    }
     if (!known) {
       // Calls appear when they ring here; dialled ones exist from the dial on.
       if (event.state !== "ringing" || event.direction !== "in") return;
@@ -133,6 +160,8 @@ export const createPhoneService = (deps: PhoneDeps) => {
     await save(next);
     if (next.outcome === "missed") {
       void deps.notify?.(next.members, phoneNotice(next)).catch(() => undefined);
+    }
+    if (next.state === "ended" && known.state !== "ended") {
       await leaveCallback(next).catch(() => undefined);
     }
     if (next.state === "talking" && known.state !== "talking") {

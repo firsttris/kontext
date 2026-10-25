@@ -20,6 +20,12 @@ export type Admin = {
     greeting: string | null;
     deliverTo: string | null;
   };
+  hours: {
+    enabled: boolean;
+    open: { day: number; from: string; to: string }[];
+    closedDays: { day: string; name: string }[];
+    greeting: string | null;
+  };
   sip: { ok: true } | { ok: false; error: string };
 };
 

@@ -11,10 +11,13 @@ describe("withoutSound", () => {
         { id: "b", name: "Geschlossen", seconds: 6 },
       ],
       mailbox: { enabled: true, ringSeconds: 20, greeting: "a", deliverTo: null },
-    } as PhoneSettings;
+      hours: { enabled: true, open: [], closedDays: [], greeting: "b" },
+    } as unknown as PhoneSettings;
     const next = withoutSound(settings, "a");
     expect(next.sounds.map((sound) => sound.id)).toEqual(["b"]);
     expect(next.mailbox.greeting).toBeNull();
+    expect(next.hours.greeting).toBe("b");
     expect(withoutSound(settings, "b").mailbox.greeting).toBe("a");
+    expect(withoutSound(settings, "b").hours.greeting).toBeNull();
   });
 });

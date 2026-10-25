@@ -8,7 +8,7 @@ import type { Sealer } from "../crypto";
 import type { Db } from "../db";
 import * as schema from "../db/schema";
 import type { PhoneCall } from "./phone";
-import { lineSchema } from "./protocol";
+import { hoursSchema, lineSchema } from "./protocol";
 
 /** Stored settings; what later versions added comes with its default when it is missing. */
 const settingsSchema = z.object({
@@ -31,6 +31,15 @@ const settingsSchema = z.object({
       deliverTo: z.object({ accountId: z.string(), email: z.string() }).nullable(),
     })
     .default({ enabled: false, ringSeconds: 25, greeting: null, deliverTo: null }),
+  /** Outside these hours the phone does not ring; the caller hears the closing greeting. */
+  hours: z
+    .object({
+      enabled: z.boolean(),
+      open: hoursSchema.shape.open,
+      closedDays: z.array(z.object({ day: z.string(), name: z.string() })),
+      greeting: z.string().nullable(),
+    })
+    .default({ enabled: false, open: [], closedDays: [], greeting: null }),
 });
 export type PhoneSettings = z.infer<typeof settingsSchema>;
 

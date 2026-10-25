@@ -59,6 +59,8 @@ export const createPhone = (setup: PhoneSetup) => {
   });
   // LiveKit SIP may still be starting; a failure shows in the Firmenverwaltung.
   void service.reconfigure().catch(() => undefined);
+  // Closed days that passed leave the box's configuration (Asterisk would repeat them yearly).
+  setInterval(() => void service.reconfigure().catch(() => undefined), 86_400_000).unref();
   const voicemail = createVoicemail({
     store,
     files,

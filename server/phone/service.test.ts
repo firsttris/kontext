@@ -36,6 +36,7 @@ const SETTINGS: PhoneSettings = {
   callbackBoard: null,
   sounds: [],
   mailbox: { enabled: false, ringSeconds: 25, greeting: null, deliverTo: null },
+  hours: { enabled: false, open: [], closedDays: [], greeting: null },
 };
 
 const setup = (settings: Partial<PhoneSettings> = {}) => {
@@ -114,6 +115,24 @@ describe("the box's connection", () => {
     expect(desiredConfig({ ...withMailbox, sounds: [] }, "h", 5060)).toMatchObject({
       sounds: [],
       mailbox: { greeting: null },
+    });
+    const hours = {
+      ...SETTINGS,
+      hours: {
+        enabled: true,
+        open: [{ day: 1, from: "08:00", to: "17:00" }],
+        closedDays: [
+          { day: "2026-10-03", name: "Tag der Deutschen Einheit" },
+          { day: "2026-12-24", name: "" },
+        ],
+        greeting: null,
+      },
+    };
+    expect(desiredConfig(hours, "h", 5060, "2026-10-25").hours).toEqual({
+      timezone: "Europe/Berlin",
+      open: [{ day: 1, from: "08:00", to: "17:00" }],
+      closedDays: ["2026-12-24"],
+      greeting: null,
     });
     expect(desiredConfig(SETTINGS, "h", 5060).trunk).toEqual({
       host: "h",
@@ -201,6 +220,16 @@ describe("an incoming call", () => {
     expect(
       phoneEvents().find(({ event: e }) => e.call.id === "id-1" && !e.call.callbackTaskId),
     ).toBeDefined();
+  });
+
+  it("files a call outside the hours without ringing, with Zurückrufen", async () => {
+    const { box, notices, phoneEvents, tasks } = setup({ callbackBoard: "info" });
+    await box.receive(event(1, "closed"));
+    expect(notices).toEqual([]);
+    expect(phoneEvents().at(-1)!.event.call).toMatchObject({ state: "mailbox", outcome: "closed" });
+    await box.receive(event(2, "ended", { cause: 16 }));
+    expect(phoneEvents().at(-1)!.event.call).toMatchObject({ state: "ended", outcome: "closed" });
+    expect(tasks.made[0]?.links[0]?.detail).toMatch(/^Außerhalb der Öffnungszeiten · /);
   });
 
   it("files a call taken at a desk phone", async () => {
