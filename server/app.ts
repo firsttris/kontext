@@ -40,6 +40,7 @@ import { createSmtp } from "./external/smtp";
 import { createExternalStore } from "./external/store";
 import { createUserJmap } from "./external/user-jmap";
 import { createImageSenderRoutes } from "./images/routes";
+import { createServerJmap } from "./jmap-server";
 import { createHub } from "./live/hub";
 import { createLiveRoutes } from "./live/routes";
 import { createImporter, type Importer } from "./migration/importer";
@@ -277,6 +278,7 @@ export const createApp = async (env: Env) => {
   );
   const chatStore = createChatStore(db, messages);
   const tasks = createTaskStore(db);
+  const snoozes = createSnoozeStore(db);
   /** A board got tasks the server made (telephony, CalDAV, rules): tell who sees it. */
   const tasksChanged = (accountId: string) =>
     hub.publish({ type: "tasks", accountId }, (viewer) => viewer.accountIds.includes(accountId));
@@ -299,6 +301,12 @@ export const createApp = async (env: Env) => {
       viewerOf: viewerOfRequest,
       nameOf: nameOfRequest,
       notify: pusher.notify,
+      dir: join(dirname(env.DATABASE_PATH), "phone"),
+      importMessage: createServerJmap({
+        env,
+        grants,
+        sessions: () => snoozes.sessionsFor(""),
+      }).importMessage,
       tasks: {
         create: async (task) => {
           const made = await tasks.create(task, task.accountId);
@@ -402,7 +410,6 @@ export const createApp = async (env: Env) => {
   );
   app.route("/api/snippets", createSnippetRoutes({ store: createSnippetStore(db), accountsOf }));
   // Wiedervorlage: due mails come back every minute, also with nobody signed in.
-  const snoozes = createSnoozeStore(db);
   const waker = createSnoozeWaker({ env, grants, store: snoozes, notify: pusher.notify });
   setInterval(() => void waker.tick(), env.SNOOZE_TICK_MS).unref();
   app.route("/api/snoozes", createSnoozeRoutes({ store: snoozes, infoOf }));

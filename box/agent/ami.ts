@@ -3,7 +3,7 @@
  * line per message. The agent logs in, sends actions (answer by moving the call, originate, hang
  * up, reload) and hears the dialplan's KontextCall user events and the Fritzbox registration.
  */
-import type { CallEvent } from "../../server/phone/protocol";
+import { CALL_STATES, type CallEvent } from "../../server/phone/protocol";
 
 export type Frame = Record<string, string>;
 
@@ -36,13 +36,12 @@ export const callEventOf = (frame: Frame, now: Date): Omit<CallEvent, "type" | "
   if (frame.Event !== "UserEvent" || frame.UserEvent !== "KontextCall") return null;
   const state = frame.State;
   const direction = frame.Direction;
-  if (!frame.Call || (state !== "ringing" && state !== "answered" && state !== "ended"))
-    return null;
+  if (!frame.Call || !(CALL_STATES as readonly string[]).includes(state ?? "")) return null;
   if (direction !== "in" && direction !== "out") return null;
   const cause = Number(frame.Cause);
   return {
     call: frame.Call,
-    state,
+    state: state as CallEvent["state"],
     direction,
     remote: frame.Remote ?? "",
     local: frame.Local ?? "",

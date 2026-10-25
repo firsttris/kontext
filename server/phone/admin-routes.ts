@@ -4,7 +4,7 @@
  */
 import { Hono } from "hono";
 import { z } from "zod";
-import type { Env } from "../company/context";
+import type { Env, Loaded } from "../company/context";
 import { lineSchema } from "./protocol";
 import type { PhoneService } from "./service";
 import type { PhoneStore } from "./store";
@@ -15,19 +15,35 @@ const lineInput = lineSchema.extend({
 });
 const ringSchema = z.object({ members: z.array(z.string().min(1).max(64)).max(200) });
 const callbacksSchema = z.object({ board: z.string().min(1).max(64).nullable() });
+const mailboxSchema = z.object({
+  enabled: z.boolean(),
+  ringSeconds: z.number().int().min(10).max(120),
+  greeting: z.string().max(64).nullable(),
+  /** The account whose inbox gets the messages: a shared mailbox or a person. */
+  deliverTo: z.string().min(1).max(64).nullable(),
+});
 const boxSchema = z.object({ name: z.string().trim().min(1).max(60) });
+
+/** A person or a shared mailbox of the company, by its account id. */
+const ownerOf = (loaded: Loaded, id: string) =>
+  [...loaded.company.employees, ...loaded.company.mailboxes].find((owner) => owner.id === id) ??
+  null;
 
 export const createPhoneAdminRoutes = ({
   store,
   service,
   sipStatus,
+  sounds,
 }: {
   store: PhoneStore;
   service: PhoneService;
   /** Whether LiveKit SIP is set up, or why not. */
   sipStatus: () => Promise<{ ok: true } | { ok: false; error: string }>;
+  /** The greetings' own routes (admin-sounds.ts). */
+  sounds: Hono<Env>;
 }) => {
   const app = new Hono<Env>();
+  app.route("/sounds", sounds);
 
   app.get("/", async (c) => {
     const [settings, boxes, sip] = await Promise.all([
@@ -47,6 +63,13 @@ export const createPhoneAdminRoutes = ({
         : null,
       ring: settings.ring,
       callbackBoard: settings.callbackBoard,
+      sounds: settings.sounds,
+      mailbox: {
+        enabled: settings.mailbox.enabled,
+        ringSeconds: settings.mailbox.ringSeconds,
+        greeting: settings.mailbox.greeting,
+        deliverTo: settings.mailbox.deliverTo?.accountId ?? null,
+      },
       sip,
     });
   });
@@ -78,12 +101,31 @@ export const createPhoneAdminRoutes = ({
   app.put("/callbacks", async (c) => {
     const parsed = callbacksSchema.safeParse(await c.req.json().catch(() => ({})));
     if (!parsed.success) return c.json({ error: "Ungültig" }, 400);
-    const { employees, mailboxes } = c.get("loaded").company;
-    const boards = new Set([...employees, ...mailboxes].map((owner) => owner.id));
-    if (parsed.data.board && !boards.has(parsed.data.board)) {
+    if (parsed.data.board && !ownerOf(c.get("loaded"), parsed.data.board)) {
       return c.json({ error: "Unbekanntes Board" }, 400);
     }
     await store.saveSettings({ ...(await store.settings()), callbackBoard: parsed.data.board });
+    return c.body(null, 204);
+  });
+
+  app.put("/mailbox", async (c) => {
+    const parsed = mailboxSchema.safeParse(await c.req.json().catch(() => ({})));
+    if (!parsed.success) return c.json({ error: "Ungültig" }, 400);
+    const settings = await store.settings();
+    const { greeting, deliverTo } = parsed.data;
+    if (greeting && !settings.sounds.some((sound) => sound.id === greeting)) {
+      return c.json({ error: "Unbekannte Ansage" }, 400);
+    }
+    const owner = deliverTo ? ownerOf(c.get("loaded"), deliverTo) : null;
+    if (deliverTo && !owner) return c.json({ error: "Unbekanntes Postfach" }, 400);
+    await store.saveSettings({
+      ...settings,
+      mailbox: {
+        ...parsed.data,
+        deliverTo: owner ? { accountId: owner.id, email: owner.email } : null,
+      },
+    });
+    await service.reconfigure();
     return c.body(null, 204);
   });
 

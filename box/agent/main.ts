@@ -11,6 +11,7 @@ import { existsSync } from "node:fs";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import type { BoxConfig } from "../../server/phone/protocol";
+import { createBoxFiles } from "./files";
 import { type Credentials, pair } from "./link";
 import { createAsterisk } from "./pbx";
 import { type BoxState, runBox } from "./run";
@@ -25,6 +26,7 @@ const AMI = {
   secret: process.env.AMI_SECRET ?? "",
   port: Number(process.env.AMI_PORT ?? 5038),
 };
+const PATHS = { sounds: join(DATA_DIR, "sounds"), recordings: join(DATA_DIR, "recordings") };
 const credentialsFile = join(DATA_DIR, "kontext.json");
 const configFile = join(DATA_DIR, "config.json");
 
@@ -46,7 +48,14 @@ const start = async (paired: Credentials) => {
   const box = await runBox({
     credentials: paired,
     version: VERSION,
-    makePbx: (events) => createAsterisk({ configDir: CONFIG_DIR, ami: AMI, events }),
+    makePbx: (events) =>
+      createAsterisk({
+        configDir: CONFIG_DIR,
+        paths: PATHS,
+        files: createBoxFiles({ credentials: paired, soundDir: PATHS.sounds }),
+        ami: AMI,
+        events,
+      }),
     lastConfig: existsSync(configFile)
       ? (JSON.parse(await readFile(configFile, "utf8")) as BoxConfig)
       : null,

@@ -625,6 +625,7 @@ export const phoneCalls = sqliteTable(
     endedAt: integer("ended_at", { mode: "timestamp_ms" }),
     note: text("note").notNull(),
     callbackTaskId: text("callback_task_id"),
+    voicemailSeconds: integer("voicemail_seconds"),
   },
   (table) => [
     index("phone_calls_started").on(table.startedAt),

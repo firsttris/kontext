@@ -35,6 +35,7 @@ Telefonie „Box koppeln“, dann:
 bun dev/fake-box.ts --code K7QM-4XPA                                  # Steuerung auf 18096
 curl -XPOST localhost:18096/ring -d '{"from":"07223 81234"}'          # Petra Keller ruft an
 curl -XPOST localhost:18096/hangup -d '{"call":"fake.1"}'             # sie legt auf
+curl -XPOST localhost:18096/mailbox -d '{"call":"fake.1","seconds":5}' # oder spricht auf die Mailbox
 ```
 
 Zu hören ist dabei nichts (lokal läuft kein LiveKit SIP). Die echte Box (`box/`, Asterisk und der

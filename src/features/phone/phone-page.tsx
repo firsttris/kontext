@@ -16,6 +16,7 @@ import { cn } from "@/lib/cn";
 import { listDate } from "@/lib/format";
 import { outcomeText, type PhoneCall, readableNumber } from "@/lib/phone";
 import { m } from "@/paraglide/messages";
+import { soundLength } from "../../../server/phone/sounds";
 import { usePhoneStore } from "./phone-store";
 import { dialPhone, savePhoneNote, usePhone } from "./queries";
 import { useCallerName } from "./use-caller";
@@ -114,6 +115,21 @@ const Row = ({
             .filter(Boolean)
             .join(" · ")}
         </span>
+        {call.voicemailSeconds ? (
+          <div className="flex flex-wrap items-center gap-2 text-[13px]">
+            <span className="font-medium">
+              {m.phone_voicemail({ length: soundLength(call.voicemailSeconds) })}
+            </span>
+            {/* biome-ignore lint/a11y/useMediaCaption: a caller's spoken message, no captions exist */}
+            <audio
+              controls
+              preload="none"
+              src={`/api/phone/calls/${encodeURIComponent(call.id)}/voicemail`}
+              aria-label={m.phone_voicemail({ length: soundLength(call.voicemailSeconds) })}
+              className="h-8 max-w-full"
+            />
+          </div>
+        ) : null}
         {call.callbackTaskId ? (
           <Link
             to="/tasks"

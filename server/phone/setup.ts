@@ -8,13 +8,18 @@ import type { LiveKitConfig } from "../calls/livekit";
 import type { Viewer } from "../chat/chat";
 import type { Sealer } from "../crypto";
 import type { Db } from "../db";
+import type { ImportResult } from "../jmap-server";
 import type { Hub } from "../live/hub";
 import { createPhoneAdminRoutes } from "./admin-routes";
+import { createPhoneSoundRoutes } from "./admin-sounds";
+import { createBoxFileRoutes } from "./box-routes";
+import { createPhoneFiles } from "./files";
 import { ensureSipRouting } from "./livekit-sip";
 import { type phoneNotice, roomOfPhoneRoom } from "./phone";
 import { createPhoneRoutes } from "./routes";
 import { type CallbackTasks, createPhoneService } from "./service";
 import { createPhoneStore } from "./store";
+import { createVoicemail } from "./voicemail";
 
 export type PhoneSetup = {
   db: Db;
@@ -28,6 +33,10 @@ export type PhoneSetup = {
   nameOf: (request: Request) => Promise<string>;
   notify?: (members: string[], notice: ReturnType<typeof phoneNotice>) => Promise<void>;
   tasks?: CallbackTasks;
+  /** Where greetings and messages are kept, next to the database. */
+  dir: string;
+  /** Puts a mail into a mailbox (server/jmap-server.ts). */
+  importMessage: (accountId: string, message: Uint8Array) => Promise<ImportResult>;
 };
 
 /** Bun's WebSocket for the boxes; Bun.serve needs `websocket` (server/main.ts). */
@@ -37,6 +46,7 @@ export { websocket };
 
 export const createPhone = (setup: PhoneSetup) => {
   const store = createPhoneStore(setup.db, setup.sealer);
+  const files = createPhoneFiles(setup.dir);
   const ensureSip = (password: string) => ensureSipRouting(setup.livekit, password);
   const service = createPhoneService({
     store,
@@ -49,6 +59,12 @@ export const createPhone = (setup: PhoneSetup) => {
   });
   // LiveKit SIP may still be starting; a failure shows in the Firmenverwaltung.
   void service.reconfigure().catch(() => undefined);
+  const voicemail = createVoicemail({
+    store,
+    files,
+    refresh: service.refresh,
+    importMessage: setup.importMessage,
+  });
 
   return {
     routes: createPhoneRoutes({
@@ -59,11 +75,14 @@ export const createPhone = (setup: PhoneSetup) => {
       viewerOf: setup.viewerOf,
       nameOf: setup.nameOf,
       upgradeWebSocket,
+      boxFiles: createBoxFileRoutes({ store, files, voicemail }),
+      files,
     }),
     adminRoutes: createPhoneAdminRoutes({
       store,
       service,
       sipStatus: async () => ensureSip((await store.settings()).trunkPassword),
+      sounds: createPhoneSoundRoutes({ store, service, files }),
     }),
     /** LiveKit's room events: whoever had a phone call left its room, so it ends. */
     onRoomEvent: (event: RoomEvent) => {

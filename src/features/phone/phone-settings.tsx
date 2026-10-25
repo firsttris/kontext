@@ -12,6 +12,8 @@ import { SettingsCard } from "@/features/settings/settings-page";
 import { m } from "@/paraglide/messages";
 import { ADMIN_KEY, type Admin, send, useAdminChange } from "./settings/api";
 import { CallbacksForm } from "./settings/callbacks";
+import { MailboxForm } from "./settings/mailbox";
+import { SoundsCard } from "./settings/sounds";
 
 const boxState = (box: Admin["boxes"][number]) =>
   !box.paired
@@ -196,6 +198,8 @@ export const PhoneSettingsSection = () => {
           <LineForm line={data.line} />
           <RingForm ring={data.ring} />
           <CallbacksForm board={data.callbackBoard} />
+          <SoundsCard sounds={data.sounds} />
+          <MailboxForm mailbox={data.mailbox} sounds={data.sounds} />
         </>
       ) : null}
     </>

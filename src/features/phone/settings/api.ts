@@ -13,6 +13,13 @@ export type Admin = {
   line: { registrar: string; username: string; hasPassword: boolean } | null;
   ring: string[];
   callbackBoard: string | null;
+  sounds: { id: string; name: string; seconds: number }[];
+  mailbox: {
+    enabled: boolean;
+    ringSeconds: number;
+    greeting: string | null;
+    deliverTo: string | null;
+  };
   sip: { ok: true } | { ok: false; error: string };
 };
 

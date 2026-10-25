@@ -5,36 +5,26 @@
  */
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Label, Select } from "@/components/ui/input";
+import { Label } from "@/components/ui/input";
 import { useToast } from "@/components/ui/toast";
-import { useCompany } from "@/features/company/queries";
 import { SettingsCard } from "@/features/settings/settings-page";
 import { m } from "@/paraglide/messages";
 import { send, useAdminChange } from "./api";
+import { OwnerSelect } from "./owner-select";
 
 export const CallbacksForm = ({ board }: { board: string | null }) => {
   const toast = useToast();
-  const { data: company } = useCompany();
   const [chosen, setChosen] = useState(board ?? "");
   const save = useAdminChange(() => send("PUT", "/callbacks", { board: chosen || null }));
-  const people = (company?.employees ?? []).filter((employee) => employee.active);
   return (
     <SettingsCard title={m.phone_callbacks()} description={m.phone_callbacks_hint()}>
       <Label>
         {m.phone_callbacks_board()}
-        <Select value={chosen} onChange={(event) => setChosen(event.target.value)}>
-          <option value="">{m.phone_callbacks_none()}</option>
-          {(company?.mailboxes ?? []).map((mailbox) => (
-            <option key={mailbox.id} value={mailbox.id}>
-              {mailbox.email}
-            </option>
-          ))}
-          {people.map((employee) => (
-            <option key={employee.id} value={employee.id}>
-              {employee.fullName}
-            </option>
-          ))}
-        </Select>
+        <OwnerSelect
+          none={m.phone_callbacks_none()}
+          value={chosen}
+          onChange={(event) => setChosen(event.target.value)}
+        />
       </Label>
       <Button
         variant="primary"

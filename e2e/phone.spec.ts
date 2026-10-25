@@ -1,5 +1,6 @@
 import { type ChildProcess, spawn } from "node:child_process";
 import { type Browser, expect, type Page, test } from "@playwright/test";
+import { encodeWav } from "../server/phone/sounds";
 import { login } from "./helpers";
 
 /**
@@ -30,6 +31,8 @@ const box = {
     ).json()) as { call: string },
   hangup: (call: string, cause = 16) =>
     fetch(`${CONTROL}/hangup`, { method: "POST", body: JSON.stringify({ call, cause }) }),
+  mailbox: (call: string, seconds: number) =>
+    fetch(`${CONTROL}/mailbox`, { method: "POST", body: JSON.stringify({ call, seconds }) }),
   state: async () =>
     (await (await fetch(`${CONTROL}/state`)).json()) as {
       connected: boolean;
@@ -71,6 +74,22 @@ test.describe("Telefonie über die Telefonbox", () => {
       .selectOption({ label: "Jonas Weber" });
     await callbacks.getByRole("button", { name: "Speichern" }).click();
 
+    // A greeting as an uploaded file (any rate; the browser makes 8 kHz of it).
+    const sounds = page.getByRole("region", { name: "Ansagen" });
+    await sounds.getByLabel("Name der Ansage").fill("Mailbox Büro");
+    await sounds.getByLabel("Datei hochladen").setInputFiles({
+      name: "ansage.wav",
+      mimeType: "audio/wav",
+      buffer: Buffer.from(encodeWav(new Int16Array(16000 * 2), 16000)),
+    });
+    await expect(sounds.getByRole("listitem")).toContainText("Mailbox Büro · 0:02");
+    const mailbox = page.getByRole("region", { name: "Mailbox", exact: true });
+    await mailbox.getByLabel("Mailbox einschalten").check();
+    await mailbox.getByLabel("Mailbox nach").selectOption({ label: "20 Sekunden Klingeln" });
+    await mailbox.getByLabel("Ansage").selectOption({ label: "Mailbox Büro" });
+    await mailbox.getByLabel("Nachrichten als Mail an").selectOption({ label: "Jonas Weber" });
+    await mailbox.getByRole("button", { name: "Speichern" }).click();
+
     const boxes = page.getByRole("region", { name: "Telefonbox" });
     await boxes.getByRole("button", { name: "Box koppeln" }).click();
     const code = (await boxes.getByText(/^Kopplungscode: /).textContent())!.replace(
@@ -79,6 +98,10 @@ test.describe("Telefonie über die Telefonbox", () => {
     );
     await box.start(code);
     await expect.poll(async () => (await box.state()).config?.line?.username).toBe("kontext620");
+    expect((await box.state()).config).toMatchObject({
+      ringSeconds: 20,
+      mailbox: { maxSeconds: 120 },
+    });
     await page.reload();
     await expect(page.getByRole("region", { name: "Telefonbox" })).toContainText(
       "verbunden · an der Fritzbox angemeldet",
@@ -155,6 +178,28 @@ test.describe("Telefonie über die Telefonbox", () => {
     await expect(page.getByRole("link", { name: "Aufgabe „Zurückrufen“ öffnen" })).toHaveCount(0);
     await panel(page).getByRole("button", { name: "Auflegen" }).click();
     await expect(panel(page)).toHaveCount(0);
+  });
+
+  test("auf der Mailbox: die Nachricht steht beim Anruf und kommt als Mail", async ({ page }) => {
+    await login(page);
+    const { call } = await box.ring("07223 5550123");
+    await expect(page.getByRole("dialog", { name: /^Anruf von/ })).toBeVisible();
+    await box.mailbox(call, 5);
+    await expect(page.getByRole("dialog", { name: /^Anruf von/ })).toHaveCount(0);
+
+    await page.getByRole("link", { name: "Telefon", exact: true }).click();
+    const item = page.getByRole("list", { name: "Letzte Anrufe" }).getByRole("listitem").first();
+    await expect(item).toContainText("Nachricht 0:05");
+    await expect(item.getByLabel("Nachricht 0:05")).toBeVisible();
+
+    const subject = "Nachricht von 07223 5550123 (0:05)";
+    // The mail comes through Stalwart; the inbox is opened again until it is there.
+    await expect(async () => {
+      await page.goto("/mail");
+      await expect(page.getByRole("list", { name: "Posteingang" }).getByText(subject)).toBeVisible({
+        timeout: 5_000,
+      });
+    }).toPass({ timeout: 30_000 });
   });
 
   test("aus dem Kontakt anrufen geht über die Box", async ({ page }) => {

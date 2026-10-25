@@ -70,7 +70,7 @@ export const ringingPhoneCall = (
       !dismissed.includes(call.id),
   ) ?? null;
 
-const STAGE: Record<PhoneCall["state"], number> = { ringing: 0, talking: 1, ended: 2 };
+const STAGE: Record<PhoneCall["state"], number> = { ringing: 0, mailbox: 1, talking: 1, ended: 2 };
 
 /**
  * Which of two copies of a call to keep: the live update and the answer to a request can arrive

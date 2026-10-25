@@ -28,7 +28,8 @@ export type PhoneCall = {
   remote: string;
   /** The own number that was called. */
   local: string;
-  state: "ringing" | "talking" | "ended";
+  /** "mailbox": nobody took it, the caller is on the mailbox. */
+  state: "ringing" | "talking" | "mailbox" | "ended";
   outcome: Outcome | null;
   /** Who took it in Kontext (incoming) or dialled it (outgoing). */
   member: string | null;
@@ -42,6 +43,8 @@ export type PhoneCall = {
   note: string;
   /** The task "Zurückrufen" a missed call made; cleared once someone talked to the number. */
   callbackTaskId: string | null;
+  /** How long the message is that the caller left on the mailbox. */
+  voicemailSeconds: number | null;
 };
 
 /** Phone rooms in LiveKit: "kontext-phone-<uuid>", which LiveKit SIP's dispatch rule matches. */
@@ -91,6 +94,7 @@ export const incomingCall = (
   endedAt: null,
   note: "",
   callbackTaskId: null,
+  voicemailSeconds: null,
 });
 
 /** A call dialled from Kontext, before the box has done anything. */
@@ -125,6 +129,7 @@ export const outgoingCall = ({
   endedAt: null,
   note: "",
   callbackTaskId: null,
+  voicemailSeconds: null,
 });
 
 /** The call after one of the box's events; the same call when it changes nothing (a repeat). */
@@ -132,6 +137,9 @@ export const applyCallEvent = (call: PhoneCall, event: CallEvent): PhoneCall => 
   if (call.state === "ended") return call;
   if (event.state === "answered") {
     return call.state === "talking" ? call : { ...call, state: "talking", answeredAt: event.at };
+  }
+  if (event.state === "mailbox") {
+    return call.state === "ringing" ? { ...call, state: "mailbox" } : call;
   }
   if (event.state === "ended") {
     return {

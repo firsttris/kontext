@@ -6,7 +6,11 @@ const config: BoxConfig = {
   line: { registrar: "fritz.box", username: "kontext620", password: "geheim" },
   trunk: { host: "kontext.firma.de", port: 5060, username: "kontext-box", password: "trunk" },
   ringSeconds: 60,
+  sounds: [],
+  mailbox: null,
 };
+const paths = { sounds: "/data/sounds", recordings: "/data/recordings" };
+const greeting = "a1b2c3d4e5f6a1b2c3d4e5f6";
 
 describe("pjsipConf", () => {
   it("signs in at the Fritzbox as an IP phone and calls LiveKit SIP over TCP", () => {
@@ -39,12 +43,34 @@ describe("pjsipConf", () => {
 
 describe("extensionsConf", () => {
   it("rings until answered in Kontext, then dials the room at LiveKit", () => {
-    const conf = extensionsConf(config);
+    const conf = extensionsConf(config, paths);
     expect(conf).toContain("Wait(60)");
+    expect(conf).toContain("Hangup(19)");
+    expect(conf).not.toContain("kontext-mailbox");
     expect(conf).toContain(`Set(__KONTEXT_CALL=\${UNIQUEID})`);
     expect(conf).toContain(`Dial(PJSIP/\${KONTEXT_ROOM}@livekit,30)`);
     expect(conf).toContain(`Dial(PJSIP/\${EXTEN}@fritzbox,60,U(kontext-callee-answered))`);
     expect(conf).toMatch(/\[kontext-in\][\s\S]*exten => h,1,UserEvent\(KontextCall,.*State: ended/);
+  });
+});
+
+describe("the mailbox", () => {
+  it("picks up after ringing, plays the greeting and records the message", () => {
+    const conf = extensionsConf(
+      { ...config, ringSeconds: 25, sounds: [greeting], mailbox: { greeting, maxSeconds: 120 } },
+      paths,
+    );
+    expect(conf).toContain("Wait(25)\n same => n,Goto(kontext-mailbox,s,1)");
+    expect(conf).toContain(`State: mailbox,Direction: in`);
+    expect(conf).toContain(`Playback(/data/sounds/${greeting})`);
+    expect(conf).toContain(`Record(/data/recordings/\${KONTEXT_CALL}.wav,4,120,k)`);
+    expect(conf).toMatch(/\[kontext-mailbox\][\s\S]*exten => h,1,.*Recording: \$\{RECORDED_FILE\}/);
+  });
+
+  it("only beeps without a greeting", () => {
+    const conf = extensionsConf({ ...config, mailbox: { greeting: null, maxSeconds: 60 } }, paths);
+    expect(conf).not.toContain("Playback(");
+    expect(conf).toContain(",4,60,k)");
   });
 });
 
@@ -59,10 +85,8 @@ describe("managerConf", () => {
 
 describe("asteriskFiles", () => {
   it("writes the three files Asterisk reads", () => {
-    expect(Object.keys(asteriskFiles(config, { username: "a", secret: "s", port: 5038 }))).toEqual([
-      "pjsip.conf",
-      "extensions.conf",
-      "manager.conf",
-    ]);
+    expect(
+      Object.keys(asteriskFiles(config, { username: "a", secret: "s", port: 5038 }, paths)),
+    ).toEqual(["pjsip.conf", "extensions.conf", "manager.conf"]);
   });
 });

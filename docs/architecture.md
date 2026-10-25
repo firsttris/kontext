@@ -687,6 +687,18 @@ flowchart LR
   <Nummer>“ an, fällig heute und mit dem Anruf verknüpft (`callbackTask`). Spricht danach jemand
   mit der Nummer – Rückruf aus Kontext oder ihr nächster Anruf wird angenommen –, hakt der Server
   die Aufgabe ab (`answeredCallbacks`). Unterdrückte Nummern bekommen keine Aufgabe.
+- **Ansagen:** In der Firmenverwaltung gesprochen (MediaRecorder) oder hochgeladen; der Browser
+  macht daraus WAV mit 8 kHz, mono, 16 Bit (`src/lib/wav.ts`), der Server prüft nur
+  (`server/phone/sounds.ts`) und legt sie unter ihrer Prüfsumme neben die Datenbank
+  (`phone/sounds/`). Die Konfiguration nennt der Box die Ansagen, die sie braucht; sie lädt jede
+  einmal (`/api/phone/box/files/sounds/<id>`, mit ihrem Token), bevor sie den Rest anwendet.
+- **Mailbox:** Ist sie an, klingelt ein Anruf so lange wie eingestellt, dann nimmt die Box ab
+  (`kontext-mailbox`): Ereignis „mailbox“ (die Karte in Kontext verschwindet), Ansage, Piepton,
+  `Record()` bis zu zwei Minuten. Legt der Anrufer auf, lädt der Agent die Aufnahme hoch
+  (`PUT /api/phone/box/files/voicemail/<anruf>`), erst danach meldet er das Ende. Kontext legt sie
+  beim Anruf ab (`phone/voicemail/`, abspielbar in der Liste) und legt eine Mail mit der Aufnahme
+  in das gewählte Postfach: mit `Email/import` über die Anmeldung von jemandem, der dort schreiben
+  darf (`server/jmap-server.ts`), so wie die Aufgaben aus Regeln.
 - **Auflegen:** in Kontext (Box legt auf), beim Anrufer (Box meldet das Ende) oder wenn die
   Person den Raum verlässt, etwa weil der Tab zu ist (LiveKits Webhook).
 - **LiveKit SIP** braucht Redis (zur Absprache mit LiveKit). Kontext richtet beim Start einen

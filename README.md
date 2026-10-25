@@ -126,6 +126,7 @@ fine on a VPS with 2 vCPUs and 4 GB RAM.
 - **Calls and video calls** right from a conversation: ring a colleague, or start a meeting in a channel that others join; mute, camera, share your screen, and the call stays open while you switch to mail; missed calls and call lengths stay in the conversation. Runs on your own server ([LiveKit](https://github.com/livekit/livekit), optional).
 - **Phone calls in Kontext**: a small telephone box in the office joins your Fritzbox as an IP phone. Calls ring in Kontext with who it is (contact, company, last mail, next appointment), you answer in the browser or at the desk phone, call out from any contact, and missed calls stay in a list with notes and "call back".
   - A missed call leaves a "call back" task on the board you choose; it ticks itself off once someone talked to that number.
+  - **Mailbox**: if nobody answers, the box plays your greeting (spoken into the browser or uploaded) and records a message; it arrives as a mail with the recording and can be played back at the call.
 - **Search** across all your channels; edit or delete your own messages; mute, leave or delete channels.
 - **Retention** set by the company admin (30 days to 5 years, or for ever): older messages, photos and files are deleted by themselves.
 - **On the phone**: its own tab, conversations as bubbles.

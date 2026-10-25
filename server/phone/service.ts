@@ -48,20 +48,33 @@ export type PhoneDeps = {
 
 export type Problem = "not-allowed" | "offline" | "not-found" | "busy" | "bad-number";
 
+/** How long a message on the mailbox may be. */
+const MAILBOX_SECONDS = 120;
+
+/** Only sounds that still exist; a deleted greeting leaves the beep alone. */
+const knownSound = (settings: PhoneSettings, id: string | null) =>
+  id && settings.sounds.some((sound) => sound.id === id) ? id : null;
+
 export const desiredConfig = (
   settings: PhoneSettings,
   trunkHost: string,
   trunkPort: number,
-): BoxConfig => ({
-  line: settings.line,
-  trunk: {
-    host: trunkHost,
-    port: trunkPort,
-    username: TRUNK_USER,
-    password: settings.trunkPassword,
-  },
-  ringSeconds: RING_SECONDS,
-});
+): BoxConfig => {
+  const { mailbox } = settings;
+  const greeting = knownSound(settings, mailbox.greeting);
+  return {
+    line: settings.line,
+    trunk: {
+      host: trunkHost,
+      port: trunkPort,
+      username: TRUNK_USER,
+      password: settings.trunkPassword,
+    },
+    ringSeconds: mailbox.enabled ? mailbox.ringSeconds : RING_SECONDS,
+    sounds: mailbox.enabled && greeting ? [greeting] : [],
+    mailbox: mailbox.enabled ? { greeting, maxSeconds: MAILBOX_SECONDS } : null,
+  };
+};
 
 export const createPhoneService = (deps: PhoneDeps) => {
   const { store, hub } = deps;
@@ -220,6 +233,12 @@ export const createPhoneService = (deps: PhoneDeps) => {
       if (call && call.state !== "ended" && call.member === identity) {
         send(call, { type: "hangup", call: call.boxCallId });
       }
+    },
+
+    /** The call changed outside the service (a message arrived): tell who sees it. */
+    refresh: async (callId: string) => {
+      const call = await store.call(callId);
+      if (call) publish(call);
     },
 
     note: async (callId: string, me: string, note: string): Promise<PhoneCall | Problem> => {

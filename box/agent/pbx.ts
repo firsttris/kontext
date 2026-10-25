@@ -7,7 +7,8 @@ import { mkdir, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import type { BoxConfig, CallEvent } from "../../server/phone/protocol";
 import { type Ami, callEventOf, connectAmi, type Frame, registrationOf } from "./ami";
-import { type AmiLogin, asteriskFiles } from "./asterisk-config";
+import { type AmiLogin, asteriskFiles, type BoxPaths } from "./asterisk-config";
+import type { BoxFiles } from "./files";
 
 export type Pbx = {
   apply: (config: BoxConfig) => Promise<void>;
@@ -26,20 +27,33 @@ const REGISTRATION_CHECK_MS = 60_000;
 
 export const createAsterisk = async ({
   configDir,
+  paths,
+  files,
   ami: login,
   events,
 }: {
   configDir: string;
+  paths: BoxPaths;
+  files: BoxFiles;
   ami: AmiLogin;
   events: PbxEvents;
 }): Promise<Pbx & { close: () => void }> => {
   // The channel of each call, from its first event: AMI acts on channels, Kontext on calls.
   const channels = new Map<string, string>();
+  /** A call that ended on the mailbox: its message goes up before Kontext hears of the end. */
+  const ended = async (event: Omit<CallEvent, "type" | "seq">, recording: string | undefined) => {
+    if (recording) await files.sendRecording(event.call, recording).catch(() => false);
+    events.onCall(event);
+  };
   const onFrame = (frame: Frame) => {
     const event = callEventOf(frame, new Date());
     if (event) {
       if (frame.Channel && event.state !== "ended") channels.set(event.call, frame.Channel);
-      if (event.state === "ended") channels.delete(event.call);
+      if (event.state === "ended") {
+        channels.delete(event.call);
+        void ended(event, frame.Recording || undefined);
+        return;
+      }
       events.onCall(event);
       return;
     }
@@ -67,8 +81,11 @@ export const createAsterisk = async ({
 
   return {
     apply: async (config) => {
+      // The sounds first: a dialplan that plays a missing file stays silent.
+      await files.syncSounds(config.sounds);
+      await mkdir(paths.recordings, { recursive: true });
       await mkdir(configDir, { recursive: true });
-      for (const [name, text] of Object.entries(asteriskFiles(config, login))) {
+      for (const [name, text] of Object.entries(asteriskFiles(config, login, paths))) {
         await writeFile(join(configDir, name), text, { mode: 0o640 });
       }
       await ami.action([

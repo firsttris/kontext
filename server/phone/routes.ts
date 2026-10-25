@@ -9,7 +9,9 @@ import { z } from "zod";
 import { participantMetadata } from "../calls/calls";
 import { joinToken, type LiveKitConfig } from "../calls/livekit";
 import type { Viewer } from "../chat/chat";
-import { dialSchema, noteSchema, type PhoneCall, phoneRoom } from "./phone";
+import { bearer } from "./box-routes";
+import { type PhoneFiles, wavResponse } from "./files";
+import { canSeeCall, dialSchema, noteSchema, type PhoneCall, phoneRoom } from "./phone";
 import { fromBoxSchema, parseMessage } from "./protocol";
 import type { PhoneService, Problem } from "./service";
 import type { PhoneStore } from "./store";
@@ -22,6 +24,9 @@ export type PhoneRouteDeps = {
   viewerOf: (request: Request) => Promise<Viewer | null>;
   nameOf: (request: Request) => Promise<string>;
   upgradeWebSocket: UpgradeWebSocket;
+  /** The boxes' file routes (sounds, messages), with their own check of the box's token. */
+  boxFiles: Hono<{ Variables: { boxId: string } }>;
+  files: Pick<PhoneFiles, "readVoicemail">;
 };
 
 const STATUS: Record<Problem, 400 | 403 | 404 | 409 | 503> = {
@@ -42,9 +47,6 @@ const MESSAGES: Record<Problem, string> = {
 
 const pairSchema = z.object({ code: z.string().trim().min(4).max(20) });
 
-const bearer = (request: Request) =>
-  request.headers.get("authorization")?.replace(/^Bearer /, "") ?? "";
-
 export const createPhoneRoutes = (deps: PhoneRouteDeps) => {
   const { service, store } = deps;
   const app = new Hono<{ Variables: { viewer: Viewer } }>();
@@ -56,6 +58,8 @@ export const createPhoneRoutes = (deps: PhoneRouteDeps) => {
     const paired = await store.pair(parsed.data.code);
     return paired ? c.json(paired) : c.json({ error: "Code ungültig oder abgelaufen" }, 403);
   });
+
+  app.route("/box/files", deps.boxFiles);
 
   app.get(
     "/box",
@@ -132,6 +136,15 @@ export const createPhoneRoutes = (deps: PhoneRouteDeps) => {
     const result = await service.hangup(c.req.param("id"), c.get("viewer").me);
     if (problem(result)) return c.json({ error: MESSAGES[result] }, STATUS[result]);
     return c.body(null, 204);
+  });
+
+  app.get("/calls/:id/voicemail", async (c) => {
+    const call = await store.call(c.req.param("id"));
+    if (!call || !canSeeCall(call, c.get("viewer").me))
+      return c.json({ error: "Nicht gefunden" }, 404);
+    const bytes = await deps.files.readVoicemail(call.id);
+    if (!bytes) return c.json({ error: "Nicht gefunden" }, 404);
+    return wavResponse(bytes, { "cache-control": "private, max-age=86400" });
   });
 
   app.put("/calls/:id/note", async (c) => {

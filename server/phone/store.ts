@@ -20,6 +20,17 @@ const settingsSchema = z.object({
   trunkPassword: z.string().min(1),
   /** The board (an account id) a missed call leaves "Zurückrufen" on; null for none. */
   callbackBoard: z.string().nullable().default(null),
+  /** Greetings recorded or uploaded in the Firmenverwaltung (files: server/phone/files.ts). */
+  sounds: z.array(z.object({ id: z.string(), name: z.string(), seconds: z.number() })).default([]),
+  /** Unanswered calls go to the mailbox; its messages arrive as mails in `deliverTo`. */
+  mailbox: z
+    .object({
+      enabled: z.boolean(),
+      ringSeconds: z.number().int().min(10).max(120),
+      greeting: z.string().nullable(),
+      deliverTo: z.object({ accountId: z.string(), email: z.string() }).nullable(),
+    })
+    .default({ enabled: false, ringSeconds: 25, greeting: null, deliverTo: null }),
 });
 export type PhoneSettings = z.infer<typeof settingsSchema>;
 
@@ -85,6 +96,7 @@ const toCall = (row: CallDbRow): PhoneCall => ({
   endedAt: iso(row.endedAt),
   note: row.note,
   callbackTaskId: row.callbackTaskId,
+  voicemailSeconds: row.voicemailSeconds,
 });
 
 const fromCall = (call: PhoneCall): CallDbRow => ({
@@ -231,10 +243,19 @@ export const createPhoneStore = (db: Db, sealer: Sealer) => {
 
     saveCall: async (call: PhoneCall) => {
       const row = fromCall(call);
+      // The message arrives on its own way (setVoicemail); a call event must not undo it.
+      const { voicemailSeconds: _, ...update } = row;
       await db
         .insert(schema.phoneCalls)
         .values(row)
-        .onConflictDoUpdate({ target: schema.phoneCalls.id, set: row });
+        .onConflictDoUpdate({ target: schema.phoneCalls.id, set: update });
+    },
+
+    setVoicemail: async (callId: string, seconds: number) => {
+      await db
+        .update(schema.phoneCalls)
+        .set({ voicemailSeconds: seconds })
+        .where(eq(schema.phoneCalls.id, callId));
     },
 
     /** Earlier calls with this number that still have an open "Zurückrufen". */

@@ -34,6 +34,8 @@ const SETTINGS: PhoneSettings = {
   ring: ["jonas", "anna"],
   trunkPassword: "trunk-secret",
   callbackBoard: null,
+  sounds: [],
+  mailbox: { enabled: false, ringSeconds: 25, greeting: null, deliverTo: null },
 };
 
 const setup = (settings: Partial<PhoneSettings> = {}) => {
@@ -95,6 +97,23 @@ describe("the box's connection", () => {
       type: "config",
       version: Date.parse("2026-10-25T09:00:00.000Z"),
       config: desiredConfig(SETTINGS, "kontext.firma.de", 5060),
+    });
+    expect(desiredConfig(SETTINGS, "h", 5060)).toMatchObject({ ringSeconds: 60, mailbox: null });
+    const greeting = "a1b2c3d4e5f6a1b2c3d4e5f6";
+    const withMailbox = {
+      ...SETTINGS,
+      sounds: [{ id: greeting, name: "Ansage", seconds: 8 }],
+      mailbox: { enabled: true, ringSeconds: 20, greeting, deliverTo: null },
+    };
+    expect(desiredConfig(withMailbox, "h", 5060)).toMatchObject({
+      ringSeconds: 20,
+      sounds: [greeting],
+      mailbox: { greeting, maxSeconds: 120 },
+    });
+    // A greeting that was deleted is not played.
+    expect(desiredConfig({ ...withMailbox, sounds: [] }, "h", 5060)).toMatchObject({
+      sounds: [],
+      mailbox: { greeting: null },
     });
     expect(desiredConfig(SETTINGS, "h", 5060).trunk).toEqual({
       host: "h",

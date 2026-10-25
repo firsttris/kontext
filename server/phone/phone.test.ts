@@ -76,6 +76,14 @@ describe("applyCallEvent", () => {
     expect(applyCallEvent(ringing(), event("ended", { cause: 26 })).outcome).toBe("elsewhere");
   });
 
+  it("leaves the ringing when the caller is on the mailbox, and files it as missed", () => {
+    const mailbox = applyCallEvent(ringing(), event("mailbox"));
+    expect(mailbox.state).toBe("mailbox");
+    expect(applyCallEvent(mailbox, event("ended", { cause: 16 })).outcome).toBe("missed");
+    const talking = applyCallEvent(ringing(), event("answered"));
+    expect(applyCallEvent(talking, event("mailbox"))).toBe(talking);
+  });
+
   it("ignores repeats and anything after the end", () => {
     const talking = applyCallEvent(ringing(), event("answered"));
     expect(applyCallEvent(talking, event("answered", { at: "2026-10-25T10:00:00.000Z" }))).toBe(

@@ -24,12 +24,24 @@ export const trunkSchema = z.object({
 });
 export type Trunk = z.infer<typeof trunkSchema>;
 
+/** A sound's id (server/phone/sounds.ts): the box fetches it once from /api/phone/box/sounds. */
+const soundIdSchema = z.string().regex(/^[a-f0-9]{24}$/);
+
+/** After ringing unanswered: the greeting, then the caller may leave a message. */
+export const mailboxSchema = z.object({
+  greeting: soundIdSchema.nullable(),
+  maxSeconds: z.number().int().min(10).max(180),
+});
+
 /** Everything the box needs, whole and versioned: it always renders from all of it. */
 export const boxConfigSchema = z.object({
   line: lineSchema.nullable(),
   trunk: trunkSchema.nullable(),
   /** How long an incoming call may ring in Kontext before the box gives up. */
   ringSeconds: z.number().int().min(10).max(300),
+  /** The sounds the dialplan plays; the box has them before it applies the rest. */
+  sounds: z.array(soundIdSchema).default([]),
+  mailbox: mailboxSchema.nullable().default(null),
 });
 export type BoxConfig = z.infer<typeof boxConfigSchema>;
 
@@ -53,7 +65,8 @@ export const toBoxSchema = z.discriminatedUnion("type", [
 ]);
 export type ToBox = z.infer<typeof toBoxSchema>;
 
-export const CALL_STATES = ["ringing", "answered", "ended"] as const;
+/** "mailbox": nobody answered, the caller hears the greeting and may leave a message. */
+export const CALL_STATES = ["ringing", "answered", "mailbox", "ended"] as const;
 
 /** One step of a call, as the box saw it. */
 export const callEventSchema = z.object({

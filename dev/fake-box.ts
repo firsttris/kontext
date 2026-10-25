@@ -6,15 +6,18 @@
  *
  *   curl -XPOST localhost:18096/ring -d '{"from":"07223 123456"}'      # someone calls
  *   curl -XPOST localhost:18096/hangup -d '{"call":"…","cause":16}'    # the caller hangs up
+ *   curl -XPOST localhost:18096/mailbox -d '{"call":"…","seconds":5}'  # leaves a message (silence)
  *   curl localhost:18096/state                                         # what Kontext told the box
  *
  * Answered calls and dialled ones are "answered" at once; nobody talks, there is no audio.
  */
 import { parseArgs } from "node:util";
+import { createBoxFiles } from "../box/agent/files";
 import { pair } from "../box/agent/link";
 import type { PbxEvents } from "../box/agent/pbx";
 import { runBox } from "../box/agent/run";
 import type { BoxConfig, ToBox } from "../server/phone/protocol";
+import { encodeWav } from "../server/phone/sounds";
 
 const { values: args } = parseArgs({
   options: {
@@ -123,6 +126,26 @@ Bun.serve({
         at: now(),
       });
       return Response.json({ ok: true });
+    }
+    if (path === "/mailbox") {
+      // As Asterisk does it: the mailbox picks up, the message goes up, then the call ends.
+      const call = String(body.call);
+      const seconds = Number(body.seconds ?? 5);
+      events?.onCall({ call, state: "mailbox", direction: "in", remote: "", local: "", at: now() });
+      const sent = await createBoxFiles({ credentials, soundDir: "/tmp" }).uploadVoicemail(
+        call,
+        encodeWav(new Int16Array(8000 * seconds)),
+      );
+      events?.onCall({
+        call,
+        state: "ended",
+        direction: "in",
+        remote: "",
+        local: "",
+        cause: 16,
+        at: now(),
+      });
+      return Response.json({ sent });
     }
     if (path === "/state")
       return Response.json({ connected: box.state().connected, config, commands });
