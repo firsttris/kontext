@@ -185,7 +185,7 @@ export const TasksPage = ({ search }: { search: TasksSearch }) => {
       )}
       {creating ? (
         <TaskDialog
-          start={{ title: "", accountId: board?.id ?? me }}
+          starts={[{ title: "", accountId: board?.id ?? me }]}
           onClose={() => setCreating(false)}
         />
       ) : null}

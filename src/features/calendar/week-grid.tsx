@@ -13,9 +13,11 @@ import {
   onDay,
   timeLabel,
 } from "@/lib/jscalendar";
+import { type DayTask, tasksOnDay } from "@/lib/task-context";
 import { m } from "@/paraglide/messages";
 import { calendarColor, eventClass } from "./event-style";
 import { eventSearch } from "./queries";
+import { TaskChip } from "./task-chip";
 import { type Moved, useDragEvents } from "./use-drag";
 
 export const HOUR_HEIGHT = 56;
@@ -37,6 +39,8 @@ const useNow = (): Date => {
 type Props = {
   days: string[];
   events: CalendarEvent[];
+  /** Tasks due, shown with the all-day appointments. */
+  tasks?: DayTask[];
   /** Events the user still has to answer are drawn dashed. */
   isInvitation: (event: CalendarEvent) => boolean;
   /** The row with weekday and date; the phone shows its own strip instead. */
@@ -55,6 +59,7 @@ const withinDay = (event: CalendarEvent): boolean => {
 export const WeekGrid = ({
   days,
   events,
+  tasks = [],
   isInvitation,
   showDayHeader = true,
   canMove = () => false,
@@ -75,7 +80,8 @@ export const WeekGrid = ({
   const allDay = days.map((day) =>
     events.filter((event) => eventTimes(event).allDay && onDay(event, day)),
   );
-  const hasAllDay = allDay.some((list) => list.length > 0);
+  const dayTasks = days.map((day) => tasksOnDay(tasks, day));
+  const hasAllDay = allDay.some((list) => list.length > 0) || dayTasks.some((list) => list.length);
 
   return (
     <div className="flex min-h-0 flex-1 flex-col">
@@ -120,6 +126,9 @@ export const WeekGrid = ({
             >
               {list.map((event) => (
                 <EventChip key={eventKey(event)} event={event} invitation={isInvitation(event)} />
+              ))}
+              {dayTasks[index]!.map((entry) => (
+                <TaskChip key={entry.task.id} entry={entry} />
               ))}
             </div>
           ))}

@@ -348,7 +348,8 @@ oder Reihenfolge.
 - **Wem sie gehören:** Jede Aufgabe gehört zu einem Konto – dem eigenen Postfach oder einem
   gemeinsamen wie info@. `/api/tasks` liefert alle Aufgaben der Konten in der JMAP-Session der
   angemeldeten Person; anlegen, ändern und löschen darf, wer das Postfach nicht nur lesen darf.
-  Erledigtes bleibt 30 Tage in den Listen.
+  Wer eine Aufgabe zugewiesen bekommt, sieht und ändert sie auch auf dem eigenen Board einer
+  Kollegin; verschieben und löschen darf dort nur sie. Erledigtes bleibt 30 Tage in den Listen.
 - **Ansichten:** „Meine Aufgaben“ sind mir zugewiesene und die im eigenen Postfach ohne
   Zuständigen; „Heute“ nimmt Überfälliges mit, heute Erledigtes bleibt durchgestrichen stehen. Ein
   Board pro Postfach mit den festen Spalten Offen, In Arbeit, Wartet, Erledigt (`status`); die
@@ -357,11 +358,28 @@ oder Reihenfolge.
   „AW:/Re:“, verknüpft mit der Mail und ihrer Unterhaltung (`threadId`), auf Wunsch wird die
   Mail danach archiviert (merkt sich der Browser). Die Mail zeigt ihre Aufgabe in Liste und
   Lesebereich.
+- **Aus mehreren Mails:** „Aufgaben erstellen“ in der Leiste der Auswahl macht eine Aufgabe pro
+  Mail, mit gemeinsamem Tag, Zuständigem und Board. Hat die andere Seite der Mail eine
+  Kontaktkarte, wird sie mitverknüpft (auch bei einer einzelnen Mail).
+- **Am Kontakt:** die Aufgaben, die mit der Karte verknüpft sind oder mit einer Unterhaltung der
+  letzten Mails mit der Person (`src/lib/task-context.ts`); „Aufgabe“ legt eine verknüpfte an.
+- **Im Kalender:** meine offenen Aufgaben am Tag ihrer Fälligkeit, Überfälliges auf heute, in Rot;
+  in Woche und Tag bei den ganztägigen Terminen. Abhaken mit „Rückgängig“; unter „Meine Kalender“
+  ausblendbar (merkt sich der Browser wie ausgeblendete Kalender).
+- **In der Glocke:** „Neu für dich“ – was mir jemand anderes in den letzten 7 Tagen zugewiesen hat
+  (`assigned_by`, `assigned_at`; ungesehene zählen zum Punkt an der Glocke) – und „Fällige
+  Aufgaben“ von heute und davor.
+- **Push:** Wer eine Aufgabe jemand anderem zuweist, schickt ihr eine Benachrichtigung. Eine
+  Erinnerung (`remind_at`, „Erinnern“ in der Aufgabe: zur Fälligkeit, 15 Minuten oder eine Stunde
+  vorher, am Morgen, am Vortag, oder frei) verschickt der Server jede Minute
+  (`server/tasks/notices.ts`, `REMINDER_TICK_MS`) an die zuständige Person, ohne Zuständige an
+  die, die sie angelegt hat – auch bei geschlossener App, einmal (`reminded_at`). Wird der Tag
+  verschoben, zieht die Erinnerung mit.
 - **Schnelleingabe** (`src/lib/tasks.ts`): ein letztes Wort „heute“, „morgen“, „übermorgen“, ein
   Wochentag oder ein Datum wie „30.10.“ wird zur Fälligkeit.
 - **Abgleich im Team:** Nach jeder Änderung meldet der Server über die
   [Live-Verbindung](#live-verbindung), welches Board sich geändert hat; alle, die dieses Postfach
-  öffnen können, laden die Aufgaben neu. Eigene Änderungen zeigt die App sofort und korrigiert
+  öffnen können, und die Zuständigen laden die Aufgaben neu. Eigene Änderungen zeigt die App sofort und korrigiert
   sie, wenn der Server etwas anderes sagt.
 
 ## Team-Chat

@@ -26,6 +26,8 @@ const schema = z.object({
   PUSH_ANY_ENDPOINT: z.stringbool().default(false),
   /** How often due Wiedervorlagen are brought back; tests make it short. */
   SNOOZE_TICK_MS: z.coerce.number().int().min(100).default(60_000),
+  /** How often task reminders are looked for; tests make it short. */
+  REMINDER_TICK_MS: z.coerce.number().int().min(100).default(60_000),
   /** Tests only: a stand-in for Microsoft's sign-in and Graph (dev/fake-graph.ts). */
   M365_LOGIN_URL: z.url().default("https://login.microsoftonline.com"),
   GRAPH_URL: z.url().default("https://graph.microsoft.com/v1.0"),

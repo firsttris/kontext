@@ -1,6 +1,6 @@
 /** One task in a list: its box to tick off, title, due date, what it is about, who does it. */
 import { Link } from "@tanstack/react-router";
-import { Mail } from "lucide-react";
+import { BellRing, Mail } from "lucide-react";
 import { Avatar } from "@/components/ui/avatar";
 import { cn } from "@/lib/cn";
 import { shortAddress } from "@/lib/mail-accounts";
@@ -20,6 +20,7 @@ export const TaskRow = ({
   board,
   assignee,
   onToggle,
+  inTasks = true,
 }: {
   task: Task;
   today: string;
@@ -28,6 +29,8 @@ export const TaskRow = ({
   board: string | null;
   assignee: string | null;
   onToggle: () => void;
+  /** Within the tasks app the view stays as it is; elsewhere (a contact) it opens the task. */
+  inTasks?: boolean;
 }) => {
   const done = task.status === "done";
   const mail = task.links.find((link) => link.kind === "mail");
@@ -48,8 +51,7 @@ export const TaskRow = ({
       />
       <Link
         to="/tasks"
-        from="/tasks"
-        search={(prev) => ({ ...prev, task: task.id })}
+        search={inTasks ? (prev) => ({ ...prev, task: task.id }) : { task: task.id }}
         className="flex min-w-0 flex-1 flex-col gap-1 text-fg no-underline"
       >
         <span className={cn("truncate font-medium", done && "text-muted line-through")}>
@@ -60,6 +62,9 @@ export const TaskRow = ({
             <span className={cn("shrink-0 font-medium", dueTone(task, today))}>
               {dueLabel(task.dueDate, task.dueTime, today)}
             </span>
+          ) : null}
+          {task.remindAt && !done ? (
+            <BellRing size={12} className="shrink-0" aria-label={m.tasks_remind()} />
           ) : null}
           {mail ? (
             <span className="flex min-w-0 items-center gap-1 truncate">

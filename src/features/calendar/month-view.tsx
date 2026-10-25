@@ -13,9 +13,11 @@ import {
   toLocal,
   weekStart,
 } from "@/lib/jscalendar";
+import { type DayTask, tasksOnDay } from "@/lib/task-context";
 import { m } from "@/paraglide/messages";
 import { calendarColor } from "./event-style";
 import { eventSearch } from "./queries";
+import { TaskChip } from "./task-chip";
 
 const WEEKDAYS = ["Mo", "Di", "Mi", "Do", "Fr", "Sa", "So"];
 const SHOWN = 3;
@@ -37,11 +39,20 @@ type Props = {
   selected: string;
   today: string;
   events: CalendarEvent[];
+  /** Tasks due; on a day after its appointments, within the same few lines. */
+  tasks?: DayTask[];
   isInvitation: (event: CalendarEvent) => boolean;
   compact: boolean;
 };
 
-export const MonthView = ({ selected, today, events, isInvitation, compact }: Props) => {
+export const MonthView = ({
+  selected,
+  today,
+  events,
+  tasks = [],
+  isInvitation,
+  compact,
+}: Props) => {
   const days = monthDays(selected);
   const month = selected.slice(0, 7);
   return (
@@ -56,6 +67,11 @@ export const MonthView = ({ selected, today, events, isInvitation, compact }: Pr
       <div className="grid min-h-0 flex-1 grid-cols-7 grid-rows-6 overflow-y-auto">
         {days.map((day) => {
           const list = events.filter((event) => onDay(event, day)).sort(byStart);
+          const due = tasksOnDay(tasks, day);
+          // At least one line for tasks when there are any.
+          const eventLines = Math.min(list.length, due.length ? SHOWN - 1 : SHOWN);
+          const taskLines = Math.min(due.length, SHOWN - eventLines);
+          const hidden = list.length - eventLines + due.length - taskLines;
           return (
             <div
               key={day}
@@ -86,23 +102,36 @@ export const MonthView = ({ selected, today, events, isInvitation, compact }: Pr
                       style={calendarColor(event)}
                     />
                   ))}
+                  {due.length ? (
+                    <span
+                      role="img"
+                      aria-label={m.calendar_tasks_count({ count: due.length })}
+                      className={cn(
+                        "size-1.5 rounded-full border",
+                        due.some((entry) => entry.overdue) ? "border-danger" : "border-muted",
+                      )}
+                    />
+                  ) : null}
                 </span>
               ) : (
                 <>
-                  {list.slice(0, SHOWN).map((event) => (
+                  {list.slice(0, eventLines).map((event) => (
                     <MonthChip
                       key={eventKey(event)}
                       event={event}
                       invitation={isInvitation(event)}
                     />
                   ))}
-                  {list.length > SHOWN ? (
+                  {due.slice(0, taskLines).map((entry) => (
+                    <TaskChip key={entry.task.id} entry={entry} />
+                  ))}
+                  {hidden > 0 ? (
                     <Link
                       to="/calendar"
                       search={(prev) => ({ ...prev, date: day, view: "day" })}
                       className="px-1.5 text-[11px] text-muted no-underline hover:text-fg"
                     >
-                      {m.calendar_more({ count: list.length - SHOWN })}
+                      {m.calendar_more({ count: hidden })}
                     </Link>
                   ) : null}
                 </>

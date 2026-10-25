@@ -32,22 +32,27 @@ const subscribe = (listener: () => void) => {
   return () => listeners.delete(listener);
 };
 
-export type Seen = { at: number; invitations: string[] };
+/** When the bell was last opened, with the invitations and tasks given to me shown then. */
+export type Seen = { at: number; invitations: string[]; tasks: string[] };
 
 const parseSeen = (raw: string | null): Seen => {
   try {
     const value = JSON.parse(raw ?? "") as Partial<Seen>;
-    return { at: Number(value.at) || 0, invitations: value.invitations ?? [] };
+    return {
+      at: Number(value.at) || 0,
+      invitations: value.invitations ?? [],
+      tasks: value.tasks ?? [],
+    };
   } catch {
-    return { at: 0, invitations: [] };
+    return { at: 0, invitations: [], tasks: [] };
   }
 };
 
 /** The raw string is the snapshot, so React sees a change only when it really changed. */
 export const useSeen = (): Seen => parseSeen(useSyncExternalStore(subscribe, () => read(SEEN)));
 
-export const markSeen = (at: number, invitations: string[]) =>
-  write(SEEN, JSON.stringify({ at, invitations }));
+export const markSeen = (at: number, invitations: string[], tasks: string[]) =>
+  write(SEEN, JSON.stringify({ at, invitations, tasks }));
 
 export const notificationsSupported = (): boolean => typeof Notification !== "undefined";
 

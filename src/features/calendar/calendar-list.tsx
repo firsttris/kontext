@@ -15,6 +15,7 @@ import { usePrincipals } from "../sharing/queries";
 import { ShareDialog } from "../sharing/share-dialog";
 import { setCalendarHidden } from "./hidden-calendars";
 import { type CalendarRef, useCalendarMutations, useCalendarRefs } from "./queries";
+import { TasksToggle } from "./task-chip";
 
 const fail = (toast: ReturnType<typeof useToast>) => (error: Error) =>
   toast.show(m.common_error({ message: error.message }), "error");
@@ -40,6 +41,7 @@ export const CalendarList = ({ onManage }: { onManage: () => void }) => {
         </button>
       </div>
       <Rows calendars={calendars.filter((c) => c.isPersonal)} />
+      <TasksToggle />
       {calendars.some((c) => !c.isPersonal) ? (
         <>
           <span className="text-[12px] font-medium text-muted">{m.calendar_shared()}</span>
@@ -176,6 +178,7 @@ export const CalendarsDialog = ({
       <section className="flex flex-col gap-2">
         <h3 className="m-0 text-[12px] font-medium text-muted">{m.calendar_my_calendars()}</h3>
         <Rows calendars={own} manage />
+        <TasksToggle />
         <form onSubmit={create} className="flex gap-2 pt-1">
           <Input
             aria-label={m.calendar_calendar_name()}

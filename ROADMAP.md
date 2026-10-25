@@ -8,7 +8,6 @@ ein Plan, kein Versprechen; Wünsche und Hinweise gern als
 
 | Funktion | Worum es geht |
 | --- | --- |
-| **Aufgaben überall im Kontext** | Offene Aufgaben am Kontakt, Fälliges im Kalender, Heute-Fälliges und neu Zugewiesenes in der Glocke, Erinnerungen als Benachrichtigung, „Aufgaben erstellen“ für mehrere Mails. |
 | **Team-Chat: mehr** | Antworten im Faden, Reaktionen, Aufbewahrungsfrist, die der Chef einstellt. |
 
 ## Danach
@@ -32,7 +31,8 @@ Kleinere Dinge, die beim Bauen aufgefallen sind und noch erledigt werden.
 - [ ] Chat-Suche: Umlaute in Groß- und Kleinschreibung („Ö“ findet „ö“ nicht), weil SQLite nur ASCII ohne Unterschied vergleicht.
 - [ ] Chat: „Ganze Mail teilen“ als Kopie, für Kolleginnen ohne Zugriff auf das Postfach (heute sehen sie nur die Karte).
 - [ ] Chat: Fotos als kleine Vorschaubilder auf dem Server erzeugen (heute lädt der Verlauf die verkleinerten Fotos in voller Größe).
-- [ ] Aufgabe aus einer Mail mit dem Absender als Kontakt verknüpfen; die Verknüpfungen „Kontakt“ und „Termin“ öffnen sich schon richtig, werden aber noch nirgends angelegt.
+- [ ] Aufgaben am Kontakt finden Mails nur über die letzten fünf Mails mit der Person im eigenen Postfach; ältere oder solche in info@ zählen nur, wenn die Aufgabe mit der Karte verknüpft ist (geschieht beim Anlegen aus der Mail). Die Verknüpfung „Termin“ wird noch nirgends angelegt.
+- [ ] Erinnerung an Aufgaben auch direkt im Dialog „Neue Aufgabe“ (heute in der geöffneten Aufgabe).
 - [ ] **Regeln für Mitarbeiter** in der Firmenverwaltung (heute nur für gemeinsame Postfächer und die eigenen).
 - [ ] **App auf Englisch** und weiteren Sprachen (Texte liegen schon gesammelt in `messages/de.json`).
 - [ ] Wiedervorlage für mehrere ausgewählte Mails auf einmal (heute aus der geöffneten Mail) und „Wieder vorgelegt“ auch in „Alle Posteingänge“ (heute im Posteingang des Postfachs).
@@ -59,6 +59,9 @@ Kleinere Dinge, die beim Bauen aufgefallen sind und noch erledigt werden.
 
 ## Zuletzt fertig geworden
 
+Aufgaben überall im Kontext: offene Aufgaben am Kontakt, Fälliges im Kalender, neu Zugewiesenes
+und heute Fälliges in der Glocke, Erinnerungen als Benachrichtigung auch bei geschlossener App,
+„Aufgaben erstellen“ für mehrere Mails.
 Wiedervorlage (eine Mail bis zu einem Zeitpunkt aus dem Weg, dann oben im Posteingang – auch bei
 geschlossener App).
 Anrufe und Videobesprechungen im Chat (LiveKit auf dem eigenen Server): anrufen in

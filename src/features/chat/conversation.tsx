@@ -326,7 +326,7 @@ export const Conversation = ({
           }}
         />
       </div>
-      {task ? <TaskDialog start={task} onClose={() => setTask(null)} /> : null}
+      {task ? <TaskDialog starts={[task]} onClose={() => setTask(null)} /> : null}
     </section>
   );
 };

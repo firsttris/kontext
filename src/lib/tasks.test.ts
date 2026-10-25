@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { EmailSummary } from "@/jmap/types";
+import { sampleTask } from "../../server/tasks/sample-task";
 import {
   column,
   dueGroup,
@@ -16,24 +17,16 @@ import {
 
 const today = "2026-10-24"; // a Saturday
 
-const task = (patch: Partial<Task> = {}): Task => ({
-  id: "t",
-  accountId: "me",
-  title: "Aufgabe",
-  notes: "",
-  status: "open",
-  position: 1,
-  assigneeId: null,
-  dueDate: null,
-  dueTime: null,
-  checklist: [],
-  links: [],
-  createdBy: "me",
-  createdAt: "2026-10-20T10:00:00Z",
-  updatedAt: "2026-10-20T10:00:00Z",
-  completedAt: null,
-  ...patch,
-});
+const task = (patch: Partial<Task> = {}): Task =>
+  sampleTask({
+    id: "t",
+    accountId: "me",
+    title: "Aufgabe",
+    createdBy: "me",
+    createdAt: "2026-10-20T10:00:00Z",
+    updatedAt: "2026-10-20T10:00:00Z",
+    ...patch,
+  });
 
 describe("views", () => {
   it("mine: assigned to me, or in my mailbox with nobody assigned", () => {

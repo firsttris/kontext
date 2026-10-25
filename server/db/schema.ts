@@ -148,9 +148,18 @@ export const tasks = sqliteTable(
     checklist: text("checklist").notNull(),
     createdBy: text("created_by").notNull(),
     completedAt: integer("completed_at", { mode: "timestamp_ms" }),
+    /** Who gave the task its assignee, and when: what the bell shows as "Neu für dich". */
+    assignedBy: text("assigned_by"),
+    assignedAt: integer("assigned_at", { mode: "timestamp_ms" }),
+    /** When to remind the assignee by push; `remindedAt` once that happened. */
+    remindAt: integer("remind_at", { mode: "timestamp_ms" }),
+    remindedAt: integer("reminded_at", { mode: "timestamp_ms" }),
     ...timestamps,
   },
-  (table) => [index("tasks_account").on(table.accountId)],
+  (table) => [
+    index("tasks_account").on(table.accountId),
+    index("tasks_remind_at").on(table.remindAt),
+  ],
 );
 
 /** What a task is about: a mail (with its thread), a contact, an appointment. */

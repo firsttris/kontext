@@ -73,7 +73,8 @@ test.describe("Aufgaben", () => {
         .getByRole("link", { name: new RegExp(subject) }),
     ).toContainText("Aufgabe");
     const created = await taskOf(page, subject);
-    expect(created?.links.map((link) => link.kind)).toEqual(["mail"]);
+    // With the mail; the sender's card too, once a test has made one.
+    expect(created?.links.map((link) => link.kind)).toContain("mail");
 
     // Anna, member of info@, finds it on the board and drags it to "In Arbeit".
     const anna = await (await browser.newContext()).newPage();

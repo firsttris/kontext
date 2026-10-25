@@ -38,6 +38,8 @@ const fields = {
   dueTime: time.nullable(),
   checklist: z.array(checkItemSchema).max(50),
   links: z.array(taskLinkSchema).max(10),
+  /** When the assignee (else who made it) gets a push; an instant. */
+  remindAt: z.iso.datetime().nullable(),
 };
 
 export const newTaskSchema = z.object({
@@ -51,6 +53,7 @@ export const newTaskSchema = z.object({
   dueTime: fields.dueTime.default(null),
   checklist: fields.checklist.default([]),
   links: fields.links.default([]),
+  remindAt: fields.remindAt.default(null),
 });
 /** As the app sends it (defaults may be left out) and as the server has it after checking. */
 export type NewTask = z.input<typeof newTaskSchema>;
@@ -78,4 +81,8 @@ export type Task = {
   createdAt: string;
   updatedAt: string;
   completedAt: string | null;
+  /** Who assigned it (a personal account id) and when; null without assignee. */
+  assignedBy: string | null;
+  assignedAt: string | null;
+  remindAt: string | null;
 };

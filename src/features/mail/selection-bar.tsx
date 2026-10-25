@@ -6,6 +6,7 @@
 import {
   Archive,
   FolderInput,
+  ListChecks,
   Mail,
   MailOpen,
   ShieldAlert,
@@ -15,7 +16,7 @@ import {
   Trash2,
   X,
 } from "lucide-react";
-import { Fragment, type ReactNode } from "react";
+import { Fragment, type ReactNode, useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
   MenuCheckboxItem,
@@ -29,6 +30,7 @@ import {
 import { useToast } from "@/components/ui/toast";
 import { COLOR_STYLES } from "@/lib/categories";
 import { cn } from "@/lib/cn";
+import { correspondent } from "@/lib/correspondent";
 import { moveTargets } from "@/lib/move-targets";
 import {
   categoryState,
@@ -38,8 +40,10 @@ import {
   type Picked,
   singleAccount,
 } from "@/lib/selection";
+import { mailLink, plainSubject } from "@/lib/tasks";
 import { m } from "@/paraglide/messages";
 import { useCategories } from "../categories/queries";
+import { TaskDialog, type TaskStart } from "../tasks/task-dialog";
 import { useMailActions } from "./actions";
 import { useAllMailboxes, useMailAccounts } from "./queries";
 
@@ -86,6 +90,7 @@ export const SelectionBar = ({
   const toast = useToast();
   const accounts = useMailAccounts();
   const mailboxes = useAllMailboxes();
+  const [tasks, setTasks] = useState<TaskStart[] | null>(null);
   const groups = groupsOf(picked, folderId);
   const accountId = singleAccount(picked);
   const categories = useCategories(accountId ?? undefined);
@@ -113,6 +118,29 @@ export const SelectionBar = ({
       );
   };
 
+  const archiveAll = () =>
+    groups.map((g) =>
+      actions.archive(
+        g.accountId,
+        g.emails.map((e) => e.id),
+        g.from,
+      ),
+    );
+
+  /** One task per picked mail, linked to it and to its sender's card. */
+  const makeTasks = () =>
+    setTasks(
+      picked.map(({ accountId: account, email }) => ({
+        title: plainSubject(email.subject ?? ""),
+        accountId: account,
+        link: mailLink(account, email),
+        person: correspondent(
+          email,
+          accounts.map((candidate) => candidate.name),
+        )?.email,
+      })),
+    );
+
   return (
     <div className="flex flex-col gap-1">
       <div className="flex items-center gap-1">
@@ -139,19 +167,7 @@ export const SelectionBar = ({
         <IconButton
           label={m.mail_archive_action()}
           disabled={none}
-          onClick={() =>
-            void run(
-              () =>
-                groups.map((g) =>
-                  actions.archive(
-                    g.accountId,
-                    g.emails.map((e) => e.id),
-                    g.from,
-                  ),
-                ),
-              true,
-            )
-          }
+          onClick={() => void run(archiveAll, true)}
         >
           <Archive size={15} strokeWidth={1.75} />
         </IconButton>
@@ -215,6 +231,9 @@ export const SelectionBar = ({
           }
         >
           <Star size={15} strokeWidth={1.75} className={flag ? undefined : "fill-warn text-warn"} />
+        </IconButton>
+        <IconButton label={m.mail_tasks_action()} disabled={none} onClick={makeTasks}>
+          <ListChecks size={15} strokeWidth={1.75} />
         </IconButton>
         {accountId && categories.length ? (
           <MenuRoot>
@@ -303,6 +322,13 @@ export const SelectionBar = ({
           </MenuRoot>
         ) : null}
       </div>
+      {tasks ? (
+        <TaskDialog
+          starts={tasks}
+          onClose={() => setTasks(null)}
+          onArchive={folderId ? () => run(archiveAll, true) : undefined}
+        />
+      ) : null}
     </div>
   );
 };

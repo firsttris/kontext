@@ -22,13 +22,16 @@ import {
   toLocal,
   weekDays,
 } from "@/lib/jscalendar";
+import { calendarTasks } from "@/lib/task-context";
 import { m } from "@/paraglide/messages";
+import { useMe, useTasks } from "../tasks/queries";
 import { AGENDA_DAYS, AgendaView } from "./agenda-view";
 import { CalendarList, CalendarsDialog } from "./calendar-list";
 import { EventDialog } from "./event-dialog";
 import { MiniMonth } from "./mini-month";
 import { MonthView, monthDays } from "./month-view";
 import { calendarOf, isInvitation, mayEdit, useEventMutations, useEvents } from "./queries";
+import { useTasksShown } from "./task-chip";
 import type { Moved } from "./use-drag";
 import { WeekGrid } from "./week-grid";
 
@@ -105,6 +108,9 @@ export const CalendarPage = ({ search }: { search: Search }) => {
   const { from, to } = range(view, selected);
   const { data: events, calendars, isPending } = useEvents(from, to);
   const [managing, setManaging] = useState(false);
+  const me = useMe();
+  const { tasks: allTasks } = useTasks();
+  const tasks = useTasksShown() ? calendarTasks(allTasks, me, today) : [];
   const { data: session } = useSession();
   const mine = session ? [session.username] : [];
   const { move: moveEvent } = useEventMutations();
@@ -265,15 +271,23 @@ export const CalendarPage = ({ search }: { search: Search }) => {
             selected={selected}
             today={today}
             events={events}
+            tasks={tasks}
             isInvitation={invited}
             compact={phone}
           />
         ) : view === "agenda" ? (
-          <AgendaView from={from} today={today} events={events} isInvitation={invited} />
+          <AgendaView
+            from={from}
+            today={today}
+            events={events}
+            tasks={tasks}
+            isInvitation={invited}
+          />
         ) : (
           <WeekGrid
             days={days}
             events={events}
+            tasks={tasks}
             isInvitation={invited}
             showDayHeader={!phone}
             canMove={canMove}

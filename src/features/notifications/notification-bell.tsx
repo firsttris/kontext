@@ -1,18 +1,20 @@
 /**
- * The bell in the rail: a dot when something arrived since it was last opened; opened, the
- * invitations to answer, the rest of today's appointments and the new mail, each one click away,
- * and the switch for notifications on this device.
+ * The bell in the rail: a dot when something arrived since it was last opened; opened, tasks
+ * given to me, the invitations to answer, what is due today (tasks, appointments) and the new
+ * mail, each one click away, and the switch for notifications on this device.
  */
 import * as Popover from "@radix-ui/react-popover";
 import { Link } from "@tanstack/react-router";
-import { Bell, CalendarCheck, CalendarDays, CheckCheck } from "lucide-react";
+import { Bell, CalendarCheck, CalendarDays, CheckCheck, ListChecks } from "lucide-react";
 import { type ReactNode, useEffect, useState } from "react";
 import { Avatar } from "@/components/ui/avatar";
 import { cn } from "@/lib/cn";
 import { displayName, listDate } from "@/lib/format";
 import { dateKey, locationName, toLocal } from "@/lib/jscalendar";
 import { unseenCount } from "@/lib/notifications";
+import { dueLabel, type Task } from "@/lib/tasks";
 import { m } from "@/paraglide/messages";
+import { usePeople } from "../tasks/queries";
 import { useAnnouncements } from "./announcements";
 import { markSeen, notificationsSupported, useSeen } from "./device-settings";
 import { DeviceSwitch } from "./device-switch";
@@ -38,7 +40,7 @@ const dayFormat = new Intl.DateTimeFormat("de-DE", {
 const MAX_MAILS = 8;
 
 const Section = ({ title, children }: { title: string; children: ReactNode }) => (
-  <section className="flex flex-col gap-0.5">
+  <section aria-label={title} className="flex flex-col gap-0.5">
     <h3 className="m-0 px-2 pt-1 pb-1 text-[11px] font-medium tracking-wide text-muted uppercase">
       {title}
     </h3>
@@ -79,27 +81,74 @@ const EventRow = ({ item, invitation }: { item: FeedEvent; invitation?: boolean 
   );
 };
 
+const TaskEntry = ({
+  task,
+  detail,
+  fresh,
+  overdue,
+}: {
+  task: Task;
+  detail: string;
+  /** Given to me and not yet seen. */
+  fresh?: boolean;
+  overdue?: boolean;
+}) => (
+  <Popover.Close asChild>
+    <Link to="/tasks" search={{ task: task.id }} className={row}>
+      <span
+        className={cn(
+          "flex size-8 shrink-0 items-center justify-center rounded-lg",
+          fresh ? "bg-accent/10 text-accent" : "bg-subtle text-muted",
+        )}
+      >
+        <ListChecks size={15} />
+      </span>
+      <span className="flex min-w-0 flex-1 flex-col">
+        <span className="truncate font-medium">{task.title}</span>
+        <span className={cn("truncate text-[12px]", overdue ? "text-danger" : "text-muted")}>
+          {detail}
+        </span>
+      </span>
+      {fresh ? (
+        <span aria-hidden="true" className="mt-1.5 size-2 shrink-0 rounded-full bg-accent" />
+      ) : null}
+    </Link>
+  </Popover.Close>
+);
+
 export const NotificationBell = ({ className }: { className: string }) => {
   const now = useNow();
-  const { mails, invitations, appointments } = useNotificationFeed(now);
+  const { mails, invitations, appointments, assigned, due } = useNotificationFeed(now);
   useAnnouncements(mails, appointments);
   const seen = useSeen();
+  const people = usePeople();
+  const today = dateKey(now);
+  const nameOf = (id: string | null) => people.find((person) => person.id === id)?.name ?? "";
   const unseen =
     unseenCount(
       mails.map((mail) => new Date(mail.email.receivedAt)),
       seen.at,
-    ) + invitations.filter((item) => !seen.invitations.includes(item.key)).length;
+    ) +
+    invitations.filter((item) => !seen.invitations.includes(item.key)).length +
+    assigned.filter((task) => !seen.tasks.includes(task.id)).length;
   const label = unseen > 0 ? m.notifications_open_new({ count: unseen }) : m.notifications_title();
-  const empty = mails.length + invitations.length + appointments.length === 0;
+  const empty =
+    mails.length + invitations.length + appointments.length + assigned.length + due.length === 0;
+  // What was new when the bell opened stays marked while it is open.
+  const [fresh, setFresh] = useState<ReadonlySet<string>>(new Set());
 
   return (
     <Popover.Root
       onOpenChange={(open) => {
-        if (open)
-          markSeen(
-            Date.now(),
-            invitations.map((item) => item.key),
-          );
+        if (!open) return;
+        setFresh(
+          new Set(assigned.filter((task) => !seen.tasks.includes(task.id)).map((t) => t.id)),
+        );
+        markSeen(
+          Date.now(),
+          invitations.map((item) => item.key),
+          assigned.map((task) => task.id),
+        );
       }}
     >
       <Popover.Trigger aria-label={label} title={label} className={cn(className, "relative")}>
@@ -134,10 +183,45 @@ export const NotificationBell = ({ className }: { className: string }) => {
                 {m.notifications_empty()}
               </p>
             ) : null}
+            {assigned.length ? (
+              <Section title={m.notifications_tasks_new()}>
+                {assigned.map((task) => (
+                  <TaskEntry
+                    key={task.id}
+                    task={task}
+                    fresh={fresh.has(task.id)}
+                    detail={[
+                      m.notifications_task_from({ name: nameOf(task.assignedBy) || "—" }),
+                      dueLabel(task.dueDate, task.dueTime, today),
+                    ]
+                      .filter(Boolean)
+                      .join(" · ")}
+                  />
+                ))}
+              </Section>
+            ) : null}
             {invitations.length ? (
               <Section title={m.notifications_invitations()}>
                 {invitations.map((item) => (
                   <EventRow key={item.key} item={item} invitation />
+                ))}
+              </Section>
+            ) : null}
+            {due.length ? (
+              <Section title={m.notifications_tasks_due()}>
+                {due.map((task) => (
+                  <TaskEntry
+                    key={task.id}
+                    task={task}
+                    overdue={task.dueDate! < today}
+                    detail={
+                      task.dueDate! < today
+                        ? m.notifications_task_overdue({
+                            when: dueLabel(task.dueDate, task.dueTime, today),
+                          })
+                        : dueLabel(task.dueDate, task.dueTime, today)
+                    }
+                  />
                 ))}
               </Section>
             ) : null}

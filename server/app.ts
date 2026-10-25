@@ -47,6 +47,7 @@ import { createSnippetStore } from "./snippets/store";
 import { createSnoozeRoutes } from "./snooze/routes";
 import { createSnoozeStore } from "./snooze/store";
 import { createSnoozeWaker } from "./snooze/waker";
+import { createTaskReminder } from "./tasks/notices";
 import { createTaskRoutes } from "./tasks/routes";
 import { createTaskStore } from "./tasks/store";
 
@@ -285,14 +286,21 @@ export const createApp = async (env: Env) => {
       nameOf: async (request) => (await infoOf(request))?.name ?? "",
     }),
   );
+  // Task reminders go out every minute, also with nobody signed in.
+  const tasks = createTaskStore(db);
+  const reminder = createTaskReminder({ store: tasks, notify: pusher.notify });
+  setInterval(() => void reminder.tick(), env.REMINDER_TICK_MS).unref();
   app.route(
     "/api/tasks",
     createTaskRoutes({
-      store: createTaskStore(db),
+      store: tasks,
       accountsOf,
-      changed: (accountId) =>
-        hub.publish({ type: "tasks", accountId }, (viewer) =>
-          viewer.accountIds.includes(accountId),
+      notify: pusher.notify,
+      nameOf: async (request) => (await infoOf(request))?.name ?? "",
+      changed: (accountId, assignees) =>
+        hub.publish(
+          { type: "tasks", accountId },
+          (viewer) => viewer.accountIds.includes(accountId) || assignees.includes(viewer.me),
         ),
     }),
   );

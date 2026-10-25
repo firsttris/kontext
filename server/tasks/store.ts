@@ -1,16 +1,23 @@
 /** Tasks in Kontext's SQLite: one row per task, its links to mails, contacts and appointments. */
-import { and, eq, gte, inArray, isNull, max, ne, or } from "drizzle-orm";
+import { and, asc, eq, gte, inArray, isNull, lte, max, ne, or } from "drizzle-orm";
 import type { Db } from "../db";
 import * as schema from "../db/schema";
 import type { CheckItem, NewTaskData, Task, TaskLink, TaskPatch, TaskStatus } from "./tasks";
 
 export type TaskStore = {
-  /** Open tasks of these accounts, and the ones finished since `doneSince`. */
-  list: (accountIds: string[], doneSince: Date) => Promise<Task[]>;
+  /**
+   * Open tasks of these accounts and those assigned to `me` wherever they are (a colleague's own
+   * board), and the ones finished since `doneSince`.
+   */
+  list: (accountIds: string[], doneSince: Date, me?: string) => Promise<Task[]>;
   get: (id: string) => Promise<Task | null>;
   create: (task: NewTaskData, createdBy: string) => Promise<Task>;
-  update: (id: string, patch: TaskPatch) => Promise<Task | null>;
+  /** `by`: who changes it, kept as who assigned it when the assignee changes. */
+  update: (id: string, patch: TaskPatch, by: string) => Promise<Task | null>;
   remove: (id: string) => Promise<void>;
+  /** Open tasks whose reminder is due and not yet sent, the oldest first. */
+  dueReminders: (now: Date) => Promise<Task[]>;
+  markReminded: (id: string, at: Date) => Promise<void>;
 };
 
 type Row = typeof schema.tasks.$inferSelect;
@@ -39,7 +46,12 @@ const toTask = (row: Row, links: LinkRow[]): Task => ({
   createdAt: row.createdAt.toISOString(),
   updatedAt: row.updatedAt.toISOString(),
   completedAt: row.completedAt?.toISOString() ?? null,
+  assignedBy: row.assignedBy,
+  assignedAt: row.assignedAt?.toISOString() ?? null,
+  remindAt: row.remindAt?.toISOString() ?? null,
 });
+
+const instant = (value: string | null) => (value ? new Date(value) : null);
 
 export const createTaskStore = (db: Db): TaskStore => {
   const linksOf = async (ids: string[]) => {
@@ -78,14 +90,17 @@ export const createTaskStore = (db: Db): TaskStore => {
   };
 
   return {
-    list: async (accountIds, doneSince) => {
-      if (!accountIds.length) return [];
+    list: async (accountIds, doneSince, me) => {
+      if (!accountIds.length && !me) return [];
       const rows = await db
         .select()
         .from(schema.tasks)
         .where(
           and(
-            inArray(schema.tasks.accountId, accountIds),
+            or(
+              inArray(schema.tasks.accountId, accountIds),
+              me ? eq(schema.tasks.assigneeId, me) : undefined,
+            ),
             or(
               ne(schema.tasks.status, "done"),
               isNull(schema.tasks.completedAt),
@@ -113,16 +128,20 @@ export const createTaskStore = (db: Db): TaskStore => {
         checklist: JSON.stringify(task.checklist),
         createdBy,
         completedAt: task.status === "done" ? now : null,
+        assignedBy: task.assigneeId ? createdBy : null,
+        assignedAt: task.assigneeId ? now : null,
+        remindAt: instant(task.remindAt),
         createdAt: now,
         updatedAt: now,
       });
       await writeLinks(id, task.links);
       return (await get(id))!;
     },
-    update: async (id, patch) => {
+    update: async (id, patch, by) => {
       const current = await get(id);
       if (!current) return null;
-      const { links, checklist, ...rest } = patch;
+      const { links, checklist, remindAt, ...rest } = patch;
+      const reassigned = patch.assigneeId !== undefined && patch.assigneeId !== current.assigneeId;
       const status = patch.status ?? current.status;
       const moved =
         (patch.status && patch.status !== current.status) ||
@@ -132,6 +151,16 @@ export const createTaskStore = (db: Db): TaskStore => {
         .set({
           ...rest,
           ...(checklist ? { checklist: JSON.stringify(checklist) } : {}),
+          ...(reassigned
+            ? {
+                assignedBy: patch.assigneeId ? by : null,
+                assignedAt: patch.assigneeId ? new Date() : null,
+              }
+            : {}),
+          // A new time reminds anew.
+          ...(remindAt !== undefined && remindAt !== current.remindAt
+            ? { remindAt: instant(remindAt), remindedAt: null }
+            : {}),
           // Into another column without a place of its own: at its end.
           ...(moved && patch.position === undefined
             ? { position: await nextPosition(patch.accountId ?? current.accountId, status) }
@@ -154,6 +183,24 @@ export const createTaskStore = (db: Db): TaskStore => {
     },
     remove: async (id) => {
       await db.delete(schema.tasks).where(eq(schema.tasks.id, id));
+    },
+    dueReminders: async (now) => {
+      const rows = await db
+        .select()
+        .from(schema.tasks)
+        .where(
+          and(
+            lte(schema.tasks.remindAt, now),
+            isNull(schema.tasks.remindedAt),
+            ne(schema.tasks.status, "done"),
+          ),
+        )
+        .orderBy(asc(schema.tasks.remindAt));
+      const links = await linksOf(rows.map((row) => row.id));
+      return rows.map((row) => toTask(row, links.get(row.id) ?? []));
+    },
+    markReminded: async (id, at) => {
+      await db.update(schema.tasks).set({ remindedAt: at }).where(eq(schema.tasks.id, id));
     },
   };
 };

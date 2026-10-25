@@ -18,6 +18,7 @@ import { addressLines, company, fullName, note, primaryEmail, primaryPhone } fro
 import { toVCard } from "@/lib/vcard";
 import { m } from "@/paraglide/messages";
 import { useEventsWith } from "../calendar/queries";
+import { ContactTasks } from "./contact-tasks";
 import { type BookRef, bookOf, type Contact } from "./queries";
 
 const Card = ({ title, children }: { title: string; children: ReactNode }) => (
@@ -67,6 +68,9 @@ export const ContactDetail = ({ card, books, groups }: Props) => {
     (a, b) => eventTimes(a).start.getTime() - eventTimes(b).start.getTime(),
   );
   const next = upcoming[0];
+  const threadIds = new Set(
+    (mails.data ?? []).flatMap((mail) => (mail.threadId ? [mail.threadId] : [])),
+  );
 
   return (
     <div className="mx-auto flex max-w-[1040px] flex-col gap-7 px-4 pt-3 pb-10 md:px-10 md:pt-9">
@@ -135,6 +139,7 @@ export const ContactDetail = ({ card, books, groups }: Props) => {
 
       <div className="flex flex-wrap gap-7">
         <div className="flex min-w-0 flex-[999_1_420px] flex-col gap-6">
+          <ContactTasks card={card} name={fullName(card)} email={email} threadIds={threadIds} />
           <section className="flex flex-col gap-2">
             <h3 className="m-0 border-b border-border pb-2 text-[14px] font-semibold">
               {m.contacts_upcoming()}

@@ -32,6 +32,7 @@ import { useToast } from "@/components/ui/toast";
 import { useShortcuts } from "@/components/use-shortcuts";
 import { isFlagged } from "@/jmap/mail";
 import type { EmailDetail, EmailSummary, Mailbox } from "@/jmap/types";
+import { correspondent } from "@/lib/correspondent";
 import { shortAddress } from "@/lib/mail-accounts";
 import { mailboxRights } from "@/lib/mailboxes";
 import { moveTargets } from "@/lib/move-targets";
@@ -81,6 +82,10 @@ export const Toolbar = ({
       title: plainSubject(email.subject ?? ""),
       accountId,
       link: mailLink(accountId, email),
+      person: correspondent(
+        email,
+        accounts.map((account) => account.name),
+      )?.email,
     });
   const close = () =>
     navigate({ to: ".", search: (prev) => ({ ...prev, email: undefined, compose: undefined }) });
@@ -355,7 +360,7 @@ export const Toolbar = ({
       ) : null}
       {task ? (
         <TaskDialog
-          start={task}
+          starts={[task]}
           onClose={() => setTask(null)}
           onArchive={
             canRemove && mailbox.role !== "archive"

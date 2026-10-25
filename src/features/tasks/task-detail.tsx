@@ -11,11 +11,13 @@ import { useToast } from "@/components/ui/toast";
 import { ItemLink, LinkIcon } from "@/features/links/item-link";
 import { cn } from "@/lib/cn";
 import { shortAddress } from "@/lib/mail-accounts";
+import { shiftedReminder } from "@/lib/task-reminders";
 import { STATUS_LABELS, TASK_STATUSES, type Task } from "@/lib/tasks";
 import { m } from "@/paraglide/messages";
 import type { TaskPatch } from "../../../server/tasks/tasks";
 import { useBoards, useMe, usePeople, useTaskActions } from "./queries";
 import { TaskChecklist } from "./task-checklist";
+import { TaskReminder } from "./task-reminder";
 
 const createdFormat = new Intl.DateTimeFormat("de-DE", {
   timeZone: "Europe/Berlin",
@@ -36,6 +38,12 @@ export const TaskDetail = ({ task, onClose }: { task: Task; onClose?: () => void
   const [notes, setNotes] = useState(task.notes);
   const [confirm, setConfirm] = useState(false);
   const done = task.status === "done";
+
+  /** A new due day or time; the reminder moves along, the same distance before. */
+  const saveDue = (dueDate: string | null, dueTime: string | null) => {
+    const remindAt = shiftedReminder(task, { dueDate, dueTime }, new Date());
+    void save({ dueDate, dueTime, ...(remindAt === undefined ? {} : { remindAt }) });
+  };
 
   const save = async (patch: TaskPatch) => {
     try {
@@ -65,6 +73,9 @@ export const TaskDetail = ({ task, onClose }: { task: Task; onClose?: () => void
   };
 
   const creator = people.find((person) => person.id === task.createdBy)?.name ?? "";
+  // Given to me on a colleague's own board: changed there, not moved or deleted.
+  const onMyBoards = boards.some((board) => board.id === task.accountId);
+  const owner = people.find((person) => person.id === task.accountId)?.name ?? "";
 
   return (
     <article aria-label={task.title} className="flex h-full min-h-0 flex-col">
@@ -86,17 +97,19 @@ export const TaskDetail = ({ task, onClose }: { task: Task; onClose?: () => void
           {done ? m.tasks_reopen() : m.tasks_complete()}
         </Button>
         <div className="flex-1" />
-        <Button
-          variant="ghost"
-          size={confirm ? "sm" : "icon"}
-          aria-label={m.tasks_delete()}
-          title={m.tasks_delete()}
-          onClick={() => (confirm ? void remove() : setConfirm(true))}
-          className={confirm ? "text-danger" : undefined}
-        >
-          <Trash2 size={15} />
-          {confirm ? m.tasks_delete_really() : null}
-        </Button>
+        {onMyBoards ? (
+          <Button
+            variant="ghost"
+            size={confirm ? "sm" : "icon"}
+            aria-label={m.tasks_delete()}
+            title={m.tasks_delete()}
+            onClick={() => (confirm ? void remove() : setConfirm(true))}
+            className={confirm ? "text-danger" : undefined}
+          >
+            <Trash2 size={15} />
+            {confirm ? m.tasks_delete_really() : null}
+          </Button>
+        ) : null}
       </div>
       <div className="min-h-0 flex-1 overflow-y-auto">
         <div className="flex max-w-[720px] flex-col gap-5 px-5 py-5 md:px-8">
@@ -156,8 +169,14 @@ export const TaskDetail = ({ task, onClose }: { task: Task; onClose?: () => void
               {m.tasks_mailbox()}
               <Select
                 value={task.accountId}
+                disabled={!onMyBoards}
                 onChange={(e) => void save({ accountId: e.target.value })}
               >
+                {onMyBoards ? null : (
+                  <option value={task.accountId}>
+                    {m.tasks_board_of({ mailbox: owner || "—" })}
+                  </option>
+                )}
                 {boards.map((board) => (
                   <option key={board.id} value={board.id}>
                     {board.isPersonal ? m.tasks_my_board() : shortAddress(board.name)}
@@ -171,10 +190,7 @@ export const TaskDetail = ({ task, onClose }: { task: Task; onClose?: () => void
                 type="date"
                 value={task.dueDate ?? ""}
                 onChange={(e) =>
-                  void save({
-                    dueDate: e.target.value || null,
-                    ...(e.target.value ? {} : { dueTime: null }),
-                  })
+                  saveDue(e.target.value || null, e.target.value ? task.dueTime : null)
                 }
               />
             </Label>
@@ -184,10 +200,17 @@ export const TaskDetail = ({ task, onClose }: { task: Task; onClose?: () => void
                 type="time"
                 value={task.dueTime ?? ""}
                 disabled={!task.dueDate}
-                onChange={(e) => void save({ dueTime: e.target.value || null })}
+                onChange={(e) => saveDue(task.dueDate, e.target.value || null)}
               />
             </Label>
           </div>
+          {done ? null : (
+            <TaskReminder
+              key={`${task.id}-${task.dueDate}-${task.dueTime}`}
+              task={task}
+              onChange={(remindAt) => void save({ remindAt })}
+            />
+          )}
           <TaskChecklist
             items={task.checklist}
             onChange={(checklist) => void save({ checklist })}
