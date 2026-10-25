@@ -40,12 +40,15 @@ const write = async (page: Page, text: string, field = "Nachricht") => {
   await page.keyboard.press("Enter");
 };
 
-/** One message in the conversation (not in the thread beside it). */
+/**
+ * One message in the conversation (not in the thread beside it), as the server has it: the copy
+ * shown at once while sending ("pending-…") has no actions yet and may stand beside it a moment.
+ */
 const messageIn = (page: Page, text: string) =>
   page
     .getByRole("list", { name: "Nachrichten" })
     .first()
-    .locator("[data-message]")
+    .locator('[data-message]:not([data-message^="pending-"])')
     .filter({ hasText: text });
 
 test.describe("Chat: Reaktionen und Antworten", () => {

@@ -46,6 +46,19 @@ test.describe("Umzug", () => {
     const max = jmapAs("max");
     const maxId = await personalAccountId("max");
     const using = [CAPABILITIES.core, CAPABILITIES.mail, CAPABILITIES.blob];
+    // A retry starts clean: an earlier attempt's labels (with their mails) would count twice.
+    const { list: maxBoxes } = await max.call<{ list: { id: string; name: string }[] }>(
+      "Mailbox/get",
+      { accountId: maxId, properties: ["name"] },
+    );
+    const earlier = maxBoxes.filter((box) => /^Label [AB] /.test(box.name)).map((box) => box.id);
+    if (earlier.length) {
+      await max.call("Mailbox/set", {
+        accountId: maxId,
+        destroy: earlier,
+        onDestroyRemoveEmails: true,
+      });
+    }
     const [created] = await max.request(
       [
         [
@@ -105,11 +118,13 @@ test.describe("Umzug", () => {
 
     const local = `ziel-${stamp_}`;
     await login(page, "jonas");
-    await newEmployee(page, local, "Zora Ziel");
+    // A name of its own: a first attempt's row from Max's mailbox may still be in the list.
+    const target = `Zora Ziel ${stamp_}`;
+    await newEmployee(page, local, target);
     await page.goto("/settings?section=migration");
     await page.getByRole("button", { name: "Postfach verbinden" }).click();
     const dialog = page.getByRole("dialog", { name: "Postfach verbinden" });
-    await dialog.getByLabel("Für").selectOption({ label: `Zora Ziel (${address(local)})` });
+    await dialog.getByLabel("Für").selectOption({ label: `${target} (${address(local)})` });
     await dialog.getByLabel("Anbieter").selectOption({ label: "Anderer Server" });
     await dialog.getByLabel("Server", { exact: true }).fill("127.0.0.1");
     await dialog.getByLabel("Port").fill("20143");
@@ -122,7 +137,7 @@ test.describe("Umzug", () => {
     await expect(dialog).toBeHidden({ timeout: 20_000 });
 
     // Max's mailbox also holds the seed's invitations; the numbers only must not change later.
-    const row = page.getByRole("listitem", { name: address("max") });
+    const row = page.getByRole("listitem", { name: address("max") }).filter({ hasText: target });
     await expect(row).toContainText("1 in weitere Ordner", { timeout: 30_000 });
     const imported = (await row.textContent())?.match(/(\d+) Mails übernommen/)?.[0] ?? "";
     expect(imported).not.toBe("");
@@ -178,8 +193,9 @@ test.describe("Umzug", () => {
     await expect(row).toContainText("1 in weitere Ordner");
     await row.getByRole("button", { name: "Umzug abschließen" }).click();
     await row.getByRole("button", { name: "Ja, weiter" }).click();
+    // Finishing waits for the server's last run of the move.
     const done = page.getByRole("dialog", { name: "Umzug abgeschlossen" });
-    await expect(done).toContainText(address(local));
+    await expect(done).toContainText(address(local), { timeout: 20_000 });
     await done.getByRole("button", { name: "Fertig" }).click();
     await expect(row).toContainText("Abgeschlossen");
   });
