@@ -11,7 +11,7 @@
  *   share on a folder holds for what is in it, as in Schreibzeug.
  *
  *   bun dev/fake-schreibzeug.ts                                        # http://localhost:18096
- *   bun dev/fake-schreibzeug.ts --port 28096 --kontext http://localhost:5174   # the e2e tests
+ *   bun dev/fake-schreibzeug.ts --port 28097 --kontext http://localhost:5174   # the e2e tests
  *
  * Kontext then needs SCHREIBZEUG_URL=http://localhost:<port> and SCHREIBZEUG_CLIENT_SECRET set to
  * SCHREIBZEUG_DEV_SECRET (dev/config.ts), the secret this stand-in signs in with.

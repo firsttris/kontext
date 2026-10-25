@@ -10,7 +10,7 @@ const SERVER_PORT = 28090;
 const APP_PORT = 5174;
 const GRAPH_PORT = 28095;
 const LIVEKIT_PORT = 27880;
-const SCHREIBZEUG_PORT = 28096;
+const SCHREIBZEUG_PORT = 28097;
 
 const launchOptions = {
   ...(process.env.PW_CHROMIUM_PATH ? { executablePath: process.env.PW_CHROMIUM_PATH } : {}),

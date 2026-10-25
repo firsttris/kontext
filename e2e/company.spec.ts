@@ -5,7 +5,7 @@ import { address, inboxMails, jmapAs, login, personalAccountId, STALWART, unique
 import { deliverMail } from "./protocols";
 
 /** The stand-in for Schreibzeug (dev/fake-schreibzeug.ts, playwright.config.ts). */
-const SCHREIBZEUG = "http://localhost:28096";
+const SCHREIBZEUG = "http://localhost:28097";
 
 test.describe("Firmenverwaltung", () => {
   test("nur mit dem Recht sichtbar", async ({ page }) => {

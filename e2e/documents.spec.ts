@@ -76,7 +76,7 @@ test.describe("Dokumente", () => {
     await rail(page).getByRole("link", { name: "Dokumente" }).click();
     await expect(documentsFrame(page).locator("#who")).toHaveText(/Angemeldet als/);
     const signedOut = page.waitForResponse(
-      (response) => response.url().includes(":28096/logout") && response.status() === 204,
+      (response) => response.url().includes(":28097/logout") && response.status() === 204,
     );
     await rail(page)
       .getByRole("button", { name: /sandra/i })
