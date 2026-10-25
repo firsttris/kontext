@@ -52,6 +52,21 @@ const settingsSchema = z.object({
       }),
     )
     .default([]),
+  /** A voice menu before it rings: each key rings for its people, or goes to the mailbox. */
+  menu: z
+    .object({
+      enabled: z.boolean(),
+      greeting: z.string().nullable(),
+      options: z.array(
+        z.object({
+          digit: z.string(),
+          label: z.string(),
+          members: z.array(z.string()),
+          mailbox: z.boolean(),
+        }),
+      ),
+    })
+    .default({ enabled: false, greeting: null, options: [] }),
   /** Desk phones (Snom) that sign in at the box and ring with Kontext. */
   deskPhones: z
     .array(
@@ -148,6 +163,7 @@ const toCall = (row: CallDbRow): PhoneCall => ({
   forwardedTo: row.forwardedTo,
   line: row.line,
   desk: row.desk,
+  topic: row.topic,
 });
 
 const fromCall = ({ present: _, ...call }: PhoneCall): CallDbRow => ({

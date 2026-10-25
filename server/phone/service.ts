@@ -6,7 +6,17 @@
  */
 import type { Hub } from "../live/hub";
 import { companyDay, type NewTaskData } from "../tasks/tasks";
-import { deskCall, deskForBox, deskOf, everyone, lineOf, outLineOf, ringPlanFor } from "./lines";
+import {
+  choiceOf,
+  deskCall,
+  deskForBox,
+  deskOf,
+  everyone,
+  lineOf,
+  outLineOf,
+  ringPlanFor,
+  ringPlanForCall,
+} from "./lines";
 import { TRUNK_USER } from "./livekit-sip";
 import { toDialable, toE164 } from "./numbers";
 import {
@@ -85,6 +95,7 @@ export const desiredConfig = (
   const { mailbox, hours } = settings;
   const greeting = knownSound(settings, mailbox.greeting);
   const closedGreeting = knownSound(settings, hours.greeting);
+  const menuGreeting = settings.menu.enabled ? knownSound(settings, settings.menu.greeting) : null;
   return {
     line: settings.line,
     extraLines: settings.line
@@ -104,8 +115,11 @@ export const desiredConfig = (
     },
     ringSeconds: mailbox.enabled ? mailbox.ringSeconds : RING_SECONDS,
     sounds: [
-      ...(mailbox.enabled && greeting ? [greeting] : []),
-      ...(hours.enabled && closedGreeting && closedGreeting !== greeting ? [closedGreeting] : []),
+      ...new Set([
+        ...(mailbox.enabled && greeting ? [greeting] : []),
+        ...(hours.enabled && closedGreeting ? [closedGreeting] : []),
+        ...(menuGreeting ? [menuGreeting] : []),
+      ]),
     ],
     mailbox: mailbox.enabled ? { greeting, maxSeconds: MAILBOX_SECONDS } : null,
     hours: hours.enabled
@@ -116,6 +130,18 @@ export const desiredConfig = (
           greeting: closedGreeting,
         }
       : null,
+    // Without a greeting there is no menu to hear.
+    menu:
+      menuGreeting && settings.menu.options.length
+        ? {
+            greeting: menuGreeting,
+            options: settings.menu.options.map(({ digit, mailbox: toMailbox }) => ({
+              digit,
+              mailbox: toMailbox,
+            })),
+            waitSeconds: 5,
+          }
+        : null,
     forward: settings.forward
       ? { number: toDialable(settings.forward.number), afterSeconds: settings.forward.afterSeconds }
       : null,
@@ -217,13 +243,15 @@ export const createPhoneService = (deps: PhoneDeps) => {
       if (event.state !== "ringing" || event.direction !== "in") return;
       const settings = await store.settings();
       const line = lineOf(settings, event.line);
+      const choice = choiceOf(settings, event.choice);
       const plan = withoutUnavailable(
-        ringPlanFor(settings, line),
+        ringPlanForCall(settings, line, choice),
         unavailableAt(await store.statuses(), now()),
       );
       const call = {
         ...incomingCall(event, { id: newId(), boxId, members: plan.order }),
         line: line?.label ?? null,
+        topic: choice?.label ?? null,
       };
       await save(call);
       ringPhones(call, plan);

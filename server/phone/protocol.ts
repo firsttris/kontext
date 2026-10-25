@@ -73,6 +73,20 @@ export const deskPhoneSchema = z.object({
 });
 export type DeskPhone = z.infer<typeof deskPhoneSchema>;
 
+/**
+ * A voice menu before it rings: the greeting, then a key – "1" for Kundendienst – picks who it
+ * rings for (Kontext decides that from the choice) or the mailbox. No key: it rings as usual.
+ */
+export const menuSchema = z.object({
+  greeting: soundIdSchema,
+  options: z
+    .array(z.object({ digit: z.string().regex(/^[0-9]$/), mailbox: z.boolean() }))
+    .min(1)
+    .max(10),
+  /** How long to wait for a key after the greeting. */
+  waitSeconds: z.number().int().min(2).max(15),
+});
+
 /** Everything the box needs, whole and versioned: it always renders from all of it. */
 export const boxConfigSchema = z.object({
   line: lineSchema.nullable(),
@@ -85,6 +99,7 @@ export const boxConfigSchema = z.object({
   sounds: z.array(soundIdSchema).default([]),
   mailbox: mailboxSchema.nullable().default(null),
   hours: hoursSchema.nullable().default(null),
+  menu: menuSchema.nullable().default(null),
   /** While it rings in Kontext, after a while also this number (a mobile phone) rings. */
   forward: z
     .object({
@@ -151,6 +166,11 @@ export const callEventSchema = z.object({
   line: z.string().max(100).optional(),
   /** Answered at, or dialled from, this desk phone (its id). */
   desk: z.string().max(12).optional(),
+  /** The key the caller pressed in the voice menu. */
+  choice: z
+    .string()
+    .regex(/^[0-9]$/)
+    .optional(),
   at: z.string().datetime(),
 });
 export type CallEvent = z.infer<typeof callEventSchema>;

@@ -62,6 +62,8 @@ export type PhoneCall = {
   line: string | null;
   /** The desk phone at the box it was answered at or dialled from (its name). */
   desk: string | null;
+  /** What the caller chose in the voice menu ("Kundendienst"). */
+  topic: string | null;
 };
 
 /** Phone rooms in LiveKit: "kontext-phone-<uuid>", which LiveKit SIP's dispatch rule matches. */
@@ -158,6 +160,7 @@ export const incomingCall = (
   forwardedTo: null,
   line: null,
   desk: null,
+  topic: null,
 });
 
 /** A call outside the opening hours: filed at once, it never rings. */
@@ -207,6 +210,7 @@ export const outgoingCall = ({
   forwardedTo: null,
   line: null,
   desk: null,
+  topic: null,
 });
 
 /** The call after one of the box's events; the same call when it changes nothing (a repeat). */

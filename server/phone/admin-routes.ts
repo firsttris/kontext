@@ -83,6 +83,20 @@ const desksSchema = z.object({
     )
     .max(30),
 });
+const menuInput = z.object({
+  enabled: z.boolean(),
+  greeting: z.string().max(64).nullable(),
+  options: z
+    .array(
+      z.object({
+        digit: z.string().regex(/^[0-9]$/),
+        label: z.string().trim().min(1).max(60),
+        members: z.array(z.string().min(1).max(64)).max(200),
+        mailbox: z.boolean(),
+      }),
+    )
+    .max(10),
+});
 const boxSchema = z.object({ name: z.string().trim().min(1).max(60) });
 
 /** Short ids for the box's endpoint names ("fritzbox-<id>"). */
@@ -143,6 +157,7 @@ export const createPhoneAdminRoutes = ({
         deliverTo: settings.mailbox.deliverTo?.accountId ?? null,
       },
       hours: settings.hours,
+      menu: settings.menu,
       sip,
     });
   });
@@ -239,6 +254,28 @@ export const createPhoneAdminRoutes = ({
       };
     });
     await store.saveSettings({ ...settings, deskPhones });
+    await service.reconfigure();
+    return c.body(null, 204);
+  });
+
+  app.put("/menu", async (c) => {
+    const parsed = menuInput.safeParse(await c.req.json().catch(() => ({})));
+    if (!parsed.success) return c.json({ error: "Ungültiges Menü" }, 400);
+    const settings = await store.settings();
+    const { greeting, options } = parsed.data;
+    if (greeting && !settings.sounds.some((sound) => sound.id === greeting)) {
+      return c.json({ error: "Unbekannte Ansage" }, 400);
+    }
+    if (parsed.data.enabled && !greeting)
+      return c.json({ error: "Das Menü braucht eine Ansage" }, 400);
+    if (new Set(options.map((option) => option.digit)).size !== options.length) {
+      return c.json({ error: "Jede Taste nur einmal" }, 400);
+    }
+    const known = new Set(c.get("loaded").company.employees.map((employee) => employee.id));
+    if (!options.every((option) => option.members.every((id) => known.has(id)))) {
+      return c.json({ error: "Unbekannte Person" }, 400);
+    }
+    await store.saveSettings({ ...settings, menu: parsed.data });
     await service.reconfigure();
     return c.body(null, 204);
   });

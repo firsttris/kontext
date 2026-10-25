@@ -121,6 +121,7 @@ Bun.serve({
         remote: String(body.from ?? ""),
         local: String(body.to ?? ""),
         ...(body.line ? { line: String(body.line) } : {}),
+        ...(body.choice ? { choice: String(body.choice) } : {}),
         at: now(),
       });
       return Response.json({ call });

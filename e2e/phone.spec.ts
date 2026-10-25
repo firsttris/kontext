@@ -25,9 +25,12 @@ const box = {
       })
       .toBe(true);
   },
-  ring: async (from: string, line?: string) =>
+  ring: async (from: string, line?: string, choice?: string) =>
     (await (
-      await fetch(`${CONTROL}/ring`, { method: "POST", body: JSON.stringify({ from, line }) })
+      await fetch(`${CONTROL}/ring`, {
+        method: "POST",
+        body: JSON.stringify({ from, line, choice }),
+      })
     ).json()) as { call: string },
   hangup: (call: string, cause = 16) =>
     fetch(`${CONTROL}/hangup`, { method: "POST", body: JSON.stringify({ call, cause }) }),
@@ -53,6 +56,7 @@ const box = {
           lines: string[];
         }[];
         hours: { open: { day: number; from: string; to: string }[] } | null;
+        menu: { options: { digit: string; mailbox: boolean }[] } | null;
       } | null;
       commands: { type: string; number?: string; call?: string }[];
     },
@@ -368,6 +372,36 @@ test.describe("Telefonie über die Telefonbox", () => {
     await expect(page.getByRole("dialog", { name: /^Anruf von/ })).toHaveCount(0);
     await box.hangup(call);
     await page.getByLabel("Erreichbarkeit").selectOption({ label: "Erreichbar" });
+    await anna.close();
+  });
+
+  test("Sprachmenü: wer die 1 drückt, landet beim Kundendienst (Anna)", async ({
+    page,
+    browser,
+  }) => {
+    await login(page);
+    await page.goto("/settings?section=phone");
+    const menu = page.getByRole("region", { name: "Sprachmenü" });
+    await menu.getByLabel("Sprachmenü einschalten").check();
+    await menu
+      .getByRole("combobox", { name: /^Ansage des Menüs/ })
+      .selectOption({ label: "Mailbox Büro" });
+    await menu.getByRole("button", { name: "Taste hinzufügen" }).click();
+    const key = menu.getByRole("group", { name: "Taste 1" });
+    await key.getByLabel("Wofür").fill("Kundendienst");
+    await key.getByLabel("Anna Weber").check();
+    await menu.getByRole("button", { name: "Speichern" }).click();
+    await expect
+      .poll(async () => (await box.state()).config?.menu)
+      .toMatchObject({ options: [{ digit: "1", mailbox: false }] });
+
+    const anna = await colleague(browser, "anna");
+    const { call } = await box.ring("07223 81234", undefined, "1");
+    await expect(anna.page.getByRole("dialog", { name: /^Anruf von/ })).toContainText(
+      "Kundendienst",
+    );
+    await expect(page.getByRole("dialog", { name: /^Anruf von/ })).toHaveCount(0);
+    await box.hangup(call);
     await anna.close();
   });
 

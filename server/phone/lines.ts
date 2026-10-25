@@ -88,3 +88,22 @@ export const deskCall = (
     desk: desk?.label ?? null,
   };
 };
+
+export type MenuOption = PhoneSettings["menu"]["options"][number];
+
+/** The menu option a caller chose (when the menu is on). */
+export const choiceOf = (settings: PhoneSettings, digit: string | undefined): MenuOption | null =>
+  (settings.menu.enabled &&
+    digit &&
+    settings.menu.options.find((option) => option.digit === digit)) ||
+  null;
+
+/** Who hears a call: the chosen option's people (all at once), else the line's plan. */
+export const ringPlanForCall = (
+  settings: PhoneSettings,
+  line: ExtraLine | null,
+  choice: MenuOption | null,
+): RingPlan =>
+  choice?.members.length
+    ? { mode: "all", stepSeconds: settings.ringStepSeconds, order: choice.members }
+    : ringPlanFor(settings, line);

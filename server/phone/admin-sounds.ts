@@ -24,6 +24,10 @@ export const withoutSound = (settings: PhoneSettings, id: string): PhoneSettings
     ...settings.hours,
     greeting: settings.hours.greeting === id ? null : settings.hours.greeting,
   },
+  menu: {
+    ...settings.menu,
+    greeting: settings.menu.greeting === id ? null : settings.menu.greeting,
+  },
 });
 
 export const createPhoneSoundRoutes = ({

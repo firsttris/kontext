@@ -82,8 +82,9 @@ const MONTH_NAMES = [
  * The opening-hours check at the start of a call: closed days first, then every open range, the
  * rest is closed. Asterisk compares in the company's time zone (GotoIfTime's fifth field).
  */
-const hoursCheck = ({ hours }: BoxConfig): string[] => {
+const hoursCheck = ({ hours, menu }: BoxConfig): string[] => {
   if (!hours) return [];
+  const target = menu ? "kontext-menu,s,1" : "ringing,1";
   const zone = hours.timezone;
   const holidays = hours.closedDays.map((day) => {
     const [, month, date] = day.split("-").map(Number);
@@ -91,7 +92,7 @@ const hoursCheck = ({ hours }: BoxConfig): string[] => {
   });
   const open = hours.open.map(
     (range) =>
-      `GotoIfTime(${range.from}-${range.to},${DAY_NAMES[range.day]},*,*,${zone}?ringing,1)`,
+      `GotoIfTime(${range.from}-${range.to},${DAY_NAMES[range.day]},*,*,${zone}?${target})`,
   );
   return [...holidays, ...open, "Goto(closed,1)"];
 };
@@ -128,8 +129,9 @@ const SAFE_EXTEN = /^[A-Za-z0-9_-]{1,64}$/;
  */
 const ringingExtensions = (config: BoxConfig, caller: [string, string][]) => {
   const steps = (line: string | null) => [
-    report("ringing", "in", caller),
-    "Ringing()",
+    report("ringing", "in", [...caller, ["Choice", `\${KONTEXT_CHOICE}`]]),
+    // After the menu the call is answered already: the caller hears a ringing tone from here.
+    config.menu ? "Playtones(ring)" : "Ringing()",
     ...waitForAnswer(config, desksFor(config, line)),
     config.mailbox ? "Goto(kontext-mailbox,s,1)" : "Hangup(19)",
   ];
@@ -141,6 +143,31 @@ const ringingExtensions = (config: BoxConfig, caller: [string, string][]) => {
     extension("ringing", [...(extras.length ? [jump] : []), ...steps(null)]),
     ...extras.map((name) => extension(`ringing-${name}`, steps(name))),
   ];
+};
+
+/** The voice menu: greeting, a key, then ringing (with the choice) or the mailbox. */
+const menuContext = (config: BoxConfig, paths: BoxPaths) => {
+  const { menu } = config;
+  if (!menu) return "";
+  return context(
+    "kontext-menu",
+    extension("s", [
+      "Answer()",
+      `Background(${paths.sounds}/${menu.greeting})`,
+      `WaitExten(${menu.waitSeconds})`,
+    ]),
+    ...menu.options.map((option) =>
+      extension(option.digit, [
+        `Set(__KONTEXT_CHOICE=${option.digit})`,
+        option.mailbox && config.mailbox
+          ? "Goto(kontext-mailbox,s,1)"
+          : "Goto(kontext-in,ringing,1)",
+      ]),
+    ),
+    // No key, or one that means nothing: it rings as usual.
+    extension("t", ["Goto(kontext-in,ringing,1)"]),
+    extension("i", ["Goto(kontext-in,ringing,1)"]),
+  );
 };
 
 /** Asks the mailbox for a message, or ends the call when there is none. */
@@ -170,7 +197,9 @@ const incoming = (config: BoxConfig, paths: BoxPaths) => {
       `Set(__KONTEXT_CALL=\${UNIQUEID})`,
       "Set(__KONTEXT_DIR=in)",
       reportEnd,
-      ...(config.hours ? hoursCheck(config) : ["Goto(ringing,1)"]),
+      ...(config.hours
+        ? hoursCheck(config)
+        : [config.menu ? "Goto(kontext-menu,s,1)" : "Goto(ringing,1)"]),
     ]),
     ...ringingExtensions(config, caller),
     closed,
@@ -259,6 +288,7 @@ export const extensionsConf = (config: BoxConfig, paths: BoxPaths): string =>
     context(
       "kontext-answer",
       extension("answer", [
+        "StopPlaytones()",
         report("answered", "in"),
         `Dial(PJSIP/\${KONTEXT_ROOM}@livekit,30)`,
         "Hangup()",
@@ -318,4 +348,5 @@ export const extensionsConf = (config: BoxConfig, paths: BoxPaths): string =>
     // LiveKit never calls in on its own; anything from it ends there.
     context("kontext-refuse", extension("_.", ["Hangup(21)"])),
     mailbox(config, paths),
+    menuContext(config, paths),
   ].join("\n");

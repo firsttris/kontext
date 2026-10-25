@@ -47,6 +47,14 @@ export const sampleConfig: BoxConfig = {
     closedDays: ["2026-12-24"],
     greeting: sound,
   },
+  menu: {
+    greeting: sound,
+    options: [
+      { digit: "1", mailbox: false },
+      { digit: "9", mailbox: true },
+    ],
+    waitSeconds: 5,
+  },
   forward: { number: "01712345678", afterSeconds: 10 },
 };
 

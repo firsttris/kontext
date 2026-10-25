@@ -31,6 +31,11 @@ export type Admin = {
     greeting: string | null;
     deliverTo: string | null;
   };
+  menu: {
+    enabled: boolean;
+    greeting: string | null;
+    options: { digit: string; label: string; members: string[]; mailbox: boolean }[];
+  };
   hours: {
     enabled: boolean;
     open: { day: number; from: string; to: string }[];

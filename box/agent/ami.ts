@@ -62,6 +62,7 @@ export const callEventOf = (frame: Frame, now: Date): Omit<CallEvent, "type" | "
     ...(frame.Endpoint?.startsWith("fritzbox") ? { forwarded: true } : {}),
     ...(frame.Endpoint?.startsWith("desk-") ? { desk: frame.Endpoint.slice(5) } : {}),
     ...(frame.Desk ? { desk: frame.Desk } : {}),
+    ...(/^[0-9]$/.test(frame.Choice ?? "") ? { choice: frame.Choice } : {}),
     ...(frame.Line ? { line: frame.Line } : {}),
     at: now.toISOString(),
   };

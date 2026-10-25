@@ -91,6 +91,7 @@ const Ringing = ({
               </DialogPrimitive.Title>
               <span className="truncate text-[13px] text-muted">
                 {[
+                  call.topic ?? "",
                   caller.company,
                   caller.contact ? readableNumber(call.remote) : "",
                   call.line ?? "",

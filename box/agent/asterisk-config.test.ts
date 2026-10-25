@@ -11,6 +11,7 @@ const config: BoxConfig = {
   sounds: [],
   mailbox: null,
   hours: null,
+  menu: null,
   forward: null,
 };
 const paths = { sounds: "/data/sounds", recordings: "/data/recordings" };
@@ -69,7 +70,7 @@ describe("extensionsConf", () => {
     expect(conf).toContain("exten => _**X.,1,Set(__KONTEXT_DIR=out)");
     expect(conf).toContain(`Dial(PJSIP/\${EXTEN}@\${KONTEXT_OUT},60`);
     expect(conf).toContain(`exten => _[+0-9a-zA-Z].,1,Set(__KONTEXT_LINE=\${EXTEN})`);
-    expect(conf).toContain(`Line: \${KONTEXT_LINE})`);
+    expect(conf).toContain(`Line: \${KONTEXT_LINE},Choice: \${KONTEXT_CHOICE})`);
     // The line outside reports its end wherever it is, by a hangup handler.
     expect(conf).toContain(
       `exten => ring,1,Set(__KONTEXT_CALL=\${UNIQUEID})\n same => n,Set(__KONTEXT_DIR=in)\n same => n,Set(CHANNEL(hangup_handler_push)=kontext-ended,s,1)`,
@@ -161,6 +162,55 @@ describe("opening hours", () => {
     expect(extensionsConf(config, paths)).toContain(
       "Set(CHANNEL(hangup_handler_push)=kontext-ended,s,1)\n same => n,Goto(ringing,1)",
     );
+  });
+});
+
+describe("the voice menu", () => {
+  const greeting = "c1b2c3d4e5f6a1b2c3d4e5f6";
+  const menu = {
+    greeting,
+    options: [
+      { digit: "1", mailbox: false },
+      { digit: "9", mailbox: true },
+    ],
+    waitSeconds: 5,
+  };
+
+  it("plays the greeting, waits for a key and rings with the choice", () => {
+    const conf = extensionsConf(
+      { ...config, menu, mailbox: { greeting: null, maxSeconds: 120 } },
+      paths,
+    );
+    expect(conf).toContain(" same => n,Goto(kontext-menu,s,1)");
+    expect(conf).toContain(
+      `[kontext-menu]\nexten => s,1,Answer()\n same => n,Background(/data/sounds/${greeting})\n same => n,WaitExten(5)`,
+    );
+    expect(conf).toContain(
+      "exten => 1,1,Set(__KONTEXT_CHOICE=1)\n same => n,Goto(kontext-in,ringing,1)",
+    );
+    expect(conf).toContain(
+      "exten => 9,1,Set(__KONTEXT_CHOICE=9)\n same => n,Goto(kontext-mailbox,s,1)",
+    );
+    expect(conf).toContain("exten => t,1,Goto(kontext-in,ringing,1)");
+    expect(conf).toContain(`Choice: \${KONTEXT_CHOICE})`);
+    expect(conf).toContain(" same => n,Playtones(ring)");
+  });
+
+  it("comes after the opening hours", () => {
+    const conf = extensionsConf(
+      {
+        ...config,
+        menu,
+        hours: {
+          timezone: "Europe/Berlin",
+          open: [{ day: 1, from: "08:00", to: "17:00" }],
+          closedDays: [],
+          greeting: null,
+        },
+      },
+      paths,
+    );
+    expect(conf).toContain("GotoIfTime(08:00-17:00,mon,*,*,Europe/Berlin?kontext-menu,s,1)");
   });
 });
 

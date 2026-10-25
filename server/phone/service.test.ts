@@ -48,6 +48,7 @@ const SETTINGS: PhoneSettings = {
   forward: null,
   extraLines: [],
   deskPhones: [],
+  menu: { enabled: false, greeting: null, options: [] },
 };
 
 const setup = (settings: Partial<PhoneSettings> = {}) => {
@@ -110,7 +111,30 @@ describe("the box's connection", () => {
       version: Date.parse("2026-10-25T09:00:00.000Z"),
       config: desiredConfig(SETTINGS, "kontext.firma.de", 5060),
     });
-    expect(desiredConfig(SETTINGS, "h", 5060)).toMatchObject({ ringSeconds: 60, mailbox: null });
+    expect(desiredConfig(SETTINGS, "h", 5060)).toMatchObject({
+      ringSeconds: 60,
+      mailbox: null,
+      menu: null,
+    });
+    const menuGreeting = "c1b2c3d4e5f6a1b2c3d4e5f6";
+    expect(
+      desiredConfig(
+        {
+          ...SETTINGS,
+          sounds: [{ id: menuGreeting, name: "Menü", seconds: 6 }],
+          menu: {
+            enabled: true,
+            greeting: menuGreeting,
+            options: [{ digit: "9", label: "Nachricht", members: [], mailbox: true }],
+          },
+        },
+        "h",
+        5060,
+      ),
+    ).toMatchObject({
+      sounds: [menuGreeting],
+      menu: { greeting: menuGreeting, options: [{ digit: "9", mailbox: true }] },
+    });
     expect(
       desiredConfig(
         { ...SETTINGS, forward: { number: "+491712345678", afterSeconds: 15 } },
@@ -298,6 +322,21 @@ describe("an incoming call", () => {
     const taken = (await service.answer("id-1", "anna")) as PhoneCall;
     await service.joinedRoom(taken.room!, "anna");
     expect(heard.at(-1)!.event).toEqual({ type: "phone-people", busy: ["anna"], unavailable: [] });
+  });
+
+  it("rings the people of the menu option the caller chose", async () => {
+    const greeting = "c1b2c3d4e5f6a1b2c3d4e5f6";
+    const { box, notices, phoneEvents } = setup({
+      sounds: [{ id: greeting, name: "Menü", seconds: 6 }],
+      menu: {
+        enabled: true,
+        greeting,
+        options: [{ digit: "1", label: "Kundendienst", members: ["anna"], mailbox: false }],
+      },
+    });
+    await box.receive({ ...event(1, "ringing"), choice: "1" });
+    expect(notices).toEqual([{ members: ["anna"], title: "Anruf" }]);
+    expect(phoneEvents().at(-1)!.event.call.topic).toBe("Kundendienst");
   });
 
   it("leaves Zurückrufen on the chosen board, done once someone talked to the number", async () => {

@@ -15,6 +15,7 @@ import { DesksForm } from "./settings/desks";
 import { HoursForm } from "./settings/hours";
 import { LinesForm } from "./settings/lines";
 import { MailboxForm } from "./settings/mailbox";
+import { MenuForm } from "./settings/menu";
 import { RingForm } from "./settings/ring";
 import { SoundsCard } from "./settings/sounds";
 
@@ -164,6 +165,7 @@ export const PhoneSettingsSection = () => {
           <SoundsCard sounds={data.sounds} />
           <MailboxForm mailbox={data.mailbox} sounds={data.sounds} />
           <HoursForm hours={data.hours} sounds={data.sounds} />
+          <MenuForm menu={data.menu} sounds={data.sounds} />
         </>
       ) : null}
     </>
