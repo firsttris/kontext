@@ -63,6 +63,9 @@ export type EmailDetail = EmailSummary & {
   /** Headers the mail server adds on arrival, topmost first (src/lib/sender-check.ts). */
   authenticationResults: string[] | null;
   spamScore: string[] | null;
+  /** The newsletter's ways to unsubscribe (List-Unsubscribe), and whether one click does it. */
+  unsubscribe: string[] | null;
+  unsubscribePost: string | null;
 };
 
 export type Identity = {

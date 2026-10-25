@@ -28,6 +28,7 @@ import { Toolbar } from "./message-toolbar";
 import { useEmail, useMailAccounts } from "./queries";
 import { ScheduledNotice } from "./scheduled-notice";
 import { SenderPanel } from "./sender-panel";
+import { UnsubscribeButton } from "./unsubscribe";
 
 type Props = { accountId: string; mailbox: Mailbox; emailId: string | undefined };
 
@@ -124,19 +125,22 @@ export const MessageView = ({ accountId, mailbox, emailId }: Props) => {
                     {email.from?.[0]?.email} → {formatAddressList(email.to)}
                     {email.cc?.length ? `, Cc: ${formatAddressList(email.cc)}` : ""}
                   </span>
-                  <button
-                    type="button"
-                    aria-expanded={showDetails}
-                    onClick={() => setDetailsFor(showDetails ? null : email.id)}
-                    className="mt-0.5 flex items-center gap-1 self-start text-[12px] text-muted hover:text-fg"
-                  >
-                    <ChevronDown
-                      size={13}
-                      aria-hidden="true"
-                      className={showDetails ? "rotate-180" : undefined}
-                    />
-                    {showDetails ? m.mail_details_hide() : m.mail_details_show()}
-                  </button>
+                  <div className="mt-0.5 flex flex-wrap items-center gap-x-3">
+                    <button
+                      type="button"
+                      aria-expanded={showDetails}
+                      onClick={() => setDetailsFor(showDetails ? null : email.id)}
+                      className="flex items-center gap-1 text-[12px] text-muted hover:text-fg"
+                    >
+                      <ChevronDown
+                        size={13}
+                        aria-hidden="true"
+                        className={showDetails ? "rotate-180" : undefined}
+                      />
+                      {showDetails ? m.mail_details_hide() : m.mail_details_show()}
+                    </button>
+                    <UnsubscribeButton accountId={accountId} mailboxId={mailbox.id} email={email} />
+                  </div>
                 </div>
                 <span className="hidden shrink-0 text-[13px] text-muted sm:block">
                   {readingDate(email.receivedAt)}

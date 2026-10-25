@@ -77,6 +77,7 @@ fine on a VPS with 2 vCPUs and 4 GB RAM.
 
 - **Shared mailboxes**: info@ and co. appear in every member's sidebar and are labelled as such; replies go out as info@, with the name of the person who answered. Read-only mailboxes show only what is allowed.
 - **All inboxes in one list**: your own mail and info@'s together.
+- **Unsubscribe** from newsletters with one click, right at the mail.
 - **Categories**: coloured tags like "In progress", "Waiting for reply", "Done" – several per mail, your own ones too, set by rules. In shared mailboxes the whole team sees them: a small task board.
 - **Rules**: "if sender, recipient, subject or text … then move to folder, mark, set category, forward" – run on the server as mail arrives, even when Kontext is closed; created from a mail, optionally applied to the inbox. The boss keeps the rules of shared mailboxes.
 - **Many mails at once**: pick them (also with Shift-click or `x`) and archive, delete, mark read, categorise or move them together.

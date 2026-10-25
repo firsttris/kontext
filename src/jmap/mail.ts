@@ -39,6 +39,9 @@ const BODY_PROPERTIES = ["partId", "blobId", "type", "name", "size", "cid", "dis
 const CHECK_HEADERS = {
   authenticationResults: "header:Authentication-Results:asText:all",
   spamScore: "header:X-Spam-Score:asText:all",
+  /** How to unsubscribe from a newsletter (RFC 2369, RFC 8058). */
+  unsubscribe: "header:List-Unsubscribe:asURLs",
+  unsubscribePost: "header:List-Unsubscribe-Post:asText",
 } as const;
 
 export const listMailboxes = async (client: JmapClient, accountId: string): Promise<Mailbox[]> => {

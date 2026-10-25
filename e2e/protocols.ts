@@ -61,6 +61,8 @@ export const deliverMail = (mail: {
   messageId?: string;
   /** An answer to that mail: it joins the conversation. */
   inReplyTo?: string;
+  /** More header lines as they are, e.g. List-Unsubscribe. */
+  headers?: string[];
 }): Promise<void> =>
   new Promise((resolve, reject) => {
     const message = [
@@ -73,6 +75,7 @@ export const deliverMail = (mail: {
       ...(mail.inReplyTo
         ? [`In-Reply-To: <${mail.inReplyTo}>`, `References: <${mail.inReplyTo}>`]
         : []),
+      ...(mail.headers ?? []),
       "MIME-Version: 1.0",
       "Content-Type: text/plain; charset=utf-8",
       "Content-Transfer-Encoding: 8bit",

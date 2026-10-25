@@ -55,6 +55,7 @@ import { createRuleTasks } from "./tasks/from-rules";
 import { createTaskReminder } from "./tasks/notices";
 import { createTaskRoutes } from "./tasks/routes";
 import { createTaskStore } from "./tasks/store";
+import { createUnsubscribeRoutes } from "./unsubscribe/routes";
 
 /** Request headers that go on to Stalwart; cookies and the browser's own auth stay here. */
 const FORWARDED_REQUEST_HEADERS = [
@@ -328,6 +329,7 @@ export const createApp = async (env: Env) => {
   const waker = createSnoozeWaker({ env, grants, store: snoozes, notify: pusher.notify });
   setInterval(() => void waker.tick(), env.SNOOZE_TICK_MS).unref();
   app.route("/api/snoozes", createSnoozeRoutes({ store: snoozes, infoOf }));
+  app.route("/api/unsubscribe", createUnsubscribeRoutes({ env, grants, infoOf }));
   // The task boards for Thunderbird and phone apps (CalDAV), signed in with the mail password.
   app.all("/.well-known/caldav", (c) => c.redirect("/dav/", 301));
   app.route(

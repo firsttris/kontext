@@ -22,6 +22,8 @@ const schema = z.object({
   STALWART_ADMIN_KEY: z.preprocess((v) => v || undefined, z.string().optional()),
   /** Tests only: moves over IMAP may use any port and servers without TLS (the local Stalwart). */
   MAIL_SYNC_ALLOW_PLAIN: z.stringbool().default(false),
+  /** Tests only: one-click unsubscribe to any address, inside the network, any certificate. */
+  UNSUBSCRIBE_ANY_TARGET: z.stringbool().default(false),
   /** Tests only: push to any address, not only to the browsers' push services. */
   PUSH_ANY_ENDPOINT: z.stringbool().default(false),
   /** How often due Wiedervorlagen are brought back; tests make it short. */

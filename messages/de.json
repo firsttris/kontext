@@ -1087,5 +1087,15 @@
   "sync_android_2": "In DAVx⁵ „Mit URL und Benutzername anmelden“, die Server-Adresse eintragen und die Aufgabenlisten einschalten.",
   "sync_apple_1": "Einstellungen → Apps → Erinnerungen → Accounts → Account hinzufügen → Andere → CalDAV-Account.",
   "sync_apple_2": "Server: {host}, dazu Mail-Adresse und Passwort.",
-  "sync_two_factor": "Mit Bestätigung in zwei Schritten klappt die Anmeldung dort noch nicht, weil diese Apps keinen Code abfragen."
+  "sync_two_factor": "Mit Bestätigung in zwei Schritten klappt die Anmeldung dort noch nicht, weil diese Apps keinen Code abfragen.",
+  "mail_unsubscribe": "Abbestellen",
+  "mail_unsubscribed": "Abbestellt",
+  "mail_unsubscribe_title": "Newsletter von {sender} abbestellen?",
+  "mail_unsubscribe_one_click": "Kontext meldet dich bei {sender} ab – ohne Umweg über eine Webseite.",
+  "mail_unsubscribe_mail": "Kontext schickt eine Abmelde-Mail an {address}.",
+  "mail_unsubscribe_web": "Die Abmeldeseite des Absenders öffnet sich in einem neuen Tab; dort bestätigst du die Abmeldung.",
+  "mail_unsubscribe_delete": "Diese Mail danach löschen",
+  "mail_unsubscribe_done": "Bei {sender} abgemeldet.",
+  "mail_unsubscribe_web_done": "Abmeldeseite geöffnet.",
+  "mail_unsubscribe_no_identity": "Keine Absenderadresse für die Abmelde-Mail."
 }

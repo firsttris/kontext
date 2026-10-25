@@ -100,6 +100,7 @@ export default defineConfig({
         SNOOZE_TICK_MS: "1000",
         REMINDER_TICK_MS: "1000",
         RULE_TASK_TICK_MS: "1000",
+        UNSUBSCRIBE_ANY_TARGET: "true",
         // Microsoft's sign-in and Graph: the stand-in below
         M365_LOGIN_URL: `http://127.0.0.1:${GRAPH_PORT}`,
         GRAPH_URL: `http://127.0.0.1:${GRAPH_PORT}/v1.0`,

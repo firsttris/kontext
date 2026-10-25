@@ -73,6 +73,24 @@ Damit man sieht, wo eine Mail liegt, steht über dem Betreff „Gemeinsames Post
 Gruppen-Symbol, und die Seitenleiste nennt die Ordner eines gemeinsamen Postfachs „Ordner von
 info@“.
 
+## Newsletter abbestellen
+
+Hat eine Mail `List-Unsubscribe` (RFC 2369), steht neben „Details anzeigen“ „Abbestellen“
+(`src/features/mail/unsubscribe.tsx`, Weg: `server/unsubscribe/unsubscribe.ts`):
+
+- **Mit einem Klick** (RFC 8058: eine https-Adresse und `List-Unsubscribe-Post:
+  List-Unsubscribe=One-Click`): Der Kontext-Server schickt das POST, weil der Browser nicht an
+  fremde Seiten posten darf (`/api/unsubscribe`). Die Adresse liest er selbst aus der Mail, mit
+  dem Zugang der angemeldeten Person – niemand kann ihn so auf andere Adressen ansetzen. Nur
+  https, nur Adressen im Internet (keine aus internen Netzen, `private-address.ts`), ein Versuch,
+  keine Weiterleitungen, zehn Sekunden.
+- **Per Mail** (`mailto:`): Die App schickt die Abmelde-Mail von der Adresse, an die der
+  Newsletter ging (info@ für den Newsletter an info@), mit Betreff und Text aus dem Link.
+- **Auf der Webseite:** Sie öffnet sich in einem neuen Tab.
+
+Danach trägt die Mail das Schlagwort `kontext.unsubscribed` („Abbestellt“) und kann auf Wunsch
+gleich in den Papierkorb.
+
 ## Prüfung des Absenders
 
 Kommt eine Mail aus dem Internet an (Port 25), prüft Stalwart den Absender und schreibt das
