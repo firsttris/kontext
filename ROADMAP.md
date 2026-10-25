@@ -37,7 +37,7 @@ Kleinere Dinge, die beim Bauen aufgefallen sind und noch erledigt werden.
 
 **Technik**
 
-- [ ] e2e: lesende Tests öffnen Mails aus den Testdaten. Kommen im Posteingang von Jonas über 50 Test-Mails dazu, rutschen diese auf die zweite Seite der Liste; dann auch dort eigene Mails anlegen.
+- [ ] e2e: einige lesende Tests öffnen Mails aus den Testdaten. Legen andere Tests viele Mails in Jonas' Posteingang, rutschen diese aus dem sichtbaren Bereich der Liste (sie zeigt nur, was auf dem Bildschirm ist); nach und nach auf eigene Mails umstellen (der Handy-Test ist umgestellt).
 - [ ] Lokal fehlt `readpst` für den Outlook-Test (`sudo apt install pst-utils`).
 - [ ] README: ein Bild der Regeln; Aufgaben und Chat sind drin (Beispieldaten über die API, `e2e/demo-data.ts`). In der lokalen Entwicklung sind Aufgaben und Chat weiterhin leer.
 

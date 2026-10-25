@@ -127,12 +127,16 @@ test.describe("Chat: Reaktionen und Antworten", () => {
       0,
     );
     await write(page, "Feuchte Wand im Keller");
-    const photo = page.getByRole("button", { name: "Foto keller.png groß zeigen" }).locator("img");
+    // The message shown at once and the server's answer may stand side by side for a moment.
+    const photo = page
+      .getByRole("button", { name: "Foto keller.png groß zeigen" })
+      .last()
+      .locator("img");
     await expect(photo).toHaveAttribute("src", /\?thumb=1$/);
     const response = await page.request.get((await photo.getAttribute("src"))!);
     expect(response.headers()["content-type"]).toBe("image/jpeg");
     // Opened big: the photo itself.
-    await page.getByRole("button", { name: "Foto keller.png groß zeigen" }).click();
+    await page.getByRole("button", { name: "Foto keller.png groß zeigen" }).last().click();
     await expect(
       page.getByRole("dialog", { name: "keller.png" }).getByRole("img", { name: "keller.png" }),
     ).toHaveAttribute("src", /files\/[^?]+$/);

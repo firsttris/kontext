@@ -445,15 +445,15 @@ test.describe("Postfach nur zum Lesen", () => {
 
 test.describe("Mail am Handy @phone", () => {
   test("Liste, Mail, zurück und Ordner", async ({ page }) => {
+    // Its own mail, on top: the seed's may be below the screen when other tests added many.
+    const subject = unique("Angebot Wartung Handy");
+    await addMail("jonas", "jonas", subject);
     await login(page);
     await expect(
       page.getByRole("navigation", { name: "Apps" }).getByRole("link", { name: "Mail" }),
     ).toBeVisible();
-    await page
-      .getByRole("list", { name: "Posteingang" })
-      .getByText("Angebot Wartungsvertrag 2027")
-      .click();
-    await expect(page.getByRole("heading", { name: "Angebot Wartungsvertrag 2027" })).toBeVisible();
+    await page.getByRole("list", { name: "Posteingang" }).getByText(subject).click();
+    await expect(page.getByRole("heading", { name: subject })).toBeVisible();
     await expect(page.getByRole("list", { name: "Posteingang" })).toBeHidden();
     await page.getByRole("button", { name: "Zurück" }).click();
     await expect(page.getByRole("list", { name: "Posteingang" })).toBeVisible();
