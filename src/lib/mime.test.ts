@@ -78,6 +78,9 @@ describe("MIME built in the app", () => {
     expect(encodeWord("Grüße")).toMatch(/^=\?UTF-8\?B\?/);
     expect(mailbox({ name: "Weber, Jonas", email: "j@w.test" })).toBe('"Weber, Jonas" <j@w.test>');
     expect(mailbox({ name: null, email: "j@w.test" })).toBe("<j@w.test>");
+    expect(mailbox({ name: 'IT\\Admin "Weber"', email: "j@w.test" })).toBe(
+      '"IT\\\\Admin \\"Weber\\"" <j@w.test>',
+    );
   });
 
   it("puts the subject inside, marked as protected, and hides it outside", async () => {

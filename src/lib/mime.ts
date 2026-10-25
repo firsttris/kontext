@@ -24,9 +24,11 @@ const lines = (text: string) => (text.match(/.{1,76}/g) ?? []).join("\r\n");
 export const encodeWord = (text: string): string =>
   /^[\x20-\x7e]*$/.test(text) ? text : `=?UTF-8?B?${base64(encoder.encode(text))}?=`;
 
+/** Specials and the backslash are not atext, so such a name goes in quotes, where `\` and `"`
+ * are written as quoted-pairs (RFC 5322 3.2.3, 3.2.4). */
 export const mailbox = ({ name, email }: MimeAddress) =>
   name
-    ? `${/[(),.:;<>@[\]"]/.test(name) && /^[\x20-\x7e]*$/.test(name) ? `"${name.replace(/"/g, '\\"')}"` : encodeWord(name)} <${email}>`
+    ? `${/[(),.:;<>@[\]"\\]/.test(name) && /^[\x20-\x7e]*$/.test(name) ? `"${name.replace(/[\\"]/g, "\\$&")}"` : encodeWord(name)} <${email}>`
     : `<${email}>`;
 
 /** A file name parameter, as RFC 2231 for more than ASCII. */

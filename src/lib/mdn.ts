@@ -4,6 +4,8 @@
  * is recognised. Stalwart has no JMAP MDN (RFC 9007), so the app builds it. Pure.
  */
 
+import { mailbox } from "./mime";
+
 /** Set on a mail once its receipt was sent or declined (RFC 3503), so nobody is asked twice. */
 export const MDN_SENT = "$MDNSent";
 
@@ -16,9 +18,6 @@ const base64 = (text: string) => {
 
 /** "=?UTF-8?B?…?=" for a header with more than ASCII (RFC 2047). */
 const word = (text: string) => (/^[\x20-\x7e]*$/.test(text) ? text : `=?UTF-8?B?${base64(text)}?=`);
-
-const mailbox = (address: { name: string | null; email: string }) =>
-  address.name ? `${word(address.name)} <${address.email}>` : `<${address.email}>`;
 
 const base64Lines = (text: string) => (base64(text).match(/.{1,76}/g) ?? []).join("\r\n");
 

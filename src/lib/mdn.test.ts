@@ -1,3 +1,5 @@
+// @vitest-environment node
+import PostalMime from "postal-mime";
 import { describe, expect, it } from "vitest";
 import { isReceipt, receiptAnswered, receiptMessage } from "./mdn";
 
@@ -32,6 +34,34 @@ describe("read receipts", () => {
     });
     expect(umlaut).toMatch(/Subject: =\?UTF-8\?B\?[A-Za-z0-9+/=]+\?=\r\n/);
     expect(umlaut).toContain("From: <max@w.test>\r\n");
+  });
+
+  it("quotes a display name with a comma, so From and To stay one mailbox each (RFC 5322 3.4)", async () => {
+    const parsed = await PostalMime.parse(
+      receiptMessage({
+        from: { name: "Becker, Max", email: "max@w.test" },
+        to: { name: "Weber, Jonas", email: "jonas@w.test" },
+        original: { messageId: "abc@w.test", subject: "Angebot", sentAt: "2026-10-25T08:00:00Z" },
+        now: new Date("2026-10-25T09:30:00Z"),
+        id: "r3",
+      }),
+    );
+    expect(parsed.from).toEqual({ name: "Becker, Max", address: "max@w.test" });
+    expect(parsed.to).toEqual([{ name: "Weber, Jonas", address: "jonas@w.test" }]);
+  });
+
+  it("keeps a backslash in a quoted display name (RFC 5322 3.2.4)", async () => {
+    const receipt = (name: string) =>
+      receiptMessage({
+        from: { name, email: "max@w.test" },
+        to: { name: null, email: "jonas@w.test" },
+        original: { messageId: "abc@w.test", subject: "Angebot", sentAt: "2026-10-25T08:00:00Z" },
+        now: new Date("2026-10-25T09:30:00Z"),
+        id: "r4",
+      });
+    for (const name of ["IT\\Admin (Weber)", "Becker, Max\\"]) {
+      expect((await PostalMime.parse(receipt(name))).from).toEqual({ name, address: "max@w.test" });
+    }
   });
 
   it("knows a receipt by its type", () => {
