@@ -7,12 +7,12 @@ import type { Slot } from "@/lib/availability";
 import type { EventForm } from "@/lib/event-form";
 import { AvailabilityPhone } from "./availability-phone";
 import { AvailabilityTimeline } from "./availability-timeline";
-import { usePlanning } from "./use-planning";
+import { type Editing, usePlanning } from "./use-planning";
 
 type Props = {
   form: EventForm;
-  /** The appointment's time before this change, when editing one. */
-  editing: Slot | null;
+  /** The appointment before this change, when editing one. */
+  editing: Editing | null;
   onPick: (slot: Slot) => void;
 };
 

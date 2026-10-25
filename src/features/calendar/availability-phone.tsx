@@ -6,7 +6,7 @@ import { AlertTriangle } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Dialog } from "@/components/ui/dialog";
-import { dayBars, type Slot } from "@/lib/availability";
+import { dayBars, dayPart, type Slot } from "@/lib/availability";
 import { slotLabel } from "@/lib/planning";
 import { m } from "@/paraglide/messages";
 import {
@@ -50,7 +50,7 @@ export const AvailabilityPhone = ({
           </div>
         </div>
       ) : (
-        <Clash busy={busyNow} />
+        <Clash busy={busyNow} pending={planning.isPending} />
       )}
       <div className="flex items-center justify-between">
         <span className="text-[13px] text-muted">{m.availability_title()}</span>
@@ -101,17 +101,16 @@ const Schedule = ({
   onClose: () => void;
   onPick: (slot: Slot) => void;
 }) => {
-  const { day, rows, hours, slot, suggestions, dayStartMs } = planning;
+  const { day, rows, hours, slot, suggestions } = planning;
   const count = hours.endHour - hours.startHour;
-  const span = count * 3_600_000;
   const next = suggestions[0];
-  const frame = (from: number, to: number) => ({
-    top: Math.max(0, ((from - dayStartMs) / span) * count * HOUR),
-    height: Math.max(
-      0,
-      ((Math.min(to, dayStartMs + span) - Math.max(from, dayStartMs)) / span) * count * HOUR,
-    ),
-  });
+  /** Top and height in px of a time on the day shown, or null when it is not on it. */
+  const frame = (from: number, to: number) => {
+    const part = dayPart(from, to, day, hours);
+    return part ? { top: part.left * count * HOUR, height: part.width * count * HOUR } : null;
+  };
+  const chosen = slot ? frame(slot.start, slot.end) : null;
+  const suggested = next ? frame(next.start, next.end) : null;
 
   return (
     <Dialog open onOpenChange={(open) => !open && onClose()} title={m.availability_schedule()}>
@@ -165,18 +164,18 @@ const Schedule = ({
             </li>
           ))}
         </ul>
-        {slot ? (
+        {chosen ? (
           <span
             aria-hidden="true"
             className="absolute right-0 left-9 rounded-md border-2 border-accent bg-accent/10"
-            style={frame(slot.start, slot.end)}
+            style={chosen}
           />
         ) : null}
-        {next ? (
+        {suggested ? (
           <span
             aria-hidden="true"
             className="absolute right-0 left-9 rounded-md border-2 border-dashed border-ok bg-ok/5"
-            style={frame(next.start, next.end)}
+            style={suggested}
           />
         ) : null}
       </div>

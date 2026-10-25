@@ -4,7 +4,7 @@
  */
 import { type Slot, WORKDAY, type Workday } from "./availability";
 import type { EventForm } from "./event-form";
-import { fromLocal, toLocal, ZONE } from "./jscalendar";
+import { addDays, dateKey, fromLocal, toLocal, ZONE } from "./jscalendar";
 
 /** The chosen time of a timed form, or null while it is all day or ends before it starts. */
 export const formSlot = (form: EventForm): Slot | null => {
@@ -63,5 +63,30 @@ export const shownHours = (slot: Slot | null, day: string): Workday => {
     ...WORKDAY,
     startHour: Math.min(WORKDAY.startHour, startHour),
     endHour: Math.max(WORKDAY.endHour, endHour),
+  };
+};
+
+/** How far ahead the suggestions look, in days. */
+export const LOOKAHEAD_DAYS = 14;
+
+/**
+ * Which busy times the panel needs: the day on screen, the form's day, and the two weeks the
+ * suggestions look at from the day on screen (or from now, when that day has passed).
+ */
+export const planningRange = (
+  day: string,
+  formDate: string,
+  now: number,
+): { from: number; to: number; suggestFrom: number } => {
+  const [first = day, last = day] = [day, formDate].sort();
+  const start = (key: string) => fromLocal(`${key}T00:00:00`).getTime();
+  const suggestFrom = Math.max(now, start(day));
+  return {
+    from: start(first),
+    to: Math.max(
+      start(addDays(last, 1)),
+      start(addDays(dateKey(new Date(suggestFrom)), LOOKAHEAD_DAYS)),
+    ),
+    suggestFrom,
   };
 };

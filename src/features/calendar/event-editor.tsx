@@ -21,6 +21,7 @@ import { type CalendarEvent, isInstance, toLocal } from "@/lib/jscalendar";
 import { formAt, formSlot } from "@/lib/planning";
 import { m } from "@/paraglide/messages";
 import { AvailabilityPanel } from "./availability-panel";
+import { attendeeList } from "./availability-queries";
 import { calendarLabel, useCalendarRefs, useEventMutations, useMyAddresses } from "./queries";
 import { RepeatFields } from "./repeat-fields";
 
@@ -63,8 +64,19 @@ export const EventEditor = ({ event, series, start, onDone, onCancel }: Props) =
       : newEventForm(`${start ?? `${toLocal(new Date()).slice(0, 11)}09:00`}:00`.slice(0, 19)),
   );
   const [form, setForm] = useState(initial);
-  // Its old time is in every attendee's calendar already; planning leaves it out.
-  const [editing] = useState(() => (event ? formSlot(initial) : null));
+  // Its old time is in the calendar of everyone it went to; planning leaves it out there.
+  const [editing] = useState(() => {
+    const slot = event ? formSlot(initial) : null;
+    return slot
+      ? {
+          ...slot,
+          invited: new Set([
+            ...attendeeList(initial.attendees),
+            ...mine.map((address) => address.toLowerCase()),
+          ]),
+        }
+      : null;
+  });
   const [scope, setScope] = useState<Scope>("this");
   const [problem, setProblem] = useState<string | null>(null);
   const set = (key: keyof EventForm) => (e: { target: { value: string } }) =>

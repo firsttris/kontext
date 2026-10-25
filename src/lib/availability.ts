@@ -4,7 +4,7 @@
  * that `Principal/getAvailability` returns (draft-ietf-jmap-calendars, Stalwart
  * crates/jmap/src/principal/availability.rs). Times are epoch milliseconds.
  */
-import { addDays, dateKey, fromLocal } from "./jscalendar";
+import { addDays, dateKey, fromLocal, minutesInDay } from "./jscalendar";
 
 export type BusyStatus = "confirmed" | "tentative" | "unavailable";
 
@@ -106,33 +106,50 @@ export const freeSlots = (
   return slots;
 };
 
+/**
+ * Where a time lies in the hours shown of one local day, as fractions of that span; null when
+ * it is outside. By the clock, like the hour marks, so the day the clocks change lines up too.
+ */
+export const dayPart = (
+  start: number,
+  end: number,
+  day: string,
+  { startHour, endHour }: Pick<Workday, "startHour" | "endHour">,
+): { left: number; width: number } | null => {
+  const first = startHour * 60;
+  const span = (endHour - startHour) * 60;
+  const from = Math.max(minutesInDay(new Date(start), day), first);
+  const to = Math.min(minutesInDay(new Date(end), day), first + span);
+  return to > from ? { left: (from - first) / span, width: (to - from) / span } : null;
+};
+
 /** The busy periods of one local day, cut to the hours shown, as fractions of that span. */
 export const dayBars = (
   busy: Busy[],
   day: string,
-  { startHour, endHour }: Pick<Workday, "startHour" | "endHour">,
-): { left: number; width: number; status: BusyStatus }[] => {
-  const hour = (h: number) => fromLocal(`${day}T${String(h).padStart(2, "0")}:00:00`).getTime();
-  const from = hour(startHour);
-  const to = hour(endHour);
-  const span = to - from;
-  return busy
-    .filter((b) => overlaps(b, from, to))
-    .map((b) => {
-      const start = Math.max(b.start, from);
-      const end = Math.min(b.end, to);
-      return { left: (start - from) / span, width: (end - start) / span, status: b.status };
-    });
-};
+  hours: Pick<Workday, "startHour" | "endHour">,
+): { left: number; width: number; status: BusyStatus }[] =>
+  busy.flatMap((b) => {
+    const part = dayPart(b.start, b.end, day, hours);
+    return part ? [{ ...part, status: b.status }] : [];
+  });
 
 /**
- * Leaves out the appointment being edited: it sits in every attendee's calendar with the same
- * times, and would otherwise clash with itself.
+ * Leaves out the appointment being edited: it sits with its old times in the calendar of
+ * everyone it was sent to, and would otherwise clash with itself. Someone added just now has no
+ * copy of it, so a period with the same times there is a real appointment.
  */
-export const withoutEvent = (schedules: Schedule[], event: Slot | null): Schedule[] =>
+export const withoutEvent = (
+  schedules: Schedule[],
+  event: (Slot & { invited: Set<string> }) | null,
+): Schedule[] =>
   event
-    ? schedules.map((s) => ({
-        ...s,
-        busy: s.busy?.filter((b) => b.start !== event.start || b.end !== event.end) ?? null,
-      }))
+    ? schedules.map((s) =>
+        event.invited.has(s.email)
+          ? {
+              ...s,
+              busy: s.busy?.filter((b) => b.start !== event.start || b.end !== event.end) ?? null,
+            }
+          : s,
+      )
     : schedules;

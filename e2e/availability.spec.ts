@@ -50,6 +50,32 @@ const signedIn = async (browser: Browser, user: string) => {
   return page;
 };
 
+/** The titles in a colleague's calendars on a day, read behind the UI's back. */
+const titlesOf = async (user: string, day: string): Promise<string[]> => {
+  const client = jmapAs(user);
+  const accountId = await personalAccountId(user);
+  const [, get] = await client.request(
+    [
+      [
+        "CalendarEvent/query",
+        { accountId, filter: { after: `${day}T00:00:00Z`, before: `${day}T23:59:59Z` } },
+        "q",
+      ],
+      [
+        "CalendarEvent/get",
+        {
+          accountId,
+          "#ids": { resultOf: "q", name: "CalendarEvent/query", path: "/ids" },
+          properties: ["title"],
+        },
+        "g",
+      ],
+    ],
+    CALENDARS,
+  );
+  return ((get![1].list as { title?: string }[]) ?? []).map((event) => event.title ?? "");
+};
+
 const newMeetingWithAnna = async (page: Page, day: string) => {
   await login(page);
   await page.goto(`/calendar?date=${day}&event=new&start=${day}T10:00`);
@@ -129,6 +155,39 @@ test.describe("Verfügbarkeit", () => {
       await expect((await maxAtTen()).getByText("Alle sind zu dieser Zeit frei.")).toBeVisible();
       await share("none", "availability");
       await expect((await maxAtTen()).getByText("Max ist zu dieser Zeit belegt.")).toBeVisible();
+    } finally {
+      await remove();
+    }
+  });
+});
+
+test.describe("Verfügbarkeit beim Ändern", () => {
+  test("der eigene Termin zählt nicht, auch wenn Anna gleich danach einen hat", async ({
+    page,
+  }) => {
+    test.setTimeout(60_000);
+    const day = wednesday();
+    const remove = await busyAt("anna", day, "09:00", "PT1H");
+    try {
+      const title = unique("Abstimmung Angebot");
+      await login(page);
+      await page.goto(`/calendar?date=${day}&event=new&start=${day}T08:00`);
+      const dialog = page.getByRole("dialog");
+      await dialog.getByLabel("Titel").fill(title);
+      await dialog.getByLabel("Teilnehmer").fill("anna@weber-haustechnik.test");
+      await dialog.getByRole("button", { name: "Speichern" }).click();
+      await expect(dialog).toBeHidden();
+      await expect.poll(() => titlesOf("anna", day), { timeout: 20_000 }).toContain(title);
+
+      // Anna's copy of it (8–9) touches her own appointment (9–10); other tests plan at 10.
+      await page.locator(`[data-day="${day}"]`).getByText(title).click();
+      await page.getByRole("dialog").getByRole("button", { name: "Bearbeiten" }).click();
+      const planning = page.getByRole("dialog").getByRole("region", { name: "Verfügbarkeit" });
+      await expect(planning.getByText("Alle sind zu dieser Zeit frei.")).toBeVisible();
+      // An hour later she is busy with her own appointment.
+      await page.getByRole("dialog").getByLabel("Beginn Uhrzeit").fill("09:00");
+      await page.getByRole("dialog").getByLabel("Ende Uhrzeit").fill("10:00");
+      await expect(planning.getByText("Anna ist zu dieser Zeit belegt.")).toBeVisible();
     } finally {
       await remove();
     }

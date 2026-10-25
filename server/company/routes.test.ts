@@ -78,7 +78,7 @@ const fakeManagement = () => {
   return { management, mailstore, updates, created, shared, rules, back };
 };
 
-const setup = (email: string | null) => {
+const setup = (email: string | null, welcomeError?: string) => {
   const fake = fakeManagement();
   const ended: string[] = [];
   const welcomed: { newcomer: string; people: string[] }[] = [];
@@ -93,7 +93,7 @@ const setup = (email: string | null) => {
     calendars: {
       welcome: async (newcomer, people) => {
         welcomed.push({ newcomer, people });
-        return { ok: true, value: 1 };
+        return welcomeError ? { ok: false, error: welcomeError } : { ok: true, value: 1 };
       },
       showEveryone: async (people) => {
         shownToAll.push(people);
@@ -153,6 +153,17 @@ describe("Firmenverwaltung", () => {
     expect(welcomed[0]!.newcomer).toBe("3");
     expect(welcomed[0]!.people).toContain("3");
     expect(welcomed[0]!.people.length).toBeGreaterThan(1);
+  });
+
+  it("still hands out the new password when sharing the calendars fails", async () => {
+    const { send, created } = setup("chef@firma.de", "Kalender: Stalwart-Verwaltung: 503");
+    const response = await send("POST", "/employees", {
+      email: "lena@firma.de",
+      fullName: "Lena Klein",
+    });
+    expect(response.status).toBe(201);
+    expect(await response.json()).toMatchObject({ id: "3", password: "aaaa-aaaa-aaaa-aaaa" });
+    expect(created).toHaveLength(1);
   });
 
   it("switches free and busy times on for all", async () => {

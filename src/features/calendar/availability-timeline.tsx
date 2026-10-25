@@ -3,7 +3,7 @@
  * the day as bars, the chosen time framed across all rows (like Outlook's scheduling assistant).
  */
 import type { CSSProperties } from "react";
-import { dayBars, type Slot } from "@/lib/availability";
+import { dayBars, dayPart, type Slot } from "@/lib/availability";
 import { m } from "@/paraglide/messages";
 import {
   barStyle,
@@ -30,15 +30,7 @@ export const AvailabilityTimeline = ({
   onPick: (slot: Slot) => void;
 }) => {
   const { day, rows, slot, hours, busyNow, suggestions } = planning;
-  const span = (hours.endHour - hours.startHour) * 3_600_000;
-  const dayStartMs = planning.dayStartMs;
-  const selection =
-    slot && slot.end > dayStartMs && slot.start < dayStartMs + span
-      ? {
-          left: Math.max(0, (slot.start - dayStartMs) / span),
-          right: Math.min(1, (slot.end - dayStartMs) / span),
-        }
-      : null;
+  const selection = slot ? dayPart(slot.start, slot.end, day, hours) : null;
 
   return (
     <section
@@ -108,7 +100,7 @@ export const AvailabilityTimeline = ({
               className="absolute inset-y-0 rounded-md border-2 border-accent bg-accent/10"
               style={{
                 left: across(selection.left),
-                width: `calc((100% - ${NAMES}px) * ${selection.right - selection.left})`,
+                width: `calc((100% - ${NAMES}px) * ${selection.width})`,
               }}
             />
           ) : null}
@@ -116,7 +108,7 @@ export const AvailabilityTimeline = ({
       </div>
       <div className="flex flex-col gap-2 border-t border-border px-3.5 py-3">
         <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
-          <Clash busy={busyNow} />
+          <Clash busy={busyNow} pending={planning.isPending} />
           {busyNow.length ? (
             <span className="flex flex-wrap items-center gap-2">
               <span className="text-[13px] text-muted">{m.availability_suggestions()}</span>

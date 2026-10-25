@@ -191,7 +191,8 @@ mit einem eigenen API-Schlüssel an und erlaubt nur, was die Firmenverwaltung br
   Kollegen nur für die Verfügbarkeit, und wer seine Kalender noch allen zeigt, zeigt sie auch dem
   Neuen; wer es für einen Kalender abgeschaltet hat, bleibt dabei. „Für alle einschalten“ teilt
   jeden Kalender jedes Mitarbeiters so mit allen (`server/company/availability.ts`,
-  `calendars.ts`).
+  `calendars.ts`, je Anfrage höchstens 16 Konten). Scheitert die Freigabe beim Anlegen, bleibt
+  das Konto bestehen und das Startpasswort wird trotzdem gezeigt.
 - In der Mail zeigt Kontext übergebene Postfächer unter „Postfächer“ wie gemeinsame: als
   Postfach zählt ein fremdes Konto, wenn es eine Gruppe ist oder Ordner zeigt (wer nur einen
   Kalender teilt, zeigt keine).
@@ -1058,8 +1059,11 @@ nächsten Zeiten, in denen alle frei sind (wie Outlooks Terminplanungs-Assistent
 `Principal/getAvailability` (draft-ietf-jmap-calendars, Capability
 `urn:ietf:params:jmap:principals:availability`): pro Kollege die belegten Zeiträume ohne Titel,
 mit `busyStatus` (bestätigt, vorläufig, nicht verfügbar). Kontext fragt alle Teilnehmer in einer
-Anfrage (bis 16 Aufrufe, Stalwarts `maxCallsInRequest`), für den gezeigten Tag und zwei Wochen
-danach.
+Anfrage (bis 16 Aufrufe, Stalwarts `maxCallsInRequest`), für den gezeigten Tag und die zwei
+Wochen, in denen die Vorschläge suchen (ab dem gezeigten Tag, bei einem vergangenen ab heute).
+Es fragt dabei die IDs der Termine mit ab (`eventProperties`): Ohne sie fasst Stalwart
+aneinandergrenzende Zeiträume zusammen, und der gerade bearbeitete Termin ließe sich nicht vom
+nächsten unterscheiden.
 
 Stalwart antwortet nur aus Kalendern, deren Verfügbarkeit man lesen darf (`mayReadFreeBusy` oder
 `mayReadItems` im `shareWith`), und lässt Termine weg, die auf „Frei“ stehen
@@ -1076,7 +1080,8 @@ einschalten, ohne dass Kalender unter „Geteilt mit mir“ auftauchen.
   für alle auf einmal und „In Verfügbarkeit einbeziehen“ (`includeInAvailability`) pro Kalender.
 - **Vorschläge** (`src/lib/availability.ts`): auf halbe Stunden, Mo–Fr 7–18 Uhr, in der Länge des
   Termins; vorläufige Termine zählen als belegt. Beim Ändern eines Termins bleibt seine alte Zeit
-  außen vor, weil er schon in allen Kalendern steht.
+  bei denen außen vor, die ihn schon bekommen haben; wer gerade erst dazukommt, hat zu derselben
+  Zeit einen echten anderen Termin.
 - **Ansicht:** am Desktop eine Zeile pro Teilnehmer mit Balken über den Tag, die gewählte Zeit
   umrahmt; am Handy der Status pro Teilnehmer und ein Zeitplan mit der Zeit nach unten.
 

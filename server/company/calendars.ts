@@ -14,52 +14,71 @@ import type { StalwartRequest } from "./management";
 
 const CALENDARS = ["urn:ietf:params:jmap:core", "urn:ietf:params:jmap:calendars"];
 
+/**
+ * Stalwart takes at most this many calls per request (`maxMethodCalls`, default 16,
+ * crates/registry/src/schema/structs_impl.rs); one call per account.
+ */
+const CALLS_PER_REQUEST = 16;
+
 type SetResult = { notUpdated?: Record<string, { description?: string; type?: string }> | null };
 
+const pieces = <T>(items: T[]): T[][] =>
+  Array.from({ length: Math.ceil(items.length / CALLS_PER_REQUEST) }, (_, i) =>
+    items.slice(i * CALLS_PER_REQUEST, (i + 1) * CALLS_PER_REQUEST),
+  );
+
 export const createCalendars = (request: StalwartRequest) => {
-  /** The calendars of several accounts, with `shareWith`, in one request. */
+  /** The calendars of several accounts, with `shareWith`, a request per 16 accounts. */
   const list = async (accountIds: string[]): Promise<Record<string, CalendarShare[]>> => {
-    if (!accountIds.length) return {};
-    const responses = await request(
-      accountIds.map((accountId, index) => [
-        "Calendar/get",
-        { accountId, properties: ["shareWith"] },
-        String(index),
-      ]),
-      CALENDARS,
-    );
-    return Object.fromEntries(
-      accountIds.map((id, index) => [id, (responses[index]![1].list as CalendarShare[]) ?? []]),
-    );
+    const result: Record<string, CalendarShare[]> = {};
+    for (const piece of pieces(accountIds)) {
+      const responses = await request(
+        piece.map((accountId) => [
+          "Calendar/get",
+          { accountId, properties: ["shareWith"] },
+          accountId,
+        ]),
+        CALENDARS,
+      );
+      for (const [, args, accountId] of responses) {
+        result[accountId] = (args.list as CalendarShare[]) ?? [];
+      }
+    }
+    return result;
   };
 
-  const apply = async (patches: CalendarPatches): Promise<Result<number>> => {
+  /** Writes the patches; the number of calendars changed. */
+  const apply = async (patches: CalendarPatches): Promise<number> => {
     const accounts = Object.entries(patches);
-    if (!accounts.length) return { ok: true, value: 0 };
-    const responses = await request(
-      accounts.map(([accountId, update], index) => [
-        "Calendar/set",
-        { accountId, update },
-        String(index),
-      ]),
-      CALENDARS,
-    );
-    const failed = responses
-      .flatMap(([, args]) => Object.values((args as SetResult).notUpdated ?? {}))
-      .map((error) => error.description ?? error.type)[0];
-    if (failed) return { ok: false, error: `Kalender: ${failed}` };
-    return {
-      ok: true,
-      value: accounts.reduce((sum, [, update]) => sum + Object.keys(update).length, 0),
-    };
+    for (const piece of pieces(accounts)) {
+      const responses = await request(
+        piece.map(([accountId, update]) => ["Calendar/set", { accountId, update }, accountId]),
+        CALENDARS,
+      );
+      const failed = responses
+        .flatMap(([, args]) => Object.values((args as SetResult).notUpdated ?? {}))
+        .map((error) => error.description ?? error.type)[0];
+      if (failed) throw new Error(failed);
+    }
+    return accounts.reduce((sum, [, update]) => sum + Object.keys(update).length, 0);
+  };
+
+  /** Stalwart's refusals (and a server that cannot be reached) as values, not exceptions. */
+  const attempt = async (work: () => Promise<number>): Promise<Result<number>> => {
+    try {
+      return { ok: true, value: await work() };
+    } catch (error) {
+      return { ok: false, error: `Kalender: ${(error as Error).message}` };
+    }
   };
 
   return {
     /** A new person in the company (`people` includes them). */
-    welcome: async (newcomer: string, people: string[]) =>
-      apply(newcomerPatches(newcomer, await list(people))),
+    welcome: (newcomer: string, people: string[]) =>
+      attempt(async () => apply(newcomerPatches(newcomer, await list(people)))),
     /** Every calendar of `people` shows every colleague; the number of calendars changed. */
-    showEveryone: async (people: string[]) => apply(everyonePatches(await list(people))),
+    showEveryone: (people: string[]) =>
+      attempt(async () => apply(everyonePatches(await list(people)))),
   };
 };
 

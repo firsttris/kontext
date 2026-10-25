@@ -46,15 +46,17 @@ export const clashText = (busy: PlanningRow[]): string => {
     : m.availability_conflict_many({ names });
 };
 
-export const Clash = ({ busy }: { busy: PlanningRow[] }) => (
-  <span
-    aria-live="polite"
-    className={`inline-flex items-center gap-1.5 text-[13px] ${busy.length ? "text-warn" : "text-ok"}`}
-  >
-    {busy.length ? <AlertTriangle size={15} aria-hidden="true" /> : null}
-    {clashText(busy)}
-  </span>
-);
+/** Nothing while the times are loading: "everyone is free" must not show before it is known. */
+export const Clash = ({ busy, pending }: { busy: PlanningRow[]; pending: boolean }) =>
+  pending ? null : (
+    <span
+      aria-live="polite"
+      className={`inline-flex items-center gap-1.5 text-[13px] ${busy.length ? "text-warn" : "text-ok"}`}
+    >
+      {busy.length ? <AlertTriangle size={15} aria-hidden="true" /> : null}
+      {clashText(busy)}
+    </span>
+  );
 
 export const Suggestions = ({
   slots,

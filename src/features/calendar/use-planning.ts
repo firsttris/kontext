@@ -12,22 +12,16 @@ import {
   withoutEvent,
 } from "@/lib/availability";
 import type { EventForm } from "@/lib/event-form";
-import { addDays, fromLocal } from "@/lib/jscalendar";
-import { formSlot, shownHours } from "@/lib/planning";
+import { formSlot, LOOKAHEAD_DAYS, planningRange, shownHours } from "@/lib/planning";
 import { attendeeList, useSchedules } from "./availability-queries";
-
-/** How far ahead the suggestions look. */
-const LOOKAHEAD_DAYS = 14;
 
 export type PlanningRow = Schedule & { name: string; isMe: boolean; status: PersonStatus };
 
-const dayStart = (day: string) => fromLocal(`${day}T00:00:00`);
+/** The appointment before this change: its time and whom it went to (lower case). */
+export type Editing = Slot & { invited: Set<string> };
 
-/**
- * `editing` is the appointment's time before the change: it sits in every attendee's calendar and
- * must not clash with itself.
- */
-export const usePlanning = (form: EventForm, editing: Slot | null) => {
+/** `editing` sits in the calendars it was sent to and must not clash with itself. */
+export const usePlanning = (form: EventForm, editing: Editing | null) => {
   const emails = attendeeList(form.attendees);
   const slot = formSlot(form);
   const [day, setDay] = useState(form.date);
@@ -37,11 +31,11 @@ export const usePlanning = (form: EventForm, editing: Slot | null) => {
     setFollowed(form.date);
     setDay(form.date);
   }
-  const [first = day, last = day] = [day, form.date].sort();
+  const range = planningRange(day, form.date, Date.now());
   const { schedules, names, me, isPending, isError } = useSchedules(
     emails,
-    dayStart(first),
-    dayStart(addDays(last, LOOKAHEAD_DAYS)),
+    new Date(range.from),
+    new Date(range.to),
   );
   const known = withoutEvent(schedules, editing);
   const rows: PlanningRow[] = known.map((schedule) => ({
@@ -51,7 +45,6 @@ export const usePlanning = (form: EventForm, editing: Slot | null) => {
     status: slot ? statusDuring(schedule.busy, slot.start, slot.end) : { kind: "free" },
   }));
   const minutes = slot ? (slot.end - slot.start) / 60_000 : 60;
-  const from = Math.max(Date.now(), dayStart(day).getTime());
   const hours = shownHours(slot, day);
   return {
     day,
@@ -60,13 +53,11 @@ export const usePlanning = (form: EventForm, editing: Slot | null) => {
     slot,
     /** Who is busy at the chosen time (tentative counts). */
     busyNow: rows.filter((row) => row.status.kind === "busy"),
-    suggestions: freeSlots(known, from, minutes, { days: LOOKAHEAD_DAYS }),
+    suggestions: freeSlots(known, range.suggestFrom, minutes, { days: LOOKAHEAD_DAYS }),
     hasAttendees: emails.length > 0,
     isPending,
     isError,
     hours,
-    /** Where the bars begin: the first hour shown on that day. */
-    dayStartMs: fromLocal(`${day}T${String(hours.startHour).padStart(2, "0")}:00:00`).getTime(),
   };
 };
 

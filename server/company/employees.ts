@@ -99,10 +99,11 @@ export const employeeRoutes = ({
     if (signature) await applySignature(mailstore, created.value, signature);
     // Colleagues see when they are busy and the other way round, like in Outlook; a refusal
     // there does not undo the account either.
-    await calendars.welcome(created.value, [
+    const shared = await calendars.welcome(created.value, [
       ...loaded.company.employees.map((employee) => employee.id),
       created.value,
     ]);
+    if (!shared.ok) console.warn(`Neuer Mitarbeiter ${created.value}: ${shared.error}`);
     return c.json({ id: created.value, password }, 201);
   });
 
