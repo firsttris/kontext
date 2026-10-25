@@ -47,7 +47,30 @@ const hoursInput = z.object({
     .max(100),
   greeting: z.string().max(64).nullable(),
 });
+const linesSchema = z.object({
+  lines: z
+    .array(
+      z.object({
+        id: z
+          .string()
+          .regex(/^[a-z0-9]{1,12}$/)
+          .optional(),
+        label: z.string().trim().min(1).max(60),
+        username: z.string().trim().min(1).max(100),
+        /** Left empty, the stored password stays. */
+        password: z.string().max(200).default(""),
+        ring: z.array(z.string().min(1).max(64)).max(200),
+      }),
+    )
+    .max(9),
+});
 const boxSchema = z.object({ name: z.string().trim().min(1).max(60) });
+
+/** Short ids for the box's endpoint names ("fritzbox-<id>"). */
+const newLineId = () =>
+  Array.from(crypto.getRandomValues(new Uint8Array(8)), (byte) =>
+    "abcdefghijklmnopqrstuvwxyz0123456789".charAt(byte % 36),
+  ).join("");
 
 /** A person or a shared mailbox of the company, by its account id. */
 const ownerOf = (loaded: Loaded, id: string) =>
@@ -87,6 +110,7 @@ export const createPhoneAdminRoutes = ({
           }
         : null,
       ring: settings.ring,
+      extraLines: settings.extraLines.map(({ password: _, ...line }) => line),
       ringMode: settings.ringMode,
       ringStepSeconds: settings.ringStepSeconds,
       forward: settings.forward,
@@ -144,6 +168,30 @@ export const createPhoneAdminRoutes = ({
       return c.json({ error: "Unbekanntes Board" }, 400);
     }
     await store.saveSettings({ ...(await store.settings()), callbackBoard: parsed.data.board });
+    return c.body(null, 204);
+  });
+
+  // Direct numbers: each another IP phone at the Fritzbox with its own people.
+  app.put("/lines", async (c) => {
+    const parsed = linesSchema.safeParse(await c.req.json().catch(() => ({})));
+    if (!parsed.success) return c.json({ error: "Angaben unvollständig" }, 400);
+    const settings = await store.settings();
+    const known = new Set(c.get("loaded").company.employees.map((employee) => employee.id));
+    const names = [settings.line?.username, ...parsed.data.lines.map((line) => line.username)];
+    if (new Set(names.filter(Boolean)).size !== names.filter(Boolean).length) {
+      return c.json({ error: "Jeder Benutzername nur einmal" }, 400);
+    }
+    const extraLines = [];
+    for (const line of parsed.data.lines) {
+      if (!line.ring.every((id) => known.has(id)))
+        return c.json({ error: "Unbekannte Person" }, 400);
+      const before = settings.extraLines.find((other) => other.id === line.id);
+      const password = line.password || before?.password;
+      if (!password) return c.json({ error: `Kennwort für „${line.label}“ fehlt` }, 400);
+      extraLines.push({ ...line, id: before?.id ?? newLineId(), password });
+    }
+    await store.saveSettings({ ...settings, extraLines });
+    await service.reconfigure();
     return c.body(null, 204);
   });
 

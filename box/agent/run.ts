@@ -59,7 +59,9 @@ export const runBox = async ({
         link?.applied(command.version);
       }
       if (command.type === "answer") await pbx.answer(command.call, command.room);
-      if (command.type === "dial") await pbx.dial(command.call, command.room, command.number);
+      if (command.type === "dial") {
+        await pbx.dial(command.call, command.room, command.number, command.line);
+      }
       if (command.type === "hangup") await pbx.hangup(command.call);
     } catch (error) {
       state.error = (error as Error).message;

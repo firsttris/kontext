@@ -85,7 +85,10 @@ export const ringingPhoneCall = (
       !call.member &&
       call.members.includes(me) &&
       !dismissed.includes(call.id) &&
-      (!plan || ringingFor(plan, (now.getTime() - Date.parse(call.startedAt)) / 1000).includes(me)),
+      // The plan is the first line's; a direct number rings for all its people at once.
+      (!plan ||
+        call.line !== null ||
+        ringingFor(plan, (now.getTime() - Date.parse(call.startedAt)) / 1000).includes(me)),
   ) ?? null;
 
 /** A call a colleague hands to me, waiting for me to take it. */

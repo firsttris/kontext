@@ -54,6 +54,8 @@ export type PhoneCall = {
   present: string[];
   /** Answered at the forwarding number (a mobile phone) while it rang in Kontext. */
   forwardedTo: string | null;
+  /** The extra number it came in on or went out with (its name, "Durchwahl Anna"); null: the first. */
+  line: string | null;
 };
 
 /** Phone rooms in LiveKit: "kontext-phone-<uuid>", which LiveKit SIP's dispatch rule matches. */
@@ -118,6 +120,7 @@ export const incomingCall = (
   offeredBy: null,
   present: [],
   forwardedTo: null,
+  line: null,
 });
 
 /** A call outside the opening hours: filed at once, it never rings. */
@@ -163,6 +166,7 @@ export const outgoingCall = ({
   offeredBy: null,
   present: [],
   forwardedTo: null,
+  line: null,
 });
 
 /** The call after one of the box's events; the same call when it changes nothing (a repeat). */

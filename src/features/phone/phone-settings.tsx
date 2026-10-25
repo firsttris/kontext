@@ -12,6 +12,7 @@ import { m } from "@/paraglide/messages";
 import { ADMIN_KEY, type Admin, send, useAdminChange } from "./settings/api";
 import { CallbacksForm } from "./settings/callbacks";
 import { HoursForm } from "./settings/hours";
+import { LinesForm } from "./settings/lines";
 import { MailboxForm } from "./settings/mailbox";
 import { RingForm } from "./settings/ring";
 import { SoundsCard } from "./settings/sounds";
@@ -155,6 +156,7 @@ export const PhoneSettingsSection = () => {
           <Boxes boxes={data.boxes} />
           <LineForm line={data.line} />
           <RingForm admin={data} />
+          <LinesForm lines={data.extraLines} />
           <CallbacksForm board={data.callbackBoard} />
           <SoundsCard sounds={data.sounds} />
           <MailboxForm mailbox={data.mailbox} sounds={data.sounds} />

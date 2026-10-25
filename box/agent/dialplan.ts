@@ -11,7 +11,8 @@
  * - Mailbox (kontext-mailbox, kontext-record): when nobody answered in time, the box picks up,
  *   plays the greeting and records a message; the agent uploads it when the caller hangs up.
  * - Outgoing: the agent originates a call to LiveKit SIP (the room Kontext named) and, once that
- *   leg is up, kontext-out dials the number through the Fritzbox.
+ *   leg is up, kontext-out dials the number through the Fritzbox, with the line the agent chose
+ *   (${KONTEXT_OUT}: the first IP phone, or an extra one for a direct number).
  */
 import type { BoxConfig } from "../../server/phone/protocol";
 
@@ -101,6 +102,7 @@ const incoming = (config: BoxConfig, paths: BoxPaths) => {
   const caller: [string, string][] = [
     ["Remote", `\${CALLERID(num)}`],
     ["Local", `\${CALLERID(dnid)}`],
+    ["Line", `\${KONTEXT_LINE}`],
   ];
   const closed = config.hours
     ? extension("closed", [
@@ -112,7 +114,8 @@ const incoming = (config: BoxConfig, paths: BoxPaths) => {
     : [];
   return context(
     "kontext-in",
-    extension("_[+0-9a-zA-Z].", ["Goto(ring,1)"]),
+    // The number dialled is the IP phone's user name: which of the box's lines was called.
+    extension("_[+0-9a-zA-Z].", [`Set(__KONTEXT_LINE=\${EXTEN})`, "Goto(ring,1)"]),
     extension("s", ["Goto(ring,1)"]),
     extension("ring", [
       `Set(__KONTEXT_CALL=\${UNIQUEID})`,
@@ -158,7 +161,7 @@ const mailbox = (config: BoxConfig, paths: BoxPaths) => {
 /** Out through the Fritzbox, once the line into Kontext's room is up. */
 const dialOut = [
   report("ringing", "out", [["Remote", `\${EXTEN}`]]),
-  `Dial(PJSIP/\${EXTEN}@fritzbox,60,U(kontext-callee-answered))`,
+  `Dial(PJSIP/\${EXTEN}@\${KONTEXT_OUT},60,U(kontext-callee-answered))`,
   "Hangup()",
 ];
 

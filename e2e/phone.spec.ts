@@ -25,9 +25,9 @@ const box = {
       })
       .toBe(true);
   },
-  ring: async (from: string) =>
+  ring: async (from: string, line?: string) =>
     (await (
-      await fetch(`${CONTROL}/ring`, { method: "POST", body: JSON.stringify({ from }) })
+      await fetch(`${CONTROL}/ring`, { method: "POST", body: JSON.stringify({ from, line }) })
     ).json()) as { call: string },
   hangup: (call: string, cause = 16) =>
     fetch(`${CONTROL}/hangup`, { method: "POST", body: JSON.stringify({ call, cause }) }),
@@ -42,6 +42,7 @@ const box = {
       connected: boolean;
       config: {
         line: { username: string } | null;
+        extraLines: { username: string; password: string }[];
         hours: { open: { day: number; from: string; to: string }[] } | null;
       } | null;
       commands: { type: string; number?: string; call?: string }[];
@@ -296,6 +297,32 @@ test.describe("Telefonie über die Telefonbox", () => {
     await expect
       .poll(async () => (await box.state()).commands)
       .toContainEqual({ type: "hangup", call: dialled.call });
+  });
+
+  test("eine Durchwahl klingelt nur bei Anna", async ({ page, browser }) => {
+    await login(page);
+    await page.goto("/settings?section=phone");
+    const lines = page.getByRole("region", { name: "Weitere Rufnummern" });
+    await lines.getByRole("button", { name: "Rufnummer hinzufügen" }).click();
+    const line = lines.getByRole("group", { name: "Neue Rufnummer" });
+    await line.getByLabel("Name", { exact: true }).fill("Durchwahl Anna");
+    const named = lines.getByRole("group", { name: "Durchwahl Anna" });
+    await named.getByLabel("Benutzername").fill("kontext621");
+    await named.getByLabel("Kennwort").fill("zwei");
+    await named.getByLabel("Anna Weber").check();
+    await lines.getByRole("button", { name: "Speichern" }).click();
+    await expect
+      .poll(async () => (await box.state()).config)
+      .toMatchObject({ extraLines: [{ username: "kontext621", password: "zwei" }] });
+
+    const anna = await colleague(browser, "anna");
+    const { call } = await box.ring("07223 81234", "kontext621");
+    await expect(anna.page.getByRole("dialog", { name: /^Anruf von/ })).toContainText(
+      "Durchwahl Anna",
+    );
+    await expect(page.getByRole("dialog", { name: /^Anruf von/ })).toHaveCount(0);
+    await box.hangup(call);
+    await anna.close();
   });
 
   test("aus dem Kontakt anrufen geht über die Box", async ({ page }) => {

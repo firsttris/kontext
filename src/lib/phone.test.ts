@@ -33,6 +33,7 @@ const call = (extra: Partial<PhoneCall> = {}): PhoneCall => ({
   offeredBy: null,
   present: [],
   forwardedTo: null,
+  line: null,
   ...extra,
 });
 

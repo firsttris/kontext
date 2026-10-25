@@ -130,6 +130,7 @@ fine on a VPS with 2 vCPUs and 4 GB RAM.
   - **Opening hours** with lunch break, closed days and the public holidays at one click: outside them nothing rings, callers hear your closing greeting and may leave a message. The box decides by itself, also when Kontext is out of reach.
   - **Hand a call on** to a colleague (it rings for them, you leave once they are on) or to any number or a handset at the Fritzbox (`**610`): the box dials it into the call and you hand over once it is answered.
   - **Who rings when**: everyone at once or one after another (then all), and a mobile phone that rings too after a while.
+  - **Direct numbers**: more numbers of the line, each ringing for its own people, who also call out with it.
 - **Search** across all your channels; edit or delete your own messages; mute, leave or delete channels.
 - **Retention** set by the company admin (30 days to 5 years, or for ever): older messages, photos and files are deleted by themselves.
 - **On the phone**: its own tab, conversations as bubbles.

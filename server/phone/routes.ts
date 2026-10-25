@@ -11,6 +11,7 @@ import { joinToken, type LiveKitConfig } from "../calls/livekit";
 import type { Viewer } from "../chat/chat";
 import { bearer } from "./box-routes";
 import { type PhoneFiles, wavResponse } from "./files";
+import { everyone } from "./lines";
 import {
   canSeeCall,
   dialSchema,
@@ -118,7 +119,7 @@ export const createPhoneRoutes = (deps: PhoneRouteDeps) => {
     return c.json({
       enabled: true,
       allowed: await service.allowed(me),
-      colleagues: (await store.settings()).ring.filter((id) => id !== me),
+      colleagues: everyone(await store.settings()).filter((id) => id !== me),
       ringPlan: ringPlanOf(await store.settings()),
       online: service.online().length > 0,
       calls: await service.callsOf(me),

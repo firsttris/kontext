@@ -40,6 +40,18 @@ const settingsSchema = z.object({
       greeting: z.string().nullable(),
     })
     .default({ enabled: false, open: [], closedDays: [], greeting: null }),
+  /** More numbers: further IP phones at the Fritzbox, each ringing for its own people. */
+  extraLines: z
+    .array(
+      z.object({
+        id: z.string(),
+        label: z.string(),
+        username: z.string(),
+        password: z.string(),
+        ring: z.array(z.string()),
+      }),
+    )
+    .default([]),
   /** All at once, or the people in `ring`'s order, each for stepSeconds, then all. */
   ringMode: z.enum(["all", "order"]).default("all"),
   ringStepSeconds: z.number().int().min(5).max(60).default(15),
@@ -118,6 +130,7 @@ const toCall = (row: CallDbRow): PhoneCall => ({
   offeredBy: row.offeredBy,
   present: [],
   forwardedTo: row.forwardedTo,
+  line: row.line,
 });
 
 const fromCall = ({ present: _, ...call }: PhoneCall): CallDbRow => ({

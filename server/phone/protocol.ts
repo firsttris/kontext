@@ -47,9 +47,17 @@ export const hoursSchema = z.object({
   greeting: soundIdSchema.nullable(),
 });
 
+/** Another IP phone at the same Fritzbox, for another number (a direct line). */
+export const extraLineSchema = z.object({
+  id: z.string().regex(/^[a-z0-9]{1,12}$/),
+  username: z.string().min(1).max(100),
+  password: z.string().min(1).max(200),
+});
+
 /** Everything the box needs, whole and versioned: it always renders from all of it. */
 export const boxConfigSchema = z.object({
   line: lineSchema.nullable(),
+  extraLines: z.array(extraLineSchema).max(9).default([]),
   trunk: trunkSchema.nullable(),
   /** How long an incoming call may ring in Kontext before the box gives up. */
   ringSeconds: z.number().int().min(10).max(300),
@@ -81,6 +89,11 @@ export const toBoxSchema = z.discriminatedUnion("type", [
     call: callId,
     room: z.string().uuid(),
     number: z.string().regex(/^[0-9+*#]{2,32}$/),
+    /** The extra line to call out with (its id), so they see that number; else the first. */
+    line: z
+      .string()
+      .regex(/^[a-z0-9]{1,12}$/)
+      .optional(),
   }),
   z.object({ type: z.literal("hangup"), call: callId }),
   /** Events up to this number arrived; the box need not send them again. */
@@ -110,6 +123,8 @@ export const callEventSchema = z.object({
   cause: z.number().int().optional(),
   /** An incoming call answered at the forwarding number, not in Kontext. */
   forwarded: z.boolean().optional(),
+  /** Which IP phone of the box was called: its user name at the Fritzbox. */
+  line: z.string().max(100).optional(),
   at: z.string().datetime(),
 });
 export type CallEvent = z.infer<typeof callEventSchema>;

@@ -7,13 +7,13 @@ import { mkdir, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import type { BoxConfig, CallEvent } from "../../server/phone/protocol";
 import { type Ami, callEventOf, connectAmi, type Frame, registrationOf } from "./ami";
-import { type AmiLogin, asteriskFiles, type BoxPaths } from "./asterisk-config";
+import { type AmiLogin, asteriskFiles, type BoxPaths, lineEndpoint } from "./asterisk-config";
 import type { BoxFiles } from "./files";
 
 export type Pbx = {
   apply: (config: BoxConfig) => Promise<void>;
   answer: (call: string, room: string) => Promise<void>;
-  dial: (call: string, room: string, number: string) => Promise<void>;
+  dial: (call: string, room: string, number: string, line?: string) => Promise<void>;
   hangup: (call: string) => Promise<void>;
 };
 
@@ -110,7 +110,7 @@ export const createAsterisk = async ({
         ["Priority", "1"],
       ]);
     },
-    dial: async (call, room, number) => {
+    dial: async (call, room, number, line) => {
       // First the leg into Kontext's room (LiveKit SIP answers at once), then the number.
       await ami.action([
         ["Action", "Originate"],
@@ -119,6 +119,7 @@ export const createAsterisk = async ({
         ["Exten", number],
         ["Priority", "1"],
         ["Variable", `__KONTEXT_CALL=${call}`],
+        ["Variable", `KONTEXT_OUT=${line ? lineEndpoint(line) : "fritzbox"}`],
         ["CallerID", "Kontext"],
         ["Async", "true"],
       ]);

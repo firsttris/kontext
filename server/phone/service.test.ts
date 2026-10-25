@@ -40,6 +40,7 @@ const SETTINGS: PhoneSettings = {
   ringMode: "all",
   ringStepSeconds: 15,
   forward: null,
+  extraLines: [],
 };
 
 const setup = (settings: Partial<PhoneSettings> = {}) => {
@@ -218,6 +219,30 @@ describe("an incoming call", () => {
       state: "talking",
       forwardedTo: "+491712345678",
     });
+  });
+
+  it("rings a direct number only for its people, and they call out with it", async () => {
+    const anna = {
+      id: "anna",
+      label: "Durchwahl Anna",
+      username: "k621",
+      password: "p",
+      ring: ["anna"],
+    };
+    const { box, service, toBox, notices, phoneEvents } = setup({ extraLines: [anna] });
+    await box.receive({ ...event(1, "ringing"), line: "k621" });
+    expect(notices).toEqual([{ members: ["anna"], title: "Anruf" }]);
+    expect(phoneEvents().at(-1)!.event.call).toMatchObject({
+      members: ["anna"],
+      line: "Durchwahl Anna",
+    });
+    expect(phoneEvents().map(({ who }) => who)).toEqual(["anna"]);
+    expect(await service.allowed("anna")).toBe(true);
+    const call = (await service.dial("anna", "07223 123456")) as PhoneCall;
+    expect(call.line).toBe("Durchwahl Anna");
+    expect(toBox.at(-1)).toMatchObject({ type: "dial", line: "anna" });
+    await service.dial("jonas", "07223 123456");
+    expect(toBox.at(-1)).not.toHaveProperty("line");
   });
 
   it("leaves Zurückrufen on the chosen board, done once someone talked to the number", async () => {

@@ -21,6 +21,66 @@ const safe = (value: string) => value.replace(/[\r\n[\];]/g, "");
 
 const SIP_PORT = 5070;
 
+/** The endpoint of an extra number, for calls out with it. */
+export const lineEndpoint = (id: string) => `fritzbox-${safe(id)}`;
+
+/** One IP phone at the Fritzbox: its login, its registration and the endpoint to call out with. */
+const fritzboxLine = (
+  name: string,
+  registrarValue: string,
+  usernameValue: string,
+  password: string,
+  identify: boolean,
+) => {
+  const registrar = safe(registrarValue);
+  const username = safe(usernameValue);
+  return [
+    section(`${name}-auth`, [
+      ["type", "auth"],
+      ["auth_type", "userpass"],
+      ["username", username],
+      ["password", safe(password)],
+    ]),
+    section(`${name}-registration`, [
+      ["type", "registration"],
+      ["transport", "transport-udp"],
+      ["outbound_auth", `${name}-auth`],
+      ["server_uri", `sip:${registrar}`],
+      ["client_uri", `sip:${username}@${registrar}`],
+      ["contact_user", username],
+      ["retry_interval", 30],
+      ["forbidden_retry_interval", 300],
+      ["expiration", 300],
+    ]),
+    section(name, [
+      ["type", "aor"],
+      ["contact", `sip:${registrar}`],
+    ]),
+    section(name, [
+      ["type", "endpoint"],
+      ["transport", "transport-udp"],
+      ["context", "kontext-in"],
+      ["disallow", "all"],
+      ["allow", "alaw,ulaw,g722"],
+      ["outbound_auth", `${name}-auth`],
+      ["aors", name],
+      ["from_user", username],
+      ["from_domain", registrar],
+      ["direct_media", "no"],
+      ["dtmf_mode", "rfc4733"],
+    ]),
+    ...(identify
+      ? [
+          section(`${name}-identify`, [
+            ["type", "identify"],
+            ["endpoint", name],
+            ["match", registrar],
+          ]),
+        ]
+      : []),
+  ];
+};
+
 export const pjsipConf = (config: BoxConfig): string => {
   const parts = [
     section("transport-udp", [
@@ -36,49 +96,20 @@ export const pjsipConf = (config: BoxConfig): string => {
   ];
   const { line, trunk } = config;
   if (line) {
-    const registrar = safe(line.registrar);
-    const username = safe(line.username);
-    parts.push(
-      section("fritzbox-auth", [
-        ["type", "auth"],
-        ["auth_type", "userpass"],
-        ["username", username],
-        ["password", safe(line.password)],
-      ]),
-      section("fritzbox-registration", [
-        ["type", "registration"],
-        ["transport", "transport-udp"],
-        ["outbound_auth", "fritzbox-auth"],
-        ["server_uri", `sip:${registrar}`],
-        ["client_uri", `sip:${username}@${registrar}`],
-        ["contact_user", username],
-        ["retry_interval", 30],
-        ["forbidden_retry_interval", 300],
-        ["expiration", 300],
-      ]),
-      section("fritzbox", [
-        ["type", "aor"],
-        ["contact", `sip:${registrar}`],
-      ]),
-      section("fritzbox", [
-        ["type", "endpoint"],
-        ["transport", "transport-udp"],
-        ["context", "kontext-in"],
-        ["disallow", "all"],
-        ["allow", "alaw,ulaw,g722"],
-        ["outbound_auth", "fritzbox-auth"],
-        ["aors", "fritzbox"],
-        ["from_user", username],
-        ["from_domain", registrar],
-        ["direct_media", "no"],
-        ["dtmf_mode", "rfc4733"],
-      ]),
-      section("fritzbox-identify", [
-        ["type", "identify"],
-        ["endpoint", "fritzbox"],
-        ["match", registrar],
-      ]),
-    );
+    parts.push(...fritzboxLine("fritzbox", line.registrar, line.username, line.password, true));
+    // More numbers: more IP phones at the same Fritzbox; calls in still come through the first
+    // (matched by address) and tell their line by the number dialled (contact_user).
+    for (const extra of config.extraLines) {
+      parts.push(
+        ...fritzboxLine(
+          lineEndpoint(extra.id),
+          line.registrar,
+          extra.username,
+          extra.password,
+          false,
+        ),
+      );
+    }
   }
   if (trunk) {
     parts.push(

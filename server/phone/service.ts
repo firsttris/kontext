@@ -6,6 +6,7 @@
  */
 import type { Hub } from "../live/hub";
 import { companyDay, type NewTaskData } from "../tasks/tasks";
+import { everyone, lineOf, outLineOf, ringPlanFor } from "./lines";
 import { TRUNK_USER } from "./livekit-sip";
 import { toDialable, toE164 } from "./numbers";
 import {
@@ -68,12 +69,8 @@ const TIMEZONE = "Europe/Berlin";
 const comingDays = (days: { day: string }[], today: string) =>
   days.map((entry) => entry.day).filter((day) => day >= today);
 
-/** The ring plan as the app and the push see it. */
-export const ringPlanOf = (settings: PhoneSettings): RingPlan => ({
-  mode: settings.ringMode,
-  stepSeconds: settings.ringStepSeconds,
-  order: settings.ring,
-});
+/** The first line's ring plan, as the app sees it. */
+export const ringPlanOf = (settings: PhoneSettings): RingPlan => ringPlanFor(settings, null);
 
 export const desiredConfig = (
   settings: PhoneSettings,
@@ -86,6 +83,9 @@ export const desiredConfig = (
   const closedGreeting = knownSound(settings, hours.greeting);
   return {
     line: settings.line,
+    extraLines: settings.line
+      ? settings.extraLines.map(({ id, username, password }) => ({ id, username, password }))
+      : [],
     trunk: {
       host: trunkHost,
       port: trunkPort,
@@ -182,17 +182,27 @@ export const createPhoneService = (deps: PhoneDeps) => {
     const known = await store.callOfBox(boxId, event.call);
     if (!known && event.state === "closed" && event.direction === "in") {
       // Outside the opening hours: in the list, but nobody hears it ring.
-      const { ring } = await store.settings();
-      await save(closedCall(event, { id: newId(), boxId, members: ring }));
+      const settings = await store.settings();
+      const line = lineOf(settings, event.line);
+      const members = ringPlanFor(settings, line).order;
+      await save({
+        ...closedCall(event, { id: newId(), boxId, members }),
+        line: line?.label ?? null,
+      });
       return;
     }
     if (!known) {
       // Calls appear when they ring here; dialled ones exist from the dial on.
       if (event.state !== "ringing" || event.direction !== "in") return;
       const settings = await store.settings();
-      const call = incomingCall(event, { id: newId(), boxId, members: settings.ring });
+      const line = lineOf(settings, event.line);
+      const plan = ringPlanFor(settings, line);
+      const call = {
+        ...incomingCall(event, { id: newId(), boxId, members: plan.order }),
+        line: line?.label ?? null,
+      };
       await save(call);
-      ringPhones(call, ringPlanOf(settings));
+      ringPhones(call, plan);
       return;
     }
     const forwardTo = event.forwarded ? ((await store.settings()).forward?.number ?? null) : null;
@@ -227,7 +237,7 @@ export const createPhoneService = (deps: PhoneDeps) => {
 
   const transfers = createTransfers({ store, save, send, newId, now });
 
-  const allowed = async (me: string) => (await store.settings()).ring.includes(me);
+  const allowed = async (me: string) => everyone(await store.settings()).includes(me);
 
   return {
     /** A box came online; the function it returns handles what the box says. */
@@ -291,16 +301,26 @@ export const createPhoneService = (deps: PhoneDeps) => {
       if (!remote) return "bad-number";
       const boxId = connected.keys().next().value;
       if (!boxId) return "offline";
-      const call = outgoingCall({
-        id: newId(),
-        boxId,
-        member: me,
-        remote,
-        room: newId(),
-        at: now().toISOString(),
-      });
+      const line = outLineOf(await store.settings(), me);
+      const call = {
+        ...outgoingCall({
+          id: newId(),
+          boxId,
+          member: me,
+          remote,
+          room: newId(),
+          at: now().toISOString(),
+        }),
+        line: line?.label ?? null,
+      };
       await save(call);
-      send(call, { type: "dial", call: call.id, room: call.room!, number: toDialable(remote) });
+      send(call, {
+        type: "dial",
+        call: call.id,
+        room: call.room!,
+        number: toDialable(remote),
+        ...(line ? { line: line.id } : {}),
+      });
       return call;
     },
 

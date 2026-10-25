@@ -98,7 +98,9 @@ Einstellungen → Telefonie steht, ob das geklappt hat.
 
 **In der Fritzbox:** Telefonie → Telefoniegeräte → Neues Gerät einrichten → „Telefon (mit und
 ohne Anrufbeantworter)“ → „LAN/WLAN (IP-Telefon)“, Name „Kontext“. Benutzername und Kennwort
-merken und festlegen, auf welche Rufnummern das Gerät reagiert und mit welcher es anruft.
+merken und festlegen, auf welche Rufnummern das Gerät reagiert und mit welcher es anruft. Für
+Durchwahlen je Nummer ein weiteres Gerät dieser Art anlegen, das nur auf diese Nummer reagiert
+und mit ihr anruft, und es in Kontext unter „Weitere Rufnummern“ eintragen.
 
 **In Kontext:** Einstellungen → Telefonie: Benutzername und Kennwort aus der Fritzbox eintragen,
 auswählen, wer klingeln soll, dann „Box koppeln“.

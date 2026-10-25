@@ -6,6 +6,8 @@
  * - to a number or a telephone at the Fritzbox ("**610"): the box dials it into the same room;
  *   once it is answered the one handing over leaves, and the two talk through the room.
  */
+
+import { everyone } from "./lines";
 import { dialTarget, offerCall, outgoingCall, type PhoneCall, takeOffer } from "./phone";
 import type { ToBox } from "./protocol";
 import type { Problem } from "./service";
@@ -30,7 +32,7 @@ export const createTransfers = ({ store, save, send, newId, now }: TransferConte
   };
 
   const toColleague = async (call: PhoneCall, me: string, to: string) => {
-    if (!(await store.settings()).ring.includes(to)) return "not-allowed" as const;
+    if (!everyone(await store.settings()).includes(to)) return "not-allowed" as const;
     const offered = offerCall(call, me, to);
     if (!offered) return "busy" as const;
     await save(offered);

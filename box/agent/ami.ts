@@ -47,6 +47,7 @@ export const callEventOf = (frame: Frame, now: Date): Omit<CallEvent, "type" | "
     local: frame.Local ?? "",
     ...(Number.isFinite(cause) && frame.Cause ? { cause } : {}),
     ...(frame.Forwarded === "1" ? { forwarded: true } : {}),
+    ...(frame.Line ? { line: frame.Line } : {}),
     at: now.toISOString(),
   };
 };

@@ -111,7 +111,11 @@ const Row = ({
           </time>
         </div>
         <span className="text-[13px] text-muted">
-          {[caller.contact ? readableNumber(call.remote) : "", outcomeText(call, nameOf, me)]
+          {[
+            caller.contact ? readableNumber(call.remote) : "",
+            outcomeText(call, nameOf, me),
+            call.line ?? "",
+          ]
             .filter(Boolean)
             .join(" · ")}
         </span>

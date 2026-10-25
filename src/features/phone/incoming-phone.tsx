@@ -82,7 +82,11 @@ const Ringing = ({
                   : m.phone_incoming({ name: caller.name })}
               </DialogPrimitive.Title>
               <span className="truncate text-[13px] text-muted">
-                {[caller.company, caller.contact ? readableNumber(call.remote) : ""]
+                {[
+                  caller.company,
+                  caller.contact ? readableNumber(call.remote) : "",
+                  call.line ?? "",
+                ]
                   .filter(Boolean)
                   .join(" · ")}
               </span>

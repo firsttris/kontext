@@ -4,6 +4,7 @@ import { asteriskFiles, extensionsConf, managerConf, pjsipConf } from "./asteris
 
 const config: BoxConfig = {
   line: { registrar: "fritz.box", username: "kontext620", password: "geheim" },
+  extraLines: [],
   trunk: { host: "kontext.firma.de", port: 5060, username: "kontext-box", password: "trunk" },
   ringSeconds: 60,
   sounds: [],
@@ -24,6 +25,19 @@ describe("pjsipConf", () => {
     expect(conf).toContain("contact=sip:kontext.firma.de:5060;transport=tcp");
     expect(conf).toContain("rtp_symmetric=yes");
     expect(conf).toContain("username=kontext-box\npassword=trunk");
+  });
+
+  it("signs in further IP phones for direct numbers, at the same Fritzbox", () => {
+    const conf = pjsipConf({
+      ...config,
+      extraLines: [{ id: "anna", username: "kontext621", password: "zwei" }],
+    });
+    expect(conf).toContain("[fritzbox-anna-registration]\ntype=registration");
+    expect(conf).toContain("client_uri=sip:kontext621@fritz.box\ncontact_user=kontext621");
+    expect(conf).toContain("[fritzbox-anna]\ntype=endpoint");
+    expect(conf).toContain("from_user=kontext621");
+    // Calls in come through the first line's endpoint (matched by address).
+    expect(conf).not.toContain("[fritzbox-anna-identify]");
   });
 
   it("only listens while there is no line or trunk yet", () => {
@@ -51,8 +65,10 @@ describe("extensionsConf", () => {
     expect(conf).not.toContain("kontext-mailbox");
     expect(conf).toContain(`Set(__KONTEXT_CALL=\${UNIQUEID})`);
     expect(conf).toContain(`Dial(PJSIP/\${KONTEXT_ROOM}@livekit,30)`);
-    expect(conf).toContain(`Dial(PJSIP/\${EXTEN}@fritzbox,60,U(kontext-callee-answered))`);
     expect(conf).toContain("exten => _**X.,1,UserEvent(KontextCall");
+    expect(conf).toContain(`Dial(PJSIP/\${EXTEN}@\${KONTEXT_OUT},60`);
+    expect(conf).toContain(`exten => _[+0-9a-zA-Z].,1,Set(__KONTEXT_LINE=\${EXTEN})`);
+    expect(conf).toContain(`Line: \${KONTEXT_LINE})`);
     expect(conf).toMatch(/\[kontext-in\][\s\S]*exten => h,1,UserEvent\(KontextCall,.*State: ended/);
   });
 });

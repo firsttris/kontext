@@ -5,6 +5,7 @@
  *   bun dev/fake-box.ts --url http://127.0.0.1:18090 --code K7QM-4XPA [--control 18096]
  *
  *   curl -XPOST localhost:18096/ring -d '{"from":"07223 123456"}'      # someone calls
+ *   curl -XPOST localhost:18096/ring -d '{"from":"…","line":"anna620"}' # … a direct number
  *   curl -XPOST localhost:18096/hangup -d '{"call":"…","cause":16}'    # the caller hangs up
  *   curl -XPOST localhost:18096/mailbox -d '{"call":"…","seconds":5}'  # leaves a message (silence)
  *   curl -XPOST localhost:18096/closed -d '{"from":"07223 123456"}'    # calls outside the hours
@@ -57,8 +58,8 @@ const box = await runBox({
           at: now(),
         });
       },
-      dial: async (call, room, number) => {
-        commands.push({ type: "dial", call, room, number });
+      dial: async (call, room, number, line) => {
+        commands.push({ type: "dial", call, room, number, ...(line ? { line } : {}) });
         pbxEvents.onCall({
           call,
           state: "ringing",
@@ -112,6 +113,7 @@ Bun.serve({
         direction: "in",
         remote: String(body.from ?? ""),
         local: String(body.to ?? ""),
+        ...(body.line ? { line: String(body.line) } : {}),
         at: now(),
       });
       return Response.json({ call });
