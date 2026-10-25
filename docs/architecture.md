@@ -604,7 +604,8 @@ Principal-ID), die Namen holt die App wie bei den Aufgaben über die Principals.
   SQLite nur bei ASCII ohne Unterschied vergleicht.
 - **Stummschalten, verlassen, löschen:** Stummgeschaltetes zählt nicht zum Ungelesenen am Chat
   und am App-Symbol und meldet sich nicht. Einen eigenen Kanal verlassen kann jedes Mitglied (der
-  letzte nimmt ihn mit), löschen nur, wer ihn angelegt hat – mit allen Nachrichten und Dateien.
+  letzte nimmt ihn mit, wie beim Löschen), löschen nur, wer ihn angelegt hat – mit allen
+  Nachrichten und Dateien.
   `#allgemein`, Postfach-Kanäle und Direktnachrichten lassen sich nur stummschalten.
 - **Neu dabei:** Wer in einen Kanal kommt, hat ihn bis dahin gelesen; in `#allgemein` und den
   Postfach-Kanälen zählen ohne Gelesen-Marke nur die letzten sieben Tage als ungelesen.
