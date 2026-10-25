@@ -1,6 +1,6 @@
 import { expect, type Page, test } from "@playwright/test";
 import { DEV_PASSWORD } from "../dev/config";
-import { jmapAs, login, unique } from "./helpers";
+import { addMail, jmapAs, login, unique } from "./helpers";
 
 /** One MCP request with the key, as an agent makes it (server/mcp/). */
 const mcp = (page: Page, key: string, method: string, params: Record<string, unknown> = {}) =>
@@ -81,16 +81,18 @@ test.describe("KI-Agenten (MCP)", () => {
     page,
   }) => {
     const name = unique("Claude schreibt");
-    const text = unique("Halle 2 nehmen wir mit auf");
+    const subject = unique("Angebot Wartung");
+    // A mail of its own: the seed's mails stay as other tests expect them.
+    await addMail("jonas", "jonas", subject);
     await login(page);
     const key = await createKey(page, name, true);
-    const original = await mailId("Angebot Wartungsvertrag 2027");
+    const original = await mailId(subject);
 
     const done = await answer(
       await callTool(page, key, "create_draft", {
         accountId: original.accountId,
         replyToEmailId: original.id,
-        text: `Hallo Petra,\n\n${text}.\n\nViele Grüße\nJonas`,
+        text: "Hallo Erika,\n\ndas passt so.\n\nViele Grüße\nJonas",
       }),
     );
     expect(done).toContain("liegt in „Entwürfe“");
@@ -99,7 +101,7 @@ test.describe("KI-Agenten (MCP)", () => {
     await page.goto("/mail");
     await page.getByRole("link", { name: /Entwürfe/ }).click();
     await expect(
-      page.getByRole("list", { name: "Entwürfe" }).getByText("Re: Angebot Wartungsvertrag 2027"),
+      page.getByRole("list", { name: "Entwürfe" }).getByText(`Re: ${subject}`),
     ).toBeVisible();
 
     // The settings show what the agent changed.
@@ -107,7 +109,7 @@ test.describe("KI-Agenten (MCP)", () => {
     const listed = page.getByRole("listitem").filter({ hasText: name });
     await expect(listed).toContainText("lesen, anlegen, ändern");
     await expect(listed.getByRole("list", { name: `Letzte Änderungen von ${name}` })).toContainText(
-      "Entwurf an petra.keller@keller-elektro.test",
+      "Entwurf an erika@example.test",
     );
   });
 
@@ -129,56 +131,45 @@ const pkce = async () => {
   return { verifier, challenge: Buffer.from(digest).toString("base64url") };
 };
 
-/** An agent's own requests: plain fetch, no cookies of the browser. */
-const agentFetch = (base: string) => ({
-  json: async (path: string, init: RequestInit = {}) => {
-    const response = await fetch(new URL(path, base), init);
-    return { status: response.status, headers: response.headers, body: await response.json() };
-  },
-});
-
 test.describe("KI-Agenten mit Anmeldung (OAuth)", () => {
   test("ein Agent meldet sich im Browser an, die Person erlaubt mit Passwort", async ({
     page,
+    playwright,
     baseURL,
   }) => {
-    const agent = agentFetch(baseURL!);
+    // The agent's own requests: a context of its own, without the browser's cookies.
+    const agent = await playwright.request.newContext({ baseURL });
     const callback = "http://127.0.0.1:9999/callback";
     const name = unique("Test-Agent");
-    const json = { "content-type": "application/json" };
     const callMcp = (token: string) =>
-      agent.json("/mcp", {
-        method: "POST",
+      agent.post("/mcp", {
         headers: {
-          ...json,
           authorization: `Bearer ${token}`,
           accept: "application/json, text/event-stream",
         },
-        body: JSON.stringify({ jsonrpc: "2.0", id: 1, method: "tools/list" }),
+        data: { jsonrpc: "2.0", id: 1, method: "tools/list" },
       });
 
     // The agent finds the sign-in from /mcp (RFC 9728) and registers itself (RFC 7591).
-    const challenge = await agent.json("/mcp", { method: "POST", headers: json, body: "{}" });
-    expect(challenge.status).toBe(401);
-    expect(challenge.headers.get("www-authenticate")).toContain("oauth-protected-resource/mcp");
-    const resource = (await agent.json("/.well-known/oauth-protected-resource/mcp")).body;
+    const challenge = await agent.post("/mcp", { data: {} });
+    expect(challenge.status()).toBe(401);
+    expect(challenge.headers()["www-authenticate"]).toContain("oauth-protected-resource/mcp");
+    const resource = await (await agent.get("/.well-known/oauth-protected-resource/mcp")).json();
     const issuer = resource.authorization_servers[0] as string;
-    const metadata = (
-      await agent.json(`/.well-known/oauth-authorization-server${new URL(issuer).pathname}`)
-    ).body;
-    const client = (
-      await agent.json(metadata.registration_endpoint, {
-        method: "POST",
-        headers: json,
-        body: JSON.stringify({
+    const metadata = await (
+      await agent.get(`/.well-known/oauth-authorization-server${new URL(issuer).pathname}`)
+    ).json();
+    const client = await (
+      await agent.post(metadata.registration_endpoint, {
+        data: {
           client_name: name,
           redirect_uris: [callback],
           token_endpoint_auth_method: "none",
           grant_types: ["authorization_code", "refresh_token"],
           scope: "openid offline_access read write",
-        }),
+        },
       })
-    ).body;
+    ).json();
 
     // The browser: sign-in, then the consent page, then back to the agent with a code.
     const { verifier, challenge: codeChallenge } = await pkce();
@@ -210,23 +201,24 @@ test.describe("KI-Agenten mit Anmeldung (OAuth)", () => {
     const back = new URL(page.url());
     expect(back.searchParams.get("state")).toBe("st");
 
-    const token = (
-      await agent.json(metadata.token_endpoint, {
-        method: "POST",
-        body: new URLSearchParams({
+    const token = await (
+      await agent.post(metadata.token_endpoint, {
+        form: {
           grant_type: "authorization_code",
           code: back.searchParams.get("code")!,
           redirect_uri: callback,
           client_id: client.client_id,
           code_verifier: verifier,
           resource: resource.resource,
-        }),
+        },
       })
-    ).body;
+    ).json();
     expect(token.access_token, JSON.stringify(token)).toBeTruthy();
 
     // With the token the agent works, writing included; the settings list it.
-    const tools = (await callMcp(token.access_token)).body.result.tools as { name: string }[];
+    const tools = (await (await callMcp(token.access_token)).json()).result.tools as {
+      name: string;
+    }[];
     expect(tools.map((tool) => tool.name)).toContain("create_draft");
     await page.goto("/settings?section=agents");
     const listed = page.getByRole("listitem").filter({ hasText: name });
@@ -238,8 +230,9 @@ test.describe("KI-Agenten mit Anmeldung (OAuth)", () => {
     await listed.getByRole("button", { name: "Ja, weiter" }).click();
     await expect(listed).toHaveCount(0);
     const after = await callMcp(token.access_token);
-    expect(after.status).toBe(401);
-    expect(after.headers.get("www-authenticate")).toContain("resource_metadata");
+    expect(after.status()).toBe(401);
+    expect(after.headers()["www-authenticate"]).toContain("resource_metadata");
+    await agent.dispose();
   });
 });
 
