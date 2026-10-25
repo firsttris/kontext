@@ -341,8 +341,21 @@ export const useCalendarMutations = () => {
     onSettled: (_data, _error, calendar) => refresh(calendar.accountId),
   });
   const share = useMutation({
-    mutationFn: ({ calendar, shareWith }: { calendar: CalendarRef; shareWith: ShareWith }) =>
-      updateCalendar(client, calendar.accountId, calendar.calendar.id, { shareWith }),
+    mutationFn: ({
+      calendar,
+      shareWith,
+      includeInAvailability,
+    }: {
+      calendar: CalendarRef;
+      shareWith: ShareWith;
+      includeInAvailability?: boolean;
+    }) =>
+      updateCalendar(client, calendar.accountId, calendar.calendar.id, {
+        shareWith,
+        ...(includeInAvailability === undefined
+          ? {}
+          : { includeInAvailability: includeInAvailability ? "all" : "none" }),
+      }),
     onSettled: (_data, _error, { calendar }) => refresh(calendar.accountId),
   });
   return { createOne, deleteOne, share };

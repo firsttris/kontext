@@ -19,6 +19,7 @@ import { createMessageStore } from "./chat/messages";
 import { createChatPruner, createChatRetention } from "./chat/retention";
 import { createChatRoutes, viewerOf } from "./chat/routes";
 import { createChatStore } from "./chat/store";
+import { createCalendars } from "./company/calendars";
 import { createMailstore } from "./company/mailstore";
 import {
   createDownload,
@@ -208,6 +209,7 @@ export const createApp = async (env: Env) => {
         upload,
         createDownload(env.STALWART_URL, env.STALWART_ADMIN_KEY),
       ),
+      calendars: createCalendars(request),
       settings,
       migrations: { jobs, runner, workDir },
       syncs: { syncs, runner: syncRunner, sealer: syncSealer, allowPlain, microsoft },

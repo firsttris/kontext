@@ -8,6 +8,7 @@
  */
 import { parseArgs } from "node:util";
 import { rolesValue } from "../server/company/accounts";
+import { createCalendars } from "../server/company/calendars";
 import { createManagement, createRequest } from "../server/company/management";
 import { assertSetOk, CAPABILITIES, createJmapClient, type JmapClient } from "../src/jmap/client";
 import { DEV_DOMAIN, DEV_PASSWORD, STALWART_ADMIN } from "./config";
@@ -129,6 +130,15 @@ const ensureCompanyAdmins = async (): Promise<void> => {
   );
   const result = await management.updateAccounts(patches);
   if (!result.ok) throw new Error(`Firmenverwaltung: ${result.error}`);
+};
+
+/** Colleagues see each other's free and busy times, as the Firmenverwaltung sets it up. */
+const ensureAvailability = async (): Promise<void> => {
+  const request = createRequest(origin, `${STALWART_ADMIN.user}:${STALWART_ADMIN.password}`);
+  const accounts = await createManagement(request).listAccounts();
+  const ids = users.flatMap((user) => accounts.find((a) => a.name === user.name)?.id ?? []);
+  const result = await createCalendars(request).showEveryone(ids);
+  if (!result.ok) throw new Error(`Verfügbarkeit: ${result.error}`);
 };
 
 /** Mailbox owner ("jonas", "info", …) → JMAP account id, as seen by a user with access. */
@@ -427,6 +437,7 @@ export const seed = async (serverOrigin: string): Promise<string> => {
   }
   const createdContacts = await ensureContacts();
   const createdEvents = await ensureEvents();
+  await ensureAvailability();
 
   return `Testdaten bereit: ${users.length} Benutzer, ${groups.length} gemeinsame Postfächer, ${imported} neue Mails, ${createdContacts} neue Kontakte, ${createdEvents} neue Termine.`;
 };

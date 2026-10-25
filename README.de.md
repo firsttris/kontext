@@ -148,7 +148,8 @@ reicht ein VPS mit 2 vCPU und 4 GB RAM.
 
 - **Tag, Woche, Monat und Liste**, Termine mit der Maus verschieben, wiederkehrende Termine mit Ausnahmen.
 - **Videobesprechung am Termin**: ein Klick legt einen Link an; Kunden treten im Browser bei, ohne Konto – sobald jemand aus deiner Firma da ist.
-- **Kalender teilen** mit Kollegen – zum Lesen oder Bearbeiten; **Einladungen** mit Zusage und Absage.
+- **Kalender teilen** mit Kollegen – nur die Verfügbarkeit, zum Lesen oder Bearbeiten; **Einladungen** mit Zusage und Absage.
+- **Wer hat Zeit?** Beim Einladen zeigt Kontext, wer zu der Zeit belegt ist, und schlägt die nächsten Zeiten vor, in denen alle frei sind – wie Outlooks Terminplanungs-Assistent. In der Firma sieht jeder, wann Kollegen belegt sind (ohne Titel); jeder kann das pro Kalender abschalten.
 - **Am Handy**: Tagesansicht mit Wochenleiste, Monat und Liste.
 
 ### 👥 Kontakte

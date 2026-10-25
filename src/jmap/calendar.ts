@@ -20,6 +20,7 @@ const EVENT_PROPERTIES = [
   "virtualLocations",
   "participants",
   "organizerCalendarAddress",
+  "freeBusyStatus",
   "recurrenceRule",
   "recurrenceOverrides",
   "recurrenceId",
@@ -35,6 +36,11 @@ export type Calendar = {
   color: string | null;
   isDefault: boolean;
   isVisible: boolean;
+  /**
+   * Whether its events count as busy when colleagues plan a meeting: "all", only those the user
+   * attends, or "none" (draft-ietf-jmap-calendars). Stalwart keeps it per user.
+   */
+  includeInAvailability?: "all" | "attending" | "none";
   /** Only the owner sees whom it is shared with. */
   shareWith?: ShareWith | null;
   myRights?: Rights;
@@ -57,12 +63,12 @@ export const createCalendar = async (
   return result.created!.c!.id;
 };
 
-/** Name, colour or `shareWith`. */
+/** Name, colour, `shareWith` or whether it counts for free and busy times. */
 export const updateCalendar = async (
   client: JmapClient,
   accountId: string,
   id: string,
-  patch: Partial<Pick<Calendar, "name" | "color" | "shareWith">>,
+  patch: Partial<Pick<Calendar, "name" | "color" | "shareWith" | "includeInAvailability">>,
 ): Promise<void> => {
   assertSetOk(
     await client.call("Calendar/set", { accountId, update: { [id]: patch } }, USING),

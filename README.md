@@ -148,7 +148,8 @@ fine on a VPS with 2 vCPUs and 4 GB RAM.
 
 - **Day, week, month and list**, drag to move, recurring events with exceptions.
 - **Video meeting per event**: one click adds a link; customers join in the browser without an account, once someone of your company is there.
-- **Share calendars** with colleagues – to read or to edit; **invitations** with accept and decline.
+- **Share calendars** with colleagues – free/busy only, to read or to edit; **invitations** with accept and decline.
+- **Who is free?** Inviting colleagues shows who is busy at that time and suggests the next times everyone is free, like Outlook's scheduling assistant. Everyone in the company sees when colleagues are busy (without titles); each person can turn it off per calendar.
 - **On the phone**: day view with a week strip, month and list.
 
 ### 👥 Contacts

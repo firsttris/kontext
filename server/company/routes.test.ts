@@ -78,9 +78,11 @@ const fakeManagement = () => {
   return { management, mailstore, updates, created, shared, rules, back };
 };
 
-const setup = (email: string | null) => {
+const setup = (email: string | null, welcomeError?: string) => {
   const fake = fakeManagement();
   const ended: string[] = [];
+  const welcomed: { newcomer: string; people: string[] }[] = [];
+  const shownToAll: string[][] = [];
   const app = createCompanyRoutes({
     categories: {
       list: async (ids) => Object.fromEntries(ids.map((id) => [id, []])),
@@ -88,6 +90,16 @@ const setup = (email: string | null) => {
     },
     management: fake.management,
     mailstore: fake.mailstore,
+    calendars: {
+      welcome: async (newcomer, people) => {
+        welcomed.push({ newcomer, people });
+        return welcomeError ? { ok: false, error: welcomeError } : { ok: true, value: 1 };
+      },
+      showEveryone: async (people) => {
+        shownToAll.push(people);
+        return { ok: true, value: people.length };
+      },
+    },
     settings: {
       signature: async () => null,
       saveSignature: async () => {},
@@ -108,7 +120,7 @@ const setup = (email: string | null) => {
       headers: { "content-type": "application/json" },
       body: body === undefined ? undefined : JSON.stringify(body),
     });
-  return { ...fake, ended, send };
+  return { ...fake, ended, welcomed, shownToAll, send };
 };
 
 describe("Firmenverwaltung", () => {
@@ -132,6 +144,33 @@ describe("Firmenverwaltung", () => {
     expect(response.status).toBe(201);
     expect(await response.json()).toEqual({ id: "3", password: "aaaa-aaaa-aaaa-aaaa" });
     expect(created[0]).toMatchObject({ "@type": "User", name: "lena", domainId: "d" });
+  });
+
+  it("shows a new person's calendar to the colleagues and theirs to them", async () => {
+    const { send, welcomed } = setup("chef@firma.de");
+    await send("POST", "/employees", { email: "lena@firma.de", fullName: "Lena Klein" });
+    expect(welcomed).toHaveLength(1);
+    expect(welcomed[0]!.newcomer).toBe("3");
+    expect(welcomed[0]!.people).toContain("3");
+    expect(welcomed[0]!.people.length).toBeGreaterThan(1);
+  });
+
+  it("still hands out the new password when sharing the calendars fails", async () => {
+    const { send, created } = setup("chef@firma.de", "Kalender: Stalwart-Verwaltung: 503");
+    const response = await send("POST", "/employees", {
+      email: "lena@firma.de",
+      fullName: "Lena Klein",
+    });
+    expect(response.status).toBe(201);
+    expect(await response.json()).toMatchObject({ id: "3", password: "aaaa-aaaa-aaaa-aaaa" });
+    expect(created).toHaveLength(1);
+  });
+
+  it("switches free and busy times on for all", async () => {
+    const { send, shownToAll } = setup("chef@firma.de");
+    const response = await send("POST", "/employees/availability");
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual({ calendars: shownToAll[0]!.length });
   });
 
   it("deactivates a person and ends their sessions", async () => {

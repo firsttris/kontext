@@ -34,6 +34,8 @@ export const EventDialog = ({ eventId, event, start }: Props) => {
         if (!open) void close();
       }}
       title={isNew ? m.calendar_new() : editing ? (event?.title ?? "") : event?.title || "—"}
+      // Editing gets room for the attendees' schedules.
+      className={editing ? "md:w-[min(760px,calc(100vw-32px))]" : undefined}
     >
       {waiting ? (
         <p className="m-0 text-[14px] text-muted">{m.common_loading()}</p>

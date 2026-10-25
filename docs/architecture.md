@@ -186,6 +186,13 @@ mit einem eigenen API-Schlüssel an und erlaubt nur, was die Firmenverwaltung br
   (`kontext-austritt`, `redirect` und `vacation`), weil Stalwart nur ein aktives Skript pro
   Konto ausführt; es ersetzt dabei Abwesenheitsnotiz und Regeln, bis der Zugang wieder
   freigegeben wird (siehe [Regeln](#regeln)). Gelöscht wird nichts.
+- **Verfügbarkeit im Kalender:** wie in Outlook sieht jeder, wann Kollegen belegt sind (siehe
+  [Verfügbarkeit](#verfugbarkeit)). Neue Mitarbeiter teilen beim Anlegen ihre Kalender mit allen
+  Kollegen nur für die Verfügbarkeit, und wer seine Kalender noch allen zeigt, zeigt sie auch dem
+  Neuen; wer es für einen Kalender abgeschaltet hat, bleibt dabei. „Für alle einschalten“ teilt
+  jeden Kalender jedes Mitarbeiters so mit allen (`server/company/availability.ts`,
+  `calendars.ts`, je Anfrage höchstens 16 Konten). Scheitert die Freigabe beim Anlegen, bleibt
+  das Konto bestehen und das Startpasswort wird trotzdem gezeigt.
 - In der Mail zeigt Kontext übergebene Postfächer unter „Postfächer“ wie gemeinsame: als
   Postfach zählt ein fremdes Konto, wenn es eine Gruppe ist oder Ordner zeigt (wer nur einen
   Kalender teilt, zeigt keine).
@@ -1021,12 +1028,13 @@ Adressbuch schon gibt (gleiche `uid`, oder gleicher Name und gleiche Mail-Adress
 
 Adressbücher und Kalender werden über ihr `shareWith` geteilt (draft-ietf-jmap-contacts und
 -calendars): pro Kollege (Principal-ID, in Stalwart zugleich die Konto-ID) die Rechte. Kontext
-bietet zwei Stufen:
+bietet zwei Stufen, für Kalender eine dritte:
 
-| Stufe          | Adressbuch                         | Kalender                                                                              |
-| -------------- | ---------------------------------- | ------------------------------------------------------------------------------------- |
-| **Lesen**      | `mayRead`                          | `mayReadFreeBusy`, `mayReadItems`                                                     |
-| **Bearbeiten** | `mayRead`, `mayWrite`, `mayDelete` | dazu `mayWriteAll`, `mayWriteOwn`, `mayUpdatePrivate`, `mayRSVP`                      |
+| Stufe                  | Adressbuch                         | Kalender                                                                              |
+| ---------------------- | ---------------------------------- | ------------------------------------------------------------------------------------- |
+| **Nur Verfügbarkeit**  | –                                  | `mayReadFreeBusy` (siehe [Verfügbarkeit](#verfugbarkeit))                             |
+| **Lesen**              | `mayRead`                          | `mayReadFreeBusy`, `mayReadItems`                                                     |
+| **Bearbeiten**         | `mayRead`, `mayWrite`, `mayDelete` | dazu `mayWriteAll`, `mayWriteOwn`, `mayUpdatePrivate`, `mayRSVP`                      |
 
 Stalwart erlaubt bei Adressbüchern mit `mayWrite` nur Anlegen und Ändern; Löschen von Kontakten
 braucht `mayDelete`. Bei Kalendern enthält `mayWriteAll` das Löschen schon. Weiterteilen
@@ -1043,6 +1051,39 @@ Einen Termin in einem fremden Kalender darf man mit „Bearbeiten“ ändern, we
 Besitzer des Kalenders ihn organisiert. Zusagen und Absagen gibt es nur im eigenen Kalender.
 Welche Kalender eingeblendet sind, merkt sich die App pro Gerät im Browser: Stalwart 0.16 lässt
 das per Benutzer gespeicherte `isVisible` bei fremden Kalendern nur mit Schreibrecht ändern.
+
+## Verfügbarkeit
+
+Lädt man zu einem Termin Kollegen ein, zeigt der Editor, ob sie zu der Zeit frei sind, und die
+nächsten Zeiten, in denen alle frei sind (wie Outlooks Terminplanungs-Assistent). Grundlage ist
+`Principal/getAvailability` (draft-ietf-jmap-calendars, Capability
+`urn:ietf:params:jmap:principals:availability`): pro Kollege die belegten Zeiträume ohne Titel,
+mit `busyStatus` (bestätigt, vorläufig, nicht verfügbar). Kontext fragt alle Teilnehmer in einer
+Anfrage (bis 16 Aufrufe, Stalwarts `maxCallsInRequest`), für den gezeigten Tag und die zwei
+Wochen, in denen die Vorschläge suchen (ab dem gezeigten Tag, bei einem vergangenen ab heute).
+Es fragt dabei die IDs der Termine mit ab (`eventProperties`): Ohne sie fasst Stalwart
+aneinandergrenzende Zeiträume zusammen, und der gerade bearbeitete Termin ließe sich nicht vom
+nächsten unterscheiden.
+
+Stalwart antwortet nur aus Kalendern, deren Verfügbarkeit man lesen darf (`mayReadFreeBusy` oder
+`mayReadItems` im `shareWith`), und lässt Termine weg, die auf „Frei“ stehen
+(`freeBusyStatus: "free"`, im Editor „Anzeigen als“), geheim oder abgesagt sind
+(crates/jmap/src/principal/availability.rs). Kalender mit `includeInAvailability: "none"` zählen
+nicht. Wer nichts teilt, sieht deshalb aus wie frei; das sagt der Editor dazu. Externe Teilnehmer
+(keine Person der Firma unter `Principal/get`) zeigt er als „Keine Info“.
+
+Eine Freigabe nur für die Verfügbarkeit hängt das Konto des Kollegen nicht an die JMAP-Session an
+(anders als Lesen); seine Termine bleiben unsichtbar. Darum kann die Firma das für alle
+einschalten, ohne dass Kalender unter „Geteilt mit mir“ auftauchen.
+
+- **Teilen:** die Stufe „Nur Verfügbarkeit“ (`mayReadFreeBusy`) pro Kollege, dazu „Alle Kollegen“
+  für alle auf einmal und „In Verfügbarkeit einbeziehen“ (`includeInAvailability`) pro Kalender.
+- **Vorschläge** (`src/lib/availability.ts`): auf halbe Stunden, Mo–Fr 7–18 Uhr, in der Länge des
+  Termins; vorläufige Termine zählen als belegt. Beim Ändern eines Termins bleibt seine alte Zeit
+  bei denen außen vor, die ihn schon bekommen haben; wer gerade erst dazukommt, hat zu derselben
+  Zeit einen echten anderen Termin.
+- **Ansicht:** am Desktop eine Zeile pro Teilnehmer mit Balken über den Tag, die gewählte Zeit
+  umrahmt; am Handy der Status pro Teilnehmer und ein Zeitplan mit der Zeit nach unten.
 
 ## Wiederkehrende Termine
 
