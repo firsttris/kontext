@@ -2,6 +2,7 @@ import { createFileRoute, redirect, useNavigate } from "@tanstack/react-router";
 import { type FormEvent, useState } from "react";
 import { z } from "zod";
 import { useAuth } from "@/auth/auth";
+import { signedOAuthQuery } from "@/auth/oauth-query";
 import { Button } from "@/components/ui/button";
 import { Input, Label } from "@/components/ui/input";
 import { m } from "@/paraglide/messages";
@@ -9,7 +10,8 @@ import { m } from "@/paraglide/messages";
 export const Route = createFileRoute("/login")({
   validateSearch: z.object({ redirect: z.string().optional() }),
   beforeLoad: ({ context }) => {
-    if (context.client) throw redirect({ to: "/" });
+    // An OAuth sign-in that asks to sign in again (prompt=login) stays here.
+    if (context.client && !signedOAuthQuery(window.location.search)) throw redirect({ to: "/" });
   },
   component: LoginPage,
 });
@@ -30,7 +32,7 @@ function LoginPage() {
     setBusy(true);
     setError(null);
     const result = await login(username.trim(), password, needsCode ? code : undefined);
-    // Back to Schreibzeug: the page is leaving, the button stays busy.
+    // On to Schreibzeug or an agent's consent: the page is leaving, the button stays busy.
     if (result === "continue") return;
     setBusy(false);
     if (result === "ok") {

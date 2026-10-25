@@ -9,7 +9,7 @@ flowchart LR
   Caddy -->|"/rtc"| LiveKit["LiveKit<br>(Anrufe)"]
   Browser -.->|"Ton und Bild<br>UDP 7882, TCP 7881"| LiveKit
   LiveKit -->|Webhooks| Server
-  Caddy -->|"/dav, /.well-known"| Stalwart
+  Caddy -->|"/dav, /.well-known (außer OAuth)"| Stalwart
   Clients["Mailprogramme, Handys"] -->|"IMAP, SMTP, CalDAV, CardDAV"| Stalwart
   Internet["andere Mailserver"] -->|SMTP 25| Stalwart
   Stalwart --> Daten[("RocksDB-Volume")]
@@ -1114,8 +1114,9 @@ bleibt die App am Handy angemeldet, bis man sich abmeldet (Sitzung 90 Tage, bei 
 der Server in Stalwart ein App-Passwort für das Gerät an und speichert es verschlüsselt; eine
 Passkey-Anmeldung holt damit den Stalwart-Token. Am Rest ändert sich nichts.
 
-Kontext ist außerdem **Anmeldeanbieter** (OpenID Connect) für Schreibzeug, siehe
-[Dokumente](#dokumente). Den Namen, den Schreibzeug sieht, gleicht Kontext bei jeder Anmeldung mit
+Kontext ist außerdem **Anmeldeanbieter**: per OpenID Connect für Schreibzeug, siehe
+[Dokumente](#dokumente), und per OAuth 2.1 für KI-Agenten, siehe [Agenten (MCP)](#agenten-mcp).
+Beide teilen sich einen Anbieter (Better Auth erlaubt nur einen, `server/oidc/provider.ts`). Den Namen, den Schreibzeug sieht, gleicht Kontext bei jeder Anmeldung mit
 dem Absendernamen in Stalwart ab.
 
 ## Dokumente
@@ -1134,14 +1135,16 @@ flowchart LR
   KServer -->|"JMAP mit dem Token der Sitzung"| Stalwart
 ```
 
-**Anmeldung.** Better Auths Plugin `@better-auth/oauth-provider` (mit dem `jwt`-Plugin für die
-Schlüssel) macht Kontext zum Anbieter (`server/oidc/provider.ts`): Discovery unter
+**Anmeldung.** Better Auths Plugin `@better-auth/mcp` – `@better-auth/oauth-provider` mit der
+MCP-Ressource für die [Agenten](#agenten-mcp), dazu das `jwt`-Plugin für die Schlüssel – macht
+Kontext zum Anbieter (`server/oidc/provider.ts`): Discovery unter
 `/api/auth/.well-known/openid-configuration` (Caddy gibt das `/.well-known` der Wurzel an
-Stalwart), Autorisierung mit PKCE, Token, UserInfo und Schlüssel (JWKS) unter `/api/auth`. Der
-einzige Client ist Schreibzeug aus der Umgebung (`SCHREIBZEUG_URL`, `SCHREIBZEUG_CLIENT_ID`,
-`SCHREIBZEUG_CLIENT_SECRET`); der Server trägt ihn beim Start in die Datenbank ein, ohne
-Zustimmungsseite, weil beide Dienste zum selben Betreiber gehören. Über die API lässt sich kein
-Client anlegen oder ändern. Wer ohne Sitzung kommt, landet auf Kontexts Anmeldeseite; die schickt
+Stalwart, bis auf die OAuth-Discovery der Agenten), Autorisierung mit PKCE, Token, UserInfo und
+Schlüssel (JWKS) unter `/api/auth`. Schreibzeug ist ein fester Client aus der Umgebung
+(`SCHREIBZEUG_URL`, `SCHREIBZEUG_CLIENT_ID`, `SCHREIBZEUG_CLIENT_SECRET`); der Server trägt ihn
+beim Start in die Datenbank ein, ohne Zustimmungsseite, weil beide Dienste zum selben Betreiber
+gehören. Agenten registrieren sich selbst und brauchen die Zustimmung der Person; angemeldet lässt
+sich über die API kein Client anlegen oder ändern. Wer ohne Sitzung kommt, landet auf Kontexts Anmeldeseite; die schickt
 die signierte Anfrage mit der Anmeldung zurück (`src/auth/oauth-query.ts`), und der Server leitet
 weiter zu Schreibzeug. Im Rahmen fragt Schreibzeug mit `prompt=none`: mit Sitzung kommt der Code
 sofort zurück, ohne Sitzung `login_required`.
@@ -1215,6 +1218,97 @@ Neuladen nicht offen war und seine Nachricht `logout` niemanden erreicht hätte.
 Passwort), beendet Kontexts Server deshalb auch die in Dokumente (`DELETE /api/sessions` mit dem
 Token der Person, `endSessionsOf` in `server/app.ts`); wer dort kein Konto hat, bekommt keins.
 
+## Agenten (MCP)
+
+Über das [Model Context Protocol](https://modelcontextprotocol.io) arbeitet ein KI-Agent (Claude
+Code, Claude Desktop und andere MCP-Clients) mit Kontext: Er schlägt Kunden, Mails, Termine und
+Aufgaben nach und legt auf Wunsch Entwürfe, Termine, Kontakte und Aufgaben an – mit den Rechten
+der Person, die ihn verbunden hat (`server/mcp/`).
+
+- **Schnittstelle:** `/mcp` am Kontext-Server, Streamable HTTP ohne MCP-Sitzung: Jede Anfrage
+  bekommt einen frischen Server aus dem MCP-SDK, der mit JSON antwortet (`server/mcp/server.ts`).
+  Die Werkzeuge nutzen die Bausteine der App (`src/jmap/`, `src/lib/`) mit dem Stalwart-Token
+  der Verbindung; welche Konten ein Agent sieht, bestimmt wie in der App Stalwarts JMAP-Session,
+  gemeinsame Postfächer und „Nur lesen“ eingeschlossen. Aufgaben gehen durch dieselben Routen wie
+  in der App (`server/tasks/routes.ts`, im Prozess aufgerufen), mit ihren Rechten, Pushes an
+  Zuständige und Live-Aktualisierung.
+- **Werkzeuge zum Lesen** (`server/mcp/read-tools.ts`, `readOnlyHint`):
+
+  | Werkzeug            | Liefert                                                                           |
+  | ------------------- | --------------------------------------------------------------------------------- |
+  | `list_accounts`     | eigenes Postfach und gemeinsame Postfächer, was darin ist, ob nur lesend          |
+  | `search_contacts`   | Kontakte nach Name, Firma, Adresse oder Nummer                                    |
+  | `customer_overview` | Kontakt, letzte Mails (alle Postfächer), Termine davor und danach, Aufgaben       |
+  | `search_mail`       | Suche mit der Sprache des Suchfelds (`von:`, `nach:`, `in:info@`, `ist:ungelesen` …) |
+  | `get_mail`          | eine Mail als Text, mit Ordnern und Anhangnamen                                   |
+  | `get_thread`        | die Mails einer Unterhaltung                                                      |
+  | `list_events`       | Termine zwischen zwei Tagen, Serien als einzelne Termine                          |
+  | `list_colleagues`   | die Leute der Firma, an die man Aufgaben geben kann                               |
+  | `list_tasks`        | offene (auf Wunsch erledigte) Aufgaben der eigenen Boards und die zugewiesenen    |
+
+  Antworten sind klein gehalten: Text statt HTML (`server/mcp/format.ts`), Zeiten in
+  Europe/Berlin, lange Texte gekürzt mit Hinweis, dazu die Ids zum Weiterfragen. Der
+  Kundenüberblick sucht Mails nach den Adressen der passenden Kontakte (oder der eingegebenen
+  Adresse, auch `@firma.de`), Termine und Aufgaben nach Teilnehmern, Namen und Firma.
+- **Werkzeuge zum Anlegen und Ändern** (`server/mcp/write-tools.ts`, `server/mcp/writer.ts`), nur
+  mit dem Recht „Darf anlegen und ändern“:
+
+  | Werkzeug         | Tut                                                                                 |
+  | ---------------- | ----------------------------------------------------------------------------------- |
+  | `create_draft`   | Mail als Entwurf in „Entwürfe“ (eigenes oder gemeinsames Postfach); als Antwort mit Empfängern, „Re:“, Zitat und Thread-Headern wie in der App (`startCompose`) |
+  | `create_event`   | Termin in einen Kalender, ohne Teilnehmer                                           |
+  | `create_contact` | Kontakt in ein Adressbuch                                                           |
+  | `update_contact` | Felder eines Kontakts ändern                                                        |
+  | `create_task`    | Aufgabe auf ein Board, mit Fälligkeit, Zuständiger und Verknüpfung zu Mail und Kontakt |
+  | `update_task`    | Aufgabe ändern, auch erledigen                                                      |
+
+  **Nichts verlässt das Haus von selbst:** Es gibt kein Senden und kein Löschen; ein Entwurf wartet,
+  bis ihn jemand in Kontext abschickt, und ein Termin bekommt keine Teilnehmer, weil Stalwart
+  ihnen sonst eine Einladung schickt. Mails sind fremder Text und können einem Agenten
+  Anweisungen unterschieben (Prompt Injection); die Beschreibung von `get_mail` und die
+  Anweisungen des Servers sagen ihm, Mailtext nur als Information zu nehmen.
+- **Protokoll und Grenze:** Jede Änderung steht mit ihrer Meldung in `mcp_log` und in den
+  Einstellungen bei der Verbindung („Letzte Änderungen“). Mehr als 100 Änderungen pro Stunde
+  lehnt der Server ab.
+- **Verbinden, zwei Wege:** Beide geben dem Agenten eine **eigene Sitzung mit eigenem
+  Stalwart-Token** (`server/mcp/connections.ts`, Tabelle `mcp_key`): Man gibt dabei sein Passwort
+  (und den Code) noch einmal ein, der Server meldet sich damit neu bei Stalwart an. Die Verbindung
+  überlebt also das Abmelden im Browser und lässt sich einzeln trennen; Trennen löscht die
+  Sitzung, mit ihr Token und Protokoll. Das Sperren eines Mitarbeiters beendet alle seine Sitzungen
+  und damit auch seine Agenten. Stalwart verlängert den Refresh-Token, solange der Agent arbeitet.
+  - **Anmeldung (OAuth 2.1):** Für Claude (App, Desktop, claude.ai) und andere Clients, die nur
+    eine Adresse kennen. Kontext ist dafür der Autorisierungsserver: Better Auths MCP-Plugin
+    (`@better-auth/mcp` auf `@better-auth/oauth-provider`, `jwt` für die Schlüssel;
+    `server/mcp/oauth.ts`). Ablauf nach der MCP-Spezifikation: `/mcp` ohne Token antwortet 401 mit
+    `WWW-Authenticate: Bearer resource_metadata=…` (RFC 9728), der Client liest
+    `/.well-known/oauth-protected-resource/mcp` und `/.well-known/oauth-authorization-server/api/auth`
+    (RFC 8414), registriert sich – per Client ID Metadata Document (`@better-auth/cimd`, Abruf nur
+    öffentlicher Adressen ohne Weiterleitung) oder dynamisch (RFC 7591) – und schickt die Person
+    mit PKCE zu `/api/auth/oauth2/authorize`. Ohne Sitzung führt das zur Anmeldung (`/login` gibt
+    das signierte `oauth_query` mit, `src/auth/oauth-query.ts`), dann zur Zustimmung
+    (`/agent-consent`): welcher Agent, was er darf, „Darf anlegen und ändern“ nur, wenn er
+    `write` anfragt, und das Passwort. `POST /api/mcp-oauth/consent` (`server/mcp/oauth-routes.ts`)
+    prüft das Passwort, lässt den Provider die Zustimmung abschließen (er prüft die Signatur) und
+    legt erst dann die Verbindung an. Tokens sind JWTs mit `aud` = `<Adresse>/mcp` (RFC 8707), eine
+    Stunde gültig, mit Refresh-Token; `/mcp` prüft sie gegen die eigenen Schlüssel (JWKS, intern
+    über `127.0.0.1` gelesen) und sucht die Verbindung zu Person (`sub`) und Client (`azp`). Fehlt
+    sie (getrennt, oder mit allen Sitzungen der Person beendet: neues Passwort, gesperrt, Austritt)
+    oder ist ihr Stalwart-Token abgelaufen, bekommt der Client wieder die 401 mit
+    `resource_metadata`; Zustimmung und Refresh-Tokens werden dabei gelöscht, so dass die Person
+    wieder gefragt wird. Nur `authorization_code` und `refresh_token`: hinter jedem Token steht eine Person.
+    Ein Client mit Redirect auf `localhost` (Claude Code) gilt als native App (RFC 8252).
+  - **Zugangsschlüssel:** Für Claude Code, Skripte und Clients ohne Anmeldung im Browser: unter
+    „KI-Agenten“ angelegt; in SQLite liegt nur der SHA-256, der Schlüssel selbst ist einmal zu
+    sehen. Der Agent schickt ihn als `Authorization: Bearer kontext_…`.
+- **Passwort-Versuche:** Schlüssel anlegen und Zustimmen prüfen das Passwort bei Stalwart; beide
+  zählen pro Person gegen dasselbe Limit wie die Anmeldung (`SIGN_IN_PER_MINUTE`,
+  `server/mcp/attempts.ts`), damit ein offen gelassener, angemeldeter Browser kein Weg ist,
+  Passwort oder Code zu erraten.
+- **Discovery und Caddy:** Die beiden `/.well-known/oauth-*`-Pfade liegen auf der Wurzel und gehen
+  an Better Auth (`server/app.ts`); Caddy gibt sie Kontext statt Stalwart (`deploy/Caddyfile`).
+
+**Später:** Anrufe und Chat als Werkzeuge.
+
 ## Code
 
 | Ordner          | Inhalt                                                                                                                     |
@@ -1222,7 +1316,7 @@ Token der Person, `endSessionsOf` in `server/app.ts`); wer dort kein Konto hat, 
 | `src/jmap/`     | JMAP-Client (Session, Methoden, Upload/Download, Push) und die Aufrufe für Mail, Kalender, Kontakte                        |
 | `src/lib/`      | reine Funktionen: Ordnerbaum, Adressen, Antworten, HTML-Bereinigung, JSCalendar- und JSContact-Umrechnung – mit Unit-Tests |
 | `src/features/` | die Ansichten von Mail, Kalender, Kontakten und Firmenverwaltung, je mit ihren Daten-Hooks (`queries.ts`)                 |
-| `server/`       | Kontext-Server: Anmeldung, JMAP-Weiterleitung, Firmenverwaltung (`server/company/`), Anbieter für Schreibzeug (`server/oidc/`, `server/documents/`) |
+| `server/`       | Kontext-Server: Anmeldung, JMAP-Weiterleitung, Firmenverwaltung (`server/company/`), Anbieter für Schreibzeug (`server/oidc/`, `server/documents/`), Agenten über MCP (`server/mcp/`) |
 | `src/routes/`   | TanStack-Router-Routen; der Zustand einer Ansicht steht in der URL (offene Mail, Ordner, Termin)                           |
 | `dev/`          | lokaler Stalwart, Testdaten (Seed)                                                                                         |
 | `deploy/`       | Caddy, Compose, Quadlets, Backup                                                                                           |

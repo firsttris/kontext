@@ -61,6 +61,9 @@ const newPassword = z.object({ password: z.string().min(1).max(1024) });
 /** What the browser sees: everything but the sealed password. */
 const publicSync = ({ secret: _, ...sync }: Sync) => sync;
 
+/** How long finishing waits for a run in progress before asking to try again. */
+const FINISH_WAIT_MS = 20_000;
+
 export const syncRoutes = ({ syncs, runner, sealer, microsoft, allowPlain = false }: SyncDeps) => {
   /** Logs in once to see that address and password work; null or the reason in words. */
   const check = async (
@@ -197,6 +200,7 @@ export const syncRoutes = ({ syncs, runner, sealer, microsoft, allowPlain = fals
 
   /** The move is done: no more runs; the password is no longer needed. */
   app.post("/:id/finish", async (c) => {
+    await runner.settled(c.req.param("id"), FINISH_WAIT_MS);
     const sync = await syncs.get(c.req.param("id"));
     if (!sync || sync.status === "running") return bad("Läuft gerade, bitte gleich noch einmal.");
     await syncs.update(sync.id, { status: "finished", secret: "" });

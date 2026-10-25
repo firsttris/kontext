@@ -134,7 +134,11 @@ jobs:
           path: .dev/bin
           key: stalwart-${{ hashFiles('dev/config.ts') }}
       - run: bun install --frozen-lockfile
-      - run: bun run e2e --shard=${{ matrix.shard }}/4
+      # Nightly each test runs three times and without the retry, so one that passes only now and
+      # then shows up there before it holds up a pull request.
+      - run: >-
+          bun run e2e --shard=${{ matrix.shard }}/4
+          ${{ github.event_name == 'schedule' && '--repeat-each=3 --retries=0' || '' }}
       - if: failure()
         uses: actions/upload-artifact@v4
         with:

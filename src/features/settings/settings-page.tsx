@@ -1,10 +1,11 @@
 /**
  * Settings of the own account: name, signatures, out-of-office reply, mail rules, password and
- * 2FA, look.
+ * 2FA, AI agents, look.
  */
 import { Link } from "@tanstack/react-router";
 import {
   AtSign,
+  Bot,
   ChevronLeft,
   ChevronRight,
   Inbox,
@@ -27,6 +28,7 @@ import {
 } from "lucide-react";
 import { lazy, type ReactNode, Suspense, useId } from "react";
 import { TabBar } from "@/components/shell/app-shell";
+import { AgentsSection } from "@/features/agents/agents-section";
 import { ChatSection } from "@/features/company/chat-section";
 import { EmployeesSection } from "@/features/company/employees-section";
 import { MailboxesSection } from "@/features/company/mailboxes-section";
@@ -80,6 +82,7 @@ const OWN: Entry[] = [
   { id: "sync", label: m.settings_sync, icon: RefreshCw },
   { id: "security", label: m.settings_security, icon: KeyRound },
   { id: "encryption", label: m.settings_encryption, icon: LockKeyhole },
+  { id: "agents", label: m.settings_agents, icon: Bot },
   { id: "appearance", label: m.settings_appearance, icon: Palette },
 ];
 
@@ -104,6 +107,7 @@ const CONTENT: Record<Section, () => ReactNode> = {
   sync: () => <SyncSection />,
   security: () => <SecuritySection />,
   encryption: () => <EncryptionSection />,
+  agents: () => <AgentsSection />,
   appearance: () => <AppearanceSection />,
   employees: () => <EmployeesSection />,
   mailboxes: () => <MailboxesSection />,

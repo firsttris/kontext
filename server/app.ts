@@ -8,6 +8,7 @@ import { oauthProviderOpenIdConfigMetadata } from "@better-auth/oauth-provider";
 import { eq } from "drizzle-orm";
 import { Hono } from "hono";
 import { serveStatic } from "hono/bun";
+import { version as packageVersion } from "../package.json";
 import { type Auth, createAuth, createGrants, type Grants } from "./auth";
 import { currentRoomEvents, type LiveKitConfig } from "./calls/livekit";
 import { createMeetRoutes } from "./calls/meet-routes";
@@ -51,6 +52,12 @@ import { createImageSenderRoutes } from "./images/routes";
 import { createServerJmap } from "./jmap-server";
 import { createHub } from "./live/hub";
 import { createLiveRoutes } from "./live/routes";
+import { createAttempts } from "./mcp/attempts";
+import { createConnections } from "./mcp/connections";
+import { createOAuthCaller, createRevokeClient, jwtVerifier } from "./mcp/oauth";
+import { createConsentRoutes } from "./mcp/oauth-routes";
+import { createMcpEndpoint, createMcpKeyRoutes, type McpDeps } from "./mcp/routes";
+import { taskApiOf } from "./mcp/writer";
 import { createImporter, type Importer } from "./migration/importer";
 import { createJobs } from "./migration/jobs";
 import { createGraph, type M365Credentials } from "./migration/m365/graph";
@@ -75,6 +82,7 @@ import { createSnippetStore } from "./snippets/store";
 import { createSnoozeRoutes } from "./snooze/routes";
 import { createSnoozeStore } from "./snooze/store";
 import { createSnoozeWaker } from "./snooze/waker";
+import { loginAtStalwart } from "./stalwart";
 import { createRuleTasks } from "./tasks/from-rules";
 import { createTaskReminder } from "./tasks/notices";
 import { createTaskRoutes } from "./tasks/routes";
@@ -469,18 +477,21 @@ export const createApp = async (env: Env) => {
   // Task reminders go out every minute, also with nobody signed in.
   const reminder = createTaskReminder({ store: tasks, notify: pusher.notify });
   setInterval(() => void reminder.tick(), env.REMINDER_TICK_MS).unref();
+  const taskNotices = {
+    store: tasks,
+    notify: pusher.notify,
+    changed: (accountId: string, assignees: string[]) =>
+      hub.publish(
+        { type: "tasks", accountId },
+        (viewer) => viewer.accountIds.includes(accountId) || assignees.includes(viewer.me),
+      ),
+  };
   app.route(
     "/api/tasks",
     createTaskRoutes({
-      store: tasks,
+      ...taskNotices,
       accountsOf,
-      notify: pusher.notify,
       nameOf: async (request) => (await infoOf(request))?.name ?? "",
-      changed: (accountId, assignees) =>
-        hub.publish(
-          { type: "tasks", accountId },
-          (viewer) => viewer.accountIds.includes(accountId) || assignees.includes(viewer.me),
-        ),
     }),
   );
   app.route(
@@ -499,6 +510,74 @@ export const createApp = async (env: Env) => {
       blobs: createSessionBlobs(env.STALWART_URL),
     }),
   );
+  // Agents over MCP, with connections of their own; they reach what their owner may reach.
+  const connections = createConnections(db);
+  const revokeClient = createRevokeClient(db);
+  const oauthCaller = createOAuthCaller({
+    connections,
+    revokeClient,
+    // The server's own signing keys, read on the inside rather than through the public address.
+    verify: jwtVerifier(env.BETTER_AUTH_URL, `http://127.0.0.1:${env.PORT}/api/auth/jwks`),
+  });
+  // Guessing a password through an agent's sign-in counts like signing in (SIGN_IN_PER_MINUTE).
+  const passwordAttempts = createAttempts(env.SIGN_IN_PER_MINUTE);
+  const mcp: McpDeps = {
+    connections,
+    grants,
+    stalwartUrl: env.STALWART_URL,
+    version: packageVersion,
+    userOf: async (request) =>
+      (await auth.api.getSession({ headers: request.headers }))?.user ?? null,
+    login: (credentials) => loginAtStalwart(env.STALWART_URL, credentials),
+    // The same task routes, as the agent's owner: the same rights, notices and live updates.
+    tasksFor: (accounts, name) =>
+      taskApiOf(createTaskRoutes({ ...taskNotices, accountsOf: accounts, nameOf: name })),
+    oauthCaller: (request) => oauthCaller(request),
+    revokeClient,
+    mayTryPassword: passwordAttempts,
+  };
+  app.route("/api/mcp-keys", createMcpKeyRoutes(mcp));
+  app.route(
+    "/api/mcp-oauth",
+    createConsentRoutes({
+      ...mcp,
+      revokeClient,
+      api: {
+        // As a request of its own: the provider continues the authorization from it.
+        consent: async (body, headers) => {
+          const response = await auth.handler(
+            new Request(`${env.BETTER_AUTH_URL}/api/auth/oauth2/consent`, {
+              method: "POST",
+              headers: {
+                cookie: headers.get("cookie") ?? "",
+                origin: new URL(env.BETTER_AUTH_URL).origin,
+                accept: "application/json",
+                "content-type": "application/json",
+              },
+              body: JSON.stringify(body),
+            }),
+          );
+          if (!response.ok) throw new Error(`Zustimmung: ${response.status}`);
+          return (await response.json()) as { url: string };
+        },
+        clientName: async (clientId, headers) =>
+          (await auth.api.getOAuthClientPublic({ query: { client_id: clientId }, headers }))
+            .client_name ?? null,
+      },
+    }),
+  );
+  // OAuth discovery for agents (RFC 9728, RFC 8414) lives at the root; Better Auth answers it.
+  app.on(
+    ["GET", "HEAD"],
+    [
+      "/.well-known/oauth-protected-resource",
+      "/.well-known/oauth-protected-resource/*",
+      "/.well-known/oauth-authorization-server/*",
+    ],
+    (c) => auth.handler(c.req.raw),
+  );
+  const mcpEndpoint = createMcpEndpoint(mcp);
+  app.all("/mcp", (c) => mcpEndpoint(c.req.raw));
   app.route("/api/snippets", createSnippetRoutes({ store: createSnippetStore(db), accountsOf }));
   // Wiedervorlage: due mails come back every minute, also with nobody signed in.
   const waker = createSnoozeWaker({ env, grants, store: snoozes, notify: pusher.notify });

@@ -172,6 +172,7 @@ reicht ein VPS mit 2 vCPU und 4 GB RAM.
 - **Als App auf jedem Gerät**: Kontext aus dem Browser installieren (PC, Android, iPhone) – eigenes Fenster und Symbol, Ungelesen-Zahl am Symbol, startet auch ohne Netz; Fotos und Dateien aus anderen Apps direkt in eine neue Mail teilen; `mailto:`-Links öffnen Kontext. Neue Versionen kommen zuverlässig an und laden auf Klick auf „Neu laden“.
 - **Benachrichtigungen**: Glocke mit Einladungen, heutigen Terminen und neuen Mails; auf deinen Geräten auch bei geschlossener App (Web Push, Ende-zu-Ende verschlüsselt): neue Mails, Direktnachrichten, @Erwähnungen und eingehende Anrufe.
 - **Speicherplatz im Blick**: ein feiner Ring um das eigene Bild zeigt, wie voll das Postfach ist.
+- **KI-Agenten (MCP)**: Kontext in Claude als Connector eintragen und im Browser anmelden (OAuth) oder einem Agenten einen Zugangsschlüssel geben – er schlägt Kunden, letzte Mails, Termine und Aufgaben über alle Postfächer nach, mit deinen Rechten; wenn du es erlaubst, schreibt er auch Entwürfe und legt Termine, Kontakte und Aufgaben an. Er sendet und löscht nie selbst: Antworten warten in den Entwürfen auf dich. Jede Änderung wird protokolliert, jede Verbindung lässt sich trennen.
 
 ### 🏢 Firmenverwaltung
 

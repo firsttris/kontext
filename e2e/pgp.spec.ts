@@ -11,6 +11,8 @@ test.describe("Verschlüsselung: persönlicher Schlüssel", () => {
   }) => {
     test.setTimeout(90_000);
     await login(page);
+    // A retry starts clean: the first attempt may have saved the key already.
+    await page.request.delete("/api/pgp/me");
     await page.goto("/settings?section=encryption");
     const own = page.getByRole("region", { name: "Mein Schlüssel" });
     await own.getByRole("button", { name: "Schlüssel anlegen" }).click();
@@ -70,6 +72,10 @@ test.describe("Verschlüsselung: persönlicher Schlüssel", () => {
     await login(max, "max");
     await max.getByRole("list", { name: "Posteingang" }).getByText(subject).click();
     await expect(max.getByRole("heading", { name: subject })).toBeVisible();
+    // Taking the key over happens in the background once the mail is open: wait for it there.
+    await expect
+      .poll(async () => JSON.stringify(await (await max.request.get("/api/pgp/keys")).json()))
+      .toContain(`jonas@${DEV_DOMAIN}`);
     await max.goto("/settings?section=encryption");
     const known = max.getByRole("region", { name: "Schlüssel von anderen" });
     await expect(known).toContainText(`jonas@${DEV_DOMAIN}`);

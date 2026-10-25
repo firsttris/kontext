@@ -22,14 +22,22 @@ const signInWithForm = async (page: Page, user: string) => {
   sessions.set(user, await page.context().cookies());
 };
 
-/** Whether the kept session still holds: the app opens Mail with it, not the sign-in page. */
+/**
+ * Whether the kept session still holds, asked of the server rather than read from where the app
+ * lands: /jmap/session answers only while the Kontext session and the Stalwart sign-in behind it
+ * are both valid (a new password ends the latter). Waiting for the app to bounce to /login raced
+ * its own redirect: the URL could still show /mail when the bounce came, or a goto("/login") of
+ * ours could abort the app's (net::ERR_ABORTED).
+ */
 const signedInWithKept = async (page: Page, user: string) => {
   const kept = sessions.get(user);
   if (!kept) return false;
   await page.context().addCookies(kept);
-  await page.goto("/mail");
-  await page.waitForURL(/\/(mail\/|login)/);
-  if (/\/mail\//.test(page.url())) return true;
+  if ((await page.context().request.get("/jmap/session")).ok()) {
+    await page.goto("/mail");
+    await expect(page).toHaveURL(/\/mail\//);
+    return true;
+  }
   sessions.delete(user);
   await page.context().clearCookies();
   return false;

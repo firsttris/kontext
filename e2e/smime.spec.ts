@@ -53,6 +53,8 @@ test.describe("Verschlüsselung: S/MIME", () => {
     const max = certificateFor("max");
 
     await login(page, "sandra");
+    // A retry starts clean: the first attempt may have imported the certificate already.
+    await page.request.delete("/api/smime/me");
     await page.goto("/settings?section=encryption");
     const own = page.getByRole("region", { name: "Mein S/MIME-Zertifikat" });
     await own.getByRole("button", { name: "Zertifikat importieren" }).click();

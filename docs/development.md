@@ -124,7 +124,31 @@ statt jedes Modul erst beim ersten Aufruf zu übersetzen; ihr Service Worker ist
 Wer `playwright test` direkt startet, bekommt den Dev-Server. Angemeldet wird jede Person einmal
 pro Testlauf über das Formular; danach starten ihre Tests mit den Cookies dieser Sitzung
 (`login` in `e2e/helpers.ts`), und nach Abmelden, Sperren oder neuem Passwort wieder mit dem
-Formular. Die lokale Instanz
+Formular. Ob eine aufbewahrte Sitzung noch gilt, fragt `login` den Server (`/jmap/session`), statt
+abzuwarten, wohin die App springt – das lief um die Wette mit ihrer eigenen Weiterleitung.
+
+### Robuste E2E-Tests
+
+Alle Tests eines CI-Teils teilen sich einen Stalwart und eine Server-Datenbank, und ein
+fehlgeschlagener Test läuft in der CI einmal neu – im Zustand, den der erste Versuch hinterlassen
+hat. Darum:
+
+- **Die Testdaten sind nur zum Lesen da.** Wer etwas anlegt oder ändert, bringt es selbst mit und
+  benennt es eindeutig (`unique()`, `addMail()` in `e2e/helpers.ts`), statt Seed-Mails zu
+  beantworten oder zu verschieben – andere Tests rechnen mit ihnen.
+- **Ein Test fängt sauber an.** Was ein früherer Versuch angelegt haben kann (eigener Schlüssel,
+  Zertifikat, Ordner im „alten Anbieter“), räumt er zu Beginn über die API weg.
+- **Auf Zustände warten, nicht auf Zeit.** Für Arbeit im Hintergrund (Autocrypt, Abgleich,
+  Zustellung) `expect.poll` auf die API statt fester Pausen; `waitForTimeout` nur, um zu zeigen,
+  dass in einer Zeit *nichts* passiert.
+- **Mit der sofortigen Anzeige rechnen.** Eine eigene Chat-Nachricht steht sofort da
+  (`data-message="pending-…"`) und kurz neben der des Servers; gesucht wird die des Servers
+  (`:not([data-message^="pending-"])`) oder bewusst `.last()`.
+- **Nachts dreimal.** Der nächtliche CI-Lauf führt jeden E2E-Test dreimal und ohne Wiederholung
+  aus (`--repeat-each=3 --retries=0`); was dort mal fehlschlägt, ist wackelig und wird repariert,
+  nicht übersprungen. Lokal geht das mit `bun run e2e --repeat-each=3`.
+
+Die lokale Instanz
 erlaubt IMAP-Anmeldungen ohne TLS (nur auf 127.0.0.1), damit Mailprogramme und die
 Integrationstests sich verbinden können.
 
@@ -134,7 +158,8 @@ Integrationstests sich verbinden können.
   Job; die E2E- und Integrationstests parallel im offiziellen Playwright-Image, in vier Teilen
   gleichzeitig (`bun run e2e --shard=1/4` … `4/4`, jeder mit eigenem Stalwart und frischen
   Testdaten; Dateien bleiben ganz in einem Teil), Stalwart wird gecacht. Der Check „End-to-end
-  tests (Stalwart + Playwright)“ fasst die vier zusammen. Nachts läuft alles noch einmal, damit neue Sicherheitsmeldungen auffallen.
+  tests (Stalwart + Playwright)“ fasst die vier zusammen. Nachts läuft alles noch einmal, damit neue Sicherheitsmeldungen auffallen, die
+  E2E-Tests dabei dreimal ohne Wiederholung (siehe [Robuste E2E-Tests](#robuste-e2e-tests)).
 - **Screenshots**: Actions → _Update screenshots_ → Run workflow.
 - **Release**: Tag `vX.Y.Z` (Version in `package.json`) baut das Image `tristanteu/kontext`
   für amd64 und arm64 und legt das GitHub-Release an.

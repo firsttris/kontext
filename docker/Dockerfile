@@ -18,6 +18,10 @@ COPY package.json bun.lock ./
 RUN bun install --frozen-lockfile --production --ignore-scripts
 COPY --from=build /app/dist ./dist
 COPY server ./server
+# The server uses parts of the app (src/jmap, src/lib) through the "@/" paths of tsconfig.json;
+# src comes from the build, with the compiled messages (src/paraglide).
+COPY --from=build /app/src ./src
+COPY tsconfig.json ./
 VOLUME /data
 EXPOSE 3000
 HEALTHCHECK --interval=30s --timeout=5s CMD bun -e "fetch('http://127.0.0.1:3000/healthz').then(r => process.exit(r.ok ? 0 : 1))"

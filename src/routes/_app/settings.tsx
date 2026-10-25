@@ -12,6 +12,7 @@ export const settingsSections = [
   "sync",
   "security",
   "encryption",
+  "agents",
   "appearance",
   "employees",
   "mailboxes",

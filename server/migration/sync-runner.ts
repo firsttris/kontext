@@ -124,15 +124,33 @@ export const createSyncRunner = ({
 
   // One run at a time, so a small server and the provider's limits are not overrun.
   let queue = Promise.resolve();
-  const waiting = new Set<string>();
+  const pending = new Map<string, Promise<void>>();
   const enqueue = (id: string) => {
-    if (waiting.has(id)) return queue;
-    waiting.add(id);
-    queue = queue
+    const queued = pending.get(id);
+    if (queued) return queued;
+    const done = queue
       .then(() => run(id))
       .catch(() => undefined)
-      .finally(() => waiting.delete(id));
-    return queue;
+      .finally(() => pending.delete(id));
+    pending.set(id, done);
+    queue = done;
+    return done;
+  };
+
+  /**
+   * Whether the move's queued or running run is over, waiting at most `ms`: finishing a move
+   * waits for the run just asked for instead of refusing it (a first run may take hours).
+   */
+  const settled = async (id: string, ms: number): Promise<boolean> => {
+    const queued = pending.get(id);
+    if (!queued) return true;
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const late = new Promise<false>((resolve) => {
+      timer = setTimeout(() => resolve(false), ms);
+    });
+    const over = await Promise.race([queued.then(() => true as const), late]);
+    clearTimeout(timer);
+    return over;
   };
 
   /** Every minute: the active moves whose last run is older than 15 minutes. */
@@ -150,7 +168,7 @@ export const createSyncRunner = ({
     return setInterval(() => void tick(), 60_000);
   };
 
-  return { enqueue, start };
+  return { enqueue, settled, start };
 };
 
 export type SyncRunner = ReturnType<typeof createSyncRunner>;

@@ -1,7 +1,7 @@
 /**
  * The tables of Better Auth's `jwt` plugin (signing keys) and of `@better-auth/oauth-provider`
- * (Kontext as the sign-in provider of Schreibzeug), as Better Auth's schema generator writes them
- * for SQLite. Lists and JSON are plain text: the Drizzle adapter serialises them itself on SQLite
+ * (Kontext as the sign-in provider of Schreibzeug and of agents), as Better Auth's schema generator
+ * writes them for SQLite. Lists and JSON are plain text: the Drizzle adapter serialises them itself on SQLite
  * (`supportsArrays: false` in @better-auth/drizzle-adapter).
  */
 import { index, integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
