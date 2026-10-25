@@ -78,7 +78,7 @@ test.describe("Telefonie über die Telefonbox", () => {
       "verbunden · an der Fritzbox angemeldet",
     );
     // Telefon is in the rail now.
-    await expect(page.getByRole("link", { name: "Telefon" })).toBeVisible();
+    await expect(page.getByRole("link", { name: "Telefon", exact: true })).toBeVisible();
   });
 
   test("ein Anruf klingelt bei beiden, Jonas sieht den Kontakt und nimmt an", async ({
@@ -112,7 +112,7 @@ test.describe("Telefonie über die Telefonbox", () => {
       .poll(async () => (await box.state()).commands.map((command) => command.type))
       .toContain("hangup");
 
-    await page.getByRole("link", { name: "Telefon" }).click();
+    await page.getByRole("link", { name: "Telefon", exact: true }).click();
     const list = page.getByRole("list", { name: "Letzte Anrufe" });
     await expect(list.getByRole("listitem").first()).toContainText("Petra Keller");
     await expect(list.getByRole("listitem").first()).toContainText("Angenommen");
@@ -126,7 +126,7 @@ test.describe("Telefonie über die Telefonbox", () => {
     await box.hangup(call);
     await expect(page.getByRole("dialog", { name: /^Anruf von/ })).toHaveCount(0);
 
-    await page.getByRole("link", { name: "Telefon" }).click();
+    await page.getByRole("link", { name: "Telefon", exact: true }).click();
     await page.getByRole("button", { name: "Verpasst" }).click();
     const missed = page.getByRole("list", { name: "Letzte Anrufe" }).getByRole("listitem").first();
     await expect(missed).toContainText("Verpasst");
