@@ -133,10 +133,18 @@ export const createJmapProxy =
     return new Response(upstream.body, { status: upstream.status, headers: responseHeaders });
   };
 
-/** Ends all Kontext sessions of a user; their Stalwart tokens go with them (cascade). */
-const endSessionsOf = (db: Db) => async (email: string) => {
+/**
+ * Ends all Kontext sessions of a user; their Stalwart tokens go with them (cascade). With Dokumente
+ * its sessions end too, as Schreibzeug never asks Kontext again once someone is signed in there.
+ */
+const endSessionsOf = (db: Db, documents: Schreibzeug | null) => async (email: string) => {
   const [found] = await db.select().from(schema.user).where(eq(schema.user.email, email));
-  if (found) await db.delete(schema.session).where(eq(schema.session.userId, found.id));
+  if (!found) return;
+  await db.delete(schema.session).where(eq(schema.session.userId, found.id));
+  const person = { id: found.id, email: found.email, name: found.name };
+  await documents
+    ?.endSessions(person)
+    .catch((error: Error) => console.warn(`Dokumente: Abmelden von ${email}: ${error.message}`));
 };
 
 /** Schreibzeug's API for the server, with tokens signed by Kontext's keys for its address. */
@@ -261,7 +269,7 @@ export const createApp = async (env: Env) => {
       syncs: { syncs, runner: syncRunner, sealer: syncSealer, allowPlain, microsoft },
       currentEmail: async (request) =>
         (await auth.api.getSession({ headers: request.headers }))?.user.email ?? null,
-      endSessions: endSessionsOf(db),
+      endSessions: endSessionsOf(db, documents),
       chatRetention,
       pruneChat: chatPruner.tick,
       security: { publicUrl: env.BETTER_AUTH_URL, resolve: dohResolver(env.DOH_URL) },

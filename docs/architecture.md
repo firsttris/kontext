@@ -1199,11 +1199,17 @@ Den Ordner gibt Kontext den Leuten des Postfachs frei, wie Stalwart sie hat (mit
 gelesen wie in der Firmenverwaltung, `server/documents/company-mailboxes.ts`): Mitglieder dürfen
 ändern, wer nur liest, darf öffnen; wer nicht mehr dabei ist, verliert ihn. Abgeglichen wird beim Start
 der App (`GET /api/documents/mailboxes`, höchstens alle 30 Sekunden neu gelesen) und sofort, wenn die
-Firmenverwaltung Mitglieder oder Leser eines Postfachs ändert. In Kontext stehen die Ordner oben im
+Firmenverwaltung Mitglieder oder Leser eines Postfachs ändert – am Postfach wie am Mitarbeiter, beim
+Anlegen, Sperren und beim Austritt (gesperrte Leute zählen nicht mit). In Kontext stehen die Ordner oben im
 Auswahldialog, ein Anhang einer Mail aus info@ landet zuerst in dessen Ordner; in Schreibzeug stehen
 sie unter „Für mich freigegeben“. Eine Datei darin gehört dem Postfach; Kontext gibt sie deshalb, wenn
 die Person selbst es nicht darf, als das Postfach frei, in dem sie arbeitet. Ohne
 `STALWART_ADMIN_KEY` gibt es keine Postfach-Ordner.
+
+**Sperren und Austritt.** Schreibzeug fragt Kontext nach der Anmeldung nicht mehr; seine Sitzung
+hielte sonst weiter. Wo die Firmenverwaltung Kontexts Sitzungen beendet (Sperren, Austritt, neues
+Passwort), beendet Kontexts Server deshalb auch die in Dokumente (`DELETE /api/sessions` mit dem
+Token der Person, `endSessionsOf` in `server/app.ts`); wer dort kein Konto hat, bekommt keins.
 
 ## Code
 

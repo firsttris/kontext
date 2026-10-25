@@ -144,6 +144,10 @@ export const createSchreibzeug = ({
         { method: "DELETE" },
       );
     },
+    /** Signs the person out of Schreibzeug everywhere (someone left or was locked). */
+    endSessions: async (person: Person) => {
+      await call(person, "/sessions", { method: "DELETE" });
+    },
     /** Whether Schreibzeug answers at all (checked once at start). */
     reachable: async (): Promise<boolean> =>
       fetch(`${url}/api/health`)

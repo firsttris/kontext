@@ -5,7 +5,8 @@
  * - its sign-in through Kontext: the OpenID Connect code flow with PKCE against Kontext's provider
  *   (silently, `prompt=none`), the id token checked against Kontext's keys;
  * - its side of the frame: the messages it sends and takes (Schreibzeug's apps/web/src/embed);
- * - its API for Kontext's server: folders, listings, uploads, downloads and shares with a bearer
+ * - its API for Kontext's server: folders, listings, uploads, downloads, shares and ending someone's
+ *   sessions (`DELETE /api/sessions`), with a bearer
  *   token from Kontext, checked against Kontext's keys, issuer and this address as audience; a
  *   share on a folder holds for what is in it, as in Schreibzeug.
  *
@@ -172,6 +173,10 @@ const api = async (request: Request, url: URL) => {
   if (url.pathname === "/api/health") return Response.json({ ok: true });
   const person = await bearerOf(request);
   if (!person) return failure(401, "unauthorized", "Bitte melde dich an.");
+  if (request.method === "DELETE" && url.pathname === "/api/sessions") {
+    for (const [id, signedIn] of sessions) if (signedIn.sub === person.sub) sessions.delete(id);
+    return new Response(null, { status: 204 });
+  }
   if (request.method === "GET" && url.pathname === "/api/nodes") {
     const parent = url.searchParams.get("parent");
     const folderId = parent && parent !== "root" ? parent : null;
@@ -216,7 +221,8 @@ const api = async (request: Request, url: URL) => {
 /**
  * For the tests only: a file of someone's (`POST /e2e/files` with `{ owner, name }`, optionally in
  * a folder `parentId`), whom a node was shared with (`GET /e2e/shares/<id>`), and someone's own
- * folders at the top (`GET /e2e/folders/<address>`).
+ * folders at the top (`GET /e2e/folders/<address>`), and how many sessions someone has here
+ * (`GET /e2e/sessions/<address>`).
  */
 const e2e = async (request: Request, url: URL) => {
   if (request.method === "POST" && url.pathname === "/e2e/files") {
@@ -241,6 +247,12 @@ const e2e = async (request: Request, url: URL) => {
       childrenOf(null, owner)
         .filter(([, stored]) => !stored.file)
         .map(([id, stored]) => node(id, stored)),
+    );
+  }
+  if (url.pathname.startsWith("/e2e/sessions/")) {
+    const email = decodeURIComponent(url.pathname.replace("/e2e/sessions/", "")).toLowerCase();
+    return Response.json(
+      [...sessions.values()].filter((p) => p.email.toLowerCase() === email).length,
     );
   }
   const shared = nodes.get(url.pathname.replace("/e2e/shares/", ""));

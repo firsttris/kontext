@@ -19,13 +19,13 @@ const account = (id: string, name: string, admin = false): StalwartAccount => ({
 });
 
 /** A Stalwart that keeps the calls; enough for the rules the routes decide. */
-const fakeManagement = () => {
+const fakeManagement = ({ annaInInfo = false } = {}) => {
   const updates: Record<string, Record<string, unknown>>[] = [];
   const created: Record<string, unknown>[] = [];
   const management: Management = {
     listAccounts: async () => [
       account("1", "chef", true),
-      account("2", "anna"),
+      { ...account("2", "anna"), ...(annaInInfo ? { memberGroupIds: { g: true as const } } : {}) },
       { id: "g", "@type": "Group", name: "info", domainId: "d", roles: { "@type": "Default" } },
     ],
     listDomains: async () => [{ id: "d", name: "firma.de" }],
@@ -78,8 +78,12 @@ const fakeManagement = () => {
   return { management, mailstore, updates, created, shared, rules, back };
 };
 
-const setup = (email: string | null, welcomeError?: string) => {
-  const fake = fakeManagement();
+const setup = (
+  email: string | null,
+  options: { welcomeError?: string; annaInInfo?: boolean } = {},
+) => {
+  const { welcomeError } = options;
+  const fake = fakeManagement(options);
   const ended: string[] = [];
   const welcomed: { newcomer: string; people: string[] }[] = [];
   const shownToAll: string[][] = [];
@@ -127,6 +131,8 @@ const setup = (email: string | null, welcomeError?: string) => {
   return { ...fake, ended, welcomed, shownToAll, changedMailboxes, send };
 };
 
+type Setup = ReturnType<typeof setup>;
+
 describe("Firmenverwaltung", () => {
   it("is only for users with the company role", async () => {
     expect(await (await setup("anna@firma.de").send("GET", "/me")).json()).toEqual({
@@ -160,7 +166,9 @@ describe("Firmenverwaltung", () => {
   });
 
   it("still hands out the new password when sharing the calendars fails", async () => {
-    const { send, created } = setup("chef@firma.de", "Kalender: Stalwart-Verwaltung: 503");
+    const { send, created } = setup("chef@firma.de", {
+      welcomeError: "Kalender: Stalwart-Verwaltung: 503",
+    });
     const response = await send("POST", "/employees", {
       email: "lena@firma.de",
       fullName: "Lena Klein",
@@ -190,6 +198,40 @@ describe("Firmenverwaltung", () => {
       },
     });
     expect(ended).toEqual(["anna@firma.de"]);
+  });
+
+  it("lets the shared mailboxes' folders in Dokumente follow a person's membership", async () => {
+    const joining = setup("chef@firma.de");
+    expect((await joining.send("PATCH", "/employees/2", { mailboxIds: ["g"] })).status).toBe(200);
+    expect(joining.updates).toEqual([{ "2": { "memberGroupIds/g": true } }]);
+    expect(joining.changedMailboxes).toEqual(["g"]);
+    // The dialog sends the mailboxes with every save; unchanged ones are left alone.
+    await joining.send("PATCH", "/employees/2", { fullName: "Anna W.", mailboxIds: [] });
+    expect(joining.changedMailboxes).toEqual(["g"]);
+
+    const created = setup("chef@firma.de");
+    const made = await created.send("POST", "/employees", {
+      fullName: "Bert",
+      email: "bert@firma.de",
+      mailboxIds: ["g"],
+    });
+    expect(made.status).toBe(201);
+    expect(created.changedMailboxes).toEqual(["g"]);
+
+    for (const leave of [
+      (send: Setup["send"]) => send("PATCH", "/employees/2", { active: false }),
+      (send: Setup["send"]) => send("PATCH", "/employees/2", { mailboxIds: [] }),
+      (send: Setup["send"]) =>
+        send("POST", "/employees/2/offboarding", {
+          handoverTo: null,
+          forwardTo: null,
+          reply: null,
+        }),
+    ]) {
+      const member = setup("chef@firma.de", { annaInInfo: true });
+      expect((await leave(member.send)).status).toBe(200);
+      expect(member.changedMailboxes).toEqual(["g"]);
+    }
   });
 
   it("ends the offboarding when a person is unlocked again", async () => {

@@ -33,6 +33,7 @@ const fakes = () => {
     createFolder: async () => ({ id: "f2", kind: "folder", name: "Neu" }),
     shares: async () => [],
     unshare: async () => undefined,
+    endSessions: async () => undefined,
     reachable: async () => true,
   };
   const deps: DocumentsDeps = {
