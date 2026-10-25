@@ -19,6 +19,8 @@ export const OUTCOMES = [
   "closed",
   /** On the block list: turned away by the box. */
   "blocked",
+  /** A fax on the fax line. */
+  "fax",
 ] as const;
 export type Outcome = (typeof OUTCOMES)[number];
 
@@ -68,6 +70,8 @@ export type PhoneCall = {
   topic: string | null;
   /** The door intercom rings; `member` is who opened it. */
   door: boolean;
+  /** A call on the fax line: being received, or the fax arrived (as PDF). */
+  fax: "receiving" | "received" | null;
 };
 
 /** Phone rooms in LiveKit: "kontext-phone-<uuid>", which LiveKit SIP's dispatch rule matches. */
@@ -166,6 +170,7 @@ export const incomingCall = (
   desk: null,
   topic: null,
   door: false,
+  fax: null,
 });
 
 /** A call outside the opening hours: filed at once, it never rings. */
@@ -187,6 +192,17 @@ export const blockedCall = (
   state: "ended",
   outcome: "blocked",
   endedAt: event.at,
+});
+
+/** A call on the fax line: in the list as a fax, it never rings. */
+export const faxCall = (
+  event: CallEvent,
+  ids: { id: string; boxId: string; members: string[] },
+): PhoneCall => ({
+  ...incomingCall(event, ids),
+  state: "mailbox",
+  outcome: "fax",
+  fax: "receiving",
 });
 
 export const blockSchema = z.object({ number: z.string().trim().min(3).max(40) });
@@ -234,6 +250,7 @@ export const outgoingCall = ({
   desk: null,
   topic: null,
   door: false,
+  fax: null,
 });
 
 /** The call after one of the box's events; the same call when it changes nothing (a repeat). */

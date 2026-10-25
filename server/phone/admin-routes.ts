@@ -113,6 +113,11 @@ const doorInput = z.object({
     .regex(/^[0-9*#]{1,8}$/),
   members: z.array(z.string().min(1).max(64)).max(200),
 });
+const faxInput = z.object({
+  enabled: z.boolean(),
+  line: z.string().max(100),
+  deliverTo: z.string().min(1).max(64).nullable(),
+});
 const boxSchema = z.object({ name: z.string().trim().min(1).max(60) });
 
 /** Short ids for the box's endpoint names ("fritzbox-<id>"). */
@@ -176,6 +181,7 @@ export const createPhoneAdminRoutes = ({
       menu: settings.menu,
       blocked: settings.blocked,
       door: settings.door,
+      fax: { ...settings.fax, deliverTo: settings.fax.deliverTo?.accountId ?? null },
       sip,
     });
   });
@@ -294,6 +300,27 @@ export const createPhoneAdminRoutes = ({
       return c.json({ error: "Unbekannte Person" }, 400);
     }
     await store.saveSettings({ ...settings, menu: parsed.data });
+    await service.reconfigure();
+    return c.body(null, 204);
+  });
+
+  app.put("/fax", async (c) => {
+    const parsed = faxInput.safeParse(await c.req.json().catch(() => ({})));
+    if (!parsed.success) return c.json({ error: "Ungültig" }, 400);
+    const settings = await store.settings();
+    const lines = [settings.line?.username, ...settings.extraLines.map((line) => line.username)];
+    if (parsed.data.enabled && !lines.includes(parsed.data.line)) {
+      return c.json({ error: "Unbekannte Leitung" }, 400);
+    }
+    const owner = parsed.data.deliverTo ? ownerOf(c.get("loaded"), parsed.data.deliverTo) : null;
+    if (parsed.data.deliverTo && !owner) return c.json({ error: "Unbekanntes Postfach" }, 400);
+    await store.saveSettings({
+      ...settings,
+      fax: {
+        ...parsed.data,
+        deliverTo: owner ? { accountId: owner.id, email: owner.email } : null,
+      },
+    });
     await service.reconfigure();
     return c.body(null, 204);
   });

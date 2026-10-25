@@ -58,6 +58,7 @@ const box = {
         hours: { open: { day: number; from: string; to: string }[] } | null;
         menu: { options: { digit: string; mailbox: boolean }[] } | null;
         blocked: { numbers: string[]; anonymous: boolean };
+        fax: { line: string } | null;
       } | null;
       commands: { type: string; number?: string; call?: string }[];
     },
@@ -449,6 +450,38 @@ test.describe("Telefonie über die Telefonbox", () => {
     await expect(page.getByRole("dialog", { name: /^Anruf von/ })).toHaveCount(0);
     await box.hangup(call);
     await anna.close();
+  });
+
+  test("ein Fax auf der Faxnummer kommt als PDF und als Mail", async ({ page }) => {
+    await login(page);
+    await page.goto("/settings?section=phone");
+    const fax = page.getByRole("region", { name: "Fax", exact: true });
+    await fax.getByLabel("Faxe empfangen").check();
+    await fax
+      .getByRole("combobox", { name: /^Faxnummer/ })
+      .selectOption({ label: "Durchwahl Anna" });
+    await fax
+      .getByRole("combobox", { name: /^Faxe als Mail an/ })
+      .selectOption({ label: "Jonas Weber" });
+    await fax.getByRole("button", { name: "Speichern" }).click();
+    await expect.poll(async () => (await box.state()).config?.fax).toEqual({ line: "kontext621" });
+
+    await fetch(`${CONTROL}/fax`, {
+      method: "POST",
+      body: JSON.stringify({ from: "07223 5550199" }),
+    });
+    await page.getByRole("link", { name: "Telefon", exact: true }).click();
+    const item = page.getByRole("list", { name: "Letzte Anrufe" }).getByRole("listitem").first();
+    await expect(item).toContainText("Fax");
+    await expect(item.getByRole("link", { name: "Fax öffnen (PDF)" })).toBeVisible();
+    await expect(async () => {
+      await page.goto("/mail");
+      await expect(
+        page
+          .getByRole("list", { name: "Posteingang" })
+          .getByText("Fax von 07223 5550199", { exact: true }),
+      ).toBeVisible({ timeout: 5_000 });
+    }).toPass({ timeout: 30_000 });
   });
 
   test("ein Tischtelefon an der Box: richtet sich ein und nimmt Anrufe an", async ({ page }) => {

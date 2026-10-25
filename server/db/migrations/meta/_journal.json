@@ -218,6 +218,13 @@
       "when": 1792941176442,
       "tag": "0030_phone_door",
       "breakpoints": true
+    },
+    {
+      "idx": 31,
+      "version": "6",
+      "when": 1792941177731,
+      "tag": "0031_phone_fax",
+      "breakpoints": true
     }
   ]
 }

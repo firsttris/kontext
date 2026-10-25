@@ -55,6 +55,7 @@ export const sampleConfig: BoxConfig = {
     ],
     waitSeconds: 5,
   },
+  fax: { line: "kontext621" },
   blocked: { numbers: ["+4917099999999", "017099999999"], anonymous: true },
   forward: { number: "01712345678", afterSeconds: 10 },
 };

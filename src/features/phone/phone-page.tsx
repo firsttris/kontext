@@ -163,6 +163,16 @@ const Row = ({
             />
           </div>
         ) : null}
+        {call.fax === "received" ? (
+          <a
+            href={`/api/phone/calls/${encodeURIComponent(call.id)}/fax`}
+            target="_blank"
+            rel="noreferrer"
+            className="self-start text-[13px] text-accent no-underline hover:underline"
+          >
+            {m.phone_fax_open()}
+          </a>
+        ) : null}
         {call.callbackTaskId ? (
           <Link
             to="/tasks"

@@ -55,6 +55,7 @@ export const outcomeText = (
       : m.phone_talking();
   }
   if (call.state === "mailbox") {
+    if (call.outcome === "fax") return m.phone_fax_receiving();
     return call.outcome === "closed" ? m.phone_outcome_closed() : m.phone_on_mailbox();
   }
   switch (call.outcome) {
@@ -78,6 +79,8 @@ export const outcomeText = (
       return m.phone_outcome_closed();
     case "blocked":
       return m.phone_outcome_blocked();
+    case "fax":
+      return m.phone_outcome_fax();
     default:
       return m.phone_outcome_failed();
   }

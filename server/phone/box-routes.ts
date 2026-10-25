@@ -3,6 +3,7 @@
  * messages callers left on the mailbox.
  */
 import { Hono } from "hono";
+import type { createFaxes } from "./fax";
 import { type PhoneFiles, wavResponse } from "./files";
 import type { PhoneStore } from "./store";
 import type { createVoicemail } from "./voicemail";
@@ -17,10 +18,12 @@ export const createBoxFileRoutes = ({
   store,
   files,
   voicemail,
+  faxes,
 }: {
   store: Pick<PhoneStore, "boxOfToken" | "settings">;
   files: Pick<PhoneFiles, "readSound">;
   voicemail: ReturnType<typeof createVoicemail>;
+  faxes: ReturnType<typeof createFaxes>;
 }) => {
   const app = new Hono<{ Variables: { boxId: string } }>();
 
@@ -45,6 +48,15 @@ export const createBoxFileRoutes = ({
     const result = await voicemail.receive(c.get("boxId"), c.req.param("call"), bytes);
     if (result === "not-found") return c.json({ error: "Unbekannter Anruf" }, 404);
     if (result === "bad-file") return c.json({ error: "Kein WAV in 8 kHz, mono, 16 Bit" }, 400);
+    return c.body(null, 204);
+  });
+
+  app.put("/fax/:call", async (c) => {
+    const bytes = new Uint8Array(await c.req.arrayBuffer());
+    if (bytes.length > 4 * MAX_UPLOAD) return c.json({ error: "Zu groß" }, 413);
+    const result = await faxes.receive(c.get("boxId"), c.req.param("call"), bytes);
+    if (result === "not-found") return c.json({ error: "Unbekannter Anruf" }, 404);
+    if (result === "bad-file") return c.json({ error: "Kein PDF" }, 400);
     return c.body(null, 204);
   });
 

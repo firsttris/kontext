@@ -26,16 +26,21 @@ export const createBoxFiles = ({
   fetcher?: typeof fetch;
   wait?: (ms: number) => Promise<unknown>;
 }) => {
-  /** Uploads a message; true once Kontext has it. */
-  const uploadVoicemail = async (call: string, wav: Uint8Array): Promise<boolean> => {
+  /** Uploads a message or a fax; true once Kontext has it. */
+  const upload = async (
+    kind: "voicemail" | "fax",
+    call: string,
+    bytes: Uint8Array,
+  ): Promise<boolean> => {
+    const type = kind === "fax" ? "application/pdf" : "audio/wav";
     for (const delay of [0, ...RETRY_MS]) {
       if (delay) await wait(delay);
       const response = await fetcher(
-        filesUrl(credentials, `/voicemail/${encodeURIComponent(call)}`),
+        filesUrl(credentials, `/${kind}/${encodeURIComponent(call)}`),
         {
           method: "PUT",
-          headers: { ...auth(credentials), "content-type": "audio/wav" },
-          body: new Uint8Array(wav),
+          headers: { ...auth(credentials), "content-type": type },
+          body: new Uint8Array(bytes),
         },
       ).catch(() => null);
       if (response?.ok) return true;
@@ -59,7 +64,23 @@ export const createBoxFiles = ({
         await writeFile(path, new Uint8Array(await response.arrayBuffer()));
       }
     },
-    uploadVoicemail,
+    uploadVoicemail: (call: string, wav: Uint8Array) => upload("voicemail", call, wav),
+    uploadFax: (call: string, pdf: Uint8Array) => upload("fax", call, pdf),
+    /** The fax Asterisk received (path without ".tif"), as PDF to Kontext, then removed. */
+    sendFax: async (
+      call: string,
+      fax: string,
+      toPdf: (tif: string, pdf: string) => Promise<boolean>,
+    ): Promise<boolean> => {
+      const tif = `${fax}.tif`;
+      const pdf = `${fax}.pdf`;
+      if (!existsSync(tif)) return false;
+      const converted = await toPdf(tif, pdf).catch(() => false);
+      const bytes = converted ? await readFile(pdf).catch(() => null) : null;
+      const sent = bytes ? await upload("fax", call, bytes) : false;
+      if (sent) await Promise.all([rm(tif, { force: true }), rm(pdf, { force: true })]);
+      return sent;
+    },
     /** The recording Asterisk left (path without ".wav"), sent up and then removed. */
     sendRecording: async (call: string, recording: string): Promise<boolean> => {
       const path = `${recording}.wav`;
@@ -69,7 +90,7 @@ export const createBoxFiles = ({
         await rm(path, { force: true });
         return false;
       }
-      const sent = await uploadVoicemail(call, wav);
+      const sent = await upload("voicemail", call, wav);
       if (sent) await rm(path, { force: true });
       return sent;
     },

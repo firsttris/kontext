@@ -13,6 +13,7 @@ import type { Hub } from "../live/hub";
 import { createPhoneAdminRoutes } from "./admin-routes";
 import { createPhoneSoundRoutes } from "./admin-sounds";
 import { createBoxFileRoutes } from "./box-routes";
+import { createFaxes } from "./fax";
 import { createPhoneFiles } from "./files";
 import { ensureSipRouting } from "./livekit-sip";
 import { type phoneNotice, roomOfPhoneRoom } from "./phone";
@@ -77,7 +78,17 @@ export const createPhone = (setup: PhoneSetup) => {
       viewerOf: setup.viewerOf,
       nameOf: setup.nameOf,
       upgradeWebSocket,
-      boxFiles: createBoxFileRoutes({ store, files, voicemail }),
+      boxFiles: createBoxFileRoutes({
+        store,
+        files,
+        voicemail,
+        faxes: createFaxes({
+          store,
+          files,
+          refresh: service.refresh,
+          importMessage: setup.importMessage,
+        }),
+      }),
       files,
     }),
     adminRoutes: createPhoneAdminRoutes({

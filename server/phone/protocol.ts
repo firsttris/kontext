@@ -100,6 +100,11 @@ export const boxConfigSchema = z.object({
   mailbox: mailboxSchema.nullable().default(null),
   hours: hoursSchema.nullable().default(null),
   menu: menuSchema.nullable().default(null),
+  /** A line (by its user name at the Fritzbox) for faxes: the box receives them, Kontext mails a PDF. */
+  fax: z
+    .object({ line: z.string().max(100) })
+    .nullable()
+    .default(null),
   /** Calls the box turns away at once: these numbers (in every way they may come) and withheld ones. */
   blocked: z
     .object({
@@ -157,6 +162,7 @@ export type ToBox = z.infer<typeof toBoxSchema>;
  * "mailbox": nobody answered, the caller hears the greeting and may leave a message. "closed": a
  * call outside the opening hours; it does not ring, the caller hears the closing greeting.
  * "blocked": a number on the block list (or withheld, if those are blocked); turned away at once.
+ * "fax": a call on the fax line; the box receives the fax.
  */
 export const CALL_STATES = [
   "ringing",
@@ -164,6 +170,7 @@ export const CALL_STATES = [
   "mailbox",
   "closed",
   "blocked",
+  "fax",
   "ended",
 ] as const;
 

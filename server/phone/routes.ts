@@ -37,7 +37,7 @@ export type PhoneRouteDeps = {
   upgradeWebSocket: UpgradeWebSocket;
   /** The boxes' file routes (sounds, messages), with their own check of the box's token. */
   boxFiles: Hono<{ Variables: { boxId: string } }>;
-  files: Pick<PhoneFiles, "readVoicemail">;
+  files: Pick<PhoneFiles, "readVoicemail" | "readFax">;
 };
 
 const STATUS: Record<Problem, 400 | 403 | 404 | 409 | 503> = {
@@ -224,6 +224,21 @@ export const createPhoneRoutes = (deps: PhoneRouteDeps) => {
     const result = await service.cancelTransfer(c.req.param("id"), c.get("viewer").me);
     if (problem(result)) return c.json({ error: MESSAGES[result] }, STATUS[result]);
     return c.json({ call: result });
+  });
+
+  app.get("/calls/:id/fax", async (c) => {
+    const call = await store.call(c.req.param("id"));
+    if (!call || !canSeeCall(call, c.get("viewer").me)) {
+      return c.json({ error: "Nicht gefunden" }, 404);
+    }
+    const bytes = await deps.files.readFax(call.id);
+    if (!bytes) return c.json({ error: "Nicht gefunden" }, 404);
+    return new Response(new Uint8Array(bytes), {
+      headers: {
+        "content-type": "application/pdf",
+        "content-disposition": `inline; filename="Fax-${call.remote.replace(/\D/g, "") || "unbekannt"}.pdf"`,
+      },
+    });
   });
 
   app.put("/calls/:id/note", async (c) => {

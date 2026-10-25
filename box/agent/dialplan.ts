@@ -145,6 +145,21 @@ const ringingExtensions = (config: BoxConfig, caller: [string, string][]) => {
   ];
 };
 
+/** The fax line: answered as a fax machine; the agent sends the pages to Kontext as PDF. */
+const faxContext = (config: BoxConfig, paths: BoxPaths) =>
+  config.fax
+    ? context(
+        "kontext-fax",
+        extension("s", [
+          report("fax", "in", [["Remote", `\${CALLERID(num)}`]]),
+          "Answer()",
+          `Set(KONTEXT_FAX=${paths.recordings}/\${KONTEXT_CALL})`,
+          `ReceiveFAX(\${KONTEXT_FAX}.tif)`,
+          "Hangup(16)",
+        ]),
+      )
+    : "";
+
 /** The voice menu: greeting, a key, then ringing (with the choice) or the mailbox. */
 const menuContext = (config: BoxConfig, paths: BoxPaths) => {
   const { menu } = config;
@@ -212,6 +227,9 @@ const incoming = (config: BoxConfig, paths: BoxPaths) => {
       "Set(__KONTEXT_DIR=in)",
       ...blockCheck(config),
       reportEnd,
+      ...(config.fax
+        ? [`GotoIf($["\${KONTEXT_LINE}" = "${config.fax.line}"]?kontext-fax,s,1)`]
+        : []),
       ...(config.hours
         ? hoursCheck(config)
         : [config.menu ? "Goto(kontext-menu,s,1)" : "Goto(ringing,1)"]),
@@ -360,6 +378,7 @@ export const extensionsConf = (config: BoxConfig, paths: BoxPaths): string =>
         report("ended", `\${KONTEXT_DIR}`, [
           ["Cause", `\${HANGUPCAUSE}`],
           ["Recording", `\${RECORDED_FILE}`],
+          ["Fax", `\${KONTEXT_FAX}`],
         ]),
         "Return()",
       ]),
@@ -379,4 +398,5 @@ export const extensionsConf = (config: BoxConfig, paths: BoxPaths): string =>
     context("kontext-refuse", extension("_.", ["Hangup(21)"])),
     mailbox(config, paths),
     menuContext(config, paths),
+    faxContext(config, paths),
   ].join("\n");

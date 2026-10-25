@@ -51,6 +51,7 @@ const SETTINGS: PhoneSettings = {
   menu: { enabled: false, greeting: null, options: [] },
   blocked: { numbers: [], anonymous: false },
   door: { enabled: false, number: "**11", code: "#", members: [] },
+  fax: { enabled: false, line: "", deliverTo: null },
 };
 
 const setup = (settings: Partial<PhoneSettings> = {}) => {
@@ -369,6 +370,15 @@ describe("an incoming call", () => {
     expect(await service.openDoor("id-1", "max")).toBe("not-found");
     expect(await service.openDoor("id-1", "anna")).toMatchObject({ member: "anna" });
     expect(toBox.at(-1)).toEqual({ type: "door-open", call: "1729850000.12", code: "*5" });
+  });
+
+  it("files a fax on the fax line without ringing", async () => {
+    const { box, notices, phoneEvents } = setup();
+    await box.receive(event(1, "fax"));
+    expect(notices).toEqual([]);
+    expect(phoneEvents().at(-1)!.event.call).toMatchObject({ outcome: "fax", fax: "receiving" });
+    await box.receive(event(2, "ended", { cause: 16 }));
+    expect(phoneEvents().at(-1)!.event.call).toMatchObject({ state: "ended", outcome: "fax" });
   });
 
   it("leaves Zurückrufen on the chosen board, done once someone talked to the number", async () => {

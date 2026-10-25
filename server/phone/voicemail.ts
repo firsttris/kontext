@@ -5,9 +5,9 @@
  */
 import type { ImportResult } from "../jmap-server";
 import type { PhoneFiles } from "./files";
+import { voicemailMessage } from "./phone-mail";
 import { isPhoneWav, wavInfo } from "./sounds";
 import type { PhoneStore } from "./store";
-import { voicemailMessage } from "./voicemail-message";
 
 export type VoicemailDeps = {
   store: Pick<PhoneStore, "callOfBox" | "setVoicemail" | "settings">;

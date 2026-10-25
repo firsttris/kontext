@@ -1,7 +1,7 @@
 // @vitest-environment node
 import { describe, expect, it } from "vitest";
+import { encodeWord, faxMessage, voicemailMessage } from "./phone-mail";
 import { encodeWav } from "./sounds";
-import { encodeWord, voicemailMessage } from "./voicemail-message";
 
 const decode = (bytes: Uint8Array) => new TextDecoder().decode(bytes);
 
@@ -44,5 +44,24 @@ describe("voicemailMessage", () => {
   it("encodes non-ASCII header words", () => {
     expect(encodeWord("Telefon")).toBe("Telefon");
     expect(encodeWord("Grüße")).toBe("=?UTF-8?B?R3LDvMOfZQ==?=");
+  });
+});
+
+describe("faxMessage", () => {
+  it("attaches the fax as PDF", () => {
+    const pdf = new TextEncoder().encode("%PDF-1.4 …");
+    const text = decode(
+      faxMessage(
+        {
+          remote: "+497223812345",
+          to: "info@firma.test",
+          at: new Date("2026-10-26T08:14:00Z"),
+          pdf,
+        },
+        "g",
+      ),
+    );
+    expect(text).toContain("Subject: Fax von 07223 812345");
+    expect(text).toContain('Content-Type: application/pdf; name="Fax-497223812345.pdf"');
   });
 });

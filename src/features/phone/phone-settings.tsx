@@ -14,6 +14,7 @@ import { BlockedForm } from "./settings/blocked";
 import { CallbacksForm } from "./settings/callbacks";
 import { DesksForm } from "./settings/desks";
 import { DoorForm } from "./settings/door";
+import { FaxForm } from "./settings/fax";
 import { HoursForm } from "./settings/hours";
 import { LinesForm } from "./settings/lines";
 import { MailboxForm } from "./settings/mailbox";
@@ -161,15 +162,16 @@ export const PhoneSettingsSection = () => {
           <LineForm line={data.line} />
           <RingForm admin={data} />
           {/* Saved, the lists come back with their ids: the forms start again from them. */}
-          <LinesForm key={JSON.stringify(data.extraLines)} lines={data.extraLines} />
-          <DesksForm key={JSON.stringify(data.deskPhones)} desks={data.deskPhones} />
+          <LinesForm key={`lines-${JSON.stringify(data.extraLines)}`} lines={data.extraLines} />
+          <DesksForm key={`desks-${JSON.stringify(data.deskPhones)}`} desks={data.deskPhones} />
           <CallbacksForm board={data.callbackBoard} />
           <SoundsCard sounds={data.sounds} />
           <MailboxForm mailbox={data.mailbox} sounds={data.sounds} />
           <HoursForm hours={data.hours} sounds={data.sounds} />
           <MenuForm menu={data.menu} sounds={data.sounds} />
-          <BlockedForm key={JSON.stringify(data.blocked)} blocked={data.blocked} />
+          <BlockedForm key={`blocked-${JSON.stringify(data.blocked)}`} blocked={data.blocked} />
           <DoorForm door={data.door} />
+          <FaxForm admin={data} />
         </>
       ) : null}
     </>

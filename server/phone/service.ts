@@ -26,6 +26,7 @@ import {
   callbackTask,
   canSeeCall,
   closedCall,
+  faxCall,
   incomingCall,
   isDoor,
   isPerson,
@@ -132,6 +133,7 @@ export const desiredConfig = (
           greeting: closedGreeting,
         }
       : null,
+    fax: settings.fax.enabled && settings.fax.line ? { line: settings.fax.line } : null,
     blocked: {
       numbers: [...new Set(settings.blocked.numbers.flatMap((entry) => numberForms(entry.number)))],
       anonymous: settings.blocked.anonymous,
@@ -237,6 +239,12 @@ export const createPhoneService = (deps: PhoneDeps) => {
         ...closedCall(event, { id: newId(), boxId, members }),
         line: line?.label ?? null,
       });
+      return;
+    }
+    if (!known && event.state === "fax" && event.direction === "in") {
+      // On the fax line: in the list as a fax, nobody hears it ring.
+      const { ring } = await store.settings();
+      await save(faxCall(event, { id: newId(), boxId, members: ring }));
       return;
     }
     if (!known && event.state === "blocked") {

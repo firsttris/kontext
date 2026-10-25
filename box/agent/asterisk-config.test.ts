@@ -12,6 +12,7 @@ const config: BoxConfig = {
   mailbox: null,
   hours: null,
   menu: null,
+  fax: null,
   blocked: { numbers: [], anonymous: false },
   forward: null,
 };
@@ -93,7 +94,7 @@ describe("the mailbox", () => {
     expect(conf).toContain(`State: mailbox,Direction: in`);
     expect(conf).toContain(`Playback(/data/sounds/${greeting})`);
     expect(conf).toContain(`Record(/data/recordings/\${KONTEXT_CALL}.wav,4,120,k)`);
-    expect(conf).toContain(`Recording: \${RECORDED_FILE})`);
+    expect(conf).toContain(`Recording: \${RECORDED_FILE},Fax: \${KONTEXT_FAX})`);
   });
 
   it("only beeps without a greeting", () => {
@@ -281,6 +282,18 @@ describe("desk phones", () => {
     expect(conf).toContain(`Desk: \${KONTEXT_DESK})`);
     expect(conf).toMatch(/\[kontext-out\]\nexten => 21,1,Set\(__KONTEXT_DIR=out\)/);
     expect(conf).toContain("Dial(PJSIP/desk-empfang,60,U(kontext-callee-answered))");
+  });
+});
+
+describe("the fax line", () => {
+  it("answers calls on the fax line as a fax machine", () => {
+    const conf = extensionsConf({ ...config, fax: { line: "kontext629" } }, paths);
+    expect(conf).toContain(`GotoIf($["\${KONTEXT_LINE}" = "kontext629"]?kontext-fax,s,1)`);
+    expect(conf).toContain(
+      `[kontext-fax]\nexten => s,1,UserEvent(KontextCall,Call: \${KONTEXT_CALL},State: fax,`,
+    );
+    expect(conf).toContain(`ReceiveFAX(\${KONTEXT_FAX}.tif)`);
+    expect(conf).toContain(`Fax: \${KONTEXT_FAX})`);
   });
 });
 

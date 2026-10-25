@@ -74,6 +74,14 @@ const settingsSchema = z.object({
       anonymous: z.boolean(),
     })
     .default({ numbers: [], anonymous: false }),
+  /** A fax line (the user name of one of the box's lines); faxes arrive as PDF mails. */
+  fax: z
+    .object({
+      enabled: z.boolean(),
+      line: z.string(),
+      deliverTo: z.object({ accountId: z.string(), email: z.string() }).nullable(),
+    })
+    .default({ enabled: false, line: "", deliverTo: null }),
   /** The door intercom at the Fritzbox: how it calls (its number), its opening code, who hears it. */
   door: z
     .object({
@@ -181,6 +189,7 @@ const toCall = (row: CallDbRow): PhoneCall => ({
   desk: row.desk,
   topic: row.topic,
   door: row.door,
+  fax: (row.fax as PhoneCall["fax"]) ?? null,
 });
 
 const fromCall = ({ present: _, ...call }: PhoneCall): CallDbRow => ({
@@ -325,12 +334,18 @@ export const createPhoneStore = (db: Db, sealer: Sealer) => {
 
     saveCall: async (call: PhoneCall) => {
       const row = fromCall(call);
-      // The message arrives on its own way (setVoicemail); a call event must not undo it.
-      const { voicemailSeconds: _, ...update } = row;
+      // A message or a fax arrives on its own way (setVoicemail, setFax); a call event must not
+      // undo it.
+      const { voicemailSeconds: _, fax: __, ...update } = row;
       await db
         .insert(schema.phoneCalls)
         .values(row)
         .onConflictDoUpdate({ target: schema.phoneCalls.id, set: update });
+    },
+
+    /** The fax line's call: the box sent the fax (it arrives on its own way, like a message). */
+    setFax: async (callId: string, fax: "receiving" | "received") => {
+      await db.update(schema.phoneCalls).set({ fax }).where(eq(schema.phoneCalls.id, callId));
     },
 
     setVoicemail: async (callId: string, seconds: number) => {

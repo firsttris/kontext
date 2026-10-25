@@ -737,6 +737,11 @@ flowchart LR
   „Tür öffnen“: Kontext schickt der Box `door-open`, sie lenkt die Leitung nach
   `kontext-door-open` um, nimmt ab, sendet den Code als DTMF (`SendDTMF`) und legt auf. Mit
   „Sprechen“ nimmt man wie sonst an.
+- **Fax:** Eine Leitung der Box ist die Faxnummer (am besten eine eigene Nummer, also ein weiteres
+  IP-Telefon). Anrufe darauf nimmt die Box wie ein Faxgerät an (`kontext-fax`, `ReceiveFAX` mit
+  res_fax_spandsp), meldet „fax“ und beim Ende den Pfad; der Agent macht mit `tiff2pdf` ein PDF
+  und lädt es hoch (`PUT /api/phone/box/files/fax/<anruf>`). Kontext legt es beim Anruf ab
+  (`phone/fax/`) und legt eine Mail mit dem PDF ins gewählte Postfach, wie bei der Mailbox.
 - **Präsenz:** Wer in einem Telefon-Raum ist oder am Tischtelefon spricht, „telefoniert“ – das
   geht als `phone-people` an alle (der Chat zeigt es an der Person). Bitte nicht stören und
   Abwesend (bis zu einer Zeit) liegen in `phone_status`; wer nicht erreichbar ist, fällt aus dem

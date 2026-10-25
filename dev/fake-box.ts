@@ -9,6 +9,7 @@
  *   curl -XPOST localhost:18096/hangup -d '{"call":"…","cause":16}'    # the caller hangs up
  *   curl -XPOST localhost:18096/mailbox -d '{"call":"…","seconds":5}'  # leaves a message (silence)
  *   curl -XPOST localhost:18096/closed -d '{"from":"07223 123456"}'    # calls outside the hours
+ *   curl -XPOST localhost:18096/fax -d '{"from":"07223 123456"}'       # sends a fax
  *   curl -XPOST localhost:18096/event -d '{"call":"…","state":"answered","desk":"…"}'  # any step
  *   curl localhost:18096/state                                         # what Kontext told the box
  *
@@ -171,6 +172,30 @@ Bun.serve({
         at: now(),
       });
       return Response.json({ ok: true });
+    }
+    if (path === "/fax") {
+      // A fax on the fax line: received, sent up as PDF, then the call ends.
+      const call = `fake.${++counter}`;
+      events?.onCall({
+        call,
+        state: "fax",
+        direction: "in",
+        remote: String(body.from ?? ""),
+        local: "",
+        at: now(),
+      });
+      const pdf = new TextEncoder().encode("%PDF-1.4\n% Kontext test fax\n%%EOF\n");
+      const sent = await createBoxFiles({ credentials, soundDir: "/tmp" }).uploadFax(call, pdf);
+      events?.onCall({
+        call,
+        state: "ended",
+        direction: "in",
+        remote: "",
+        local: "",
+        cause: 16,
+        at: now(),
+      });
+      return Response.json({ call, sent });
     }
     if (path === "/closed") {
       // What Asterisk's opening-hours check does; the fake box does not look at the clock.

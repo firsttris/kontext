@@ -25,6 +25,12 @@ export type PbxEvents = {
   onRegistration: (registered: boolean, detail: string) => void;
 };
 
+/** A received fax (TIFF) as PDF, with libtiff's tiff2pdf from the image. */
+const tiffToPdf = async (tif: string, pdf: string) => {
+  const process = Bun.spawn(["tiff2pdf", "-o", pdf, tif], { stdout: "ignore", stderr: "ignore" });
+  return (await process.exited) === 0;
+};
+
 /** How often the box asks Asterisk whether it is still signed in at the Fritzbox. */
 const REGISTRATION_CHECK_MS = 60_000;
 
@@ -46,9 +52,13 @@ export const createAsterisk = async ({
   // into Kontext's room.
   const outside = new Map<string, string>();
   const intoRoom = new Map<string, string>();
-  /** A call that ended on the mailbox: its message goes up before Kontext hears of the end. */
-  const ended = async (event: Omit<CallEvent, "type" | "seq">, recording: string | undefined) => {
-    if (recording) await files.sendRecording(event.call, recording).catch(() => false);
+  /**
+   * A call that ended on the mailbox or the fax line: its message or fax goes up before Kontext
+   * hears of the end.
+   */
+  const ended = async (event: Omit<CallEvent, "type" | "seq">, frame: Frame) => {
+    if (frame.Recording) await files.sendRecording(event.call, frame.Recording).catch(() => false);
+    if (frame.Fax) await files.sendFax(event.call, frame.Fax, tiffToPdf).catch(() => false);
     events.onCall(event);
   };
   const onFrame = (frame: Frame) => {
@@ -57,7 +67,7 @@ export const createAsterisk = async ({
       if (event.state === "ended") {
         outside.delete(event.call);
         intoRoom.delete(event.call);
-        void ended(event, frame.Recording || undefined);
+        void ended(event, frame);
         return;
       }
       if (frame.Channel && event.direction === "out" && event.state === "ringing") {
