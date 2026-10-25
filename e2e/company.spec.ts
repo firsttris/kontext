@@ -4,6 +4,9 @@ import { newEmployee, signInWith, stamp } from "./company-helpers";
 import { address, inboxMails, jmapAs, login, personalAccountId, STALWART, unique } from "./helpers";
 import { deliverMail } from "./protocols";
 
+/** The stand-in for Schreibzeug (dev/fake-schreibzeug.ts, playwright.config.ts). */
+const SCHREIBZEUG = "http://localhost:28097";
+
 test.describe("Firmenverwaltung", () => {
   test("nur mit dem Recht sichtbar", async ({ page }) => {
     await login(page, "anna");
@@ -29,6 +32,14 @@ test.describe("Firmenverwaltung", () => {
     await signInWith(paul, address(local), password);
     await expect(paul).toHaveURL(/\/mail\//);
     await expect(paul.getByRole("link", { name: /^info@/ }).first()).toBeVisible();
+    // In Dokumente too (the stand-in for Schreibzeug, dev/fake-schreibzeug.ts).
+    await paul.goto("/documents");
+    await expect(paul.frameLocator("iframe[title=Dokumente]").locator("#who")).toContainText(
+      "Angemeldet als",
+    );
+    const sessionsInDocuments = async () =>
+      (await paul.request.get(`${SCHREIBZEUG}/e2e/sessions/${address(local)}`)).json();
+    expect(await sessionsInDocuments()).toBe(1);
 
     await page.getByRole("button", { name: /Paul Azubi/ }).click();
     const dialog = page.getByRole("dialog", { name: "Mitarbeiter bearbeiten" });
@@ -37,7 +48,8 @@ test.describe("Firmenverwaltung", () => {
     await expect(page.getByRole("status").filter({ hasText: "ist gesperrt" })).toBeVisible();
     await expect(page.getByRole("button", { name: /Paul Azubi.*Gesperrt/ })).toBeVisible();
 
-    // signed out everywhere, and no new sign-in
+    // signed out everywhere, Dokumente included, and no new sign-in
+    await expect.poll(sessionsInDocuments).toBe(0);
     await paul.reload();
     await expect(paul).toHaveURL(/\/login/);
     await signInWith(paul, address(local), password);

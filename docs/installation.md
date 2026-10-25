@@ -12,6 +12,7 @@ IP muss sich setzen lassen.
 | ------- | -------------------------------- | ------------------------------------------------------------------- |
 | A       | `mail.firma.de`                  | IP des Servers                                                      |
 | A       | `kontext.firma.de`             | IP des Servers                                                      |
+| A       | `dokumente.firma.de`             | IP des Servers (nur mit [Dokumente](#dokumente))                    |
 | MX      | `firma.de`                       | `10 mail.firma.de`                                                  |
 | TXT     | `firma.de`                       | `v=spf1 mx -all`                                                    |
 | TXT     | `<selector>._domainkey.firma.de` | DKIM-Schlüssel aus Stalwart                                         |
@@ -123,6 +124,32 @@ Mit Podman: `deploy/quadlet/kontext-box.container`. Ohne Code beim Start zeigt d
 Ports nach außen; sie läuft im Host-Netz (SIP mit der Fritzbox auf 5070, Sprache auf
 10000–10200 im LAN).
 
+### Dokumente
+
+Das Modul „Dokumente“ ist [Schreibzeug](https://github.com/firsttris/schreibzeug), ein eigener
+Dienst mit eigenen Daten und Versionen. `compose.yaml` startet ihn mit dem Profil `documents`
+(`COMPOSE_PROFILES=calls,documents` in `.env`, so in `.env.example`). Dafür braucht es:
+
+- eine eigene Adresse unter derselben Domain, etwa `dokumente.firma.de` (A-Eintrag wie Kontext),
+  als `SCHREIBZEUG_URL=https://dokumente.firma.de` in `.env`. Caddy holt das Zertifikat dafür
+  selbst. Dieselbe Domain hält Rahmen und Anmeldung ohne Umwege (keine Drittanbieter-Cookies).
+- `SCHREIBZEUG_CLIENT_SECRET` in `.env`: mindestens 32 Zeichen (`openssl rand -base64 48`). Damit
+  meldet sich Schreibzeug bei Kontext an; Kontext trägt Schreibzeug beim Start als vertrauten
+  Client ein, ohne Zustimmungsseite.
+
+Wer in Kontext angemeldet ist, ist es dann auch in Dokumente; Anhänge lassen sich dort ablegen und
+Dokumente an Mails hängen. Jedes gemeinsame Postfach bekommt dort einen eigenen Ordner für seine
+Leute; dafür liest Kontext die Mitglieder mit `STALWART_ADMIN_KEY`, wie für die Firmenverwaltung. Ohne `SCHREIBZEUG_URL` fehlt das Modul, alles andere läuft wie gehabt.
+Schreibzeug läuft auch für sich unter seiner Adresse, mit „Anmelden mit Kontext“.
+
+Mit Podman: `deploy/quadlet/schreibzeug.container` mitkopieren, in
+`/opt/kontext/deploy/schreibzeug.env` `SCHREIBZEUG_URL`, `SCHREIBZEUG_EMBED_ORIGIN=https://kontext.firma.de`,
+`OIDC_ISSUER=https://kontext.firma.de/api/auth` und `OIDC_CLIENT_SECRET` (dasselbe Geheimnis)
+eintragen, `SCHREIBZEUG_URL` und `SCHREIBZEUG_CLIENT_SECRET` auch in `kontext.env`. Ohne Dokumente
+die beiden Zeilen aus `.env` löschen (nicht leer lassen: Caddy liest sie dort).
+
+Der Server bleibt schlank: Bearbeiten und Texterkennung laufen im Browser.
+
 ### Firmenverwaltung einschalten
 
 Unter *Einstellungen → Firma* legt der Chef (oder die Büroleitung) Mitarbeiter und gemeinsame
@@ -200,7 +227,7 @@ verschlüsselt jede Sicherung mit dem Passwort aus `deploy/.env`, der Speicheran
 Verschlüsseltes; das Passwort gehört zusätzlich an einen sicheren Ort außerhalb des Servers. Gesichert werden Stalwarts
 Datenvolume (Mails, Kalender, Kontakte, Konten), eine Kopie der Kontext-Datenbank
 (Anmeldungen, Firmen-Signatur, Aufgaben, Chat, Stand der Umzüge) und die Fotos und Dateien aus dem
-Chat. Hochgeladene PST-Dateien bleiben draußen. Am besten einen Bucket mit **Object Lock** nehmen, dann kann auch ein Angreifer mit
+Chat, mit Dokumente auch Schreibzeugs Datenbank (Kopie) und Dateien. Hochgeladene PST-Dateien bleiben draußen. Am besten einen Bucket mit **Object Lock** nehmen, dann kann auch ein Angreifer mit
 Zugriff auf den Server die Sicherungen nicht löschen (wichtig für GoBD-Archivierung).
 
 ```bash
@@ -215,7 +242,11 @@ eine Wiederherstellung auf einem Testserver üben:
 ```bash
 restic restore latest --tag stalwart --target /tmp/restore     # Stalwart
 restic restore latest --tag kontext --target /tmp/restore    # Kontext
+restic restore latest --tag schreibzeug --target /tmp/restore  # Dokumente
 ```
+
+Bei Dokumente kommt `…/backup/schreibzeug.db` als `schreibzeug.db` ins Volume
+`kontext_schreibzeug-data`, `blobs` und `auth-secret` daneben.
 
 Die Kopie der Kontext-Datenbank (`…/backup/kontext.db`) kommt bei gestopptem Container als
 `kontext.db` ins Volume `kontext_kontext-data`, der Ordner `…/chat-files` daneben als
@@ -231,3 +262,7 @@ docker compose -f deploy/compose.yaml pull && docker compose -f deploy/compose.y
 
 Vor einem Stalwart-Update mit neuer Hauptversion die `UPGRADING`-Hinweise von Stalwart lesen und
 vorher ein Backup machen.
+
+Kontext und Schreibzeug haben getrennte Images und Versionen (`KONTEXT_VERSION`,
+`SCHREIBZEUG_VERSION`); beim Start prüft Kontext nur, ob Schreibzeug antwortet, und schreibt sonst
+eine Warnung ins Log.

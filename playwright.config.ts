@@ -1,4 +1,5 @@
 import { defineConfig, devices } from "@playwright/test";
+import { SCHREIBZEUG_DEV_SECRET } from "./dev/config";
 
 /**
  * E2E tests run against their own Stalwart (port 28080, fresh data, seeded), their own Kontext
@@ -9,6 +10,7 @@ const SERVER_PORT = 28090;
 const APP_PORT = 5174;
 const GRAPH_PORT = 28095;
 const LIVEKIT_PORT = 27880;
+const SCHREIBZEUG_PORT = 28097;
 
 const launchOptions = {
   ...(process.env.PW_CHROMIUM_PATH ? { executablePath: process.env.PW_CHROMIUM_PATH } : {}),
@@ -36,13 +38,19 @@ export default defineConfig({
   projects: [
     {
       name: "desktop",
-      use: { ...devices["Desktop Chrome"], viewport: { width: 1440, height: 900 }, launchOptions },
+      use: {
+        ...devices["Desktop Chrome"],
+        viewport: { width: 1440, height: 900 },
+        launchOptions,
+        // The built app brings its service worker; the PWA tests have their own (project "pwa").
+        serviceWorkers: "block",
+      },
       grepInvert: /@phone|@screenshots/,
       testIgnore: /pwa\.spec\.ts/,
     },
     {
       name: "phone",
-      use: { ...devices["Pixel 7"], launchOptions },
+      use: { ...devices["Pixel 7"], launchOptions, serviceWorkers: "block" },
       grep: /@phone/,
       testIgnore: /pwa\.spec\.ts/,
     },
@@ -83,6 +91,12 @@ export default defineConfig({
       reuseExistingServer: false,
     },
     {
+      // Documents: a stand-in for Schreibzeug that signs in through Kontext (dev/fake-schreibzeug.ts).
+      command: `bun dev/fake-schreibzeug.ts --port ${SCHREIBZEUG_PORT} --kontext http://localhost:${APP_PORT}`,
+      url: `http://localhost:${SCHREIBZEUG_PORT}/api/health`,
+      reuseExistingServer: false,
+    },
+    {
       command: "rm -rf .dev/e2e-server && bun server/main.ts",
       url: `http://127.0.0.1:${SERVER_PORT}/healthz`,
       env: {
@@ -108,12 +122,18 @@ export default defineConfig({
         // Microsoft's sign-in and Graph: the stand-in below
         M365_LOGIN_URL: `http://127.0.0.1:${GRAPH_PORT}`,
         GRAPH_URL: `http://127.0.0.1:${GRAPH_PORT}/v1.0`,
+        SCHREIBZEUG_URL: `http://localhost:${SCHREIBZEUG_PORT}`,
+        SCHREIBZEUG_CLIENT_SECRET: SCHREIBZEUG_DEV_SECRET,
       },
       reuseExistingServer: false,
       timeout: 60_000,
     },
     {
-      command: `bunx vite --port ${APP_PORT}`,
+      // `bun run e2e` builds the app first (E2E_BUILT): the built one loads at once, while Vite's
+      // dev server translates every module on its first request. Without it, the dev server.
+      command: process.env.E2E_BUILT
+        ? `bunx vite preview --port ${APP_PORT}`
+        : `bunx vite --port ${APP_PORT}`,
       url: `http://localhost:${APP_PORT}`,
       env: {
         KONTEXT_SERVER: `http://127.0.0.1:${SERVER_PORT}`,

@@ -13,6 +13,15 @@ Anmeldung zum Senden annimmt. Für Microsoft 365 ersetzt `bun dev/fake-graph.ts`
 `M365_LOGIN_URL=http://127.0.0.1:18095 GRAPH_URL=http://127.0.0.1:18095/v1.0` starten und
 Mandant `contoso`, Anwendung `kontext-test`, Schlüssel `geheim` eintragen.
 
+Für das Modul „Dokumente“ ersetzt `bun dev/fake-schreibzeug.ts` (Port 18096) Schreibzeug: es meldet
+sich über Kontexts Anbieter an (OIDC mit PKCE und `prompt=none`), spricht die Nachrichten des
+Rahmens und nimmt Dateien mit Kontexts Tokens an. `bun run dev` dann mit
+`SCHREIBZEUG_URL=http://localhost:18096 SCHREIBZEUG_CLIENT_SECRET=schreibzeug-dev-secret-only-for-local-tests-0123`
+starten (das Geheimnis aus `dev/config.ts`, mit dem sich das Skript anmeldet). Mit dem echten Schreibzeug: dessen Server mit `OIDC_ISSUER=http://localhost:5173/api/auth`,
+`OIDC_CLIENT_ID=schreibzeug`, `OIDC_CLIENT_SECRET`, `SCHREIBZEUG_EMBED_ORIGIN=http://localhost:5173`
+und `SCHREIBZEUG_URL` (seine Vite-Adresse) starten, siehe
+[Schreibzeug in Kontext](https://firsttris.github.io/schreibzeug/kontext/).
+
 ```bash
 bun install
 bun run dev   # Stalwart, Testdaten, Kontext-Server und App: http://localhost:5173
@@ -102,21 +111,30 @@ und „Team“, Termine der laufenden Woche, eine wöchentliche Teambesprechung 
 | Komponenten     | `bun run test`        | Vitest mit Testing Library für UI-Bausteine ohne Server (Empfängerfeld, Tastaturkürzel)                     |
 | Integration     | `bun run e2e`         | `e2e/integration.spec.ts`: JMAP-Funktionen, IMAP (gemeinsame Postfächer), CalDAV und CardDAV gegen Stalwart |
 | End-to-End      | `bun run e2e`         | Playwright, Desktop und Handy (Pixel 7), gegen einen frisch angelegten Stalwart auf 28080, LiveKit auf 27880 und Vite auf 5174; Chromium mit unechter Kamera und Mikrofon |
+| Dokumente       | `bun run e2e`         | `e2e/documents.spec.ts` und `e2e/documents-links.spec.ts` gegen `dev/fake-schreibzeug.ts` (28097): Anmeldung über Kontexts Anbieter, Rahmen, Anhänge ablegen und anhängen, Abmelden, Dokumente in Chat, Aufgaben, Terminen und an Kontakten mit ihren Freigaben, der Ordner von info@ |
 | App (PWA)       | `bun run e2e`         | `e2e/pwa.spec.ts` gegen die gebaute App wie in Produktion (Server auf 28090 liefert `dist/`): Updates, Offline-Start, Cache-Header, Teilen |
 | Abhängigkeiten  | `bun audit`           | bekannte Lücken; in CI bei jedem Push und nachts                                                            |
 | Screenshots     | `bun run screenshots` | die Bilder in `docs/screenshots/` und für den Installationsdialog in `public/screenshots/`                  |
 
 `bun run check` macht Typen, Lint, Unit- und Komponententests und den Build. `bun run e2e` baut
 die App vorher (`vite build`), weil die PWA-Tests den Service Worker brauchen, den es nur im Build
-gibt; im Dev-Server ist er bewusst aus, damit Neuladen nichts aus einem Cache holt. Die lokale Instanz
+gibt; im Dev-Server ist er bewusst aus, damit Neuladen nichts aus einem Cache holt. Die übrigen
+Tests laufen dann auch gegen die gebaute App (`vite preview`, `E2E_BUILT=1`), die sofort lädt,
+statt jedes Modul erst beim ersten Aufruf zu übersetzen; ihr Service Worker ist dort blockiert.
+Wer `playwright test` direkt startet, bekommt den Dev-Server. Angemeldet wird jede Person einmal
+pro Testlauf über das Formular; danach starten ihre Tests mit den Cookies dieser Sitzung
+(`login` in `e2e/helpers.ts`), und nach Abmelden, Sperren oder neuem Passwort wieder mit dem
+Formular. Die lokale Instanz
 erlaubt IMAP-Anmeldungen ohne TLS (nur auf 127.0.0.1), damit Mailprogramme und die
 Integrationstests sich verbinden können.
 
 ## CI und Releases
 
 - **CI** (`.github/workflows/ci.yml`): Typen, Lint, Unit-Tests, Build und `bun audit` in einem
-  Job; die E2E- und Integrationstests parallel im offiziellen Playwright-Image, Stalwart wird
-  gecacht. Nachts läuft alles noch einmal, damit neue Sicherheitsmeldungen auffallen.
+  Job; die E2E- und Integrationstests parallel im offiziellen Playwright-Image, in vier Teilen
+  gleichzeitig (`bun run e2e --shard=1/4` … `4/4`, jeder mit eigenem Stalwart und frischen
+  Testdaten; Dateien bleiben ganz in einem Teil), Stalwart wird gecacht. Der Check „End-to-end
+  tests (Stalwart + Playwright)“ fasst die vier zusammen. Nachts läuft alles noch einmal, damit neue Sicherheitsmeldungen auffallen.
 - **Screenshots**: Actions → _Update screenshots_ → Run workflow.
 - **Release**: Tag `vX.Y.Z` (Version in `package.json`) baut das Image `tristanteu/kontext`
   für amd64 und arm64 und legt das GitHub-Release an.

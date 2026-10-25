@@ -1,6 +1,8 @@
 # One customer = one server: Kontext on https://$KONTEXT_DOMAIN.
 # Caddy gets the certificate; the app, sign-in and JMAP go to the Kontext server, which talks to
 # Stalwart. Mail clients reach Stalwart directly on the mail ports and through /dav and autoconfig.
+# With documents, Schreibzeug has an address of its own ($SCHREIBZEUG_URL, e.g.
+# https://dokumente.firma.de): the same site as Kontext, so its frame and cookies need no detour.
 {
 	email {$ACME_EMAIL}
 }
@@ -37,7 +39,26 @@
 		Referrer-Policy no-referrer
 		# Camera, microphone and the screen only for Kontext itself (calls in the chat)
 		Permissions-Policy "camera=(self), microphone=(self), display-capture=(self), geolocation=()"
-		Content-Security-Policy "default-src 'self'; img-src 'self' data: blob: https:; style-src 'self' 'unsafe-inline'; frame-src 'self' blob:; connect-src 'self'; font-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'"
+		Content-Security-Policy "default-src 'self'; img-src 'self' data: blob: https:; style-src 'self' 'unsafe-inline'; frame-src 'self' blob: {$SCHREIBZEUG_URL:https://schreibzeug.internal}; connect-src 'self'; font-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'"
+		-Server
+	}
+}
+
+# Schreibzeug (the module "Dokumente"). Without SCHREIBZEUG_URL the placeholder answers nobody and
+# gets no public certificate (.internal). Schreibzeug sets which site may frame it (Kontext's).
+{$SCHREIBZEUG_URL:https://schreibzeug.internal} {
+	encode zstd gzip
+
+	handle {
+		reverse_proxy schreibzeug:3000 {
+			flush_interval -1
+		}
+	}
+
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		X-Content-Type-Options nosniff
+		Referrer-Policy no-referrer
 		-Server
 	}
 }

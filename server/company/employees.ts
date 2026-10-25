@@ -63,6 +63,18 @@ const offboarding = z.object({
 const knownMailboxes = (loaded: Loaded, wanted: string[]) =>
   wanted.every((id) => mailboxOf(loaded, id));
 
+/** The shared mailboxes a person works in, as member or reader. */
+const mailboxesOf = (loaded: Loaded, userId: string) =>
+  loaded.company.mailboxes
+    .filter((mailbox) => mailbox.memberIds.includes(userId) || mailbox.readerIds.includes(userId))
+    .map((mailbox) => mailbox.id);
+
+/** The mailboxes whose people a change of membership touches: those joined or left. */
+const membershipChanged = (loaded: Loaded, userId: string, wanted: string[]) =>
+  loaded.company.mailboxes
+    .filter((mailbox) => mailbox.memberIds.includes(userId) !== wanted.includes(mailbox.id))
+    .map((mailbox) => mailbox.id);
+
 export const employeeRoutes = ({
   management,
   mailstore,
@@ -70,7 +82,12 @@ export const employeeRoutes = ({
   settings,
   endSessions,
   random,
+  mailboxChanged,
 }: CompanyDeps) => {
+  // Who works in a shared mailbox decides who opens its folder in Dokumente (documents/mailboxes.ts).
+  const changed = (ids: string[]) => {
+    for (const id of new Set(ids)) mailboxChanged?.(id);
+  };
   const makePassword = () =>
     newPassword(random ?? ((size) => crypto.getRandomValues(new Uint8Array(size))));
   const app = new Hono<Env>();
@@ -104,6 +121,7 @@ export const employeeRoutes = ({
       created.value,
     ]);
     if (!shared.ok) console.warn(`Neuer Mitarbeiter ${created.value}: ${shared.error}`);
+    changed(body.mailboxIds);
     return c.json({ id: created.value, password }, 201);
   });
 
@@ -147,6 +165,11 @@ export const employeeRoutes = ({
     }
     const result = await management.updateAccounts({ [id]: patch });
     if (!result.ok) return bad(result.error);
+    changed([
+      ...(change.mailboxIds ? membershipChanged(loaded, id, change.mailboxIds) : []),
+      // Locked people are no one's colleagues in a mailbox (documents/company-mailboxes.ts).
+      ...(change.active !== undefined ? mailboxesOf(loaded, id) : []),
+    ]);
     if (change.active === false) await endSessions(user.emailAddress ?? "");
     // Unlocked again after leaving: forwarding and reply of the offboarding stop.
     if (change.active === true) {
@@ -219,6 +242,7 @@ export const employeeRoutes = ({
       [user.id]: { permissions: permissionsValue(false, user.permissions) },
     });
     if (!locked.ok) return bad(locked.error);
+    changed(mailboxesOf(loaded, user.id));
     await endSessions(user.emailAddress ?? "");
 
     if (heir) {

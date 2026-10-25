@@ -144,6 +144,13 @@ fine on a VPS with 2 vCPUs and 4 GB RAM.
 - **Retention** set by the company admin (30 days to 5 years, or for ever): older messages, photos and files are deleted by themselves.
 - **On the phone**: its own tab, conversations as bubbles.
 
+### 📄 Documents
+
+- **Word, Excel, PowerPoint and PDF** in Kontext's own window, with [Schreibzeug](https://github.com/firsttris/schreibzeug) as the module "Documents" (optional, a service of its own): no second sign-in, light or dark like Kontext, an open document stays open while you answer a mail.
+- **Files where they belong**: share a document in the chat, link it to a task or a contact, or attach it to an appointment; the people there may open it.
+- **A folder per shared mailbox**: info@ and rechnung@ have their own documents, open to who works in the mailbox and following the company admin; an attachment from info@ goes there first.
+- **Attachments into Documents**: put a mail's attachment into a folder, or open it there right away; **attach from Documents** while writing a mail. The files go server to server, with each person's own rights.
+
 ### 📅 Calendar
 
 - **Day, week, month and list**, drag to move, recurring events with exceptions.
@@ -186,6 +193,7 @@ business switches on when it needs them – whoever doesn't, never sees them.
 | Team chat | ✅ available |
 | Calls and video meetings in the chat | ✅ available |
 | Telephony through the Fritzbox (telephone box) | 🧪 being tested |
+| Documents (Schreibzeug) | ✅ available |
 | Work reports (e.g. for trades) | planned |
 
 What comes next is in the [roadmap](ROADMAP.md) (German).

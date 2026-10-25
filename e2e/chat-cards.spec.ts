@@ -126,10 +126,12 @@ test.describe("Chat: Fotos, Dateien und Karten", () => {
     // Back in the field: Enter sends the card.
     await expect(page.getByRole("textbox", { name: "Nachricht" })).toBeFocused();
     await page.keyboard.press("Enter");
+    // The message shown at once and the server's answer may stand side by side for a moment.
     await expect(
       page
         .getByRole("list", { name: "Nachrichten" })
-        .getByRole("link", { name: new RegExp(subject) }),
+        .getByRole("link", { name: new RegExp(subject) })
+        .last(),
     ).toBeVisible();
 
     const max = await colleague(browser, "max");
@@ -174,9 +176,11 @@ test.describe("Chat: Fotos, Dateien und Karten", () => {
     await picker.getByRole("searchbox", { name: "Suchen" }).fill("Petra");
     await picker.getByRole("button", { name: /Petra Keller/ }).click();
     await page.getByRole("button", { name: "Senden", exact: true }).click();
+    // The message shown at once and the server's answer may stand side by side for a moment.
     const card = page
       .getByRole("list", { name: "Nachrichten" })
-      .getByRole("link", { name: /Kontakt.*Petra Keller/ });
+      .getByRole("link", { name: /Kontakt.*Petra Keller/ })
+      .last();
     await card.click();
     await expect(page.getByRole("heading", { name: "Petra Keller" })).toBeVisible();
   });

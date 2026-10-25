@@ -14,7 +14,8 @@ test.describe("Senden rückgängig und später senden", () => {
   test("holt eine gerade gesendete Mail zurück", async ({ page }) => {
     const subject = unique("Doch noch nicht");
     await login(page);
-    await page.evaluate(() => window.localStorage.setItem("kontext.mail.undo", "10"));
+    // The shortest hold (5 s): the test waits it out below.
+    await page.evaluate(() => window.localStorage.setItem("kontext.mail.undo", "5"));
     await writeToAnna(page, subject);
     await page.getByRole("button", { name: "Senden", exact: true }).click();
     const sent = page.getByRole("status").filter({ hasText: "Mail gesendet." });
@@ -22,7 +23,7 @@ test.describe("Senden rückgängig und später senden", () => {
     await expect(page.getByRole("status").filter({ hasText: "Nicht gesendet" })).toBeVisible();
     // Back as a draft, to change and send again.
     await expect(page.getByRole("textbox", { name: "Betreff" })).toHaveValue(subject);
-    await page.waitForTimeout(12_000);
+    await page.waitForTimeout(7_000);
     expect(await inboxSubjects("anna")).not.toContain(subject);
   });
 

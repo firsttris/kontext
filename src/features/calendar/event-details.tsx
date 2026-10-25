@@ -1,7 +1,12 @@
-/** An appointment as the dialog shows it: when, where, who, the answer buttons, delete. */
+/**
+ * An appointment as the dialog shows it: when, where, who, its documents, the answer buttons,
+ * delete.
+ */
 import { CalendarDays, MapPin, Repeat, Users, Video } from "lucide-react";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { useToast } from "@/components/ui/toast";
+import { ItemLink, LinkIcon } from "@/features/links/item-link";
+import { DOCUMENTS_ACCOUNT, documentsOfLinks } from "@/lib/document-links";
 import {
   attendees,
   type CalendarEvent,
@@ -48,6 +53,7 @@ type Props = {
 };
 
 export const EventDetails = ({ event, series, onEdit, onDone }: Props) => {
+  const documents = documentsOfLinks(event.links);
   const mine = useMyAddresses();
   const { respond, remove } = useEventMutations();
   const toast = useToast();
@@ -151,6 +157,21 @@ export const EventDetails = ({ event, series, onEdit, onDone }: Props) => {
       ) : null}
       {event.description ? (
         <p className="m-0 whitespace-pre-line text-[14px] text-muted">{event.description}</p>
+      ) : null}
+      {documents.length ? (
+        <ul aria-label={m.documents_linked()} className="m-0 flex list-none flex-col gap-1.5 p-0">
+          {documents.map((document) => (
+            <li key={document.id}>
+              <ItemLink
+                item={{ kind: "document", accountId: DOCUMENTS_ACCOUNT, ref: document.id }}
+                className="flex items-center gap-2 rounded-lg border border-border px-2.5 py-1.5 text-[14px] text-fg no-underline hover:bg-hover"
+              >
+                <LinkIcon kind="document" size={14} />
+                <span className="truncate">{document.name}</span>
+              </ItemLink>
+            </li>
+          ))}
+        </ul>
       ) : null}
       {me && !organizer ? (
         <fieldset aria-label="Antwort" className="m-0 flex gap-2 border-0 p-0">

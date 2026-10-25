@@ -1114,6 +1114,107 @@ bleibt die App am Handy angemeldet, bis man sich abmeldet (Sitzung 90 Tage, bei 
 der Server in Stalwart ein App-Passwort für das Gerät an und speichert es verschlüsselt; eine
 Passkey-Anmeldung holt damit den Stalwart-Token. Am Rest ändert sich nichts.
 
+Kontext ist außerdem **Anmeldeanbieter** (OpenID Connect) für Schreibzeug, siehe
+[Dokumente](#dokumente). Den Namen, den Schreibzeug sieht, gleicht Kontext bei jeder Anmeldung mit
+dem Absendernamen in Stalwart ab.
+
+## Dokumente
+
+Das Modul „Dokumente“ ist [Schreibzeug](https://github.com/firsttris/schreibzeug): ein eigener
+Dienst mit eigenen Sitzungen, Daten und Releases, der auch ohne Kontext läuft. Verbunden sind beide
+nur über Standards: OpenID Connect für die Anmeldung, HTTP mit Tokens zwischen den Servern und
+`postMessage` zwischen den Seiten. Beide laufen unter derselben Domain (`kontext.firma.de`,
+`dokumente.firma.de`), damit Schreibzeugs Cookies im Rahmen gelten.
+
+```mermaid
+flowchart LR
+  Kontext["Kontext (Browser)"] -->|"Rahmen, postMessage"| Schreibzeug["Schreibzeug (Browser)"]
+  Schreibzeug -->|"OpenID Connect"| Anbieter["Kontext-Server: Anbieter /api/auth"]
+  KServer["Kontext-Server"] -->|"Token je Person (5 min)"| SAPI["Schreibzeug-API"]
+  KServer -->|"JMAP mit dem Token der Sitzung"| Stalwart
+```
+
+**Anmeldung.** Better Auths Plugin `@better-auth/oauth-provider` (mit dem `jwt`-Plugin für die
+Schlüssel) macht Kontext zum Anbieter (`server/oidc/provider.ts`): Discovery unter
+`/api/auth/.well-known/openid-configuration` (Caddy gibt das `/.well-known` der Wurzel an
+Stalwart), Autorisierung mit PKCE, Token, UserInfo und Schlüssel (JWKS) unter `/api/auth`. Der
+einzige Client ist Schreibzeug aus der Umgebung (`SCHREIBZEUG_URL`, `SCHREIBZEUG_CLIENT_ID`,
+`SCHREIBZEUG_CLIENT_SECRET`); der Server trägt ihn beim Start in die Datenbank ein, ohne
+Zustimmungsseite, weil beide Dienste zum selben Betreiber gehören. Über die API lässt sich kein
+Client anlegen oder ändern. Wer ohne Sitzung kommt, landet auf Kontexts Anmeldeseite; die schickt
+die signierte Anfrage mit der Anmeldung zurück (`src/auth/oauth-query.ts`), und der Server leitet
+weiter zu Schreibzeug. Im Rahmen fragt Schreibzeug mit `prompt=none`: mit Sitzung kommt der Code
+sofort zurück, ohne Sitzung `login_required`.
+
+**Das Modul.** Mit `SCHREIBZEUG_URL` zeigt Kontext „Dokumente“ als sechstes Modul (Kürzel 6, am
+Handy unter „Mehr“). `/documents/…` zeigt Schreibzeug in einem Rahmen im Inhaltsbereich
+(`src/features/documents/documents-host.tsx`), der beim ersten Besuch entsteht und beim Wechsel zu
+Mail und zurück stehen bleibt, damit ein offenes Dokument offen bleibt. Die Adresse folgt der Seite
+im Rahmen (`/documents/edit/…`, ohne eigenen Verlaufseintrag: den hat der Rahmen), und Kontexts
+Navigation zu einer solchen Adresse öffnet die Seite im Rahmen. Kontext schickt Hell/Dunkel und
+beim Abmelden `logout` (und wartet bis zu zwei Sekunden auf `signed-out`); Schreibzeug meldet die
+Seite, den Namen des Dokuments, ungespeicherte Änderungen (ein Punkt an „Dokumente“ in der Leiste)
+und Kontexts Tastenkürzel, die außerhalb von Feldern und Dokument gedrückt wurden. Nachrichten
+zählen nur vom Rahmen mit Schreibzeugs Herkunft (`src/features/documents/messages.ts`); die
+Tabelle aller Nachrichten steht in
+[Schreibzeugs Doku](https://firsttris.github.io/schreibzeug/kontext/#messages).
+
+**Dateien zwischen Mail und Dokumente.** An jedem Anhang legt „In Dokumente ablegen“ die Datei in
+einen gewählten Ordner („Ablegen und öffnen“ öffnet sie danach im Modul), beim Schreiben hängt
+„Aus Dokumente anhängen“ eine Datei an. Das geht von Server zu Server, nie über den Browser
+(`server/documents/`): die Mail-Seite mit dem Stalwart-Token der Sitzung (JMAP-Download und
+-Upload), die Dokumente-Seite mit einem Token, das Kontext mit seinen Anbieter-Schlüsseln für die
+Person signiert (5 Minuten gültig, Zielgruppe `SCHREIBZEUG_URL`). Schreibzeug prüft es gegen
+Kontexts Schlüssel und handelt mit genau den Rechten der Person. Ein schon vergebener Name kommt
+mit Schreibzeugs Meldung zurück.
+
+**Dokumente überall, wo sie hingehören.** Eine Datei aus Dokumente lässt sich im Chat als Karte
+teilen („Mail, Aufgabe oder Kontakt verknüpfen“, Reiter „Dokument“), mit einer Aufgabe verknüpfen
+(„Dokument verknüpfen“ in der Aufgabe), an einen Termin hängen (im Termin-Editor) und mit einem
+Kontakt verknüpfen (Abschnitt „Dokumente“ am Kontakt, wenn man das Adressbuch ändern darf). Ein Klick
+öffnet sie im Modul. Beim Termin ist sie ein Link des Termins (JSCalendar `links`, RFC 8984 §4.2.7,
+Schlüssel `kontext-document-<id>`) mit der Adresse `https://<Kontext>/documents/edit/<id>`, den auch
+Thunderbird und Handys zeigen; beim Kontakt ebenso ein Link der Karte (JSContact `links`, RFC 9553
+§2.6.3, `uri` und `label`). Links aus fremden Einladungen und vCards bleiben dabei stehen. Die Logik
+steht in `src/lib/document-links.ts`.
+
+Damit die anderen die Datei auch öffnen dürfen, gibt Kontext sie ihnen dabei in Schreibzeug zum
+Ansehen frei (`POST /api/documents/share`, `src/features/documents/use-share-with.ts`; wer sie
+schon hat, etwa zum Bearbeiten, behält seine Freigabe): im Chat
+allen Lesern des Kanals (beim Team-Kanal allen, bei benannten und direkten den Mitgliedern, im Kanal
+eines gemeinsamen Postfachs dessen Leuten), bei einer Aufgabe der zuständigen Person (auch nach einem
+Wechsel) und auf der Tafel eines gemeinsamen Postfachs dessen Leuten, bei einem Termin den
+Eingeladenen aus der Firma (Leute von außen können sich bei Schreibzeug nicht anmelden), bei einem
+Kontakt im Adressbuch eines gemeinsamen Postfachs dessen Leuten. Wer die Leute eines Postfachs sind,
+weiß nur Kontexts Server (unten); der Browser nennt nur das Konto. Wer noch nie in Dokumente war, hat
+dort noch kein Konto: Schreibzeug merkt die Freigabe für die Adresse vor und gibt sie bei der ersten
+Anmeldung über Kontext frei. Freigeben kann nur, wem die Datei gehört; sonst bleibt die Verknüpfung
+und eine Meldung sagt, warum die anderen sie nicht öffnen können. Ob jemand eine Karte öffnen darf,
+entscheidet Schreibzeug beim Öffnen.
+
+**Dokumente gemeinsamer Postfächer.** Jedes gemeinsame Postfach (info@, rechnung@) hat in Dokumente
+einen eigenen Ordner, benannt nach seiner Adresse (`server/documents/mailboxes.ts`); Kontext merkt
+sich seine ID (Tabelle `mailbox_folders`), denn Mitglieder dürfen ihn umbenennen. Er gehört dem
+Postfach selbst, nicht dem, der zuerst etwas ablegt: Kontext handelt dort als das Postfach, mit einem
+Token für `mailbox:<Konto-ID>` und die Adresse des Postfachs, das Schreibzeug wie eine Person führt.
+Den Ordner gibt Kontext den Leuten des Postfachs frei, wie Stalwart sie hat (mit dem Admin-Schlüssel
+gelesen wie in der Firmenverwaltung, `server/documents/company-mailboxes.ts`): Mitglieder dürfen
+ändern, wer nur liest, darf öffnen; wer nicht mehr dabei ist, verliert ihn. Abgeglichen wird beim Start
+der App (`GET /api/documents/mailboxes`, höchstens alle 30 Sekunden neu gelesen) und sofort, wenn die
+Firmenverwaltung Mitglieder oder Leser eines Postfachs ändert – am Postfach wie am Mitarbeiter, beim
+Anlegen, Sperren und beim Austritt (gesperrte Leute zählen nicht mit). In Kontext stehen die Ordner oben im
+Auswahldialog, ein Anhang einer Mail aus info@ landet zuerst in dessen Ordner; in Schreibzeug stehen
+sie unter „Für mich freigegeben“. Eine Datei darin gehört dem Postfach; Kontext gibt sie deshalb, wenn
+die Person selbst es nicht darf, als das Postfach frei, in dem sie arbeitet. Ohne
+`STALWART_ADMIN_KEY` gibt es keine Postfach-Ordner.
+
+**Abmelden, Sperren und Austritt.** Schreibzeug fragt Kontext nach der Anmeldung nicht mehr; seine
+Sitzung hielte sonst weiter. Wer sich in Kontext abmeldet, wird deshalb vom Server aus auch in
+Dokumente abgemeldet (`POST /api/auth/sign-out` in `server/app.ts`), auch wenn der Rahmen seit dem
+Neuladen nicht offen war und seine Nachricht `logout` niemanden erreicht hätte. Wo die Firmenverwaltung Kontexts Sitzungen beendet (Sperren, Austritt, neues
+Passwort), beendet Kontexts Server deshalb auch die in Dokumente (`DELETE /api/sessions` mit dem
+Token der Person, `endSessionsOf` in `server/app.ts`); wer dort kein Konto hat, bekommt keins.
+
 ## Code
 
 | Ordner          | Inhalt                                                                                                                     |
@@ -1121,7 +1222,7 @@ Passkey-Anmeldung holt damit den Stalwart-Token. Am Rest ändert sich nichts.
 | `src/jmap/`     | JMAP-Client (Session, Methoden, Upload/Download, Push) und die Aufrufe für Mail, Kalender, Kontakte                        |
 | `src/lib/`      | reine Funktionen: Ordnerbaum, Adressen, Antworten, HTML-Bereinigung, JSCalendar- und JSContact-Umrechnung – mit Unit-Tests |
 | `src/features/` | die Ansichten von Mail, Kalender, Kontakten und Firmenverwaltung, je mit ihren Daten-Hooks (`queries.ts`)                 |
-| `server/`       | Kontext-Server: Anmeldung, JMAP-Weiterleitung, Firmenverwaltung (`server/company/`)                                       |
+| `server/`       | Kontext-Server: Anmeldung, JMAP-Weiterleitung, Firmenverwaltung (`server/company/`), Anbieter für Schreibzeug (`server/oidc/`, `server/documents/`) |
 | `src/routes/`   | TanStack-Router-Routen; der Zustand einer Ansicht steht in der URL (offene Mail, Ordner, Termin)                           |
 | `dev/`          | lokaler Stalwart, Testdaten (Seed)                                                                                         |
 | `deploy/`       | Caddy, Compose, Quadlets, Backup                                                                                           |

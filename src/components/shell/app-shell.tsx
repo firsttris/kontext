@@ -14,12 +14,13 @@ import {
 } from "@/components/ui/menu";
 import { useShortcuts } from "@/components/use-shortcuts";
 import { useChannels } from "@/features/chat/queries";
+import { useFrameState } from "@/features/documents/frame-store";
 import { usePhone } from "@/features/phone/queries";
 import { totalUnread } from "@/lib/chat";
 import { cn } from "@/lib/cn";
 import { m } from "@/paraglide/messages";
 import { AccountAvatar, StorageSummary, storageText, useOwnQuota } from "./account-avatar";
-import { MORE_ITEMS, NAV_ITEMS, TAB_ITEMS } from "./nav-items";
+import { TAB_ITEMS, useMoreItems, useNavItems } from "./nav-items";
 import { useSession } from "./session";
 
 export { useSession };
@@ -85,10 +86,17 @@ const UnreadBadge = ({ count, className }: { count: number; className?: string }
 const unreadLabel = (label: string, count: number) =>
   count > 0 ? m.nav_unread({ label, count }) : label;
 
+/** The rail's name of an app, with what waits there. */
+const railLabel = (to: string, label: string, chatUnread: number, unsavedDocuments: boolean) => {
+  if (to === "/chat") return unreadLabel(label, chatUnread);
+  return to === "/documents" && unsavedDocuments ? m.nav_documents_unsaved() : label;
+};
+
 const Rail = ({ onHelp, bell }: { onHelp: () => void; bell: ReactNode }) => {
   const pathname = useRouterState({ select: (state) => state.location.pathname });
   const chatUnread = useChatUnread();
   const phone = usePhoneNav();
+  const { unsaved } = useFrameState();
   return (
     <nav
       aria-label="Apps"
@@ -100,14 +108,14 @@ const Rail = ({ onHelp, bell }: { onHelp: () => void; bell: ReactNode }) => {
       >
         K
       </div>
-      {NAV_ITEMS.map(({ to, label, icon: Icon }) => {
+      {useNavItems().map(({ to, label, icon: Icon }) => {
         const active = pathname.startsWith(to);
         const unread = to === "/chat" ? chatUnread : 0;
         return (
           <Link
             key={to}
             to={to}
-            aria-label={unreadLabel(label(), unread)}
+            aria-label={railLabel(to, label(), chatUnread, unsaved)}
             title={label()}
             aria-current={active ? "page" : undefined}
             className={cn(
@@ -117,6 +125,12 @@ const Rail = ({ onHelp, bell }: { onHelp: () => void; bell: ReactNode }) => {
           >
             <Icon size={18} strokeWidth={1.75} />
             <UnreadBadge count={unread} className="top-0.5 right-0.5" />
+            {to === "/documents" && unsaved ? (
+              <span
+                aria-hidden="true"
+                className="absolute top-1.5 right-1.5 size-2 rounded-full bg-accent"
+              />
+            ) : null}
           </Link>
         );
       })}
@@ -161,11 +175,12 @@ const Rail = ({ onHelp, bell }: { onHelp: () => void; bell: ReactNode }) => {
 export const AppShell = ({ children, bell }: { children: ReactNode; bell?: ReactNode }) => {
   const navigate = useNavigate();
   const [help, setHelp] = useState(false);
-  // "?" shows all shortcuts, 1–5 switch between the apps.
+  // "?" shows all shortcuts, 1–6 switch between the apps.
+  const items = useNavItems();
   useShortcuts({
     "?": () => setHelp(true),
     ...Object.fromEntries(
-      NAV_ITEMS.map(({ to }, index) => [String(index + 1), () => void navigate({ to })]),
+      items.map(({ to }, index) => [String(index + 1), () => void navigate({ to })]),
     ),
   });
   return (
@@ -183,7 +198,8 @@ const MoreMenu = () => {
   const { data: session } = useSession();
   const pathname = useRouterState({ select: (state) => state.location.pathname });
   const phone = usePhoneNav();
-  const active = [...MORE_ITEMS.map((entry) => entry.to), "/settings", "/phone"].some((to) =>
+  const moreItems = useMoreItems();
+  const active = [...moreItems.map((entry) => entry.to), "/settings", "/phone"].some((to) =>
     pathname.startsWith(to),
   );
   return (
@@ -201,7 +217,7 @@ const MoreMenu = () => {
         <MenuLabel>{session?.username ?? ""}</MenuLabel>
         <StorageSummary />
         <MenuSeparator />
-        {MORE_ITEMS.map(({ to, label, icon: Icon }) => (
+        {moreItems.map(({ to, label, icon: Icon }) => (
           <MenuItem key={to} asChild>
             <Link to={to} className="text-fg no-underline">
               <Icon size={15} /> {label()}

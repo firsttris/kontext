@@ -1,5 +1,5 @@
 /**
- * A mail, task or contact shared in a message. Whoever may open it gets a link (a task shows its
+ * A mail, task, contact or document shared in a message. Whoever may open it gets a link (a task shows its
  * current status); everyone else sees what it is about and where it lives, but not the content –
  * unless a mail was shared as a copy, which they read from the card.
  */
@@ -19,7 +19,12 @@ import { dueLabel, type Task } from "@/lib/tasks";
 import { m } from "@/paraglide/messages";
 import { MailCopyDialog } from "./mail-copy";
 
-const KIND_LABEL = { mail: m.chat_card_mail, task: m.chat_card_task, contact: m.chat_card_contact };
+const KIND_LABEL = {
+  mail: m.chat_card_mail,
+  task: m.chat_card_task,
+  contact: m.chat_card_contact,
+  document: m.chat_card_document,
+};
 
 /** Whether this person can open the card, and the live task behind a task card. */
 const useCardAccess = (card: Card): { open: boolean; task?: Task } => {
@@ -27,6 +32,8 @@ const useCardAccess = (card: Card): { open: boolean; task?: Task } => {
   const { tasks } = useTasks();
   const { data: contacts = [] } = useContacts();
   if (card.kind === "mail") return { open: accounts.some((a) => a.id === card.accountId) };
+  // Dokumente decides when it opens: who may not see the file is told there.
+  if (card.kind === "document") return { open: true };
   if (card.kind === "task") {
     const task = tasks.find((candidate) => candidate.id === card.ref);
     return { open: Boolean(task), task };

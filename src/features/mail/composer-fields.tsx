@@ -9,7 +9,7 @@ import {
   Trash2,
   X,
 } from "lucide-react";
-import { useRef } from "react";
+import { type ReactNode, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import type { OutgoingAttachment } from "@/jmap/mail";
 import type { EmailAddress, Identity } from "@/jmap/types";
@@ -159,6 +159,7 @@ export const ComposerActions = ({
   onSendLater,
   savedAt,
   onAttach,
+  attachMore,
   onSaveDraft,
   onDiscard,
   receipt,
@@ -193,6 +194,8 @@ export const ComposerActions = ({
   onSendLater: (at: Date) => void;
   savedAt: Date | null;
   onAttach: (files: FileList | null) => void;
+  /** Further ways to attach, beside the file picker (from Dokumente). */
+  attachMore?: ReactNode;
   onSaveDraft: () => void;
   onDiscard: () => void;
 }) => {
@@ -226,6 +229,7 @@ export const ComposerActions = ({
       >
         <Paperclip size={16} />
       </Button>
+      {attachMore}
       <Button
         variant="ghost"
         size="icon"

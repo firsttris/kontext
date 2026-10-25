@@ -96,10 +96,17 @@ jobs:
         with:
           lockfile: bun.lock
 
+  # The end-to-end tests in four parts at once, each with a Stalwart and seed of its own (the tests
+  # share one server within a part and run one after the other there). Playwright splits by files,
+  # so a file whose tests build on each other (e2e/phone.spec.ts) stays in one part.
   e2e:
-    name: End-to-end tests (Stalwart + Playwright)
+    name: End-to-end tests (${{ matrix.shard }}/4)
     needs: image
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2, 3, 4]
     container:
       image: ${{ needs.image.outputs.image }}
       options: --ipc=host
@@ -107,19 +114,41 @@ jobs:
       - uses: actions/checkout@v4
       # The npm package brings the binary without curl or unzip, which the image lacks
       - run: npm install --global bun@1.4.x
-      # readpst for the Outlook move (server/migration/pst.ts)
-      - run: apt-get update && apt-get install -y --no-install-recommends pst-utils
+      # readpst for the Outlook move (server/migration/pst.ts); its packages are kept, so only the
+      # first run after a new image asks the package index (apt-get update takes the time).
+      - uses: actions/cache@v4
+        with:
+          path: .dev/apt
+          key: pst-utils-${{ needs.image.outputs.image }}
+      - run: |
+          if ! ls .dev/apt/*.deb > /dev/null 2>&1; then
+            apt-get update
+            apt-get install -y --no-install-recommends --download-only pst-utils
+            mkdir -p .dev/apt
+            cp /var/cache/apt/archives/*.deb .dev/apt/
+          fi
+          dpkg -i .dev/apt/*.deb
+          command -v readpst
       - uses: actions/cache@v4
         with:
           path: .dev/bin
           key: stalwart-${{ hashFiles('dev/config.ts') }}
       - run: bun install --frozen-lockfile
-      - run: bun run e2e
+      - run: bun run e2e --shard=${{ matrix.shard }}/4
       - if: failure()
         uses: actions/upload-artifact@v4
         with:
-          name: playwright-report
+          name: playwright-report-${{ matrix.shard }}
           path: |
             playwright-report
             test-results
           retention-days: 7
+
+  # One check under the old name for all parts, for branch rules and a quick look.
+  e2e-all:
+    name: End-to-end tests (Stalwart + Playwright)
+    needs: e2e
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - run: test "${{ needs.e2e.result }}" = success

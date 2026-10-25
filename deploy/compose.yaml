@@ -1,7 +1,7 @@
 # Kontext for one customer: Stalwart (mail, calendar, contacts), the Kontext server (app,
-# sign-in, JMAP pass-through), Caddy (HTTPS) and, with the profile "calls", LiveKit for calls in
-# the chat plus LiveKit SIP and Redis for telephony through the telephone box
-# (COMPOSE_PROFILES=calls in .env).
+# sign-in, JMAP pass-through), Caddy (HTTPS), with the profile "calls" LiveKit for calls in the
+# chat plus LiveKit SIP and Redis for telephony through the telephone box, and with the profile
+# "documents" Schreibzeug for documents (COMPOSE_PROFILES in .env).
 # Works with Docker Compose and Podman Compose; Quadlet files are in deploy/quadlet/.
 #
 #   cp deploy/.env.example deploy/.env   # fill in domain and mail
@@ -44,8 +44,27 @@ services:
       LIVEKIT_URL: http://livekit:7880
       LIVEKIT_API_KEY: kontext
       LIVEKIT_API_SECRET: ${LIVEKIT_SECRET:-}
+      # Documents (Schreibzeug); without the address the module is off.
+      SCHREIBZEUG_URL: ${SCHREIBZEUG_URL:-}
+      SCHREIBZEUG_CLIENT_SECRET: ${SCHREIBZEUG_CLIENT_SECRET:-}
     volumes:
       - kontext-data:/data
+
+  # Documents: a service of its own with its own data and versions. People sign in through
+  # Kontext (OpenID Connect); its tokens let Kontext move attachments in and out.
+  schreibzeug:
+    image: docker.io/tristanteu/schreibzeug:${SCHREIBZEUG_VERSION:-latest}
+    profiles: [documents]
+    restart: unless-stopped
+    depends_on: [kontext]
+    environment:
+      SCHREIBZEUG_URL: ${SCHREIBZEUG_URL:-}
+      SCHREIBZEUG_EMBED_ORIGIN: https://${KONTEXT_DOMAIN}
+      OIDC_ISSUER: https://${KONTEXT_DOMAIN}/api/auth
+      OIDC_CLIENT_ID: schreibzeug
+      OIDC_CLIENT_SECRET: ${SCHREIBZEUG_CLIENT_SECRET:-}
+    volumes:
+      - schreibzeug-data:/data
 
   livekit:
     image: docker.io/livekit/livekit-server:v1.13.10
@@ -105,6 +124,7 @@ services:
     environment:
       KONTEXT_DOMAIN: ${KONTEXT_DOMAIN}
       ACME_EMAIL: ${ACME_EMAIL}
+      SCHREIBZEUG_URL: ${SCHREIBZEUG_URL:-https://schreibzeug.internal}
     volumes:
       - ./Caddyfile:/etc/caddy/Caddyfile:ro
       - caddy-data:/data
@@ -114,5 +134,6 @@ volumes:
   stalwart-config:
   stalwart-data:
   kontext-data:
+  schreibzeug-data:
   caddy-data:
   caddy-config:

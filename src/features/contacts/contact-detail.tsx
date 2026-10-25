@@ -19,6 +19,7 @@ import { toVCard } from "@/lib/vcard";
 import { m } from "@/paraglide/messages";
 import { useEventsWith } from "../calendar/queries";
 import { usePhoneDial } from "../phone/phone-page";
+import { ContactDocuments } from "./contact-documents";
 import { ContactTasks } from "./contact-tasks";
 import { type BookRef, bookOf, type Contact } from "./queries";
 
@@ -146,6 +147,7 @@ export const ContactDetail = ({ card, books, groups }: Props) => {
       <div className="flex flex-wrap gap-7">
         <div className="flex min-w-0 flex-[999_1_420px] flex-col gap-6">
           <ContactTasks card={card} name={fullName(card)} email={email} threadIds={threadIds} />
+          <ContactDocuments card={card} mayWrite={Boolean(book?.mayWrite)} />
           <section className="flex flex-col gap-2">
             <h3 className="m-0 border-b border-border pb-2 text-[14px] font-semibold">
               {m.contacts_upcoming()}

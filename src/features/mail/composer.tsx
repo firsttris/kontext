@@ -10,6 +10,7 @@ import { useClient } from "@/auth/auth";
 import { useSession } from "@/components/shell/app-shell";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/toast";
+import { AttachFromDocuments } from "@/features/documents/document-actions";
 import { externalIdOf, replyingExternal, sendThroughExternal } from "@/features/external/api";
 import { displayBody, type OutgoingAttachment, saveDraft, sendEmail } from "@/jmap/mail";
 import type { EmailAddress, Identity } from "@/jmap/types";
@@ -549,6 +550,13 @@ export const Composer = ({ accountId, mode, sourceEmailId, prefill }: Props) => 
         canSend={uploading === 0 && Boolean(identity && drafts && sent)}
         savedAt={savedAt}
         onAttach={(files) => void upload(files)}
+        attachMore={
+          <AttachFromDocuments
+            accountId={sendAccountId}
+            onAttached={(attachment) => setAttachments((current) => [...current, attachment])}
+            onBusy={(change) => setUploading((n) => n + change)}
+          />
+        }
         onSaveDraft={() => void storeDraft()}
         receipt={receipt}
         onReceipt={setReceipt}
