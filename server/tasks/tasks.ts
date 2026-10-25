@@ -33,7 +33,21 @@ export const columnsSchema = z
 export const REPEATS = ["daily", "weekdays", "weekly", "monthly", "yearly"] as const;
 export type Repeat = (typeof REPEATS)[number];
 
-const day = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
+/**
+ * Whether "YYYY-MM-DD" names a day that exists: a Date rolls 31 April over to 1 May, so a day
+ * is real only if it comes back unchanged (29 February only in leap years). setUTCFullYear, not
+ * Date.UTC, which reads the years 0–99 as 1900–1999.
+ */
+export const isCalendarDay = (value: string): boolean => {
+  const match = value.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (!match) return false;
+  const [y, m, d] = match.slice(1).map(Number) as [number, number, number];
+  const date = new Date(0);
+  date.setUTCFullYear(y, m - 1, d);
+  return date.getUTCFullYear() === y && date.getUTCMonth() === m - 1 && date.getUTCDate() === d;
+};
+
+const day = z.string().refine(isCalendarDay);
 const time = z.string().regex(/^\d{2}:\d{2}$/);
 
 export const checkItemSchema = z.object({

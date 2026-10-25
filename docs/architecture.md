@@ -520,7 +520,9 @@ oder Reihenfolge.
   und Verknüpfungen bleiben in Kontext. Was ein Client anlegt, behält seinen Dateinamen und seine
   UID (`dav_name`, `dav_uid`). Mit Bestätigung in zwei Schritten klappt die Anmeldung noch nicht.
 - **Schnelleingabe** (`src/lib/tasks.ts`): ein letztes Wort „heute“, „morgen“, „übermorgen“, ein
-  Wochentag oder ein Datum wie „30.10.“ wird zur Fälligkeit.
+  Wochentag oder ein Datum wie „30.10.“ wird zur Fälligkeit. Ein Datum, das es nicht gibt („31.4.“,
+  „29.2.“ außerhalb eines Schaltjahrs), bleibt Teil des Titels; der Server nimmt als Fälligkeit nur
+  echte Kalendertage an.
 - **Abgleich im Team:** Nach jeder Änderung meldet der Server über die
   [Live-Verbindung](#live-verbindung), welches Board sich geändert hat; alle, die dieses Postfach
   öffnen können, und die Zuständigen laden die Aufgaben neu. Eigene Änderungen zeigt die App sofort und korrigiert

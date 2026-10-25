@@ -4,7 +4,7 @@ import type { SessionAccount } from "../categories/routes";
 import type { Notice } from "../push/pusher";
 import { memoryTaskStore } from "./memory-store";
 import { createTaskRoutes } from "./routes";
-import type { Task } from "./tasks";
+import { isCalendarDay, type Task } from "./tasks";
 
 const accounts: SessionAccount[] = [
   { id: "jonas", isPersonal: true, isReadOnly: false },
@@ -73,6 +73,26 @@ describe("task routes", () => {
     expect(tasks[0]!.remindAt).toBe("2026-10-26T07:00:00.000Z");
     const bad = await call("POST", "/", { accountId: "jonas", title: "x", remindAt: "morgen" });
     expect(bad.status).toBe(400);
+  });
+
+  it("takes a due day only if it exists", async () => {
+    const { tasks, call } = setup();
+    const post = (dueDate: string) =>
+      call("POST", "/", { accountId: "jonas", title: "x", dueDate });
+    expect((await post("2026-04-31")).status).toBe(400);
+    expect((await post("2026-13-05")).status).toBe(400);
+    expect((await post("2027-02-29")).status).toBe(400);
+    expect((await post("2028-02-29")).status).toBe(201);
+    expect(tasks.map((task) => task.dueDate)).toEqual(["2028-02-29"]);
+    expect((await call("PATCH", "/t1", { dueDate: "2028-02-30" })).status).toBe(400);
+  });
+
+  it("knows the days of any year, also 0000–0099", () => {
+    expect(isCalendarDay("0050-01-01")).toBe(true);
+    expect(isCalendarDay("0000-02-29")).toBe(true);
+    expect(isCalendarDay("0100-02-29")).toBe(false);
+    expect(isCalendarDay("2026-04-31")).toBe(false);
+    expect(isCalendarDay("2026-4-1")).toBe(false);
   });
 
   it("whom it is given to sees and changes it on a colleague's own board, not deletes it", async () => {

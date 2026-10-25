@@ -13,7 +13,7 @@ import type {
   TaskLink,
   TaskStatus,
 } from "../../server/tasks/tasks";
-import { DEFAULT_COLUMNS, REPEATS, TASK_STATUSES } from "../../server/tasks/tasks";
+import { DEFAULT_COLUMNS, isCalendarDay, REPEATS, TASK_STATUSES } from "../../server/tasks/tasks";
 import { displayName } from "./format";
 import { addDays, dateKey } from "./jscalendar";
 
@@ -192,7 +192,8 @@ export const parseQuickAdd = (
     let day = `${y ?? today.slice(0, 4)}-${mo.padStart(2, "0")}-${d.padStart(2, "0")}`;
     // "5.1." in December means next January.
     if (!y && day < today) day = `${Number(today.slice(0, 4)) + 1}${day.slice(4)}`;
-    return { title: rest, dueDate: day };
+    // "31.4." or "5.13." is no day: it stays part of the title, like any other last word.
+    if (isCalendarDay(day)) return { title: rest, dueDate: day };
   }
   return { title: trimmed, dueDate: null };
 };
