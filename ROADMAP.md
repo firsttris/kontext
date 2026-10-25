@@ -27,7 +27,7 @@ Kleinere Dinge, die beim Bauen aufgefallen sind und noch erledigt werden.
 - [ ] Chat: Reaktionen mit beliebigen Emojis (heute die sieben Schnellwahlen), und im Thread „auch im Kanal zeigen“.
 - [ ] Aufgaben am Kontakt finden Mails nur über die letzten fünf Mails mit der Person im eigenen Postfach; ältere oder solche in info@ zählen nur, wenn die Aufgabe mit der Karte verknüpft ist (geschieht beim Anlegen aus der Mail). Die Verknüpfung „Termin“ wird noch nirgends angelegt.
 - [ ] Erinnerung an Aufgaben auch direkt im Dialog „Neue Aufgabe“ (heute in der geöffneten Aufgabe).
-- [ ] „Vertraulich senden“: den Code per SMS verschicken (braucht einen SMS-Anbieter); Laufzeit des Links wählbar (heute 30 Tage).
+- [ ] „Vertraulich senden“: Laufzeit des Links wählbar (heute 30 Tage).
 - [ ] PGP: nur unterschreiben (ohne Verschlüsseln) beim Senden; den Betreff mitverschlüsseln (Protected Headers); verschlüsselte Mails in der Unterhaltungsansicht und beim Weiterleiten mit Inhalt.
 - [ ] CalDAV für Aufgaben mit Bestätigung in zwei Schritten: App-Passwörter anlegen können (Thunderbird und Handy fragen keinen Code ab); dazu `sync-collection` für schnelleren Abgleich auf dem iPhone.
 - [ ] **Regeln für Mitarbeiter** in der Firmenverwaltung (heute nur für gemeinsame Postfächer und die eigenen).
