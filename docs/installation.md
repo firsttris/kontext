@@ -18,6 +18,13 @@ IP muss sich setzen lassen.
 | TXT     | `_dmarc.firma.de`                | `v=DMARC1; p=none; rua=mailto:dmarc@firma.de` (später `quarantine`) |
 | PTR     | IP des Servers                   | `mail.firma.de` (beim Anbieter einstellen)                          |
 
+Dazu für die Verschlüsselung unterwegs ([Konzept](encryption.md)): **MTA-STS** und **TLS-RPT**
+verlangen von anderen Mailservern, nur verschlüsselt an `firma.de` zuzustellen, und melden
+Probleme. Stalwart zeigt die passenden Einträge unter *Domains → firma.de → DNS-Einträge* an
+(`_mta-sts.firma.de`, `mta-sts.firma.de`, `_smtp._tls.firma.de`) und stellt die Richtlinie unter
+`https://mta-sts.firma.de` selbst bereit. Mit DNSSEC beim Anbieter kommt **DANE** dazu (ein
+TLSA-Eintrag, ebenfalls aus Stalwart). Die Firmenverwaltung prüft, was davon gesetzt ist.
+
 !!! warning "Cloudflare"
     Liegt das DNS bei Cloudflare, müssen alle Einträge für Mail und Kontext **„DNS only“**
     sein (graue Wolke). Durch den Cloudflare-Proxy kommen keine Mails und kein JMAP-Push.
@@ -142,9 +149,19 @@ ein. Geht das Handy verloren, setzt der Chef sie unter *Einstellungen → Firma 
 Mitarbeiter zurück; danach meldet sich der Mitarbeiter wieder nur mit Passwort an und richtet den
 Code neu ein.
 
-## 4. Backups
+## 4. Platte verschlüsseln
 
-`deploy/backup.sh` sichert mit [Restic](https://restic.net) auf einen S3-Speicher: Stalwarts
+Mails, Chat, Aufgaben und Dateien liegen auf der Platte des Servers. Verschlüsselt ist sie
+nutzlos für jemanden, der den Server oder eine Platte mitnimmt: beim Einrichten die Datenplatte
+mit LUKS verschlüsseln (bei vielen VPS-Anbietern als Option beim Anlegen, sonst eine zweite
+Platte mit `cryptsetup luksFormat` und darauf die Docker-Volumes). Den Schlüssel nicht auf dem
+Server ablegen, sondern beim Neustart eingeben oder per Netzwerk entsperren (Clevis/Tang).
+
+## 5. Backups
+
+`deploy/backup.sh` sichert mit [Restic](https://restic.net) auf einen S3-Speicher – Restic
+verschlüsselt jede Sicherung mit dem Passwort aus `deploy/.env`, der Speicheranbieter sieht nur
+Verschlüsseltes; das Passwort gehört zusätzlich an einen sicheren Ort außerhalb des Servers. Gesichert werden Stalwarts
 Datenvolume (Mails, Kalender, Kontakte, Konten), eine Kopie der Kontext-Datenbank
 (Anmeldungen, Firmen-Signatur, Aufgaben, Chat, Stand der Umzüge) und die Fotos und Dateien aus dem
 Chat. Hochgeladene PST-Dateien bleiben draußen. Am besten einen Bucket mit **Object Lock** nehmen, dann kann auch ein Angreifer mit
@@ -169,7 +186,7 @@ Die Kopie der Kontext-Datenbank (`…/backup/kontext.db`) kommt bei gestopptem C
 `chat-files`. Fehlt sie, geht nichts in Stalwart verloren: alle melden sich einmal neu an, die
 Vorlage der Firmen-Signatur ist neu einzutragen; Aufgaben und Chat sind dann leer.
 
-## 5. Updates
+## 6. Updates
 
 ```bash
 cd /opt/kontext && git pull

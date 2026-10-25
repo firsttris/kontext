@@ -34,4 +34,5 @@ nav:
   - Start: index.md
   - Installation: installation.md
   - Architektur: architecture.md
+  - Verschlüsselung: encryption.md
   - Entwicklung: development.md

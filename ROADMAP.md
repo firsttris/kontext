@@ -8,7 +8,7 @@ ein Plan, kein Versprechen; Wünsche und Hinweise gern als
 
 | Funktion | Worum es geht |
 | --- | --- |
-| **Verschlüsselung** | S/MIME oder PGP für Betriebe mit vertraulichen Kunden- oder Gesundheitsdaten. |
+| **Verschlüsselung** | Das [Konzept](docs/encryption.md) in fünf Bausteinen: Grundschutz (Schloss an Mails, Prüfung von MTA-STS und DANE in der Firmenverwaltung), persönlicher Schlüssel und PGP in Mails, „Vertraulich senden“ mit Link für Empfänger ohne Schlüssel, S/MIME für Behörden und Kanzleien, vertrauliche Unterhaltungen im Chat. |
 
 ## Danach
 
