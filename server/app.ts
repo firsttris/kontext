@@ -8,6 +8,7 @@ import { oauthProviderOpenIdConfigMetadata } from "@better-auth/oauth-provider";
 import { eq } from "drizzle-orm";
 import { Hono } from "hono";
 import { serveStatic } from "hono/bun";
+import { version as packageVersion } from "../package.json";
 import { type Auth, createAuth, createGrants, type Grants } from "./auth";
 import { currentRoomEvents, type LiveKitConfig } from "./calls/livekit";
 import { createMeetRoutes } from "./calls/meet-routes";
@@ -51,6 +52,8 @@ import { createImageSenderRoutes } from "./images/routes";
 import { createServerJmap } from "./jmap-server";
 import { createHub } from "./live/hub";
 import { createLiveRoutes } from "./live/routes";
+import { createMcpKeys } from "./mcp/keys";
+import { createMcpEndpoint, createMcpKeyRoutes, type McpDeps } from "./mcp/routes";
 import { createImporter, type Importer } from "./migration/importer";
 import { createJobs } from "./migration/jobs";
 import { createGraph, type M365Credentials } from "./migration/m365/graph";
@@ -75,6 +78,7 @@ import { createSnippetStore } from "./snippets/store";
 import { createSnoozeRoutes } from "./snooze/routes";
 import { createSnoozeStore } from "./snooze/store";
 import { createSnoozeWaker } from "./snooze/waker";
+import { loginAtStalwart } from "./stalwart";
 import { createRuleTasks } from "./tasks/from-rules";
 import { createTaskReminder } from "./tasks/notices";
 import { createTaskRoutes } from "./tasks/routes";
@@ -499,6 +503,20 @@ export const createApp = async (env: Env) => {
       blobs: createSessionBlobs(env.STALWART_URL),
     }),
   );
+  // Agents over MCP, with access keys of their own; they read what their owner may read.
+  const mcp: McpDeps = {
+    keys: createMcpKeys(db),
+    grants,
+    stalwartUrl: env.STALWART_URL,
+    version: packageVersion,
+    userOf: async (request) =>
+      (await auth.api.getSession({ headers: request.headers }))?.user ?? null,
+    login: (credentials) => loginAtStalwart(env.STALWART_URL, credentials),
+    tasks: (accountIds, me) => tasks.list(accountIds, new Date(Date.now() - 30 * 86_400_000), me),
+  };
+  app.route("/api/mcp-keys", createMcpKeyRoutes(mcp));
+  const mcpEndpoint = createMcpEndpoint(mcp);
+  app.all("/mcp", (c) => mcpEndpoint(c.req.raw));
   app.route("/api/snippets", createSnippetRoutes({ store: createSnippetStore(db), accountsOf }));
   // Wiedervorlage: due mails come back every minute, also with nobody signed in.
   const waker = createSnoozeWaker({ env, grants, store: snoozes, notify: pusher.notify });

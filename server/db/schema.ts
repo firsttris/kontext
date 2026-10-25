@@ -661,3 +661,26 @@ export const mailboxFolders = sqliteTable("mailbox_folders", {
   mailboxId: text("mailbox_id").primaryKey(),
   folderId: text("folder_id").notNull(),
 });
+
+/**
+ * Access keys for agents over MCP (server/mcp/): each key has its own sign-in session and so its
+ * own Stalwart grant; deleting the session (or the key) takes the access away. Only a hash of the
+ * key is kept.
+ */
+export const mcpKey = sqliteTable(
+  "mcp_key",
+  {
+    id: text("id").primaryKey(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    sessionId: text("session_id")
+      .notNull()
+      .references(() => session.id, { onDelete: "cascade" }),
+    name: text("name").notNull(),
+    keyHash: text("key_hash").notNull().unique(),
+    createdAt: integer("created_at", { mode: "timestamp_ms" }).notNull(),
+    lastUsedAt: integer("last_used_at", { mode: "timestamp_ms" }),
+  },
+  (table) => [index("mcp_key_user").on(table.userId)],
+);

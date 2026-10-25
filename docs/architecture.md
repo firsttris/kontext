@@ -1217,20 +1217,49 @@ Token der Person, `endSessionsOf` in `server/app.ts`); wer dort kein Konto hat, 
 
 ## Agenten (MCP)
 
-*In Arbeit.* Über das [Model Context Protocol](https://modelcontextprotocol.io) kann ein
-KI-Agent (Claude Desktop, Claude Code und andere MCP-Clients) in Kontext lesen: Kontakte, Mails,
-Termine, Aufgaben und Anrufe, mit den Rechten der Person, die ihn verbunden hat.
+Über das [Model Context Protocol](https://modelcontextprotocol.io) schlägt ein KI-Agent (Claude
+Code, Claude Desktop und andere MCP-Clients) in Kontext nach: Kunden, Mails, Termine und Aufgaben,
+mit den Rechten der Person, die ihn verbunden hat (`server/mcp/`).
 
-- **Schnittstelle:** `POST /mcp` am Kontext-Server (Streamable HTTP). Die Werkzeuge nutzen die
-  JMAP-Funktionen aus `src/jmap/` und die Stores des Servers; welche Konten ein Agent sieht,
-  bestimmt wie in der App Stalwarts JMAP-Session (gemeinsame Postfächer eingeschlossen).
-- **Anmeldung:** Ein Zugangsschlüssel, den man in den Einstellungen mit seinem Passwort anlegt.
-  Der Server meldet sich dabei neu bei Stalwart an; der Schlüssel bekommt eine eigene Sitzung
-  mit eigenem Stalwart-Token und lässt sich einzeln widerrufen. Später OAuth 2.1 nach der
-  MCP-Spezifikation.
-- **Zuerst nur lesen:** Mails sind fremder Text und können einem Agenten Anweisungen
-  unterschieben (Prompt Injection). Schreibende Werkzeuge (Entwurf, Termin, Kontakt, Aufgabe)
-  kommen in einem zweiten Schritt, Senden nur als Entwurf, den ein Mensch abschickt.
+- **Schnittstelle:** `/mcp` am Kontext-Server, Streamable HTTP ohne MCP-Sitzung: Jede Anfrage
+  bekommt einen frischen Server aus dem MCP-SDK, der mit JSON antwortet (`server/mcp/server.ts`).
+  Die Werkzeuge nutzen die JMAP-Funktionen der App (`src/jmap/`, `src/lib/mail-search.ts`) und
+  die Aufgaben aus SQLite; welche Konten ein Agent sieht, bestimmt wie in der App Stalwarts
+  JMAP-Session, gemeinsame Postfächer und „Nur lesen“ eingeschlossen.
+- **Werkzeuge** (`server/mcp/tools.ts`), alle nur lesend (`readOnlyHint`):
+
+  | Werkzeug            | Liefert                                                                           |
+  | ------------------- | --------------------------------------------------------------------------------- |
+  | `list_accounts`     | eigenes Postfach und gemeinsame Postfächer, was darin ist, ob nur lesend          |
+  | `search_contacts`   | Kontakte nach Name, Firma, Adresse oder Nummer                                    |
+  | `customer_overview` | Kontakt, letzte Mails (alle Postfächer), Termine davor und danach, Aufgaben       |
+  | `search_mail`       | Suche mit der Sprache des Suchfelds (`von:`, `nach:`, `in:info@`, `ist:ungelesen` …) |
+  | `get_mail`          | eine Mail als Text, mit Ordnern und Anhangnamen                                   |
+  | `get_thread`        | die Mails einer Unterhaltung                                                      |
+  | `list_events`       | Termine zwischen zwei Tagen, Serien als einzelne Termine                          |
+  | `list_tasks`        | offene (auf Wunsch erledigte) Aufgaben der eigenen Boards und die zugewiesenen    |
+
+  Antworten sind klein gehalten: Text statt HTML (`server/mcp/format.ts`), Zeiten in
+  Europe/Berlin, lange Texte gekürzt mit Hinweis, dazu die Ids zum Weiterfragen. Der
+  Kundenüberblick sucht Mails nach den Adressen der passenden Kontakte (oder der eingegebenen
+  Adresse, auch `@firma.de`), Termine und Aufgaben nach Teilnehmern, Namen und Firma.
+- **Zugangsschlüssel:** In den Einstellungen unter „KI-Agenten“ legt man einen an und gibt dabei
+  sein Passwort (und den Code) noch einmal ein. Der Server meldet sich damit neu bei Stalwart an
+  und legt für den Schlüssel eine **eigene Sitzung mit eigenem Stalwart-Token** an
+  (`server/mcp/keys.ts`, Tabelle `mcp_key`); in SQLite liegt nur der SHA-256 des Schlüssels, der
+  Schlüssel selbst ist einmal zu sehen. Der Agent schickt ihn als `Authorization: Bearer
+  kontext_…`. Widerrufen löscht die Sitzung, mit ihr Schlüssel und Token; das Sperren eines
+  Mitarbeiters beendet alle seine Sitzungen und damit auch seine Schlüssel. Stalwart verlängert
+  den Refresh-Token, solange der Schlüssel benutzt wird; läuft er ab, sagt `/mcp` „Zugang
+  abgelaufen“ und man legt einen neuen an.
+- **Nur lesen, mit Absicht:** Mails sind fremder Text und können einem Agenten Anweisungen
+  unterschieben (Prompt Injection). Darum gibt es vorerst kein Senden, Ändern oder Löschen; die
+  Beschreibung von `get_mail` und die Anweisungen des Servers sagen dem Agenten, Mailtext nur als
+  Information zu nehmen.
+
+**Später:** OAuth 2.1 nach der MCP-Spezifikation (Anmelden im Browser statt Schlüssel kopieren),
+schreibende Werkzeuge (Entwurf, Termin, Kontakt, Aufgabe; Senden nur als Entwurf, den ein Mensch
+abschickt), Anrufe und Chat.
 
 ## Code
 
@@ -1239,7 +1268,7 @@ Termine, Aufgaben und Anrufe, mit den Rechten der Person, die ihn verbunden hat.
 | `src/jmap/`     | JMAP-Client (Session, Methoden, Upload/Download, Push) und die Aufrufe für Mail, Kalender, Kontakte                        |
 | `src/lib/`      | reine Funktionen: Ordnerbaum, Adressen, Antworten, HTML-Bereinigung, JSCalendar- und JSContact-Umrechnung – mit Unit-Tests |
 | `src/features/` | die Ansichten von Mail, Kalender, Kontakten und Firmenverwaltung, je mit ihren Daten-Hooks (`queries.ts`)                 |
-| `server/`       | Kontext-Server: Anmeldung, JMAP-Weiterleitung, Firmenverwaltung (`server/company/`), Anbieter für Schreibzeug (`server/oidc/`, `server/documents/`) |
+| `server/`       | Kontext-Server: Anmeldung, JMAP-Weiterleitung, Firmenverwaltung (`server/company/`), Anbieter für Schreibzeug (`server/oidc/`, `server/documents/`), Agenten über MCP (`server/mcp/`) |
 | `src/routes/`   | TanStack-Router-Routen; der Zustand einer Ansicht steht in der URL (offene Mail, Ordner, Termin)                           |
 | `dev/`          | lokaler Stalwart, Testdaten (Seed)                                                                                         |
 | `deploy/`       | Caddy, Compose, Quadlets, Backup                                                                                           |

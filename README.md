@@ -172,6 +172,7 @@ fine on a VPS with 2 vCPUs and 4 GB RAM.
 - **An app on every device**: install Kontext from the browser (desktop, Android, iPhone) with its own window and icon, unread count on the icon, starts without network; share photos and files from other apps straight into a new mail; open `mailto:` links in Kontext. New versions arrive reliably and load when you click "Reload".
 - **Notifications**: a bell with invitations, today's appointments and new mail; on your devices also with Kontext closed (Web Push, end-to-end encrypted): new mail, direct messages, @mentions and incoming calls.
 - **Storage at a glance**: a thin ring around your avatar shows how full the mailbox is.
+- **AI agents (MCP)**: connect Claude or another agent with its own access key – it looks up customers, latest mails, appointments and tasks across your mailboxes, with your rights and read-only for now; each key can be revoked.
 
 ### 🏢 Company admin
 
