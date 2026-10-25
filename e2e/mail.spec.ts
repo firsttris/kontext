@@ -549,9 +549,11 @@ test.describe("Sicherheit", () => {
     await expect(body.getByText("Betrag: 1.234,56 €")).toBeVisible();
     await expect(body.getByText("Rechnung öffnen")).toBeVisible();
     await expect(body.locator('[href^="javascript:" i], [src^="javascript:" i]')).toHaveCount(0);
+    // The mail's own content lives in <body>; the <head> is Kontext's, with its CSP.
     await expect(
-      body.locator("script, iframe, object, embed, base[href], meta[http-equiv]"),
+      body.locator("body").locator("script, iframe, object, embed, base[href], meta[http-equiv]"),
     ).toHaveCount(0);
+    await expect(body.locator('head meta[http-equiv="Content-Security-Policy"]')).toHaveCount(1);
     await expect(body.locator("[onload], [onerror], [onclick]")).toHaveCount(0);
     await page.waitForTimeout(500);
     expect(await page.evaluate(() => (window as { __xss?: string }).__xss)).toBeUndefined();

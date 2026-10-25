@@ -102,6 +102,19 @@ dessen Domain bestätigt sein (DMARC, oder SPF/DKIM passend); eine ohne jede Pr�
 (importiert, von Kolleginnen) zählt mit, eine durchgefallene nie – ein gefälschter Absender
 schaltet keine Bilder frei.
 
+Blockiert heißt: `sanitizeMailHtml` (`src/lib/html.ts`, CSS in `src/lib/mail-css.ts`) entfernt
+jede Adresse, die der Browser abrufen würde – `src`, `background`, `poster`, `href` von
+SVG-Bildern, auch `//host/…`, und in CSS `url(…)` und Adressen in `image-set(…)` oder in eigenen
+Eigenschaften (`--u: "…"`) in `style`-Attributen, in allen anderen Attributen, die CSS sein
+können (SVG: `fill`, `mask` …), und in `<style>`; `@import` fällt ganz weg – und zählt sie für
+„Laden“. Das CSS wird dafür so zerlegt, wie der Browser es liest (CSS Syntax 3,
+`src/lib/css-tokens.ts`: Kommentare, Escapes, offene `url(` am Ende), die Adressen so, wie der
+URL-Parser sie liest (Tabs und Steuerzeichen fallen weg). Was nichts abruft, bleibt Zeichen für
+Zeichen, wie es war: eingebettete Bilder und Schriften (`cid:`, `data:`), Text wie
+`content: "https://…"`; sind die Bilder erlaubt, auch alle Attribute außer `style`. Dahinter
+verbietet eine Content-Security-Policy im Dokument des Rahmens (`mailDocument`) das Laden von
+außen, bis die Bilder erlaubt sind; die Druckseite (`src/lib/print.ts`) verbietet es immer.
+
 ## Lesebestätigung
 
 Stalwart kennt JMAP-MDN (RFC 9007) nicht; Kontext baut Lesebestätigungen nach RFC 8098 selbst

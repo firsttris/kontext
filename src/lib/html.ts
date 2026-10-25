@@ -3,6 +3,7 @@
  * the quoted original for replies. DOMPurify needs a DOM, so `sanitizeMailHtml` runs in the browser.
  */
 import DOMPurify from "dompurify";
+import { cleanCss } from "./mail-css";
 
 export const escapeHtml = (text: string): string =>
   text
@@ -30,10 +31,34 @@ export const textToHtml = (text: string): string =>
 
 export type SanitizedMail = { html: string; blockedImages: number };
 
+/** Attributes that make the browser fetch something (`href` only outside links, e.g. SVG `<image>`). */
+const LOADING_ATTRIBUTES = ["src", "background", "poster", "href", "xlink:href"];
+const isLink = (element: Element) => ["a", "area"].includes(element.localName);
+
+/**
+ * Whether a URL stays inside the mail. Everything else is fetched: `//host` and `\\host` too, and a
+ * relative path, which resolves against the app (a srcdoc document has its parent's base URL).
+ */
+const isLocalUrl = (url: string) => /^\s*(data:|#)/i.test(url);
+
+/** Text and addresses that are only followed, never fetched. */
+const TEXT_ATTRIBUTES = ["alt", "title", "cite", "longdesc", "usemap"];
+
+/**
+ * Text and addresses are no CSS; any other attribute might be read as CSS (SVG's fill, mask,
+ * filter, …), so all others are cleaned as CSS, which leaves what fetches nothing as it is.
+ */
+const isCss = (name: string) =>
+  !LOADING_ATTRIBUTES.includes(name) &&
+  !TEXT_ATTRIBUTES.includes(name) &&
+  !name.startsWith("aria-");
+
 /**
  * Cleans foreign mail HTML. Scripts, forms and event handlers go; links open in a new tab.
- * Remote images stay blocked (they reveal that the mail was read) until `allowRemote` is set.
- * `cidUrls` maps Content-IDs of inline images to local object URLs.
+ * Remote images stay blocked (they reveal that the mail was read) until `allowRemote` is set:
+ * every address that would be fetched goes (img, video poster, SVG image, CSS in style
+ * attributes and `<style>`), counted in `blockedImages`. `cidUrls` maps Content-IDs of inline
+ * images to local object URLs. `mailDocument` adds a CSP as a second line of defence.
  */
 export const sanitizeMailHtml = (
   html: string,
@@ -41,33 +66,41 @@ export const sanitizeMailHtml = (
 ): SanitizedMail => {
   let blockedImages = 0;
   const purify = DOMPurify();
+  purify.addHook("afterSanitizeElements", (node) => {
+    if (allowRemote || (node as Element).localName !== "style") return;
+    const { css, blocked } = cleanCss(node.textContent ?? "", {
+      allowRemote,
+      cidUrls,
+      rules: true,
+    });
+    node.textContent = css;
+    blockedImages += blocked;
+  });
   purify.addHook("afterSanitizeAttributes", (node) => {
     const element = node as Element;
     if (element.tagName === "A") {
       element.setAttribute("target", "_blank");
       element.setAttribute("rel", "noopener noreferrer");
     }
-    for (const attribute of ["src", "background"]) {
+    for (const attribute of LOADING_ATTRIBUTES) {
       const value = element.getAttribute?.(attribute);
-      if (!value) continue;
+      if (!value || (attribute.endsWith("href") && isLink(element))) continue;
       if (value.startsWith("cid:")) {
         const url = cidUrls[value.slice(4).replace(/^<|>$/g, "")];
         if (url) element.setAttribute(attribute, url);
         else element.removeAttribute(attribute);
-      } else if (/^https?:/i.test(value) && !allowRemote) {
+      } else if (!allowRemote && !isLocalUrl(value)) {
         element.removeAttribute(attribute);
         blockedImages++;
       }
     }
-    // CSS images: only http(s), and only when remote content is allowed.
-    const style = element.getAttribute?.("style");
-    if (style && /url\(/i.test(style)) {
-      element.setAttribute(
-        "style",
-        style.replace(/url\(\s*(['"]?)([^)'"]*)\1\s*\)/gi, (whole, _quote, url: string) =>
-          allowRemote && /^https?:/i.test(url.trim()) ? whole : "none",
-        ),
-      );
+    // CSS images: `style`, and while blocked any attribute read as CSS (SVG's fill, mask, …).
+    // Once remote content is allowed, the others stay as they were.
+    for (const { name, value } of [...(element.attributes ?? [])]) {
+      if (name !== "style" && (allowRemote || !isCss(name))) continue;
+      const { css, blocked } = cleanCss(value, { allowRemote, cidUrls });
+      if (css !== value) element.setAttribute(name, css);
+      blockedImages += blocked;
     }
   });
   const clean = purify.sanitize(html, {
@@ -94,12 +127,35 @@ export const sanitizeMailHtml = (
 };
 
 /**
+ * What the mail document may fetch: inline styles, `data:` and the `blob:` URLs of inline images;
+ * remote images, media, fonts and stylesheets only once they are allowed. A second line behind
+ * `sanitizeMailHtml`, for whatever its cleaning misses (a `<meta>` CSP also holds in a srcdoc);
+ * the reading pane and the printed page (print.ts) carry it.
+ */
+export const mailPolicy = (allowRemote: boolean) => {
+  const remote = allowRemote ? " https: http:" : "";
+  return [
+    "default-src 'none'",
+    `style-src 'unsafe-inline'${remote}`,
+    `img-src data: blob:${remote}`,
+    `media-src data: blob:${remote}`,
+    `font-src data:${remote}`,
+  ].join("; ");
+};
+
+/**
  * The document shown inside the sandboxed iframe of the reading pane. The body is a flow root so
  * the last paragraph's margin stays inside it: mail-body.tsx fits the frame to body.scrollHeight,
  * and a margin sticking out would give the frame its own scrollbar.
  */
-export const mailDocument = (body: string, dark: boolean): string => `<!doctype html>
-<html><head><meta charset="utf-8"><base target="_blank">
+export const mailDocument = (
+  body: string,
+  dark: boolean,
+  allowRemote = false,
+): string => `<!doctype html>
+<html><head><meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="${mailPolicy(allowRemote)}">
+<base target="_blank">
 <style>
   html { color-scheme: ${dark ? "dark" : "light"}; }
   body { margin: 0; display: flow-root; font: 15px/1.65 "Geist Variable", system-ui, sans-serif; color: ${dark ? "#fafafa" : "#09090b"}; background: transparent; overflow-wrap: anywhere; }

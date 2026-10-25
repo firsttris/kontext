@@ -82,7 +82,7 @@ export const MailBody = ({ accountId, email }: { accountId: string; email: Email
     };
   }, [email, allowRemote, cidUrls, showQuote]);
 
-  const document = useMemo(() => mailDocument(html, dark), [html, dark]);
+  const document = useMemo(() => mailDocument(html, dark, allowRemote), [html, dark, allowRemote]);
 
   useEffect(() => {
     const element = frame.current;
