@@ -471,6 +471,41 @@ export const pgpKeys = sqliteTable(
 );
 
 /**
+ * A person's own S/MIME certificate (docs/encryption.md, building block 4): the .p12 file as it
+ * came, locked with its password, which only the browser gets; and the certificate in it.
+ */
+export const smimeOwn = sqliteTable("smime_own", {
+  memberId: text("member_id").primaryKey(),
+  email: text("email").notNull(),
+  fingerprint: text("fingerprint").notNull(),
+  certificate: text("certificate").notNull(),
+  /** The .p12 file, base64. */
+  p12: text("p12").notNull(),
+  notAfter: integer("not_after", { mode: "timestamp_ms" }).notNull(),
+  createdAt: integer("created_at", { mode: "timestamp_ms" }).notNull(),
+  updatedAt: integer("updated_at", { mode: "timestamp_ms" }).notNull(),
+});
+
+/** Other people's S/MIME certificates a person knows, by address: from signed mails or a file. */
+export const smimeCerts = sqliteTable(
+  "smime_certs",
+  {
+    memberId: text("member_id").notNull(),
+    email: text("email").notNull(),
+    fingerprint: text("fingerprint").notNull(),
+    certificate: text("certificate").notNull(),
+    issuer: text("issuer").notNull(),
+    notAfter: integer("not_after", { mode: "timestamp_ms" }).notNull(),
+    /** mail, import */
+    source: text("source").notNull(),
+    previousFingerprint: text("previous_fingerprint"),
+    createdAt: integer("created_at", { mode: "timestamp_ms" }).notNull(),
+    updatedAt: integer("updated_at", { mode: "timestamp_ms" }).notNull(),
+  },
+  (table) => [primaryKey({ columns: [table.memberId, table.email] })],
+);
+
+/**
  * "Vertraulich senden" (server/secure/): a message for a recipient without a key, read on a page
  * with a code. The content lies encrypted next to the database (`secure/<id>`); its key is only in
  * the link (after "#") and, for the sender, locked with their own OpenPGP key (`senderKey`).

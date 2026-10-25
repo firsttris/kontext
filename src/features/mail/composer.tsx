@@ -20,6 +20,7 @@ import { contactAddresses } from "@/lib/jscontact";
 import { findRole } from "@/lib/mailboxes";
 import { pgpKind } from "@/lib/pgp-mail";
 import { holdUntil, sendTimeLabel } from "@/lib/schedule";
+import { smimeKind } from "@/lib/smime";
 import { m } from "@/paraglide/messages";
 import { useContacts } from "../contacts/queries";
 import { useAutocryptHeader } from "../pgp/autocrypt";
@@ -129,7 +130,10 @@ export const Composer = ({ accountId, mode, sourceEmailId, prefill }: Props) => 
       const body = displayBody(source.data);
       // An encrypted original is not quoted (it would be cipher text, or its content in clear);
       // the answer goes encrypted too.
-      if (pgpKind(source.data.contentType, body.value) === "encrypted") {
+      if (
+        pgpKind(source.data.contentType, body.value) === "encrypted" ||
+        smimeKind(source.data.contentType) === "encrypted"
+      ) {
         setEncrypt(true);
       } else {
         originalHtml = sanitizeMailHtml(
@@ -483,13 +487,7 @@ export const Composer = ({ accountId, mode, sourceEmailId, prefill }: Props) => 
         encrypt={encrypt}
         onEncrypt={setEncrypt}
         encryptBlocked={pgp.reason}
-        encryptNote={
-          pgp.viaLink.length
-            ? pgp.viaPgp.length
-              ? m.secure_note_mixed({ pgp: pgp.viaPgp.length, link: pgp.viaLink.length })
-              : m.secure_note_link()
-            : m.pgp_send_on()
-        }
+        encryptNote={pgp.note}
         onDiscard={() => void discard()}
       />
       {pgp.dialog}

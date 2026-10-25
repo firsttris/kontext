@@ -8,7 +8,7 @@ ein Plan, kein Versprechen; Wünsche und Hinweise gern als
 
 | Funktion | Worum es geht |
 | --- | --- |
-| **Verschlüsselung** | Das [Konzept](docs/encryption.md) in fünf Bausteinen; Grundschutz, persönlicher Schlüssel, PGP in Mails und „Vertraulich senden“ mit Link sind fertig, als Nächstes S/MIME für Behörden und Kanzleien, vertrauliche Unterhaltungen im Chat. |
+| **Verschlüsselung** | Das [Konzept](docs/encryption.md) in fünf Bausteinen; Grundschutz, persönlicher Schlüssel, PGP in Mails, S/MIME und „Vertraulich senden“ mit Link sind fertig, als Nächstes vertrauliche Unterhaltungen im Chat. |
 
 ## Danach
 
@@ -29,6 +29,7 @@ Kleinere Dinge, die beim Bauen aufgefallen sind und noch erledigt werden.
 - [ ] Erinnerung an Aufgaben auch direkt im Dialog „Neue Aufgabe“ (heute in der geöffneten Aufgabe).
 - [ ] „Vertraulich senden“: Laufzeit des Links wählbar (heute 30 Tage).
 - [ ] PGP: nur unterschreiben (ohne Verschlüsseln) beim Senden; den Betreff mitverschlüsseln (Protected Headers); verschlüsselte Mails in der Unterhaltungsansicht und beim Weiterleiten mit Inhalt.
+- [ ] S/MIME: Zertifikatsketten gegen eine Liste anerkannter Stellen prüfen und Sperrlisten (OCSP) abfragen (heute zeigt Kontext die ausstellende Stelle); Zertifikate anderer im Verzeichnis der Stelle suchen; nur unterschreiben beim Senden.
 - [ ] CalDAV für Aufgaben mit Bestätigung in zwei Schritten: App-Passwörter anlegen können (Thunderbird und Handy fragen keinen Code ab); dazu `sync-collection` für schnelleren Abgleich auf dem iPhone.
 - [ ] **Regeln für Mitarbeiter** in der Firmenverwaltung (heute nur für gemeinsame Postfächer und die eigenen).
 - [ ] **App auf Englisch** und weiteren Sprachen (Texte liegen schon gesammelt in `messages/de.json`).
@@ -57,6 +58,9 @@ Kleinere Dinge, die beim Bauen aufgefallen sind und noch erledigt werden.
 
 ## Zuletzt fertig geworden
 
+Verschlüsselung, S/MIME: eigenes Zertifikat (.p12) importieren, Zertifikate anderer aus
+unterschriebenen Mails und Dateien, S/MIME-Mails lesen und Unterschriften prüfen, „Vertraulich
+senden“ nimmt S/MIME für Empfänger mit Zertifikat.
 Verschlüsselung, Baustein 4: „Vertraulich senden“ – PGP für Empfänger mit Schlüssel, für alle
 anderen ein Link mit Code auf den eigenen Server (Schlüssel nur im Link), Antworten dort, Übersicht
 „Vertraulich gesendet“.

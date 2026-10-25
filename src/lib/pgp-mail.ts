@@ -19,6 +19,7 @@ export const encryptedPreview = (
   contentType?: string | null,
 ): boolean =>
   /multipart\/encrypted/i.test(contentType ?? "") ||
+  (/pkcs7-mime/i.test(contentType ?? "") && !/signed-data/i.test(contentType ?? "")) ||
   /^\s*(Version:\s*1\b|-----BEGIN PGP MESSAGE-----)/.test(preview ?? "");
 
 /** PGP/MIME by the Content-Type (RFC 3156), or an armored message in the text itself. */

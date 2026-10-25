@@ -107,6 +107,10 @@ const headers = (mail: Envelope) => [
   "MIME-Version: 1.0",
 ];
 
+/** The whole mail around an entity S/MIME made (RFC 8551): what goes to the server. */
+export const withHeaders = (mail: Envelope, entity: string): string =>
+  [...headers(mail), entity].join("\r\n");
+
 /** The whole mail around PGP's armored message (RFC 3156 §4): what goes to the server. */
 export const encryptedMail = (mail: Envelope, armored: string, id: string): string =>
   [

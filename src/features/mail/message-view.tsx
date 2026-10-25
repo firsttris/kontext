@@ -12,6 +12,7 @@ import { displayName, firstName, formatAddressList, readingDate } from "@/lib/fo
 import { mailboxNotice } from "@/lib/mail-accounts";
 import { mailboxRights } from "@/lib/mailboxes";
 import { pgpKind } from "@/lib/pgp-mail";
+import { smimeKind } from "@/lib/smime";
 import { tasksOfMail } from "@/lib/tasks";
 import { m } from "@/paraglide/messages";
 import { CategoryChips } from "../categories/category-chips";
@@ -19,6 +20,7 @@ import { useCategories } from "../categories/queries";
 import { DiscussedNotice } from "../chat/discussed-notice";
 import { AutocryptCollector } from "../pgp/autocrypt";
 import { EncryptedMail, SignedNote } from "../pgp/pgp-mail";
+import { SmimeMail, SmimeSignedNote } from "../smime/smime-mail";
 import { RESURFACED } from "../snooze/queries";
 import { SnoozeNotice } from "../snooze/snooze-notice";
 import { useStatusLabel, useTasks } from "../tasks/queries";
@@ -74,6 +76,11 @@ export const MessageView = ({ accountId, mailbox, emailId }: Props) => {
   if (!email) return <div className="p-6 text-[14px] text-muted">{m.mail_pick()}</div>;
   const showDetails = detailsFor === email.id;
   const pgp = pgpKind(email.contentType, displayBody(email).value);
+  const smime = smimeKind(email.contentType);
+  // Signed with the content inside (not beside) the signature: no body of its own.
+  const smimeWrapped =
+    smime === "encrypted" ||
+    (smime === "signed" && !/multipart\/signed/i.test(email.contentType ?? ""));
   const categories = categoriesOn(email.keywords, accountCategories);
   const mailTasks = tasksOfMail(tasks, email.id, email.threadId);
   const attachments = email.attachments.filter(
@@ -172,9 +179,14 @@ export const MessageView = ({ accountId, mailbox, emailId }: Props) => {
             {showDetails ? <MessageDetails email={email} attachments={attachments} /> : null}
             {pgp === "encrypted" ? (
               <EncryptedMail accountId={accountId} email={email} />
+            ) : smimeWrapped ? (
+              <SmimeMail accountId={accountId} email={email} encrypted={smime === "encrypted"} />
             ) : (
               <>
                 {pgp === "signed" ? <SignedNote accountId={accountId} email={email} /> : null}
+                {smime === "signed" ? (
+                  <SmimeSignedNote accountId={accountId} email={email} />
+                ) : null}
                 <MailBody accountId={accountId} email={email} />
                 <Attachments accountId={accountId} parts={attachments} />
               </>

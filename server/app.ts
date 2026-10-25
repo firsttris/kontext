@@ -52,6 +52,8 @@ import { createPushStore, loadVapidKeys } from "./push/store";
 import { createSecurePublicRoutes, createSecureRoutes } from "./secure/routes";
 import { createSecureStore } from "./secure/store";
 import { createSessionInfo } from "./session-info";
+import { createSmimeRoutes } from "./smime/routes";
+import { createSmimeStore } from "./smime/store";
 import { createSnippetRoutes } from "./snippets/routes";
 import { createSnippetStore } from "./snippets/store";
 import { createSnoozeRoutes } from "./snooze/routes";
@@ -342,6 +344,7 @@ export const createApp = async (env: Env) => {
   const pgp = createPgpStore(db);
   app.route("/api/pgp", createPgpRoutes({ store: pgp, accountsOf }));
   app.route("/.well-known/openpgpkey", createWkdRoutes(pgp));
+  app.route("/api/smime", createSmimeRoutes({ store: createSmimeStore(db), accountsOf }));
   // "Vertraulich senden": encrypted messages for recipients without a key, opened with a code.
   const secure = createSecureStore(db, join(dirname(env.DATABASE_PATH), "secure"));
   app.route("/api/secure", createSecureRoutes({ store: secure, accountsOf }));

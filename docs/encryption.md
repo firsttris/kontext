@@ -6,7 +6,7 @@ Funktionen (Suche, Regeln, Benachrichtigungen mit Text, Aufgaben aus Mails) brau
 Server, der die Inhalte lesen kann. Ende-zu-Ende gibt es dort, wo es zählt: nach außen und für
 ausgewählte vertrauliche Unterhaltungen.
 
-Stand: Baustein 1 bis 4 sind umgesetzt (S/MIME in 4 noch nicht), 5 geplant ([Roadmap](https://github.com/firsttris/kontext/blob/main/ROADMAP.md)).
+Stand: Baustein 1 bis 4 sind umgesetzt, 5 geplant ([Roadmap](https://github.com/firsttris/kontext/blob/main/ROADMAP.md)).
 
 ## Wovor geschützt wird
 
@@ -94,8 +94,20 @@ unterschreibt und entschlüsselt – und der später auch vertrauliche Chats tr�
 Ein Schalter für Mails nach außen; Kontext nimmt je Empfänger den besten Weg:
 
 1. **Hat einen PGP-Schlüssel** → PGP (Baustein 3).
-2. **Hat ein S/MIME-Zertifikat** (häufig bei Behörden und Kanzleien) → S/MIME. Eigene
-   Zertifikate werden wie PGP-Schlüssel verwahrt (PKCS#12, mit Passphrase).
+2. **Hat ein S/MIME-Zertifikat** (häufig bei Behörden und Kanzleien) → S/MIME, verschlüsselt
+   (AES-256) und unterschrieben (SHA-256), im Browser gebaut (`src/lib/smime.ts`, node-forge).
+   - Das eigene Zertifikat kommt als .p12-Datei einer Zertifizierungsstelle unter Einstellungen →
+     Verschlüsselung. Der Server bewahrt die Datei auf, wie sie ist – mit ihrem Passwort
+     verschlüsselt, das nur der Browser bekommt (`server/smime/`). Geöffnet bleibt sie bis zum
+     Neuladen, wie der PGP-Schlüssel.
+   - Zertifikate anderer merkt sich Kontext aus ihren unterschriebenen Mails (nur für die Adresse
+     des Absenders), oder man übernimmt sie aus einer Datei (.cer, .pem). Abgelaufene zählen nicht.
+   - Eingehende S/MIME-Mails werden im Browser entschlüsselt; Unterschriften (getrennt oder
+     eingepackt) werden geprüft, und die Mail sagt, wer bürgt: die ausstellende Stelle, oder
+     „selbst ausgestellt“. Ob man dieser Stelle traut, entscheidet man selbst – eine Liste
+     anerkannter Stellen prüft Kontext nicht.
+   - Wer nur ein Zertifikat und keinen PGP-Schlüssel hat, kann an S/MIME-Empfänger vertraulich
+     senden; für PGP und Links braucht es den PGP-Schlüssel.
 3. **Hat nichts davon** → eine Mail mit einem Link (`/s/<id>#<schlüssel>`). Umgesetzt so:
    - Der Browser des Absenders verschlüsselt Text, HTML und Anhänge mit einem neuen AES-GCM-
      Schlüssel (`src/lib/secure.ts`). Der Schlüssel steht nur im Link hinter `#` – diesen Teil
@@ -115,7 +127,7 @@ Ein Schalter für Mails nach außen; Kontext nimmt je Empfänger den besten Weg:
    - Seite und Mail an Empfänger von außen sprechen mit „Sie“ an.
 
 Im Fenster „Neue Mail“ heißt das Schloss „Vertraulich senden“; der Hinweis daneben sagt, wie viele
-Empfänger PGP und wie viele einen Link bekommen. Mit Links gibt es keine „Rückgängig“-Frist.
+Empfänger PGP, S/MIME und einen Link bekommen. Mit Links gibt es keine „Rückgängig“-Frist.
 
 ## Baustein 5: vertrauliche Unterhaltungen im Chat
 

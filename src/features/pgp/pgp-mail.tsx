@@ -26,7 +26,7 @@ import { checkSigned, type ReadMail, readEncrypted, type Signature } from "@/lib
 import { m } from "@/paraglide/messages";
 import { keepUnlocked, useKnownKeys, useOwnKey, useUnlockedKey } from "./queries";
 
-const useRaw = (accountId: string, email: EmailDetail, enabled: boolean) => {
+export const useRaw = (accountId: string, email: EmailDetail, enabled: boolean) => {
   const client = useClient();
   return useQuery({
     queryKey: [accountId, "raw", email.id],
@@ -123,7 +123,7 @@ export const Unlock = () => {
   );
 };
 
-const Body = ({ read }: { read: ReadMail }) => {
+export const Body = ({ read }: { read: Pick<ReadMail, "html" | "text"> }) => {
   const dark = useTheme().theme === "dark";
   const [height, setHeight] = useState(160);
   const document = useMemo(() => {
@@ -144,7 +144,7 @@ const Body = ({ read }: { read: ReadMail }) => {
   );
 };
 
-const Files = ({ files }: { files: ReadMail["attachments"] }) => {
+export const Files = ({ files }: { files: ReadMail["attachments"] }) => {
   const urls = useMemo(
     () =>
       files.map((file) =>

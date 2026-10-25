@@ -1,9 +1,9 @@
 /**
  * "Vertraulich senden" from the composer (docs/encryption.md, building blocks 3 and 4): recipients
  * with a known key get the mail encrypted and signed with PGP (built in the browser, sent as it
- * is); everyone else a link to a page on the own server, where the content waits encrypted with a
- * key that is only in the link, opened with a code passed on another way. Needs one's own key for
- * the sending address; asks for its passphrase when signing.
+ * is); those with a known S/MIME certificate (and none) the same with S/MIME; everyone else a link to a page on the own server, where the content waits encrypted with a
+ * key that is only in the link, opened with a code passed on another way. Needs one's own key (or,
+ * for S/MIME alone, certificate) for the sending address; asks for its passphrase when signing.
  */
 import type { PrivateKey } from "openpgp";
 import { type FormEvent, type ReactNode, useState } from "react";
@@ -18,6 +18,7 @@ import { escapeHtml } from "@/lib/html";
 import { unlockKey } from "@/lib/pgp";
 import { encryptMail } from "@/lib/pgp-mail";
 import {
+  base64ToBytes,
   bytesToBase64,
   keyToFragment,
   newSecureKey,
@@ -26,8 +27,10 @@ import {
   secureCode,
   wrapForSender,
 } from "@/lib/secure";
+import { type OwnSmime, openP12, smimeMail } from "@/lib/smime";
 import { m } from "@/paraglide/messages";
 import { send as api, type SentCode, showCodes } from "../secure/queries";
+import { keepSmimeOpen, useKnownCerts, useOpenSmime, useOwnCert } from "../smime/queries";
 import { keepUnlocked, useKnownKeys, useOwnKey, useUnlockedKey } from "./queries";
 
 /** Long header lines folded for the raw mail. */
@@ -45,24 +48,65 @@ export const useEncryptedSend = (from: string | undefined, recipients: string[])
   const { data: own } = useOwnKey();
   const known = useKnownKeys();
   const unlocked = useUnlockedKey();
-  const [asking, setAsking] = useState<{
-    resolve: (key: PrivateKey) => void;
-    reject: (error: Error) => void;
-  } | null>(null);
+  const { data: ownCert } = useOwnCert();
+  const certs = useKnownCerts();
+  const openCert = useOpenSmime();
+  const [asking, setAsking] = useState<Asking | null>(null);
 
   const lower = recipients.map((address) => address.toLowerCase());
   const ownAddress = own?.email;
+  const sender = from?.toLowerCase();
+  const others = lower.filter((address) => address !== ownAddress && address !== ownCert?.email);
   const hasKey = (address: string) => known.some((key) => key.email === address);
-  const viaPgp = lower.filter((address) => address !== ownAddress && hasKey(address));
-  const viaLink = lower.filter((address) => address !== ownAddress && !hasKey(address));
-  const forSender = Boolean(own && from && own.email === from.toLowerCase());
-  const reason = !own ? m.pgp_send_no_key() : !forSender ? m.pgp_send_other_sender() : null;
+  const smimeUsable = Boolean(ownCert && ownCert.email === sender);
+  const hasCert = (address: string) =>
+    smimeUsable &&
+    certs.some((cert) => cert.email === address && new Date(cert.notAfter) > new Date());
+  const viaPgp = others.filter(hasKey);
+  const viaSmime = others.filter((address) => !hasKey(address) && hasCert(address));
+  const viaLink = others.filter((address) => !hasKey(address) && !hasCert(address));
+  const forSender = Boolean(own && sender && own.email === sender);
+  // S/MIME alone needs no PGP key; links and PGP do (the link's key is kept locked with it).
+  const needsPgp = viaPgp.length > 0 || viaLink.length > 0 || !viaSmime.length;
+  const reason = !needsPgp
+    ? null
+    : !own
+      ? m.pgp_send_no_key()
+      : !forSender
+        ? m.pgp_send_other_sender()
+        : null;
+  const note =
+    !viaLink.length && !viaSmime.length
+      ? m.pgp_send_on()
+      : !viaLink.length && !viaPgp.length
+        ? m.smime_send_on()
+        : !viaPgp.length && !viaSmime.length
+          ? m.secure_note_link()
+          : m.secure_note_parts({
+              parts: [
+                viaPgp.length ? m.secure_part_pgp({ count: viaPgp.length }) : null,
+                viaSmime.length ? m.secure_part_smime({ count: viaSmime.length }) : null,
+                viaLink.length ? m.secure_part_link({ count: viaLink.length }) : null,
+              ]
+                .filter(Boolean)
+                .join(", "),
+            });
 
   /** The unlocked key; asks for the passphrase first if needed. */
   const ensureUnlocked = () =>
     unlocked
       ? Promise.resolve(unlocked)
-      : new Promise<PrivateKey>((resolve, reject) => setAsking({ resolve, reject }));
+      : new Promise<PrivateKey>((resolve, reject) =>
+          setAsking({ kind: "pgp", resolve: resolve as (value: unknown) => void, reject }),
+        );
+
+  /** One's opened certificate; asks for its password first if needed. */
+  const ensureCert = () =>
+    openCert
+      ? Promise.resolve(openCert)
+      : new Promise<OwnSmime>((resolve, reject) =>
+          setAsking({ kind: "smime", resolve: resolve as (value: unknown) => void, reject }),
+        );
 
   /** One link per recipient without a key; the mail that brings it; its code. */
   const sendLink = async (
@@ -115,6 +159,7 @@ export const useEncryptedSend = (from: string | undefined, recipients: string[])
   ) => {
     if (reason) throw new Error(reason);
     const key = viaPgp.length ? await ensureUnlocked() : null;
+    const cert = viaSmime.length ? await ensureCert() : null;
     const id = crypto.randomUUID();
     const attachments = await Promise.all(
       mail.attachments.map(async (file) => ({
@@ -128,23 +173,29 @@ export const useEncryptedSend = (from: string | undefined, recipients: string[])
       })),
     );
     const everyone = [...mail.to, ...mail.cc, ...mail.bcc];
-    const keyed = (list: EmailAddress[]) =>
-      list.filter((a) => viaPgp.includes(a.email.toLowerCase()));
+    const among = (group: string[]) => (list: EmailAddress[]) =>
+      list.filter((a) => group.includes(a.email.toLowerCase()));
+    const keyed = among(viaPgp);
+    const certified = among(viaSmime);
+    const content = { text: mail.text, html: mail.html, attachments };
+    const envelopeFor = (group: (list: EmailAddress[]) => EmailAddress[], messageId: string) => ({
+      from: { name: mail.identity.name || null, email: mail.identity.email },
+      to: group(mail.to),
+      cc: group(mail.cc),
+      subject: mail.subject,
+      date: new Date(),
+      messageId: `${messageId}@${mail.identity.email.split("@")[1]}`,
+      inReplyTo: mail.inReplyTo,
+      references: mail.references,
+      extra: mail.autocrypt ? [foldHeader("Autocrypt", mail.autocrypt)] : [],
+    });
+    // Undo and later only when one mail goes and nothing else at once.
+    const alone = !viaLink.length && !(key && cert);
     let held: { emailId: string; submissionId: string } | null = null;
     if (key) {
       const raw = await encryptMail({
-        envelope: {
-          from: { name: mail.identity.name || null, email: mail.identity.email },
-          to: keyed(mail.to),
-          cc: keyed(mail.cc),
-          subject: mail.subject,
-          date: new Date(),
-          messageId: `${id}@${mail.identity.email.split("@")[1]}`,
-          inReplyTo: mail.inReplyTo,
-          references: mail.references,
-          extra: mail.autocrypt ? [foldHeader("Autocrypt", mail.autocrypt)] : [],
-        },
-        content: { text: mail.text, html: mail.html, attachments },
+        envelope: envelopeFor(keyed, id),
+        content,
         recipientKeys: known
           .filter((entry) => viaPgp.includes(entry.email))
           .map((entry) => entry.publicKey),
@@ -159,9 +210,32 @@ export const useEncryptedSend = (from: string | undefined, recipients: string[])
         recipients: keyed(everyone).map((address) => address.email),
         ...folders,
         // With links going out at once, the encrypted mail goes at once too.
-        hold: viaLink.length ? undefined : hold,
+        hold: alone ? hold : undefined,
         replacesDraft: mail.draftId,
       });
+    }
+    if (cert) {
+      const smimeId = key ? crypto.randomUUID() : id;
+      const raw = await smimeMail({
+        envelope: envelopeFor(certified, smimeId),
+        content,
+        recipientCerts: certs
+          .filter((entry) => viaSmime.includes(entry.email))
+          .map((entry) => entry.certificate),
+        own: cert,
+        id: smimeId,
+      });
+      const sent = await sendRaw(client, {
+        accountId: mail.accountId,
+        raw,
+        identityId: mail.identity.id,
+        from: mail.identity.email,
+        recipients: certified(everyone).map((address) => address.email),
+        ...folders,
+        hold: alone ? hold : undefined,
+        replacesDraft: key ? null : mail.draftId,
+      });
+      held = held ?? sent;
     }
     const linked = everyone.filter((a) => viaLink.includes(a.email.toLowerCase()));
     if (linked.length) {
@@ -185,10 +259,16 @@ export const useEncryptedSend = (from: string | undefined, recipients: string[])
 
   const dialog: ReactNode = asking ? (
     <UnlockDialog
-      privateKey={own?.privateKey ?? ""}
-      onUnlocked={(key) => {
-        keepUnlocked(key);
-        asking.resolve(key);
+      kind={asking.kind}
+      unlock={(secret) =>
+        asking.kind === "pgp"
+          ? unlockKey(own?.privateKey ?? "", secret)
+          : openP12(base64ToBytes(ownCert?.p12 ?? ""), secret)
+      }
+      onUnlocked={(opened) => {
+        if (asking.kind === "pgp") keepUnlocked(opened as PrivateKey);
+        else keepSmimeOpen(opened as OwnSmime);
+        asking.resolve(opened);
         setAsking(null);
       }}
       onCancel={() => {
@@ -198,16 +278,24 @@ export const useEncryptedSend = (from: string | undefined, recipients: string[])
     />
   ) : null;
 
-  return { available: !reason, reason, send, dialog, viaPgp, viaLink };
+  return { available: !reason, reason, note, send, dialog, viaPgp, viaSmime, viaLink };
+};
+
+type Asking = {
+  kind: "pgp" | "smime";
+  resolve: (value: unknown) => void;
+  reject: (error: Error) => void;
 };
 
 const UnlockDialog = ({
-  privateKey,
+  kind,
+  unlock,
   onUnlocked,
   onCancel,
 }: {
-  privateKey: string;
-  onUnlocked: (key: PrivateKey) => void;
+  kind: Asking["kind"];
+  unlock: (secret: string) => Promise<unknown>;
+  onUnlocked: (opened: unknown) => void;
   onCancel: () => void;
 }) => {
   const [passphrase, setPassphrase] = useState("");
@@ -216,7 +304,7 @@ const UnlockDialog = ({
     event.preventDefault();
     event.stopPropagation();
     try {
-      onUnlocked(await unlockKey(privateKey, passphrase));
+      onUnlocked(await unlock(passphrase));
     } catch {
       setWrong(true);
     }
@@ -226,14 +314,14 @@ const UnlockDialog = ({
       open
       onOpenChange={(open) => !open && onCancel()}
       title={m.pgp_unlock()}
-      description={m.pgp_unlock_send_hint()}
+      description={kind === "pgp" ? m.pgp_unlock_send_hint() : m.smime_unlock_send_hint()}
     >
       <form onSubmit={(event) => void submit(event)} className="flex flex-col gap-3">
         <Input
           type="password"
           autoFocus
-          aria-label={m.pgp_unlock_passphrase()}
-          placeholder={m.pgp_unlock_passphrase()}
+          aria-label={kind === "pgp" ? m.pgp_unlock_passphrase() : m.smime_password()}
+          placeholder={kind === "pgp" ? m.pgp_unlock_passphrase() : m.smime_password()}
           value={passphrase}
           onChange={(event) => {
             setPassphrase(event.target.value);
@@ -242,7 +330,7 @@ const UnlockDialog = ({
         />
         {wrong ? (
           <span role="alert" className="text-[13px] text-danger">
-            {m.pgp_wrong_passphrase()}
+            {kind === "pgp" ? m.pgp_wrong_passphrase() : m.smime_wrong_password()}
           </span>
         ) : null}
         <div className="flex justify-end gap-2">
