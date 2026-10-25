@@ -24,6 +24,11 @@ const schema = z.object({
   MAIL_SYNC_ALLOW_PLAIN: z.stringbool().default(false),
   /** DNS-over-HTTPS for the check of the domains' mail security (JSON API). */
   DOH_URL: z.url().default("https://cloudflare-dns.com/dns-query"),
+  /**
+   * More authorities whose S/MIME certificates count as trusted, besides those Bun brings
+   * (Mozilla's list): a PEM file, e.g. the root of the Verwaltungs-PKI.
+   */
+  SMIME_ROOTS: z.preprocess((v) => v || undefined, z.string().optional()),
   /** Tests only: one-click unsubscribe to any address, inside the network, any certificate. */
   UNSUBSCRIBE_ANY_TARGET: z.stringbool().default(false),
   /** Tests only: push to any address, not only to the browsers' push services. */

@@ -1,3 +1,4 @@
+import { readFileSync } from "node:fs";
 import { expect, test } from "@playwright/test";
 import forge from "node-forge";
 import { DEV_DOMAIN } from "../dev/config";
@@ -5,8 +6,20 @@ import { address, inboxSubjects, jmapAs, login, unique } from "./helpers";
 
 const PASSWORD = "p12-passwort";
 
-/** A self-signed S/MIME certificate for a user, as a .p12 file and its PEM. */
-const certificateFor = (user: string) => {
+/** The tests' own authority, which the e2e server trusts (playwright.config.ts SMIME_ROOTS). */
+const testCa = {
+  cert: forge.pki.certificateFromPem(readFileSync("e2e/smime-ca/root.pem", "utf8")),
+  key: forge.pki.privateKeyFromPem(readFileSync("e2e/smime-ca/root.key", "utf8")),
+};
+
+/**
+ * An S/MIME certificate for a user, as a .p12 file and its PEM: self-signed, or issued by an
+ * authority.
+ */
+const certificateFor = (
+  user: string,
+  by?: { cert: forge.pki.Certificate; key: forge.pki.rsa.PrivateKey },
+) => {
   const keys = forge.pki.rsa.generateKeyPair(1024);
   const cert = forge.pki.createCertificate();
   cert.publicKey = keys.publicKey;
@@ -15,9 +28,12 @@ const certificateFor = (user: string) => {
   cert.validity.notAfter = new Date(Date.now() + 365 * 86_400_000);
   const name = [{ name: "commonName", value: address(user) }];
   cert.setSubject(name);
-  cert.setIssuer(name);
-  cert.setExtensions([{ name: "subjectAltName", altNames: [{ type: 1, value: address(user) }] }]);
-  cert.sign(keys.privateKey, forge.md.sha256.create());
+  cert.setIssuer(by ? by.cert.subject.attributes : name);
+  cert.setExtensions([
+    { name: "subjectAltName", altNames: [{ type: 1, value: address(user) }] },
+    { name: "extKeyUsage", emailProtection: true },
+  ]);
+  cert.sign(by?.key ?? keys.privateKey, forge.md.sha256.create());
   const der = forge.asn1
     .toDer(forge.pkcs12.toPkcs12Asn1(keys.privateKey, [cert], PASSWORD, { algorithm: "3des" }))
     .getBytes();
@@ -179,6 +195,60 @@ test.describe("Verschlüsselung: S/MIME", () => {
     await expect(
       other.getByText(`Unterschrieben von sandra@${DEV_DOMAIN} – selbst ausgestelltes Zertifikat`),
     ).toBeVisible();
+    await other.context().close();
+  });
+
+  test("eine Unterschrift von einer anerkannten Stelle wird bestätigt, von einer unbekannten nicht", async ({
+    page,
+    browser,
+  }) => {
+    test.setTimeout(90_000);
+    const other = await (await browser.newContext()).newPage();
+    await login(other, "max");
+    await login(page, "sandra");
+    const stranger = (() => {
+      const keys = forge.pki.rsa.generateKeyPair(1024);
+      const cert = forge.pki.createCertificate();
+      cert.publicKey = keys.publicKey;
+      cert.serialNumber = "0c";
+      cert.validity.notBefore = new Date(Date.now() - 86_400_000);
+      cert.validity.notAfter = new Date(Date.now() + 365 * 86_400_000);
+      const name = [{ name: "organizationName", value: "Unbekannte Stelle" }];
+      cert.setSubject(name);
+      cert.setIssuer(name);
+      cert.setExtensions([{ name: "basicConstraints", cA: true }]);
+      cert.sign(keys.privateKey, forge.md.sha256.create());
+      return { cert, key: keys.privateKey };
+    })();
+    for (const [by, says] of [
+      [testCa, "bestätigt von Kontext Test-CA"],
+      [stranger, "einer Stelle, die Kontext nicht als anerkannt kennt"],
+    ] as const) {
+      const subject = unique("Signiert");
+      const made = certificateFor("sandra", by);
+      await page.request.put("/api/smime/me", {
+        data: { certificate: made.pem, p12: made.p12.toString("base64") },
+      });
+      await page.goto("/mail");
+      await page.getByRole("link", { name: "Neue Mail" }).first().click();
+      await page.getByRole("combobox", { name: "An" }).fill(address("max"));
+      await page.keyboard.press(",");
+      await page.getByLabel("Betreff").fill(subject);
+      await page.getByRole("textbox", { name: "Ihre Nachricht …" }).fill("Mit Unterschrift.");
+      await page.getByRole("button", { name: "Unterschreiben" }).click();
+      await page.getByRole("button", { name: "Senden", exact: true }).click();
+      const unlock = page.getByRole("dialog", { name: "Entsperren" });
+      await unlock.getByLabel("Passwort des Zertifikats").fill(PASSWORD);
+      await unlock.getByRole("button", { name: "Entsperren" }).click();
+      await expect(page.getByRole("status").filter({ hasText: "Mail gesendet." })).toBeVisible();
+      await expect.poll(() => inboxSubjects("max")).toContain(subject);
+      await other.goto("/mail");
+      await other
+        .getByRole("list", { name: "Posteingang" })
+        .getByRole("link", { name: new RegExp(subject) })
+        .click();
+      await expect(other.getByRole("note")).toContainText(says);
+    }
     await other.context().close();
   });
 });

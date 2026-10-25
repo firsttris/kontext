@@ -24,6 +24,23 @@ const send = async <T>(method: string, path: string, body?: unknown): Promise<T>
   return result;
 };
 
+export type Trust = {
+  chain: "trusted" | "untrusted" | "expired" | "not-for-mail";
+  revocation: "good" | "revoked" | "unknown";
+  root: string | null;
+};
+
+/** The server's check of a certificate (server/smime/trust.ts); null when it cannot say. */
+export const checkTrust = async (
+  input: { certificate: string; chain: string[] } | null,
+): Promise<Trust | null> =>
+  input ? (await send<{ trust: Trust }>("POST", "/trust", input)).trust : null;
+
+/** Somebody's certificate from DNS (SMIMEA), or null. */
+export const lookupCert = async (email: string) =>
+  (await send<{ certificate: string | null }>("GET", `/lookup?email=${encodeURIComponent(email)}`))
+    .certificate;
+
 export const useOwnCert = () =>
   useQuery({
     queryKey: OWN,
@@ -51,8 +68,11 @@ export const useSmimeActions = () => {
     },
   });
   const remember = useMutation({
-    mutationFn: (cert: { certificate: string; source: "mail" | "import"; email?: string }) =>
-      send<{ certs: KnownCert[] }>("PUT", "/certs", cert),
+    mutationFn: (cert: {
+      certificate: string;
+      source: "mail" | "import" | "dns";
+      email?: string;
+    }) => send<{ certs: KnownCert[] }>("PUT", "/certs", cert),
     onSuccess: ({ certs }) => queryClient.setQueryData(KNOWN, certs),
   });
   const forget = useMutation({

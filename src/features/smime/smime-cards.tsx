@@ -2,7 +2,7 @@
  * Settings: one's own S/MIME certificate (a .p12 file from an authority, with its password) and
  * those of others, from their signed mails or a file – for authorities and firms that use S/MIME.
  */
-import { AlertTriangle, Download, Trash2, Upload } from "lucide-react";
+import { AlertTriangle, Download, Search, Trash2, Upload } from "lucide-react";
 import { type FormEvent, useState } from "react";
 import { useSession } from "@/components/shell/app-shell";
 import { Button } from "@/components/ui/button";
@@ -15,7 +15,7 @@ import { bytesToBase64 } from "@/lib/secure";
 import { certToPem, openP12, readCertificate } from "@/lib/smime";
 import { m } from "@/paraglide/messages";
 import { SettingsCard } from "../settings/settings-page";
-import { keepSmimeOpen, useKnownCerts, useOwnCert, useSmimeActions } from "./queries";
+import { keepSmimeOpen, lookupCert, useKnownCerts, useOwnCert, useSmimeActions } from "./queries";
 import { untilLabel } from "./smime-mail";
 
 const ImportDialog = ({ onClose }: { onClose: () => void }) => {
@@ -158,11 +158,42 @@ export const OwnCertCard = () => {
   );
 };
 
+const SOURCE_LABELS: Record<string, () => string> = {
+  dns: m.smime_source_dns,
+  mail: m.smime_source_mail,
+  import: m.smime_source_import,
+};
+
 export const KnownCertsCard = () => {
   const certs = useKnownCerts();
   const actions = useSmimeActions();
   const toast = useToast();
   const fail = (error: Error) => toast.show(m.common_error({ message: error.message }), "error");
+
+  const [search, setSearch] = useState("");
+  const [busy, setBusy] = useState(false);
+
+  /** From the DNS of the recipient's domain (SMIMEA), as the server found it signed. */
+  const find = async (event: FormEvent) => {
+    event.preventDefault();
+    const address = search.trim().toLowerCase();
+    if (!address) return;
+    setBusy(true);
+    try {
+      const certificate = await lookupCert(address);
+      if (!certificate) {
+        toast.show(m.smime_lookup_none({ email: address }));
+        return;
+      }
+      await actions.remember({ certificate, source: "dns", email: address });
+      toast.show(m.smime_lookup_found({ email: address }));
+      setSearch("");
+    } catch (error) {
+      fail(error as Error);
+    } finally {
+      setBusy(false);
+    }
+  };
 
   const bring = async (file: File) => {
     try {
@@ -188,6 +219,9 @@ export const KnownCertsCard = () => {
                 <span className="text-[12px] text-muted">
                   {m.smime_cert_line({ issuer: cert.issuer, until: untilLabel(cert.notAfter) })}
                 </span>
+                <span className="text-[12px] text-muted">
+                  {SOURCE_LABELS[cert.source]?.() ?? cert.source}
+                </span>
                 <span className="font-mono text-[12px] break-all text-muted">
                   {groupFingerprint(cert.fingerprint)}
                 </span>
@@ -211,6 +245,18 @@ export const KnownCertsCard = () => {
       ) : (
         <p className="m-0 text-[13px] text-muted">{m.smime_known_none()}</p>
       )}
+      <form onSubmit={(event) => void find(event)} className="flex gap-2">
+        <Input
+          type="email"
+          aria-label={m.smime_lookup_label()}
+          placeholder={m.pgp_lookup_placeholder()}
+          value={search}
+          onChange={(event) => setSearch(event.target.value)}
+        />
+        <Button type="submit" variant="outline" disabled={busy || !search.trim()}>
+          <Search size={15} /> {m.smime_lookup()}
+        </Button>
+      </form>
       <label className="inline-flex h-9 cursor-pointer items-center gap-1.5 self-start rounded-lg px-3 text-[14px] text-muted hover:bg-hover hover:text-fg">
         <Upload size={15} /> {m.smime_cert_import()}
         <input

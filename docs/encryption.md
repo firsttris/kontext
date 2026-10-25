@@ -114,8 +114,19 @@ Ein Schalter für Mails nach außen; Kontext nimmt je Empfänger den besten Weg:
      des Absenders), oder man übernimmt sie aus einer Datei (.cer, .pem). Abgelaufene zählen nicht.
    - Eingehende S/MIME-Mails werden im Browser entschlüsselt; Unterschriften (getrennt oder
      eingepackt) werden geprüft, und die Mail sagt, wer bürgt: die ausstellende Stelle, oder
-     „selbst ausgestellt“. Ob man dieser Stelle traut, entscheidet man selbst – eine Liste
-     anerkannter Stellen prüft Kontext nicht.
+     „selbst ausgestellt“.
+   - **Vertrauen:** Der Server prüft die Kette des Zertifikats (mit den Zwischenzertifikaten aus
+     der Unterschrift) bis zu einer anerkannten Stelle – denen, die Bun mitbringt (Mozillas
+     Liste), und eigenen aus `SMIME_ROOTS` (eine PEM-Datei, z. B. die Wurzel der
+     Verwaltungs-PKI) –, ob es gilt und für Mails gedacht ist, und fragt per OCSP bei der Stelle,
+     ob es gesperrt wurde; die Antwort zählt nur mit gültiger Unterschrift der Stelle
+     (`server/smime/trust.ts`). Die Mail sagt dann „bestätigt von …, nicht gesperrt“, warnt bei
+     unbekannten Stellen, abgelaufenen oder nicht für Mails gedachten Zertifikaten und zeigt rot,
+     wenn es gesperrt ist. Ohne OCSP-Adresse oder Antwort bleibt es bei „bestätigt von …“.
+   - **Zertifikate finden:** Unter Einstellungen → Verschlüsselung sucht „Im DNS suchen“ das
+     Zertifikat einer Adresse in deren Domain (SMIMEA, RFC 8162) – nur aus einer mit DNSSEC
+     signierten Antwort und nur, wenn es zur Adresse gehört. Verzeichnisse einzelner Stellen
+     (LDAP) fragt Kontext nicht ab.
    - Wer nur ein Zertifikat und keinen PGP-Schlüssel hat, kann an S/MIME-Empfänger vertraulich
      senden; für PGP und Links braucht es den PGP-Schlüssel.
 3. **Hat nichts davon** → eine Mail mit einem Link (`/s/<id>#<schlüssel>`). Umgesetzt so:

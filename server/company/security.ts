@@ -10,7 +10,7 @@ export type DomainChecks = { domain: string; checks: Check[] };
 
 /** A DNS answer: the records' data, and whether the answer was signed (DNSSEC). */
 export type Answer = { data: string[]; secure: boolean };
-export type Resolve = (name: string, type: "TXT" | "MX" | "TLSA") => Promise<Answer>;
+export type Resolve = (name: string, type: "TXT" | "MX" | "TLSA" | "SMIMEA") => Promise<Answer>;
 
 const unquote = (value: string) => value.replace(/^"|"$/g, "").replace(/"\s+"/g, "");
 
@@ -28,7 +28,7 @@ export const dohResolver =
       AD?: boolean;
       Answer?: { type: number; data: string }[];
     };
-    const wanted = { TXT: 16, MX: 15, TLSA: 52 }[type];
+    const wanted = { TXT: 16, MX: 15, TLSA: 52, SMIMEA: 53 }[type];
     return {
       data: (body.Answer ?? []).filter((a) => a.type === wanted).map((a) => unquote(a.data)),
       secure: Boolean(body.AD),

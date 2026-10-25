@@ -4,7 +4,7 @@
  * certificate is kept for writing back, as Autocrypt does for PGP keys.
  */
 import { useQuery } from "@tanstack/react-query";
-import { LockKeyhole, ShieldAlert, ShieldCheck } from "lucide-react";
+import { LockKeyhole, ShieldAlert, ShieldCheck, ShieldQuestion } from "lucide-react";
 import { type FormEvent, useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -15,10 +15,29 @@ import { openP12, readSmime, type SmimeRead, type SmimeSignature } from "@/lib/s
 import { m } from "@/paraglide/messages";
 import { rememberOpened } from "../mail/opened-mails";
 import { Body, Files, useRaw } from "../pgp/pgp-mail";
-import { keepSmimeOpen, useKnownCerts, useOpenSmime, useOwnCert, useSmimeActions } from "./queries";
+import {
+  checkTrust,
+  keepSmimeOpen,
+  useKnownCerts,
+  useOpenSmime,
+  useOwnCert,
+  useSmimeActions,
+} from "./queries";
 
 const untilLabel = (iso: string) =>
   new Date(iso).toLocaleDateString("de-DE", { timeZone: "Europe/Berlin", dateStyle: "medium" });
+
+/** What the server found of a signer's certificate: chain to a trusted authority, revoked. */
+const useTrust = (signature: SmimeSignature) =>
+  useQuery({
+    queryKey: ["smime", "trust", signature.state === "valid" ? signature.info.fingerprint : ""],
+    queryFn: () =>
+      checkTrust(
+        signature.state === "valid" ? { certificate: signature.pem, chain: signature.chain } : null,
+      ),
+    enabled: signature.state === "valid" && !signature.info.selfSigned,
+    staleTime: 60 * 60_000,
+  }).data;
 
 export const SmimeSignatureNote = ({
   signature,
@@ -27,20 +46,34 @@ export const SmimeSignatureNote = ({
   signature: SmimeSignature;
   sender: string;
 }) => {
+  const trust = useTrust(signature);
   if (signature.state === "none") return null;
   const valid = signature.state === "valid";
   const other = valid && signature.email !== sender.toLowerCase();
+  const issuer = valid ? signature.info.issuer : "";
   const [Icon, tone, text] = !valid
     ? [ShieldAlert, "text-danger", m.pgp_signed_invalid()]
     : other
       ? [ShieldAlert, "text-warn", m.smime_signed_other({ signer: signature.email, sender })]
-      : [
-          ShieldCheck,
-          signature.info.selfSigned ? "text-muted" : "text-ok",
-          signature.info.selfSigned
-            ? m.smime_signed_self({ sender })
-            : m.smime_signed_valid({ sender, issuer: signature.info.issuer }),
-        ];
+      : signature.info.selfSigned
+        ? [ShieldCheck, "text-muted", m.smime_signed_self({ sender })]
+        : trust?.revocation === "revoked"
+          ? [ShieldAlert, "text-danger", m.smime_signed_revoked({ sender })]
+          : trust?.chain === "trusted"
+            ? [
+                ShieldCheck,
+                "text-ok",
+                trust.revocation === "good"
+                  ? m.smime_signed_checked({ sender, issuer })
+                  : m.smime_signed_valid({ sender, issuer }),
+              ]
+            : trust?.chain === "expired"
+              ? [ShieldAlert, "text-warn", m.smime_signed_expired({ sender })]
+              : trust?.chain === "not-for-mail"
+                ? [ShieldAlert, "text-warn", m.smime_signed_not_for_mail({ sender })]
+                : trust
+                  ? [ShieldQuestion, "text-warn", m.smime_signed_unknown_ca({ sender, issuer })]
+                  : [ShieldQuestion, "text-muted", m.smime_signed_checking({ sender })];
   return (
     <span className={cn("flex items-center gap-1.5 text-[13px]", tone)}>
       <Icon size={15} aria-hidden="true" /> {text}

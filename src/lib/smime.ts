@@ -133,7 +133,14 @@ export const openP12 = async (data: Uint8Array, password: string): Promise<OwnSm
 };
 
 export type SmimeSignature =
-  | { state: "valid"; email: string; info: CertInfo; pem: string }
+  | {
+      state: "valid";
+      email: string;
+      info: CertInfo;
+      pem: string;
+      /** The other certificates the signature brought (intermediates), for the trust check. */
+      chain: string[];
+    }
   | { state: "invalid" }
   | { state: "none" };
 
@@ -167,9 +174,16 @@ export const checkSignedData = async (
     const certsNode = parts.find(
       (part) => part.tagClass === asn1.Class.CONTEXT_SPECIFIC && part.type === 0,
     );
-    const certs = ((certsNode?.value as Asn1[]) ?? []).map((node) =>
-      forge.pki.certificateFromAsn1(node),
-    );
+    // Every certificate as PEM; forge reads only those with RSA keys (an authority's may be EC).
+    const brought = ((certsNode?.value as Asn1[]) ?? []).map((node) => {
+      const pemText = forge.pem.encode({ type: "CERTIFICATE", body: asn1.toDer(node).getBytes() });
+      try {
+        return { pem: pemText, cert: forge.pki.certificateFromAsn1(node) };
+      } catch {
+        return { pem: pemText, cert: null };
+      }
+    });
+    const certs = brought.flatMap((entry) => (entry.cert ? [entry.cert] : []));
     const signerInfo = (parts.at(-1)!.value as Asn1[])[0]!.value as Asn1[];
     const sid = signerInfo[1]!;
     const serial = forge.util.createBuffer((sid.value as Asn1[])[1]!.value as string).toHex();
@@ -217,6 +231,7 @@ export const checkSignedData = async (
         email: described.emails[0] ?? "",
         info: described,
         pem: forge.pki.certificateToPem(signer),
+        chain: brought.filter((entry) => entry.cert !== signer).map((entry) => entry.pem),
       },
       content,
     };
