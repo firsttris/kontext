@@ -35,7 +35,7 @@ test.describe("Lesebestätigung", () => {
     await expect(max.getByRole("heading", { name: subject })).toBeVisible();
     await expect(max.getByText("bittet um eine Lesebestätigung")).toHaveCount(0);
 
-    await page.getByRole("link", { name: "Gesendet" }).click();
+    await page.getByRole("link", { name: "Gesendet", exact: true }).click();
     await page.getByRole("list", { name: "Gesendet" }).getByText(subject).click();
     await expect(page.getByRole("note").filter({ hasText: "Gelesen von Max Becker" })).toBeVisible({
       timeout: 15_000,

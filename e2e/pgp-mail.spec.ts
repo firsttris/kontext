@@ -50,7 +50,7 @@ test.describe("Verschlüsselung: PGP in Mails", () => {
     await page
       .getByRole("textbox", { name: "Ihre Nachricht …" })
       .fill("Messwerte: 42 Grad, alles vertraulich.");
-    await page.getByRole("button", { name: "Verschlüsselt senden" }).click();
+    await page.getByRole("button", { name: "Vertraulich senden" }).click();
     await expect(
       page.getByRole("status").filter({ hasText: "Verschlüsselt und unterschrieben" }),
     ).toBeVisible();
@@ -85,7 +85,7 @@ test.describe("Verschlüsselung: PGP in Mails", () => {
     await expect(max.getByText(`Unterschrieben von anna@${DEV_DOMAIN} – geprüft`)).toBeVisible();
     // The answer goes encrypted too, without the cipher text quoted.
     await max.getByRole("link", { name: "Antworten" }).first().click();
-    await expect(max.getByRole("button", { name: "Verschlüsselt senden" })).toHaveAttribute(
+    await expect(max.getByRole("button", { name: "Vertraulich senden" })).toHaveAttribute(
       "aria-pressed",
       "true",
     );
@@ -95,16 +95,14 @@ test.describe("Verschlüsselung: PGP in Mails", () => {
     await max.context().close();
   });
 
-  test("ohne Schlüssel des Empfängers bleibt der Schalter gesperrt", async ({ page }) => {
+  test("ohne Schlüssel des Empfängers geht es per Link", async ({ page }) => {
     await login(page, "sandra");
     await giveKey(page, "sandra");
     await page.goto("/mail");
     await page.getByRole("link", { name: "Neue Mail" }).first().click();
     await page.getByRole("combobox", { name: "An" }).fill("niemand@example.test");
     await page.keyboard.press(",");
-    await page.getByRole("button", { name: "Verschlüsselt senden" }).click();
-    await expect(
-      page.getByRole("status").filter({ hasText: "Kein Schlüssel für niemand@example.test" }),
-    ).toBeVisible();
+    await page.getByRole("button", { name: "Vertraulich senden" }).click();
+    await expect(page.getByRole("status").filter({ hasText: "per Link mit Code" })).toBeVisible();
   });
 });

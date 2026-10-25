@@ -318,6 +318,8 @@ export const Composer = ({ accountId, mode, sourceEmailId, prefill }: Props) => 
       const held = encrypt
         ? await pgp.send(outgoing(), folders, hold)
         : await sendEmail(client, outgoing(), folders, hold);
+      // Links go out at once: nothing to take back, nothing held.
+      const kept = held && !(encrypt && pgp.viaLink.length) ? held : null;
       if ((mode === "reply" || mode === "replyAll") && sourceEmailId) {
         // RFC 8621: mark the original as answered.
         // Mailboxes shared only for reading may not allow it; the mail is sent anyway.
@@ -331,9 +333,11 @@ export const Composer = ({ accountId, mode, sourceEmailId, prefill }: Props) => 
       lastSaved.current = changeKey;
       const back = {
         label: later ? m.mail_unsend() : m.mail_undo(),
-        run: () => takeBack(sendAccountId, held, drafts.id),
+        run: () => (kept ? takeBack(sendAccountId, kept, drafts.id) : Promise.resolve()),
       };
-      if (later) {
+      if (!kept) {
+        toast.show(m.secure_sent_toast());
+      } else if (later) {
         toast.show(m.mail_scheduled_toast({ when: sendTimeLabel(later) }), "info", {
           action: back,
           duration: 8000,
@@ -479,6 +483,13 @@ export const Composer = ({ accountId, mode, sourceEmailId, prefill }: Props) => 
         encrypt={encrypt}
         onEncrypt={setEncrypt}
         encryptBlocked={pgp.reason}
+        encryptNote={
+          pgp.viaLink.length
+            ? pgp.viaPgp.length
+              ? m.secure_note_mixed({ pgp: pgp.viaPgp.length, link: pgp.viaLink.length })
+              : m.secure_note_link()
+            : m.pgp_send_on()
+        }
         onDiscard={() => void discard()}
       />
       {pgp.dialog}

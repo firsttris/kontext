@@ -10,6 +10,7 @@ import {
   Folder,
   Inbox,
   Layers,
+  LockKeyhole,
   type LucideIcon,
   Plus,
   Send,
@@ -38,6 +39,7 @@ import {
 import { storageLevel } from "@/lib/storage";
 import { m } from "@/paraglide/messages";
 import { CategoryNav } from "../categories/category-nav";
+import { useSecureMessages } from "../secure/queries";
 import { useMailDrop } from "./mail-drag";
 import { useCreateMailbox, useInboxes, useMailAccounts, useMailboxes, useQuota } from "./queries";
 
@@ -73,6 +75,7 @@ type Props = {
 };
 
 export const MailSidebar = ({ accountId, mailbox, view, query }: Props) => {
+  const secure = useSecureMessages();
   const unified = view !== undefined;
   const { data: mailboxes = [] } = useMailboxes(accountId);
   const accounts = useMailAccounts();
@@ -187,6 +190,13 @@ export const MailSidebar = ({ accountId, mailbox, view, query }: Props) => {
             </Link>
           );
         })}
+        {secure.length ? (
+          <Link to="/secure" search={{}} className={navClass(false)}>
+            <LockKeyhole size={16} strokeWidth={1.75} />
+            <span>{m.secure_list_link()}</span>
+            <Count value={secure.reduce((sum, message) => sum + message.unreadReplies, 0)} />
+          </Link>
+        ) : null}
       </nav>
 
       {accounts.length > 1 ? (

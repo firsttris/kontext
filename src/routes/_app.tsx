@@ -10,6 +10,7 @@ import { useLive } from "@/features/live/use-live";
 import { useInboxes } from "@/features/mail/queries";
 import { keepPushSubscription } from "@/features/notifications/device-settings";
 import { NotificationBell } from "@/features/notifications/notification-bell";
+import { SecureCodesDialog } from "@/features/secure/codes-dialog";
 import { useMe } from "@/features/tasks/queries";
 import { subscribeToChanges } from "@/jmap/push";
 import { totalUnread } from "@/lib/chat";
@@ -59,6 +60,7 @@ function AppLayout() {
     <AppShell bell={<NotificationBell className={railButton(false)} />}>
       <Outlet />
       <CallHost />
+      <SecureCodesDialog />
     </AppShell>
   );
 }

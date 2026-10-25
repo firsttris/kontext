@@ -8,7 +8,7 @@ ein Plan, kein Versprechen; Wünsche und Hinweise gern als
 
 | Funktion | Worum es geht |
 | --- | --- |
-| **Verschlüsselung** | Das [Konzept](docs/encryption.md) in fünf Bausteinen; Grundschutz, persönlicher Schlüssel und PGP in Mails sind fertig, als Nächstes „Vertraulich senden“ mit Link für Empfänger ohne Schlüssel, S/MIME für Behörden und Kanzleien, vertrauliche Unterhaltungen im Chat. |
+| **Verschlüsselung** | Das [Konzept](docs/encryption.md) in fünf Bausteinen; Grundschutz, persönlicher Schlüssel, PGP in Mails und „Vertraulich senden“ mit Link sind fertig, als Nächstes S/MIME für Behörden und Kanzleien, vertrauliche Unterhaltungen im Chat. |
 
 ## Danach
 
@@ -27,6 +27,7 @@ Kleinere Dinge, die beim Bauen aufgefallen sind und noch erledigt werden.
 - [ ] Chat: Reaktionen mit beliebigen Emojis (heute die sieben Schnellwahlen), und im Thread „auch im Kanal zeigen“.
 - [ ] Aufgaben am Kontakt finden Mails nur über die letzten fünf Mails mit der Person im eigenen Postfach; ältere oder solche in info@ zählen nur, wenn die Aufgabe mit der Karte verknüpft ist (geschieht beim Anlegen aus der Mail). Die Verknüpfung „Termin“ wird noch nirgends angelegt.
 - [ ] Erinnerung an Aufgaben auch direkt im Dialog „Neue Aufgabe“ (heute in der geöffneten Aufgabe).
+- [ ] „Vertraulich senden“: den Code per SMS verschicken (braucht einen SMS-Anbieter); Laufzeit des Links wählbar (heute 30 Tage).
 - [ ] PGP: nur unterschreiben (ohne Verschlüsseln) beim Senden; den Betreff mitverschlüsseln (Protected Headers); verschlüsselte Mails in der Unterhaltungsansicht und beim Weiterleiten mit Inhalt.
 - [ ] CalDAV für Aufgaben mit Bestätigung in zwei Schritten: App-Passwörter anlegen können (Thunderbird und Handy fragen keinen Code ab); dazu `sync-collection` für schnelleren Abgleich auf dem iPhone.
 - [ ] **Regeln für Mitarbeiter** in der Firmenverwaltung (heute nur für gemeinsame Postfächer und die eigenen).
@@ -56,6 +57,9 @@ Kleinere Dinge, die beim Bauen aufgefallen sind und noch erledigt werden.
 
 ## Zuletzt fertig geworden
 
+Verschlüsselung, Baustein 4: „Vertraulich senden“ – PGP für Empfänger mit Schlüssel, für alle
+anderen ein Link mit Code auf den eigenen Server (Schlüssel nur im Link), Antworten dort, Übersicht
+„Vertraulich gesendet“.
 Verschlüsselung, Baustein 3: PGP-Mails lesen (entschlüsseln im Browser, Unterschrift prüfen) und
 verschlüsselt und unterschrieben senden, mit Anhängen; Antworten darauf gehen verschlüsselt.
 Verschlüsselung, Baustein 2: persönlicher OpenPGP-Schlüssel (anlegen, importieren, mit Passphrase

@@ -100,7 +100,7 @@ test.describe("Newsletter abbestellen", () => {
     await expect(dialog).toContainText(`Abmelde-Mail an ${address("max")}`);
     await dialog.getByRole("button", { name: "Abbestellen" }).click();
     await expect(page.getByText("Abbestellt", { exact: true })).toBeVisible();
-    await page.getByRole("link", { name: "Gesendet" }).click();
+    await page.getByRole("link", { name: "Gesendet", exact: true }).click();
     await expect(page.getByRole("list", { name: "Gesendet" })).toContainText("Abmelden Sandra");
   });
 });

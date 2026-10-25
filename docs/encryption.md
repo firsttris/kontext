@@ -6,7 +6,7 @@ Funktionen (Suche, Regeln, Benachrichtigungen mit Text, Aufgaben aus Mails) brau
 Server, der die Inhalte lesen kann. Ende-zu-Ende gibt es dort, wo es zählt: nach außen und für
 ausgewählte vertrauliche Unterhaltungen.
 
-Stand: Baustein 1 bis 3 sind umgesetzt, 4 und 5 geplant ([Roadmap](https://github.com/firsttris/kontext/blob/main/ROADMAP.md)).
+Stand: Baustein 1 bis 4 sind umgesetzt (S/MIME in 4 noch nicht), 5 geplant ([Roadmap](https://github.com/firsttris/kontext/blob/main/ROADMAP.md)).
 
 ## Wovor geschützt wird
 
@@ -96,13 +96,26 @@ Ein Schalter für Mails nach außen; Kontext nimmt je Empfänger den besten Weg:
 1. **Hat einen PGP-Schlüssel** → PGP (Baustein 3).
 2. **Hat ein S/MIME-Zertifikat** (häufig bei Behörden und Kanzleien) → S/MIME. Eigene
    Zertifikate werden wie PGP-Schlüssel verwahrt (PKCS#12, mit Passphrase).
-3. **Hat nichts davon** → eine Mail mit einem Link. Die Nachricht samt Anhängen bleibt
-   verschlüsselt auf dem eigenen Kontext-Server; der Empfänger öffnet sie mit einem Code (per SMS
-   oder mündlich), liest, lädt Anhänge und antwortet dort – die Antwort kommt als Mail an. Links
-   laufen ab, jeder Abruf wird festgehalten. So machen es DATEV und Telekom, nur bleiben die
-   Daten im Haus.
+3. **Hat nichts davon** → eine Mail mit einem Link (`/s/<id>#<schlüssel>`). Umgesetzt so:
+   - Der Browser des Absenders verschlüsselt Text, HTML und Anhänge mit einem neuen AES-GCM-
+     Schlüssel (`src/lib/secure.ts`). Der Schlüssel steht nur im Link hinter `#` – diesen Teil
+     schickt kein Browser an einen Server; der Kontext-Server bewahrt nur Verschlüsseltes auf
+     (`secure/` neben der Datenbank, `server/secure/`).
+   - Zweiter Schlüssel ist ein **Code** (acht Zeichen, „K7QP-2MXR“), den der Absender nach dem
+     Senden angezeigt bekommt und auf anderem Weg weitergibt (Telefon, SMS). Der Server prüft ihn
+     (scrypt), fünf falsche sperren die Nachricht; ein neuer Code öffnet sie wieder.
+   - Der Empfänger öffnet die Seite ohne Anmeldung, gibt den Code ein, liest, lädt Anhänge und
+     antwortet dort – die Antwort wird im Browser genauso verschlüsselt.
+   - Der Absender sieht unter **„Vertraulich gesendet“** (in der Mail-Seitenleiste), ob geöffnet
+     und beantwortet wurde, und liest Inhalt und Antworten: Den Schlüssel jeder Nachricht
+     bewahrt der Server mit dem persönlichen OpenPGP-Schlüssel des Absenders verschlüsselt auf
+     (Baustein 2) – lesbar nur nach dem Entsperren. Beim ersten Öffnen und bei jeder Antwort kommt
+     eine Benachrichtigung.
+   - Links gelten 30 Tage, dann löscht der Server die Nachricht; zurückziehen geht jederzeit.
+   - Seite und Mail an Empfänger von außen sprechen mit „Sie“ an.
 
-Vor dem Senden zeigt Kontext je Empfänger, welcher Weg genommen wird.
+Im Fenster „Neue Mail“ heißt das Schloss „Vertraulich senden“; der Hinweis daneben sagt, wie viele
+Empfänger PGP und wie viele einen Link bekommen. Mit Links gibt es keine „Rückgängig“-Frist.
 
 ## Baustein 5: vertrauliche Unterhaltungen im Chat
 

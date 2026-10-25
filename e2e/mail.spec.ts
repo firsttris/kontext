@@ -139,7 +139,7 @@ test.describe("Mail", () => {
     await expect(page.getByRole("status")).toHaveText("Mail gesendet.");
     await expect.poll(() => inboxSubjects("anna")).toContain(subject);
 
-    await page.getByRole("link", { name: "Gesendet" }).click();
+    await page.getByRole("link", { name: "Gesendet", exact: true }).click();
     await expect(page.getByRole("list", { name: "Gesendet" }).getByText(subject)).toBeVisible();
   });
 

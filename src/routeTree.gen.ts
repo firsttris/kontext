@@ -16,9 +16,11 @@ import { Route as AppCalendarRouteImport } from './routes/_app/calendar'
 import { Route as AppChatRouteImport } from './routes/_app/chat'
 import { Route as AppComposeRouteImport } from './routes/_app/compose'
 import { Route as AppContactsRouteImport } from './routes/_app/contacts'
+import { Route as AppSecureRouteImport } from './routes/_app/secure'
 import { Route as AppSettingsRouteImport } from './routes/_app/settings'
 import { Route as AppTasksRouteImport } from './routes/_app/tasks'
 import { Route as MeetIdRouteImport } from './routes/meet.$id'
+import { Route as SIdRouteImport } from './routes/s.$id'
 import { Route as AppMailIndexRouteImport } from './routes/_app/mail.index'
 import { Route as AppMailAccountIdMailboxIdRouteImport } from './routes/_app/mail.$accountId.$mailboxId'
 
@@ -56,6 +58,11 @@ const AppContactsRoute = AppContactsRouteImport.update({
   path: '/contacts',
   getParentRoute: () => AppRoute,
 } as any)
+const AppSecureRoute = AppSecureRouteImport.update({
+  id: '/secure',
+  path: '/secure',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppSettingsRoute = AppSettingsRouteImport.update({
   id: '/settings',
   path: '/settings',
@@ -69,6 +76,11 @@ const AppTasksRoute = AppTasksRouteImport.update({
 const MeetIdRoute = MeetIdRouteImport.update({
   id: '/meet/$id',
   path: '/meet/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SIdRoute = SIdRouteImport.update({
+  id: '/s/$id',
+  path: '/s/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AppMailIndexRoute = AppMailIndexRouteImport.update({
@@ -90,9 +102,11 @@ export interface FileRoutesByFullPath {
   '/chat': typeof AppChatRoute
   '/compose': typeof AppComposeRoute
   '/contacts': typeof AppContactsRoute
+  '/secure': typeof AppSecureRoute
   '/settings': typeof AppSettingsRoute
   '/tasks': typeof AppTasksRoute
   '/meet/$id': typeof MeetIdRoute
+  '/s/$id': typeof SIdRoute
   '/mail/': typeof AppMailIndexRoute
   '/mail/$accountId/$mailboxId': typeof AppMailAccountIdMailboxIdRoute
 }
@@ -102,9 +116,11 @@ export interface FileRoutesByTo {
   '/chat': typeof AppChatRoute
   '/compose': typeof AppComposeRoute
   '/contacts': typeof AppContactsRoute
+  '/secure': typeof AppSecureRoute
   '/settings': typeof AppSettingsRoute
   '/tasks': typeof AppTasksRoute
   '/meet/$id': typeof MeetIdRoute
+  '/s/$id': typeof SIdRoute
   '/': typeof AppIndexRoute
   '/mail': typeof AppMailIndexRoute
   '/mail/$accountId/$mailboxId': typeof AppMailAccountIdMailboxIdRoute
@@ -117,9 +133,11 @@ export interface FileRoutesById {
   '/_app/chat': typeof AppChatRoute
   '/_app/compose': typeof AppComposeRoute
   '/_app/contacts': typeof AppContactsRoute
+  '/_app/secure': typeof AppSecureRoute
   '/_app/settings': typeof AppSettingsRoute
   '/_app/tasks': typeof AppTasksRoute
   '/meet/$id': typeof MeetIdRoute
+  '/s/$id': typeof SIdRoute
   '/_app/': typeof AppIndexRoute
   '/_app/mail/': typeof AppMailIndexRoute
   '/_app/mail/$accountId/$mailboxId': typeof AppMailAccountIdMailboxIdRoute
@@ -133,9 +151,11 @@ export interface FileRouteTypes {
     | '/chat'
     | '/compose'
     | '/contacts'
+    | '/secure'
     | '/settings'
     | '/tasks'
     | '/meet/$id'
+    | '/s/$id'
     | '/mail/'
     | '/mail/$accountId/$mailboxId'
   fileRoutesByTo: FileRoutesByTo
@@ -145,9 +165,11 @@ export interface FileRouteTypes {
     | '/chat'
     | '/compose'
     | '/contacts'
+    | '/secure'
     | '/settings'
     | '/tasks'
     | '/meet/$id'
+    | '/s/$id'
     | '/'
     | '/mail'
     | '/mail/$accountId/$mailboxId'
@@ -159,9 +181,11 @@ export interface FileRouteTypes {
     | '/_app/chat'
     | '/_app/compose'
     | '/_app/contacts'
+    | '/_app/secure'
     | '/_app/settings'
     | '/_app/tasks'
     | '/meet/$id'
+    | '/s/$id'
     | '/_app/'
     | '/_app/mail/'
     | '/_app/mail/$accountId/$mailboxId'
@@ -171,6 +195,7 @@ export interface RootRouteChildren {
   AppRoute: typeof AppRouteWithChildren
   LoginRoute: typeof LoginRoute
   MeetIdRoute: typeof MeetIdRoute
+  SIdRoute: typeof SIdRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -224,6 +249,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppContactsRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/secure': {
+      id: '/_app/secure'
+      path: '/secure'
+      fullPath: '/secure'
+      preLoaderRoute: typeof AppSecureRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/settings': {
       id: '/_app/settings'
       path: '/settings'
@@ -243,6 +275,13 @@ declare module '@tanstack/react-router' {
       path: '/meet/$id'
       fullPath: '/meet/$id'
       preLoaderRoute: typeof MeetIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/s/$id': {
+      id: '/s/$id'
+      path: '/s/$id'
+      fullPath: '/s/$id'
+      preLoaderRoute: typeof SIdRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_app/mail/': {
@@ -267,6 +306,7 @@ interface AppRouteChildren {
   AppChatRoute: typeof AppChatRoute
   AppComposeRoute: typeof AppComposeRoute
   AppContactsRoute: typeof AppContactsRoute
+  AppSecureRoute: typeof AppSecureRoute
   AppSettingsRoute: typeof AppSettingsRoute
   AppTasksRoute: typeof AppTasksRoute
   AppIndexRoute: typeof AppIndexRoute
@@ -279,6 +319,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppChatRoute: AppChatRoute,
   AppComposeRoute: AppComposeRoute,
   AppContactsRoute: AppContactsRoute,
+  AppSecureRoute: AppSecureRoute,
   AppSettingsRoute: AppSettingsRoute,
   AppTasksRoute: AppTasksRoute,
   AppIndexRoute: AppIndexRoute,
@@ -292,6 +333,7 @@ const rootRouteChildren: RootRouteChildren = {
   AppRoute: AppRouteWithChildren,
   LoginRoute: LoginRoute,
   MeetIdRoute: MeetIdRoute,
+  SIdRoute: SIdRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

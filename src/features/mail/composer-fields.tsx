@@ -156,6 +156,7 @@ export const ComposerActions = ({
   encrypt,
   onEncrypt,
   encryptBlocked,
+  encryptNote,
 }: {
   receipt: boolean;
   onReceipt: (on: boolean) => void;
@@ -163,6 +164,8 @@ export const ComposerActions = ({
   onEncrypt: (on: boolean) => void;
   /** Why it cannot be encrypted now, or null. */
   encryptBlocked: string | null;
+  /** What happens to whom when sent confidentially. */
+  encryptNote: string;
   sending: boolean;
   canSend: boolean;
   onSendLater: (at: Date) => void;
@@ -218,7 +221,7 @@ export const ComposerActions = ({
         aria-label={m.pgp_send_toggle()}
         title={
           encrypt
-            ? (encryptBlocked ?? `${m.pgp_send_on()} ${m.pgp_send_draft_hint()}`)
+            ? (encryptBlocked ?? `${encryptNote} ${m.pgp_send_draft_hint()}`)
             : m.pgp_send_toggle()
         }
         aria-pressed={encrypt}
@@ -238,7 +241,7 @@ export const ComposerActions = ({
           role="status"
           className={`hidden min-w-0 truncate text-[12px] sm:inline ${encryptBlocked ? "text-warn" : "text-accent"}`}
         >
-          {encryptBlocked ?? m.pgp_send_on()}
+          {encryptBlocked ?? encryptNote}
         </span>
       ) : null}
       <div className="flex-1" />

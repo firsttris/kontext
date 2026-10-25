@@ -41,7 +41,7 @@ test.describe("Senden rückgängig und später senden", () => {
       page.getByRole("status").filter({ hasText: /^Wird .* 08:00 gesendet\./ }),
     ).toBeVisible();
 
-    await page.getByRole("link", { name: "Gesendet" }).click();
+    await page.getByRole("link", { name: "Gesendet", exact: true }).click();
     await page.getByRole("link", { name: /^Geplant/ }).click();
     const list = page.getByRole("list", { name: "Gesendet" });
     const row = list.getByRole("link", { name: new RegExp(subject) });
@@ -52,7 +52,7 @@ test.describe("Senden rückgängig und später senden", () => {
     await expect(page.getByText(/^Wird .* 08:00 gesendet\./)).toBeVisible();
     await page.getByRole("button", { name: "Nicht senden" }).click();
     await expect(page.getByRole("textbox", { name: "Betreff" })).toHaveValue(subject);
-    await page.getByRole("link", { name: "Gesendet" }).click();
+    await page.getByRole("link", { name: "Gesendet", exact: true }).click();
     await page.getByRole("link", { name: /^Geplant/ }).click();
     await expect(list.getByText(subject)).toHaveCount(0);
     expect(await inboxSubjects("anna")).not.toContain(subject);

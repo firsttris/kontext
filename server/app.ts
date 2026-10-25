@@ -49,6 +49,8 @@ import { createMailWatch } from "./push/mail-watch";
 import { createPusher } from "./push/pusher";
 import { createPushRoutes } from "./push/routes";
 import { createPushStore, loadVapidKeys } from "./push/store";
+import { createSecurePublicRoutes, createSecureRoutes } from "./secure/routes";
+import { createSecureStore } from "./secure/store";
 import { createSessionInfo } from "./session-info";
 import { createSnippetRoutes } from "./snippets/routes";
 import { createSnippetStore } from "./snippets/store";
@@ -340,6 +342,16 @@ export const createApp = async (env: Env) => {
   const pgp = createPgpStore(db);
   app.route("/api/pgp", createPgpRoutes({ store: pgp, accountsOf }));
   app.route("/.well-known/openpgpkey", createWkdRoutes(pgp));
+  // "Vertraulich senden": encrypted messages for recipients without a key, opened with a code.
+  const secure = createSecureStore(db, join(dirname(env.DATABASE_PATH), "secure"));
+  app.route("/api/secure", createSecureRoutes({ store: secure, accountsOf }));
+  app.route(
+    "/api/secure-public",
+    createSecurePublicRoutes({ store: secure, notify: pusher.notify }),
+  );
+  const pruneSecure = () => void secure.pruneExpired(new Date()).catch(() => undefined);
+  pruneSecure();
+  setInterval(pruneSecure, 3_600_000).unref();
   // The task boards for Thunderbird and phone apps (CalDAV), signed in with the mail password.
   app.all("/.well-known/caldav", (c) => c.redirect("/dav/", 301));
   app.route(

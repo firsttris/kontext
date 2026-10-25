@@ -469,3 +469,42 @@ export const pgpKeys = sqliteTable(
   },
   (table) => [primaryKey({ columns: [table.memberId, table.email] })],
 );
+
+/**
+ * "Vertraulich senden" (server/secure/): a message for a recipient without a key, read on a page
+ * with a code. The content lies encrypted next to the database (`secure/<id>`); its key is only in
+ * the link (after "#") and, for the sender, locked with their own OpenPGP key (`senderKey`).
+ */
+export const secureMessages = sqliteTable(
+  "secure_messages",
+  {
+    id: text("id").primaryKey(),
+    memberId: text("member_id").notNull(),
+    fromName: text("from_name").notNull(),
+    fromEmail: text("from_email").notNull(),
+    toEmail: text("to_email").notNull(),
+    /** The message key as an OpenPGP message to the sender's own key. */
+    senderKey: text("sender_key").notNull(),
+    /** scrypt of the code, with its salt; wrong tries count, five lock it. */
+    codeHash: text("code_hash").notNull(),
+    codeSalt: text("code_salt").notNull(),
+    failedTries: integer("failed_tries").notNull().default(0),
+    size: integer("size").notNull(),
+    createdAt: integer("created_at", { mode: "timestamp_ms" }).notNull(),
+    expiresAt: integer("expires_at", { mode: "timestamp_ms" }).notNull(),
+    openedAt: integer("opened_at", { mode: "timestamp_ms" }),
+    openCount: integer("open_count").notNull().default(0),
+  },
+  (table) => [index("secure_messages_member").on(table.memberId)],
+);
+
+/** Answers from the recipient's page, encrypted with the message's key. */
+export const secureReplies = sqliteTable("secure_replies", {
+  id: text("id").primaryKey(),
+  messageId: text("message_id")
+    .notNull()
+    .references(() => secureMessages.id, { onDelete: "cascade" }),
+  ciphertext: text("ciphertext").notNull(),
+  createdAt: integer("created_at", { mode: "timestamp_ms" }).notNull(),
+  readAt: integer("read_at", { mode: "timestamp_ms" }),
+});

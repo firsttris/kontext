@@ -77,7 +77,7 @@ export const SignedNote = ({ accountId, email }: { accountId: string; email: Ema
   );
 };
 
-const Unlock = () => {
+export const Unlock = () => {
   const { data: own } = useOwnKey();
   const [passphrase, setPassphrase] = useState("");
   const [wrong, setWrong] = useState(false);
