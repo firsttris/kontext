@@ -88,6 +88,10 @@ export const resetPassword = (id: string) =>
 export const resetTwoFactor = (id: string) =>
   send<{ ok: true }>("DELETE", `/employees/${encodeURIComponent(id)}/two-factor`);
 
+/** Every colleague sees when everyone is busy; the number of calendars changed. */
+export const showAvailabilityToAll = () =>
+  send<{ calendars: number }>("POST", "/employees/availability");
+
 export const getEmployeeVacation = (id: string) =>
   send<Vacation & { departed: boolean }>("GET", `/employees/${encodeURIComponent(id)}/vacation`);
 

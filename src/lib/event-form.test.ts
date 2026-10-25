@@ -193,4 +193,12 @@ describe("video meeting", () => {
     expect(addMeetingNote(notes, link)).toBe(notes);
     expect(removeMeetingNote(notes, link)).toBe("Bitte Pläne mitbringen.");
   });
+  it("writes whether the time counts as busy and reads it back", () => {
+    const form = { ...newEventForm("2026-10-23T10:00:00"), title: "Urlaub planen" };
+    expect(formToEvent(form, me).freeBusyStatus).toBe("busy");
+    const free = formToEvent({ ...form, showAs: "free" }, me);
+    expect(free.freeBusyStatus).toBe("free");
+    const event = { id: "e", calendarIds: {}, ...free } as unknown as CalendarEvent;
+    expect(eventToForm(event, []).showAs).toBe("free");
+  });
 });

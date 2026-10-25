@@ -9,9 +9,9 @@ import { Dialog } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/components/ui/toast";
 import { principalName } from "@/jmap/principals";
-import { sharedWith } from "@/lib/sharing";
+import { everyoneAccess, sharedWith } from "@/lib/sharing";
 import { m } from "@/paraglide/messages";
-import { usePrincipals } from "../sharing/queries";
+import { useColleagues, usePrincipals } from "../sharing/queries";
 import { ShareDialog } from "../sharing/share-dialog";
 import { setCalendarHidden } from "./hidden-calendars";
 import { type CalendarRef, useCalendarMutations, useCalendarRefs } from "./queries";
@@ -92,13 +92,24 @@ const Row = ({ calendar, manage }: { calendar: CalendarRef; manage: boolean }) =
 
 const SharedWith = ({ calendar }: { calendar: CalendarRef }) => {
   const { data: principals = [] } = usePrincipals();
-  const names = sharedWith(calendar.calendar.shareWith).map((id) => {
+  const { colleagues } = useColleagues();
+  const shareWith = calendar.calendar.shareWith;
+  const names = sharedWith(shareWith).map((id) => {
     const principal = principals.find((p) => p.id === id);
     return principal ? principalName(principal) : id;
   });
+  const everyone =
+    everyoneAccess(
+      shareWith,
+      colleagues.map((p) => p.id),
+    ) === "availability";
+  const parts = [
+    names.length ? m.calendar_shared_with({ names: names.join(", ") }) : "",
+    everyone ? m.calendar_availability_everyone() : "",
+  ].filter(Boolean);
   return (
     <span className="truncate text-[12px] text-muted">
-      {names.length ? m.calendar_shared_with({ names: names.join(", ") }) : m.calendar_private()}
+      {parts.length ? parts.join(" · ") : m.calendar_private()}
     </span>
   );
 };
@@ -142,8 +153,9 @@ const OwnActions = ({ calendar }: { calendar: CalendarRef }) => {
           kind="calendar"
           hint={m.sharing_hint_calendar()}
           shareWith={calendar.calendar.shareWith}
-          onSave={async (shareWith) => {
-            await share.mutateAsync({ calendar, shareWith });
+          includeInAvailability={calendar.calendar.includeInAvailability !== "none"}
+          onSave={async (shareWith, { includeInAvailability }) => {
+            await share.mutateAsync({ calendar, shareWith, includeInAvailability });
             toast.show(m.sharing_saved());
           }}
         />

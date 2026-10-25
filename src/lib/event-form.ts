@@ -25,6 +25,8 @@ export type EventForm = {
   /** The link of the event's Kontext video meeting, or "". */
   meeting: string;
   attendees: string;
+  /** Whether the time counts as busy for colleagues planning a meeting (RFC 8984 freeBusyStatus). */
+  showAs: "busy" | "free";
   description: string;
   /** How the event repeats; null for a rule the form cannot show, which is kept as it is. */
   recurrence: RepeatForm | null;
@@ -53,6 +55,7 @@ export const eventToForm = (
       .map(([, p]) => participantEmail(p))
       .filter((email) => email && !mine.has(email.toLowerCase()))
       .join(", "),
+    showAs: event.freeBusyStatus === "free" ? "free" : "busy",
     description: event.description ?? "",
     recurrence: fromRecurrenceRule((series ?? event).recurrenceRule),
   };
@@ -71,10 +74,18 @@ export const newEventForm = (startLocal: string, minutes = 60): EventForm => {
     location: "",
     meeting: "",
     attendees: "",
+    showAs: "busy",
     description: "",
     recurrence: NO_REPEAT,
   };
 };
+
+/** The addresses in the attendee field ("a@x.de, b@x.de"). */
+export const attendeeEmails = (text: string): string[] =>
+  text
+    .split(/[,;\s]+/)
+    .map((e) => e.trim())
+    .filter((e) => e.includes("@"));
 
 export type FormProblem = "title" | "order" | "repeatEnd" | null;
 
@@ -112,10 +123,7 @@ export const formToEvent = (
             60_000,
         ),
       );
-  const emails = form.attendees
-    .split(/[,;\s]+/)
-    .map((e) => e.trim())
-    .filter((e) => e.includes("@"));
+  const emails = attendeeEmails(form.attendees);
   const previous = new Map(
     attendees(existing ?? ({} as CalendarEvent)).map(([id, p]) => [
       participantEmail(p).toLowerCase(),
@@ -168,6 +176,7 @@ export const formToEvent = (
     virtualLocations: withMeeting(existing?.virtualLocations, form.meeting),
     participants,
     organizerCalendarAddress: participants ? `mailto:${organizer.email}` : null,
+    freeBusyStatus: form.showAs,
     ...(withRecurrence && form.recurrence
       ? { recurrenceRule: toRecurrenceRule(form.recurrence) }
       : {}),

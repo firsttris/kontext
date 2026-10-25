@@ -18,7 +18,9 @@ import {
   validateEventForm,
 } from "@/lib/event-form";
 import { type CalendarEvent, isInstance, toLocal } from "@/lib/jscalendar";
+import { formAt, formSlot } from "@/lib/planning";
 import { m } from "@/paraglide/messages";
+import { AvailabilityPanel } from "./availability-panel";
 import { calendarLabel, useCalendarRefs, useEventMutations, useMyAddresses } from "./queries";
 import { RepeatFields } from "./repeat-fields";
 
@@ -61,6 +63,8 @@ export const EventEditor = ({ event, series, start, onDone, onCancel }: Props) =
       : newEventForm(`${start ?? `${toLocal(new Date()).slice(0, 11)}09:00`}:00`.slice(0, 19)),
   );
   const [form, setForm] = useState(initial);
+  // Its old time is in every attendee's calendar already; planning leaves it out.
+  const [editing] = useState(() => (event ? formSlot(initial) : null));
   const [scope, setScope] = useState<Scope>("this");
   const [problem, setProblem] = useState<string | null>(null);
   const set = (key: keyof EventForm) => (e: { target: { value: string } }) =>
@@ -162,7 +166,7 @@ export const EventEditor = ({ event, series, start, onDone, onCancel }: Props) =
         />
         {m.calendar_event_all_day()}
       </label>
-      <div className="grid grid-cols-1 gap-3">
+      <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
         <TimeFields
           legend={m.calendar_event_start()}
           date={form.date}
@@ -180,6 +184,31 @@ export const EventEditor = ({ event, series, start, onDone, onCancel }: Props) =
           onTime={set("endTime")}
         />
       </div>
+      <Label>
+        {m.calendar_event_attendees()}
+        <Input
+          value={form.attendees}
+          onChange={set("attendees")}
+          placeholder={m.calendar_event_attendees_hint()}
+        />
+      </Label>
+      <AvailabilityPanel
+        form={form}
+        editing={editing}
+        onPick={(slot) => setForm((current) => formAt(current, slot))}
+      />
+      <Label>
+        {m.calendar_event_show_as()}
+        <Select
+          value={form.showAs}
+          onChange={(e) =>
+            setForm((current) => ({ ...current, showAs: e.target.value as EventForm["showAs"] }))
+          }
+        >
+          <option value="busy">{m.calendar_event_show_busy()}</option>
+          <option value="free">{m.calendar_event_show_free()}</option>
+        </Select>
+      </Label>
       {!instance || scope === "series" ? (
         <RepeatFields
           value={form.recurrence}
@@ -197,14 +226,6 @@ export const EventEditor = ({ event, series, start, onDone, onCancel }: Props) =
           setForm((current) => ({ ...current, meeting, description }))
         }
       />
-      <Label>
-        {m.calendar_event_attendees()}
-        <Input
-          value={form.attendees}
-          onChange={set("attendees")}
-          placeholder={m.calendar_event_attendees_hint()}
-        />
-      </Label>
       <Label>
         {m.calendar_event_notes()}
         <Textarea value={form.description} onChange={set("description")} />

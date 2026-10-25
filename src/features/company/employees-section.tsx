@@ -1,15 +1,17 @@
 /** The company's people with their state; a click opens the person. */
-import { UserPlus } from "lucide-react";
+import { CalendarClock, UserPlus } from "lucide-react";
 import { useState } from "react";
 import { Avatar } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
+import { useToast } from "@/components/ui/toast";
 import { formatSize } from "@/lib/format";
 import { m } from "@/paraglide/messages";
-import type { Company } from "./api";
+import { type Company, showAvailabilityToAll } from "./api";
 import { EmployeeDialog, NewEmployeeDialog } from "./employee-dialogs";
 import { Badge } from "./fields";
 import { CompanyGate } from "./gate";
 import { OffboardingDialog } from "./offboarding-dialog";
+import { useCompanyChange } from "./queries";
 import { VacationDialog } from "./vacation-dialog";
 
 export const EmployeesSection = () => (
@@ -58,6 +60,7 @@ const Employees = ({ company }: { company: Company }) => {
           </li>
         ))}
       </ul>
+      <AvailabilityForAll />
       {open === "new" ? (
         <NewEmployeeDialog company={company} onClose={() => setOpen(null)} />
       ) : employee ? (
@@ -79,5 +82,36 @@ const Employees = ({ company }: { company: Company }) => {
         <OffboardingDialog company={company} employee={other} onClose={() => setNext(null)} />
       ) : null}
     </>
+  );
+};
+
+/**
+ * New people see their colleagues' free and busy times on their own (server: calendars.welcome);
+ * this turns it on for everyone at once, e.g. after the move to Kontext.
+ */
+const AvailabilityForAll = () => {
+  const toast = useToast();
+  const change = useCompanyChange(showAvailabilityToAll);
+  const run = async () => {
+    try {
+      const { calendars } = await change.mutateAsync(undefined);
+      toast.show(m.company_availability_done({ count: calendars }));
+    } catch (error) {
+      toast.show(m.common_error({ message: (error as Error).message }), "error");
+    }
+  };
+  return (
+    <section
+      aria-label={m.company_availability()}
+      className="flex flex-col items-start gap-3 rounded-xl border border-border p-4 md:flex-row md:items-center"
+    >
+      <span className="flex min-w-0 flex-1 flex-col gap-0.5">
+        <span className="text-[14px] font-medium">{m.company_availability()}</span>
+        <span className="text-[13px] text-muted">{m.company_availability_hint()}</span>
+      </span>
+      <Button disabled={change.isPending} onClick={() => void run()}>
+        <CalendarClock size={15} /> {m.company_availability_on()}
+      </Button>
+    </section>
   );
 };

@@ -66,6 +66,7 @@ const knownMailboxes = (loaded: Loaded, wanted: string[]) =>
 export const employeeRoutes = ({
   management,
   mailstore,
+  calendars,
   settings,
   endSessions,
   random,
@@ -96,7 +97,21 @@ export const employeeRoutes = ({
     // New people start with the company signature; a refusal there does not undo the account.
     const signature = await settings.signature();
     if (signature) await applySignature(mailstore, created.value, signature);
+    // Colleagues see when they are busy and the other way round, like in Outlook; a refusal
+    // there does not undo the account either.
+    await calendars.welcome(created.value, [
+      ...loaded.company.employees.map((employee) => employee.id),
+      created.value,
+    ]);
     return c.json({ id: created.value, password }, 201);
+  });
+
+  /** Every colleague sees every calendar's busy times, also where someone took it back. */
+  app.post("/availability", async (c) => {
+    const { employees } = c.get("loaded").company;
+    const result = await calendars.showEveryone(employees.map((employee) => employee.id));
+    if (!result.ok) return bad(result.error);
+    return c.json({ calendars: result.value });
   });
 
   app.patch("/:id", async (c) => {

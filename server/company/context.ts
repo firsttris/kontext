@@ -15,6 +15,7 @@ import {
   type StalwartAccount,
   toCompany,
 } from "./accounts";
+import type { Calendars } from "./calendars";
 import type { Mailstore } from "./mailstore";
 import type { Management } from "./management";
 import type { CompanySettings } from "./settings";
@@ -23,6 +24,8 @@ import type { Folder } from "./sharing";
 export type CompanyDeps = {
   management: Management;
   mailstore: Mailstore;
+  /** Free and busy times of the company's calendars. */
+  calendars: Calendars;
   settings: CompanySettings;
   /** Categories of the shared mailboxes, for the rules that set them. */
   categories: CategoryStore;
