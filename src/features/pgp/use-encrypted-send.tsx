@@ -16,7 +16,7 @@ import { sendRaw } from "@/jmap/send-raw";
 import type { EmailAddress } from "@/jmap/types";
 import { escapeHtml } from "@/lib/html";
 import { unlockKey } from "@/lib/pgp";
-import { encryptMail } from "@/lib/pgp-mail";
+import { encryptMail, signMail } from "@/lib/pgp-mail";
 import {
   base64ToBytes,
   bytesToBase64,
@@ -27,7 +27,7 @@ import {
   secureCode,
   wrapForSender,
 } from "@/lib/secure";
-import { type OwnSmime, openP12, smimeMail } from "@/lib/smime";
+import { type OwnSmime, openP12, smimeMail, smimeSignedMail } from "@/lib/smime";
 import { m } from "@/paraglide/messages";
 import { send as api, type SentCode, showCodes } from "../secure/queries";
 import { keepSmimeOpen, useKnownCerts, useOpenSmime, useOwnCert } from "../smime/queries";
@@ -110,6 +110,63 @@ export const useEncryptedSend = (from: string | undefined, recipients: string[])
           setAsking({ kind: "smime", resolve: resolve as (value: unknown) => void, reject }),
         );
 
+  /** The mail's attachments, fetched to go inside what is signed or encrypted. */
+  const filesOf = (mail: OutgoingEmail) =>
+    Promise.all(
+      mail.attachments.map(async (file) => ({
+        name: file.name,
+        type: file.type,
+        bytes: new Uint8Array(
+          await (
+            await client.download(mail.accountId, file.blobId, file.name, file.type)
+          ).arrayBuffer(),
+        ),
+      })),
+    );
+
+  /**
+   * Signing alone, without encrypting: with the S/MIME certificate where there is one (every mail
+   * program checks it without anything else), else with the PGP key; null when neither belongs to
+   * the sending address.
+   */
+  const signWith: "smime" | "pgp" | null = smimeUsable ? "smime" : forSender ? "pgp" : null;
+
+  /** The mail signed, not encrypted, to everyone; "Rückgängig" and "Später" hold as usual. */
+  const sendSigned = async (
+    mail: OutgoingEmail,
+    folders: { draftsId: string; sentId: string },
+    hold?: Hold,
+  ) => {
+    if (!signWith) throw new Error(m.sign_no_key());
+    const id = crypto.randomUUID();
+    const envelope = {
+      from: { name: mail.identity.name || null, email: mail.identity.email },
+      to: mail.to,
+      cc: mail.cc,
+      subject: mail.subject,
+      date: new Date(),
+      messageId: `${id}@${mail.identity.email.split("@")[1]}`,
+      inReplyTo: mail.inReplyTo,
+      references: mail.references,
+      extra: mail.autocrypt ? [foldHeader("Autocrypt", mail.autocrypt)] : [],
+    };
+    const content = { text: mail.text, html: mail.html, attachments: await filesOf(mail) };
+    const raw =
+      signWith === "smime"
+        ? await smimeSignedMail({ envelope, content, own: await ensureCert(), id })
+        : await signMail({ envelope, content, ownKey: await ensureUnlocked(), id });
+    return sendRaw(client, {
+      accountId: mail.accountId,
+      raw,
+      identityId: mail.identity.id,
+      from: mail.identity.email,
+      recipients: [...mail.to, ...mail.cc, ...mail.bcc].map((address) => address.email),
+      ...folders,
+      hold,
+      replacesDraft: mail.draftId,
+    });
+  };
+
   /** One link per recipient without a key; the mail that brings it; its code. */
   const sendLink = async (
     mail: OutgoingEmail,
@@ -163,17 +220,7 @@ export const useEncryptedSend = (from: string | undefined, recipients: string[])
     const key = viaPgp.length ? await ensureUnlocked() : null;
     const cert = viaSmime.length ? await ensureCert() : null;
     const id = crypto.randomUUID();
-    const attachments = await Promise.all(
-      mail.attachments.map(async (file) => ({
-        name: file.name,
-        type: file.type,
-        bytes: new Uint8Array(
-          await (
-            await client.download(mail.accountId, file.blobId, file.name, file.type)
-          ).arrayBuffer(),
-        ),
-      })),
-    );
+    const attachments = await filesOf(mail);
     const everyone = [...mail.to, ...mail.cc, ...mail.bcc];
     const among = (group: string[]) => (list: EmailAddress[]) =>
       list.filter((a) => group.includes(a.email.toLowerCase()));
@@ -291,6 +338,8 @@ export const useEncryptedSend = (from: string | undefined, recipients: string[])
     viaLink,
     linkDays,
     setLinkDays,
+    signWith,
+    sendSigned,
   };
 };
 

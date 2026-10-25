@@ -1,5 +1,14 @@
 /** The parts of the composer around the editor: header fields, attachments, action bar. */
-import { LockKeyhole, LockKeyholeOpen, MailCheck, Paperclip, Send, Trash2, X } from "lucide-react";
+import {
+  LockKeyhole,
+  LockKeyholeOpen,
+  MailCheck,
+  Paperclip,
+  Send,
+  Signature,
+  Trash2,
+  X,
+} from "lucide-react";
 import { useRef } from "react";
 import { Button } from "@/components/ui/button";
 import type { OutgoingAttachment } from "@/jmap/mail";
@@ -160,6 +169,9 @@ export const ComposerActions = ({
   encryptNote,
   linkDays,
   onLinkDays,
+  sign,
+  onSign,
+  signWith,
 }: {
   receipt: boolean;
   onReceipt: (on: boolean) => void;
@@ -172,6 +184,10 @@ export const ComposerActions = ({
   /** How long the links of "Vertraulich senden" stay; null when no one gets a link. */
   linkDays: number | null;
   onLinkDays: (days: number) => void;
+  /** Signed only, not encrypted; with what (null: no key or certificate for this address). */
+  sign: boolean;
+  onSign: (on: boolean) => void;
+  signWith: "smime" | "pgp" | null;
   sending: boolean;
   canSend: boolean;
   onSendLater: (at: Date) => void;
@@ -242,6 +258,26 @@ export const ComposerActions = ({
       >
         {encrypt ? <LockKeyhole size={16} /> : <LockKeyholeOpen size={16} />}
       </Button>
+      {!encrypt && signWith ? (
+        <Button
+          variant="ghost"
+          size="icon"
+          aria-label={m.sign_toggle()}
+          title={
+            sign ? (signWith === "smime" ? m.sign_on_smime() : m.sign_on_pgp()) : m.sign_toggle()
+          }
+          aria-pressed={sign}
+          onClick={() => onSign(!sign)}
+          className={sign ? "bg-accent/10 text-accent hover:bg-accent/15" : undefined}
+        >
+          <Signature size={16} />
+        </Button>
+      ) : null}
+      {!encrypt && sign && signWith ? (
+        <span role="status" className="hidden min-w-0 truncate text-[12px] text-accent sm:inline">
+          {signWith === "smime" ? m.sign_on_smime() : m.sign_on_pgp()}
+        </span>
+      ) : null}
       {encrypt ? (
         <span
           role="status"

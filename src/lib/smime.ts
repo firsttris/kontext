@@ -428,4 +428,17 @@ export const smimeMail = async ({
   );
 };
 
+/** A mail signed with one's certificate and not encrypted: the raw text to send. */
+export const smimeSignedMail = async ({
+  envelope,
+  content,
+  own,
+  id,
+}: {
+  envelope: Envelope;
+  content: { text: string; html: string; attachments: MimeAttachment[] };
+  own: OwnSmime;
+  id: string;
+}): Promise<string> => withHeaders(envelope, await signEntity(contentPart(content, id), own, id));
+
 export { binaryToBytes, bytesToBinary };

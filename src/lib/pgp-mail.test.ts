@@ -1,7 +1,15 @@
 // @vitest-environment node
 import { createMessage, generateKey, readKey, sign } from "openpgp";
+import PostalMime from "postal-mime";
 import { describe, expect, it } from "vitest";
-import { checkSigned, encryptedPreview, encryptMail, pgpKind, readEncrypted } from "./pgp-mail";
+import {
+  checkSigned,
+  encryptedPreview,
+  encryptMail,
+  pgpKind,
+  readEncrypted,
+  signMail,
+} from "./pgp-mail";
 
 const person = async (email: string) => {
   const { privateKey, publicKey } = await generateKey({
@@ -100,5 +108,31 @@ describe("PGP in mails", () => {
       (await checkSigned(raw.replace("bezahlt", "offen"), type, [petra.publicKey])).state,
     ).toBe("invalid");
     expect((await readKey({ armoredKey: petra.publicKey })).isPrivate()).toBe(false);
+  }, 30_000);
+
+  it("signs a mail without encrypting it: readable by all, checked with the key", async () => {
+    const jonas = await person("jonas@w.test");
+    const raw = await signMail({
+      envelope: {
+        from: { name: "Jonas", email: "jonas@w.test" },
+        to: [{ name: null, email: "amt@stadt.test" }],
+        cc: [],
+        subject: "Antrag Baugenehmigung",
+        date: new Date("2026-10-25T08:00:00Z"),
+        messageId: "s1@w.test",
+      },
+      content: { text: "Anbei der Antrag.", html: "<p>Anbei der Antrag.</p>", attachments: [] },
+      ownKey: jonas.privateKey,
+      id: "s1",
+    });
+    const type = raw.match(/^Content-Type: (.*)$/m)![1]!;
+    expect(pgpKind(type, "")).toBe("signed");
+    expect(raw).toContain("Subject: Antrag Baugenehmigung");
+    const parsed = await PostalMime.parse(raw);
+    expect(parsed.text?.trim()).toBe("Anbei der Antrag.");
+    expect((await checkSigned(raw, type, [jonas.publicKey])).state).toBe("valid");
+    const changed = raw.replace(/^(QW5iZWkg)/m, "QW5kZXJz");
+    expect(changed).not.toBe(raw);
+    expect((await checkSigned(changed, type, [jonas.publicKey])).state).toBe("invalid");
   }, 30_000);
 });

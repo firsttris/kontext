@@ -136,4 +136,49 @@ test.describe("Verschlüsselung: S/MIME", () => {
       .toContain(address("sandra"));
     await other.context().close();
   });
+
+  test("nur unterschreiben: lesbar für alle, die Unterschrift wird geprüft", async ({
+    page,
+    browser,
+  }) => {
+    test.setTimeout(90_000);
+    const subject = unique("Antrag unterschrieben");
+    const sandra = certificateFor("sandra");
+    await login(page, "sandra");
+    const saved = await page.request.put("/api/smime/me", {
+      data: { certificate: sandra.pem, p12: sandra.p12.toString("base64") },
+    });
+    expect(saved.ok()).toBe(true);
+    await page.goto("/mail");
+    await page.getByRole("link", { name: "Neue Mail" }).first().click();
+    await page.getByRole("combobox", { name: "An" }).fill(address("max"));
+    await page.keyboard.press(",");
+    await page.getByLabel("Betreff").fill(subject);
+    await page.getByRole("textbox", { name: "Ihre Nachricht …" }).fill("Hiermit beantrage ich.");
+    await page.getByRole("button", { name: "Unterschreiben" }).click();
+    await expect(
+      page.getByRole("status").filter({ hasText: "Unterschrieben mit deinem S/MIME-Zertifikat" }),
+    ).toBeVisible();
+    await page.getByRole("button", { name: "Senden", exact: true }).click();
+    const unlock = page.getByRole("dialog", { name: "Entsperren" });
+    await unlock.getByLabel("Passwort des Zertifikats").fill(PASSWORD);
+    await unlock.getByRole("button", { name: "Entsperren" }).click();
+    await expect(page.getByRole("status").filter({ hasText: "Mail gesendet." })).toBeVisible();
+    // Not encrypted: the subject is the real one.
+    await expect.poll(() => inboxSubjects("max")).toContain(subject);
+
+    const other = await (await browser.newContext()).newPage();
+    await login(other, "max");
+    await other
+      .getByRole("list", { name: "Posteingang" })
+      .getByRole("link", { name: new RegExp(subject) })
+      .click();
+    await expect(
+      other.frameLocator("iframe[title='Inhalt der Mail']").getByText("Hiermit beantrage ich."),
+    ).toBeVisible();
+    await expect(
+      other.getByText(`Unterschrieben von sandra@${DEV_DOMAIN} – selbst ausgestelltes Zertifikat`),
+    ).toBeVisible();
+    await other.context().close();
+  });
 });

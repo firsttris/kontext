@@ -93,8 +93,11 @@ unterschreibt und entschlüsselt – und der später auch vertrauliche Chats tr�
   Nachricht“. Sobald eine Mail geöffnet wurde, zeigen Liste, Ansicht und Antwort den echten
   Betreff. Gilt für PGP und S/MIME.
 - **Grenzen:** Verschlüsselte Mails findet die Suche nur über Absender und Datum; Regeln sehen
-  weder Inhalt noch Betreff. Nur unterschreiben, ohne zu
-  verschlüsseln, kann Kontext noch nicht.
+  weder Inhalt noch Betreff.
+- **Nur unterschreiben:** Im Fenster „Neue Mail“ unterschreibt „Unterschreiben“ die Mail, ohne
+  sie zu verschlüsseln – lesbar für alle, aber nachweislich von einem selbst und unverändert.
+  Mit dem S/MIME-Zertifikat, wenn eins für die Adresse da ist (jedes Mailprogramm prüft das
+  ohne Weiteres), sonst mit dem PGP-Schlüssel (`signMail`, `smimeSignedMail`).
 
 ## Baustein 4: „Vertraulich senden“ – für alle Empfänger
 

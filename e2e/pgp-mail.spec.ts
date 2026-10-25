@@ -110,4 +110,43 @@ test.describe("Verschlüsselung: PGP in Mails", () => {
     await page.getByRole("button", { name: "Vertraulich senden" }).click();
     await expect(page.getByRole("status").filter({ hasText: "per Link mit Code" })).toBeVisible();
   });
+
+  test("nur unterschreiben mit PGP: lesbar, beim Empfänger geprüft", async ({ page, browser }) => {
+    test.setTimeout(90_000);
+    const subject = unique("Rechnung unterschrieben");
+    await login(page, "anna");
+    const annaKey = await giveKey(page, "anna");
+    await page.request.delete("/api/smime/me");
+    const max = await (await browser.newContext()).newPage();
+    await login(max, "max");
+    await max.request.put("/api/pgp/keys", { data: { publicKey: annaKey, source: "import" } });
+
+    await page.goto("/mail");
+    await page.getByRole("link", { name: "Neue Mail" }).first().click();
+    await page.getByRole("combobox", { name: "An" }).fill(address("max"));
+    await page.keyboard.press(",");
+    await page.getByLabel("Betreff").fill(subject);
+    await page.getByRole("textbox", { name: "Ihre Nachricht …" }).fill("Betrag: 980 Euro.");
+    await page.getByRole("button", { name: "Unterschreiben" }).click();
+    await expect(
+      page.getByRole("status").filter({ hasText: "Unterschrieben mit deinem PGP-Schlüssel" }),
+    ).toBeVisible();
+    await page.getByRole("button", { name: "Senden", exact: true }).click();
+    const unlock = page.getByRole("dialog", { name: "Entsperren" });
+    await unlock.getByLabel("Passphrase deines Schlüssels").fill(PASSPHRASE);
+    await unlock.getByRole("button", { name: "Entsperren" }).click();
+    await expect(page.getByRole("status").filter({ hasText: "Mail gesendet." })).toBeVisible();
+    await expect.poll(() => inboxSubjects("max")).toContain(subject);
+
+    await max.goto("/mail");
+    await max
+      .getByRole("list", { name: "Posteingang" })
+      .getByRole("link", { name: new RegExp(subject) })
+      .click();
+    await expect(
+      max.frameLocator("iframe[title='Inhalt der Mail']").getByText("Betrag: 980 Euro."),
+    ).toBeVisible();
+    await expect(max.getByText(`Unterschrieben von anna@${DEV_DOMAIN} – geprüft`)).toBeVisible();
+    await max.context().close();
+  });
 });

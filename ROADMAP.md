@@ -27,8 +27,7 @@ Kleinere Dinge, die beim Bauen aufgefallen sind und noch erledigt werden.
 - [ ] Chat: Reaktionen mit beliebigen Emojis (heute die sieben Schnellwahlen), und im Thread „auch im Kanal zeigen“.
 - [ ] Aufgaben am Kontakt finden Mails nur über die letzten fünf Mails mit der Person im eigenen Postfach; ältere oder solche in info@ zählen nur, wenn die Aufgabe mit der Karte verknüpft ist (geschieht beim Anlegen aus der Mail). Die Verknüpfung „Termin“ wird noch nirgends angelegt.
 - [ ] Erinnerung an Aufgaben auch direkt im Dialog „Neue Aufgabe“ (heute in der geöffneten Aufgabe).
-- [ ] PGP: nur unterschreiben (ohne Verschlüsseln) beim Senden.
-- [ ] S/MIME: Zertifikatsketten gegen eine Liste anerkannter Stellen prüfen und Sperrlisten (OCSP) abfragen (heute zeigt Kontext die ausstellende Stelle); Zertifikate anderer im Verzeichnis der Stelle suchen; nur unterschreiben beim Senden.
+- [ ] S/MIME: Zertifikatsketten gegen eine Liste anerkannter Stellen prüfen und Sperrlisten (OCSP) abfragen (heute zeigt Kontext die ausstellende Stelle); Zertifikate anderer im Verzeichnis der Stelle suchen.
 - [ ] CalDAV für Aufgaben mit Bestätigung in zwei Schritten: App-Passwörter anlegen können (Thunderbird und Handy fragen keinen Code ab); dazu `sync-collection` für schnelleren Abgleich auf dem iPhone.
 - [ ] **Regeln für Mitarbeiter** in der Firmenverwaltung (heute nur für gemeinsame Postfächer und die eigenen).
 - [ ] **App auf Englisch** und weiteren Sprachen (Texte liegen schon gesammelt in `messages/de.json`).
@@ -57,6 +56,7 @@ Kleinere Dinge, die beim Bauen aufgefallen sind und noch erledigt werden.
 
 ## Zuletzt fertig geworden
 
+Mails nur unterschreiben, ohne zu verschlüsseln (S/MIME oder PGP).
 Chat: eine Unterhaltung oder einen Kanal „vertraulich weiterführen“ (neue verschlüsselte mit denselben Mitgliedern, Hinweis in der alten).
 Vertraulicher Chat: ein neuer Schlüssel eines Mitglieds fällt auf (mit Fingerabdruck) und gilt erst nach Bestätigung.
 Verschlüsselte Mails: nach dem Öffnen mit Text in Liste und Unterhaltung, Antworten zitieren ihn, Weiterleiten mit Inhalt und Anhängen.

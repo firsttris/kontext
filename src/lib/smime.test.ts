@@ -1,7 +1,15 @@
 // @vitest-environment node
 import forge from "node-forge";
 import { beforeAll, describe, expect, it } from "vitest";
-import { type OwnSmime, openP12, readCertificate, readSmime, smimeKind, smimeMail } from "./smime";
+import {
+  type OwnSmime,
+  openP12,
+  readCertificate,
+  readSmime,
+  smimeKind,
+  smimeMail,
+  smimeSignedMail,
+} from "./smime";
 
 /** A self-signed certificate for an address, as a .p12 file locked with a password. */
 const makeP12 = (email: string, password: string) => {
@@ -125,5 +133,20 @@ describe("S/MIME", () => {
     );
     expect(changed).not.toBe(signed);
     expect((await readSmime(changed, null)).signature.state).toBe("invalid");
+  });
+
+  it("signs without encrypting: readable as it is, the signature holds", async () => {
+    const raw = await smimeSignedMail({
+      envelope,
+      content: { text: "Anbei der Antrag.", html: "<p>Anbei</p>", attachments: [] },
+      own: jonas,
+      id: "t3",
+    });
+    expect(raw).toContain("Subject: Antrag");
+    expect(raw).toContain('protocol="application/pkcs7-signature"');
+    const read = await readSmime(raw, null);
+    expect(read.encrypted).toBe(false);
+    expect(read.text.trim()).toBe("Anbei der Antrag.");
+    expect(read.signature).toMatchObject({ state: "valid", email: "jonas@weber.test" });
   });
 });

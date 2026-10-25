@@ -246,6 +246,8 @@ export const Composer = ({ accountId, mode, sourceEmailId, prefill }: Props) => 
   const [receipt, setReceipt] = useState(false);
   const autocrypt = useAutocryptHeader(identity?.email);
   const [encrypt, setEncrypt] = useState(false);
+  // Signed, not encrypted (an encrypted mail is signed anyway).
+  const [sign, setSign] = useState(false);
   const pgp = useEncryptedSend(
     identity?.email,
     [...to, ...cc, ...bcc].map((address) => address.email),
@@ -349,7 +351,9 @@ export const Composer = ({ accountId, mode, sourceEmailId, prefill }: Props) => 
       const folders = { draftsId: drafts.id, sentId: sent.id };
       const held = encrypt
         ? await pgp.send(outgoing(), folders, hold)
-        : await sendEmail(client, outgoing(), folders, hold);
+        : sign
+          ? await pgp.sendSigned(outgoing(), folders, hold)
+          : await sendEmail(client, outgoing(), folders, hold);
       // Links go out at once: nothing to take back, nothing held.
       const kept = held && !(encrypt && pgp.viaLink.length) ? held : null;
       if ((mode === "reply" || mode === "replyAll") && sourceEmailId) {
@@ -516,6 +520,9 @@ export const Composer = ({ accountId, mode, sourceEmailId, prefill }: Props) => 
         onEncrypt={setEncrypt}
         encryptBlocked={pgp.reason}
         encryptNote={pgp.note}
+        sign={sign}
+        onSign={setSign}
+        signWith={pgp.signWith}
         linkDays={pgp.viaLink.length ? pgp.linkDays : null}
         onLinkDays={pgp.setLinkDays}
         onDiscard={() => void discard()}

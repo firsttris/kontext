@@ -10,6 +10,7 @@ import {
   encryptedMail,
   type MimeAttachment,
   outerEnvelope,
+  pgpSignedMail,
   protectHeaders,
 } from "./mime";
 
@@ -191,4 +192,31 @@ export const encryptMail = async ({
     signingKeys: ownKey,
   });
   return encryptedMail(outerEnvelope(envelope), armored as string, id);
+};
+
+/**
+ * A mail signed with one's key and not encrypted: readable everywhere, and whoever has one's
+ * public key can check it came from oneself unchanged.
+ */
+export const signMail = async ({
+  envelope,
+  content,
+  ownKey,
+  id,
+}: {
+  envelope: Envelope;
+  content: { text: string; html: string; attachments: MimeAttachment[] };
+  ownKey: PrivateKey;
+  id: string;
+}): Promise<string> => {
+  const { createMessage, sign } = await openpgp();
+  // What is signed is the part exactly as it stands in the mail, without its last line break
+  // (that belongs to the boundary).
+  const entity = contentPart(content, id).replace(/\r\n$/, "");
+  const signature = await sign({
+    message: await createMessage({ binary: new TextEncoder().encode(entity) }),
+    signingKeys: ownKey,
+    detached: true,
+  });
+  return pgpSignedMail(envelope, entity, signature as string, id);
 };

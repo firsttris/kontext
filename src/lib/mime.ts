@@ -134,6 +134,35 @@ export const outerEnvelope = (mail: Envelope): Envelope => ({
   subject: PROTECTED_SUBJECT,
 });
 
+/**
+ * A mail signed with PGP, not encrypted (RFC 3156 §5): the content part as it is, then the
+ * detached signature over exactly its bytes.
+ */
+export const pgpSignedMail = (
+  mail: Envelope,
+  entity: string,
+  armoredSignature: string,
+  id: string,
+): string =>
+  [
+    ...headers(mail),
+    multipart(
+      "signed",
+      `sig-${id}`,
+      [
+        entity.replace(/\r\n$/, ""),
+        [
+          'Content-Type: application/pgp-signature; name="signature.asc"',
+          "Content-Description: OpenPGP digital signature",
+          'Content-Disposition: attachment; filename="signature.asc"',
+          "",
+          armoredSignature.replace(/\r?\n/g, "\r\n"),
+        ].join("\r\n"),
+      ],
+      '; protocol="application/pgp-signature"; micalg=pgp-sha256',
+    ),
+  ].join("\r\n");
+
 /** The whole mail around an entity S/MIME made (RFC 8551): what goes to the server. */
 export const withHeaders = (mail: Envelope, entity: string): string =>
   [...headers(mail), entity].join("\r\n");
