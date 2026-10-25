@@ -31,7 +31,15 @@ export type TaskStore = {
   columns: (accountIds: string[]) => Promise<Record<string, BoardColumn[]>>;
   /** New columns; tasks in a column that went move to the end of "open". */
   setColumns: (accountId: string, columns: BoardColumn[]) => Promise<void>;
+  /** A board's tasks for CalDAV, with their file name and UID there. */
+  davList: (accountId: string, doneSince: Date) => Promise<DavTask[]>;
+  /** The task a CalDAV client means by this file name. */
+  davGet: (accountId: string, name: string) => Promise<DavTask | null>;
+  /** A task a CalDAV client made, under its file name and UID. */
+  davCreate: (task: NewTaskData, createdBy: string, name: string, uid: string) => Promise<Task>;
 };
+
+export type DavTask = { task: Task; name: string; uid: string };
 
 type Row = typeof schema.tasks.$inferSelect;
 type LinkRow = typeof schema.taskLinks.$inferSelect;
@@ -66,6 +74,12 @@ const toTask = (row: Row, links: LinkRow[]): Task => ({
 });
 
 const instant = (value: string | null) => (value ? new Date(value) : null);
+
+const davOf = (row: Row, task: Task): DavTask => ({
+  task,
+  name: row.davName ?? row.id,
+  uid: row.davUid ?? row.id,
+});
 
 export const createTaskStore = (db: Db): TaskStore => {
   const linksOf = async (ids: string[]) => {
@@ -103,6 +117,33 @@ export const createTaskStore = (db: Db): TaskStore => {
     }
   };
 
+  const create = async (task: NewTaskData, createdBy: string): Promise<Task> => {
+    const id = crypto.randomUUID();
+    const now = new Date();
+    await db.insert(schema.tasks).values({
+      id,
+      accountId: task.accountId,
+      title: task.title,
+      notes: task.notes,
+      status: task.status,
+      position: task.position ?? (await nextPosition(task.accountId, task.status)),
+      assigneeId: task.assigneeId,
+      dueDate: task.dueDate,
+      dueTime: task.dueTime,
+      checklist: JSON.stringify(task.checklist),
+      createdBy,
+      completedAt: task.status === "done" ? now : null,
+      assignedBy: task.assigneeId ? createdBy : null,
+      assignedAt: task.assigneeId ? now : null,
+      remindAt: instant(task.remindAt),
+      repeat: task.repeat,
+      createdAt: now,
+      updatedAt: now,
+    });
+    await writeLinks(id, task.links);
+    return (await get(id))!;
+  };
+
   return {
     list: async (accountIds, doneSince, me) => {
       if (!accountIds.length && !me) return [];
@@ -126,32 +167,7 @@ export const createTaskStore = (db: Db): TaskStore => {
       return rows.map((row) => toTask(row, links.get(row.id) ?? []));
     },
     get,
-    create: async (task, createdBy) => {
-      const id = crypto.randomUUID();
-      const now = new Date();
-      await db.insert(schema.tasks).values({
-        id,
-        accountId: task.accountId,
-        title: task.title,
-        notes: task.notes,
-        status: task.status,
-        position: task.position ?? (await nextPosition(task.accountId, task.status)),
-        assigneeId: task.assigneeId,
-        dueDate: task.dueDate,
-        dueTime: task.dueTime,
-        checklist: JSON.stringify(task.checklist),
-        createdBy,
-        completedAt: task.status === "done" ? now : null,
-        assignedBy: task.assigneeId ? createdBy : null,
-        assignedAt: task.assigneeId ? now : null,
-        remindAt: instant(task.remindAt),
-        repeat: task.repeat,
-        createdAt: now,
-        updatedAt: now,
-      });
-      await writeLinks(id, task.links);
-      return (await get(id))!;
-    },
+    create,
     update: async (id, patch, by) => {
       const current = await get(id);
       if (!current) return null;
@@ -216,6 +232,46 @@ export const createTaskStore = (db: Db): TaskStore => {
     },
     markReminded: async (id, at) => {
       await db.update(schema.tasks).set({ remindedAt: at }).where(eq(schema.tasks.id, id));
+    },
+    davList: async (accountId, doneSince) => {
+      const rows = await db
+        .select()
+        .from(schema.tasks)
+        .where(
+          and(
+            eq(schema.tasks.accountId, accountId),
+            or(
+              ne(schema.tasks.status, "done"),
+              isNull(schema.tasks.completedAt),
+              gte(schema.tasks.completedAt, doneSince),
+            ),
+          ),
+        );
+      const links = await linksOf(rows.map((row) => row.id));
+      return rows.map((row) => davOf(row, toTask(row, links.get(row.id) ?? [])));
+    },
+    davGet: async (accountId, name) => {
+      const [row] = await db
+        .select()
+        .from(schema.tasks)
+        .where(
+          and(
+            eq(schema.tasks.accountId, accountId),
+            or(
+              eq(schema.tasks.davName, name),
+              and(isNull(schema.tasks.davName), eq(schema.tasks.id, name)),
+            ),
+          ),
+        );
+      return row ? davOf(row, toTask(row, (await linksOf([row.id])).get(row.id) ?? [])) : null;
+    },
+    davCreate: async (task, createdBy, name, uid) => {
+      const created = await create(task, createdBy);
+      await db
+        .update(schema.tasks)
+        .set({ davName: name, davUid: uid })
+        .where(eq(schema.tasks.id, created.id));
+      return created;
     },
     columns: async (accountIds) => {
       const rows = accountIds.length

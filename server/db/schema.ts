@@ -156,11 +156,18 @@ export const tasks = sqliteTable(
     remindedAt: integer("reminded_at", { mode: "timestamp_ms" }),
     /** daily, weekdays, weekly, monthly, yearly: done, it comes again (server/tasks/tasks.ts). */
     repeat: text("repeat"),
+    /**
+     * Made in a CalDAV client: its file name there (without ".ics") and its UID, kept so the
+     * client finds it again. Tasks made in Kontext are "<id>.ics" with their id as UID.
+     */
+    davName: text("dav_name"),
+    davUid: text("dav_uid"),
     ...timestamps,
   },
   (table) => [
     index("tasks_account").on(table.accountId),
     index("tasks_remind_at").on(table.remindAt),
+    index("tasks_dav_name").on(table.accountId, table.davName),
   ],
 );
 

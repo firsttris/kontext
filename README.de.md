@@ -99,6 +99,7 @@ reicht ein VPS mit 2 vCPU und 4 GB RAM.
 - **Aufgaben für dich und das Team**: Meine Aufgaben, Heute, Demnächst, Erledigt; ein Board fürs eigene Postfach und eins pro gemeinsamem Postfach (info@, rechnung@).
 - **Liste oder Kanban**: nach Fälligkeit gruppiert, oder als Board mit Offen, In Arbeit, Wartet, Erledigt – Karten zwischen den Spalten ziehen.
 - **Aus einer Mail**: „Aufgabe“ (oder `t`) macht aus einer Mail eine Aufgabe mit Betreff, Fälligkeit und Zuständigem; die Mail zeigt danach ihre Aufgabe.
+- **In Thunderbird und auf dem Handy**: deine Boards als Aufgabenlisten über CalDAV (Thunderbird, DAVx⁵ mit tasks.org, Apple Erinnerungen), in beide Richtungen.
 - **Aufgaben aus Regeln**: Eine Mail-Regel macht aus jeder passenden Mail eine Aufgabe, auch wenn Kontext geschlossen ist.
 - **Eigene Spalten** pro Board („Material bestellt“ …) und **wiederkehrende Aufgaben** (täglich, an Werktagen, wöchentlich, monatlich, jährlich).
 - **Schnelleingabe**: „Rückruf Hoffmann morgen“ ist morgen fällig; Checkliste, Notiz, Zuständige.

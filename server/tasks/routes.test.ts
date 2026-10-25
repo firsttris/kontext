@@ -2,10 +2,9 @@
 import { describe, expect, it } from "vitest";
 import type { SessionAccount } from "../categories/routes";
 import type { Notice } from "../push/pusher";
+import { memoryTaskStore } from "./memory-store";
 import { createTaskRoutes } from "./routes";
-import { sampleTask } from "./sample-task";
-import type { TaskStore } from "./store";
-import { type BoardColumn, DEFAULT_COLUMNS, type Task } from "./tasks";
+import type { Task } from "./tasks";
 
 const accounts: SessionAccount[] = [
   { id: "jonas", isPersonal: true, isReadOnly: false },
@@ -18,51 +17,8 @@ const lea: SessionAccount[] = [
 ];
 
 const setup = () => {
-  const tasks: Task[] = [];
-  const boards: Record<string, BoardColumn[]> = {};
+  const { tasks, store } = memoryTaskStore();
   let signedIn = accounts;
-  const store: TaskStore = {
-    list: async (ids, _since, me) =>
-      tasks.filter((task) => ids.includes(task.accountId) || task.assigneeId === me),
-    get: async (id) => tasks.find((task) => task.id === id) ?? null,
-    create: async (data, createdBy) => {
-      const task = sampleTask({
-        ...data,
-        id: `t${tasks.length + 1}`,
-        position: 1,
-        createdBy,
-        assignedBy: data.assigneeId ? createdBy : null,
-      });
-      tasks.push(task);
-      return task;
-    },
-    update: async (id, patch, by) => {
-      const task = tasks.find((candidate) => candidate.id === id)!;
-      if (patch.assigneeId !== undefined && patch.assigneeId !== task.assigneeId) {
-        task.assignedBy = patch.assigneeId ? by : null;
-      }
-      Object.assign(task, patch);
-      return task;
-    },
-    remove: async (id) => {
-      tasks.splice(
-        tasks.findIndex((task) => task.id === id),
-        1,
-      );
-    },
-    dueReminders: async () => [],
-    markReminded: async () => undefined,
-    columns: async (ids) =>
-      Object.fromEntries(ids.map((id) => [id, boards[id] ?? DEFAULT_COLUMNS])),
-    setColumns: async (accountId, columns) => {
-      boards[accountId] = columns;
-      for (const task of tasks) {
-        if (task.accountId === accountId && !columns.some((c) => c.id === task.status)) {
-          task.status = "open";
-        }
-      }
-    },
-  };
   const sent: [string[], Notice][] = [];
   const changes: [string, string[]][] = [];
   const app = createTaskRoutes({

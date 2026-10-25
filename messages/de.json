@@ -1072,5 +1072,20 @@
   "tasks_column_add": "Spalte hinzufügen",
   "tasks_columns_saved": "Spalten gespeichert.",
   "rules_action_task": "Aufgabe anlegen",
-  "rules_then_task": "Aufgabe anlegen"
+  "rules_then_task": "Aufgabe anlegen",
+  "settings_sync": "Aufgaben in anderen Apps",
+  "sync_title": "Aufgaben in Thunderbird und auf dem Handy",
+  "sync_hint": "Deine Boards erscheinen dort als Aufgabenlisten – Mein Board und jedes gemeinsame Postfach. Was du dort abhakst oder anlegst, steht sofort in Kontext, und umgekehrt.",
+  "sync_address": "Server-Adresse (CalDAV)",
+  "sync_copy": "Kopieren",
+  "sync_copied": "Kopiert",
+  "sync_login": "Anmelden mit deiner Mail-Adresse {user} und deinem Passwort.",
+  "sync_thunderbird_1": "Im Kalender links „Neuer Kalender …“ → „Im Netzwerk“.",
+  "sync_thunderbird_2": "Benutzername und die Server-Adresse eintragen, dann „Kalender suchen“.",
+  "sync_thunderbird_3": "Die Aufgabenlisten anhaken; sie stehen dann unter „Aufgaben“.",
+  "sync_android_1": "DAVx⁵ installieren und dazu tasks.org oder jtx Board.",
+  "sync_android_2": "In DAVx⁵ „Mit URL und Benutzername anmelden“, die Server-Adresse eintragen und die Aufgabenlisten einschalten.",
+  "sync_apple_1": "Einstellungen → Apps → Erinnerungen → Accounts → Account hinzufügen → Andere → CalDAV-Account.",
+  "sync_apple_2": "Server: {host}, dazu Mail-Adresse und Passwort.",
+  "sync_two_factor": "Mit Bestätigung in zwei Schritten klappt die Anmeldung dort noch nicht, weil diese Apps keinen Code abfragen."
 }

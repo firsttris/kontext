@@ -29,6 +29,8 @@ import {
 import { createCompanyRoutes } from "./company/routes";
 import { createCompanySettings } from "./company/settings";
 import { createSealer } from "./crypto";
+import { createDavAuth } from "./dav/auth";
+import { createDavRoutes } from "./dav/routes";
 import { type Db, openDatabase, schema } from "./db";
 import type { Env } from "./env";
 import { createHub } from "./live/hub";
@@ -326,6 +328,19 @@ export const createApp = async (env: Env) => {
   const waker = createSnoozeWaker({ env, grants, store: snoozes, notify: pusher.notify });
   setInterval(() => void waker.tick(), env.SNOOZE_TICK_MS).unref();
   app.route("/api/snoozes", createSnoozeRoutes({ store: snoozes, infoOf }));
+  // The task boards for Thunderbird and phone apps (CalDAV), signed in with the mail password.
+  app.all("/.well-known/caldav", (c) => c.redirect("/dav/", 301));
+  app.route(
+    "/dav",
+    createDavRoutes({
+      auth: createDavAuth(env),
+      store: tasks,
+      changed: (accountId) =>
+        hub.publish({ type: "tasks", accountId }, (viewer) =>
+          viewer.accountIds.includes(accountId),
+        ),
+    }),
+  );
   // Mails a rule marked "Aufgabe anlegen" become tasks, every minute, also with nobody signed in.
   const ruleTasks = createRuleTasks({
     env,

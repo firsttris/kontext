@@ -14,6 +14,7 @@ import {
   Palette,
   Palmtree,
   PenLine,
+  RefreshCw,
   Signature,
   TextQuote,
   Truck,
@@ -35,6 +36,7 @@ import type { settingsSections } from "@/routes/_app/settings";
 import { AppearanceSection } from "./appearance-section";
 import { ProfileSection } from "./profile-section";
 import { SecuritySection } from "./security-section";
+import { SyncSection } from "./sync-section";
 import { VacationSection } from "./vacation-section";
 
 // The signature editors bring the mail editor (Tiptap): loaded when their section opens.
@@ -57,6 +59,7 @@ const OWN: Entry[] = [
   { id: "vacation", label: m.settings_vacation, icon: Palmtree },
   { id: "rules", label: m.settings_rules, icon: ListFilter },
   { id: "snippets", label: m.settings_snippets, icon: TextQuote },
+  { id: "sync", label: m.settings_sync, icon: RefreshCw },
   { id: "security", label: m.settings_security, icon: KeyRound },
   { id: "appearance", label: m.settings_appearance, icon: Palette },
 ];
@@ -76,6 +79,7 @@ const CONTENT: Record<Section, () => ReactNode> = {
   vacation: () => <VacationSection />,
   rules: () => <RulesSection />,
   snippets: () => <SnippetsSection />,
+  sync: () => <SyncSection />,
   security: () => <SecuritySection />,
   appearance: () => <AppearanceSection />,
   employees: () => <EmployeesSection />,

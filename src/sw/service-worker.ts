@@ -31,7 +31,7 @@ precacheAndRoute(self.__WB_MANIFEST);
 // Every page of the app is the cached index.html; the server's own paths are not pages.
 registerRoute(
   new NavigationRoute(createHandlerBoundToURL("/index.html"), {
-    denylist: [/^\/jmap/, /^\/api/, new RegExp(`^${SHARE_PATH}`)],
+    denylist: [/^\/jmap/, /^\/api/, /^\/dav/, /^\/\.well-known/, new RegExp(`^${SHARE_PATH}`)],
   }),
 );
 
