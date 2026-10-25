@@ -101,6 +101,18 @@ const blockedInput = z.object({
   numbers: z.array(z.string().trim().min(3).max(40)).max(1000),
   anonymous: z.boolean(),
 });
+const doorInput = z.object({
+  enabled: z.boolean(),
+  number: z
+    .string()
+    .trim()
+    .regex(/^[0-9*#+ ]{2,20}$/),
+  code: z
+    .string()
+    .trim()
+    .regex(/^[0-9*#]{1,8}$/),
+  members: z.array(z.string().min(1).max(64)).max(200),
+});
 const boxSchema = z.object({ name: z.string().trim().min(1).max(60) });
 
 /** Short ids for the box's endpoint names ("fritzbox-<id>"). */
@@ -163,6 +175,7 @@ export const createPhoneAdminRoutes = ({
       hours: settings.hours,
       menu: settings.menu,
       blocked: settings.blocked,
+      door: settings.door,
       sip,
     });
   });
@@ -282,6 +295,17 @@ export const createPhoneAdminRoutes = ({
     }
     await store.saveSettings({ ...settings, menu: parsed.data });
     await service.reconfigure();
+    return c.body(null, 204);
+  });
+
+  app.put("/door", async (c) => {
+    const parsed = doorInput.safeParse(await c.req.json().catch(() => ({})));
+    if (!parsed.success) return c.json({ error: "Nummer oder Code ungültig" }, 400);
+    const known = new Set(c.get("loaded").company.employees.map((employee) => employee.id));
+    if (!parsed.data.members.every((id) => known.has(id))) {
+      return c.json({ error: "Unbekannte Person" }, 400);
+    }
+    await store.saveSettings({ ...(await store.settings()), door: parsed.data });
     return c.body(null, 204);
   });
 

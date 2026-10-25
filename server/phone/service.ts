@@ -27,6 +27,7 @@ import {
   canSeeCall,
   closedCall,
   incomingCall,
+  isDoor,
   isPerson,
   outgoingCall,
   type PhoneCall,
@@ -255,14 +256,18 @@ export const createPhoneService = (deps: PhoneDeps) => {
       const settings = await store.settings();
       const line = lineOf(settings, event.line);
       const choice = choiceOf(settings, event.choice);
+      const door = isDoor(settings.door, event.remote);
       const plan = withoutUnavailable(
-        ringPlanForCall(settings, line, choice),
+        door
+          ? { mode: "all", stepSeconds: 15, order: settings.door.members }
+          : ringPlanForCall(settings, line, choice),
         unavailableAt(await store.statuses(), now()),
       );
       const call = {
         ...incomingCall(event, { id: newId(), boxId, members: plan.order }),
         line: line?.label ?? null,
         topic: choice?.label ?? null,
+        door,
       };
       await save(call);
       ringPhones(call, plan);
@@ -496,6 +501,18 @@ export const createPhoneService = (deps: PhoneDeps) => {
           void sendConfig();
         }, left).unref?.();
       }
+    },
+
+    /** Open the door for whoever rang: the box picks up, sends the code and hangs up. */
+    openDoor: async (callId: string, me: string): Promise<PhoneCall | Problem> => {
+      const call = await store.call(callId);
+      if (!call?.door || !canSeeCall(call, me)) return "not-found";
+      if (call.state === "ended") return "busy";
+      const { code } = (await store.settings()).door;
+      if (!send(call, { type: "door-open", call: call.boxCallId, code })) return "offline";
+      const opened = { ...call, member: me };
+      await save(opened);
+      return withPresence(opened);
     },
 
     /** Someone of the line blocks a number from the list: the box turns it away from now on. */

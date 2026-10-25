@@ -66,6 +66,8 @@ export type PhoneCall = {
   desk: string | null;
   /** What the caller chose in the voice menu ("Kundendienst"). */
   topic: string | null;
+  /** The door intercom rings; `member` is who opened it. */
+  door: boolean;
 };
 
 /** Phone rooms in LiveKit: "kontext-phone-<uuid>", which LiveKit SIP's dispatch rule matches. */
@@ -163,6 +165,7 @@ export const incomingCall = (
   line: null,
   desk: null,
   topic: null,
+  door: false,
 });
 
 /** A call outside the opening hours: filed at once, it never rings. */
@@ -170,6 +173,10 @@ export const closedCall = (
   event: CallEvent,
   ids: { id: string; boxId: string; members: string[] },
 ): PhoneCall => ({ ...incomingCall(event, ids), state: "mailbox", outcome: "closed" });
+
+/** Whether the door intercom calls: its internal number as the Fritzbox delivers it ("**11"). */
+export const isDoor = (door: { enabled: boolean; number: string }, remote: string) =>
+  door.enabled && remote.replace(/\s/g, "") === door.number.replace(/\s/g, "");
 
 /** A call the box turned away (block list): filed as over at once. */
 export const blockedCall = (
@@ -226,6 +233,7 @@ export const outgoingCall = ({
   line: null,
   desk: null,
   topic: null,
+  door: false,
 });
 
 /** The call after one of the box's events; the same call when it changes nothing (a repeat). */

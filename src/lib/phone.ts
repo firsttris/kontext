@@ -41,6 +41,14 @@ export const outcomeText = (
 ): string => {
   if (call.state === "ringing")
     return call.direction === "in" ? m.phone_ringing() : m.phone_dialing();
+  if (call.door) {
+    if (call.member) {
+      return call.member === me
+        ? m.phone_door_opened()
+        : m.phone_door_opened_by({ name: nameOf(call.member) });
+    }
+    if (call.state === "ended") return m.phone_door_nobody();
+  }
   if (call.state === "talking") {
     return call.forwardedTo
       ? m.phone_outcome_forwarded({ number: readableNumber(call.forwardedTo) })
@@ -93,9 +101,12 @@ export const ringingPhoneCall = (
       !call.member &&
       call.members.includes(me) &&
       !dismissed.includes(call.id) &&
-      // The plan is the first line's; a direct number rings for all its people at once.
+      // The plan is the first line's; a direct number, a menu choice and the door ring for all
+      // their people at once.
       (!plan ||
         call.line !== null ||
+        call.topic !== null ||
+        call.door ||
         ringingFor(plan, (now.getTime() - Date.parse(call.startedAt)) / 1000).includes(me)),
   ) ?? null;
 

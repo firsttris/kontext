@@ -138,6 +138,12 @@ export const toBoxSchema = z.discriminatedUnion("type", [
       .optional(),
   }),
   z.object({ type: z.literal("hangup"), call: callId }),
+  /** A call from the door intercom: pick up, send the opening code (DTMF), hang up. */
+  z.object({
+    type: z.literal("door-open"),
+    call: callId,
+    code: z.string().regex(/^[0-9*#]{1,8}$/),
+  }),
   /** Music for the line outside, out of Kontext's room … */
   z.object({ type: z.literal("hold"), call: callId }),
   /** … and back into this room. */

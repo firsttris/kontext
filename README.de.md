@@ -137,6 +137,7 @@ reicht ein VPS mit 2 vCPU und 4 GB RAM.
   - **Sprachmenü**: „Für den Kundendienst drücken Sie die 1 …“ – jede Taste klingelt bei ihren Leuten oder führt auf die Mailbox.
   - **Sperrliste**: „Sperren“ in der Anrufliste, oder gleich alle unterdrückten Nummern; die Box weist sie ab, bevor etwas klingelt.
   - **Auswertung**: Anrufe der letzten 30 Tage, wie schnell angenommen wurde, wann Anrufe verpasst wurden (Wochentag × Uhrzeit) und wer angenommen hat.
+  - **Türsprechstelle** der Fritzbox: Es klingelt in Kontext, Tür öffnen oder sprechen mit einem Klick.
 - **Suche** über alle deine Kanäle; eigene Nachrichten bearbeiten oder löschen; Kanäle stummschalten, verlassen oder löschen.
 - **Aufbewahrung**, die die Firmenverwaltung festlegt (30 Tage bis 5 Jahre oder unbegrenzt): Ältere Nachrichten, Fotos und Dateien löscht Kontext von selbst.
 - **Am Handy**: ein eigener Tab, Unterhaltungen als Sprechblasen.

@@ -36,6 +36,7 @@ export type Admin = {
     greeting: string | null;
     options: { digit: string; label: string; members: string[]; mailbox: boolean }[];
   };
+  door: { enabled: boolean; number: string; code: string; members: string[] };
   blocked: { numbers: { number: string; by: string; at: string }[]; anonymous: boolean };
   hours: {
     enabled: boolean;

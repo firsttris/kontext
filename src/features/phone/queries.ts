@@ -62,6 +62,15 @@ export const setPhonePeople = (
 ) =>
   queryClient.setQueryData<PhoneData>(PHONE_KEY, (data) => (data ? { ...data, ...people } : data));
 
+/** Open the door for whoever rang at the intercom (the box sends the code and hangs up). */
+export const openDoor = async (queryClient: QueryClient, callId: string) => {
+  const { call } = await send<{ call: PhoneCall }>(
+    "POST",
+    `/calls/${encodeURIComponent(callId)}/door`,
+  );
+  setPhoneCall(queryClient, call);
+};
+
 /** The box turns this number away from now on. */
 export const blockNumber = (number: string) => send<unknown>("POST", "/block", { number });
 

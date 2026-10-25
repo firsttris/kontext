@@ -74,6 +74,15 @@ const settingsSchema = z.object({
       anonymous: z.boolean(),
     })
     .default({ numbers: [], anonymous: false }),
+  /** The door intercom at the Fritzbox: how it calls (its number), its opening code, who hears it. */
+  door: z
+    .object({
+      enabled: z.boolean(),
+      number: z.string(),
+      code: z.string(),
+      members: z.array(z.string()),
+    })
+    .default({ enabled: false, number: "**11", code: "#", members: [] }),
   /** Desk phones (Snom) that sign in at the box and ring with Kontext. */
   deskPhones: z
     .array(
@@ -171,6 +180,7 @@ const toCall = (row: CallDbRow): PhoneCall => ({
   line: row.line,
   desk: row.desk,
   topic: row.topic,
+  door: row.door,
 });
 
 const fromCall = ({ present: _, ...call }: PhoneCall): CallDbRow => ({

@@ -6,7 +6,7 @@
 import * as DialogPrimitive from "@radix-ui/react-dialog";
 import { useQueryClient } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
-import { Phone, X } from "lucide-react";
+import { DoorOpen, Phone, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Avatar } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -25,7 +25,7 @@ import {
 } from "@/lib/phone";
 import { m } from "@/paraglide/messages";
 import { dismissPhone, usePhoneStore } from "./phone-store";
-import { answerPhone, takePhoneTransfer, usePhone } from "./queries";
+import { answerPhone, openDoor, takePhoneTransfer, usePhone } from "./queries";
 import { useCallerContext, useCallerName } from "./use-caller";
 
 const whenFormat = new Intl.DateTimeFormat("de-DE", {
@@ -83,11 +83,13 @@ const Ringing = ({
             <Avatar name={caller.name} size={44} className="animate-pulse" />
             <div className="flex min-w-0 flex-1 flex-col">
               <DialogPrimitive.Title className="m-0 truncate text-[15px] font-semibold">
-                {handedBy
-                  ? call.offeredJoin
-                    ? m.phone_joining({ by: handedBy, name: caller.name })
-                    : m.phone_handed({ by: handedBy, name: caller.name })
-                  : m.phone_incoming({ name: caller.name })}
+                {call.door
+                  ? m.phone_door()
+                  : handedBy
+                    ? call.offeredJoin
+                      ? m.phone_joining({ by: handedBy, name: caller.name })
+                      : m.phone_handed({ by: handedBy, name: caller.name })
+                    : m.phone_incoming({ name: caller.name })}
               </DialogPrimitive.Title>
               <span className="truncate text-[13px] text-muted">
                 {[
@@ -136,6 +138,20 @@ const Ringing = ({
                 </Link>
               </Button>
             ) : null}
+            {call.door ? (
+              <Button
+                className="flex-1"
+                disabled={busy}
+                onClick={() =>
+                  void openDoor(queryClient, call.id).catch((error: Error) =>
+                    toast.show(m.phone_failed({ message: error.message }), "error"),
+                  )
+                }
+              >
+                <DoorOpen size={15} />
+                {m.phone_door_open()}
+              </Button>
+            ) : null}
             {canAnswer ? (
               <Button
                 className="flex-1 border-ok text-ok"
@@ -143,7 +159,7 @@ const Ringing = ({
                 onClick={() => void answer()}
               >
                 <Phone size={15} />
-                {m.phone_answer()}
+                {call.door ? m.phone_door_talk() : m.phone_answer()}
               </Button>
             ) : null}
           </div>

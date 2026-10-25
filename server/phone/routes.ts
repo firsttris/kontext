@@ -187,6 +187,12 @@ export const createPhoneRoutes = (deps: PhoneRouteDeps) => {
     return c.body(null, 204);
   });
 
+  app.post("/calls/:id/door", async (c) => {
+    const result = await service.openDoor(c.req.param("id"), c.get("viewer").me);
+    if (problem(result)) return c.json({ error: MESSAGES[result] }, STATUS[result]);
+    return c.json({ call: result });
+  });
+
   app.post("/calls/:id/hold", async (c) => {
     const result = await service.hold(c.req.param("id"), c.get("viewer").me);
     if (problem(result)) return c.json({ error: MESSAGES[result] }, STATUS[result]);

@@ -284,6 +284,14 @@ describe("desk phones", () => {
   });
 });
 
+describe("the door intercom", () => {
+  it("picks up only to send the opening code, then hangs up", () => {
+    expect(extensionsConf(config, paths)).toContain(
+      `[kontext-door-open]\nexten => s,1,Answer()\n same => n,UserEvent(KontextCall,Call: \${KONTEXT_CALL},State: answered,Direction: in)\n same => n,Wait(1)\n same => n,SendDTMF(\${KONTEXT_DTMF},250)\n same => n,Wait(2)\n same => n,Hangup(16)`,
+    );
+  });
+});
+
 describe("holding and calls out", () => {
   it("moves a held line to music and back into the room", () => {
     const conf = extensionsConf(config, paths);

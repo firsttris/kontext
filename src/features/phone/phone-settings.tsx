@@ -13,6 +13,7 @@ import { ADMIN_KEY, type Admin, send, useAdminChange } from "./settings/api";
 import { BlockedForm } from "./settings/blocked";
 import { CallbacksForm } from "./settings/callbacks";
 import { DesksForm } from "./settings/desks";
+import { DoorForm } from "./settings/door";
 import { HoursForm } from "./settings/hours";
 import { LinesForm } from "./settings/lines";
 import { MailboxForm } from "./settings/mailbox";
@@ -168,6 +169,7 @@ export const PhoneSettingsSection = () => {
           <HoursForm hours={data.hours} sounds={data.sounds} />
           <MenuForm menu={data.menu} sounds={data.sounds} />
           <BlockedForm key={JSON.stringify(data.blocked)} blocked={data.blocked} />
+          <DoorForm door={data.door} />
         </>
       ) : null}
     </>

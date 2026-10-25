@@ -732,6 +732,11 @@ flowchart LR
 - **Auswertung:** `GET /api/phone/stats` rechnet aus den Anrufen, die man sehen darf
   (`server/phone/stats.ts`): Anrufe, angenommen und wie schnell, verpasst (nach Wochentag und
   Stunde in Europe/Berlin), außerhalb der Zeiten, Nachrichten, wer angenommen hat.
+- **Türsprechstelle:** Die Türsprechanlage der Fritzbox ruft ihre Telefone über eine interne
+  Nummer (meist `**11`). Kommt ein Anruf von ihr, klingelt es bei den dafür gewählten Leuten mit
+  „Tür öffnen“: Kontext schickt der Box `door-open`, sie lenkt die Leitung nach
+  `kontext-door-open` um, nimmt ab, sendet den Code als DTMF (`SendDTMF`) und legt auf. Mit
+  „Sprechen“ nimmt man wie sonst an.
 - **Präsenz:** Wer in einem Telefon-Raum ist oder am Tischtelefon spricht, „telefoniert“ – das
   geht als `phone-people` an alle (der Chat zeigt es an der Person). Bitte nicht stören und
   Abwesend (bis zu einer Zeit) liegen in `phone_status`; wer nicht erreichbar ist, fällt aus dem

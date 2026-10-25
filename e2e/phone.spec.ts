@@ -496,6 +496,29 @@ test.describe("Telefonie über die Telefonbox", () => {
     await expect(stats.locator("td[style]").first()).toBeVisible();
   });
 
+  test("die Türsprechstelle klingelt bei Anna, sie öffnet die Tür", async ({ page, browser }) => {
+    await login(page);
+    await page.goto("/settings?section=phone");
+    const door = page.getByRole("region", { name: "Türsprechstelle" });
+    await door.getByLabel("Türsprechstelle in Kontext klingeln lassen").check();
+    await door.getByLabel("Anna Weber").check();
+    await door.getByRole("button", { name: "Speichern" }).click();
+    await expect(page.getByText("Gespeichert").first()).toBeVisible();
+
+    const anna = await colleague(browser, "anna");
+    const { call } = await box.ring("**11");
+    const card = anna.page.getByRole("dialog", { name: "Es klingelt an der Tür" });
+    await card.getByRole("button", { name: "Tür öffnen" }).click();
+    await expect
+      .poll(async () => (await box.state()).commands.at(-1))
+      .toEqual({ type: "door-open", call, code: "#" });
+    await anna.page.getByRole("link", { name: "Telefon", exact: true }).click();
+    await expect(
+      anna.page.getByRole("list", { name: "Letzte Anrufe" }).getByRole("listitem").first(),
+    ).toContainText("Tür geöffnet");
+    await anna.close();
+  });
+
   test("aus dem Kontakt anrufen geht über die Box", async ({ page }) => {
     await login(page);
     await page.getByRole("link", { name: "Kontakte" }).first().click();

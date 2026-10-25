@@ -211,6 +211,13 @@
       "when": 1792941174977,
       "tag": "0029_phone_menu",
       "breakpoints": true
+    },
+    {
+      "idx": 30,
+      "version": "6",
+      "when": 1792941176442,
+      "tag": "0030_phone_door",
+      "breakpoints": true
     }
   ]
 }

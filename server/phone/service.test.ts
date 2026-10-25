@@ -50,6 +50,7 @@ const SETTINGS: PhoneSettings = {
   deskPhones: [],
   menu: { enabled: false, greeting: null, options: [] },
   blocked: { numbers: [], anonymous: false },
+  door: { enabled: false, number: "**11", code: "#", members: [] },
 };
 
 const setup = (settings: Partial<PhoneSettings> = {}) => {
@@ -356,6 +357,18 @@ describe("an incoming call", () => {
     await box.receive(event(1, "blocked"));
     expect(notices).toEqual([]);
     expect(phoneEvents().at(-1)!.event.call).toMatchObject({ state: "ended", outcome: "blocked" });
+  });
+
+  it("rings the door for its people and opens it with the code", async () => {
+    const { service, box, toBox, notices, phoneEvents } = setup({
+      door: { enabled: true, number: "**11", code: "*5", members: ["anna"] },
+    });
+    await box.receive({ ...event(1, "ringing"), remote: "**11" });
+    expect(notices).toEqual([{ members: ["anna"], title: "Anruf" }]);
+    expect(phoneEvents().at(-1)!.event.call).toMatchObject({ door: true, remote: "**11" });
+    expect(await service.openDoor("id-1", "max")).toBe("not-found");
+    expect(await service.openDoor("id-1", "anna")).toMatchObject({ member: "anna" });
+    expect(toBox.at(-1)).toEqual({ type: "door-open", call: "1729850000.12", code: "*5" });
   });
 
   it("leaves Zurückrufen on the chosen board, done once someone talked to the number", async () => {

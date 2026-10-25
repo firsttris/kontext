@@ -16,6 +16,7 @@ export type Pbx = {
   dial: (call: string, room: string, number: string, line?: string) => Promise<void>;
   hangup: (call: string) => Promise<void>;
   hold: (call: string) => Promise<void>;
+  doorOpen: (call: string, code: string) => Promise<void>;
   resume: (call: string, room: string) => Promise<void>;
 };
 
@@ -125,6 +126,15 @@ export const createAsterisk = async ({
     },
     answer: (call, room) => moveTo(call, "kontext-answer", "answer", room),
     hold: (call) => moveTo(call, "kontext-hold", "s"),
+    doorOpen: async (call, code) => {
+      await ami.action([
+        ["Action", "Setvar"],
+        ["Channel", lineOf(call)],
+        ["Variable", "KONTEXT_DTMF"],
+        ["Value", code],
+      ]);
+      await moveTo(call, "kontext-door-open", "s");
+    },
     resume: (call, room) => moveTo(call, "kontext-resume", "s", room),
     dial: async (call, room, number, line) => {
       // First the leg into Kontext's room (LiveKit SIP answers at once), then the number.

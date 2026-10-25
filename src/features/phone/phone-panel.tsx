@@ -12,7 +12,17 @@ import {
 } from "@livekit/components-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Track } from "livekit-client";
-import { ArrowRightLeft, Grid3x3, Mic, MicOff, Pause, PhoneOff, Play, Volume2 } from "lucide-react";
+import {
+  ArrowRightLeft,
+  DoorOpen,
+  Grid3x3,
+  Mic,
+  MicOff,
+  Pause,
+  PhoneOff,
+  Play,
+  Volume2,
+} from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { Avatar } from "@/components/ui/avatar";
 import { useToast } from "@/components/ui/toast";
@@ -23,7 +33,7 @@ import { cn } from "@/lib/cn";
 import { handedOver, linesOf, type PhoneCall, readableNumber } from "@/lib/phone";
 import { m } from "@/paraglide/messages";
 import { type ActivePhone, leavePhone } from "./phone-store";
-import { hangupPhone, holdPhone, usePhone } from "./queries";
+import { hangupPhone, holdPhone, openDoor, usePhone } from "./queries";
 import { HandoverStatus, TransferForm } from "./transfer";
 import { useCallerName } from "./use-caller";
 
@@ -85,6 +95,19 @@ const Controls = ({ call }: { call: PhoneCall }) => {
             </button>
           ))}
         </fieldset>
+      ) : null}
+      {call.door ? (
+        <button
+          type="button"
+          onClick={() =>
+            void openDoor(queryClient, call.id).catch((error: Error) =>
+              toast.show(m.phone_failed({ message: error.message }), "error"),
+            )
+          }
+          className="flex items-center gap-2 rounded-lg bg-subtle px-3 py-1.5 text-[13px] hover:bg-hover"
+        >
+          <DoorOpen size={14} /> {m.phone_door_open()}
+        </button>
       ) : null}
       {transfer ? <TransferForm call={call} onDone={() => setTransfer(false)} /> : null}
       <HandoverStatus call={call} />

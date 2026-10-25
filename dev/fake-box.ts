@@ -82,6 +82,27 @@ const box = await runBox({
           300,
         );
       },
+      doorOpen: async (call, code) => {
+        commands.push({ type: "door-open", call, code });
+        // Picked up, code sent, hung up.
+        pbxEvents.onCall({
+          call,
+          state: "answered",
+          direction: "in",
+          remote: "",
+          local: "",
+          at: now(),
+        });
+        pbxEvents.onCall({
+          call,
+          state: "ended",
+          direction: "in",
+          remote: "",
+          local: "",
+          cause: 16,
+          at: now(),
+        });
+      },
       hold: async (call) => {
         commands.push({ type: "hold", call });
       },

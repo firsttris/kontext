@@ -312,6 +312,18 @@ export const extensionsConf = (config: BoxConfig, paths: BoxPaths): string =>
         "Hangup()",
       ]),
     ),
+    // The door intercom: picked up only to send the opening code, then hung up.
+    context(
+      "kontext-door-open",
+      extension("s", [
+        "Answer()",
+        report("answered", "in"),
+        "Wait(1)",
+        `SendDTMF(\${KONTEXT_DTMF},250)`,
+        "Wait(2)",
+        "Hangup(16)",
+      ]),
+    ),
     // Held: the line outside hears music, out of Kontext's room …
     context("kontext-hold", extension("s", ["MusicOnHold()"])),
     // … and back into it (the agent sets ${KONTEXT_ROOM} again).

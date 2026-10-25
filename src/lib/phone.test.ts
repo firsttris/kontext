@@ -38,6 +38,7 @@ const call = (extra: Partial<PhoneCall> = {}): PhoneCall => ({
   line: null,
   desk: null,
   topic: null,
+  door: false,
   ...extra,
 });
 
