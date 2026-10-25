@@ -64,9 +64,19 @@ export const SyncRow = ({ sync, company }: { sync: MailSync; company: Company })
             label={m.company_sync_finish()}
             question={m.company_sync_finish_confirm()}
             disabled={finish.isPending || sync.status === "running"}
-            onConfirm={() => void finish.mutateAsync(undefined).then(() => setDialog("finished"))}
+            onConfirm={() =>
+              void finish
+                .mutateAsync(undefined)
+                .then(() => setDialog("finished"))
+                .catch(() => undefined)
+            }
           />
         </div>
+      ) : null}
+      {finish.error ? (
+        <p role="alert" className="m-0 text-[13px] text-danger">
+          {finish.error.message}
+        </p>
       ) : null}
       {dialog === "password" ? (
         <PasswordDialog syncId={sync.id} onClose={() => setDialog(null)} />

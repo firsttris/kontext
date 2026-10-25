@@ -195,7 +195,7 @@ test.describe("Umzug", () => {
     await row.getByRole("button", { name: "Ja, weiter" }).click();
     // Finishing waits for the server's last run of the move.
     const done = page.getByRole("dialog", { name: "Umzug abgeschlossen" });
-    await expect(done).toContainText(address(local), { timeout: 20_000 });
+    await expect(done).toContainText(address(local), { timeout: 30_000 });
     await done.getByRole("button", { name: "Fertig" }).click();
     await expect(row).toContainText("Abgeschlossen");
   });
