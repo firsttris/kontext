@@ -639,3 +639,11 @@ export const phoneCalls = sqliteTable(
     index("phone_calls_box_call").on(table.boxId, table.boxCallId),
   ],
 );
+
+/** Whether someone takes phone calls now: "dnd" (Bitte nicht stören) or "away" until a time. */
+export const phoneStatus = sqliteTable("phone_status", {
+  memberId: text("member_id").primaryKey(),
+  mode: text("mode").notNull(),
+  until: integer("until", { mode: "timestamp_ms" }),
+  updatedAt: integer("updated_at", { mode: "timestamp_ms" }).notNull(),
+});

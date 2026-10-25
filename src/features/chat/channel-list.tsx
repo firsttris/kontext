@@ -4,10 +4,11 @@
  * the last message of each.
  */
 import { Link } from "@tanstack/react-router";
-import { AtSign, BellOff, Hash, LockKeyhole, Plus } from "lucide-react";
+import { AtSign, BellOff, Hash, LockKeyhole, Phone, Plus } from "lucide-react";
 import { useState } from "react";
 import { Avatar } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
+import { usePhone } from "@/features/phone/queries";
 import { type ChannelSummary, firstName, shortTime, sortChannels, sortDirect } from "@/lib/chat";
 import { cn } from "@/lib/cn";
 import { m } from "@/paraglide/messages";
@@ -54,10 +55,30 @@ const Sealed = ({ channel }: { channel: ChannelSummary }) =>
     />
   ) : null;
 
-const PersonIcon = ({ name, online, size }: { name: string; online: boolean; size: number }) => (
+const PersonIcon = ({
+  name,
+  online,
+  onPhone = false,
+  size,
+}: {
+  name: string;
+  online: boolean;
+  /** On the phone right now (telephony): shown instead of "online". */
+  onPhone?: boolean;
+  size: number;
+}) => (
   <span className="relative inline-flex">
     <Avatar name={name} size={size} />
-    {online ? (
+    {onPhone ? (
+      <span
+        role="img"
+        aria-label={m.chat_on_phone()}
+        title={m.chat_on_phone()}
+        className="absolute -right-1 -bottom-1 flex size-3.5 items-center justify-center rounded-full border-2 border-bg bg-danger text-white"
+      >
+        <Phone size={7} strokeWidth={3} aria-hidden="true" />
+      </span>
+    ) : online ? (
       <span
         role="img"
         aria-label={m.chat_online()}
@@ -77,6 +98,7 @@ const lastLine = (channel: ChannelSummary, me: string, nameOf: (id: string) => s
 
 const useRows = (channels: ChannelSummary[], online: string[]) => {
   const { me, nameOf, titleOf } = useChatNames();
+  const { busy } = usePhone();
   const row = (channel: ChannelSummary) => {
     const other = channel.members.find((member) => member !== me) ?? me;
     return {
@@ -84,7 +106,9 @@ const useRows = (channels: ChannelSummary[], online: string[]) => {
       title: titleOf(channel),
       last: lastLine(channel, me, nameOf),
       person:
-        channel.kind === "direct" ? { name: nameOf(other), online: online.includes(other) } : null,
+        channel.kind === "direct"
+          ? { name: nameOf(other), online: online.includes(other), onPhone: busy.includes(other) }
+          : null,
     };
   };
   return {
@@ -155,6 +179,7 @@ export const ChannelSidebar = ({ channels, online, activeId, onNew }: Props) => 
                 <PersonIcon
                   name={person?.name ?? title}
                   online={Boolean(person?.online)}
+                  onPhone={Boolean(person?.onPhone)}
                   size={22}
                 />
                 <span className="flex-1 truncate">{title}</span>
@@ -179,7 +204,7 @@ const PhoneRow = ({ row }: { row: ReturnType<typeof useRows>["named"][number] })
       className="flex items-center gap-3 rounded-xl p-2.5 text-fg no-underline active:bg-hover"
     >
       {person ? (
-        <PersonIcon name={person.name} online={person.online} size={42} />
+        <PersonIcon name={person.name} online={person.online} onPhone={person.onPhone} size={42} />
       ) : (
         <span className="flex size-[42px] shrink-0 items-center justify-center rounded-xl bg-subtle text-muted">
           <ChannelIcon channel={channel} size={18} />

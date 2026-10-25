@@ -18,6 +18,7 @@ import {
   noteSchema,
   type PhoneCall,
   phoneRoom,
+  statusSchema,
   transferSchema,
 } from "./phone";
 import { fromBoxSchema, parseMessage } from "./protocol";
@@ -121,6 +122,8 @@ export const createPhoneRoutes = (deps: PhoneRouteDeps) => {
       allowed: await service.allowed(me),
       colleagues: everyone(await store.settings()).filter((id) => id !== me),
       ringPlan: ringPlanOf(await store.settings()),
+      ...(await service.people()),
+      status: await service.statusOf(me),
       online: service.online().length > 0,
       calls: await service.callsOf(me),
     });
@@ -155,6 +158,13 @@ export const createPhoneRoutes = (deps: PhoneRouteDeps) => {
     const bytes = await deps.files.readVoicemail(call.id);
     if (!bytes) return c.json({ error: "Nicht gefunden" }, 404);
     return wavResponse(bytes, { "cache-control": "private, max-age=86400" });
+  });
+
+  app.put("/status", async (c) => {
+    const parsed = statusSchema.safeParse(await c.req.json().catch(() => ({})));
+    if (!parsed.success) return c.json({ error: "Ungültig" }, 400);
+    await service.setStatus({ memberId: c.get("viewer").me, ...parsed.data });
+    return c.body(null, 204);
   });
 
   app.post("/calls/:id/hold", async (c) => {

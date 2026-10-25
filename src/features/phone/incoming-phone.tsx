@@ -16,7 +16,13 @@ import { startRinging } from "@/features/calls/ringtone";
 import { useChatNames } from "@/features/chat/use-chat-names";
 import { useMe } from "@/features/tasks/queries";
 import { eventTimes } from "@/lib/jscalendar";
-import { offeredPhoneCall, type PhoneCall, readableNumber, ringingPhoneCall } from "@/lib/phone";
+import {
+  offeredPhoneCall,
+  type PhoneCall,
+  readableNumber,
+  ringingPhoneCall,
+  withoutUnavailable,
+} from "@/lib/phone";
 import { m } from "@/paraglide/messages";
 import { dismissPhone, usePhoneStore } from "./phone-store";
 import { answerPhone, takePhoneTransfer, usePhone } from "./queries";
@@ -159,7 +165,7 @@ const useNow = (ticking: boolean) => {
 
 export const IncomingPhone = () => {
   const me = useMe();
-  const { calls, online, ringPlan } = usePhone();
+  const { calls, online, ringPlan, unavailable } = usePhone();
   const { active, dismissed } = usePhoneStore();
   const { active: inChatCall } = useCallStore();
   const { nameOf } = useChatNames();
@@ -177,7 +183,10 @@ export const IncomingPhone = () => {
       />
     );
   }
-  const call = ringingPhoneCall(calls, me, dismissed, ringPlan, now);
+  // Bitte nicht stören or away: nothing rings here; the others ring as if I were not there.
+  if (unavailable.includes(me)) return null;
+  const plan = ringPlan && withoutUnavailable(ringPlan, unavailable);
+  const call = ringingPhoneCall(calls, me, dismissed, plan, now);
   if (!call || active) return null;
   // A colleague's call in the chat goes on; the phone still shows who rings, without answering.
   return <Ringing key={call.id} call={call} canAnswer={online && !inChatCall} />;

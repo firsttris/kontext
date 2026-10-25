@@ -2,7 +2,7 @@
 import { describe, expect, it } from "vitest";
 import { createHub, type LiveEvent } from "../live/hub";
 import type { NewTaskData } from "../tasks/tasks";
-import type { PhoneCall } from "./phone";
+import type { PhoneCall, PhoneStatus } from "./phone";
 import type { CallEvent, ToBox } from "./protocol";
 import { createPhoneService, desiredConfig } from "./service";
 import type { PhoneSettings, PhoneStore } from "./store";
@@ -10,6 +10,7 @@ import type { PhoneSettings, PhoneStore } from "./store";
 /** The store in memory, enough for the service. */
 const memoryStore = (settings: PhoneSettings) => {
   const calls = new Map<string, PhoneCall>();
+  const statuses = new Map<string, PhoneStatus>();
   let current = settings;
   const store = {
     settings: async () => current,
@@ -22,6 +23,11 @@ const memoryStore = (settings: PhoneSettings) => {
       [...calls.values()].find((c) => c.boxId === boxId && c.boxCallId === boxCallId) ?? null,
     callsOfRoom: async (room: string) => [...calls.values()].filter((c) => c.room === room),
     saveCall: async (call: PhoneCall) => void calls.set(call.id, call),
+    statuses: async () => [...statuses.values()],
+    setStatus: async (status: PhoneStatus) => {
+      if (status.mode === "available") statuses.delete(status.memberId);
+      else statuses.set(status.memberId, status);
+    },
     callbacksOf: async (remote: string) =>
       [...calls.values()].filter((c) => c.remote === remote && c.callbackTaskId),
     recentCalls: async () => [...calls.values()].reverse(),
@@ -278,6 +284,20 @@ describe("an incoming call", () => {
       member: null,
       members: ["jonas", "anna"],
     });
+  });
+
+  it("does not ring for who does not take calls, and tells everyone who is on the phone", async () => {
+    const { service, box, notices, heard } = setup();
+    await service.setStatus({ memberId: "jonas", mode: "dnd", until: null });
+    expect(heard.at(-1)!.event).toEqual({ type: "phone-people", busy: [], unavailable: ["jonas"] });
+    await box.receive(event(1, "ringing"));
+    expect(notices).toEqual([{ members: ["anna"], title: "Anruf" }]);
+    await service.setStatus({ memberId: "jonas", mode: "away", until: "2026-10-25T08:00:00.000Z" });
+    // Away until an hour ago: back.
+    expect((await service.people()).unavailable).toEqual([]);
+    const taken = (await service.answer("id-1", "anna")) as PhoneCall;
+    await service.joinedRoom(taken.room!, "anna");
+    expect(heard.at(-1)!.event).toEqual({ type: "phone-people", busy: ["anna"], unavailable: [] });
   });
 
   it("leaves Zurückrufen on the chosen board, done once someone talked to the number", async () => {

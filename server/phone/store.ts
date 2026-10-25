@@ -7,7 +7,7 @@ import { z } from "zod";
 import type { Sealer } from "../crypto";
 import type { Db } from "../db";
 import * as schema from "../db/schema";
-import type { PhoneCall } from "./phone";
+import type { PhoneCall, PhoneStatus } from "./phone";
 import { hoursSchema, lineSchema } from "./protocol";
 
 /** Stored settings; what later versions added comes with its default when it is missing. */
@@ -317,6 +317,31 @@ export const createPhoneStore = (db: Db, sealer: Sealer) => {
             and(eq(schema.phoneCalls.remote, remote), isNotNull(schema.phoneCalls.callbackTaskId)),
           )
       ).map(toCall),
+
+    /** Who does not take calls now, or only until a time (Bitte nicht stören, Abwesend). */
+    statuses: async (): Promise<PhoneStatus[]> =>
+      (await db.select().from(schema.phoneStatus)).map((row) => ({
+        memberId: row.memberId,
+        mode: row.mode as PhoneStatus["mode"],
+        until: row.until?.toISOString() ?? null,
+      })),
+
+    setStatus: async (status: PhoneStatus, now = new Date()) => {
+      if (status.mode === "available") {
+        await db.delete(schema.phoneStatus).where(eq(schema.phoneStatus.memberId, status.memberId));
+        return;
+      }
+      const row = {
+        memberId: status.memberId,
+        mode: status.mode,
+        until: status.until ? new Date(status.until) : null,
+        updatedAt: now,
+      };
+      await db
+        .insert(schema.phoneStatus)
+        .values(row)
+        .onConflictDoUpdate({ target: schema.phoneStatus.memberId, set: row });
+    },
 
     /** The latest calls; who may see which is decided by the caller. */
     recentCalls: async (limit: number): Promise<PhoneCall[]> =>

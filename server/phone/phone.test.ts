@@ -17,6 +17,8 @@ import {
   roomOfPhoneRoom,
   takeCall,
   takeOffer,
+  unavailableAt,
+  withoutUnavailable,
 } from "./phone";
 import type { CallEvent } from "./protocol";
 
@@ -247,5 +249,21 @@ describe("ringingFor", () => {
     const answered = applyCallEvent(ringing(), event("answered", { forwarded: true }), "+491711");
     expect(answered).toMatchObject({ state: "talking", forwardedTo: "+491711", member: null });
     expect(applyCallEvent(ringing(), event("answered"), "+491711").forwardedTo).toBeNull();
+  });
+});
+
+describe("who takes calls", () => {
+  const now = new Date("2026-10-25T10:00:00.000Z");
+  it("leaves out who asked not to be disturbed or is away, until the away runs out", () => {
+    const statuses = [
+      { memberId: "jonas", mode: "dnd" as const, until: null },
+      { memberId: "anna", mode: "away" as const, until: "2026-10-25T12:00:00.000Z" },
+      { memberId: "max", mode: "away" as const, until: "2026-10-25T09:00:00.000Z" },
+      { memberId: "sandra", mode: "away" as const, until: null },
+    ];
+    expect(unavailableAt(statuses, now)).toEqual(["jonas", "anna", "sandra"]);
+    expect(
+      withoutUnavailable({ mode: "order", stepSeconds: 15, order: ["jonas", "max"] }, ["jonas"]),
+    ).toEqual({ mode: "order", stepSeconds: 15, order: ["max"] });
   });
 });

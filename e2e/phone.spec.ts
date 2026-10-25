@@ -354,6 +354,22 @@ test.describe("Telefonie über die Telefonbox", () => {
     await anna.close();
   });
 
+  test("Bitte nicht stören: bei Jonas klingelt nichts, bei Anna schon", async ({
+    page,
+    browser,
+  }) => {
+    await login(page);
+    await page.getByRole("link", { name: "Telefon", exact: true }).click();
+    await page.getByLabel("Erreichbarkeit").selectOption({ label: "Bitte nicht stören" });
+    const anna = await colleague(browser, "anna");
+    const { call } = await box.ring("07223 81234");
+    await expect(anna.page.getByRole("dialog", { name: /^Anruf von/ })).toBeVisible();
+    await expect(page.getByRole("dialog", { name: /^Anruf von/ })).toHaveCount(0);
+    await box.hangup(call);
+    await page.getByLabel("Erreichbarkeit").selectOption({ label: "Erreichbar" });
+    await anna.close();
+  });
+
   test("eine Durchwahl klingelt nur bei Anna", async ({ page, browser }) => {
     await login(page);
     await page.goto("/settings?section=phone");

@@ -20,7 +20,9 @@ export type LiveEvent =
   | { type: "call"; channelId: string; call: Call | null }
   | { type: "call-declined"; channelId: string; memberId: string }
   // A phone call through the telephone box rang, was taken, ended or got a note.
-  | { type: "phone"; call: PhoneCall };
+  | { type: "phone"; call: PhoneCall }
+  /** Who is on the phone now, and who does not take calls (Bitte nicht stören, Abwesend). */
+  | { type: "phone-people"; busy: string[]; unavailable: string[] };
 
 type Listener = { viewer: Viewer; send: (event: LiveEvent) => void };
 

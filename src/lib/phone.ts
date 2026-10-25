@@ -4,11 +4,16 @@
  */
 import { m } from "@/paraglide/messages";
 import { readableNumber as readable, toE164 } from "../../server/phone/numbers";
-import { type PhoneCall, type RingPlan, ringingFor } from "../../server/phone/phone";
+import {
+  type PhoneCall,
+  type RingPlan,
+  ringingFor,
+  withoutUnavailable,
+} from "../../server/phone/phone";
 import type { ContactCard } from "./jscontact";
 
 export type { PhoneCall, RingPlan };
-export { toE164 };
+export { toE164, withoutUnavailable };
 
 /** The contact a number belongs to, comparing every number of every card. */
 export const contactOfNumber = <C extends Pick<ContactCard, "phones">>(

@@ -19,11 +19,14 @@ import {
   isPerson,
   outgoingCall,
   type PhoneCall,
+  type PhoneStatus,
   phoneNotice,
   type RingPlan,
   ringingFor,
   roomIsOver,
   takeCall,
+  unavailableAt,
+  withoutUnavailable,
 } from "./phone";
 import type { BoxConfig, CallEvent, FromBox, ToBox } from "./protocol";
 import type { PhoneSettings, PhoneStore } from "./store";
@@ -77,6 +80,7 @@ export const desiredConfig = (
   trunkHost: string,
   trunkPort: number,
   today = companyDay(new Date()),
+  unavailable: string[] = [],
 ): BoxConfig => {
   const { mailbox, hours } = settings;
   const greeting = knownSound(settings, mailbox.greeting);
@@ -86,7 +90,12 @@ export const desiredConfig = (
     extraLines: settings.line
       ? settings.extraLines.map(({ id, username, password }) => ({ id, username, password }))
       : [],
-    deskPhones: settings.deskPhones.map((desk) => deskForBox(settings, desk)),
+    // The desk phone of someone who does not take calls stays quiet.
+    deskPhones: settings.deskPhones.map((desk) =>
+      desk.member && unavailable.includes(desk.member)
+        ? { ...deskForBox(settings, desk), lines: [] }
+        : deskForBox(settings, desk),
+    ),
     trunk: {
       host: trunkHost,
       port: trunkPort,
@@ -174,7 +183,13 @@ export const createPhoneService = (deps: PhoneDeps) => {
     const message: ToBox = {
       type: "config",
       version: now().getTime(),
-      config: desiredConfig(await store.settings(), deps.trunkHost, deps.trunkPort),
+      config: desiredConfig(
+        await store.settings(),
+        deps.trunkHost,
+        deps.trunkPort,
+        companyDay(now()),
+        unavailableAt(await store.statuses(), now()),
+      ),
     };
     for (const [id, send] of connected) if (!boxId || id === boxId) send(message);
   };
@@ -202,7 +217,10 @@ export const createPhoneService = (deps: PhoneDeps) => {
       if (event.state !== "ringing" || event.direction !== "in") return;
       const settings = await store.settings();
       const line = lineOf(settings, event.line);
-      const plan = ringPlanFor(settings, line);
+      const plan = withoutUnavailable(
+        ringPlanFor(settings, line),
+        unavailableAt(await store.statuses(), now()),
+      );
       const call = {
         ...incomingCall(event, { id: newId(), boxId, members: plan.order }),
         line: line?.label ?? null,
@@ -232,12 +250,30 @@ export const createPhoneService = (deps: PhoneDeps) => {
     }
     // A line of a room ended (the caller hung up): is anyone left to talk to?
     if (next.state === "ended" && next.room) await settle(next.room);
+    if (next.desk) await publishPeople();
   };
 
   const send = (call: PhoneCall, message: ToBox): boolean => {
     const to = connected.get(call.boxId);
     to?.(message);
     return Boolean(to);
+  };
+
+  /** Who is on the phone: in a phone room, or talking at a desk phone. */
+  const busyPeople = async () => {
+    const atDesks = (await store.recentCalls(50))
+      .filter((call) => call.state === "talking" && call.desk && call.member)
+      .map((call) => call.member!);
+    return [...new Set([...[...presence.values()].flatMap((set) => [...set]), ...atDesks])];
+  };
+
+  /** For everyone (the chat shows it): who is on the phone, who does not take calls. */
+  const publishPeople = async () => {
+    const [busy, statuses] = await Promise.all([busyPeople(), store.statuses()]);
+    hub.publish(
+      { type: "phone-people", busy, unavailable: unavailableAt(statuses, now()) },
+      () => true,
+    );
   };
 
   /** At most one side left in a room: its lines are hung up. */
@@ -366,6 +402,7 @@ export const createPhoneService = (deps: PhoneDeps) => {
       if (!isPerson(identity)) return;
       presence.set(room, new Set([...presentIn(room), identity]));
       for (const call of await store.callsOfRoom(room)) publish(call);
+      await publishPeople();
     },
 
     /**
@@ -378,12 +415,44 @@ export const createPhoneService = (deps: PhoneDeps) => {
       if (left.length) presence.set(room, new Set(left));
       else presence.delete(room);
       for (const call of await store.callsOfRoom(room)) publish(call);
+      await publishPeople();
       await settle(room);
     },
 
     hold: (callId: string, me: string): Promise<PhoneCall | Problem> => setHeld(callId, me, true),
     resume: (callId: string, me: string): Promise<PhoneCall | Problem> =>
       setHeld(callId, me, false),
+
+    /** Who is on the phone and who does not take calls, as the app shows it. */
+    people: async () => ({
+      busy: await busyPeople(),
+      unavailable: unavailableAt(await store.statuses(), now()),
+    }),
+
+    statusOf: async (me: string): Promise<PhoneStatus> =>
+      (await store.statuses()).find((status) => status.memberId === me) ?? {
+        memberId: me,
+        mode: "available",
+        until: null,
+      },
+
+    /**
+     * Bitte nicht stören, Abwesend (until a time) or back: it no longer rings for them, their desk
+     * phone stays quiet, and everyone sees it.
+     */
+    setStatus: async (status: PhoneStatus) => {
+      await store.setStatus(status, now());
+      await publishPeople();
+      await sendConfig();
+      const left = status.until ? Date.parse(status.until) - now().getTime() : 0;
+      // When the away runs out, the desk phone rings again (and the app shows them back).
+      if (left > 0 && left < 86_400_000) {
+        setTimeout(() => {
+          void publishPeople();
+          void sendConfig();
+        }, left).unref?.();
+      }
+    },
 
     transfer: transfers.transfer,
     takeTransfer: transfers.take,

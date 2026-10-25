@@ -15,6 +15,10 @@ type PhoneData = {
   /** Who else hears the phone: whom one can hand a call to. */
   colleagues?: string[];
   ringPlan?: RingPlan;
+  /** Who is on the phone now, and who does not take calls. */
+  busy?: string[];
+  unavailable?: string[];
+  status?: { mode: "available" | "dnd" | "away"; until: string | null };
   calls: PhoneCall[];
 };
 type Ticket = { call: PhoneCall; token: string; url: string | null };
@@ -44,8 +48,27 @@ export const usePhone = () => {
     online: data?.online ?? false,
     colleagues: data?.colleagues ?? [],
     ringPlan: data?.ringPlan ?? null,
+    busy: data?.busy ?? [],
+    unavailable: data?.unavailable ?? [],
+    status: data?.status ?? { mode: "available" as const, until: null },
     calls: data?.calls ?? [],
   };
+};
+
+/** Who is on the phone and who does not take calls, as the live connection tells it. */
+export const setPhonePeople = (
+  queryClient: QueryClient,
+  people: { busy: string[]; unavailable: string[] },
+) =>
+  queryClient.setQueryData<PhoneData>(PHONE_KEY, (data) => (data ? { ...data, ...people } : data));
+
+/** Bitte nicht stören, Abwesend bis …, or back. */
+export const setPhoneStatus = async (
+  queryClient: QueryClient,
+  status: { mode: "available" | "dnd" | "away"; until: string | null },
+) => {
+  await send<unknown>("PUT", "/status", status);
+  queryClient.setQueryData<PhoneData>(PHONE_KEY, (data) => (data ? { ...data, status } : data));
 };
 
 /** A call changed, as the live connection tells it: newest first. */

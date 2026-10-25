@@ -73,6 +73,34 @@ export const roomOfPhoneRoom = (name: string): string | null =>
 /** The calls state of server/calls names a phone room "phone-<uuid>". */
 export const phoneCallKey = (room: string) => `phone-${room}`;
 
+/** Whether someone takes calls: Bitte nicht stören, or away (until a time, or open-ended). */
+export type PhoneStatus = {
+  memberId: string;
+  mode: "available" | "dnd" | "away";
+  until: string | null;
+};
+
+export const statusSchema = z.object({
+  mode: z.enum(["available", "dnd", "away"]),
+  until: z.iso.datetime().nullable().default(null),
+});
+
+/** Who does not take calls at `now`: an away that has run out counts as back. */
+export const unavailableAt = (statuses: PhoneStatus[], now: Date): string[] =>
+  statuses
+    .filter(
+      (status) =>
+        status.mode === "dnd" ||
+        (status.mode === "away" && (!status.until || Date.parse(status.until) > now.getTime())),
+    )
+    .map((status) => status.memberId);
+
+/** The plan without who does not take calls: the others ring (in order, as before). */
+export const withoutUnavailable = (plan: RingPlan, unavailable: string[]): RingPlan => ({
+  ...plan,
+  order: plan.order.filter((member) => !unavailable.includes(member)),
+});
+
 /** How the line's people hear a call: all at once, or one after another (then all). */
 export type RingPlan = { mode: "all" | "order"; stepSeconds: number; order: string[] };
 

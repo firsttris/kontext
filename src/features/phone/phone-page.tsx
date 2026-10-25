@@ -17,6 +17,7 @@ import { listDate } from "@/lib/format";
 import { outcomeText, type PhoneCall, readableNumber } from "@/lib/phone";
 import { m } from "@/paraglide/messages";
 import { soundLength } from "../../../server/phone/sounds";
+import { PhoneStatus } from "./phone-status";
 import { usePhoneStore } from "./phone-store";
 import { dialPhone, savePhoneNote, usePhone } from "./queries";
 import { useCallerName } from "./use-caller";
@@ -177,6 +178,7 @@ export const PhonePage = () => {
             <p className="m-0 text-[14px] text-muted">{m.phone_not_allowed()}</p>
           ) : (
             <>
+              <PhoneStatus />
               {online ? null : (
                 <p role="status" className="m-0 rounded-lg bg-subtle px-3 py-2 text-[13px]">
                   {m.phone_offline()}

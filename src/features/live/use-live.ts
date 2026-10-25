@@ -16,7 +16,7 @@ import {
   setRead,
 } from "@/features/chat/queries";
 import { startTyping, stopTyping } from "@/features/chat/typing";
-import { PHONE_KEY, setPhoneCall } from "@/features/phone/queries";
+import { PHONE_KEY, setPhoneCall, setPhonePeople } from "@/features/phone/queries";
 import type { Message } from "@/lib/chat";
 import type { LiveEvent } from "../../../server/live/hub";
 
@@ -68,6 +68,9 @@ export const applyLiveEvent = (queryClient: QueryClient, me: string, event: Live
     case "phone":
       setPhoneCall(queryClient, event.call);
       return;
+    case "phone-people":
+      setPhonePeople(queryClient, event);
+      return;
   }
 };
 
@@ -82,6 +85,7 @@ const EVENT_TYPES: LiveEvent["type"][] = [
   "call",
   "call-declined",
   "phone",
+  "phone-people",
 ];
 
 /** `onMessage` hears every new chat message (for notifications). */

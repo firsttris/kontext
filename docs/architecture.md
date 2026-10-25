@@ -720,6 +720,12 @@ flowchart LR
   `kontext-answered-here` mit seinem Endpunkt. Untereinander erreichen sie sich per Kurzwahl;
   Anrufe nach draußen gehen über die Fritzbox (mit der Durchwahl ihrer Person) und stehen in der
   Liste. Kontext erreicht sie über die Kurzwahl, auch beim Weitervermitteln.
+- **Präsenz:** Wer in einem Telefon-Raum ist oder am Tischtelefon spricht, „telefoniert“ – das
+  geht als `phone-people` an alle (der Chat zeigt es an der Person). Bitte nicht stören und
+  Abwesend (bis zu einer Zeit) liegen in `phone_status`; wer nicht erreichbar ist, fällt aus dem
+  Klingelplan (`withoutUnavailable`, auch bei „der Reihe nach“), bekommt keinen Web Push, und sein
+  Tischtelefon klingelt nicht (die Box bekommt eine neue Konfiguration, auch wenn „Abwesend bis“
+  abläuft).
 - **Wer klingelt wann:** Alle gleichzeitig oder der Reihe nach (jede Person eine Weile, dann
   alle, `ringingFor`). Die Reihenfolge rechnet die App selbst aus Beginn und Plan (die Karte
   erscheint, wenn man dran ist); Web Push geht jeweils an die, die gerade dran sind. Ein Handy
