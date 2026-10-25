@@ -4,6 +4,8 @@
 [Unit]
 Description=LiveKit (calls in Kontext's chat)
 Before=kontext.service
+After=redis.service
+Wants=redis.service
 
 [Container]
 Image=docker.io/livekit/livekit-server:v1.13.10

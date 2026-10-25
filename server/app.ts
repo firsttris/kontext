@@ -40,6 +40,7 @@ import { createSmtp } from "./external/smtp";
 import { createExternalStore } from "./external/store";
 import { createUserJmap } from "./external/user-jmap";
 import { createImageSenderRoutes } from "./images/routes";
+import { createServerJmap } from "./jmap-server";
 import { createHub } from "./live/hub";
 import { createLiveRoutes } from "./live/routes";
 import { createImporter, type Importer } from "./migration/importer";
@@ -50,6 +51,7 @@ import { createSyncRunner } from "./migration/sync-runner";
 import { createSyncs } from "./migration/syncs";
 import { createPgpRoutes, createWkdRoutes } from "./pgp/routes";
 import { createPgpStore } from "./pgp/store";
+import { createPhone } from "./phone/setup";
 import { createMailWatch } from "./push/mail-watch";
 import { createPusher } from "./push/pusher";
 import { createPushRoutes } from "./push/routes";
@@ -275,6 +277,11 @@ export const createApp = async (env: Env) => {
     }),
   );
   const chatStore = createChatStore(db, messages);
+  const tasks = createTaskStore(db);
+  const snoozes = createSnoozeStore(db);
+  /** A board got tasks the server made (telephony, CalDAV, rules): tell who sees it. */
+  const tasksChanged = (accountId: string) =>
+    hub.publish({ type: "tasks", accountId }, (viewer) => viewer.accountIds.includes(accountId));
   const livekit = liveKitOf(env);
   if (livekit) {
     const callState = createCallState();
@@ -283,6 +290,38 @@ export const createApp = async (env: Env) => {
       return accounts && viewerOf(accounts);
     };
     const nameOfRequest = async (request: Request) => (await infoOf(request))?.name ?? "";
+    const phone = createPhone({
+      db,
+      sealer: await createSealer(env.BETTER_AUTH_SECRET, "phone"),
+      hub,
+      livekit,
+      publicUrl: env.LIVEKIT_PUBLIC_URL ?? null,
+      trunkHost: env.PHONE_SIP_HOST ?? new URL(env.BETTER_AUTH_URL).hostname,
+      trunkPort: env.PHONE_SIP_PORT,
+      viewerOf: viewerOfRequest,
+      nameOf: nameOfRequest,
+      notify: pusher.notify,
+      dir: join(dirname(env.DATABASE_PATH), "phone"),
+      importMessage: createServerJmap({
+        env,
+        grants,
+        sessions: () => snoozes.sessionsFor(""),
+      }).importMessage,
+      tasks: {
+        create: async (task) => {
+          const made = await tasks.create(task, task.accountId);
+          tasksChanged(task.accountId);
+          return made;
+        },
+        complete: async (id) => {
+          const done = await tasks.update(id, { status: "done" }, "phone");
+          if (done) tasksChanged(done.accountId);
+        },
+      },
+    });
+    app.route("/api/phone", phone.routes);
+    // Behind the Firmenverwaltung's check, which runs first for every /api/company path.
+    if (env.STALWART_ADMIN_KEY) app.route("/api/company/phone", phone.adminRoutes);
     const calls = createCallRoutes(
       {
         livekit,
@@ -292,6 +331,7 @@ export const createApp = async (env: Env) => {
         viewerOf: viewerOfRequest,
         nameOf: nameOfRequest,
         notify: pusher.notify,
+        onRoomEvent: phone.onRoomEvent,
         postCall: (channelId, authorId, call) =>
           messages.post({
             channelId,
@@ -326,8 +366,11 @@ export const createApp = async (env: Env) => {
       })
       .catch(() => undefined);
   } else {
-    // The app asks; without LiveKit it shows no call buttons.
+    // The app asks; without LiveKit it shows no call buttons and no telephony.
     app.get("/api/calls", (c) => c.json({ enabled: false, calls: [] }));
+    app.get("/api/phone", (c) =>
+      c.json({ enabled: false, allowed: false, online: false, calls: [] }),
+    );
   }
   app.route(
     "/api/chat",
@@ -349,7 +392,6 @@ export const createApp = async (env: Env) => {
     }),
   );
   // Task reminders go out every minute, also with nobody signed in.
-  const tasks = createTaskStore(db);
   const reminder = createTaskReminder({ store: tasks, notify: pusher.notify });
   setInterval(() => void reminder.tick(), env.REMINDER_TICK_MS).unref();
   app.route(
@@ -368,7 +410,6 @@ export const createApp = async (env: Env) => {
   );
   app.route("/api/snippets", createSnippetRoutes({ store: createSnippetStore(db), accountsOf }));
   // Wiedervorlage: due mails come back every minute, also with nobody signed in.
-  const snoozes = createSnoozeStore(db);
   const waker = createSnoozeWaker({ env, grants, store: snoozes, notify: pusher.notify });
   setInterval(() => void waker.tick(), env.SNOOZE_TICK_MS).unref();
   app.route("/api/snoozes", createSnoozeRoutes({ store: snoozes, infoOf }));
@@ -404,10 +445,7 @@ export const createApp = async (env: Env) => {
     createDavRoutes({
       auth: createDavAuth(env),
       store: tasks,
-      changed: (accountId) =>
-        hub.publish({ type: "tasks", accountId }, (viewer) =>
-          viewer.accountIds.includes(accountId),
-        ),
+      changed: tasksChanged,
     }),
   );
   // Mails a rule marked "Aufgabe anlegen" become tasks, every minute, also with nobody signed in.
@@ -416,8 +454,7 @@ export const createApp = async (env: Env) => {
     grants,
     sessions: () => snoozes.sessionsFor(""),
     store: tasks,
-    changed: (accountId) =>
-      hub.publish({ type: "tasks", accountId }, (viewer) => viewer.accountIds.includes(accountId)),
+    changed: tasksChanged,
   });
   setInterval(() => void ruleTasks.tick(), env.RULE_TASK_TICK_MS).unref();
   app.route(

@@ -1,0 +1,1 @@
+ALTER TABLE `phone_calls` ADD `door` integer DEFAULT false NOT NULL;

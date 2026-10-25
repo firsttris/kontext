@@ -51,6 +51,12 @@ const schema = z.object({
   LIVEKIT_API_SECRET: z.preprocess((v) => v || undefined, z.string().min(32).optional()),
   /** Where browsers reach LiveKit, if not through Kontext's own address (/rtc via Caddy). */
   LIVEKIT_PUBLIC_URL: z.preprocess((v) => v || undefined, z.url().optional()),
+  /**
+   * Telephony: where the telephone boxes reach LiveKit SIP – the server's public name (default:
+   * the host of BETTER_AUTH_URL) and SIP port (TCP).
+   */
+  PHONE_SIP_HOST: z.preprocess((v) => v || undefined, z.string().optional()),
+  PHONE_SIP_PORT: z.coerce.number().default(5060),
   /** The built app (dist/); when set, the server delivers it too. Empty in dev (Vite does). */
   STATIC_DIR: z.string().optional(),
 });

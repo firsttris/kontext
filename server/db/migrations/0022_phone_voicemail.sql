@@ -1,0 +1,1 @@
+ALTER TABLE `phone_calls` ADD `voicemail_seconds` integer;

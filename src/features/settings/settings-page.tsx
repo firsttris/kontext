@@ -16,6 +16,7 @@ import {
   Palette,
   Palmtree,
   PenLine,
+  Phone,
   RefreshCw,
   ShieldCheck,
   Signature,
@@ -34,6 +35,7 @@ import { useIsCompanyAdmin } from "@/features/company/queries";
 import { SecuritySection as CompanySecuritySection } from "@/features/company/security-section";
 import { ExternalSection } from "@/features/external/external-section";
 import { useExternalAccounts } from "@/features/external/queries";
+import { usePhone } from "@/features/phone/queries";
 import { RulesSection } from "@/features/rules/rules-section";
 import { SnippetsSection } from "@/features/snippets/snippets-section";
 import { cn } from "@/lib/cn";
@@ -52,6 +54,11 @@ const EncryptionSection = lazy(() =>
 // The signature editors bring the mail editor (Tiptap): loaded when their section opens.
 const SignatureSection = lazy(() =>
   import("./signature-section").then((module) => ({ default: module.SignatureSection })),
+);
+const PhoneSettingsSection = lazy(() =>
+  import("@/features/phone/phone-settings").then((module) => ({
+    default: module.PhoneSettingsSection,
+  })),
 );
 const CompanySignatureSection = lazy(() =>
   import("@/features/company/signature-section").then((module) => ({
@@ -83,6 +90,7 @@ const COMPANY: Entry[] = [
   { id: "company-signature", label: m.company_signature, icon: Signature },
   { id: "company-chat", label: m.company_chat, icon: MessagesSquare },
   { id: "company-security", label: m.company_security, icon: ShieldCheck },
+  { id: "phone", label: m.phone_settings, icon: Phone },
   { id: "migration", label: m.company_migration, icon: Truck },
 ];
 
@@ -102,6 +110,7 @@ const CONTENT: Record<Section, () => ReactNode> = {
   "company-signature": () => <CompanySignatureSection />,
   "company-chat": () => <ChatSection />,
   "company-security": () => <CompanySecuritySection />,
+  phone: () => <PhoneSettingsSection />,
   migration: () => <MigrationSection />,
 };
 
@@ -134,6 +143,9 @@ export const SettingsPage = ({ section }: { section: Section | undefined }) => {
   // Other mailboxes need the server's Stalwart key; without it the entry is left out.
   const { data: external } = useExternalAccounts();
   const own = external === null ? OWN.filter((entry) => entry.id !== "accounts") : OWN;
+  // Telephony needs LiveKit on the server; without it the section has nothing to set.
+  const phone = usePhone().enabled;
+  const company = COMPANY.filter((entry) => entry.id !== "phone" || phone);
   const title = [...OWN, ...COMPANY].find((s) => s.id === current)!.label();
   return (
     <>
@@ -153,7 +165,7 @@ export const SettingsPage = ({ section }: { section: Section | undefined }) => {
           {admin ? (
             <div className="flex flex-col gap-1">
               <div className="px-2.5 text-[12px] font-medium text-muted">{m.company_heading()}</div>
-              <SectionLinks entries={COMPANY} current={current} />
+              <SectionLinks entries={company} current={current} />
             </div>
           ) : null}
         </div>

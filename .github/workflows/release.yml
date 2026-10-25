@@ -20,3 +20,17 @@ jobs:
     permissions:
       contents: write
       packages: write
+
+  # The telephone box (Asterisk and the box agent), its own image: tristanteu/kontext-box.
+  box:
+    needs: docker
+    uses: firsttris/workflows/.github/workflows/docker-release.yml@v1
+    with:
+      image: tristanteu/kontext-box
+      description: Kontext telephone box – Asterisk and the box agent, next to the Fritzbox
+      dockerfile: box/Dockerfile
+      readme: ""
+    secrets: inherit
+    permissions:
+      contents: write
+      packages: write

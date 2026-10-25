@@ -639,12 +639,171 @@ Server läuft; Kontext baut nur die Oberfläche und entscheidet, wer hinein darf
 - **Ohne LiveKit** (keine `LIVEKIT_*`-Einstellungen) sind Anrufe aus: Die App fragt
   `/api/calls` und zeigt keine Knöpfe; der Termin bietet keine Videobesprechung an.
 
+## Telefonie
+
+Kontext telefoniert über eine **Telefonbox** im Büro des Kunden: ein Container mit Asterisk und
+dem Box-Agent (`box/`), auf einem Thin Client, einem Pi, dem Firmenserver oder einem NAS. Die
+Box meldet sich im Büronetz als IP-Telefon an der Fritzbox an; die Fritzbox bleibt am Anschluss,
+die Nummern und Tischtelefone bleiben, wie sie sind. Kontext selbst (Server `server/phone/`,
+App `src/features/phone/`) läuft weiter auf dem VPS.
+
+```mermaid
+flowchart LR
+  Fritzbox -->|"SIP im LAN (Box als IP-Telefon)"| Box["Telefonbox<br>(Asterisk + Agent)"]
+  Box -->|"WebSocket, von innen nach außen"| Server["Kontext-Server"]
+  Box -->|"SIP/TCP 5060, RTP"| SIP["LiveKit SIP"]
+  SIP --> LiveKit
+  Browser -->|WebRTC| LiveKit
+```
+
+- **Keine offenen Ports beim Kunden:** Die Box baut eine WebSocket-Verbindung zu Kontext auf
+  (`/api/phone/box`) und hält sie offen. Kontext schickt ihr den ganzen Sollzustand
+  (Fritzbox-Anmeldung, Zugang zu LiveKit SIP) mit Version, die Box schreibt daraus Asterisks
+  Konfiguration (`box/agent/asterisk-config.ts`) und meldet Anrufe zurück: klingelt,
+  angenommen, beendet (mit Q.850-Ursache). Ereignisse tragen eine laufende Nummer; nach einem
+  Abbruch schickt die Box nach, was Kontext nicht bestätigt hat. Ohne Kontext telefoniert sie mit
+  der letzten Konfiguration weiter (`/data/config.json`).
+- **Koppeln:** In der Firmenverwaltung unter Telefonie gibt es einen Code (30 Minuten gültig).
+  Die Box tauscht ihn einmal gegen ein Token (`POST /api/phone/box/pair`); beides liegt nur als
+  SHA-256 in der Datenbank. Den Code gibt man der Box beim ersten Start mit oder auf ihrer
+  Statusseite (`http://<box>:8089`), die sonst nur anzeigt, ob sie verbunden und an der Fritzbox
+  angemeldet ist.
+- **Ein Anruf kommt rein:** Die Fritzbox klingelt bei der Box (und bei den Tischtelefonen). Die
+  Box meldet „klingelt“; Kontext legt den Anruf an, schaut aber nicht ins Adressbuch – das macht
+  die App mit den Rechten der angemeldeten Person (`contactOfNumber`, Nummern in E.164,
+  `server/phone/numbers.ts`). Bei den Personen, die unter Telefonie ausgewählt sind, erscheint
+  eine Karte: Kontakt, Firma, letzte Mail, nächster Termin, „Annehmen“ – auch als Web Push.
+- **Annehmen in Kontext:** Kontext gibt dem Anruf einen Raum und sagt der Box „answer“. Erst dann
+  wählt Asterisk LiveKit SIP an (`<uuid>@…`, die Dispatch-Regel macht daraus den Raum
+  `kontext-phone-<uuid>`) und verbindet den Anrufer – vorher klingeln die Tischtelefone weiter,
+  wer zuerst abnimmt, hat ihn. Nimmt jemand am Tischtelefon ab, steht der Anruf als „Am Telefon
+  angenommen“ in der Liste (Ursache 26), sonst als „Verpasst“.
+- **Anrufen:** „Anrufen“ am Kontakt oder auf der Seite Telefon: Kontext legt Anruf und Raum an,
+  die Person tritt dem Raum bei, die Box wählt erst LiveKit SIP an (diesen Raum) und dann über die
+  Fritzbox die Nummer (national mit 0, Ausland mit 00). Ein Tastenfeld schickt Töne (DTMF) für
+  Sprachmenüs.
+- **Verpasste Anrufe als Aufgabe:** Ist in der Firmenverwaltung ein Board gewählt (das eigene
+  einer Person oder das eines gemeinsamen Postfachs), legt ein verpasster Anruf dort „Zurückrufen:
+  <Nummer>“ an, fällig heute und mit dem Anruf verknüpft (`callbackTask`). Spricht danach jemand
+  mit der Nummer – Rückruf aus Kontext oder ihr nächster Anruf wird angenommen –, hakt der Server
+  die Aufgabe ab (`answeredCallbacks`). Unterdrückte Nummern bekommen keine Aufgabe.
+- **Ansagen:** In der Firmenverwaltung gesprochen (MediaRecorder) oder hochgeladen; der Browser
+  macht daraus WAV mit 8 kHz, mono, 16 Bit (`src/lib/wav.ts`), der Server prüft nur
+  (`server/phone/sounds.ts`) und legt sie unter ihrer Prüfsumme neben die Datenbank
+  (`phone/sounds/`). Die Konfiguration nennt der Box die Ansagen, die sie braucht; sie lädt jede
+  einmal (`/api/phone/box/files/sounds/<id>`, mit ihrem Token), bevor sie den Rest anwendet.
+- **Mailbox:** Ist sie an, klingelt ein Anruf so lange wie eingestellt, dann nimmt die Box ab
+  (`kontext-mailbox`): Ereignis „mailbox“ (die Karte in Kontext verschwindet), Ansage, Piepton,
+  `Record()` bis zu zwei Minuten. Legt der Anrufer auf, lädt der Agent die Aufnahme hoch
+  (`PUT /api/phone/box/files/voicemail/<anruf>`), erst danach meldet er das Ende. Kontext legt sie
+  beim Anruf ab (`phone/voicemail/`, abspielbar in der Liste) und legt eine Mail mit der Aufnahme
+  in das gewählte Postfach: mit `Email/import` über die Anmeldung von jemandem, der dort schreiben
+  darf (`server/jmap-server.ts`), so wie die Aufgaben aus Regeln.
+- **Öffnungszeiten:** prüft die Box selbst, damit sie auch ohne Kontext gelten: am Anfang jedes
+  Anrufs geschlossene Tage, dann die offenen Zeiträume, beides mit `GotoIfTime` in Europe/Berlin
+  (`box/agent/dialplan.ts`). Außerhalb meldet sie „closed“ statt „klingelt“ – Kontext legt den
+  Anruf ohne Klingeln und ohne Web Push als „Außerhalb der Öffnungszeiten“ an –, spielt die Ansage
+  und nimmt, wenn die Mailbox an ist, eine Nachricht auf. Asterisk kennt bei Tagen keine Jahre;
+  Kontext schickt deshalb nur Tage von heute bis vor demselben Datum im nächsten Jahr (ein Tag
+  weiter weg würde dasselbe Datum in diesem Jahr schließen) und die Konfiguration einmal täglich
+  neu. Tage, die es nicht gibt („2026-02-30“), nimmt die Firmenverwaltung nicht an. Die
+  Feiertage für Baden-Württemberg rechnet `server/phone/holidays.ts` aus (Ostern nach Gauß).
+- **Durchwahlen:** Jede weitere Nummer ist ein weiteres IP-Telefon an derselben Fritzbox, das dort
+  nur auf diese Nummer reagiert; die Box meldet sich mit jedem an (`fritzbox-<id>`). Anrufe
+  kommen über den ersten Endpunkt herein (Zuordnung nach Adresse) und verraten ihre Leitung über
+  die gewählte Nummer, den Benutzernamen (`contact_user`, im Dialplan `${EXTEN}` → `Line`).
+  Kontext lässt dann nur die Leute dieser Durchwahl klingeln (alle zugleich). Wer auf einer
+  Durchwahl ist, ruft mit ihr an: Der Agent setzt beim Originate `KONTEXT_OUT=fritzbox-<id>`.
+- **Tischtelefone (Snom):** melden sich an der Box an, nicht an der Fritzbox (PJSIP-Endpunkt
+  `desk-<id>`, die Box ist ihr Registrar). Ihre Einstellungen holen sie sich von der Box
+  (`http://<box>:8089/snom/<mac>.xml`, `box/agent/snom.ts`): Konto, Sprache, Töne, Zeitzone. Sie
+  klingeln zusammen mit Kontext (`Dial` statt `Wait`, je Leitung ihre Telefone: das einer Person
+  bei deren Nummern, ein gemeinsames bei der ersten); wer abnimmt, meldet sich über
+  `kontext-answered-here` mit seinem Endpunkt. Untereinander erreichen sie sich per Kurzwahl;
+  Anrufe nach draußen gehen über die Fritzbox (mit der Durchwahl ihrer Person) und stehen in der
+  Liste. Kontext erreicht sie über die Kurzwahl, auch beim Weitervermitteln.
+- **Sprachmenü:** Nach den Öffnungszeiten nimmt die Box ab (`kontext-menu`), spielt die Ansage
+  mit `Background()` und wartet auf eine Taste. Eine Taste setzt `KONTEXT_CHOICE` und klingelt
+  (Kontext lässt die Leute dieser Taste klingeln, alle zugleich, und zeigt das Thema am Anruf) oder
+  führt auf die Mailbox (über `kontext-in,mailbox`, das „mailbox“ mit Anrufer und Taste meldet,
+  sodass Kontext den Anruf anlegt, zu dem die Nachricht gehört); ohne Taste klingelt es wie sonst. Weil der Anruf dann schon angenommen
+  ist, spielt die Box den Klingelton selbst (`Playtones(ring)`).
+- **Sperrliste:** prüft die Box ganz am Anfang, vor Öffnungszeiten und Klingeln: die gesperrten
+  Nummern in jeder Form, in der die Fritzbox sie liefern kann (national, `+49`, `0049`, `49`,
+  `numberForms`), und auf Wunsch unterdrückte. Sie meldet „blocked“ und weist ab (Ursache 21);
+  Kontext legt den Anruf als „Gesperrt“ in die Liste, ohne Klingeln. Höchstens 1000 Nummern
+  (`MAX_BLOCKED_NUMBERS`), damit die Konfiguration mit allen Formen in das Protokoll passt.
+- **Auswertung:** `GET /api/phone/stats` rechnet aus den Anrufen, die man sehen darf
+  (`server/phone/stats.ts`): Anrufe, angenommen und wie schnell, verpasst (nach Wochentag und
+  Stunde in Europe/Berlin), außerhalb der Zeiten, Nachrichten, wer angenommen hat.
+- **Türsprechstelle:** Die Türsprechanlage der Fritzbox ruft ihre Telefone über eine interne
+  Nummer (meist `**11`). Kommt ein Anruf von ihr, klingelt es bei den dafür gewählten Leuten mit
+  „Tür öffnen“: Kontext schickt der Box `door-open`, sie lenkt die Leitung nach
+  `kontext-door-open` um, nimmt ab, sendet den Code als DTMF (`SendDTMF`) und legt auf. Mit
+  „Sprechen“ nimmt man wie sonst an.
+- **Fax:** Eine Leitung der Box ist die Faxnummer (am besten eine eigene Nummer, also ein weiteres
+  IP-Telefon). Anrufe darauf nimmt die Box wie ein Faxgerät an (`kontext-fax`, `ReceiveFAX` mit
+  res_fax_spandsp), meldet „fax“ und beim Ende den Pfad; der Agent macht mit `tiff2pdf` ein PDF
+  und lädt es hoch (`PUT /api/phone/box/files/fax/<anruf>`). Kontext legt es beim Anruf ab
+  (`phone/fax/`) und legt eine Mail mit dem PDF ins gewählte Postfach, wie bei der Mailbox.
+- **Gespräche aufnehmen:** Erlaubt die Firmenverwaltung es, hat das Anruf-Fenster „Aufnehmen“.
+  Kontext schickt `record`; die Box holt die Leitung draußen aus dem Raum
+  (`kontext-record-call`), spielt die gewählte Ansage („Dieses Gespräch wird aufgezeichnet“, das
+  Einverständnis nach § 201 StGB), startet `MixMonitor` (beide Richtungen, `a` hängt bei erneutem
+  Start an) und wählt sie zurück in den Raum. „Aufnahme beenden“ schickt `record-stop`
+  (`StopMixMonitor`). Am Ende des Anrufs meldet `kontext-ended` die Datei als `Talk`, der Agent
+  lädt sie hoch (`PUT /api/phone/box/files/recording/<anruf>`), Kontext legt sie beim Anruf ab
+  (`phone/recordings/`); in der Liste steht „Aufnahme m:ss“ mit Player. Gemailt wird sie nicht.
+- **Präsenz:** Wer in einem Telefon-Raum ist oder am Tischtelefon spricht, „telefoniert“ – das
+  geht als `phone-people` an alle (der Chat zeigt es an der Person). Bitte nicht stören und
+  Abwesend (bis zu einer Zeit) liegen in `phone_status`; wer nicht erreichbar ist, fällt aus dem
+  Klingelplan (`withoutUnavailable`, auch bei „der Reihe nach“), bekommt keinen Web Push, und sein
+  Tischtelefon klingelt nicht (die Box bekommt eine neue Konfiguration, auch wenn „Abwesend bis“
+  abläuft: mit jeder Konfiguration stellt der Dienst einen Wecker auf das nächste Ende, höchstens
+  sechs Stunden, und nach einem Neustart schickt er sie beim Verbinden der Box ohnehin).
+- **Wer klingelt wann:** Alle gleichzeitig oder der Reihe nach (jede Person eine Weile, dann
+  alle, `ringingFor`). Die Reihenfolge rechnet die App selbst aus Beginn und Plan (die Karte
+  erscheint, wenn man dran ist); Web Push geht jeweils an die, die gerade dran sind. Ein Handy
+  ruft die Box nach der eingestellten Zeit über die Fritzbox mit an (`Dial` in `kontext-in`,
+  zweite Leitung; liegt die Zeit hinter der Klingeldauer, klingelt es nicht); nimmt es ab, meldet die Box „angenommen“ mit `forwarded` und der Anruf steht
+  als „Am Handy angenommen“ in der Liste. Solange es klingelt, kann man ihn in Kontext noch
+  annehmen (Redirect beendet das `Dial`).
+- **Weitervermitteln:** Ein Gespräch lebt in seinem LiveKit-Raum, Weitervermitteln heißt also, wer
+  im Raum ist (`server/phone/transfer.ts`). An eine Kollegin: Der Anruf klingelt bei ihr
+  (`offeredTo`), nimmt sie an, gehört er ihr und sie tritt dem Raum bei; sobald LiveKits Webhook
+  sie im Raum meldet, verlässt der Übergebende ihn. An eine Nummer oder ein Telefon der Fritzbox
+  (`**610`): Die Box wählt sie in denselben Raum (zweite Leitung über die Fritzbox, die braucht
+  dafür zwei freie Leitungen); ist abgenommen, geht man, und beide sprechen über den Raum weiter.
+  Kontext merkt sich, wer von Kontext in welchem Raum ist; bleibt nur eine Seite übrig (Personen
+  im Raum plus verbundene Leitungen, `roomIsOver`), legt es die übrigen Leitungen auf – auch wenn
+  der Anrufer auflegt und nur noch das Handy der Kollegin dran wäre.
+- **Halten, Rückfrage, Dreierkonferenz:** „Halten“ schickt der Box `hold`: Sie lenkt die Leitung
+  nach draußen nach `kontext-hold` um (Wartemusik), damit verlässt sie den Raum; „Fortsetzen“
+  (`resume`) wählt den Raum wieder an (`kontext-resume`). Eine gehaltene Leitung zählt weiter als
+  Seite, der Raum endet also nicht. „Dazuholen“ ist ein Angebot wie beim Übergeben, nur bleibt der
+  Anruf beim Fragenden (`offeredJoin`); wer im Raum ist, darf halten und auflegen. Sind noch
+  Kolleginnen im Gespräch, heißt der rote Knopf „Gespräch verlassen“ und legt nichts auf.
+- **Ende eines Anrufs:** meldet die Leitung nach draußen selbst, wo immer sie gerade ist
+  (klingelt, im Raum, gehalten, auf der Mailbox): ein Hangup-Handler (`kontext-ended`) statt der
+  `h`-Extension je Kontext. Ein Anruf nach draußen, der nicht angenommen wird, meldet sein Ende
+  über die Leitung in den Raum (`kontext-out-ended`, Grund aus `DIALSTATUS`). CI lässt Asterisk
+  die Konfiguration mit allen Funktionen lesen (`box/sample-config.ts`).
+- **Auflegen:** in Kontext (Box legt auf, mit allen dazugewählten Leitungen), beim Anrufer (Box
+  meldet das Ende) oder wenn die Person den Raum verlässt, etwa weil der Tab zu ist (LiveKits
+  Webhook) und niemand mehr da ist.
+- **LiveKit SIP** braucht Redis (zur Absprache mit LiveKit). Kontext richtet beim Start einen
+  Eingangs-Trunk mit Passwort (nur die Boxen) und die Dispatch-Regel ein
+  (`server/phone/livekit-sip.ts`); ob das klappt, zeigt die Firmenverwaltung.
+- **Notruf und Kurzwahlen:** 110, 112 und andere Kurzwahlen (115, 116117, 11880) wählt die Box
+  so, wie sie sind, über die Fritzbox – derselbe Anschluss wie bei den Tischtelefonen
+  (`dialTarget`). Fällt das Internet aus, bleiben die Telefone an der Fritzbox.
+
 ## Live-Verbindung
 
 Jede offene App hält eine Verbindung `/api/live` (Server-Sent Events, `server/live/`). Der Server
 merkt sich nur, wer verbunden ist (`hub.ts`), und schickt jedes Ereignis an die, die es sehen
 dürfen: neue Nachrichten, „schreibt …“, Gelesen-Marken, geänderte Kanäle, wer online ist,
-geänderte Aufgaben-Boards und Anrufe. Mails meldet Stalwart weiter selbst (JMAP Push).
+geänderte Aufgaben-Boards, Anrufe und Telefonate. Mails meldet Stalwart weiter selbst (JMAP Push).
 
 - Alle 25 Sekunden ein Kommentar, damit Proxys die ruhige Verbindung nicht schließen; Caddy
   komprimiert die beiden Streams nicht (`deploy/Caddyfile`), sonst kämen Ereignisse verzögert an.

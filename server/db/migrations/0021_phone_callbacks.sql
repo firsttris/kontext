@@ -1,0 +1,1 @@
+ALTER TABLE `phone_calls` ADD `callback_task_id` text;

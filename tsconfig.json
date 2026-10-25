@@ -25,6 +25,7 @@
     "dev",
     "e2e",
     "server",
+    "box",
     "vite.config.ts",
     "playwright.config.ts",
     "drizzle.config.ts"

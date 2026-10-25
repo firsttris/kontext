@@ -124,6 +124,22 @@ fine on a VPS with 2 vCPUs and 4 GB RAM.
 - **Share a mail as a copy** with its attachments, for colleagues who cannot open the mailbox.
 - **Task from a message**, linked both ways.
 - **Calls and video calls** right from a conversation: ring a colleague, or start a meeting in a channel that others join; mute, camera, share your screen, and the call stays open while you switch to mail; missed calls and call lengths stay in the conversation. Runs on your own server ([LiveKit](https://github.com/livekit/livekit), optional).
+- **Phone calls in Kontext**: a small telephone box in the office joins your Fritzbox as an IP phone. Calls ring in Kontext with who it is (contact, company, last mail, next appointment), you answer in the browser or at the desk phone, call out from any contact, and missed calls stay in a list with notes and "call back".
+  - A missed call leaves a "call back" task on the board you choose; it ticks itself off once someone talked to that number.
+  - **Mailbox**: if nobody answers, the box plays your greeting (spoken into the browser or uploaded) and records a message; it arrives as a mail with the recording and can be played back at the call.
+  - **Opening hours** with lunch break, closed days and the public holidays at one click: outside them nothing rings, callers hear your closing greeting and may leave a message. The box decides by itself, also when Kontext is out of reach.
+  - **Hand a call on** to a colleague (it rings for them, you leave once they are on) or to any number or a handset at the Fritzbox (`**610`): the box dials it into the call and you hand over once it is answered.
+  - **Hold, consult, three-way**: hold music for the caller, ask a colleague in first, bring the caller back and talk together, or leave the two of them to it.
+  - **Who rings when**: everyone at once or one after another (then all), and a mobile phone that rings too after a while.
+  - **Direct numbers**: more numbers of the line, each ringing for its own people, who also call out with it.
+  - **Snom desk phones** sign in at the box and set themselves up from it: they ring with Kontext, reach each other by short number, and calls can be handed to them.
+  - **Presence**: "on the phone" next to colleagues in the chat; *Do not disturb* or *Away until …* and it rings for the others instead (your desk phone stays quiet too).
+  - **Voice menu**: "For service press 1 …" – each key rings for its people or goes to the mailbox.
+  - **Block list**: "Block" in the call list, or withheld numbers altogether; the box turns them away before anything rings.
+  - **Statistics**: calls of the last 30 days, how fast they were answered, when calls were missed (weekday × hour) and who took them.
+  - **Door intercom** of the Fritzbox: it rings in Kontext, open the door or talk with one click.
+  - **Fax as PDF mail**: a number of the line takes faxes; each arrives as a PDF in the mailbox you choose.
+  - **Record calls** (if the company allows it): the box first plays a notice to the caller, the recording stays at the call.
 - **Search** across all your channels; edit or delete your own messages; mute, leave or delete channels.
 - **Retention** set by the company admin (30 days to 5 years, or for ever): older messages, photos and files are deleted by themselves.
 - **On the phone**: its own tab, conversations as bubbles.
@@ -168,6 +184,7 @@ business switches on when it needs them – whoever doesn't, never sees them.
 | Tasks and Kanban board | ✅ available |
 | Team chat | ✅ available |
 | Calls and video meetings in the chat | ✅ available |
+| Telephony through the Fritzbox (telephone box) | 🧪 being tested |
 | Work reports (e.g. for trades) | planned |
 
 What comes next is in the [roadmap](ROADMAP.md) (German).

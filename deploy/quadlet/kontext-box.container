@@ -1,0 +1,21 @@
+# Podman Quadlet for the telephone box at the customer (not on the Kontext server): copy to
+# /etc/containers/systemd/ and run `systemctl daemon-reload`. Pair once on http://<box>:8089,
+# or put KONTEXT_URL and PAIRING_CODE into /etc/kontext-box.env for the first start.
+[Unit]
+Description=Kontext telephone box (Asterisk + agent)
+Wants=network-online.target
+After=network-online.target
+
+[Container]
+Image=docker.io/tristanteu/kontext-box:latest
+ContainerName=kontext-box
+Network=host
+Volume=kontext-box:/data
+EnvironmentFile=-/etc/kontext-box.env
+AutoUpdate=registry
+
+[Service]
+Restart=always
+
+[Install]
+WantedBy=multi-user.target

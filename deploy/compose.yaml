@@ -1,6 +1,7 @@
 # Kontext for one customer: Stalwart (mail, calendar, contacts), the Kontext server (app,
 # sign-in, JMAP pass-through), Caddy (HTTPS) and, with the profile "calls", LiveKit for calls in
-# the chat (COMPOSE_PROFILES=calls in .env).
+# the chat plus LiveKit SIP and Redis for telephony through the telephone box
+# (COMPOSE_PROFILES=calls in .env).
 # Works with Docker Compose and Podman Compose; Quadlet files are in deploy/quadlet/.
 #
 #   cp deploy/.env.example deploy/.env   # fill in domain and mail
@@ -58,6 +59,40 @@ services:
       LIVEKIT_KEYS: "kontext: ${LIVEKIT_SECRET:-}"
     volumes:
       - ./livekit.yaml:/etc/livekit.yaml:ro
+
+  # Telephony: the telephone box at the customer calls in here (SIP over TCP 5060, media on UDP
+  # 20000–20100); LiveKit SIP puts the calls into LiveKit rooms. It talks to LiveKit over Redis.
+  livekit-sip:
+    image: docker.io/livekit/sip:v1.21.0
+    profiles: [calls]
+    restart: unless-stopped
+    depends_on: [redis, livekit]
+    ports:
+      - "5060:5060/tcp"
+      - "20000-20100:20000-20100/udp"
+    environment:
+      SIP_CONFIG_BODY: |
+        api_key: kontext
+        api_secret: ${LIVEKIT_SECRET:-}
+        ws_url: ws://livekit:7880
+        redis:
+          address: redis:6379
+        sip_port: 5060
+        rtp_port: 20000-20100
+        use_external_ip: true
+        # The boxes sit behind the customers' routers: answer media where it comes from.
+        symmetric_rtp: true
+        # Unknown callers get no answer at all, so port scanners learn nothing.
+        hide_inbound_port: true
+        logging:
+          level: warn
+
+  redis:
+    image: docker.io/library/redis:7-alpine
+    profiles: [calls]
+    restart: unless-stopped
+    # Only rooms and calls in flight; nothing to keep across a restart.
+    command: ["redis-server", "--save", "", "--appendonly", "no"]
 
   caddy:
     image: docker.io/library/caddy:2-alpine

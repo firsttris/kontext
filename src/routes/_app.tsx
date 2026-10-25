@@ -10,6 +10,7 @@ import { useLive } from "@/features/live/use-live";
 import { useInboxes } from "@/features/mail/queries";
 import { keepPushSubscription } from "@/features/notifications/device-settings";
 import { NotificationBell } from "@/features/notifications/notification-bell";
+import { PhoneHost } from "@/features/phone/phone-host";
 import { SecureCodesDialog } from "@/features/secure/codes-dialog";
 import { useMe } from "@/features/tasks/queries";
 import { subscribeToChanges } from "@/jmap/push";
@@ -61,6 +62,7 @@ function AppLayout() {
       <Outlet />
       <CallHost />
       <SecureCodesDialog />
+      <PhoneHost />
     </AppShell>
   );
 }

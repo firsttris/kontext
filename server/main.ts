@@ -5,6 +5,7 @@
  */
 import { createApp } from "./app";
 import { readEnv } from "./env";
+import { websocket } from "./phone/setup";
 
 const devAdminKey = async (): Promise<string | undefined> => {
   if (process.env.NODE_ENV === "production") return undefined;
@@ -36,5 +37,5 @@ const env = readEnv({
 });
 const { app } = await createApp(env);
 
-const server = Bun.serve({ port: env.PORT, fetch: app.fetch, idleTimeout: 0 });
+const server = Bun.serve({ port: env.PORT, fetch: app.fetch, websocket, idleTimeout: 0 });
 console.log(`Kontext-Server läuft: http://127.0.0.1:${server.port} → Stalwart ${env.STALWART_URL}`);

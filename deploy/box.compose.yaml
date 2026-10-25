@@ -1,0 +1,23 @@
+# The telephone box at the customer (or on a home server), next to the Fritzbox:
+#
+#   KONTEXT_URL=https://kontext.firma.de PAIRING_CODE=K7QM-4XPA \
+#     docker compose -f deploy/box.compose.yaml up -d
+#
+# The code comes from Kontext (Einstellungen → Telefonie → Box koppeln); it is only needed once.
+# Without it, the status page on http://<box>:8089 asks for Kontext's address and the code.
+name: kontext-box
+
+services:
+  box:
+    image: docker.io/tristanteu/kontext-box:${KONTEXT_VERSION:-latest}
+    restart: unless-stopped
+    # SIP and RTP with the Fritzbox do not survive container NAT well.
+    network_mode: host
+    environment:
+      KONTEXT_URL: ${KONTEXT_URL:-}
+      PAIRING_CODE: ${PAIRING_CODE:-}
+    volumes:
+      - box-data:/data
+
+volumes:
+  box-data:

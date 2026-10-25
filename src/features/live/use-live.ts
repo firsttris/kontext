@@ -16,6 +16,7 @@ import {
   setRead,
 } from "@/features/chat/queries";
 import { startTyping, stopTyping } from "@/features/chat/typing";
+import { PHONE_KEY, setPhoneCall, setPhonePeople } from "@/features/phone/queries";
 import type { Message } from "@/lib/chat";
 import type { LiveEvent } from "../../../server/live/hub";
 
@@ -64,6 +65,12 @@ export const applyLiveEvent = (queryClient: QueryClient, me: string, event: Live
     case "call-declined":
       heardDeclined(event.channelId, event.memberId);
       return;
+    case "phone":
+      setPhoneCall(queryClient, event.call);
+      return;
+    case "phone-people":
+      setPhonePeople(queryClient, event);
+      return;
   }
 };
 
@@ -77,6 +84,8 @@ const EVENT_TYPES: LiveEvent["type"][] = [
   "tasks",
   "call",
   "call-declined",
+  "phone",
+  "phone-people",
 ];
 
 /** `onMessage` hears every new chat message (for notifications). */
@@ -98,6 +107,7 @@ export const useLive = (me: string, onMessage?: (message: Message) => void) => {
         void queryClient.invalidateQueries({ queryKey: CHAT_KEY });
         void queryClient.invalidateQueries({ queryKey: TASKS_KEY });
         void queryClient.invalidateQueries({ queryKey: CALLS_KEY });
+        void queryClient.invalidateQueries({ queryKey: PHONE_KEY });
       };
       source.onerror = () => {
         lost = true;

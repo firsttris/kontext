@@ -92,17 +92,19 @@ export const verifyWebhook = async (
   }
 };
 
-type Fetch = (input: string, init?: RequestInit) => Promise<Response>;
+export type Fetch = (input: string, init?: RequestInit) => Promise<Response>;
 
-const twirp = async <T>(
+/** One call of LiveKit's API (Twirp, JSON), with a short token carrying just these claims. */
+export const twirpCall = async <T>(
   config: LiveKitConfig,
   fetcher: Fetch,
+  service: "RoomService" | "SIP",
   method: string,
   body: Record<string, unknown>,
-  video: VideoGrant,
+  claims: { video?: VideoGrant; sip?: { admin?: boolean; call?: boolean } },
 ): Promise<T> => {
-  const token = await sign(config, { video }, SERVER_TTL);
-  const response = await fetcher(`${config.url}/twirp/livekit.RoomService/${method}`, {
+  const token = await sign(config, claims, SERVER_TTL);
+  const response = await fetcher(`${config.url}/twirp/livekit.${service}/${method}`, {
     method: "POST",
     headers: { authorization: `Bearer ${token}`, "content-type": "application/json" },
     body: JSON.stringify(body),
@@ -110,6 +112,14 @@ const twirp = async <T>(
   if (!response.ok) throw new Error(`LiveKit ${method}: ${response.status}`);
   return (await response.json()) as T;
 };
+
+const twirp = <T>(
+  config: LiveKitConfig,
+  fetcher: Fetch,
+  method: string,
+  body: Record<string, unknown>,
+  video: VideoGrant,
+) => twirpCall<T>(config, fetcher, "RoomService", method, body, { video });
 
 /**
  * The rooms with people in them, as the webhooks would have told it: one participant_joined per

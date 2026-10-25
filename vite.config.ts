@@ -110,7 +110,12 @@ export default defineConfig({
   preview: { port: Number(process.env.PORT ?? 4173), strictPort: true, proxy },
   test: {
     environment: "jsdom",
-    include: ["src/**/*.test.{ts,tsx}", "dev/**/*.test.ts", "server/**/*.test.ts"],
+    include: [
+      "src/**/*.test.{ts,tsx}",
+      "dev/**/*.test.ts",
+      "server/**/*.test.ts",
+      "box/**/*.test.ts",
+    ],
     setupFiles: ["./src/test-setup.ts"],
   },
 });

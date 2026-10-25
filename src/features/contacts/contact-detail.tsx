@@ -18,6 +18,7 @@ import { addressLines, company, fullName, note, primaryEmail, primaryPhone } fro
 import { toVCard } from "@/lib/vcard";
 import { m } from "@/paraglide/messages";
 import { useEventsWith } from "../calendar/queries";
+import { usePhoneDial } from "../phone/phone-page";
 import { ContactTasks } from "./contact-tasks";
 import { type BookRef, bookOf, type Contact } from "./queries";
 
@@ -57,6 +58,7 @@ export const ContactDetail = ({ card, books, groups }: Props) => {
   const mailAccountId = session?.primaryAccounts[CAPABILITIES.mail];
   const email = primaryEmail(card);
   const phone = primaryPhone(card);
+  const phoneDial = usePhoneDial();
   const { street, city } = addressLines(card);
   const mails = useQuery({
     queryKey: [mailAccountId, "emails", "with", email],
@@ -108,7 +110,11 @@ export const ContactDetail = ({ card, books, groups }: Props) => {
               </Link>
             </Button>
           ) : null}
-          {phone ? (
+          {phone && phoneDial.available ? (
+            <Button disabled={phoneDial.busy} onClick={() => void phoneDial.dial(phone)}>
+              <Phone size={15} /> {m.contacts_call()}
+            </Button>
+          ) : phone ? (
             <Button asChild>
               <a href={`tel:${phone.replace(/[^+\d]/g, "")}`}>
                 <Phone size={15} /> {m.contacts_call()}

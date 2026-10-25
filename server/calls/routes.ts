@@ -30,6 +30,8 @@ export type CallDeps = {
   viewerOf: (request: Request) => Promise<Viewer | null>;
   nameOf: (request: Request) => Promise<string>;
   notify?: (memberIds: string[], notice: ReturnType<typeof callNotice>) => Promise<void>;
+  /** Every room event LiveKit reports, for others to follow (the phone calls' rooms). */
+  onRoomEvent?: (event: RoomEvent) => void;
   /** Writes the line of an ended call into its conversation, as the caller. */
   postCall?: (channelId: string, authorId: string, call: CallRecord) => Promise<Message>;
 };
@@ -107,6 +109,7 @@ export const createCallRoutes = (deps: CallDeps, state: CallState) => {
     const body = await c.req.text();
     const event = await verifyWebhook(deps.livekit, body, c.req.header("authorization") ?? null);
     if (!event) return c.json({ error: "Ungültige Signatur" }, 401);
+    deps.onRoomEvent?.(event);
     await receive(event);
     return c.body(null, 204);
   });
