@@ -3,6 +3,7 @@
  * the content: the inner part of an encrypted mail (text, HTML, attachments), and the outer
  * PGP/MIME envelope (RFC 3156) around what OpenPGP made of it. Pure.
  */
+import { replyReferences } from "./references";
 
 export type MimeAddress = { name: string | null; email: string };
 export type MimeAttachment = { name: string; type: string; bytes: Uint8Array };
@@ -103,7 +104,9 @@ const headers = (mail: Envelope) => [
     : []),
   ...(mail.references?.length || mail.inReplyTo?.length
     ? [
-        `References: ${[...(mail.references ?? []), ...(mail.inReplyTo ?? [])].map((id) => `<${id}>`).join(" ")}`,
+        `References: ${replyReferences(mail.references, mail.inReplyTo)
+          .map((id) => `<${id}>`)
+          .join(" ")}`,
       ]
     : []),
   ...(mail.extra ?? []),

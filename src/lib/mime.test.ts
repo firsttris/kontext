@@ -55,6 +55,24 @@ describe("MIME built in the app", () => {
     expect(parsed.to?.[0]?.address).toBe("petra@k.test");
   });
 
+  it("names the parent once in References when it is already there (a reopened draft)", () => {
+    const raw = encryptedMail(
+      {
+        from: { name: "Jonas Weber", email: "jonas@w.test" },
+        to: [],
+        cc: [],
+        subject: "Re: Befund",
+        date: new Date("2026-10-25T09:00:00Z"),
+        messageId: "m2@w.test",
+        inReplyTo: ["a@k.test"],
+        references: ["start@k.test", "a@k.test"],
+      },
+      "-----BEGIN PGP MESSAGE-----\nxyz\n-----END PGP MESSAGE-----",
+      "e2",
+    );
+    expect(raw).toContain("References: <start@k.test> <a@k.test>\r\n");
+  });
+
   it("encodes names and words only where needed", () => {
     expect(encodeWord("Angebot")).toBe("Angebot");
     expect(encodeWord("Grüße")).toMatch(/^=\?UTF-8\?B\?/);
