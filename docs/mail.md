@@ -1,0 +1,83 @@
+---
+description: >-
+  Webmail für den eigenen Mailserver (Stalwart, JMAP): gemeinsame Postfächer wie info@, alle
+  Posteingänge in einer Liste, Kategorien, Regeln, Suche wie Gmail, Wiedervorlage, später
+  senden, Textbausteine, Gmail und GMX abrufen, Schutz vor gefälschten Absendern.
+---
+
+# Mail
+
+Kontext ist das Mailprogramm im Browser und am Handy für den eigenen Mailserver
+[Stalwart](https://stalw.art) – gebaut für Teams mit gemeinsamen Postfächern. Mails kommen per
+JMAP-Push ohne Neuladen; Thunderbird, Outlook und die Mail-App am Handy verbinden sich weiter per
+IMAP und SMTP.
+
+![Posteingang mit Ordnern, gemeinsamen Postfächern info@ und rechnung@, Kategorien und einer geöffneten Mail mit PDF-Vorschau](screenshots/mail.png)
+
+## Im Team
+
+- **Gemeinsame Postfächer** (info@, rechnung@) stehen bei jedem Mitglied in der Seitenleiste.
+  Antworten gehen als info@ hinaus, mit dem Namen der Person, die geantwortet hat; die Liste
+  zeigt, wer schon geantwortet hat („Jonas · 14:02“). Rechte je Person: kein Zugriff, nur lesen,
+  lesen und senden. [Mehr](architecture.md#gemeinsame-postfacher)
+- **Alle Posteingänge** in einer Liste: das eigene Postfach und die gemeinsamen zusammen.
+- **Kategorien** wie „In Bearbeitung“, „Wartet auf Antwort“, „Erledigt“ – mehrere je Mail, eigene
+  dazu, per Regel gesetzt. In info@ sieht sie das ganze Team: eine kleine Aufgabenliste.
+- **Besprechen statt weiterleiten:** „Besprechen“ (`b`) bringt eine Mail als Karte in den
+  [Team-Chat](chat.md); „Aufgabe“ (`t`) macht eine [Aufgabe](tasks.md) daraus.
+- **Textbausteine** für Standardantworten, eigene und gemeinsame für info@; `{Name}` wird zum
+  Empfänger.
+
+## Ordnen und finden
+
+- **Suche wie in Gmail** über alle Ordner und Postfächer, mit Operatoren wie `von:`, `an:`,
+  `betreff:`, `hat:anhang`, `ist:ungelesen`, `kategorie:`, `in:info@`, `nach:`/`vor:` (auch
+  englisch: `from:`, `has:attachment` …) und Vorschlägen beim Tippen.
+- **Regeln** („wenn Absender, Empfänger, Betreff oder Text … dann in Ordner, markieren, Kategorie
+  setzen, weiterleiten, Aufgabe anlegen“) laufen auf dem Server beim Eingang, auch wenn Kontext zu
+  ist; aus einer Mail heraus angelegt, auf Wunsch auch auf vorhandene Mails.
+- **Ordner und Unterordner**, verschieben per Menü oder Ziehen, auch zwischen info@ und den
+  eigenen Ordnern.
+- **Mehrere Mails auf einmal** (Kästchen, Shift-Klick, `x`): archivieren, löschen, gelesen,
+  Kategorie, verschieben, Aufgaben erstellen.
+- **Unterhaltungen beim Lesen:** frühere Mails und die Antworten seitdem, Zitate eingeklappt;
+  gruppiert wie Gmail auf Wunsch.
+- **Wiedervorlage:** eine Mail aus dem Weg bis morgen, Montag oder einem Zeitpunkt – dann ist sie
+  wieder oben im Posteingang, ungelesen, auch bei geschlossener App.
+
+## Schreiben
+
+- **Formatierter Text**, Antworten mit Zitat, Anhänge, Empfänger-Vorschläge aus den Kontakten,
+  Signatur je Absenderadresse.
+- **Senden rückgängig** (5 bis 30 Sekunden) und **später senden** („morgen 8 Uhr“) – der Server
+  sendet, auch wenn der Rechner aus ist.
+- **Lesebestätigung** anfordern; eine erbetene beantwortet man mit einem Klick, nie von selbst.
+- **Vertraulich senden** und **PGP/S/MIME**: siehe [Verschlüsselung](encryption.md).
+- **Aus Dokumente anhängen**, Anhänge **in Dokumente ablegen**: siehe [Dokumente](documents.md).
+
+## Sicherheit
+
+- **Warnung vor gefälschten Absendern:** wenn der Absender nicht bestätigt ist, sich jemand von
+  außen als die eigene Firma ausgibt oder Antworten an eine andere Adresse gehen (ein Muster bei
+  Rechnungsbetrug); „Details anzeigen“ zeigt SPF, DKIM, DMARC und die Spam-Bewertung.
+  [Mehr](architecture.md#prufung-des-absenders)
+- **Als Spam markieren** (`!`) und „Kein Spam“ – der Filter lernt aus beidem.
+- **Bilder aus dem Internet** laden erst auf Wunsch, oder sofort für Absender, denen man vertraut
+  (auch alle Kontakte) – aber nur, wenn die Mail wirklich von ihnen kommt.
+- **Newsletter abbestellen** mit einem Klick direkt an der Mail.
+- Mails werden in einem abgeschotteten Rahmen ohne Skripte angezeigt.
+
+## Weitere Postfächer: Gmail, GMX, WEB.DE & Co.
+
+Unter *Einstellungen → Weitere Postfächer* verbindet jede Person ihre anderen Adressen: Neue Mail
+kommt alle zwei Minuten in Kontext, gesendet wird als diese Adresse über den Server des Anbieters
+(damit SPF und DMARC stimmen), Antworten gehen von der Adresse, an die die Mail ging.
+[Mehr](architecture.md#weitere-postfacher)
+
+## Anhänge, Drucken, Tastatur
+
+- **Vorschau** von Fotos und der ersten PDF-Seite; ein Klick öffnet sie groß.
+- **Drucken** nur der Mail, sauber auf A4 (auch mit Strg+P).
+- **Tastaturkürzel wie in Gmail**; `?` zeigt alle.
+- **Neben der Mail** (auf breiten Bildschirmen): wer schreibt, mit Firma, nächsten Terminen,
+  letzten Mails und „Anrufen“.

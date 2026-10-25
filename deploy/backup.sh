@@ -5,7 +5,9 @@
 # consistent copy the container stops for the few seconds the snapshot takes; senders retry
 # delivery, so no mail is lost. Kontext's own SQLite (sessions, the company signature, tasks,
 # chat, the progress of moves) is copied while it runs with VACUUM INTO; the chat's photos and
-# files are never changed once written, so they go in as they are; uploaded PST files are left out.
+# files, the telephony's greetings, voicemails, faxes and recordings (phone/) and the mails sent
+# "Vertraulich" (secure/) are never changed once written, so they go in as they are; uploaded PST
+# files are left out.
 # Schreibzeug (documents, when it runs) the same way: its SQLite copied with VACUUM INTO, its
 # file contents (blobs, named by their hash and never changed) as they are.
 # Run from cron or a systemd timer at night, e.g.:
@@ -30,8 +32,9 @@ $compose exec -T kontext bun -e '
   rmSync("/data/backup/kontext.db", { force: true });
   new Database(process.env.DATABASE_PATH).exec("VACUUM INTO '"'"'/data/backup/kontext.db'"'"'");
 '
-mkdir -p "$app/chat-files"
-restic backup --tag kontext --host "$KONTEXT_DOMAIN" "$app/backup" "$app/chat-files"
+mkdir -p "$app/chat-files" "$app/phone" "$app/secure"
+restic backup --tag kontext --host "$KONTEXT_DOMAIN" \
+  "$app/backup" "$app/chat-files" "$app/phone" "$app/secure"
 
 if $compose ps --services --status running | grep -qx schreibzeug; then
   documents="$(docker volume inspect -f '{{ .Mountpoint }}' kontext_schreibzeug-data)"

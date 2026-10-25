@@ -160,6 +160,11 @@ Integrationstests sich verbinden können.
   Testdaten; Dateien bleiben ganz in einem Teil), Stalwart wird gecacht. Der Check „End-to-end
   tests (Stalwart + Playwright)“ fasst die vier zusammen. Nachts läuft alles noch einmal, damit neue Sicherheitsmeldungen auffallen, die
   E2E-Tests dabei dreimal ohne Wiederholung (siehe [Robuste E2E-Tests](#robuste-e2e-tests)).
-- **Screenshots**: Actions → _Update screenshots_ → Run workflow.
+- **Dokumentation** (`.github/workflows/docs.yml`): jeder Push auf `main`, der `docs/` oder
+  `mkdocs.yml` ändert, baut die Seiten mit MkDocs Material und veröffentlicht sie auf GitHub
+  Pages (einmalig: Settings → Pages → Source „GitHub Actions“). Lokal: `pip install mkdocs-material
+  && mkdocs serve`.
+- **Screenshots**: Actions → _Update screenshots_ → Run workflow (oder `bun run screenshots`, lokal mit
+  `PW_CHROMIUM_PATH`, wenn Playwrights eigener Browser fehlt).
 - **Release**: Tag `vX.Y.Z` (Version in `package.json`) baut das Image `tristanteu/kontext`
   für amd64 und arm64 und legt das GitHub-Release an.

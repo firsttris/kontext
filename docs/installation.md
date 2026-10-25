@@ -242,8 +242,9 @@ Server ablegen, sondern beim Neustart eingeben oder per Netzwerk entsperren (Cle
 verschlüsselt jede Sicherung mit dem Passwort aus `deploy/.env`, der Speicheranbieter sieht nur
 Verschlüsseltes; das Passwort gehört zusätzlich an einen sicheren Ort außerhalb des Servers. Gesichert werden Stalwarts
 Datenvolume (Mails, Kalender, Kontakte, Konten), eine Kopie der Kontext-Datenbank
-(Anmeldungen, Firmen-Signatur, Aufgaben, Chat, Stand der Umzüge) und die Fotos und Dateien aus dem
-Chat, mit Dokumente auch Schreibzeugs Datenbank (Kopie) und Dateien. Hochgeladene PST-Dateien bleiben draußen. Am besten einen Bucket mit **Object Lock** nehmen, dann kann auch ein Angreifer mit
+(Anmeldungen, Firmen-Signatur, Aufgaben, Chat, Anrufliste, Stand der Umzüge), die Fotos und Dateien aus dem
+Chat, Ansagen, Mailbox-Nachrichten, Faxe und Aufnahmen der Telefonie und die vertraulich gesendeten
+Mails, mit Dokumente auch Schreibzeugs Datenbank (Kopie) und Dateien. Hochgeladene PST-Dateien bleiben draußen. Am besten einen Bucket mit **Object Lock** nehmen, dann kann auch ein Angreifer mit
 Zugriff auf den Server die Sicherungen nicht löschen (wichtig für GoBD-Archivierung).
 
 ```bash
@@ -265,8 +266,8 @@ Bei Dokumente kommt `…/backup/schreibzeug.db` als `schreibzeug.db` ins Volume
 `kontext_schreibzeug-data`, `blobs` und `auth-secret` daneben.
 
 Die Kopie der Kontext-Datenbank (`…/backup/kontext.db`) kommt bei gestopptem Container als
-`kontext.db` ins Volume `kontext_kontext-data`, der Ordner `…/chat-files` daneben als
-`chat-files`. Fehlt sie, geht nichts in Stalwart verloren: alle melden sich einmal neu an, die
+`kontext.db` ins Volume `kontext_kontext-data`, die Ordner `…/chat-files`, `…/phone` und
+`…/secure` daneben. Fehlt sie, geht nichts in Stalwart verloren: alle melden sich einmal neu an, die
 Vorlage der Firmen-Signatur ist neu einzutragen; Aufgaben und Chat sind dann leer.
 
 ## 6. Updates

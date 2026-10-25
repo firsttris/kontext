@@ -1,0 +1,64 @@
+---
+description: >-
+  Team-Chat auf dem eigenen Server – eine Slack- und Teams-Alternative: Kanäle pro gemeinsamem
+  Postfach, Direktnachrichten, Threads, Mails als Karten, Anrufe, Videocalls und
+  Bildschirmfreigabe über LiveKit, Ende-zu-Ende verschlüsselte vertrauliche Unterhaltungen.
+---
+
+# Team-Chat und Videocalls
+
+Der Chat gehört zu Kontext, nicht zu einem weiteren Dienst: dieselbe Anmeldung, dieselben Leute,
+dieselben Postfächer. Statt eine Kundenmail intern weiterzuleiten, bespricht man sie im Kanal von
+info@ – wer das Postfach öffnen darf, öffnet die Mail, kopiert wird nichts.
+
+![Kanal im Team-Chat mit Baustellenbericht, einer geteilten Kundenmail als Karte und einer Aufgabe aus einer Nachricht](screenshots/chat.png)
+
+## Kanäle und Nachrichten
+
+- **#allgemein** für alle, **ein Kanal pro gemeinsamem Postfach** (info@, rechnung@) für alle,
+  die darin arbeiten, und eigene wie #baustelle-hoffmann mit ausgewählten Mitgliedern.
+- **Direktnachrichten** an eine oder mehrere Personen, mit „Gelesen“.
+- **Live:** Nachrichten, „Sandra schreibt …“ und wer online ist, ohne Neuladen; Ungelesenes am
+  Chat und am App-Symbol.
+- **@Erwähnungen** mit Vorschlägen; eine Erwähnung oder Direktnachricht kommt aufs Handy, auch
+  bei geschlossener App.
+- **Threads und Reaktionen:** im Thread antworten, ohne den Kanal zu füllen; 👍 ✅ 🎉 statt
+  „ok“.
+- **Fotos und Dateien** von der Kamera, per Ziehen oder Einfügen; Fotos werden vorher verkleinert.
+- **Suche** über alle Kanäle; eigene Nachrichten bearbeiten und löschen; stummschalten,
+  verlassen, löschen.
+- **Aufbewahrung** legt die Firmenverwaltung fest (30 Tage bis 5 Jahre oder unbegrenzt).
+
+## Mails, Aufgaben, Kontakte und Dokumente als Karten
+
+- **„Besprechen“ an einer Mail** (`b`) schickt sie als Karte in einen Kanal; die Mail zeigt danach,
+  wo sie besprochen wurde. Öffnen kann die Karte nur, wer das Postfach ohnehin sehen darf.
+- **Mail als Kopie teilen** mit Anhängen – für Kollegen, die das Postfach nicht öffnen können.
+- **Aufgabe aus einer Nachricht**, in beide Richtungen verknüpft.
+- **Dokumente** aus [Dokumente](documents.md) teilen; die Mitglieder dürfen sie öffnen.
+
+## Videocalls und Besprechungen
+
+Anrufe laufen über [LiveKit](https://github.com/livekit/livekit) auf dem eigenen Server
+(optional) – kein Zoom, kein Teams, keine Daten bei Dritten.
+
+- **Anrufen und Videoanruf** aus jeder Direktnachricht, mit Klingeln auch bei geschlossener App;
+  **Besprechung starten** in einem Kanal, andere treten bei.
+- **Mikrofon, Kamera, Bildschirm teilen**; das Gespräch bleibt offen, während man zu Mail oder
+  Kalender wechselt.
+- **Im Verlauf:** „Anruf · 5 Min“, verpasste Anrufe mit „Zurückrufen“.
+- **Videobesprechung am Termin** mit einem Link für Gäste ohne Konto; sie kommen hinein, sobald
+  jemand aus der Firma da ist.
+- **In vertraulichen Unterhaltungen** sind Anrufe Ende-zu-Ende verschlüsselt.
+
+Das Firmentelefon (Fritzbox) gehört ebenfalls dazu: siehe [Telefonie](telephony.md).
+
+## Vertrauliche Unterhaltungen
+
+Direktnachrichten und Kanäle lassen sich **vertraulich** anlegen oder fortführen: Ende-zu-Ende
+verschlüsselt mit den persönlichen Schlüsseln, Fotos und Dateien eingeschlossen – der Server sieht
+nur Verschlüsseltes. Wie und mit welchen Grenzen:
+[Verschlüsselung → Baustein 5](encryption.md#baustein-5-vertrauliche-unterhaltungen-im-chat).
+
+Einrichtung der Anrufe: [Installation → Anrufe](installation.md#anrufe). Technik:
+[Architektur → Team-Chat](architecture.md#team-chat) und [Anrufe](architecture.md#anrufe).
