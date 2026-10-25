@@ -32,4 +32,4 @@ Aufbewahrung).
 5. **Leitstand** für den Betreiber: alle Kunden-Server mit Status, Backups, Restore-Test und
    Updates an einer Stelle.
 
-Weiter: [Installation](installation.md) · [Architektur](architecture.md) · [Entwicklung](development.md)
+Weiter: [Funktionen](features.md) · [Installation](installation.md) · [Architektur](architecture.md) · [Entwicklung](development.md)
