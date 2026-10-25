@@ -52,7 +52,9 @@ test.describe("Verschlüsselung: PGP in Mails", () => {
       .getByRole("link", { name: new RegExp(subject) });
     await expect(row).toContainText("Verschlüsselt");
     await row.click();
-    await expect(max.getByText("Verschlüsselt", { exact: true })).toBeVisible();
+    await expect(
+      max.getByRole("article").getByText("Verschlüsselt", { exact: true }),
+    ).toBeVisible();
     await max.getByLabel("Passphrase deines Schlüssels").fill(PASSPHRASE);
     await max.getByRole("button", { name: "Entsperren" }).click();
     await expect(
