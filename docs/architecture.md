@@ -1215,6 +1215,23 @@ Neuladen nicht offen war und seine Nachricht `logout` niemanden erreicht hätte.
 Passwort), beendet Kontexts Server deshalb auch die in Dokumente (`DELETE /api/sessions` mit dem
 Token der Person, `endSessionsOf` in `server/app.ts`); wer dort kein Konto hat, bekommt keins.
 
+## Agenten (MCP)
+
+*In Arbeit.* Über das [Model Context Protocol](https://modelcontextprotocol.io) kann ein
+KI-Agent (Claude Desktop, Claude Code und andere MCP-Clients) in Kontext lesen: Kontakte, Mails,
+Termine, Aufgaben und Anrufe, mit den Rechten der Person, die ihn verbunden hat.
+
+- **Schnittstelle:** `POST /mcp` am Kontext-Server (Streamable HTTP). Die Werkzeuge nutzen die
+  JMAP-Funktionen aus `src/jmap/` und die Stores des Servers; welche Konten ein Agent sieht,
+  bestimmt wie in der App Stalwarts JMAP-Session (gemeinsame Postfächer eingeschlossen).
+- **Anmeldung:** Ein Zugangsschlüssel, den man in den Einstellungen mit seinem Passwort anlegt.
+  Der Server meldet sich dabei neu bei Stalwart an; der Schlüssel bekommt eine eigene Sitzung
+  mit eigenem Stalwart-Token und lässt sich einzeln widerrufen. Später OAuth 2.1 nach der
+  MCP-Spezifikation.
+- **Zuerst nur lesen:** Mails sind fremder Text und können einem Agenten Anweisungen
+  unterschieben (Prompt Injection). Schreibende Werkzeuge (Entwurf, Termin, Kontakt, Aufgabe)
+  kommen in einem zweiten Schritt, Senden nur als Entwurf, den ein Mensch abschickt.
+
 ## Code
 
 | Ordner          | Inhalt                                                                                                                     |
