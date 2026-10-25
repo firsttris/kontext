@@ -1,6 +1,11 @@
 // @vitest-environment node
 import { describe, expect, it } from "vitest";
-import { createMailboxFolders, type MailboxPeople, shareChanges } from "./mailboxes";
+import {
+  createMailboxFolders,
+  type FolderIds,
+  type MailboxPeople,
+  shareChanges,
+} from "./mailboxes";
 import type { DocumentNode, DocumentShare, Person, Schreibzeug } from "./schreibzeug";
 
 /** Schreibzeug in memory: folders per owner and their shares. */
@@ -31,6 +36,17 @@ const fakeSchreibzeug = () => {
     },
   } as unknown as Schreibzeug;
   return { schreibzeug, folders, shares };
+};
+
+/** Kontext's database for the folders' ids, in memory. */
+const memoryIds = (): FolderIds => {
+  const kept = new Map<string, string>();
+  return {
+    get: async (mailboxId) => kept.get(mailboxId) ?? null,
+    set: async (mailboxId, folderId) => {
+      kept.set(mailboxId, folderId);
+    },
+  };
 };
 
 const info = (people: MailboxPeople["people"]): MailboxPeople => ({
@@ -65,7 +81,11 @@ describe("shared mailboxes' folders", () => {
       { email: "jonas@weber.test", role: "edit" },
       { email: "max@weber.test", role: "view" },
     ]);
-    const mailboxFolders = createMailboxFolders({ schreibzeug, load: async () => [mailbox] });
+    const mailboxFolders = createMailboxFolders({
+      schreibzeug,
+      load: async () => [mailbox],
+      ids: memoryIds(),
+    });
 
     expect(await mailboxFolders.foldersFor("JONAS@weber.test")).toEqual([
       { accountId: "m1", email: "info@weber.test", folderId: "f1" },
@@ -97,8 +117,30 @@ describe("shared mailboxes' folders", () => {
   it("finds a folder the mailbox already has after a restart", async () => {
     const { schreibzeug, folders } = fakeSchreibzeug();
     const load = async () => [info([{ email: "jonas@weber.test", role: "edit" }])];
-    await createMailboxFolders({ schreibzeug, load }).foldersFor("jonas@weber.test");
-    await createMailboxFolders({ schreibzeug, load }).foldersFor("jonas@weber.test");
+    await createMailboxFolders({ schreibzeug, load, ids: memoryIds() }).foldersFor(
+      "jonas@weber.test",
+    );
+    await createMailboxFolders({ schreibzeug, load, ids: memoryIds() }).foldersFor(
+      "jonas@weber.test",
+    );
     expect(folders).toHaveLength(1);
+  });
+
+  it("keeps the folder by its id when a member renamed it, also after a restart", async () => {
+    const { schreibzeug, folders, shares } = fakeSchreibzeug();
+    let mailbox = info([
+      { email: "jonas@weber.test", role: "edit" },
+      { email: "max@weber.test", role: "edit" },
+    ]);
+    const load = async () => [mailbox];
+    const ids = memoryIds();
+    await createMailboxFolders({ schreibzeug, load, ids }).foldersFor("jonas@weber.test");
+    const original = folders[0]!;
+    // Max renames it in Dokumente (an edit share may), then Kontext restarts and Max leaves.
+    original.name = "Info – Ablage";
+    mailbox = info([{ email: "jonas@weber.test", role: "edit" }]);
+    await createMailboxFolders({ schreibzeug, load, ids }).changed("m1");
+    expect(folders).toHaveLength(1);
+    expect(shares.get(original.id)?.map((share) => share.email)).toEqual(["jonas@weber.test"]);
   });
 });

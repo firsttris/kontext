@@ -31,7 +31,14 @@ const fakes = () => {
       shared.push({ owner: person.id, nodeId, email, role });
     },
     createFolder: async () => ({ id: "f2", kind: "folder", name: "Neu" }),
-    shares: async () => [],
+    shares: async (person, nodeId) => {
+      const owner = nodeId === "info-file" ? "mailbox:m1" : "u1";
+      if (nodeId === "foreign" || person.id !== owner)
+        throw new Error("Das darf nur, wem es gehört.");
+      return nodeId === "n2"
+        ? [{ userId: "u2", email: "anna@weber.test", role: "edit" as const }]
+        : [];
+    },
     unshare: async () => undefined,
     endSessions: async () => undefined,
     reachable: async () => true,
@@ -156,5 +163,16 @@ describe("/api/documents", () => {
     const app = createDocumentsRoutes(fakes().deps);
     const reply = await app.request("/mailboxes", { headers: { cookie: "session" } });
     expect(await reply.json()).toEqual([]);
+  });
+
+  it("keeps a colleague's stronger share: who may edit it still may", async () => {
+    const { deps, shared } = fakes();
+    const app = createDocumentsRoutes(deps);
+    const emails = ["anna@weber.test", "sandra@weber.test"];
+    const reply = await app.request(post("/share", { fileId: "n2", emails }));
+    expect(reply.status).toBe(200);
+    expect(shared).toEqual([
+      { owner: "u1", nodeId: "n2", email: "sandra@weber.test", role: "view" },
+    ]);
   });
 });

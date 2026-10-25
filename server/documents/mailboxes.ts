@@ -1,6 +1,7 @@
 /**
  * Documents of a shared mailbox (info@, rechnung@): one folder in Dokumente that belongs to the
- * mailbox itself, not to whoever made it first, named after its address. Kontext acts there as the
+ * mailbox itself, not to whoever made it first, named after its address (and kept by its id, as
+ * members may rename it). Kontext acts there as the
  * mailbox (a token with its own subject, schreibzeug.ts) and keeps the folder shared with the
  * mailbox's people as Stalwart has them: members may change its files, readers only open them.
  * Members see it under "Für mich freigegeben" in Dokumente and beside their own files in Kontext.
@@ -47,21 +48,34 @@ export const shareChanges = (
   ];
 };
 
+/** Where the folders' ids are kept (the database in app.ts), as members may rename the folders. */
+export type FolderIds = {
+  get: (mailboxId: string) => Promise<string | null>;
+  set: (mailboxId: string, folderId: string) => Promise<void>;
+};
+
 export const createMailboxFolders = ({
   schreibzeug,
   load,
+  ids,
 }: {
   schreibzeug: Schreibzeug;
   load: LoadMailboxes;
+  ids: FolderIds;
 }) => {
   /** Mailbox id → its folder's id; asked once, also when several ask at the same time. */
   const folders = new Map<string, Promise<string>>();
 
+  // By the kept id; by its name only the first time (a folder from before ids were kept).
   const findOrCreate = async (mailbox: MailboxPeople): Promise<string> => {
+    const kept = await ids.get(mailbox.id);
+    if (kept) return kept;
     const owner = mailboxPerson(mailbox);
     const { children } = await schreibzeug.list(owner, null);
     const found = children.find((node) => node.kind === "folder" && node.name === mailbox.email);
-    return (found ?? (await schreibzeug.createFolder(owner, null, mailbox.email))).id;
+    const folder = found ?? (await schreibzeug.createFolder(owner, null, mailbox.email));
+    await ids.set(mailbox.id, folder.id);
+    return folder.id;
   };
 
   const folderOf = (mailbox: MailboxPeople): Promise<string> => {

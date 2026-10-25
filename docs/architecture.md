@@ -1179,7 +1179,8 @@ Thunderbird und Handys zeigen; beim Kontakt ebenso ein Link der Karte (JSContact
 steht in `src/lib/document-links.ts`.
 
 Damit die anderen die Datei auch öffnen dürfen, gibt Kontext sie ihnen dabei in Schreibzeug zum
-Ansehen frei (`POST /api/documents/share`, `src/features/documents/use-share-with.ts`): im Chat
+Ansehen frei (`POST /api/documents/share`, `src/features/documents/use-share-with.ts`; wer sie
+schon hat, etwa zum Bearbeiten, behält seine Freigabe): im Chat
 allen Lesern des Kanals (beim Team-Kanal allen, bei benannten und direkten den Mitgliedern, im Kanal
 eines gemeinsamen Postfachs dessen Leuten), bei einer Aufgabe der zuständigen Person (auch nach einem
 Wechsel) und auf der Tafel eines gemeinsamen Postfachs dessen Leuten, bei einem Termin den
@@ -1192,7 +1193,8 @@ und eine Meldung sagt, warum die anderen sie nicht öffnen können. Ob jemand ei
 entscheidet Schreibzeug beim Öffnen.
 
 **Dokumente gemeinsamer Postfächer.** Jedes gemeinsame Postfach (info@, rechnung@) hat in Dokumente
-einen eigenen Ordner, benannt nach seiner Adresse (`server/documents/mailboxes.ts`). Er gehört dem
+einen eigenen Ordner, benannt nach seiner Adresse (`server/documents/mailboxes.ts`); Kontext merkt
+sich seine ID (Tabelle `mailbox_folders`), denn Mitglieder dürfen ihn umbenennen. Er gehört dem
 Postfach selbst, nicht dem, der zuerst etwas ablegt: Kontext handelt dort als das Postfach, mit einem
 Token für `mailbox:<Konto-ID>` und die Adresse des Postfachs, das Schreibzeug wie eine Person führt.
 Den Ordner gibt Kontext den Leuten des Postfachs frei, wie Stalwart sie hat (mit dem Admin-Schlüssel
@@ -1206,8 +1208,10 @@ sie unter „Für mich freigegeben“. Eine Datei darin gehört dem Postfach; Ko
 die Person selbst es nicht darf, als das Postfach frei, in dem sie arbeitet. Ohne
 `STALWART_ADMIN_KEY` gibt es keine Postfach-Ordner.
 
-**Sperren und Austritt.** Schreibzeug fragt Kontext nach der Anmeldung nicht mehr; seine Sitzung
-hielte sonst weiter. Wo die Firmenverwaltung Kontexts Sitzungen beendet (Sperren, Austritt, neues
+**Abmelden, Sperren und Austritt.** Schreibzeug fragt Kontext nach der Anmeldung nicht mehr; seine
+Sitzung hielte sonst weiter. Wer sich in Kontext abmeldet, wird deshalb vom Server aus auch in
+Dokumente abgemeldet (`POST /api/auth/sign-out` in `server/app.ts`), auch wenn der Rahmen seit dem
+Neuladen nicht offen war und seine Nachricht `logout` niemanden erreicht hätte. Wo die Firmenverwaltung Kontexts Sitzungen beendet (Sperren, Austritt, neues
 Passwort), beendet Kontexts Server deshalb auch die in Dokumente (`DELETE /api/sessions` mit dem
 Token der Person, `endSessionsOf` in `server/app.ts`); wer dort kein Konto hat, bekommt keins.
 

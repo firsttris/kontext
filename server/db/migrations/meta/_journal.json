@@ -239,6 +239,13 @@
       "when": 1792946389314,
       "tag": "0033_oauth_provider",
       "breakpoints": true
+    },
+    {
+      "idx": 34,
+      "version": "6",
+      "when": 1792949536995,
+      "tag": "0034_mailbox_folders",
+      "breakpoints": true
     }
   ]
 }

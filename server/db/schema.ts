@@ -652,3 +652,12 @@ export const phoneStatus = sqliteTable("phone_status", {
   until: integer("until", { mode: "timestamp_ms" }),
   updatedAt: integer("updated_at", { mode: "timestamp_ms" }).notNull(),
 });
+
+/**
+ * The folder of a shared mailbox in Dokumente (server/documents/mailboxes.ts), by its id: members
+ * may rename it, so its name does not find it again.
+ */
+export const mailboxFolders = sqliteTable("mailbox_folders", {
+  mailboxId: text("mailbox_id").primaryKey(),
+  folderId: text("folder_id").notNull(),
+});

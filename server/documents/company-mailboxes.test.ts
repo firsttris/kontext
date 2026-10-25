@@ -68,4 +68,38 @@ describe("the company's shared mailboxes", () => {
     await mailboxes.load();
     expect(reads()).toBe(3);
   });
+
+  it("does not keep a read that began before a change", async () => {
+    const { management, mailstore } = fakes();
+    let release: () => void = () => undefined;
+    const held = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+    let slow = true;
+    const listAccounts = management.listAccounts;
+    const slowManagement = {
+      ...management,
+      listAccounts: async () => {
+        const answer = await listAccounts();
+        if (slow) {
+          slow = false;
+          await held;
+        }
+        return answer;
+      },
+    } as Management;
+    const mailboxes = createCompanyMailboxes({ management: slowManagement, mailstore });
+    const before = mailboxes.load();
+    // The Firmenverwaltung changes something while that read is under way.
+    mailboxes.forget();
+    release();
+    await before;
+    const reads = { count: 0 };
+    slowManagement.listAccounts = async () => {
+      reads.count += 1;
+      return listAccounts();
+    };
+    await mailboxes.load();
+    expect(reads.count).toBe(1);
+  });
 });

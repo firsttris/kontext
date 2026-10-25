@@ -1,7 +1,8 @@
 /**
  * The company's shared mailboxes with their people, read with Stalwart's admin key the way the
  * Firmenverwaltung reads them (company/accounts.ts): members are in the group, readers have its
- * folders shared with them. Kept for half a minute; a change in the Firmenverwaltung clears it.
+ * folders shared with them. Kept for half a minute; a change in the Firmenverwaltung clears it, and
+ * a read that was under way then is not kept.
  */
 import { toCompany } from "../company/accounts";
 import type { Mailstore } from "../company/mailstore";
@@ -45,14 +46,19 @@ export const createCompanyMailboxes = ({
     }));
   };
 
+  // Counts the changes: a read that began before one never fills the cache with what it saw.
+  let generation = 0;
+
   return {
     load: async () => {
       if (cached && cached.until > now()) return cached.mailboxes;
+      const began = generation;
       const mailboxes = await read();
-      cached = { mailboxes, until: now() + FRESH_MS };
+      if (began === generation) cached = { mailboxes, until: now() + FRESH_MS };
       return mailboxes;
     },
     forget: () => {
+      generation += 1;
       cached = null;
     },
   };

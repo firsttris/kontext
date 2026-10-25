@@ -37,6 +37,7 @@ import { createDavRoutes } from "./dav/routes";
 import { type Db, openDatabase, schema } from "./db";
 import { createSessionBlobs } from "./documents/blobs";
 import { createCompanyMailboxes } from "./documents/company-mailboxes";
+import { createFolderIds } from "./documents/folder-ids";
 import { createMailboxFolders, type MailboxFolders } from "./documents/mailboxes";
 import { createDocumentsRoutes } from "./documents/routes";
 import { createSchreibzeug, type Schreibzeug } from "./documents/schreibzeug";
@@ -206,6 +207,23 @@ export const createApp = async (env: Env) => {
     const discovery = oauthProviderOpenIdConfigMetadata(auth);
     app.get("/api/auth/.well-known/openid-configuration", (c) => discovery(c.req.raw));
   }
+  // Signing out of Kontext signs out of Dokumente too, also when its frame was not open since the
+  // last reload (the frame's own "logout" reaches only an open one): Schreibzeug never asks Kontext
+  // again once someone is signed in there, and the next person at this browser would be them.
+  if (documents) {
+    app.post("/api/auth/sign-out", async (c) => {
+      const session = await auth.api.getSession({ headers: c.req.raw.headers });
+      if (session) {
+        const { id, email, name } = session.user;
+        await documents
+          .endSessions({ id, email, name })
+          .catch((error: Error) =>
+            console.warn(`Dokumente: Abmelden von ${email}: ${error.message}`),
+          );
+      }
+      return auth.handler(c.req.raw);
+    });
+  }
   app.on(["GET", "POST"], "/api/auth/*", (c) => auth.handler(c.req.raw));
   /** Fetching for external accounts imports with the server's key, like a move. */
   let externalImporter: Importer | null = null;
@@ -251,6 +269,7 @@ export const createApp = async (env: Env) => {
       mailboxFolders = createMailboxFolders({
         schreibzeug: documents,
         load: companyMailboxes.load,
+        ids: createFolderIds(db),
       });
     }
     const company = createCompanyRoutes({

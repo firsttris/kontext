@@ -158,8 +158,14 @@ export const createDocumentsRoutes = ({
       const others = [
         ...new Set([...emails, ...ofMailboxes].map((email) => email.toLowerCase())),
       ].filter((email) => email !== person.email.toLowerCase());
+      // Who has it already keeps their role: an edit share never becomes view.
       const shareAs = async (owner: Person) => {
-        for (const email of others) await c.get("schreibzeug").share(owner, fileId, email, "view");
+        const schreibzeug = c.get("schreibzeug");
+        const has = new Set(
+          (await schreibzeug.shares(owner, fileId)).map((share) => share.email.toLowerCase()),
+        );
+        for (const email of others.filter((other) => !has.has(other)))
+          await schreibzeug.share(owner, fileId, email, "view");
       };
       // A file in a shared mailbox's folder belongs to the mailbox, which shares it then.
       const owners = [person, ...(mailboxes ? await mailboxes.ownersFor(person.email) : [])];

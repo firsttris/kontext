@@ -1,5 +1,5 @@
 import { expect, type Page, test } from "@playwright/test";
-import { login } from "./helpers";
+import { address, login } from "./helpers";
 
 /**
  * The module "Dokumente": Schreibzeug in Kontext's frame, signed in through Kontext's own provider
@@ -84,5 +84,22 @@ test.describe("Dokumente", () => {
     await page.getByRole("menuitem", { name: "Abmelden" }).click();
     await signedOut;
     await expect(page).toHaveURL(/\/login/);
+  });
+
+  test("meldet Schreibzeug auch ab, wenn Dokumente seit dem Neuladen nicht offen war", async ({
+    page,
+  }) => {
+    await login(page, "anna");
+    await rail(page).getByRole("link", { name: "Dokumente" }).click();
+    await expect(documentsFrame(page).locator("#who")).toHaveText(/Angemeldet als/);
+    const sessions = async () =>
+      (await page.request.get(`http://localhost:28097/e2e/sessions/${address("anna")}`)).json();
+    expect(await sessions()).toBeGreaterThan(0);
+    // Reloaded in Mail: no frame that could be told.
+    await page.goto("/mail");
+    await rail(page).getByRole("button", { name: /anna/i }).click();
+    await page.getByRole("menuitem", { name: "Abmelden" }).click();
+    await expect(page).toHaveURL(/\/login/);
+    expect(await sessions()).toBe(0);
   });
 });
