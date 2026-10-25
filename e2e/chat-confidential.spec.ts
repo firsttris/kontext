@@ -140,4 +140,45 @@ test.describe("Chat: vertrauliche Unterhaltung", () => {
     );
     await context.close();
   });
+
+  test("eine Unterhaltung vertraulich weiterführen: neue verschlüsselte, Hinweis in der alten", async ({
+    page,
+    browser,
+  }) => {
+    await login(page, "anna");
+    await giveKey(page, "anna");
+    const context = await browser.newContext();
+    const max = await context.newPage();
+    await login(max, "max");
+    await giveKey(max, "max");
+    await context.close();
+    await page.getByRole("link", { name: /^Chat/ }).first().click();
+    await page.getByRole("button", { name: "Neue Nachricht" }).click();
+    const dialog = page.getByRole("dialog", { name: "Neue Nachricht" });
+    await dialog.getByText("Max Becker").click();
+    await dialog.getByRole("button", { name: "Chat beginnen" }).click();
+    await expect(page.getByRole("heading", { name: "Max Becker" })).toBeVisible();
+    await expect(page.getByText("Vertraulich", { exact: true })).toHaveCount(0);
+    const plain = new URL(page.url()).searchParams.get("channel");
+
+    page.once("dialog", (question) => void question.accept());
+    await page.getByRole("button", { name: "Mehr zum Kanal" }).click();
+    await page.getByRole("menuitem", { name: "Vertraulich weiterführen" }).click();
+    await expect(page.getByText("Vertraulich", { exact: true })).toBeVisible();
+    const confidential = new URL(page.url()).searchParams.get("channel");
+    expect(confidential).not.toBe(plain);
+
+    // The old conversation says where it goes on, with a link only members can open.
+    await page.goto(`/chat?channel=${plain}`);
+    const note = page
+      .getByRole("list", { name: "Nachrichten" })
+      .getByRole("paragraph")
+      .filter({ hasText: "Weiter geht es vertraulich" })
+      .last();
+    await expect(note).toBeVisible();
+    await expect(note.getByRole("link")).toHaveAttribute(
+      "href",
+      new RegExp(`channel=${confidential}`),
+    );
+  });
 });

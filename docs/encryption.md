@@ -163,6 +163,11 @@ markieren („Neue Nachricht“ → „Vertraulich – Ende-zu-Ende verschlüsse
   „Ende-zu-Ende verschlüsselt“, sobald LiveKit es für die eigene Seite meldet. Anrufen und
   Annehmen geht dort erst mit entsperrtem Schlüssel; Besprechungen über einen Link bleiben wie
   bisher.
+- **Vertraulich weiterführen:** Eine bestehende Direktnachricht oder ein Kanal lässt sich über das
+  Kanal-Menü vertraulich weiterführen. Kontext legt dafür eine neue vertrauliche Unterhaltung mit
+  denselben Mitgliedern an und schreibt in die alte einen Hinweis mit Link dorthin. Der bisherige
+  Verlauf bleibt, wo er ist, und unverschlüsselt; nachträglich verschlüsseln ließe er sich nicht,
+  der Server kannte ihn ja schon.
 - **Neuer Schlüssel eines Mitglieds:** Kontext merkt sich den Schlüssel jedes Mitglieds beim ersten
   Mal in den „Schlüsseln von anderen“ (Quelle „vertraulicher Chat“, gilt so auf jedem Gerät).
   Ist es später ein anderer, steht über der Unterhaltung, wessen Schlüssel neu ist, mit
