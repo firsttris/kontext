@@ -138,6 +138,32 @@ describe("CalDAV", () => {
     expect(tasks).toHaveLength(0);
   });
 
+  it("a file name with a percent sign is decoded once and round-trips", async () => {
+    const { tasks, store, call } = setup();
+    // The client's files "50%.ics" and "a%41.ics", percent-encoded in the URL (RFC 3986).
+    expect((await call("PUT", "/dav/tasks/jonas/50%25.ics", vtodo("Halb"))).status).toBe(201);
+    expect((await call("PUT", "/dav/tasks/jonas/a%2541.ics", vtodo("Eins"))).status).toBe(201);
+    const names = (await store.davList("jonas", new Date(0))).map(({ name }) => name);
+    expect(names.sort()).toEqual(["50%", "a%41"]);
+
+    // The hrefs written back are the ones the client used.
+    const listing = await (await call("PROPFIND", "/dav/tasks/jonas/", "", { depth: "1" })).text();
+    expect(listing).toContain("<D:href>/dav/tasks/jonas/a%2541.ics</D:href>");
+    expect((await call("GET", "/dav/tasks/jonas/a%2541.ics")).status).toBe(200);
+    const multiget = await (
+      await call(
+        "REPORT",
+        "/dav/tasks/jonas/",
+        '<C:calendar-multiget xmlns:D="DAV:" xmlns:C="urn:ietf:params:xml:ns:caldav"><D:href>/dav/tasks/jonas/a%2541.ics</D:href><D:href>/dav/tasks/jonas/50%.ics</D:href></C:calendar-multiget>',
+      )
+    ).text();
+    expect(multiget).toContain("SUMMARY:Eins");
+    // A malformed href names no task instead of failing the REPORT.
+    expect(multiget).toContain("404 Not Found");
+    expect((await call("DELETE", "/dav/tasks/jonas/a%2541.ics")).status).toBe(204);
+    expect(tasks.map((task) => task.title)).toEqual(["Halb"]);
+  });
+
   it("a board one may only read stays as it is", async () => {
     const { call } = setup();
     expect((await call("PUT", "/dav/tasks/chef/x.ics", vtodo("Nein"))).status).toBe(403);
