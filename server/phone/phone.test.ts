@@ -4,13 +4,18 @@ import {
   applyCallEvent,
   callbackTask,
   canSeeCall,
+  dialTarget,
   incomingCall,
+  isPerson,
+  offerCall,
   outcomeOf,
   outgoingCall,
   phoneNotice,
   phoneRoom,
+  roomIsOver,
   roomOfPhoneRoom,
   takeCall,
+  takeOffer,
 } from "./phone";
 import type { CallEvent } from "./protocol";
 
@@ -178,5 +183,41 @@ describe("callbackTask", () => {
     const talked = { ...ringing(), id: "c2", state: "talking" as const };
     expect(answeredCallbacks([missed, other], talked)).toEqual([missed]);
     expect(answeredCallbacks([missed], { ...talked, state: "ringing" })).toEqual([]);
+  });
+});
+
+describe("handing on", () => {
+  const talking = { ...applyCallEvent(takeCall(ringing(), "jonas", "r1")!, event("answered")) };
+
+  it("offers a call one talks on and lets the colleague take it", () => {
+    expect(offerCall(ringing(), "jonas", "anna")).toBeNull();
+    expect(offerCall(talking, "anna", "max")).toBeNull();
+    expect(offerCall(talking, "jonas", "jonas")).toBeNull();
+    const offered = offerCall(talking, "jonas", "max")!;
+    expect(canSeeCall(offered, "max")).toBe(true);
+    expect(takeOffer(offered, "anna")).toBeNull();
+    expect(takeOffer(offered, "max")).toMatchObject({
+      member: "max",
+      members: ["jonas", "anna", "max"],
+      offeredTo: null,
+      offeredBy: null,
+    });
+  });
+
+  it("knows people from LiveKit SIP's lines and when a room is over", () => {
+    expect(isPerson("jonas")).toBe(true);
+    expect(isPerson("sip_07223123456")).toBe(false);
+    expect(roomIsOver(["jonas"], [talking])).toBe(false);
+    expect(roomIsOver([], [talking, talking])).toBe(false);
+    expect(roomIsOver(["jonas"], [])).toBe(true);
+    expect(roomIsOver([], [talking])).toBe(true);
+  });
+
+  it("dials numbers the Fritzbox's way and its own telephones by their internal number", () => {
+    expect(dialTarget("0171 2345678")).toEqual({ remote: "+491712345678", dial: "01712345678" });
+    expect(dialTarget("**610")).toEqual({ remote: "**610", dial: "**610" });
+    expect(dialTarget("** 611")).toEqual({ remote: "**611", dial: "**611" });
+    expect(dialTarget("*610")).toBeNull();
+    expect(dialTarget("abc")).toBeNull();
   });
 });

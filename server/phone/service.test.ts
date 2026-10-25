@@ -20,7 +20,7 @@ const memoryStore = (settings: PhoneSettings) => {
     call: async (id: string) => calls.get(id) ?? null,
     callOfBox: async (boxId: string, boxCallId: string) =>
       [...calls.values()].find((c) => c.boxId === boxId && c.boxCallId === boxCallId) ?? null,
-    callOfRoom: async (room: string) => [...calls.values()].find((c) => c.room === room) ?? null,
+    callsOfRoom: async (room: string) => [...calls.values()].filter((c) => c.room === room),
     saveCall: async (call: PhoneCall) => void calls.set(call.id, call),
     callbacksOf: async (remote: string) =>
       [...calls.values()].filter((c) => c.remote === remote && c.callbackTaskId),
@@ -246,6 +246,67 @@ describe("an incoming call", () => {
   });
 });
 
+describe("handing a call on", () => {
+  /** Jonas talks with the caller in the room. */
+  const talking = async () => {
+    const context = setup();
+    await context.box.receive(event(1, "ringing"));
+    const taken = (await context.service.answer("id-1", "jonas")) as PhoneCall;
+    await context.box.receive(event(2, "answered"));
+    await context.service.joinedRoom(taken.room!, "jonas");
+    return { ...context, room: taken.room! };
+  };
+
+  it("to a colleague: it rings for her, she takes it, and Jonas may leave", async () => {
+    const { service, toBox, room, phoneEvents } = await talking();
+    expect(await service.transfer("id-1", "anna", { to: "anna" })).toBe("not-found");
+    expect(await service.transfer("id-1", "jonas", { to: "max" })).toBe("not-allowed");
+    const offered = await service.transfer("id-1", "jonas", { to: "anna" });
+    expect(offered).toMatchObject({ offeredTo: "anna", offeredBy: "jonas", member: "jonas" });
+    expect(await service.takeTransfer("id-1", "max")).toBe("not-found");
+    expect(await service.takeTransfer("id-1", "anna")).toMatchObject({
+      member: "anna",
+      offeredTo: null,
+    });
+    await service.joinedRoom(room, "anna");
+    expect(phoneEvents().at(-1)!.event.call.present).toEqual(["jonas", "anna"]);
+    await service.leftRoom(room, "jonas");
+    expect(toBox.some((m) => m.type === "hangup")).toBe(false);
+    await service.leftRoom(room, "anna");
+    expect(toBox).toContainEqual({ type: "hangup", call: "1729850000.12" });
+  });
+
+  it("can be taken back before the colleague answers", async () => {
+    const { service } = await talking();
+    await service.transfer("id-1", "jonas", { to: "anna" });
+    expect(await service.cancelTransfer("id-1", "jonas")).toMatchObject({
+      offeredTo: null,
+      member: "jonas",
+    });
+    expect(await service.takeTransfer("id-1", "anna")).toBe("not-found");
+  });
+
+  it("to a number: the box dials it into the same room, the two talk once Jonas leaves", async () => {
+    const { service, box, toBox, room } = await talking();
+    expect(await service.transfer("id-1", "jonas", { number: "**610x" })).toBe("bad-number");
+    const leg = (await service.transfer("id-1", "jonas", { number: "0171 2345678" })) as PhoneCall;
+    expect(toBox).toContainEqual({ type: "dial", call: leg.id, room, number: "01712345678" });
+    await box.receive({ ...event(3, "answered"), call: leg.id, direction: "out" });
+    await service.leftRoom(room, "jonas");
+    expect(toBox.some((m) => m.type === "hangup")).toBe(false);
+    // The caller hangs up: nobody is left for the mobile phone, so it is hung up too.
+    await box.receive(event(4, "ended", { cause: 16 }));
+    expect(toBox).toContainEqual({ type: "hangup", call: leg.id });
+  });
+
+  it("dials a telephone at the Fritzbox by its internal number", async () => {
+    const { service, toBox } = await talking();
+    const leg = (await service.transfer("id-1", "jonas", { number: "**610" })) as PhoneCall;
+    expect(leg.remote).toBe("**610");
+    expect(toBox.at(-1)).toMatchObject({ type: "dial", number: "**610" });
+  });
+});
+
 describe("dialling", () => {
   it("lets the line's people call out through the box, in the Fritzbox's way of dialling", async () => {
     const { service, toBox } = setup();
@@ -261,9 +322,12 @@ describe("dialling", () => {
     });
   });
 
-  it("hangs up the call of whoever left its room", async () => {
-    const { service, toBox } = setup();
+  it("hangs up when only one side is left in the room", async () => {
+    const { service, toBox, phoneEvents } = setup();
     const call = (await service.dial("jonas", "07223 123456")) as PhoneCall;
+    await service.joinedRoom(call.room!, "jonas");
+    await service.joinedRoom(call.room!, "sip_07223123456");
+    expect(phoneEvents().at(-1)!.event.call.present).toEqual(["jonas"]);
     await service.leftRoom(call.room!, "anna");
     expect(toBox.some((m) => m.type === "hangup")).toBe(false);
     await service.leftRoom(call.room!, "jonas");

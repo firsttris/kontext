@@ -86,11 +86,15 @@ export const createPhone = (setup: PhoneSetup) => {
       sipStatus: async () => ensureSip((await store.settings()).trunkPassword),
       sounds: createPhoneSoundRoutes({ store, service, files }),
     }),
-    /** LiveKit's room events: whoever had a phone call left its room, so it ends. */
+    /** LiveKit's room events: who is in a phone room decides when its lines end. */
     onRoomEvent: (event: RoomEvent) => {
       const room = roomOfPhoneRoom(event.room?.name ?? "");
       const identity = event.participant?.identity;
-      if (room && identity && event.event === "participant_left") {
+      if (!room || !identity) return;
+      if (event.event === "participant_joined") {
+        void service.joinedRoom(room, identity).catch(() => undefined);
+      }
+      if (event.event === "participant_left") {
         void service.leftRoom(room, identity).catch(() => undefined);
       }
     },

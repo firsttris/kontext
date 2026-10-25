@@ -128,6 +128,7 @@ fine on a VPS with 2 vCPUs and 4 GB RAM.
   - A missed call leaves a "call back" task on the board you choose; it ticks itself off once someone talked to that number.
   - **Mailbox**: if nobody answers, the box plays your greeting (spoken into the browser or uploaded) and records a message; it arrives as a mail with the recording and can be played back at the call.
   - **Opening hours** with lunch break, closed days and the public holidays at one click: outside them nothing rings, callers hear your closing greeting and may leave a message. The box decides by itself, also when Kontext is out of reach.
+  - **Hand a call on** to a colleague (it rings for them, you leave once they are on) or to any number or a handset at the Fritzbox (`**610`): the box dials it into the call and you hand over once it is answered.
 - **Search** across all your channels; edit or delete your own messages; mute, leave or delete channels.
 - **Retention** set by the company admin (30 days to 5 years, or for ever): older messages, photos and files are deleted by themselves.
 - **On the phone**: its own tab, conversations as bubbles.

@@ -11,7 +11,14 @@ import { joinToken, type LiveKitConfig } from "../calls/livekit";
 import type { Viewer } from "../chat/chat";
 import { bearer } from "./box-routes";
 import { type PhoneFiles, wavResponse } from "./files";
-import { canSeeCall, dialSchema, noteSchema, type PhoneCall, phoneRoom } from "./phone";
+import {
+  canSeeCall,
+  dialSchema,
+  noteSchema,
+  type PhoneCall,
+  phoneRoom,
+  transferSchema,
+} from "./phone";
 import { fromBoxSchema, parseMessage } from "./protocol";
 import type { PhoneService, Problem } from "./service";
 import type { PhoneStore } from "./store";
@@ -111,6 +118,7 @@ export const createPhoneRoutes = (deps: PhoneRouteDeps) => {
     return c.json({
       enabled: true,
       allowed: await service.allowed(me),
+      colleagues: (await store.settings()).ring.filter((id) => id !== me),
       online: service.online().length > 0,
       calls: await service.callsOf(me),
     });
@@ -145,6 +153,27 @@ export const createPhoneRoutes = (deps: PhoneRouteDeps) => {
     const bytes = await deps.files.readVoicemail(call.id);
     if (!bytes) return c.json({ error: "Nicht gefunden" }, 404);
     return wavResponse(bytes, { "cache-control": "private, max-age=86400" });
+  });
+
+  app.post("/calls/:id/transfer", async (c) => {
+    const parsed = transferSchema.safeParse(await c.req.json().catch(() => ({})));
+    if (!parsed.success) return c.json({ error: MESSAGES["bad-number"] }, 400);
+    const result = await service.transfer(c.req.param("id"), c.get("viewer").me, parsed.data);
+    if (problem(result)) return c.json({ error: MESSAGES[result] }, STATUS[result]);
+    return c.json({ call: result });
+  });
+
+  app.post("/calls/:id/transfer/take", async (c) => {
+    const me = c.get("viewer").me;
+    const result = await service.takeTransfer(c.req.param("id"), me);
+    if (problem(result)) return c.json({ error: MESSAGES[result] }, STATUS[result]);
+    return c.json(await withTicket(c.req.raw, me, result));
+  });
+
+  app.post("/calls/:id/transfer/cancel", async (c) => {
+    const result = await service.cancelTransfer(c.req.param("id"), c.get("viewer").me);
+    if (problem(result)) return c.json({ error: MESSAGES[result] }, STATUS[result]);
+    return c.json({ call: result });
   });
 
   app.put("/calls/:id/note", async (c) => {

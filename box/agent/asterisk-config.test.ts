@@ -51,6 +51,7 @@ describe("extensionsConf", () => {
     expect(conf).toContain(`Set(__KONTEXT_CALL=\${UNIQUEID})`);
     expect(conf).toContain(`Dial(PJSIP/\${KONTEXT_ROOM}@livekit,30)`);
     expect(conf).toContain(`Dial(PJSIP/\${EXTEN}@fritzbox,60,U(kontext-callee-answered))`);
+    expect(conf).toContain("exten => _**X.,1,UserEvent(KontextCall");
     expect(conf).toMatch(/\[kontext-in\][\s\S]*exten => h,1,UserEvent\(KontextCall,.*State: ended/);
   });
 });

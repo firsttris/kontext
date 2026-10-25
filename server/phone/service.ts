@@ -15,13 +15,16 @@ import {
   canSeeCall,
   closedCall,
   incomingCall,
+  isPerson,
   outgoingCall,
   type PhoneCall,
   phoneNotice,
+  roomIsOver,
   takeCall,
 } from "./phone";
 import type { BoxConfig, CallEvent, FromBox, ToBox } from "./protocol";
 import type { PhoneSettings, PhoneStore } from "./store";
+import { createTransfers } from "./transfer";
 
 /** What telephony needs from the tasks: make "Zurückrufen" and tick it off. */
 export type CallbackTasks = {
@@ -102,9 +105,15 @@ export const createPhoneService = (deps: PhoneDeps) => {
   const newId = deps.newId ?? (() => crypto.randomUUID());
   const now = deps.now ?? (() => new Date());
   const connected = new Map<string, (message: ToBox) => void>();
+  /** Who of Kontext is in which phone room, from LiveKit's webhooks. */
+  const presence = new Map<string, Set<string>>();
+  const presentIn = (room: string | null) => (room ? [...(presence.get(room) ?? [])] : []);
+  const withPresence = (call: PhoneCall): PhoneCall => ({ ...call, present: presentIn(call.room) });
 
-  const publish = (call: PhoneCall) =>
-    hub.publish({ type: "phone", call }, (viewer) => canSeeCall(call, viewer.me));
+  const publish = (call: PhoneCall) => {
+    const shown = withPresence(call);
+    hub.publish({ type: "phone", call: shown }, (viewer) => canSeeCall(shown, viewer.me));
+  };
 
   const save = async (call: PhoneCall) => {
     await store.saveCall(call);
@@ -167,6 +176,8 @@ export const createPhoneService = (deps: PhoneDeps) => {
     if (next.state === "talking" && known.state !== "talking") {
       await closeCallbacks(next).catch(() => undefined);
     }
+    // A line of a room ended (the caller hung up): is anyone left to talk to?
+    if (next.state === "ended" && next.room) await settle(next.room);
   };
 
   const send = (call: PhoneCall, message: ToBox): boolean => {
@@ -174,6 +185,15 @@ export const createPhoneService = (deps: PhoneDeps) => {
     to?.(message);
     return Boolean(to);
   };
+
+  /** At most one side left in a room: its lines are hung up. */
+  const settle = async (room: string) => {
+    const live = (await store.callsOfRoom(room)).filter((call) => call.state !== "ended");
+    if (!live.length || !roomIsOver(presentIn(room), live)) return;
+    for (const call of live) send(call, { type: "hangup", call: call.boxCallId });
+  };
+
+  const transfers = createTransfers({ store, save, send, newId, now });
 
   const allowed = async (me: string) => (await store.settings()).ring.includes(me);
 
@@ -213,7 +233,10 @@ export const createPhoneService = (deps: PhoneDeps) => {
     },
 
     callsOf: async (me: string, limit = 100): Promise<PhoneCall[]> =>
-      (await store.recentCalls(limit * 3)).filter((call) => canSeeCall(call, me)).slice(0, limit),
+      (await store.recentCalls(limit * 3))
+        .filter((call) => canSeeCall(call, me))
+        .slice(0, limit)
+        .map(withPresence),
 
     /** Take a ringing call in Kontext: the box puts it into a new room, which the caller joins. */
     answer: async (callId: string, me: string): Promise<PhoneCall | Problem> => {
@@ -256,13 +279,29 @@ export const createPhoneService = (deps: PhoneDeps) => {
       return call;
     },
 
-    /** Whoever had the call left its room (closed the tab, lost the network): end it. */
-    leftRoom: async (room: string, identity: string) => {
-      const call = await store.callOfRoom(room);
-      if (call && call.state !== "ended" && call.member === identity) {
-        send(call, { type: "hangup", call: call.boxCallId });
-      }
+    /** Someone of Kontext joined a phone room (LiveKit's webhook). */
+    joinedRoom: async (room: string, identity: string) => {
+      if (!isPerson(identity)) return;
+      presence.set(room, new Set([...presentIn(room), identity]));
+      for (const call of await store.callsOfRoom(room)) publish(call);
     },
+
+    /**
+     * Someone left a phone room (hung up, handed over, closed the tab): with at most one side
+     * left, the room's lines end.
+     */
+    leftRoom: async (room: string, identity: string) => {
+      if (!isPerson(identity)) return;
+      const left = presentIn(room).filter((other) => other !== identity);
+      if (left.length) presence.set(room, new Set(left));
+      else presence.delete(room);
+      for (const call of await store.callsOfRoom(room)) publish(call);
+      await settle(room);
+    },
+
+    transfer: transfers.transfer,
+    takeTransfer: transfers.take,
+    cancelTransfer: transfers.cancel,
 
     /** The call changed outside the service (a message arrived): tell who sees it. */
     refresh: async (callId: string) => {

@@ -706,8 +706,18 @@ flowchart LR
   und nimmt, wenn die Mailbox an ist, eine Nachricht auf. Asterisk kennt bei Tagen keine Jahre;
   Kontext schickt deshalb nur kommende Tage und die Konfiguration einmal täglich neu. Die
   Feiertage für Baden-Württemberg rechnet `server/phone/holidays.ts` aus (Ostern nach Gauß).
-- **Auflegen:** in Kontext (Box legt auf), beim Anrufer (Box meldet das Ende) oder wenn die
-  Person den Raum verlässt, etwa weil der Tab zu ist (LiveKits Webhook).
+- **Weitervermitteln:** Ein Gespräch lebt in seinem LiveKit-Raum, Weitervermitteln heißt also, wer
+  im Raum ist (`server/phone/transfer.ts`). An eine Kollegin: Der Anruf klingelt bei ihr
+  (`offeredTo`), nimmt sie an, gehört er ihr und sie tritt dem Raum bei; sobald LiveKits Webhook
+  sie im Raum meldet, verlässt der Übergebende ihn. An eine Nummer oder ein Telefon der Fritzbox
+  (`**610`): Die Box wählt sie in denselben Raum (zweite Leitung über die Fritzbox, die braucht
+  dafür zwei freie Leitungen); ist abgenommen, geht man, und beide sprechen über den Raum weiter.
+  Kontext merkt sich, wer von Kontext in welchem Raum ist; bleibt nur eine Seite übrig (Personen
+  im Raum plus verbundene Leitungen, `roomIsOver`), legt es die übrigen Leitungen auf – auch wenn
+  der Anrufer auflegt und nur noch das Handy der Kollegin dran wäre.
+- **Auflegen:** in Kontext (Box legt auf, mit allen dazugewählten Leitungen), beim Anrufer (Box
+  meldet das Ende) oder wenn die Person den Raum verlässt, etwa weil der Tab zu ist (LiveKits
+  Webhook) und niemand mehr da ist.
 - **LiveKit SIP** braucht Redis (zur Absprache mit LiveKit). Kontext richtet beim Start einen
   Eingangs-Trunk mit Passwort (nur die Boxen) und die Dispatch-Regel ein
   (`server/phone/livekit-sip.ts`); ob das klappt, zeigt die Firmenverwaltung.

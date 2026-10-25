@@ -5,7 +5,7 @@
  */
 import { z } from "zod";
 import { companyDay, type NewTaskData } from "../tasks/tasks";
-import { readableNumber, toE164 } from "./numbers";
+import { readableNumber, toDialable, toE164 } from "./numbers";
 import type { CallEvent } from "./protocol";
 
 export const OUTCOMES = [
@@ -47,6 +47,11 @@ export type PhoneCall = {
   callbackTaskId: string | null;
   /** How long the message is that the caller left on the mailbox. */
   voicemailSeconds: number | null;
+  /** Handed over: the colleague it rings for, and who hands it over. */
+  offeredTo: string | null;
+  offeredBy: string | null;
+  /** The people of Kontext in its room now (LiveKit's webhooks); not stored. */
+  present: string[];
 };
 
 /** Phone rooms in LiveKit: "kontext-phone-<uuid>", which LiveKit SIP's dispatch rule matches. */
@@ -97,6 +102,9 @@ export const incomingCall = (
   note: "",
   callbackTaskId: null,
   voicemailSeconds: null,
+  offeredTo: null,
+  offeredBy: null,
+  present: [],
 });
 
 /** A call outside the opening hours: filed at once, it never rings. */
@@ -138,6 +146,9 @@ export const outgoingCall = ({
   note: "",
   callbackTaskId: null,
   voicemailSeconds: null,
+  offeredTo: null,
+  offeredBy: null,
+  present: [],
 });
 
 /** The call after one of the box's events; the same call when it changes nothing (a repeat). */
@@ -170,8 +181,47 @@ export const takeCall = (call: PhoneCall, member: string, room: string): PhoneCa
     ? { ...call, member, room }
     : null;
 
-export const canSeeCall = (call: Pick<PhoneCall, "members" | "member">, me: string) =>
-  call.members.includes(me) || call.member === me;
+export const canSeeCall = (call: Pick<PhoneCall, "members" | "member" | "offeredTo">, me: string) =>
+  call.members.includes(me) || call.member === me || call.offeredTo === me;
+
+/** Hand a call one is talking on to a colleague; it rings for them until they take it. */
+export const offerCall = (call: PhoneCall, me: string, to: string): PhoneCall | null =>
+  call.state === "talking" && call.member === me && to !== me
+    ? { ...call, offeredTo: to, offeredBy: me }
+    : null;
+
+/** The colleague takes the handed-over call; from now on it is theirs. */
+export const takeOffer = (call: PhoneCall, me: string): PhoneCall | null =>
+  call.state === "talking" && call.offeredTo === me
+    ? {
+        ...call,
+        member: me,
+        members: [...new Set([...call.members, me])],
+        offeredTo: null,
+        offeredBy: null,
+      }
+    : null;
+
+/** Who sits in a phone room: LiveKit SIP's participants are "sip_…", the rest are people. */
+export const isPerson = (identity: string) => !identity.startsWith("sip_");
+
+/**
+ * Whether a room's calls should end: when at most one side is left – people of Kontext in the
+ * room plus the lines still connected (the caller, a colleague's mobile phone …).
+ */
+export const roomIsOver = (present: string[], liveCalls: PhoneCall[]) =>
+  present.length + liveCalls.length <= 1;
+
+/**
+ * Where a call is handed or dialled to: a number (E.164 for the list, national for the
+ * Fritzbox) or a telephone at the Fritzbox itself ("**610" for the first DECT handset).
+ */
+export const dialTarget = (raw: string): { remote: string; dial: string } | null => {
+  const internal = raw.replace(/\s/g, "");
+  if (/^\*\*\d{2,4}$/.test(internal)) return { remote: internal, dial: internal };
+  const remote = toE164(raw);
+  return remote ? { remote, dial: toDialable(remote) } : null;
+};
 
 /** The notification on the phones of the line's people (Web Push); a missed call replaces it. */
 export const phoneNotice = (call: Pick<PhoneCall, "id" | "remote" | "outcome">) => ({
@@ -234,4 +284,9 @@ export const answeredCallbacks = (calls: PhoneCall[], talked: PhoneCall): PhoneC
     : [];
 
 export const dialSchema = z.object({ number: z.string().trim().min(3).max(40) });
+/** To a colleague (`to`) or to a number (`number`), one of the two. */
+export const transferSchema = z.union([
+  z.object({ to: z.string().min(1).max(64) }),
+  z.object({ number: z.string().trim().min(3).max(40) }),
+]);
 export const noteSchema = z.object({ note: z.string().max(2000) });

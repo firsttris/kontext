@@ -13,12 +13,13 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/toast";
 import { useCallStore } from "@/features/calls/call-store";
 import { startRinging } from "@/features/calls/ringtone";
+import { useChatNames } from "@/features/chat/use-chat-names";
 import { useMe } from "@/features/tasks/queries";
 import { eventTimes } from "@/lib/jscalendar";
-import { type PhoneCall, readableNumber, ringingPhoneCall } from "@/lib/phone";
+import { offeredPhoneCall, type PhoneCall, readableNumber, ringingPhoneCall } from "@/lib/phone";
 import { m } from "@/paraglide/messages";
 import { dismissPhone, usePhoneStore } from "./phone-store";
-import { answerPhone, usePhone } from "./queries";
+import { answerPhone, takePhoneTransfer, usePhone } from "./queries";
 import { useCallerContext, useCallerName } from "./use-caller";
 
 const whenFormat = new Intl.DateTimeFormat("de-DE", {
@@ -30,7 +31,16 @@ const whenFormat = new Intl.DateTimeFormat("de-DE", {
   minute: "2-digit",
 });
 
-const Ringing = ({ call, canAnswer }: { call: PhoneCall; canAnswer: boolean }) => {
+const Ringing = ({
+  call,
+  canAnswer,
+  handedBy,
+}: {
+  call: PhoneCall;
+  canAnswer: boolean;
+  /** A colleague hands the call on to me. */
+  handedBy?: string;
+}) => {
   const queryClient = useQueryClient();
   const toast = useToast();
   const caller = useCallerName(call.remote);
@@ -41,7 +51,8 @@ const Ringing = ({ call, canAnswer }: { call: PhoneCall; canAnswer: boolean }) =
   const answer = async () => {
     setBusy(true);
     try {
-      await answerPhone(queryClient, call.id);
+      if (handedBy) await takePhoneTransfer(queryClient, call.id);
+      else await answerPhone(queryClient, call.id);
     } catch (error) {
       toast.show(m.phone_failed({ message: (error as Error).message }), "error");
     } finally {
@@ -66,7 +77,9 @@ const Ringing = ({ call, canAnswer }: { call: PhoneCall; canAnswer: boolean }) =
             <Avatar name={caller.name} size={44} className="animate-pulse" />
             <div className="flex min-w-0 flex-1 flex-col">
               <DialogPrimitive.Title className="m-0 truncate text-[15px] font-semibold">
-                {m.phone_incoming({ name: caller.name })}
+                {handedBy
+                  ? m.phone_handed({ by: handedBy, name: caller.name })
+                  : m.phone_incoming({ name: caller.name })}
               </DialogPrimitive.Title>
               <span className="truncate text-[13px] text-muted">
                 {[caller.company, caller.contact ? readableNumber(call.remote) : ""]
@@ -132,6 +145,18 @@ export const IncomingPhone = () => {
   const { calls, online } = usePhone();
   const { active, dismissed } = usePhoneStore();
   const { active: inChatCall } = useCallStore();
+  const { nameOf } = useChatNames();
+  const offered = offeredPhoneCall(calls, me);
+  if (offered && !active) {
+    return (
+      <Ringing
+        key={`handed-${offered.id}`}
+        call={offered}
+        canAnswer={!inChatCall}
+        handedBy={nameOf(offered.offeredBy ?? "")}
+      />
+    );
+  }
   const call = ringingPhoneCall(calls, me, dismissed);
   if (!call || active) return null;
   // A colleague's call in the chat goes on; the phone still shows who rings, without answering.

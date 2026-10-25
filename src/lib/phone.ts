@@ -75,6 +75,20 @@ export const ringingPhoneCall = (
       !dismissed.includes(call.id),
   ) ?? null;
 
+/** A call a colleague hands to me, waiting for me to take it. */
+export const offeredPhoneCall = (calls: PhoneCall[], me: string): PhoneCall | null =>
+  calls.find((call) => call.state === "talking" && call.offeredTo === me) ?? null;
+
+/** The other lines in a call's room: numbers dialled in to hand it on. */
+export const linesOf = (calls: PhoneCall[], call: PhoneCall): PhoneCall[] =>
+  calls.filter(
+    (other) => other.id !== call.id && other.room === call.room && other.state !== "ended",
+  );
+
+/** The call went to a colleague who is in its room now: I may go. */
+export const handedOver = (call: PhoneCall, me: string) =>
+  Boolean(call.member && call.member !== me && call.present.includes(call.member));
+
 const STAGE: Record<PhoneCall["state"], number> = { ringing: 0, mailbox: 1, talking: 1, ended: 2 };
 
 /**

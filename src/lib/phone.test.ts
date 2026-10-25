@@ -1,7 +1,10 @@
 import { describe, expect, it } from "vitest";
 import {
   contactOfNumber,
+  handedOver,
   laterCall,
+  linesOf,
+  offeredPhoneCall,
   outcomeText,
   type PhoneCall,
   readableNumber,
@@ -26,6 +29,9 @@ const call = (extra: Partial<PhoneCall> = {}): PhoneCall => ({
   note: "",
   callbackTaskId: null,
   voicemailSeconds: null,
+  offeredTo: null,
+  offeredBy: null,
+  present: [],
   ...extra,
 });
 
@@ -94,5 +100,22 @@ describe("laterCall", () => {
     expect(laterCall(undefined, ringing)).toBe(ringing);
     const noted = call({ state: "ended", note: "zurückrufen" });
     expect(laterCall(call({ state: "ended" }), noted)).toBe(noted);
+  });
+});
+
+describe("handing on", () => {
+  it("finds the call handed to me, the lines in its room, and when it is over for me", () => {
+    const talking = call({ state: "talking", member: "jonas", room: "r1" });
+    const offered = { ...talking, offeredTo: "anna", offeredBy: "jonas" };
+    const leg = call({ id: "c2", direction: "out", room: "r1", member: "jonas" });
+    expect(offeredPhoneCall([offered], "anna")).toBe(offered);
+    expect(offeredPhoneCall([offered], "jonas")).toBeNull();
+    expect(linesOf([talking, leg, call({ id: "c3", room: "r2" })], talking)).toEqual([leg]);
+    expect(linesOf([talking, { ...leg, state: "ended" as const }], talking)).toEqual([]);
+    expect(handedOver({ ...talking, member: "anna", present: ["jonas"] }, "jonas")).toBe(false);
+    expect(handedOver({ ...talking, member: "anna", present: ["jonas", "anna"] }, "jonas")).toBe(
+      true,
+    );
+    expect(handedOver({ ...talking, present: ["jonas"] }, "jonas")).toBe(false);
   });
 });

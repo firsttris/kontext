@@ -11,16 +11,19 @@ import {
   useTrackToggle,
 } from "@livekit/components-react";
 import { Track } from "livekit-client";
-import { Grid3x3, Mic, MicOff, PhoneOff, Volume2 } from "lucide-react";
+import { ArrowRightLeft, Grid3x3, Mic, MicOff, PhoneOff, Volume2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Avatar } from "@/components/ui/avatar";
 import { useToast } from "@/components/ui/toast";
+import { useChatNames } from "@/features/chat/use-chat-names";
+import { useMe } from "@/features/tasks/queries";
 import { callDuration } from "@/lib/calls";
 import { cn } from "@/lib/cn";
-import { type PhoneCall, readableNumber } from "@/lib/phone";
+import { handedOver, linesOf, type PhoneCall, readableNumber } from "@/lib/phone";
 import { m } from "@/paraglide/messages";
 import { type ActivePhone, leavePhone } from "./phone-store";
 import { hangupPhone, usePhone } from "./queries";
+import { HandoverStatus, TransferForm } from "./transfer";
 import { useCallerName } from "./use-caller";
 
 const KEYS = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "*", "0", "#"];
@@ -46,9 +49,12 @@ const Controls = ({ call }: { call: PhoneCall }) => {
   const mic = useTrackToggle({ source: Track.Source.Microphone });
   const { localParticipant } = useLocalParticipant();
   const [keypad, setKeypad] = useState(false);
+  const [transfer, setTransfer] = useState(false);
   const { canPlayAudio, startAudio } = useAudioPlayback();
+  const { calls } = usePhone();
+  // Hanging up ends the call and the lines dialled into it.
   const hangup = () => {
-    void hangupPhone(call.id);
+    for (const line of [call, ...linesOf(calls, call)]) void hangupPhone(line.id);
     leavePhone();
   };
   return (
@@ -67,6 +73,8 @@ const Controls = ({ call }: { call: PhoneCall }) => {
           ))}
         </fieldset>
       ) : null}
+      {transfer ? <TransferForm call={call} onDone={() => setTransfer(false)} /> : null}
+      <HandoverStatus call={call} />
       {canPlayAudio ? null : (
         <button
           type="button"
@@ -97,6 +105,17 @@ const Controls = ({ call }: { call: PhoneCall }) => {
           className={roundButton(true)}
         >
           <Grid3x3 size={18} />
+        </button>
+        <button
+          type="button"
+          aria-label={m.phone_transfer()}
+          title={m.phone_transfer()}
+          aria-pressed={transfer}
+          disabled={call.state !== "talking"}
+          onClick={() => setTransfer((open) => !open)}
+          className={cn(roundButton(true), "disabled:opacity-40")}
+        >
+          <ArrowRightLeft size={18} />
         </button>
         <button
           type="button"
@@ -142,6 +161,8 @@ const PhoneView = ({ call }: { call: PhoneCall }) => {
 export const PhonePanel = ({ active }: { active: ActivePhone }) => {
   const toast = useToast();
   const { calls } = usePhone();
+  const me = useMe();
+  const { nameOf } = useChatNames();
   const call = calls.find((candidate) => candidate.id === active.callId);
   const caller = useCallerName(call?.remote ?? "");
   // The other side hung up, or the box ended it: the panel goes.
@@ -149,6 +170,14 @@ export const PhonePanel = ({ active }: { active: ActivePhone }) => {
   useEffect(() => {
     if (ended) leavePhone();
   }, [ended]);
+  // Handed to a colleague who is in the call now: I go.
+  const gone = call ? handedOver(call, me) : false;
+  const takenBy = call?.member ?? "";
+  useEffect(() => {
+    if (!gone) return;
+    toast.show(m.phone_transfer_done({ name: nameOf(takenBy) }));
+    leavePhone();
+  }, [gone, takenBy, nameOf, toast]);
   if (!call) return null;
   return (
     <LiveKitRoom

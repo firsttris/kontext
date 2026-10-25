@@ -44,7 +44,7 @@ const box = {
         line: { username: string } | null;
         hours: { open: { day: number; from: string; to: string }[] } | null;
       } | null;
-      commands: { type: string; number?: string }[];
+      commands: { type: string; number?: string; call?: string }[];
     },
   stop: () => box.process?.kill(),
 };
@@ -234,6 +234,68 @@ test.describe("Telefonie über die Telefonbox", () => {
     await expect(item).toContainText("07112 223334");
     await expect(item).toContainText("Außerhalb der Öffnungszeiten");
     await expect(page.getByRole("dialog", { name: /^Anruf von/ })).toHaveCount(0);
+  });
+
+  test("weitervermitteln an Anna: es klingelt bei ihr, sie nimmt an, Jonas ist raus", async ({
+    page,
+    browser,
+  }) => {
+    await login(page);
+    const anna = await colleague(browser, "anna");
+    const { call } = await box.ring("07223 81234");
+    await page
+      .getByRole("dialog", { name: "Anruf von Petra Keller" })
+      .getByRole("button", { name: "Annehmen" })
+      .click();
+    await expect(panel(page).getByRole("status")).toHaveText(/^\d+:\d\d$/, { timeout: 15_000 });
+
+    await panel(page).getByRole("button", { name: "Weitervermitteln" }).click();
+    await panel(page).getByRole("button", { name: "Anna Weber" }).click();
+    await expect(panel(page)).toContainText("Klingelt bei Anna Weber …");
+    const handed = anna.page.getByRole("dialog", { name: "Jonas Weber verbindet: 07223 81234" });
+    await expect(handed).toBeVisible();
+    await handed.getByRole("button", { name: "Annehmen" }).click();
+    await expect(panel(anna.page)).toBeVisible();
+    // Once Anna is in the call, Jonas's panel goes; the call goes on.
+    await expect(panel(page)).toHaveCount(0, { timeout: 15_000 });
+    await expect(page.getByText("An Anna Weber übergeben")).toBeVisible();
+    expect((await box.state()).commands).not.toContainEqual({ type: "hangup", call });
+
+    await panel(anna.page).getByRole("button", { name: "Auflegen" }).click();
+    await expect
+      .poll(async () => (await box.state()).commands)
+      .toContainEqual({ type: "hangup", call });
+    await anna.close();
+  });
+
+  test("weitervermitteln an eine Nummer: die Box wählt sie dazu, Jonas übergibt", async ({
+    page,
+  }) => {
+    await login(page);
+    const { call } = await box.ring("07223 81234");
+    await page
+      .getByRole("dialog", { name: "Anruf von Petra Keller" })
+      .getByRole("button", { name: "Annehmen" })
+      .click();
+    await expect(panel(page).getByRole("status")).toHaveText(/^\d+:\d\d$/, { timeout: 15_000 });
+
+    await panel(page).getByRole("button", { name: "Weitervermitteln" }).click();
+    await panel(page).getByLabel("Nummer zum Weitervermitteln").fill("0171 2345678");
+    await panel(page).getByRole("button", { name: "Anrufen" }).click();
+    await expect
+      .poll(async () => (await box.state()).commands.at(-1))
+      .toMatchObject({ type: "dial", number: "01712345678" });
+    const line = panel(page).getByRole("listitem").filter({ hasText: "01712 345678" });
+    await expect(line).toContainText("verbunden");
+    await line.getByRole("button", { name: "Übergeben" }).click();
+    await expect(panel(page)).toHaveCount(0);
+    const dialled = (await box.state()).commands.at(-1) as { call: string };
+
+    // When the caller hangs up, nobody is left for the mobile phone: it is hung up too.
+    await box.hangup(call);
+    await expect
+      .poll(async () => (await box.state()).commands)
+      .toContainEqual({ type: "hangup", call: dialled.call });
   });
 
   test("aus dem Kontakt anrufen geht über die Box", async ({ page }) => {

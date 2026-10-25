@@ -106,9 +106,12 @@ const toCall = (row: CallDbRow): PhoneCall => ({
   note: row.note,
   callbackTaskId: row.callbackTaskId,
   voicemailSeconds: row.voicemailSeconds,
+  offeredTo: row.offeredTo,
+  offeredBy: row.offeredBy,
+  present: [],
 });
 
-const fromCall = (call: PhoneCall): CallDbRow => ({
+const fromCall = ({ present: _, ...call }: PhoneCall): CallDbRow => ({
   ...call,
   members: JSON.stringify(call.members),
   startedAt: new Date(call.startedAt),
@@ -242,13 +245,11 @@ export const createPhoneStore = (db: Db, sealer: Sealer) => {
       return row ? toCall(row) : null;
     },
 
-    callOfRoom: async (room: string): Promise<PhoneCall | null> => {
-      const [row] = await db
-        .select()
-        .from(schema.phoneCalls)
-        .where(eq(schema.phoneCalls.room, room));
-      return row ? toCall(row) : null;
-    },
+    /** The calls of a room: the caller's, and the lines dialled into it to hand it on. */
+    callsOfRoom: async (room: string): Promise<PhoneCall[]> =>
+      (await db.select().from(schema.phoneCalls).where(eq(schema.phoneCalls.room, room))).map(
+        toCall,
+      ),
 
     saveCall: async (call: PhoneCall) => {
       const row = fromCall(call);

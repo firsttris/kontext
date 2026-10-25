@@ -8,7 +8,14 @@ import { enterPhone } from "./phone-store";
 
 export const PHONE_KEY = ["phone"];
 
-type PhoneData = { enabled: boolean; allowed: boolean; online: boolean; calls: PhoneCall[] };
+type PhoneData = {
+  enabled: boolean;
+  allowed: boolean;
+  online: boolean;
+  /** Who else hears the phone: whom one can hand a call to. */
+  colleagues?: string[];
+  calls: PhoneCall[];
+};
 type Ticket = { call: PhoneCall; token: string; url: string | null };
 
 const send = async <T>(method: string, path: string, body?: unknown): Promise<T> => {
@@ -34,6 +41,7 @@ export const usePhone = () => {
     enabled: data?.enabled ?? false,
     allowed: data?.allowed ?? false,
     online: data?.online ?? false,
+    colleagues: data?.colleagues ?? [],
     calls: data?.calls ?? [],
   };
 };
@@ -71,6 +79,35 @@ export const dialPhone = async (queryClient: QueryClient, number: string) =>
 
 export const hangupPhone = (callId: string) =>
   send<unknown>("POST", `/calls/${encodeURIComponent(callId)}/hangup`).catch(() => undefined);
+
+/** Hand the call on: to a colleague (it rings for them) or a number dialled into the room. */
+export const transferPhone = async (
+  queryClient: QueryClient,
+  callId: string,
+  target: { to: string } | { number: string },
+) => {
+  const { call } = await send<{ call: PhoneCall }>(
+    "POST",
+    `/calls/${encodeURIComponent(callId)}/transfer`,
+    target,
+  );
+  setPhoneCall(queryClient, call);
+};
+
+/** Take the call a colleague hands to me: into its room. */
+export const takePhoneTransfer = async (queryClient: QueryClient, callId: string) =>
+  enter(
+    queryClient,
+    await send<Ticket>("POST", `/calls/${encodeURIComponent(callId)}/transfer/take`),
+  );
+
+export const cancelPhoneTransfer = async (queryClient: QueryClient, callId: string) => {
+  const { call } = await send<{ call: PhoneCall }>(
+    "POST",
+    `/calls/${encodeURIComponent(callId)}/transfer/cancel`,
+  );
+  setPhoneCall(queryClient, call);
+};
 
 export const savePhoneNote = async (queryClient: QueryClient, callId: string, note: string) => {
   const { call } = await send<{ call: PhoneCall }>(

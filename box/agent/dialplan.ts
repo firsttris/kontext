@@ -140,6 +140,13 @@ const mailbox = (config: BoxConfig, paths: BoxPaths) => {
   ].join("\n");
 };
 
+/** Out through the Fritzbox, once the line into Kontext's room is up. */
+const dialOut = [
+  report("ringing", "out", [["Remote", `\${EXTEN}`]]),
+  `Dial(PJSIP/\${EXTEN}@fritzbox,60,U(kontext-callee-answered))`,
+  "Hangup()",
+];
+
 /** The dialplan. ${KONTEXT_ROOM} is set by the agent before it moves a call. */
 export const extensionsConf = (config: BoxConfig, paths: BoxPaths): string =>
   [
@@ -155,13 +162,11 @@ export const extensionsConf = (config: BoxConfig, paths: BoxPaths): string =>
       ]),
       ended("in"),
     ),
+    // Numbers, and the Fritzbox's own telephones by their internal number ("**610").
     context(
       "kontext-out",
-      extension("_X.", [
-        report("ringing", "out", [["Remote", `\${EXTEN}`]]),
-        `Dial(PJSIP/\${EXTEN}@fritzbox,60,U(kontext-callee-answered))`,
-        "Hangup()",
-      ]),
+      extension("_X.", dialOut),
+      extension("_**X.", dialOut),
       ended("out", [["DialStatus", `\${DIALSTATUS}`]]),
     ),
     context("kontext-callee-answered", extension("s", [report("answered", "out"), "Return()"])),
