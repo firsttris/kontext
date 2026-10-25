@@ -24,6 +24,10 @@ const memoryStore = (settings: PhoneSettings) => {
     callsOfRoom: async (room: string) => [...calls.values()].filter((c) => c.room === room),
     saveCall: async (call: PhoneCall) => void calls.set(call.id, call),
     statuses: async () => [...statuses.values()],
+    setRecording: async (id: string, recording: "running" | "stopped") => {
+      const call = calls.get(id);
+      if (call) calls.set(id, { ...call, recording });
+    },
     setStatus: async (status: PhoneStatus) => {
       if (status.mode === "available") statuses.delete(status.memberId);
       else statuses.set(status.memberId, status);
@@ -52,6 +56,7 @@ const SETTINGS: PhoneSettings = {
   blocked: { numbers: [], anonymous: false },
   door: { enabled: false, number: "**11", code: "#", members: [] },
   fax: { enabled: false, line: "", deliverTo: null },
+  recording: { enabled: false, notice: null },
 };
 
 const setup = (settings: Partial<PhoneSettings> = {}) => {
@@ -471,6 +476,29 @@ describe("handing a call on", () => {
     expect(toBox.some((m) => m.type === "hangup")).toBe(false);
     expect(await service.resume("id-1", "jonas")).toMatchObject({ held: false });
     expect(toBox.at(-1)).toEqual({ type: "resume", call: "1729850000.12", room });
+  });
+
+  it("records a call when allowed, with the box playing the notice first", async () => {
+    const off = await talking();
+    expect(await off.service.record("id-1", "jonas", true)).toBe("not-allowed");
+    const context = setup({ recording: { enabled: true, notice: null } });
+    await context.box.receive(event(1, "ringing"));
+    const taken = (await context.service.answer("id-1", "jonas")) as PhoneCall;
+    await context.box.receive(event(2, "answered"));
+    expect(await context.service.record("id-1", "max", true)).toBe("not-found");
+    expect(await context.service.record("id-1", "jonas", true)).toMatchObject({
+      recording: "running",
+    });
+    expect(context.toBox.at(-1)).toEqual({
+      type: "record",
+      call: "1729850000.12",
+      room: taken.room,
+    });
+    expect(await context.service.record("id-1", "jonas", true)).toBe("busy");
+    expect(await context.service.record("id-1", "jonas", false)).toMatchObject({
+      recording: "stopped",
+    });
+    expect(context.toBox.at(-1)).toEqual({ type: "record-stop", call: "1729850000.12" });
   });
 
   it("asks a colleague to join (Rückfrage, three-way): the call stays Jonas's", async () => {

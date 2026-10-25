@@ -28,7 +28,7 @@ export const createBoxFiles = ({
 }) => {
   /** Uploads a message or a fax; true once Kontext has it. */
   const upload = async (
-    kind: "voicemail" | "fax",
+    kind: "voicemail" | "fax" | "recording",
     call: string,
     bytes: Uint8Array,
   ): Promise<boolean> => {
@@ -66,6 +66,16 @@ export const createBoxFiles = ({
     },
     uploadVoicemail: (call: string, wav: Uint8Array) => upload("voicemail", call, wav),
     uploadFax: (call: string, pdf: Uint8Array) => upload("fax", call, pdf),
+    uploadRecording: (call: string, wav: Uint8Array) => upload("recording", call, wav),
+    /** A recorded call (path without ".wav") to Kontext, then removed. */
+    sendTalk: async (call: string, talk: string): Promise<boolean> => {
+      const path = `${talk}.wav`;
+      const wav = await readFile(path).catch(() => null);
+      if (!wav) return false;
+      const sent = await upload("recording", call, wav);
+      if (sent) await rm(path, { force: true });
+      return sent;
+    },
     /** The fax Asterisk received (path without ".tif"), as PDF to Kontext, then removed. */
     sendFax: async (
       call: string,

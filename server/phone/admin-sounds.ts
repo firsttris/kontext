@@ -28,6 +28,10 @@ export const withoutSound = (settings: PhoneSettings, id: string): PhoneSettings
     ...settings.menu,
     greeting: settings.menu.greeting === id ? null : settings.menu.greeting,
   },
+  recording: {
+    ...settings.recording,
+    notice: settings.recording.notice === id ? null : settings.recording.notice,
+  },
 });
 
 export const createPhoneSoundRoutes = ({

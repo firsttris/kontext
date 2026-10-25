@@ -74,6 +74,10 @@ const settingsSchema = z.object({
       anonymous: z.boolean(),
     })
     .default({ numbers: [], anonymous: false }),
+  /** Recording calls, and the notice the other side hears first. */
+  recording: z
+    .object({ enabled: z.boolean(), notice: z.string().nullable() })
+    .default({ enabled: false, notice: null }),
   /** A fax line (the user name of one of the box's lines); faxes arrive as PDF mails. */
   fax: z
     .object({
@@ -190,6 +194,8 @@ const toCall = (row: CallDbRow): PhoneCall => ({
   topic: row.topic,
   door: row.door,
   fax: (row.fax as PhoneCall["fax"]) ?? null,
+  recording: (row.recording as PhoneCall["recording"]) ?? null,
+  recordingSeconds: row.recordingSeconds,
 });
 
 const fromCall = ({ present: _, ...call }: PhoneCall): CallDbRow => ({
@@ -336,7 +342,13 @@ export const createPhoneStore = (db: Db, sealer: Sealer) => {
       const row = fromCall(call);
       // A message or a fax arrives on its own way (setVoicemail, setFax); a call event must not
       // undo it.
-      const { voicemailSeconds: _, fax: __, ...update } = row;
+      const {
+        voicemailSeconds: _,
+        fax: __,
+        recording: ___,
+        recordingSeconds: ____,
+        ...update
+      } = row;
       await db
         .insert(schema.phoneCalls)
         .values(row)
@@ -346,6 +358,18 @@ export const createPhoneStore = (db: Db, sealer: Sealer) => {
     /** The fax line's call: the box sent the fax (it arrives on its own way, like a message). */
     setFax: async (callId: string, fax: "receiving" | "received") => {
       await db.update(schema.phoneCalls).set({ fax }).where(eq(schema.phoneCalls.id, callId));
+    },
+
+    /** Recording started or stopped, or the recording arrived (with its length). */
+    setRecording: async (
+      callId: string,
+      recording: "running" | "stopped",
+      seconds: number | null = null,
+    ) => {
+      await db
+        .update(schema.phoneCalls)
+        .set({ recording, ...(seconds !== null ? { recordingSeconds: seconds } : {}) })
+        .where(eq(schema.phoneCalls.id, callId));
     },
 
     setVoicemail: async (callId: string, seconds: number) => {

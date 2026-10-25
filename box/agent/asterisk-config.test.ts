@@ -12,6 +12,7 @@ const config: BoxConfig = {
   mailbox: null,
   hours: null,
   menu: null,
+  recording: null,
   fax: null,
   blocked: { numbers: [], anonymous: false },
   forward: null,
@@ -94,7 +95,9 @@ describe("the mailbox", () => {
     expect(conf).toContain(`State: mailbox,Direction: in`);
     expect(conf).toContain(`Playback(/data/sounds/${greeting})`);
     expect(conf).toContain(`Record(/data/recordings/\${KONTEXT_CALL}.wav,4,120,k)`);
-    expect(conf).toContain(`Recording: \${RECORDED_FILE},Fax: \${KONTEXT_FAX})`);
+    expect(conf).toContain(
+      `Recording: \${RECORDED_FILE},Fax: \${KONTEXT_FAX},Talk: \${KONTEXT_TALK})`,
+    );
   });
 
   it("only beeps without a greeting", () => {
@@ -285,6 +288,18 @@ describe("desk phones", () => {
   });
 });
 
+describe("recording a call", () => {
+  it("plays the notice to the line outside, records both ways and goes back into the room", () => {
+    const notice = "d1b2c3d4e5f6a1b2c3d4e5f6";
+    const conf = extensionsConf({ ...config, recording: { notice } }, paths);
+    expect(conf).toContain(
+      `[kontext-record-call]\nexten => s,1,Playback(/data/sounds/${notice})\n same => n,Set(KONTEXT_TALK=/data/recordings/\${KONTEXT_CALL}-gespraech)\n same => n,MixMonitor(\${KONTEXT_TALK}.wav,a)\n same => n,Dial(PJSIP/\${KONTEXT_ROOM}@livekit,30)`,
+    );
+    expect(conf).toContain(`Talk: \${KONTEXT_TALK})`);
+    expect(extensionsConf(config, paths)).not.toContain("kontext-record-call");
+  });
+});
+
 describe("the fax line", () => {
   it("answers calls on the fax line as a fax machine", () => {
     const conf = extensionsConf({ ...config, fax: { line: "kontext629" } }, paths);
@@ -293,7 +308,7 @@ describe("the fax line", () => {
       `[kontext-fax]\nexten => s,1,UserEvent(KontextCall,Call: \${KONTEXT_CALL},State: fax,`,
     );
     expect(conf).toContain(`ReceiveFAX(\${KONTEXT_FAX}.tif)`);
-    expect(conf).toContain(`Fax: \${KONTEXT_FAX})`);
+    expect(conf).toContain(`Fax: \${KONTEXT_FAX},`);
   });
 });
 

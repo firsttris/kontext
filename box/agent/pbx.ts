@@ -17,6 +17,8 @@ export type Pbx = {
   hangup: (call: string) => Promise<void>;
   hold: (call: string) => Promise<void>;
   doorOpen: (call: string, code: string) => Promise<void>;
+  record: (call: string, room: string) => Promise<void>;
+  recordStop: (call: string) => Promise<void>;
   resume: (call: string, room: string) => Promise<void>;
 };
 
@@ -59,6 +61,7 @@ export const createAsterisk = async ({
   const ended = async (event: Omit<CallEvent, "type" | "seq">, frame: Frame) => {
     if (frame.Recording) await files.sendRecording(event.call, frame.Recording).catch(() => false);
     if (frame.Fax) await files.sendFax(event.call, frame.Fax, tiffToPdf).catch(() => false);
+    if (frame.Talk) await files.sendTalk(event.call, frame.Talk).catch(() => false);
     events.onCall(event);
   };
   const onFrame = (frame: Frame) => {
@@ -136,6 +139,13 @@ export const createAsterisk = async ({
     },
     answer: (call, room) => moveTo(call, "kontext-answer", "answer", room),
     hold: (call) => moveTo(call, "kontext-hold", "s"),
+    record: (call, room) => moveTo(call, "kontext-record-call", "s", room),
+    recordStop: async (call) => {
+      await ami.action([
+        ["Action", "StopMixMonitor"],
+        ["Channel", lineOf(call)],
+      ]);
+    },
     doorOpen: async (call, code) => {
       await ami.action([
         ["Action", "Setvar"],

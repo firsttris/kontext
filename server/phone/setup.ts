@@ -17,6 +17,7 @@ import { createFaxes } from "./fax";
 import { createPhoneFiles } from "./files";
 import { ensureSipRouting } from "./livekit-sip";
 import { type phoneNotice, roomOfPhoneRoom } from "./phone";
+import { createRecordings } from "./recordings";
 import { createPhoneRoutes } from "./routes";
 import { type CallbackTasks, createPhoneService } from "./service";
 import { createPhoneStore } from "./store";
@@ -82,6 +83,7 @@ export const createPhone = (setup: PhoneSetup) => {
         store,
         files,
         voicemail,
+        recordings: createRecordings({ store, files, refresh: service.refresh }),
         faxes: createFaxes({
           store,
           files,

@@ -38,6 +38,7 @@ export type Admin = {
   };
   door: { enabled: boolean; number: string; code: string; members: string[] };
   fax: { enabled: boolean; line: string; deliverTo: string | null };
+  recording: { enabled: boolean; notice: string | null };
   blocked: { numbers: { number: string; by: string; at: string }[]; anonymous: boolean };
   hours: {
     enabled: boolean;

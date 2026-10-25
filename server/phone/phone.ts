@@ -72,6 +72,9 @@ export type PhoneCall = {
   door: boolean;
   /** A call on the fax line: being received, or the fax arrived (as PDF). */
   fax: "receiving" | "received" | null;
+  /** Being recorded, or recorded (the recording arrives with recordingSeconds). */
+  recording: "running" | "stopped" | null;
+  recordingSeconds: number | null;
 };
 
 /** Phone rooms in LiveKit: "kontext-phone-<uuid>", which LiveKit SIP's dispatch rule matches. */
@@ -171,6 +174,8 @@ export const incomingCall = (
   topic: null,
   door: false,
   fax: null,
+  recording: null,
+  recordingSeconds: null,
 });
 
 /** A call outside the opening hours: filed at once, it never rings. */
@@ -251,6 +256,8 @@ export const outgoingCall = ({
   topic: null,
   door: false,
   fax: null,
+  recording: null,
+  recordingSeconds: null,
 });
 
 /** The call after one of the box's events; the same call when it changes nothing (a repeat). */

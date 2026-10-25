@@ -1582,5 +1582,13 @@
   "external_phones": "Handy und Mailprogramm sehen die abgeholten Mails mit; senden als diese Adresse geht nur in Kontext.",
   "external_no_later": "Mails über ein weiteres Postfach gehen sofort raus; „Später senden“ geht damit noch nicht.",
   "external_no_encrypt": "Verschlüsseln und Unterschreiben gehen über ein weiteres Postfach noch nicht.",
-  "external_refused": "Gesendet – aber der Anbieter hat diese Empfänger abgelehnt: {addresses}"
+  "external_refused": "Gesendet – aber der Anbieter hat diese Empfänger abgelehnt: {addresses}",
+  "phone_record": "Aufnehmen",
+  "phone_record_stop": "Aufnahme beenden",
+  "phone_recording": "Aufnahme {length}",
+  "phone_recording_settings": "Gespräche aufnehmen",
+  "phone_recording_hint": "Wer telefoniert, kann das Gespräch im Anruf-Fenster aufnehmen. Die Aufnahme steht danach beim Anruf. Ein Gespräch aufzunehmen ist nur mit Einverständnis der anderen Seite erlaubt (§ 201 StGB): Die Box spielt vor der Aufnahme die gewählte Ansage ab, zum Beispiel „Dieses Gespräch wird aufgezeichnet“.",
+  "phone_recording_enabled": "Aufnehmen erlauben",
+  "phone_recording_notice": "Ansage vor der Aufnahme",
+  "phone_recording_no_notice": "Keine Ansage"
 }

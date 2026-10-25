@@ -8,8 +8,13 @@ import { join } from "node:path";
 
 const SAFE_ID = /^[a-zA-Z0-9-]{1,64}$/;
 
-type Kind = "sounds" | "voicemail" | "fax";
-const EXTENSION: Record<Kind, string> = { sounds: "wav", voicemail: "wav", fax: "pdf" };
+type Kind = "sounds" | "voicemail" | "fax" | "recordings";
+const EXTENSION: Record<Kind, string> = {
+  sounds: "wav",
+  voicemail: "wav",
+  fax: "pdf",
+  recordings: "wav",
+};
 
 export const createPhoneFiles = (dir: string) => {
   const path = (kind: Kind, id: string) => {
@@ -31,6 +36,8 @@ export const createPhoneFiles = (dir: string) => {
     readVoicemail: (callId: string) => read("voicemail", callId),
     saveFax: (callId: string, bytes: Uint8Array) => save("fax", callId, bytes),
     readFax: (callId: string) => read("fax", callId),
+    saveRecording: (callId: string, bytes: Uint8Array) => save("recordings", callId, bytes),
+    readRecording: (callId: string) => read("recordings", callId),
   };
 };
 

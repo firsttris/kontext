@@ -118,6 +118,7 @@ const faxInput = z.object({
   line: z.string().max(100),
   deliverTo: z.string().min(1).max(64).nullable(),
 });
+const recordingInput = z.object({ enabled: z.boolean(), notice: z.string().max(64).nullable() });
 const boxSchema = z.object({ name: z.string().trim().min(1).max(60) });
 
 /** Short ids for the box's endpoint names ("fritzbox-<id>"). */
@@ -181,6 +182,7 @@ export const createPhoneAdminRoutes = ({
       menu: settings.menu,
       blocked: settings.blocked,
       door: settings.door,
+      recording: settings.recording,
       fax: { ...settings.fax, deliverTo: settings.fax.deliverTo?.accountId ?? null },
       sip,
     });
@@ -300,6 +302,19 @@ export const createPhoneAdminRoutes = ({
       return c.json({ error: "Unbekannte Person" }, 400);
     }
     await store.saveSettings({ ...settings, menu: parsed.data });
+    await service.reconfigure();
+    return c.body(null, 204);
+  });
+
+  app.put("/recording", async (c) => {
+    const parsed = recordingInput.safeParse(await c.req.json().catch(() => ({})));
+    if (!parsed.success) return c.json({ error: "Ungültig" }, 400);
+    const settings = await store.settings();
+    const { notice } = parsed.data;
+    if (notice && !settings.sounds.some((sound) => sound.id === notice)) {
+      return c.json({ error: "Unbekannte Ansage" }, 400);
+    }
+    await store.saveSettings({ ...settings, recording: parsed.data });
     await service.reconfigure();
     return c.body(null, 204);
   });

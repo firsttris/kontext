@@ -104,6 +104,17 @@ const box = await runBox({
           at: now(),
         });
       },
+      record: async (call, room) => {
+        commands.push({ type: "record", call, room });
+      },
+      recordStop: async (call) => {
+        commands.push({ type: "record-stop", call });
+        // What MixMonitor would have written: three seconds of silence.
+        await createBoxFiles({ credentials, soundDir: "/tmp" }).uploadRecording(
+          call,
+          encodeWav(new Int16Array(8000 * 3)),
+        );
+      },
       hold: async (call) => {
         commands.push({ type: "hold", call });
       },

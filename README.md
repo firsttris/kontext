@@ -139,6 +139,7 @@ fine on a VPS with 2 vCPUs and 4 GB RAM.
   - **Statistics**: calls of the last 30 days, how fast they were answered, when calls were missed (weekday × hour) and who took them.
   - **Door intercom** of the Fritzbox: it rings in Kontext, open the door or talk with one click.
   - **Fax as PDF mail**: a number of the line takes faxes; each arrives as a PDF in the mailbox you choose.
+  - **Record calls** (if the company allows it): the box first plays a notice to the caller, the recording stays at the call.
 - **Search** across all your channels; edit or delete your own messages; mute, leave or delete channels.
 - **Retention** set by the company admin (30 days to 5 years, or for ever): older messages, photos and files are deleted by themselves.
 - **On the phone**: its own tab, conversations as bubbles.

@@ -59,6 +59,7 @@ const box = {
         menu: { options: { digit: string; mailbox: boolean }[] } | null;
         blocked: { numbers: string[]; anonymous: boolean };
         fax: { line: string } | null;
+        recording: { notice: string | null } | null;
       } | null;
       commands: { type: string; number?: string; call?: string }[];
     },
@@ -378,6 +379,44 @@ test.describe("Telefonie über die Telefonbox", () => {
       .poll(async () => (await box.state()).commands)
       .toContainEqual({ type: "hangup", call });
     await anna.close();
+  });
+
+  test("ein Gespräch aufnehmen: erst die Ansage, die Aufnahme steht beim Anruf", async ({
+    page,
+  }) => {
+    await login(page);
+    await page.goto("/settings?section=phone");
+    const settings = page.getByRole("region", { name: "Gespräche aufnehmen" });
+    await settings.getByLabel("Aufnehmen erlauben").check();
+    await settings
+      .getByRole("combobox", { name: /^Ansage vor der Aufnahme/ })
+      .selectOption({ label: "Mailbox Büro" });
+    await settings.getByRole("button", { name: "Speichern" }).click();
+    await expect
+      .poll(async () => (await box.state()).config?.recording?.notice)
+      .toMatch(/^[0-9a-f]{24}$/);
+
+    await page.goto("/");
+    const { call } = await box.ring("07223 81234");
+    await page
+      .getByRole("dialog", { name: "Anruf von Petra Keller" })
+      .getByRole("button", { name: "Annehmen" })
+      .click();
+    await expect(panel(page).getByRole("status")).toHaveText(/^\d+:\d\d$/, { timeout: 15_000 });
+    await panel(page).getByRole("button", { name: "Aufnehmen" }).click();
+    await expect(panel(page).getByRole("button", { name: "Aufnahme beenden" })).toBeVisible();
+    await expect
+      .poll(async () => (await box.state()).commands.at(-1))
+      .toMatchObject({ type: "record", call });
+    await panel(page).getByRole("button", { name: "Aufnahme beenden" }).click();
+    await expect
+      .poll(async () => (await box.state()).commands.at(-1))
+      .toEqual({ type: "record-stop", call });
+    await panel(page).getByRole("button", { name: "Auflegen" }).click();
+
+    await page.getByRole("link", { name: "Telefon", exact: true }).click();
+    const first = page.getByRole("list", { name: "Letzte Anrufe" }).getByRole("listitem").first();
+    await expect(first).toContainText("Aufnahme 0:03");
   });
 
   test("Bitte nicht stören: bei Jonas klingelt nichts, bei Anna schon", async ({

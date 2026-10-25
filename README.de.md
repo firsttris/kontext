@@ -139,6 +139,7 @@ reicht ein VPS mit 2 vCPU und 4 GB RAM.
   - **Auswertung**: Anrufe der letzten 30 Tage, wie schnell angenommen wurde, wann Anrufe verpasst wurden (Wochentag × Uhrzeit) und wer angenommen hat.
   - **Türsprechstelle** der Fritzbox: Es klingelt in Kontext, Tür öffnen oder sprechen mit einem Klick.
   - **Fax als PDF-Mail**: Eine Nummer des Anschlusses nimmt Faxe an; jedes kommt als PDF ins gewählte Postfach.
+  - **Gespräche aufnehmen** (wenn die Firma es erlaubt): Die Box spielt vorher eine Ansage, die Aufnahme steht beim Anruf.
 - **Suche** über alle deine Kanäle; eigene Nachrichten bearbeiten oder löschen; Kanäle stummschalten, verlassen oder löschen.
 - **Aufbewahrung**, die die Firmenverwaltung festlegt (30 Tage bis 5 Jahre oder unbegrenzt): Ältere Nachrichten, Fotos und Dateien löscht Kontext von selbst.
 - **Am Handy**: ein eigener Tab, Unterhaltungen als Sprechblasen.

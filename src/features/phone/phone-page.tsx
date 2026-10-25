@@ -163,6 +163,21 @@ const Row = ({
             />
           </div>
         ) : null}
+        {call.recordingSeconds ? (
+          <div className="flex flex-wrap items-center gap-2 text-[13px]">
+            <span className="font-medium">
+              {m.phone_recording({ length: soundLength(call.recordingSeconds) })}
+            </span>
+            {/* biome-ignore lint/a11y/useMediaCaption: a recorded conversation, no captions exist */}
+            <audio
+              controls
+              preload="none"
+              src={`/api/phone/calls/${encodeURIComponent(call.id)}/recording`}
+              aria-label={m.phone_recording({ length: soundLength(call.recordingSeconds) })}
+              className="h-8 max-w-full"
+            />
+          </div>
+        ) : null}
         {call.fax === "received" ? (
           <a
             href={`/api/phone/calls/${encodeURIComponent(call.id)}/fax`}

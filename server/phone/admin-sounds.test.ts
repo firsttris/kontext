@@ -13,12 +13,14 @@ describe("withoutSound", () => {
       mailbox: { enabled: true, ringSeconds: 20, greeting: "a", deliverTo: null },
       hours: { enabled: true, open: [], closedDays: [], greeting: "b" },
       menu: { enabled: true, greeting: "a", options: [] },
+      recording: { enabled: true, notice: "a" },
     } as unknown as PhoneSettings;
     const next = withoutSound(settings, "a");
     expect(next.sounds.map((sound) => sound.id)).toEqual(["b"]);
     expect(next.mailbox.greeting).toBeNull();
     expect(next.hours.greeting).toBe("b");
     expect(next.menu.greeting).toBeNull();
+    expect(next.recording.notice).toBeNull();
     expect(withoutSound(settings, "b").mailbox.greeting).toBe("a");
     expect(withoutSound(settings, "b").hours.greeting).toBeNull();
   });

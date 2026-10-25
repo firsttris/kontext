@@ -15,6 +15,8 @@ type PhoneData = {
   /** Who else hears the phone: whom one can hand a call to. */
   colleagues?: string[];
   ringPlan?: RingPlan;
+  /** Whether the Firmenverwaltung allows recording calls. */
+  recordingEnabled?: boolean;
   /** Who is on the phone now, and who does not take calls. */
   busy?: string[];
   unavailable?: string[];
@@ -48,6 +50,7 @@ export const usePhone = () => {
     online: data?.online ?? false,
     colleagues: data?.colleagues ?? [],
     ringPlan: data?.ringPlan ?? null,
+    recordingEnabled: data?.recordingEnabled ?? false,
     busy: data?.busy ?? [],
     unavailable: data?.unavailable ?? [],
     status: data?.status ?? { mode: "available" as const, until: null },
@@ -151,6 +154,16 @@ export const holdPhone = async (queryClient: QueryClient, callId: string, held: 
   const { call } = await send<{ call: PhoneCall }>(
     "POST",
     `/calls/${encodeURIComponent(callId)}/${held ? "hold" : "resume"}`,
+  );
+  setPhoneCall(queryClient, call);
+};
+
+/** Start or stop recording the call (the box plays the notice to the caller first). */
+export const recordPhone = async (queryClient: QueryClient, callId: string, on: boolean) => {
+  const { call } = await send<{ call: PhoneCall }>(
+    "POST",
+    `/calls/${encodeURIComponent(callId)}/record`,
+    { on },
   );
   setPhoneCall(queryClient, call);
 };

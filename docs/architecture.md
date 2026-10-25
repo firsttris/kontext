@@ -742,6 +742,14 @@ flowchart LR
   res_fax_spandsp), meldet „fax“ und beim Ende den Pfad; der Agent macht mit `tiff2pdf` ein PDF
   und lädt es hoch (`PUT /api/phone/box/files/fax/<anruf>`). Kontext legt es beim Anruf ab
   (`phone/fax/`) und legt eine Mail mit dem PDF ins gewählte Postfach, wie bei der Mailbox.
+- **Gespräche aufnehmen:** Erlaubt die Firmenverwaltung es, hat das Anruf-Fenster „Aufnehmen“.
+  Kontext schickt `record`; die Box holt die Leitung draußen aus dem Raum
+  (`kontext-record-call`), spielt die gewählte Ansage („Dieses Gespräch wird aufgezeichnet“, das
+  Einverständnis nach § 201 StGB), startet `MixMonitor` (beide Richtungen, `a` hängt bei erneutem
+  Start an) und wählt sie zurück in den Raum. „Aufnahme beenden“ schickt `record-stop`
+  (`StopMixMonitor`). Am Ende des Anrufs meldet `kontext-ended` die Datei als `Talk`, der Agent
+  lädt sie hoch (`PUT /api/phone/box/files/recording/<anruf>`), Kontext legt sie beim Anruf ab
+  (`phone/recordings/`); in der Liste steht „Aufnahme m:ss“ mit Player. Gemailt wird sie nicht.
 - **Präsenz:** Wer in einem Telefon-Raum ist oder am Tischtelefon spricht, „telefoniert“ – das
   geht als `phone-people` an alle (der Chat zeigt es an der Person). Bitte nicht stören und
   Abwesend (bis zu einer Zeit) liegen in `phone_status`; wer nicht erreichbar ist, fällt aus dem

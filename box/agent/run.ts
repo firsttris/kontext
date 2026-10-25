@@ -67,6 +67,8 @@ export const runBox = async ({
       if (command.type === "hangup") await pbx.hangup(command.call);
       if (command.type === "hold") await pbx.hold(command.call);
       if (command.type === "door-open") await pbx.doorOpen(command.call, command.code);
+      if (command.type === "record") await pbx.record(command.call, command.room);
+      if (command.type === "record-stop") await pbx.recordStop(command.call);
       if (command.type === "resume") await pbx.resume(command.call, command.room);
     } catch (error) {
       state.error = (error as Error).message;

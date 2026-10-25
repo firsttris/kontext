@@ -99,6 +99,9 @@ export const desiredConfig = (
   const greeting = knownSound(settings, mailbox.greeting);
   const closedGreeting = knownSound(settings, hours.greeting);
   const menuGreeting = settings.menu.enabled ? knownSound(settings, settings.menu.greeting) : null;
+  const notice = settings.recording.enabled
+    ? knownSound(settings, settings.recording.notice)
+    : null;
   return {
     line: settings.line,
     extraLines: settings.line
@@ -122,6 +125,7 @@ export const desiredConfig = (
         ...(mailbox.enabled && greeting ? [greeting] : []),
         ...(hours.enabled && closedGreeting ? [closedGreeting] : []),
         ...(menuGreeting ? [menuGreeting] : []),
+        ...(notice ? [notice] : []),
       ]),
     ],
     mailbox: mailbox.enabled ? { greeting, maxSeconds: MAILBOX_SECONDS } : null,
@@ -134,6 +138,7 @@ export const desiredConfig = (
         }
       : null,
     fax: settings.fax.enabled && settings.fax.line ? { line: settings.fax.line } : null,
+    recording: settings.recording.enabled ? { notice } : null,
     blocked: {
       numbers: [...new Set(settings.blocked.numbers.flatMap((entry) => numberForms(entry.number)))],
       anonymous: settings.blocked.anonymous,
@@ -509,6 +514,25 @@ export const createPhoneService = (deps: PhoneDeps) => {
           void sendConfig();
         }, left).unref?.();
       }
+    },
+
+    /** Start or stop recording a call one is in (if the Firmenverwaltung allows it). */
+    record: async (callId: string, me: string, on: boolean): Promise<PhoneCall | Problem> => {
+      const call = await store.call(callId);
+      if (!call || !inCall(call, me) || !call.room) return "not-found";
+      if (!(await store.settings()).recording.enabled) return "not-allowed";
+      if (call.state !== "talking" || call.held || (call.recording === "running") === on) {
+        return "busy";
+      }
+      const message: ToBox = on
+        ? { type: "record", call: call.boxCallId, room: call.room }
+        : { type: "record-stop", call: call.boxCallId };
+      if (!send(call, message)) return "offline";
+      const state = on ? "running" : "stopped";
+      await store.setRecording(call.id, state);
+      const next = { ...call, recording: state } as PhoneCall;
+      publish(next);
+      return withPresence(next);
     },
 
     /** Open the door for whoever rang: the box picks up, sends the code and hangs up. */

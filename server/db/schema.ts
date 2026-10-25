@@ -636,6 +636,8 @@ export const phoneCalls = sqliteTable(
     topic: text("topic"),
     door: integer("door", { mode: "boolean" }).notNull().default(false),
     fax: text("fax"),
+    recording: text("recording"),
+    recordingSeconds: integer("recording_seconds"),
   },
   (table) => [
     index("phone_calls_started").on(table.startedAt),

@@ -37,7 +37,7 @@ export type PhoneRouteDeps = {
   upgradeWebSocket: UpgradeWebSocket;
   /** The boxes' file routes (sounds, messages), with their own check of the box's token. */
   boxFiles: Hono<{ Variables: { boxId: string } }>;
-  files: Pick<PhoneFiles, "readVoicemail" | "readFax">;
+  files: Pick<PhoneFiles, "readVoicemail" | "readFax" | "readRecording">;
 };
 
 const STATUS: Record<Problem, 400 | 403 | 404 | 409 | 503> = {
@@ -124,6 +124,7 @@ export const createPhoneRoutes = (deps: PhoneRouteDeps) => {
       allowed: await service.allowed(me),
       colleagues: everyone(await store.settings()).filter((id) => id !== me),
       ringPlan: ringPlanOf(await store.settings()),
+      recordingEnabled: (await store.settings()).recording.enabled,
       ...(await service.people()),
       status: await service.statusOf(me),
       online: service.online().length > 0,
@@ -224,6 +225,23 @@ export const createPhoneRoutes = (deps: PhoneRouteDeps) => {
     const result = await service.cancelTransfer(c.req.param("id"), c.get("viewer").me);
     if (problem(result)) return c.json({ error: MESSAGES[result] }, STATUS[result]);
     return c.json({ call: result });
+  });
+
+  app.post("/calls/:id/record", async (c) => {
+    const on = Boolean(((await c.req.json().catch(() => ({}))) as { on?: boolean }).on);
+    const result = await service.record(c.req.param("id"), c.get("viewer").me, on);
+    if (problem(result)) return c.json({ error: MESSAGES[result] }, STATUS[result]);
+    return c.json({ call: result });
+  });
+
+  app.get("/calls/:id/recording", async (c) => {
+    const call = await store.call(c.req.param("id"));
+    if (!call || !canSeeCall(call, c.get("viewer").me)) {
+      return c.json({ error: "Nicht gefunden" }, 404);
+    }
+    const bytes = await deps.files.readRecording(call.id);
+    if (!bytes) return c.json({ error: "Nicht gefunden" }, 404);
+    return wavResponse(bytes, { "cache-control": "private, max-age=86400" });
   });
 
   app.get("/calls/:id/fax", async (c) => {

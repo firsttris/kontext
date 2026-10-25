@@ -21,6 +21,7 @@ import {
   Pause,
   PhoneOff,
   Play,
+  Square,
   Volume2,
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
@@ -33,7 +34,7 @@ import { cn } from "@/lib/cn";
 import { handedOver, linesOf, type PhoneCall, readableNumber } from "@/lib/phone";
 import { m } from "@/paraglide/messages";
 import { type ActivePhone, leavePhone } from "./phone-store";
-import { hangupPhone, holdPhone, openDoor, usePhone } from "./queries";
+import { hangupPhone, holdPhone, openDoor, recordPhone, usePhone } from "./queries";
 import { HandoverStatus, TransferForm } from "./transfer";
 import { useCallerName } from "./use-caller";
 
@@ -62,13 +63,13 @@ const Controls = ({ call }: { call: PhoneCall }) => {
   const [keypad, setKeypad] = useState(false);
   const [transfer, setTransfer] = useState(false);
   const { canPlayAudio, startAudio } = useAudioPlayback();
-  const { calls } = usePhone();
+  const { calls, recordingEnabled } = usePhone();
   const queryClient = useQueryClient();
   const toast = useToast();
-  const hold = () =>
-    void holdPhone(queryClient, call.id, !call.held).catch((error: Error) =>
-      toast.show(m.phone_failed({ message: error.message }), "error"),
-    );
+  const failed = (error: Error) => toast.show(m.phone_failed({ message: error.message }), "error");
+  const hold = () => void holdPhone(queryClient, call.id, !call.held).catch(failed);
+  const recording = call.recording === "running";
+  const record = () => void recordPhone(queryClient, call.id, !recording).catch(failed);
   // Hanging up ends the call and the lines dialled into it.
   const me = useMe();
   // With a colleague still in the call, one only leaves; otherwise hanging up ends the call and
@@ -99,14 +100,25 @@ const Controls = ({ call }: { call: PhoneCall }) => {
       {call.door ? (
         <button
           type="button"
-          onClick={() =>
-            void openDoor(queryClient, call.id).catch((error: Error) =>
-              toast.show(m.phone_failed({ message: error.message }), "error"),
-            )
-          }
+          onClick={() => void openDoor(queryClient, call.id).catch(failed)}
           className="flex items-center gap-2 rounded-lg bg-subtle px-3 py-1.5 text-[13px] hover:bg-hover"
         >
           <DoorOpen size={14} /> {m.phone_door_open()}
+        </button>
+      ) : null}
+      {recordingEnabled && call.state === "talking" ? (
+        <button
+          type="button"
+          aria-pressed={recording}
+          onClick={record}
+          disabled={call.held}
+          className={cn(
+            "flex items-center gap-2 rounded-lg px-3 py-1.5 text-[13px] disabled:opacity-40",
+            recording ? "bg-danger text-white" : "bg-subtle hover:bg-hover",
+          )}
+        >
+          {recording ? <Square size={12} /> : <span className="size-2.5 rounded-full bg-danger" />}
+          {recording ? m.phone_record_stop() : m.phone_record()}
         </button>
       ) : null}
       {transfer ? <TransferForm call={call} onDone={() => setTransfer(false)} /> : null}

@@ -145,6 +145,26 @@ const ringingExtensions = (config: BoxConfig, caller: [string, string][]) => {
   ];
 };
 
+/**
+ * Recording a call: the line outside hears the notice, the box starts recording it (both ways)
+ * and puts it back into the room; the file is reported at the end (kontext-ended).
+ */
+const recordingContext = (config: BoxConfig, paths: BoxPaths) =>
+  config.recording
+    ? [
+        context(
+          "kontext-record-call",
+          extension("s", [
+            ...(config.recording.notice ? [play(paths, config.recording.notice)] : []),
+            `Set(KONTEXT_TALK=${paths.recordings}/\${KONTEXT_CALL}-gespraech)`,
+            `MixMonitor(\${KONTEXT_TALK}.wav,a)`,
+            `Dial(PJSIP/\${KONTEXT_ROOM}@livekit,30)`,
+            "Hangup()",
+          ]),
+        ),
+      ]
+    : [];
+
 /** The fax line: answered as a fax machine; the agent sends the pages to Kontext as PDF. */
 const faxContext = (config: BoxConfig, paths: BoxPaths) =>
   config.fax
@@ -342,6 +362,7 @@ export const extensionsConf = (config: BoxConfig, paths: BoxPaths): string =>
         "Hangup(16)",
       ]),
     ),
+    ...recordingContext(config, paths),
     // Held: the line outside hears music, out of Kontext's room …
     context("kontext-hold", extension("s", ["MusicOnHold()"])),
     // … and back into it (the agent sets ${KONTEXT_ROOM} again).
@@ -379,6 +400,7 @@ export const extensionsConf = (config: BoxConfig, paths: BoxPaths): string =>
           ["Cause", `\${HANGUPCAUSE}`],
           ["Recording", `\${RECORDED_FILE}`],
           ["Fax", `\${KONTEXT_FAX}`],
+          ["Talk", `\${KONTEXT_TALK}`],
         ]),
         "Return()",
       ]),

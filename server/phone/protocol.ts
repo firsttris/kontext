@@ -100,6 +100,8 @@ export const boxConfigSchema = z.object({
   mailbox: mailboxSchema.nullable().default(null),
   hours: hoursSchema.nullable().default(null),
   menu: menuSchema.nullable().default(null),
+  /** Recording calls: the notice the other side hears first ("… wird aufgezeichnet"). */
+  recording: z.object({ notice: soundIdSchema.nullable() }).nullable().default(null),
   /** A line (by its user name at the Fritzbox) for faxes: the box receives them, Kontext mails a PDF. */
   fax: z
     .object({ line: z.string().max(100) })
@@ -149,6 +151,13 @@ export const toBoxSchema = z.discriminatedUnion("type", [
     call: callId,
     code: z.string().regex(/^[0-9*#]{1,8}$/),
   }),
+  /**
+   * Record the call: the line outside hears the notice (out of the room for a moment), then the
+   * box records it (MixMonitor) and puts it back into the room …
+   */
+  z.object({ type: z.literal("record"), call: callId, room: z.string().uuid() }),
+  /** … until this, or the end of the call. */
+  z.object({ type: z.literal("record-stop"), call: callId }),
   /** Music for the line outside, out of Kontext's room … */
   z.object({ type: z.literal("hold"), call: callId }),
   /** … and back into this room. */

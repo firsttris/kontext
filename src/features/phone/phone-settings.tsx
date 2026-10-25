@@ -19,6 +19,7 @@ import { HoursForm } from "./settings/hours";
 import { LinesForm } from "./settings/lines";
 import { MailboxForm } from "./settings/mailbox";
 import { MenuForm } from "./settings/menu";
+import { RecordingForm } from "./settings/recording";
 import { RingForm } from "./settings/ring";
 import { SoundsCard } from "./settings/sounds";
 
@@ -172,6 +173,7 @@ export const PhoneSettingsSection = () => {
           <BlockedForm key={`blocked-${JSON.stringify(data.blocked)}`} blocked={data.blocked} />
           <DoorForm door={data.door} />
           <FaxForm admin={data} />
+          <RecordingForm recording={data.recording} sounds={data.sounds} />
         </>
       ) : null}
     </>
