@@ -9,6 +9,7 @@ import { queryEvents } from "@/jmap/calendar";
 import { CAPABILITIES, type JmapClient, type Session } from "@/jmap/client";
 import { listAddressBooks, listContacts } from "@/jmap/contacts";
 import { getEmail, listMailboxes, SUMMARY_PROPERTIES } from "@/jmap/mail";
+import { listPrincipals, principalName } from "@/jmap/principals";
 import { getThreads } from "@/jmap/threads";
 import type { EmailSummary } from "@/jmap/types";
 import { dateKey } from "@/lib/jscalendar";
@@ -25,11 +26,12 @@ import {
   newestFirst,
   taskSummary,
 } from "./format";
+import type { TaskApi } from "./writer";
 
 export type ReaderDeps = {
   client: JmapClient;
-  /** Open tasks of these boards, those given to `me`, and the ones finished lately. */
-  tasks: (accountIds: string[], me: string | undefined) => Promise<Task[]>;
+  /** The task routes as the agent's owner (server/tasks/routes.ts), so the rights are the same. */
+  taskApi: TaskApi;
   now?: () => Date;
 };
 
@@ -69,7 +71,7 @@ const perAccount = async <T>(accounts: AccountInfo[], read: (a: AccountInfo) => 
     result.status === "fulfilled" ? result.value : [],
   );
 
-export const createReader = ({ client, tasks, now = () => new Date() }: ReaderDeps) => {
+export const createReader = ({ client, taskApi, now = () => new Date() }: ReaderDeps) => {
   const accounts = async () => accountsOf(await client.getSession());
   const namesOf = (list: AccountInfo[]): AccountNames =>
     Object.fromEntries(list.map((account) => [account.id, account.name]));
@@ -195,17 +197,43 @@ export const createReader = ({ client, tasks, now = () => new Date() }: ReaderDe
     return found.sort((a, b) => a.summary.start.localeCompare(b.summary.start));
   };
 
+  /** Open tasks of the own boards and those given to the owner, and the ones done lately. */
   const taskList = async () => {
-    const list = await accounts();
-    const me = list.find((account) => account.personal)?.id;
-    const all = await tasks(
-      list.map((account) => account.id),
-      me,
-    );
-    return { all, summarize: (task: Task) => taskSummary(task, namesOf(list)) };
+    const [list, team, { status, body }] = await Promise.all([
+      accounts(),
+      colleagues().catch(() => []),
+      taskApi("GET", "/"),
+    ]);
+    if (status !== 200) throw new Error(String(body.error ?? "Aufgaben nicht lesbar"));
+    // Whom a task is given to is a person's own account: named by the company's people.
+    const names = { ...Object.fromEntries(team.map((p) => [p.id, p.name])), ...namesOf(list) };
+    return { all: body.tasks as Task[], summarize: (task: Task) => taskSummary(task, names) };
   };
 
-  return { accounts, contacts, searchMail, mailsWith, readMail, readThread, events, taskList };
+  /** The company's people: whom a task can be given to (their id is their account id). */
+  const colleagues = async () => {
+    const own = (await accounts()).find((account) => account.personal);
+    if (!own) return [];
+    return (await listPrincipals(client, own.id))
+      .filter((principal) => principal.type === "individual")
+      .map((principal) => ({
+        id: principal.id,
+        name: principalName(principal),
+        email: principal.email ?? null,
+      }));
+  };
+
+  return {
+    accounts,
+    contacts,
+    searchMail,
+    mailsWith,
+    readMail,
+    readThread,
+    events,
+    taskList,
+    colleagues,
+  };
 };
 
 export type Reader = ReturnType<typeof createReader>;

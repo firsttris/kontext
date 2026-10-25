@@ -1,7 +1,7 @@
 {
   "version": "6",
   "dialect": "sqlite",
-  "id": "45ab3f10-c5eb-4676-b077-271f845a5918",
+  "id": "c53b4ccb-a60a-4236-97ce-204e30452baf",
   "prevId": "917a16b0-c961-4f9a-a79b-c74d900d49a7",
   "tables": {
     "account": {
@@ -1234,8 +1234,23 @@
           "name": "key_hash",
           "type": "text",
           "primaryKey": false,
-          "notNull": true,
+          "notNull": false,
           "autoincrement": false
+        },
+        "client_id": {
+          "name": "client_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "scopes": {
+          "name": "scopes",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "'read'"
         },
         "created_at": {
           "name": "created_at",
@@ -1266,6 +1281,14 @@
             "user_id"
           ],
           "isUnique": false
+        },
+        "mcp_key_client": {
+          "name": "mcp_key_client",
+          "columns": [
+            "user_id",
+            "client_id"
+          ],
+          "isUnique": false
         }
       },
       "foreignKeys": {
@@ -1288,6 +1311,74 @@
           "tableTo": "session",
           "columnsFrom": [
             "session_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    },
+    "mcp_log": {
+      "name": "mcp_log",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "connection_id": {
+          "name": "connection_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "tool": {
+          "name": "tool",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "summary": {
+          "name": "summary",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        }
+      },
+      "indexes": {
+        "mcp_log_connection": {
+          "name": "mcp_log_connection",
+          "columns": [
+            "connection_id",
+            "created_at"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {
+        "mcp_log_connection_id_mcp_key_id_fk": {
+          "name": "mcp_log_connection_id_mcp_key_id_fk",
+          "tableFrom": "mcp_log",
+          "tableTo": "mcp_key",
+          "columnsFrom": [
+            "connection_id"
           ],
           "columnsTo": [
             "id"

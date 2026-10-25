@@ -1,15 +1,15 @@
 /**
- * The calls for one's agent access keys to the Kontext server (/api/mcp-keys,
+ * The calls for one's connected agents to the Kontext server (/api/mcp-keys,
  * server/mcp/routes.ts), and the setup line for Claude Code.
  */
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import type { McpKeyInfo } from "../../../server/mcp/keys";
+import type { ConnectionInfo } from "../../../server/mcp/connections";
 
-export type { McpKeyInfo };
+export type { ConnectionInfo };
 
-export type NewKey = { name: string; password: string; code?: string };
+export type NewKey = { name: string; password: string; code?: string; write: boolean };
 
-export type NewKeyResult = { status: "ok"; key: string; info: McpKeyInfo } | { status: "mfa" };
+export type NewKeyResult = { status: "ok"; key: string; info: ConnectionInfo } | { status: "mfa" };
 
 const send = async <T>(method: string, path: string, body?: unknown): Promise<T> => {
   const response = await fetch(`/api/mcp-keys${path}`, {
@@ -25,10 +25,10 @@ const send = async <T>(method: string, path: string, body?: unknown): Promise<T>
 
 const KEYS = ["mcp-keys"];
 
-export const useMcpKeys = () =>
+export const useConnections = () =>
   useQuery({
     queryKey: KEYS,
-    queryFn: async () => (await send<{ keys: McpKeyInfo[] }>("GET", "")).keys,
+    queryFn: async () => (await send<{ connections: ConnectionInfo[] }>("GET", "")).connections,
   });
 
 /** A change to the keys; the list is loaded again afterwards. */
@@ -43,7 +43,7 @@ const useKeyChange = <T, R>(change: (value: T) => Promise<R>) => {
 export const useCreateKey = () =>
   useKeyChange((key: NewKey) => send<NewKeyResult>("POST", "", key));
 
-export const useRevokeKey = () =>
+export const useRevoke = () =>
   useKeyChange((id: string) => send<{ ok: true }>("DELETE", `/${encodeURIComponent(id)}`));
 
 /** The address agents talk to. */

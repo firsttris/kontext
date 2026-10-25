@@ -5,6 +5,7 @@ import type { Task } from "../tasks/tasks";
 import { type ContactSummary, eventSummary } from "./format";
 import type { Reader } from "./reader";
 import { customerTerms, TOOLS } from "./tools";
+import type { Writer } from "./writer";
 
 const keller: ContactSummary = {
   accountId: "d",
@@ -20,7 +21,8 @@ const keller: ContactSummary = {
 
 const run = (name: string, reader: Partial<Reader>, input: Record<string, unknown>) => {
   const tool = TOOLS.find((candidate) => candidate.name === name)!;
-  return tool.run(reader as Reader, input as never) as Promise<Record<string, unknown>>;
+  const context = { reader: reader as Reader, writer: {} as Writer };
+  return tool.run(context, input as never) as Promise<Record<string, unknown>>;
 };
 
 describe("customer terms", () => {

@@ -1,7 +1,9 @@
 // @vitest-environment node
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
+import type { Scope } from "./connections";
 import type { Reader } from "./reader";
-import { handleMcp } from "./server";
+import { handleMcp, type WriteGuard } from "./server";
+import type { Writer } from "./writer";
 
 const reader = {
   accounts: async () => [{ id: "a1", name: "jonas@weber-haustechnik.test", personal: true }],
@@ -10,7 +12,16 @@ const reader = {
   },
 } as unknown as Reader;
 
-const rpc = async (method: string, params: Record<string, unknown> = {}) => {
+const writer = {
+  createTask: async () => ({ message: "Aufgabe „Rückruf“ angelegt.", taskId: "t1" }),
+} as unknown as Writer;
+
+const rpc = async (
+  method: string,
+  params: Record<string, unknown> = {},
+  scopes: Scope[] = ["read"],
+  guard: WriteGuard = { mayWrite: async () => true, log: async () => undefined },
+) => {
   const response = await handleMcp(
     new Request("http://kontext.test/mcp", {
       method: "POST",
@@ -21,12 +32,13 @@ const rpc = async (method: string, params: Record<string, unknown> = {}) => {
       },
       body: JSON.stringify({ jsonrpc: "2.0", id: 1, method, params }),
     }),
-    reader,
-    "0.1.0",
+    { context: { reader, writer }, scopes, guard, version: "0.1.0" },
   );
   expect(response.status).toBe(200);
   return (await response.json()) as { result: Record<string, unknown> };
 };
+
+type Listed = { name: string; annotations: { readOnlyHint: boolean } };
 
 describe("the MCP endpoint", () => {
   it("introduces itself with instructions", async () => {
@@ -39,9 +51,8 @@ describe("the MCP endpoint", () => {
     expect(result.instructions).toContain("customer_overview");
   });
 
-  it("offers read-only tools", async () => {
-    const { result } = await rpc("tools/list");
-    const tools = result.tools as { name: string; annotations: { readOnlyHint: boolean } }[];
+  it("offers only read tools to a connection that may only read", async () => {
+    const tools = (await rpc("tools/list")).result.tools as Listed[];
     expect(tools.map((tool) => tool.name)).toEqual([
       "list_accounts",
       "search_contacts",
@@ -50,9 +61,24 @@ describe("the MCP endpoint", () => {
       "get_mail",
       "get_thread",
       "list_events",
+      "list_colleagues",
       "list_tasks",
     ]);
     expect(tools.every((tool) => tool.annotations.readOnlyHint)).toBe(true);
+  });
+
+  it("adds the write tools with the right to write – none sends or deletes", async () => {
+    const tools = (await rpc("tools/list", {}, ["read", "write"])).result.tools as Listed[];
+    const writes = tools.filter((tool) => !tool.annotations.readOnlyHint).map((t) => t.name);
+    expect(writes).toEqual([
+      "create_draft",
+      "create_event",
+      "create_contact",
+      "update_contact",
+      "create_task",
+      "update_task",
+    ]);
+    expect(tools.some((tool) => /send|delete/.test(tool.name))).toBe(false);
   });
 
   it("answers a tool call as JSON text", async () => {
@@ -70,5 +96,28 @@ describe("the MCP endpoint", () => {
     });
     expect(result.isError).toBe(true);
     expect(result.content).toEqual([{ type: "text", text: "Mail nicht gefunden: m9" }]);
+  });
+
+  it("logs a write, and refuses one too many", async () => {
+    const log = vi.fn(async () => undefined);
+    const call = { name: "create_task", arguments: { title: "Rückruf" } };
+    const done = await rpc("tools/call", call, ["read", "write"], {
+      mayWrite: async () => true,
+      log,
+    });
+    expect(done.result.isError).toBeUndefined();
+    expect(log).toHaveBeenCalledWith("create_task", "Aufgabe „Rückruf“ angelegt.");
+
+    const refused = await rpc("tools/call", call, ["read", "write"], {
+      mayWrite: async () => false,
+      log,
+    });
+    expect(refused.result.isError).toBe(true);
+    expect(log).toHaveBeenCalledTimes(1);
+  });
+
+  it("does not run a write tool for a connection that may only read", async () => {
+    const { result } = await rpc("tools/call", { name: "create_task", arguments: { title: "x" } });
+    expect(result.isError).toBe(true);
   });
 });

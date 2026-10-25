@@ -52,8 +52,9 @@ import { createImageSenderRoutes } from "./images/routes";
 import { createServerJmap } from "./jmap-server";
 import { createHub } from "./live/hub";
 import { createLiveRoutes } from "./live/routes";
-import { createMcpKeys } from "./mcp/keys";
+import { createConnections } from "./mcp/connections";
 import { createMcpEndpoint, createMcpKeyRoutes, type McpDeps } from "./mcp/routes";
+import { taskApiOf } from "./mcp/writer";
 import { createImporter, type Importer } from "./migration/importer";
 import { createJobs } from "./migration/jobs";
 import { createGraph, type M365Credentials } from "./migration/m365/graph";
@@ -473,18 +474,21 @@ export const createApp = async (env: Env) => {
   // Task reminders go out every minute, also with nobody signed in.
   const reminder = createTaskReminder({ store: tasks, notify: pusher.notify });
   setInterval(() => void reminder.tick(), env.REMINDER_TICK_MS).unref();
+  const taskNotices = {
+    store: tasks,
+    notify: pusher.notify,
+    changed: (accountId: string, assignees: string[]) =>
+      hub.publish(
+        { type: "tasks", accountId },
+        (viewer) => viewer.accountIds.includes(accountId) || assignees.includes(viewer.me),
+      ),
+  };
   app.route(
     "/api/tasks",
     createTaskRoutes({
-      store: tasks,
+      ...taskNotices,
       accountsOf,
-      notify: pusher.notify,
       nameOf: async (request) => (await infoOf(request))?.name ?? "",
-      changed: (accountId, assignees) =>
-        hub.publish(
-          { type: "tasks", accountId },
-          (viewer) => viewer.accountIds.includes(accountId) || assignees.includes(viewer.me),
-        ),
     }),
   );
   app.route(
@@ -503,16 +507,18 @@ export const createApp = async (env: Env) => {
       blobs: createSessionBlobs(env.STALWART_URL),
     }),
   );
-  // Agents over MCP, with access keys of their own; they read what their owner may read.
+  // Agents over MCP, with connections of their own; they reach what their owner may reach.
   const mcp: McpDeps = {
-    keys: createMcpKeys(db),
+    connections: createConnections(db),
     grants,
     stalwartUrl: env.STALWART_URL,
     version: packageVersion,
     userOf: async (request) =>
       (await auth.api.getSession({ headers: request.headers }))?.user ?? null,
     login: (credentials) => loginAtStalwart(env.STALWART_URL, credentials),
-    tasks: (accountIds, me) => tasks.list(accountIds, new Date(Date.now() - 30 * 86_400_000), me),
+    // The same task routes, as the agent's owner: the same rights, notices and live updates.
+    tasksFor: (accounts, name) =>
+      taskApiOf(createTaskRoutes({ ...taskNotices, accountsOf: accounts, nameOf: name })),
   };
   app.route("/api/mcp-keys", createMcpKeyRoutes(mcp));
   const mcpEndpoint = createMcpEndpoint(mcp);
