@@ -639,12 +639,63 @@ Server läuft; Kontext baut nur die Oberfläche und entscheidet, wer hinein darf
 - **Ohne LiveKit** (keine `LIVEKIT_*`-Einstellungen) sind Anrufe aus: Die App fragt
   `/api/calls` und zeigt keine Knöpfe; der Termin bietet keine Videobesprechung an.
 
+## Telefonie
+
+Kontext telefoniert über eine **Telefonbox** im Büro des Kunden: ein Container mit Asterisk und
+dem Box-Agent (`box/`), auf einem Thin Client, einem Pi, dem Firmenserver oder einem NAS. Die
+Box meldet sich im Büronetz als IP-Telefon an der Fritzbox an; die Fritzbox bleibt am Anschluss,
+die Nummern und Tischtelefone bleiben, wie sie sind. Kontext selbst (Server `server/phone/`,
+App `src/features/phone/`) läuft weiter auf dem VPS.
+
+```mermaid
+flowchart LR
+  Fritzbox -->|"SIP im LAN (Box als IP-Telefon)"| Box["Telefonbox<br>(Asterisk + Agent)"]
+  Box -->|"WebSocket, von innen nach außen"| Server["Kontext-Server"]
+  Box -->|"SIP/TCP 5060, RTP"| SIP["LiveKit SIP"]
+  SIP --> LiveKit
+  Browser -->|WebRTC| LiveKit
+```
+
+- **Keine offenen Ports beim Kunden:** Die Box baut eine WebSocket-Verbindung zu Kontext auf
+  (`/api/phone/box`) und hält sie offen. Kontext schickt ihr den ganzen Sollzustand
+  (Fritzbox-Anmeldung, Zugang zu LiveKit SIP) mit Version, die Box schreibt daraus Asterisks
+  Konfiguration (`box/agent/asterisk-config.ts`) und meldet Anrufe zurück: klingelt,
+  angenommen, beendet (mit Q.850-Ursache). Ereignisse tragen eine laufende Nummer; nach einem
+  Abbruch schickt die Box nach, was Kontext nicht bestätigt hat. Ohne Kontext telefoniert sie mit
+  der letzten Konfiguration weiter (`/data/config.json`).
+- **Koppeln:** In der Firmenverwaltung unter Telefonie gibt es einen Code (30 Minuten gültig).
+  Die Box tauscht ihn einmal gegen ein Token (`POST /api/phone/box/pair`); beides liegt nur als
+  SHA-256 in der Datenbank. Den Code gibt man der Box beim ersten Start mit oder auf ihrer
+  Statusseite (`http://<box>:8089`), die sonst nur anzeigt, ob sie verbunden und an der Fritzbox
+  angemeldet ist.
+- **Ein Anruf kommt rein:** Die Fritzbox klingelt bei der Box (und bei den Tischtelefonen). Die
+  Box meldet „klingelt“; Kontext legt den Anruf an, schaut aber nicht ins Adressbuch – das macht
+  die App mit den Rechten der angemeldeten Person (`contactOfNumber`, Nummern in E.164,
+  `server/phone/numbers.ts`). Bei den Personen, die unter Telefonie ausgewählt sind, erscheint
+  eine Karte: Kontakt, Firma, letzte Mail, nächster Termin, „Annehmen“ – auch als Web Push.
+- **Annehmen in Kontext:** Kontext gibt dem Anruf einen Raum und sagt der Box „answer“. Erst dann
+  wählt Asterisk LiveKit SIP an (`<uuid>@…`, die Dispatch-Regel macht daraus den Raum
+  `kontext-phone-<uuid>`) und verbindet den Anrufer – vorher klingeln die Tischtelefone weiter,
+  wer zuerst abnimmt, hat ihn. Nimmt jemand am Tischtelefon ab, steht der Anruf als „Am Telefon
+  angenommen“ in der Liste (Ursache 26), sonst als „Verpasst“.
+- **Anrufen:** „Anrufen“ am Kontakt oder auf der Seite Telefon: Kontext legt Anruf und Raum an,
+  die Person tritt dem Raum bei, die Box wählt erst LiveKit SIP an (diesen Raum) und dann über die
+  Fritzbox die Nummer (national mit 0, Ausland mit 00). Ein Tastenfeld schickt Töne (DTMF) für
+  Sprachmenüs.
+- **Auflegen:** in Kontext (Box legt auf), beim Anrufer (Box meldet das Ende) oder wenn die
+  Person den Raum verlässt, etwa weil der Tab zu ist (LiveKits Webhook).
+- **LiveKit SIP** braucht Redis (zur Absprache mit LiveKit). Kontext richtet beim Start einen
+  Eingangs-Trunk mit Passwort (nur die Boxen) und die Dispatch-Regel ein
+  (`server/phone/livekit-sip.ts`); ob das klappt, zeigt die Firmenverwaltung.
+- **Notruf:** 110 und 112 bleiben über die Fritzbox und die Tischtelefone; Kontext wählt sie
+  nicht.
+
 ## Live-Verbindung
 
 Jede offene App hält eine Verbindung `/api/live` (Server-Sent Events, `server/live/`). Der Server
 merkt sich nur, wer verbunden ist (`hub.ts`), und schickt jedes Ereignis an die, die es sehen
 dürfen: neue Nachrichten, „schreibt …“, Gelesen-Marken, geänderte Kanäle, wer online ist,
-geänderte Aufgaben-Boards und Anrufe. Mails meldet Stalwart weiter selbst (JMAP Push).
+geänderte Aufgaben-Boards, Anrufe und Telefonate. Mails meldet Stalwart weiter selbst (JMAP Push).
 
 - Alle 25 Sekunden ein Kommentar, damit Proxys die ruhige Verbindung nicht schließen; Caddy
   komprimiert die beiden Streams nicht (`deploy/Caddyfile`), sonst kämen Ereignisse verzögert an.

@@ -124,6 +124,7 @@ reicht ein VPS mit 2 vCPU und 4 GB RAM.
 - **Mail als Kopie teilen**, mit Anhängen, für Kolleginnen ohne Zugriff auf das Postfach.
 - **Aufgabe aus einer Nachricht**, in beide Richtungen verknüpft.
 - **Anrufe und Videoanrufe** direkt aus der Unterhaltung: eine Kollegin anrufen oder im Kanal eine Besprechung starten, der die anderen beitreten; stummschalten, Kamera, Bildschirm teilen, und das Gespräch bleibt offen, während du zur Mail wechselst; verpasste Anrufe und die Dauer stehen im Verlauf. Läuft auf dem eigenen Server ([LiveKit](https://github.com/livekit/livekit), optional).
+- **Telefonieren in Kontext**: Eine kleine Telefonbox im Büro meldet sich als IP-Telefon an der Fritzbox an. Anrufe klingeln in Kontext mit dem Wichtigsten zum Anrufer (Kontakt, Firma, letzte Mail, nächster Termin), du nimmst im Browser oder am Tischtelefon ab, rufst aus jedem Kontakt an, und verpasste Anrufe stehen mit Notiz und „Zurückrufen“ in einer Liste.
 - **Suche** über alle deine Kanäle; eigene Nachrichten bearbeiten oder löschen; Kanäle stummschalten, verlassen oder löschen.
 - **Aufbewahrung**, die die Firmenverwaltung festlegt (30 Tage bis 5 Jahre oder unbegrenzt): Ältere Nachrichten, Fotos und Dateien löscht Kontext von selbst.
 - **Am Handy**: ein eigener Tab, Unterhaltungen als Sprechblasen.
@@ -168,6 +169,7 @@ Module, die ein Betrieb einschaltet, wenn er sie braucht – wer sie nicht brauc
 | Aufgaben und Kanban-Board | ✅ verfügbar |
 | Team-Chat | ✅ verfügbar |
 | Anrufe und Videobesprechungen im Chat | ✅ verfügbar |
+| Telefonie über die Fritzbox (Telefonbox) | 🧪 im Test |
 | Rapportzettel (Arbeitsnachweise, z. B. im Handwerk) | geplant |
 
 Was als Nächstes kommt, steht in der [Roadmap](ROADMAP.md).

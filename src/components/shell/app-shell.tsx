@@ -1,6 +1,6 @@
 /** The frame of every logged-in page: the app rail on the left (desktop), the page beside it. */
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
-import { Ellipsis, Keyboard, LogOut, Settings } from "lucide-react";
+import { Ellipsis, Keyboard, LogOut, Phone, Settings } from "lucide-react";
 import { type ReactNode, useState } from "react";
 import { useAuth } from "@/auth/auth";
 import { ShortcutsDialog } from "@/components/shortcuts-dialog";
@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/menu";
 import { useShortcuts } from "@/components/use-shortcuts";
 import { useChannels } from "@/features/chat/queries";
+import { usePhone } from "@/features/phone/queries";
 import { totalUnread } from "@/lib/chat";
 import { cn } from "@/lib/cn";
 import { m } from "@/paraglide/messages";
@@ -60,6 +61,12 @@ export const railButton = (active: boolean) =>
     active ? "bg-subtle text-fg" : "text-muted hover:text-fg",
   );
 
+/** "Telefon" in the rail and under "Mehr", for whoever may telephone through the box. */
+const usePhoneNav = (): boolean => {
+  const { enabled, allowed } = usePhone();
+  return enabled && allowed;
+};
+
 /** Unread chat messages, for the badge on "Chat". */
 const useChatUnread = (): number => totalUnread(useChannels().channels);
 
@@ -81,6 +88,7 @@ const unreadLabel = (label: string, count: number) =>
 const Rail = ({ onHelp, bell }: { onHelp: () => void; bell: ReactNode }) => {
   const pathname = useRouterState({ select: (state) => state.location.pathname });
   const chatUnread = useChatUnread();
+  const phone = usePhoneNav();
   return (
     <nav
       aria-label="Apps"
@@ -112,6 +120,17 @@ const Rail = ({ onHelp, bell }: { onHelp: () => void; bell: ReactNode }) => {
           </Link>
         );
       })}
+      {phone ? (
+        <Link
+          to="/phone"
+          aria-label={m.nav_phone()}
+          title={m.nav_phone()}
+          aria-current={pathname.startsWith("/phone") ? "page" : undefined}
+          className={railButton(pathname.startsWith("/phone"))}
+        >
+          <Phone size={18} strokeWidth={1.75} />
+        </Link>
+      ) : null}
       <div className="flex-1" />
       {bell}
       <button
@@ -163,7 +182,8 @@ const MoreMenu = () => {
   const { logout } = useAuth();
   const { data: session } = useSession();
   const pathname = useRouterState({ select: (state) => state.location.pathname });
-  const active = [...MORE_ITEMS.map((entry) => entry.to), "/settings"].some((to) =>
+  const phone = usePhoneNav();
+  const active = [...MORE_ITEMS.map((entry) => entry.to), "/settings", "/phone"].some((to) =>
     pathname.startsWith(to),
   );
   return (
@@ -188,6 +208,13 @@ const MoreMenu = () => {
             </Link>
           </MenuItem>
         ))}
+        {phone ? (
+          <MenuItem asChild>
+            <Link to="/phone" className="text-fg no-underline">
+              <Phone size={15} /> {m.nav_phone()}
+            </Link>
+          </MenuItem>
+        ) : null}
         <MenuItem asChild>
           <Link to="/settings" search={{}} className="text-fg no-underline">
             <Settings size={15} /> {m.nav_settings()}

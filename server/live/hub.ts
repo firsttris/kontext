@@ -5,6 +5,7 @@
  */
 import type { Call } from "../calls/calls";
 import type { Message, Viewer } from "../chat/chat";
+import type { PhoneCall } from "../phone/phone";
 
 export type LiveEvent =
   | { type: "message"; channelId: string; message: Message }
@@ -17,7 +18,9 @@ export type LiveEvent =
   | { type: "tasks"; accountId: string }
   // A call began, someone joined or left, or it ended (null).
   | { type: "call"; channelId: string; call: Call | null }
-  | { type: "call-declined"; channelId: string; memberId: string };
+  | { type: "call-declined"; channelId: string; memberId: string }
+  // A phone call through the telephone box rang, was taken, ended or got a note.
+  | { type: "phone"; call: PhoneCall };
 
 type Listener = { viewer: Viewer; send: (event: LiveEvent) => void };
 

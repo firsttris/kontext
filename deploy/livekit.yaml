@@ -6,6 +6,9 @@
 # open TCP 7881 and UDP 7882 in the firewall. One UDP port carries every call (ICE/UDP mux),
 # which is plenty for a small business.
 port: 7880
+# Shared with LiveKit SIP (telephony): both talk over it.
+redis:
+  address: redis:6379
 rtc:
   tcp_port: 7881
   # The server's public address, found via STUN (the browsers must reach it).

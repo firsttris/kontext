@@ -1,0 +1,23 @@
+# Podman Quadlet: copy to /etc/containers/systemd/ and run `systemctl daemon-reload`.
+# Telephony: LiveKit SIP takes the telephone boxes' calls (TCP 5060, UDP 20000–20100 open).
+# Put SIP_CONFIG_BODY into /opt/kontext/deploy/livekit-sip.env as in deploy/compose.yaml, with
+# the LiveKit secret as api_secret.
+[Unit]
+Description=LiveKit SIP (telephony in Kontext)
+After=livekit.service redis.service
+Wants=livekit.service redis.service
+
+[Container]
+Image=docker.io/livekit/sip:v1.21.0
+ContainerName=livekit-sip
+Network=kontext.network
+PublishPort=5060:5060/tcp
+PublishPort=20000-20100:20000-20100/udp
+EnvironmentFile=/opt/kontext/deploy/livekit-sip.env
+AutoUpdate=registry
+
+[Service]
+Restart=always
+
+[Install]
+WantedBy=multi-user.target

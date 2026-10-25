@@ -25,7 +25,21 @@ und UDP 17882, nur auf 127.0.0.1); unter Linux lädt das Skript die Release-Date
 macOS nimmt es `livekit-server` aus dem PATH (`brew install livekit`). Vite reicht `/rtc` an
 LiveKit weiter, LiveKits Webhooks gehen an den Server. Danach starten der Kontext-Server auf 18090
 (Anmeldung, JMAP; startet bei Änderungen neu) und Vite auf 5173. Einen Anruf probiert man mit
-zwei Browserfenstern (eins privat), etwa Jonas und Anna. Stalwarts eigenes Log steht in `.dev/stalwart.log`. Strg+C
+zwei Browserfenstern (eins privat), etwa Jonas und Anna.
+
+Für die Telefonie gibt es eine Telefonbox als Attrappe (`dev/fake-box.ts`): Sie koppelt und
+spricht mit dem Server wie die echte, klingelt aber nur auf Zuruf. Unter Einstellungen →
+Telefonie „Box koppeln“, dann:
+
+```bash
+bun dev/fake-box.ts --code K7QM-4XPA                                  # Steuerung auf 18096
+curl -XPOST localhost:18096/ring -d '{"from":"07223 81234"}'          # Petra Keller ruft an
+curl -XPOST localhost:18096/hangup -d '{"call":"fake.1"}'             # sie legt auf
+```
+
+Zu hören ist dabei nichts (lokal läuft kein LiveKit SIP). Die echte Box (`box/`, Asterisk und der
+Agent) baut `docker build -f box/Dockerfile -t kontext-box .`; CI baut sie und prüft, ob Asterisk
+mit PJSIP startet. Stalwarts eigenes Log steht in `.dev/stalwart.log`. Strg+C
 beendet alles, und endet einer der Prozesse, stoppt auch der Rest.
 
 Läuft schon ein Stalwart auf 18080, nimmt `bun run dev` diesen. So lässt sich Stalwart in einem

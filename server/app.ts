@@ -50,6 +50,7 @@ import { createSyncRunner } from "./migration/sync-runner";
 import { createSyncs } from "./migration/syncs";
 import { createPgpRoutes, createWkdRoutes } from "./pgp/routes";
 import { createPgpStore } from "./pgp/store";
+import { createPhone } from "./phone/setup";
 import { createMailWatch } from "./push/mail-watch";
 import { createPusher } from "./push/pusher";
 import { createPushRoutes } from "./push/routes";
@@ -283,6 +284,21 @@ export const createApp = async (env: Env) => {
       return accounts && viewerOf(accounts);
     };
     const nameOfRequest = async (request: Request) => (await infoOf(request))?.name ?? "";
+    const phone = createPhone({
+      db,
+      sealer: await createSealer(env.BETTER_AUTH_SECRET, "phone"),
+      hub,
+      livekit,
+      publicUrl: env.LIVEKIT_PUBLIC_URL ?? null,
+      trunkHost: env.PHONE_SIP_HOST ?? new URL(env.BETTER_AUTH_URL).hostname,
+      trunkPort: env.PHONE_SIP_PORT,
+      viewerOf: viewerOfRequest,
+      nameOf: nameOfRequest,
+      notify: pusher.notify,
+    });
+    app.route("/api/phone", phone.routes);
+    // Behind the Firmenverwaltung's check, which runs first for every /api/company path.
+    if (env.STALWART_ADMIN_KEY) app.route("/api/company/phone", phone.adminRoutes);
     const calls = createCallRoutes(
       {
         livekit,
@@ -292,6 +308,7 @@ export const createApp = async (env: Env) => {
         viewerOf: viewerOfRequest,
         nameOf: nameOfRequest,
         notify: pusher.notify,
+        onRoomEvent: phone.onRoomEvent,
         postCall: (channelId, authorId, call) =>
           messages.post({
             channelId,
@@ -326,8 +343,11 @@ export const createApp = async (env: Env) => {
       })
       .catch(() => undefined);
   } else {
-    // The app asks; without LiveKit it shows no call buttons.
+    // The app asks; without LiveKit it shows no call buttons and no telephony.
     app.get("/api/calls", (c) => c.json({ enabled: false, calls: [] }));
+    app.get("/api/phone", (c) =>
+      c.json({ enabled: false, allowed: false, online: false, calls: [] }),
+    );
   }
   app.route(
     "/api/chat",

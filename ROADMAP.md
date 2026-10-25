@@ -14,7 +14,7 @@ ein Plan, kein Versprechen; Wünsche und Hinweise gern als
 
 | Funktion | Worum es geht |
 | --- | --- |
-| **Telefonie** | Eine Firmennummer, die in Kontext klingelt: Festnetz und Handy über einen SIP-Anbieter (LiveKit SIP), Gruppenruf, Weiterleitung, Mailbox. |
+| **Telefonie: mehr** | Durchwahlen pro Person, Öffnungszeiten, Mailbox als Mail, Weitervermitteln, Snom-Telefone einrichten, Anschluss direkt beim Anbieter oder per SIP-Trunk statt über die Fritzbox, SIP über TLS. |
 
 ## Offene Punkte
 
@@ -71,6 +71,9 @@ verschlüsselt mit den persönlichen Schlüsseln, unterschrieben; der Server sie
 Verschlüsselung, S/MIME: eigenes Zertifikat (.p12) importieren, Zertifikate anderer aus
 unterschriebenen Mails und Dateien, S/MIME-Mails lesen und Unterschriften prüfen, „Vertraulich
 senden“ nimmt S/MIME für Empfänger mit Zertifikat.
+Telefonie über eine Telefonbox an der Fritzbox (im Test): Anrufe klingeln in Kontext mit Kontakt,
+letzter Mail und nächstem Termin, Annehmen im Browser, Anrufen aus Kontakten, Anrufliste mit
+Notiz und Zurückrufen.
 Verschlüsselung, Baustein 4: „Vertraulich senden“ – PGP für Empfänger mit Schlüssel, für alle
 anderen ein Link mit Code auf den eigenen Server (Schlüssel nur im Link), Antworten dort, Übersicht
 „Vertraulich gesendet“.

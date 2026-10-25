@@ -16,6 +16,7 @@ import { Route as AppCalendarRouteImport } from './routes/_app/calendar'
 import { Route as AppChatRouteImport } from './routes/_app/chat'
 import { Route as AppComposeRouteImport } from './routes/_app/compose'
 import { Route as AppContactsRouteImport } from './routes/_app/contacts'
+import { Route as AppPhoneRouteImport } from './routes/_app/phone'
 import { Route as AppSecureRouteImport } from './routes/_app/secure'
 import { Route as AppSettingsRouteImport } from './routes/_app/settings'
 import { Route as AppTasksRouteImport } from './routes/_app/tasks'
@@ -56,6 +57,11 @@ const AppComposeRoute = AppComposeRouteImport.update({
 const AppContactsRoute = AppContactsRouteImport.update({
   id: '/contacts',
   path: '/contacts',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppPhoneRoute = AppPhoneRouteImport.update({
+  id: '/phone',
+  path: '/phone',
   getParentRoute: () => AppRoute,
 } as any)
 const AppSecureRoute = AppSecureRouteImport.update({
@@ -102,6 +108,7 @@ export interface FileRoutesByFullPath {
   '/chat': typeof AppChatRoute
   '/compose': typeof AppComposeRoute
   '/contacts': typeof AppContactsRoute
+  '/phone': typeof AppPhoneRoute
   '/secure': typeof AppSecureRoute
   '/settings': typeof AppSettingsRoute
   '/tasks': typeof AppTasksRoute
@@ -116,6 +123,7 @@ export interface FileRoutesByTo {
   '/chat': typeof AppChatRoute
   '/compose': typeof AppComposeRoute
   '/contacts': typeof AppContactsRoute
+  '/phone': typeof AppPhoneRoute
   '/secure': typeof AppSecureRoute
   '/settings': typeof AppSettingsRoute
   '/tasks': typeof AppTasksRoute
@@ -133,6 +141,7 @@ export interface FileRoutesById {
   '/_app/chat': typeof AppChatRoute
   '/_app/compose': typeof AppComposeRoute
   '/_app/contacts': typeof AppContactsRoute
+  '/_app/phone': typeof AppPhoneRoute
   '/_app/secure': typeof AppSecureRoute
   '/_app/settings': typeof AppSettingsRoute
   '/_app/tasks': typeof AppTasksRoute
@@ -151,6 +160,7 @@ export interface FileRouteTypes {
     | '/chat'
     | '/compose'
     | '/contacts'
+    | '/phone'
     | '/secure'
     | '/settings'
     | '/tasks'
@@ -165,6 +175,7 @@ export interface FileRouteTypes {
     | '/chat'
     | '/compose'
     | '/contacts'
+    | '/phone'
     | '/secure'
     | '/settings'
     | '/tasks'
@@ -181,6 +192,7 @@ export interface FileRouteTypes {
     | '/_app/chat'
     | '/_app/compose'
     | '/_app/contacts'
+    | '/_app/phone'
     | '/_app/secure'
     | '/_app/settings'
     | '/_app/tasks'
@@ -249,6 +261,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppContactsRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/phone': {
+      id: '/_app/phone'
+      path: '/phone'
+      fullPath: '/phone'
+      preLoaderRoute: typeof AppPhoneRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/secure': {
       id: '/_app/secure'
       path: '/secure'
@@ -306,6 +325,7 @@ interface AppRouteChildren {
   AppChatRoute: typeof AppChatRoute
   AppComposeRoute: typeof AppComposeRoute
   AppContactsRoute: typeof AppContactsRoute
+  AppPhoneRoute: typeof AppPhoneRoute
   AppSecureRoute: typeof AppSecureRoute
   AppSettingsRoute: typeof AppSettingsRoute
   AppTasksRoute: typeof AppTasksRoute
@@ -319,6 +339,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppChatRoute: AppChatRoute,
   AppComposeRoute: AppComposeRoute,
   AppContactsRoute: AppContactsRoute,
+  AppPhoneRoute: AppPhoneRoute,
   AppSecureRoute: AppSecureRoute,
   AppSettingsRoute: AppSettingsRoute,
   AppTasksRoute: AppTasksRoute,

@@ -124,6 +124,7 @@ fine on a VPS with 2 vCPUs and 4 GB RAM.
 - **Share a mail as a copy** with its attachments, for colleagues who cannot open the mailbox.
 - **Task from a message**, linked both ways.
 - **Calls and video calls** right from a conversation: ring a colleague, or start a meeting in a channel that others join; mute, camera, share your screen, and the call stays open while you switch to mail; missed calls and call lengths stay in the conversation. Runs on your own server ([LiveKit](https://github.com/livekit/livekit), optional).
+- **Phone calls in Kontext**: a small telephone box in the office joins your Fritzbox as an IP phone. Calls ring in Kontext with who it is (contact, company, last mail, next appointment), you answer in the browser or at the desk phone, call out from any contact, and missed calls stay in a list with notes and "call back".
 - **Search** across all your channels; edit or delete your own messages; mute, leave or delete channels.
 - **Retention** set by the company admin (30 days to 5 years, or for ever): older messages, photos and files are deleted by themselves.
 - **On the phone**: its own tab, conversations as bubbles.
@@ -168,6 +169,7 @@ business switches on when it needs them – whoever doesn't, never sees them.
 | Tasks and Kanban board | ✅ available |
 | Team chat | ✅ available |
 | Calls and video meetings in the chat | ✅ available |
+| Telephony through the Fritzbox (telephone box) | 🧪 being tested |
 | Work reports (e.g. for trades) | planned |
 
 What comes next is in the [roadmap](ROADMAP.md) (German).

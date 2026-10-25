@@ -1,0 +1,123 @@
+/**
+ * What the agent needs from the telephone system: apply a configuration, put a ringing call into
+ * a room, dial, hang up – and hear call steps and the registration. Asterisk does it here; the
+ * dev box (dev/fake-box.ts) pretends to.
+ */
+import { mkdir, writeFile } from "node:fs/promises";
+import { join } from "node:path";
+import type { BoxConfig, CallEvent } from "../../server/phone/protocol";
+import { type Ami, callEventOf, connectAmi, type Frame, registrationOf } from "./ami";
+import { type AmiLogin, asteriskFiles } from "./asterisk-config";
+
+export type Pbx = {
+  apply: (config: BoxConfig) => Promise<void>;
+  answer: (call: string, room: string) => Promise<void>;
+  dial: (call: string, room: string, number: string) => Promise<void>;
+  hangup: (call: string) => Promise<void>;
+};
+
+export type PbxEvents = {
+  onCall: (event: Omit<CallEvent, "type" | "seq">) => void;
+  onRegistration: (registered: boolean, detail: string) => void;
+};
+
+/** How often the box asks Asterisk whether it is still signed in at the Fritzbox. */
+const REGISTRATION_CHECK_MS = 60_000;
+
+export const createAsterisk = async ({
+  configDir,
+  ami: login,
+  events,
+}: {
+  configDir: string;
+  ami: AmiLogin;
+  events: PbxEvents;
+}): Promise<Pbx & { close: () => void }> => {
+  // The channel of each call, from its first event: AMI acts on channels, Kontext on calls.
+  const channels = new Map<string, string>();
+  const onFrame = (frame: Frame) => {
+    const event = callEventOf(frame, new Date());
+    if (event) {
+      if (frame.Channel && event.state !== "ended") channels.set(event.call, frame.Channel);
+      if (event.state === "ended") channels.delete(event.call);
+      events.onCall(event);
+      return;
+    }
+    const registration = registrationOf(frame);
+    if (registration) events.onRegistration(registration.registered, registration.detail);
+  };
+  const ami: Ami = await connectAmi({
+    port: login.port,
+    username: login.username,
+    secret: login.secret,
+    onFrame,
+    // Asterisk went away: let the container restart both.
+    onClose: () => process.exit(1),
+  });
+  const check = setInterval(
+    () => void ami.action([["Action", "PJSIPShowRegistrationsOutbound"]]).catch(() => undefined),
+    REGISTRATION_CHECK_MS,
+  );
+
+  const channelOf = (call: string) => {
+    const channel = channels.get(call);
+    if (!channel) throw new Error(`Kein Kanal für ${call}`);
+    return channel;
+  };
+
+  return {
+    apply: async (config) => {
+      await mkdir(configDir, { recursive: true });
+      for (const [name, text] of Object.entries(asteriskFiles(config, login))) {
+        await writeFile(join(configDir, name), text, { mode: 0o640 });
+      }
+      await ami.action([
+        ["Action", "Command"],
+        ["Command", "core reload"],
+      ]);
+      await ami.action([["Action", "PJSIPShowRegistrationsOutbound"]]);
+    },
+    answer: async (call, room) => {
+      const channel = channelOf(call);
+      await ami.action([
+        ["Action", "Setvar"],
+        ["Channel", channel],
+        ["Variable", "KONTEXT_ROOM"],
+        ["Value", room],
+      ]);
+      await ami.action([
+        ["Action", "Redirect"],
+        ["Channel", channel],
+        ["Context", "kontext-answer"],
+        ["Exten", "answer"],
+        ["Priority", "1"],
+      ]);
+    },
+    dial: async (call, room, number) => {
+      // First the leg into Kontext's room (LiveKit SIP answers at once), then the number.
+      await ami.action([
+        ["Action", "Originate"],
+        ["Channel", `PJSIP/${room}@livekit`],
+        ["Context", "kontext-out"],
+        ["Exten", number],
+        ["Priority", "1"],
+        ["Variable", `__KONTEXT_CALL=${call}`],
+        ["CallerID", "Kontext"],
+        ["Async", "true"],
+      ]);
+    },
+    hangup: async (call) => {
+      const channel = channels.get(call);
+      if (!channel) return;
+      await ami.action([
+        ["Action", "Hangup"],
+        ["Channel", channel],
+        ["Cause", "16"],
+      ]);
+    },
+    close: () => {
+      clearInterval(check);
+      ami.close();
+    },
+  };
+};

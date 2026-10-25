@@ -1,0 +1,17 @@
+# Podman Quadlet: copy to /etc/containers/systemd/ and run `systemctl daemon-reload`.
+# Redis for LiveKit and LiveKit SIP (telephony): only calls in flight, nothing kept.
+[Unit]
+Description=Redis (LiveKit)
+
+[Container]
+Image=docker.io/library/redis:7-alpine
+ContainerName=redis
+Network=kontext.network
+Exec=redis-server --save "" --appendonly no
+AutoUpdate=registry
+
+[Service]
+Restart=always
+
+[Install]
+WantedBy=multi-user.target

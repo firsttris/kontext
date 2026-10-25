@@ -52,6 +52,22 @@ jobs:
       - run: pip install mkdocs-material
       - run: mkdocs build --strict
 
+  box:
+    name: Telephone box image (Asterisk + agent)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: docker build -f box/Dockerfile -t kontext-box .
+      # Asterisk starts with PJSIP and the manager, the agent serves its status page.
+      - run: docker run -d --name box --network host kontext-box
+      - run: |
+          for i in $(seq 1 30); do curl -fsS http://127.0.0.1:8089/ | grep -q "Kontext-Telefonbox" && break; sleep 1; done
+          curl -fsS http://127.0.0.1:8089/ | grep -q "noch nicht mit Kontext gekoppelt"
+          docker exec box asterisk -rx "module show like res_pjsip.so" | grep -q "res_pjsip.so"
+          docker exec box asterisk -rx "manager show users" | grep -q "kontext-agent"
+      - if: always()
+        run: docker logs box || true
+
   image:
     runs-on: ubuntu-latest
     outputs:

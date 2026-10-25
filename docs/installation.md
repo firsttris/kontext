@@ -87,6 +87,35 @@ Mit Podman: `deploy/quadlet/livekit.container` mitkopieren, `LIVEKIT_KEYS="konte
 Für zehn Leute reicht der kleine VPS; ein Videogespräch zu dritt braucht am Server etwa
 3–5 Mbit/s je Teilnehmer in jede Richtung.
 
+### Telefonie
+
+Damit die Firmennummer auch in Kontext klingelt und man aus Kontext anrufen kann, braucht es
+LiveKit SIP und Redis auf dem Server (im Profil `calls` schon dabei) und eine Telefonbox im Büro.
+
+**Auf dem Server:** in der Firewall zusätzlich **TCP 5060** (SIP von den Boxen) und
+**UDP 20000–20100** (Sprache) öffnen. Kontext meldet die Boxen bei LiveKit SIP selbst an; unter
+Einstellungen → Telefonie steht, ob das geklappt hat.
+
+**In der Fritzbox:** Telefonie → Telefoniegeräte → Neues Gerät einrichten → „Telefon (mit und
+ohne Anrufbeantworter)“ → „LAN/WLAN (IP-Telefon)“, Name „Kontext“. Benutzername und Kennwort
+merken und festlegen, auf welche Rufnummern das Gerät reagiert und mit welcher es anruft.
+
+**In Kontext:** Einstellungen → Telefonie: Benutzername und Kennwort aus der Fritzbox eintragen,
+auswählen, wer klingeln soll, dann „Box koppeln“.
+
+**Die Box:** ein Gerät im Büronetz, das immer läuft – gebrauchter Thin Client (Futro S740,
+Wyse 5070), Raspberry Pi mit SSD, der Firmenserver oder ein NAS mit Docker. Am besten per Kabel.
+
+```bash
+KONTEXT_URL=https://kontext.firma.de PAIRING_CODE=K7QM-4XPA \
+  docker compose -f deploy/box.compose.yaml up -d
+```
+
+Mit Podman: `deploy/quadlet/kontext-box.container`. Ohne Code beim Start zeigt die Box auf
+`http://<box>:8089` ein Formular für Kontexts Adresse und den Code. Die Box braucht keine offenen
+Ports nach außen; sie läuft im Host-Netz (SIP mit der Fritzbox auf 5070, Sprache auf
+10000–10200 im LAN).
+
 ### Firmenverwaltung einschalten
 
 Unter *Einstellungen → Firma* legt der Chef (oder die Büroleitung) Mitarbeiter und gemeinsame

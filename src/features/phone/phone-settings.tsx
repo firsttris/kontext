@@ -1,0 +1,236 @@
+/**
+ * Firmenverwaltung → Telefonie: couple the telephone box, its login at the Fritzbox, and who
+ * hears calls ring in Kontext. The box itself has nothing to set; it gets all of this from here.
+ */
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { type FormEvent, useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Input, Label } from "@/components/ui/input";
+import { useToast } from "@/components/ui/toast";
+import { useCompany } from "@/features/company/queries";
+import { SettingsCard } from "@/features/settings/settings-page";
+import { m } from "@/paraglide/messages";
+import type { BoxRow } from "../../../server/phone/store";
+import { PHONE_KEY } from "./queries";
+
+type Admin = {
+  boxes: (BoxRow & { online: boolean })[];
+  line: { registrar: string; username: string; hasPassword: boolean } | null;
+  ring: string[];
+  sip: { ok: true } | { ok: false; error: string };
+};
+
+const ADMIN_KEY = ["company", "phone"];
+
+const send = async <T,>(method: string, path: string, body?: unknown): Promise<T> => {
+  const response = await fetch(`/api/company/phone${path}`, {
+    method,
+    credentials: "same-origin",
+    headers: body === undefined ? undefined : { "content-type": "application/json" },
+    body: body === undefined ? undefined : JSON.stringify(body),
+  });
+  const result = (await response.json().catch(() => ({}))) as T & { error?: string };
+  if (!response.ok) throw new Error(result.error ?? String(response.status));
+  return result;
+};
+
+const useAdminChange = <T,>(change: (value: T) => Promise<unknown>) => {
+  const queryClient = useQueryClient();
+  const toast = useToast();
+  return useMutation({
+    mutationFn: change,
+    onError: (error) => toast.show(m.common_error({ message: error.message }), "error"),
+    onSettled: async () => {
+      await queryClient.invalidateQueries({ queryKey: ADMIN_KEY });
+      await queryClient.invalidateQueries({ queryKey: PHONE_KEY });
+    },
+  });
+};
+
+const boxState = (box: Admin["boxes"][number]) =>
+  !box.paired
+    ? m.phone_box_waiting()
+    : [
+        box.online ? m.phone_box_online() : m.phone_box_offline(),
+        box.status?.registered ? m.phone_box_registered() : m.phone_box_unregistered(),
+      ].join(" · ");
+
+const Boxes = ({ boxes }: { boxes: Admin["boxes"] }) => {
+  const [name, setName] = useState<string>(m.phone_box_name_default());
+  const [code, setCode] = useState<string | null>(null);
+  const pairBox = useAdminChange(async (boxName: string) => {
+    const result = await send<{ code: string }>("POST", "/boxes", { name: boxName });
+    setCode(result.code);
+  });
+  const remove = useAdminChange((id: string) => send("DELETE", `/boxes/${encodeURIComponent(id)}`));
+  const origin = location.origin;
+  return (
+    <SettingsCard title={m.phone_box()}>
+      {boxes.length ? (
+        <ul className="m-0 flex list-none flex-col gap-2 p-0">
+          {boxes.map((box) => (
+            <li key={box.id} className="flex items-center gap-2 text-[14px]">
+              <span className="flex-1">
+                <span className="font-medium">{box.name}</span>
+                <span className="text-muted"> · {boxState(box)}</span>
+              </span>
+              <Button
+                size="sm"
+                variant="danger"
+                onClick={() => {
+                  if (window.confirm(m.phone_box_remove_confirm({ name: box.name }))) {
+                    remove.mutate(box.id);
+                  }
+                }}
+              >
+                {m.phone_box_remove()}
+              </Button>
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <p className="m-0 text-[13px] text-muted">{m.phone_box_none()}</p>
+      )}
+      <form
+        className="flex flex-wrap items-end gap-2"
+        onSubmit={(event) => {
+          event.preventDefault();
+          pairBox.mutate(name.trim());
+        }}
+      >
+        <Label className="min-w-0 flex-1">
+          {m.phone_box_name()}
+          <Input value={name} onChange={(event) => setName(event.target.value)} required />
+        </Label>
+        <Button type="submit" disabled={pairBox.isPending || !name.trim()}>
+          {m.phone_box_pair()}
+        </Button>
+      </form>
+      {code ? (
+        <div role="status" className="flex flex-col gap-1.5 rounded-lg bg-subtle p-3 text-[13px]">
+          <strong className="font-mono text-[15px]">{m.phone_box_code({ code })}</strong>
+          <span className="text-muted">{m.phone_box_code_hint()}</span>
+          <code className="overflow-x-auto font-mono text-[12px] whitespace-pre">
+            {`docker run -d --name kontext-box --network host --restart unless-stopped \\\n  -v kontext-box:/data -e KONTEXT_URL=${origin} -e PAIRING_CODE=${code} \\\n  docker.io/tristanteu/kontext-box`}
+          </code>
+        </div>
+      ) : null}
+    </SettingsCard>
+  );
+};
+
+const LineForm = ({ line }: { line: Admin["line"] }) => {
+  const toast = useToast();
+  const [registrar, setRegistrar] = useState(line?.registrar ?? "fritz.box");
+  const [username, setUsername] = useState(line?.username ?? "");
+  const [password, setPassword] = useState("");
+  const save = useAdminChange(() => send("PUT", "/line", { registrar, username, password }));
+  const submit = async (event: FormEvent) => {
+    event.preventDefault();
+    await save.mutateAsync(undefined);
+    setPassword("");
+    toast.show(m.company_saved());
+  };
+  return (
+    <SettingsCard title={m.phone_line()} description={m.phone_line_hint()}>
+      <form onSubmit={(event) => void submit(event)} className="flex flex-col gap-3">
+        <Label>
+          {m.phone_line_registrar()}
+          <Input
+            value={registrar}
+            onChange={(event) => setRegistrar(event.target.value)}
+            required
+          />
+        </Label>
+        <Label>
+          {m.phone_line_username()}
+          <Input
+            value={username}
+            onChange={(event) => setUsername(event.target.value)}
+            autoComplete="off"
+            required
+          />
+        </Label>
+        <Label>
+          {m.phone_line_password()}
+          <Input
+            type="password"
+            value={password}
+            onChange={(event) => setPassword(event.target.value)}
+            autoComplete="new-password"
+            placeholder={line?.hasPassword ? m.phone_line_password_keep() : ""}
+            required={!line?.hasPassword}
+          />
+        </Label>
+        <Button type="submit" variant="primary" className="self-start" disabled={save.isPending}>
+          {m.company_save()}
+        </Button>
+      </form>
+    </SettingsCard>
+  );
+};
+
+const RingForm = ({ ring }: { ring: string[] }) => {
+  const toast = useToast();
+  const { data: company } = useCompany();
+  const [chosen, setChosen] = useState(ring);
+  const save = useAdminChange(() => send("PUT", "/ring", { members: chosen }));
+  const employees = (company?.employees ?? []).filter((employee) => employee.active);
+  return (
+    <SettingsCard title={m.phone_ring()} description={m.phone_ring_hint()}>
+      <fieldset className="m-0 flex flex-col gap-2 border-0 p-0">
+        <legend className="sr-only">{m.phone_ring()}</legend>
+        {employees.map((employee) => (
+          <label key={employee.id} className="flex items-center gap-2 text-[14px]">
+            <input
+              type="checkbox"
+              checked={chosen.includes(employee.id)}
+              onChange={(event) =>
+                setChosen((current) =>
+                  event.target.checked
+                    ? [...current, employee.id]
+                    : current.filter((id) => id !== employee.id),
+                )
+              }
+              className="size-4 accent-[var(--accent)]"
+            />
+            {employee.fullName}
+          </label>
+        ))}
+      </fieldset>
+      <Button
+        variant="primary"
+        className="self-start"
+        disabled={save.isPending}
+        onClick={async () => {
+          await save.mutateAsync(undefined);
+          toast.show(m.company_saved());
+        }}
+      >
+        {m.company_save()}
+      </Button>
+    </SettingsCard>
+  );
+};
+
+export const PhoneSettingsSection = () => {
+  const { data } = useQuery({ queryKey: ADMIN_KEY, queryFn: () => send<Admin>("GET", "") });
+  return (
+    <>
+      <p className="m-0 text-[13px] text-muted">{m.phone_settings_hint()}</p>
+      {data ? (
+        <>
+          <p
+            role="status"
+            className={data.sip.ok ? "m-0 text-[13px] text-ok" : "m-0 text-[13px] text-danger"}
+          >
+            {data.sip.ok ? m.phone_sip_ok() : m.phone_sip_error({ error: data.sip.error })}
+          </p>
+          <Boxes boxes={data.boxes} />
+          <LineForm line={data.line} />
+          <RingForm ring={data.ring} />
+        </>
+      ) : null}
+    </>
+  );
+};
