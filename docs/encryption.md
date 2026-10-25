@@ -106,6 +106,9 @@ Ein Schalter für Mails nach außen; Kontext nimmt je Empfänger den besten Weg:
 1. **Hat einen PGP-Schlüssel** → PGP (Baustein 3).
 2. **Hat ein S/MIME-Zertifikat** (häufig bei Behörden und Kanzleien) → S/MIME, verschlüsselt
    (AES-256) und unterschrieben (SHA-256), im Browser gebaut (`src/lib/smime.ts`, node-forge).
+   Die RSA-Signatur einer empfangenen Mail prüft nicht node-forge, sondern WebCrypto im Browser:
+   node-forge bis 1.4.0 nimmt dabei auch gefälschte Signaturen an (GHSA-86w9-cpqp-85rv, noch ohne
+   behobene Version); `bun audit` übergeht diese eine Meldung deshalb.
    - Das eigene Zertifikat kommt als .p12-Datei einer Zertifizierungsstelle unter Einstellungen →
      Verschlüsselung. Der Server bewahrt die Datei auf, wie sie ist – mit ihrem Passwort
      verschlüsselt, das nur der Browser bekommt (`server/smime/`). Geöffnet bleibt sie bis zum

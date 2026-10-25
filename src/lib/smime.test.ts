@@ -149,4 +149,29 @@ describe("S/MIME", () => {
     expect(read.text.trim()).toBe("Anbei der Antrag.");
     expect(read.signature).toMatchObject({ state: "valid", email: "jonas@weber.test" });
   });
+
+  it("refuses a signature whose RSA value was changed (checked by WebCrypto)", async () => {
+    const raw = await smimeSignedMail({
+      envelope,
+      content: { text: "Betrag: 100 Euro", html: "<p>100</p>", attachments: [] },
+      own: jonas,
+      id: "t4",
+    });
+    const part = raw.match(
+      /Content-Type: application\/pkcs7-signature[\s\S]*?\r?\n\r?\n([A-Za-z0-9+/=\r\n]+)/,
+    );
+    const base64 = part![1]!.trim();
+    // The SignerInfo's last field is the RSA signature itself; one bit of it changes.
+    const info = forge.asn1.fromDer(atob(base64.replace(/\s+/g, "")));
+    const signedData = (info.value as forge.asn1.Asn1[])[1]!.value[0] as forge.asn1.Asn1;
+    const signerInfos = (signedData.value as forge.asn1.Asn1[]).at(-1)!;
+    const signerInfo = (signerInfos.value as forge.asn1.Asn1[])[0]!;
+    const value = (signerInfo.value as forge.asn1.Asn1[]).at(-1)!;
+    const bytes = value.value as string;
+    value.value = `${bytes.slice(0, -1)}${String.fromCharCode(bytes.charCodeAt(bytes.length - 1) ^ 1)}`;
+    const tampered = btoa(forge.asn1.toDer(info).getBytes()).replace(/.{76}/g, "$&\r\n");
+    const changed = raw.replace(base64, tampered);
+    expect((await readSmime(raw, null)).signature.state).toBe("valid");
+    expect((await readSmime(changed, null)).signature.state).toBe("invalid");
+  });
 });

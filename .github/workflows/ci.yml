@@ -36,7 +36,10 @@ jobs:
       - run: bun run test
       - run: bun run build
       # Known vulnerabilities in dependencies (high and critical fail the build).
-      - run: bun audit --audit-level=high
+      # GHSA-86w9-cpqp-85rv (node-forge <= 1.4.0, no fixed release yet) is in forge's RSA
+      # signature check, which Kontext does not use: S/MIME signatures are checked by WebCrypto
+      # in the browser (src/lib/smime.ts) and by node:crypto on the server (server/smime).
+      - run: bun audit --audit-level=high --ignore GHSA-86w9-cpqp-85rv
 
   docs:
     name: Documentation

@@ -1,9 +1,10 @@
 /**
  * S/MIME (RFC 8551) for mails to and from authorities and law firms (docs/encryption.md,
  * building block 4): one's certificate from a .p12 file, others' certificates, reading encrypted
- * and signed mails, sending encrypted and signed. node-forge does RSA with PKCS#1 v1.5, which the
- * browser's own crypto lacks; signatures are checked here, as forge does not. Loaded only when
- * needed.
+ * and signed mails, sending encrypted and signed. node-forge does RSA encryption with PKCS#1 v1.5,
+ * which the browser's own crypto lacks; signatures are checked here, as forge does not, and their
+ * RSA part by the browser's WebCrypto: forge's own check takes forged signatures up to 1.4.0
+ * (GHSA-86w9-cpqp-85rv). Loaded only when needed.
  */
 import type { asn1 as forgeAsn1, pkcs7, pki, util } from "node-forge";
 import {
@@ -109,6 +110,29 @@ const OIDS = {
   certBag: "1.2.840.113549.1.12.10.1.3",
   aes256Cbc: "2.16.840.1.101.3.4.1.42",
   sha512: "2.16.840.1.101.3.4.2.3",
+};
+
+/** WebCrypto's names of the digests a signature may use, by OID. */
+const WEB_HASHES: Record<string, string> = {
+  [OIDS.sha1]: "SHA-1",
+  [OIDS.sha256]: "SHA-256",
+  [OIDS.sha384]: "SHA-384",
+  [OIDS.sha512]: "SHA-512",
+};
+
+/**
+ * An RSA signature (PKCS#1 v1.5, RFC 8017 §8.2) over `data` by the key in `spki`, checked by
+ * WebCrypto, which hashes `data` itself and parses the signature strictly.
+ */
+const rsaVerifies = async (
+  spki: Uint8Array<ArrayBuffer>,
+  hash: string,
+  signature: Uint8Array<ArrayBuffer>,
+  data: Uint8Array<ArrayBuffer>,
+): Promise<boolean> => {
+  const algorithm = { name: "RSASSA-PKCS1-v1_5", hash };
+  const key = await crypto.subtle.importKey("spki", spki, algorithm, false, ["verify"]);
+  return crypto.subtle.verify(algorithm, key, signature, data);
 };
 
 export type OwnSmime = { key: pki.rsa.PrivateKey; cert: pki.Certificate; info: CertInfo };
@@ -217,11 +241,11 @@ export const checkSignedData = async (
     }
     // The signature is over the attributes, encoded as a SET.
     const set = asn1.create(asn1.Class.UNIVERSAL, asn1.Type.SET, true, attrs.value as Asn1[]);
-    const attrsDigest = md();
-    attrsDigest.update(asn1.toDer(set).getBytes());
-    const ok = (signer.publicKey as pki.rsa.PublicKey).verify(
-      attrsDigest.digest().getBytes(),
-      signature,
+    const ok = await rsaVerifies(
+      binaryToBytes(asn1.toDer(forge.pki.publicKeyToAsn1(signer.publicKey)).getBytes()),
+      WEB_HASHES[digestOid] ?? "SHA-256",
+      binaryToBytes(signature),
+      binaryToBytes(asn1.toDer(set).getBytes()),
     );
     if (!ok) return { signature: { state: "invalid" }, content };
     const described = await describeCert(signer);
