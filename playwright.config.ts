@@ -38,13 +38,19 @@ export default defineConfig({
   projects: [
     {
       name: "desktop",
-      use: { ...devices["Desktop Chrome"], viewport: { width: 1440, height: 900 }, launchOptions },
+      use: {
+        ...devices["Desktop Chrome"],
+        viewport: { width: 1440, height: 900 },
+        launchOptions,
+        // The built app brings its service worker; the PWA tests have their own (project "pwa").
+        serviceWorkers: "block",
+      },
       grepInvert: /@phone|@screenshots/,
       testIgnore: /pwa\.spec\.ts/,
     },
     {
       name: "phone",
-      use: { ...devices["Pixel 7"], launchOptions },
+      use: { ...devices["Pixel 7"], launchOptions, serviceWorkers: "block" },
       grep: /@phone/,
       testIgnore: /pwa\.spec\.ts/,
     },
@@ -123,7 +129,11 @@ export default defineConfig({
       timeout: 60_000,
     },
     {
-      command: `bunx vite --port ${APP_PORT}`,
+      // `bun run e2e` builds the app first (E2E_BUILT): the built one loads at once, while Vite's
+      // dev server translates every module on its first request. Without it, the dev server.
+      command: process.env.E2E_BUILT
+        ? `bunx vite preview --port ${APP_PORT}`
+        : `bunx vite --port ${APP_PORT}`,
       url: `http://localhost:${APP_PORT}`,
       env: {
         KONTEXT_SERVER: `http://127.0.0.1:${SERVER_PORT}`,

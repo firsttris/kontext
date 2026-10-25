@@ -118,7 +118,13 @@ und „Team“, Termine der laufenden Woche, eine wöchentliche Teambesprechung 
 
 `bun run check` macht Typen, Lint, Unit- und Komponententests und den Build. `bun run e2e` baut
 die App vorher (`vite build`), weil die PWA-Tests den Service Worker brauchen, den es nur im Build
-gibt; im Dev-Server ist er bewusst aus, damit Neuladen nichts aus einem Cache holt. Die lokale Instanz
+gibt; im Dev-Server ist er bewusst aus, damit Neuladen nichts aus einem Cache holt. Die übrigen
+Tests laufen dann auch gegen die gebaute App (`vite preview`, `E2E_BUILT=1`), die sofort lädt,
+statt jedes Modul erst beim ersten Aufruf zu übersetzen; ihr Service Worker ist dort blockiert.
+Wer `playwright test` direkt startet, bekommt den Dev-Server. Angemeldet wird jede Person einmal
+pro Testlauf über das Formular; danach starten ihre Tests mit den Cookies dieser Sitzung
+(`login` in `e2e/helpers.ts`), und nach Abmelden, Sperren oder neuem Passwort wieder mit dem
+Formular. Die lokale Instanz
 erlaubt IMAP-Anmeldungen ohne TLS (nur auf 127.0.0.1), damit Mailprogramme und die
 Integrationstests sich verbinden können.
 

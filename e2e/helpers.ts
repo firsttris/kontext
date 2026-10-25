@@ -1,4 +1,4 @@
-import { expect, type Page } from "@playwright/test";
+import { type Cookie, expect, type Page } from "@playwright/test";
 import { DEV_DOMAIN, DEV_PASSWORD } from "../dev/config";
 import { assertSetOk, createJmapClient } from "../src/jmap/client";
 
@@ -6,12 +6,37 @@ export const STALWART = "http://127.0.0.1:28080";
 
 export const address = (user: string) => `${user}@${DEV_DOMAIN}`;
 
-export const login = async (page: Page, user = "jonas") => {
+/**
+ * The session cookies of each person's last sign-in in this test worker: the next test of theirs
+ * starts with them instead of the sign-in form (it takes a few seconds, and nearly every test signs
+ * in). A session that has ended since (signed out, locked, new password) leads to the form again.
+ */
+const sessions = new Map<string, Cookie[]>();
+
+const signInWithForm = async (page: Page, user: string) => {
   await page.goto("/login");
   await page.getByLabel("E-Mail-Adresse").fill(address(user));
   await page.getByLabel("Passwort").fill(DEV_PASSWORD);
   await page.getByRole("button", { name: "Anmelden" }).click();
   await expect(page).toHaveURL(/\/mail\//);
+  sessions.set(user, await page.context().cookies());
+};
+
+/** Whether the kept session still holds: the app opens Mail with it, not the sign-in page. */
+const signedInWithKept = async (page: Page, user: string) => {
+  const kept = sessions.get(user);
+  if (!kept) return false;
+  await page.context().addCookies(kept);
+  await page.goto("/mail");
+  await page.waitForURL(/\/(mail\/|login)/);
+  if (/\/mail\//.test(page.url())) return true;
+  sessions.delete(user);
+  await page.context().clearCookies();
+  return false;
+};
+
+export const login = async (page: Page, user = "jonas") => {
+  if (!(await signedInWithKept(page, user))) await signInWithForm(page, user);
   // Mails go out at once in the tests; "Rückgängig" has its own (e2e/send-later.spec.ts).
   await page.evaluate(() => window.localStorage.setItem("kontext.mail.undo", "0"));
 };

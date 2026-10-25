@@ -114,8 +114,21 @@ jobs:
       - uses: actions/checkout@v4
       # The npm package brings the binary without curl or unzip, which the image lacks
       - run: npm install --global bun@1.4.x
-      # readpst for the Outlook move (server/migration/pst.ts)
-      - run: apt-get update && apt-get install -y --no-install-recommends pst-utils
+      # readpst for the Outlook move (server/migration/pst.ts); its packages are kept, so only the
+      # first run after a new image asks the package index (apt-get update takes the time).
+      - uses: actions/cache@v4
+        with:
+          path: .dev/apt
+          key: pst-utils-${{ needs.image.outputs.image }}
+      - run: |
+          if ! ls .dev/apt/*.deb > /dev/null 2>&1; then
+            apt-get update
+            apt-get install -y --no-install-recommends --download-only pst-utils
+            mkdir -p .dev/apt
+            cp /var/cache/apt/archives/*.deb .dev/apt/
+          fi
+          dpkg -i .dev/apt/*.deb
+          command -v readpst
       - uses: actions/cache@v4
         with:
           path: .dev/bin
