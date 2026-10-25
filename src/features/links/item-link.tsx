@@ -1,12 +1,20 @@
 /**
- * A link to something in Kontext by its kind: a mail, task, contact, appointment, chat message or
- * phone call – for task links and chat cards alike.
+ * A link to something in Kontext by its kind: a mail, task, contact, appointment, chat message,
+ * phone call or a file in Dokumente – for task links and chat cards alike.
  */
 import { Link } from "@tanstack/react-router";
-import { CalendarDays, ListChecks, Mail, MessagesSquare, Phone, User } from "lucide-react";
+import {
+  CalendarDays,
+  FileText,
+  ListChecks,
+  Mail,
+  MessagesSquare,
+  Phone,
+  User,
+} from "lucide-react";
 import type { ReactNode } from "react";
 
-export type ItemKind = "mail" | "task" | "contact" | "event" | "chat" | "call";
+export type ItemKind = "mail" | "task" | "contact" | "event" | "chat" | "call" | "document";
 
 export type ItemRef = {
   kind: ItemKind;
@@ -23,6 +31,7 @@ const ICONS = {
   event: CalendarDays,
   chat: MessagesSquare,
   call: Phone,
+  document: FileText,
 } as const;
 
 export const LinkIcon = ({ kind, size = 16 }: { kind: ItemKind; size?: number }) => {
@@ -62,6 +71,13 @@ export const ItemLink = ({
   if (kind === "event") {
     return (
       <Link to="/calendar" search={{ event: ref, account: accountId }} className={className}>
+        {children}
+      </Link>
+    );
+  }
+  if (kind === "document") {
+    return (
+      <Link to="/documents/$" params={{ _splat: `edit/${ref}` }} className={className}>
         {children}
       </Link>
     );

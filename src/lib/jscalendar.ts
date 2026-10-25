@@ -32,6 +32,8 @@ export type CalendarEvent = {
   /** Online places, such as the link to a Kontext meeting (RFC 8984 §5.1.6). */
   virtualLocations?: Record<string, { name?: string; uri?: string }>;
   participants?: Record<string, Participant>;
+  /** Links to what belongs to it, such as documents of Dokumente (RFC 8984 §4.2.7). */
+  links?: Record<string, { href: string; title?: string }> | null;
   organizerCalendarAddress?: string;
   /** "free" when the time does not count as busy (RFC 8984 §5.2.2); "busy" when left out. */
   freeBusyStatus?: "free" | "busy";

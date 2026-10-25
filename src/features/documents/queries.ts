@@ -3,7 +3,10 @@
  * folder holds, and moving files between mail and documents (server/documents/routes.ts).
  */
 import { useQuery } from "@tanstack/react-query";
+import { useCallback } from "react";
+import { useToast } from "@/components/ui/toast";
 import type { OutgoingAttachment } from "@/jmap/mail";
+import { m } from "@/paraglide/messages";
 
 type DocumentsConfig = { url: string | null; connected: boolean };
 
@@ -63,3 +66,26 @@ export const saveAttachment = (input: {
 /** A file of Dokumente as an attachment of a mail written from this account. */
 export const attachDocument = (input: { accountId: string; fileId: string }) =>
   send<OutgoingAttachment>("POST", "/attach", input);
+
+/** Lets colleagues view a file of the one who asks; their addresses, the asker's own is skipped. */
+export const shareDocument = (input: { fileId: string; emails: string[] }) =>
+  send<{ shared: string[] }>("POST", "/share", input);
+
+/**
+ * Shares a file that went into a chat, a task or an appointment with the people there. The link
+ * stays when this fails (only the owner can share); the person learns why.
+ */
+export const useShareDocument = () => {
+  const toast = useToast();
+  return useCallback(
+    async (fileId: string, emails: string[]) => {
+      if (emails.length === 0) return;
+      try {
+        await shareDocument({ fileId, emails });
+      } catch (error) {
+        toast.show(m.documents_shared_failed({ message: (error as Error).message }), "error");
+      }
+    },
+    [toast],
+  );
+};

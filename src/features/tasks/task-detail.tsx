@@ -8,8 +8,12 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input, Label, Select, Textarea } from "@/components/ui/input";
 import { useToast } from "@/components/ui/toast";
+import { LinkDocument } from "@/features/documents/document-actions";
+import { useDocumentsConnected } from "@/features/documents/queries";
+import { useShareWith } from "@/features/documents/use-share-with";
 import { ItemLink, LinkIcon } from "@/features/links/item-link";
 import { cn } from "@/lib/cn";
+import { documentLink } from "@/lib/document-links";
 import { shortAddress } from "@/lib/mail-accounts";
 import { shiftedReminder } from "@/lib/task-reminders";
 import { columnLabel, dueLabel, REPEAT_LABELS, REPEATS, type Repeat, type Task } from "@/lib/tasks";
@@ -30,6 +34,8 @@ const createdFormat = new Intl.DateTimeFormat("de-DE", {
 
 export const TaskDetail = ({ task, onClose }: { task: Task; onClose?: () => void }) => {
   const actions = useTaskActions();
+  const documentsConnected = useDocumentsConnected();
+  const shareWith = useShareWith();
   const toast = useToast();
   const navigate = useNavigate();
   const people = usePeople();
@@ -157,7 +163,13 @@ export const TaskDetail = ({ task, onClose }: { task: Task; onClose?: () => void
               {m.tasks_assignee()}
               <Select
                 value={task.assigneeId ?? ""}
-                onChange={(e) => void save({ assigneeId: e.target.value || null })}
+                onChange={(e) => {
+                  const assigneeId = e.target.value || null;
+                  void save({ assigneeId });
+                  // Whoever takes it over can open its documents too.
+                  for (const link of task.links)
+                    if (link.kind === "document") shareWith.task(assigneeId, link.ref);
+                }}
               >
                 <option value="">{m.tasks_nobody()}</option>
                 {people.map((person) => (
@@ -256,7 +268,7 @@ export const TaskDetail = ({ task, onClose }: { task: Task; onClose?: () => void
               onBlur={() => notes !== task.notes && void save({ notes })}
             />
           </Label>
-          {task.links.length ? (
+          {task.links.length || documentsConnected ? (
             <div className="flex flex-col gap-2">
               <span className="text-[12px] font-semibold tracking-wide text-muted uppercase">
                 {m.tasks_links()}
@@ -278,6 +290,14 @@ export const TaskDetail = ({ task, onClose }: { task: Task; onClose?: () => void
                   </span>
                 </ItemLink>
               ))}
+              <LinkDocument
+                onPick={(file) => {
+                  if (task.links.some((link) => link.kind === "document" && link.ref === file.id))
+                    return;
+                  void save({ links: [...task.links, documentLink(file)] });
+                  shareWith.task(task.assigneeId, file.id);
+                }}
+              />
             </div>
           ) : null}
           <span className="text-[12px] text-muted">

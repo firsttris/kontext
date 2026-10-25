@@ -35,7 +35,8 @@ const CLIENT_ID = "schreibzeug";
 type Person = { sub: string; email: string; name: string };
 const sessions = new Map<string, Person>();
 const pending = new Map<string, { verifier: string; path: string }>();
-const files = new Map<string, { owner: string; file: File }>();
+/** Files by id, each with its owner's address (what Kontext's tokens name) and who it is shared with. */
+const files = new Map<string, { owner: string; file: File; sharedWith: Map<string, string> }>();
 
 const base64url = (bytes: ArrayBuffer | Uint8Array) =>
   Buffer.from(bytes as Uint8Array).toString("base64url");
@@ -133,7 +134,7 @@ const api = async (request: Request, url: URL) => {
       { error: { kind: "unauthorized", message: "Bitte melde dich an." } },
       { status: 401 },
     );
-  const own = [...files.entries()].filter(([, file]) => file.owner === person.sub);
+  const own = [...files.entries()].filter(([, file]) => file.owner === person.email);
   if (request.method === "GET" && url.pathname === "/api/nodes")
     return Response.json({
       folder: null,
@@ -153,16 +154,39 @@ const api = async (request: Request, url: URL) => {
         { status: 409 },
       );
     const id = crypto.randomUUID();
-    files.set(id, { owner: person.sub, file: upload });
+    files.set(id, { owner: person.email, file: upload, sharedWith: new Map() });
     return Response.json(node(id, upload), { status: 201 });
   }
   const id = url.pathname.match(/^\/api\/(?:nodes|files)\/([^/]+)/)?.[1] ?? "";
   const stored = files.get(id);
-  if (!stored || stored.owner !== person.sub)
+  if (!stored || stored.owner !== person.email)
     return Response.json({ error: { kind: "not_found" } }, { status: 404 });
+  if (request.method === "PUT" && url.pathname.endsWith("/shares")) {
+    const { email, role } = (await request.json()) as { email: string; role: string };
+    stored.sharedWith.set(email, role);
+    return Response.json(
+      [...stored.sharedWith].map(([address, given]) => ({ email: address, role: given })),
+    );
+  }
   if (url.pathname.endsWith("/content"))
     return new Response(stored.file, { headers: { "content-type": stored.file.type } });
   return Response.json(node(id, stored.file));
+};
+
+/**
+ * For the tests only: a file of someone's (`POST /e2e/files` with `{ owner, name }`), and whom a
+ * file was shared with (`GET /e2e/shares/<id>`).
+ */
+const e2e = async (request: Request, url: URL) => {
+  if (request.method === "POST" && url.pathname === "/e2e/files") {
+    const { owner, name } = (await request.json()) as { owner: string; name: string };
+    const id = crypto.randomUUID();
+    const file = new File(["Inhalt"], name, { type: "application/octet-stream" });
+    files.set(id, { owner: owner.toLowerCase(), file, sharedWith: new Map() });
+    return Response.json(node(id, file), { status: 201 });
+  }
+  const shared = files.get(url.pathname.replace("/e2e/shares/", ""));
+  return Response.json(shared ? Object.fromEntries(shared.sharedWith) : null);
 };
 
 /** Schreibzeug's side of the frame: who is signed in, the page, and its messages to Kontext. */
@@ -209,6 +233,7 @@ const server = Bun.serve({
   fetch: async (request) => {
     const url = new URL(request.url);
     if (url.pathname.startsWith("/api/auth/callback/oidc")) return finishSignIn(url);
+    if (url.pathname.startsWith("/e2e/")) return e2e(request, url);
     if (url.pathname.startsWith("/api/")) return api(request, url);
     if (request.method === "POST" && url.pathname === "/logout") {
       const id = request.headers.get("cookie")?.match(/fake_schreibzeug=([^;]+)/)?.[1];

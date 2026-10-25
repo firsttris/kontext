@@ -10,6 +10,7 @@ import { type DragEvent, useEffect, useLayoutEffect, useRef, useState } from "re
 import { Button } from "@/components/ui/button";
 import { useMediaQuery } from "@/components/use-media-query";
 import { CallButtons } from "@/features/calls/call-buttons";
+import { useShareWith } from "@/features/documents/use-share-with";
 import { TaskDialog, type TaskStart } from "@/features/tasks/task-dialog";
 import { type ChannelSummary, firstName, type Message, readBy, timeline } from "@/lib/chat";
 import { taskFromMessage } from "@/lib/chat-cards";
@@ -80,6 +81,7 @@ export const Conversation = ({
     loadingOlder,
   } = useMessages(channel.id);
   const actions = useChatActions(me);
+  const shareWith = useShareWith();
   const react = useReact(me);
   const typing = useTyping(channel.id);
   const title = titleOf(channel);
@@ -375,6 +377,7 @@ export const Conversation = ({
                     file.uploaded ? [file.uploaded] : [],
                   ),
                 });
+                shareWith.channel(channel, attachments.cards);
                 attachments.clear();
               }}
             />

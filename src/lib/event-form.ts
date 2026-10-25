@@ -1,4 +1,6 @@
 /** The event editor's form and the JSCalendar properties it becomes (RFC 8984). */
+
+import { documentsOfLinks, type LinkedDocument, withDocuments } from "./document-links";
 import {
   attendees,
   type CalendarEvent,
@@ -30,6 +32,8 @@ export type EventForm = {
   description: string;
   /** How the event repeats; null for a rule the form cannot show, which is kept as it is. */
   recurrence: RepeatForm | null;
+  /** Files of Dokumente that belong to it, kept as its links. */
+  documents: LinkedDocument[];
 };
 
 /** `series` is the base event of an instance; its rule is what the form shows. */
@@ -58,6 +62,7 @@ export const eventToForm = (
     showAs: event.freeBusyStatus === "free" ? "free" : "busy",
     description: event.description ?? "",
     recurrence: fromRecurrenceRule((series ?? event).recurrenceRule),
+    documents: documentsOfLinks(event.links),
   };
 };
 
@@ -77,6 +82,7 @@ export const newEventForm = (startLocal: string, minutes = 60): EventForm => {
     showAs: "busy",
     description: "",
     recurrence: NO_REPEAT,
+    documents: [],
   };
 };
 
@@ -175,6 +181,7 @@ export const formToEvent = (
       : null,
     virtualLocations: withMeeting(existing?.virtualLocations, form.meeting),
     participants,
+    links: withDocuments(existing?.links, form.documents),
     organizerCalendarAddress: participants ? `mailto:${organizer.email}` : null,
     freeBusyStatus: form.showAs,
     ...(withRecurrence && form.recurrence

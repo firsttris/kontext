@@ -96,6 +96,17 @@ export const createSchreibzeug = ({
       const type = content.headers.get("content-type") ?? "application/octet-stream";
       return new File([await content.arrayBuffer()], node.name, { type });
     },
+    /**
+     * Lets someone open a file (or a folder) by their address, as the owner may; an address without
+     * an account at Schreibzeug holds once the person first comes through Kontext.
+     */
+    share: async (person: Person, nodeId: string, email: string, role: "view" | "edit") => {
+      await call(person, `/nodes/${encodeURIComponent(nodeId)}/shares`, {
+        method: "PUT",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ email, role }),
+      });
+    },
     /** Whether Schreibzeug answers at all (checked once at start). */
     reachable: async (): Promise<boolean> =>
       fetch(`${url}/api/health`)

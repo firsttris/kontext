@@ -68,7 +68,8 @@ export type MailCopy = {
  * A mail, task or contact in a message, as a card. The label and detail are a snapshot taken when
  * it was shared, so whoever cannot open the mailbox still sees what it is about.
  */
-export const CARD_KINDS = ["mail", "task", "contact"] as const;
+/** document: a file in Dokumente (Schreibzeug), `ref` its id there; access is Schreibzeug's. */
+export const CARD_KINDS = ["mail", "task", "contact", "document"] as const;
 export const cardSchema = z.object({
   kind: z.enum(CARD_KINDS),
   /** The account it lives in (mailbox, task board, address book's account). */

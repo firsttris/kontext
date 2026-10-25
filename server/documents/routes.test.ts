@@ -9,6 +9,7 @@ const jonas: Person = { id: "u1", email: "jonas@weber.test", name: "Jonas Weber"
 const fakes = () => {
   const stored: { person: Person; folderId: string | null; name: string; text: string }[] = [];
   const uploaded: { token: string; accountId: string; text: string; type: string }[] = [];
+  const shared: { nodeId: string; email: string; role: string }[] = [];
   const schreibzeug: Schreibzeug = {
     list: async (_person, folderId) => ({
       folder: null,
@@ -22,6 +23,10 @@ const fakes = () => {
       return { id: "n1", kind: "file", name: file.name };
     },
     download: async () => new File(["Angebot"], "Angebot.docx", { type: "application/x-docx" }),
+    share: async (_person, nodeId, email, role) => {
+      if (nodeId === "foreign") throw new Error("Das darf nur, wem es gehört.");
+      shared.push({ nodeId, email, role });
+    },
     reachable: async () => true,
   };
   const deps: DocumentsDeps = {
@@ -37,7 +42,7 @@ const fakes = () => {
       },
     },
   };
-  return { deps, stored, uploaded };
+  return { deps, stored, uploaded, shared };
 };
 
 const post = (path: string, body: unknown, cookie = "session") =>
@@ -101,5 +106,16 @@ describe("/api/documents", () => {
     expect(uploaded).toEqual([
       { token: "st", accountId: "a1", text: "Angebot", type: "application/x-docx" },
     ]);
+  });
+
+  it("lets colleagues view a file, not the one who shares it", async () => {
+    const { deps, shared } = fakes();
+    const app = createDocumentsRoutes(deps);
+    const emails = ["anna@weber.test", "Jonas@weber.test", "ANNA@weber.test"];
+    const reply = await app.request(post("/share", { fileId: "n1", emails }));
+    expect(await reply.json()).toEqual({ shared: ["anna@weber.test"] });
+    expect(shared).toEqual([{ nodeId: "n1", email: "anna@weber.test", role: "view" }]);
+    const refused = await app.request(post("/share", { fileId: "foreign", emails }));
+    expect(await refused.json()).toEqual({ error: "Das darf nur, wem es gehört." });
   });
 });

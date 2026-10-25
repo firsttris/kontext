@@ -20,8 +20,11 @@ type PickerProps = {
   actions?: (folderId: string | null) => ReactNode;
 };
 
-/** The folder shown; mounted with the open dialog, so it starts at the top and reads afresh. */
-const PickerBody = ({
+/**
+ * One folder of Dokumente with the way back above it; mounted with the dialog that shows it, so it
+ * starts at the top and reads afresh. Also the "Dokument" tab of the chat's link picker.
+ */
+export const DocumentBrowser = ({
   mode,
   onFile,
   actions,
@@ -106,6 +109,6 @@ const PickerBody = ({
 
 export const DocumentPicker = ({ open, onOpenChange, title, ...body }: PickerProps) => (
   <Dialog open={open} onOpenChange={onOpenChange} title={title}>
-    <PickerBody {...body} onCancel={() => onOpenChange(false)} />
+    <DocumentBrowser {...body} onCancel={() => onOpenChange(false)} />
   </Dialog>
 );

@@ -1,17 +1,24 @@
 /**
  * Where mail and documents touch: an attachment goes into a folder of Dokumente (and opens there,
- * if wanted), and a document becomes an attachment of the mail being written. Shown only where
+ * if wanted), and a document becomes an attachment of the mail being written; tasks and
+ * appointments link documents. Shown only where
  * Kontext signs people in to Schreibzeug; the files go server to server (queries.ts).
  */
 import { useNavigate } from "@tanstack/react-router";
-import { FolderInput, FolderOpen } from "lucide-react";
+import { FilePlus2, FileText, FolderInput, FolderOpen, X } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/toast";
 import type { OutgoingAttachment } from "@/jmap/mail";
+import { documentHref, type LinkedDocument } from "@/lib/document-links";
 import { m } from "@/paraglide/messages";
 import { DocumentPicker } from "./document-picker";
-import { attachDocument, saveAttachment, useDocumentsConnected } from "./queries";
+import {
+  attachDocument,
+  type DocumentNode,
+  saveAttachment,
+  useDocumentsConnected,
+} from "./queries";
 
 type Attachment = { blobId: string; name: string; type: string };
 
@@ -123,5 +130,70 @@ export const AttachFromDocuments = ({
         onFile={(file) => void attach(file.id)}
       />
     </>
+  );
+};
+
+/** "Dokument verknüpfen": picks a file for a task or an appointment. */
+export const LinkDocument = ({ onPick }: { onPick: (file: DocumentNode) => void }) => {
+  const connected = useDocumentsConnected();
+  const [open, setOpen] = useState(false);
+  if (!connected) return null;
+  return (
+    <>
+      <Button variant="outline" size="sm" className="self-start" onClick={() => setOpen(true)}>
+        <FilePlus2 size={14} /> {m.documents_link()}
+      </Button>
+      <DocumentPicker
+        open={open}
+        onOpenChange={setOpen}
+        title={m.documents_link_title()}
+        mode="file"
+        onFile={(file) => {
+          setOpen(false);
+          onPick(file);
+        }}
+      />
+    </>
+  );
+};
+
+/** The documents of an appointment in its editor: each with a way to take it off, and one more. */
+export const EventDocuments = ({
+  documents,
+  onChange,
+}: {
+  documents: LinkedDocument[];
+  onChange: (documents: LinkedDocument[]) => void;
+}) => {
+  const connected = useDocumentsConnected();
+  if (!connected && documents.length === 0) return null;
+  return (
+    <div className="flex flex-col gap-2">
+      <span className="text-[13px] text-muted">{m.calendar_documents()}</span>
+      {documents.map((document) => (
+        <span
+          key={document.id}
+          className="flex items-center gap-2 rounded-lg border border-border px-2.5 py-1.5 text-[13px]"
+        >
+          <FileText size={14} className="shrink-0 text-muted" aria-hidden="true" />
+          <span className="min-w-0 flex-1 truncate">{document.name}</span>
+          <Button
+            variant="ghost"
+            size="iconSm"
+            aria-label={m.calendar_document_remove({ name: document.name })}
+            onClick={() => onChange(documents.filter((other) => other.id !== document.id))}
+          >
+            <X size={14} />
+          </Button>
+        </span>
+      ))}
+      <LinkDocument
+        onPick={(file) => {
+          if (documents.some((other) => other.id === file.id)) return;
+          const href = documentHref(window.location.origin, file.id);
+          onChange([...documents, { id: file.id, name: file.name, href }]);
+        }}
+      />
+    </div>
   );
 };

@@ -1168,6 +1168,25 @@ Person signiert (5 Minuten gültig, Zielgruppe `SCHREIBZEUG_URL`). Schreibzeug p
 Kontexts Schlüssel und handelt mit genau den Rechten der Person. Ein schon vergebener Name kommt
 mit Schreibzeugs Meldung zurück.
 
+**Dokumente überall, wo sie hingehören.** Eine Datei aus Dokumente lässt sich im Chat als Karte
+teilen („Mail, Aufgabe oder Kontakt verknüpfen“, Reiter „Dokument“), mit einer Aufgabe verknüpfen
+(„Dokument verknüpfen“ in der Aufgabe) und an einen Termin hängen (im Termin-Editor). Ein Klick öffnet
+sie im Modul. Beim Termin ist sie ein Link des Termins (JSCalendar `links`, RFC 8984 §4.2.7, Schlüssel
+`kontext-document-<id>`) mit der Adresse `https://<Kontext>/documents/edit/<id>`, den auch
+Thunderbird und Handys zeigen; Links aus fremden Einladungen bleiben dabei stehen. Die Logik steht in
+`src/lib/document-links.ts`.
+
+Damit die anderen die Datei auch öffnen dürfen, gibt Kontext sie ihnen dabei in Schreibzeug zum
+Ansehen frei (`POST /api/documents/share`, `src/features/documents/use-share-with.ts`): im Chat
+allen Lesern des Kanals (beim Team-Kanal allen, bei benannten und direkten den Mitgliedern; im Kanal
+eines gemeinsamen Postfachs niemandem, weil Kontext dort keine Personenliste hat), bei einer Aufgabe
+der zuständigen Person (auch nach einem Wechsel), bei einem Termin den Eingeladenen aus der Firma
+(Leute von außen können sich bei Schreibzeug nicht anmelden). Wer noch nie in Dokumente war, hat
+dort noch kein Konto: Schreibzeug merkt die Freigabe für die Adresse vor und gibt sie bei der ersten
+Anmeldung über Kontext frei. Freigeben kann nur, wem die Datei gehört; sonst bleibt die Verknüpfung
+und eine Meldung sagt, warum die anderen sie nicht öffnen können. Ob jemand eine Karte öffnen darf,
+entscheidet Schreibzeug beim Öffnen.
+
 ## Code
 
 | Ordner          | Inhalt                                                                                                                     |

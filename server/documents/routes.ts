@@ -5,7 +5,8 @@
  *
  * - `POST /save`: a mail's attachment into a folder of Dokumente (the mail stays as it is);
  * - `POST /attach`: a file of Dokumente as a blob for a mail being written;
- * - `GET /folders`: what a folder holds, for choosing where to put something or what to attach.
+ * - `GET /folders`: what a folder holds, for choosing where to put something or what to attach;
+ * - `POST /share`: lets colleagues open a file that went into a chat, a task or an appointment.
  *
  * The mail side goes with the person's own Stalwart token, the documents side with a token for the
  * person (schreibzeug.ts): each side allows only what the person may do there.
@@ -43,6 +44,11 @@ const saveSchema = z.object({
 const attachSchema = z.object({
   accountId: z.string().min(1).max(128),
   fileId: z.string().min(1).max(64),
+});
+
+const shareSchema = z.object({
+  fileId: z.string().min(1).max(64),
+  emails: z.array(z.email().max(320)).max(200),
 });
 
 const message = (error: unknown) => (error instanceof Error ? error.message : String(error));
@@ -94,6 +100,23 @@ export const createDocumentsRoutes = ({ url, schreibzeug, askerOf, blobs }: Docu
       const file = await c.get("schreibzeug").download(person, fileId);
       const blobId = await blobs.upload(stalwartToken, accountId, file);
       return c.json({ blobId, name: file.name, type: file.type, size: file.size });
+    } catch (error) {
+      return c.json({ error: message(error) }, 502);
+    }
+  });
+
+  // Viewing only; whoever should change it gets more rights in Dokumente itself.
+  app.post("/share", async (c) => {
+    const parsed = shareSchema.safeParse(await c.req.json().catch(() => null));
+    if (!parsed.success) return c.json({ error: "Angaben unvollständig." }, 400);
+    const { fileId, emails } = parsed.data;
+    const { person } = c.get("asker");
+    const others = [...new Set(emails.map((email) => email.toLowerCase()))].filter(
+      (email) => email !== person.email.toLowerCase(),
+    );
+    try {
+      for (const email of others) await c.get("schreibzeug").share(person, fileId, email, "view");
+      return c.json({ shared: others });
     } catch (error) {
       return c.json({ error: message(error) }, 502);
     }

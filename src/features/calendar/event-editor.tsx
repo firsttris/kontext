@@ -8,7 +8,10 @@ import { Button } from "@/components/ui/button";
 import { Input, Label, Select, Textarea } from "@/components/ui/input";
 import { useToast } from "@/components/ui/toast";
 import { MeetingField } from "@/features/calls/meeting-field";
+import { EventDocuments } from "@/features/documents/document-actions";
+import { useShareWith } from "@/features/documents/use-share-with";
 import {
+  attendeeEmails,
   type EventForm,
   eventToForm,
   type FormProblem,
@@ -57,6 +60,7 @@ export const EventEditor = ({ event, series, start, onDone, onCancel }: Props) =
     writable.find((calendar) => calendar.isPersonal && calendar.calendar.isDefault) ??
     writable[0];
   const toast = useToast();
+  const shareWith = useShareWith();
   const instance = event && isInstance(event) && series ? event : undefined;
   const [initial] = useState<EventForm>(() =>
     event
@@ -117,6 +121,11 @@ export const EventEditor = ({ event, series, start, onDone, onCancel }: Props) =
     );
     try {
       await save(data);
+      // The colleagues invited can open the appointment's documents.
+      shareWith.event(
+        attendeeEmails(form.attendees),
+        form.documents.map((document) => document.id),
+      );
       if (data.participants) toast.show(m.calendar_invite_sent());
       onDone();
     } catch (error) {
@@ -242,6 +251,10 @@ export const EventEditor = ({ event, series, start, onDone, onCancel }: Props) =
         {m.calendar_event_notes()}
         <Textarea value={form.description} onChange={set("description")} />
       </Label>
+      <EventDocuments
+        documents={form.documents}
+        onChange={(documents) => setForm((current) => ({ ...current, documents }))}
+      />
       {problem ? (
         <p role="alert" className="m-0 text-[13px] text-danger">
           {problem}

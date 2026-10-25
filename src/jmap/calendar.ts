@@ -19,6 +19,7 @@ const EVENT_PROPERTIES = [
   "locations",
   "virtualLocations",
   "participants",
+  "links",
   "organizerCalendarAddress",
   "freeBusyStatus",
   "recurrenceRule",
