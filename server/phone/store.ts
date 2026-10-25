@@ -40,6 +40,14 @@ const settingsSchema = z.object({
       greeting: z.string().nullable(),
     })
     .default({ enabled: false, open: [], closedDays: [], greeting: null }),
+  /** All at once, or the people in `ring`'s order, each for stepSeconds, then all. */
+  ringMode: z.enum(["all", "order"]).default("all"),
+  ringStepSeconds: z.number().int().min(5).max(60).default(15),
+  /** While it rings in Kontext, after a while also a mobile phone, E.164. */
+  forward: z
+    .object({ number: z.string(), afterSeconds: z.number().int().min(0).max(120) })
+    .nullable()
+    .default(null),
 });
 export type PhoneSettings = z.infer<typeof settingsSchema>;
 
@@ -109,6 +117,7 @@ const toCall = (row: CallDbRow): PhoneCall => ({
   offeredTo: row.offeredTo,
   offeredBy: row.offeredBy,
   present: [],
+  forwardedTo: row.forwardedTo,
 });
 
 const fromCall = ({ present: _, ...call }: PhoneCall): CallDbRow => ({

@@ -5,6 +5,7 @@
 import { Hono } from "hono";
 import { z } from "zod";
 import type { Env, Loaded } from "../company/context";
+import { toE164 } from "./numbers";
 import { hoursSchema, lineSchema } from "./protocol";
 import type { PhoneService } from "./service";
 import type { PhoneStore } from "./store";
@@ -13,7 +14,18 @@ const lineInput = lineSchema.extend({
   /** Left empty, the stored password stays. */
   password: z.string().max(200).default(""),
 });
-const ringSchema = z.object({ members: z.array(z.string().min(1).max(64)).max(200) });
+const ringSchema = z.object({
+  members: z.array(z.string().min(1).max(64)).max(200),
+  mode: z.enum(["all", "order"]).default("all"),
+  stepSeconds: z.number().int().min(5).max(60).default(15),
+  forward: z
+    .object({
+      number: z.string().trim().min(3).max(40),
+      afterSeconds: z.number().int().min(0).max(120),
+    })
+    .nullable()
+    .default(null),
+});
 const callbacksSchema = z.object({ board: z.string().min(1).max(64).nullable() });
 const mailboxSchema = z.object({
   enabled: z.boolean(),
@@ -75,6 +87,9 @@ export const createPhoneAdminRoutes = ({
           }
         : null,
       ring: settings.ring,
+      ringMode: settings.ringMode,
+      ringStepSeconds: settings.ringStepSeconds,
+      forward: settings.forward,
       callbackBoard: settings.callbackBoard,
       sounds: settings.sounds,
       mailbox: {
@@ -106,8 +121,18 @@ export const createPhoneAdminRoutes = ({
     if (!parsed.data.members.every((id) => known.has(id))) {
       return c.json({ error: "Unbekannte Person" }, 400);
     }
+    const { members, mode, stepSeconds, forward } = parsed.data;
+    const number = forward ? toE164(forward.number) : null;
+    if (forward && !number) return c.json({ error: "Keine gültige Nummer" }, 400);
     const settings = await store.settings();
-    await store.saveSettings({ ...settings, ring: [...new Set(parsed.data.members)] });
+    await store.saveSettings({
+      ...settings,
+      ring: [...new Set(members)],
+      ringMode: mode,
+      ringStepSeconds: stepSeconds,
+      forward: forward && number ? { number, afterSeconds: forward.afterSeconds } : null,
+    });
+    await service.reconfigure();
     return c.body(null, 204);
   });
 

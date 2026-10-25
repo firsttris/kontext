@@ -9,6 +9,7 @@ const config: BoxConfig = {
   sounds: [],
   mailbox: null,
   hours: null,
+  forward: null,
 };
 const paths = { sounds: "/data/sounds", recordings: "/data/recordings" };
 const greeting = "a1b2c3d4e5f6a1b2c3d4e5f6";
@@ -73,6 +74,25 @@ describe("the mailbox", () => {
     const conf = extensionsConf({ ...config, mailbox: { greeting: null, maxSeconds: 60 } }, paths);
     expect(conf).not.toContain("Playback(");
     expect(conf).toContain(",4,60,k)");
+  });
+});
+
+describe("forwarding", () => {
+  it("lets a mobile phone ring too after a while, and ends with it when it answered", () => {
+    const conf = extensionsConf(
+      { ...config, ringSeconds: 40, forward: { number: "01712345678", afterSeconds: 15 } },
+      paths,
+    );
+    expect(conf).toContain(
+      [
+        " same => n,Wait(15)",
+        " same => n,Dial(PJSIP/01712345678@fritzbox,25,U(kontext-forward-answered))",
+        ` same => n,ExecIf($["\${DIALSTATUS}" = "ANSWER"]?Hangup(16))`,
+        " same => n,Hangup(19)",
+      ].join("\n"),
+    );
+    expect(conf).toContain("[kontext-forward-answered]\nexten => s,1,UserEvent(KontextCall,");
+    expect(conf).toContain("State: answered,Direction: in,Forwarded: 1)");
   });
 });
 

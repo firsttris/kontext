@@ -32,6 +32,7 @@ const call = (extra: Partial<PhoneCall> = {}): PhoneCall => ({
   offeredTo: null,
   offeredBy: null,
   present: [],
+  forwardedTo: null,
   ...extra,
 });
 
@@ -117,5 +118,23 @@ describe("handing on", () => {
       true,
     );
     expect(handedOver({ ...talking, present: ["jonas"] }, "jonas")).toBe(false);
+  });
+});
+
+describe("ringing one after another", () => {
+  it("rings for me only when it is my turn", () => {
+    const ringingCall = call({ startedAt: "2026-10-25T09:00:00.000Z" });
+    const plan = { mode: "order" as const, stepSeconds: 15, order: ["jonas", "anna"] };
+    const at = (seconds: number) =>
+      new Date(Date.parse("2026-10-25T09:00:00.000Z") + seconds * 1000);
+    expect(ringingPhoneCall([ringingCall], "anna", [], plan, at(5))).toBeNull();
+    expect(ringingPhoneCall([ringingCall], "anna", [], plan, at(16))).toBe(ringingCall);
+    expect(ringingPhoneCall([ringingCall], "jonas", [], plan, at(16))).toBeNull();
+    expect(ringingPhoneCall([ringingCall], "jonas", [], plan, at(31))).toBe(ringingCall);
+  });
+
+  it("says when a call was taken at the mobile phone", () => {
+    const forwarded = call({ state: "ended", outcome: "answered", forwardedTo: "+491712345678" });
+    expect(outcomeText(forwarded, () => "", "jonas")).toBe("Am Handy angenommen (01712 345678)");
   });
 });

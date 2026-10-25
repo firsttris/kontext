@@ -19,6 +19,8 @@ import {
   outgoingCall,
   type PhoneCall,
   phoneNotice,
+  type RingPlan,
+  ringingFor,
   roomIsOver,
   takeCall,
 } from "./phone";
@@ -66,6 +68,13 @@ const TIMEZONE = "Europe/Berlin";
 const comingDays = (days: { day: string }[], today: string) =>
   days.map((entry) => entry.day).filter((day) => day >= today);
 
+/** The ring plan as the app and the push see it. */
+export const ringPlanOf = (settings: PhoneSettings): RingPlan => ({
+  mode: settings.ringMode,
+  stepSeconds: settings.ringStepSeconds,
+  order: settings.ring,
+});
+
 export const desiredConfig = (
   settings: PhoneSettings,
   trunkHost: string,
@@ -96,6 +105,9 @@ export const desiredConfig = (
           closedDays: comingDays(hours.closedDays, today).slice(0, 60),
           greeting: closedGreeting,
         }
+      : null,
+    forward: settings.forward
+      ? { number: toDialable(settings.forward.number), afterSeconds: settings.forward.afterSeconds }
       : null,
   };
 };
@@ -138,6 +150,25 @@ export const createPhoneService = (deps: PhoneDeps) => {
     }
   };
 
+  /**
+   * Web Push to whoever hears the call now, and later to the next ones when they ring one after
+   * another – as long as it still rings.
+   */
+  const ringPhones = (call: PhoneCall, plan: RingPlan) => {
+    const notify = (members: string[]) =>
+      void deps.notify?.(members, phoneNotice(call)).catch(() => undefined);
+    notify(ringingFor(plan, 0));
+    if (plan.mode !== "order") return;
+    plan.order.forEach((_, step) => {
+      if (step === 0) return;
+      const seconds = step * plan.stepSeconds;
+      setTimeout(async () => {
+        const now = await store.call(call.id);
+        if (now?.state === "ringing") notify(ringingFor(plan, seconds));
+      }, seconds * 1000).unref?.();
+    });
+  };
+
   const sendConfig = async (boxId?: string) => {
     const message: ToBox = {
       type: "config",
@@ -158,13 +189,14 @@ export const createPhoneService = (deps: PhoneDeps) => {
     if (!known) {
       // Calls appear when they ring here; dialled ones exist from the dial on.
       if (event.state !== "ringing" || event.direction !== "in") return;
-      const { ring } = await store.settings();
-      const call = incomingCall(event, { id: newId(), boxId, members: ring });
+      const settings = await store.settings();
+      const call = incomingCall(event, { id: newId(), boxId, members: settings.ring });
       await save(call);
-      void deps.notify?.(call.members, phoneNotice(call)).catch(() => undefined);
+      ringPhones(call, ringPlanOf(settings));
       return;
     }
-    const next = applyCallEvent(known, event);
+    const forwardTo = event.forwarded ? ((await store.settings()).forward?.number ?? null) : null;
+    const next = applyCallEvent(known, event, forwardTo);
     if (next === known) return;
     await save(next);
     if (next.outcome === "missed") {

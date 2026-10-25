@@ -314,4 +314,34 @@ test.describe("Telefonie über die Telefonbox", () => {
     await panel(page).getByRole("button", { name: "Auflegen" }).click();
     await expect(panel(page)).toHaveCount(0);
   });
+
+  test("der Reihe nach: erst Jonas, dann Anna, und nach einer Weile das Handy", async ({
+    page,
+    browser,
+  }) => {
+    await login(page);
+    await page.goto("/settings?section=phone");
+    const ring = page.getByRole("region", { name: "Wer klingelt" });
+    await ring.getByLabel("Klingeln").selectOption({ label: "Der Reihe nach, dann bei allen" });
+    await expect(ring.getByRole("list", { name: "Reihenfolge" })).toContainText("Jonas Weber");
+    await ring.getByLabel("Jeweils").selectOption({ label: "10 Sekunden" });
+    await ring.getByLabel("Auch auf einem Handy klingeln lassen").check();
+    await ring.getByLabel("Handynummer").fill("0171 2345678");
+    await ring.getByLabel("Nach", { exact: true }).selectOption({ label: "10 Sekunden" });
+    await ring.getByRole("button", { name: "Speichern" }).click();
+    await expect
+      .poll(async () => (await box.state()).config)
+      .toMatchObject({ forward: { number: "01712345678", afterSeconds: 10 } });
+
+    const anna = await colleague(browser, "anna");
+    const { call } = await box.ring("07223 81234");
+    await expect(page.getByRole("dialog", { name: "Anruf von Petra Keller" })).toBeVisible();
+    await expect(anna.page.getByRole("dialog", { name: /^Anruf von/ })).toHaveCount(0);
+    // After ten seconds it is Anna's turn.
+    await expect(anna.page.getByRole("dialog", { name: /^Anruf von/ })).toBeVisible({
+      timeout: 15_000,
+    });
+    await box.hangup(call);
+    await anna.close();
+  });
 });

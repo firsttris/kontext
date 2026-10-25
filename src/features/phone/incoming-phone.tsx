@@ -140,12 +140,26 @@ const Ringing = ({
   );
 };
 
+/** The time, every second while `ticking`. */
+const useNow = (ticking: boolean) => {
+  const [now, setNow] = useState(() => new Date());
+  useEffect(() => {
+    if (!ticking) return;
+    const timer = setInterval(() => setNow(new Date()), 1000);
+    return () => clearInterval(timer);
+  }, [ticking]);
+  return ticking ? now : new Date();
+};
+
 export const IncomingPhone = () => {
   const me = useMe();
-  const { calls, online } = usePhone();
+  const { calls, online, ringPlan } = usePhone();
   const { active, dismissed } = usePhoneStore();
   const { active: inChatCall } = useCallStore();
   const { nameOf } = useChatNames();
+  // One after another: whether it is my turn changes with the clock.
+  const waiting = ringPlan?.mode === "order" && calls.some((other) => other.state === "ringing");
+  const now = useNow(waiting);
   const offered = offeredPhoneCall(calls, me);
   if (offered && !active) {
     return (
@@ -157,7 +171,7 @@ export const IncomingPhone = () => {
       />
     );
   }
-  const call = ringingPhoneCall(calls, me, dismissed);
+  const call = ringingPhoneCall(calls, me, dismissed, ringPlan, now);
   if (!call || active) return null;
   // A colleague's call in the chat goes on; the phone still shows who rings, without answering.
   return <Ringing key={call.id} call={call} canAnswer={online && !inChatCall} />;

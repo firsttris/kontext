@@ -37,6 +37,9 @@ const SETTINGS: PhoneSettings = {
   sounds: [],
   mailbox: { enabled: false, ringSeconds: 25, greeting: null, deliverTo: null },
   hours: { enabled: false, open: [], closedDays: [], greeting: null },
+  ringMode: "all",
+  ringStepSeconds: 15,
+  forward: null,
 };
 
 const setup = (settings: Partial<PhoneSettings> = {}) => {
@@ -100,6 +103,13 @@ describe("the box's connection", () => {
       config: desiredConfig(SETTINGS, "kontext.firma.de", 5060),
     });
     expect(desiredConfig(SETTINGS, "h", 5060)).toMatchObject({ ringSeconds: 60, mailbox: null });
+    expect(
+      desiredConfig(
+        { ...SETTINGS, forward: { number: "+491712345678", afterSeconds: 15 } },
+        "h",
+        5060,
+      ).forward,
+    ).toEqual({ number: "01712345678", afterSeconds: 15 });
     const greeting = "a1b2c3d4e5f6a1b2c3d4e5f6";
     const withMailbox = {
       ...SETTINGS,
@@ -194,6 +204,20 @@ describe("an incoming call", () => {
     await box.receive(event(2, "ended", { cause: 16 }));
     expect(notices.map((n) => n.title)).toEqual(["Anruf", "Verpasster Anruf"]);
     expect(phoneEvents().filter(({ who }) => who === "jonas")).toHaveLength(2);
+  });
+
+  it("rings for the first in order, and files a call taken at the mobile phone", async () => {
+    const { box, notices, phoneEvents } = setup({
+      ringMode: "order",
+      forward: { number: "+491712345678", afterSeconds: 10 },
+    });
+    await box.receive(event(1, "ringing"));
+    expect(notices).toEqual([{ members: ["jonas"], title: "Anruf" }]);
+    await box.receive(event(2, "answered", { forwarded: true }));
+    expect(phoneEvents().at(-1)!.event.call).toMatchObject({
+      state: "talking",
+      forwardedTo: "+491712345678",
+    });
   });
 
   it("leaves Zurückrufen on the chosen board, done once someone talked to the number", async () => {

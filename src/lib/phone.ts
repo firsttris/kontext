@@ -4,10 +4,10 @@
  */
 import { m } from "@/paraglide/messages";
 import { readableNumber as readable, toE164 } from "../../server/phone/numbers";
-import type { PhoneCall } from "../../server/phone/phone";
+import { type PhoneCall, type RingPlan, ringingFor } from "../../server/phone/phone";
 import type { ContactCard } from "./jscontact";
 
-export type { PhoneCall };
+export type { PhoneCall, RingPlan };
 export { toE164 };
 
 /** The contact a number belongs to, comparing every number of every card. */
@@ -36,12 +36,19 @@ export const outcomeText = (
 ): string => {
   if (call.state === "ringing")
     return call.direction === "in" ? m.phone_ringing() : m.phone_dialing();
-  if (call.state === "talking") return m.phone_talking();
+  if (call.state === "talking") {
+    return call.forwardedTo
+      ? m.phone_outcome_forwarded({ number: readableNumber(call.forwardedTo) })
+      : m.phone_talking();
+  }
   if (call.state === "mailbox") {
     return call.outcome === "closed" ? m.phone_outcome_closed() : m.phone_on_mailbox();
   }
   switch (call.outcome) {
     case "answered":
+      if (call.forwardedTo) {
+        return m.phone_outcome_forwarded({ number: readableNumber(call.forwardedTo) });
+      }
       return call.direction === "in" && call.member && call.member !== me
         ? m.phone_outcome_answered_by({ name: nameOf(call.member) })
         : m.phone_outcome_answered();
@@ -60,11 +67,16 @@ export const outcomeText = (
   }
 };
 
-/** The call that rings here now: incoming, nobody took it, I am one of its people. */
+/**
+ * The call that rings here now: incoming, nobody took it, I am one of its people – and, when they
+ * ring one after another, it is my turn.
+ */
 export const ringingPhoneCall = (
   calls: PhoneCall[],
   me: string,
   dismissed: string[],
+  plan: RingPlan | null = null,
+  now: Date = new Date(),
 ): PhoneCall | null =>
   calls.find(
     (call) =>
@@ -72,7 +84,8 @@ export const ringingPhoneCall = (
       call.state === "ringing" &&
       !call.member &&
       call.members.includes(me) &&
-      !dismissed.includes(call.id),
+      !dismissed.includes(call.id) &&
+      (!plan || ringingFor(plan, (now.getTime() - Date.parse(call.startedAt)) / 1000).includes(me)),
   ) ?? null;
 
 /** A call a colleague hands to me, waiting for me to take it. */

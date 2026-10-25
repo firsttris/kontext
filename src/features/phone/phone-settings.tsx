@@ -7,13 +7,13 @@ import { type FormEvent, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input, Label } from "@/components/ui/input";
 import { useToast } from "@/components/ui/toast";
-import { useCompany } from "@/features/company/queries";
 import { SettingsCard } from "@/features/settings/settings-page";
 import { m } from "@/paraglide/messages";
 import { ADMIN_KEY, type Admin, send, useAdminChange } from "./settings/api";
 import { CallbacksForm } from "./settings/callbacks";
 import { HoursForm } from "./settings/hours";
 import { MailboxForm } from "./settings/mailbox";
+import { RingForm } from "./settings/ring";
 import { SoundsCard } from "./settings/sounds";
 
 const boxState = (box: Admin["boxes"][number]) =>
@@ -139,49 +139,6 @@ const LineForm = ({ line }: { line: Admin["line"] }) => {
   );
 };
 
-const RingForm = ({ ring }: { ring: string[] }) => {
-  const toast = useToast();
-  const { data: company } = useCompany();
-  const [chosen, setChosen] = useState(ring);
-  const save = useAdminChange(() => send("PUT", "/ring", { members: chosen }));
-  const employees = (company?.employees ?? []).filter((employee) => employee.active);
-  return (
-    <SettingsCard title={m.phone_ring()} description={m.phone_ring_hint()}>
-      <fieldset className="m-0 flex flex-col gap-2 border-0 p-0">
-        <legend className="sr-only">{m.phone_ring()}</legend>
-        {employees.map((employee) => (
-          <label key={employee.id} className="flex items-center gap-2 text-[14px]">
-            <input
-              type="checkbox"
-              checked={chosen.includes(employee.id)}
-              onChange={(event) =>
-                setChosen((current) =>
-                  event.target.checked
-                    ? [...current, employee.id]
-                    : current.filter((id) => id !== employee.id),
-                )
-              }
-              className="size-4 accent-[var(--accent)]"
-            />
-            {employee.fullName}
-          </label>
-        ))}
-      </fieldset>
-      <Button
-        variant="primary"
-        className="self-start"
-        disabled={save.isPending}
-        onClick={async () => {
-          await save.mutateAsync(undefined);
-          toast.show(m.company_saved());
-        }}
-      >
-        {m.company_save()}
-      </Button>
-    </SettingsCard>
-  );
-};
-
 export const PhoneSettingsSection = () => {
   const { data } = useQuery({ queryKey: ADMIN_KEY, queryFn: () => send<Admin>("GET", "") });
   return (
@@ -197,7 +154,7 @@ export const PhoneSettingsSection = () => {
           </p>
           <Boxes boxes={data.boxes} />
           <LineForm line={data.line} />
-          <RingForm ring={data.ring} />
+          <RingForm admin={data} />
           <CallbacksForm board={data.callbackBoard} />
           <SoundsCard sounds={data.sounds} />
           <MailboxForm mailbox={data.mailbox} sounds={data.sounds} />

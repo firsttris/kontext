@@ -1,0 +1,1 @@
+ALTER TABLE `phone_calls` ADD `forwarded_to` text;

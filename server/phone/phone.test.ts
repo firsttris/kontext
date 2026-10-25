@@ -12,6 +12,7 @@ import {
   outgoingCall,
   phoneNotice,
   phoneRoom,
+  ringingFor,
   roomIsOver,
   roomOfPhoneRoom,
   takeCall,
@@ -219,5 +220,24 @@ describe("handing on", () => {
     expect(dialTarget("** 611")).toEqual({ remote: "**611", dial: "**611" });
     expect(dialTarget("*610")).toBeNull();
     expect(dialTarget("abc")).toBeNull();
+  });
+});
+
+describe("ringingFor", () => {
+  const order = ["jonas", "anna", "max"];
+  it("rings for all at once, or one after another and then all", () => {
+    expect(ringingFor({ mode: "all", stepSeconds: 15, order }, 0)).toEqual(order);
+    const plan = { mode: "order" as const, stepSeconds: 15, order };
+    expect(ringingFor(plan, 0)).toEqual(["jonas"]);
+    expect(ringingFor(plan, 14)).toEqual(["jonas"]);
+    expect(ringingFor(plan, 15)).toEqual(["anna"]);
+    expect(ringingFor(plan, 44)).toEqual(["max"]);
+    expect(ringingFor(plan, 45)).toEqual(order);
+  });
+
+  it("files a call answered at the forwarding number", () => {
+    const answered = applyCallEvent(ringing(), event("answered", { forwarded: true }), "+491711");
+    expect(answered).toMatchObject({ state: "talking", forwardedTo: "+491711", member: null });
+    expect(applyCallEvent(ringing(), event("answered"), "+491711").forwardedTo).toBeNull();
   });
 });

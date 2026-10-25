@@ -706,6 +706,13 @@ flowchart LR
   und nimmt, wenn die Mailbox an ist, eine Nachricht auf. Asterisk kennt bei Tagen keine Jahre;
   Kontext schickt deshalb nur kommende Tage und die Konfiguration einmal täglich neu. Die
   Feiertage für Baden-Württemberg rechnet `server/phone/holidays.ts` aus (Ostern nach Gauß).
+- **Wer klingelt wann:** Alle gleichzeitig oder der Reihe nach (jede Person eine Weile, dann
+  alle, `ringingFor`). Die Reihenfolge rechnet die App selbst aus Beginn und Plan (die Karte
+  erscheint, wenn man dran ist); Web Push geht jeweils an die, die gerade dran sind. Ein Handy
+  ruft die Box nach der eingestellten Zeit über die Fritzbox mit an (`Dial` in `kontext-in`,
+  zweite Leitung); nimmt es ab, meldet die Box „angenommen“ mit `forwarded` und der Anruf steht
+  als „Am Handy angenommen“ in der Liste. Solange es klingelt, kann man ihn in Kontext noch
+  annehmen (Redirect beendet das `Dial`).
 - **Weitervermitteln:** Ein Gespräch lebt in seinem LiveKit-Raum, Weitervermitteln heißt also, wer
   im Raum ist (`server/phone/transfer.ts`). An eine Kollegin: Der Anruf klingelt bei ihr
   (`offeredTo`), nimmt sie an, gehört er ihr und sie tritt dem Raum bei; sobald LiveKits Webhook

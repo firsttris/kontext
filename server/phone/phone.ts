@@ -52,6 +52,8 @@ export type PhoneCall = {
   offeredBy: string | null;
   /** The people of Kontext in its room now (LiveKit's webhooks); not stored. */
   present: string[];
+  /** Answered at the forwarding number (a mobile phone) while it rang in Kontext. */
+  forwardedTo: string | null;
 };
 
 /** Phone rooms in LiveKit: "kontext-phone-<uuid>", which LiveKit SIP's dispatch rule matches. */
@@ -62,6 +64,16 @@ export const roomOfPhoneRoom = (name: string): string | null =>
 
 /** The calls state of server/calls names a phone room "phone-<uuid>". */
 export const phoneCallKey = (room: string) => `phone-${room}`;
+
+/** How the line's people hear a call: all at once, or one after another (then all). */
+export type RingPlan = { mode: "all" | "order"; stepSeconds: number; order: string[] };
+
+/** Who hears a ringing call `seconds` after it started. Pure. */
+export const ringingFor = (plan: RingPlan, seconds: number): string[] => {
+  if (plan.mode === "all") return plan.order;
+  const step = Math.floor(seconds / plan.stepSeconds);
+  return step >= plan.order.length ? plan.order : plan.order.slice(step, step + 1);
+};
 
 /** Hangup causes (Q.850, as Asterisk passes them on). */
 const CAUSE = { busy: 17, noAnswer: 19, answeredElsewhere: 26 } as const;
@@ -105,6 +117,7 @@ export const incomingCall = (
   offeredTo: null,
   offeredBy: null,
   present: [],
+  forwardedTo: null,
 });
 
 /** A call outside the opening hours: filed at once, it never rings. */
@@ -149,13 +162,20 @@ export const outgoingCall = ({
   offeredTo: null,
   offeredBy: null,
   present: [],
+  forwardedTo: null,
 });
 
 /** The call after one of the box's events; the same call when it changes nothing (a repeat). */
-export const applyCallEvent = (call: PhoneCall, event: CallEvent): PhoneCall => {
+export const applyCallEvent = (
+  call: PhoneCall,
+  event: CallEvent,
+  forwardTo: string | null = null,
+): PhoneCall => {
   if (call.state === "ended") return call;
   if (event.state === "answered") {
-    return call.state === "talking" ? call : { ...call, state: "talking", answeredAt: event.at };
+    if (call.state === "talking") return call;
+    const forwardedTo = event.forwarded ? forwardTo : null;
+    return { ...call, state: "talking", answeredAt: event.at, forwardedTo };
   }
   if (event.state === "mailbox") {
     return call.state === "ringing" ? { ...call, state: "mailbox" } : call;

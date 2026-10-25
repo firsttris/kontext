@@ -57,6 +57,14 @@ export const boxConfigSchema = z.object({
   sounds: z.array(soundIdSchema).default([]),
   mailbox: mailboxSchema.nullable().default(null),
   hours: hoursSchema.nullable().default(null),
+  /** While it rings in Kontext, after a while also this number (a mobile phone) rings. */
+  forward: z
+    .object({
+      number: z.string().regex(/^[0-9+*#]{2,32}$/),
+      afterSeconds: z.number().int().min(0).max(300),
+    })
+    .nullable()
+    .default(null),
 });
 export type BoxConfig = z.infer<typeof boxConfigSchema>;
 
@@ -100,6 +108,8 @@ export const callEventSchema = z.object({
   local: z.string().max(64).default(""),
   /** Asterisk's hangup cause (Q.850): 16 normal, 17 busy, 19 no answer, 26 answered elsewhere. */
   cause: z.number().int().optional(),
+  /** An incoming call answered at the forwarding number, not in Kontext. */
+  forwarded: z.boolean().optional(),
   at: z.string().datetime(),
 });
 export type CallEvent = z.infer<typeof callEventSchema>;

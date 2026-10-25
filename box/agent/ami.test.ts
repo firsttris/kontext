@@ -81,6 +81,19 @@ describe("callEventOf", () => {
         now,
       ),
     ).toMatchObject({ state: "mailbox" });
+    expect(
+      callEventOf(
+        {
+          Event: "UserEvent",
+          UserEvent: "KontextCall",
+          Call: "c",
+          State: "answered",
+          Direction: "in",
+          Forwarded: "1",
+        },
+        now,
+      ),
+    ).toMatchObject({ state: "answered", forwarded: true });
   });
 
   it("ignores other events and broken ones", () => {

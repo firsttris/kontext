@@ -3,7 +3,7 @@
  * dialling, hanging up and notes. The live connection keeps the list current (features/live).
  */
 import { type QueryClient, useQuery } from "@tanstack/react-query";
-import { laterCall, type PhoneCall } from "@/lib/phone";
+import { laterCall, type PhoneCall, type RingPlan } from "@/lib/phone";
 import { enterPhone } from "./phone-store";
 
 export const PHONE_KEY = ["phone"];
@@ -14,6 +14,7 @@ type PhoneData = {
   online: boolean;
   /** Who else hears the phone: whom one can hand a call to. */
   colleagues?: string[];
+  ringPlan?: RingPlan;
   calls: PhoneCall[];
 };
 type Ticket = { call: PhoneCall; token: string; url: string | null };
@@ -42,6 +43,7 @@ export const usePhone = () => {
     allowed: data?.allowed ?? false,
     online: data?.online ?? false,
     colleagues: data?.colleagues ?? [],
+    ringPlan: data?.ringPlan ?? null,
     calls: data?.calls ?? [],
   };
 };

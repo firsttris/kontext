@@ -20,7 +20,7 @@ import {
   transferSchema,
 } from "./phone";
 import { fromBoxSchema, parseMessage } from "./protocol";
-import type { PhoneService, Problem } from "./service";
+import { type PhoneService, type Problem, ringPlanOf } from "./service";
 import type { PhoneStore } from "./store";
 
 export type PhoneRouteDeps = {
@@ -119,6 +119,7 @@ export const createPhoneRoutes = (deps: PhoneRouteDeps) => {
       enabled: true,
       allowed: await service.allowed(me),
       colleagues: (await store.settings()).ring.filter((id) => id !== me),
+      ringPlan: ringPlanOf(await store.settings()),
       online: service.online().length > 0,
       calls: await service.callsOf(me),
     });

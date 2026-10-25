@@ -628,6 +628,7 @@ export const phoneCalls = sqliteTable(
     voicemailSeconds: integer("voicemail_seconds"),
     offeredTo: text("offered_to"),
     offeredBy: text("offered_by"),
+    forwardedTo: text("forwarded_to"),
   },
   (table) => [
     index("phone_calls_started").on(table.startedAt),

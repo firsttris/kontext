@@ -78,6 +78,21 @@ const hoursCheck = ({ hours }: BoxConfig): string[] => {
   return [...holidays, ...open, "Goto(closed,1)"];
 };
 
+/**
+ * While it rings in Kontext: wait – or, with a forwarding number, wait a while, then let that
+ * number ring too until the ringing time is up. Answered there, the call ends with it; Kontext
+ * can still take it while it rings (the agent's Redirect ends the Dial).
+ */
+const waitForAnswer = ({ ringSeconds, forward }: BoxConfig): string[] => {
+  if (!forward) return [`Wait(${ringSeconds})`];
+  const rest = Math.max(5, ringSeconds - forward.afterSeconds);
+  return [
+    ...(forward.afterSeconds ? [`Wait(${forward.afterSeconds})`] : []),
+    `Dial(PJSIP/${forward.number}@fritzbox,${rest},U(kontext-forward-answered))`,
+    `ExecIf($["\${DIALSTATUS}" = "ANSWER"]?Hangup(16))`,
+  ];
+};
+
 /** Asks the mailbox for a message, or ends the call when there is none. */
 const toMailbox = (config: BoxConfig) =>
   config.mailbox ? "Goto(kontext-record,s,1)" : "Hangup(16)";
@@ -106,7 +121,7 @@ const incoming = (config: BoxConfig, paths: BoxPaths) => {
     extension("ringing", [
       report("ringing", "in", caller),
       "Ringing()",
-      `Wait(${config.ringSeconds})`,
+      ...waitForAnswer(config),
       config.mailbox ? "Goto(kontext-mailbox,s,1)" : "Hangup(19)",
     ]),
     closed,
@@ -170,6 +185,10 @@ export const extensionsConf = (config: BoxConfig, paths: BoxPaths): string =>
       ended("out", [["DialStatus", `\${DIALSTATUS}`]]),
     ),
     context("kontext-callee-answered", extension("s", [report("answered", "out"), "Return()"])),
+    context(
+      "kontext-forward-answered",
+      extension("s", [report("answered", "in", [["Forwarded", "1"]]), "Return()"]),
+    ),
     // LiveKit never calls in on its own; anything from it ends there.
     context("kontext-refuse", extension("_.", ["Hangup(21)"])),
     mailbox(config, paths),

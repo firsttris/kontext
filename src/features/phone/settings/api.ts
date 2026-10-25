@@ -12,6 +12,9 @@ export type Admin = {
   boxes: (BoxRow & { online: boolean })[];
   line: { registrar: string; username: string; hasPassword: boolean } | null;
   ring: string[];
+  ringMode: "all" | "order";
+  ringStepSeconds: number;
+  forward: { number: string; afterSeconds: number } | null;
   callbackBoard: string | null;
   sounds: { id: string; name: string; seconds: number }[];
   mailbox: {
