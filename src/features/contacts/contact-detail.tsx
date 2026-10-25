@@ -10,6 +10,7 @@ import { Avatar } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { CAPABILITIES } from "@/jmap/client";
 import { emailsWithAddress } from "@/jmap/mail";
+import { formatAddressInput } from "@/lib/addresses";
 import { downloadText } from "@/lib/download";
 import { displayName, listDate } from "@/lib/format";
 import { groupsOf } from "@/lib/groups";
@@ -105,7 +106,10 @@ export const ContactDetail = ({ card, books, groups }: Props) => {
               <Link
                 to="/mail/$accountId/$mailboxId"
                 params={{ accountId: mailAccountId, mailboxId: "inbox" }}
-                search={{ compose: "new", to: `${fullName(card)} <${email}>` }}
+                search={{
+                  compose: "new",
+                  to: formatAddressInput([{ name: fullName(card), email }]),
+                }}
               >
                 <Mail size={15} /> {m.contacts_write_mail()}
               </Link>

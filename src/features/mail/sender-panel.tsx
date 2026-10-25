@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/toast";
 import { emailsWithAddress } from "@/jmap/mail";
 import type { EmailDetail } from "@/jmap/types";
+import { formatAddressInput } from "@/lib/addresses";
 import { cn } from "@/lib/cn";
 import { contactFormFor, correspondent, findContact } from "@/lib/correspondent";
 import { displayName, listDate } from "@/lib/format";
@@ -102,7 +103,7 @@ export const SenderPanel = ({ accountId, email }: { accountId: string; email: Em
           <Button asChild size="sm" variant="outline">
             <Link
               to="."
-              search={{ compose: "new", to: `${name} <${person.email}>` }}
+              search={{ compose: "new", to: formatAddressInput([{ name, email: person.email }]) }}
               title={m.contacts_write_mail()}
             >
               <Mail size={14} /> {m.mail_person_mail()}

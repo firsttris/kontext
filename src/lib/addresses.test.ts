@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { parseAddresses, prefixSubject, replyRecipients } from "./addresses";
+import { formatAddressInput, parseAddresses, prefixSubject, replyRecipients } from "./addresses";
 
 describe("parseAddresses", () => {
   it("reads names, plain addresses and separators", () => {
@@ -18,6 +18,29 @@ describe("parseAddresses", () => {
   });
   it("reports what is not an address", () => {
     expect(parseAddresses("petra, x@y.test").invalid).toEqual(["petra"]);
+  });
+  it("unescapes a quoted name", () => {
+    expect(parseAddresses('"Max \\"Der Chef\\" Weber" <max@weber.test>').addresses).toEqual([
+      { name: 'Max "Der Chef" Weber', email: "max@weber.test" },
+    ]);
+  });
+});
+
+describe("formatAddressInput", () => {
+  it("quotes a name with specials so it parses back to the same addresses", () => {
+    const addresses = [
+      { name: "Weber, Jonas", email: "jonas@weber.test" },
+      { name: 'Max "Der Chef" Weber', email: "max@weber.test" },
+      { name: "Back\\slash", email: "b@weber.test" },
+      { name: "Anna Weber", email: "anna@weber.test" },
+      { name: null, email: "info@weber.test" },
+    ];
+    const input = formatAddressInput(addresses);
+    expect(input).toBe(
+      '"Weber, Jonas" <jonas@weber.test>, "Max \\"Der Chef\\" Weber" <max@weber.test>, ' +
+        '"Back\\\\slash" <b@weber.test>, Anna Weber <anna@weber.test>, info@weber.test',
+    );
+    expect(parseAddresses(input)).toEqual({ addresses, invalid: [] });
   });
 });
 
