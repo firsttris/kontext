@@ -21,18 +21,28 @@
 	}
 	handle @stalwart {
 		reverse_proxy stalwart:8080 {
+			# Stalwart reads Forwarded before X-Forwarded-For (crates/http/src/request.rs): only
+			# the address Caddy saw counts, so no client names another one to dodge or cause a ban.
 			header_up X-Forwarded-For {remote_host}
+			header_up -Forwarded
+			header_up -X-Real-IP
 		}
 	}
 
 	# Calls: LiveKit's signalling (WebSocket); the media go to it directly (TCP 7881, UDP 7882)
 	handle /rtc* {
-		reverse_proxy livekit:7880
+		reverse_proxy livekit:7880 {
+			header_up X-Forwarded-For {remote_host}
+			header_up -Forwarded
+			header_up -X-Real-IP
+		}
 	}
 
 	handle {
 		reverse_proxy kontext:3000 {
 			header_up X-Forwarded-For {remote_host}
+			header_up -Forwarded
+			header_up -X-Real-IP
 			flush_interval -1
 		}
 	}
