@@ -13,6 +13,7 @@ import { splitQuote, splitTextQuote } from "@/lib/conversation";
 import { findContact } from "@/lib/correspondent";
 import { mailDocument, sanitizeMailHtml, textToHtml } from "@/lib/html";
 import { imageState } from "@/lib/remote-images";
+import { imageUrl, releaseImageUrl } from "@/lib/safe-blob";
 import { m } from "@/paraglide/messages";
 import { trusts } from "../../../server/images/senders";
 import { useContacts } from "../contacts/queries";
@@ -32,16 +33,23 @@ const useInlineImages = (accountId: string, email: EmailDetail): Record<string, 
     void Promise.all(
       inline.map(async (part) => {
         const blob = await client.download(accountId, part.blobId!, part.name ?? "bild", part.type);
-        const url = URL.createObjectURL(blob);
-        created.push(url);
+        // Only images get a URL, and none a tab could run as a page (safe-blob.ts).
+        const url = await imageUrl(blob);
+        if (url) created.push(url);
         return [part.cid!.replace(/^<|>$/g, ""), url] as const;
       }),
     ).then((entries) => {
-      if (!cancelled) setUrls(Object.fromEntries(entries));
+      if (cancelled) for (const url of created) releaseImageUrl(url);
+      else
+        setUrls(
+          Object.fromEntries(
+            entries.filter((entry): entry is readonly [string, string] => entry[1] !== null),
+          ),
+        );
     });
     return () => {
       cancelled = true;
-      for (const url of created) URL.revokeObjectURL(url);
+      for (const url of created) releaseImageUrl(url);
     };
   }, [client, accountId, email]);
   return urls;

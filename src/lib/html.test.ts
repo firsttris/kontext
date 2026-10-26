@@ -36,6 +36,13 @@ describe("sanitizeMailHtml", () => {
     expect(clean('<img src="cid:logo@x">').html).toBe('<img src="blob:logo">');
     expect(clean('<img src="cid:unknown">').html).toBe("<img>");
   });
+  it("turns no cid: into a URL outside images and SVG", () => {
+    const math = clean('<math><mtext href="cid:logo@x">x</mtext></math>').html;
+    expect(math).not.toContain("href");
+    expect(clean('<svg><image href="cid:logo@x"></image></svg>').html).toContain(
+      'href="blob:logo"',
+    );
+  });
   it("keeps only allowed CSS images", () => {
     const style = `<div style="background:url('https://img.test/bg.png')">a</div><div style="background:url(javascript:alert(1))">b</div>`;
     expect(clean(style).html).not.toMatch(/url\(/);

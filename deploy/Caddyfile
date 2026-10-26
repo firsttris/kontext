@@ -43,7 +43,9 @@
 		Referrer-Policy no-referrer
 		# Camera, microphone and the screen only for Kontext itself (calls in the chat)
 		Permissions-Policy "camera=(self), microphone=(self), display-capture=(self), geolocation=()"
-		Content-Security-Policy "default-src 'self'; img-src 'self' data: blob: https:; style-src 'self' 'unsafe-inline'; frame-src 'self' blob: {$SCHREIBZEUG_URL:https://schreibzeug.internal}; connect-src 'self'; font-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'"
+		# Only where the answer brings none: the server sets the app's own (server/headers.ts), and
+		# its downloads and chat files bring "sandbox", which this must not replace.
+		?Content-Security-Policy "default-src 'self'; img-src 'self' data: blob: https:; style-src 'self' 'unsafe-inline'; frame-src 'self' blob: {$SCHREIBZEUG_URL:https://schreibzeug.internal}; connect-src 'self'; font-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'"
 		-Server
 	}
 }

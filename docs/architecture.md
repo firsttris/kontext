@@ -995,8 +995,17 @@ bekommt eine farbige Kachel nach Dateityp (`src/lib/attachment-kind.ts`).
 
 Ein Klick auf die Vorschau öffnet PDFs und Fotos in einem neuen Tab – aus dem Blob, den die
 Vorschau schon geladen hat, damit der Browser den Tab nicht blockiert. SVG, HTML und alles andere
-wird nur heruntergeladen: als `blob:`-Seite liefe es mit den Rechten der App. Die Testdaten haben
-echte PDFs (`dev/pdf.ts`) und einen Grundriss als SVG.
+wird nur heruntergeladen: als `blob:`-Seite liefe es mit den Rechten der App. Was sich öffnet,
+entscheidet der Typ, den die Datei wirklich hat, nie ihr Name (eine „Rechnung.pdf“ kann HTML
+sein). Jeder Blob aus einer Mail bekommt seinen Typ von Kontext (`src/lib/safe-blob.ts`):
+Download-Links (PGP, „Vertraulich senden“, vertrauliche Chat-Dateien) sind
+`application/octet-stream`, eingebettete Bilder (`cid:`) nur Rasterbilder als `blob:` oder SVG als
+`data:`-Adresse, die kein Tab als Seite öffnet; andere Teile bekommen keine Adresse. Der Server
+schickt Downloads über `/jmap/download/…` mit `Content-Security-Policy: sandbox` und `nosniff`,
+und was kein Bild und kein PDF ist, als `application/octet-stream` – so lädt auch kein
+`<script src>` einen Anhang als Skript (`server/headers.ts`). Die Content-Security-Policy der App
+setzt der Server selbst; Caddy ergänzt sie nur, wo eine Antwort keine eigene hat. Die Testdaten
+haben echte PDFs (`dev/pdf.ts`) und einen Grundriss als SVG.
 
 ## Darstellung und Tastaturkürzel
 

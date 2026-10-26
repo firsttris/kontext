@@ -8,6 +8,7 @@ import type { EmailDetail } from "@/jmap/types";
 import { formatSize, readingDate } from "@/lib/format";
 import { sanitizeMailHtml, textToHtml } from "@/lib/html";
 import { printDocument } from "@/lib/print";
+import { imageUrl, releaseImageUrl } from "@/lib/safe-blob";
 import { useMailAccounts } from "./queries";
 
 const loaded = (image: HTMLImageElement) =>
@@ -53,13 +54,14 @@ export const usePrintMail = () => {
     const urls = await Promise.all(
       inline.map(async (part) => {
         const blob = await client.download(accountId, part.blobId!, part.name ?? "bild", part.type);
-        return [part.cid!.replace(/^<|>$/g, ""), URL.createObjectURL(blob)] as const;
+        // Only images, as in the reading pane (safe-blob.ts).
+        return [part.cid!.replace(/^<|>$/g, ""), await imageUrl(blob)] as const;
       }),
     );
     const body = displayBody(email);
     const { html } = sanitizeMailHtml(body.kind === "html" ? body.value : textToHtml(body.value), {
       allowRemote: false,
-      cidUrls: Object.fromEntries(urls),
+      cidUrls: Object.fromEntries(urls.filter((entry): entry is [string, string] => !!entry[1])),
     });
     const account = accounts.find((candidate) => candidate.id === accountId);
     const page = printDocument({
@@ -75,7 +77,7 @@ export const usePrintMail = () => {
         .map((part) => ({ name: part.name ?? "Anhang", size: formatSize(part.size) })),
     });
     await printPage(page, () => {
-      for (const [, url] of urls) URL.revokeObjectURL(url);
+      for (const [, url] of urls) if (url) releaseImageUrl(url);
     });
   };
 };

@@ -48,6 +48,7 @@ import { createExternalRoutes } from "./external/routes";
 import { createSmtp } from "./external/smtp";
 import { createExternalStore } from "./external/store";
 import { createUserJmap } from "./external/user-jmap";
+import { appPolicy, hardenDownload, isDownload, withAppHeaders } from "./headers";
 import { createImageSenderRoutes } from "./images/routes";
 import { createServerJmap } from "./jmap-server";
 import { createHub } from "./live/hub";
@@ -138,6 +139,7 @@ export const createJmapProxy =
     });
     const responseHeaders = new Headers(upstream.headers);
     for (const name of DROPPED_RESPONSE_HEADERS) responseHeaders.delete(name);
+    if (isDownload(url.pathname)) hardenDownload(responseHeaders);
     responseHeaders.set("cache-control", responseHeaders.get("cache-control") ?? "no-store");
     return new Response(upstream.body, { status: upstream.status, headers: responseHeaders });
   };
@@ -192,6 +194,12 @@ export const createApp = async (env: Env) => {
 
   const categories = createCategoryStore(db);
   const app = new Hono();
+  // The app's policy on its pages, also without Caddy in front (headers.ts).
+  const policy = appPolicy({ schreibzeug: env.SCHREIBZEUG_URL, livekit: env.LIVEKIT_PUBLIC_URL });
+  app.use(async (c, next) => {
+    await next();
+    withAppHeaders(c.res.headers, policy);
+  });
 
   const chatFiles = createChatFiles(db, join(dirname(env.DATABASE_PATH), "chat-files"));
   // Photos uploaded for a message that was never sent go after a day.

@@ -8,6 +8,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useTheme } from "@/components/theme/use-theme";
 import { formatSize } from "@/lib/format";
 import { mailDocument, sanitizeMailHtml, textToHtml } from "@/lib/html";
+import { asDownload } from "@/lib/safe-blob";
 import { base64ToBytes, type SecureContent, type SecureFile, type SecureReply } from "@/lib/secure";
 import { m } from "@/paraglide/messages";
 
@@ -22,9 +23,8 @@ export const SecureFiles = ({ files }: { files: SecureFile[] }) => {
   const urls = useMemo(
     () =>
       files.map((file) =>
-        URL.createObjectURL(
-          new Blob([base64ToBytes(file.data) as Uint8Array<ArrayBuffer>], { type: file.type }),
-        ),
+        // A download, never a page of Kontext, whatever type the sender gave (safe-blob.ts).
+        URL.createObjectURL(asDownload(base64ToBytes(file.data) as Uint8Array<ArrayBuffer>)),
       ),
     [files],
   );

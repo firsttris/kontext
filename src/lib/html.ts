@@ -45,6 +45,11 @@ export type SanitizedMail = { html: string; blockedImages: number };
 /** Attributes that make the browser fetch something (`href` only outside links, e.g. SVG `<image>`). */
 const LOADING_ATTRIBUTES = ["src", "background", "poster", "href", "xlink:href"];
 const isLink = (element: Element) => ["a", "area"].includes(element.localName);
+/**
+ * Outside links, `href` loads something only in SVG (`<image>`, `<use>`, gradients). Elsewhere it
+ * is a link in disguise – Firefox follows MathML's – and goes, so no `cid:` turns into a URL there.
+ */
+const isSvg = (element: Element) => element.namespaceURI === "http://www.w3.org/2000/svg";
 
 /**
  * Whether a URL stays inside the mail. Everything else is fetched: `//host` and `\\host` too, and a
@@ -96,6 +101,10 @@ export const sanitizeMailHtml = (
     for (const attribute of LOADING_ATTRIBUTES) {
       const value = element.getAttribute?.(attribute);
       if (!value || (attribute.endsWith("href") && isLink(element))) continue;
+      if (attribute.endsWith("href") && !isSvg(element)) {
+        element.removeAttribute(attribute);
+        continue;
+      }
       if (value.startsWith("cid:")) {
         const url = cidUrls[value.slice(4).replace(/^<|>$/g, "")];
         if (url) element.setAttribute(attribute, url);
