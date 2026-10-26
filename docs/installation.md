@@ -46,7 +46,9 @@ ersetzen: Kontext startet nicht mit ihnen, `backup.sh` sichert nicht. Für Anruf
 `LIVEKIT_SECRET` setzen und in der Firewall **TCP 7881 und UDP 7882** öffnen (siehe
 [Anrufe](#anrufe)). Caddy holt das Zertifikat für
 `KONTEXT_DOMAIN` selbst. Mit Podman liegen die Quadlet-Dateien in
-`deploy/quadlet/` (nach `/etc/containers/systemd/` kopieren, `systemctl daemon-reload`).
+`deploy/quadlet/` (nach `/etc/containers/systemd/` kopieren, `systemctl daemon-reload`); Domain
+und Adressen stehen dort in jeder Datei selbst, jeder Dienst bekommt nur seine eigenen
+Einstellungen (`kontext.env`, `livekit.env` … mit `chmod 600`), keiner `deploy/.env`.
 
 ## 3. Stalwart einrichten
 
