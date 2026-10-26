@@ -27,11 +27,12 @@ export const asViewable = (blob: Blob): Blob | null => {
 /** A blob for a download link: never rendered, whatever it holds. */
 export const asDownload = (data: BlobPart): Blob => new Blob([data], { type: DOWNLOAD });
 
-/** A file that is shown when it is a raster image (a photo in the chat) and downloaded otherwise. */
-export const asFile = (data: BlobPart, type: string): Blob => {
-  const base = baseType(type);
-  return new Blob([data], { type: RASTER.test(base) ? base : DOWNLOAD });
-};
+/**
+ * A file that keeps its type where the browser only shows it (a photo in the chat, a PDF, as an
+ * attachment opens in a tab) and is a plain download otherwise.
+ */
+export const asFile = (data: BlobPart, type: string): Blob =>
+  new Blob([data], { type: viewableType(type) ?? DOWNLOAD });
 
 const ascii = (bytes: Uint8Array, from: number, to: number) =>
   String.fromCharCode(...bytes.subarray(from, to));

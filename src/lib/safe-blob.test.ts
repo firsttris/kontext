@@ -19,6 +19,7 @@ describe("blobs from mails", () => {
     expect(asFile("x", "text/html").type).toBe("application/octet-stream");
     expect(asFile("x", "image/svg+xml").type).toBe("application/octet-stream");
     expect(asFile("x", "image/JPEG").type).toBe("image/jpeg");
+    expect(asFile("x", "application/pdf").type).toBe("application/pdf");
   });
 
   it("give images a URL a tab cannot run, and nothing else one at all", async () => {
