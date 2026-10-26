@@ -6,11 +6,23 @@ on:
   workflow_dispatch:
 
 jobs:
+  # A release commit from "Bump version" changes only the version, so main's green CI of the commit
+  # before it counts and the checks are not run a second time.
+  tested:
+    uses: firsttris/workflows/.github/workflows/tested-on-main.yml@v1
+    permissions:
+      actions: read
+      contents: read
+
   checks:
+    needs: tested
+    if: needs.tested.outputs.tested != 'true'
     uses: ./.github/workflows/ci.yml
 
   docker:
-    needs: checks
+    needs: [tested, checks]
+    # The checks either passed or were not needed
+    if: ${{ !cancelled() && needs.tested.result == 'success' && needs.checks.result != 'failure' }}
     uses: firsttris/workflows/.github/workflows/docker-release.yml@v1
     with:
       image: tristanteu/kontext
@@ -30,6 +42,10 @@ jobs:
       description: Kontext telephone box – Asterisk and the box agent, next to the Fritzbox
       dockerfile: box/Dockerfile
       readme: ""
+      # Its own build cache (ghcr.io/firsttris/kontext-box-buildcache), not the app image's, and no
+      # second GitHub release: the app image's call creates it.
+      ghcr-image: firsttris/kontext-box
+      github-release: false
     secrets: inherit
     permissions:
       contents: write

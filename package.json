@@ -21,7 +21,11 @@
     "check": "bun run typecheck && bun run lint && bun run test && bun run build",
     "postinstall": "paraglide-js compile --project ./project.inlang --outdir ./src/paraglide",
     "screenshots": "playwright test --project screenshots",
-    "dev:server": "bun --watch server/main.ts"
+    "dev:server": "bun --watch server/main.ts",
+    "release:patch": "npm version patch",
+    "release:minor": "npm version minor",
+    "release:major": "npm version major",
+    "postversion": "git push --follow-tags"
   },
   "dependencies": {
     "@better-auth/cimd": "1.7.13",
