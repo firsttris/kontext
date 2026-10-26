@@ -1,5 +1,5 @@
 /** Wiedervorlagen in Kontext's SQLite, and the sign-ins that can bring them back. */
-import { and, asc, desc, eq, inArray, lte } from "drizzle-orm";
+import { and, asc, desc, eq, gt, inArray, lte } from "drizzle-orm";
 import type { Db } from "../db";
 import * as schema from "../db/schema";
 import type { Snooze } from "./snooze";
@@ -13,10 +13,11 @@ export type SnoozeStore = {
   /** Whose sign-in session asks. */
   userOf: (sessionId: string) => Promise<string | null>;
   /**
-   * Sessions to act with: the newest of this person first, then the newest of everyone else –
-   * in a shared mailbox a colleague can bring it back when the one who put it away is signed out.
+   * Sessions to act with, unexpired: the newest of this person first, then the newest of everyone
+   * else – in a shared mailbox a colleague can bring it back when the one who put it away is
+   * signed out.
    */
-  sessionsFor: (userId: string) => Promise<string[]>;
+  sessionsFor: (userId: string) => Promise<{ sessionId: string; userId: string }[]>;
 };
 
 type Row = typeof schema.snoozes.$inferSelect;
@@ -78,12 +79,14 @@ export const createSnoozeStore = (db: Db): SnoozeStore => ({
       .select({ id: schema.session.id, userId: schema.session.userId })
       .from(schema.session)
       .innerJoin(schema.stalwartGrant, eq(schema.stalwartGrant.sessionId, schema.session.id))
+      // A session past its end is signed out, even before Better Auth has cleaned it away.
+      .where(gt(schema.session.expiresAt, new Date()))
       .orderBy(desc(schema.session.updatedAt));
     const seen = new Set<string>();
     const newest = rows.filter((row) => !seen.has(row.userId) && seen.add(row.userId));
     return [
       ...newest.filter((row) => row.userId === userId),
       ...newest.filter((row) => row.userId !== userId),
-    ].map((row) => row.id);
+    ].map((row) => ({ sessionId: row.id, userId: row.userId }));
   },
 });

@@ -407,7 +407,7 @@ export const createApp = async (env: Env) => {
       importMessage: createServerJmap({
         env,
         grants,
-        sessions: () => snoozes.sessionsFor(""),
+        sessions: async () => (await snoozes.sessionsFor("")).map(({ sessionId }) => sessionId),
       }).importMessage,
       tasks: {
         create: async (task) => {
@@ -641,7 +641,7 @@ export const createApp = async (env: Env) => {
   const ruleTasks = createRuleTasks({
     env,
     grants,
-    sessions: () => snoozes.sessionsFor(""),
+    sessions: async () => (await snoozes.sessionsFor("")).map(({ sessionId }) => sessionId),
     store: tasks,
     changed: tasksChanged,
   });

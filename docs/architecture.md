@@ -976,7 +976,9 @@ Eine Mail „aus dem Weg bis …“: Knopf mit dem Wecker über der Mail oder `w
 - **Zurück:** jede Minute holt der Server Fälliges zurück (`waker.ts`), mit dem Token der
   neuesten Sitzung dessen, der die Mail zurückgelegt hat – ist er abgemeldet, mit dem einer
   Kollegin, die in das Postfach schreiben darf. Die Mail kommt ungelesen in den Posteingang, mit
-  dem Schlagwort `kontext.resurfaced`, und der Zurücklegende bekommt eine Benachrichtigung.
+  dem Schlagwort `kontext.resurfaced`, und der Zurücklegende bekommt eine Benachrichtigung – kam
+  sie über die Sitzung einer Kollegin, ohne Absender und Betreff (er könnte das Postfach inzwischen
+  verloren haben). Abgelaufene Sitzungen nimmt kein Hintergrundjob.
   Hat jemand die Mail inzwischen anderswohin verschoben, bleibt sie, wo sie ist.
 - **Wieder vorgelegt:** der Posteingang zeigt solche Mails, solange sie ungelesen sind, oben in
   einer eigenen Gruppe – nach Datum lägen sie weit unten. Gelesen nimmt Kontext das Schlagwort
