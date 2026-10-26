@@ -61,10 +61,14 @@ unterschreibt und entschlüsselt – und der später auch vertrauliche Chats tr�
   ihn unter `/.well-known/openpgpkey/<domain>/hu/<hash>` aus – zeigt `openpgpkey.firma.de` auf den
   Kontext-Server, finden Thunderbird und andere ihn von selbst.
 - **Schlüssel der anderen:** Kontext übernimmt sie beim Öffnen einer Mail aus ihrem
-  `Autocrypt`-Kopf (nur für die Absenderadresse), sucht sie per WKD der Empfänger-Domain und auf
-  keys.openpgp.org (vom Server aus, nur https ins Internet) und nimmt sie von Hand oder als Datei
-  entgegen. Sie liegen je Person auf dem Server (`pgp_keys`), mit Herkunft und Fingerabdruck; kommt
-  für eine bekannte Adresse ein anderer Schlüssel, steht das deutlich daneben.
+  `Autocrypt`-Kopf (nur für die Absenderadresse, und nur wenn die Mail wirklich von dort kommt:
+  DMARC, SPF oder DKIM bestätigt, `fromSender` in `src/lib/sender-check.ts`), sucht sie per WKD
+  der Empfänger-Domain und auf keys.openpgp.org (vom Server aus, nur https ins Internet) und nimmt
+  sie von Hand oder als Datei entgegen. Sie liegen je Person auf dem Server (`pgp_keys`), mit
+  Herkunft und Fingerabdruck; kommt für eine bekannte Adresse ein anderer Schlüssel, steht das
+  deutlich daneben. Ein Schlüssel aus einer Mail ersetzt nie einen, den jemand importiert oder
+  nachgeschlagen hat (`server/kept-keys.ts`) – sonst könnte ein gefälschter Absender den Schlüssel
+  tauschen, mit dem Unterschriften geprüft und Antworten verschlüsselt werden.
 
 ## Baustein 3: PGP in Mails
 
@@ -114,7 +118,8 @@ Ein Schalter für Mails nach außen; Kontext nimmt je Empfänger den besten Weg:
      verschlüsselt, das nur der Browser bekommt (`server/smime/`). Geöffnet bleibt sie bis zum
      Neuladen, wie der PGP-Schlüssel.
    - Zertifikate anderer merkt sich Kontext aus ihren unterschriebenen Mails (nur für die Adresse
-     des Absenders), oder man übernimmt sie aus einer Datei (.cer, .pem). Abgelaufene zählen nicht.
+     des Absenders, nur aus einer Mail mit bestätigtem Absender, und nie an Stelle eines
+     importierten), oder man übernimmt sie aus einer Datei (.cer, .pem). Abgelaufene zählen nicht.
    - Eingehende S/MIME-Mails werden im Browser entschlüsselt; Unterschriften (getrennt oder
      eingepackt) werden geprüft, und die Mail sagt, wer bürgt: die ausstellende Stelle, oder
      „selbst ausgestellt“. Ob erst unterschrieben und dann verschlüsselt wurde oder umgekehrt,

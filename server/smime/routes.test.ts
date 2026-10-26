@@ -110,6 +110,21 @@ describe("/api/smime", () => {
     expect((await left.json()).certs).toMatchObject([{ email: "post@stadt.test" }]);
   });
 
+  it("lets no certificate from a mail replace an imported one", async () => {
+    const call = setup();
+    const real = certFor(["amt@stadt.test"]);
+    await call("PUT", "/certs", { certificate: real, source: "import" });
+    const forged = await call("PUT", "/certs", {
+      // Another certificate for the same address (another validity, so another fingerprint).
+      certificate: certFor(["amt@stadt.test"], 200),
+      source: "mail",
+      email: "amt@stadt.test",
+    });
+    expect((await forged.json()).certs).toMatchObject([
+      { email: "amt@stadt.test", certificate: real, source: "import" },
+    ]);
+  });
+
   it("checks the chain to a trusted root, once per hour per certificate", async () => {
     const pem = certFor(["amt@stadt.test"]);
     // certFor signs with its own key: its issuer is the root here.

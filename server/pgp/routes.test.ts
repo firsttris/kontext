@@ -138,6 +138,23 @@ describe("/api/pgp", () => {
     );
   });
 
+  it("lets no key from a mail replace one that was imported or looked up", async () => {
+    const { call } = setup();
+    const petra = await keyFor("petra@keller.test");
+    await call("PUT", "/keys", { publicKey: petra.publicKey, source: "wkd" });
+    const forged = await keyFor("petra@keller.test");
+    const { keys } = (await (
+      await call("PUT", "/keys", {
+        publicKey: forged.publicKey,
+        source: "autocrypt",
+        email: "petra@keller.test",
+      })
+    ).json()) as { keys: KnownKey[] };
+    expect(keys).toHaveLength(1);
+    expect(keys[0]!.source).toBe("wkd");
+    expect(keys[0]!.publicKey).toBe(petra.publicKey);
+  });
+
   it("looks a key up per WKD, then on keys.openpgp.org", async () => {
     const petra = await keyFor("petra@keller.test");
     const hash = await wkdHash("petra");

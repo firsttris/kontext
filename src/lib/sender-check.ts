@@ -100,6 +100,18 @@ export const isConfirmed = (check: SenderCheck, fromDomain: string | undefined):
   (check.dkim?.result === "pass" && aligned(check.dkim.domain, fromDomain)) ||
   (check.spf?.result === "pass" && aligned(check.spf.domain, fromDomain));
 
+/**
+ * Whether a mail may be taken as coming from its sender: confirmed for the sender's domain, or
+ * checked by nobody (imported, or from a colleague inside); a failed check never.
+ */
+export const fromSender = (
+  sender: string,
+  authenticationResults: string[] | null | undefined,
+): boolean => {
+  const check = parseSenderCheck(authenticationResults);
+  return !check || isConfirmed(check, domainOf(sender));
+};
+
 export type SenderWarning =
   | { kind: "ownDomain"; domain: string }
   | { kind: "notConfirmed"; domain: string }

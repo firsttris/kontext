@@ -4,7 +4,7 @@
  * SPF/DKIM aligned); one without any check (imported, or from a colleague inside) counts too, a
  * failed one never. Pure.
  */
-import { domainOf, isConfirmed, parseSenderCheck } from "./sender-check";
+import { fromSender } from "./sender-check";
 
 export type ImageState = "load" | "unconfirmed" | "ask";
 
@@ -14,6 +14,5 @@ export const imageState = (
   authenticationResults: string[] | null | undefined,
 ): ImageState => {
   if (!trusted) return "ask";
-  const check = parseSenderCheck(authenticationResults);
-  return !check || isConfirmed(check, domainOf(sender)) ? "load" : "unconfirmed";
+  return fromSender(sender, authenticationResults) ? "load" : "unconfirmed";
 };

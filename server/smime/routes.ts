@@ -11,6 +11,7 @@ import { z } from "zod";
 import { certInfo } from "../../src/lib/smime";
 import type { SessionAccount } from "../categories/routes";
 import type { Resolve } from "../company/security";
+import { mayReplace } from "../kept-keys";
 import { isPrivateAddress } from "../unsubscribe/private-address";
 import type { SmimeStore } from "./store";
 import { certFromSmimea, checkTrust, parseCert, smimeaName, type Trust } from "./trust";
@@ -136,7 +137,11 @@ export const createSmimeRoutes = ({
       ? info.emails.filter((candidate) => candidate === parsed.data.email)
       : info.emails;
     if (!emails.length) return c.json({ error: "Das Zertifikat passt nicht zur Adresse." }, 400);
+    const kept = await store.known(c.get("me"));
+    const incoming = { fingerprint: info.fingerprint, source: parsed.data.source };
     for (const address of emails) {
+      const current = kept.find((cert) => cert.email === address);
+      if (!mayReplace(current, incoming, "mail")) continue;
       await store.remember(c.get("me"), {
         email: address,
         fingerprint: info.fingerprint,

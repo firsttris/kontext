@@ -11,6 +11,7 @@ import { Input } from "@/components/ui/input";
 import type { EmailDetail } from "@/jmap/types";
 import { cn } from "@/lib/cn";
 import { base64ToBytes } from "@/lib/secure";
+import { fromSender } from "@/lib/sender-check";
 import { openP12, readSmime, type SmimeRead, type SmimeSignature } from "@/lib/smime";
 import { m } from "@/paraglide/messages";
 import { rememberOpened } from "../mail/opened-mails";
@@ -98,10 +99,13 @@ const useCollect = (email: EmailDetail, read: SmimeRead | undefined) => {
   const pem = signature?.state === "valid" ? signature.pem : null;
   const signer = signature?.state === "valid" ? signature.email : null;
   const has = known.some((cert) => cert.email === sender && cert.fingerprint === fingerprint);
+  // A signature checks against the certificate inside it: only from a mail that really comes
+  // from its sender (sender-check.ts) is it kept to write back to.
+  const confirmed = Boolean(sender && fromSender(sender, email.authenticationResults));
   useEffect(() => {
-    if (!pem || !sender || signer !== sender || has) return;
+    if (!pem || !sender || signer !== sender || has || !confirmed) return;
     void remember({ certificate: pem, source: "mail", email: sender }).catch(() => undefined);
-  }, [pem, sender, signer, has, remember]);
+  }, [pem, sender, signer, has, confirmed, remember]);
 };
 
 export const SmimeUnlock = () => {
