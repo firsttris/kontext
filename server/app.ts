@@ -9,7 +9,14 @@ import { eq } from "drizzle-orm";
 import { Hono } from "hono";
 import { serveStatic } from "hono/bun";
 import { version as packageVersion } from "../package.json";
-import { type Auth, createAuth, createGrants, type Grants } from "./auth";
+import {
+  type Auth,
+  createAuth,
+  createGrants,
+  type Grants,
+  tokenOrUnavailable,
+  unavailable,
+} from "./auth";
 import { currentRoomEvents, type LiveKitConfig } from "./calls/livekit";
 import { createMeetRoutes } from "./calls/meet-routes";
 import { createCallRoutes, createCallState } from "./calls/routes";
@@ -113,7 +120,8 @@ export const createJmapProxy =
   async (request: Request): Promise<Response> => {
     const session = await auth.api.getSession({ headers: request.headers });
     if (!session) return Response.json({ error: "Nicht angemeldet" }, { status: 401 });
-    const token = await grants.accessToken(session.session.id);
+    const token = await tokenOrUnavailable(grants, session.session.id);
+    if (token === "unavailable") return unavailable();
     if (!token) {
       await auth.api.revokeSession({
         headers: request.headers,

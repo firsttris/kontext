@@ -9,7 +9,7 @@ import { z } from "zod";
 import { createJmapClient } from "@/jmap/client";
 import { listIdentities } from "@/jmap/mail";
 import { accountRights, createFoldersOf, type JmapSessionAccount } from "../account-rights";
-import type { Grants } from "../auth";
+import { type Grants, tokenOrUnavailable, unavailable } from "../auth";
 import type { SessionAccount } from "../categories/routes";
 import type { LoginResult } from "../stalwart";
 import {
@@ -102,7 +102,9 @@ export const createMcpEndpoint = (deps: McpDeps) => {
   return async (request: Request): Promise<Response> => {
     const caller = await callerOf(request);
     if (caller instanceof Response) return caller;
-    const token = await grants.accessToken(caller.sessionId);
+    const token = await tokenOrUnavailable(grants, caller.sessionId);
+    // Stalwart briefly away: the connection and its consent stay.
+    if (token === "unavailable") return unavailable();
     if (!token) {
       // An OAuth connection is forgotten, consent included, so the agent's next try asks again.
       if (caller.clientId && deps.oauthCaller) {

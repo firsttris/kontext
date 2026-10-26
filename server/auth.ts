@@ -53,7 +53,10 @@ export const createGrants = (
       .onConflictDoUpdate({ target: schema.stalwartGrant.sessionId, set: row });
   };
 
-  /** A valid access token for the session, refreshed when needed; null means sign in again. */
+  /**
+   * A valid access token for the session, refreshed when needed; null means sign in again. Throws
+   * (`isStalwartUnavailable`) while Stalwart does not answer as it should: the session stays.
+   */
   const accessToken = async (sessionId: string): Promise<string | null> => {
     const [row] = await db
       .select()
@@ -64,10 +67,11 @@ export const createGrants = (
     const renewed = await refresh(stalwartUrl, await sealer.open(row.refreshToken));
     // Only a refused token ends the grant; while Stalwart is down or limits Kontext, the session
     // waits and goes on once it answers again.
+    if (renewed.status === "unavailable") throw stalwartUnavailable();
     if (renewed.status === "rejected") {
       await db.delete(schema.stalwartGrant).where(eq(schema.stalwartGrant.sessionId, sessionId));
+      return null;
     }
-    if (renewed.status !== "ok") return null;
     await save(sessionId, renewed.tokens);
     return renewed.tokens.accessToken;
   };
@@ -76,6 +80,27 @@ export const createGrants = (
 };
 
 export type Grants = ReturnType<typeof createGrants>;
+
+/** Stalwart is down, limits or bans Kontext: try again later, nobody is signed out for it. */
+const stalwartUnavailable = () =>
+  Object.assign(new Error("Stalwart antwortet gerade nicht"), { name: "StalwartUnavailable" });
+
+export const isStalwartUnavailable = (error: unknown): boolean =>
+  error instanceof Error && error.name === "StalwartUnavailable";
+
+/** The session's token, null to sign in again, or "unavailable" while Stalwart is away. */
+export const tokenOrUnavailable = (
+  grants: Pick<Grants, "accessToken">,
+  sessionId: string,
+): Promise<string | null | "unavailable"> =>
+  grants.accessToken(sessionId).catch((error: unknown) => {
+    if (isStalwartUnavailable(error)) return "unavailable" as const;
+    throw error;
+  });
+
+/** The answer while Stalwart is unavailable: the session stays, the app tries again. */
+export const unavailable = () =>
+  Response.json({ error: "Der Mailserver antwortet gerade nicht." }, { status: 503 });
 
 const signInBody = z.object({
   email: z.string().trim().min(3).max(320),
