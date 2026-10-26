@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { asDownload, asFile, asViewable, imageUrl, viewableType } from "./safe-blob";
+import { asDownload, asFile, asViewable, imageUrl, sniffRaster, viewableType } from "./safe-blob";
 
 describe("blobs from mails", () => {
   it("open only PDFs and raster images in a tab, whatever the case of their type", () => {
@@ -25,5 +25,32 @@ describe("blobs from mails", () => {
     expect(await imageUrl(new Blob(["<html>"], { type: "text/html" }))).toBeNull();
     const svg = await imageUrl(new Blob(["<svg/>"], { type: "Image/SVG+XML" }));
     expect(svg).toBe(`data:image/svg+xml;base64,${btoa("<svg/>")}`);
+  });
+});
+
+describe("inline images whose part names no image type", () => {
+  const PNG = new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
+  const JPEG = new Uint8Array([0xff, 0xd8, 0xff, 0xe0, 0, 0x10]);
+
+  it("are known by their first bytes", () => {
+    expect(sniffRaster(PNG)).toBe("image/png");
+    expect(sniffRaster(JPEG)).toBe("image/jpeg");
+    expect(sniffRaster(new TextEncoder().encode("GIF89a"))).toBe("image/gif");
+    expect(sniffRaster(new TextEncoder().encode("<html><script>"))).toBeNull();
+  });
+
+  it("still get a URL, typed as what they are", async () => {
+    const created: Blob[] = [];
+    const real = URL.createObjectURL;
+    URL.createObjectURL = (blob: Blob) => {
+      created.push(blob);
+      return "blob:x";
+    };
+    for (const type of ["application/octet-stream", "image/pjpeg", "image/x-png"]) {
+      expect(await imageUrl(new Blob([PNG], { type })), type).toBe("blob:x");
+    }
+    expect(created.map((blob) => blob.type)).toEqual(["image/png", "image/png", "image/png"]);
+    expect(await imageUrl(new Blob(["<html>"], { type: "application/octet-stream" }))).toBeNull();
+    URL.createObjectURL = real;
   });
 });

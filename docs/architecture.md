@@ -1006,7 +1006,8 @@ wird nur heruntergeladen: als `blob:`-Seite liefe es mit den Rechten der App. Wa
 entscheidet der Typ, den die Datei wirklich hat, nie ihr Name (eine „Rechnung.pdf“ kann HTML
 sein). Jeder Blob aus einer Mail bekommt seinen Typ von Kontext (`src/lib/safe-blob.ts`):
 Download-Links (PGP, „Vertraulich senden“, vertrauliche Chat-Dateien) sind
-`application/octet-stream`, eingebettete Bilder (`cid:`) nur Rasterbilder als `blob:` oder SVG als
+`application/octet-stream`, eingebettete Bilder (`cid:`) nur Rasterbilder als `blob:` (auch ohne
+Bildtyp, an ihren ersten Bytes erkannt) oder SVG als
 `data:`-Adresse, die kein Tab als Seite öffnet; andere Teile bekommen keine Adresse. Der Server
 schickt Downloads über `/jmap/download/…` mit `Content-Security-Policy: sandbox` und `nosniff`,
 und was kein Bild und kein PDF ist, als `application/octet-stream` – so lädt auch kein
