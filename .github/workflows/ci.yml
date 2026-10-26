@@ -4,15 +4,17 @@ on:
   push:
     branches: [main]
   pull_request:
-  workflow_call:
+    types: [opened, synchronize, reopened, ready_for_review]
+  workflow_call: # release.yml runs the same checks before publishing
   workflow_dispatch:
   # Nightly: new advisories for dependencies show up without a push.
   schedule:
     - cron: "17 3 * * *"
 
+# A new push to a pull request cancels its outdated run; runs on main and tags finish
 concurrency:
   group: ci-${{ github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 permissions:
   contents: read
@@ -20,6 +22,8 @@ permissions:
 jobs:
   check:
     name: Typecheck, lint, unit tests, build
+    # Draft pull requests do not build; "Ready for review" starts the run
+    if: ${{ !github.event.pull_request.draft }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -43,6 +47,8 @@ jobs:
 
   docs:
     name: Documentation
+    # Draft pull requests do not build; "Ready for review" starts the run
+    if: ${{ !github.event.pull_request.draft }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -54,6 +60,8 @@ jobs:
 
   box:
     name: Telephone box image (Asterisk + agent)
+    # Draft pull requests do not build; "Ready for review" starts the run
+    if: ${{ !github.event.pull_request.draft }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -87,6 +95,8 @@ jobs:
         run: docker logs box || true
 
   image:
+    # Draft pull requests do not build; "Ready for review" starts the run
+    if: ${{ !github.event.pull_request.draft }}
     runs-on: ubuntu-latest
     outputs:
       image: ${{ steps.playwright.outputs.image }}
@@ -152,7 +162,7 @@ jobs:
   e2e-all:
     name: End-to-end tests (Stalwart + Playwright)
     needs: e2e
-    if: always()
+    if: ${{ always() && !github.event.pull_request.draft }}
     runs-on: ubuntu-latest
     steps:
       - run: test "${{ needs.e2e.result }}" = success

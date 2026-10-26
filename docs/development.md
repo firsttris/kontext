@@ -158,7 +158,9 @@ Integrationstests sich verbinden können.
   Job; die E2E- und Integrationstests parallel im offiziellen Playwright-Image, in vier Teilen
   gleichzeitig (`bun run e2e --shard=1/4` … `4/4`, jeder mit eigenem Stalwart und frischen
   Testdaten; Dateien bleiben ganz in einem Teil), Stalwart wird gecacht. Der Check „End-to-end
-  tests (Stalwart + Playwright)“ fasst die vier zusammen. Nachts läuft alles noch einmal, damit neue Sicherheitsmeldungen auffallen, die
+  tests (Stalwart + Playwright)“ fasst die vier zusammen. Pull Requests im Entwurf bauen nicht,
+  erst „Ready for review“ startet den Lauf; ein neuer Push bricht den alten Lauf eines Pull Requests
+  ab, Läufe auf `main` laufen zu Ende. Nachts läuft alles noch einmal, damit neue Sicherheitsmeldungen auffallen, die
   E2E-Tests dabei dreimal ohne Wiederholung (siehe [Robuste E2E-Tests](#robuste-e2e-tests)).
 - **Dokumentation** (`.github/workflows/docs.yml`): jeder Push auf `main`, der `docs/` oder
   `mkdocs.yml` ändert, baut die Seiten mit MkDocs Material und veröffentlicht sie auf GitHub
@@ -166,5 +168,12 @@ Integrationstests sich verbinden können.
   && mkdocs serve`.
 - **Screenshots**: Actions → _Update screenshots_ → Run workflow (oder `bun run screenshots`, lokal mit
   `PW_CHROMIUM_PATH`, wenn Playwrights eigener Browser fehlt).
-- **Release**: Tag `vX.Y.Z` (Version in `package.json`) baut das Image `tristanteu/kontext`
-  für amd64 und arm64 und legt das GitHub-Release an.
+- **Release**: Actions → _Bump version_ → Run workflow auf `main` und `patch`, `minor` oder `major`
+  wählen (für einen Release Candidate `preminor`, dann `prerelease`, am Ende `patch`). Der Lauf hebt
+  die Version in `package.json`, committet sie als „Release vX.Y.Z“, setzt den Tag und startet
+  _Release_ (`.github/workflows/release.yml`) darauf. Von einem Checkout aus geht dasselbe mit
+  `bun run release:patch` (`:minor`, `:major`), das den Commit samt Tag pusht. Das Release
+  überspringt die CI, wenn `main` den Stand schon grün getestet hat, baut die Images
+  `tristanteu/kontext` (Docker Hub und GHCR) und `tristanteu/kontext-box` (Docker Hub) für amd64
+  und arm64 und legt das GitHub-Release an. Die Abläufe kommen aus
+  [firsttris/workflows](https://github.com/firsttris/workflows).
