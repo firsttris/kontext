@@ -9,7 +9,12 @@
 export type FailureLimit = {
   /** Whether a key has failed too often lately; a blocked check is not sent on. */
   blocked: (key: string) => boolean;
-  failed: (key: string) => void;
+  /**
+   * A failed check of `attempt` (a hash of what was tried). The same wrong attempt again counts
+   * once: a phone or Thunderbird that keeps trying an old password is no guessing, and must not
+   * block a whole office behind one address. Without `attempt` every failure counts.
+   */
+  failed: (key: string, attempt?: string) => void;
   /** A right password clears the count of its key. */
   cleared: (key: string) => void;
 };
@@ -19,20 +24,34 @@ export const createFailureLimit = (
   windowMs: number,
   now: () => number = Date.now,
 ): FailureLimit => {
-  const failures = new Map<string, number[]>();
+  const failures = new Map<string, Map<string, number>>();
   const recent = (key: string) => {
     const at = now();
-    const kept = (failures.get(key) ?? []).filter((time) => at - time < windowMs);
-    if (kept.length) failures.set(key, kept);
+    const kept = new Map([...(failures.get(key) ?? [])].filter(([, time]) => at - time < windowMs));
+    if (kept.size) failures.set(key, kept);
     else failures.delete(key);
     return kept;
   };
   return {
-    blocked: (key) => recent(key).length >= max,
-    failed: (key) => failures.set(key, [...recent(key), now()]),
+    blocked: (key) => recent(key).size >= max,
+    failed: (key, attempt = crypto.randomUUID()) =>
+      void failures.set(key, recent(key).set(attempt, now())),
     cleared: (key) => void failures.delete(key),
   };
 };
+
+/** What a failure is told apart by: a hash of the credentials tried, never the credentials. */
+export const attemptOf = async (...parts: (string | undefined)[]): Promise<string> =>
+  Buffer.from(
+    await crypto.subtle.digest("SHA-256", new TextEncoder().encode(JSON.stringify(parts))),
+  ).toString("hex");
+
+/**
+ * The key a login name counts under. Stalwart takes "jonas" as well as "jonas@firma.de", so both
+ * count as one: by the part before the "@" (one company per Stalwart, so names rarely meet).
+ */
+export const loginKey = (login: string): string =>
+  `login:${(login.trim().toLowerCase().split("@")[0] ?? "").trim()}`;
 
 /** Ten wrong passwords per login name within a quarter of an hour, then a pause. */
 export const createLoginFailures = (now?: () => number) => createFailureLimit(10, 15 * 60_000, now);

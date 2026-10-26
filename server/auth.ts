@@ -16,7 +16,7 @@ import { z } from "zod";
 import type { Sealer } from "./crypto";
 import { type Db, schema } from "./db";
 import type { Env } from "./env";
-import { createLoginFailures, type FailureLimit } from "./failures";
+import { attemptOf, createLoginFailures, type FailureLimit, loginKey } from "./failures";
 import { providerPlugins } from "./oidc/provider";
 import { loginAtStalwart, refreshAtStalwart, type StalwartTokens, whoAmI } from "./stalwart";
 import { stalwartUnavailable } from "./stalwart-away";
@@ -111,7 +111,7 @@ const stalwartSignIn = (
         { method: "POST", body: signInBody },
         async (ctx) => {
           // Per login name, on top of Better Auth's limit per address (failures.ts).
-          const login = ctx.body.email.toLowerCase();
+          const login = loginKey(ctx.body.email);
           if (failures.blocked(login)) {
             throw new APIError("TOO_MANY_REQUESTS", {
               message: "Zu viele Fehlversuche. Bitte in einer Viertelstunde erneut versuchen.",
@@ -125,7 +125,7 @@ const stalwartSignIn = (
             });
           }
           if (result.status === "failed") {
-            failures.failed(login);
+            failures.failed(login, await attemptOf(ctx.body.password, ctx.body.code));
             throw new APIError("UNAUTHORIZED", { message: "Anmeldung fehlgeschlagen" });
           }
           // The code is still to come: only a whole sign-in clears the count, or sending the

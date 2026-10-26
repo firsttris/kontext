@@ -41,9 +41,11 @@ describe("the per-login limit and the second factor", () => {
     for (let round = 0; round < 3; round++) {
       // Nine wrong codes ...
       for (let i = 0; i < 9; i++) {
-        statuses.push((await signIn({ password: "right", code: String(100000 + i) })).status);
+        statuses.push(
+          (await signIn({ password: "right", code: String(100000 + round * 9 + i) })).status,
+        );
       }
-      // ... then the password alone, which answers "mfa" and clears the count.
+      // ... then the password alone, which answers "mfa" and must not clear the count.
       await signIn({ password: "right" });
     }
     // 27 wrong codes in a row reached Stalwart; the limit is 10 per login.
@@ -55,8 +57,13 @@ describe("the per-login limit and the second factor", () => {
     const statuses: number[] = [];
     for (let i = 0; i < 11; i++) {
       statuses.push(
-        (await signIn({ email: "anna@weber-haustechnik.test", password: "right", code: "111111" }))
-          .status,
+        (
+          await signIn({
+            email: "anna@weber-haustechnik.test",
+            password: "right",
+            code: String(200000 + i),
+          })
+        ).status,
       );
     }
     expect(statuses.at(-1)).toBe(429);

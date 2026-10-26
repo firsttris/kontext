@@ -80,7 +80,7 @@ export const createPhoneRoutes = (deps: PhoneRouteDeps) => {
     if (!parsed.success) return c.json({ error: "Code fehlt" }, 400);
     const paired = await store.pair(parsed.data.code);
     if (!paired) {
-      pairFailures.failed(client);
+      pairFailures.failed(client, parsed.data.code.toUpperCase());
       return c.json({ error: "Code ungültig oder abgelaufen" }, 403);
     }
     return c.json(paired);

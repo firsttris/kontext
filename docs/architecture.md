@@ -33,7 +33,8 @@ flowchart LR
   die Anmeldung und reicht JMAP an Stalwart durch. Dabei setzt er den Stalwart-Token der Sitzung
   ein; der Browser kennt weder Passwort noch Token. Weil alle Anmeldungen von seiner einen
   Adresse kommen, bremst er das Raten selbst (10 Fehlversuche je Anmeldename in 15 Minuten, auch
-  für CalDAV) und steht in Stalwart unter den erlaubten IPs, sonst würde Stalwart ihn sperren.
+  für CalDAV; „jonas“ und „jonas@firma.de“ zählen zusammen, und dasselbe falsche Passwort noch
+  einmal zählt nicht neu – ein Handy mit altem Passwort sperrt so kein ganzes Büro) und steht in Stalwart unter den erlaubten IPs, sonst würde Stalwart ihn sperren.
   Eine Sitzung endet nur, wenn Stalwart den Refresh-Token ablehnt, nicht wenn es gerade nicht
   antwortet. Was mit dem Sitzungs-Cookie etwas ändert (POST, PUT, PATCH, DELETE), muss von
   Kontexts eigenen Seiten kommen (`Sec-Fetch-Site`, sonst `Origin`; `server/csrf.ts`) – sonst

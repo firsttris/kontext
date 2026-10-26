@@ -41,6 +41,26 @@ describe("DAV sign-in", () => {
     expect(fetch).toHaveBeenCalledTimes(2);
   });
 
+  it("lets one old password, tried again and again behind an office's address, block nobody", async () => {
+    const fetch = vi.fn(async (_url: string, init?: RequestInit) =>
+      new Headers(init?.headers).get("authorization") === basic("anna@firma.test", "neu")
+        ? Response.json({ apiUrl: "/jmap/", primaryAccounts: {}, accounts: {} })
+        : new Response("", { status: 401 }),
+    );
+    vi.stubGlobal("fetch", fetch);
+    const auth = createDavAuth(
+      { STALWART_URL: "http://stalwart" },
+      Date.now,
+      createFailureLimit(3, 60_000),
+    );
+    for (let i = 0; i < 10; i++) await auth(basic("jonas@firma.test", "alt"), "198.51.100.1");
+    await auth(basic("anna@firma.test", "neu"), "198.51.100.1");
+    expect(fetch).toHaveBeenLastCalledWith(
+      "http://stalwart/jmap/session",
+      expect.objectContaining({ headers: { authorization: basic("anna@firma.test", "neu") } }),
+    );
+  });
+
   it("does not count it against anyone when Stalwart does not answer", async () => {
     const fetch = vi.fn(async () => new Response("", { status: 503 }));
     vi.stubGlobal("fetch", fetch);

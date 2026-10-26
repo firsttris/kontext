@@ -11,7 +11,7 @@ import {
   type JmapSessionAccount,
 } from "../account-rights";
 import type { Env } from "../env";
-import { createLoginFailures, type FailureLimit } from "../failures";
+import { createLoginFailures, type FailureLimit, loginKey } from "../failures";
 
 export type DavAccount = { id: string; name: string; isReadOnly: boolean };
 export type DavUser = { me: string; accounts: DavAccount[] };
@@ -53,7 +53,7 @@ export const createDavAuth = (
     const kept = known.get(key);
     if (kept && kept.until > now()) return kept.user;
     // Guessing stops here, per login name and per address, before it reaches Stalwart.
-    const [login, address] = [`login:${loginOf(header)}`, `client:${client}`];
+    const [login, address] = [loginKey(loginOf(header)), `client:${client}`];
     const counted = [login, address];
     if (counted.some(failures.blocked)) return null;
     const response = await fetch(`${env.STALWART_URL}/jmap/session`, {
@@ -61,7 +61,7 @@ export const createDavAuth = (
     }).catch(() => null);
     if (!response?.ok) {
       known.delete(key);
-      if (response?.status === 401) for (const counter of counted) failures.failed(counter);
+      if (response?.status === 401) for (const counter of counted) failures.failed(counter, key);
       return null;
     }
     failures.cleared(login);
