@@ -161,6 +161,30 @@ describe("/api/smime", () => {
     expect((await call("POST", "/trust", { certificate: "x".repeat(200) })).status).toBe(400);
   });
 
+  it("does not let a check without the chain stand for one with it", async () => {
+    const authority = (subject: string, issuer: string) => {
+      const cert = forge.pki.createCertificate();
+      cert.publicKey = keys.publicKey;
+      cert.serialNumber = "07";
+      cert.validity.notBefore = new Date(Date.now() - 2 * 86_400_000);
+      cert.validity.notAfter = new Date(Date.now() + 365 * 86_400_000);
+      cert.setSubject([{ name: "organizationName", value: subject }]);
+      cert.setIssuer([{ name: "organizationName", value: issuer }]);
+      cert.setExtensions([{ name: "basicConstraints", cA: true }]);
+      cert.sign(keys.privateKey, forge.md.sha256.create());
+      return forge.pki.certificateToPem(cert);
+    };
+    // The leaf (issued by "Test-CA") hangs on the root only through the intermediate "Test-CA".
+    const root = new X509Certificate(authority("Wurzel", "Wurzel"));
+    const intermediate = authority("Test-CA", "Wurzel");
+    const pem = certFor(["amt@stadt.test"]);
+    const call = setup({ roots: [root] });
+    const bare = await call("POST", "/trust", { certificate: pem });
+    expect((await bare.json()).trust.chain).toBe("untrusted");
+    const full = await call("POST", "/trust", { certificate: pem, chain: [intermediate] });
+    expect((await full.json()).trust.chain).toBe("trusted");
+  });
+
   it("finds a certificate in DNS only from a signed answer and for that address", async () => {
     const pem = certFor(["amt@stadt.test"]);
     const hex = Buffer.from(new X509Certificate(pem).raw).toString("hex");

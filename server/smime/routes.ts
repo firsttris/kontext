@@ -160,8 +160,11 @@ export const createSmimeRoutes = ({
       .object({ certificate: pem, chain: z.array(pem).max(10).default([]) })
       .safeParse(await c.req.json().catch(() => null));
     if (!parsed.success) return c.json({ error: "Angaben unvollständig." }, 400);
-    const key = parseCert(parsed.data.certificate)?.fingerprint256;
-    if (!key) return c.json({ error: "Kein Zertifikat." }, 400);
+    const leaf = parseCert(parsed.data.certificate)?.fingerprint256;
+    if (!leaf) return c.json({ error: "Kein Zertifikat." }, 400);
+    // The answer holds for this leaf with this chain only: anyone may ask with a leaf and no
+    // chain, and that "untrusted" must not stand for everyone else's mail with the full chain.
+    const key = [leaf, ...parsed.data.chain.map((cert) => parseCert(cert)?.fingerprint256)].join();
     const cached = checked.get(key);
     if (cached && now().getTime() - cached.at < TRUST_MS) return c.json({ trust: cached.trust });
     const trust = await checkTrust(parsed.data, { roots, post, now });
