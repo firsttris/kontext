@@ -40,7 +40,9 @@ flowchart LR
   könnte eine Seite unter derselben Domain, etwa Schreibzeug, mit dem Cookie Anfragen schicken.
   Kein fremder Rahmen darf Kontext zeigen (`frame-ancestors 'self'`).
 - **Caddy** holt das Zertifikat und leitet alles an den Server weiter, CalDAV/CardDAV für
-  Mailprogramme direkt an Stalwart.
+  Mailprogramme direkt an Stalwart (`/dav/cal`, `/dav/card` …, `/.well-known/caldav` und
+  `carddav`); der Rest von `/dav` sind Kontexts Aufgabenlisten. Unter `mta-sts.<domain>` liefert
+  er Stalwarts MTA-STS-Richtlinie aus, unter `openpgpkey.<domain>` Kontexts WKD.
 - **LiveKit** (Apache 2.0, optional) trägt die [Anrufe](#anrufe) im Chat: ein SFU, der Ton, Bild
   und geteilte Bildschirme zwischen den Browsern verteilt.
 - **Die Telefonbox** (optional, `box/`) steht im Büro des Kunden: Asterisk und ein kleiner Agent,

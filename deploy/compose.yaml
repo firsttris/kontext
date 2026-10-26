@@ -123,6 +123,7 @@ services:
       - "443:443/udp"
     environment:
       KONTEXT_DOMAIN: ${KONTEXT_DOMAIN}
+      MAIL_DOMAIN: ${MAIL_DOMAIN:-}
       ACME_EMAIL: ${ACME_EMAIL}
       SCHREIBZEUG_URL: ${SCHREIBZEUG_URL:-https://schreibzeug.internal}
     volumes:

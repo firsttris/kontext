@@ -13,6 +13,8 @@ IP muss sich setzen lassen.
 | A       | `mail.firma.de`                  | IP des Servers                                                      |
 | A       | `kontext.firma.de`             | IP des Servers                                                      |
 | A       | `dokumente.firma.de`             | IP des Servers (nur mit [Dokumente](#dokumente))                    |
+| A       | `mta-sts.firma.de`               | IP des Servers (MTA-STS, siehe unten)                               |
+| A       | `openpgpkey.firma.de`            | IP des Servers (OpenPGP-Schlüssel per WKD)                          |
 | MX      | `firma.de`                       | `10 mail.firma.de`                                                  |
 | TXT     | `firma.de`                       | `v=spf1 mx -all`                                                    |
 | TXT     | `<selector>._domainkey.firma.de` | DKIM-Schlüssel aus Stalwart                                         |
@@ -22,8 +24,9 @@ IP muss sich setzen lassen.
 Dazu für die Verschlüsselung unterwegs ([Konzept](encryption.md)): **MTA-STS** und **TLS-RPT**
 verlangen von anderen Mailservern, nur verschlüsselt an `firma.de` zuzustellen, und melden
 Probleme. Stalwart zeigt die passenden Einträge unter *Domains → firma.de → DNS-Einträge* an
-(`_mta-sts.firma.de`, `mta-sts.firma.de`, `_smtp._tls.firma.de`) und stellt die Richtlinie unter
-`https://mta-sts.firma.de` selbst bereit. Mit DNSSEC beim Anbieter kommt **DANE** dazu (ein
+(`_mta-sts.firma.de`, `mta-sts.firma.de`, `_smtp._tls.firma.de`) und schreibt die Richtlinie;
+Caddy liefert sie unter `https://mta-sts.firma.de` aus (dafür `MAIL_DOMAIN=firma.de` in
+`deploy/.env`). Mit DNSSEC beim Anbieter kommt **DANE** dazu (ein
 TLSA-Eintrag, ebenfalls aus Stalwart). Die Firmenverwaltung prüft, was davon gesetzt ist.
 
 !!! warning "Cloudflare"

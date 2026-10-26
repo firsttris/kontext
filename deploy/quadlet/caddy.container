@@ -16,6 +16,7 @@ Volume=caddy-data:/data
 Volume=caddy-config:/config
 # Only what the Caddyfile reads, not deploy/.env with Kontext's secrets and the backup's keys
 Environment=KONTEXT_DOMAIN=kontext.firma.de
+Environment=MAIL_DOMAIN=firma.de
 Environment=ACME_EMAIL=admin@firma.de
 Environment=SCHREIBZEUG_URL=https://dokumente.firma.de
 
