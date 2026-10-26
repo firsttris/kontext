@@ -65,11 +65,13 @@ Auf einem Server mit Docker (oder Podman), eigener Domain und offenen Ports 25, 
 ```bash
 git clone https://github.com/firsttris/kontext /opt/kontext && cd /opt/kontext
 cp deploy/.env.example deploy/.env      # Domain, Mailserver-Name, Geheimnisse, Backup-Ziel
+chmod 600 deploy/.env                   # jedes change-me ersetzen: damit startet Kontext nicht
 docker compose -f deploy/compose.yaml up -d
 ```
 
-Danach in Stalwarts Verwaltung (Port 8080, nur über Tailscale) Domain, DKIM und Benutzer anlegen
-und unter `https://<deine Domain>` anmelden. Für zehn Benutzer reicht ein VPS mit 2 vCPU und 4 GB
+Danach in Stalwarts Verwaltung (Port 8080, nur über Tailscale) Domain, DKIM und Benutzer anlegen,
+Kontexts Container-Netz `10.89.250.0/24` als erlaubte IP eintragen (sonst können falsche
+Passwörter Kontext selbst sperren lassen) und unter `https://<deine Domain>` anmelden. Für zehn Benutzer reicht ein VPS mit 2 vCPU und 4 GB
 RAM. Anrufe (LiveKit), Telefonie und Dokumente sind Compose-Profile, die du bei Bedarf
 einschaltest. DNS-Einträge, Podman-Quadlets, Backups und Updates stehen in der
 [Installationsanleitung](https://firsttris.github.io/kontext/installation.html).
