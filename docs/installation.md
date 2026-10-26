@@ -290,6 +290,14 @@ docker compose -f deploy/compose.yaml pull && docker compose -f deploy/compose.y
 Hat sich `deploy/Caddyfile` geändert (etwa für die KI-Agenten), Caddy neu laden:
 `docker compose -f deploy/compose.yaml restart caddy`.
 
+Seit 0.1.3 läuft der Kontext-Server nicht mehr als root, sondern als Benutzer `bun`. Ein Volume aus
+einer älteren Version gehört noch root; einmal übergeben, dann starten:
+
+```bash
+docker compose -f deploy/compose.yaml run --rm --user root --entrypoint chown kontext -R bun:bun /data
+docker compose -f deploy/compose.yaml up -d
+```
+
 Vor einem Stalwart-Update mit neuer Hauptversion die `UPGRADING`-Hinweise von Stalwart lesen und
 vorher ein Backup machen.
 
