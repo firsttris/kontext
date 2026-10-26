@@ -265,7 +265,9 @@ nur für Kontakte und Termine aus, nicht für Mails.
 
 Kontext liest das alte Postfach per IMAP (`imapflow`), nur lesend, und gleicht es in eine Richtung
 ab: der erste Lauf holt alles, danach alle 15 Minuten das Neue, bis der Chef den Umzug abschließt.
-So läuft das alte Postfach parallel weiter, solange Absender noch die alte Adresse nutzen.
+So läuft das alte Postfach parallel weiter, solange Absender noch die alte Adresse nutzen. Mails
+über 50 MB übernimmt Kontext nicht (sie zählen als fehlgeschlagen); geholt wird jede höchstens bis
+zu dieser Größe, egal was der Server über sie sagt.
 
 - **Anmeldung**: Adresse und Passwort – bei Gmail ein App-Passwort (Bestätigung in zwei Schritten
   nötig). Kontext prüft die Anmeldung sofort und speichert das Passwort verschlüsselt (AES-GCM mit

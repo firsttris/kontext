@@ -5,7 +5,7 @@
  */
 import { imapCategories } from "./categories";
 import { keywordsOf } from "./imap-folders";
-import type { ImapSource, MailHead } from "./imap-source";
+import { type ImapSource, MAX_MAIL_BYTES, type MailHead } from "./imap-source";
 import { type Importer, INLINE_LIMIT, type MailToImport } from "./importer";
 import type { FolderState, SyncCounts } from "./syncs";
 
@@ -75,29 +75,35 @@ export const syncFolder = async ({
       Object.fromEntries(again.map((head) => [known.get(head.messageId!)!, mailboxId])),
     );
     counts.added += again.length;
-    for (const batch of batchesOf(fresh)) {
+    // Larger than the limit by the server's own word: not even fetched.
+    const fitting = fresh.filter((head) => head.size <= MAX_MAIL_BYTES);
+    counts.failed += fresh.length - fitting.length;
+    for (const batch of batchesOf(fitting)) {
       const raw = await source.sources(
         path,
         batch.map((head) => head.uid),
       );
-      const mails: MailToImport[] = batch.flatMap((head) => {
+      const taken = batch.flatMap((head) => {
         const data = raw.get(head.uid);
-        return data
-          ? [
-              {
-                raw: data,
-                mailboxId,
-                keywords: keywordsFor(head),
-                categories: imapCategories(head.flags),
-                receivedAt: head.internalDate?.toISOString().replace(/\.\d{3}Z$/, "Z") ?? null,
-              },
-            ]
-          : [];
+        const mail: MailToImport | null = data
+          ? {
+              raw: data,
+              mailboxId,
+              keywords: keywordsFor(head),
+              categories: imapCategories(head.flags),
+              receivedAt: head.internalDate?.toISOString().replace(/\.\d{3}Z$/, "Z") ?? null,
+            }
+          : null;
+        return mail ? [{ head, mail }] : [];
       });
-      const outcome = await importer.importMails(accountId, mails);
+      const outcome = await importer.importMails(
+        accountId,
+        taken.map(({ mail }) => mail),
+      );
       counts.imported += outcome.imported;
       counts.failed += batch.length - outcome.imported;
-      batch.forEach((head, i) => {
+      // The ids follow the mails sent, not the batch: one that did not come leaves a gap there.
+      taken.forEach(({ head }, i) => {
         const id = outcome.ids[i];
         if (head.messageId && id) known.set(head.messageId, id);
       });

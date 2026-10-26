@@ -10,6 +10,12 @@ import type { Endpoint } from "./providers";
 export type Login = { user: string; password: string };
 
 /**
+ * The largest mail taken over. The size a server announces is its word only, so the source itself
+ * is fetched no longer than this: a server cannot fill Kontext's memory with one "small" mail.
+ */
+export const MAX_MAIL_BYTES = 50 * 1024 * 1024;
+
+/**
  * Why a connection failed: the login (wrong or revoked app password), the server, or a server
  * that is not on the internet.
  */
@@ -115,10 +121,13 @@ const sourceOf = (client: ImapFlow) => {
       const result = new Map<number, Uint8Array>();
       for await (const message of client.fetch(
         uids.join(","),
-        { uid: true, source: true },
+        { uid: true, source: { maxLength: MAX_MAIL_BYTES + 1 } },
         { uid: true },
       )) {
-        if (message.source) result.set(message.uid, new Uint8Array(message.source));
+        // Longer than the limit: cut off, so not taken (counted as failed).
+        if (message.source && message.source.length <= MAX_MAIL_BYTES) {
+          result.set(message.uid, new Uint8Array(message.source));
+        }
       }
       return result;
     } finally {
