@@ -377,7 +377,9 @@ SPF und DMARC. Beides macht deshalb der Kontext-Server:
   nur IMAP 993/143 und SMTP 465/587, und nur Server im Internet (keine Adresse im eigenen Netz,
   `server/internet-host.ts`); das gilt auch für den Umzug von einem anderen Server und bei jedem
   Abholen und Senden. Kontext verbindet sich mit genau der geprüften Adresse (TLS prüft weiter den
-  Namen), damit der Name nicht zwischen Prüfen und Verbinden nach innen zeigen kann.
+  Namen), damit der Name nicht zwischen Prüfen und Verbinden nach innen zeigen kann. Falsche
+  Passwörter zählen je Person (10 in 15 Minuten): Sonst ließe sich über das Formular am eigenen
+  Stalwart, bei dem Kontext eine erlaubte Adresse ist, das Passwort eines Kollegen raten.
 - **Grenzen**: Rückgängig, „Später senden“, Verschlüsseln und Unterschreiben gehen über ein weiteres Postfach noch
   nicht (der Server sendet sofort); Lesebestätigungen und Abmelde-Mails gehen weiter von der
   eigenen Adresse. Senden als diese Adresse geht nur in Kontext, nicht aus Thunderbird oder der
