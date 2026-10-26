@@ -12,6 +12,7 @@
   "login_code_hint": "Der 6-stellige Code aus Ihrer Authenticator-App.",
   "login_code_failed": "Der Code stimmt nicht. Bitte den aktuellen Code eingeben.",
   "login_offline": "Der Server ist gerade nicht erreichbar.",
+  "login_limited": "Zu viele Fehlversuche. Bitte in einer Viertelstunde erneut versuchen.",
   "logout": "Abmelden",
   "nav_mail": "Mail",
   "nav_calendar": "Kalender",

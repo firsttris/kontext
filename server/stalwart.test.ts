@@ -1,6 +1,6 @@
 // @vitest-environment node
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { refreshAtStalwart } from "./stalwart";
+import { loginAtStalwart, refreshAtStalwart } from "./stalwart";
 
 const answer = (status: number, body: unknown = {}) =>
   vi.fn(async () => new Response(JSON.stringify(body), { status }));
@@ -32,5 +32,30 @@ describe("refreshing at Stalwart", () => {
       vi.fn(async () => Promise.reject(new Error("down"))),
     );
     expect(await refreshAtStalwart("http://stalwart", "r1")).toEqual({ status: "unavailable" });
+  });
+});
+
+describe("signing in at Stalwart", () => {
+  const credentials = { email: "jonas@weber.test", password: "falsch" };
+
+  it("calls a wrong password failed", async () => {
+    vi.stubGlobal("fetch", answer(200, { type: "failure" }));
+    expect(await loginAtStalwart("http://stalwart", credentials)).toEqual({ status: "failed" });
+  });
+
+  it("gives no verdict on the password when Stalwart does not answer as it should", async () => {
+    for (const status of [403, 429, 500]) {
+      vi.stubGlobal("fetch", answer(status));
+      expect(await loginAtStalwart("http://stalwart", credentials)).toEqual({
+        status: "unavailable",
+      });
+    }
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => Promise.reject(new Error("down"))),
+    );
+    expect(await loginAtStalwart("http://stalwart", credentials)).toEqual({
+      status: "unavailable",
+    });
   });
 });

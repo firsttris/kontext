@@ -12,6 +12,7 @@ vi.mock("./db", async () => ({
 vi.mock("./stalwart", async (importOriginal) => ({
   ...(await importOriginal<typeof import("./stalwart")>()),
   loginAtStalwart: async (_url: string, body: { password: string; code?: string }) => {
+    if (body.password === "stalwart-down") return { status: "unavailable" };
     if (body.password !== "right") return { status: "failed" };
     if (!body.code) return { status: "mfa" };
     return { status: "failed" }; // every code tried here is wrong
@@ -59,5 +60,20 @@ describe("the per-login limit and the second factor", () => {
       );
     }
     expect(statuses.at(-1)).toBe(429);
+  });
+});
+
+describe("the per-login limit while Stalwart is away", () => {
+  it("counts nothing against the person and says to try again", async () => {
+    const as = (password: string) =>
+      auth.handler(
+        new Request("https://kontext.test/api/auth/sign-in/stalwart", {
+          method: "POST",
+          headers: { "content-type": "application/json", origin: "https://kontext.test" },
+          body: JSON.stringify({ email: "sandra@weber-haustechnik.test", password }),
+        }),
+      );
+    for (let i = 0; i < 12; i++) expect((await as("stalwart-down")).status).toBe(503);
+    expect((await as("wrong")).status).toBe(401);
   });
 });

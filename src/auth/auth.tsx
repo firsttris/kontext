@@ -8,7 +8,7 @@ import { createJmapClient, type JmapClient } from "@/jmap/client";
 import { signedOAuthQuery } from "./oauth-query";
 
 /** "continue": the sign-in was for an OAuth client (Schreibzeug, an agent); the browser goes on. */
-export type SignInResult = "ok" | "mfa" | "failed" | "offline" | "continue";
+export type SignInResult = "ok" | "mfa" | "failed" | "limited" | "offline" | "continue";
 
 /**
  * Signs in at the server; "mfa" means the account needs the code from the authenticator app.
@@ -33,6 +33,8 @@ export const signIn = async (
       }),
     });
     if (response.status === 401 || response.status === 400) return "failed";
+    // Too many wrong tries for this address or login name (server/failures.ts).
+    if (response.status === 429) return "limited";
     if (!response.ok) return "offline";
     const body = (await response.json()) as { status: "ok" | "mfa" } | { url: string };
     if ("url" in body) {

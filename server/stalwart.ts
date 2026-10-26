@@ -14,7 +14,9 @@ export type StalwartTokens = { accessToken: string; refreshToken: string; access
 export type LoginResult =
   | { status: "ok"; tokens: StalwartTokens }
   | { status: "mfa" }
-  | { status: "failed" };
+  | { status: "failed" }
+  /** Stalwart did not answer as it should: no verdict on the password. */
+  | { status: "unavailable" };
 
 const loginResponse = z.discriminatedUnion("type", [
   z.object({ type: z.literal("authenticated"), client_code: z.string() }),
@@ -96,8 +98,10 @@ export const loginAtStalwart = async (
       codeChallenge: challenge,
       codeChallengeMethod: "S256",
     }),
-  });
-  if (!response.ok) return { status: "failed" };
+  }).catch(() => null);
+  // A wrong password is a 200 with type "failure" (LoginResponse in
+  // crates/http/src/auth/oauth/auth.rs); an HTTP error is Stalwart not answering as it should.
+  if (!response?.ok) return { status: "unavailable" };
   const login = loginResponse.parse(await response.json());
   if (login.type === "mfaRequired") return { status: "mfa" };
   if (login.type !== "authenticated") return { status: "failed" };
@@ -109,9 +113,8 @@ export const loginAtStalwart = async (
     redirect_uri: REDIRECT_URI,
     code_verifier: verifier,
   });
-  return token.status === "ok"
-    ? { status: "ok", tokens: toTokens(token.body) }
-    : { status: "failed" };
+  if (token.status === "ok") return { status: "ok", tokens: toTokens(token.body) };
+  return token.status === "rejected" ? { status: "failed" } : { status: "unavailable" };
 };
 
 export type RefreshResult =

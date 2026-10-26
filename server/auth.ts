@@ -118,6 +118,12 @@ const stalwartSignIn = (
             });
           }
           const result = await loginAtStalwart(stalwartUrl, ctx.body);
+          // No verdict on the password: counts against nobody.
+          if (result.status === "unavailable") {
+            throw new APIError("SERVICE_UNAVAILABLE", {
+              message: "Der Mailserver antwortet gerade nicht. Bitte gleich erneut versuchen.",
+            });
+          }
           if (result.status === "failed") {
             failures.failed(login);
             throw new APIError("UNAUTHORIZED", { message: "Anmeldung fehlgeschlagen" });
