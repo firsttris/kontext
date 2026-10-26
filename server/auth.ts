@@ -142,8 +142,10 @@ const stalwartSignIn = (
             failures.failed(login);
             throw new APIError("UNAUTHORIZED", { message: "Anmeldung fehlgeschlagen" });
           }
-          failures.cleared(login);
+          // The code is still to come: only a whole sign-in clears the count, or sending the
+          // password alone between wrong codes would let them be guessed without end.
           if (result.status === "mfa") return ctx.json({ status: "mfa" as const });
+          failures.cleared(login);
           // Stalwart may accept a bare name; the account's real address comes from the session.
           const { email } = await whoAmI(stalwartUrl, result.tokens.accessToken);
           const adapter = ctx.context.internalAdapter;
