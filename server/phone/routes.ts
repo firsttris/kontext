@@ -3,12 +3,14 @@
  * boxes' own door: pairing with a code (POST /box/pair) and their WebSocket (GET /box, with the
  * token from pairing). A ticket into a phone call's LiveKit room comes with answer and dial.
  */
+
 import { Hono } from "hono";
 import type { UpgradeWebSocket } from "hono/ws";
 import { z } from "zod";
 import { participantMetadata } from "../calls/calls";
 import { joinToken, type LiveKitConfig } from "../calls/livekit";
 import type { Viewer } from "../chat/chat";
+import { createFailureLimit, type FailureLimit } from "../failures";
 import { bearer } from "./box-routes";
 import { type PhoneFiles, wavResponse } from "./files";
 import { everyone } from "./lines";
@@ -38,6 +40,8 @@ export type PhoneRouteDeps = {
   /** The boxes' file routes (sounds, messages), with their own check of the box's token. */
   boxFiles: Hono<{ Variables: { boxId: string } }>;
   files: Pick<PhoneFiles, "readVoicemail" | "readFax" | "readRecording">;
+  /** Wrong pairing codes per caller's address (failures.ts). */
+  pairFailures?: FailureLimit;
 };
 
 const STATUS: Record<Problem, 400 | 403 | 404 | 409 | 503> = {
@@ -65,11 +69,21 @@ export const createPhoneRoutes = (deps: PhoneRouteDeps) => {
   const app = new Hono<{ Variables: { viewer: Viewer } }>();
 
   // The boxes: pairing once with the code from the Firmenverwaltung, then their token.
+  // Nobody signs in here: wrong codes are counted per address, so nobody tries their way through.
+  const pairFailures = deps.pairFailures ?? createFailureLimit(10, 15 * 60_000);
   app.post("/box/pair", async (c) => {
+    const client = `client:${c.req.header("x-forwarded-for")?.split(",")[0]?.trim() ?? ""}`;
+    if (pairFailures.blocked(client)) {
+      return c.json({ error: "Zu viele falsche Codes. Bitte später erneut versuchen." }, 429);
+    }
     const parsed = pairSchema.safeParse(await c.req.json().catch(() => ({})));
     if (!parsed.success) return c.json({ error: "Code fehlt" }, 400);
     const paired = await store.pair(parsed.data.code);
-    return paired ? c.json(paired) : c.json({ error: "Code ungültig oder abgelaufen" }, 403);
+    if (!paired) {
+      pairFailures.failed(client);
+      return c.json({ error: "Code ungültig oder abgelaufen" }, 403);
+    }
+    return c.json(paired);
   });
 
   app.route("/box/files", deps.boxFiles);

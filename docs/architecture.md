@@ -714,7 +714,8 @@ flowchart LR
   der letzten Konfiguration weiter (`/data/config.json`).
 - **Koppeln:** In der Firmenverwaltung unter Telefonie gibt es einen Code (30 Minuten gültig).
   Die Box tauscht ihn einmal gegen ein Token (`POST /api/phone/box/pair`); beides liegt nur als
-  SHA-256 in der Datenbank. Den Code gibt man der Box beim ersten Start mit oder auf ihrer
+  SHA-256 in der Datenbank. Nach 10 falschen Codes in 15 Minuten nimmt Kontext von derselben
+  IP-Adresse eine Weile keinen mehr an. Den Code gibt man der Box beim ersten Start mit oder auf ihrer
   Statusseite (`http://<box>:8089`), die sonst nur anzeigt, ob sie verbunden und an der Fritzbox
   angemeldet ist.
 - **Ein Anruf kommt rein:** Die Fritzbox klingelt bei der Box (und bei den Tischtelefonen). Die
