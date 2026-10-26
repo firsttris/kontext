@@ -9,14 +9,7 @@ import { eq } from "drizzle-orm";
 import { Hono } from "hono";
 import { serveStatic } from "hono/bun";
 import { version as packageVersion } from "../package.json";
-import {
-  type Auth,
-  createAuth,
-  createGrants,
-  type Grants,
-  tokenOrUnavailable,
-  unavailable,
-} from "./auth";
+import { type Auth, createAuth, createGrants, type Grants } from "./auth";
 import { currentRoomEvents, type LiveKitConfig } from "./calls/livekit";
 import { createMeetRoutes } from "./calls/meet-routes";
 import { createCallRoutes, createCallState } from "./calls/routes";
@@ -92,6 +85,7 @@ import { createSnoozeRoutes } from "./snooze/routes";
 import { createSnoozeStore } from "./snooze/store";
 import { createSnoozeWaker } from "./snooze/waker";
 import { loginAtStalwart } from "./stalwart";
+import { tokenOrUnavailable, unavailable } from "./stalwart-away";
 import { createRuleTasks } from "./tasks/from-rules";
 import { createTaskReminder } from "./tasks/notices";
 import { createTaskRoutes } from "./tasks/routes";

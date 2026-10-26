@@ -9,9 +9,10 @@ import { z } from "zod";
 import { createJmapClient } from "@/jmap/client";
 import { listIdentities } from "@/jmap/mail";
 import { accountRights, createFoldersOf, type JmapSessionAccount } from "../account-rights";
-import { type Grants, tokenOrUnavailable, unavailable } from "../auth";
+import type { Grants } from "../auth";
 import type { SessionAccount } from "../categories/routes";
 import type { LoginResult } from "../stalwart";
+import { tokenOrUnavailable, unavailable } from "../stalwart-away";
 import {
   bearerToken,
   type Connections,

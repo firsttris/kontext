@@ -19,6 +19,7 @@ import type { Env } from "./env";
 import { createLoginFailures, type FailureLimit } from "./failures";
 import { providerPlugins } from "./oidc/provider";
 import { loginAtStalwart, refreshAtStalwart, type StalwartTokens, whoAmI } from "./stalwart";
+import { stalwartUnavailable } from "./stalwart-away";
 
 const DAY = 24 * 60 * 60;
 
@@ -80,27 +81,6 @@ export const createGrants = (
 };
 
 export type Grants = ReturnType<typeof createGrants>;
-
-/** Stalwart is down, limits or bans Kontext: try again later, nobody is signed out for it. */
-const stalwartUnavailable = () =>
-  Object.assign(new Error("Stalwart antwortet gerade nicht"), { name: "StalwartUnavailable" });
-
-export const isStalwartUnavailable = (error: unknown): boolean =>
-  error instanceof Error && error.name === "StalwartUnavailable";
-
-/** The session's token, null to sign in again, or "unavailable" while Stalwart is away. */
-export const tokenOrUnavailable = (
-  grants: Pick<Grants, "accessToken">,
-  sessionId: string,
-): Promise<string | null | "unavailable"> =>
-  grants.accessToken(sessionId).catch((error: unknown) => {
-    if (isStalwartUnavailable(error)) return "unavailable" as const;
-    throw error;
-  });
-
-/** The answer while Stalwart is unavailable: the session stays, the app tries again. */
-export const unavailable = () =>
-  Response.json({ error: "Der Mailserver antwortet gerade nicht." }, { status: 503 });
 
 const signInBody = z.object({
   email: z.string().trim().min(3).max(320),
