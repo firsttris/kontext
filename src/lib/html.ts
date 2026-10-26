@@ -189,12 +189,14 @@ export const mailDocument = (
 
 /** Visible text of an HTML fragment, for the text/plain part of a sent mail. */
 export const htmlToText = (html: string): string => {
-  if (typeof document === "undefined") return html.replace(/<[^>]+>/g, "");
-  const container = document.createElement("div");
-  container.innerHTML = html
-    .replace(/<br\s*\/?>/gi, "\n")
-    .replace(/<\/(p|div|li|h[1-6]|blockquote)>/gi, "</$1>\n");
-  return (container.textContent ?? "").replace(/\n{3,}/g, "\n\n").trim();
+  if (typeof DOMParser === "undefined") return html.replace(/<[^>]+>/g, "");
+  // Parsed into a document of its own, which loads and runs nothing: an element of the page's
+  // document would load an <img> and fire its onerror even without being attached.
+  const parsed = new DOMParser().parseFromString(
+    html.replace(/<br\s*\/?>/gi, "\n").replace(/<\/(p|div|li|h[1-6]|blockquote)>/gi, "</$1>\n"),
+    "text/html",
+  );
+  return (parsed.body.textContent ?? "").replace(/\n{3,}/g, "\n\n").trim();
 };
 
 /** The original below a reply, as an HTML quote. */

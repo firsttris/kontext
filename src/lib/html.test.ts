@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { escapeHtml, htmlToText, mailDocument, sanitizeMailHtml, textToHtml } from "./html";
 
 const clean = (html: string, allowRemote = false) =>
@@ -159,5 +159,9 @@ describe("text and HTML", () => {
   });
   it("turns HTML back into text", () => {
     expect(htmlToText("<p>Hallo</p><p>Welt<br>zwei</p>").trim()).toBe("Hallo\nWelt\nzwei");
+    // Parsed apart from the page: what it holds is only read.
+    const created = vi.spyOn(document, "createElement");
+    expect(htmlToText('<img src="x" onerror="alert(1)">Text')).toBe("Text");
+    expect(created).not.toHaveBeenCalled();
   });
 });
