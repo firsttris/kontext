@@ -22,6 +22,16 @@ import { loginAtStalwart, refreshAtStalwart, type StalwartTokens, whoAmI } from 
 
 const DAY = 24 * 60 * 60;
 
+/** Better Auth's own routes Kontext does not use (they would bypass Stalwart). */
+export const DISABLED_PATHS = [
+  "/update-user",
+  "/change-email",
+  "/change-password",
+  "/set-password",
+  "/delete-user",
+  "/token",
+] as const;
+
 /** Stores and renews the Stalwart tokens of a session. */
 export const createGrants = (
   db: Db,
@@ -146,6 +156,10 @@ export const createAuth = (
     database: drizzleAdapter(db, { provider: "sqlite", schema }),
     // Passwords belong to Stalwart; Better Auth only keeps the sessions.
     emailAndPassword: { enabled: false },
+    // Name and address come from Stalwart at each sign-in; nobody changes them here, or a person
+    // could take a colleague's name into Schreibzeug's tokens. /token would hand out JWTs signed
+    // with the provider's keys to any session.
+    disabledPaths: [...DISABLED_PATHS],
     session: { expiresIn: 90 * DAY, updateAge: DAY },
     rateLimit: {
       enabled: true,
