@@ -2,7 +2,8 @@
  * Who a CalDAV client is: its mail address and password (an app password with two-factor sign-in)
  * are checked by Stalwart, whose JMAP session (sorted by `accountRights`) then says which
  * mailboxes – and so which task boards – the person has, and which they may change. A good
- * answer is kept a few minutes, so a sync does not ask each time.
+ * answer is kept a minute, so a sync does not ask each time – and a locked account or a lost
+ * mailbox counts here at most a minute later.
  */
 import {
   accountRights,
@@ -16,7 +17,7 @@ import { createLoginFailures, type FailureLimit, loginKey } from "../failures";
 export type DavAccount = { id: string; name: string; isReadOnly: boolean };
 export type DavUser = { me: string; accounts: DavAccount[] };
 
-const KEEP_MS = 5 * 60_000;
+const KEEP_MS = 60_000;
 const MAIL = "urn:ietf:params:jmap:mail";
 
 type Session = {

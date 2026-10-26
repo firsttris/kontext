@@ -548,10 +548,10 @@ oder Reihenfolge.
   die, die sie angelegt hat – auch bei geschlossener App, einmal (`reminded_at`). Wird der Tag
   verschoben, zieht die Erinnerung mit.
 - **In anderen Apps (CalDAV):** Kontext stellt die Boards unter `/dav/` als Aufgabenlisten
-  bereit (RFC 4791, nur VTODO; `server/dav/`), gefunden über `/.well-known/caldav`: eine Liste
+  bereit (RFC 4791, nur VTODO; `server/dav/`), unter der Adresse aus den Einstellungen: eine Liste
   je Board, das man hat, „Meine Aufgaben (Kontext)“ und „Aufgaben info@“. Angemeldet wird mit
   Mail-Adresse und Passwort; Kontext fragt Stalwarts JMAP-Session damit und merkt sich die
-  Antwort fünf Minuten. Clients lesen per PROPFIND (mit `getctag`) und REPORT
+  Antwort eine Minute (ein gesperrtes Konto zählt also spätestens eine Minute später). Clients lesen per PROPFIND (mit `getctag`) und REPORT
   `calendar-multiget`/`calendar-query`, schreiben mit PUT (`If-Match` auf den ETag) und löschen
   mit DELETE; `sync-collection` gibt es nicht, die Clients fallen auf den ctag zurück. Titel,
   Notiz, Fälligkeit (Zeiten in UTC hinaus; hinein in der Zone der `TZID`, ohne oder mit
