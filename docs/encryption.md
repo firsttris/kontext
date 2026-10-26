@@ -147,7 +147,9 @@ Ein Schalter für Mails nach außen; Kontext nimmt je Empfänger den besten Weg:
      Senden angezeigt bekommt und auf anderem Weg weitergibt (Telefon, SMS). Der Server prüft ihn
      (scrypt), fünf falsche sperren die Nachricht; ein neuer Code öffnet sie wieder.
    - Der Empfänger öffnet die Seite ohne Anmeldung, gibt den Code ein, liest, lädt Anhänge und
-     antwortet dort – die Antwort wird im Browser genauso verschlüsselt.
+     antwortet dort – die Antwort wird im Browser genauso verschlüsselt. Als Absender nennt die
+     Seite nur eine Adresse, als die die Person senden darf (eine Identität eines ihrer
+     Postfächer, mit deren Namen); der Server prüft das beim Anlegen.
    - Der Absender sieht unter **„Vertraulich gesendet“** (in der Mail-Seitenleiste), ob geöffnet
      und beantwortet wurde, und liest Inhalt und Antworten: Den Schlüssel jeder Nachricht
      bewahrt der Server mit dem persönlichen OpenPGP-Schlüssel des Absenders verschlüsselt auf

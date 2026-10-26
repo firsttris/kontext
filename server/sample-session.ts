@@ -51,6 +51,9 @@ type MethodCall = [string, { accountId: string }, string];
 /** Stalwart's answer to the person: folders they may see, none of an account that shared none. */
 const answer = (others: Record<string, Seen>, calls: MethodCall[]) =>
   calls.map(([name, { accountId }, id]) => {
+    // Each account sends as its own address; the name stays empty (so the address is the name).
+    if (name === "Identity/get")
+      return [name, { list: [{ email: `${accountId}@W.test`, name: "" }] }, id];
     if (name !== "Mailbox/get") return [name, { list: [] }, id];
     const seen = others[accountId];
     const list = !seen ? [] : "member" in seen ? [writableInbox] : seen.folders;

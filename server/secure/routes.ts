@@ -6,6 +6,7 @@
 import { Hono } from "hono";
 import type { SessionAccount } from "../categories/routes";
 import type { Notice } from "../push/pusher";
+import type { Sender } from "../session-info";
 import {
   codeFits,
   codeSchema,
@@ -20,6 +21,8 @@ import type { SecureRow, SecureStore } from "./store";
 export type SecureDeps = {
   store: SecureStore;
   accountsOf: (request: Request) => Promise<SessionAccount[] | null>;
+  /** The addresses the person may send as (session-info.ts). */
+  sendersOf: (request: Request) => Promise<Sender[] | null>;
   notify?: (memberIds: string[], notice: Notice) => Promise<void>;
   now?: () => Date;
 };
@@ -39,7 +42,12 @@ const summary = (row: SecureRow & { replies: number; unreadReplies: number }, no
   state: stateOf(row, now),
 });
 
-export const createSecureRoutes = ({ store, accountsOf, now = () => new Date() }: SecureDeps) => {
+export const createSecureRoutes = ({
+  store,
+  accountsOf,
+  sendersOf,
+  now = () => new Date(),
+}: SecureDeps) => {
   const app = new Hono<{ Variables: { me: string } }>();
   app.use(async (c, next) => {
     const me = (await accountsOf(c.req.raw))?.find((account) => account.isPersonal)?.id;
@@ -56,7 +64,16 @@ export const createSecureRoutes = ({ store, accountsOf, now = () => new Date() }
   app.post("/", async (c) => {
     const parsed = newMessageSchema.safeParse(await c.req.json().catch(() => null));
     if (!parsed.success) return c.json({ error: "Angaben unvollständig." }, 400);
-    const { to, fromName, fromEmail, ciphertext, senderKey, code, expiresDays } = parsed.data;
+    const { to, fromEmail, ciphertext, senderKey, code, expiresDays } = parsed.data;
+    // The recipient's page names the sender: only an address of one's own mailboxes, with the
+    // name that goes with it – not the boss's.
+    const sender = (await sendersOf(c.req.raw))?.find(
+      (candidate) => candidate.email === fromEmail.toLowerCase(),
+    );
+    if (!sender) {
+      return c.json({ error: "Diese Absenderadresse gehört zu keinem Ihrer Postfächer." }, 403);
+    }
+    const fromName = sender.name;
     const { hash, salt } = hashCode(code);
     const id = crypto.randomUUID();
     const at = now();

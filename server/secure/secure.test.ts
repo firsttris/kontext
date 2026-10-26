@@ -79,6 +79,7 @@ const setup = () => {
   const sender = createSecureRoutes({
     store,
     accountsOf: async () => [{ id: me, isPersonal: true, isReadOnly: false }],
+    sendersOf: async () => [{ email: "jonas@weber.test", name: "Jonas Weber" }],
   });
   const page = createSecurePublicRoutes({
     store,
@@ -151,6 +152,32 @@ describe("confidential messages", () => {
       replies: { ciphertext: string }[];
     };
     expect(mine.replies[0]?.ciphertext).toBe("encrypted-answer");
+  });
+});
+
+describe("the sender a recipient sees", () => {
+  const message = (fromName: string, fromEmail: string) => ({
+    to: "petra@keller.test",
+    fromName,
+    fromEmail,
+    ciphertext: "iv-and-encrypted-content",
+    senderKey: "-----BEGIN PGP MESSAGE-----\n…\n-----END PGP MESSAGE-----",
+    code: "K7QP-2MXR",
+    expiresDays: 30,
+  });
+
+  it("is only an address of one's own mailboxes", async () => {
+    const { sender, json } = setup();
+    const forged = await sender.request("/", json(message("Chef", "chef@weber.test")));
+    expect(forged.status).toBe(403);
+  });
+
+  it("goes by the name that belongs to the address", async () => {
+    const { sender, page, json } = setup();
+    const created = await sender.request("/", json(message("Chef", "Jonas@weber.test")));
+    const { id } = (await created.json()) as { id: string };
+    const meta = (await (await page.request(`/${id}`)).json()) as { fromName: string };
+    expect(meta.fromName).toBe("Jonas Weber");
   });
 });
 

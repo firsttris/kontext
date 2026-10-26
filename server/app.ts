@@ -320,7 +320,7 @@ export const createApp = async (env: Env) => {
     });
     app.route("/api/company", company);
   }
-  const { accountsOf, infoOf } = createSessionInfo(env, auth, grants);
+  const { accountsOf, infoOf, sendersOf } = createSessionInfo(env, auth, grants);
   if (externalImporter) {
     // Other mailboxes of a person (Gmail, GMX, …): fetched into Kontext, sent through them.
     const store = createExternalStore(db);
@@ -617,7 +617,7 @@ export const createApp = async (env: Env) => {
   );
   // "Vertraulich senden": encrypted messages for recipients without a key, opened with a code.
   const secure = createSecureStore(db, join(dirname(env.DATABASE_PATH), "secure"));
-  app.route("/api/secure", createSecureRoutes({ store: secure, accountsOf }));
+  app.route("/api/secure", createSecureRoutes({ store: secure, accountsOf, sendersOf }));
   app.route(
     "/api/secure-public",
     createSecurePublicRoutes({ store: secure, notify: pusher.notify }),
