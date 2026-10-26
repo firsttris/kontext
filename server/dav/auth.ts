@@ -11,6 +11,7 @@ import {
   type JmapSessionAccount,
 } from "../account-rights";
 import type { Env } from "../env";
+import { createLoginFailures, type FailureLimit } from "../failures";
 
 export type DavAccount = { id: string; name: string; isReadOnly: boolean };
 export type DavUser = { me: string; accounts: DavAccount[] };
@@ -25,25 +26,45 @@ type Session = {
   accounts: Record<string, JmapSessionAccount & { name: string }>;
 };
 
-export const createDavAuth = (env: Pick<Env, "STALWART_URL">, now = () => Date.now()) => {
+/** The login name in a Basic header, for counting failures; "" when it cannot be read. */
+const loginOf = (header: string) => {
+  const decoded = Buffer.from(header.slice("Basic ".length), "base64").toString("utf8");
+  return decoded
+    .slice(0, Math.max(decoded.indexOf(":"), 0))
+    .trim()
+    .toLowerCase();
+};
+
+export const createDavAuth = (
+  env: Pick<Env, "STALWART_URL">,
+  now = () => Date.now(),
+  failures: FailureLimit = createLoginFailures(now),
+) => {
   const known = new Map<string, { user: DavUser; until: number }>();
   const keyOf = async (header: string) =>
     Buffer.from(await crypto.subtle.digest("SHA-256", new TextEncoder().encode(header))).toString(
       "hex",
     );
 
-  return async (header: string | undefined): Promise<DavUser | null> => {
+  /** `client` is the caller's address (Caddy's X-Forwarded-For). */
+  return async (header: string | undefined, client = ""): Promise<DavUser | null> => {
     if (!header?.startsWith("Basic ")) return null;
     const key = await keyOf(header);
     const kept = known.get(key);
     if (kept && kept.until > now()) return kept.user;
+    // Guessing stops here, per login name and per address, before it reaches Stalwart.
+    const [login, address] = [`login:${loginOf(header)}`, `client:${client}`];
+    const counted = [login, address];
+    if (counted.some(failures.blocked)) return null;
     const response = await fetch(`${env.STALWART_URL}/jmap/session`, {
       headers: { authorization: header },
     }).catch(() => null);
     if (!response?.ok) {
       known.delete(key);
+      if (response?.status === 401) for (const counter of counted) failures.failed(counter);
       return null;
     }
+    failures.cleared(login);
     const session = (await response.json()) as Session;
     const me = session.primaryAccounts[MAIL];
     if (!me) return null;

@@ -31,7 +31,11 @@ flowchart LR
   Event-Stream.
 - **Der Kontext-Server** (Bun, Hono, Better Auth, SQLite) liefert die App aus, kümmert sich um
   die Anmeldung und reicht JMAP an Stalwart durch. Dabei setzt er den Stalwart-Token der Sitzung
-  ein; der Browser kennt weder Passwort noch Token.
+  ein; der Browser kennt weder Passwort noch Token. Weil alle Anmeldungen von seiner einen
+  Adresse kommen, bremst er das Raten selbst (10 Fehlversuche je Anmeldename in 15 Minuten, auch
+  für CalDAV) und steht in Stalwart unter den erlaubten IPs, sonst würde Stalwart ihn sperren.
+  Eine Sitzung endet nur, wenn Stalwart den Refresh-Token ablehnt, nicht wenn es gerade nicht
+  antwortet.
 - **Caddy** holt das Zertifikat und leitet alles an den Server weiter, CalDAV/CardDAV für
   Mailprogramme direkt an Stalwart.
 - **LiveKit** (Apache 2.0, optional) trägt die [Anrufe](#anrufe) im Chat: ein SFU, der Ton, Bild

@@ -57,10 +57,18 @@ Stalwarts eigene Verwaltung ist nur über die Tailscale-Adresse des Servers erre
    Port 443 bei Caddy liegt.
 3. **Firmenverwaltung einschalten** (siehe unten) und das Konto des Chefs anlegen. Weitere
    Mitarbeiter und gemeinsame Postfächer legt der Chef danach selbst in Kontext an.
-4. Caddy als vertrauenswürdigen Proxy eintragen, damit Stalwart die echten IP-Adressen sieht.
-5. Unter *Suche* die **Standardsprache** auf Deutsch (`de-DE`) stellen. Stalwart bildet damit
+4. Unter *Netzwerk → HTTP* **X-Forwarded-For verwenden** (`useXForwarded`) einschalten, damit
+   Stalwart bei CalDAV/CardDAV und Autoconfig (über Caddy) die echten IP-Adressen sieht.
+5. Unter *Sicherheit → Erlaubte IPs* das Container-Netz **`10.89.250.0/24`** eintragen
+   (`AllowedIp`). Kontext meldet alle Personen von seiner einen Adresse an; ohne den Eintrag
+   sperrt Stalwart nach 100 Fehlversuchen am Tag (`authBanRate`) diese Adresse – und damit
+   Kontext für alle. Gegen das Raten von Passwörtern bremst Kontext selbst: 10 Fehlversuche je
+   Anmeldename in 15 Minuten, dazu 10 Anmeldungen je IP-Adresse in der Minute.
+6. Unter *Sicherheit* eine **Sperrdauer** setzen (`authBanPeriod`, `scanBanPeriod`, z. B. ein
+   Tag). Ohne Dauer bleibt eine Sperre für immer.
+7. Unter *Suche* die **Standardsprache** auf Deutsch (`de-DE`) stellen. Stalwart bildet damit
    die Wortstämme deutsch, auch bei kurzen Mails, deren Sprache es nicht sicher erkennt.
-6. Unter *JMAP* die **gleichzeitigen Anfragen** (`maxConcurrentRequests`) auf 16 stellen.
+8. Unter *JMAP* die **gleichzeitigen Anfragen** (`maxConcurrentRequests`) auf 16 stellen.
    Stalwart erlaubt sonst 4 je Person – für alle Tabs und Geräte zusammen; Kontext fragt beim
    Start mehr auf einmal (Ordner jedes Postfachs, Liste, Unterhaltungen), und was darüber liegt,
    lehnt Stalwart ab.

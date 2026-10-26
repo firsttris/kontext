@@ -28,7 +28,8 @@ const DONE_DAYS = 30;
 const ICS = "text/calendar; charset=utf-8";
 
 export type DavDeps = {
-  auth: (header: string | undefined) => Promise<DavUser | null>;
+  /** The Authorization header and the caller's address. */
+  auth: (header: string | undefined, client: string) => Promise<DavUser | null>;
   store: TaskStore;
   /** Told after a change, with the board it touched. */
   changed?: (accountId: string) => void;
@@ -81,7 +82,8 @@ export const createDavRoutes = ({
   const app = new Hono<{ Variables: { user: DavUser } }>();
 
   app.use(async (c, next) => {
-    const user = await auth(c.req.header("authorization"));
+    const client = c.req.header("x-forwarded-for")?.split(",")[0]?.trim() ?? "";
+    const user = await auth(c.req.header("authorization"), client);
     if (!user) {
       return c.text("Anmeldung nötig", 401, { "www-authenticate": 'Basic realm="Kontext"' });
     }

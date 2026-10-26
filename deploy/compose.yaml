@@ -137,3 +137,12 @@ volumes:
   schreibzeug-data:
   caddy-data:
   caddy-config:
+
+# A fixed subnet, so it can be entered in Stalwart as an allowed network (installation, step 3):
+# Kontext signs everyone in from this one address, and Stalwart would otherwise ban it after
+# 100 failed logins a day – for good, and for everyone.
+networks:
+  default:
+    ipam:
+      config:
+        - subnet: 10.89.250.0/24

@@ -16,13 +16,19 @@ import { z } from "zod";
 import type { Sealer } from "./crypto";
 import { type Db, schema } from "./db";
 import type { Env } from "./env";
+import { createLoginFailures, type FailureLimit } from "./failures";
 import { providerPlugins } from "./oidc/provider";
 import { loginAtStalwart, refreshAtStalwart, type StalwartTokens, whoAmI } from "./stalwart";
 
 const DAY = 24 * 60 * 60;
 
 /** Stores and renews the Stalwart tokens of a session. */
-export const createGrants = (db: Db, sealer: Sealer, stalwartUrl: string) => {
+export const createGrants = (
+  db: Db,
+  sealer: Sealer,
+  stalwartUrl: string,
+  refresh = refreshAtStalwart,
+) => {
   const save = async (sessionId: string, tokens: StalwartTokens) => {
     const row = {
       sessionId,
@@ -45,13 +51,15 @@ export const createGrants = (db: Db, sealer: Sealer, stalwartUrl: string) => {
       .where(eq(schema.stalwartGrant.sessionId, sessionId));
     if (!row) return null;
     if (row.accessExpiresAt.getTime() > Date.now()) return sealer.open(row.accessToken);
-    const renewed = await refreshAtStalwart(stalwartUrl, await sealer.open(row.refreshToken));
-    if (!renewed) {
+    const renewed = await refresh(stalwartUrl, await sealer.open(row.refreshToken));
+    // Only a refused token ends the grant; while Stalwart is down or limits Kontext, the session
+    // waits and goes on once it answers again.
+    if (renewed.status === "rejected") {
       await db.delete(schema.stalwartGrant).where(eq(schema.stalwartGrant.sessionId, sessionId));
-      return null;
     }
-    await save(sessionId, renewed);
-    return renewed.accessToken;
+    if (renewed.status !== "ok") return null;
+    await save(sessionId, renewed.tokens);
+    return renewed.tokens.accessToken;
   };
 
   return { save, accessToken };
@@ -74,7 +82,12 @@ const signInBody = z.object({
 /** The name the person sends mail as, from their Stalwart account (session-info.ts). */
 export type NameOf = (accessToken: string, email: string) => Promise<string>;
 
-const stalwartSignIn = (stalwartUrl: string, grants: Grants, nameOf: NameOf) =>
+const stalwartSignIn = (
+  stalwartUrl: string,
+  grants: Grants,
+  nameOf: NameOf,
+  failures: FailureLimit,
+) =>
   ({
     id: "stalwart-sign-in",
     endpoints: {
@@ -82,11 +95,20 @@ const stalwartSignIn = (stalwartUrl: string, grants: Grants, nameOf: NameOf) =>
         "/sign-in/stalwart",
         { method: "POST", body: signInBody },
         async (ctx) => {
+          // Per login name, on top of Better Auth's limit per address (failures.ts).
+          const login = ctx.body.email.toLowerCase();
+          if (failures.blocked(login)) {
+            throw new APIError("TOO_MANY_REQUESTS", {
+              message: "Zu viele Fehlversuche. Bitte in einer Viertelstunde erneut versuchen.",
+            });
+          }
           const result = await loginAtStalwart(stalwartUrl, ctx.body);
-          if (result.status === "mfa") return ctx.json({ status: "mfa" as const });
           if (result.status === "failed") {
+            failures.failed(login);
             throw new APIError("UNAUTHORIZED", { message: "Anmeldung fehlgeschlagen" });
           }
+          failures.cleared(login);
+          if (result.status === "mfa") return ctx.json({ status: "mfa" as const });
           // Stalwart may accept a bare name; the account's real address comes from the session.
           const { email } = await whoAmI(stalwartUrl, result.tokens.accessToken);
           const adapter = ctx.context.internalAdapter;
@@ -110,7 +132,13 @@ const stalwartSignIn = (stalwartUrl: string, grants: Grants, nameOf: NameOf) =>
     },
   }) satisfies BetterAuthPlugin;
 
-export const createAuth = (env: Env, db: Db, grants: Grants, nameOf: NameOf) =>
+export const createAuth = (
+  env: Env,
+  db: Db,
+  grants: Grants,
+  nameOf: NameOf,
+  failures: FailureLimit = createLoginFailures(),
+) =>
   betterAuth({
     baseURL: env.BETTER_AUTH_URL,
     basePath: "/api/auth",
@@ -133,7 +161,7 @@ export const createAuth = (env: Env, db: Db, grants: Grants, nameOf: NameOf) =>
       useSecureCookies: env.BETTER_AUTH_URL.startsWith("https://"),
     },
     plugins: [
-      stalwartSignIn(env.STALWART_URL, grants, nameOf),
+      stalwartSignIn(env.STALWART_URL, grants, nameOf, failures),
       // Kontext signs people in to Schreibzeug and agents to /mcp (oidc/provider.ts).
       ...providerPlugins(env.BETTER_AUTH_URL),
     ],

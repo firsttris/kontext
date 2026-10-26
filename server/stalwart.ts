@@ -54,14 +54,28 @@ const toTokens = (
   };
 };
 
-const postToken = async (stalwartUrl: string, form: Record<string, string>) => {
+/** Stalwart's answer at /auth/token: tokens, a token it refuses, or no answer to go by. */
+type TokenAnswer =
+  | { status: "ok"; body: z.infer<typeof tokenResponse> }
+  | { status: "rejected" }
+  | { status: "unavailable" };
+
+const postToken = async (
+  stalwartUrl: string,
+  form: Record<string, string>,
+): Promise<TokenAnswer> => {
   const response = await fetch(`${stalwartUrl}/auth/token`, {
     method: "POST",
     headers: { "content-type": "application/x-www-form-urlencoded" },
     body: new URLSearchParams(form),
-  });
-  if (!response.ok) return null;
-  return tokenResponse.parse(await response.json());
+  }).catch(() => null);
+  if (!response) return { status: "unavailable" };
+  if (response.ok) return { status: "ok", body: tokenResponse.parse(await response.json()) };
+  // RFC 6749 5.2: an invalid grant is a 400 (401 for the client); a ban (403), a limit (429) or
+  // a server error says nothing about the token.
+  return response.status === 400 || response.status === 401
+    ? { status: "rejected" }
+    : { status: "unavailable" };
 };
 
 export const loginAtStalwart = async (
@@ -95,20 +109,31 @@ export const loginAtStalwart = async (
     redirect_uri: REDIRECT_URI,
     code_verifier: verifier,
   });
-  return token ? { status: "ok", tokens: toTokens(token) } : { status: "failed" };
+  return token.status === "ok"
+    ? { status: "ok", tokens: toTokens(token.body) }
+    : { status: "failed" };
 };
 
-/** A new access token; null when the refresh token is no longer valid (sign in again). */
+export type RefreshResult =
+  | { status: "ok"; tokens: StalwartTokens }
+  /** The refresh token is no longer valid: sign in again. */
+  | { status: "rejected" }
+  /** Stalwart did not answer as it should (down, a limit, a ban): try again later. */
+  | { status: "unavailable" };
+
+/** A new access token for a refresh token. */
 export const refreshAtStalwart = async (
   stalwartUrl: string,
   refreshToken: string,
-): Promise<StalwartTokens | null> => {
+): Promise<RefreshResult> => {
   const token = await postToken(stalwartUrl, {
     grant_type: "refresh_token",
     refresh_token: refreshToken,
     client_id: CLIENT_ID,
   });
-  return token ? toTokens(token, refreshToken) : null;
+  return token.status === "ok"
+    ? { status: "ok", tokens: toTokens(token.body, refreshToken) }
+    : token;
 };
 
 /** Name and address of the account, from the JMAP session. */
