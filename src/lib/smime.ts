@@ -145,7 +145,9 @@ const WEB_HASHES: Record<string, string> = {
 
 /**
  * An RSA signature (PKCS#1 v1.5, RFC 8017 §8.2) over `data` by the key in `spki`, checked by
- * WebCrypto, which hashes `data` itself and parses the signature strictly.
+ * WebCrypto, which hashes `data` itself and parses the signature strictly. Never with node-forge:
+ * its `publicKey.verify` takes forged PKCS#1 signatures (GHSA-86w9-cpqp-85rv, all versions up to
+ * 1.4.0, no fix yet); forge only builds and unpacks messages here.
  */
 const rsaVerifies = async (
   spki: Uint8Array<ArrayBuffer>,
