@@ -12,6 +12,7 @@ import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import type { BoxConfig } from "../../server/phone/protocol";
 import { createBoxFiles } from "./files";
+import { createHandedOut } from "./handed-out";
 import { type Credentials, pair } from "./link";
 import { createAsterisk } from "./pbx";
 import { type BoxState, runBox } from "./run";
@@ -32,6 +33,17 @@ const credentialsFile = join(DATA_DIR, "kontext.json");
 /** Where desk phones sign in (asterisk-config.ts). */
 const SIP_PORT = 5070;
 const configFile = join(DATA_DIR, "config.json");
+const handedOutFile = join(DATA_DIR, "snom-handed-out.json");
+const firstTime = createHandedOut({
+  load: async () =>
+    existsSync(handedOutFile)
+      ? (JSON.parse(await readFile(handedOutFile, "utf8")) as string[])
+      : [],
+  save: async (keys) => {
+    await mkdir(DATA_DIR, { recursive: true });
+    await writeFile(handedOutFile, JSON.stringify(keys), { mode: 0o600 });
+  },
+});
 
 const loadCredentials = async (): Promise<Credentials | null> =>
   existsSync(credentialsFile)
@@ -92,7 +104,8 @@ Bun.serve({
     if (mac) {
       const desk = currentConfig?.()?.deskPhones.find((phone) => phone.mac === mac);
       if (!desk) return new Response("unbekannt", { status: 404 });
-      return new Response(snomSettings(desk, url.hostname, SIP_PORT), {
+      const withPassword = await firstTime(mac, desk.password);
+      return new Response(snomSettings(desk, url.hostname, SIP_PORT, withPassword), {
         headers: { "content-type": "application/xml; charset=utf-8" },
       });
     }

@@ -778,7 +778,10 @@ flowchart LR
   Durchwahl ist, ruft mit ihr an: Der Agent setzt beim Originate `KONTEXT_OUT=fritzbox-<id>`.
 - **Tischtelefone (Snom):** melden sich an der Box an, nicht an der Fritzbox (PJSIP-Endpunkt
   `desk-<id>`, die Box ist ihr Registrar). Ihre Einstellungen holen sie sich von der Box
-  (`http://<box>:8089/snom/<mac>.xml`, `box/agent/snom.ts`): Konto, Sprache, Töne, Zeitzone. Sie
+  (`http://<box>:8089/snom/<mac>.xml`, `box/agent/snom.ts`): Konto, Sprache, Töne, Zeitzone. Das
+  SIP-Passwort geht dabei nur einmal hinaus, beim ersten Abruf nach dem Anlegen
+  (`box/agent/handed-out.ts`) – jeder im Büronetz könnte die Adresse sonst mit der MAC abrufen;
+  später behält das Telefon sein Passwort. Sie
   klingeln zusammen mit Kontext (`Dial` statt `Wait`, je Leitung ihre Telefone: das einer Person
   bei deren Nummern, ein gemeinsames bei der ersten); wer abnimmt, meldet sich über
   `kontext-answered-here` mit seinem Endpunkt. Untereinander erreichen sie sich per Kurzwahl;
