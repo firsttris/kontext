@@ -21,6 +21,8 @@ export const appPolicy = (urls: { schreibzeug?: string; livekit?: string } = {})
     "object-src 'none'",
     "base-uri 'self'",
     "form-action 'self'",
+    // No other site frames Kontext (clickjacking); X-Frame-Options for older browsers.
+    "frame-ancestors 'self'",
   ].join("; ");
 
 /** Sets the app's policy on a page that brings none of its own. */
@@ -28,6 +30,7 @@ export const withAppHeaders = (headers: Headers, policy: string): void => {
   if (!(headers.get("content-type") ?? "").startsWith("text/html")) return;
   if (!headers.has("content-security-policy")) headers.set("content-security-policy", policy);
   headers.set("x-content-type-options", "nosniff");
+  headers.set("x-frame-options", "SAMEORIGIN");
 };
 
 const SHOWN = /^(image\/(png|jpe?g|gif|webp|avif|bmp|svg\+xml)|application\/pdf)$/;

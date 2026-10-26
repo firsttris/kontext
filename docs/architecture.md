@@ -35,7 +35,10 @@ flowchart LR
   Adresse kommen, bremst er das Raten selbst (10 Fehlversuche je Anmeldename in 15 Minuten, auch
   für CalDAV) und steht in Stalwart unter den erlaubten IPs, sonst würde Stalwart ihn sperren.
   Eine Sitzung endet nur, wenn Stalwart den Refresh-Token ablehnt, nicht wenn es gerade nicht
-  antwortet.
+  antwortet. Was mit dem Sitzungs-Cookie etwas ändert (POST, PUT, PATCH, DELETE), muss von
+  Kontexts eigenen Seiten kommen (`Sec-Fetch-Site`, sonst `Origin`; `server/csrf.ts`) – sonst
+  könnte eine Seite unter derselben Domain, etwa Schreibzeug, mit dem Cookie Anfragen schicken.
+  Kein fremder Rahmen darf Kontext zeigen (`frame-ancestors 'self'`).
 - **Caddy** holt das Zertifikat und leitet alles an den Server weiter, CalDAV/CardDAV für
   Mailprogramme direkt an Stalwart.
 - **LiveKit** (Apache 2.0, optional) trägt die [Anrufe](#anrufe) im Chat: ein SFU, der Ton, Bild

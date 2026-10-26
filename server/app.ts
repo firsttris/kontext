@@ -33,6 +33,7 @@ import { createCompanyRoutes } from "./company/routes";
 import { dohResolver } from "./company/security";
 import { createCompanySettings } from "./company/settings";
 import { createSealer } from "./crypto";
+import { fromOwnPage } from "./csrf";
 import { createDavAuth } from "./dav/auth";
 import { createDavRoutes } from "./dav/routes";
 import { type Db, openDatabase, schema } from "./db";
@@ -199,6 +200,14 @@ export const createApp = async (env: Env) => {
   app.use(async (c, next) => {
     await next();
     withAppHeaders(c.res.headers, policy);
+  });
+  // Changes with the session cookie only from Kontext's own pages (csrf.ts).
+  const appOrigin = new URL(env.BETTER_AUTH_URL).origin;
+  app.use(async (c, next) => {
+    if (!fromOwnPage(c.req.raw, appOrigin)) {
+      return c.json({ error: "Anfrage von einer fremden Seite abgelehnt" }, 403);
+    }
+    await next();
   });
 
   const chatFiles = createChatFiles(db, join(dirname(env.DATABASE_PATH), "chat-files"));

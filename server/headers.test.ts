@@ -31,8 +31,9 @@ describe("downloads through the pass-through", () => {
 });
 
 describe("the app's policy", () => {
-  it("allows Schreibzeug's frame", () => {
+  it("lets no other site frame Kontext and allows Schreibzeug's frame", () => {
     const policy = appPolicy({ schreibzeug: "https://dokumente.firma.test/" });
+    expect(policy).toContain("frame-ancestors 'self'");
     expect(policy).toContain("frame-src 'self' blob: https://dokumente.firma.test;");
     expect(appPolicy()).toContain("frame-src 'self' blob:;");
   });
@@ -47,6 +48,7 @@ describe("the app's policy", () => {
     const plain = new Headers({ "content-type": "text/html; charset=utf-8" });
     withAppHeaders(plain, "default-src 'self'");
     expect(plain.get("content-security-policy")).toBe("default-src 'self'");
+    expect(plain.get("x-frame-options")).toBe("SAMEORIGIN");
     const sandboxed = new Headers({
       "content-type": "text/html",
       "content-security-policy": "sandbox",
