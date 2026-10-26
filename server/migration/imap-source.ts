@@ -3,13 +3,17 @@
  * the last run, and their source. Never changes anything there (folders opened read-only).
  */
 import { ImapFlow } from "imapflow";
+import { NOT_ON_INTERNET, type Pinned, pinHost } from "../internet-host";
 import type { ImapFolder } from "./imap-folders";
 import type { Endpoint } from "./providers";
 
 export type Login = { user: string; password: string };
 
-/** Why a connection failed: the login (wrong or revoked app password) or the server. */
-export type OpenFailure = { reason: "login" | "server"; message: string };
+/**
+ * Why a connection failed: the login (wrong or revoked app password), the server, or a server
+ * that is not on the internet.
+ */
+export type OpenFailure = { reason: "login" | "server" | "outside"; message: string };
 
 export type MailHead = {
   uid: number;
@@ -20,16 +24,21 @@ export type MailHead = {
 };
 
 /**
- * Connects; port 993 with TLS, any other port with STARTTLS. `allowPlain` (tests against the local
- * Stalwart only) also accepts a server without TLS.
+ * Connects; port 993 with TLS, any other port with STARTTLS; only to a server on the internet,
+ * at the address that was checked (internet-host.ts). `allowPlain` (tests against the local
+ * Stalwart only) also accepts a server without TLS, inside the network.
  */
 export const openImap = async (
   endpoint: Endpoint,
   login: Login,
   allowPlain = false,
+  pin: (host: string) => Promise<Pinned | null> = pinHost,
 ): Promise<{ ok: true; value: ImapSource } | { ok: false; error: OpenFailure }> => {
+  const target = allowPlain ? { address: endpoint.host } : await pin(endpoint.host);
+  if (!target) return { ok: false, error: { reason: "outside", message: NOT_ON_INTERNET } };
   const client = new ImapFlow({
-    host: endpoint.host,
+    host: target.address,
+    ...(target.servername ? { servername: target.servername } : {}),
     port: endpoint.port,
     secure: endpoint.port === 993,
     doSTARTTLS: endpoint.port === 993 ? undefined : allowPlain ? undefined : true,

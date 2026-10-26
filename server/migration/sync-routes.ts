@@ -6,7 +6,6 @@ import { Hono } from "hono";
 import { z } from "zod";
 import { bad, bodyOf, type Env, notFound, userOf } from "../company/context";
 import type { Sealer } from "../crypto";
-import { dnsResolve, isInternetHost, type Resolve } from "../internet-host";
 import { openImap } from "./imap-source";
 import type { Graph, M365Credentials } from "./m365/graph";
 import { endpointFor, type ProviderId } from "./providers";
@@ -25,7 +24,6 @@ export type SyncDeps = {
   };
   /** Tests against the local Stalwart: any port, IMAP without TLS, inside the network. */
   allowPlain?: boolean;
-  resolve?: Resolve;
 };
 
 const newSync = z.object({
@@ -66,29 +64,20 @@ const publicSync = ({ secret: _, ...sync }: Sync) => sync;
 /** How long finishing waits for a run in progress before asking to try again. */
 const FINISH_WAIT_MS = 20_000;
 
-export const syncRoutes = ({
-  syncs,
-  runner,
-  sealer,
-  microsoft,
-  allowPlain = false,
-  resolve = dnsResolve,
-}: SyncDeps) => {
+export const syncRoutes = ({ syncs, runner, sealer, microsoft, allowPlain = false }: SyncDeps) => {
   /** Logs in once to see that address and password work; null or the reason in words. */
   const check = async (
     endpoint: { host: string; port: number },
     login: string,
     password: string,
   ) => {
-    // Only servers on the internet: the form must not reach Stalwart or anything else inside.
-    if (!allowPlain && !(await isInternetHost(endpoint.host, resolve))) {
-      return "Diesen Server erreicht Kontext nicht: Er liegt nicht im Internet.";
-    }
+    // Only servers on the internet (openImap checks it): not Stalwart or anything else inside.
     const opened = await openImap(endpoint, { user: login, password }, allowPlain);
     if (opened.ok) {
       await opened.value.close();
       return null;
     }
+    if (opened.error.reason === "outside") return opened.error.message;
     return opened.error.reason === "login"
       ? "Anmeldung abgelehnt: Adresse oder (App-)Passwort stimmen nicht, oder IMAP ist beim Anbieter nicht eingeschaltet."
       : `Der Server antwortet nicht (${opened.error.message}).`;

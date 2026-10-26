@@ -6,7 +6,7 @@
 import { Hono } from "hono";
 import { z } from "zod";
 import type { Sealer } from "../crypto";
-import { dnsResolve, isInternetHost, type Resolve } from "../internet-host";
+import { NOT_ON_INTERNET } from "../internet-host";
 import { openImap } from "../migration/imap-source";
 import type { SessionInfo } from "../session-info";
 import type { Fetcher } from "./fetcher";
@@ -25,7 +25,6 @@ export type ExternalDeps = {
   jmapFor: (sessionId: string) => Promise<UserJmap | null>;
   /** Tests against a local server: any port, no TLS, inside the network. */
   allowPlain?: boolean;
-  resolve?: Resolve;
 };
 
 const providers = [
@@ -78,7 +77,6 @@ export const createExternalRoutes = ({
   infoOf,
   jmapFor,
   allowPlain = false,
-  resolve = dnsResolve,
 }: ExternalDeps) => {
   /** Logs in at both servers; null or the reason in words; the inbox's state for a fresh start. */
   const check = async (
@@ -86,20 +84,17 @@ export const createExternalRoutes = ({
     login: string,
     password: string,
   ) => {
-    // Only servers on the internet: the form must not reach Stalwart or anything else inside.
-    const outside = await Promise.all(
-      [servers.imap.host, servers.smtp.host].map((host) => isInternetHost(host, resolve)),
-    );
-    if (!allowPlain && outside.includes(false)) {
-      return { problem: "Diesen Server erreicht Kontext nicht: Er liegt nicht im Internet." };
-    }
+    // Only servers on the internet (openImap and smtp check it): the form must not reach Stalwart
+    // or anything else inside.
     const opened = await openImap(servers.imap, { user: login, password }, allowPlain);
     if (!opened.ok) {
       return {
         problem:
           opened.error.reason === "login"
             ? "Anmeldung abgelehnt: Adresse oder (App-)Passwort stimmen nicht, oder IMAP ist beim Anbieter nicht eingeschaltet."
-            : `Der Posteingangsserver antwortet nicht (${opened.error.message}).`,
+            : opened.error.reason === "outside"
+              ? NOT_ON_INTERNET
+              : `Der Posteingangsserver antwortet nicht (${opened.error.message}).`,
       };
     }
     let inbox: { uidValidity: string; lastUid: number } | null = null;
@@ -115,7 +110,9 @@ export const createExternalRoutes = ({
         problem:
           sending.error.reason === "login"
             ? "Posteingang geht, aber der Postausgang (SMTP) lehnt die Anmeldung ab."
-            : `Der Postausgangsserver antwortet nicht (${sending.error.message}).`,
+            : sending.error.reason === "outside"
+              ? NOT_ON_INTERNET
+              : `Der Postausgangsserver antwortet nicht (${sending.error.message}).`,
       };
     }
     return { problem: null, inbox };

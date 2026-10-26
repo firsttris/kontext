@@ -4,10 +4,14 @@
  * envelope, so nothing is rebuilt on the way.
  */
 import nodemailer from "nodemailer";
+import { NOT_ON_INTERNET, type Pinned, pinHost } from "../internet-host";
 import type { Login } from "../migration/imap-source";
 import type { Endpoint } from "../migration/providers";
 
-export type SmtpFailure = { reason: "login" | "server" | "rejected"; message: string };
+export type SmtpFailure = {
+  reason: "login" | "server" | "rejected" | "outside";
+  message: string;
+};
 export type SmtpResult = { ok: true } | { ok: false; error: SmtpFailure };
 /** Sent: `refused` are the recipients the server turned down while taking the others. */
 export type SendResult = { ok: true; refused: string[] } | { ok: false; error: SmtpFailure };
@@ -41,11 +45,22 @@ const failureOf = (error: unknown): SmtpFailure => {
   return { reason: "server", message: message ?? "Server nicht erreichbar" };
 };
 
-/** `allowPlain` (tests against a local server only) also accepts a server without TLS. */
-export const createSmtp = (allowPlain = false): Smtp => {
-  const transportFor = (endpoint: Endpoint, login: Login) =>
-    nodemailer.createTransport({
-      host: endpoint.host,
+const OUTSIDE = { ok: false, error: { reason: "outside", message: NOT_ON_INTERNET } } as const;
+
+/**
+ * Only to servers on the internet, at the address that was checked (internet-host.ts).
+ * `allowPlain` (tests against a local server only) also accepts a server without TLS, inside.
+ */
+export const createSmtp = (
+  allowPlain = false,
+  pin: (host: string) => Promise<Pinned | null> = pinHost,
+): Smtp => {
+  const transportFor = async (endpoint: Endpoint, login: Login) => {
+    const target = allowPlain ? { address: endpoint.host } : await pin(endpoint.host);
+    if (!target) return null;
+    return nodemailer.createTransport({
+      host: target.address,
+      ...(target.servername ? { servername: target.servername } : {}),
       port: endpoint.port,
       secure: endpoint.port === 465,
       requireTLS: endpoint.port !== 465 && !allowPlain,
@@ -55,9 +70,11 @@ export const createSmtp = (allowPlain = false): Smtp => {
       socketTimeout: TIMEOUT_MS * 3,
       ...(allowPlain ? { tls: { rejectUnauthorized: false } } : {}),
     });
+  };
 
   const check: Smtp["check"] = async (endpoint, login) => {
-    const transport = transportFor(endpoint, login);
+    const transport = await transportFor(endpoint, login);
+    if (!transport) return OUTSIDE;
     try {
       await transport.verify();
       return { ok: true };
@@ -69,7 +86,8 @@ export const createSmtp = (allowPlain = false): Smtp => {
   };
 
   const send: Smtp["send"] = async (endpoint, login, envelope, raw) => {
-    const transport = transportFor(endpoint, login);
+    const transport = await transportFor(endpoint, login);
+    if (!transport) return OUTSIDE;
     try {
       // nodemailer only fails when every recipient is refused; the others it reports here.
       const info = await transport.sendMail({ envelope, raw: Buffer.from(raw) });
