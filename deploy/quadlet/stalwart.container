@@ -16,7 +16,6 @@ Volume=stalwart-config:/etc/stalwart
 Volume=stalwart-data:/var/lib/stalwart
 EnvironmentFile=/opt/kontext/deploy/.env
 HealthCmd=curl -fsS http://127.0.0.1:8080/healthz/live
-AutoUpdate=registry
 
 [Service]
 Restart=always

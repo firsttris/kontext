@@ -15,7 +15,6 @@ Network=kontext.network
 Volume=schreibzeug-data:/data
 Environment=OIDC_CLIENT_ID=schreibzeug
 EnvironmentFile=/opt/kontext/deploy/schreibzeug.env
-AutoUpdate=registry
 
 [Service]
 Restart=always

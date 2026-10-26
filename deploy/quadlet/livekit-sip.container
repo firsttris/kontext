@@ -14,7 +14,6 @@ Network=kontext.network
 PublishPort=5060:5060/tcp
 PublishPort=20000-20100:20000-20100/udp
 EnvironmentFile=/opt/kontext/deploy/livekit-sip.env
-AutoUpdate=registry
 
 [Service]
 Restart=always

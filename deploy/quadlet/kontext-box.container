@@ -7,12 +7,12 @@ Wants=network-online.target
 After=network-online.target
 
 [Container]
+# Best a fixed version once the box has versioned images; it does not update itself.
 Image=docker.io/tristanteu/kontext-box:latest
 ContainerName=kontext-box
 Network=host
 Volume=kontext-box:/data
 EnvironmentFile=-/etc/kontext-box.env
-AutoUpdate=registry
 
 [Service]
 Restart=always

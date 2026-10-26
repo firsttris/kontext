@@ -284,8 +284,13 @@ Vorlage der Firmen-Signatur ist neu einzutragen; Aufgaben und Chat sind dann lee
 
 ```bash
 cd /opt/kontext && git pull
+nano deploy/.env                 # KONTEXT_VERSION auf die neue Version setzen, z. B. 0.1.3
 docker compose -f deploy/compose.yaml pull && docker compose -f deploy/compose.yaml up -d
 ```
+
+Die Images laufen mit festen Versionen und aktualisieren sich nicht selbst (auch nicht mit
+Podman-Auto-Update): Ein neues Image kommt nur, wenn man die Version hebt. Mit Quadlet steht sie in
+`deploy/quadlet/kontext.container`.
 
 Hat sich `deploy/Caddyfile` geändert (etwa für die KI-Agenten), Caddy neu laden:
 `docker compose -f deploy/compose.yaml restart caddy`.
