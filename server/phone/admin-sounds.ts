@@ -3,7 +3,9 @@
  * browser or uploaded, already converted to the telephone's WAV there. Kept by their content's id;
  * a greeting that goes is no longer played anywhere.
  */
+
 import { Hono } from "hono";
+import { limitBody } from "../body-limit";
 import type { Env } from "../company/context";
 import { type PhoneFiles, wavResponse } from "./files";
 import type { PhoneService } from "./service";
@@ -45,7 +47,7 @@ export const createPhoneSoundRoutes = ({
 }) => {
   const app = new Hono<Env>();
 
-  app.put("/", async (c) => {
+  app.put("/", limitBody(MAX_BYTES), async (c) => {
     const name = (c.req.query("name") ?? "").trim().slice(0, 80);
     if (!name) return c.json({ error: "Name fehlt" }, 400);
     const bytes = new Uint8Array(await c.req.arrayBuffer());

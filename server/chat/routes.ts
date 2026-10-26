@@ -3,7 +3,9 @@
  * sees what follows from the person's JMAP session (server/chat/chat.ts `canSee`); every change
  * goes out on the live connection to whoever may see it.
  */
+
 import { Hono } from "hono";
+import { limitBody } from "../body-limit";
 import type { SessionAccount } from "../categories/routes";
 import type { Hub } from "../live/hub";
 import {
@@ -348,7 +350,8 @@ export const createChatRoutes = ({
     return c.json({ ok: true });
   });
 
-  app.post("/channels/:id/files", async (c) => {
+  // The file, its small picture and the form around it: read no more than that.
+  app.post("/channels/:id/files", limitBody(MAX_FILE_BYTES + 2 * 1024 * 1024), async (c) => {
     const viewer = c.get("viewer");
     const channel = await visible(c.req.param("id"), viewer);
     if (!channel) return c.json({ error: "Unbekannter Kanal" }, 404);
