@@ -483,9 +483,10 @@ das Manifest steht in `vite.config.ts`, der Service Worker in `src/sw/service-wo
   Cc, Betreff und Text aus (`src/lib/mailto.ts`, RFC 6068).
 - **Teilen in Kontext:** Auf dem Handy erscheint Kontext im Teilen-Menü anderer Apps (Web Share
   Target). Der Service Worker nimmt Fotos, Dateien, Texte und Links an, legt sie kurz in einem
-  eigenen Cache ab und öffnet eine neue Mail damit; die Dateien sind dann schon Anhänge. Ein
-  Formular auf einer anderen Seite, das dorthin schickt (erkennbar am Referrer), landet nur im
-  Posteingang.
+  eigenen Cache ab und zeigt sie zuerst: Erst „In neue Mail übernehmen“ öffnet eine neue Mail
+  damit, die Dateien sind dann schon Anhänge (`shared-offer.tsx`). Denn jede Seite kann ein
+  Formular dorthin schicken; eines mit fremdem Referrer landet gleich im Posteingang, ohne
+  Referrer hält es die Rückfrage auf.
 - **Benachrichtigungen** gehen über den Service Worker (`showNotification`), weil installierte Apps
   auf Android nur so dürfen; ein Klick öffnet die Mail oder den Termin, auch bei geschlossenem
   Fenster. Bei ganz geschlossener App kommen sie als Web Push vom Kontext-Server, siehe

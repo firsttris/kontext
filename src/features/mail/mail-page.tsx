@@ -4,7 +4,7 @@
  */
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import type { Mailbox } from "@/jmap/types";
 import { shareStart } from "@/lib/mailto";
 import { takeShared } from "@/pwa/share-cache";
@@ -16,6 +16,7 @@ import { MessageList } from "./message-list";
 import { MessageView } from "./message-view";
 import { useMailboxes } from "./queries";
 import { SearchPage } from "./search-page";
+import { SharedOffer } from "./shared-offer";
 import { UnifiedPage } from "./unified-page";
 
 /** The URL's account for "Alle Posteingänge". */
@@ -61,6 +62,9 @@ const useShared = (id: string | undefined) => {
 const FolderPage = ({ accountId, mailboxParam, search }: Props) => {
   const mailboxes = useMailboxes(accountId);
   const { shared, waiting } = useShared(search.shared);
+  // Shared content goes into the mail only once the person takes it (shared-offer.tsx).
+  const [taken, setTaken] = useState<string>();
+  const offered = Boolean(search.shared && shared) && taken !== search.shared;
   const mailbox = resolveMailbox(mailboxes.data, mailboxParam);
   const navigate = useNavigate();
 
@@ -83,7 +87,18 @@ const FolderPage = ({ accountId, mailboxParam, search }: Props) => {
         mailbox ? <MessageList accountId={accountId} mailbox={mailbox} search={search} /> : null
       }
       main={
-        mailbox && search.compose && !waiting ? (
+        mailbox && search.compose && shared && offered ? (
+          <SharedOffer
+            shared={shared}
+            onTake={() => setTaken(search.shared)}
+            onDiscard={() =>
+              void navigate({
+                to: "/mail/$accountId/$mailboxId",
+                params: { accountId, mailboxId: mailboxParam },
+              })
+            }
+          />
+        ) : mailbox && search.compose && !waiting ? (
           <Composer
             key={`${search.compose}-${search.email ?? ""}-${search.shared ?? ""}`}
             accountId={accountId}
