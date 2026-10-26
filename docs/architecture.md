@@ -64,6 +64,13 @@ im Postfach hat (Stalwart gibt Identitäten nur Mitgliedern), antwortet vom eige
 Antwort liegt dann im eigenen Gesendet-Ordner. Beide Stufen setzt die Firmenverwaltung; „Nur
 lesen“ teilt dabei alle vorhandenen Ordner des Postfachs (später angelegte Ordner nicht).
 
+Der Server (Aufgaben, Kategorien, Textbausteine, Chat, DAV) liest die Stufe nicht aus `isReadOnly`
+der Session: Stalwart 0.16 schickt jedes weitere Konto mit `isReadOnly: false` und `isPersonal:
+false`, auch das einer Kollegin, die nur ein Adressbuch teilt. Mitglied einer Gruppe ist, bei
+wessen Konto Stalwart `mayCreateCalendar` (bzw. `mayCreateAddressBook`) setzt; für alle anderen
+fragt `server/account-rights.ts` per `Mailbox/get` die Ordner ab: ohne Ordner kein Postfach,
+schreiben darf, wem der Posteingang `mayAddItems` gibt.
+
 ### Verschieben zwischen Postfächern
 
 „Verschieben nach …“ zeigt die Ordner aller Postfächer, nach Postfach gruppiert, das der Mail
@@ -94,6 +101,19 @@ die Mail wirklich vom Absender kommt (`src/lib/remote-images.ts`): Eine Mail von
 dessen Domain bestätigt sein (DMARC, oder SPF/DKIM passend); eine ohne jede Prüfung
 (importiert, von Kolleginnen) zählt mit, eine durchgefallene nie – ein gefälschter Absender
 schaltet keine Bilder frei.
+
+Blockiert heißt: `sanitizeMailHtml` (`src/lib/html.ts`, CSS in `src/lib/mail-css.ts`) entfernt
+jede Adresse, die der Browser abrufen würde – `src`, `background`, `poster`, `href` von
+SVG-Bildern, auch `//host/…`, und in CSS `url(…)` und Adressen in `image-set(…)` oder in eigenen
+Eigenschaften (`--u: "…"`) in `style`-Attributen, in allen anderen Attributen, die CSS sein
+können (SVG: `fill`, `mask` …), und in `<style>`; `@import` fällt ganz weg – und zählt sie für
+„Laden“. Das CSS wird dafür so zerlegt, wie der Browser es liest (CSS Syntax 3,
+`src/lib/css-tokens.ts`: Kommentare, Escapes, offene `url(` am Ende), die Adressen so, wie der
+URL-Parser sie liest (Tabs und Steuerzeichen fallen weg). Was nichts abruft, bleibt Zeichen für
+Zeichen, wie es war: eingebettete Bilder und Schriften (`cid:`, `data:`), Text wie
+`content: "https://…"`; sind die Bilder erlaubt, auch alle Attribute außer `style`. Dahinter
+verbietet eine Content-Security-Policy im Dokument des Rahmens (`mailDocument`) das Laden von
+außen, bis die Bilder erlaubt sind; die Druckseite (`src/lib/print.ts`) verbietet es immer.
 
 ## Lesebestätigung
 
@@ -514,13 +534,16 @@ oder Reihenfolge.
   Antwort fünf Minuten. Clients lesen per PROPFIND (mit `getctag`) und REPORT
   `calendar-multiget`/`calendar-query`, schreiben mit PUT (`If-Match` auf den ETag) und löschen
   mit DELETE; `sync-collection` gibt es nicht, die Clients fallen auf den ctag zurück. Titel,
-  Notiz, Fälligkeit (Zeiten in UTC hinaus, ohne Zone hinein als Berliner Zeit), Erledigt,
-  Wiederholung (`RRULE`, nur was Kontext kennt) und Erinnerung (`VALARM`) gehen hin und her;
+  Notiz, Fälligkeit (Zeiten in UTC hinaus; hinein in der Zone der `TZID`, ohne oder mit
+  unbekannter Zone als Berliner Zeit), Erledigt, Wiederholung (`RRULE`, nur was Kontext kennt)
+  und Erinnerung (`VALARM`) gehen hin und her;
   „in Arbeit“ ist im Client `IN-PROCESS` und in Kontext die erste Spalte nach „Offen“. Checkliste
   und Verknüpfungen bleiben in Kontext. Was ein Client anlegt, behält seinen Dateinamen und seine
   UID (`dav_name`, `dav_uid`). Mit Bestätigung in zwei Schritten klappt die Anmeldung noch nicht.
 - **Schnelleingabe** (`src/lib/tasks.ts`): ein letztes Wort „heute“, „morgen“, „übermorgen“, ein
-  Wochentag oder ein Datum wie „30.10.“ wird zur Fälligkeit.
+  Wochentag oder ein Datum wie „30.10.“ wird zur Fälligkeit. Ein Datum, das es nicht gibt („31.4.“,
+  „29.2.“ außerhalb eines Schaltjahrs), bleibt Teil des Titels; der Server nimmt als Fälligkeit nur
+  echte Kalendertage an.
 - **Abgleich im Team:** Nach jeder Änderung meldet der Server über die
   [Live-Verbindung](#live-verbindung), welches Board sich geändert hat; alle, die dieses Postfach
   öffnen können, und die Zuständigen laden die Aufgaben neu. Eigene Änderungen zeigt die App sofort und korrigiert
@@ -602,7 +625,8 @@ Principal-ID), die Namen holt die App wie bei den Aufgaben über die Principals.
   SQLite nur bei ASCII ohne Unterschied vergleicht.
 - **Stummschalten, verlassen, löschen:** Stummgeschaltetes zählt nicht zum Ungelesenen am Chat
   und am App-Symbol und meldet sich nicht. Einen eigenen Kanal verlassen kann jedes Mitglied (der
-  letzte nimmt ihn mit), löschen nur, wer ihn angelegt hat – mit allen Nachrichten und Dateien.
+  letzte nimmt ihn mit, wie beim Löschen), löschen nur, wer ihn angelegt hat – mit allen
+  Nachrichten und Dateien.
   `#allgemein`, Postfach-Kanäle und Direktnachrichten lassen sich nur stummschalten.
 - **Neu dabei:** Wer in einen Kanal kommt, hat ihn bis dahin gelesen; in `#allgemein` und den
   Postfach-Kanälen zählen ohne Gelesen-Marke nur die letzten sieben Tage als ungelesen.
@@ -902,7 +926,8 @@ dort liegt (`undoStatus: "canceled"`, RFC 8621 §7). Die Empfänger nimmt es dan
   je Gerät: aus, 5, 10, 20 oder 30 Sekunden; vorgegeben 10). So lange steht „Rückgängig“ an der
   Meldung; danach ist sie unterwegs („Zu spät – die Mail ist schon unterwegs“).
 - **Später senden:** der Pfeil neben „Senden“ – heute 13 oder 17 Uhr (solange das noch kommt),
-  morgen 8 Uhr, Montag 8 Uhr, oder ein Zeitpunkt nach Wahl. Die Mail liegt bis dahin im
+  morgen 8 Uhr, Montag 8 Uhr (montags vor 8 Uhr: heute 8 Uhr, nie mehr als die 7 Tage, die der
+  Server hält), oder ein Zeitpunkt nach Wahl. Die Mail liegt bis dahin im
   Gesendet-Ordner unter „Geplant“, mit Zeitpunkt in der Liste und „Nicht senden“ in der Mail.
 - **Zurückholen:** erst wird der Versand gestoppt, dann kommt die Mail zurück zu den Entwürfen und
   öffnet sich zum Ändern – nie liegt eine Mail bei den Entwürfen, die doch hinausging.

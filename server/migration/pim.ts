@@ -9,7 +9,7 @@ import type { Count } from "./jobs";
 
 const CREATE_BATCH = 500;
 
-const chunks = <T>(items: T[], size: number): T[][] =>
+export const chunks = <T>(items: T[], size: number): T[][] =>
   Array.from({ length: Math.ceil(items.length / size) }, (_, i) =>
     items.slice(i * size, i * size + size),
   );

@@ -3,6 +3,7 @@
  * the content: the inner part of an encrypted mail (text, HTML, attachments), and the outer
  * PGP/MIME envelope (RFC 3156) around what OpenPGP made of it. Pure.
  */
+import { replyReferences } from "./references";
 
 export type MimeAddress = { name: string | null; email: string };
 export type MimeAttachment = { name: string; type: string; bytes: Uint8Array };
@@ -19,13 +20,42 @@ export const base64 = (bytes: Uint8Array): string => {
 
 const lines = (text: string) => (text.match(/.{1,76}/g) ?? []).join("\r\n");
 
-/** "=?UTF-8?B?…?=" where a header has more than ASCII (RFC 2047). */
-export const encodeWord = (text: string): string =>
-  /^[\x20-\x7e]*$/.test(text) ? text : `=?UTF-8?B?${base64(encoder.encode(text))}?=`;
+/**
+ * Bytes per encoded-word: RFC 2047 §2 allows 75 characters, "=?UTF-8?B?" and "?=" take 12, the
+ * 63 left hold 15 base64 groups of 3 bytes.
+ */
+const WORD_BYTES = 45;
 
+/**
+ * The text in pieces of at most `WORD_BYTES` UTF-8 bytes, cut only between characters: RFC 2047
+ * §5 (3) forbids splitting a multi-byte character across encoded-words (iterating the string
+ * goes by code point, so surrogate pairs stay whole as well).
+ */
+const wordChunks = (text: string): string[] =>
+  Array.from(text).reduce<string[]>((chunks, char) => {
+    const last = chunks.length - 1;
+    if (last >= 0 && encoder.encode(chunks[last] + char).length <= WORD_BYTES) chunks[last] += char;
+    else chunks.push(char);
+    return chunks;
+  }, []);
+
+/**
+ * "=?UTF-8?B?…?=" where a header has more than ASCII (RFC 2047), as several encoded-words of at
+ * most 75 characters on folded lines (CRLF SP, RFC 5322 §2.2.3); a reader drops the whitespace
+ * between adjacent encoded-words (RFC 2047 §6.2), so the text comes back whole.
+ */
+export const encodeWord = (text: string): string =>
+  /^[\x20-\x7e]*$/.test(text)
+    ? text
+    : wordChunks(text)
+        .map((chunk) => `=?UTF-8?B?${base64(encoder.encode(chunk))}?=`)
+        .join("\r\n ");
+
+/** Specials and the backslash are not atext, so such a name goes in quotes, where `\` and `"`
+ * are written as quoted-pairs (RFC 5322 3.2.3, 3.2.4). */
 export const mailbox = ({ name, email }: MimeAddress) =>
   name
-    ? `${/[(),.:;<>@[\]"]/.test(name) && /^[\x20-\x7e]*$/.test(name) ? `"${name.replace(/"/g, '\\"')}"` : encodeWord(name)} <${email}>`
+    ? `${/[(),.:;<>@[\]"\\]/.test(name) && /^[\x20-\x7e]*$/.test(name) ? `"${name.replace(/[\\"]/g, "\\$&")}"` : encodeWord(name)} <${email}>`
     : `<${email}>`;
 
 /** A file name parameter, as RFC 2231 for more than ASCII. */
@@ -103,7 +133,9 @@ const headers = (mail: Envelope) => [
     : []),
   ...(mail.references?.length || mail.inReplyTo?.length
     ? [
-        `References: ${[...(mail.references ?? []), ...(mail.inReplyTo ?? [])].map((id) => `<${id}>`).join(" ")}`,
+        `References: ${replyReferences(mail.references, mail.inReplyTo)
+          .map((id) => `<${id}>`)
+          .join(" ")}`,
       ]
     : []),
   ...(mail.extra ?? []),

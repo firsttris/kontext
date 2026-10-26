@@ -117,17 +117,69 @@ export const toDuration = (minutes: number): string => {
   return `P${days ? `${days}D` : ""}${time ? `T${time}` : ""}`;
 };
 
+/** Adds minutes to a local date-time as on a wall clock ("…T09:00:00" + 30 → "…T09:30:00"). */
+export const shiftLocal = (local: string, minutes: number): string =>
+  new Date(Date.parse(`${local}Z`) + minutes * 60_000).toISOString().slice(0, 19);
+
+/** Minutes between two local date-times, on the wall clock. */
+export const localDiff = (from: string, to: string): number =>
+  Math.round((Date.parse(`${to}Z`) - Date.parse(`${from}Z`)) / 60_000);
+
+/**
+ * The end of a timed event: its duration added to the local start on the wall clock, a day as
+ * 24 hours, then resolved in the event's zone. This is how Stalwart 0.16.27 computes utcEnd
+ * (crates/groupware/src/calendar/dates.rs `start_timestamp_naive + delta` with calcard 0.3.14's
+ * `as_seconds`, resolved by expand.rs `resolve_local`) and how it writes DTEND for CalDAV clients
+ * (calcard jscalendar/export/convert.rs). It deviates from RFC 5545 §3.3.6, where only days are
+ * nominal; the app follows the server so that saving and reading agree across the clock change.
+ */
+const localEnd = (event: CalendarEvent): Date =>
+  fromLocal(shiftLocal(event.start, durationMinutes(event.duration)), event.timeZone);
+
 export type Timed = { start: Date; end: Date; allDay: boolean };
+
+/**
+ * An all-day event spans whole local days: from midnight of its start date to midnight `duration`
+ * calendar days later (at least one). Its utcStart/utcEnd are not used: they depend on the zone the
+ * server resolved the floating times in (Stalwart takes UTC when CalendarEvent/get has no
+ * `timeZone` argument, crates/jmap/src/calendar_event/get.rs), which shifted the event by hours.
+ */
+const allDayTimes = (event: CalendarEvent): Timed => {
+  const date = event.start.slice(0, 10);
+  const days = Math.max(1, Math.ceil(durationMinutes(event.duration) / 1440));
+  return {
+    start: fromLocal(`${date}T00:00:00`),
+    end: fromLocal(`${addDays(date, days)}T00:00:00`),
+    allDay: true,
+  };
+};
+
+/**
+ * Gives an expanded instance back the all-day flag of its stored event. With `expandRecurrences`
+ * every event of the query is an instance (single ones too), and Stalwart writes an instance's
+ * start as a date-time in the request's zone: a floating all-day event comes back as 00:00 to
+ * 00:00 in Berlin without showWithoutTime (crates/jmap/src/calendar_event/get.rs,
+ * `expand_from_ids`). A date changed on its own (it carries showWithoutTime: false) or moved to
+ * a time of day stays timed.
+ */
+export const withAllDayOf =
+  (bases: Map<string, Pick<CalendarEvent, "showWithoutTime" | "timeZone">>) =>
+  (event: CalendarEvent): CalendarEvent => {
+    const base = event.baseEventId ? bases.get(event.baseEventId) : undefined;
+    // A changed date (an override) states its own showWithoutTime; only plain instances lack it.
+    const ownFlag = event.showWithoutTime !== undefined;
+    if (!base?.showWithoutTime || ownFlag || !event.start.endsWith("T00:00:00")) {
+      return event;
+    }
+    return { ...event, showWithoutTime: true, timeZone: base.timeZone ?? null };
+  };
 
 /** Start and end as instants. All-day events span whole local days. */
 export const eventTimes = (event: CalendarEvent): Timed => {
-  const allDay = Boolean(event.showWithoutTime);
-  const start = event.utcStart
-    ? new Date(event.utcStart)
-    : fromLocal(event.start, allDay ? ZONE : event.timeZone);
-  const minutes = durationMinutes(event.duration) || (allDay ? 1440 : 0);
-  const end = event.utcEnd ? new Date(event.utcEnd) : new Date(start.getTime() + minutes * 60_000);
-  return { start, end, allDay };
+  if (event.showWithoutTime) return allDayTimes(event);
+  const start = event.utcStart ? new Date(event.utcStart) : fromLocal(event.start, event.timeZone);
+  const end = event.utcEnd ? new Date(event.utcEnd) : localEnd(event);
+  return { start, end, allDay: false };
 };
 
 export const addDays = (key: string, days: number): string => {

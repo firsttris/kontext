@@ -146,18 +146,22 @@ export const createSecurePublicRoutes = ({
     });
   });
 
-  /** Checks the code; a wrong one counts, the fifth locks. */
+  /**
+   * Checks the code; a wrong one counts, the fifth locks. The try is taken before the check and
+   * given back when the code fits, so no more than MAX_TRIES codes are ever checked, even sent at once.
+   */
   const unlocked = async (id: string, input: unknown) => {
     const message = await found(id);
     if (!message) return { error: "Unbekannt", status: 404 as const };
     if (message.state === "expired") return { error: "Abgelaufen", status: 410 as const };
     if (message.state === "locked") return { error: "Gesperrt", status: 423 as const };
+    const taken = await store.takeTry(message.row.id, MAX_TRIES);
+    if (taken === null) return { error: "Gesperrt", status: 423 as const };
     const code = codeSchema.safeParse(input);
     if (!code.success || !codeFits(code.data, message.row.codeSalt, message.row.codeHash)) {
-      const left = MAX_TRIES - message.row.failedTries - 1;
-      await store.failed(message.row.id);
-      return { error: "Falscher Code", status: 403 as const, left };
+      return { error: "Falscher Code", status: 403 as const, left: MAX_TRIES - taken };
     }
+    await store.giveBackTry(message.row.id);
     return { row: message.row };
   };
 

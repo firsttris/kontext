@@ -16,6 +16,7 @@ import {
   eventTimes,
   fromLocal,
   minutesInDay,
+  shiftLocal,
   timeLabel,
 } from "@/lib/jscalendar";
 
@@ -45,6 +46,21 @@ type Drag = {
 };
 
 export type Moved = { event: CalendarEvent; start: Date; end: Date; resized: boolean };
+
+/**
+ * Start and end of a dropped block. The grid's rows are wall-clock minutes (minutesInDay), so a
+ * resized end is the row it was pulled to, also on the day the clocks change; movePatch writes the
+ * wall-clock length from it. A moved block keeps its length.
+ */
+export const droppedTimes = (drop: DragPreview, mode: Drag["mode"]): { start: Date; end: Date } => {
+  const startLocal = `${drop.day}T${timeLabel(drop.top)}:00`;
+  const start = fromLocal(startLocal);
+  const end =
+    mode === "resize"
+      ? fromLocal(shiftLocal(startLocal, drop.height))
+      : new Date(start.getTime() + drop.height * 60_000);
+  return { start, end };
+};
 
 const dayAt = (x: number, y: number): HTMLElement | undefined =>
   document
@@ -102,8 +118,7 @@ export const useDragEvents = (hourHeight: number, onMove: (moved: Moved) => void
       setTimeout(() => {
         suppressClick.current = false;
       });
-      const start = fromLocal(`${result.day}T${timeLabel(result.top)}:00`);
-      const end = new Date(start.getTime() + result.height * 60_000);
+      const { start, end } = droppedTimes(result, state.mode);
       const before = eventTimes(state.event);
       if (start.getTime() === before.start.getTime() && end.getTime() === before.end.getTime())
         return;

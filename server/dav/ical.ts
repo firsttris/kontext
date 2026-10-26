@@ -1,10 +1,11 @@
 /**
  * Tasks as iCalendar VTODO (RFC 5545) for CalDAV clients – Thunderbird, DAVx⁵ with tasks.org or
- * jtx Board, Apple Erinnerungen – and back. Times go out in UTC; times without a zone that come
- * in are taken as Berlin time. What a task has and VTODO has not (its checklist, links, column
- * beyond open / in progress / done) stays in Kontext. Pure.
+ * jtx Board, Apple Erinnerungen – and back. Times go out in UTC; times that come in are read in
+ * the zone they name (UTC or a TZID), and those without a zone as Berlin time. What a task has
+ * and VTODO has not (its checklist, links, column beyond open / in progress / done) stays in
+ * Kontext. Pure.
  */
-import { berlinInstant, type Repeat, type Task } from "../tasks/tasks";
+import { berlinInstant, isCalendarDay, type Repeat, type Task, zonedInstant } from "../tasks/tasks";
 
 export type Prop = { name: string; params: Record<string, string>; value: string };
 
@@ -75,18 +76,46 @@ const berlinParts = (date: Date) => {
   return { day, time };
 };
 
-/** An iCalendar date or date-time as a day, and a time if it has one, in Berlin. */
+const ianaZone = (name: string): string | null => {
+  try {
+    return new Intl.DateTimeFormat("en-US", { timeZone: name }).resolvedOptions().timeZone;
+  } catch {
+    return null;
+  }
+};
+
+/**
+ * The IANA zone a TZID names, or Berlin when Intl does not know it: a TZID is any name the
+ * VTIMEZONE beside it defines (RFC 5545 §3.2.19), e.g. Outlook's "W. Europe Standard Time".
+ * A TZID with the globally unique prefix "/" (older Lightning's
+ * "/mozilla.org/20070129_1/America/New_York", libical's "/freeassociation.sourceforge.net/…")
+ * ends in the IANA name: the longest tail Intl knows.
+ */
+const knownZone = (tzid: string | undefined): string => {
+  if (!tzid) return "Europe/Berlin";
+  const parts = tzid.split("/");
+  const tails = tzid.startsWith("/") ? parts.map((_, i) => parts.slice(i).join("/")) : [tzid];
+  return tails.map((tail) => (tail ? ianaZone(tail) : null)).find(Boolean) ?? "Europe/Berlin";
+};
+
+/**
+ * An iCalendar date or date-time as a day, and a time if it has one, in Berlin. A date-time is
+ * UTC with "Z", local to its TZID with one, and floating (taken as Berlin) without
+ * (RFC 5545 §3.3.5, forms 2, 3 and 1). A day or time that does not exist (31 April, month 13,
+ * 25:00) is none: it would be stored as given and break the task list, or throw here.
+ */
 export const readDate = (prop: Prop): { day: string; time: string | null; at: Date } | null => {
   const match = prop.value.match(/^(\d{4})(\d{2})(\d{2})(?:T(\d{2})(\d{2})(\d{2})?(Z?))?$/);
   if (!match) return null;
   const [, y, mo, d, h, mi, , z] = match;
   const day = `${y}-${mo}-${d}`;
+  if (!isCalendarDay(day) || (h !== undefined && (+h > 23 || +mi! > 59))) return null;
   if (prop.params.VALUE === "DATE" || h === undefined) {
     return { day, time: null, at: berlinInstant(day, "08:00") };
   }
   const at = z
     ? new Date(Date.UTC(+y!, +mo! - 1, +d!, +h, +mi!))
-    : berlinInstant(day, `${h}:${mi}`);
+    : zonedInstant(day, `${h}:${mi}`, knownZone(prop.params.TZID));
   return { ...berlinParts(at), at };
 };
 

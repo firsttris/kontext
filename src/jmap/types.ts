@@ -50,6 +50,9 @@ export type BodyPart = {
   disposition: string | null;
 };
 
+/** A part with its children (RFC 8621 §4.1.4): the MIME tree, for the S/MIME layering. */
+export type BodyStructure = BodyPart & { subParts: BodyStructure[] | null };
+
 export type EmailDetail = EmailSummary & {
   cc: EmailAddress[] | null;
   bcc: EmailAddress[] | null;
@@ -61,6 +64,7 @@ export type EmailDetail = EmailSummary & {
   htmlBody: BodyPart[];
   textBody: BodyPart[];
   attachments: BodyPart[];
+  bodyStructure: BodyStructure | null;
   bodyValues: Record<string, { value: string; isTruncated?: boolean }>;
   /** Headers the mail server adds on arrival, topmost first (src/lib/sender-check.ts). */
   authenticationResults: string[] | null;

@@ -13,7 +13,8 @@ export const DEFAULT_UNDO: UndoSeconds = 10;
 
 /**
  * How far ahead a mail may be planned. Stalwart announces 30 days (maxDelayedSend), its SMTP
- * default for future release is 7 (crates/registry/src/schema/structs_impl.rs); the smaller one.
+ * default for future release is 7 (crates/registry/src/schema/structs_impl.rs), and a longer
+ * HOLDUNTIL is refused (crates/smtp/src/inbound/mail.rs); the smaller one.
  */
 export const MAX_HOLD_DAYS = 7;
 
@@ -25,17 +26,29 @@ export type SendChoice = { label: string; at: Date };
 const at = (day: string, hour: number) =>
   fromLocal(`${day}T${String(hour).padStart(2, "0")}:00:00`);
 
-/** "Heute 13:00" (before noon), "Heute 17:00" (before four), "Morgen 08:00", "Montag 08:00". */
+/** A time is fine if it lies ahead, within what the server holds. */
+export const validSendTime = (at: Date, now: Date): boolean =>
+  at.getTime() > now.getTime() + 60_000 &&
+  at.getTime() < now.getTime() + MAX_HOLD_DAYS * 86_400_000;
+
+/**
+ * "Heute 08:00" (Monday before eight), "Heute 13:00" (before noon), "Heute 17:00" (before four),
+ * "Morgen 08:00", "Montag 08:00"; only what the server will hold.
+ */
 export const sendChoices = (now: Date): SendChoice[] => {
   const today = dateKey(now);
   const hour = Number(toLocal(now).slice(11, 13));
+  const weekday = new Date(`${today}T12:00:00Z`).getUTCDay();
   const choices: SendChoice[] = [];
+  // The start of the week is this morning, not next Monday (more than 7 days ahead).
+  if (weekday === 1 && hour < 8) {
+    choices.push({ label: m.mail_later_today({ time: "08:00" }), at: at(today, 8) });
+  }
   if (hour < 12) choices.push({ label: m.mail_later_today({ time: "13:00" }), at: at(today, 13) });
   if (hour < 16) choices.push({ label: m.mail_later_today({ time: "17:00" }), at: at(today, 17) });
   const tomorrow = addDays(today, 1);
   choices.push({ label: m.mail_later_tomorrow({ time: "08:00" }), at: at(tomorrow, 8) });
   // Monday morning, unless that is tomorrow anyway.
-  const weekday = new Date(`${today}T12:00:00Z`).getUTCDay();
   const toMonday = (8 - weekday) % 7 || 7;
   if (toMonday > 1) {
     choices.push({
@@ -43,13 +56,8 @@ export const sendChoices = (now: Date): SendChoice[] => {
       at: at(addDays(today, toMonday), 8),
     });
   }
-  return choices;
+  return choices.filter((choice) => validSendTime(choice.at, now));
 };
-
-/** A time picked by hand is fine if it lies ahead, within what the server holds. */
-export const validSendTime = (at: Date, now: Date): boolean =>
-  at.getTime() > now.getTime() + 60_000 &&
-  at.getTime() < now.getTime() + MAX_HOLD_DAYS * 86_400_000;
 
 /** "Mo., 26. Okt., 08:00", for the notice and the scheduled mails. */
 export const sendTimeLabel = (at: Date): string =>

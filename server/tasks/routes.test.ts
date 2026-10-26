@@ -1,10 +1,11 @@
 // @vitest-environment node
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import type { SessionAccount } from "../categories/routes";
 import type { Notice } from "../push/pusher";
+import { readOnlyInbox, sampleSessionInfo } from "../sample-session";
 import { memoryTaskStore } from "./memory-store";
 import { createTaskRoutes } from "./routes";
-import type { Task } from "./tasks";
+import { isCalendarDay, type Task } from "./tasks";
 
 const accounts: SessionAccount[] = [
   { id: "jonas", isPersonal: true, isReadOnly: false },
@@ -73,6 +74,26 @@ describe("task routes", () => {
     expect(tasks[0]!.remindAt).toBe("2026-10-26T07:00:00.000Z");
     const bad = await call("POST", "/", { accountId: "jonas", title: "x", remindAt: "morgen" });
     expect(bad.status).toBe(400);
+  });
+
+  it("takes a due day only if it exists", async () => {
+    const { tasks, call } = setup();
+    const post = (dueDate: string) =>
+      call("POST", "/", { accountId: "jonas", title: "x", dueDate });
+    expect((await post("2026-04-31")).status).toBe(400);
+    expect((await post("2026-13-05")).status).toBe(400);
+    expect((await post("2027-02-29")).status).toBe(400);
+    expect((await post("2028-02-29")).status).toBe(201);
+    expect(tasks.map((task) => task.dueDate)).toEqual(["2028-02-29"]);
+    expect((await call("PATCH", "/t1", { dueDate: "2028-02-30" })).status).toBe(400);
+  });
+
+  it("knows the days of any year, also 0000–0099", () => {
+    expect(isCalendarDay("0050-01-01")).toBe(true);
+    expect(isCalendarDay("0000-02-29")).toBe(true);
+    expect(isCalendarDay("0100-02-29")).toBe(false);
+    expect(isCalendarDay("2026-04-31")).toBe(false);
+    expect(isCalendarDay("2026-4-1")).toBe(false);
   });
 
   it("whom it is given to sees and changes it on a colleague's own board, not deletes it", async () => {
@@ -151,5 +172,45 @@ describe("columns and repeating tasks", () => {
     expect(tasks[0]!.repeat).toBeNull();
     expect(tasks[1]).toMatchObject({ title: "Zählerstand", status: "open", repeat: "monthly" });
     expect(tasks[1]!.dueDate! > "2020-01-31").toBe(true);
+  });
+});
+
+describe("task rights from Stalwart's session", () => {
+  afterEach(() => vi.unstubAllGlobals());
+
+  const setupWith = (people: Parameters<typeof sampleSessionInfo>[0]) => {
+    const { accountsOf } = sampleSessionInfo(people);
+    const { tasks, store } = memoryTaskStore();
+    const app = createTaskRoutes({ store, accountsOf });
+    const call = (who: string, method: string, path: string, body?: unknown) =>
+      app.request(path, {
+        method,
+        headers: { "x-who": who, "content-type": "application/json" },
+        body: body === undefined ? undefined : JSON.stringify(body),
+      });
+    return { tasks, call };
+  };
+
+  it("lets who only reads info@ look at its tasks, not delete them", async () => {
+    const { tasks, call } = setupWith({
+      jonas: { info: { member: true } },
+      max: { info: { folders: [readOnlyInbox] } },
+    });
+    expect((await call("jonas", "POST", "/", { accountId: "info", title: "Angebot" })).status).toBe(
+      201,
+    );
+    const listed = (await (await call("max", "GET", "/")).json()) as { tasks: Task[] };
+    expect(listed.tasks.map((task) => task.title)).toEqual(["Angebot"]);
+    expect((await call("max", "DELETE", `/${tasks[0]!.id}`)).status).toBe(403);
+    expect(tasks).toHaveLength(1);
+  });
+
+  it("gives no colleague's own board to who only sees her shared address book", async () => {
+    const { tasks, call } = setupWith({ anna: {}, jonas: { anna: { folders: [] } } });
+    await call("anna", "POST", "/", { accountId: "anna", title: "Arzttermin" });
+    const listed = (await (await call("jonas", "GET", "/")).json()) as { tasks: Task[] };
+    expect(listed.tasks).toEqual([]);
+    expect((await call("jonas", "DELETE", `/${tasks[0]!.id}`)).status).not.toBe(200);
+    expect(tasks).toHaveLength(1);
   });
 });

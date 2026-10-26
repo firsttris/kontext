@@ -1,10 +1,11 @@
 /**
  * A mail as a page to print: subject, sender, recipients, date, the mailbox it is in, the text
- * and the names of the attachments; light, on A4, without the app around it. Pure.
+ * and the names of the attachments; light, on A4, without the app around it. Remote content is
+ * never printed: the body comes cleaned with it blocked, and the page's CSP holds it out. Pure.
  */
 import type { EmailAddress } from "@/jmap/types";
 import { m } from "@/paraglide/messages";
-import { escapeHtml } from "./html";
+import { escapeHtml, mailPolicy } from "./html";
 
 export type PrintableMail = {
   subject: string;
@@ -27,7 +28,8 @@ const row = (label: string, value: string) =>
   value ? `<tr><th>${escapeHtml(label)}</th><td>${value}</td></tr>` : "";
 
 export const printDocument = (mail: PrintableMail): string => `<!doctype html>
-<html lang="de"><head><meta charset="utf-8"><title>${escapeHtml(mail.subject)}</title>
+<html lang="de"><head><meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="${mailPolicy(false)}"><title>${escapeHtml(mail.subject)}</title>
 <style>
   @page { size: A4; margin: 18mm 16mm; }
   html { color-scheme: light; }

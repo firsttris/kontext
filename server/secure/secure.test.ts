@@ -2,7 +2,7 @@
 import { describe, expect, it } from "vitest";
 import type { Notice } from "../push/pusher";
 import { createSecurePublicRoutes, createSecureRoutes } from "./routes";
-import { codeFits, codeSchema, hashCode, stateOf } from "./secure";
+import { codeFits, codeSchema, hashCode, MAX_TRIES, stateOf } from "./secure";
 import type { ReplyRow, SecureRow, SecureStore } from "./store";
 
 describe("the code", () => {
@@ -49,8 +49,14 @@ const memory = () => {
         readAt: null,
       }),
     markRepliesRead: async () => undefined,
-    failed: async (id: string) => {
-      rows.get(id)!.failedTries += 1;
+    takeTry: async (id: string, max: number) => {
+      const row = rows.get(id)!;
+      if (row.failedTries >= max) return null;
+      return ++row.failedTries;
+    },
+    giveBackTry: async (id: string) => {
+      const row = rows.get(id)!;
+      row.failedTries = Math.max(row.failedTries - 1, 0);
     },
     opened: async (id: string, at: Date) => {
       const row = rows.get(id)!;
@@ -145,5 +151,53 @@ describe("confidential messages", () => {
       replies: { ciphertext: string }[];
     };
     expect(mine.replies[0]?.ciphertext).toBe("encrypted-answer");
+  });
+});
+
+describe("the code's tries", () => {
+  it("checks no more than five wrong codes, even sent at once", async () => {
+    const { sender, page, json } = setup();
+    const created = await sender.request(
+      "/",
+      json({
+        to: "petra@keller.test",
+        fromName: "Jonas Weber",
+        fromEmail: "jonas@weber.test",
+        ciphertext: "iv-and-encrypted-content",
+        senderKey: "-----BEGIN PGP MESSAGE-----\n…\n-----END PGP MESSAGE-----",
+        code: "K7QP-2MXR",
+        expiresDays: 30,
+      }),
+    );
+    const { id } = (await created.json()) as { id: string };
+    const guesses = Array.from({ length: 30 }, (_, i) =>
+      page.request(`/${id}/open`, json({ code: `WRONG${String(i).padStart(3, "0")}` })),
+    );
+    const statuses = (await Promise.all(guesses)).map((response) => response.status);
+    // Each 403 is a guess the server checked against the code.
+    expect(statuses.filter((status) => status === 403)).toHaveLength(MAX_TRIES);
+    expect(statuses.filter((status) => status === 423)).toHaveLength(30 - MAX_TRIES);
+  });
+
+  it("a right code gives its try back", async () => {
+    const { sender, page, json } = setup();
+    const created = await sender.request(
+      "/",
+      json({
+        to: "petra@keller.test",
+        fromName: "Jonas Weber",
+        fromEmail: "jonas@weber.test",
+        ciphertext: "iv-and-encrypted-content",
+        senderKey: "-----BEGIN PGP MESSAGE-----\n…\n-----END PGP MESSAGE-----",
+        code: "K7QP-2MXR",
+        expiresDays: 30,
+      }),
+    );
+    const { id } = (await created.json()) as { id: string };
+    await page.request(`/${id}/open`, json({ code: "WRONGCODE" }));
+    const reply = json({ code: "K7QP2MXR", ciphertext: "encrypted-answer" });
+    expect((await page.request(`/${id}/reply`, reply)).status).toBe(201);
+    const wrong = await page.request(`/${id}/open`, json({ code: "WRONGCODE" }));
+    expect(((await wrong.json()) as { left: number }).left).toBe(MAX_TRIES - 2);
   });
 });

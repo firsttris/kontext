@@ -315,6 +315,12 @@ export const createChatRoutes = ({
     return c.json({ muted: parsed.data.muted });
   });
 
+  /** A channel with all its messages and files; the files first, found by their rows. */
+  const removeChannel = async (channelId: string) => {
+    await files.removeOfChannel(channelId);
+    await store.remove(channelId);
+  };
+
   app.post("/channels/:id/leave", async (c) => {
     const viewer = c.get("viewer");
     const channel = await visible(c.req.param("id"), viewer);
@@ -322,7 +328,9 @@ export const createChatRoutes = ({
     if (channel.kind !== "channel") {
       return c.json({ error: "Diesen Kanal kann man nicht verlassen." }, 403);
     }
-    await store.leave(channel.id, viewer.me);
+    const empty = await store.leave(channel.id, viewer.me);
+    // The last one out takes the channel with them; it would keep its files' bytes otherwise.
+    if (empty) await removeChannel(channel.id);
     announce(channel, [viewer.me]);
     return c.json({ ok: true });
   });
@@ -335,8 +343,7 @@ export const createChatRoutes = ({
     if (channel.kind !== "channel" || channel.createdBy !== viewer.me) {
       return c.json({ error: "Nur wer den Kanal angelegt hat, kann ihn löschen." }, 403);
     }
-    await files.removeOfChannel(channel.id);
-    await store.remove(channel.id);
+    await removeChannel(channel.id);
     announce(channel);
     return c.json({ ok: true });
   });

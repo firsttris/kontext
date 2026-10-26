@@ -42,12 +42,36 @@ describe("which way to unsubscribe", () => {
       "::1",
       "fd00::1",
       "::ffff:10.0.0.1",
+      "fe80::1",
+      "ff02::1",
       "nonsense",
     ]) {
       expect(isPrivateAddress(address), address).toBe(true);
     }
-    for (const address of ["93.184.216.34", "2a00:1450:4001::200e", "172.32.0.1"]) {
+    for (const address of [
+      "93.184.216.34",
+      "2a00:1450:4001::200e",
+      "172.32.0.1",
+      "::ffff:5db8:d822",
+      "64:ff9b::5db8:d822",
+    ]) {
       expect(isPrivateAddress(address), address).toBe(false);
+    }
+  });
+
+  it("knows IPv4 addresses inside IPv6 ones, in every way they are written", () => {
+    // WHATWG URL writes [::ffff:127.0.0.1] as [::ffff:7f00:1].
+    expect(new URL("https://[::ffff:127.0.0.1]/").hostname).toBe("[::ffff:7f00:1]");
+    for (const address of [
+      "::ffff:7f00:1",
+      "::ffff:a00:1",
+      "::ffff:c0a8:b201",
+      "0:0:0:0:0:ffff:7f00:1",
+      "::7f00:1",
+      "64:ff9b::7f00:1",
+      "64:ff9b::192.168.1.1",
+    ]) {
+      expect(isPrivateAddress(address), address).toBe(true);
     }
   });
 });
@@ -112,5 +136,15 @@ describe("/api/unsubscribe", () => {
     expect((await setup(oneClick).call({ accountId: "fremd", emailId: "m1" })).status).toBe(404);
     const web = { "header:List-Unsubscribe:asURLs": ["https://list.test/off"] };
     expect((await setup(web).call({ accountId: "jonas", emailId: "m1" })).status).toBe(400);
+  });
+
+  it("not to loopback written as an IPv4-mapped IPv6 literal", async () => {
+    const mapped = {
+      ...oneClick,
+      "header:List-Unsubscribe:asURLs": ["https://[::ffff:127.0.0.1]:18090/admin"],
+    };
+    const { posted, call } = setup(mapped, "::ffff:7f00:1");
+    expect((await call({ accountId: "jonas", emailId: "m1" })).status).toBe(400);
+    expect(posted).toEqual([]);
   });
 });

@@ -84,6 +84,7 @@ const memoryStore = (): ChatStore => {
     leave: async (channelId, memberId) => {
       const channel = channels.find((c) => c.id === channelId);
       if (channel) channel.members = channel.members.filter((m) => m !== memberId);
+      return channel?.members.length === 0;
     },
     audience: async () => ({ readers: [], muted: [] }),
     remove: async (channelId) => {
@@ -104,6 +105,7 @@ const person = (id: string, shared: string[] = []): SessionAccount[] => [
 const memoryMessages = () => {
   const messages: Message[] = [];
   const stored: StoredFile[] = [];
+  const removedChannels: string[] = [];
   const files: ChatFiles = {
     save: async (channelId, _by, file, _thumb, type = file.type) => {
       const saved = {
@@ -131,7 +133,9 @@ const memoryMessages = () => {
     pruneUnsent: async () => 0,
     removeOfMessage: async () => undefined,
     removeOfMessages: async () => undefined,
-    removeOfChannel: async () => undefined,
+    removeOfChannel: async (channelId) => {
+      removedChannels.push(channelId);
+    },
   };
   const store: MessageStore = {
     page: async (channelId) =>
@@ -197,7 +201,7 @@ const memoryMessages = () => {
       ),
     ],
   };
-  return { store, files };
+  return { store, files, removedChannels };
 };
 
 const setup = () => {
@@ -256,7 +260,16 @@ const setup = () => {
     });
     return { status: response.status, body: (await response.json()) as { file: ChatFile } };
   };
-  return { send, as, listen, upload, app, told, bodies };
+  return {
+    send,
+    as,
+    listen,
+    upload,
+    app,
+    told,
+    bodies,
+    removedChannels: memory.removedChannels,
+  };
 };
 
 describe("/api/chat", () => {
@@ -396,6 +409,24 @@ describe("/api/chat", () => {
     expect((await send("DELETE", path)).status).toBe(200);
     expect((await send("GET", `${path}/messages`)).status).toBe(404);
   });
+
+  it("takes a channel's files with it when the last member leaves", async () => {
+    const { send, as, upload, removedChannels } = setup();
+    const { body } = await send("POST", "/channels", { name: "baustelle", members: ["max"] });
+    const path = `/channels/${body.channel.id}`;
+    const photo = await upload(body.channel.id, "angebot.jpg");
+    await send("POST", `${path}/messages`, { text: "Hier", fileIds: [photo.body.file.id] });
+    as(person("max"));
+    expect((await send("POST", `${path}/leave`)).status).toBe(200);
+    // Jonas is still in it: the files stay.
+    expect(removedChannels).toEqual([]);
+    as(person("jonas", ["info"]));
+    expect((await send("POST", `${path}/leave`)).status).toBe(200);
+    // Nobody is left: with the channel go the bytes of its files, as when it is deleted.
+    expect(removedChannels).toEqual([body.channel.id]);
+    expect((await send("GET", `${path}/messages`)).status).toBe(404);
+  });
+
   it("tells the other in a direct conversation and the mentioned in a channel", async () => {
     const { send, told } = setup();
     const direct = (await send("POST", "/direct", { members: ["sandra"] })).body.channel;

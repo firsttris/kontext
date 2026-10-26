@@ -55,11 +55,61 @@ describe("MIME built in the app", () => {
     expect(parsed.to?.[0]?.address).toBe("petra@k.test");
   });
 
+  it("names the parent once in References when it is already there (a reopened draft)", () => {
+    const raw = encryptedMail(
+      {
+        from: { name: "Jonas Weber", email: "jonas@w.test" },
+        to: [],
+        cc: [],
+        subject: "Re: Befund",
+        date: new Date("2026-10-25T09:00:00Z"),
+        messageId: "m2@w.test",
+        inReplyTo: ["a@k.test"],
+        references: ["start@k.test", "a@k.test"],
+      },
+      "-----BEGIN PGP MESSAGE-----\nxyz\n-----END PGP MESSAGE-----",
+      "e2",
+    );
+    expect(raw).toContain("References: <start@k.test> <a@k.test>\r\n");
+  });
+
   it("encodes names and words only where needed", () => {
     expect(encodeWord("Angebot")).toBe("Angebot");
     expect(encodeWord("Grüße")).toMatch(/^=\?UTF-8\?B\?/);
     expect(mailbox({ name: "Weber, Jonas", email: "j@w.test" })).toBe('"Weber, Jonas" <j@w.test>');
     expect(mailbox({ name: null, email: "j@w.test" })).toBe("<j@w.test>");
+    expect(mailbox({ name: 'IT\\Admin "Weber"', email: "j@w.test" })).toBe(
+      '"IT\\\\Admin \\"Weber\\"" <j@w.test>',
+    );
+  });
+
+  it("keeps every encoded-word within 75 characters (RFC 2047 §2) and reads back whole", async () => {
+    const subject = "Rückfrage zur Rechnung über die Heizungsanlage im Büro – bitte prüfen 🔧ÄÖÜß";
+    const name = "Jürgen Müller-Lüdenscheidt Größenwahn Hausverwaltung Süd 🏠 GmbH & Co. KG";
+    const encoded = encodeWord(subject);
+    const words = encoded.split("\r\n ");
+    expect(words.length).toBeGreaterThan(1);
+    for (const word of words) {
+      expect(word).toMatch(/^=\?UTF-8\?B\?[A-Za-z0-9+/=]+\?=$/);
+      expect(word.length).toBeLessThanOrEqual(75);
+    }
+    const raw = encryptedMail(
+      {
+        from: { name, email: "j@w.test" },
+        to: [{ name, email: "p@k.test" }],
+        cc: [],
+        subject,
+        date: new Date("2026-10-25T09:00:00Z"),
+        messageId: "m2@w.test",
+      },
+      "-----BEGIN PGP MESSAGE-----\nxyz\n-----END PGP MESSAGE-----",
+      "e2",
+    );
+    const parsed = await PostalMime.parse(raw);
+    expect(parsed.subject).toBe(subject);
+    expect(parsed.from?.name).toBe(name);
+    expect(parsed.to?.[0]?.name).toBe(name);
+    expect(parsed.to?.[0]?.address).toBe("p@k.test");
   });
 
   it("puts the subject inside, marked as protected, and hides it outside", async () => {

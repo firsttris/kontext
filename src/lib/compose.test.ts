@@ -1,4 +1,6 @@
 import { describe, expect, it } from "vitest";
+import type { JmapClient } from "@/jmap/client";
+import { saveDraft } from "@/jmap/mail";
 import type { EmailDetail } from "@/jmap/types";
 import { sharedSenderName, startCompose } from "./compose";
 
@@ -34,6 +36,7 @@ const original: EmailDetail = {
       disposition: "attachment",
     },
   ],
+  bodyStructure: null,
   bodyValues: {},
   authenticationResults: null,
   spamScore: null,
@@ -88,6 +91,44 @@ describe("startCompose", () => {
     });
     expect(start.bcc.map((a) => a.email)).toEqual(["archiv@weber.test"]);
     expect(start.attachments).toHaveLength(1);
+  });
+  it("keeps each message id once in References when a reply draft is reopened", async () => {
+    // Saves like the composer does and returns the Email/set create of the draft.
+    const save = async (threading: Pick<EmailDetail, "inReplyTo" | "references">) => {
+      let created: Partial<EmailDetail> = {};
+      const client = {
+        call: async (_method: string, args: { create: { draft: Partial<EmailDetail> } }) => {
+          created = args.create.draft;
+          return { created: { draft: { id: "d1" } } };
+        },
+      } as unknown as JmapClient;
+      const identity = {
+        id: "i1",
+        name: "Jonas",
+        email: "jonas@weber.test",
+        replyTo: null,
+        bcc: null,
+        textSignature: "",
+        htmlSignature: "",
+      };
+      const mail = { accountId: "a", identity, to: [], cc: [], bcc: [], subject: "Re: x" };
+      await saveDraft(
+        client,
+        { ...mail, html: "", text: "", attachments: [], ...threading },
+        "drafts",
+      );
+      return created;
+    };
+    const reply = startCompose("reply", original, "", ["jonas@weber.test"]);
+    const first = await save(reply);
+    expect(first.references).toEqual(["start@keller.test", "angebot@keller.test"]);
+    const draft = {
+      ...original,
+      inReplyTo: first.inReplyTo ?? null,
+      references: first.references ?? null,
+    };
+    const second = await save(startCompose("draft", draft, "", ["jonas@weber.test"]));
+    expect(second.references).toEqual(["start@keller.test", "angebot@keller.test"]);
   });
   it("starts empty for a new mail", () => {
     expect(startCompose("new", original, "", []).subject).toBe("");

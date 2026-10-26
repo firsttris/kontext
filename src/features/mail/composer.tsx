@@ -22,7 +22,7 @@ import { contactAddresses } from "@/lib/jscontact";
 import { findRole } from "@/lib/mailboxes";
 import { pgpKind } from "@/lib/pgp-mail";
 import { holdUntil, sendTimeLabel } from "@/lib/schedule";
-import { smimeKind } from "@/lib/smime";
+import { signedOverEncrypted, smimeKind } from "@/lib/smime";
 import { m } from "@/paraglide/messages";
 import { useContacts } from "../contacts/queries";
 import { useAutocryptHeader } from "../pgp/autocrypt";
@@ -141,7 +141,8 @@ export const Composer = ({ accountId, mode, sourceEmailId, prefill }: Props) => 
       // never as cipher text; the answer goes encrypted too.
       if (
         pgpKind(source.data.contentType, body.value) === "encrypted" ||
-        smimeKind(source.data.contentType) === "encrypted"
+        smimeKind(source.data.contentType) === "encrypted" ||
+        signedOverEncrypted(source.data)
       ) {
         setEncrypt(true);
         encryptedOriginal = true;

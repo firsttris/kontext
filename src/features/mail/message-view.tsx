@@ -12,7 +12,7 @@ import { displayName, firstName, formatAddressList, readingDate } from "@/lib/fo
 import { mailboxNotice } from "@/lib/mail-accounts";
 import { mailboxRights } from "@/lib/mailboxes";
 import { pgpKind } from "@/lib/pgp-mail";
-import { smimeKind } from "@/lib/smime";
+import { signedOverEncrypted, smimeKind } from "@/lib/smime";
 import { tasksOfMail } from "@/lib/tasks";
 import { m } from "@/paraglide/messages";
 import { CategoryChips } from "../categories/category-chips";
@@ -78,7 +78,7 @@ export const MessageView = ({ accountId, mailbox, emailId }: Props) => {
   if (!email) return <div className="p-6 text-[14px] text-muted">{m.mail_pick()}</div>;
   const showDetails = detailsFor === email.id;
   const pgp = pgpKind(email.contentType, displayBody(email).value);
-  const smime = smimeKind(email.contentType);
+  const smime = signedOverEncrypted(email) ? "encrypted" : smimeKind(email.contentType);
   // Signed with the content inside (not beside) the signature: no body of its own.
   const smimeWrapped =
     smime === "encrypted" ||

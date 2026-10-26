@@ -40,6 +40,22 @@ const taskHref = (accountId: string, name: string) =>
   `${boardHref(accountId)}${encodeURIComponent(name)}.ics`;
 const etag = (task: Task) => `"${Date.parse(task.updatedAt)}"`;
 
+/** "abc.ics" → "abc"; the name as stored, the inverse of `taskHref`. */
+const taskName = (file: string) => file.replace(/\.ics$/, "");
+
+/**
+ * The task's name from a multiget href: hrefs in the body are URIs (RFC 4918 §8.3), so their last
+ * segment is percent-decoded once here, unlike path params, which Hono has decoded already.
+ * A malformed one ("50%.ics") names no task rather than failing the whole REPORT.
+ */
+const nameOfHref = (href: string) => {
+  try {
+    return taskName(decodeURIComponent(href.split("/").pop() ?? ""));
+  } catch {
+    return "";
+  }
+};
+
 /** "info@weber-haustechnik.test" → "Aufgaben info@", the own one "Meine Aufgaben". */
 const boardName = (account: DavAccount, me: string) =>
   account.id === me ? "Meine Aufgaben (Kontext)" : `Aufgaben ${account.name.replace(/@.*/, "@")}`;
@@ -170,8 +186,8 @@ export const createDavRoutes = ({
       return multistatus(
         await Promise.all(
           wanted.map(async (href) => {
-            const name = decodeURIComponent(href.split("/").pop() ?? "").replace(/\.ics$/, "");
-            const found = await store.davGet(account.id, name);
+            const name = nameOfHref(href);
+            const found = name ? await store.davGet(account.id, name) : null;
             return found
               ? taskResponse(account.id, found.name, found.uid, found.task, true)
               : notFound(href);
@@ -193,10 +209,14 @@ export const createDavRoutes = ({
     );
   });
 
-  /** The board and the task's file name from a path, if the person has that board. */
+  /**
+   * The board and the task's file name from a path, if the person has that board. `file` comes
+   * from `c.req.param`, which Hono has percent-decoded already; decoding again would turn the
+   * file "a%41.ics" into "aA" and throw on "50%.ics".
+   */
   const located = (user: DavUser, board: string, file: string) => {
     const account = boardOf(user, board);
-    const name = decodeURIComponent(file).replace(/\.ics$/, "");
+    const name = taskName(file);
     return account && name ? { account, name } : null;
   };
 

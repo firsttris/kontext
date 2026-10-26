@@ -1,4 +1,5 @@
 /** Mail operations on top of the JMAP client (RFC 8621). Each function is one round-trip. */
+import { replyReferences } from "@/lib/references";
 import { assertSetOk, CAPABILITIES, type JmapClient } from "./client";
 import type { BodyPart, EmailAddress, EmailDetail, EmailSummary, Identity, Mailbox } from "./types";
 
@@ -30,10 +31,21 @@ const DETAIL_PROPERTIES = [
   "htmlBody",
   "textBody",
   "attachments",
+  "bodyStructure",
   "bodyValues",
 ];
 
-const BODY_PROPERTIES = ["partId", "blobId", "type", "name", "size", "cid", "disposition"];
+const BODY_PROPERTIES = [
+  "partId",
+  "blobId",
+  "type",
+  "name",
+  "size",
+  "cid",
+  "disposition",
+  // bodyStructure's tree (signedOverEncrypted in src/lib/smime.ts); leaves have none.
+  "subParts",
+];
 
 /**
  * Headers for the sender check, every instance (`:all`, topmost first, RFC 8621 §4.1.3): without
@@ -357,7 +369,7 @@ const emailCreate = (mail: OutgoingEmail, mailboxIds: Record<string, boolean>, d
   ...(mail.autocrypt ? { "header:Autocrypt:asRaw": folded(mail.autocrypt) } : {}),
   ...(mail.inReplyTo?.length ? { inReplyTo: mail.inReplyTo } : {}),
   ...(mail.references?.length || mail.inReplyTo?.length
-    ? { references: [...(mail.references ?? []), ...(mail.inReplyTo ?? [])] }
+    ? { references: replyReferences(mail.references, mail.inReplyTo) }
     : {}),
   bodyValues: { text: { value: mail.text }, html: { value: mail.html } },
   textBody: [{ partId: "text", type: "text/plain" }],

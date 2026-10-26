@@ -174,6 +174,10 @@ export const SmimeSignedNote = ({
   );
 };
 
+/** Encrypted as AuthEnvelopedData (RFC 5083), which node-forge cannot open: no wrong certificate. */
+const authEnveloped = (contentType: string | null) =>
+  /smime-type\s*=\s*"?authenveloped-data/i.test(contentType ?? "");
+
 /**
  * In place of the body of an S/MIME mail whose content is wrapped: encrypted (opened with one's
  * certificate) or signed inside (no certificate needed).
@@ -215,7 +219,11 @@ export const SmimeMail = ({
       {!ready ? <SmimeUnlock /> : null}
       {error ? (
         <p role="alert" className="m-0 text-[14px] text-danger">
-          {encrypted ? m.smime_cannot_decrypt() : m.pgp_signed_invalid()}
+          {!encrypted
+            ? m.pgp_signed_invalid()
+            : authEnveloped(email.contentType)
+              ? m.smime_auth_enveloped()
+              : m.smime_cannot_decrypt()}
         </p>
       ) : null}
       {read ? (

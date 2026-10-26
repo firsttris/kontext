@@ -2,7 +2,7 @@
 import { mkdirSync } from "node:fs";
 import { rm } from "node:fs/promises";
 import { join } from "node:path";
-import { asc, desc, eq, lte, sql } from "drizzle-orm";
+import { and, asc, desc, eq, lt, lte, sql } from "drizzle-orm";
 import type { Db } from "../db";
 import * as schema from "../db/schema";
 
@@ -73,10 +73,24 @@ export const createSecureStore = (db: Db, dir: string) => {
         .set({ readAt: new Date() })
         .where(eq(schema.secureReplies.messageId, messageId));
     },
-    failed: async (id: string) => {
-      await db
+    /**
+     * Takes one of the tries before the code is checked: one conditional UPDATE, so guesses sent at
+     * once cannot all read the same count during the slow scrypt check. Returns the tries now
+     * taken, or null when none was left.
+     */
+    takeTry: async (id: string, max: number): Promise<number | null> => {
+      const [row] = await db
         .update(schema.secureMessages)
         .set({ failedTries: sql`${schema.secureMessages.failedTries} + 1` })
+        .where(and(eq(schema.secureMessages.id, id), lt(schema.secureMessages.failedTries, max)))
+        .returning({ failedTries: schema.secureMessages.failedTries });
+      return row?.failedTries ?? null;
+    },
+    /** A right code gives its try back (never below zero: a new code may have reset them). */
+    giveBackTry: async (id: string) => {
+      await db
+        .update(schema.secureMessages)
+        .set({ failedTries: sql`max(${schema.secureMessages.failedTries} - 1, 0)` })
         .where(eq(schema.secureMessages.id, id));
     },
     opened: async (id: string, at: Date) => {

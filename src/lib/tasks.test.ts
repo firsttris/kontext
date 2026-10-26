@@ -126,6 +126,21 @@ describe("parseQuickAdd", () => {
     });
     expect(parseQuickAdd("morgen", today)).toEqual({ title: "morgen", dueDate: null });
   });
+
+  it("leaves a date that does not exist in the title", () => {
+    expect(parseQuickAdd("Rechnung prüfen 31.4.", today)).toEqual({
+      title: "Rechnung prüfen 31.4.",
+      dueDate: null,
+    });
+    expect(parseQuickAdd("Anruf 5.13.", today)).toEqual({ title: "Anruf 5.13.", dueDate: null });
+    expect(parseQuickAdd("Anruf 0.5.", today).dueDate).toBeNull();
+  });
+
+  it("takes 29 February only in a leap year", () => {
+    expect(parseQuickAdd("Wartung 29.2.2028", today).dueDate).toBe("2028-02-29");
+    expect(parseQuickAdd("Wartung 29.2.2027", today).dueDate).toBeNull();
+    expect(parseQuickAdd("Wartung 29.2.", "2027-03-10").dueDate).toBe("2028-02-29");
+  });
 });
 
 describe("tasks and mails", () => {

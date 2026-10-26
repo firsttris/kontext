@@ -33,7 +33,21 @@ export const columnsSchema = z
 export const REPEATS = ["daily", "weekdays", "weekly", "monthly", "yearly"] as const;
 export type Repeat = (typeof REPEATS)[number];
 
-const day = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
+/**
+ * Whether "YYYY-MM-DD" names a day that exists: a Date rolls 31 April over to 1 May, so a day
+ * is real only if it comes back unchanged (29 February only in leap years). setUTCFullYear, not
+ * Date.UTC, which reads the years 0–99 as 1900–1999.
+ */
+export const isCalendarDay = (value: string): boolean => {
+  const match = value.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (!match) return false;
+  const [y, m, d] = match.slice(1).map(Number) as [number, number, number];
+  const date = new Date(0);
+  date.setUTCFullYear(y, m - 1, d);
+  return date.getUTCFullYear() === y && date.getUTCMonth() === m - 1 && date.getUTCDate() === d;
+};
+
+const day = z.string().refine(isCalendarDay);
 const time = z.string().regex(/^\d{2}:\d{2}$/);
 
 export const checkItemSchema = z.object({
@@ -123,21 +137,36 @@ export type Task = {
 export const companyDay = (now: Date): string =>
   new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Berlin" }).format(now);
 
-/** The instant of a day and time in Berlin, summer or winter time. */
-export const berlinInstant = (day: string, time: string): Date => {
-  const asUtc = Date.parse(`${day}T${time}:00Z`);
-  const offset = (at: number) => {
-    const name = new Intl.DateTimeFormat("en-US", {
-      timeZone: "Europe/Berlin",
-      timeZoneName: "shortOffset",
-    })
-      .formatToParts(new Date(at))
-      .find((part) => part.type === "timeZoneName")?.value;
-    const [, sign, hours] = name?.match(/GMT([+-])(\d+)/) ?? [];
-    return sign ? (sign === "-" ? -1 : 1) * Number(hours) * 3_600_000 : 0;
-  };
-  return new Date(asUtc - offset(asUtc - offset(asUtc)));
+/** The offset of a zone from UTC at an instant, in milliseconds. */
+const zoneOffset = (timeZone: string, at: number): number => {
+  const name = new Intl.DateTimeFormat("en-US", { timeZone, timeZoneName: "shortOffset" })
+    .formatToParts(new Date(at))
+    .find((part) => part.type === "timeZoneName")?.value;
+  // "GMT+1", "GMT-4", "GMT+5:30"; plain "GMT" is no offset.
+  const [, sign, hours, minutes] = name?.match(/GMT([+-])(\d+)(?::(\d+))?/) ?? [];
+  if (!sign) return 0;
+  return (sign === "-" ? -1 : 1) * (Number(hours) * 60 + Number(minutes ?? 0)) * 60_000;
 };
+
+/**
+ * The instant of a day and time in an IANA time zone, summer or winter time. Around a switch
+ * the wall time is read with the offset of the day before or of the day after, whichever gives
+ * it back; a time that comes twice (fall back) is the first, and one that does not exist
+ * (spring forward) takes the offset before the switch, so 02:30 is 03:30 summer time
+ * (RFC 5545 §3.3.5).
+ */
+export const zonedInstant = (day: string, time: string, timeZone: string): Date => {
+  const wall = Date.parse(`${day}T${time}:00Z`);
+  const [before, after] = [wall - 86_400_000, wall + 86_400_000].map(
+    (at) => wall - zoneOffset(timeZone, at),
+  ) as [number, number];
+  const exact = [before, after].filter((at) => at + zoneOffset(timeZone, at) === wall);
+  return new Date(exact.length ? Math.min(...exact) : before);
+};
+
+/** The instant of a day and time in Berlin, summer or winter time. */
+export const berlinInstant = (day: string, time: string): Date =>
+  zonedInstant(day, time, "Europe/Berlin");
 
 const DAY = 86_400_000;
 const toDay = (date: Date) => date.toISOString().slice(0, 10);

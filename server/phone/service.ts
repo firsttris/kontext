@@ -270,6 +270,23 @@ export const createPhoneService = (deps: PhoneDeps) => {
     await watchStatuses();
   };
 
+  /**
+   * One at a time per call: two people pressing "Annehmen" at once would both read it as ringing
+   * before either is saved. The second one waits and then finds it taken. The box's events for a
+   * known call take the same queue, so a hang-up and an answer at once do not overwrite each
+   * other.
+   */
+  const queues = new Map<string, Promise<unknown>>();
+  const oneAtATime = <T>(callId: string, work: () => Promise<T>): Promise<T> => {
+    const next = (queues.get(callId) ?? Promise.resolve()).then(work, work);
+    const settled = next.catch(() => undefined);
+    queues.set(callId, settled);
+    void settled.then(() => {
+      if (queues.get(callId) === settled) queues.delete(callId);
+    });
+    return next;
+  };
+
   const onEvent = async (boxId: string, event: CallEvent) => {
     const known = await store.callOfBox(boxId, event.call);
     if (!known && event.state === "closed" && event.direction === "in") {
@@ -339,6 +356,13 @@ export const createPhoneService = (deps: PhoneDeps) => {
       ringPhones(call, plan);
       return;
     }
+    await oneAtATime(known.id, () => onKnownEvent(known.id, event));
+  };
+
+  /** An event for a call already in the list: read again in the queue, it may have changed. */
+  const onKnownEvent = async (callId: string, event: CallEvent) => {
+    const known = await store.call(callId);
+    if (!known) return;
     const forwardTo = event.forwarded ? ((await store.settings()).forward?.number ?? null) : null;
     const applied = applyCallEvent(known, event, forwardTo);
     // Answered at a desk phone: whose it is, and which.
@@ -421,21 +445,6 @@ export const createPhoneService = (deps: PhoneDeps) => {
 
   const allowed = async (me: string) => everyone(await store.settings()).includes(me);
 
-  /**
-   * One at a time per call: two people pressing "Annehmen" at once would both read it as ringing
-   * before either is saved. The second one waits and then finds it taken.
-   */
-  const queues = new Map<string, Promise<unknown>>();
-  const oneAtATime = <T>(callId: string, work: () => Promise<T>): Promise<T> => {
-    const next = (queues.get(callId) ?? Promise.resolve()).then(work, work);
-    const settled = next.catch(() => undefined);
-    queues.set(callId, settled);
-    void settled.then(() => {
-      if (queues.get(callId) === settled) queues.delete(callId);
-    });
-    return next;
-  };
-
   return {
     /** A box came online; the function it returns handles what the box says. */
     connect: (boxId: string, sendToBox: (message: ToBox) => void) => {
@@ -482,6 +491,8 @@ export const createPhoneService = (deps: PhoneDeps) => {
       oneAtATime(callId, async () => {
         const call = await store.call(callId);
         if (!call || !canSeeCall(call, me)) return "not-found";
+        // Hung up meanwhile: the call is gone, not taken by someone else.
+        if (call.state === "ended") return "not-found";
         const taken = takeCall(call, me, newId());
         if (!taken) return "busy";
         if (!connected.has(taken.boxId)) return "offline";

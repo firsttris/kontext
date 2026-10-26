@@ -1,7 +1,7 @@
 /** Calendars over JMAP (draft-ietf-jmap-calendars). Repeating events come expanded per instance. */
 
 import { chunk } from "@/lib/chunk";
-import type { CalendarEvent } from "@/lib/jscalendar";
+import { type CalendarEvent, withAllDayOf, ZONE } from "@/lib/jscalendar";
 import type { Rights, ShareWith } from "@/lib/sharing";
 import { assertSetOk, CAPABILITIES, type JmapClient } from "./client";
 
@@ -94,6 +94,43 @@ export const deleteCalendar = async (
 };
 
 /**
+ * Works around Stalwart 0.16.27: once a date of a series is changed, get on the series' id returns
+ * that override's properties as the series' (crates/jmap/src/calendar_event/get.rs,
+ * `into_jscalendar_with_opt(... .return_first(true))` picks the first component). A
+ * recurrenceOverridesAfter/Before window no override falls into (draft-ietf-jmap-calendars
+ * CalendarEvent/get) drops the overrides first (same file, `override_range`), so the series'
+ * own values come back.
+ */
+const WITHOUT_OVERRIDES = {
+  recurrenceOverridesAfter: "9999-12-30T00:00:00Z",
+  recurrenceOverridesBefore: "9999-12-31T00:00:00Z",
+};
+
+/**
+ * At most `maxObjectsInGet` (500) per call, one call after the other. Like the query, get takes
+ * the app's zone: Stalwart resolves floating times (all-day events) and the instances in it, and
+ * in UTC without it (crates/jmap/src/calendar_event/get.rs, `default_tz`).
+ */
+const getEvents = async (
+  client: JmapClient,
+  accountId: string,
+  ids: string[],
+  properties: string[],
+  extra: Record<string, unknown> = {},
+): Promise<CalendarEvent[]> => {
+  const events: CalendarEvent[] = [];
+  for (const page of chunk(ids, 500)) {
+    const { list } = await client.call<{ list: CalendarEvent[] }>(
+      "CalendarEvent/get",
+      { accountId, ids: page, properties, timeZone: ZONE, ...extra },
+      USING,
+    );
+    events.push(...list);
+  }
+  return events;
+};
+
+/**
  * Events (and instances of repeating events) between two instants, of one calendar or (without
  * `calendarId`) the whole account. Calendars of other accounts are always asked one by one, so
  * the result holds exactly what is in the calendars the user can see.
@@ -116,22 +153,21 @@ export const queryEvents = async (
         ...(calendarId ? { inCalendar: calendarId } : {}),
       },
       expandRecurrences: true,
-      timeZone: "Europe/Berlin",
+      timeZone: ZONE,
       limit: 5000,
     },
     USING,
   );
-  // At most `maxObjectsInGet` (500) per call, one call after the other.
-  const events: CalendarEvent[] = [];
-  for (const page of chunk(ids, 500)) {
-    const { list } = await client.call<{ list: CalendarEvent[] }>(
-      "CalendarEvent/get",
-      { accountId, ids: page, properties: EVENT_PROPERTIES },
-      USING,
-    );
-    events.push(...list);
-  }
-  return events;
+  const events = await getEvents(client, accountId, ids, EVENT_PROPERTIES);
+  const baseIds = [...new Set(events.flatMap((event) => event.baseEventId ?? []))];
+  const bases = await getEvents(
+    client,
+    accountId,
+    baseIds,
+    ["showWithoutTime", "timeZone"],
+    WITHOUT_OVERRIDES,
+  );
+  return events.map(withAllDayOf(new Map(bases.map((base) => [base.id, base]))));
 };
 
 /** One stored event, e.g. the series behind an instance (which carries the rule). */
@@ -140,13 +176,7 @@ export const getEvent = async (
   accountId: string,
   id: string,
 ): Promise<CalendarEvent | null> =>
-  (
-    await client.call<{ list: CalendarEvent[] }>(
-      "CalendarEvent/get",
-      { accountId, ids: [id], properties: EVENT_PROPERTIES },
-      USING,
-    )
-  ).list[0] ?? null;
+  (await getEvents(client, accountId, [id], EVENT_PROPERTIES))[0] ?? null;
 
 /**
  * Changing or deleting an instance id changes only that date: Stalwart writes it to the series'

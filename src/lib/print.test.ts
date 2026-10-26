@@ -22,6 +22,9 @@ describe("printDocument", () => {
     expect(page).toContain("@page { size: A4;");
   });
 
+  it("fetches nothing from outside", () => {
+    expect(printDocument(mail)).toContain("img-src data: blob:;");
+  });
   it("leaves out what is not there: Cc, mailbox, attachments", () => {
     const page = printDocument({ ...mail, attachments: [] });
     expect(page).not.toContain("<th>Cc</th>");

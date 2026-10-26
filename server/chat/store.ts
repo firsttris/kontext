@@ -33,8 +33,11 @@ export type ChatStore = {
   /** Up to when each member read the channel. */
   reads: (channelId: string) => Promise<Record<string, string>>;
   mute: (channelId: string, memberId: string, muted: boolean) => Promise<void>;
-  /** Takes the person out of a named channel; the last one out removes it. */
-  leave: (channelId: string, memberId: string) => Promise<void>;
+  /**
+   * Takes the person out of a named channel; true when nobody is left. The caller then removes
+   * the channel, its files first: they are found by their rows, which the channel takes along.
+   */
+  leave: (channelId: string, memberId: string) => Promise<boolean>;
   remove: (channelId: string) => Promise<void>;
   /** Who has read in the channel, and who muted it – for the notifications. */
   audience: (channelId: string) => Promise<{ readers: string[]; muted: string[] }>;
@@ -273,9 +276,7 @@ export const createChatStore = (db: Db, messages: Pick<MessageStore, "last">): C
           ),
         );
       const left = await membersOf([channelId]);
-      if (!left.get(channelId)?.length) {
-        await db.delete(schema.chatChannels).where(eq(schema.chatChannels.id, channelId));
-      }
+      return !left.get(channelId)?.length;
     },
     remove: async (channelId) => {
       await db.delete(schema.chatChannels).where(eq(schema.chatChannels.id, channelId));

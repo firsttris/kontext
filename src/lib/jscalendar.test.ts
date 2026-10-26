@@ -11,6 +11,7 @@ import {
   toDuration,
   toLocal,
   weekDays,
+  withAllDayOf,
 } from "./jscalendar";
 
 const event = (
@@ -55,6 +56,20 @@ describe("durations", () => {
   });
 });
 
+describe("timed events across the clock change, as Stalwart reads them", () => {
+  // Stalwart adds the duration to the local start on the wall clock, a day as 24 hours.
+  it("ends P1D and PT24H from Saturday 12:00 on Sunday 12:00 without utcEnd", () => {
+    const p1d = eventTimes(event("x", "2026-10-24T12:00:00", "P1D"));
+    const pt24h = eventTimes(event("y", "2026-10-24T12:00:00", "PT24H"));
+    expect(p1d.end.toISOString()).toBe("2026-10-25T11:00:00.000Z");
+    expect(pt24h.end.toISOString()).toBe("2026-10-25T11:00:00.000Z");
+  });
+  it("ends PT8H from Saturday 22:00 on Sunday 06:00 without utcEnd", () => {
+    const { end } = eventTimes(event("z", "2026-10-24T22:00:00", "PT8H"));
+    expect(toLocal(end)).toBe("2026-10-25T06:00:00");
+  });
+});
+
 describe("weeks", () => {
   it("starts on Monday and counts ISO weeks", () => {
     expect(weekDays("2026-10-23")[0]).toBe("2026-10-19");
@@ -96,5 +111,46 @@ describe("onDay", () => {
     expect(onDay(allDay, "2026-10-24")).toBe(true);
     expect(onDay(allDay, "2026-10-25")).toBe(false);
     expect(eventTimes(allDay).allDay).toBe(true);
+  });
+  it("keeps an all-day event on its own day whatever zone the server resolved it in", () => {
+    // Stalwart without a `timeZone` argument resolves floating times in UTC
+    // (crates/jmap/src/calendar_event/get.rs): 00:00Z to 00:00Z is 02:00 to 02:00 in Berlin.
+    const allDay = event("j", "2026-10-23T00:00:00", "P1D", {
+      showWithoutTime: true,
+      utcStart: "2026-10-23T00:00:00Z",
+      utcEnd: "2026-10-24T00:00:00Z",
+    });
+    expect(onDay(allDay, "2026-10-23")).toBe(true);
+    expect(onDay(allDay, "2026-10-24")).toBe(false);
+  });
+  it("ends all-day events at local midnight across the clock change", () => {
+    const { start, end } = eventTimes(
+      event("d", "2026-10-24T00:00:00", "P2D", { showWithoutTime: true, timeZone: null }),
+    );
+    expect(start.toISOString()).toBe("2026-10-23T22:00:00.000Z");
+    expect(end.toISOString()).toBe("2026-10-25T23:00:00.000Z");
+  });
+});
+
+describe("withAllDayOf", () => {
+  // A floating all-day event as Stalwart 0.16.27 returns it from the expanded query (checked
+  // against a running server): a date-time in the request's zone, without showWithoutTime.
+  const instance = event("h1pnmeaaaaac", "2026-11-03T00:00:00", "P1D", {
+    baseEventId: "c",
+    utcStart: "2026-11-02T23:00:00Z",
+    utcEnd: "2026-11-03T23:00:00Z",
+  });
+  const bases = new Map([["c", { showWithoutTime: true }]]);
+
+  it("gives an instance of an all-day event its flag and floating time back", () => {
+    const restored = withAllDayOf(bases)(instance);
+    expect(restored).toMatchObject({ showWithoutTime: true, timeZone: null });
+    expect(onDay(restored, "2026-11-03")).toBe(true);
+    expect(onDay(restored, "2026-11-04")).toBe(false);
+  });
+  it("leaves timed events and instances moved to a time of day alone", () => {
+    expect(withAllDayOf(new Map([["c", {}]]))(instance)).toBe(instance);
+    const moved = { ...instance, start: "2026-11-03T10:00:00" };
+    expect(withAllDayOf(bases)(moved)).toBe(moved);
   });
 });

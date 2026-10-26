@@ -5,16 +5,28 @@ const EMAIL = /^[^\s@<>,;]+@[^\s@<>,;]+\.[^\s@<>,;]+$/;
 
 export const isEmail = (text: string): boolean => EMAIL.test(text.trim());
 
+/** RFC 5322 §3.2.3 specials: a display name with one of them must be a quoted-string. */
+const SPECIALS = /[()<>[\]:;@\\,."]/;
+
+/** RFC 5322 §3.2.4: inside a quoted-string, `"` and `\` are escaped with a backslash. */
+const quoteName = (name: string): string =>
+  SPECIALS.test(name) ? `"${name.replace(/["\\]/g, "\\$&")}"` : name;
+
+const unquoteName = (name: string): string => {
+  const quoted = name.match(/^"((?:[^"\\]|\\.)*)"$/);
+  return quoted ? quoted[1]!.replace(/\\(.)/g, "$1") : name.replace(/^"|"$/g, "");
+};
+
 /** "Petra Keller <petra@x.de>, info@y.de" → addresses; invalid parts are returned separately. */
 export const parseAddresses = (input: string): { addresses: EmailAddress[]; invalid: string[] } => {
   const addresses: EmailAddress[] = [];
   const invalid: string[] = [];
-  const parts = input.match(/("[^"]*"|[^,;])+/g) ?? [];
+  const parts = input.match(/("(?:[^"\\]|\\.)*"|[^,;])+/g) ?? [];
   for (const raw of parts) {
     const part = raw.trim();
     if (!part) continue;
     const angle = part.match(/^(.*)<([^>]+)>$/);
-    const name = angle ? angle[1]!.trim().replace(/^"|"$/g, "") : null;
+    const name = angle ? unquoteName(angle[1]!.trim()) : null;
     const email = (angle ? angle[2]! : part).trim();
     if (isEmail(email)) addresses.push({ name: name || null, email });
     else invalid.push(part);
@@ -23,7 +35,7 @@ export const parseAddresses = (input: string): { addresses: EmailAddress[]; inva
 };
 
 export const formatAddressInput = (addresses: EmailAddress[]): string =>
-  addresses.map(({ name, email }) => (name ? `${name} <${email}>` : email)).join(", ");
+  addresses.map(({ name, email }) => (name ? `${quoteName(name)} <${email}>` : email)).join(", ");
 
 const sameAddress = (a: string, b: string): boolean => a.toLowerCase() === b.toLowerCase();
 

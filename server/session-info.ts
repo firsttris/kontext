@@ -1,8 +1,15 @@
 /**
- * Who is asking, from their sign-in session: the accounts of their JMAP session (asked of
- * Stalwart with their token) and their display name (from their identity). Kept for half a
- * minute per session – "schreibt …" asks every three seconds; changed access counts after that.
+ * Who is asking, from their sign-in session: the mailbox accounts of their JMAP session (asked of
+ * Stalwart with their token, sorted by `accountRights`) and their display name (from their
+ * identity). Kept for half a minute per session – "schreibt …" asks every three seconds; changed
+ * access counts after that.
  */
+import {
+  accountRights,
+  callsPerRequest,
+  createFoldersOf,
+  type JmapSessionAccount,
+} from "./account-rights";
 import type { Auth, Grants } from "./auth";
 import type { SessionAccount } from "./categories/routes";
 import type { Env } from "./env";
@@ -19,7 +26,8 @@ const onStalwart = (env: Env, url: string) => {
 
 type JmapSession = {
   apiUrl: string;
-  accounts: Record<string, { name?: string; isReadOnly?: boolean; isPersonal?: boolean }>;
+  capabilities?: Record<string, { maxCallsInRequest?: number } | undefined>;
+  accounts: Record<string, JmapSessionAccount>;
   primaryAccounts: Record<string, string>;
 };
 
@@ -71,12 +79,15 @@ export const createSessionInfo = (env: Env, auth: Auth, grants: Grants) => {
     const jmap = (await response.json()) as JmapSession;
     const info: SessionInfo = {
       sessionId: session.session.id,
-      accounts: Object.entries(jmap.accounts).map(([id, account]) => ({
-        id,
-        isReadOnly: Boolean(account.isReadOnly),
-        isPersonal: Boolean(account.isPersonal),
-        name: account.name,
-      })),
+      accounts: await accountRights(
+        jmap.accounts,
+        createFoldersOf(
+          onStalwart(env, jmap.apiUrl),
+          `Bearer ${token}`,
+          fetch,
+          callsPerRequest(jmap),
+        ),
+      ),
       name: await displayName(env, token, jmap, session.user.email),
     };
     for (const [id, entry] of known) if (entry.until <= now) known.delete(id);
