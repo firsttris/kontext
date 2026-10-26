@@ -5,6 +5,7 @@ import {
   durationMinutes,
   eventTimes,
   fromLocal,
+  isMeetingLink,
   isoWeek,
   layoutDay,
   onDay,
@@ -152,5 +153,14 @@ describe("withAllDayOf", () => {
     expect(withAllDayOf(new Map([["c", {}]]))(instance)).toBe(instance);
     const moved = { ...instance, start: "2026-11-03T10:00:00" };
     expect(withAllDayOf(bases)(moved)).toBe(moved);
+  });
+});
+
+describe("isMeetingLink", () => {
+  it("takes Kontext's meeting links and nothing that only ends like one", () => {
+    expect(isMeetingLink("https://kontext.weber.test/meet/AbCdEfGhIjKlMnOpQrSt_-")).toBe(true);
+    expect(isMeetingLink("http://localhost:5173/meet/AbCdEfGhIjKlMnOp")).toBe(true);
+    expect(isMeetingLink("javascript:alert(1)//x/meet/AAAAAAAAAAAAAAAA")).toBe(false);
+    expect(isMeetingLink("data:text/html,x/meet/AAAAAAAAAAAAAAAA")).toBe(false);
   });
 });
