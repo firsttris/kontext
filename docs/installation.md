@@ -35,12 +35,14 @@ TLSA-Eintrag, ebenfalls aus Stalwart). Die Firmenverwaltung prüft, was davon ge
 ```bash
 git clone https://github.com/firsttris/kontext /opt/kontext && cd /opt/kontext
 cp deploy/.env.example deploy/.env
+chmod 600 deploy/.env            # nur root darf die Geheimnisse lesen
 nano deploy/.env                 # Domain, Mailserver-Name, Geheimnis, Tailscale-IP, Backup-Ziel
 docker compose -f deploy/compose.yaml up -d
 ```
 
 Für `KONTEXT_SECRET` eine lange Zufallszeichenfolge nehmen (`openssl rand -base64 48`); damit
-sind die Sitzungen signiert und die Stalwart-Tokens verschlüsselt. Für Anrufe im Chat ebenso
+sind die Sitzungen signiert und die Stalwart-Tokens verschlüsselt. Alle `change-me`-Platzhalter
+ersetzen: Kontext startet nicht mit ihnen, `backup.sh` sichert nicht. Für Anrufe im Chat ebenso
 `LIVEKIT_SECRET` setzen und in der Firewall **TCP 7881 und UDP 7882** öffnen (siehe
 [Anrufe](#anrufe)). Caddy holt das Zertifikat für
 `KONTEXT_DOMAIN` selbst. Mit Podman liegen die Quadlet-Dateien in

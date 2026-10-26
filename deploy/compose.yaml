@@ -38,7 +38,7 @@ services:
     environment:
       STALWART_URL: http://stalwart:8080
       BETTER_AUTH_URL: https://${KONTEXT_DOMAIN}
-      BETTER_AUTH_SECRET: ${KONTEXT_SECRET}
+      BETTER_AUTH_SECRET: ${KONTEXT_SECRET:?KONTEXT_SECRET in deploy/.env setzen}
       STALWART_ADMIN_KEY: ${STALWART_ADMIN_KEY:-}
       # Calls in the chat; without a secret they are off.
       LIVEKIT_URL: http://livekit:7880

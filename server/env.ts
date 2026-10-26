@@ -1,6 +1,22 @@
 /** Settings of the Kontext server, read once from the environment and checked. */
 import { z } from "zod";
 
+/**
+ * A secret of at least 32 characters that is no placeholder: deploy/.env.example's
+ * "change-me-…" is long enough, and with it the sessions, Stalwart's tokens or the calls would
+ * hang on a value anyone can read on GitHub.
+ */
+const secret = () =>
+  z
+    .string()
+    .min(32)
+    .refine((value) => !/change-me/i.test(value), {
+      message: "noch der Platzhalter aus .env.example – `openssl rand -base64 48`",
+    });
+
+const optional = <T extends z.ZodType>(type: T) =>
+  z.preprocess((v) => v || undefined, type.optional());
+
 const schema = z.object({
   /** Where the server listens. */
   PORT: z.coerce.number().default(18090),
@@ -9,7 +25,7 @@ const schema = z.object({
   /** The public address of Kontext, e.g. https://kontext.firma.de (cookies, passkeys later). */
   BETTER_AUTH_URL: z.url().default("http://localhost:5173"),
   /** At least 32 random characters; signs the session cookies and encrypts the Stalwart tokens. */
-  BETTER_AUTH_SECRET: z.string().min(32),
+  BETTER_AUTH_SECRET: secret(),
   /** The SQLite file with sessions (and later passkeys). */
   DATABASE_PATH: z.string().default(".dev/server/kontext.db"),
   /** Sign-in attempts per minute and address (the e2e tests sign in far more often). */
@@ -48,7 +64,7 @@ const schema = z.object({
    */
   LIVEKIT_URL: z.preprocess((v) => v || undefined, z.url().optional()),
   LIVEKIT_API_KEY: z.preprocess((v) => v || undefined, z.string().optional()),
-  LIVEKIT_API_SECRET: z.preprocess((v) => v || undefined, z.string().min(32).optional()),
+  LIVEKIT_API_SECRET: optional(secret()),
   /** Where browsers reach LiveKit, if not through Kontext's own address (/rtc via Caddy). */
   LIVEKIT_PUBLIC_URL: z.preprocess((v) => v || undefined, z.url().optional()),
   /**
@@ -64,7 +80,7 @@ const schema = z.object({
   SCHREIBZEUG_URL: z.preprocess((v) => v || undefined, z.url().optional()),
   SCHREIBZEUG_CLIENT_ID: z.string().min(1).default("schreibzeug"),
   /** The secret Schreibzeug sends with the code (its OIDC_CLIENT_SECRET), at least 32 characters. */
-  SCHREIBZEUG_CLIENT_SECRET: z.preprocess((v) => v || undefined, z.string().min(32).optional()),
+  SCHREIBZEUG_CLIENT_SECRET: optional(secret()),
   /** The built app (dist/); when set, the server delivers it too. Empty in dev (Vite does). */
   STATIC_DIR: z.string().optional(),
 });

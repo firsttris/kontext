@@ -16,6 +16,14 @@ set -eu
 cd "$(dirname "$0")"
 set -a; . ./.env; set +a
 
+# A backup under the placeholders from .env.example would be readable by anyone.
+for name in RESTIC_PASSWORD AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY; do
+  eval "value=\${$name:-}"
+  case "$value" in
+    "" | *change-me*) echo "backup.sh: $name in deploy/.env setzen (kein Platzhalter)" >&2; exit 1 ;;
+  esac
+done
+
 compose="docker compose -f compose.yaml"
 volume="$($compose config --format json | grep -o '"kontext_stalwart-data"' | head -1 | tr -d '"')"
 volume="${volume:-kontext_stalwart-data}"
