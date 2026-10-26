@@ -38,6 +38,10 @@ const ENTITIES: Record<string, string> = {
   euro: "€",
 };
 
+/** A numeric entity's character; one past Unicode (a mail can say &#99999999;) is U+FFFD, as in HTML. */
+const character = (code: number) =>
+  code > 0 && code <= 0x10ffff ? String.fromCodePoint(code) : "\uFFFD";
+
 /** The visible text of a mail's HTML, without a DOM: blocks become lines, scripts and styles go. */
 export const htmlToText = (html: string): string =>
   html
@@ -45,10 +49,8 @@ export const htmlToText = (html: string): string =>
     .replace(/<br\s*\/?>/gi, "\n")
     .replace(/<\/(p|div|li|tr|h[1-6]|blockquote)>/gi, "\n")
     .replace(/<[^>]+>/g, "")
-    .replace(/&#(\d+);/g, (_, code: string) => String.fromCodePoint(Number(code)))
-    .replace(/&#x([0-9a-f]+);/gi, (_, code: string) =>
-      String.fromCodePoint(Number.parseInt(code, 16)),
-    )
+    .replace(/&#(\d+);/g, (_, code: string) => character(Number(code)))
+    .replace(/&#x([0-9a-f]+);/gi, (_, code: string) => character(Number.parseInt(code, 16)))
     .replace(/&([a-z]+);/gi, (entity, name: string) => ENTITIES[name] ?? entity)
     .replace(/[ \t]+\n/g, "\n")
     .replace(/\n{3,}/g, "\n\n")
