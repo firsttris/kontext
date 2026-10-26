@@ -371,7 +371,8 @@ SPF und DMARC. Beides macht deshalb der Kontext-Server:
   Gesendet-Ordner, die anderen nicht.
 - **Anmeldung**: Adresse und (App-)Passwort; Kontext prüft beim Verbinden IMAP und SMTP und
   speichert das Passwort verschlüsselt (AES-GCM mit dem Server-Geheimnis). Bei „Anderer Server“
-  nur IMAP 993/143 und SMTP 465/587.
+  nur IMAP 993/143 und SMTP 465/587, und nur Server im Internet (keine Adresse im eigenen Netz,
+  `server/internet-host.ts`); das gilt auch für den Umzug von einem anderen Server.
 - **Grenzen**: Rückgängig, „Später senden“, Verschlüsseln und Unterschreiben gehen über ein weiteres Postfach noch
   nicht (der Server sendet sofort); Lesebestätigungen und Abmelde-Mails gehen weiter von der
   eigenen Adresse. Senden als diese Adresse geht nur in Kontext, nicht aus Thunderbird oder der

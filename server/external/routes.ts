@@ -6,6 +6,7 @@
 import { Hono } from "hono";
 import { z } from "zod";
 import type { Sealer } from "../crypto";
+import { dnsResolve, isInternetHost, type Resolve } from "../internet-host";
 import { openImap } from "../migration/imap-source";
 import type { SessionInfo } from "../session-info";
 import type { Fetcher } from "./fetcher";
@@ -22,8 +23,9 @@ export type ExternalDeps = {
   smtp: Smtp;
   infoOf: (request: Request) => Promise<SessionInfo | null>;
   jmapFor: (sessionId: string) => Promise<UserJmap | null>;
-  /** Tests against a local server: any port, no TLS. */
+  /** Tests against a local server: any port, no TLS, inside the network. */
   allowPlain?: boolean;
+  resolve?: Resolve;
 };
 
 const providers = [
@@ -76,6 +78,7 @@ export const createExternalRoutes = ({
   infoOf,
   jmapFor,
   allowPlain = false,
+  resolve = dnsResolve,
 }: ExternalDeps) => {
   /** Logs in at both servers; null or the reason in words; the inbox's state for a fresh start. */
   const check = async (
@@ -83,6 +86,13 @@ export const createExternalRoutes = ({
     login: string,
     password: string,
   ) => {
+    // Only servers on the internet: the form must not reach Stalwart or anything else inside.
+    const outside = await Promise.all(
+      [servers.imap.host, servers.smtp.host].map((host) => isInternetHost(host, resolve)),
+    );
+    if (!allowPlain && outside.includes(false)) {
+      return { problem: "Diesen Server erreicht Kontext nicht: Er liegt nicht im Internet." };
+    }
     const opened = await openImap(servers.imap, { user: login, password }, allowPlain);
     if (!opened.ok) {
       return {
