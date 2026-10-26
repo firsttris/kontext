@@ -260,7 +260,10 @@ Datenvolume (Mails, Kalender, Kontakte, Konten), eine Kopie der Kontext-Datenban
 (Anmeldungen, Firmen-Signatur, Aufgaben, Chat, Anrufliste, Stand der Umzüge), die Fotos und Dateien aus dem
 Chat, Ansagen, Mailbox-Nachrichten, Faxe und Aufnahmen der Telefonie und die vertraulich gesendeten
 Mails, mit Dokumente auch Schreibzeugs Datenbank (Kopie) und Dateien. Hochgeladene PST-Dateien bleiben draußen. Am besten einen Bucket mit **Object Lock** nehmen, dann kann auch ein Angreifer mit
-Zugriff auf den Server die Sicherungen nicht löschen (wichtig für GoBD-Archivierung).
+Zugriff auf den Server die Sicherungen nicht löschen (wichtig für GoBD-Archivierung). Die Sperrfrist
+im Bucket höchstens 14 Tage: `backup.sh` hebt 14 Tage, 8 Wochen und 12 Monate auf und räumt den
+Rest weg; länger gesperrte Dateien lassen sich nicht löschen. Das meldet das Skript, prüft die
+Sicherung aber trotzdem.
 
 ```bash
 crontab -e
