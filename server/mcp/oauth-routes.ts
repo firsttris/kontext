@@ -83,6 +83,9 @@ export const createConsentRoutes = ({
     const result = await login({ email: user.email, password, code });
     if (result.status === "mfa") return c.json({ status: "mfa" as const });
     if (result.status === "failed") return c.json({ error: "Passwort oder Code falsch." }, 401);
+    if (result.status === "unavailable") {
+      return c.json({ error: "Der Mailserver antwortet gerade nicht." }, 503);
+    }
 
     const scope = acceptedScopes(query.get("scope"), write);
     const next = await api.consent({ accept: true, scope, oauth_query }, headers).catch(() => null);

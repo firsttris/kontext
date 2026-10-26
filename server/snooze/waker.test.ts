@@ -45,7 +45,7 @@ const stalwart = (accountsOf: Record<string, Record<string, { isReadOnly: boolea
 afterEach(() => vi.unstubAllGlobals());
 
 describe("createSnoozeWaker", () => {
-  it("acts as a colleague when the one who put it away cannot, and tells them", async () => {
+  it("acts as a colleague when the one who put it away cannot, and tells them without what", async () => {
     // Jonas's session has no token any more; Max may write in info@.
     const used = stalwart({ max: { info: { isReadOnly: false } } });
     const removed: string[] = [];
@@ -56,7 +56,10 @@ describe("createSnoozeWaker", () => {
       store: {
         due: async () => [due],
         remove: async (_accountId, ids) => void removed.push(...ids),
-        sessionsFor: async () => ["s-jonas", "s-max"],
+        sessionsFor: async () => [
+          { sessionId: "s-jonas", userId: "u-jonas" },
+          { sessionId: "s-max", userId: "u-max" },
+        ],
       },
       notify,
     });
@@ -64,6 +67,24 @@ describe("createSnoozeWaker", () => {
     expect(used.length).toBeGreaterThan(0);
     expect(new Set(used)).toEqual(new Set(["max"]));
     expect(removed).toEqual(["m1"]);
+    expect(notify).toHaveBeenCalledWith(["jonas"], backNotice(due, null));
+    expect(backNotice(due, null).body).not.toContain("Angebot");
+  });
+
+  it("tells the one who put it away what is back when it is done with their own session", async () => {
+    stalwart({ jonas: { info: { isReadOnly: false } } });
+    const notify = vi.fn(async () => undefined);
+    const waker = createSnoozeWaker({
+      env,
+      grants: { accessToken: async () => "jonas" },
+      store: {
+        due: async () => [due],
+        remove: async () => undefined,
+        sessionsFor: async () => [{ sessionId: "s-jonas", userId: "u-jonas" }],
+      },
+      notify,
+    });
+    await waker.tick();
     expect(notify).toHaveBeenCalledWith(
       ["jonas"],
       backNotice(due, { subject: "Angebot", from: [] }),
@@ -79,7 +100,7 @@ describe("createSnoozeWaker", () => {
       store: {
         due: async () => [due],
         remove: async (_accountId, ids) => void removed.push(...ids),
-        sessionsFor: async () => ["s-max"],
+        sessionsFor: async () => [{ sessionId: "s-max", userId: "u-max" }],
       },
       notify: async () => undefined,
     });

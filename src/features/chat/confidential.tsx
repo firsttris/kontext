@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { type Channel, isSealed, type Message } from "@/lib/chat";
 import type { ChatFile } from "@/lib/chat-cards";
 import { groupFingerprint } from "@/lib/pgp";
+import { asFile } from "@/lib/safe-blob";
 import { decodePayload, encodePayload, sealedFiles } from "@/lib/sealed-chat";
 import { m } from "@/paraglide/messages";
 import { Unlock } from "../pgp/pgp-mail";
@@ -126,9 +127,8 @@ export const useSealedUrls = (files: ChatFile[], enabled: boolean) => {
           decryptionKeys: key!,
           format: "binary",
         });
-        urls[file.id] = URL.createObjectURL(
-          new Blob([bytes as Uint8Array<ArrayBuffer>], { type: file.type }),
-        );
+        // Photos stay photos; anything else only downloads (safe-blob.ts).
+        urls[file.id] = URL.createObjectURL(asFile(bytes as Uint8Array<ArrayBuffer>, file.type));
       }
       return urls;
     },

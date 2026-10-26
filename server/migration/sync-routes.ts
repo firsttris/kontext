@@ -22,7 +22,7 @@ export type SyncDeps = {
     save: (credentials: M365Credentials) => Promise<void>;
     graph: (credentials: M365Credentials) => Graph;
   };
-  /** Tests against the local Stalwart: any port, IMAP without TLS. */
+  /** Tests against the local Stalwart: any port, IMAP without TLS, inside the network. */
   allowPlain?: boolean;
 };
 
@@ -71,11 +71,13 @@ export const syncRoutes = ({ syncs, runner, sealer, microsoft, allowPlain = fals
     login: string,
     password: string,
   ) => {
+    // Only servers on the internet (openImap checks it): not Stalwart or anything else inside.
     const opened = await openImap(endpoint, { user: login, password }, allowPlain);
     if (opened.ok) {
       await opened.value.close();
       return null;
     }
+    if (opened.error.reason === "outside") return opened.error.message;
     return opened.error.reason === "login"
       ? "Anmeldung abgelehnt: Adresse oder (App-)Passwort stimmen nicht, oder IMAP ist beim Anbieter nicht eingeschaltet."
       : `Der Server antwortet nicht (${opened.error.message}).`;

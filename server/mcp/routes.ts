@@ -8,9 +8,11 @@ import { Hono } from "hono";
 import { z } from "zod";
 import { createJmapClient } from "@/jmap/client";
 import { listIdentities } from "@/jmap/mail";
+import { accountRights, createFoldersOf, type JmapSessionAccount } from "../account-rights";
 import type { Grants } from "../auth";
 import type { SessionAccount } from "../categories/routes";
 import type { LoginResult } from "../stalwart";
+import { tokenOrUnavailable, unavailable } from "../stalwart-away";
 import {
   bearerToken,
   type Connections,
@@ -18,7 +20,7 @@ import {
   type McpCaller,
   type Scope,
 } from "./connections";
-import { accountsOf, createReader } from "./reader";
+import { createReader } from "./reader";
 import { handleMcp } from "./server";
 import { createWriter, type TaskApi } from "./writer";
 
@@ -101,7 +103,9 @@ export const createMcpEndpoint = (deps: McpDeps) => {
   return async (request: Request): Promise<Response> => {
     const caller = await callerOf(request);
     if (caller instanceof Response) return caller;
-    const token = await grants.accessToken(caller.sessionId);
+    const token = await tokenOrUnavailable(grants, caller.sessionId);
+    // Stalwart briefly away: the connection and its consent stay.
+    if (token === "unavailable") return unavailable();
     if (!token) {
       // An OAuth connection is forgotten, consent included, so the agent's next try asks again.
       if (caller.clientId && deps.oauthCaller) {
@@ -112,13 +116,20 @@ export const createMcpEndpoint = (deps: McpDeps) => {
       return expired();
     }
     const client = clientWith(stalwartUrl, token, base);
-    const sessionAccounts = async (): Promise<SessionAccount[]> =>
-      accountsOf(await client.getSession()).map((account) => ({
-        id: account.id,
-        name: account.name,
-        isPersonal: account.personal,
-        isReadOnly: account.readOnly,
-      }));
+    // The mailboxes and rights as the web app sees them (account-rights.ts): Stalwart's session
+    // lists every account that shared anything, a calendar say, as writable.
+    let rights: Promise<SessionAccount[]> | null = null;
+    const sessionAccounts = (): Promise<SessionAccount[]> => {
+      rights ??= client
+        .getSession()
+        .then((session) =>
+          accountRights(
+            session.accounts as Record<string, JmapSessionAccount>,
+            createFoldersOf(session.apiUrl, `Bearer ${token}`, base),
+          ),
+        );
+      return rights;
+    };
     const name = async () => {
       const own = (await sessionAccounts()).find((account) => account.isPersonal);
       const identities = own ? await listIdentities(client, own.id) : [];
@@ -163,6 +174,9 @@ export const createMcpKeyRoutes = (deps: McpDeps) => {
     const result = await login({ email: user.email, password, code });
     if (result.status === "mfa") return c.json({ status: "mfa" as const });
     if (result.status === "failed") return c.json({ error: "Passwort oder Code falsch." }, 401);
+    if (result.status === "unavailable") {
+      return c.json({ error: "Der Mailserver antwortet gerade nicht." }, 503);
+    }
     const sessionId = await connections.openSession(user.id, name);
     try {
       await grants.save(sessionId, result.tokens);

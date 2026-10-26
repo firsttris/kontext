@@ -1,5 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { isConfirmed, parseSenderCheck, parseSpamScore, senderWarnings } from "./sender-check";
+import {
+  fromSender,
+  isConfirmed,
+  parseSenderCheck,
+  parseSpamScore,
+  senderWarnings,
+} from "./sender-check";
 
 // As Stalwart writes them (seen on a local instance, see dev/stalwart.ts).
 const unknownDomain =
@@ -63,6 +69,15 @@ describe("isConfirmed", () => {
       false,
     );
     expect(isConfirmed(parseSenderCheck([unknownDomain])!, "keller-elektro.test")).toBe(false);
+  });
+});
+
+describe("fromSender", () => {
+  it("takes a confirmed mail and one nobody checked, never a failed check", () => {
+    expect(fromSender("petra@keller-elektro.de", [allPass])).toBe(true);
+    expect(fromSender("anna@weber-haustechnik.test", null)).toBe(true);
+    expect(fromSender("chef@gmail.com", [dmarcFail])).toBe(false);
+    expect(fromSender("petra@keller-elektro.test", [unknownDomain])).toBe(false);
   });
 });
 

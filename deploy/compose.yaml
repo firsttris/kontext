@@ -32,13 +32,13 @@ services:
       retries: 3
 
   kontext:
-    image: docker.io/tristanteu/kontext:${KONTEXT_VERSION:-latest}
+    image: docker.io/tristanteu/kontext:${KONTEXT_VERSION:?KONTEXT_VERSION in deploy/.env setzen}
     restart: unless-stopped
     depends_on: [stalwart]
     environment:
       STALWART_URL: http://stalwart:8080
       BETTER_AUTH_URL: https://${KONTEXT_DOMAIN}
-      BETTER_AUTH_SECRET: ${KONTEXT_SECRET}
+      BETTER_AUTH_SECRET: ${KONTEXT_SECRET:?KONTEXT_SECRET in deploy/.env setzen}
       STALWART_ADMIN_KEY: ${STALWART_ADMIN_KEY:-}
       # Calls in the chat; without a secret they are off.
       LIVEKIT_URL: http://livekit:7880
@@ -107,14 +107,14 @@ services:
           level: warn
 
   redis:
-    image: docker.io/library/redis:7-alpine
+    image: docker.io/library/redis:7.4.5-alpine
     profiles: [calls]
     restart: unless-stopped
     # Only rooms and calls in flight; nothing to keep across a restart.
     command: ["redis-server", "--save", "", "--appendonly", "no"]
 
   caddy:
-    image: docker.io/library/caddy:2-alpine
+    image: docker.io/library/caddy:2.10.2-alpine
     restart: unless-stopped
     depends_on: [kontext]
     ports:
@@ -123,6 +123,7 @@ services:
       - "443:443/udp"
     environment:
       KONTEXT_DOMAIN: ${KONTEXT_DOMAIN}
+      MAIL_DOMAIN: ${MAIL_DOMAIN:-}
       ACME_EMAIL: ${ACME_EMAIL}
       SCHREIBZEUG_URL: ${SCHREIBZEUG_URL:-https://schreibzeug.internal}
     volumes:
@@ -137,3 +138,12 @@ volumes:
   schreibzeug-data:
   caddy-data:
   caddy-config:
+
+# A fixed subnet, so it can be entered in Stalwart as an allowed network (installation, step 3):
+# Kontext signs everyone in from this one address, and Stalwart would otherwise ban it after
+# 100 failed logins a day – for good, and for everyone.
+networks:
+  default:
+    ipam:
+      config:
+        - subnet: 10.89.250.0/24

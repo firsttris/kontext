@@ -38,3 +38,18 @@ describe("createSmtp", () => {
     expect(await createSmtp(true).check(endpoint, login)).toEqual({ ok: true });
   });
 });
+
+describe("servers inside the network", () => {
+  it("are never connected to, for checking or sending", async () => {
+    const smtp = createSmtp(false, async () => null);
+    const login = { user: "a", password: "b" };
+    const endpoint = { host: "smtp.rebind.test", port: 465 };
+    expect(await smtp.check(endpoint, login)).toMatchObject({
+      ok: false,
+      error: { reason: "outside" },
+    });
+    expect(
+      await smtp.send(endpoint, login, { from: "a@x.test", to: ["b@y.test"] }, new Uint8Array()),
+    ).toMatchObject({ ok: false, error: { reason: "outside" } });
+  });
+});

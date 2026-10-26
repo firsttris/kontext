@@ -299,8 +299,12 @@ export const onDay = (event: CalendarEvent, key: string): boolean => {
   return start < to && (end > from || (end.getTime() === start.getTime() && start >= from));
 };
 
-/** A Kontext meeting's link (…/meet/<id>), the way into its video meeting. */
-const MEETING_LINK = /\/meet\/[A-Za-z0-9_-]{16,64}$/;
+/**
+ * A Kontext meeting's link (http(s)://host/meet/<id>), the way into its video meeting. Anchored
+ * at both ends: the link goes into an href, and an invitation from outside could start it with
+ * `javascript:`.
+ */
+const MEETING_LINK = /^https?:\/\/[^/\s?#]+\/meet\/[A-Za-z0-9_-]{16,64}$/;
 export const isMeetingLink = (uri: string): boolean => MEETING_LINK.test(uri);
 
 export const meetingLink = (event: Pick<CalendarEvent, "virtualLocations">): string =>

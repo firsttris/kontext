@@ -31,6 +31,7 @@ import {
 } from "@/lib/attachment-kind";
 import { cn } from "@/lib/cn";
 import { formatSize } from "@/lib/format";
+import { asDownload, asViewable, imageUrl, releaseImageUrl } from "@/lib/safe-blob";
 import { m } from "@/paraglide/messages";
 import { renderPdfThumbnail } from "./pdf-thumbnail";
 
@@ -50,21 +51,26 @@ const LOOK: Record<AttachmentKind, { icon: LucideIcon; tone: string }> = {
   other: { icon: File, tone: "text-muted bg-subtle" },
 };
 
-/** Raster images and PDFs the browser shows by itself, without running anything of ours. */
-const opensInTab = (part: BodyPart, kind: AttachmentKind) =>
-  kind === "pdf" || (kind === "image" && part.type !== "image/svg+xml");
-
 const THUMBNAIL_WIDTH = 432;
 
-/** An object URL for a blob, revoked when the blob changes or the card goes. */
-const useObjectUrl = (blob: Blob | undefined): string | undefined => {
+/** A URL for a thumbnail (safe-blob.ts), released when the blob changes or the card goes. */
+const useImageUrl = (blob: Blob | undefined): string | undefined => {
   const [url, setUrl] = useState<string>();
   useEffect(() => {
     if (!blob) return;
-    const next = URL.createObjectURL(blob);
-    setUrl(next);
+    let current: string | null = null;
+    let gone = false;
+    void imageUrl(blob).then((next) => {
+      if (gone) {
+        if (next) releaseImageUrl(next);
+        return;
+      }
+      current = next;
+      setUrl(next ?? undefined);
+    });
     return () => {
-      URL.revokeObjectURL(next);
+      gone = true;
+      if (current) releaseImageUrl(current);
       setUrl(undefined);
     };
   }, [blob]);
@@ -94,7 +100,7 @@ const useAttachment = (accountId: string, part: BodyPart, kind: AttachmentKind) 
   const fetchFile = () =>
     file.data ?? client.download(accountId, part.blobId!, part.name ?? "anhang", part.type);
   return {
-    thumbnailUrl: useObjectUrl(thumbnail.data),
+    thumbnailUrl: useImageUrl(thumbnail.data),
     loading: preview && !thumbnail.isError && !thumbnail.data,
     cached: file.data,
     fetchFile,
@@ -102,7 +108,7 @@ const useAttachment = (accountId: string, part: BodyPart, kind: AttachmentKind) 
 };
 
 const save = (blob: Blob, name: string) => {
-  const url = URL.createObjectURL(blob);
+  const url = URL.createObjectURL(asDownload(blob));
   const link = document.createElement("a");
   link.href = url;
   link.download = name;
@@ -126,10 +132,12 @@ const AttachmentCard = ({ accountId, part }: { accountId: string; part: BodyPart
     }
   };
   // Opening must happen within the click, or the browser blocks the new tab; so only what the
-  // thumbnail already fetched opens, the rest is downloaded.
+  // thumbnail already fetched opens, the rest is downloaded. What opens is decided by the type
+  // the file really has, never by its name: a "Rechnung.pdf" may be HTML (safe-blob.ts).
+  const viewable = cached && asViewable(cached);
   const view = () => {
-    if (cached && opensInTab(part, kind)) {
-      const url = URL.createObjectURL(cached);
+    if (viewable) {
+      const url = URL.createObjectURL(viewable);
       window.open(url, "_blank", "noopener");
       setTimeout(() => URL.revokeObjectURL(url), 60_000);
     } else void download();

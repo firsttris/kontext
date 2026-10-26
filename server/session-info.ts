@@ -13,8 +13,12 @@ import {
 import type { Auth, Grants } from "./auth";
 import type { SessionAccount } from "./categories/routes";
 import type { Env } from "./env";
+import { chunks } from "./migration/pim";
 
 export type SessionInfo = { sessionId: string; accounts: SessionAccount[]; name: string };
+
+/** An address one may send as, with the name that goes with it. */
+export type Sender = { email: string; name: string };
 
 const FRESH_MS = 30_000;
 
@@ -95,8 +99,45 @@ export const createSessionInfo = (env: Env, auth: Auth, grants: Grants) => {
     return info;
   };
 
+  /**
+   * The addresses the person may send as: the identities of the mailboxes they may write to (their
+   * own, a shared one with "Lesen und senden"), as Stalwart lists them.
+   */
+  const sendersOf = async (request: Request): Promise<Sender[] | null> => {
+    const info = await infoOf(request);
+    const token = info && (await grants.accessToken(info.sessionId));
+    if (!info || !token) return null;
+    const response = await fetch(`${env.STALWART_URL}/jmap/session`, {
+      headers: { authorization: `Bearer ${token}` },
+    }).catch(() => null);
+    if (!response?.ok) return null;
+    const jmap = (await response.json()) as JmapSession;
+    const writable = info.accounts.filter((account) => !account.isReadOnly).map(({ id }) => id);
+    const lists = await Promise.all(
+      chunks(writable, callsPerRequest(jmap)).map(async (ids) => {
+        const answer = await fetch(onStalwart(env, jmap.apiUrl), {
+          method: "POST",
+          headers: { authorization: `Bearer ${token}`, "content-type": "application/json" },
+          body: JSON.stringify({
+            using: ["urn:ietf:params:jmap:core", "urn:ietf:params:jmap:submission"],
+            methodCalls: ids.map((accountId) => ["Identity/get", { accountId }, accountId]),
+          }),
+        }).catch(() => null);
+        if (!answer?.ok) return [];
+        const { methodResponses } = (await answer.json()) as {
+          methodResponses: [string, { list?: Sender[] }][];
+        };
+        return methodResponses.flatMap(([name, args]) =>
+          name === "Identity/get" ? (args.list ?? []) : [],
+        );
+      }),
+    );
+    return lists.flat().map(({ email, name }) => ({ email: email.toLowerCase(), name }));
+  };
+
   return {
     infoOf,
     accountsOf: async (request: Request) => (await infoOf(request))?.accounts ?? null,
+    sendersOf,
   };
 };

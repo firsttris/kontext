@@ -9,6 +9,7 @@ import { Hono } from "hono";
 import { readKey } from "openpgp";
 import { z } from "zod";
 import type { SessionAccount } from "../categories/routes";
+import { mayReplace } from "../kept-keys";
 import { isPrivateAddress } from "../unsubscribe/private-address";
 import { lockedPrivateKey, publicKeyInfo, wkdHash } from "./keys";
 import type { PgpStore } from "./store";
@@ -122,7 +123,11 @@ export const createPgpRoutes = ({
       ? info.emails.filter((candidate) => candidate === parsed.data.email)
       : info.emails;
     if (!emails.length) return c.json({ error: "Der Schlüssel passt nicht zur Adresse." }, 400);
+    const kept = await store.known(c.get("me"));
+    const incoming = { fingerprint: info.fingerprint, source: parsed.data.source };
     for (const address of emails) {
+      const current = kept.find((key) => key.email === address);
+      if (!mayReplace(current, incoming, "autocrypt")) continue;
       await store.remember(c.get("me"), {
         email: address,
         fingerprint: info.fingerprint,

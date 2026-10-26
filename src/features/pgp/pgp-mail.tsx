@@ -23,6 +23,7 @@ import { formatSize } from "@/lib/format";
 import { mailDocument, sanitizeMailHtml, textToHtml } from "@/lib/html";
 import { unlockKey } from "@/lib/pgp";
 import { checkSigned, type ReadMail, readEncrypted, type Signature } from "@/lib/pgp-mail";
+import { asDownload } from "@/lib/safe-blob";
 import { m } from "@/paraglide/messages";
 import { rememberOpened } from "../mail/opened-mails";
 import { keepUnlocked, useKnownKeys, useOwnKey, useUnlockedKey } from "./queries";
@@ -149,7 +150,8 @@ export const Files = ({ files }: { files: ReadMail["attachments"] }) => {
   const urls = useMemo(
     () =>
       files.map((file) =>
-        URL.createObjectURL(new Blob([file.bytes as Uint8Array<ArrayBuffer>], { type: file.type })),
+        // A download, never a page of Kontext, whatever type the sender gave (safe-blob.ts).
+        URL.createObjectURL(asDownload(file.bytes as Uint8Array<ArrayBuffer>)),
       ),
     [files],
   );

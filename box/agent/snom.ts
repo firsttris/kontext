@@ -18,13 +18,19 @@ export const macOfPath = (path: string): string | null => {
   return match ? match[1]!.toLowerCase() : null;
 };
 
-export const snomSettings = (desk: DeskPhone, boxHost: string, sipPort: number): string => {
+/** `withPassword` false: the phone keeps the password it has (handed-out.ts). */
+export const snomSettings = (
+  desk: DeskPhone,
+  boxHost: string,
+  sipPort: number,
+  withPassword = true,
+): string => {
   const settings: [string, string][] = [
     ['user_active idx="1"', "on"],
     ['user_realname idx="1"', desk.label],
     ['user_name idx="1"', deskEndpoint(desk.id)],
     ['user_pname idx="1"', deskEndpoint(desk.id)],
-    ['user_pass idx="1"', desk.password],
+    ...(withPassword ? [['user_pass idx="1"', desk.password] as [string, string]] : []),
     ['user_host idx="1"', `${boxHost}:${sipPort}`],
     ['user_idle_text idx="1"', `${desk.label} (${desk.extension})`],
     ["language", "Deutsch"],

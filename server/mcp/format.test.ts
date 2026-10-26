@@ -104,6 +104,10 @@ describe("what an agent reads", () => {
     expect(htmlToText(html)).toBe("Guten Tag,\nanbei das Angebot für 1.000€\nGruß");
   });
 
+  it("reads a mail with entities past Unicode instead of failing on it", () => {
+    expect(htmlToText("<p>a&#99999999;b&#x110000;c&#0;d&#65;</p>")).toBe("a\uFFFDb\uFFFDc\uFFFDdA");
+  });
+
   it("reads the text part, else the HTML", () => {
     const part = (partId: string) => ({
       partId,

@@ -33,6 +33,12 @@ test.describe("Neue Mail von außen", () => {
       );
     });
     await page.goto("/compose?shared=s1");
+    // Shown first; only taken into a mail on request (any page could post to the share target).
+    const offer = page.getByRole("region", { name: "Geteilt aus einer anderen App" });
+    await expect(offer).toContainText("Schaden Bad");
+    await expect(offer).toContainText("schaden.jpg");
+    await expect(page.getByRole("form", { name: "Neue Mail" })).toHaveCount(0);
+    await offer.getByRole("button", { name: "In neue Mail übernehmen" }).click();
     const form = page.getByRole("form", { name: "Neue Mail" });
     await expect(form.getByLabel("Betreff")).toHaveValue("Schaden Bad");
     await expect(form.getByRole("textbox", { name: "Ihre Nachricht …" })).toContainText(
@@ -43,5 +49,22 @@ test.describe("Neue Mail von außen", () => {
     expect(
       await page.evaluate(async () => (await (await caches.open("kontext-share")).keys()).length),
     ).toBe(0);
+  });
+
+  test("verwirft Geteiltes, ohne eine Mail zu öffnen", async ({ page }) => {
+    await login(page);
+    await page.evaluate(async () => {
+      const cache = await caches.open("kontext-share");
+      await cache.put(
+        "/shared/s2/meta",
+        Response.json({ title: "Fremd", text: "von einer anderen Seite", url: "", files: 0 }),
+      );
+    });
+    await page.goto("/compose?shared=s2");
+    await page.getByRole("button", { name: "Verwerfen" }).click();
+    await expect(page.getByRole("region", { name: "Geteilt aus einer anderen App" })).toHaveCount(
+      0,
+    );
+    await expect(page.getByRole("form", { name: "Neue Mail" })).toHaveCount(0);
   });
 });

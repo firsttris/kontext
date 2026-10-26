@@ -19,10 +19,13 @@ type JmapSession = {
 /** The notification for a mail that is back. */
 export const backNotice = (
   snooze: Snooze,
-  mail: { subject: string | null; from: { name: string | null; email: string }[] },
+  /** Null: say only that it is back, not what it is. */
+  mail: { subject: string | null; from: { name: string | null; email: string }[] } | null,
 ): Notice => ({
-  title: `Wiedervorlage: ${mail.from[0]?.name || mail.from[0]?.email || "Mail"}`,
-  body: mail.subject ?? "",
+  title: mail
+    ? `Wiedervorlage: ${mail.from[0]?.name || mail.from[0]?.email || "Mail"}`
+    : "Wiedervorlage",
+  body: mail ? (mail.subject ?? "") : "Eine Mail ist wieder im Posteingang.",
   url: `/mail/${encodeURIComponent(snooze.accountId)}/inbox?email=${encodeURIComponent(snooze.emailId)}`,
   tag: `mail-${snooze.emailId}`,
 });
@@ -68,12 +71,15 @@ export const createSnoozeWaker = ({
   };
 
   const wakeOne = async (snooze: Snooze & { userId: string }) => {
-    for (const sessionId of await store.sessionsFor(snooze.userId)) {
+    for (const { sessionId, userId } of await store.sessionsFor(snooze.userId)) {
       const call = await callerFor(sessionId, snooze.accountId).catch(() => null);
       if (!call) continue;
       const mail = await wake(call, snooze);
       await store.remove(snooze.accountId, [snooze.emailId]);
-      if (mail) await notify([snooze.by], backNotice(snooze, mail));
+      // Brought back by a colleague: the one who put it away may have lost the mailbox since, so
+      // the notice names neither sender nor subject.
+      const own = userId === snooze.userId;
+      if (mail) await notify([snooze.by], backNotice(snooze, own ? mail : null));
       return;
     }
     // Nobody signed in who may write there: it stays due and is tried again next time.

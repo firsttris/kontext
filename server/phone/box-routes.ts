@@ -2,7 +2,9 @@
  * The boxes' files at /api/phone/box/files (with their token): the sounds the dialplan plays, and the
  * messages callers left on the mailbox.
  */
+
 import { Hono } from "hono";
+import { BUN_MAX_BODY, limitBody } from "../body-limit";
 import type { createFaxes } from "./fax";
 import { type PhoneFiles, wavResponse } from "./files";
 import type { createRecordings } from "./recordings";
@@ -45,7 +47,7 @@ export const createBoxFileRoutes = ({
     return wavResponse(bytes);
   });
 
-  app.put("/voicemail/:call", async (c) => {
+  app.put("/voicemail/:call", limitBody(MAX_UPLOAD), async (c) => {
     const bytes = new Uint8Array(await c.req.arrayBuffer());
     if (bytes.length > MAX_UPLOAD) return c.json({ error: "Zu groß" }, 413);
     const result = await voicemail.receive(c.get("boxId"), c.req.param("call"), bytes);
@@ -54,16 +56,16 @@ export const createBoxFileRoutes = ({
     return c.body(null, 204);
   });
 
-  app.put("/recording/:call", async (c) => {
+  // A recording can be long; Bun takes no more than 128 MB in one request (about two hours).
+  app.put("/recording/:call", limitBody(BUN_MAX_BODY), async (c) => {
     const bytes = new Uint8Array(await c.req.arrayBuffer());
-    if (bytes.length > 512 * 1024 * 1024) return c.json({ error: "Zu groß" }, 413);
     const result = await recordings.receive(c.get("boxId"), c.req.param("call"), bytes);
     if (result === "not-found") return c.json({ error: "Unbekannte Aufnahme" }, 404);
     if (result === "bad-file") return c.json({ error: "Kein WAV" }, 400);
     return c.body(null, 204);
   });
 
-  app.put("/fax/:call", async (c) => {
+  app.put("/fax/:call", limitBody(4 * MAX_UPLOAD), async (c) => {
     const bytes = new Uint8Array(await c.req.arrayBuffer());
     if (bytes.length > 4 * MAX_UPLOAD) return c.json({ error: "Zu groß" }, 413);
     const result = await faxes.receive(c.get("boxId"), c.req.param("call"), bytes);

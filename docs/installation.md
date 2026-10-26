@@ -13,6 +13,8 @@ IP muss sich setzen lassen.
 | A       | `mail.firma.de`                  | IP des Servers                                                      |
 | A       | `kontext.firma.de`             | IP des Servers                                                      |
 | A       | `dokumente.firma.de`             | IP des Servers (nur mit [Dokumente](#dokumente))                    |
+| A       | `mta-sts.firma.de`               | IP des Servers (MTA-STS, siehe unten)                               |
+| A       | `openpgpkey.firma.de`            | IP des Servers (OpenPGP-Schlüssel per WKD)                          |
 | MX      | `firma.de`                       | `10 mail.firma.de`                                                  |
 | TXT     | `firma.de`                       | `v=spf1 mx -all`                                                    |
 | TXT     | `<selector>._domainkey.firma.de` | DKIM-Schlüssel aus Stalwart                                         |
@@ -22,8 +24,9 @@ IP muss sich setzen lassen.
 Dazu für die Verschlüsselung unterwegs ([Konzept](encryption.md)): **MTA-STS** und **TLS-RPT**
 verlangen von anderen Mailservern, nur verschlüsselt an `firma.de` zuzustellen, und melden
 Probleme. Stalwart zeigt die passenden Einträge unter *Domains → firma.de → DNS-Einträge* an
-(`_mta-sts.firma.de`, `mta-sts.firma.de`, `_smtp._tls.firma.de`) und stellt die Richtlinie unter
-`https://mta-sts.firma.de` selbst bereit. Mit DNSSEC beim Anbieter kommt **DANE** dazu (ein
+(`_mta-sts.firma.de`, `mta-sts.firma.de`, `_smtp._tls.firma.de`) und schreibt die Richtlinie;
+Caddy liefert sie unter `https://mta-sts.firma.de` aus (dafür `MAIL_DOMAIN=firma.de` in
+`deploy/.env`). Mit DNSSEC beim Anbieter kommt **DANE** dazu (ein
 TLSA-Eintrag, ebenfalls aus Stalwart). Die Firmenverwaltung prüft, was davon gesetzt ist.
 
 !!! warning "Cloudflare"
@@ -35,16 +38,20 @@ TLSA-Eintrag, ebenfalls aus Stalwart). Die Firmenverwaltung prüft, was davon ge
 ```bash
 git clone https://github.com/firsttris/kontext /opt/kontext && cd /opt/kontext
 cp deploy/.env.example deploy/.env
+chmod 600 deploy/.env            # nur root darf die Geheimnisse lesen
 nano deploy/.env                 # Domain, Mailserver-Name, Geheimnis, Tailscale-IP, Backup-Ziel
 docker compose -f deploy/compose.yaml up -d
 ```
 
 Für `KONTEXT_SECRET` eine lange Zufallszeichenfolge nehmen (`openssl rand -base64 48`); damit
-sind die Sitzungen signiert und die Stalwart-Tokens verschlüsselt. Für Anrufe im Chat ebenso
+sind die Sitzungen signiert und die Stalwart-Tokens verschlüsselt. Alle `change-me`-Platzhalter
+ersetzen: Kontext startet nicht mit ihnen, `backup.sh` sichert nicht. Für Anrufe im Chat ebenso
 `LIVEKIT_SECRET` setzen und in der Firewall **TCP 7881 und UDP 7882** öffnen (siehe
 [Anrufe](#anrufe)). Caddy holt das Zertifikat für
 `KONTEXT_DOMAIN` selbst. Mit Podman liegen die Quadlet-Dateien in
-`deploy/quadlet/` (nach `/etc/containers/systemd/` kopieren, `systemctl daemon-reload`).
+`deploy/quadlet/` (nach `/etc/containers/systemd/` kopieren, `systemctl daemon-reload`); Domain
+und Adressen stehen dort in jeder Datei selbst, jeder Dienst bekommt nur seine eigenen
+Einstellungen (`kontext.env`, `livekit.env` … mit `chmod 600`), keiner `deploy/.env`.
 
 ## 3. Stalwart einrichten
 
@@ -57,10 +64,18 @@ Stalwarts eigene Verwaltung ist nur über die Tailscale-Adresse des Servers erre
    Port 443 bei Caddy liegt.
 3. **Firmenverwaltung einschalten** (siehe unten) und das Konto des Chefs anlegen. Weitere
    Mitarbeiter und gemeinsame Postfächer legt der Chef danach selbst in Kontext an.
-4. Caddy als vertrauenswürdigen Proxy eintragen, damit Stalwart die echten IP-Adressen sieht.
-5. Unter *Suche* die **Standardsprache** auf Deutsch (`de-DE`) stellen. Stalwart bildet damit
+4. Unter *Netzwerk → HTTP* **X-Forwarded-For verwenden** (`useXForwarded`) einschalten, damit
+   Stalwart bei CalDAV/CardDAV und Autoconfig (über Caddy) die echten IP-Adressen sieht.
+5. Unter *Sicherheit → Erlaubte IPs* das Container-Netz **`10.89.250.0/24`** eintragen
+   (`AllowedIp`). Kontext meldet alle Personen von seiner einen Adresse an; ohne den Eintrag
+   sperrt Stalwart nach 100 Fehlversuchen am Tag (`authBanRate`) diese Adresse – und damit
+   Kontext für alle. Gegen das Raten von Passwörtern bremst Kontext selbst: 10 Fehlversuche je
+   Anmeldename in 15 Minuten, dazu 10 Anmeldungen je IP-Adresse in der Minute.
+6. Unter *Sicherheit* eine **Sperrdauer** setzen (`authBanPeriod`, `scanBanPeriod`, z. B. ein
+   Tag). Ohne Dauer bleibt eine Sperre für immer.
+7. Unter *Suche* die **Standardsprache** auf Deutsch (`de-DE`) stellen. Stalwart bildet damit
    die Wortstämme deutsch, auch bei kurzen Mails, deren Sprache es nicht sicher erkennt.
-6. Unter *JMAP* die **gleichzeitigen Anfragen** (`maxConcurrentRequests`) auf 16 stellen.
+8. Unter *JMAP* die **gleichzeitigen Anfragen** (`maxConcurrentRequests`) auf 16 stellen.
    Stalwart erlaubt sonst 4 je Person – für alle Tabs und Geräte zusammen; Kontext fragt beim
    Start mehr auf einmal (Ordner jedes Postfachs, Liste, Unterhaltungen), und was darüber liegt,
    lehnt Stalwart ab.
@@ -117,7 +132,9 @@ KONTEXT_URL=https://kontext.firma.de PAIRING_CODE=K7QM-4XPA \
 **Tischtelefone (Snom):** in Kontext unter Telefonie → Tischtelefone mit MAC-Adresse anlegen,
 dann im Telefon (Weboberfläche → Erweitert → Update) als Einstellungs-URL
 `http://<box>:8089/snom/{mac}.xml` eintragen und neu starten; es holt sich Konto und Einstellungen
-von der Box. Die Box braucht dafür eine feste Adresse im LAN.
+von der Box. Die Box braucht dafür eine feste Adresse im LAN. Das Passwort gibt sie nur beim
+ersten Abruf heraus; nach einem Zurücksetzen des Telefons das Tischtelefon in Kontext löschen und
+neu anlegen.
 
 Mit Podman: `deploy/quadlet/kontext-box.container`. Ohne Code beim Start zeigt die Box auf
 `http://<box>:8089` ein Formular für Kontexts Adresse und den Code. Die Box braucht keine offenen
@@ -245,7 +262,10 @@ Datenvolume (Mails, Kalender, Kontakte, Konten), eine Kopie der Kontext-Datenban
 (Anmeldungen, Firmen-Signatur, Aufgaben, Chat, Anrufliste, Stand der Umzüge), die Fotos und Dateien aus dem
 Chat, Ansagen, Mailbox-Nachrichten, Faxe und Aufnahmen der Telefonie und die vertraulich gesendeten
 Mails, mit Dokumente auch Schreibzeugs Datenbank (Kopie) und Dateien. Hochgeladene PST-Dateien bleiben draußen. Am besten einen Bucket mit **Object Lock** nehmen, dann kann auch ein Angreifer mit
-Zugriff auf den Server die Sicherungen nicht löschen (wichtig für GoBD-Archivierung).
+Zugriff auf den Server die Sicherungen nicht löschen (wichtig für GoBD-Archivierung). Die Sperrfrist
+im Bucket höchstens 14 Tage: `backup.sh` hebt 14 Tage, 8 Wochen und 12 Monate auf und räumt den
+Rest weg; länger gesperrte Dateien lassen sich nicht löschen. Das meldet das Skript, prüft die
+Sicherung aber trotzdem.
 
 ```bash
 crontab -e
@@ -274,11 +294,24 @@ Vorlage der Firmen-Signatur ist neu einzutragen; Aufgaben und Chat sind dann lee
 
 ```bash
 cd /opt/kontext && git pull
+nano deploy/.env                 # KONTEXT_VERSION auf die neue Version setzen, z. B. 0.1.3
 docker compose -f deploy/compose.yaml pull && docker compose -f deploy/compose.yaml up -d
 ```
 
+Die Images laufen mit festen Versionen und aktualisieren sich nicht selbst (auch nicht mit
+Podman-Auto-Update): Ein neues Image kommt nur, wenn man die Version hebt. Mit Quadlet steht sie in
+`deploy/quadlet/kontext.container`.
+
 Hat sich `deploy/Caddyfile` geändert (etwa für die KI-Agenten), Caddy neu laden:
 `docker compose -f deploy/compose.yaml restart caddy`.
+
+Seit 0.1.3 läuft der Kontext-Server nicht mehr als root, sondern als Benutzer `bun`. Ein Volume aus
+einer älteren Version gehört noch root; einmal übergeben, dann starten:
+
+```bash
+docker compose -f deploy/compose.yaml run --rm --user root --entrypoint chown kontext -R bun:bun /data
+docker compose -f deploy/compose.yaml up -d
+```
 
 Vor einem Stalwart-Update mit neuer Hauptversion die `UPGRADING`-Hinweise von Stalwart lesen und
 vorher ein Backup machen.

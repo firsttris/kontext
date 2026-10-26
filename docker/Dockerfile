@@ -22,6 +22,10 @@ COPY server ./server
 # src comes from the build, with the compiled messages (src/paraglide).
 COPY --from=build /app/src ./src
 COPY tsconfig.json ./
+# Not as root: readpst parses uploaded files, a bug there should not own the container. The image's
+# user "bun" owns /data; a new volume takes that over (an older one: docs/installation.md, Updates).
+RUN mkdir -p /data && chown bun:bun /data
+USER bun
 VOLUME /data
 EXPOSE 3000
 HEALTHCHECK --interval=30s --timeout=5s CMD bun -e "fetch('http://127.0.0.1:3000/healthz').then(r => process.exit(r.ok ? 0 : 1))"

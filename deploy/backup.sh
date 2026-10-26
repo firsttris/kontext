@@ -16,6 +16,14 @@ set -eu
 cd "$(dirname "$0")"
 set -a; . ./.env; set +a
 
+# A backup under the placeholders from .env.example would be readable by anyone.
+for name in RESTIC_PASSWORD AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY; do
+  eval "value=\${$name:-}"
+  case "$value" in
+    "" | *change-me*) echo "backup.sh: $name in deploy/.env setzen (kein Platzhalter)" >&2; exit 1 ;;
+  esac
+done
+
 compose="docker compose -f compose.yaml"
 volume="$($compose config --format json | grep -o '"kontext_stalwart-data"' | head -1 | tr -d '"')"
 volume="${volume:-kontext_stalwart-data}"
@@ -56,8 +64,16 @@ $compose start stalwart
 trap - EXIT
 
 # Keep 14 days, 8 weeks, 12 months; Object Lock on the bucket keeps them from being deleted early.
-restic forget --tag stalwart --keep-daily 14 --keep-weekly 8 --keep-monthly 12 --prune
-restic forget --tag kontext --keep-daily 14 --keep-weekly 8 --keep-monthly 12 --prune
-restic forget --tag schreibzeug --keep-daily 14 --keep-weekly 8 --keep-monthly 12 --prune
+# A file still locked cannot be deleted, so tidying up may fail: that is reported, and the check
+# below runs anyway (set -e would otherwise end the script before it).
+tidied=ok
+for tag in stalwart kontext schreibzeug; do
+  restic forget --tag "$tag" --keep-daily 14 --keep-weekly 8 --keep-monthly 12 --prune ||
+    tidied=failed
+done
 restic check --read-data-subset 1%
-echo "$(date -Is) backup ok"
+if [ "$tidied" = ok ]; then
+  echo "$(date -Is) backup ok"
+else
+  echo "$(date -Is) backup ok, tidying up failed (Object Lock longer than 14 days?)" >&2
+fi

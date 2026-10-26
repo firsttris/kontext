@@ -9,7 +9,8 @@ After=stalwart.service
 Wants=stalwart.service
 
 [Container]
-Image=docker.io/tristanteu/kontext:latest
+# A fixed version, raised by hand (docs/installation.md, Updates); no automatic updates.
+Image=docker.io/tristanteu/kontext:0.1.2
 ContainerName=kontext
 Network=kontext.network
 Volume=kontext-data:/data
@@ -17,7 +18,6 @@ Environment=STALWART_URL=http://stalwart:8080
 Environment=LIVEKIT_URL=http://livekit:7880
 Environment=LIVEKIT_API_KEY=kontext
 EnvironmentFile=/opt/kontext/deploy/kontext.env
-AutoUpdate=registry
 
 [Service]
 Restart=always

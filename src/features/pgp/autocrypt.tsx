@@ -7,6 +7,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useEffect } from "react";
 import type { EmailDetail } from "@/jmap/types";
 import { autocryptHeader, describeKey, readAutocrypt } from "@/lib/pgp";
+import { fromSender } from "@/lib/sender-check";
 import { useKnownKeys, useOwnKey, usePgpActions } from "./queries";
 
 /** The Autocrypt header for mails from this address, or null without a key for it. */
@@ -35,6 +36,8 @@ const useCollectAutocrypt = (email: EmailDetail) => {
     if (!email.autocrypt || seen.has(email.id)) return;
     seen.add(email.id);
     const sender = email.from?.[0]?.email.toLowerCase();
+    // The header is the sender's word: only from a mail that really comes from them.
+    if (!sender || !fromSender(sender, email.authenticationResults)) return;
     void (async () => {
       const header = await readAutocrypt(email.autocrypt);
       if (!header || header.addr !== sender || header.addr === own?.email) return;

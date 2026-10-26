@@ -19,7 +19,7 @@ import {
 } from "workbox-precaching";
 import { NavigationRoute, registerRoute } from "workbox-routing";
 import { subscribeToPush } from "../pwa/push";
-import { SHARE_CACHE, SHARE_PATH, shareKey } from "../pwa/share-cache";
+import { isShare, SHARE_CACHE, SHARE_PATH, shareKey } from "../pwa/share-cache";
 
 declare const self: ServiceWorkerGlobalScope & {
   __WB_MANIFEST: (string | PrecacheEntry)[];
@@ -76,7 +76,11 @@ const receiveShare = async (request: Request): Promise<Response> => {
 self.addEventListener("fetch", (event) => {
   const url = new URL(event.request.url);
   if (event.request.method === "POST" && url.pathname === SHARE_PATH) {
-    event.respondWith(receiveShare(event.request));
+    event.respondWith(
+      isShare(event.request.referrer, self.location.origin)
+        ? receiveShare(event.request)
+        : Response.redirect("/mail", 303),
+    );
   }
 });
 

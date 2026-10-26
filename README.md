@@ -65,11 +65,13 @@ On a server with Docker (or Podman), your own domain and open ports 25, 80, 443,
 ```bash
 git clone https://github.com/firsttris/kontext /opt/kontext && cd /opt/kontext
 cp deploy/.env.example deploy/.env      # domain, mail server name, secrets, backup target
+chmod 600 deploy/.env                   # replace every change-me: Kontext refuses to start with them
 docker compose -f deploy/compose.yaml up -d
 ```
 
-Then create the domain, DKIM and users in Stalwart's admin (port 8080, over Tailscale only) and
-sign in at `https://<your domain>`. Ten users run fine on a VPS with 2 vCPUs and 4 GB RAM. Calls
+Then create the domain, DKIM and users in Stalwart's admin (port 8080, over Tailscale only),
+enter Kontext's container network `10.89.250.0/24` as an allowed IP (otherwise wrong passwords can
+get Kontext itself banned) and sign in at `https://<your domain>`. Ten users run fine on a VPS with 2 vCPUs and 4 GB RAM. Calls
 (LiveKit), telephony and documents are Compose profiles you switch on when you need them. DNS
 records, Podman Quadlets, backups and updates are in the
 [installation guide](https://firsttris.github.io/kontext/installation.html) (German).

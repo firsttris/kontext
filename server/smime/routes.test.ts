@@ -110,6 +110,21 @@ describe("/api/smime", () => {
     expect((await left.json()).certs).toMatchObject([{ email: "post@stadt.test" }]);
   });
 
+  it("lets no certificate from a mail replace an imported one", async () => {
+    const call = setup();
+    const real = certFor(["amt@stadt.test"]);
+    await call("PUT", "/certs", { certificate: real, source: "import" });
+    const forged = await call("PUT", "/certs", {
+      // Another certificate for the same address (another validity, so another fingerprint).
+      certificate: certFor(["amt@stadt.test"], 200),
+      source: "mail",
+      email: "amt@stadt.test",
+    });
+    expect((await forged.json()).certs).toMatchObject([
+      { email: "amt@stadt.test", certificate: real, source: "import" },
+    ]);
+  });
+
   it("checks the chain to a trusted root, once per hour per certificate", async () => {
     const pem = certFor(["amt@stadt.test"]);
     // certFor signs with its own key: its issuer is the root here.
@@ -144,6 +159,30 @@ describe("/api/smime", () => {
       (await (await untrusted("POST", "/trust", { certificate: pem })).json()).trust.chain,
     ).toBe("untrusted");
     expect((await call("POST", "/trust", { certificate: "x".repeat(200) })).status).toBe(400);
+  });
+
+  it("does not let a check without the chain stand for one with it", async () => {
+    const authority = (subject: string, issuer: string) => {
+      const cert = forge.pki.createCertificate();
+      cert.publicKey = keys.publicKey;
+      cert.serialNumber = "07";
+      cert.validity.notBefore = new Date(Date.now() - 2 * 86_400_000);
+      cert.validity.notAfter = new Date(Date.now() + 365 * 86_400_000);
+      cert.setSubject([{ name: "organizationName", value: subject }]);
+      cert.setIssuer([{ name: "organizationName", value: issuer }]);
+      cert.setExtensions([{ name: "basicConstraints", cA: true }]);
+      cert.sign(keys.privateKey, forge.md.sha256.create());
+      return forge.pki.certificateToPem(cert);
+    };
+    // The leaf (issued by "Test-CA") hangs on the root only through the intermediate "Test-CA".
+    const root = new X509Certificate(authority("Wurzel", "Wurzel"));
+    const intermediate = authority("Test-CA", "Wurzel");
+    const pem = certFor(["amt@stadt.test"]);
+    const call = setup({ roots: [root] });
+    const bare = await call("POST", "/trust", { certificate: pem });
+    expect((await bare.json()).trust.chain).toBe("untrusted");
+    const full = await call("POST", "/trust", { certificate: pem, chain: [intermediate] });
+    expect((await full.json()).trust.chain).toBe("trusted");
   });
 
   it("finds a certificate in DNS only from a signed answer and for that address", async () => {

@@ -26,4 +26,11 @@ describe("Snom provisioning", () => {
     expect(text).toContain('<user_realname idx="1" perm="RW">Empfang &amp; Büro</user_realname>');
     expect(text).toContain('<language perm="RW">Deutsch</language>');
   });
+
+  it("leaves the password out once it was handed out", () => {
+    const text = snomSettings(desk, "192.168.178.20", 5070, false);
+    expect(text).not.toContain("user_pass");
+    expect(text).not.toContain("tisch-geheim");
+    expect(text).toContain('<user_name idx="1" perm="RW">desk-empfang</user_name>');
+  });
 });

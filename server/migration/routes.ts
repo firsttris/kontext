@@ -2,9 +2,12 @@
  * The moves under /api/company/migrations (behind the Firmenverwaltung's guard): create one for a
  * person, upload the file in pieces, watch the progress, try again.
  */
+
 import { appendFile, mkdir, rm } from "node:fs/promises";
 import { Hono } from "hono";
 import { z } from "zod";
+import { PIECE_SIZE } from "@/lib/chunked-upload";
+import { limitBody } from "../body-limit";
 import { bad, bodyOf, type Env, notFound, userOf } from "../company/context";
 import type { Jobs } from "./jobs";
 import { type Runner, uploadFileOf } from "./runner";
@@ -55,7 +58,7 @@ export const migrationRoutes = ({ jobs, runner, workDir }: MigrationDeps) => {
   });
 
   /** One piece of the file at `offset`; the last one starts the move. */
-  app.put("/:id/file", async (c) => {
+  app.put("/:id/file", limitBody(PIECE_SIZE), async (c) => {
     const job = await jobs.get(c.req.param("id"));
     if (job?.status !== "uploading") return notFound();
     const offset = Number(c.req.query("offset"));

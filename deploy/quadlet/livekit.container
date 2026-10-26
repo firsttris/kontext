@@ -16,7 +16,6 @@ PublishPort=7882:7882/udp
 Volume=/opt/kontext/deploy/livekit.yaml:/etc/livekit.yaml:ro
 EnvironmentFile=/opt/kontext/deploy/livekit.env
 Exec=--config /etc/livekit.yaml --udp-port 7882
-AutoUpdate=registry
 
 [Service]
 Restart=always

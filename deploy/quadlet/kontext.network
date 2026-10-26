@@ -1,2 +1,4 @@
 [Network]
 NetworkName=kontext
+# Fixed, so it can be entered in Stalwart as an allowed network (as in compose.yaml).
+Subnet=10.89.250.0/24

@@ -31,9 +31,19 @@ flowchart LR
   Event-Stream.
 - **Der Kontext-Server** (Bun, Hono, Better Auth, SQLite) liefert die App aus, kümmert sich um
   die Anmeldung und reicht JMAP an Stalwart durch. Dabei setzt er den Stalwart-Token der Sitzung
-  ein; der Browser kennt weder Passwort noch Token.
+  ein; der Browser kennt weder Passwort noch Token. Weil alle Anmeldungen von seiner einen
+  Adresse kommen, bremst er das Raten selbst (10 Fehlversuche je Anmeldename in 15 Minuten, auch
+  für CalDAV; „jonas“ und „jonas@firma.de“ zählen zusammen, und dasselbe falsche Passwort noch
+  einmal zählt nicht neu – ein Handy mit altem Passwort sperrt so kein ganzes Büro) und steht in Stalwart unter den erlaubten IPs, sonst würde Stalwart ihn sperren.
+  Eine Sitzung endet nur, wenn Stalwart den Refresh-Token ablehnt, nicht wenn es gerade nicht
+  antwortet. Was mit dem Sitzungs-Cookie etwas ändert (POST, PUT, PATCH, DELETE), muss von
+  Kontexts eigenen Seiten kommen (`Sec-Fetch-Site`, sonst `Origin`; `server/csrf.ts`) – sonst
+  könnte eine Seite unter derselben Domain, etwa Schreibzeug, mit dem Cookie Anfragen schicken.
+  Kein fremder Rahmen darf Kontext zeigen (`frame-ancestors 'self'`).
 - **Caddy** holt das Zertifikat und leitet alles an den Server weiter, CalDAV/CardDAV für
-  Mailprogramme direkt an Stalwart.
+  Mailprogramme direkt an Stalwart (`/dav/cal`, `/dav/card` …, `/.well-known/caldav` und
+  `carddav`); der Rest von `/dav` sind Kontexts Aufgabenlisten. Unter `mta-sts.<domain>` liefert
+  er Stalwarts MTA-STS-Richtlinie aus, unter `openpgpkey.<domain>` Kontexts WKD.
 - **LiveKit** (Apache 2.0, optional) trägt die [Anrufe](#anrufe) im Chat: ein SFU, der Ton, Bild
   und geteilte Bildschirme zwischen den Browsern verteilt.
 - **Die Telefonbox** (optional, `box/`) steht im Büro des Kunden: Asterisk und ein kleiner Agent,
@@ -255,7 +265,9 @@ nur für Kontakte und Termine aus, nicht für Mails.
 
 Kontext liest das alte Postfach per IMAP (`imapflow`), nur lesend, und gleicht es in eine Richtung
 ab: der erste Lauf holt alles, danach alle 15 Minuten das Neue, bis der Chef den Umzug abschließt.
-So läuft das alte Postfach parallel weiter, solange Absender noch die alte Adresse nutzen.
+So läuft das alte Postfach parallel weiter, solange Absender noch die alte Adresse nutzen. Mails
+über 50 MB übernimmt Kontext nicht (sie zählen als fehlgeschlagen); geholt wird jede höchstens bis
+zu dieser Größe, egal was der Server über sie sagt.
 
 - **Anmeldung**: Adresse und Passwort – bei Gmail ein App-Passwort (Bestätigung in zwei Schritten
   nötig). Kontext prüft die Anmeldung sofort und speichert das Passwort verschlüsselt (AES-GCM mit
@@ -364,7 +376,12 @@ SPF und DMARC. Beides macht deshalb der Kontext-Server:
   Gesendet-Ordner, die anderen nicht.
 - **Anmeldung**: Adresse und (App-)Passwort; Kontext prüft beim Verbinden IMAP und SMTP und
   speichert das Passwort verschlüsselt (AES-GCM mit dem Server-Geheimnis). Bei „Anderer Server“
-  nur IMAP 993/143 und SMTP 465/587.
+  nur IMAP 993/143 und SMTP 465/587, und nur Server im Internet (keine Adresse im eigenen Netz,
+  `server/internet-host.ts`); das gilt auch für den Umzug von einem anderen Server und bei jedem
+  Abholen und Senden. Kontext verbindet sich mit genau der geprüften Adresse (TLS prüft weiter den
+  Namen), damit der Name nicht zwischen Prüfen und Verbinden nach innen zeigen kann. Falsche
+  Passwörter zählen je Person (10 in 15 Minuten): Sonst ließe sich über das Formular am eigenen
+  Stalwart, bei dem Kontext eine erlaubte Adresse ist, das Passwort eines Kollegen raten.
 - **Grenzen**: Rückgängig, „Später senden“, Verschlüsseln und Unterschreiben gehen über ein weiteres Postfach noch
   nicht (der Server sendet sofort); Lesebestätigungen und Abmelde-Mails gehen weiter von der
   eigenen Adresse. Senden als diese Adresse geht nur in Kontext, nicht aus Thunderbird oder der
@@ -475,7 +492,10 @@ das Manifest steht in `vite.config.ts`, der Service Worker in `src/sw/service-wo
   Cc, Betreff und Text aus (`src/lib/mailto.ts`, RFC 6068).
 - **Teilen in Kontext:** Auf dem Handy erscheint Kontext im Teilen-Menü anderer Apps (Web Share
   Target). Der Service Worker nimmt Fotos, Dateien, Texte und Links an, legt sie kurz in einem
-  eigenen Cache ab und öffnet eine neue Mail damit; die Dateien sind dann schon Anhänge.
+  eigenen Cache ab und zeigt sie zuerst: Erst „In neue Mail übernehmen“ öffnet eine neue Mail
+  damit, die Dateien sind dann schon Anhänge (`shared-offer.tsx`). Denn jede Seite kann ein
+  Formular dorthin schicken; eines mit fremdem Referrer landet gleich im Posteingang, ohne
+  Referrer hält es die Rückfrage auf.
 - **Benachrichtigungen** gehen über den Service Worker (`showNotification`), weil installierte Apps
   auf Android nur so dürfen; ein Klick öffnet die Mail oder den Termin, auch bei geschlossenem
   Fenster. Bei ganz geschlossener App kommen sie als Web Push vom Kontext-Server, siehe
@@ -528,10 +548,10 @@ oder Reihenfolge.
   die, die sie angelegt hat – auch bei geschlossener App, einmal (`reminded_at`). Wird der Tag
   verschoben, zieht die Erinnerung mit.
 - **In anderen Apps (CalDAV):** Kontext stellt die Boards unter `/dav/` als Aufgabenlisten
-  bereit (RFC 4791, nur VTODO; `server/dav/`), gefunden über `/.well-known/caldav`: eine Liste
+  bereit (RFC 4791, nur VTODO; `server/dav/`), unter der Adresse aus den Einstellungen: eine Liste
   je Board, das man hat, „Meine Aufgaben (Kontext)“ und „Aufgaben info@“. Angemeldet wird mit
   Mail-Adresse und Passwort; Kontext fragt Stalwarts JMAP-Session damit und merkt sich die
-  Antwort fünf Minuten. Clients lesen per PROPFIND (mit `getctag`) und REPORT
+  Antwort eine Minute (ein gesperrtes Konto zählt also spätestens eine Minute später). Clients lesen per PROPFIND (mit `getctag`) und REPORT
   `calendar-multiget`/`calendar-query`, schreiben mit PUT (`If-Match` auf den ETag) und löschen
   mit DELETE; `sync-collection` gibt es nicht, die Clients fallen auf den ctag zurück. Titel,
   Notiz, Fälligkeit (Zeiten in UTC hinaus; hinein in der Zone der `TZID`, ohne oder mit
@@ -706,7 +726,8 @@ flowchart LR
   der letzten Konfiguration weiter (`/data/config.json`).
 - **Koppeln:** In der Firmenverwaltung unter Telefonie gibt es einen Code (30 Minuten gültig).
   Die Box tauscht ihn einmal gegen ein Token (`POST /api/phone/box/pair`); beides liegt nur als
-  SHA-256 in der Datenbank. Den Code gibt man der Box beim ersten Start mit oder auf ihrer
+  SHA-256 in der Datenbank. Nach 10 falschen Codes in 15 Minuten nimmt Kontext von derselben
+  IP-Adresse eine Weile keinen mehr an. Den Code gibt man der Box beim ersten Start mit oder auf ihrer
   Statusseite (`http://<box>:8089`), die sonst nur anzeigt, ob sie verbunden und an der Fritzbox
   angemeldet ist.
 - **Ein Anruf kommt rein:** Die Fritzbox klingelt bei der Box (und bei den Tischtelefonen). Die
@@ -757,7 +778,10 @@ flowchart LR
   Durchwahl ist, ruft mit ihr an: Der Agent setzt beim Originate `KONTEXT_OUT=fritzbox-<id>`.
 - **Tischtelefone (Snom):** melden sich an der Box an, nicht an der Fritzbox (PJSIP-Endpunkt
   `desk-<id>`, die Box ist ihr Registrar). Ihre Einstellungen holen sie sich von der Box
-  (`http://<box>:8089/snom/<mac>.xml`, `box/agent/snom.ts`): Konto, Sprache, Töne, Zeitzone. Sie
+  (`http://<box>:8089/snom/<mac>.xml`, `box/agent/snom.ts`): Konto, Sprache, Töne, Zeitzone. Das
+  SIP-Passwort geht dabei nur einmal hinaus, beim ersten Abruf nach dem Anlegen
+  (`box/agent/handed-out.ts`) – jeder im Büronetz könnte die Adresse sonst mit der MAC abrufen;
+  später behält das Telefon sein Passwort. Sie
   klingeln zusammen mit Kontext (`Dial` statt `Wait`, je Leitung ihre Telefone: das einer Person
   bei deren Nummern, ein gemeinsames bei der ersten); wer abnimmt, meldet sich über
   `kontext-answered-here` mit seinem Endpunkt. Untereinander erreichen sie sich per Kurzwahl;
@@ -955,7 +979,9 @@ Eine Mail „aus dem Weg bis …“: Knopf mit dem Wecker über der Mail oder `w
 - **Zurück:** jede Minute holt der Server Fälliges zurück (`waker.ts`), mit dem Token der
   neuesten Sitzung dessen, der die Mail zurückgelegt hat – ist er abgemeldet, mit dem einer
   Kollegin, die in das Postfach schreiben darf. Die Mail kommt ungelesen in den Posteingang, mit
-  dem Schlagwort `kontext.resurfaced`, und der Zurücklegende bekommt eine Benachrichtigung.
+  dem Schlagwort `kontext.resurfaced`, und der Zurücklegende bekommt eine Benachrichtigung – kam
+  sie über die Sitzung einer Kollegin, ohne Absender und Betreff (er könnte das Postfach inzwischen
+  verloren haben). Abgelaufene Sitzungen nimmt kein Hintergrundjob.
   Hat jemand die Mail inzwischen anderswohin verschoben, bleibt sie, wo sie ist.
 - **Wieder vorgelegt:** der Posteingang zeigt solche Mails, solange sie ungelesen sind, oben in
   einer eigenen Gruppe – nach Datum lägen sie weit unten. Gelesen nimmt Kontext das Schlagwort
@@ -991,8 +1017,18 @@ bekommt eine farbige Kachel nach Dateityp (`src/lib/attachment-kind.ts`).
 
 Ein Klick auf die Vorschau öffnet PDFs und Fotos in einem neuen Tab – aus dem Blob, den die
 Vorschau schon geladen hat, damit der Browser den Tab nicht blockiert. SVG, HTML und alles andere
-wird nur heruntergeladen: als `blob:`-Seite liefe es mit den Rechten der App. Die Testdaten haben
-echte PDFs (`dev/pdf.ts`) und einen Grundriss als SVG.
+wird nur heruntergeladen: als `blob:`-Seite liefe es mit den Rechten der App. Was sich öffnet,
+entscheidet der Typ, den die Datei wirklich hat, nie ihr Name (eine „Rechnung.pdf“ kann HTML
+sein). Jeder Blob aus einer Mail bekommt seinen Typ von Kontext (`src/lib/safe-blob.ts`):
+Download-Links (PGP, „Vertraulich senden“, vertrauliche Chat-Dateien) sind
+`application/octet-stream`, eingebettete Bilder (`cid:`) nur Rasterbilder als `blob:` (auch ohne
+Bildtyp, an ihren ersten Bytes erkannt) oder SVG als
+`data:`-Adresse, die kein Tab als Seite öffnet; andere Teile bekommen keine Adresse. Der Server
+schickt Downloads über `/jmap/download/…` mit `Content-Security-Policy: sandbox` und `nosniff`,
+und was kein Bild und kein PDF ist, als `application/octet-stream` – so lädt auch kein
+`<script src>` einen Anhang als Skript (`server/headers.ts`). Die Content-Security-Policy der App
+setzt der Server selbst; Caddy ergänzt sie nur, wo eine Antwort keine eigene hat. Die Testdaten
+haben echte PDFs (`dev/pdf.ts`) und einen Grundriss als SVG.
 
 ## Darstellung und Tastaturkürzel
 

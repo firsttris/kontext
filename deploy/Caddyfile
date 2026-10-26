@@ -7,45 +7,96 @@
 	email {$ACME_EMAIL}
 }
 
+# Behind every reverse_proxy: only the address Caddy saw counts. Stalwart reads Forwarded before
+# X-Forwarded-For (crates/http/src/request.rs), so no client names another one to dodge or cause
+# a ban.
+(client_address) {
+	header_up X-Forwarded-For {remote_host}
+	header_up -Forwarded
+	header_up -X-Real-IP
+}
+
+(security_headers) {
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		X-Content-Type-Options nosniff
+		Referrer-Policy no-referrer
+		-Server
+	}
+}
+
 {$KONTEXT_DOMAIN} {
 	# The live streams (Kontext's /api/live, Stalwart's JMAP push) uncompressed: a compressor
 	# may hold events back until its buffer is full.
 	@compressible not path /api/live /jmap/eventsource*
 	encode @compressible zstd gzip
 
-	# CalDAV/CardDAV and autoconfiguration for mail programs and phones, straight to Stalwart;
-	# the OAuth discovery for agents (MCP, RFC 9728 / 8414) belongs to Kontext
+	# CalDAV/CardDAV and autoconfiguration for mail programs and phones, straight to Stalwart: its
+	# DAV lives under /dav/cal, /dav/card, /dav/file, /dav/pal and /dav/itip
+	# (DavResourceName in crates/groupware/src/lib.rs). The rest of /dav is Kontext's task boards;
+	# Kontext also answers the OAuth discovery for agents (MCP, RFC 9728 / 8414) and WKD.
 	@stalwart {
-		path /.well-known/* /dav/* /mail/config-v1.1.xml /autodiscover/*
-		not path /.well-known/oauth-protected-resource* /.well-known/oauth-authorization-server*
+		path /dav/cal /dav/cal/* /dav/card /dav/card/* /dav/file /dav/file/* /dav/pal /dav/pal/* /dav/itip /dav/itip/*
+		path /.well-known/* /mail/config-v1.1.xml /autodiscover/*
+		not path /.well-known/oauth-protected-resource* /.well-known/oauth-authorization-server* /.well-known/openpgpkey/*
 	}
 	handle @stalwart {
 		reverse_proxy stalwart:8080 {
-			header_up X-Forwarded-For {remote_host}
+			import client_address
 		}
 	}
 
 	# Calls: LiveKit's signalling (WebSocket); the media go to it directly (TCP 7881, UDP 7882)
 	handle /rtc* {
-		reverse_proxy livekit:7880
+		reverse_proxy livekit:7880 {
+			import client_address
+		}
 	}
 
 	handle {
 		reverse_proxy kontext:3000 {
-			header_up X-Forwarded-For {remote_host}
+			import client_address
 			flush_interval -1
 		}
 	}
 
+	import security_headers
 	header {
-		Strict-Transport-Security "max-age=31536000; includeSubDomains"
-		X-Content-Type-Options nosniff
-		Referrer-Policy no-referrer
 		# Camera, microphone and the screen only for Kontext itself (calls in the chat)
 		Permissions-Policy "camera=(self), microphone=(self), display-capture=(self), geolocation=()"
-		Content-Security-Policy "default-src 'self'; img-src 'self' data: blob: https:; style-src 'self' 'unsafe-inline'; frame-src 'self' blob: {$SCHREIBZEUG_URL:https://schreibzeug.internal}; connect-src 'self'; font-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'"
-		-Server
+		# Only where the answer brings none: the server sets the app's own (server/headers.ts), and
+		# its downloads and chat files bring "sandbox", which this must not replace.
+		?Content-Security-Policy "default-src 'self'; img-src 'self' data: blob: https:; style-src 'self' 'unsafe-inline'; frame-src 'self' blob: {$SCHREIBZEUG_URL:https://schreibzeug.internal}; connect-src 'self'; font-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'self'"
 	}
+}
+
+# The mail domain's MTA-STS policy (RFC 8461), which Stalwart writes: other mail servers fetch it
+# from https://mta-sts.<domain>/.well-known/mta-sts.txt. Without MAIL_DOMAIN the placeholder
+# answers nobody and gets no public certificate (.internal).
+mta-sts.{$MAIL_DOMAIN:firma.internal} {
+	handle /.well-known/mta-sts.txt {
+		reverse_proxy stalwart:8080 {
+			import client_address
+		}
+	}
+	handle {
+		respond 404
+	}
+	import security_headers
+}
+
+# WKD (the advanced method): Thunderbird and others look up the company's OpenPGP keys at
+# https://openpgpkey.<domain>/.well-known/openpgpkey/<domain>/hu/…, which Kontext answers.
+openpgpkey.{$MAIL_DOMAIN:firma.internal} {
+	handle /.well-known/openpgpkey/* {
+		reverse_proxy kontext:3000 {
+			import client_address
+		}
+	}
+	handle {
+		respond 404
+	}
+	import security_headers
 }
 
 # Schreibzeug (the module "Dokumente"). Without SCHREIBZEUG_URL the placeholder answers nobody and
@@ -55,14 +106,10 @@
 
 	handle {
 		reverse_proxy schreibzeug:3000 {
+			import client_address
 			flush_interval -1
 		}
 	}
 
-	header {
-		Strict-Transport-Security "max-age=31536000; includeSubDomains"
-		X-Content-Type-Options nosniff
-		Referrer-Policy no-referrer
-		-Server
-	}
+	import security_headers
 }

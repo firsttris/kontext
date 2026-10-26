@@ -100,6 +100,89 @@ describe("/mcp", () => {
   });
 });
 
+describe("/mcp and the task boards", () => {
+  const MAIL = "urn:ietf:params:jmap:mail";
+  /** Stalwart for Jonas: his own account, info@ as a member, and Anna's, who only shared a calendar. */
+  const stalwart = vi.fn(async (input: string | URL | Request, init?: RequestInit) => {
+    const url = String(input);
+    if (url.endsWith("/jmap/session")) {
+      return Response.json({
+        username: "jonas@weber-haustechnik.test",
+        apiUrl: "http://stalwart.test/jmap/",
+        downloadUrl: "http://stalwart.test/jmap/download/{accountId}/{blobId}/{name}",
+        uploadUrl: "http://stalwart.test/jmap/upload/{accountId}/",
+        eventSourceUrl: "http://stalwart.test/jmap/eventsource/",
+        state: "s",
+        primaryAccounts: { [MAIL]: "jonas" },
+        accounts: {
+          jonas: {
+            name: "jonas@",
+            isPersonal: true,
+            isReadOnly: false,
+            accountCapabilities: { [MAIL]: {} },
+          },
+          info: {
+            name: "info@",
+            isPersonal: false,
+            isReadOnly: false,
+            accountCapabilities: {
+              [MAIL]: {},
+              "urn:ietf:params:jmap:calendars": { mayCreateCalendar: true },
+            },
+          },
+          anna: {
+            name: "anna@",
+            isPersonal: false,
+            isReadOnly: false,
+            accountCapabilities: { [MAIL]: {} },
+          },
+        },
+      });
+    }
+    const { methodCalls } = JSON.parse(String(init?.body)) as {
+      methodCalls: [string, unknown, string][];
+    };
+    // Anna's account shows no mail folders to Jonas: no mailbox of his.
+    return Response.json({
+      methodResponses: methodCalls.map(([name, , id]) => [name, { list: [] }, id]),
+    });
+  });
+
+  it("gives agents the mailboxes the web app gives, not every account that shared something", async () => {
+    let seen: { id: string; isReadOnly: boolean }[] = [];
+    const endpoint = createMcpEndpoint(
+      deps({
+        fetch: stalwart as unknown as typeof fetch,
+        tasksFor: (accounts) => async () => {
+          seen = await accounts();
+          return { status: 200, body: { tasks: [] } };
+        },
+      }),
+    );
+    const response = await endpoint(
+      new Request("http://kontext.test/mcp", {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          accept: "application/json, text/event-stream",
+          authorization: "Bearer kontext_good",
+        },
+        body: JSON.stringify({
+          jsonrpc: "2.0",
+          id: 1,
+          method: "tools/call",
+          params: { name: "list_tasks", arguments: {} },
+        }),
+      }),
+    );
+    expect(response.status).toBe(200);
+    expect(seen.map(({ id, isReadOnly }) => ({ id, isReadOnly }))).toEqual([
+      { id: "jonas", isReadOnly: false },
+      { id: "info", isReadOnly: false },
+    ]);
+  });
+});
+
 describe("/api/mcp-keys", () => {
   const post = (body: unknown) =>
     new Request("http://kontext.test/", {

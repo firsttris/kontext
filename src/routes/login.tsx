@@ -45,7 +45,9 @@ function LoginPage() {
           ? needsCode
             ? m.login_code_failed()
             : m.login_failed()
-          : m.login_offline(),
+          : result === "limited"
+            ? m.login_limited()
+            : m.login_offline(),
       );
     }
   };

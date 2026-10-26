@@ -6,6 +6,8 @@
 import { Hono } from "hono";
 import { z } from "zod";
 import type { Sealer } from "../crypto";
+import { attemptOf, createLoginFailures, type FailureLimit } from "../failures";
+import { NOT_ON_INTERNET } from "../internet-host";
 import { openImap } from "../migration/imap-source";
 import type { SessionInfo } from "../session-info";
 import type { Fetcher } from "./fetcher";
@@ -22,8 +24,10 @@ export type ExternalDeps = {
   smtp: Smtp;
   infoOf: (request: Request) => Promise<SessionInfo | null>;
   jmapFor: (sessionId: string) => Promise<UserJmap | null>;
-  /** Tests against a local server: any port, no TLS. */
+  /** Tests against a local server: any port, no TLS, inside the network. */
   allowPlain?: boolean;
+  /** Wrong passwords per person (failures.ts). */
+  failures?: FailureLimit;
 };
 
 const providers = [
@@ -68,6 +72,12 @@ const publicAccount = ({ secret: _, state: __, ...account }: ExternalAccount) =>
 
 const bad = (error: string) => Response.json({ error }, { status: 400 });
 
+type Servers = { imap: { host: string; port: number }; smtp: { host: string; port: number } };
+/** A login at both servers: the reason in words (`refused`: the password), or the inbox's state. */
+type Checked =
+  | { problem: string; refused?: boolean }
+  | { problem: null; inbox: { uidValidity: string; lastUid: number } | null };
+
 export const createExternalRoutes = ({
   store,
   fetcher,
@@ -76,20 +86,46 @@ export const createExternalRoutes = ({
   infoOf,
   jmapFor,
   allowPlain = false,
+  failures = createLoginFailures(),
 }: ExternalDeps) => {
-  /** Logs in at both servers; null or the reason in words; the inbox's state for a fresh start. */
+  /** `tryServers` for a person, with their wrong passwords counted. */
   const check = async (
-    servers: { imap: { host: string; port: number }; smtp: { host: string; port: number } },
+    servers: Servers,
     login: string,
     password: string,
-  ) => {
+    who: string,
+  ): Promise<Checked> => {
+    // The form logs in anywhere on the internet, the company's own Stalwart included, where
+    // Kontext is an allowed address: so it must be no way to guess a colleague's password.
+    const key = `member:${who}`;
+    if (failures.blocked(key)) {
+      return { problem: "Zu viele Fehlversuche. Bitte in einer Viertelstunde erneut versuchen." };
+    }
+    const result = await tryServers(servers, login, password);
+    if (result.problem !== null && result.refused) {
+      failures.failed(key, await attemptOf(servers.imap.host, login, password));
+    }
+    return result;
+  };
+
+  /** Logs in at both servers; null or the reason in words; the inbox's state for a fresh start. */
+  const tryServers = async (
+    servers: Servers,
+    login: string,
+    password: string,
+  ): Promise<Checked> => {
+    // Only servers on the internet (openImap and smtp check it): the form must not reach Stalwart
+    // or anything else inside.
     const opened = await openImap(servers.imap, { user: login, password }, allowPlain);
     if (!opened.ok) {
       return {
+        refused: opened.error.reason === "login",
         problem:
           opened.error.reason === "login"
             ? "Anmeldung abgelehnt: Adresse oder (App-)Passwort stimmen nicht, oder IMAP ist beim Anbieter nicht eingeschaltet."
-            : `Der Posteingangsserver antwortet nicht (${opened.error.message}).`,
+            : opened.error.reason === "outside"
+              ? NOT_ON_INTERNET
+              : `Der Posteingangsserver antwortet nicht (${opened.error.message}).`,
       };
     }
     let inbox: { uidValidity: string; lastUid: number } | null = null;
@@ -102,10 +138,13 @@ export const createExternalRoutes = ({
     const sending = await smtp.check(servers.smtp, { user: login, password });
     if (!sending.ok) {
       return {
+        refused: sending.error.reason === "login",
         problem:
           sending.error.reason === "login"
             ? "Posteingang geht, aber der Postausgang (SMTP) lehnt die Anmeldung ab."
-            : `Der Postausgangsserver antwortet nicht (${sending.error.message}).`,
+            : sending.error.reason === "outside"
+              ? NOT_ON_INTERNET
+              : `Der Postausgangsserver antwortet nicht (${sending.error.message}).`,
       };
     }
     return { problem: null, inbox };
@@ -152,8 +191,8 @@ export const createExternalRoutes = ({
     );
     if (!servers) return bad("Server oder Port ungültig (IMAP: 993 oder 143, SMTP: 465 oder 587).");
     const login = body.login || email;
-    const checked = await check(servers, login, body.password);
-    if (checked.problem) return bad(checked.problem);
+    const checked = await check(servers, login, body.password, owner.accountId);
+    if (checked.problem !== null) return bad(checked.problem);
     const account = await store.create({
       accountId: owner.accountId,
       email,
@@ -185,8 +224,8 @@ export const createExternalRoutes = ({
         imap: { host: account.imapHost, port: account.imapPort },
         smtp: { host: account.smtpHost, port: account.smtpPort },
       };
-      const checked = await check(servers, account.login, password);
-      if (checked.problem) return bad(checked.problem);
+      const checked = await check(servers, account.login, password, found.owner.accountId);
+      if (checked.problem !== null) return bad(checked.problem);
     }
     await store.update(account.id, {
       ...(name !== undefined ? { name: name || account.email } : {}),

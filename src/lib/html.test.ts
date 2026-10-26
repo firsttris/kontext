@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { escapeHtml, htmlToText, mailDocument, sanitizeMailHtml, textToHtml } from "./html";
 
 const clean = (html: string, allowRemote = false) =>
@@ -35,6 +35,13 @@ describe("sanitizeMailHtml", () => {
   it("shows inline images from the mail itself", () => {
     expect(clean('<img src="cid:logo@x">').html).toBe('<img src="blob:logo">');
     expect(clean('<img src="cid:unknown">').html).toBe("<img>");
+  });
+  it("turns no cid: into a URL outside images and SVG", () => {
+    const math = clean('<math><mtext href="cid:logo@x">x</mtext></math>').html;
+    expect(math).not.toContain("href");
+    expect(clean('<svg><image href="cid:logo@x"></image></svg>').html).toContain(
+      'href="blob:logo"',
+    );
   });
   it("keeps only allowed CSS images", () => {
     const style = `<div style="background:url('https://img.test/bg.png')">a</div><div style="background:url(javascript:alert(1))">b</div>`;
@@ -152,5 +159,9 @@ describe("text and HTML", () => {
   });
   it("turns HTML back into text", () => {
     expect(htmlToText("<p>Hallo</p><p>Welt<br>zwei</p>").trim()).toBe("Hallo\nWelt\nzwei");
+    // Parsed apart from the page: what it holds is only read.
+    const created = vi.spyOn(document, "createElement");
+    expect(htmlToText('<img src="x" onerror="alert(1)">Text')).toBe("Text");
+    expect(created).not.toHaveBeenCalled();
   });
 });

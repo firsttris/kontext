@@ -53,7 +53,8 @@ Notiz, Fälligkeit, Erledigt, Wiederholung und Erinnerung:
   *Einstellungen → Aufgaben in anderen Apps* eintragen, die Aufgabenlisten anhaken.
 - **Android:** DAVx⁵ mit tasks.org oder jtx Board, „Mit URL und Benutzername anmelden“.
 - **iPhone und iPad:** *Einstellungen → Apps → Erinnerungen → Accounts → Account hinzufügen →
-  Andere → CalDAV-Account*.
+  Andere → CalDAV-Account*, als Server die ganze Adresse mit `/dav/` (die Domain allein führt zu
+  den Kalendern in Stalwart).
 
 Angemeldet wird mit Mail-Adresse und Passwort; mit Anmeldung in zwei Schritten geht das noch nicht
 (App-Passwörter sind geplant). [Mehr](architecture.md#aufgaben)

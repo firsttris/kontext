@@ -45,6 +45,11 @@ export type SanitizedMail = { html: string; blockedImages: number };
 /** Attributes that make the browser fetch something (`href` only outside links, e.g. SVG `<image>`). */
 const LOADING_ATTRIBUTES = ["src", "background", "poster", "href", "xlink:href"];
 const isLink = (element: Element) => ["a", "area"].includes(element.localName);
+/**
+ * Outside links, `href` loads something only in SVG (`<image>`, `<use>`, gradients). Elsewhere it
+ * is a link in disguise – Firefox follows MathML's – and goes, so no `cid:` turns into a URL there.
+ */
+const isSvg = (element: Element) => element.namespaceURI === "http://www.w3.org/2000/svg";
 
 /**
  * Whether a URL stays inside the mail. Everything else is fetched: `//host` and `\\host` too, and a
@@ -96,6 +101,10 @@ export const sanitizeMailHtml = (
     for (const attribute of LOADING_ATTRIBUTES) {
       const value = element.getAttribute?.(attribute);
       if (!value || (attribute.endsWith("href") && isLink(element))) continue;
+      if (attribute.endsWith("href") && !isSvg(element)) {
+        element.removeAttribute(attribute);
+        continue;
+      }
       if (value.startsWith("cid:")) {
         const url = cidUrls[value.slice(4).replace(/^<|>$/g, "")];
         if (url) element.setAttribute(attribute, url);
@@ -180,12 +189,14 @@ export const mailDocument = (
 
 /** Visible text of an HTML fragment, for the text/plain part of a sent mail. */
 export const htmlToText = (html: string): string => {
-  if (typeof document === "undefined") return html.replace(/<[^>]+>/g, "");
-  const container = document.createElement("div");
-  container.innerHTML = html
-    .replace(/<br\s*\/?>/gi, "\n")
-    .replace(/<\/(p|div|li|h[1-6]|blockquote)>/gi, "</$1>\n");
-  return (container.textContent ?? "").replace(/\n{3,}/g, "\n\n").trim();
+  if (typeof DOMParser === "undefined") return html.replace(/<[^>]+>/g, "");
+  // Parsed into a document of its own, which loads and runs nothing: an element of the page's
+  // document would load an <img> and fire its onerror even without being attached.
+  const parsed = new DOMParser().parseFromString(
+    html.replace(/<br\s*\/?>/gi, "\n").replace(/<\/(p|div|li|h[1-6]|blockquote)>/gi, "</$1>\n"),
+    "text/html",
+  );
+  return (parsed.body.textContent ?? "").replace(/\n{3,}/g, "\n\n").trim();
 };
 
 /** The original below a reply, as an HTML quote. */

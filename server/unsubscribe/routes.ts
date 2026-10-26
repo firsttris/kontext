@@ -4,13 +4,12 @@
  * nobody can make the server post anywhere else; it must be https on the internet (not inside a
  * network), is posted to once, without following redirects.
  */
-import { lookup } from "node:dns/promises";
 import { Hono } from "hono";
 import { z } from "zod";
 import type { Grants } from "../auth";
 import type { Env } from "../env";
+import { dnsResolve, isInternetHost, type Resolve } from "../internet-host";
 import type { SessionInfo } from "../session-info";
-import { isPrivateAddress } from "./private-address";
 import { unsubscribeWay } from "./unsubscribe";
 
 const USING = ["urn:ietf:params:jmap:core", "urn:ietf:params:jmap:mail"];
@@ -26,27 +25,21 @@ export type UnsubscribeDeps = {
   grants: Pick<Grants, "accessToken">;
   infoOf: (request: Request) => Promise<SessionInfo | null>;
   /** Looks up a host's addresses; the internet's DNS unless a test says otherwise. */
-  resolve?: (host: string) => Promise<string[]>;
+  resolve?: Resolve;
 };
 
 /** Whether the server may post to this address. */
-const allowed = async (
-  url: URL,
-  anyTarget: boolean,
-  resolve: (host: string) => Promise<string[]>,
-) => {
+const allowed = async (url: URL, anyTarget: boolean, resolve: Resolve) => {
   if (anyTarget) return true;
   if (url.protocol !== "https:" || url.username || url.password) return false;
-  const host = url.hostname.replace(/^\[|\]$/g, "");
-  const addresses = await resolve(host).catch(() => []);
-  return addresses.length > 0 && !addresses.some(isPrivateAddress);
+  return isInternetHost(url.hostname, resolve);
 };
 
 export const createUnsubscribeRoutes = ({
   env,
   grants,
   infoOf,
-  resolve = async (host) => (await lookup(host, { all: true })).map((entry) => entry.address),
+  resolve = dnsResolve,
 }: UnsubscribeDeps) => {
   const app = new Hono();
 

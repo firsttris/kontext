@@ -33,6 +33,7 @@ import { createCompanyRoutes } from "./company/routes";
 import { dohResolver } from "./company/security";
 import { createCompanySettings } from "./company/settings";
 import { createSealer } from "./crypto";
+import { fromOwnPage } from "./csrf";
 import { createDavAuth } from "./dav/auth";
 import { createDavRoutes } from "./dav/routes";
 import { type Db, openDatabase, schema } from "./db";
@@ -48,6 +49,7 @@ import { createExternalRoutes } from "./external/routes";
 import { createSmtp } from "./external/smtp";
 import { createExternalStore } from "./external/store";
 import { createUserJmap } from "./external/user-jmap";
+import { appPolicy, hardenDownload, isDownload, withAppHeaders } from "./headers";
 import { createImageSenderRoutes } from "./images/routes";
 import { createServerJmap } from "./jmap-server";
 import { createHub } from "./live/hub";
@@ -83,6 +85,7 @@ import { createSnoozeRoutes } from "./snooze/routes";
 import { createSnoozeStore } from "./snooze/store";
 import { createSnoozeWaker } from "./snooze/waker";
 import { loginAtStalwart } from "./stalwart";
+import { tokenOrUnavailable, unavailable } from "./stalwart-away";
 import { createRuleTasks } from "./tasks/from-rules";
 import { createTaskReminder } from "./tasks/notices";
 import { createTaskRoutes } from "./tasks/routes";
@@ -111,7 +114,8 @@ export const createJmapProxy =
   async (request: Request): Promise<Response> => {
     const session = await auth.api.getSession({ headers: request.headers });
     if (!session) return Response.json({ error: "Nicht angemeldet" }, { status: 401 });
-    const token = await grants.accessToken(session.session.id);
+    const token = await tokenOrUnavailable(grants, session.session.id);
+    if (token === "unavailable") return unavailable();
     if (!token) {
       await auth.api.revokeSession({
         headers: request.headers,
@@ -138,6 +142,7 @@ export const createJmapProxy =
     });
     const responseHeaders = new Headers(upstream.headers);
     for (const name of DROPPED_RESPONSE_HEADERS) responseHeaders.delete(name);
+    if (isDownload(url.pathname)) hardenDownload(responseHeaders);
     responseHeaders.set("cache-control", responseHeaders.get("cache-control") ?? "no-store");
     return new Response(upstream.body, { status: upstream.status, headers: responseHeaders });
   };
@@ -192,6 +197,20 @@ export const createApp = async (env: Env) => {
 
   const categories = createCategoryStore(db);
   const app = new Hono();
+  // The app's policy on its pages, also without Caddy in front (headers.ts).
+  const policy = appPolicy({ schreibzeug: env.SCHREIBZEUG_URL, livekit: env.LIVEKIT_PUBLIC_URL });
+  app.use(async (c, next) => {
+    await next();
+    withAppHeaders(c.res.headers, policy);
+  });
+  // Changes with the session cookie only from Kontext's own pages (csrf.ts).
+  const appOrigin = new URL(env.BETTER_AUTH_URL).origin;
+  app.use(async (c, next) => {
+    if (!fromOwnPage(c.req.raw, appOrigin)) {
+      return c.json({ error: "Anfrage von einer fremden Seite abgelehnt" }, 403);
+    }
+    await next();
+  });
 
   const chatFiles = createChatFiles(db, join(dirname(env.DATABASE_PATH), "chat-files"));
   // Photos uploaded for a message that was never sent go after a day.
@@ -303,7 +322,7 @@ export const createApp = async (env: Env) => {
     });
     app.route("/api/company", company);
   }
-  const { accountsOf, infoOf } = createSessionInfo(env, auth, grants);
+  const { accountsOf, infoOf, sendersOf } = createSessionInfo(env, auth, grants);
   if (externalImporter) {
     // Other mailboxes of a person (Gmail, GMX, …): fetched into Kontext, sent through them.
     const store = createExternalStore(db);
@@ -388,7 +407,7 @@ export const createApp = async (env: Env) => {
       importMessage: createServerJmap({
         env,
         grants,
-        sessions: () => snoozes.sessionsFor(""),
+        sessions: async () => (await snoozes.sessionsFor("")).map(({ sessionId }) => sessionId),
       }).importMessage,
       tasks: {
         create: async (task) => {
@@ -600,7 +619,7 @@ export const createApp = async (env: Env) => {
   );
   // "Vertraulich senden": encrypted messages for recipients without a key, opened with a code.
   const secure = createSecureStore(db, join(dirname(env.DATABASE_PATH), "secure"));
-  app.route("/api/secure", createSecureRoutes({ store: secure, accountsOf }));
+  app.route("/api/secure", createSecureRoutes({ store: secure, accountsOf, sendersOf }));
   app.route(
     "/api/secure-public",
     createSecurePublicRoutes({ store: secure, notify: pusher.notify }),
@@ -622,7 +641,7 @@ export const createApp = async (env: Env) => {
   const ruleTasks = createRuleTasks({
     env,
     grants,
-    sessions: () => snoozes.sessionsFor(""),
+    sessions: async () => (await snoozes.sessionsFor("")).map(({ sessionId }) => sessionId),
     store: tasks,
     changed: tasksChanged,
   });

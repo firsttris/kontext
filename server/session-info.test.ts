@@ -31,3 +31,17 @@ describe("the accounts of a sign-in", () => {
     });
   });
 });
+
+describe("the addresses a person sends as", () => {
+  it("are those of the mailboxes they may write to, not of one they only read", async () => {
+    const { sendersOf } = sampleSessionInfo({
+      jonas: { info: { member: true } },
+      max: { info: { folders: [readOnlyInbox] } },
+    });
+    expect((await sendersOf(requestOf("jonas")))?.map(({ email }) => email)).toEqual([
+      "jonas@w.test",
+      "info@w.test",
+    ]);
+    expect((await sendersOf(requestOf("max")))?.map(({ email }) => email)).toEqual(["max@w.test"]);
+  });
+});
