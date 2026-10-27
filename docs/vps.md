@@ -18,6 +18,7 @@ Was wo passiert:
 | 8. Firewall                     | Server                 |
 | 9. Kontext mit Quadlet starten  | Server                 |
 | 10. Stalwart ohne Oberfläche einrichten | Server         |
+| 11. Backup auf Cloudflare R2    | Cloudflare und Server  |
 
 ## 1. Root-Passwort setzen
 
@@ -407,3 +408,23 @@ Mitarbeiter in Kontext an.
   "aliases":{"0":{"enabled":true,"name":"vorname.nachname","domainId":"<domain-id>"}},
   "credentials":{"0":{"@type":"Password","secret":"<startpasswort>"}}}}},"0"]]'
 ```
+
+## 11. Backup auf Cloudflare R2
+
+Wie in [Backups](installation.md#5-backups): ein R2-Bucket mit Standort EU, ein R2-API-Token
+(*Object Read & Write*, nur dieser Bucket, IP-Filter mit IPv4 **und** IPv6-Netz des Servers).
+Die Einstellungen für Quadlet in `deploy/backup.env`, das Restic-Passwort zufällig:
+
+```bash
+cd /opt/kontext/deploy && umask 077
+printf '%s\n' "KONTEXT_DOMAIN=kontext.firma.de" \
+  "RESTIC_REPOSITORY=s3:https://<konto-id>.eu.r2.cloudflarestorage.com/<bucket>" \
+  "RESTIC_PASSWORD=$(openssl rand -base64 36)" \
+  "AWS_ACCESS_KEY_ID=<access-key-id>" "AWS_SECRET_ACCESS_KEY=<secret-access-key>" > backup.env
+apt-get install -y restic
+./backup.sh                                   # erste Sicherung, legt das Repository an
+( crontab -l 2>/dev/null; echo '0 3 * * *  /opt/kontext/deploy/backup.sh >> /var/log/kontext-backup.log 2>&1' ) | crontab -
+```
+
+**Das Restic-Passwort** (`grep RESTIC_PASSWORD backup.env`) zusätzlich außerhalb des Servers
+ablegen, etwa im Passwortmanager: Ohne es ist das Backup nicht lesbar, wenn der Server weg ist.
