@@ -23,9 +23,9 @@ Open source (AGPL), a web app and PWA on top of the Stalwart mail server, no per
 [![Made in Europe](https://img.shields.io/badge/made%20in-Europe-003399)](#-your-data-stays-in-europe--with-ai)
 
 ```bash
-git clone https://github.com/firsttris/kontext && cd kontext
-cp deploy/.env.example deploy/.env            # your domain and secrets
-docker compose -f deploy/compose.yaml up -d   # or Podman
+git clone https://github.com/firsttris/kontext /opt/kontext && cd /opt/kontext
+cp deploy/.env.example deploy/.env && nano deploy/.env   # domain, replace every change-me
+docker compose -f deploy/compose.yaml up -d              # or Podman
 ```
 
 [Privacy & GoBD](#-your-data-stays-in-europe--with-ai) •
@@ -77,11 +77,17 @@ chmod 600 deploy/.env                   # replace every change-me: Kontext refus
 docker compose -f deploy/compose.yaml up -d
 ```
 
-Then create the domain, DKIM and users in Stalwart's admin (port 8080, only through an SSH tunnel or Tailscale),
-enter Kontext's container network `10.89.250.0/24` as an allowed IP (otherwise wrong passwords can
-get Kontext itself banned) and sign in at `https://<your domain>`. Ten users run fine on a VPS with 2 vCPUs and 4 GB RAM. Calls
-(LiveKit), telephony and documents are Compose profiles you switch on when you need them. DNS
-records, Podman Quadlets, backups and updates are in the
+Then set up Stalwart in its admin (port 8080, only through an SSH tunnel or Tailscale) as the
+[guide](https://firsttris.github.io/kontext/installation.html#3-stalwart-einrichten) lists it: the domain and DKIM, the boss's account (everyone else
+is added later in Kontext), Kontext's container network `10.89.250.0/24` as an allowed IP
+(otherwise wrong passwords can get Kontext itself banned) and the API key for the company admin
+(`STALWART_ADMIN_KEY`; without it there is no company admin, no other mailboxes and no answer
+buttons in invitations, see [company admin](https://firsttris.github.io/kontext/installation.html#firmenverwaltung-einschalten)). Then sign in at
+`https://<your domain>`. Ten users run fine on a VPS with 2 vCPUs and 4 GB RAM.
+
+Calls (LiveKit) and documents (Schreibzeug) are Compose profiles that `.env.example` switches on
+(`COMPOSE_PROFILES=calls,documents`): set their secrets and DNS names, or remove them there.
+Telephony adds a small box in the office. DNS records, Podman Quadlets, backups and updates are in the
 [installation guide](https://firsttris.github.io/kontext/installation.html) (German).
 
 ## ✨ Features

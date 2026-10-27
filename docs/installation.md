@@ -107,7 +107,7 @@ hinzufügen“ wählen: Kontext startet dann wie eine App und bleibt angemeldet.
 ### Anrufe
 
 Anrufe und Besprechungen im Chat laufen über LiveKit, das `compose.yaml` mit dem Profil `calls`
-startet (`COMPOSE_PROFILES=calls` in `.env`, so in `.env.example`). Dafür braucht es:
+startet (`COMPOSE_PROFILES=calls` in `.env`; `.env.example` hat `calls,documents`). Dafür braucht es:
 
 - `LIVEKIT_SECRET` in `.env`: mindestens 32 Zeichen (`openssl rand -base64 48`). Kontext und
   LiveKit nutzen denselben.

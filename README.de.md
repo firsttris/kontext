@@ -23,9 +23,9 @@ Open Source (AGPL), eine Web-App und PWA auf dem Mailserver Stalwart, keine Kost
 [![Made in Europe](https://img.shields.io/badge/made%20in-Europe-003399)](#-deine-daten-bleiben-in-europa--mit-ki)
 
 ```bash
-git clone https://github.com/firsttris/kontext && cd kontext
-cp deploy/.env.example deploy/.env            # deine Domain und Geheimnisse
-docker compose -f deploy/compose.yaml up -d   # oder Podman
+git clone https://github.com/firsttris/kontext /opt/kontext && cd /opt/kontext
+cp deploy/.env.example deploy/.env && nano deploy/.env   # Domain, jedes change-me ersetzen
+docker compose -f deploy/compose.yaml up -d              # oder Podman
 ```
 
 [Datenschutz & GoBD](#-deine-daten-bleiben-in-europa--mit-ki) •
@@ -77,11 +77,19 @@ chmod 600 deploy/.env                   # jedes change-me ersetzen: damit starte
 docker compose -f deploy/compose.yaml up -d
 ```
 
-Danach in Stalwarts Verwaltung (Port 8080, nur über SSH-Tunnel oder Tailscale) Domain, DKIM und Benutzer anlegen,
-Kontexts Container-Netz `10.89.250.0/24` als erlaubte IP eintragen (sonst können falsche
-Passwörter Kontext selbst sperren lassen) und unter `https://<deine Domain>` anmelden. Für zehn Benutzer reicht ein VPS mit 2 vCPU und 4 GB
-RAM. Anrufe (LiveKit), Telefonie und Dokumente sind Compose-Profile, die du bei Bedarf
-einschaltest. DNS-Einträge, Podman-Quadlets, Backups und Updates stehen in der
+Danach Stalwart in seiner Verwaltung (Port 8080, nur über SSH-Tunnel oder Tailscale) so einrichten,
+wie es die [Anleitung](https://firsttris.github.io/kontext/installation.html#3-stalwart-einrichten) aufzählt: Domain und DKIM, das Konto des Chefs
+(alle anderen legt er später in Kontext an), Kontexts Container-Netz `10.89.250.0/24` als erlaubte
+IP (sonst können falsche Passwörter Kontext selbst sperren lassen) und den API-Schlüssel für die
+Firmenverwaltung (`STALWART_ADMIN_KEY`; ohne ihn gibt es keine Firmenverwaltung, keine weiteren
+Postfächer und keine Antwort-Knöpfe in Einladungen, siehe
+[Firmenverwaltung](https://firsttris.github.io/kontext/installation.html#firmenverwaltung-einschalten)). Dann unter `https://<deine Domain>`
+anmelden. Für zehn Benutzer reicht ein VPS mit 2 vCPU und 4 GB RAM.
+
+Anrufe (LiveKit) und Dokumente (Schreibzeug) sind Compose-Profile, die `.env.example` schon
+einschaltet (`COMPOSE_PROFILES=calls,documents`): ihre Geheimnisse und DNS-Namen setzen oder sie
+dort herausnehmen. Für Telefonie kommt eine kleine Box ins Büro. DNS-Einträge, Podman-Quadlets,
+Backups und Updates stehen in der
 [Installationsanleitung](https://firsttris.github.io/kontext/installation.html).
 
 ## ✨ Funktionen
