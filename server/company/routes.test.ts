@@ -121,6 +121,17 @@ const setup = (
     mailboxChanged: (id) => {
       changedMailboxes.push(id);
     },
+    backup: {
+      read: async () => ({
+        settings: { enabled: true, time: "03:00" },
+        status: null,
+        requested: false,
+        host: "missing",
+        log: "",
+      }),
+      saveSettings: async () => {},
+      requestRun: async () => {},
+    },
   });
   const send = (method: string, path: string, body?: unknown) =>
     app.request(path, {
@@ -140,6 +151,8 @@ describe("Firmenverwaltung", () => {
     });
     expect((await setup("anna@firma.de").send("GET", "/")).status).toBe(403);
     expect((await setup(null).send("GET", "/")).status).toBe(403);
+    expect((await setup("anna@firma.de").send("POST", "/backup/run")).status).toBe(403);
+    expect((await setup("chef@firma.de").send("GET", "/backup")).status).toBe(200);
     expect(await (await setup("chef@firma.de").send("GET", "/me")).json()).toEqual({
       admin: true,
     });

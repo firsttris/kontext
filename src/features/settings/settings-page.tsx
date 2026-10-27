@@ -8,6 +8,7 @@ import {
   Bot,
   ChevronLeft,
   ChevronRight,
+  DatabaseBackup,
   Inbox,
   KeyRound,
   ListFilter,
@@ -29,6 +30,7 @@ import {
 import { lazy, type ReactNode, Suspense, useId } from "react";
 import { TabBar } from "@/components/shell/app-shell";
 import { AgentsSection } from "@/features/agents/agents-section";
+import { BackupSection } from "@/features/company/backup-section";
 import { ChatSection } from "@/features/company/chat-section";
 import { EmployeesSection } from "@/features/company/employees-section";
 import { MailboxesSection } from "@/features/company/mailboxes-section";
@@ -93,6 +95,7 @@ const COMPANY: Entry[] = [
   { id: "company-signature", label: m.company_signature, icon: Signature },
   { id: "company-chat", label: m.company_chat, icon: MessagesSquare },
   { id: "company-security", label: m.company_security, icon: ShieldCheck },
+  { id: "company-backup", label: m.company_backup, icon: DatabaseBackup },
   { id: "phone", label: m.phone_settings, icon: Phone },
   { id: "migration", label: m.company_migration, icon: Truck },
 ];
@@ -114,6 +117,7 @@ const CONTENT: Record<Section, () => ReactNode> = {
   "company-signature": () => <CompanySignatureSection />,
   "company-chat": () => <ChatSection />,
   "company-security": () => <CompanySecuritySection />,
+  "company-backup": () => <BackupSection />,
   phone: () => <PhoneSettingsSection />,
   migration: () => <MigrationSection />,
 };

@@ -19,6 +19,7 @@ export const settingsSections = [
   "company-signature",
   "company-chat",
   "company-security",
+  "company-backup",
   "phone",
   "migration",
 ] as const;

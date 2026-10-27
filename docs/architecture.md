@@ -237,6 +237,27 @@ mit einem eigenen API-Schlüssel an und erlaubt nur, was die Firmenverwaltung br
   Postfach zählt ein fremdes Konto, wenn es eine Gruppe ist oder Ordner zeigt (wer nur einen
   Kalender teilt, zeigt keine).
 
+- **Datensicherung:** Kontext sichert nicht selbst und kommt weder an den Host noch an Restic
+  oder die Zugangsdaten. Es spricht mit dem Host nur über Dateien im eigenen Volume, unter
+  `/data/backup-control/` (`server/company/backup.ts`): Kontext schreibt `settings.json`
+  (`{"enabled":true,"time":"03:00"}`, atomar über eine Datei daneben) und für „Jetzt sichern“
+  die Marke `run-now`; der Host schreibt `status.json` (Zustand, letzter Lauf, Größe,
+  Warngrenze, nächster Lauf, Ziel als Anzeigename ohne Schlüssel) und `log.txt` (die letzten
+  200 Zeilen von `backup.sh`). Auf dem Host beobachtet `kontext-backup-control.path` beide
+  Dateien und startet `deploy/backup-control.sh apply`: Es nimmt aus `settings.json` nur `true`/`false`
+  und eine Uhrzeit, die genau `HH:MM` ist, schreibt sie als Drop-in in den Timer
+  (`kontext-backup.timer.d/time.conf`, Zeitzone Europe/Berlin) und startet für `run-now` die
+  Sicherung. `kontext-backup.service` ruft `backup.sh` auf (das nimmt selbst eine Sperre per `flock`, auch von
+  Hand oder per Cron laufen nie zwei Sicherungen gleichzeitig) und schreibt den Status
+  am Anfang und am Ende, auch nach einem Abbruch (`ExecStopPost`). Das Skript betritt das Verzeichnis
+  im Volume einmal, prüft, dass es wirklich dort liegt, und arbeitet danach nur mit Namen darin;
+  geschrieben wird über eine Datei daneben und `mv -T`. So kann Kontext es nicht per Link auf
+  andere Pfade umlenken, auch nicht durch Austauschen des Verzeichnisses während eines Laufs. Fehlt
+  `status.json` oder holt der Host einen Wunsch nicht innerhalb von drei Minuten ab (oder ist ein
+  Lauf mehr als sechs Stunden überfällig), zeigt die App „Steuerung auf dem Server nicht
+  eingerichtet“ bzw. „Der Server reagiert nicht“. Nicht `/data/backup/`: Dort legt `backup.sh`
+  die Kopie der Datenbank ab, und das Verzeichnis wird mitgesichert.
+
 Für Ordner, Abwesenheit, Signaturen und Sieve arbeitet der Server per JMAP *im Konto* des Mitarbeiters bzw. der
 Gruppe. Das erlaubt Stalwart mit dem Recht `impersonate`: dann gilt der Schlüssel als Mitglied
 jedes Kontos (`AccessToken::is_member`). `server/company/management.ts` spricht die

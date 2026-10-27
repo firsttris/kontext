@@ -1,0 +1,12 @@
+# Starts the backup every night; replaces the cron entry. The time set in Kontext's
+# Firmenverwaltung goes into kontext-backup.timer.d/time.conf (deploy/backup-control.sh).
+[Unit]
+Description=Kontext: Datensicherung jede Nacht
+
+[Timer]
+OnCalendar=*-*-* 03:00:00 Europe/Berlin
+# A night the server was off is caught up when it is back.
+Persistent=true
+
+[Install]
+WantedBy=timers.target

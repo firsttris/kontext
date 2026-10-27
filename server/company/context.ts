@@ -15,6 +15,7 @@ import {
   type StalwartAccount,
   toCompany,
 } from "./accounts";
+import type { BackupControl } from "./backup";
 import type { Calendars } from "./calendars";
 import type { Mailstore } from "./mailstore";
 import type { Management } from "./management";
@@ -47,6 +48,8 @@ export type CompanyDeps = {
     resolve: import("./security").Resolve;
     fetchPolicy?: (url: string) => Promise<string | null>;
   };
+  /** The Datensicherung, through files the host reads and writes (backup.ts). */
+  backup?: BackupControl;
 };
 
 export type Loaded = {

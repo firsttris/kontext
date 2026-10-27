@@ -21,6 +21,7 @@ import { createMessageStore } from "./chat/messages";
 import { createChatPruner, createChatRetention } from "./chat/retention";
 import { createChatRoutes, viewerOf } from "./chat/routes";
 import { createChatStore } from "./chat/store";
+import { createBackupControl } from "./company/backup";
 import { createCalendars } from "./company/calendars";
 import { createMailstore } from "./company/mailstore";
 import {
@@ -325,6 +326,7 @@ export const createApp = async (env: Env) => {
       chatRetention,
       pruneChat: chatPruner.tick,
       security: { publicUrl: env.BETTER_AUTH_URL, resolve: dohResolver(env.DOH_URL) },
+      backup: createBackupControl(join(dirname(env.DATABASE_PATH), "backup-control")),
     });
     app.route("/api/company", company);
   }

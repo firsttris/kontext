@@ -369,6 +369,37 @@ auch, wenn der Server schweigt.
 
 Restic muss auf dem Server installiert sein (`apt-get install restic`).
 
+Jede Nacht starten systemd-Units die Sicherung (Vorlagen in `deploy/systemd/`). Mit ihnen zeigt
+die Firmenverwaltung unter *Datensicherung* den letzten Lauf und den belegten Speicher, stellt die
+Uhrzeit und sichert auf Knopfdruck. Kontext bekommt dafür keinen Zugriff auf den Server: Es
+legt nur Wünsche in seinem Volume ab, die die Units abholen
+([Architektur](architecture.md#firmenverwaltung)).
+
+```bash
+cd /opt/kontext/deploy
+./backup-control.sh install     # Units nach /etc/systemd/system, Volume-Pfad eingesetzt
+systemctl enable --now kontext-backup.timer kontext-backup-control.path
+crontab -l | grep -v 'deploy/backup.sh' | crontab -   # alter Cron-Eintrag, falls vorhanden
+systemctl start kontext-backup.service                # erste Sicherung, Protokoll: journalctl -u kontext-backup
+```
+
+Die Units:
+
+| Unit | Aufgabe |
+| --- | --- |
+| `kontext-backup.service` | ruft `backup.sh` auf (das sperrt per `flock`: nie zwei Läufe gleichzeitig, auch nicht von Hand oder per Cron), Ausgabe ins Journal und an Kontext, Status am Anfang und am Ende |
+| `kontext-backup.timer` | jede Nacht um 03:00 (Europe/Berlin), holt eine verpasste Nacht nach (`Persistent=true`) |
+| `kontext-backup-control.path` | beobachtet die Uhrzeit und „Jetzt sichern“ aus Kontext und startet `kontext-backup-control.service` |
+
+`install` findet das Volume `kontext-data` (Quadlet) bzw. `kontext_kontext-data` (Compose) über
+`podman volume inspect` bzw. `docker volume inspect`. Die Uhrzeit aus Kontext landet in
+`/etc/systemd/system/kontext-backup.timer.d/time.conf`; wird sie auf eine Zeit vorgezogen, die
+heute schon vorbei ist, sichert der Timer gleich einmal (`Persistent=true`). Nach einem `git pull`
+mit geänderten Units `./backup-control.sh install` erneut ausführen.
+
+Ohne die Units geht es weiter mit Cron; die Firmenverwaltung zeigt dann „Steuerung auf dem
+Server nicht eingerichtet“:
+
 ```bash
 crontab -e
 0 3 * * *  /opt/kontext/deploy/backup.sh >> /var/log/kontext-backup.log 2>&1
@@ -386,7 +417,7 @@ AWS_ACCESS_KEY_ID=…
 AWS_SECRET_ACCESS_KEY=…
 ```
 
-Der Mailserver hält dafür nachts ein paar Sekunden an; absendende Server versuchen es einfach
+Der Mailserver hält dafür ein paar Sekunden an; absendende Server versuchen es einfach
 erneut. Die Kontext-Datenbank wird im laufenden Betrieb kopiert (`VACUUM INTO`). Einmal im Monat
 eine Wiederherstellung auf einem Testserver üben:
 

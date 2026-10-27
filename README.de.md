@@ -160,6 +160,7 @@ Das [Verschlüsselungskonzept](https://firsttris.github.io/kontext/encryption.ht
 
 - **Mitarbeiter anlegen**, Passwort und zweiten Faktor zurücksetzen, **Zugang sperren**; **gemeinsame Postfächer** mit Rechten pro Person; weitere Adressen.
 - **Abwesenheit für Kollegen** mit Vertretung, **Firmen-Signatur** für alle, **Austritt**, ohne etwas zu löschen.
+- **Datensicherung im Blick**: Ziel, letzter Lauf, belegter Speicher, die nächtliche Uhrzeit und „Jetzt sichern“ – Kontext bittet nur darum, sichern tut der Server.
 - **Umzug** von Microsoft 365, Gmail, GMX und anderen IMAP-Anbietern (abgeglichen bis zum Wechsel), aus Outlook (PST) und aus einem Google-Export.
 
 ### 📱 Auf jedem Gerät

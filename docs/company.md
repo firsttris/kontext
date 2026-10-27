@@ -25,6 +25,11 @@ Stalwarts Admin-Oberfläche und ohne IT-Kenntnisse.
   Öffnungszeiten ([Telefonie](telephony.md)).
 - **Sicherheit prüfen:** SPF, DMARC, MTA-STS, TLS-RPT, DANE und HTTPS der eigenen Domain
   ([Verschlüsselung](encryption.md#baustein-1-grundschutz-unsichtbar-fur-alles)).
+- **Datensicherung:** wohin gesichert wird, wie der letzte Lauf ausging, wie voll der Speicher
+  ist, die Uhrzeit der nächtlichen Sicherung und „Jetzt sichern“, dazu das Protokoll. Dafür
+  müssen auf dem Server die Units eingerichtet sein
+  ([Installation → Backups](installation.md#5-backups)); sonst steht dort „Steuerung auf dem
+  Server nicht eingerichtet“.
 
 ## Umzug nach Kontext
 
