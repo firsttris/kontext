@@ -267,6 +267,22 @@ im Bucket höchstens 14 Tage: `backup.sh` hebt 14 Tage, 8 Wochen und 12 Monate a
 Rest weg; länger gesperrte Dateien lassen sich nicht löschen. Das meldet das Skript, prüft die
 Sicherung aber trotzdem.
 
+Das Ziel liegt **nicht auf dem Server selbst**: Fällt er aus oder wird er übernommen, wäre ein
+Backup daneben mit weg, und es füllte die Platte, auf der Stalwart die Mails annimmt. Geeignet:
+
+| Ziel | `RESTIC_REPOSITORY` | Kosten |
+| --- | --- | --- |
+| Cloudflare R2 (S3) | `s3:https://<konto-id>.r2.cloudflarestorage.com/kontext-firma` | 10 GB frei, danach etwa 1,5 Cent je GB und Monat |
+| Backblaze B2 (S3) | `s3:https://s3.eu-central-003.backblazeb2.com/kontext-firma` | 10 GB frei |
+| anderer S3-Speicher | `s3:https://…/kontext-firma` | je nach Anbieter |
+| NAS oder Speicherbox per SFTP | `sftp:backup@nas.firma.de:/kontext` | eigene Hardware bzw. Storage Box |
+
+Restic komprimiert und legt Gleiches nur einmal ab; die erste Sicherung ist so groß wie die
+Daten, jede weitere nur so groß wie das Neue. Für S3 setzt man `AWS_ACCESS_KEY_ID` und
+`AWS_SECRET_ACCESS_KEY` (bei R2 ein API-Token mit *Object Read & Write* für den einen Bucket); per
+SFTP meldet sich root mit einem SSH-Schlüssel an (`ssh-keygen`, den öffentlichen Teil beim Ziel
+hinterlegen, einmal `ssh backup@nas.firma.de` zum Bestätigen des Host-Schlüssels).
+
 Restic muss auf dem Server installiert sein (`apt-get install restic`).
 
 ```bash

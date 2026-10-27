@@ -41,7 +41,12 @@ set -a
 set +a
 
 # A backup under the placeholders from .env.example would be readable by anyone.
-for name in RESTIC_PASSWORD AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY; do
+# The S3 keys only for an S3 target; SFTP (a NAS, a storage box) signs in with an SSH key.
+required=RESTIC_PASSWORD
+case "${RESTIC_REPOSITORY:-}" in
+  s3:*) required="$required AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY" ;;
+esac
+for name in RESTIC_REPOSITORY $required; do
   eval "value=\${$name:-}"
   case "$value" in
     "" | *change-me*) echo "backup.sh: $name in deploy/$settings setzen (kein Platzhalter)" >&2; exit 1 ;;
