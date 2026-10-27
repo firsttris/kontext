@@ -126,8 +126,11 @@ Prüfen auf dem **Server** (kann ein paar Minuten dauern, bis die Freigabe greif
 timeout 5 bash -c 'echo > /dev/tcp/gmail-smtp-in.l.google.com/25' && echo offen || echo gesperrt
 ```
 
-Im selben Panel unter *Netzwerk* den **Reverse-DNS** (PTR) der IPv4- und IPv6-Adresse auf den
-Namen des Mailservers setzen (`mail.firma.de`); ohne passenden PTR landen Mails schnell im Spam.
+Den **Reverse-DNS** (PTR) setzt man bei netcup nicht im Server Control Panel, sondern im
+**Customer Control Panel** unter *Produkte → (der Server) → rDNS*: bei der IPv4-Adresse als
+Hostname den Namen des Mailservers (`mail.firma.de`), *Hostname ändern*. Ohne passenden PTR landen
+Mails schnell im Spam. IPv6 braucht keinen Eintrag: Die Container haben nur IPv4, Stalwart
+verschickt über die IPv4-Adresse. Prüfen: `dig +short -x 203.0.113.10`.
 
 ## 6. Podman installieren
 
