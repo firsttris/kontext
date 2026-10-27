@@ -350,15 +350,15 @@ export const Conversation = ({
             </p>
           ) : null}
         </div>
-        <div className="flex h-6 shrink-0 items-center gap-2 px-4 text-[13px] text-muted md:px-6 md:pl-[70px]">
+        <div className="relative shrink-0 border-t border-border px-2.5 pt-2 pb-3 safe-bottom md:border-0 md:px-5 md:pt-0 md:pb-4">
+          {/* Over the end of the list rather than in a row of its own: an always reserved row
+              left an empty band between the messages and the input. */}
           {typing.length ? (
-            <>
+            <div className="pointer-events-none absolute inset-x-0 bottom-full flex h-6 items-center gap-2 bg-bg/90 px-4 text-[13px] text-muted md:px-6 md:pl-[70px]">
               <span aria-hidden="true" className="size-1.5 animate-pulse rounded-full bg-accent" />
               {typingLine(typing.map((id) => firstName(nameOf(id))))}
-            </>
+            </div>
           ) : null}
-        </div>
-        <div className="shrink-0 border-t border-border px-2.5 pt-2 pb-3 safe-bottom md:border-0 md:px-5 md:pt-0 md:pb-4">
           {locked ? (
             <ConfidentialUnlock />
           ) : (
