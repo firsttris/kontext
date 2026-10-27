@@ -889,6 +889,7 @@
   "chat_take_photo": "Foto aufnehmen",
   "chat_attached": "Angehängt",
   "chat_link": "Mail, Aufgabe oder Kontakt verknüpfen",
+  "chat_link_with_documents": "Mail, Aufgabe, Kontakt oder Dokument verknüpfen",
   "chat_link_search": "Suchen",
   "chat_link_hits": "Treffer",
   "chat_link_none": "Nichts gefunden.",

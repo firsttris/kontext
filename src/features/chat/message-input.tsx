@@ -20,7 +20,7 @@ import {
 import { cn } from "@/lib/cn";
 import { m } from "@/paraglide/messages";
 import { InputTray } from "./input-tray";
-import { LinkPicker } from "./link-picker";
+import { LinkPicker, useLinkTitle } from "./link-picker";
 import type { Attachments } from "./use-attachments";
 import { useVoiceRecorder } from "./use-voice-recorder";
 import { VoiceRecorderBar } from "./voice-recorder-bar";
@@ -54,6 +54,7 @@ export const MessageInput = ({
   const filePicker = useRef<HTMLInputElement>(null);
   const camera = useRef<HTMLInputElement>(null);
   const [linking, setLinking] = useState(false);
+  const linkTitle = useLinkTitle();
   const [text, setText] = useState("");
   const [caret, setCaret] = useState(0);
   const [picked, setPicked] = useState<Person[]>([]);
@@ -262,7 +263,7 @@ export const MessageInput = ({
                 </MenuItem>
                 {cards ? (
                   <MenuItem onSelect={() => setLinking(true)}>
-                    <Link2 size={15} /> {m.chat_link()}
+                    <Link2 size={15} /> {linkTitle}
                   </MenuItem>
                 ) : null}
               </MenuContent>
@@ -304,8 +305,8 @@ export const MessageInput = ({
                   <Button
                     variant="ghost"
                     size="iconSm"
-                    aria-label={m.chat_link()}
-                    title={m.chat_link()}
+                    aria-label={linkTitle}
+                    title={linkTitle}
                     className="hidden md:inline-flex"
                     onClick={() => setLinking(true)}
                   >

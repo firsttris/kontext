@@ -51,8 +51,12 @@ test.describe("Dokumente in Chat, Aufgaben, Terminen und Kontakten", () => {
     await dialog.getByText("Max Becker").click();
     await dialog.getByRole("button", { name: "Kanal anlegen" }).click();
 
-    await page.getByRole("button", { name: "Mail, Aufgabe oder Kontakt verknüpfen" }).click();
-    const picker = page.getByRole("dialog", { name: "Mail, Aufgabe oder Kontakt verknüpfen" });
+    await page
+      .getByRole("button", { name: "Mail, Aufgabe, Kontakt oder Dokument verknüpfen" })
+      .click();
+    const picker = page.getByRole("dialog", {
+      name: "Mail, Aufgabe, Kontakt oder Dokument verknüpfen",
+    });
     await picker.getByRole("tab", { name: "Dokument" }).click();
     await picker.getByRole("button", { name }).click();
     await page.getByRole("textbox", { name: "Nachricht" }).fill("Das Aufmaß fürs Bad");
