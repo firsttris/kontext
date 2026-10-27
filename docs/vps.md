@@ -12,6 +12,7 @@ Was wo passiert:
 | 2. Schlüssel auf den Server     | eigener Rechner        |
 | 3. Kurzname in `~/.ssh/config`  | eigener Rechner        |
 | 4. Passwort-Login abschalten    | Server                 |
+| 5. Mail-Sperre aufheben         | Kundenbereich des Anbieters |
 
 ## 1. Root-Passwort setzen
 
@@ -98,8 +99,29 @@ passwordauthentication no
 ```
 
 Zum Schluss aus einem **zweiten Terminal** `ssh kunde-vps` – kommt die Anmeldung durch, ist der
-Server nur noch mit Schlüssel erreichbar. Danach weiter mit der [Installation](installation.md).
+Server nur noch mit Schlüssel erreichbar.
 
 !!! note "Ausgesperrt?"
     Über die Konsole des Anbieters mit dem Root-Passwort anmelden,
     `rm /etc/ssh/sshd_config.d/00-keyonly.conf && systemctl restart ssh`, Schritt 2 wiederholen.
+
+## 5. Mail-Sperre aufheben
+
+Ein neuer netcup-VPS darf keine Mails verschicken: Die Firewall im Server Control Panel bringt die
+Regelgruppe **„netcup Mail block“** mit, die ausgehend die Ports **25, 465 und 587** verwirft.
+Kontext braucht alle drei: Stalwart stellt über 25 an andere Mailserver zu, und verbundene
+externe Postfächer (Gmail, GMX …) versenden über 465 oder 587 (`server/external/smtp.ts`).
+
+Im Server Control Panel unter *Server → Firewall* die Gruppe **„netcup Mail block“ löschen** und
+speichern. Eingehend lässt die Firewall dort alles durch; abgeschottet wird auf dem Server selbst.
+
+Prüfen auf dem **Server** (kann ein paar Minuten dauern, bis die Freigabe greift):
+
+```bash
+timeout 5 bash -c 'echo > /dev/tcp/gmail-smtp-in.l.google.com/25' && echo offen || echo gesperrt
+```
+
+Im selben Panel unter *Netzwerk* den **Reverse-DNS** (PTR) der IPv4- und IPv6-Adresse auf den
+Namen des Mailservers setzen (`mail.firma.de`); ohne passenden PTR landen Mails schnell im Spam.
+
+Danach weiter mit der [Installation](installation.md).
