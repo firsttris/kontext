@@ -150,10 +150,11 @@ test.describe("Telefonie über die Telefonbox", () => {
     await expect
       .poll(async () => (await box.state()).config?.hours?.open)
       .toContainEqual({ day: 6, from: "08:00", to: "12:00" });
-    await page.reload();
+    // Without reloading: the page asks again while the box connects (phone-settings.tsx).
     await expect(page.getByRole("region", { name: "Telefonbox" })).toContainText(
       "verbunden · an der Fritzbox angemeldet",
     );
+    await expect(boxes.getByText(/^Kopplungscode: /)).toBeHidden();
     // Telefon is in the rail now.
     await expect(page.getByRole("link", { name: "Telefon", exact: true })).toBeVisible();
   });

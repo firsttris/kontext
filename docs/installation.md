@@ -134,8 +134,11 @@ merken und festlegen, auf welche Rufnummern das Gerät reagiert und mit welcher 
 Durchwahlen je Nummer ein weiteres Gerät dieser Art anlegen, das nur auf diese Nummer reagiert
 und mit ihr anruft, und es in Kontext unter „Weitere Rufnummern“ eintragen.
 
-**In Kontext:** Einstellungen → Telefonie: Benutzername und Kennwort aus der Fritzbox eintragen,
-auswählen, wer klingeln soll, dann „Box koppeln“.
+**In Kontext:** Einstellungen → Telefonie: als Adresse der Fritzbox ihre IP (meist
+`192.168.178.1`), Benutzername und Kennwort aus der Fritzbox eintragen, auswählen, wer klingeln
+soll, dann „Box koppeln“. Ein Name wie `fritz.box` geht auch: Die Box löst ihn selbst nach IPv4
+auf, denn er zeigt auch auf die IPv6-Adresse der Fritzbox, und Asterisk spricht nur IPv4. Die
+Seite zeigt von selbst, sobald die Box verbunden und an der Fritzbox angemeldet ist.
 
 **Die Box:** ein Gerät im Büronetz, das immer läuft – gebrauchter Thin Client (Futro S740,
 Wyse 5070), Raspberry Pi mit SSD, der Firmenserver oder ein NAS mit Docker. Am besten per Kabel.
