@@ -1081,6 +1081,11 @@ Hell oder dunkel ist eine Klasse an `<html>`: `public/theme.js` setzt sie vor de
 der Wahl in den Einstellungen (pro Gerät im Browser gespeichert) oder aus der Einstellung des
 Geräts; als eigene Datei, damit die Content-Security-Policy keine Inline-Skripte erlauben muss.
 
+Die Seitenleiste neben der App-Leiste ist in Mail, Kalender, Aufgaben, Chat und Einstellungen
+gleich breit (`w-sidebar`, 236 px, in `src/styles.css`), damit beim Wechsel zwischen den Modulen
+nichts springt. Kontakte hat keine Seitenleiste: die Spalte dort ist die Kontaktliste und so
+breit wie die Mailliste (320 px).
+
 Tastaturkürzel sind einzelne Tasten wie in Gmail und stehen als Liste in `src/lib/shortcuts.ts`;
 die Hilfe (`?` oder das Tastatur-Symbol unten in der Leiste) und die Einstellungen zeigen dieselbe
 Liste. Solange ein Eingabefeld oder ein Dialog den Fokus hat, greift keine Taste.

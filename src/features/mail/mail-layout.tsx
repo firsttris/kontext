@@ -26,7 +26,7 @@ export const MailLayout = ({
       <div
         className={cn(
           "h-full shrink-0 flex-col border-r border-border bg-side",
-          screen === "folders" ? "flex w-full md:w-[236px]" : "hidden lg:flex lg:w-[236px]",
+          screen === "folders" ? "flex w-full md:w-sidebar" : "hidden lg:flex lg:w-sidebar",
         )}
       >
         {sidebar}

@@ -42,7 +42,7 @@ export const ChatPage = ({
 
   return (
     <>
-      <div className="hidden h-full w-[260px] shrink-0 flex-col border-r border-border bg-side md:flex">
+      <div className="hidden h-full w-sidebar shrink-0 flex-col border-r border-border bg-side md:flex">
         <ChannelSidebar
           channels={channels}
           online={online}

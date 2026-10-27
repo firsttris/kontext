@@ -122,7 +122,7 @@ export const TasksPage = ({ search }: { search: TasksSearch }) => {
 
   return (
     <>
-      <div className="hidden h-full w-[236px] shrink-0 flex-col border-r border-border bg-side lg:flex">
+      <div className="hidden h-full w-sidebar shrink-0 flex-col border-r border-border bg-side lg:flex">
         <TaskSidebar
           search={search}
           counts={counts}
