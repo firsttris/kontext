@@ -10,7 +10,7 @@
  */
 import type { AnswerLinks } from "@/lib/invitation-mail";
 import { invitationMessage } from "@/lib/invitation-mail";
-import { isSignificantChange, planInvitations } from "@/lib/invitation-plan";
+import { planInvitations, raisesSequence } from "@/lib/invitation-plan";
 import { type Participant, participantEmail } from "@/lib/jscalendar";
 import { findRole } from "@/lib/mailboxes";
 import { createEvent, deleteEvent, getStoredEvent, updateEvent } from "./calendar";
@@ -112,7 +112,7 @@ export const saveEvent = async (
   const storedId = before?.id ?? id;
   const goneWhole = change.kind === "destroy" && storedId === change.id;
   let after = goneWhole ? null : await getStoredEvent(client, accountId, storedId);
-  if (before && after && isSignificantChange(before, after)) {
+  if (before && after && raisesSequence(before, after)) {
     const sequence = (before.sequence ?? 0) + 1;
     await updateEvent(client, accountId, after.id, { sequence }, { sendSchedulingMessages: false });
     after = { ...after, sequence };

@@ -67,26 +67,41 @@ const times = (event: CalendarEvent): string[] => {
  * events and in UTC when DTSTART has a zone; JSCalendar keeps it as a local date-time.
  */
 export const rrule = (rule: RecurrenceRule, event: CalendarEvent): string => {
-  const parts = [`FREQ=${rule.frequency.toUpperCase()}`];
-  if (rule.interval && rule.interval > 1) parts.push(`INTERVAL=${rule.interval}`);
-  if (rule.byDay?.length) {
-    parts.push(
-      `BYDAY=${rule.byDay.map((day) => `${day.nthOfPeriod ?? ""}${day.day.toUpperCase()}`).join(",")}`,
-    );
-  }
-  if (rule.byMonthDay?.length) parts.push(`BYMONTHDAY=${rule.byMonthDay.join(",")}`);
-  if (rule.count) parts.push(`COUNT=${rule.count}`);
-  if (rule.until) {
-    parts.push(
-      `UNTIL=${
-        event.showWithoutTime
-          ? compactDay(rule.until)
-          : event.timeZone
-            ? utcStamp(fromLocal(rule.until, event.timeZone))
-            : compact(rule.until)
-      }`,
-    );
-  }
+  const list = (name: string, values: (number | string)[] | undefined) =>
+    values?.length ? [`${name}=${values.join(",")}`] : [];
+  const until = rule.until
+    ? event.showWithoutTime
+      ? compactDay(rule.until)
+      : event.timeZone
+        ? utcStamp(fromLocal(rule.until, event.timeZone))
+        : compact(rule.until)
+    : "";
+  // Every part a series can have (RFC 8984 §4.3.3): one made in another program keeps its
+  // "last weekday" (BYSETPOS) or its month (BYMONTH) in the invitation.
+  const parts = [
+    `FREQ=${rule.frequency.toUpperCase()}`,
+    ...(rule.rscale ? [`RSCALE=${rule.rscale.toUpperCase()}`] : []),
+    ...(rule.interval && rule.interval > 1 ? [`INTERVAL=${rule.interval}`] : []),
+    ...list("BYSECOND", rule.bySecond),
+    ...list("BYMINUTE", rule.byMinute),
+    ...list("BYHOUR", rule.byHour),
+    ...list(
+      "BYDAY",
+      rule.byDay?.map((day) => `${day.nthOfPeriod ?? ""}${day.day.toUpperCase()}`),
+    ),
+    ...list("BYMONTHDAY", rule.byMonthDay),
+    ...list("BYYEARDAY", rule.byYearDay),
+    ...list("BYWEEKNO", rule.byWeekNo),
+    ...list(
+      "BYMONTH",
+      rule.byMonth?.map((month) => month.toUpperCase()),
+    ),
+    ...list("BYSETPOS", rule.bySetPosition),
+    ...(rule.firstDayOfWeek ? [`WKST=${rule.firstDayOfWeek.toUpperCase()}`] : []),
+    ...(rule.skip && rule.rscale ? [`SKIP=${rule.skip.toUpperCase()}`] : []),
+    ...(rule.count ? [`COUNT=${rule.count}`] : []),
+    ...(until ? [`UNTIL=${until}`] : []),
+  ];
   return `RRULE:${parts.join(";")}`;
 };
 

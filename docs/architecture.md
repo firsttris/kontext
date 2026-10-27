@@ -1314,8 +1314,8 @@ die Kopie liegt in „Gesendet“:
 | --------------------------------------- | --------------------------------------------- | ------------------------------- |
 | neuer Termin                            | alle: „… lädt dich ein“                       | `METHOD:REQUEST`                |
 | Zeit, Ort, Titel, Notiz, Serie geändert | alle außer denen, die abgesagt haben: „… hat den Termin geändert“ | `REQUEST`, `SEQUENCE` + 1 |
-| neuer Teilnehmer                        | er: die Einladung                             | `REQUEST`                       |
-| Teilnehmer entfernt                     | er: „… hat dich ausgeladen“                   | `CANCEL` nur mit ihm            |
+| neuer Teilnehmer                        | er: die Einladung                             | `REQUEST`, `SEQUENCE` + 1       |
+| Teilnehmer entfernt                     | er: „… hat dich ausgeladen“                   | `CANCEL` nur mit ihm, `SEQUENCE` + 1 |
 | Termin gelöscht                         | alle: „… hat den Termin abgesagt“             | `CANCEL`, `STATUS:CANCELLED`    |
 
 Antworten oder wer sonst kommt, zählen nicht als Änderung; vergangene Termine bekommen keine Mail
@@ -1334,8 +1334,11 @@ und ein Termin hat keine `blobId`). Es enthält `UID`, `SEQUENCE`, `ORGANIZER`, 
 `ATTENDEE;PARTSTAT=…;RSVP=TRUE`, Serien mit `RRULE`, `EXDATE` und einem `VEVENT` je geänderten
 Termin (`RECURRENCE-ID`), Ganztägiges als `VALUE=DATE` und für die Zeitzone ein `VTIMEZONE`
 (`src/lib/ical-zone.ts`, aus den Zeitzonendaten des Browsers, mit jährlicher Regel, wo sie
-passt). Wer `SEQUENCE` hochzählt, ist Kontext: Bei einer Änderung schreibt die App
-`sequence` + 1 in den Termin.
+passt), und die Regel einer Serie mit allem, was andere Programme schreiben (`BYSETPOS`,
+`BYMONTH` …). Wer `SEQUENCE` hochzählt, ist Kontext: Bei einer Änderung und wenn Teilnehmer dazukommen
+oder gehen, schreibt die App `sequence` + 1 in den Termin – wer ausgeladen wurde und wieder
+eingeladen wird, bekäme sonst eine Einladung unter der Nummer seiner Absage, und Stalwart wie
+andere Programme verwerfen sie (`OutOfSequence`).
 
 **Kollegen auf demselben Server** bekommen dieselbe Mail. Stalwart liest den `text/calendar`-Teil
 jeder Mail, die es zustellt, wenn der Absender angemeldet war (`crates/email/src/message/ingest.rs`,

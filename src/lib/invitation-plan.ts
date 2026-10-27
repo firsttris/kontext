@@ -77,6 +77,18 @@ const essence = (event: CalendarEvent) =>
 export const isSignificantChange = (before: CalendarEvent, after: CalendarEvent): boolean =>
   essence(before) !== essence(after);
 
+/**
+ * Does SEQUENCE go up? For a significant change, and when attendees come or go: whoever was
+ * taken off holds a CANCEL with the next number, and an invitation that brings them back must not
+ * be below it (RFC 5546 §2.1.4; Stalwart counts up on attendee changes too, and its inbound side
+ * turns an older one away as OutOfSequence, crates/groupware/src/scheduling/inbound.rs).
+ */
+export const raisesSequence = (before: CalendarEvent, after: CalendarEvent): boolean => {
+  const was = [...attendeesOf(before).keys()].sort().join();
+  const is = [...attendeesOf(after).keys()].sort().join();
+  return was !== is || isSignificantChange(before, after);
+};
+
 /** A single event that has ended; a series always has a date to come (as far as we know). */
 const isPast = (event: CalendarEvent, now: Date) =>
   !event.recurrenceRule &&

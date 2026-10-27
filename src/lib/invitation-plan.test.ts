@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { isSignificantChange, planInvitations } from "./invitation-plan";
+import { isSignificantChange, planInvitations, raisesSequence } from "./invitation-plan";
 import type { CalendarEvent, Participant } from "./jscalendar";
 
 const NOW = new Date("2026-10-27T12:00:00Z");
@@ -146,5 +146,22 @@ describe("isSignificantChange", () => {
         }),
       ),
     ).toBe(false);
+  });
+});
+
+describe("raisesSequence", () => {
+  it("goes up when attendees come or go, not for answers alone", () => {
+    const { k: _gone, ...kept } = event().participants!;
+    expect(raisesSequence(event(), event({ participants: kept }))).toBe(true);
+    expect(
+      raisesSequence(
+        event(),
+        event({ participants: { ...event().participants, n: person("neu@kunde.test") } }),
+      ),
+    ).toBe(true);
+    const answered = event();
+    answered.participants!.a = { ...answered.participants!.a!, participationStatus: "accepted" };
+    expect(raisesSequence(event(), answered)).toBe(false);
+    expect(raisesSequence(event(), event({ title: "Neu" }))).toBe(true);
   });
 });
