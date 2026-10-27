@@ -177,4 +177,12 @@ Für den Server zuerst nur die A-Einträge, alle **DNS only** (graue Wolke), auf
 `kontext`, `mail`, `dokumente`, `mta-sts` und `openpgpkey`. Die Website und die bisherige Mail
 bleiben davon unberührt.
 
+Prüfen (nach ein paar Minuten bei allen Resolvern; der des Anbieters merkt sich ein „gibt es
+nicht“ von vorher etwas länger):
+
+```bash
+apt-get install -y bind9-dnsutils
+for n in kontext mail dokumente mta-sts openpgpkey; do dig +short $n.firma.de @1.1.1.1; done
+```
+
 Danach weiter mit der [Installation](installation.md).
