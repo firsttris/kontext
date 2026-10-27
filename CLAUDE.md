@@ -43,7 +43,8 @@ mkdocs build --strict    # when docs/ or mkdocs.yml changed
 
 ## Commits
 
-- Work on `main` directly; no pull requests for now. One feature per commit (or a few commits).
+- Work on a branch of its own and open a pull request into `main`; never push to `main` directly.
+  One feature per pull request (in one or a few commits).
 - Before pushing, `git fetch origin main` and rebase if needed.
 
 ## Working rules
