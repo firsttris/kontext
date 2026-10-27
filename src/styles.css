@@ -135,8 +135,11 @@
 }
 
 /* Mobile safe areas: the content starts below the status bar and above the home indicator. */
+:root {
+  --safe-top: env(safe-area-inset-top);
+}
 @utility safe-top {
-  padding-top: env(safe-area-inset-top);
+  padding-top: var(--safe-top);
 }
 @utility safe-bottom {
   padding-bottom: max(env(safe-area-inset-bottom), 8px);
@@ -154,5 +157,17 @@
   [contenteditable="true"],
   .editor-content .ProseMirror {
     font-size: 16px;
+  }
+}
+
+/* iOS 26 draws a Liquid Glass edge blur over the top of an installed web app, about 40pt below
+   the status bar, above the page; no CSS or meta tag turns it off, and an opaque strip does not
+   stop it. The installed app on an iPhone in portrait therefore starts its content below it;
+   landscape has no status bar, Safari tabs have their own toolbar. */
+@supports (-webkit-touch-callout: none) {
+  @media (display-mode: standalone) and (orientation: portrait) {
+    :root {
+      --safe-top: calc(env(safe-area-inset-top) + 2.5rem);
+    }
   }
 }
