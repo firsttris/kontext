@@ -6,6 +6,7 @@ describe("statusPage", () => {
     const html = statusPage({ version: "1.0", paired: false, kontextUrl: null, state: null });
     expect(html).toContain('<form method="post" action="/pair">');
     expect(html).toContain('name="code"');
+    expect(html).not.toContain('http-equiv="refresh"');
   });
 
   it("shows the connection and the Fritzbox once paired, without markup from outside", () => {
@@ -24,5 +25,6 @@ describe("statusPage", () => {
     expect(html).toContain("verbunden (https://kontext.firma.de)");
     expect(html).toContain("&#60;script&#62;Rejected");
     expect(html).not.toContain("<form");
+    expect(html).toContain('<meta http-equiv="refresh" content="5">');
   });
 });

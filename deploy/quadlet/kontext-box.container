@@ -7,14 +7,18 @@ Wants=network-online.target
 After=network-online.target
 
 [Container]
-# Best a fixed version once the box has versioned images; it does not update itself.
+# Best a fixed version once the box has versioned images; it does not update itself. Built
+# locally (docs/installation.md, Telefonie), the image is localhost/kontext-box:<version>.
 Image=docker.io/tristanteu/kontext-box:latest
 ContainerName=kontext-box
 Network=host
 Volume=kontext-box:/data
-EnvironmentFile=-/etc/kontext-box.env
+# Quadlet hands this to `podman --env-file`, which knows no optional "-" prefix as systemd does:
+# the file has to exist, so ExecStartPre makes an empty one when there is no code to give.
+EnvironmentFile=/etc/kontext-box.env
 
 [Service]
+ExecStartPre=/usr/bin/touch /etc/kontext-box.env
 Restart=always
 
 [Install]

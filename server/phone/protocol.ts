@@ -8,7 +8,7 @@ import { z } from "zod";
 
 /** The box's line to the outside: as an IP phone of the Fritzbox, with its credentials. */
 export const lineSchema = z.object({
-  /** The Fritzbox (or another registrar) in the customer's network, e.g. "fritz.box". */
+  /** The Fritzbox (or another registrar) in the customer's network, e.g. "192.168.178.1"; the box resolves a name to IPv4. */
   registrar: z.string().min(1).max(200),
   username: z.string().min(1).max(100),
   password: z.string().min(1).max(200),

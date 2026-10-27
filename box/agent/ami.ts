@@ -79,6 +79,13 @@ export const registrationOf = (frame: Frame): { registered: boolean; detail: str
   return null;
 };
 
+/**
+ * Why Asterisk refused an action, or null when it did not. A refused `core reload` (the manager
+ * user without the "command" right) otherwise goes unnoticed and the old configuration stays.
+ */
+export const refusalOf = (frame: Frame): string | null =>
+  frame.Response === "Error" ? frame.Message || "refused" : null;
+
 export type Ami = {
   action: (fields: [string, string][]) => Promise<Frame>;
   close: () => void;

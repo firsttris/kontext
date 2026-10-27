@@ -31,6 +31,13 @@ const boxState = (box: Admin["boxes"][number]) =>
         box.status?.registered ? m.phone_box_registered() : m.phone_box_unregistered(),
       ].join(" · ");
 
+/**
+ * While a box waits for its code, connects or signs in at the Fritzbox, the page asks again
+ * every few seconds, so "verbunden" shows without reloading; once all is well it stops.
+ */
+const settling = (admin: Admin) =>
+  admin.boxes.some((box) => !box.paired || !box.online || !box.status?.registered);
+
 const Boxes = ({ boxes }: { boxes: Admin["boxes"] }) => {
   const [name, setName] = useState<string>(m.phone_box_name_default());
   const [code, setCode] = useState<string | null>(null);
@@ -82,7 +89,8 @@ const Boxes = ({ boxes }: { boxes: Admin["boxes"] }) => {
           {m.phone_box_pair()}
         </Button>
       </form>
-      {code ? (
+      {/* The code is only of use until the box has paired with it. */}
+      {code && boxes.some((box) => !box.paired) ? (
         <div role="status" className="flex flex-col gap-1.5 rounded-lg bg-subtle p-3 text-[13px]">
           <strong className="font-mono text-[15px]">{m.phone_box_code({ code })}</strong>
           <span className="text-muted">{m.phone_box_code_hint()}</span>
@@ -97,7 +105,7 @@ const Boxes = ({ boxes }: { boxes: Admin["boxes"] }) => {
 
 const LineForm = ({ line }: { line: Admin["line"] }) => {
   const toast = useToast();
-  const [registrar, setRegistrar] = useState(line?.registrar ?? "fritz.box");
+  const [registrar, setRegistrar] = useState(line?.registrar ?? "192.168.178.1");
   const [username, setUsername] = useState(line?.username ?? "");
   const [password, setPassword] = useState("");
   const save = useAdminChange(() => send("PUT", "/line", { registrar, username, password }));
@@ -147,7 +155,11 @@ const LineForm = ({ line }: { line: Admin["line"] }) => {
 };
 
 export const PhoneSettingsSection = () => {
-  const { data } = useQuery({ queryKey: ADMIN_KEY, queryFn: () => send<Admin>("GET", "") });
+  const { data } = useQuery({
+    queryKey: ADMIN_KEY,
+    queryFn: () => send<Admin>("GET", ""),
+    refetchInterval: (query) => (query.state.data && settling(query.state.data) ? 3000 : false),
+  });
   return (
     <>
       <p className="m-0 text-[13px] text-muted">{m.phone_settings_hint()}</p>

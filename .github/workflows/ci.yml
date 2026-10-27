@@ -73,6 +73,10 @@ jobs:
           curl -fsS http://127.0.0.1:8089/ | grep -q "noch nicht mit Kontext gekoppelt"
           docker exec box asterisk -rx "module show like res_pjsip.so" | grep -q "res_pjsip.so"
           docker exec box asterisk -rx "manager show users" | grep -q "kontext-agent"
+          # The agent reloads Asterisk over AMI after each configuration: that needs "command"
+          docker exec box asterisk -rx "manager show user kontext-agent" | grep -q "write perm:.*command"
+          # Every module the box loads loads cleanly (box/asterisk/modules.conf)
+          if docker logs box 2>&1 | grep -E "Error loading module|declined to load|Failed to resolve dependencies"; then exit 1; fi
       # Everything the agent may write, with every feature on: Asterisk must read all of it.
       - run: |
           fail() { echo "::error::$1"; failed=1; }

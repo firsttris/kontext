@@ -6,9 +6,10 @@
 import { mkdir, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import type { BoxConfig, CallEvent } from "../../server/phone/protocol";
-import { type Ami, callEventOf, connectAmi, type Frame, registrationOf } from "./ami";
+import { type Ami, callEventOf, connectAmi, type Frame, refusalOf, registrationOf } from "./ami";
 import { type AmiLogin, asteriskFiles, type BoxPaths, lineEndpoint } from "./asterisk-config";
 import type { BoxFiles } from "./files";
+import { type LookupIpv4, withIpv4Registrar } from "./registrar";
 
 export type Pbx = {
   apply: (config: BoxConfig) => Promise<void>;
@@ -42,12 +43,14 @@ export const createAsterisk = async ({
   files,
   ami: login,
   events,
+  lookupIpv4,
 }: {
   configDir: string;
   paths: BoxPaths;
   files: BoxFiles;
   ami: AmiLogin;
   events: PbxEvents;
+  lookupIpv4: LookupIpv4;
 }): Promise<Pbx & { close: () => void }> => {
   // AMI acts on channels, Kontext on calls. The line outside (to the Fritzbox) is what one
   // holds, moves and hangs up; for a call out, before it is answered, there is only the line
@@ -128,13 +131,16 @@ export const createAsterisk = async ({
       await files.syncSounds(config.sounds);
       await mkdir(paths.recordings, { recursive: true });
       await mkdir(configDir, { recursive: true });
-      for (const [name, text] of Object.entries(asteriskFiles(config, login, paths))) {
+      const confFiles = asteriskFiles(await withIpv4Registrar(config, lookupIpv4), login, paths);
+      for (const [name, text] of Object.entries(confFiles)) {
         await writeFile(join(configDir, name), text, { mode: 0o640 });
       }
-      await ami.action([
+      const reload = await ami.action([
         ["Action", "Command"],
         ["Command", "core reload"],
       ]);
+      const refused = refusalOf(reload);
+      if (refused) throw new Error(`Asterisk: core reload – ${refused}`);
       await ami.action([["Action", "PJSIPShowRegistrationsOutbound"]]);
     },
     answer: (call, room) => moveTo(call, "kontext-answer", "answer", room),

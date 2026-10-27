@@ -7,6 +7,7 @@
  * Asterisk's configuration into ASTERISK_CONFIG_DIR whenever Kontext sends one, and talks to
  * Asterisk over AMI on localhost.
  */
+import { lookup } from "node:dns/promises";
 import { existsSync } from "node:fs";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
@@ -71,6 +72,7 @@ const start = async (paired: Credentials) => {
         files: createBoxFiles({ credentials: paired, soundDir: PATHS.sounds }),
         ami: AMI,
         events,
+        lookupIpv4: async (host) => (await lookup(host, { family: 4 })).address,
       }),
     lastConfig: existsSync(configFile)
       ? (JSON.parse(await readFile(configFile, "utf8")) as BoxConfig)

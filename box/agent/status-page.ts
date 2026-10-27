@@ -42,7 +42,10 @@ ${error ? `<p class="bad">${escapeHtml(error)}</p>` : ""}
 <label>Code<input name="code" required placeholder="K7QM-4XPA" autocomplete="off"></label>
 <button type="submit">Koppeln</button>
 </form>`;
-  return `<!doctype html><html lang="de"><head><meta charset="utf-8">
+  // Once paired the page follows the box by itself (connecting to Kontext and signing in at the
+  // Fritzbox take a few seconds); before, it would empty the form while typing.
+  const refresh = paired ? '<meta http-equiv="refresh" content="5">' : "";
+  return `<!doctype html><html lang="de"><head><meta charset="utf-8">${refresh}
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Kontext-Telefonbox</title><style>${PAGE_STYLE}</style></head>
 <body><h1>Kontext-Telefonbox</h1>${body}<p style="color:#71717a;font-size:13px">Version ${escapeHtml(version)}</p></body></html>`;

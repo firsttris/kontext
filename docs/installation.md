@@ -134,8 +134,11 @@ merken und festlegen, auf welche Rufnummern das Gerät reagiert und mit welcher 
 Durchwahlen je Nummer ein weiteres Gerät dieser Art anlegen, das nur auf diese Nummer reagiert
 und mit ihr anruft, und es in Kontext unter „Weitere Rufnummern“ eintragen.
 
-**In Kontext:** Einstellungen → Telefonie: Benutzername und Kennwort aus der Fritzbox eintragen,
-auswählen, wer klingeln soll, dann „Box koppeln“.
+**In Kontext:** Einstellungen → Telefonie: als Adresse der Fritzbox ihre IP (meist
+`192.168.178.1`), Benutzername und Kennwort aus der Fritzbox eintragen, auswählen, wer klingeln
+soll, dann „Box koppeln“. Ein Name wie `fritz.box` geht auch: Die Box löst ihn selbst nach IPv4
+auf, denn er zeigt auch auf die IPv6-Adresse der Fritzbox, und Asterisk spricht nur IPv4. Die
+Seite zeigt von selbst, sobald die Box verbunden und an der Fritzbox angemeldet ist.
 
 **Die Box:** ein Gerät im Büronetz, das immer läuft – gebrauchter Thin Client (Futro S740,
 Wyse 5070), Raspberry Pi mit SSD, der Firmenserver oder ein NAS mit Docker. Am besten per Kabel.
@@ -145,6 +148,12 @@ KONTEXT_URL=https://kontext.firma.de PAIRING_CODE=K7QM-4XPA \
   docker compose -f deploy/box.compose.yaml up -d
 ```
 
+Die Box braucht eine **feste Adresse im LAN** (in der Fritzbox unter Heimnetz → Netzwerk →
+Gerät → „Diesem Netzwerkgerät immer die gleiche IPv4-Adresse zuweisen“). Nach außen braucht sie
+keine offenen Ports, nur ausgehend Kontext (HTTPS, 443) und den Kontext-Server auf TCP 5060 und
+UDP 20000–20100. Läuft auf dem Gerät eine Firewall, aus dem LAN 5070 TCP+UDP, 10000–10200 UDP und
+8089 TCP erlauben. SIP auf 5070 lauscht erst nach dem Koppeln; davor gibt es nur die Statusseite.
+
 **Tischtelefone (Snom):** in Kontext unter Telefonie → Tischtelefone mit MAC-Adresse anlegen,
 dann im Telefon (Weboberfläche → Erweitert → Update) als Einstellungs-URL
 `http://<box>:8089/snom/{mac}.xml` eintragen und neu starten; es holt sich Konto und Einstellungen
@@ -152,10 +161,28 @@ von der Box. Die Box braucht dafür eine feste Adresse im LAN. Das Passwort gibt
 ersten Abruf heraus; nach einem Zurücksetzen des Telefons das Tischtelefon in Kontext löschen und
 neu anlegen.
 
-Mit Podman: `deploy/quadlet/kontext-box.container`. Ohne Code beim Start zeigt die Box auf
-`http://<box>:8089` ein Formular für Kontexts Adresse und den Code. Die Box braucht keine offenen
-Ports nach außen; sie läuft im Host-Netz (SIP mit der Fritzbox auf 5070, Sprache auf
-10000–10200 im LAN).
+Mit Podman: `deploy/quadlet/kontext-box.container` nach `/etc/containers/systemd/` kopieren,
+`systemctl daemon-reload`, `systemctl start kontext-box`; nach einem Neustart startet die Box von
+selbst. Ohne Code beim Start zeigt die Box auf `http://<box>:8089` ein Formular für Kontexts
+Adresse und den Code; mit Code stehen `KONTEXT_URL` und `PAIRING_CODE` in `/etc/kontext-box.env`.
+Sie läuft im Host-Netz (SIP mit der Fritzbox auf 5070, Sprache auf 10000–10200 im LAN).
+
+Die Box selbst bauen (etwa für eine Version, die noch nicht auf Docker Hub ist):
+
+```bash
+git clone --depth 1 --branch v0.1.3 https://github.com/firsttris/kontext.git /opt/kontext-box-src
+cd /opt/kontext-box-src
+podman build -f box/Dockerfile --build-arg BOX_VERSION=0.1.3 -t kontext-box:0.1.3 .
+```
+
+Im Quadlet dann `Image=localhost/kontext-box:0.1.3` (Podman setzt `localhost/` vor lokal gebaute
+Images); mit Docker heißt es `kontext-box:0.1.3`, und `docker build` statt `podman build`.
+
+Prüfen: `curl http://127.0.0.1:8089/` zeigt „Kontext-Telefonbox“, und
+`podman exec kontext-box asterisk -rx "module show like res_pjsip.so"` zeigt `res_pjsip.so`.
+Die Meldung „There are no local system nameservers configured, resorting to system resolution“
+beim Start ist harmlos: Asterisk auf Alpine liest die Nameserver nicht selbst und nimmt dann die
+des Systems.
 
 ### Dokumente
 
