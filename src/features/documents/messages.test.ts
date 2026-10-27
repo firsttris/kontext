@@ -1,5 +1,12 @@
 import { describe, expect, it } from "vitest";
-import { framePathOf, frameSrcOf, kontextPathOf, readFrameMessage, splatOf } from "./messages";
+import {
+  framePathOf,
+  frameSrcOf,
+  isEditorPath,
+  kontextPathOf,
+  readFrameMessage,
+  splatOf,
+} from "./messages";
 
 const frame = {};
 const origin = "https://dokumente.firma.de";
@@ -34,6 +41,13 @@ describe("paths", () => {
     expect(kontextPathOf("/")).toBe("/documents");
     expect(kontextPathOf("/folders/2?embedded=kontext")).toBe("/documents/folders/2");
     expect(splatOf("/edit/1?x=1")).toBe("edit/1");
+  });
+
+  it("tells an open file from the lists", () => {
+    expect(isEditorPath("/documents/edit/1")).toBe(true);
+    expect(isEditorPath("/documents")).toBe(false);
+    expect(isEditorPath("/documents/folders/2")).toBe(false);
+    expect(isEditorPath("/mail")).toBe(false);
   });
 
   it("opens the frame embedded", () => {
