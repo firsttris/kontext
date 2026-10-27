@@ -16,6 +16,7 @@ import {
   type FrameCommand,
   framePathOf,
   frameSrcOf,
+  isEditorPath,
   kontextPathOf,
   readFrameMessage,
   splatOf,
@@ -41,6 +42,9 @@ const Frame = ({ url, active }: { url: string; active: boolean }) => {
   const [ready, setReady] = useState(false);
   /** The page the frame shows, as it last said. */
   const shown = useRef<string | null>(null);
+  // An open file has its back button in the frame: only once the frame shows the editor itself
+  // can the tab bar go (a frame that never loads leaves it).
+  const [editorShown, setEditorShown] = useState(false);
   const currentTheme = useRef(theme);
   currentTheme.current = theme;
 
@@ -57,6 +61,7 @@ const Frame = ({ url, active }: { url: string; active: boolean }) => {
         send({ source: "kontext", type: "theme", theme: currentTheme.current });
       } else if (message.type === "route") {
         shown.current = kontextPathOf(message.path);
+        setEditorShown(isEditorPath(shown.current));
         // Mirror the frame's page without a history entry of its own: the frame has one.
         if (isDocumentsPath(window.location.pathname) && window.location.pathname !== shown.current)
           void navigate({
@@ -114,7 +119,7 @@ const Frame = ({ url, active }: { url: string; active: boolean }) => {
         allow="clipboard-read; clipboard-write; fullscreen"
         className="min-h-0 w-full flex-1 border-0 bg-bg"
       />
-      <TabBar />
+      {editorShown && isEditorPath(pathname) ? null : <TabBar />}
     </div>
   );
 };

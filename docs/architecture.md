@@ -1485,7 +1485,10 @@ Handy unter „Mehr“, wenn es nicht in die Tab-Leiste gelegt ist). `/documents
 (`src/features/documents/documents-host.tsx`), der beim ersten Besuch entsteht und beim Wechsel zu
 Mail und zurück stehen bleibt, damit ein offenes Dokument offen bleibt. Die Adresse folgt der Seite
 im Rahmen (`/documents/edit/…`, ohne eigenen Verlaufseintrag: den hat der Rahmen), und Kontexts
-Navigation zu einer solchen Adresse öffnet die Seite im Rahmen. Kontext schickt Hell/Dunkel und
+Navigation zu einer solchen Adresse öffnet die Seite im Rahmen. Am Handy steht die Tab-Leiste unter den
+Listen von Dokumente, nicht unter einer offenen Datei, sobald der Rahmen den Editor meldet: dort
+gehört der Bildschirm dem Editor, und sein Zurück führt zu den Listen. Bleibt der Rahmen leer
+(Schreibzeug nicht erreichbar), bleibt die Tab-Leiste. Kontext schickt Hell/Dunkel und
 beim Abmelden `logout` (und wartet bis zu zwei Sekunden auf `signed-out`); Schreibzeug meldet die
 Seite, den Namen des Dokuments, ungespeicherte Änderungen (ein Punkt an „Dokumente“ in der Leiste)
 und Kontexts Tastenkürzel, die außerhalb von Feldern und Dokument gedrückt wurden. Nachrichten
