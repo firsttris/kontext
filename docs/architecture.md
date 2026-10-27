@@ -1523,7 +1523,8 @@ Kontexts Schlüssel und handelt mit genau den Rechten der Person. Ein schon verg
 mit Schreibzeugs Meldung zurück.
 
 **Dokumente überall, wo sie hingehören.** Eine Datei aus Dokumente lässt sich im Chat als Karte
-teilen („Mail, Aufgabe oder Kontakt verknüpfen“, Reiter „Dokument“), mit einer Aufgabe verknüpfen
+teilen („Mail, Aufgabe, Kontakt oder Dokument verknüpfen“, Reiter „Dokument“; ohne Dokumente
+heißt der Knopf „Mail, Aufgabe oder Kontakt verknüpfen“), mit einer Aufgabe verknüpfen
 („Dokument verknüpfen“ in der Aufgabe), an einen Termin hängen (im Termin-Editor) und mit einem
 Kontakt verknüpfen (Abschnitt „Dokumente“ am Kontakt, wenn man das Adressbuch ändern darf). Ein Klick
 öffnet sie im Modul. Beim Termin ist sie ein Link des Termins (JSCalendar `links`, RFC 8984 §4.2.7,

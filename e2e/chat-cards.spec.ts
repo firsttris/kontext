@@ -119,8 +119,12 @@ test.describe("Chat: Fotos, Dateien und Karten", () => {
     await addMail("jonas", "jonas", subject);
     await login(page);
     const slug = await newChannel(page, ["Max Becker"]);
-    await page.getByRole("button", { name: "Mail, Aufgabe oder Kontakt verknüpfen" }).click();
-    const picker = page.getByRole("dialog", { name: "Mail, Aufgabe oder Kontakt verknüpfen" });
+    await page
+      .getByRole("button", { name: "Mail, Aufgabe, Kontakt oder Dokument verknüpfen" })
+      .click();
+    const picker = page.getByRole("dialog", {
+      name: "Mail, Aufgabe, Kontakt oder Dokument verknüpfen",
+    });
     await picker.getByRole("searchbox", { name: "Suchen" }).fill(subject);
     await picker.getByRole("button", { name: new RegExp(subject) }).click();
     // Back in the field: Enter sends the card.
@@ -170,8 +174,12 @@ test.describe("Chat: Fotos, Dateien und Karten", () => {
   test("teilt einen Kontakt", async ({ page }) => {
     await login(page);
     await newChannel(page, []);
-    await page.getByRole("button", { name: "Mail, Aufgabe oder Kontakt verknüpfen" }).click();
-    const picker = page.getByRole("dialog", { name: "Mail, Aufgabe oder Kontakt verknüpfen" });
+    await page
+      .getByRole("button", { name: "Mail, Aufgabe, Kontakt oder Dokument verknüpfen" })
+      .click();
+    const picker = page.getByRole("dialog", {
+      name: "Mail, Aufgabe, Kontakt oder Dokument verknüpfen",
+    });
     await picker.getByRole("tab", { name: "Kontakt" }).click();
     await picker.getByRole("searchbox", { name: "Suchen" }).fill("Petra");
     await picker.getByRole("button", { name: /Petra Keller/ }).click();

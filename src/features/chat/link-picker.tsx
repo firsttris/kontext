@@ -1,7 +1,7 @@
 /**
  * "Mail, Aufgabe oder Kontakt verknüpfen": searches mails over all mailboxes (like the search,
  * without trash and spam), one's tasks or the contacts, and gives the picked one as a card; with
- * Dokumente also a file from its folders.
+ * Dokumente also a file from its folders (and the name says so).
  */
 import { useQueries } from "@tanstack/react-query";
 import { Search } from "lucide-react";
@@ -30,6 +30,10 @@ type Kind = "mail" | "task" | "contact" | "document";
 type Hit = { card: Card; key: string };
 
 const HITS = 12;
+
+/** The picker's name, on its button too: it names documents only where Dokumente is connected. */
+export const useLinkTitle = (): string =>
+  useDocumentsConnected() ? m.chat_link_with_documents() : m.chat_link();
 
 const useMailHits = (text: string, enabled: boolean): Hit[] => {
   const client = useClient();
@@ -105,6 +109,7 @@ export const LinkPicker = ({
   const [text, setText] = useState("");
   const hits = useHits(kind, useDeferredValue(text));
   const documents = useDocumentsConnected();
+  const title = useLinkTitle();
   const tabs: [Kind, string][] = [
     ["mail", m.chat_card_mail()],
     ["task", m.chat_card_task()],
@@ -115,7 +120,7 @@ export const LinkPicker = ({
     <Dialog
       open
       onOpenChange={(open) => !open && onClose()}
-      title={m.chat_link()}
+      title={title}
       onCloseAutoFocus={
         onClosed
           ? (event) => {
