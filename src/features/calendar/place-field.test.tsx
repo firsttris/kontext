@@ -39,10 +39,27 @@ describe("PlaceField", () => {
     render(<Field />);
     const field = typeInto("Bäckerei");
     fireEvent.keyDown(field, { key: "ArrowDown" });
+    fireEvent.keyDown(field, { key: "ArrowDown" });
     fireEvent.keyDown(field, { key: "Enter" });
     expect(field.value).toBe(PLACES[1]!.label);
     fireEvent.change(field, { target: { value: "Besprechungsraum 2" } });
     expect(field.value).toBe("Besprechungsraum 2");
+  });
+
+  it("keeps typed text on Enter when no place was chosen", () => {
+    render(<Field />);
+    const field = typeInto("Bäckerei am Markt");
+    fireEvent.keyDown(field, { key: "Enter" });
+    expect(field.value).toBe("Bäckerei am Markt");
+    expect(screen.queryByRole("listbox")).toBeNull();
+  });
+
+  it("goes from the last place up with ArrowUp", () => {
+    render(<Field />);
+    const field = typeInto("Bäckerei");
+    fireEvent.keyDown(field, { key: "ArrowUp" });
+    fireEvent.keyDown(field, { key: "Enter" });
+    expect(field.value).toBe(PLACES[1]!.label);
   });
 
   it("Escape closes the list, not the dialog", () => {

@@ -30,6 +30,9 @@ describe("mapsUrl", () => {
     expect(mapsUrl("www.example.com", WINDOWS)).toBeNull();
     expect(mapsUrl("zoom.us/j/123", WINDOWS)).toBeNull();
     expect(mapsUrl("   ", WINDOWS)).toBeNull();
+    // Outlook joins a booked room and a Zoom location with "; ".
+    expect(mapsUrl("Konferenzraum 1; https://us02web.zoom.us/j/85012345678", WINDOWS)).toBeNull();
+    expect(mapsUrl("Raum 2, www.example.com/meet", WINDOWS)).toBeNull();
   });
 });
 

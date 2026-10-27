@@ -15,11 +15,16 @@ type Props = {
   onChange: (value: string) => void;
 };
 
+/** The next highlighted entry; from none, down goes to the first and up to the last. */
+const step = (current: number, by: 1 | -1, count: number): number =>
+  current < 0 ? (by === 1 ? 0 : count - 1) : (current + by + count) % count;
+
 export const PlaceField = ({ value, onChange }: Props) => {
   const [focused, setFocused] = useState(false);
   // Closed by Escape or a pick until the text changes again; a place already there asks nothing.
   const [dismissed, setDismissed] = useState(true);
-  const [highlight, setHighlight] = useState(0);
+  // -1: none chosen yet, so Enter keeps what was typed.
+  const [highlight, setHighlight] = useState(-1);
   const listId = useId();
   const labelId = useId();
   const places = usePlaceSuggestions(value, dismissed);
@@ -31,7 +36,7 @@ export const PlaceField = ({ value, onChange }: Props) => {
   const pick = (place: Place) => {
     onChange(place.label);
     setDismissed(true);
-    setHighlight(0);
+    setHighlight(-1);
   };
 
   const onKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
@@ -40,11 +45,14 @@ export const PlaceField = ({ value, onChange }: Props) => {
       setDismissed(true);
     } else if (event.key === "ArrowDown" || event.key === "ArrowUp") {
       event.preventDefault();
-      setHighlight((h) => (h + (event.key === "ArrowDown" ? 1 : shown.length - 1)) % shown.length);
+      setHighlight((h) => step(h, event.key === "ArrowDown" ? 1 : -1, shown.length));
     } else if (event.key === "Enter") {
+      const place = shown[highlight];
+      // Enter on typed text is free text: the list closes and the form goes on as without it.
+      if (!place) return setDismissed(true);
       // Choosing a place never submits the appointment.
       event.preventDefault();
-      pick(shown[highlight] ?? shown[0]!);
+      pick(place);
     }
   };
 
@@ -66,7 +74,7 @@ export const PlaceField = ({ value, onChange }: Props) => {
           onChange={(e) => {
             onChange(e.target.value);
             setDismissed(false);
-            setHighlight(0);
+            setHighlight(-1);
           }}
           onKeyDown={onKeyDown}
           onFocus={() => setFocused(true)}

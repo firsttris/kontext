@@ -5,8 +5,12 @@
  * app on a phone, where the route is one tap away. Pure.
  */
 
-/** A meeting link or any other web address in the "Ort" field is no place on a map. */
-const LOOKS_LIKE_ADDRESS_ON_THE_WEB = /^(?:[a-z][a-z\d+.-]*:\/\/|www\.)|^\S+\.\S+\/\S*$/i;
+/**
+ * A meeting link or any other web address in the "Ort" field is no place on a map, also next to a
+ * room ("Konferenzraum 1; https://…", as Outlook joins its locations).
+ */
+const LOOKS_LIKE_ADDRESS_ON_THE_WEB =
+  /(?:^|\s|[;,])(?:[a-z][a-z\d+.-]*:\/\/|www\.)|^\S+\.\S+\/\S*$/i;
 
 export const isMapPlace = (location: string): boolean => {
   const text = location.trim();
