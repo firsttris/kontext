@@ -18,6 +18,8 @@ Kontext steht, steht auch am iPhone, unter Android (DAVx⁵) und in Thunderbird.
   Ausnahmen („nur dieser“ oder „ganze Serie“).
 - **Einladungen** mit Zusage und Absage; die Glocke zeigt, was noch auf Antwort wartet, und die
   Termine des Tages.
+- **Kollegen einladen:** Im Feld „Teilnehmer“ schlägt Kontext beim Tippen die Kollegen aus der
+  Firma vor (danach Kontakte und Kontaktgruppen); die Adresse muss man nicht kennen.
 - **Wer ist frei?** Beim Einladen von Kollegen zeigt Kontext, wer zu der Zeit belegt ist, und
   schlägt die nächsten Zeiten vor, in denen alle frei sind – wie Outlooks
   Terminplanungs-Assistent. In der Firma sieht jeder, wann Kollegen belegt sind (ohne Titel);

@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { login, unique } from "./helpers";
+import { addAttendees, login, unique } from "./helpers";
 
 const day = (offset: number) =>
   new Intl.DateTimeFormat("sv-SE", { timeZone: "Europe/Berlin" }).format(
@@ -27,7 +27,7 @@ test.describe("Kalender", () => {
     const dialog = page.getByRole("dialog");
     await dialog.getByLabel("Titel").fill(title);
     await dialog.getByLabel("Ort").fill("Hauptstraße 41");
-    await dialog.getByLabel("Teilnehmer").fill("anna@weber-haustechnik.test");
+    await addAttendees(dialog, "anna@weber-haustechnik.test");
     await dialog.getByRole("button", { name: "Speichern" }).click();
     await expect(page.getByRole("status")).toHaveText("Einladungen werden verschickt.");
     const block = page.locator(`[data-day="${tomorrow()}"]`).getByText(title);

@@ -16,15 +16,13 @@ import { displayBody, type OutgoingAttachment, saveDraft, sendEmail } from "@/jm
 import type { EmailAddress, Identity } from "@/jmap/types";
 import { parseAddresses } from "@/lib/addresses";
 import { type ComposeMode, sharedSenderName, startCompose } from "@/lib/compose";
-import { groupSuggestions } from "@/lib/groups";
 import { htmlToText, sanitizeMailHtml, textToHtml } from "@/lib/html";
-import { contactAddresses } from "@/lib/jscontact";
 import { findRole } from "@/lib/mailboxes";
 import { pgpKind } from "@/lib/pgp-mail";
 import { holdUntil, sendTimeLabel } from "@/lib/schedule";
 import { signedOverEncrypted, smimeKind } from "@/lib/smime";
 import { m } from "@/paraglide/messages";
-import { useContacts } from "../contacts/queries";
+import { useAddressSuggestions } from "../contacts/use-suggestions";
 import { useAutocryptHeader } from "../pgp/autocrypt";
 import { useEncryptedSend } from "../pgp/use-encrypted-send";
 import { SnippetMenu } from "../snippets/snippet-menu";
@@ -66,12 +64,8 @@ export const Composer = ({ accountId, mode, sourceEmailId, prefill }: Props) => 
   const { data: session } = useSession();
   const { account, own, sendAccountId, identities, mailboxes, myName, sendersReady } =
     useSendAccount(accountId, true);
-  const { data: contacts = [] } = useContacts();
   const source = useEmail(accountId, sourceEmailId);
-  const suggestions = useMemo(
-    () => [...groupSuggestions(contacts), ...contactAddresses(contacts)],
-    [contacts],
-  );
+  const suggestions = useAddressSuggestions();
 
   const [identityId, setIdentityId] = useState<string>("");
   const [to, setTo] = useState<EmailAddress[]>([]);

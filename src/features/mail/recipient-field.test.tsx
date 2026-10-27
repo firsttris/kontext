@@ -54,4 +54,29 @@ describe("RecipientField", () => {
     fireEvent.keyDown(input, { key: "Backspace" });
     expect(onChange).toHaveBeenCalledWith([petra]);
   });
+
+  it("boxed, shows its label above and the hint while empty", () => {
+    render(
+      <RecipientField
+        boxed
+        label="Teilnehmer"
+        placeholder="Name oder E-Mail-Adresse"
+        value={[]}
+        onChange={vi.fn()}
+        suggestions={suggestions}
+      />,
+    );
+    expect(screen.getByText("Teilnehmer")).toBeTruthy();
+    expect(screen.getByRole("combobox", { name: "Teilnehmer" }).getAttribute("placeholder")).toBe(
+      "Name oder E-Mail-Adresse",
+    );
+  });
+
+  it("keeps Enter on half-typed text from submitting the form around it", () => {
+    const { input } = setup();
+    fireEvent.change(input, { target: { value: "anna" } });
+    const enter = new KeyboardEvent("keydown", { key: "Enter", bubbles: true, cancelable: true });
+    input.dispatchEvent(enter);
+    expect(enter.defaultPrevented).toBe(true);
+  });
 });

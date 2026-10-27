@@ -47,7 +47,7 @@ IMAP und SMTP.
 
 ## Schreiben
 
-- **Formatierter Text**, Antworten mit Zitat, Anhänge, Empfänger-Vorschläge aus den Kontakten,
+- **Formatierter Text**, Antworten mit Zitat, Anhänge, Empfänger-Vorschläge aus der Firma und den Kontakten,
   Signatur je Absenderadresse.
 - **Senden rückgängig** (5 bis 30 Sekunden) und **später senden** („morgen 8 Uhr“) – der Server
   sendet, auch wenn der Rechner aus ist.

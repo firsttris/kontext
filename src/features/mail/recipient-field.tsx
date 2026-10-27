@@ -1,4 +1,7 @@
-/** To/Cc/Bcc as chips, with suggestions from the contacts while typing. */
+/**
+ * Addresses as chips, with suggestions while typing: To/Cc/Bcc in the composer (label in the
+ * line) and the attendees of an appointment (a boxed field under its label, like the others).
+ */
 import { X } from "lucide-react";
 import { type KeyboardEvent, useId, useMemo, useState } from "react";
 import type { EmailAddress } from "@/jmap/types";
@@ -12,12 +15,23 @@ type Props = {
   label: string;
   value: EmailAddress[];
   onChange: (value: EmailAddress[]) => void;
-  /** Contacts, and groups that add all their members. */
+  /** Colleagues, contacts, and groups that add all their members. */
   suggestions: Suggestion[];
   autoFocus?: boolean;
+  boxed?: boolean;
+  /** Shown while there are no chips. */
+  placeholder?: string;
 };
 
-export const RecipientField = ({ label, value, onChange, suggestions, autoFocus }: Props) => {
+export const RecipientField = ({
+  label,
+  value,
+  onChange,
+  suggestions,
+  autoFocus,
+  boxed,
+  placeholder,
+}: Props) => {
   const [text, setText] = useState("");
   const [highlight, setHighlight] = useState(0);
   const listId = useId();
@@ -69,17 +83,25 @@ export const RecipientField = ({ label, value, onChange, suggestions, autoFocus 
       if (matches.length > 0 && event.key !== ",") {
         event.preventDefault();
         pick(matches[highlight] ?? matches[0]!);
-      } else if (text.trim() && commit()) {
-        event.preventDefault();
+      } else if (text.trim()) {
+        // Half-typed text never submits the form around the field.
+        if (commit() || event.key === "Enter") event.preventDefault();
       }
     } else if (event.key === "Backspace" && !text && value.length > 0) {
       onChange(value.slice(0, -1));
     }
   };
 
-  return (
-    <div className="relative flex min-h-9 flex-1 flex-wrap items-center gap-1.5 py-1">
-      <span className="w-9 shrink-0 text-[13px] text-muted">{label}</span>
+  const field = (
+    <div
+      className={cn(
+        "relative flex flex-1 flex-wrap items-center gap-1.5",
+        boxed
+          ? "min-h-10 rounded-lg border border-border bg-bg px-2 py-1 focus-within:border-muted"
+          : "min-h-9 py-1",
+      )}
+    >
+      {boxed ? null : <span className="w-9 shrink-0 text-[13px] text-muted">{label}</span>}
       {value.map((address) => (
         <span
           key={address.email}
@@ -103,6 +125,7 @@ export const RecipientField = ({ label, value, onChange, suggestions, autoFocus 
         aria-expanded={matches.length > 0}
         aria-controls={listId}
         autoFocus={autoFocus}
+        placeholder={value.length ? undefined : placeholder}
         value={text}
         onChange={(e) => {
           setText(e.target.value);
@@ -112,13 +135,19 @@ export const RecipientField = ({ label, value, onChange, suggestions, autoFocus 
         onBlur={() => {
           if (text.trim()) commit();
         }}
-        className="h-7 min-w-[120px] flex-1 border-0 bg-transparent text-[14px] text-fg outline-none"
+        className={cn(
+          "h-7 min-w-[120px] flex-1 border-0 bg-transparent text-[14px] text-fg outline-none placeholder:text-muted",
+          boxed && "px-1",
+        )}
       />
       {matches.length > 0 ? (
         <div
           id={listId}
           role="listbox"
-          className="absolute top-full left-9 z-20 m-0 mt-1 w-[min(360px,calc(100%-36px))] list-none rounded-xl border border-border bg-bg p-1 shadow-lg"
+          className={cn(
+            "absolute top-full z-20 m-0 mt-1 list-none rounded-xl border border-border bg-bg p-1 shadow-lg",
+            boxed ? "left-0 w-[min(360px,100%)]" : "left-9 w-[min(360px,calc(100%-36px))]",
+          )}
         >
           {matches.map((address, index) => (
             <div
@@ -148,5 +177,13 @@ export const RecipientField = ({ label, value, onChange, suggestions, autoFocus 
         </div>
       ) : null}
     </div>
+  );
+  return boxed ? (
+    <div className="flex flex-col gap-1.5">
+      <span className="text-[13px] text-muted">{label}</span>
+      {field}
+    </div>
+  ) : (
+    field
   );
 };

@@ -1175,6 +1175,10 @@ das per Benutzer gespeicherte `isVisible` bei fremden Kalendern nur mit Schreibr
 
 ## Verfügbarkeit
 
+Das Feld „Teilnehmer“ schlägt beim Tippen zuerst die Personen der Firma vor (`Principal/get`,
+dieselbe Liste, in der die Verfügbarkeit ihre Kollegen findet), dann Kontaktgruppen und Kontakte
+(`src/lib/suggestions.ts`); das Feld „An“ beim Schreiben einer Mail ebenso.
+
 Lädt man zu einem Termin Kollegen ein, zeigt der Editor, ob sie zu der Zeit frei sind, und die
 nächsten Zeiten, in denen alle frei sind (wie Outlooks Terminplanungs-Assistent). Grundlage ist
 `Principal/getAvailability` (draft-ietf-jmap-calendars, Capability
