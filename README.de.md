@@ -1,6 +1,6 @@
 <div align="center">
 
-<h1>Kontext: Mail, Kalender, Chat und Telefonie für dein Team – selbst gehostet und Open Source</h1>
+<h1>Kontext: Mail, Kalender, Chat und Telefonie (CTI) für dein Team – selbst gehostet und Open Source</h1>
 
 Die selbst gehostete Alternative zu Google Workspace und Microsoft 365. Gemeinsame Postfächer, ein Kalender fürs Team und Kontakte, die alles verbinden: zu jedem Kunden Mails, Termine, Aufgaben und Anrufe auf einen Blick.<br>
 AGPL, eine Web-App und PWA auf dem Mailserver Stalwart, keine Kosten pro Benutzer. Made in Europe.
