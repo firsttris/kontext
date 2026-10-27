@@ -471,3 +471,22 @@ DMARC *pass*):
 dig +short MX firma.de @1.1.1.1
 echo QUIT | openssl s_client -starttls smtp -connect mail.firma.de:25 -verify_return_error | grep -E "subject=|Verify"
 ```
+
+!!! warning "Sperrlisten"
+    VPS-Anbieter vergeben IP-Adressen neu; die neue kann von einem früheren Mieter auf einer
+    Sperrliste stehen (beim ersten Server: Spamhaus CSS). GMX, WEB.DE, T-Online und viele
+    Firmen-Server lehnen Mails von dort ab, Gmail sortiert sie in den Spam. Vor der Umstellung
+    prüfen (über den Resolver des Anbieters; öffentliche wie 1.1.1.1 beantwortet Spamhaus nicht):
+
+    ```bash
+    R=10.113.0.203   # die IP rückwärts, für 203.0.113.10
+    for bl in zen.spamhaus.org b.barracudacentral.org bl.spamcop.net bl.mailspike.net; do
+      echo "$bl: $(dig +short $R.$bl | head -1)"; done
+    ```
+
+    Leer heißt nicht gelistet. Bei Spamhaus auf *check.spamhaus.org* die Austragung beantragen –
+    erst wenn Reverse-DNS und SPF/DKIM/DMARC stimmen. Lässt sie sich nicht austragen: beim Anbieter
+    eine andere IP erfragen oder ausgehend über einen Versanddienst (Smarthost) senden.
+
+    Die ersten Mails eines neuen Servers landen bei Gmail oft im Spam, auch ohne Sperrliste:
+    beim Empfänger „Kein Spam“, die Domain in den Google Postmaster Tools eintragen.
