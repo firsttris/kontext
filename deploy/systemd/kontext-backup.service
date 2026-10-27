@@ -11,5 +11,9 @@ Type=oneshot
 ExecStart=@DEPLOY@/backup-control.sh run
 # Also after a run that was stopped or killed: status.json says so instead of "running".
 ExecStopPost=@DEPLOY@/backup-control.sh finish
+# Restic's cache: systemd sets no $HOME, and without a cache every run reads the repository's
+# metadata from S3 again (time, and requests that free tiers count).
+CacheDirectory=kontext-backup
+Environment=RESTIC_CACHE_DIR=/var/cache/kontext-backup
 Nice=10
 IOSchedulingClass=idle
