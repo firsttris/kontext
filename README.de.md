@@ -2,9 +2,6 @@
 
 <h1>Kontext: die selbst gehostete Alternative zu Google Workspace und Microsoft 365</h1>
 
-<h3>Zehn Leute in Google Workspace oder Microsoft 365 kosten rund 1.600 € im Jahr – jedes Jahr.<br>
-Mit Kontext kosten sie einen Server: rund 120 € im Jahr, und deine Mails verlassen ihn nicht.</h3>
-
 **Mail, Kalender, Kontakte, Aufgaben, Team-Chat und Telefonie (CTI) für kleine Betriebe – auf deinem eigenen Server.**<br>
 Gemeinsame Postfächer, ein Kalender fürs Team und Kontakte, die alles verbinden: zu jedem Kunden Mails, Termine, Aufgaben und Anrufe auf einen Blick.<br>
 Open Source (AGPL), eine Web-App und PWA auf dem Mailserver Stalwart, keine Kosten pro Benutzer. Made in Europe.
