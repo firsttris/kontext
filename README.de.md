@@ -103,7 +103,7 @@ Backups und Updates stehen in der
 | 📄 **Dokumente** | **Word, Excel, PowerPoint und PDF** in Kontext mit [Schreibzeug](https://github.com/firsttris/schreibzeug), ein Ordner pro gemeinsamem Postfach, Anhänge in Dokumente und zurück · [mehr →](https://firsttris.github.io/kontext/documents.html) |
 | 🤖 **KI-Agenten (MCP)** | **Kontext ist ein MCP-Server**: Claude und andere Agenten schlagen Kunden, Mails, Termine und Aufgaben mit deinen Rechten nach und schreiben Entwürfe – kein Senden, kein Löschen, jede Änderung protokolliert · [mehr →](https://firsttris.github.io/kontext/agents.html) |
 | 🏢 **Firmenverwaltung** | **Mitarbeiter, gemeinsame Postfächer und Rechte** ohne IT-Kenntnisse, Abwesenheit mit Vertretung, Firmen-Signatur, **Austritt ohne Löschen**, Datensicherung im Blick, **Umzug von Microsoft 365, Gmail, IMAP und Outlook (PST)** · [mehr →](https://firsttris.github.io/kontext/company.html) |
-| 📱 **Auf jedem Gerät** | **Eine App am PC, unter Android und am iPhone** (PWA, ohne App Store), Benachrichtigungen auch bei geschlossener App, eine Tab-Leiste mit deinen Apps, hell und dunkel, Anmeldung mit zweitem Faktor · [mehr →](https://firsttris.github.io/kontext/index.html) |
+| 📱 **Auf jedem Gerät** | **Eine App am PC, unter Android und am iPhone** (PWA, ohne App Store), Benachrichtigungen auch bei geschlossener App, eine Tab-Leiste mit deinen Apps, hell und dunkel, Anmeldung mit zweitem Faktor · [mehr →](https://firsttris.github.io/kontext/app.html) |
 
 <img src="docs/screenshots/phone-call.png" alt="CTI in Kontext: ein Anruf über die Fritzbox klingelt im Browser mit Kontakt, Firma, Nummer und letzter Mail des Anrufers, neben dem Posteingang" width="900">
 

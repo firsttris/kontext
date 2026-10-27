@@ -34,7 +34,7 @@ CardDAV.
 | [**Verschlüsselung**](encryption.md) | OpenPGP und S/MIME im Browser, „Vertraulich senden“ an jeden Empfänger, Ende-zu-Ende verschlüsselter Chat |
 | [**KI-Agenten (MCP)**](agents.md) | Claude & Co. schlagen Kunden, Mails, Termine und Aufgaben nach und legen Entwürfe an – nie selbst senden oder löschen |
 | [**Firmenverwaltung und Umzug**](company.md) | Mitarbeiter, gemeinsame Postfächer mit Rechten, Abwesenheit mit Vertretung, Austritt, Umzug von Microsoft 365, Gmail, Outlook (PST) |
-| **Handy** | jede Ansicht als eigener Bildschirm mit Tab-Leiste (welche Apps darin stehen, wählt man selbst); als App installierbar, Benachrichtigungen auch bei geschlossener App |
+| [**App, Handy und Konto**](app.md) | als App installierbar am PC, unter Android und am iPhone; Benachrichtigungen auch bei geschlossener App; am Handy jede Ansicht als eigener Bildschirm mit Tab-Leiste (welche Apps darin stehen, wählt man selbst); hell und dunkel, Anmeldung mit Code |
 
 ## Betrieb
 

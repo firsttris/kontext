@@ -101,7 +101,7 @@ Telephony adds a small box in the office. DNS records, Podman Quadlets, backups 
 | 📄 **Documents** | **Word, Excel, PowerPoint and PDF** in Kontext with [Schreibzeug](https://github.com/firsttris/schreibzeug), a folder per shared mailbox, attachments into documents and back · [more →](https://firsttris.github.io/kontext/documents.html) |
 | 🤖 **AI agents (MCP)** | **Kontext is an MCP server**: Claude and other agents look up customers, mails, appointments and tasks with your rights and write drafts – no sending, no deleting, every change logged · [more →](https://firsttris.github.io/kontext/agents.html) |
 | 🏢 **Company admin** | **People, shared mailboxes and rights** without IT skills, out-of-office with a deputy, company signature, **offboarding without deleting**, backups at a glance, **moving in from Microsoft 365, Gmail, IMAP and Outlook (PST)** · [more →](https://firsttris.github.io/kontext/company.html) |
-| 📱 **On every device** | **An app on desktop, Android and iPhone** (PWA, no app store), push notifications even when closed, a tab bar with your apps, light and dark, two-factor sign-in · [more →](https://firsttris.github.io/kontext/index.html) |
+| 📱 **On every device** | **An app on desktop, Android and iPhone** (PWA, no app store), push notifications even when closed, a tab bar with your apps, light and dark, two-factor sign-in · [more →](https://firsttris.github.io/kontext/app.html) |
 
 <img src="docs/screenshots/phone-call.png" alt="CTI in Kontext: an incoming call from the Fritzbox rings in the browser with the caller's contact, company, number and last mail, next to the inbox" width="900">
 
