@@ -19,9 +19,11 @@ import { contactFormFor, correspondent, findContact } from "@/lib/correspondent"
 import { displayName, listDate } from "@/lib/format";
 import { dateKey, eventTimes, toLocal } from "@/lib/jscalendar";
 import { company, formToCard, fullName, primaryPhone } from "@/lib/jscontact";
+import { mailSenderKey } from "@/lib/photo";
 import { m } from "@/paraglide/messages";
 import { useEventsWith } from "../calendar/queries";
 import { useContactMutations, useContacts } from "../contacts/queries";
+import { usePhotoOf } from "../photos/queries";
 import { useMailAccounts } from "./queries";
 
 const dayFormat = new Intl.DateTimeFormat("de-DE", {
@@ -53,6 +55,7 @@ export const SenderPanel = ({ accountId, email }: { accountId: string; email: Em
   );
   const { data: contacts, books } = useContacts();
   const { create } = useContactMutations();
+  const photoOf = usePhotoOf();
   const card = person ? findContact(contacts, person.email) : undefined;
   const events = useEventsWith(person?.email);
   const mails = useQuery({
@@ -86,7 +89,11 @@ export const SenderPanel = ({ accountId, email }: { accountId: string; email: Em
       className="flex w-[300px] shrink-0 flex-col gap-6 overflow-y-auto border-l border-border px-3 py-5"
     >
       <div className="flex flex-col items-center gap-2 px-2 text-center">
-        <Avatar name={name} size={56} />
+        <Avatar
+          name={name}
+          photo={photoOf(mailSenderKey(person, email.authenticationResults))}
+          size={56}
+        />
         <div className="flex min-w-0 max-w-full flex-col">
           <span className="truncate text-[15px] font-semibold">{name}</span>
           {card && company(card) && company(card) !== name ? (

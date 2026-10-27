@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { CAPABILITIES } from "@/jmap/client";
 import { formatAddressInput } from "@/lib/addresses";
 import { groupAddresses, membersOf } from "@/lib/groups";
-import { company, fullName, primaryEmail } from "@/lib/jscontact";
+import { company, contactPhoto, fullName, primaryEmail } from "@/lib/jscontact";
 import { m } from "@/paraglide/messages";
 import { type BookRef, bookOf, type Contact, useContactsAccountId } from "./queries";
 
@@ -79,7 +79,7 @@ export const GroupDetail = ({ group, contacts, books }: Props) => {
                   })}
                   className="flex items-center gap-3 py-2.5 text-fg no-underline"
                 >
-                  <Avatar name={fullName(member)} size={32} />
+                  <Avatar name={fullName(member)} photo={contactPhoto(member)} size={32} />
                   <span className="flex min-w-0 flex-col">
                     <span className="truncate font-medium">{fullName(member)}</span>
                     <span className="truncate text-[13px] text-muted">

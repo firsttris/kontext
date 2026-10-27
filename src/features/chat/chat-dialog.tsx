@@ -5,11 +5,11 @@
  */
 import { Check, Search } from "lucide-react";
 import { type FormEvent, useId, useState } from "react";
-import { Avatar } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Dialog } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/components/ui/toast";
+import { ColleagueAvatar } from "@/features/photos/colleague-avatar";
 import { type Channel, channelName, type Person } from "@/lib/chat";
 import { cn } from "@/lib/cn";
 import { m } from "@/paraglide/messages";
@@ -71,7 +71,7 @@ const PersonPicker = ({
                 checked={on}
                 onChange={() => onToggle(person.id)}
               />
-              <Avatar name={person.name} size={26} />
+              <ColleagueAvatar id={person.id} name={person.name} size={26} />
               <span className="flex-1">{person.name}</span>
               {on ? <Check size={16} className="text-accent" aria-hidden="true" /> : null}
             </label>

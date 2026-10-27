@@ -25,6 +25,7 @@ import { useEffect, useRef, useState } from "react";
 import { useToast } from "@/components/ui/toast";
 import { useChannels } from "@/features/chat/queries";
 import { useChatNames } from "@/features/chat/use-chat-names";
+import { useColleaguePhotoOf } from "@/features/photos/queries";
 import { callDuration, callerState, firstNameList } from "@/lib/calls";
 import { cn } from "@/lib/cn";
 import { m } from "@/paraglide/messages";
@@ -50,6 +51,7 @@ const useNow = () => {
 const CallView = ({ active, expanded }: { active: ActiveCall; expanded: boolean }) => {
   const { channels } = useChannels();
   const { me, nameOf } = useChatNames();
+  const photoOf = useColleaguePhotoOf();
   const channel = channels.find((candidate) => candidate.id === active.channelId);
   const call = useCall(active.channelId);
   const { declinedBy } = useCallStore();
@@ -117,6 +119,7 @@ const CallView = ({ active, expanded }: { active: ActiveCall; expanded: boolean 
         tracks={tracks}
         expanded={expanded}
         nameOf={(participant) => nameOf(participant.identity)}
+        photoOf={(participant) => photoOf({ id: participant.identity })}
       />
       {canPlayAudio ? null : (
         <button

@@ -6,8 +6,8 @@
 import { Link } from "@tanstack/react-router";
 import { Mail, Plus, Repeat } from "lucide-react";
 import { type DragEvent, type FormEvent, useState } from "react";
-import { Avatar } from "@/components/ui/avatar";
 import { useToast } from "@/components/ui/toast";
+import { ColleagueAvatar } from "@/features/photos/colleague-avatar";
 import { cn } from "@/lib/cn";
 import { dateKey } from "@/lib/jscalendar";
 import {
@@ -189,7 +189,9 @@ export const TaskBoard = ({
                             </span>
                           ) : null}
                           <span className="flex-1" />
-                          {assignee ? <Avatar name={assignee} size={22} /> : null}
+                          {assignee ? (
+                            <ColleagueAvatar id={task.assigneeId} name={assignee} size={22} />
+                          ) : null}
                         </span>
                       ) : null}
                     </Link>

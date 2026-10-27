@@ -6,10 +6,10 @@
  */
 import { Users } from "lucide-react";
 import { type FormEvent, useState } from "react";
-import { Avatar } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Dialog } from "@/components/ui/dialog";
 import { Select } from "@/components/ui/input";
+import { ColleagueAvatar } from "@/features/photos/colleague-avatar";
 import { principalName } from "@/jmap/principals";
 import {
   ACCESS,
@@ -117,7 +117,7 @@ export const ShareDialog = ({
             const value = changes[person.id] ?? accessOf(base?.[person.id]);
             return (
               <li key={person.id} className="flex items-center gap-3 py-1">
-                <Avatar name={principalName(person)} size={32} />
+                <ColleagueAvatar id={person.id} name={principalName(person)} size={32} />
                 <span className="flex min-w-0 flex-1 flex-col">
                   <span className="truncate font-medium">{principalName(person)}</span>
                   <span className="truncate text-[12px] text-muted">{person.email}</span>

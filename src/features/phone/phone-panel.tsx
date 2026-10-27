@@ -203,7 +203,7 @@ const PhoneView = ({ call }: { call: PhoneCall }) => {
   return (
     <>
       <div className="flex flex-1 flex-col items-center justify-center gap-2 text-center">
-        <Avatar name={caller.name} size={64} />
+        <Avatar name={caller.name} photo={caller.photo} size={64} />
         <span className="text-[16px] font-semibold">{caller.name}</span>
         {caller.contact ? (
           <span className="text-[13px] text-muted">{readableNumber(call.remote)}</span>

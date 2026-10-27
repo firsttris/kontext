@@ -4,7 +4,7 @@ import { Plus, Users } from "lucide-react";
 import { Avatar } from "@/components/ui/avatar";
 import { cn } from "@/lib/cn";
 import { memberUids } from "@/lib/groups";
-import { company, fullName, indexLetter, sortKey } from "@/lib/jscontact";
+import { company, contactPhoto, fullName, indexLetter, sortKey } from "@/lib/jscontact";
 import { m } from "@/paraglide/messages";
 import { type Contact, contactKey } from "./queries";
 
@@ -49,7 +49,7 @@ export const ContactList = ({ groups, contacts, selected, ownAccount, book, sear
             <Users size={16} />
           </span>
         ) : (
-          <Avatar name={fullName(card)} size={34} />
+          <Avatar name={fullName(card)} photo={contactPhoto(card)} size={34} />
         )}
         <span className="flex min-w-0 flex-col">
           <span className="truncate font-medium">{fullName(card)}</span>

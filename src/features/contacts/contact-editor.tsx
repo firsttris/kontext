@@ -5,7 +5,17 @@ import { type FormEvent, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input, Label, Select, Textarea } from "@/components/ui/input";
 import { useToast } from "@/components/ui/toast";
-import { type ContactForm, emptyContactForm, formToCard, fullName, toForm } from "@/lib/jscontact";
+import { dataUri, squarePhoto } from "@/features/photos/make-photo";
+import { PhotoPicker } from "@/features/photos/photo-picker";
+import {
+  type ContactForm,
+  contactPhoto,
+  emptyContactForm,
+  formToCard,
+  fullName,
+  mediaWithPhoto,
+  toForm,
+} from "@/lib/jscontact";
 import { m } from "@/paraglide/messages";
 import { type BookRef, bookLabel, type Contact, startBook, useContactMutations } from "./queries";
 
@@ -18,6 +28,7 @@ type Props = {
 
 export const ContactEditor = ({ card, books, preferredBook }: Props) => {
   const [form, setForm] = useState<ContactForm>(card ? toForm(card) : emptyContactForm);
+  const [photo, setPhoto] = useState<string | undefined>(card ? contactPhoto(card) : undefined);
   const writable = books.filter((book) => book.mayWrite);
   const [bookKey, setBookKey] = useState(() => startBook(writable, preferredBook));
   const { create, update, remove } = useContactMutations();
@@ -25,6 +36,21 @@ export const ContactEditor = ({ card, books, preferredBook }: Props) => {
   const toast = useToast();
   const set = (key: keyof ContactForm) => (event: { target: { value: string } }) =>
     setForm((current) => ({ ...current, [key]: event.target.value }));
+
+  const pickPhoto = async (file: File) => {
+    try {
+      setPhoto(await dataUri(await squarePhoto(file)));
+    } catch (error) {
+      toast.show(m.common_error({ message: (error as Error).message }), "error");
+    }
+  };
+  // Only when the photo changed: a card's photo in another format stays as it is otherwise.
+  const toCard = () => ({
+    ...formToCard(form, card),
+    ...(photo === (card && contactPhoto(card))
+      ? {}
+      : { media: mediaWithPhoto(photo ?? null, card) }),
+  });
 
   const submit = async (event: FormEvent) => {
     event.preventDefault();
@@ -34,12 +60,12 @@ export const ContactEditor = ({ card, books, preferredBook }: Props) => {
     }
     try {
       if (card) {
-        await update.mutateAsync({ contact: card, card: formToCard(form, card) });
+        await update.mutateAsync({ contact: card, card: toCard() });
         await navigate({ to: "/contacts", search: (prev) => ({ ...prev, edit: undefined }) });
       } else {
         const book = writable.find((b) => b.key === (bookKey || startBook(writable)));
         if (!book) throw new Error(m.contacts_book());
-        const id = await create.mutateAsync({ card: formToCard(form), book });
+        const id = await create.mutateAsync({ card: toCard(), book });
         await navigate({
           to: "/contacts",
           search: (prev) => ({
@@ -85,6 +111,12 @@ export const ContactEditor = ({ card, books, preferredBook }: Props) => {
       <h2 className="m-0 text-[24px] font-semibold tracking-tight">
         {card ? fullName(card) : m.contacts_new()}
       </h2>
+      <PhotoPicker
+        name={[form.given, form.surname].join(" ").trim() || form.company || "?"}
+        photo={photo}
+        onPick={(file) => void pickPhoto(file)}
+        onRemove={() => setPhoto(undefined)}
+      />
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         {!card && writable.length > 1 ? (
           <Label className="sm:col-span-2">

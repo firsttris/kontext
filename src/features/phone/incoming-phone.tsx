@@ -80,7 +80,7 @@ const Ringing = ({
           className="fixed inset-x-3 top-3 z-[70] flex flex-col gap-3 rounded-2xl border border-border bg-bg p-4 shadow-2xl outline-none safe-top md:inset-x-auto md:top-4 md:right-4 md:w-[360px]"
         >
           <div className="flex items-center gap-3">
-            <Avatar name={caller.name} size={44} className="animate-pulse" />
+            <Avatar name={caller.name} photo={caller.photo} size={44} className="animate-pulse" />
             <div className="flex min-w-0 flex-1 flex-col">
               <DialogPrimitive.Title className="m-0 truncate text-[15px] font-semibold">
                 {call.door

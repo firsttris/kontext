@@ -15,7 +15,15 @@ import { downloadText } from "@/lib/download";
 import { displayName, listDate } from "@/lib/format";
 import { groupsOf } from "@/lib/groups";
 import { dateKey, eventTimes, locationName, toLocal } from "@/lib/jscalendar";
-import { addressLines, company, fullName, note, primaryEmail, primaryPhone } from "@/lib/jscontact";
+import {
+  addressLines,
+  company,
+  contactPhoto,
+  fullName,
+  note,
+  primaryEmail,
+  primaryPhone,
+} from "@/lib/jscontact";
 import { toVCard } from "@/lib/vcard";
 import { m } from "@/paraglide/messages";
 import { useEventsWith } from "../calendar/queries";
@@ -86,7 +94,12 @@ export const ContactDetail = ({ card, books, groups }: Props) => {
         <ChevronLeft size={18} /> {m.contacts_title()}
       </Link>
       <header className="flex flex-wrap items-center gap-5">
-        <Avatar name={fullName(card)} size={64} className="border-0 bg-primary text-onprimary" />
+        <Avatar
+          name={fullName(card)}
+          photo={contactPhoto(card)}
+          size={64}
+          className="border-0 bg-primary text-onprimary"
+        />
         <div className="flex min-w-[220px] flex-1 flex-col gap-1">
           <h2 className="m-0 text-[26px] font-semibold tracking-tight">{fullName(card)}</h2>
           {company(card) && company(card) !== fullName(card) ? (

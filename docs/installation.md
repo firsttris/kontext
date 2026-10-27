@@ -384,8 +384,8 @@ Bei Dokumente kommt `…/backup/schreibzeug.db` als `schreibzeug.db` ins Volume
 `kontext_schreibzeug-data`, `blobs` und `auth-secret` daneben.
 
 Die Kopie der Kontext-Datenbank (`…/backup/kontext.db`) kommt bei gestopptem Container als
-`kontext.db` ins Volume `kontext_kontext-data`, die Ordner `…/chat-files`, `…/phone` und
-`…/secure` daneben. Fehlt sie, geht nichts in Stalwart verloren: alle melden sich einmal neu an, die
+`kontext.db` ins Volume `kontext_kontext-data`, die Ordner `…/chat-files`, `…/photos`, `…/phone`
+und `…/secure` daneben. Fehlt sie, geht nichts in Stalwart verloren: alle melden sich einmal neu an, die
 Vorlage der Firmen-Signatur ist neu einzutragen; Aufgaben und Chat sind dann leer.
 
 ## 6. Updates

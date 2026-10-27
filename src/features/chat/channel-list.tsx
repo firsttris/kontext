@@ -6,10 +6,10 @@
 import { Link } from "@tanstack/react-router";
 import { AtSign, BellOff, Hash, LockKeyhole, Phone, Plus } from "lucide-react";
 import { useState } from "react";
-import { Avatar } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { FROM_PARENT } from "@/components/use-back";
 import { usePhone } from "@/features/phone/queries";
+import { ColleagueAvatar } from "@/features/photos/colleague-avatar";
 import { type ChannelSummary, firstName, shortTime, sortChannels, sortDirect } from "@/lib/chat";
 import { cn } from "@/lib/cn";
 import { m } from "@/paraglide/messages";
@@ -57,11 +57,13 @@ const Sealed = ({ channel }: { channel: ChannelSummary }) =>
   ) : null;
 
 const PersonIcon = ({
+  id,
   name,
   online,
   onPhone = false,
   size,
 }: {
+  id: string;
   name: string;
   online: boolean;
   /** On the phone right now (telephony): shown instead of "online". */
@@ -69,7 +71,7 @@ const PersonIcon = ({
   size: number;
 }) => (
   <span className="relative inline-flex">
-    <Avatar name={name} size={size} />
+    <ColleagueAvatar id={id} name={name} size={size} />
     {onPhone ? (
       <span
         role="img"
@@ -108,7 +110,12 @@ const useRows = (channels: ChannelSummary[], online: string[]) => {
       last: lastLine(channel, me, nameOf),
       person:
         channel.kind === "direct"
-          ? { name: nameOf(other), online: online.includes(other), onPhone: busy.includes(other) }
+          ? {
+              id: other,
+              name: nameOf(other),
+              online: online.includes(other),
+              onPhone: busy.includes(other),
+            }
           : null,
     };
   };
@@ -178,6 +185,7 @@ export const ChannelSidebar = ({ channels, online, activeId, onNew }: Props) => 
                 className={sideItem(channel.id === activeId, channel.unread > 0 && !channel.muted)}
               >
                 <PersonIcon
+                  id={person?.id ?? ""}
                   name={person?.name ?? title}
                   online={Boolean(person?.online)}
                   onPhone={Boolean(person?.onPhone)}
@@ -206,7 +214,13 @@ const PhoneRow = ({ row }: { row: ReturnType<typeof useRows>["named"][number] })
       className="flex items-center gap-3 rounded-xl p-2.5 text-fg no-underline active:bg-hover"
     >
       {person ? (
-        <PersonIcon name={person.name} online={person.online} onPhone={person.onPhone} size={42} />
+        <PersonIcon
+          id={person.id}
+          name={person.name}
+          online={person.online}
+          onPhone={person.onPhone}
+          size={42}
+        />
       ) : (
         <span className="flex size-[42px] shrink-0 items-center justify-center rounded-xl bg-subtle text-muted">
           <ChannelIcon channel={channel} size={18} />
