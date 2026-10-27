@@ -866,6 +866,54 @@ test.describe("Benachrichtigungen", () => {
     await expect(device).toHaveAttribute("aria-checked", "true");
   });
 
+  test("bietet Benachrichtigungen oben in der Liste an und schaltet sie ein", async ({ page }) => {
+    await page.context().grantPermissions(["notifications"]);
+    await login(page, "jonas", { pushOffer: true });
+    const offer = page.getByRole("region", { name: "Benachrichtigungen auf diesem Gerät" });
+    await offer.getByRole("button", { name: "Einschalten" }).click();
+    await expect(offer).toBeHidden();
+    await bell(page).click();
+    await expect(
+      page.getByRole("switch", { name: "Auf diesem Gerät benachrichtigen" }),
+    ).toHaveAttribute("aria-checked", "true");
+  });
+
+  test("fragt nach „Später“ noch einmal nach einer Woche, dann nicht mehr", async ({ page }) => {
+    await login(page, "jonas", { pushOffer: true });
+    const offer = page.getByRole("region", { name: "Benachrichtigungen auf diesem Gerät" });
+    await offer.getByRole("button", { name: "Später" }).click();
+    await expect(offer).toBeHidden();
+    await page.reload();
+    await expect(page.getByRole("heading", { name: "Posteingang" })).toBeVisible();
+    await expect(offer).toBeHidden();
+
+    // A week on: the last time, so its button says no for good.
+    await page.evaluate(() => {
+      const key = "kontext.notifications.offer.push";
+      const postponed = JSON.parse(window.localStorage.getItem(key)!);
+      const weekAgo = Date.now() - 7 * 86_400_000;
+      window.localStorage.setItem(key, JSON.stringify({ ...postponed, at: weekAgo }));
+    });
+    await page.reload();
+    await offer.getByRole("button", { name: "Nein, danke" }).click();
+    await expect(offer).toBeHidden();
+    await page.reload();
+    await expect(page.getByRole("heading", { name: "Posteingang" })).toBeVisible();
+    await expect(offer).toBeHidden();
+  });
+
+  test("bietet sie am Handy über der Liste an @phone", async ({ page }) => {
+    await page.context().grantPermissions(["notifications"]);
+    await login(page, "jonas", { pushOffer: true });
+    const offer = page.getByRole("region", { name: "Benachrichtigungen auf diesem Gerät" });
+    await offer.getByRole("button", { name: "Einschalten" }).click();
+    await expect(offer).toBeHidden();
+    await page.goto("/settings?section=appearance");
+    await expect(
+      page.getByRole("switch", { name: "Auf diesem Gerät benachrichtigen" }),
+    ).toHaveAttribute("aria-checked", "true");
+  });
+
   test("zeigt Anna die Einladung, die auf ihre Antwort wartet", async ({ page, browser }) => {
     test.setTimeout(90_000);
     const title = unique("Aufmaß Bad");

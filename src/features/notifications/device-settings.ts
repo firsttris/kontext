@@ -1,13 +1,16 @@
 /**
  * Per-device state of the notifications, kept in the browser: when the bell was last opened, the
- * invitations seen then, and whether this device shows system notifications. Storage can be
+ * invitations seen then, whether this device shows system notifications, and how often the offer
+ * to switch them on was postponed. Storage can be
  * missing (private window, blocked site data); everything then falls back to defaults.
  */
 import { useEffect, useSyncExternalStore } from "react";
 import { pushRegistration, subscribeToPush, unsubscribeFromPush } from "@/pwa/push";
+import { type OfferKind, type Postponed, parsePostponed } from "./offer";
 
 const SEEN = "kontext.notifications.seen";
 const DEVICE = "kontext.notifications.device";
+const POSTPONED = (kind: OfferKind) => `kontext.notifications.offer.${kind}`;
 
 const read = (key: string): string | null => {
   try {
@@ -79,6 +82,16 @@ export const useDeviceNotifications = (): boolean => {
   useEffect(followBrowserPermission, []);
   return useSyncExternalStore(subscribe, () => read(DEVICE) === "on" && notificationsSupported());
 };
+
+/** Set on this device at least once, on or off (also off when the browser refused). */
+export const useDeviceChosen = (): boolean =>
+  useSyncExternalStore(subscribe, () => read(DEVICE) !== null);
+
+export const usePostponed = (kind: OfferKind): Postponed =>
+  parsePostponed(useSyncExternalStore(subscribe, () => read(POSTPONED(kind))));
+
+export const postponeOffer = (kind: OfferKind, { times }: Postponed, now: number) =>
+  write(POSTPONED(kind), JSON.stringify({ times: times + 1, at: now }));
 
 /**
  * Switching on asks the browser; with permission already given it answers at once, without a
