@@ -298,6 +298,32 @@ test.describe("Chat", () => {
     await expect(page.getByRole("textbox", { name: "Nachricht" })).toBeVisible();
   });
 
+  test("Sprachnachricht: endet das Mikrofon während der Aufnahme, geht sie trotzdem", async ({
+    page,
+  }) => {
+    // A microphone unplugged, or taken by a phone call: its track ends, and the recorder stops on
+    // its own before "Senden" (MediaStream Recording, "stop the recorder" when all tracks end).
+    await slowMicrophone(page);
+    await login(page);
+    await openChat(page);
+    await openDirectWithMax(page);
+    const voices = page
+      .getByRole("list", { name: "Nachrichten" })
+      .getByRole("group", { name: /^Sprachnachricht, / });
+    const before = await voices.count();
+    await page.getByRole("button", { name: "Sprachnachricht aufnehmen" }).click();
+    await expect(page.getByRole("timer")).toHaveText("0:02", { timeout: 10_000 });
+    await page.evaluate(() => {
+      for (const stream of (window as unknown as { streams: MediaStream[] }).streams)
+        for (const track of stream.getTracks()) track.stop();
+    });
+    await page.waitForTimeout(500);
+    await page.getByRole("button", { name: "Sprachnachricht senden" }).click();
+    await expect(voices).toHaveCount(before + 1);
+    await expect(page.getByRole("group", { name: "Aufnahme läuft" })).toBeHidden();
+    await expect(page.getByRole("textbox", { name: "Nachricht" })).toBeVisible();
+  });
+
   test("Sprachnachricht: der gespielte Teil der Wellenform wächst flüssig", async ({ page }) => {
     await login(page);
     await openChat(page);

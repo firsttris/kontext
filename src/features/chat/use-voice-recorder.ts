@@ -132,12 +132,20 @@ export const useVoiceRecorder = ({ onError }: { onError: (message: string) => vo
           resolve(null);
           return;
         }
-        // The last piece of the recording arrives before "stop".
-        current.recorder.onstop = () => {
+        const done = () => {
           release(current);
           const type = current.recorder.mimeType || current.chunks[0]?.type || "";
           resolve(keep && current.chunks.length ? voiceFile(current.chunks, type) : null);
         };
+        // Stopped already: the microphone ended (unplugged, taken by a call), and the recorder
+        // with it, its last piece handed over; "stop" would not come again (MediaStream Recording,
+        // stop() on an inactive recorder does nothing).
+        if (current.recorder.state === "inactive") {
+          done();
+          return;
+        }
+        // The last piece of the recording arrives before "stop".
+        current.recorder.onstop = done;
         current.recorder.stop();
       }),
     [],
