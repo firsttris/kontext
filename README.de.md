@@ -111,7 +111,7 @@ einschaltest. DNS-Einträge, Podman-Quadlets, Backups und Updates stehen in der
 
 - **Kanäle** (#allgemein, einer pro gemeinsamem Postfach, eigene) und **Direktnachrichten**, live mit „schreibt …“, wer online ist, **@Erwähnungen**, **Threads** und **Reaktionen**.
 - **Mails, Aufgaben, Kontakte und Dokumente als Karten**: „Besprechen“ an einer Mail (`b`) bespricht sie im Kanal, statt sie intern weiterzuleiten – kopiert wird nichts.
-- **Fotos und Dateien**, **Suche**, **Aufbewahrungsfrist** aus der Firmenverwaltung.
+- **Fotos und Dateien**, **Sprachnachrichten** wie bei WhatsApp (aufnehmen, direkt in der Unterhaltung abspielen, schneller mit 1,5× oder 2×), **Suche**, **Aufbewahrungsfrist** aus der Firmenverwaltung.
 - **Anrufe, Videocalls und Bildschirm teilen** direkt aus einer Unterhaltung, auf dem eigenen Server mit [LiveKit](https://github.com/livekit/livekit); das Gespräch bleibt offen, während du zur Mail wechselst.
 - **Vertrauliche Unterhaltungen**, Ende-zu-Ende verschlüsselt – Nachrichten, Dateien und Anrufe.
 

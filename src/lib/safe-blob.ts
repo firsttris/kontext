@@ -2,12 +2,14 @@
  * Blobs from mails take the type their sender gave. A blob: URL belongs to Kontext's own origin,
  * so one typed text/html or image/svg+xml that is opened in a tab ("Open image in new tab", a
  * middle click on a download link) runs as a page of Kontext, with the session cookie. So every
- * blob that gets a URL is retyped here: what the browser only shows (PDF, raster images) keeps its
- * type, everything else becomes a plain download.
+ * blob that gets a URL is retyped here: what the browser only shows or plays (PDF, raster images,
+ * the audio of voice messages) keeps its type, everything else becomes a plain download.
  */
 import { bytesToBase64 } from "./secure";
 
 const RASTER = /^image\/(png|jpe?g|gif|webp|avif|bmp)$/;
+/** Voice messages in the chat (server/chat/chat.ts AUDIO_TYPES): played, never run. */
+const AUDIO = /^audio\/(webm|ogg|mp4|mpeg)$/;
 const DOWNLOAD = "application/octet-stream";
 
 const baseType = (type: string) => (type.split(";")[0] ?? "").trim().toLowerCase();
@@ -15,7 +17,7 @@ const baseType = (type: string) => (type.split(";")[0] ?? "").trim().toLowerCase
 /** The type to show a file with in a tab of its own, or null when it may only be downloaded. */
 export const viewableType = (type: string): string | null => {
   const base = baseType(type);
-  return base === "application/pdf" || RASTER.test(base) ? base : null;
+  return base === "application/pdf" || RASTER.test(base) || AUDIO.test(base) ? base : null;
 };
 
 /** The blob to open in a tab, or null when it must be downloaded instead. */

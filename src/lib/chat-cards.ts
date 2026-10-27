@@ -8,6 +8,7 @@ import {
   type Card,
   type ChatFile,
   INLINE_TYPES,
+  isVoice,
   MAX_FILE_BYTES,
   MAX_FILES,
   type Message,
@@ -17,7 +18,7 @@ import type { TaskLink } from "../../server/tasks/tasks";
 import { displayName } from "./format";
 import { type ContactCard, company, fullName, primaryEmail } from "./jscontact";
 
-export { type Card, type ChatFile, MAX_FILE_BYTES, MAX_FILES, messageSummary };
+export { type Card, type ChatFile, isVoice, MAX_FILE_BYTES, MAX_FILES, messageSummary };
 
 const when = (iso: string) =>
   new Date(iso).toLocaleString("de-DE", {

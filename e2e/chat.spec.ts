@@ -77,6 +77,61 @@ test.describe("Chat", () => {
     expect(sent.mentions).toHaveLength(1);
   });
 
+  test("Sprachnachricht: aufnehmen, verwerfen, schicken und abspielen", async ({
+    page,
+    browser,
+  }) => {
+    // The browser's microphone is a fake one that beeps (playwright.config.ts).
+    await login(page);
+    await openChat(page);
+    await page.getByRole("button", { name: "Neue Nachricht" }).click();
+    const dialog = page.getByRole("dialog", { name: "Neue Nachricht" });
+    await dialog.getByText("Max Becker").click();
+    await dialog.getByRole("button", { name: "Chat beginnen" }).click();
+    const list = page.getByRole("list", { name: "Nachrichten" });
+    const voices = list.getByRole("group", { name: /^Sprachnachricht, / });
+    const before = await voices.count();
+
+    // Thrown away: nothing is sent.
+    await page.getByRole("button", { name: "Sprachnachricht aufnehmen" }).click();
+    await expect(page.getByRole("group", { name: "Aufnahme läuft" })).toBeVisible();
+    await page.getByRole("button", { name: "Aufnahme verwerfen" }).click();
+    await expect(page.getByRole("textbox", { name: "Nachricht" })).toBeVisible();
+
+    await page.getByRole("button", { name: "Sprachnachricht aufnehmen" }).click();
+    await expect(page.getByRole("timer")).toHaveText("0:02");
+    await page.getByRole("button", { name: "Sprachnachricht senden" }).click();
+    await expect(voices).toHaveCount(before + 1);
+    const voice = voices.last();
+    await expect(voice).toHaveAccessibleName(/^Sprachnachricht, 0:0[2-3]$/);
+    await voice.getByRole("button", { name: "Abspielen" }).click();
+    await expect(voice.getByRole("button", { name: "Anhalten" })).toBeVisible();
+    await voice.getByRole("button", { name: "Tempo 1-fach, ändern" }).click();
+    await expect(voice.getByRole("button", { name: "Tempo 1.5-fach, ändern" })).toBeVisible();
+
+    // Max gets it, in the list as "Sprachnachricht", and can play it.
+    const max = await colleague(browser, "max");
+    await openChat(max);
+    const lastLines = await max.evaluate(async () => {
+      const { channels } = await (await fetch("/api/chat/channels")).json();
+      return channels
+        .filter((c: { kind: string }) => c.kind === "direct")
+        .map((c: { last: { text: string } | null }) => c.last?.text);
+    });
+    expect(lastLines).toContain("Sprachnachricht");
+    await max
+      .getByRole("navigation", { name: "Direktnachrichten" })
+      .first()
+      .getByRole("link", { name: /Jonas Weber/ })
+      .click();
+    const heard = max
+      .getByRole("list", { name: "Nachrichten" })
+      .getByRole("group", { name: /^Sprachnachricht, 0:0[2-3]$/ })
+      .last();
+    await heard.getByRole("button", { name: "Abspielen" }).click();
+    await expect(heard.getByRole("button", { name: "Anhalten" })).toBeVisible();
+  });
+
   test("ein Kanal gehört seinen Mitgliedern", async ({ page, browser }) => {
     const name = unique("Baustelle Hoffmann");
     const slug = name.toLowerCase().replace(/ /g, "-");
@@ -176,6 +231,9 @@ test.describe("Chat am Handy @phone", () => {
       .click();
     await expect(page.getByRole("heading", { name: "# allgemein" })).toBeVisible();
     await expect(tabs).toHaveCount(0);
+    // Nothing to send yet: the microphone stands where "Senden" will.
+    await expect(page.getByRole("button", { name: "Sprachnachricht aufnehmen" })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Senden" })).toBeHidden();
     const text = unique("Freitag gibt es Kuchen");
     await write(page, text);
     await expect(page.getByRole("list", { name: "Nachrichten" })).toContainText(text);

@@ -7,6 +7,7 @@ import {
   type ChatFile,
   fitWithin,
   isPhoto,
+  isVoice,
   MAX_FILE_BYTES,
   PHOTO_SIDE,
   THUMB_SIDE,
@@ -76,6 +77,8 @@ export const uploadFile = async (
   const thumb = seal ? null : await thumbnailOf(ready);
   if (thumb) form.append("thumb", thumb);
   if (mailCopy) form.append("kind", "mail-copy");
+  // The server keeps it as audio (server/chat/chat.ts voiceType).
+  else if (!seal && isVoice(ready.type)) form.append("kind", "voice");
   if (seal) form.append("kind", "sealed");
   const response = await fetch(`/api/chat/channels/${encodeURIComponent(channelId)}/files`, {
     method: "POST",

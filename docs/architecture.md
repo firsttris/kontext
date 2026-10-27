@@ -618,6 +618,14 @@ Principal-ID), die Namen holt die App wie bei den Aufgaben über die Principals.
   an Personen, die den Kanal sehen; Fotos (JPEG, PNG, WebP, GIF) zeigt der Browser an, alles andere
   wird heruntergeladen (`Content-Security-Policy: sandbox`, nie HTML oder SVG aus derselben
   Herkunft). Hochgeladenes, das nie verschickt wurde, löscht der Server nach einem Tag.
+- **Sprachnachrichten:** Die App nimmt mit `MediaRecorder` auf (Opus in WebM, in Safari AAC in
+  MP4; `src/lib/voice.ts`) und lädt die Aufnahme wie eine Datei hoch, mit `kind=voice`: Bun
+  liest den Typ einer Datei im Formular aus ihrem Namen (`.webm` wäre `video/webm`), der Server
+  setzt ihn darum nach der Endung (`voiceType` in `server/chat/chat.ts`). Audio (`AUDIO_TYPES`)
+  liefert er wie Fotos mit seinem Typ aus, und mit Byte-Bereichen (`Range`,
+  `server/chat/range.ts`), ohne die Safari nichts abspielt. Länge und Wellenform rechnet die App
+  aus dem dekodierten Ton (`OfflineAudioContext`), weil eine WebM-Aufnahme des Browsers ihre
+  Länge nicht angibt. In einem vertraulichen Kanal geht die Aufnahme verschlüsselt wie jede Datei.
 - **Karten:** Mails, Aufgaben und Kontakte hängen als Karte an einer Nachricht (`chat_cards`).
   Die Karte hält fest, worum es geht (Betreff, Absender, Zeit; Titel; Name, Firma) – öffnen kann
   sie nur, wer die Mail, die Aufgabe oder den Kontakt ohnehin sehen darf. Alle anderen sehen
