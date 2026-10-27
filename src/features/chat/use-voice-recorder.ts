@@ -21,30 +21,43 @@ const release = ({ stream, timer }: Session) => {
 
 export const useVoiceRecorder = ({ onError }: { onError: (message: string) => void }) => {
   const session = useRef<Session | null>(null);
+  // The browser may take a while to answer (it asks the person the first time): meanwhile a second
+  // click starts nothing, and a conversation closed in between gets no recording.
+  const asking = useRef(false);
+  const mounted = useRef(true);
   const [recording, setRecording] = useState(false);
   const [seconds, setSeconds] = useState(0);
 
-  useEffect(
-    () => () => {
+  useEffect(() => {
+    mounted.current = true;
+    return () => {
+      mounted.current = false;
       if (!session.current) return;
       session.current.recorder.onstop = null;
       if (session.current.recorder.state !== "inactive") session.current.recorder.stop();
       release(session.current);
-    },
-    [],
-  );
+      session.current = null;
+    };
+  }, []);
 
   const start = useCallback(async () => {
-    if (session.current) return;
+    if (session.current || asking.current) return;
     if (typeof MediaRecorder === "undefined" || !navigator.mediaDevices?.getUserMedia) {
       onError(m.chat_voice_unsupported());
       return;
     }
     let stream: MediaStream;
+    asking.current = true;
     try {
       stream = await navigator.mediaDevices.getUserMedia({ audio: true });
     } catch {
-      onError(m.chat_voice_denied());
+      if (mounted.current) onError(m.chat_voice_denied());
+      return;
+    } finally {
+      asking.current = false;
+    }
+    if (!mounted.current) {
+      for (const track of stream.getTracks()) track.stop();
       return;
     }
     const type = recordingType((candidate) => MediaRecorder.isTypeSupported(candidate));

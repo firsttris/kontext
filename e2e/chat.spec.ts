@@ -13,6 +13,39 @@ const openChat = async (page: Page) => {
   await expect(page.getByRole("navigation", { name: "Kanäle" }).first()).toBeVisible();
 };
 
+/**
+ * The microphone answers a second late, as while the browser asks the person the first time; the
+ * page keeps every stream it handed out, to count what is still recording.
+ */
+const slowMicrophone = (page: Page) =>
+  page.addInitScript(() => {
+    const original = navigator.mediaDevices.getUserMedia.bind(navigator.mediaDevices);
+    const streams: MediaStream[] = [];
+    (window as unknown as { streams: MediaStream[] }).streams = streams;
+    navigator.mediaDevices.getUserMedia = async (constraints) => {
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+      const stream = await original(constraints);
+      streams.push(stream);
+      return stream;
+    };
+  });
+
+const liveTracks = (page: Page) =>
+  page.evaluate(
+    () =>
+      (window as unknown as { streams: MediaStream[] }).streams
+        .flatMap((stream) => stream.getTracks())
+        .filter((track) => track.readyState === "live").length,
+  );
+
+const openDirectWithMax = async (page: Page) => {
+  await page.getByRole("button", { name: "Neue Nachricht" }).click();
+  const dialog = page.getByRole("dialog", { name: "Neue Nachricht" });
+  await dialog.getByText("Max Becker").click();
+  await dialog.getByRole("button", { name: "Chat beginnen" }).click();
+  await expect(page.getByRole("textbox", { name: "Nachricht" })).toBeVisible();
+};
+
 const write = async (page: Page, text: string) => {
   await page.getByRole("textbox", { name: "Nachricht" }).fill(text);
   await page.keyboard.press("Enter");
@@ -130,6 +163,39 @@ test.describe("Chat", () => {
       .last();
     await heard.getByRole("button", { name: "Abspielen" }).click();
     await expect(heard.getByRole("button", { name: "Anhalten" })).toBeVisible();
+  });
+
+  test("Sprachnachricht: ein zweiter Klick, während das Mikrofon gefragt wird, lässt es wieder los", async ({
+    page,
+  }) => {
+    await slowMicrophone(page);
+    await login(page);
+    await openChat(page);
+    await openDirectWithMax(page);
+    const mic = page.getByRole("button", { name: "Sprachnachricht aufnehmen" });
+    await mic.click();
+    await mic.click();
+    await expect(page.getByRole("group", { name: "Aufnahme läuft" })).toBeVisible();
+    await page.waitForTimeout(1500);
+    await page.getByRole("button", { name: "Aufnahme verwerfen" }).click();
+    await expect(page.getByRole("textbox", { name: "Nachricht" })).toBeVisible();
+    await expect.poll(() => liveTracks(page)).toBe(0);
+  });
+
+  test("Sprachnachricht: wer die Unterhaltung verlässt, während das Mikrofon gefragt wird, nimmt nichts auf", async ({
+    page,
+  }) => {
+    await slowMicrophone(page);
+    await login(page);
+    await openChat(page);
+    await openDirectWithMax(page);
+    await page.getByRole("button", { name: "Sprachnachricht aufnehmen" }).click();
+    await page
+      .getByRole("link", { name: /^E-Mail|^Mail/ })
+      .first()
+      .click();
+    await page.waitForTimeout(1500);
+    await expect.poll(() => liveTracks(page)).toBe(0);
   });
 
   test("ein Kanal gehört seinen Mitgliedern", async ({ page, browser }) => {
