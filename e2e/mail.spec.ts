@@ -455,6 +455,15 @@ test.describe("Mail am Handy @phone", () => {
     await page.getByRole("list", { name: "Posteingang" }).getByText(subject).click();
     await expect(page.getByRole("heading", { name: subject })).toBeVisible();
     await expect(page.getByRole("list", { name: "Posteingang" })).toBeHidden();
+    // The toolbar's icons scroll sideways; "Weitere Aktionen" stays on the screen, the page no
+    // wider than it.
+    await expect(page.getByRole("button", { name: "Weitere Aktionen" })).toBeInViewport({
+      ratio: 1,
+    });
+    const width = page.viewportSize()?.width ?? 0;
+    expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(
+      width,
+    );
     await page.getByRole("button", { name: "Zurück" }).click();
     await expect(page.getByRole("list", { name: "Posteingang" })).toBeVisible();
     await page.getByRole("link", { name: address("jonas") }).click();
