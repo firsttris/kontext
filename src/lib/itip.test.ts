@@ -234,3 +234,22 @@ describe("applyPatch", () => {
     expect(base.participants.a.participationStatus).toBe("accepted");
   });
 });
+
+describe("toICalendar: zones without one yearly rule", () => {
+  it("lists the clock changes over the whole series, not only around its start", () => {
+    // Israel's summer time starts on the Friday before the last Sunday in March: no BYDAY rule
+    // of RFC 5545 fits, so each change is listed.
+    const series: CalendarEvent = {
+      ...meeting,
+      start: "2026-11-05T09:00:00",
+      timeZone: "Asia/Jerusalem",
+      recurrenceRule: { frequency: "weekly", until: "2031-12-31T09:00:00" },
+    };
+    const zone = linesOf(toICalendar(series, { method: "REQUEST", now: NOW }), "BEGIN:VTIMEZONE");
+    const starts = zone
+      .filter((line) => line.startsWith("DTSTART:"))
+      .map((line) => line.slice(8, 12));
+    expect(starts).toContain("2030");
+    expect(starts).toContain("2031");
+  });
+});

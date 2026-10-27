@@ -192,6 +192,19 @@ export const applyPatch = <T extends object>(base: T, patch: Record<string, unkn
   return result as T;
 };
 
+/** How far an open series (or one by count) has its zone written out: ten years. */
+const OPEN_SERIES_YEARS = 10;
+
+const firstYear = (event: CalendarEvent) => Number(event.start.slice(0, 4));
+
+/** The year the series ends in, as far as the VTIMEZONE has to reach. */
+const lastYear = (event: CalendarEvent) => {
+  const rule = event.recurrenceRule;
+  if (!rule) return firstYear(event);
+  if (rule.until) return Number(rule.until.slice(0, 4));
+  return firstYear(event) + OPEN_SERIES_YEARS;
+};
+
 const component = (lines: string[]) => ["BEGIN:VEVENT", ...lines, "END:VEVENT"];
 
 export type ItipOptions = {
@@ -243,7 +256,7 @@ export const toICalendar = (event: CalendarEvent, { method, now, only }: ItipOpt
   });
   const zones =
     event.timeZone && !event.showWithoutTime && !isUtc(event.timeZone)
-      ? vtimezone(event.timeZone, Number(event.start.slice(0, 4)))
+      ? vtimezone(event.timeZone, firstYear(event), lastYear(event))
       : [];
   const lines = [
     "BEGIN:VCALENDAR",

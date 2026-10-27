@@ -1334,7 +1334,8 @@ und ein Termin hat keine `blobId`). Es enthält `UID`, `SEQUENCE`, `ORGANIZER`, 
 `ATTENDEE;PARTSTAT=…;RSVP=TRUE`, Serien mit `RRULE`, `EXDATE` und einem `VEVENT` je geänderten
 Termin (`RECURRENCE-ID`), Ganztägiges als `VALUE=DATE` und für die Zeitzone ein `VTIMEZONE`
 (`src/lib/ical-zone.ts`, aus den Zeitzonendaten des Browsers, mit jährlicher Regel, wo sie
-passt), und die Regel einer Serie mit allem, was andere Programme schreiben (`BYSETPOS`,
+passt; sonst – Israel, Ägypten, Chile, Marokko – jede Umstellung bis zum Ende der Serie, bei
+einer Serie ohne Ende zehn Jahre), und die Regel einer Serie mit allem, was andere Programme schreiben (`BYSETPOS`,
 `BYMONTH` …). Wer `SEQUENCE` hochzählt, ist Kontext: Bei einer Änderung und wenn Teilnehmer dazukommen
 oder gehen, schreibt die App `sequence` + 1 in den Termin – wer ausgeladen wurde und wieder
 eingeladen wird, bekäme sonst eine Einladung unter der Nummer seiner Absage, und Stalwart wie
