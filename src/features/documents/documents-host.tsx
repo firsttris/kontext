@@ -16,6 +16,7 @@ import {
   type FrameCommand,
   framePathOf,
   frameSrcOf,
+  isEditorPath,
   kontextPathOf,
   readFrameMessage,
   splatOf,
@@ -114,7 +115,7 @@ const Frame = ({ url, active }: { url: string; active: boolean }) => {
         allow="clipboard-read; clipboard-write; fullscreen"
         className="min-h-0 w-full flex-1 border-0 bg-bg"
       />
-      <TabBar />
+      {isEditorPath(pathname) ? null : <TabBar />}
     </div>
   );
 };
