@@ -565,6 +565,10 @@ das Manifest steht in `vite.config.ts`, der Service Worker in `src/sw/service-wo
   Dialog unten (Bottom Sheet) läge unter der Tastatur. Er rückt deshalb um `--keyboard-height`
   nach oben und wird höchstens so hoch wie der sichtbare Teil (`src/components/ui/dialog.tsx`);
   ab `md` (Tablet) steht er in der Mitte von `--app-height`, nicht der ganzen Seite.
+  Ebenso rücken Hinweise (`toast.tsx`), das Banner der App (`pwa-status.tsx`) und der Knopf
+  „Neuer Termin“ im Kalender um `--keyboard-height` nach oben. Mit zwei Fingern vergrößert
+  bleibt die Seite, wie sie ist; nur eine Tastatur über der Seite (Android) nimmt ihr dann
+  weiter ihre Höhe weg.
 - **Gespräch öffnet unten:** Ein Chat geht bei der neuesten Nachricht auf und bleibt dort, auch
   wenn Bilder, Vorschauen oder entschlüsselte Texte danach noch wachsen. Bis man selbst scrollt
   (Finger, Mausrad, Tasten), zieht jede Scroll-Meldung die Liste wieder nach unten: Safari am

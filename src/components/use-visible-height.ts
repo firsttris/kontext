@@ -18,6 +18,7 @@
 import { useEffect } from "react";
 
 type VisibleArea = { height: number; offsetTop: number };
+type ZoomedArea = VisibleArea & { scale: number };
 
 /** The part of the VirtualKeyboard API used here (Chromium; not yet in TypeScript's DOM types). */
 type VirtualKeyboard = EventTarget & { overlaysContent: boolean; boundingRect: DOMRect };
@@ -28,12 +29,20 @@ export const hiddenBelow = (pageHeight: number, visible: VisibleArea) =>
 
 /**
  * The app's height and how far fixed elements rise. `overlay` is the height of a keyboard that
- * lies over the page (VirtualKeyboard API); the visible area doesn't shrink for it.
+ * lies over the page (VirtualKeyboard API); the visible area doesn't shrink for it. Nothing to
+ * set when zoomed in with two fingers and no keyboard lies over the page: the visible part is
+ * smaller then, the page is not.
  */
-export const fitAboveKeyboard = (pageHeight: number, visible: VisibleArea, overlay: number) => ({
-  appHeight: Math.max(0, visible.height - overlay),
-  keyboardHeight: hiddenBelow(pageHeight, visible) + Math.round(overlay),
-});
+export const fitAboveKeyboard = (pageHeight: number, visible: ZoomedArea, overlay: number) => {
+  if (visible.scale > 1.01)
+    return overlay > 0
+      ? { appHeight: Math.max(0, pageHeight - overlay), keyboardHeight: Math.round(overlay) }
+      : undefined;
+  return {
+    appHeight: Math.max(0, visible.height - overlay),
+    keyboardHeight: hiddenBelow(pageHeight, visible) + Math.round(overlay),
+  };
+};
 
 const virtualKeyboardOf = (nav: Navigator) =>
   (nav as Navigator & { virtualKeyboard?: VirtualKeyboard }).virtualKeyboard;
@@ -46,16 +55,15 @@ export const useVisibleHeight = () =>
     const keyboard = virtualKeyboardOf(navigator);
     if (keyboard) keyboard.overlaysContent = true;
     const fitToView = () => {
-      // Zoomed in with two fingers: the visible part is smaller, the page is not.
-      if (viewport.scale > 1.01) {
+      const fit = fitAboveKeyboard(root.clientHeight, viewport, keyboard?.boundingRect.height ?? 0);
+      if (!fit) {
         root.style.removeProperty("--app-height");
         root.style.removeProperty("--keyboard-height");
         return;
       }
-      const overlay = keyboard?.boundingRect.height ?? 0;
-      const fit = fitAboveKeyboard(root.clientHeight, viewport, overlay);
       root.style.setProperty("--app-height", `${fit.appHeight}px`);
-      if (window.scrollY !== 0) window.scrollTo(0, 0);
+      // Zoomed in, the page may move under the finger; otherwise it stays at its top.
+      if (window.scrollY !== 0 && viewport.scale <= 1.01) window.scrollTo(0, 0);
       root.style.setProperty("--keyboard-height", `${fit.keyboardHeight}px`);
     };
     fitToView();

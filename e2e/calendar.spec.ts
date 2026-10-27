@@ -314,6 +314,23 @@ test.describe("Kalender am Handy @phone", () => {
     await expect(page.getByRole("dialog").getByLabel("Titel")).toBeVisible();
   });
 
+  test("„Neuer Termin“ bleibt über der Tastatur", async ({ page }) => {
+    await fakeKeyboard(page);
+    await login(page);
+    await page.getByRole("link", { name: "Kalender" }).click();
+    const add = page.getByRole("link", { name: "Neuer Termin", exact: true });
+    await expect(add).toBeVisible();
+    const keyboard = 330;
+    await showKeyboard(page, keyboard);
+    const visibleBottom = (await page.evaluate(() => window.innerHeight)) - keyboard;
+    await expect
+      .poll(async () => {
+        const box = (await add.boundingBox())!;
+        return box.y + box.height;
+      })
+      .toBeLessThanOrEqual(visibleBottom);
+  });
+
   test("Kalender verwalten", async ({ page }) => {
     await login(page);
     await page.getByRole("link", { name: "Kalender" }).click();

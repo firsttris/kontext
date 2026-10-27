@@ -25,22 +25,33 @@ describe("hiddenBelow", () => {
 
 describe("fitAboveKeyboard", () => {
   it("leaves the app as high as the screen without a keyboard", () => {
-    expect(fitAboveKeyboard(844, { height: 844, offsetTop: 0 }, 0)).toEqual({
+    expect(fitAboveKeyboard(844, { height: 844, offsetTop: 0, scale: 1 }, 0)).toEqual({
       appHeight: 844,
       keyboardHeight: 0,
     });
   });
 
   it("takes the visible height when the keyboard shrinks what one sees (iOS)", () => {
-    expect(fitAboveKeyboard(844, { height: 508, offsetTop: 0 }, 0)).toEqual({
+    expect(fitAboveKeyboard(844, { height: 508, offsetTop: 0, scale: 1 }, 0)).toEqual({
       appHeight: 508,
       keyboardHeight: 336,
     });
   });
 
   it("makes room for a keyboard that lies over the page (Android, VirtualKeyboard API)", () => {
-    expect(fitAboveKeyboard(915, { height: 915, offsetTop: 0 }, 330.4)).toEqual({
+    expect(fitAboveKeyboard(915, { height: 915, offsetTop: 0, scale: 1 }, 330.4)).toEqual({
       appHeight: 584.6,
+      keyboardHeight: 330,
+    });
+  });
+
+  it("leaves the page alone when zoomed in without a keyboard over it", () => {
+    expect(fitAboveKeyboard(844, { height: 422, offsetTop: 200, scale: 2 }, 0)).toBeUndefined();
+  });
+
+  it("still makes room for a keyboard over the page when zoomed in", () => {
+    expect(fitAboveKeyboard(915, { height: 300, offsetTop: 400, scale: 2 }, 330)).toEqual({
+      appHeight: 585,
       keyboardHeight: 330,
     });
   });
