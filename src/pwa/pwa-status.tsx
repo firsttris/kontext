@@ -11,6 +11,7 @@ import { RefreshCw, WifiOff } from "lucide-react";
 import { useEffect, useSyncExternalStore } from "react";
 import { Button } from "@/components/ui/button";
 import { m } from "@/paraglide/messages";
+import { activateUpdate, browserUpdateDeps } from "./activate-update";
 
 const HOUR = 60 * 60 * 1000;
 
@@ -66,7 +67,6 @@ export const PwaStatus = () => {
   useWorkerNavigation();
   const {
     needRefresh: [needRefresh],
-    updateServiceWorker,
   } = useRegisterSW({
     // Only the built app has a worker (devOptions off in vite.config.ts), so dev reloads stay plain.
     immediate: true,
@@ -87,7 +87,11 @@ export const PwaStatus = () => {
         <Banner>
           <RefreshCw size={16} className="shrink-0 text-accent" />
           <span className="flex-1">{m.pwa_update()}</span>
-          <Button variant="primary" size="sm" onClick={() => void updateServiceWorker(true)}>
+          <Button
+            variant="primary"
+            size="sm"
+            onClick={() => void activateUpdate(browserUpdateDeps())}
+          >
             {m.pwa_reload()}
           </Button>
         </Banner>

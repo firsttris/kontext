@@ -503,7 +503,10 @@ das Manifest steht in `vite.config.ts`, der Service Worker in `src/sw/service-wo
   Version (`src/pwa/pwa-status.tsx`).
 - **Neu laden auf Wunsch.** Eine neue Version wartet und meldet sich mit „Eine neue Version von
   Kontext ist da – Neu laden“; sie übernimmt erst nach dem Klick, damit eine angefangene Mail
-  nicht verloren geht. Sind alle Fenster zu, startet beim nächsten Öffnen ohnehin die neue.
+  nicht verloren geht. Nach dem Klick lädt die Seite immer neu – auch ein Tab, der mit
+  Strg+Umschalt+R am Service Worker vorbei geladen wurde, oder wenn schon ein anderer Tab die
+  neue Version übernommen hat (`src/pwa/activate-update.ts`). Sind alle Fenster zu, startet beim nächsten Öffnen ohnehin die
+  neue.
 - **Welche Version läuft:** *Einstellungen → Darstellung → App auf diesem Gerät* zeigt die
   Version der geladenen App („Kontext 0.1.5“, aus `package.json` beim Build). Der Server nennt
   seine unter `/api/version` (ohne Anmeldung wie `/healthz`; die öffentlichen Dateien der App
