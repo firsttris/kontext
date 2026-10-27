@@ -12,6 +12,8 @@ export const Route = createFileRoute("/_app/contacts")({
     book: z.string().optional(),
     edit: z.boolean().optional(),
     q: z.string().optional(),
+    /** "Weitere Kontakte" or "Zusammenführen und korrigieren" instead of a contact. */
+    manage: z.enum(["other", "cleanup"]).optional(),
   }),
   component: ContactsRoute,
 });

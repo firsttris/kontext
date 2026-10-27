@@ -1,6 +1,7 @@
 import { readFile } from "node:fs/promises";
 import { expect, type Page, test } from "@playwright/test";
-import { login, unique } from "./helpers";
+import { createContact, listAddressBooks } from "../src/jmap/contacts";
+import { addMail, jmapAs, login, personalAccountId, unique } from "./helpers";
 
 test.describe("Kontakte", () => {
   test.beforeEach(async ({ page }) => {
@@ -305,5 +306,137 @@ test.describe("Kontakte am Handy @phone", () => {
     ).toBeVisible();
     await page.getByRole("dialog").getByRole("button", { name: "Teilen: Meine Kontakte" }).click();
     await expect(page.getByRole("dialog").getByLabel("Anna Weber")).toHaveValue("none");
+  });
+
+  test("Weitere Kontakte und Zusammenführen", async ({ page }) => {
+    await login(page);
+    await openContacts(page);
+    await page.getByRole("link", { name: "Weitere Kontakte" }).click();
+    await expect(page.getByRole("heading", { name: "Weitere Kontakte" })).toBeVisible();
+    await expect(
+      page.getByRole("searchbox", { name: "Kontakte suchen", exact: true }),
+    ).toBeHidden();
+    await page.getByRole("main").getByRole("link", { name: "Kontakte" }).click();
+
+    await page.getByRole("link", { name: /Zusammenführen und korrigieren/ }).click();
+    await expect(
+      page.getByRole("heading", { name: "Zusammenführen und korrigieren" }),
+    ).toBeVisible();
+    await page.getByRole("main").getByRole("link", { name: "Kontakte" }).click();
+    await expect(page.getByRole("searchbox", { name: "Kontakte suchen" })).toBeVisible();
+  });
+});
+
+/** Cards straight into Jonas' default address book, behind the UI's back. */
+const addContacts = async (cards: Record<string, unknown>[]) => {
+  const client = jmapAs("jonas");
+  const accountId = await personalAccountId("jonas");
+  const book = (await listAddressBooks(client, accountId)).find((b) => b.isDefault)!;
+  for (const card of cards) await createContact(client, accountId, book.id, card);
+};
+
+const named = (given: string, surname: string) => ({
+  name: {
+    components: [
+      { kind: "given", value: given },
+      { kind: "surname", value: surname },
+    ],
+    isOrdered: true,
+  },
+});
+
+test.describe("Weitere Kontakte", () => {
+  test("zeigt, mit wem man Mails hatte, und nimmt ihn in die Kontakte auf", async ({ page }) => {
+    const id = Date.now().toString(36);
+    const name = `Nora Neukunde ${id}`;
+    const email = `nora-${id}@kunde.test`;
+    await addMail("jonas", "jonas", unique("Anfrage Heizung"), { name, email });
+    await login(page);
+    await page.goto("/contacts");
+    await page.getByRole("link", { name: "Weitere Kontakte" }).click();
+    await expect(page.getByRole("heading", { name: "Weitere Kontakte" })).toBeVisible();
+
+    const list = page.getByRole("list", { name: "Weitere Kontakte" });
+    const nora = list.getByRole("listitem", { name });
+    await expect(nora).toContainText(email);
+    await expect(nora).toContainText("1 Mail");
+    // Contacts and colleagues are not "other" contacts.
+    await expect(list.getByRole("listitem", { name: "Petra Keller" })).toHaveCount(0);
+    await expect(list.getByRole("listitem", { name: "Anna Weber" })).toHaveCount(0);
+
+    await nora.getByRole("button", { name: "Zu Kontakten hinzufügen" }).click();
+    await expect(page.getByRole("status")).toHaveText(`${name} steht jetzt in Ihren Kontakten.`);
+    await expect(nora).toHaveCount(0);
+    await expect(page.getByRole("link", { name: new RegExp(`Nora Neukunde ${id}`) })).toBeVisible();
+  });
+});
+
+test.describe("Zusammenführen und korrigieren", () => {
+  test("führt doppelte Kontakte zusammen, auch in ihren Gruppen", async ({ page }) => {
+    const id = Date.now().toString(36);
+    const surname = `Doppel ${id}`;
+    const group = `Baustelle ${id}`;
+    await addContacts([
+      {
+        uid: `ina-a-${id}`,
+        ...named("Ina", surname),
+        emails: { e: { address: `ina-${id}@doppel.test` } },
+      },
+      {
+        uid: `ina-b-${id}`,
+        ...named("Ina", surname),
+        emails: { e: { address: `INA-${id}@doppel.test` } },
+        phones: { p: { number: "+49 7223 9900" } },
+        organizations: { o: { name: "Doppel GmbH" } },
+      },
+      { kind: "group", name: { full: group }, members: { [`ina-a-${id}`]: true } },
+    ]);
+    await login(page);
+    await page.goto("/contacts");
+    await page.getByRole("link", { name: /Zusammenführen und korrigieren/ }).click();
+
+    const set = page.getByRole("article", { name: `Ina ${surname}` });
+    await expect(set).toContainText("2 Kontakte · gleiche E-Mail-Adresse, gleicher Name");
+    await set.getByRole("button", { name: "Zusammenführen" }).click();
+    await expect(page.getByRole("status")).toHaveText(`Ina ${surname} zusammengeführt.`);
+    await expect(set).toHaveCount(0);
+
+    // One card with everything, and the group lists it.
+    await expect(page.getByRole("link", { name: new RegExp(`Ina ${surname}`) })).toHaveCount(1);
+    await page.getByRole("link", { name: new RegExp(`Ina ${surname}`) }).click();
+    await expect(page.getByText("+49 7223 9900")).toBeVisible();
+    await page
+      .getByRole("list", { name: "Gruppen" })
+      .getByRole("link", { name: new RegExp(group) })
+      .click();
+    await expect(
+      page.getByRole("list", { name: "Mitglieder" }).getByRole("link", { name: /Ina Doppel/ }),
+    ).toHaveCount(1);
+  });
+
+  test("korrigiert einen Namen in Großbuchstaben und merkt sich Ignoriertes", async ({ page }) => {
+    const id = Date.now().toString(36).toUpperCase();
+    await addContacts([
+      named("KARL", `KRAUSE${id}`),
+      named("Udo", `Zweimal ${id.toLowerCase()}`),
+      named("Udo", `Zweimal ${id.toLowerCase()}`),
+    ]);
+    await login(page);
+    await page.goto("/contacts?manage=cleanup");
+
+    const fix = page.getByRole("listitem", { name: `KARL KRAUSE${id}` });
+    await expect(fix).toContainText(`Karl Krause${id.toLowerCase()}`);
+    await fix.getByRole("button", { name: "Übernehmen" }).click();
+    await expect(page.getByRole("status")).toHaveText(`Karl Krause${id.toLowerCase()} korrigiert.`);
+    await expect(fix).toHaveCount(0);
+
+    const udo = page.getByRole("article", { name: `Udo Zweimal ${id.toLowerCase()}` });
+    await udo.getByRole("button", { name: "Ignorieren" }).click();
+    await expect(udo).toHaveCount(0);
+    await page.reload();
+    await expect(
+      page.getByRole("heading", { name: "Zusammenführen und korrigieren" }),
+    ).toBeVisible();
+    await expect(udo).toHaveCount(0);
   });
 });

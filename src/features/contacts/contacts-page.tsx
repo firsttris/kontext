@@ -11,11 +11,14 @@ import { isGroup } from "@/lib/groups";
 import { matchesSearch } from "@/lib/jscontact";
 import { m } from "@/paraglide/messages";
 import { BooksDialog } from "./books-dialog";
+import { Cleanup } from "./cleanup";
 import { ContactDetail } from "./contact-detail";
 import { ContactEditor } from "./contact-editor";
 import { ContactList } from "./contact-list";
+import { ContactViews } from "./contact-views";
 import { GroupDetail } from "./group-detail";
 import { GroupEditor } from "./group-editor";
+import { OtherContacts } from "./other-contacts";
 import { type BookRef, bookLabel, contactKey, useContacts, useContactsAccountId } from "./queries";
 
 type ContactsSearch = {
@@ -24,6 +27,7 @@ type ContactsSearch = {
   book?: string;
   edit?: boolean;
   q?: string;
+  manage?: "other" | "cleanup";
 };
 
 export const ContactsPage = ({ search }: { search: ContactsSearch }) => {
@@ -41,7 +45,7 @@ export const ContactsPage = ({ search }: { search: ContactsSearch }) => {
   const selected = contacts.find(
     (card) => card.id === search.id && card.accountId === (search.account ?? ownAccount),
   );
-  const showDetail = Boolean(search.id);
+  const showDetail = Boolean(search.id || search.manage);
 
   const shown = contacts.filter((card) => matchesSearch(card, text));
   const groups = shown.filter(isGroup);
@@ -104,14 +108,17 @@ export const ContactsPage = ({ search }: { search: ContactsSearch }) => {
           ) : shown.length === 0 && text ? (
             <p className="px-3 py-4 text-[14px] text-muted">{m.contacts_empty()}</p>
           ) : (
-            <ContactList
-              groups={groups}
-              contacts={people}
-              selected={selected}
-              ownAccount={ownAccount}
-              book={search.book}
-              searching={Boolean(text.trim())}
-            />
+            <>
+              {text.trim() ? null : <ContactViews manage={search.manage} />}
+              <ContactList
+                groups={groups}
+                contacts={people}
+                selected={selected}
+                ownAccount={ownAccount}
+                book={search.book}
+                searching={Boolean(text.trim())}
+              />
+            </>
           )}
         </div>
         <TabBar />
@@ -122,7 +129,11 @@ export const ContactsPage = ({ search }: { search: ContactsSearch }) => {
           showDetail ? "block" : "hidden md:block",
         )}
       >
-        {search.id === "new" ? (
+        {search.manage === "other" ? (
+          <OtherContacts />
+        ) : search.manage === "cleanup" ? (
+          <Cleanup />
+        ) : search.id === "new" ? (
           <ContactEditor books={books} preferredBook={search.book} />
         ) : search.id === "new-group" ? (
           <GroupEditor contacts={contacts} books={books} preferredBook={search.book} />

@@ -34,14 +34,14 @@ const splitGivenFirst = (name: string): NameParts => {
 };
 
 /** Lowercase name particles that belong to the surname: "von der Heide", "van Dijk", "zu Salm". */
-const PARTICLES = new Set(
+export const NAME_PARTICLES = new Set(
   "von van vom zu zum zur de der den del della di da du dos das ten ter le la".split(" "),
 );
 
 /** One word ("Keller", "Müller-Lüdenscheidt"), optionally after particles ("von der Heide"). */
 const looksLikeSurname = (text: string): boolean => {
   const words = text.split(/\s+/).filter(Boolean);
-  return words.length > 0 && words.slice(0, -1).every((word) => PARTICLES.has(word));
+  return words.length > 0 && words.slice(0, -1).every((word) => NAME_PARTICLES.has(word));
 };
 
 /**

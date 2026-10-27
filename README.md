@@ -99,6 +99,7 @@ records, Podman Quadlets, backups and updates are in the
 - **Video meeting per event**: one click adds a link; customers join in the browser without an account.
 - **Share calendars and address books** with colleagues – free/busy only, read, or edit.
 - **The customer at a glance**: latest mails, upcoming appointments, open tasks, documents and "Call"; **groups**, **vCard import and export**.
+- **Other contacts** like Gmail: everyone you exchanged mails with who is in no address book, saved with one click; **merge and fix** duplicate contacts and names written in capitals.
 
 ### ✅ Tasks
 

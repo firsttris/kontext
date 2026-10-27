@@ -14,10 +14,12 @@ import {
   deleteContact,
   listAddressBooks,
   listContacts,
+  setContacts,
   shareAddressBook,
   updateContact,
 } from "@/jmap/contacts";
 import { principalName } from "@/jmap/principals";
+import { mergePlan } from "@/lib/contact-duplicates";
 import type { ContactCard } from "@/lib/jscontact";
 import type { ShareWith } from "@/lib/sharing";
 import { m } from "@/paraglide/messages";
@@ -166,7 +168,13 @@ export const useContactMutations = () => {
     mutationFn: (contact: Contact) => deleteContact(client, contact.accountId, contact.id),
     onSettled: (_data, _error, contact) => refresh(contact.accountId),
   });
-  return { create, update, remove };
+  /** Each set of duplicates (all in one account) becomes one card; `groups` are the account's. */
+  const merge = useMutation({
+    mutationFn: ({ sets, groups }: { sets: Contact[][]; groups: Contact[] }) =>
+      setContacts(client, sets[0]![0]!.accountId, mergePlan(sets, groups)),
+    onSettled: (_data, _error, { sets }) => refresh(sets[0]![0]!.accountId),
+  });
+  return { create, update, remove, merge };
 };
 
 export const useBookMutations = () => {

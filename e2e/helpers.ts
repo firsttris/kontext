@@ -106,7 +106,12 @@ export const unique = (text: string) => `${text} ${Date.now().toString(36)}`;
  * Puts a read mail straight into the inbox of a mailbox the user can open (their own or a shared
  * one like info@), for tests that move it and must not touch the seed's mails.
  */
-export const addMail = async (user: string, mailbox: string, subject: string) => {
+export const addMail = async (
+  user: string,
+  mailbox: string,
+  subject: string,
+  from = { name: "Erika Test", email: "erika@example.test" },
+) => {
   const client = jmapAs(user);
   const session = await client.getSession();
   const accountId = Object.entries(session.accounts).find(
@@ -123,7 +128,7 @@ export const addMail = async (user: string, mailbox: string, subject: string) =>
       m: {
         mailboxIds: { [inbox]: true },
         keywords: { $seen: true },
-        from: [{ name: "Erika Test", email: "erika@example.test" }],
+        from: [from],
         to: [{ name: null, email: address(mailbox) }],
         subject,
         receivedAt: new Date().toISOString(),
