@@ -271,7 +271,11 @@ systemctl start stalwart redis livekit livekit-sip kontext schreibzeug caddy
 podman ps
 ```
 
-Caddy holt die Zertifikate gleich beim Start (`podman logs caddy`). Im Log von Stalwart steht das
+Caddy holt die Zertifikate gleich beim Start (`podman logs caddy`). Findet Schreibzeug Kontext
+beim Start nicht (DNS noch nicht da, Kontext startet noch), steht in seinem Log
+`Discovery fetch failed … Provider skipped` und in Kontexts `Schreibzeug antwortet nicht`: harmlos,
+Better Auth fragt beim ersten „Anmelden mit Kontext“ erneut (`retryDiscovery` in
+`better-auth/plugins/generic-oauth`), ein Neustart ist nicht nötig. Im Log von Stalwart steht das
 vorläufige Admin-Passwort (`podman logs stalwart`). Stalwarts Verwaltung ist nur auf dem Server
 selbst erreichbar; vom eigenen Rechner über einen Tunnel, dann `http://localhost:8080` im Browser:
 
