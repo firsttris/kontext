@@ -267,9 +267,23 @@ im Bucket höchstens 14 Tage: `backup.sh` hebt 14 Tage, 8 Wochen und 12 Monate a
 Rest weg; länger gesperrte Dateien lassen sich nicht löschen. Das meldet das Skript, prüft die
 Sicherung aber trotzdem.
 
+Restic muss auf dem Server installiert sein (`apt-get install restic`).
+
 ```bash
 crontab -e
 0 3 * * *  /opt/kontext/deploy/backup.sh >> /var/log/kontext-backup.log 2>&1
+```
+
+Mit Podman (Quadlet) gibt es kein `deploy/.env`; das Skript erkennt das an
+`/etc/containers/systemd/kontext.container` und liest seine Einstellungen aus
+`deploy/backup.env` (`chmod 600`):
+
+```
+KONTEXT_DOMAIN=kontext.firma.de
+RESTIC_REPOSITORY=s3:https://s3.eu-central-1.example.com/kontext-firma
+RESTIC_PASSWORD=…
+AWS_ACCESS_KEY_ID=…
+AWS_SECRET_ACCESS_KEY=…
 ```
 
 Der Mailserver hält dafür nachts ein paar Sekunden an; absendende Server versuchen es einfach
