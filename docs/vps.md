@@ -17,6 +17,7 @@ Was wo passiert:
 | 7. DNS bei Cloudflare           | Cloudflare und Server  |
 | 8. Firewall                     | Server                 |
 | 9. Kontext mit Quadlet starten  | Server                 |
+| 10. Stalwart ohne Oberfläche einrichten | Server         |
 
 ## 1. Root-Passwort setzen
 
@@ -278,4 +279,110 @@ selbst erreichbar; vom eigenen Rechner über einen Tunnel, dann `http://localhos
 ssh -L 8080:127.0.0.1:8080 kunde-vps
 ```
 
-Danach weiter mit [Stalwart einrichten](installation.md#3-stalwart-einrichten).
+Danach weiter mit [Stalwart einrichten](installation.md#3-stalwart-einrichten) – in der
+Oberfläche oder wie unten direkt auf dem Server.
+
+## 10. Stalwart ohne Oberfläche einrichten
+
+Alles aus [Stalwart einrichten](installation.md#3-stalwart-einrichten) geht auch über Stalwarts
+Verwaltungs-API (JMAP, `x:<Objekt>/get|set`, die Objekte in
+`crates/registry/src/schema/structs.rs` von Stalwart), auf dem Server gegen `127.0.0.1:8080`.
+
+!!! danger "Stalwart schreibt sonst selbst ins DNS"
+    Mit Cloudflare-Token bei der Ersteinrichtung legt Stalwart **MX, SPF (`mx -all`) und DMARC
+    (`p=reject`)** an und stellt damit die Mail der Domain sofort auf den neuen Server um – auch
+    wenn sie noch woanders läuft. Darum die Ersteinrichtung ohne DNS (`Manual`) und danach den
+    Token nur für das Zertifikat und die DKIM-Schlüssel.
+
+Ein kleiner Helfer (die Zugangsdaten liegen in `/root/.stalwart-admin` als `name:passwort`):
+
+```bash
+cat > /root/stalwart-api.sh <<'SH'
+#!/bin/sh
+exec curl -s -u "$(cat /root/.stalwart-admin)" http://127.0.0.1:8080/jmap/ -H 'content-type: application/json' \
+  -d "{\"using\":[\"urn:ietf:params:jmap:core\",\"urn:stalwart:jmap\"],\"methodCalls\":$1}"
+SH
+chmod 700 /root/stalwart-api.sh
+```
+
+**Ersteinrichtung.** Mit dem vorläufigen Passwort aus `podman logs stalwart` (Benutzer `admin`;
+nach jedem Neustart vor der Einrichtung ein neues). Ohne Zertifikat und ohne DNS; die
+DKIM-Schlüssel erzeugt Stalwart, das Log geht nach `podman logs`:
+
+```bash
+curl -s -u 'admin:<vorläufiges-passwort>' http://127.0.0.1:8080/jmap/ -H 'content-type: application/json' -d '{
+  "using":["urn:ietf:params:jmap:core","urn:stalwart:jmap"],
+  "methodCalls":[["x:Bootstrap/set",{"update":{"singleton":{
+    "serverHostname":"mail.firma.de","defaultDomain":"firma.de",
+    "requestTlsCertificate":false,"generateDkimKeys":true,"dnsServer":{"@type":"Manual"},
+    "tracer":{"@type":"Stdout","ansi":false,"multiline":false,"enable":true,"level":"info",
+              "lossy":false,"buffered":true,"events":{},"eventsPolicy":"exclude"}}}},"0"]]}'
+```
+
+Die Antwort enthält den festen Admin (`admin@firma.de`) und sein Passwort: als
+`admin@firma.de:<passwort>` nach `/root/.stalwart-admin` (`chmod 600`), dann
+`systemctl restart stalwart`. Erst danach laufen die Mail-Ports.
+
+**Zertifikat für `mail.firma.de`** per DNS-01 über Cloudflare (Port 443 hat Caddy). Stalwart
+holt es nur mit DNS-Verwaltung; `publishRecords` braucht mindestens einen Typ, und `dkim` ist
+harmlos (eigene Namen `v1-…._domainkey`, fremde DKIM-Einträge bleiben). Die Ids aus den Antworten
+von `x:Domain/get`, `x:DnsServer/get`, `x:AcmeProvider/get` einsetzen:
+
+```bash
+/root/stalwart-api.sh '[
+ ["x:DnsServer/set",{"create":{"cf":{"@type":"Cloudflare","secret":{"@type":"Value","secret":"<cloudflare-token>"}}}},"0"],
+ ["x:AcmeProvider/set",{"create":{"le":{"challengeType":"Dns01","contact":{"admin@firma.de":true},
+   "directory":"https://acme-v02.api.letsencrypt.org/directory"}}},"1"]]'
+/root/stalwart-api.sh '[["x:Domain/set",{"update":{"<domain-id>":{
+   "certificateManagement":{"@type":"Automatic","acmeProviderId":"<acme-id>","subjectAlternativeNames":{"mail.firma.de":true}},
+   "dnsManagement":{"@type":"Automatic","dnsServerId":"<dns-id>","origin":null,"publishRecords":{"dkim":true}}}}},"0"]]'
+```
+
+Nach ein bis zwei Minuten steht im Log `ACME order completed`; Stalwart erneuert selbst.
+
+**Port 587.** Stalwarts Standard-Listener haben 465, aber nicht 587 (STARTTLS), den viele
+Mailprogramme nehmen:
+
+```bash
+/root/stalwart-api.sh '[["x:NetworkListener/set",{"create":{"sub":{"name":"submission","protocol":"smtp",
+  "bind":{"[::]:587":true},"useTls":true,"tlsImplicit":false}}},"0"]]'
+```
+
+**Einstellungen aus der Installation** (X-Forwarded-For, Kontexts Netz als erlaubte IP,
+Sperrdauer ein Tag, deutsche Suche, 16 gleichzeitige JMAP-Anfragen):
+
+```bash
+/root/stalwart-api.sh '[
+ ["x:Http/set",{"update":{"singleton":{"useXForwarded":true}}},"0"],
+ ["x:AllowedIp/set",{"create":{"k":{"address":"10.89.250.0/24","reason":"Kontext"}}},"1"],
+ ["x:Security/set",{"update":{"singleton":{"authBanPeriod":86400000,"scanBanPeriod":86400000,
+   "abuseBanPeriod":86400000,"loiterBanPeriod":86400000}}},"2"],
+ ["x:Search/set",{"update":{"singleton":{"defaultLanguage":"de-DE"}}},"3"],
+ ["x:Jmap/set",{"update":{"singleton":{"maxConcurrentRequests":16}}},"4"]]'
+```
+
+**Firmenverwaltung.** Rolle `Kontext-Server` (erbt *User*, Id `b`), das Konto
+`kontext-server@firma.de` mit ihr und einem Zufallspasswort; die Id der neuen Rolle aus der
+ersten Antwort beim Konto einsetzen:
+
+```bash
+PW=$(openssl rand -hex 24); echo "kontext-server@firma.de:$PW" > /root/.stalwart-kontext-server
+chmod 600 /root/.stalwart-kontext-server
+/root/stalwart-api.sh '[["x:Role/set",{"create":{"ks":{"description":"Kontext-Server","roleIds":{"b":true},
+  "enabledPermissions":{"sysAccountGet":true,"sysAccountQuery":true,"sysAccountCreate":true,
+  "sysAccountUpdate":true,"sysRoleGet":true,"sysRoleCreate":true,"sysDomainGet":true,
+  "sysAuthenticationGet":true,"impersonate":true}}}},"0"]]'
+/root/stalwart-api.sh '[["x:Account/set",{"create":{"a":{"@type":"User","name":"kontext-server",
+  "domainId":"<domain-id>","roles":{"@type":"Custom","roleIds":{"<rollen-id>":true}},
+  "credentials":{"0":{"@type":"Password","secret":"'"$PW"'"}}}}},"0"]]'
+```
+
+Den API-Schlüssel legt das Konto für sich selbst an; er steht einmal in der Antwort (`secret`,
+beginnt mit `API_`) und kommt als `STALWART_ADMIN_KEY` in `deploy/kontext.env`:
+
+```bash
+curl -s -u "$(cat /root/.stalwart-kontext-server)" http://127.0.0.1:8080/jmap/ -H 'content-type: application/json' \
+  -d '{"using":["urn:ietf:params:jmap:core","urn:stalwart:jmap"],"methodCalls":[["x:ApiKey/set",
+  {"create":{"k":{"description":"Kontext","permissions":{"@type":"Inherit"}}}},"0"]]}'
+nano /opt/kontext/deploy/kontext.env && systemctl restart kontext
+```
