@@ -17,7 +17,7 @@ services:
       - "465:465"
       - "587:587"
       - "993:993"
-      # Stalwart's own admin, only on the server's Tailscale address
+      # Stalwart's own admin, only on the server itself (SSH tunnel) or its Tailscale address
       - "${TAILSCALE_IP:-127.0.0.1}:8080:8080"
     volumes:
       - stalwart-config:/etc/stalwart

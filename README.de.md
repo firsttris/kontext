@@ -69,7 +69,7 @@ chmod 600 deploy/.env                   # jedes change-me ersetzen: damit starte
 docker compose -f deploy/compose.yaml up -d
 ```
 
-Danach in Stalwarts Verwaltung (Port 8080, nur über Tailscale) Domain, DKIM und Benutzer anlegen,
+Danach in Stalwarts Verwaltung (Port 8080, nur über SSH-Tunnel oder Tailscale) Domain, DKIM und Benutzer anlegen,
 Kontexts Container-Netz `10.89.250.0/24` als erlaubte IP eintragen (sonst können falsche
 Passwörter Kontext selbst sperren lassen) und unter `https://<deine Domain>` anmelden. Für zehn Benutzer reicht ein VPS mit 2 vCPU und 4 GB
 RAM. Anrufe (LiveKit), Telefonie und Dokumente sind Compose-Profile, die du bei Bedarf

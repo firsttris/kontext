@@ -40,7 +40,7 @@ TLSA-Eintrag, ebenfalls aus Stalwart). Die Firmenverwaltung prüft, was davon ge
 git clone https://github.com/firsttris/kontext /opt/kontext && cd /opt/kontext
 cp deploy/.env.example deploy/.env
 chmod 600 deploy/.env            # nur root darf die Geheimnisse lesen
-nano deploy/.env                 # Domain, Mailserver-Name, Geheimnis, Tailscale-IP, Backup-Ziel
+nano deploy/.env                 # Domain, Mailserver-Name, Geheimnis, Backup-Ziel
 docker compose -f deploy/compose.yaml up -d
 ```
 
@@ -56,9 +56,18 @@ Einstellungen (`kontext.env`, `livekit.env` … mit `chmod 600`), keiner `deploy
 
 ## 3. Stalwart einrichten
 
-Stalwarts eigene Verwaltung ist nur über die Tailscale-Adresse des Servers erreichbar:
-`http://<tailscale-ip>:8080`. Beim ersten Start steht das Admin-Passwort im Log
-(`docker compose -f deploy/compose.yaml logs stalwart`).
+Stalwarts eigene Verwaltung lauscht nur auf dem Server selbst (`127.0.0.1:8080`), nie im
+Internet. Vom eigenen Rechner über einen SSH-Tunnel, dann `http://localhost:8080` im Browser:
+
+```bash
+ssh -L 8080:127.0.0.1:8080 root@<server>
+```
+
+Wer Tailscale nutzt, trägt stattdessen die Tailscale-Adresse des Servers ein (`TAILSCALE_IP` in
+`deploy/.env`, bei Quadlet in `stalwart.container`) und erreicht sie unter
+`http://<tailscale-ip>:8080`. Beim ersten Start steht ein vorläufiges Admin-Passwort im Log
+(`docker compose -f deploy/compose.yaml logs stalwart`, mit Podman `podman logs stalwart`); nach
+jedem Neustart vor der Einrichtung gibt es ein neues.
 
 1. **Domain** `firma.de` anlegen, DKIM-Schlüssel erzeugen und als TXT-Eintrag ins DNS.
 2. **TLS** für `mail.firma.de` per ACME, am einfachsten mit DNS-01 (Cloudflare-API-Token), weil
