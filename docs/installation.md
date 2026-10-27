@@ -173,7 +173,7 @@ die Box bis v0.1.3 lädt die Konfiguration aus Kontext nicht und meldet sich nie
 ```bash
 git clone --depth 1 --branch v0.1.4 https://github.com/firsttris/kontext.git /opt/kontext-box-src
 cd /opt/kontext-box-src
-podman build -f box/Dockerfile --build-arg BOX_VERSION=0.1.4 -t kontext-box:0.1.4 .
+podman build -f box/Dockerfile -t kontext-box:0.1.4 .
 ```
 
 Im Quadlet dann `Image=localhost/kontext-box:0.1.4` (Podman setzt `localhost/` vor lokal gebaute

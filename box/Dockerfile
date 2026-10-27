@@ -21,7 +21,6 @@ RUN apk add --no-cache asterisk asterisk-sounds-en asterisk-sounds-moh asterisk-
 COPY box/asterisk/ /etc/asterisk/
 COPY box/entrypoint.sh /entrypoint.sh
 COPY --from=build /out/agent.js /app/agent.js
-ARG BOX_VERSION=dev
-ENV BOX_VERSION=$BOX_VERSION DATA_DIR=/data ASTERISK_CONFIG_DIR=/etc/asterisk STATUS_PORT=8089
+ENV DATA_DIR=/data ASTERISK_CONFIG_DIR=/etc/asterisk STATUS_PORT=8089
 VOLUME /data
 ENTRYPOINT ["/sbin/tini", "--", "/entrypoint.sh"]
