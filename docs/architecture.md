@@ -566,6 +566,11 @@ das Manifest steht in `vite.config.ts`, der Service Worker in `src/sw/service-wo
   danach vergrößert; die Seite ragt dann rechts hinaus und rutscht oben unter Safaris Glasleiste.
   Felder, Auswahllisten und der Mail-Editor haben dort deshalb 16 px (`src/styles.css`, geprüft
   von `src/lib/ios-zoom.test.ts`).
+- **Oberer Rand der installierten App am iPhone:** iOS 26 legt über die obersten etwa 40 pt unter
+  der Statusleiste eine Unschärfe („Liquid Glass“), über der Seite, die sich weder per CSS noch
+  per Meta-Tag abschalten lässt. In der installierten App im Hochformat beginnt der Inhalt deshalb
+  um 2,5 rem tiefer (`--safe-top` in `src/styles.css`, geprüft von `src/lib/ios-edge-blur.test.ts`);
+  Safari-Tabs, Querformat und andere Systeme bleiben beim Rand der Statusleiste.
 - **Zurück am Handy:** Ein Bildschirm, der aus einem anderen geöffnet wurde (Gespräch aus der
   Liste, Thread aus dem Gespräch), trägt `fromParent` im Verlaufseintrag; sein „Zurück“ geht dann
   im Verlauf des Browsers zurück, sodass ein Wischen danach nicht wieder auf ihm landet. Ohne
@@ -1489,7 +1494,10 @@ Handy unter „Mehr“, wenn es nicht in die Tab-Leiste gelegt ist). `/documents
 (`src/features/documents/documents-host.tsx`), der beim ersten Besuch entsteht und beim Wechsel zu
 Mail und zurück stehen bleibt, damit ein offenes Dokument offen bleibt. Die Adresse folgt der Seite
 im Rahmen (`/documents/edit/…`, ohne eigenen Verlaufseintrag: den hat der Rahmen), und Kontexts
-Navigation zu einer solchen Adresse öffnet die Seite im Rahmen. Kontext schickt Hell/Dunkel und
+Navigation zu einer solchen Adresse öffnet die Seite im Rahmen. Am Handy steht die Tab-Leiste unter den
+Listen von Dokumente, nicht unter einer offenen Datei, sobald der Rahmen den Editor meldet: dort
+gehört der Bildschirm dem Editor, und sein Zurück führt zu den Listen. Bleibt der Rahmen leer
+(Schreibzeug nicht erreichbar), bleibt die Tab-Leiste. Kontext schickt Hell/Dunkel und
 beim Abmelden `logout` (und wartet bis zu zwei Sekunden auf `signed-out`); Schreibzeug meldet die
 Seite, den Namen des Dokuments, ungespeicherte Änderungen (ein Punkt an „Dokumente“ in der Leiste)
 und Kontexts Tastenkürzel, die außerhalb von Feldern und Dokument gedrückt wurden. Nachrichten

@@ -48,6 +48,13 @@ export const framePathOf = (kontextPath: string): string => {
   return rest.startsWith("/") && !rest.startsWith("//") ? rest : "/";
 };
 
+/**
+ * Whether a path of Kontext shows a file open in Schreibzeug's editor (`/documents/edit/1`); there
+ * the editor has the whole screen of a phone, and its back button leads to the lists.
+ */
+export const isEditorPath = (kontextPath: string): boolean =>
+  framePathOf(kontextPath).startsWith("/edit/");
+
 /** The rest of Kontext's path for a page of Schreibzeug (the route's splat): `/edit/1?x` → `edit/1`. */
 export const splatOf = (framePath: string): string =>
   new URL(framePath, "http://frame.invalid").pathname.replace(/^\/+/, "");
