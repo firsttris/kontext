@@ -284,6 +284,16 @@ Daten, jede weitere nur so groß wie das Neue. Für S3 setzt man `AWS_ACCESS_KEY
 SFTP meldet sich root mit einem SSH-Schlüssel an (`ssh-keygen`, den öffentlichen Teil beim Ziel
 hinterlegen, einmal `ssh backup@nas.firma.de` zum Bestätigen des Host-Schlüssels).
 
+Bei R2 den Bucket mit Standort **EU** anlegen; der Endpoint heißt dann
+`https://<konto-id>.eu.r2.cloudflarestorage.com` (der ohne `.eu` findet EU-Buckets nicht). Ein
+IP-Filter am Token braucht die IPv4-Adresse **und** das IPv6-Netz des Servers: Restic geht
+bevorzugt über IPv6, sonst antwortet R2 mit *Access Denied*.
+
+Nach jeder Sicherung misst `backup.sh` die Größe und schreibt ab 8 GB eine Warnung ins Log
+(`BACKUP_WARN_GB` in den Einstellungen ändert die Grenze) – vor dem Ende der freien 10 GB. Bei R2
+zusätzlich unter *Notifications → Usage Based Billing* eine Mail ab etwa 8 GB einrichten; die kommt
+auch, wenn der Server schweigt.
+
 Restic muss auf dem Server installiert sein (`apt-get install restic`).
 
 ```bash

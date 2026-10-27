@@ -98,6 +98,15 @@ for tag in stalwart kontext schreibzeug; do
     tidied=failed
 done
 restic check --read-data-subset 1%
+
+# The repository's size after tidying up, against a limit (BACKUP_WARN_GB, default 8): free tiers
+# end at 10 GB (Cloudflare R2, Backblaze B2), and a warning before that leaves time to act.
+size="$(restic stats --mode raw-data --json | sed -n 's/.*"total_size":\([0-9]*\).*/\1/p')"
+limit_gb="${BACKUP_WARN_GB:-8}"
+if [ "${size:-0}" -gt $((limit_gb * 1024 * 1024 * 1024)) ]; then
+  echo "$(date -Is) backup: $((size / 1024 / 1024)) MB in the repository, more than ${limit_gb} GB" >&2
+fi
+
 if [ "$tidied" = ok ]; then
   echo "$(date -Is) backup ok"
 else
