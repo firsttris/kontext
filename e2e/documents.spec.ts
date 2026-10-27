@@ -117,4 +117,13 @@ test.describe("Dokumente am Handy @phone", () => {
     await expect(frame.locator("#path")).toHaveText("/edit/42");
     await expect(tabBar).toHaveCount(0);
   });
+
+  test("lässt die Tab-Leiste, wenn Schreibzeug nicht antwortet @phone", async ({ page }) => {
+    await login(page, "anna");
+    // The frame stays empty, so its back button is not there either: the tab bar is the way out.
+    await page.route("http://localhost:28097/**", (route) => route.abort());
+    await page.goto("/documents/edit/42");
+    await expect(page.locator('iframe[src*="embedded=kontext"]')).toBeAttached();
+    await expect(page.getByRole("navigation", { name: "Apps" })).toBeVisible();
+  });
 });
