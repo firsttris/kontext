@@ -2,6 +2,9 @@
 
 <h1>Kontext: die selbst gehostete Alternative zu Google Workspace und Microsoft 365</h1>
 
+<h3>Zehn Leute in Google Workspace oder Microsoft 365 kosten rund 1.600 € im Jahr – jedes Jahr.<br>
+Mit Kontext kosten sie einen Server: rund 120 € im Jahr, und deine Mails verlassen ihn nicht.</h3>
+
 **Mail, Kalender, Kontakte, Aufgaben, Team-Chat und Telefonie (CTI) für kleine Betriebe – auf deinem eigenen Server.**<br>
 Gemeinsame Postfächer, ein Kalender fürs Team und Kontakte, die alles verbinden: zu jedem Kunden Mails, Termine, Aufgaben und Anrufe auf einen Blick.<br>
 Open Source (AGPL), eine Web-App und PWA auf dem Mailserver Stalwart, keine Kosten pro Benutzer. Made in Europe.
@@ -9,14 +12,19 @@ Open Source (AGPL), eine Web-App und PWA auf dem Mailserver Stalwart, keine Kost
 [English](README.md) · **Deutsch**
 
 [![CI](https://github.com/firsttris/kontext/actions/workflows/ci.yml/badge.svg)](https://github.com/firsttris/kontext/actions/workflows/ci.yml)
+[![Release](https://img.shields.io/github/v/release/firsttris/kontext?logo=github&label=release)](https://github.com/firsttris/kontext/releases/latest)
+[![Docker Pulls](https://img.shields.io/docker/pulls/tristanteu/kontext?logo=docker&logoColor=white)](https://hub.docker.com/r/tristanteu/kontext)
+[![Platforms](https://img.shields.io/badge/platform-amd64%20%7C%20arm64-lightgrey)](https://hub.docker.com/r/tristanteu/kontext/tags)
 [![Docs](https://img.shields.io/badge/docs-firsttris.github.io%2Fkontext-4f46e5?logo=materialformkdocs&logoColor=white)](https://firsttris.github.io/kontext/)
 [![License: AGPL-3.0](https://img.shields.io/badge/license-AGPL--3.0-blue)](LICENSE)
 [![Stalwart 0.16](https://img.shields.io/badge/Stalwart-0.16-18181b)](https://stalw.art)
 [![JMAP](https://img.shields.io/badge/JMAP-mail%20%7C%20calendar%20%7C%20contacts-0f766e)](https://jmap.io)
-[![Docker](https://img.shields.io/badge/Docker-Compose%20%7C%20Podman-2496ed?logo=docker&logoColor=white)](https://firsttris.github.io/kontext/installation.html)
+[![Made in Europe](https://img.shields.io/badge/made%20in-Europe-003399)](#-deine-daten-deine-regeln)
 
 ```bash
-docker compose -f deploy/compose.yaml up -d
+git clone https://github.com/firsttris/kontext && cd kontext
+cp deploy/.env.example deploy/.env            # deine Domain und Geheimnisse
+docker compose -f deploy/compose.yaml up -d   # oder Podman
 ```
 
 [Warum](#-warum-kontext) •
@@ -214,9 +222,16 @@ eigenen Server will, mit Mail, Kalender, Chat und Firmentelefon an einem Ort.
 
 ## ❓ FAQ
 
+### Gibt es eine Open-Source-Alternative zu Google Workspace und Microsoft 365?
+Ja, Kontext: Mail mit gemeinsamen Postfächern, Kalender, Kontakte, Aufgaben, Team-Chat mit
+Videoanrufen und die Telefonanlage in einer Web-App auf deinem eigenen Server, Dokumente über
+[Schreibzeug](https://github.com/firsttris/schreibzeug). Siehe [Installation](https://firsttris.github.io/kontext/installation.html).
+
 ### Was kostet das?
-Die Software ist kostenlos (AGPL). Du brauchst einen Server – einen VPS ab etwa 5 € im Monat – und
-jemanden, der ihn einrichtet und aktuell hält.
+Die Software ist kostenlos (AGPL). Du brauchst einen Server – einen VPS ab etwa 5 € im Monat, rund
+10 € für zehn Leute – und jemanden, der ihn einrichtet und aktuell hält. Zum Vergleich: Google
+Workspace und Microsoft 365 Business Standard kosten rund 12–14 € pro Person und Monat (Jahresabo,
+netto, 2026), für zehn Leute also rund 1.600 € im Jahr, und mehr mit jedem neuen Kollegen.
 
 ### Gibt es eine Weboberfläche für den Mailserver Stalwart?
 Ja, das ist Kontext: ein JMAP-Webclient für Mail, Kalender und Kontakte auf
