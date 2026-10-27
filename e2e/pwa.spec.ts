@@ -5,8 +5,15 @@
  */
 import { readFile, writeFile } from "node:fs/promises";
 import { expect, type Page, test } from "@playwright/test";
+import { compressFile } from "../dev/precompress";
 
 const WORKER = "dist/service-worker.js";
+
+/** The worker as a build writes it: with its Brotli and gzip copies, which the server prefers. */
+const writeWorker = async (source: string) => {
+  await writeFile(WORKER, source);
+  await compressFile(WORKER);
+};
 
 /** The page is controlled by an active service worker (after a reload on first visit). */
 const controlled = async (page: Page) => {
@@ -83,7 +90,7 @@ test.describe("App (PWA)", () => {
     const original = await readFile(WORKER, "utf8");
     try {
       // A new build on the server: the worker's bytes change.
-      await writeFile(WORKER, `${original}\n// new build ${Date.now()}\n`);
+      await writeWorker(`${original}\n// new build ${Date.now()}\n`);
       await page.evaluate(async () => (await navigator.serviceWorker.getRegistration())?.update());
       const banner = page
         .getByRole("status")
@@ -110,7 +117,7 @@ test.describe("App (PWA)", () => {
       await expect(banner).toHaveCount(0);
       expect(first).toContain("/service-worker.js");
     } finally {
-      await writeFile(WORKER, original);
+      await writeWorker(original);
     }
   });
 
