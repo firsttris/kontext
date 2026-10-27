@@ -5,6 +5,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { useClient } from "@/auth/auth";
 import { Avatar } from "@/components/ui/avatar";
+import { useOwnPhoto } from "@/features/photos/queries";
 import { CAPABILITIES } from "@/jmap/client";
 import { getQuota, type Quota } from "@/jmap/mail";
 import { cn } from "@/lib/cn";
@@ -41,6 +42,7 @@ const TONE = { normal: "text-accent", warn: "text-warn", full: "text-danger" } a
 
 export const AccountAvatar = ({ name, size }: { name: string; size: number }) => {
   const quota = useOwnQuota();
+  const photo = useOwnPhoto().url;
   const level = quota ? storageLevel(quota.used, quota.limit) : undefined;
   const stroke = size > 28 ? 2.5 : 2;
   const outer = size + 2 * (stroke + 2);
@@ -79,7 +81,7 @@ export const AccountAvatar = ({ name, size }: { name: string; size: number }) =>
         </svg>
       ) : null}
       <span className="absolute inset-0 flex items-center justify-center">
-        <Avatar name={name} size={size} />
+        <Avatar name={name} photo={photo} size={size} />
       </span>
     </span>
   );

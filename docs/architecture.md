@@ -1130,6 +1130,34 @@ Postfachs aus `Quota/get` (RFC 9425, `octets`): gelb ab 80 %, rot ab 95 % (`src/
 Tooltip und Benutzermenü nennen die Zahlen. Gemeinsame Postfächer haben ihr eigenes Kontingent; es
 steht als Balken unten in ihrer Ordnerliste. Die Testdaten geben jedem Benutzer 5 GB.
 
+## Fotos
+
+Ein Bild steht überall, wo eine Person steht (`src/components/ui/avatar.tsx`); ohne Foto zeigt es
+die Initialen. Zwei Quellen:
+
+- **Profilfotos der Kollegen.** Unter *Einstellungen → Profil* wählt jeder ein Foto; die App
+  schneidet die Mitte quadratisch aus, dreht es nach EXIF richtig herum und verkleinert es auf
+  256 px als JPEG (`src/features/photos/make-photo.ts`). Stalwart hat für Personen kein Bildfeld
+  (weder `x:Account` noch JMAP `Principal`, RFC 9670), darum liegt es beim Kontext-Server:
+  `photos/<Konto-ID>.jpg` neben der Datenbank (`server/photos/`), höchstens 200 KB, nur JPEG
+  (geprüft an den ersten Bytes). `GET /api/photos` nennt allen Angemeldeten die Fotos mit ihrer
+  Version (Änderungszeit der Datei); die App lädt `/api/photos/<id>?v=<Version>`, das der Browser
+  dauerhaft behalten darf. Ändern und löschen kann jeder nur sein eigenes. Zu sehen ist es im
+  Chat, bei Anrufen, an Aufgaben, in der Mitarbeiterliste, beim Teilen und neben Mails von
+  Kollegen (gefunden über die Konto-ID oder die Mail-Adresse, `src/lib/photo.ts`).
+- **Fotos in Kontakten.** JSContact hält sie in `media` mit `kind: "photo"` (RFC 9553 §2.6.4).
+  Stalwart nimmt dort nur `uri`, kein `blobId` (`crates/jmap/src/contact/set.rs`), darum schreibt
+  die App das Foto als `data:`-URI in die Karte; über CardDAV kommt es als `PHOTO` aufs Handy. Die
+  App zeigt nur Fotos, die in der Karte stecken: ein Link auf ein Bild anderswo würde dessen
+  Server verraten, wann man den Kontakt ansieht. Logos und Töne in `media` bleiben beim Speichern
+  erhalten.
+
+Eine Mail selbst bringt kein Foto mit: Gmail zeigt Profilbilder aus Googles eigenen Konten, nicht
+aus der Mail. Kontext zeigt neben einer Mail das Foto des Kollegen oder Kontakts mit der Adresse
+des Absenders, aber nur, wenn die Mail als seine gelten darf (`fromSender`, siehe
+[Prüfung des Absenders](#prufung-des-absenders)): ein gefälschter „chef@firma.de“ von außen bekommt
+kein Gesicht. Die Listen zeigen weiter Initialen, weil sie die Prüfung nicht laden.
+
 ## Kontaktgruppen
 
 Eine Gruppe ist eine JSContact-Karte mit `kind: "group"`; ihr `members` hält die `uid`s der

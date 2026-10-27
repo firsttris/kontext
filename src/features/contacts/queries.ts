@@ -5,7 +5,7 @@
 import { useMutation, useQueries, useQueryClient } from "@tanstack/react-query";
 import { useClient } from "@/auth/auth";
 import { useSession } from "@/components/shell/app-shell";
-import { CAPABILITIES } from "@/jmap/client";
+import { CAPABILITIES, type JmapClient } from "@/jmap/client";
 import {
   type AddressBook,
   createAddressBook,
@@ -100,17 +100,18 @@ export const useBooks = (): { books: BookRef[]; isPending: boolean } => {
   return { books, isPending: results.some((result) => result.isPending) };
 };
 
+/** One book's cards; the same cache for the contacts app and the photos (features/photos). */
+export const contactsQuery = (client: JmapClient, book: BookRef) => ({
+  queryKey: [book.accountId, "contacts", book.book.id],
+  queryFn: () => listContacts(client, book.accountId, book.book.id),
+});
+
 /** The contacts of all readable address books, or of one (`bookKey`). */
 export const useContacts = (bookKey?: string) => {
   const client = useClient();
   const { books, isPending: booksPending } = useBooks();
   const shown = bookKey ? books.filter((book) => book.key === bookKey) : books;
-  const results = useQueries({
-    queries: shown.map((book) => ({
-      queryKey: [book.accountId, "contacts", book.book.id],
-      queryFn: () => listContacts(client, book.accountId, book.book.id),
-    })),
-  });
+  const results = useQueries({ queries: shown.map((book) => contactsQuery(client, book)) });
   const seen = new Set<string>();
   const contacts: Contact[] = [];
   shown.forEach((book, index) => {

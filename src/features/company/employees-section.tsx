@@ -1,9 +1,9 @@
 /** The company's people with their state; a click opens the person. */
 import { CalendarClock, UserPlus } from "lucide-react";
 import { useState } from "react";
-import { Avatar } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/toast";
+import { ColleagueAvatar } from "@/features/photos/colleague-avatar";
 import { formatSize } from "@/lib/format";
 import { m } from "@/paraglide/messages";
 import { type Company, showAvailabilityToAll } from "./api";
@@ -40,7 +40,7 @@ const Employees = ({ company }: { company: Company }) => {
               onClick={() => setOpen(person.id)}
               className="flex w-full items-center gap-3 px-3 py-2.5 text-left hover:bg-hover md:px-4"
             >
-              <Avatar name={person.fullName} size={34} />
+              <ColleagueAvatar email={person.email} name={person.fullName} size={34} />
               <span className="flex min-w-0 flex-1 flex-col">
                 <span className="flex flex-wrap items-center gap-1.5 text-[14px] font-medium">
                   {person.fullName}

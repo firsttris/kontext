@@ -5,11 +5,11 @@
  */
 import { Ellipsis, ListChecks, MessageSquareReply, Pencil, Trash2 } from "lucide-react";
 import { type KeyboardEvent, useState } from "react";
-import { Avatar } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { MenuContent, MenuItem, MenuRoot, MenuTrigger } from "@/components/ui/menu";
 import { CallLine } from "@/features/calls/call-line";
 import { ItemLink } from "@/features/links/item-link";
+import { ColleagueAvatar } from "@/features/photos/colleague-avatar";
 import { useStatusLabel, useTasks } from "@/features/tasks/queries";
 import { firstName, keptMentions, type Message, type MessageRun, type Person } from "@/lib/chat";
 import { tasksOfMessage } from "@/lib/chat-cards";
@@ -76,7 +76,7 @@ const RepliesLine = ({
     >
       <span className="flex shrink-0 gap-0.5">
         {replies.people.slice(0, 3).map((id) => (
-          <Avatar key={id} name={nameOf(id)} size={22} />
+          <ColleagueAvatar key={id} id={id} name={nameOf(id)} size={22} />
         ))}
       </span>
       <span className="font-medium text-accent">
@@ -317,7 +317,7 @@ export const Run = ({ run, ...rest }: Props) => {
   const name = nameOf(run.authorId);
   return (
     <li className={cn("flex gap-3", own && "justify-end md:justify-start")}>
-      <Avatar name={name} size={34} className="hidden md:inline-flex" />
+      <ColleagueAvatar id={run.authorId} name={name} size={34} className="hidden md:inline-flex" />
       <div
         className={cn(
           "flex min-w-0 flex-1 flex-col gap-1 md:items-stretch",

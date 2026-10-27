@@ -6,9 +6,9 @@
  */
 import { AtSign, Hash, Search } from "lucide-react";
 import { useState } from "react";
-import { Avatar } from "@/components/ui/avatar";
 import { Dialog } from "@/components/ui/dialog";
 import { useToast } from "@/components/ui/toast";
+import { ColleagueAvatar } from "@/features/photos/colleague-avatar";
 import type { EmailDetail, EmailSummary } from "@/jmap/types";
 import type { ChannelSummary, Person } from "@/lib/chat";
 import { mailCard } from "@/lib/chat-cards";
@@ -151,7 +151,7 @@ export const DiscussDialog = ({
                   onChange={() => setChosen(targetKey(option))}
                 />
                 {option.kind === "person" ? (
-                  <Avatar name={option.person.name} size={22} />
+                  <ColleagueAvatar id={option.person.id} name={option.person.name} size={22} />
                 ) : option.channel.kind === "mailbox" ? (
                   <AtSign size={15} className="text-muted" aria-hidden="true" />
                 ) : (

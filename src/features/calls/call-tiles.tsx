@@ -16,6 +16,8 @@ import { m } from "@/paraglide/messages";
 
 /** How a tile names someone: as the chat does for colleagues, by their given name for guests. */
 export type NameOf = (participant: { identity: string; name?: string }) => string;
+/** A colleague's photo; none for a meeting's guests, who see no one's. */
+export type PhotoOf = (participant: { identity: string }) => string | undefined;
 
 const hasVideo = (trackRef: TrackReferenceOrPlaceholder) =>
   Boolean(trackRef.publication?.track) && !trackRef.publication?.isMuted;
@@ -24,10 +26,12 @@ const Tile = ({
   trackRef,
   large,
   nameOf,
+  photoOf,
 }: {
   trackRef: TrackReferenceOrPlaceholder;
   large: boolean;
   nameOf: NameOf;
+  photoOf?: PhotoOf;
 }) => {
   const { participant } = trackRef;
   const speaking = useIsSpeaking(participant);
@@ -55,7 +59,7 @@ const Tile = ({
           )}
         />
       ) : (
-        <Avatar name={fullName} size={large ? 72 : 48} />
+        <Avatar name={fullName} photo={photoOf?.(participant)} size={large ? 72 : 48} />
       )}
       <span className="absolute bottom-1.5 left-1.5 flex max-w-[calc(100%-12px)] items-center gap-1 rounded-md bg-black/55 px-1.5 py-0.5 text-[11px] text-white">
         {screen ? <MonitorUp size={11} aria-hidden="true" /> : null}
@@ -70,10 +74,12 @@ export const CallTiles = ({
   tracks,
   expanded,
   nameOf,
+  photoOf,
 }: {
   tracks: TrackReferenceOrPlaceholder[];
   expanded: boolean;
   nameOf: NameOf;
+  photoOf?: PhotoOf;
 }) => {
   const screens = tracks.filter((trackRef) => trackRef.source === Track.Source.ScreenShare);
   const cameras = tracks.filter((trackRef) => trackRef.source !== Track.Source.ScreenShare);
@@ -89,6 +95,7 @@ export const CallTiles = ({
           trackRef={trackRef}
           large={trackRef.source === Track.Source.ScreenShare}
           nameOf={nameOf}
+          photoOf={photoOf}
         />
       ))}
     </ul>

@@ -12,6 +12,7 @@ import { displayName, firstName, formatAddressList, readingDate } from "@/lib/fo
 import { mailboxNotice } from "@/lib/mail-accounts";
 import { mailboxRights } from "@/lib/mailboxes";
 import { pgpKind } from "@/lib/pgp-mail";
+import { mailSenderKey } from "@/lib/photo";
 import { signedOverEncrypted, smimeKind } from "@/lib/smime";
 import { tasksOfMail } from "@/lib/tasks";
 import { m } from "@/paraglide/messages";
@@ -20,6 +21,7 @@ import { useCategories } from "../categories/queries";
 import { DiscussedNotice } from "../chat/discussed-notice";
 import { AutocryptCollector } from "../pgp/autocrypt";
 import { EncryptedMail, SignedNote } from "../pgp/pgp-mail";
+import { usePhotoOf } from "../photos/queries";
 import { SmimeMail, SmimeSignedNote } from "../smime/smime-mail";
 import { RESURFACED } from "../snooze/queries";
 import { SnoozeNotice } from "../snooze/snooze-notice";
@@ -52,6 +54,7 @@ export const MessageView = ({ accountId, mailbox, emailId }: Props) => {
   const accountCategories = useCategories(accountId);
   const { tasks } = useTasks();
   const statusLabel = useStatusLabel();
+  const photoOf = usePhotoOf();
   const subject = useShownSubject({ id: email?.id ?? "", subject: email?.subject ?? null });
 
   // Opening a mail marks it read, once per mail (if the mailbox allows it).
@@ -136,7 +139,11 @@ export const MessageView = ({ accountId, mailbox, emailId }: Props) => {
               ) : null}
               <EarlierMails accountId={accountId} email={email} />
               <div className="flex items-center gap-3">
-                <Avatar name={displayName(email.from?.[0])} size={38} />
+                <Avatar
+                  name={displayName(email.from?.[0])}
+                  photo={photoOf(mailSenderKey(email.from?.[0], email.authenticationResults))}
+                  size={38}
+                />
                 <div className="flex min-w-0 flex-1 flex-col">
                   <span className="truncate font-medium">{displayName(email.from?.[0])}</span>
                   <span className="truncate text-[13px] text-muted">

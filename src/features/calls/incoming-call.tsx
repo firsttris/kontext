@@ -5,11 +5,11 @@
 import * as DialogPrimitive from "@radix-ui/react-dialog";
 import { Phone, PhoneOff, Video } from "lucide-react";
 import { useEffect, useState } from "react";
-import { Avatar } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/toast";
 import { useChannels } from "@/features/chat/queries";
 import { useChatNames } from "@/features/chat/use-chat-names";
+import { ColleagueAvatar } from "@/features/photos/colleague-avatar";
 import { ringingCall } from "@/lib/calls";
 import { m } from "@/paraglide/messages";
 import { declineHere, useCallStore } from "./call-store";
@@ -61,7 +61,12 @@ export const IncomingCall = () => {
           className="fixed inset-x-3 top-3 z-[70] flex flex-col gap-4 rounded-2xl border border-border bg-bg p-4 shadow-2xl outline-none safe-top md:inset-x-auto md:top-4 md:right-4 md:w-[340px]"
         >
           <div className="flex items-center gap-3">
-            <Avatar name={caller} size={44} className="animate-pulse" />
+            <ColleagueAvatar
+              id={call.startedBy}
+              name={caller}
+              size={44}
+              className="animate-pulse"
+            />
             <div className="flex min-w-0 flex-col">
               <DialogPrimitive.Title className="m-0 truncate text-[15px] font-semibold">
                 {m.call_incoming({ name: caller })}

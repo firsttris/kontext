@@ -98,7 +98,7 @@ einschaltest. DNS-Einträge, Podman-Quadlets, Backups und Updates stehen in der
 - **Wer hat Zeit?** Beim Einladen von Kollegen zeigt Kontext, wer belegt ist, und schlägt Zeiten vor, in denen alle frei sind – wie der Terminplanungs-Assistent in Outlook.
 - **Videobesprechung pro Termin**: ein Klick legt einen Link an; Kunden kommen im Browser ohne Konto dazu.
 - **Kalender und Adressbücher teilen** mit Kollegen – nur Verfügbarkeit, lesen oder bearbeiten.
-- **Der Kunde auf einen Blick**: letzte Mails, nächste Termine, offene Aufgaben, Dokumente und „Anrufen“; **Gruppen**, **vCard-Import und -Export**.
+- **Der Kunde auf einen Blick**: letzte Mails, nächste Termine, offene Aufgaben, Dokumente und „Anrufen“; **Kontaktfotos**, **Gruppen**, **vCard-Import und -Export**.
 - **Weitere Kontakte** wie bei Gmail: alle, mit denen du Mails hattest und die in keinem Adressbuch stehen, mit einem Klick gespeichert; doppelte Kontakte und Namen in Großbuchstaben **zusammenführen und korrigieren**.
 
 ### ✅ Aufgaben
@@ -110,7 +110,7 @@ einschaltest. DNS-Einträge, Podman-Quadlets, Backups und Updates stehen in der
 
 ### 💬 Team-Chat und Videocalls
 
-- **Kanäle** (#allgemein, einer pro gemeinsamem Postfach, eigene) und **Direktnachrichten**, live mit „schreibt …“, wer online ist, **@Erwähnungen**, **Threads** und **Reaktionen**.
+- **Kanäle** (#allgemein, einer pro gemeinsamem Postfach, eigene) und **Direktnachrichten**, live mit „schreibt …“, wer online ist, **@Erwähnungen**, **Threads**, **Reaktionen** und ein **Profilfoto** für jeden (auch bei Anrufen, an Aufgaben und in Mails unter Kollegen).
 - **Mails, Aufgaben, Kontakte und Dokumente als Karten**: „Besprechen“ an einer Mail (`b`) bespricht sie im Kanal, statt sie intern weiterzuleiten – kopiert wird nichts.
 - **Fotos und Dateien**, **Sprachnachrichten** wie bei WhatsApp (aufnehmen, direkt in der Unterhaltung abspielen, schneller mit 1,5× oder 2×), **Suche**, **Aufbewahrungsfrist** aus der Firmenverwaltung.
 - **Anrufe, Videocalls und Bildschirm teilen** direkt aus einer Unterhaltung, auf dem eigenen Server mit [LiveKit](https://github.com/livekit/livekit); das Gespräch bleibt offen, während du zur Mail wechselst.

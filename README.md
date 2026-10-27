@@ -98,7 +98,7 @@ records, Podman Quadlets, backups and updates are in the
 - **Who is free?** Inviting colleagues shows who is busy and suggests times everyone is free, like Outlook's scheduling assistant.
 - **Video meeting per event**: one click adds a link; customers join in the browser without an account.
 - **Share calendars and address books** with colleagues – free/busy only, read, or edit.
-- **The customer at a glance**: latest mails, upcoming appointments, open tasks, documents and "Call"; **groups**, **vCard import and export**.
+- **The customer at a glance**: latest mails, upcoming appointments, open tasks, documents and "Call"; **contact photos**, **groups**, **vCard import and export**.
 - **Other contacts** like Gmail: everyone you exchanged mails with who is in no address book, saved with one click; **merge and fix** duplicate contacts and names written in capitals.
 
 ### ✅ Tasks
@@ -110,7 +110,7 @@ records, Podman Quadlets, backups and updates are in the
 
 ### 💬 Team chat and video calls
 
-- **Channels** (#allgemein, one per shared mailbox, your own) and **direct messages**, live with "typing …", who is online, **@mentions**, **threads** and **reactions**.
+- **Channels** (#allgemein, one per shared mailbox, your own) and **direct messages**, live with "typing …", who is online, **@mentions**, **threads**, **reactions** and a **profile photo** for everyone (also on calls, tasks and mail between colleagues).
 - **Mails, tasks, contacts and documents as cards**: "Discuss" on a mail (`b`) talks about it in the channel instead of forwarding it internally – nothing is copied.
 - **Photos and files**, **voice messages** as on WhatsApp (record, play right in the conversation, faster at 1.5× or 2×), **search**, **retention** set by the company admin.
 - **Calls, video calls and screen sharing** right from a conversation, on your own server with [LiveKit](https://github.com/livekit/livekit); the call stays open while you switch to mail.

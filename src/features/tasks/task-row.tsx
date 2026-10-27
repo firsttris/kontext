@@ -1,7 +1,7 @@
 /** One task in a list: its box to tick off, title, due date, what it is about, who does it. */
 import { Link } from "@tanstack/react-router";
 import { BellRing, Mail, Repeat } from "lucide-react";
-import { Avatar } from "@/components/ui/avatar";
+import { ColleagueAvatar } from "@/features/photos/colleague-avatar";
 import { cn } from "@/lib/cn";
 import { shortAddress } from "@/lib/mail-accounts";
 import { dueGroup, dueLabel, type Task } from "@/lib/tasks";
@@ -87,7 +87,7 @@ export const TaskRow = ({
           ) : null}
         </span>
       </Link>
-      {assignee ? <Avatar name={assignee} size={24} /> : null}
+      {assignee ? <ColleagueAvatar id={task.assigneeId} name={assignee} size={24} /> : null}
     </div>
   );
 };

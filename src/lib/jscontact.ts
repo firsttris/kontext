@@ -1,8 +1,9 @@
 /**
  * JSContact cards (RFC 9553) as the contacts app edits them: one name, company, mail, phone,
- * address and note. Other properties of a card are kept untouched when it is saved.
+ * address, note and photo. Other properties of a card are kept untouched when it is saved.
  */
 import type { EmailAddress } from "@/jmap/types";
+import { isInlinePhoto } from "./photo";
 
 type NameComponent = { kind: string; value: string };
 
@@ -19,9 +20,19 @@ export type ContactCard = {
   notes?: Record<string, { note: string }>;
   /** Links (RFC 9553 §2.6.3); Kontext keeps documents of Dokumente here (lib/document-links.ts). */
   links?: Record<string, { "@type"?: "Link"; uri: string; label?: string }>;
+  /** Photos, logos and sounds (RFC 9553 §2.6.4); Stalwart takes only `uri`, no `blobId`. */
+  media?: Record<string, Media>;
   /** Groups only: the member cards' `uid`s. */
   members?: Record<string, boolean>;
   updated?: string;
+};
+
+export type Media = {
+  "@type"?: "Media";
+  kind: "photo" | "logo" | "sound" | string;
+  uri?: string;
+  mediaType?: string;
+  pref?: number;
 };
 
 export type ContactForm = {
@@ -162,6 +173,43 @@ export const formToCard = (
       : undefined,
     notes: trimmed.note ? { [keyOf(existing?.notes, "n")]: { note: trimmed.note } } : undefined,
   };
+};
+
+const photoEntries = (card: Pick<ContactCard, "media">) =>
+  Object.entries(card.media ?? {})
+    .filter(([, media]) => media.kind === "photo" && media.uri && isInlinePhoto(media.uri))
+    // The preferred one first (lower `pref` wins, none comes last).
+    .sort(([, a], [, b]) => (a.pref ?? 101) - (b.pref ?? 101));
+
+/** The card's photo as a `data:` URI, if it carries one (links elsewhere are not loaded). */
+export const contactPhoto = (card: Pick<ContactCard, "media">): string | undefined =>
+  photoEntries(card)[0]?.[1].uri;
+
+/**
+ * The `media` to write for a new photo (a `data:` URI) or none (`null`): logos and sounds stay,
+ * the photo keeps its key. `undefined` when nothing is left, which removes the property.
+ */
+export const mediaWithPhoto = (
+  uri: string | null,
+  existing?: Pick<ContactCard, "media">,
+): Record<string, Media> | undefined => {
+  const media = existing?.media ?? {};
+  const key = photoEntries({ media })[0]?.[0] ?? "photo";
+  const others = Object.fromEntries(
+    Object.entries(media).filter(([, entry]) => entry.kind !== "photo"),
+  );
+  const next = uri
+    ? {
+        ...others,
+        [key]: {
+          "@type": "Media" as const,
+          kind: "photo",
+          uri,
+          mediaType: uri.slice(5, uri.indexOf(";")),
+        },
+      }
+    : others;
+  return Object.keys(next).length ? next : undefined;
 };
 
 /** Mail addresses of all contacts, for the suggestions in the To field. */

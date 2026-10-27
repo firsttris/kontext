@@ -70,6 +70,8 @@ import { registerClient, type SchreibzeugClient, schreibzeugClientOf } from "./o
 import { createPgpRoutes, createWkdRoutes } from "./pgp/routes";
 import { createPgpStore } from "./pgp/store";
 import { createPhone } from "./phone/setup";
+import { createPhotoRoutes } from "./photos/routes";
+import { createPhotoStore } from "./photos/store";
 import { createMailWatch } from "./push/mail-watch";
 import { createPusher } from "./push/pusher";
 import { createPushRoutes } from "./push/routes";
@@ -604,6 +606,13 @@ export const createApp = async (env: Env) => {
   app.route("/api/snoozes", createSnoozeRoutes({ store: snoozes, infoOf }));
   app.route("/api/unsubscribe", createUnsubscribeRoutes({ env, grants, infoOf }));
   app.route("/api/image-senders", createImageSenderRoutes({ db, accountsOf }));
+  app.route(
+    "/api/photos",
+    createPhotoRoutes({
+      store: createPhotoStore(join(dirname(env.DATABASE_PATH), "photos")),
+      accountsOf,
+    }),
+  );
   // OpenPGP: one's own key (locked in the browser), others' keys, and WKD for the company.
   const pgp = createPgpStore(db);
   app.route("/api/pgp", createPgpRoutes({ store: pgp, accountsOf }));

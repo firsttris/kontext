@@ -10,7 +10,7 @@ import { type Contact, useContacts } from "@/features/contacts/queries";
 import { CAPABILITIES } from "@/jmap/client";
 import { emailsWithAddress } from "@/jmap/mail";
 import { eventTimes } from "@/lib/jscalendar";
-import { company, fullName, primaryEmail } from "@/lib/jscontact";
+import { company, contactPhoto, fullName, primaryEmail } from "@/lib/jscontact";
 import { contactOfNumber, readableNumber } from "@/lib/phone";
 
 export type Caller = {
@@ -18,6 +18,7 @@ export type Caller = {
   /** The contact's name, else the number. */
   name: string;
   company: string;
+  photo?: string;
 };
 
 export const useCallerName = (number: string): Caller => {
@@ -27,6 +28,7 @@ export const useCallerName = (number: string): Caller => {
     contact,
     name: contact ? fullName(contact) : readableNumber(number),
     company: contact ? company(contact) : "",
+    photo: contact ? contactPhoto(contact) : undefined,
   };
 };
 

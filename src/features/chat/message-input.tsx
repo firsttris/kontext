@@ -6,10 +6,10 @@
  */
 import { AtSign, Camera, Link2, Mic, Paperclip, Plus, SendHorizontal } from "lucide-react";
 import { type KeyboardEvent, useEffect, useLayoutEffect, useRef, useState } from "react";
-import { Avatar } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { MenuContent, MenuItem, MenuRoot, MenuTrigger } from "@/components/ui/menu";
 import { useToast } from "@/components/ui/toast";
+import { ColleagueAvatar } from "@/features/photos/colleague-avatar";
 import {
   insertMention,
   keptMentions,
@@ -191,7 +191,7 @@ export const MessageInput = ({
                 index === active ? "bg-subtle" : "hover:bg-hover",
               )}
             >
-              <Avatar name={person.name} size={24} />
+              <ColleagueAvatar id={person.id} name={person.name} size={24} />
               {person.name}
             </button>
           ))}

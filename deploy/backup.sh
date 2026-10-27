@@ -66,9 +66,9 @@ run_in kontext bun -e '
   rmSync("/data/backup/kontext.db", { force: true });
   new Database(process.env.DATABASE_PATH).exec("VACUUM INTO '"'"'/data/backup/kontext.db'"'"'");
 '
-mkdir -p "$app/chat-files" "$app/phone" "$app/secure"
+mkdir -p "$app/chat-files" "$app/photos" "$app/phone" "$app/secure"
 restic backup --tag kontext --host "$KONTEXT_DOMAIN" \
-  "$app/backup" "$app/chat-files" "$app/phone" "$app/secure"
+  "$app/backup" "$app/chat-files" "$app/photos" "$app/phone" "$app/secure"
 
 if is_running schreibzeug; then
   documents="$(volume_path schreibzeug-data)"
