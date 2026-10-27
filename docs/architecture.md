@@ -528,6 +528,11 @@ das Manifest steht in `vite.config.ts`, der Service Worker in `src/sw/service-wo
   sichtbare Teil (`--app-height` aus `visualViewport`, `src/components/use-visible-height.ts`)
   und bleibt oben; Listen von Nachrichten bleiben dabei unten, wenn man unten war
   (`use-scroll-place.ts`).
+- **Gespräch öffnet unten:** Ein Chat geht bei der neuesten Nachricht auf und bleibt dort, auch
+  wenn Bilder, Vorschauen oder entschlüsselte Texte danach noch wachsen. Bis man selbst scrollt
+  (Finger, Mausrad, Tasten), zieht jede Scroll-Meldung die Liste wieder nach unten: Safari am
+  iPhone setzt eine gerade gesetzte Position einer frisch aufgebauten Liste kurz danach auf
+  ganz oben zurück (`use-scroll-place.ts`).
 - **Kein Zoom ins Feld am iPhone:** Safari zoomt in jedes Feld mit Schrift unter 16 px und bleibt
   danach vergrößert; die Seite ragt dann rechts hinaus und rutscht oben unter Safaris Glasleiste.
   Felder, Auswahllisten und der Mail-Editor haben dort deshalb 16 px (`src/styles.css`, geprüft

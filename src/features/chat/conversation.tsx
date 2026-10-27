@@ -119,7 +119,7 @@ export const Conversation = ({
   }, [newest, channel.id, channel.readAt, markRead]);
 
   // Stay at the bottom while one is there; keep the place when older messages come in above.
-  const { scroller, atBottom, onScroll } = useScrollPlace();
+  const { scroller, atBottom, toBottom, scrollProps } = useScrollPlace();
   const heightBefore = useRef<number | null>(null);
   useLayoutEffect(() => {
     const element = scroller.current;
@@ -128,9 +128,9 @@ export const Conversation = ({
       element.scrollTop += element.scrollHeight - heightBefore.current;
       heightBefore.current = null;
     } else if (atBottom.current) {
-      element.scrollTop = element.scrollHeight;
+      toBottom();
     }
-  }, [messages.length, scroller, atBottom]);
+  }, [messages.length, scroller, atBottom, toBottom]);
   const older = () => {
     heightBefore.current = scroller.current?.scrollHeight ?? null;
     loadOlder();
@@ -268,7 +268,7 @@ export const Conversation = ({
         {channel.confidential ? <ChangedKeys channel={channel} nameOf={nameOf} /> : null}
         <div
           ref={scroller}
-          onScroll={onScroll}
+          {...scrollProps}
           className="min-h-0 flex-1 overflow-y-auto px-3.5 py-4 md:px-6"
         >
           {!hasOlder && !loading && retentionDays ? (

@@ -51,12 +51,10 @@ export const ThreadPanel = ({
 
   // Down to the newest answer; on a phone without the keyboard, which would cover the thread
   // just opened (it comes with a tap into the field).
-  const { scroller, onScroll } = useScrollPlace();
+  const { toBottom, scroller, scrollProps } = useScrollPlace();
   useLayoutEffect(() => {
-    if (scroller.current && replies.length) {
-      scroller.current.scrollTop = scroller.current.scrollHeight;
-    }
-  }, [replies.length, scroller]);
+    if (replies.length) toBottom();
+  }, [replies.length, toBottom]);
   const desktop = useMediaQuery("(min-width: 768px)");
 
   const shared = {
@@ -111,7 +109,7 @@ export const ThreadPanel = ({
       </header>
       <div
         ref={scroller}
-        onScroll={onScroll}
+        {...scrollProps}
         className="min-h-0 flex-1 overflow-y-auto px-3.5 py-4 md:px-5"
       >
         {isError ? (
