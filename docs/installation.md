@@ -255,7 +255,8 @@ Server ablegen, sondern beim Neustart eingeben oder per Netzwerk entsperren (Cle
 
 ## 5. Backups
 
-`deploy/backup.sh` sichert mit [Restic](https://restic.net) auf einen S3-Speicher – Restic
+`deploy/backup.sh` sichert mit [Restic](https://restic.net) auf einen S3-Speicher, am einfachsten
+Cloudflare R2 (S3-kompatibel, 10 GB frei) – Restic
 verschlüsselt jede Sicherung mit dem Passwort aus `deploy/.env`, der Speicheranbieter sieht nur
 Verschlüsseltes; das Passwort gehört zusätzlich an einen sicheren Ort außerhalb des Servers. Gesichert werden Stalwarts
 Datenvolume (Mails, Kalender, Kontakte, Konten), eine Kopie der Kontext-Datenbank
@@ -267,9 +268,49 @@ im Bucket höchstens 14 Tage: `backup.sh` hebt 14 Tage, 8 Wochen und 12 Monate a
 Rest weg; länger gesperrte Dateien lassen sich nicht löschen. Das meldet das Skript, prüft die
 Sicherung aber trotzdem.
 
+Das Ziel liegt **nicht auf dem Server selbst**: Fällt er aus oder wird er übernommen, wäre ein
+Backup daneben mit weg, und es füllte die Platte, auf der Stalwart die Mails annimmt. Geeignet:
+
+| Ziel | `RESTIC_REPOSITORY` | Kosten |
+| --- | --- | --- |
+| Cloudflare R2 (S3) | `s3:https://<konto-id>.r2.cloudflarestorage.com/kontext-firma` | 10 GB frei, danach etwa 1,5 Cent je GB und Monat |
+| Backblaze B2 (S3) | `s3:https://s3.eu-central-003.backblazeb2.com/kontext-firma` | 10 GB frei |
+| anderer S3-Speicher | `s3:https://…/kontext-firma` | je nach Anbieter |
+| NAS oder Speicherbox per SFTP | `sftp:backup@nas.firma.de:/kontext` | eigene Hardware bzw. Storage Box |
+
+Restic komprimiert und legt Gleiches nur einmal ab; die erste Sicherung ist so groß wie die
+Daten, jede weitere nur so groß wie das Neue. Für S3 setzt man `AWS_ACCESS_KEY_ID` und
+`AWS_SECRET_ACCESS_KEY` (bei R2 ein API-Token mit *Object Read & Write* für den einen Bucket); per
+SFTP meldet sich root mit einem SSH-Schlüssel an (`ssh-keygen`, den öffentlichen Teil beim Ziel
+hinterlegen, einmal `ssh backup@nas.firma.de` zum Bestätigen des Host-Schlüssels).
+
+Bei R2 den Bucket mit Standort **EU** anlegen; der Endpoint heißt dann
+`https://<konto-id>.eu.r2.cloudflarestorage.com` (der ohne `.eu` findet EU-Buckets nicht). Ein
+IP-Filter am Token braucht die IPv4-Adresse **und** das IPv6-Netz des Servers: Restic geht
+bevorzugt über IPv6, sonst antwortet R2 mit *Access Denied*.
+
+Nach jeder Sicherung misst `backup.sh` die Größe und schreibt ab 8 GB eine Warnung ins Log
+(`BACKUP_WARN_GB` in den Einstellungen ändert die Grenze) – vor dem Ende der freien 10 GB. Bei R2
+zusätzlich unter *Notifications → Usage Based Billing* eine Mail ab etwa 8 GB einrichten; die kommt
+auch, wenn der Server schweigt.
+
+Restic muss auf dem Server installiert sein (`apt-get install restic`).
+
 ```bash
 crontab -e
 0 3 * * *  /opt/kontext/deploy/backup.sh >> /var/log/kontext-backup.log 2>&1
+```
+
+Mit Podman (Quadlet) gibt es kein `deploy/.env`; das Skript erkennt das an
+`/etc/containers/systemd/kontext.container` und liest seine Einstellungen aus
+`deploy/backup.env` (`chmod 600`):
+
+```
+KONTEXT_DOMAIN=kontext.firma.de
+RESTIC_REPOSITORY=s3:https://s3.eu-central-1.example.com/kontext-firma
+RESTIC_PASSWORD=…
+AWS_ACCESS_KEY_ID=…
+AWS_SECRET_ACCESS_KEY=…
 ```
 
 Der Mailserver hält dafür nachts ein paar Sekunden an; absendende Server versuchen es einfach
