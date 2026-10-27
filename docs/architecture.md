@@ -693,7 +693,10 @@ Principal-ID), die Namen holt die App wie bei den Aufgaben über die Principals.
   liefert er wie Fotos mit seinem Typ aus, und mit Byte-Bereichen (`Range`,
   `server/chat/range.ts`), ohne die Safari nichts abspielt. Länge und Wellenform rechnet die App
   aus dem dekodierten Ton (`OfflineAudioContext`), weil eine WebM-Aufnahme des Browsers ihre
-  Länge nicht angibt. In einem vertraulichen Kanal geht die Aufnahme verschlüsselt wie jede Datei.
+  Länge nicht angibt. Beim Abspielen stellt die App die Audio-Session auf „playback“
+  (`src/lib/audio-session.ts`, Audio Session API): am iPhone macht das Dekodieren sie sonst
+  „ambient“ (stumm mit dem Lautlos-Schalter), eine Aufnahme lässt sie bei „play-and-record“ (leise
+  an der Hörmuschel), und die erste Wiedergabe bliebe still. In einem vertraulichen Kanal geht die Aufnahme verschlüsselt wie jede Datei.
 - **Karten:** Mails, Aufgaben und Kontakte hängen als Karte an einer Nachricht (`chat_cards`).
   Die Karte hält fest, worum es geht (Betreff, Absender, Zeit; Titel; Name, Firma) – öffnen kann
   sie nur, wer die Mail, die Aufgabe oder den Kontakt ohnehin sehen darf. Alle anderen sehen

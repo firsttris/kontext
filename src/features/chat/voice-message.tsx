@@ -6,6 +6,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { Pause, Play } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
+import { setAudioSession } from "@/lib/audio-session";
 import type { ChatFile } from "@/lib/chat-cards";
 import { cn } from "@/lib/cn";
 import { formatDuration, waveform } from "@/lib/voice";
@@ -48,12 +49,21 @@ export const VoiceMessage = ({ file, url }: { file: ChatFile; url: string | unde
     if (audio.current) audio.current.playbackRate = speed;
   }, [speed]);
 
-  useEffect(
-    () => () => {
-      if (playing === audio.current) playing = null;
-    },
-    [],
-  );
+  useEffect(() => {
+    // The ref is empty again by the time a component's effects are cleaned up.
+    const element = audio.current;
+    return () => {
+      if (playing !== element) return;
+      playing = null;
+      setAudioSession("auto");
+    };
+  }, []);
+
+  /** The session goes back to the browser, unless another message has started meanwhile. */
+  const stopped = (element: HTMLAudioElement) => {
+    setPaused(true);
+    if (playing === element) setAudioSession("auto");
+  };
 
   const toggle = () => {
     const element = audio.current;
@@ -64,7 +74,9 @@ export const VoiceMessage = ({ file, url }: { file: ChatFile; url: string | unde
     }
     if (playing && playing !== element) playing.pause();
     playing = element;
-    void element.play();
+    // Set within the tap, before playing starts: otherwise an iPhone plays the first time silent.
+    setAudioSession("playback");
+    element.play().catch(() => stopped(element));
   };
 
   const seek = (seconds: number) => {
@@ -133,7 +145,8 @@ export const VoiceMessage = ({ file, url }: { file: ChatFile; url: string | unde
         src={url}
         preload="metadata"
         onPlay={() => setPaused(false)}
-        onPause={() => setPaused(true)}
+        // Also at the end: a message that has played to its end is paused.
+        onPause={(event) => stopped(event.currentTarget)}
         onEnded={() => setPosition(0)}
         onTimeUpdate={(event) => setPosition(event.currentTarget.currentTime)}
         onLoadedMetadata={(event) => {
