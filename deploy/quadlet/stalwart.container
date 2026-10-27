@@ -10,8 +10,9 @@ PublishPort=25:25
 PublishPort=465:465
 PublishPort=587:587
 PublishPort=993:993
-# Stalwart's own admin: put the server's Tailscale address here (Quadlet does not expand variables)
-PublishPort=100.64.0.10:8080:8080
+# Stalwart's own admin, only on the server itself (reach it with `ssh -L 8080:127.0.0.1:8080`);
+# or put the server's Tailscale address here (Quadlet does not expand variables)
+PublishPort=127.0.0.1:8080:8080
 Volume=stalwart-config:/etc/stalwart
 Volume=stalwart-data:/var/lib/stalwart
 # Only what Stalwart needs, not deploy/.env with Kontext's secrets and the backup's keys

@@ -1,7 +1,10 @@
 # Podman Quadlet: copy to /etc/containers/systemd/ and run `systemctl daemon-reload`.
 # Telephony: LiveKit SIP takes the telephone boxes' calls (TCP 5060, UDP 20000–20100 open).
 # Put SIP_CONFIG_BODY into /opt/kontext/deploy/livekit-sip.env as in deploy/compose.yaml, with
-# the LiveKit secret as api_secret.
+# the LiveKit secret as api_secret – on one line in YAML flow style, an env file has no multi-line
+# values: SIP_CONFIG_BODY={api_key: kontext, api_secret: "<secret>", ws_url: "ws://livekit:7880",
+# redis: {address: "redis:6379"}, sip_port: 5060, rtp_port: "20000-20100", use_external_ip: true,
+# symmetric_rtp: true, hide_inbound_port: true, logging: {level: warn}}
 [Unit]
 Description=LiveKit SIP (telephony in Kontext)
 After=livekit.service redis.service

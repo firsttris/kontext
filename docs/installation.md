@@ -2,6 +2,7 @@
 
 Ein Server pro Kunde. Er braucht Docker (oder Podman), eine feste IPv4-Adresse und eine Domain.
 Für zehn Benutzer reicht ein kleiner VPS (2 vCPU, 4 GB RAM, 80 GB SSD).
+Einen neuen VPS zuerst absichern: [VPS einrichten – erste Schritte](vps.md).
 
 ## 1. Server und DNS
 
@@ -39,7 +40,7 @@ TLSA-Eintrag, ebenfalls aus Stalwart). Die Firmenverwaltung prüft, was davon ge
 git clone https://github.com/firsttris/kontext /opt/kontext && cd /opt/kontext
 cp deploy/.env.example deploy/.env
 chmod 600 deploy/.env            # nur root darf die Geheimnisse lesen
-nano deploy/.env                 # Domain, Mailserver-Name, Geheimnis, Tailscale-IP, Backup-Ziel
+nano deploy/.env                 # Domain, Mailserver-Name, Geheimnis, Backup-Ziel
 docker compose -f deploy/compose.yaml up -d
 ```
 
@@ -55,27 +56,42 @@ Einstellungen (`kontext.env`, `livekit.env` … mit `chmod 600`), keiner `deploy
 
 ## 3. Stalwart einrichten
 
-Stalwarts eigene Verwaltung ist nur über die Tailscale-Adresse des Servers erreichbar:
-`http://<tailscale-ip>:8080`. Beim ersten Start steht das Admin-Passwort im Log
-(`docker compose -f deploy/compose.yaml logs stalwart`).
+Stalwarts eigene Verwaltung lauscht nur auf dem Server selbst (`127.0.0.1:8080`), nie im
+Internet. Vom eigenen Rechner über einen SSH-Tunnel, dann `http://localhost:8080` im Browser:
+
+```bash
+ssh -L 8080:127.0.0.1:8080 root@<server>
+```
+
+Wer Tailscale nutzt, trägt stattdessen die Tailscale-Adresse des Servers ein (`TAILSCALE_IP` in
+`deploy/.env`, bei Quadlet in `stalwart.container`) und erreicht sie unter
+`http://<tailscale-ip>:8080`. Beim ersten Start steht ein vorläufiges Admin-Passwort im Log
+(`docker compose -f deploy/compose.yaml logs stalwart`, mit Podman `podman logs stalwart`); nach
+jedem Neustart vor der Einrichtung gibt es ein neues.
 
 1. **Domain** `firma.de` anlegen, DKIM-Schlüssel erzeugen und als TXT-Eintrag ins DNS.
 2. **TLS** für `mail.firma.de` per ACME, am einfachsten mit DNS-01 (Cloudflare-API-Token), weil
-   Port 443 bei Caddy liegt.
-3. **Firmenverwaltung einschalten** (siehe unten) und das Konto des Chefs anlegen. Weitere
+   Port 443 bei Caddy liegt. Vorsicht: Mit DNS-Verwaltung veröffentlicht Stalwart selbst die
+   Einträge, die unter *DNS-Einträge veröffentlichen* angehakt sind – nach der Ersteinrichtung mit
+   Token auch **MX, SPF und DMARC `p=reject`**. Läuft die Mail der Domain noch woanders, ist sie
+   damit sofort umgestellt. Bis zum Umzug nur *DKIM* anhaken
+   ([ohne Oberfläche](vps.md#10-stalwart-ohne-oberflache-einrichten)).
+3. **Port 587** (Submission mit STARTTLS) unter *Netzwerk → Listener* anlegen: Stalwarts
+   Standard hat nur 465, viele Mailprogramme nehmen 587.
+4. **Firmenverwaltung einschalten** (siehe unten) und das Konto des Chefs anlegen. Weitere
    Mitarbeiter und gemeinsame Postfächer legt der Chef danach selbst in Kontext an.
-4. Unter *Netzwerk → HTTP* **X-Forwarded-For verwenden** (`useXForwarded`) einschalten, damit
+5. Unter *Netzwerk → HTTP* **X-Forwarded-For verwenden** (`useXForwarded`) einschalten, damit
    Stalwart bei CalDAV/CardDAV und Autoconfig (über Caddy) die echten IP-Adressen sieht.
-5. Unter *Sicherheit → Erlaubte IPs* das Container-Netz **`10.89.250.0/24`** eintragen
+6. Unter *Sicherheit → Erlaubte IPs* das Container-Netz **`10.89.250.0/24`** eintragen
    (`AllowedIp`). Kontext meldet alle Personen von seiner einen Adresse an; ohne den Eintrag
    sperrt Stalwart nach 100 Fehlversuchen am Tag (`authBanRate`) diese Adresse – und damit
    Kontext für alle. Gegen das Raten von Passwörtern bremst Kontext selbst: 10 Fehlversuche je
    Anmeldename in 15 Minuten, dazu 10 Anmeldungen je IP-Adresse in der Minute.
-6. Unter *Sicherheit* eine **Sperrdauer** setzen (`authBanPeriod`, `scanBanPeriod`, z. B. ein
+7. Unter *Sicherheit* eine **Sperrdauer** setzen (`authBanPeriod`, `scanBanPeriod`, z. B. ein
    Tag). Ohne Dauer bleibt eine Sperre für immer.
-7. Unter *Suche* die **Standardsprache** auf Deutsch (`de-DE`) stellen. Stalwart bildet damit
+8. Unter *Suche* die **Standardsprache** auf Deutsch (`de-DE`) stellen. Stalwart bildet damit
    die Wortstämme deutsch, auch bei kurzen Mails, deren Sprache es nicht sicher erkennt.
-8. Unter *JMAP* die **gleichzeitigen Anfragen** (`maxConcurrentRequests`) auf 16 stellen.
+9. Unter *JMAP* die **gleichzeitigen Anfragen** (`maxConcurrentRequests`) auf 16 stellen.
    Stalwart erlaubt sonst 4 je Person – für alle Tabs und Geräte zusammen; Kontext fragt beim
    Start mehr auf einmal (Ordner jedes Postfachs, Liste, Unterhaltungen), und was darüber liegt,
    lehnt Stalwart ab.
