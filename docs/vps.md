@@ -369,14 +369,10 @@ Sperrdauer ein Tag, deutsche Suche, 16 gleichzeitige JMAP-Anfragen, Stalwarts RS
  ["x:Security/set",{"update":{"singleton":{"authBanPeriod":86400000,"scanBanPeriod":86400000,
    "abuseBanPeriod":86400000,"loiterBanPeriod":86400000}}},"2"],
  ["x:Search/set",{"update":{"singleton":{"defaultLanguage":"de-DE"}}},"3"],
- ["x:Jmap/set",{"update":{"singleton":{"maxConcurrentRequests":16,
-   "parseLimitContact":50,"parseLimitEvent":50}}},"4"],
+ ["x:Jmap/set",{"update":{"singleton":{"maxConcurrentRequests":16}}},"4"],
  ["x:CalendarScheduling/set",{"update":{"singleton":{"httpRsvpEnable":false}}},"5"]]'
 ```
 
-- `parseLimitContact`/`parseLimitEvent`: Stalwart 0.16 liest standardmäßig nur 10 vCards bzw.
-  Termine pro `…/parse`; Kontext schickt beim vCard-Import und im Umzug 50 auf einmal, und ab
-  dem elften bricht der Import ab (*The number of ids requested … exceeds the maximum*).
 - `httpRsvpEnable`: Stalwarts Einladungsmails haben sonst Knöpfe *Yes/No/Maybe* auf
   `https://mail.firma.de/calendar/rsvp` – dort antwortet Caddy, nicht Stalwart, der Klick endet
   in einem TLS-Fehler. Einladungen verschickt Kontext selbst, mit Knöpfen auf seine eigene Seite
