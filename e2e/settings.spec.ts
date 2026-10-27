@@ -178,3 +178,22 @@ test.describe("Tab-Leiste am Handy @phone", () => {
     await expect(tabBar.getByRole("link", { name: "Aufgaben" })).toBeVisible();
   });
 });
+
+test.describe("Einstellungen am Handy @phone", () => {
+  test("die Übersicht lässt sich bis zum letzten Eintrag scrollen @phone", async ({ page }) => {
+    await login(page, "jonas");
+    await page.goto("/settings");
+    const last = page.getByRole("link", { name: "Umzug" });
+    // The Firmenverwaltung shows once the admin check answers; only then is the list full length.
+    await expect(last).toBeAttached();
+    await expect(last).not.toBeInViewport();
+    // Scrolled as a finger would, not programmatically: that also moves a clipped container.
+    const first = page.getByRole("link", { name: "Profil" });
+    const box = (await first.boundingBox())!;
+    await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+    await page.mouse.wheel(0, 2000);
+    await expect(last).toBeInViewport();
+    await last.click();
+    await expect(page.getByRole("heading", { name: "Umzug", level: 2 })).toBeVisible();
+  });
+});

@@ -163,8 +163,9 @@ export const SettingsPage = ({ section }: { section: Section | undefined }) => {
         <h1 className="m-0 px-2.5 text-[30px] leading-tight font-semibold tracking-tight md:text-[17px]">
           {m.nav_settings()}
         </h1>
-        <div className="px-2.5 text-[12px] font-medium text-muted">{m.settings_my_account()}</div>
-        <div className="flex flex-1 flex-col gap-4">
+        {/* Own sections and the Firmenverwaltung are taller than a phone: they scroll, the tab bar stays. */}
+        <div className="-mx-3 flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto px-3">
+          <div className="px-2.5 text-[12px] font-medium text-muted">{m.settings_my_account()}</div>
           <SectionLinks entries={own} current={current} />
           {admin ? (
             <div className="flex flex-col gap-1">
