@@ -36,6 +36,9 @@ jobs:
   # The telephone box (Asterisk and the box agent), its own image: tristanteu/kontext-box.
   box:
     needs: docker
+    # Like docker's own condition: without it, the skipped checks (main already tested) skip this
+    # job too, since a skipped job skips everything after it, and the box image was never published.
+    if: ${{ !cancelled() && needs.docker.result == 'success' }}
     uses: firsttris/workflows/.github/workflows/docker-release.yml@v1
     with:
       image: tristanteu/kontext-box
