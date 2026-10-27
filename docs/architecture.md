@@ -563,7 +563,8 @@ das Manifest steht in `vite.config.ts`, der Service Worker in `src/sw/service-wo
   aufgehenden Tastatur bleibt die App, nichts springt. Browser ohne diese API (Firefox) bleiben
   bei `resizes-content`. Feste Elemente hängen an der Seite, nicht am sichtbaren Teil: Ein
   Dialog unten (Bottom Sheet) läge unter der Tastatur. Er rückt deshalb um `--keyboard-height`
-  nach oben und wird höchstens so hoch wie der sichtbare Teil (`src/components/ui/dialog.tsx`).
+  nach oben und wird höchstens so hoch wie der sichtbare Teil (`src/components/ui/dialog.tsx`);
+  ab `md` (Tablet) steht er in der Mitte von `--app-height`, nicht der ganzen Seite.
 - **Gespräch öffnet unten:** Ein Chat geht bei der neuesten Nachricht auf und bleibt dort, auch
   wenn Bilder, Vorschauen oder entschlüsselte Texte danach noch wachsen. Bis man selbst scrollt
   (Finger, Mausrad, Tasten), zieht jede Scroll-Meldung die Liste wieder nach unten: Safari am

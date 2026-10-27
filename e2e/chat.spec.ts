@@ -1,5 +1,5 @@
 import { type Browser, expect, type Page, test } from "@playwright/test";
-import { login, unique } from "./helpers";
+import { fakeKeyboard, login, showKeyboard, unique } from "./helpers";
 
 /** A second person in a browser of their own. */
 const colleague = async (browser: Browser, user: string) => {
@@ -398,24 +398,7 @@ test.describe("Chat am Handy @phone", () => {
     // Chrome on Android: with the VirtualKeyboard API the keyboard lies over the page instead of
     // shrinking it (no white strip, no page scrolled up). Chromium can't show a keyboard, so a
     // stand-in announces one.
-    await page.addInitScript(() => {
-      const keyboard = Object.assign(new EventTarget(), {
-        overlaysContent: false,
-        boundingRect: new DOMRect(0, 0, 0, 0),
-      });
-      Object.defineProperty(navigator, "virtualKeyboard", { value: keyboard });
-      Object.assign(window, {
-        showKeyboard: (height: number) => {
-          keyboard.boundingRect = new DOMRect(
-            0,
-            window.innerHeight - height,
-            window.innerWidth,
-            height,
-          );
-          keyboard.dispatchEvent(new Event("geometrychange"));
-        },
-      });
-    });
+    await fakeKeyboard(page);
     await login(page);
     await page
       .getByRole("navigation", { name: "Apps" })
@@ -435,10 +418,7 @@ test.describe("Chat am Handy @phone", () => {
     const field = page.getByRole("textbox", { name: "Nachricht" });
     await field.focus();
     const keyboard = 330;
-    await page.evaluate(
-      (height) => (window as unknown as { showKeyboard: (h: number) => void }).showKeyboard(height),
-      keyboard,
-    );
+    await showKeyboard(page, keyboard);
     const visibleBottom = (await page.evaluate(() => window.innerHeight)) - keyboard;
     await expect
       .poll(async () => {

@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { addAttendees, login, unique } from "./helpers";
+import { addAttendees, fakeKeyboard, login, showKeyboard, unique } from "./helpers";
 
 const day = (offset: number) =>
   new Intl.DateTimeFormat("sv-SE", { timeZone: "Europe/Berlin" }).format(
@@ -329,5 +329,29 @@ test.describe("Kalender am Handy @phone", () => {
     await expect(
       page.getByRole("list", { name: "Liste" }).getByText("Baubesprechung Hoffmann"),
     ).toBeVisible();
+  });
+});
+
+test.describe("Kalender am Tablet", () => {
+  test.use({ viewport: { width: 800, height: 1280 }, hasTouch: true });
+
+  test("der Termin-Dialog bleibt über der Tastatur", async ({ page }) => {
+    // Chrome on an Android tablet: the keyboard lies over the page (VirtualKeyboard API), and the
+    // dialog sits in the middle, not as a bottom sheet.
+    await fakeKeyboard(page);
+    await login(page);
+    await page.goto(`/calendar?event=new&start=${today()}T17:00`);
+    const dialog = page.getByRole("dialog");
+    await dialog.getByLabel("Titel").focus();
+    const keyboard = 500;
+    await showKeyboard(page, keyboard);
+    const visibleBottom = (await page.evaluate(() => window.innerHeight)) - keyboard;
+    await expect
+      .poll(async () => {
+        const box = (await dialog.boundingBox())!;
+        return box.y + box.height;
+      })
+      .toBeLessThanOrEqual(visibleBottom);
+    await expect(dialog.getByLabel("Titel")).toBeInViewport();
   });
 });
