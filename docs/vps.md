@@ -370,6 +370,16 @@ Sperrdauer ein Tag, deutsche Suche, 16 gleichzeitige JMAP-Anfragen):
  ["x:Jmap/set",{"update":{"singleton":{"maxConcurrentRequests":16}}},"4"]]'
 ```
 
+Mit `useXForwarded` erwartet Stalwart den Header bei jeder HTTP-Anfrage; Kontext spricht es
+direkt an, ohne ihn, und jede Anfrage schreibt `X-Forwarded-For header is missing` ins Log
+(Stalwart nimmt dann die Adresse der Verbindung, `crates/http/src/request.rs`). Die Meldung aus
+dem Log nehmen (Id aus `x:Tracer/get`) – wirkt erst nach einem Neustart:
+
+```bash
+/root/stalwart-api.sh '[["x:Tracer/set",{"update":{"<tracer-id>":{"events":{"http.x-forwarded-missing":true}}}},"0"]]'
+systemctl restart stalwart
+```
+
 **Firmenverwaltung.** Rolle `Kontext-Server` (erbt *User*, Id `b`), das Konto
 `kontext-server@firma.de` mit ihr und einem Zufallspasswort; die Id der neuen Rolle aus der
 ersten Antwort beim Konto einsetzen:
