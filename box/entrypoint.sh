@@ -20,7 +20,8 @@ secret=${AMI_SECRET}
 deny=0.0.0.0/0.0.0.0
 permit=127.0.0.1/255.255.255.255
 read=system,call,user
-write=system,call,originate
+; "command" for the agent's `core reload` after each new configuration (box/agent/pbx.ts)
+write=system,call,originate,command
 CONF
 chmod 640 /etc/asterisk/manager.conf
 [ -f /etc/asterisk/pjsip.conf ] || : > /etc/asterisk/pjsip.conf

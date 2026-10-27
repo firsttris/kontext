@@ -1,6 +1,6 @@
 // @vitest-environment node
 import { describe, expect, it } from "vitest";
-import { callEventOf, formatAction, parseFrames, registrationOf } from "./ami";
+import { callEventOf, formatAction, parseFrames, refusalOf, registrationOf } from "./ami";
 
 const now = new Date("2026-10-25T09:00:00.000Z");
 
@@ -148,5 +148,17 @@ describe("registrationOf", () => {
       detail: "Rejected",
     });
     expect(registrationOf({ Event: "Hangup" })).toBeNull();
+  });
+});
+
+describe("refusalOf", () => {
+  it("tells why Asterisk refused an action", () => {
+    expect(refusalOf({ Response: "Error", Message: "Permission denied" })).toBe(
+      "Permission denied",
+    );
+  });
+
+  it("is null for an action that went through", () => {
+    expect(refusalOf({ Response: "Success", Message: "Command output follows" })).toBeNull();
   });
 });
