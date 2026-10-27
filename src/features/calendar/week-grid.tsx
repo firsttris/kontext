@@ -6,14 +6,16 @@ import {
   type CalendarEvent,
   dateKey,
   eventKey,
+  eventSpan,
   eventTimes,
-  layoutDay,
   locationName,
   minutesInDay,
   onDay,
+  placeInColumns,
+  type Span,
   timeLabel,
 } from "@/lib/jscalendar";
-import { type DayTask, tasksOnDay } from "@/lib/task-context";
+import { type DayTask, dueMinutes, tasksOnDay } from "@/lib/task-context";
 import { m } from "@/paraglide/messages";
 import { calendarColor, eventClass } from "./event-style";
 import { eventSearch } from "./queries";
@@ -39,7 +41,7 @@ const useNow = (): Date => {
 type Props = {
   days: string[];
   events: CalendarEvent[];
-  /** Tasks due, shown with the all-day appointments. */
+  /** Tasks due: at their time in the grid, without one with the all-day appointments. */
   tasks?: DayTask[];
   /** Events the user still has to answer are drawn dashed. */
   isInvitation: (event: CalendarEvent) => boolean;
@@ -49,6 +51,25 @@ type Props = {
   canMove?: (event: CalendarEvent) => boolean;
   onMove?: (moved: Moved) => void;
 };
+
+/** How much room a task due at a time takes in the grid; it has a moment, not a length. */
+const TASK_MINUTES = 30;
+
+type GridItem = { kind: "event"; event: CalendarEvent } | { kind: "task"; entry: DayTask };
+
+/** A day's timed events and the tasks due at a time, placed side by side where they overlap. */
+const placeDay = (events: CalendarEvent[], tasks: DayTask[], day: string) =>
+  placeInColumns<GridItem>([
+    ...events.map(
+      (event): Span<GridItem> => ({ ...eventSpan(event, day, 24), item: { kind: "event", event } }),
+    ),
+    ...tasks.flatMap((entry): Span<GridItem>[] => {
+      const top = dueMinutes(entry);
+      return top === null
+        ? []
+        : [{ item: { kind: "task", entry }, top, bottom: Math.min(top + TASK_MINUTES, 1440) }];
+    }),
+  ]);
 
 /** Only events within one day can be dragged; longer ones are changed in the dialog. */
 const withinDay = (event: CalendarEvent): boolean => {
@@ -81,7 +102,9 @@ export const WeekGrid = ({
     events.filter((event) => eventTimes(event).allDay && onDay(event, day)),
   );
   const dayTasks = days.map((day) => tasksOnDay(tasks, day));
-  const hasAllDay = allDay.some((list) => list.length > 0) || dayTasks.some((list) => list.length);
+  const untimedTasks = dayTasks.map((list) => list.filter((entry) => dueMinutes(entry) === null));
+  const hasAllDay =
+    allDay.some((list) => list.length > 0) || untimedTasks.some((list) => list.length > 0);
 
   return (
     <div className="flex min-h-0 flex-1 flex-col">
@@ -127,7 +150,7 @@ export const WeekGrid = ({
               {list.map((event) => (
                 <EventChip key={eventKey(event)} event={event} invitation={isInvitation(event)} />
               ))}
-              {dayTasks[index]!.map((entry) => (
+              {untimedTasks[index]!.map((entry) => (
                 <TaskChip key={entry.task.id} entry={entry} />
               ))}
             </div>
@@ -147,13 +170,13 @@ export const WeekGrid = ({
               </div>
             ))}
           </div>
-          {days.map((day) => {
-            const placed = layoutDay(
+          {days.map((day, index) => {
+            const placed = placeDay(
               events.filter(
                 (event) => !eventTimes(event).allDay && onDay(event, day) && event !== dragged,
               ),
+              dayTasks[index]!,
               day,
-              24,
             );
             const weekend = [0, 6].includes(new Date(`${day}T12:00:00Z`).getUTCDay());
             return (
@@ -182,18 +205,32 @@ export const WeekGrid = ({
                     style={{ top: hour * HOUR_HEIGHT, height: HOUR_HEIGHT }}
                   />
                 ))}
-                {placed.map(({ event, top, height, column, columns: count }) => {
+                {placed.map(({ item, top, height, column, columns: count }) => {
+                  const box = {
+                    top: (top / 60) * HOUR_HEIGHT,
+                    height: Math.max((height / 60) * HOUR_HEIGHT - 3, 20),
+                    left: `calc(${(column / count) * 100}% + 3px)`,
+                    width: `calc(${100 / count}% - 6px)`,
+                  };
+                  if (item.kind === "task") {
+                    return (
+                      <div
+                        key={item.entry.task.id}
+                        data-testid="timed-task"
+                        className="absolute flex items-start overflow-hidden rounded-md border border-border bg-bg py-0.5"
+                        style={box}
+                      >
+                        <TaskChip entry={item.entry} />
+                      </div>
+                    );
+                  }
+                  const { event } = item;
                   const movable = canMove(event) && withinDay(event);
                   return (
                     <div
                       key={eventKey(event)}
                       className={cn("absolute", movable && "cursor-grab select-none")}
-                      style={{
-                        top: (top / 60) * HOUR_HEIGHT,
-                        height: Math.max((height / 60) * HOUR_HEIGHT - 3, 20),
-                        left: `calc(${(column / count) * 100}% + 3px)`,
-                        width: `calc(${100 / count}% - 6px)`,
-                      }}
+                      style={box}
                       {...(movable ? handlers(event, day) : {})}
                     >
                       <EventBlock event={event} invitation={isInvitation(event)} />

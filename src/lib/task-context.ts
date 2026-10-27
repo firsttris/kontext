@@ -69,6 +69,16 @@ export const calendarTasks = (tasks: Task[], me: string, today: string): DayTask
 export const tasksOnDay = (list: DayTask[], day: string): DayTask[] =>
   list.filter((entry) => entry.day === day);
 
+/**
+ * When a task is due on its day, in minutes from midnight; null without a time, and for overdue
+ * ones on today, whose time has passed on another day.
+ */
+export const dueMinutes = (entry: DayTask): number | null => {
+  if (entry.overdue || !entry.task.dueTime) return null;
+  const [hours, minutes] = entry.task.dueTime.split(":").map(Number);
+  return hours! * 60 + minutes!;
+};
+
 /** For the bell: my open tasks due today or before. */
 export const dueTasks = (tasks: Task[], me: string, today: string): Task[] =>
   calendarTasks(tasks, me, today)

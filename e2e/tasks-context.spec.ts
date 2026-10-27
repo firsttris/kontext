@@ -118,6 +118,9 @@ test.describe("Aufgaben im Kontext", () => {
     await page.getByRole("link", { name: "Woche", exact: true }).click();
     const chip = page.getByRole("link", { name: new RegExp(due) });
     await expect(chip).toContainText("15:30");
+    // At its time in the grid, not with the all-day appointments.
+    await expect(page.getByTestId("timed-task").filter({ hasText: due })).toBeVisible();
+    await expect(page.getByTestId("timed-task").filter({ hasText: late })).toHaveCount(0);
     await expect(page.getByRole("link", { name: new RegExp(late) })).toContainText("überfällig");
 
     await page.getByRole("button", { name: `„${due}“ erledigt` }).click();

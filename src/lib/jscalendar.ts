@@ -235,61 +235,55 @@ export const minutesInDay = (instant: Date, key: string): number => {
   return h! * 60 + m!;
 };
 
-export type PlacedEvent = {
-  event: CalendarEvent;
-  top: number;
-  height: number;
-  column: number;
-  columns: number;
-};
+/** Something in a day's time grid, in minutes from midnight. */
+export type Span<T> = { item: T; top: number; bottom: number };
+
+export type Placed<T> = { item: T; top: number; height: number; column: number; columns: number };
 
 /**
- * Places the timed events of one day: overlapping events share the width in columns, like in
- * every calendar app. Returns minutes from midnight for top and height.
+ * Overlapping spans share the width in columns, like in every calendar app; events and the tasks
+ * due at a time alike.
  */
-export const layoutDay = (events: CalendarEvent[], key: string, minHeight = 20): PlacedEvent[] => {
-  const items = events
-    .map((event) => {
-      const { start, end } = eventTimes(event);
-      const top = minutesInDay(start, key);
-      const bottom = Math.max(minutesInDay(end, key), top + minHeight);
-      return { event, top, bottom };
-    })
-    .sort((a, b) => a.top - b.top || b.bottom - a.bottom);
-
-  const placed: PlacedEvent[] = [];
-  let group: ((typeof items)[number] & { column: number })[] = [];
+export const placeInColumns = <T>(spans: Span<T>[]): Placed<T>[] => {
+  const items = [...spans].sort((a, b) => a.top - b.top || b.bottom - a.bottom);
+  const placed: Placed<T>[] = [];
+  let group: (Span<T> & { column: number })[] = [];
   let groupEnd = -1;
 
   const flush = () => {
     const columns = Math.max(1, ...group.map((item) => item.column + 1));
-    for (const item of group) {
-      placed.push({
-        event: item.event,
-        top: item.top,
-        height: item.bottom - item.top,
-        column: item.column,
-        columns,
-      });
+    for (const { item, top, bottom, column } of group) {
+      placed.push({ item, top, height: bottom - top, column, columns });
     }
     group = [];
   };
 
-  for (const item of items) {
-    if (item.top >= groupEnd) {
+  for (const span of items) {
+    if (span.top >= groupEnd) {
       flush();
       groupEnd = -1;
     }
     const used = new Set(
-      group.filter((other) => other.bottom > item.top).map((other) => other.column),
+      group.filter((other) => other.bottom > span.top).map((other) => other.column),
     );
     let column = 0;
     while (used.has(column)) column++;
-    group.push({ ...item, column });
-    groupEnd = Math.max(groupEnd, item.bottom);
+    group.push({ ...span, column });
+    groupEnd = Math.max(groupEnd, span.bottom);
   }
   flush();
   return placed;
+};
+
+/** The span of a timed event on the given day, at least `minHeight` minutes tall. */
+export const eventSpan = (
+  event: CalendarEvent,
+  key: string,
+  minHeight = 20,
+): Span<CalendarEvent> => {
+  const { start, end } = eventTimes(event);
+  const top = minutesInDay(start, key);
+  return { item: event, top, bottom: Math.max(minutesInDay(end, key), top + minHeight) };
 };
 
 /** Does the event touch the local day? */

@@ -48,7 +48,9 @@ export const isCalendarDay = (value: string): boolean => {
 };
 
 const day = z.string().refine(isCalendarDay);
-const time = z.string().regex(/^\d{2}:\d{2}$/);
+/** A time of day, "HH:mm" from 00:00 to 23:59; the calendar places a task at it. */
+export const CLOCK_TIME = /^([01]\d|2[0-3]):[0-5]\d$/;
+const time = z.string().regex(CLOCK_TIME);
 
 export const checkItemSchema = z.object({
   id: z.string().min(1).max(64),

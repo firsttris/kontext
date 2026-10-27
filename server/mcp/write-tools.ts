@@ -4,11 +4,12 @@
  * answers with a `message` that also goes into the connection's log.
  */
 import { z } from "zod";
+import { CLOCK_TIME } from "../tasks/tasks";
 import { tool } from "./tool";
 
 const optionalText = (what: string) => z.string().max(10_000).optional().describe(what);
 const day = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
-const time = z.string().regex(/^\d{2}:\d{2}$/);
+const time = z.string().regex(CLOCK_TIME);
 
 const contactFields = {
   given: z.string().max(200).optional().describe("First name."),
