@@ -120,6 +120,10 @@ test.describe("Einstellungen", () => {
     await expect(page.getByRole("heading", { name: "Passwort und Sicherheit" })).toBeVisible();
 
     await page.goto("/settings?section=security");
+    // switched on: only the state and the button, the fields come on asking to switch off
+    await expect(page.getByText("Eingeschaltet", { exact: true })).toBeVisible();
+    await expect(page.getByLabel("Aktuelles Passwort")).toHaveCount(1);
+    await page.getByRole("button", { name: "Ausschalten" }).click();
     await page.getByLabel("Aktuelles Passwort").nth(1).fill(DEV_PASSWORD);
     await page
       .getByLabel("Bestätigungscode")

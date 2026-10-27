@@ -4,7 +4,8 @@
  */
 
 import { useNavigate } from "@tanstack/react-router";
-import { type FormEvent, useMemo, useState } from "react";
+import { ShieldCheck, ShieldOff } from "lucide-react";
+import { type FormEvent, type ReactNode, useMemo, useState } from "react";
 import { renderSVG } from "uqr";
 import { useAuth, useClient } from "@/auth/auth";
 import { useSession } from "@/components/shell/app-shell";
@@ -12,6 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Input, Label } from "@/components/ui/input";
 import { useToast } from "@/components/ui/toast";
 import { changePassword, disableTwoFactor, enableTwoFactor } from "@/jmap/settings";
+import { cn } from "@/lib/cn";
 import { newSecret, otpauthUrl, verifyTotp } from "@/lib/totp";
 import { m } from "@/paraglide/messages";
 import { ImageSendersCard } from "./image-senders-card";
@@ -48,6 +50,37 @@ const codeInput = (value: string, set: (v: string) => void) => (
     />
   </Label>
 );
+
+/** Whether sign-in asks for a code, as a panel one sees at a glance: green when on. */
+const TwoFactorStatus = ({ on, action }: { on: boolean; action: ReactNode }) => {
+  const Icon = on ? ShieldCheck : ShieldOff;
+  return (
+    <div
+      className={cn(
+        "flex flex-wrap items-center gap-3 rounded-lg border p-3",
+        on ? "border-ok/40 bg-ok/10" : "border-border bg-subtle",
+      )}
+    >
+      <span
+        className={cn(
+          "flex size-9 shrink-0 items-center justify-center rounded-full",
+          on ? "bg-ok/15 text-ok" : "bg-bg text-muted",
+        )}
+      >
+        <Icon size={18} aria-hidden="true" />
+      </span>
+      <div className="flex min-w-0 flex-1 flex-col">
+        <span className={cn("text-[14px] font-semibold", on && "text-ok")}>
+          {on ? m.settings_2fa_active() : m.settings_2fa_inactive()}
+        </span>
+        <span className="text-[13px] text-muted">
+          {on ? m.settings_2fa_on() : m.settings_2fa_off()}
+        </span>
+      </div>
+      {action}
+    </div>
+  );
+};
 
 export const SecuritySection = () => (
   <>
@@ -129,6 +162,8 @@ const TwoFactorCard = () => {
   const { data: session } = useSession();
   const { data: enabled, isPending } = useTwoFactor();
   const [setup, setSetup] = useState<string | null>(null);
+  // Switching off asks for password and code only once one chooses to, not as a standing form.
+  const [disabling, setDisabling] = useState(false);
   const [code, setCode] = useState("");
   const [current, setCurrent] = useState("");
   const [problem, setProblem] = useState<string | null>(null);
@@ -156,24 +191,34 @@ const TwoFactorCard = () => {
         setProblem(m.settings_password_wrong());
         return;
       }
-      setSetup(null);
-      setCode("");
-      setCurrent("");
+      reset();
       toast.show(action === "enable" ? m.settings_2fa_enabled() : m.settings_2fa_disabled());
     } catch (error) {
       setProblem((error as Error).message);
     }
   };
 
+  const reset = () => {
+    setSetup(null);
+    setDisabling(false);
+    setCode("");
+    setCurrent("");
+    setProblem(null);
+  };
+
   if (isPending) return null;
 
   return (
-    <SettingsCard
-      title={m.settings_2fa()}
-      description={enabled ? m.settings_2fa_on() : m.settings_2fa_hint()}
-    >
-      {enabled ? (
+    <SettingsCard title={m.settings_2fa()} description={m.settings_2fa_hint()}>
+      {enabled && !disabling ? (
+        <TwoFactorStatus
+          on
+          action={<Button onClick={() => setDisabling(true)}>{m.settings_2fa_disable()}</Button>}
+        />
+      ) : enabled ? (
         <form onSubmit={(e) => void submit(e, "disable")} className="flex flex-col gap-4">
+          <TwoFactorStatus on action={null} />
+          <p className="m-0 text-[14px]">{m.settings_2fa_disable_confirm()}</p>
           {passwordInput(m.settings_password_current(), current, setCurrent, "current-password")}
           {codeInput(code, setCode)}
           {problem ? (
@@ -181,9 +226,14 @@ const TwoFactorCard = () => {
               {problem}
             </p>
           ) : null}
-          <Button type="submit" variant="danger" className="self-start" disabled={save.isPending}>
-            {m.settings_2fa_disable()}
-          </Button>
+          <div className="flex gap-2">
+            <Button type="submit" variant="danger" disabled={save.isPending}>
+              {m.settings_2fa_disable()}
+            </Button>
+            <Button variant="ghost" onClick={reset}>
+              {m.contacts_cancel()}
+            </Button>
+          </div>
         </form>
       ) : setup ? (
         <form onSubmit={(e) => void submit(e, "enable")} className="flex flex-col gap-4">
@@ -226,15 +276,20 @@ const TwoFactorCard = () => {
             <Button type="submit" variant="primary" disabled={save.isPending}>
               {m.settings_2fa_enable()}
             </Button>
-            <Button variant="ghost" onClick={() => setSetup(null)}>
+            <Button variant="ghost" onClick={reset}>
               {m.contacts_cancel()}
             </Button>
           </div>
         </form>
       ) : (
-        <Button variant="primary" className="self-start" onClick={() => setSetup(newSecret())}>
-          {m.settings_2fa_setup()}
-        </Button>
+        <TwoFactorStatus
+          on={false}
+          action={
+            <Button variant="primary" onClick={() => setSetup(newSecret())}>
+              {m.settings_2fa_setup()}
+            </Button>
+          }
+        />
       )}
     </SettingsCard>
   );
