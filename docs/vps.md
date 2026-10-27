@@ -21,6 +21,7 @@ Was wo passiert:
 | 11. Backup auf Cloudflare R2    | Cloudflare und Server  |
 | 12. Mail umstellen              | Cloudflare und Server  |
 | 13. Zugangsdaten sichern        | Passwortmanager        |
+| 14. Automatische Updates        | Server                 |
 
 ## 1. Root-Passwort setzen
 
@@ -535,3 +536,22 @@ Das vorläufige Passwort aus dem Log von Stalwart (Benutzer `admin`) gilt nach d
 nicht mehr. Nicht nötig, weil jederzeit neu zu erzeugen: das Konto `kontext-server@` und sein
 API-Schlüssel, der Cloudflare-Token, die R2-Schlüssel. Ansehen auf dem Server, etwa
 `cat /root/.stalwart-admin`; Startpasswörter danach dort löschen.
+
+## 14. Automatische Updates
+
+Debian schließt Sicherheitslücken selbst – wichtig bei einem Server mit offenem Port 25. Täglich,
+und wenn ein Update (etwa der Kernel) es braucht, ein Neustart um 4:30 Uhr, nach dem Backup um
+3:00 Uhr; die Dienste starten danach von selbst (Quadlet):
+
+```bash
+apt-get install -y unattended-upgrades
+printf '%s\n' 'APT::Periodic::Update-Package-Lists "1";' 'APT::Periodic::Unattended-Upgrade "1";' \
+  > /etc/apt/apt.conf.d/20auto-upgrades
+printf '%s\n' 'Unattended-Upgrade::Automatic-Reboot "true";' \
+  'Unattended-Upgrade::Automatic-Reboot-Time "04:30";' \
+  'Unattended-Upgrade::Remove-Unused-Dependencies "true";' > /etc/apt/apt.conf.d/52kontext-unattended
+unattended-upgrade --dry-run -v | grep -i "allowed origins"
+```
+
+Das betrifft nur Debian (Kernel, SSH, Podman …), **nicht die Container**: Deren Versionen stehen
+fest in den Quadlet-Dateien und ändern sich nur von Hand, siehe [Updates](installation.md#6-updates).
