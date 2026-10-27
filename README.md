@@ -1,10 +1,8 @@
 <div align="center">
 
-<h1>Kontext: self-hosted Google Workspace and Microsoft 365 alternative</h1>
+<h1>Kontext: mail, calendar, chat and telephony for your team – self-hosted and open source</h1>
 
-<h3>Mail, calendar, chat and telephony for your team – self-hosted and open source.</h3>
-
-Shared mailboxes, a team calendar and contacts that connect everything: every customer's mails, appointments, tasks and calls at a glance.<br>
+The self-hosted Google Workspace and Microsoft 365 alternative. Shared mailboxes, a team calendar and contacts that connect everything: every customer's mails, appointments, tasks and calls at a glance.<br>
 AGPL, a web app and PWA on top of the Stalwart mail server, no per-seat pricing. Made in Europe.
 
 **English** · [Deutsch](README.de.md)
