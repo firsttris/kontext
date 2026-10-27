@@ -26,6 +26,7 @@ import { useToast } from "@/components/ui/toast";
 import { useChannels } from "@/features/chat/queries";
 import { useChatNames } from "@/features/chat/use-chat-names";
 import { useColleaguePhotoOf } from "@/features/photos/queries";
+import { holdMicrophone } from "@/lib/audio-session";
 import { callDuration, callerState, firstNameList } from "@/lib/calls";
 import { cn } from "@/lib/cn";
 import { m } from "@/paraglide/messages";
@@ -176,6 +177,8 @@ const useEncryptedRoom = (key: string | undefined) => {
 
 export const CallPanel = ({ active, title }: { active: ActiveCall; title: string }) => {
   const toast = useToast();
+  // A voice message played during the call must not take the microphone's session.
+  useEffect(() => holdMicrophone(), []);
   const [expanded, setExpanded] = useState(false);
   const { room, encrypted } = useEncryptedRoom(active.e2eeKey);
   if (room === null) return null;

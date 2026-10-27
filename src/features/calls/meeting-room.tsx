@@ -10,7 +10,9 @@ import {
 } from "@livekit/components-react";
 import { Track } from "livekit-client";
 import { Volume2 } from "lucide-react";
+import { useEffect } from "react";
 import { useToast } from "@/components/ui/toast";
+import { holdMicrophone } from "@/lib/audio-session";
 import { m } from "@/paraglide/messages";
 import { CallControls } from "./call-controls";
 import { CallTiles, type NameOf } from "./call-tiles";
@@ -64,6 +66,8 @@ export const MeetingRoom = ({
   onLeave: () => void;
 }) => {
   const toast = useToast();
+  // A voice message played during the call must not take the microphone's session.
+  useEffect(() => holdMicrophone(), []);
   return (
     <LiveKitRoom
       serverUrl={url}

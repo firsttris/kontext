@@ -29,6 +29,7 @@ import { Avatar } from "@/components/ui/avatar";
 import { useToast } from "@/components/ui/toast";
 import { useChatNames } from "@/features/chat/use-chat-names";
 import { useMe } from "@/features/tasks/queries";
+import { holdMicrophone } from "@/lib/audio-session";
 import { callDuration } from "@/lib/calls";
 import { cn } from "@/lib/cn";
 import { handedOver, linesOf, type PhoneCall, readableNumber } from "@/lib/phone";
@@ -220,6 +221,8 @@ const PhoneView = ({ call }: { call: PhoneCall }) => {
 
 export const PhonePanel = ({ active }: { active: ActivePhone }) => {
   const toast = useToast();
+  // A voice message played during the call must not take the microphone's session.
+  useEffect(() => holdMicrophone(), []);
   const { calls } = usePhone();
   const me = useMe();
   const { nameOf } = useChatNames();

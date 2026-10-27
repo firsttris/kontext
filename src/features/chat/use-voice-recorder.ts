@@ -4,19 +4,23 @@
  * is let go as soon as the recording ends, also when the conversation closes.
  */
 import { useCallback, useEffect, useRef, useState } from "react";
+import { holdMicrophone } from "@/lib/audio-session";
 import { recordingType, voiceFile } from "@/lib/voice";
 import { m } from "@/paraglide/messages";
+import { stopVoiceMessage } from "./voice-message";
 
 type Session = {
   recorder: MediaRecorder;
   stream: MediaStream;
   chunks: Blob[];
   timer: ReturnType<typeof setInterval>;
+  letGo: () => void;
 };
 
-const release = ({ stream, timer }: Session) => {
+const release = ({ stream, timer, letGo }: Session) => {
   clearInterval(timer);
   for (const track of stream.getTracks()) track.stop();
+  letGo();
 };
 
 export const useVoiceRecorder = ({ onError }: { onError: (message: string) => void }) => {
@@ -48,9 +52,12 @@ export const useVoiceRecorder = ({ onError }: { onError: (message: string) => vo
     }
     let stream: MediaStream;
     asking.current = true;
+    stopVoiceMessage();
+    const letGo = holdMicrophone();
     try {
       stream = await navigator.mediaDevices.getUserMedia({ audio: true });
     } catch {
+      letGo();
       if (mounted.current) onError(m.chat_voice_denied());
       return;
     } finally {
@@ -58,6 +65,7 @@ export const useVoiceRecorder = ({ onError }: { onError: (message: string) => vo
     }
     if (!mounted.current) {
       for (const track of stream.getTracks()) track.stop();
+      letGo();
       return;
     }
     const type = recordingType((candidate) => MediaRecorder.isTypeSupported(candidate));
@@ -68,7 +76,7 @@ export const useVoiceRecorder = ({ onError }: { onError: (message: string) => vo
     };
     const startedAt = Date.now();
     const timer = setInterval(() => setSeconds(Math.floor((Date.now() - startedAt) / 1000)), 250);
-    session.current = { recorder, stream, chunks, timer };
+    session.current = { recorder, stream, chunks, timer, letGo };
     recorder.start();
     setSeconds(0);
     setRecording(true);
