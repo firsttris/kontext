@@ -1,5 +1,7 @@
 /** The event editor's form and the JSCalendar properties it becomes (RFC 8984). */
 
+import type { EmailAddress } from "@/jmap/types";
+import { parseAddresses } from "./addresses";
 import { documentsOfLinks, type LinkedDocument, withDocuments } from "./document-links";
 import {
   attendees,
@@ -88,12 +90,11 @@ export const newEventForm = (startLocal: string, minutes = 60): EventForm => {
   };
 };
 
-/** The addresses in the attendee field ("a@x.de, b@x.de"). */
+/** The addresses in the attendee field ("Anna Weber <a@x.de>, b@x.de"). */
+export const attendeeAddresses = (text: string): EmailAddress[] => parseAddresses(text).addresses;
+
 export const attendeeEmails = (text: string): string[] =>
-  text
-    .split(/[,;\s]+/)
-    .map((e) => e.trim())
-    .filter((e) => e.includes("@"));
+  attendeeAddresses(text).map((address) => address.email);
 
 export type FormProblem = "title" | "order" | "repeatEnd" | null;
 

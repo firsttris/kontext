@@ -1,5 +1,6 @@
 import { expect, type Page, test } from "@playwright/test";
 import {
+  addAttendees,
   addMail,
   address,
   inboxMails,
@@ -863,7 +864,7 @@ test.describe("Benachrichtigungen", () => {
     await page.goto(`/calendar?date=${day}&event=new&start=${day}T09:00`);
     const dialog = page.getByRole("dialog");
     await dialog.getByLabel("Titel").fill(title);
-    await dialog.getByLabel("Teilnehmer").fill(address("anna"));
+    await addAttendees(dialog, address("anna"));
     await dialog.getByRole("button", { name: "Speichern" }).click();
     await expect(page.getByRole("status")).toHaveText("Einladungen werden verschickt.");
 

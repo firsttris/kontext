@@ -1,7 +1,15 @@
 import { type Browser, expect, type Page, test } from "@playwright/test";
 import { createJmapClient } from "../src/jmap/client";
 import { newEmployee, stamp } from "./company-helpers";
-import { address, jmapAs, login, personalAccountId, STALWART, unique } from "./helpers";
+import {
+  addAttendees,
+  address,
+  jmapAs,
+  login,
+  personalAccountId,
+  STALWART,
+  unique,
+} from "./helpers";
 
 const CALENDARS = ["urn:ietf:params:jmap:core", "urn:ietf:params:jmap:calendars"];
 
@@ -81,7 +89,7 @@ const newMeetingWithAnna = async (page: Page, day: string) => {
   await page.goto(`/calendar?date=${day}&event=new&start=${day}T10:00`);
   const dialog = page.getByRole("dialog");
   await dialog.getByLabel("Titel").fill(unique("Baubesprechung"));
-  await dialog.getByLabel("Teilnehmer").fill("anna@weber-haustechnik.test, kunde@example.test");
+  await addAttendees(dialog, "anna@weber-haustechnik.test, kunde@example.test");
   return dialog;
 };
 
@@ -146,7 +154,7 @@ test.describe("Verfügbarkeit", () => {
     const maxAtTen = async () => {
       await page.goto(`/calendar?date=${day}&event=new&start=${day}T10:00`);
       const dialog = page.getByRole("dialog");
-      await dialog.getByLabel("Teilnehmer").fill("max@weber-haustechnik.test");
+      await addAttendees(dialog, "max@weber-haustechnik.test");
       return dialog.getByRole("region", { name: "Verfügbarkeit" });
     };
     try {
@@ -155,6 +163,42 @@ test.describe("Verfügbarkeit", () => {
       await expect((await maxAtTen()).getByText("Alle sind zu dieser Zeit frei.")).toBeVisible();
       await share("none", "availability");
       await expect((await maxAtTen()).getByText("Max ist zu dieser Zeit belegt.")).toBeVisible();
+    } finally {
+      await remove();
+    }
+  });
+});
+
+/** Picks Anna from the suggestions by her first name, without knowing her address. */
+const pickAnna = async (page: Page, day: string) => {
+  await login(page);
+  await page.goto(`/calendar?date=${day}&event=new&start=${day}T10:00`);
+  const dialog = page.getByRole("dialog");
+  await dialog.getByRole("combobox", { name: "Teilnehmer" }).fill("ann");
+  await dialog.getByRole("option", { name: /Anna Weber/ }).click();
+  await expect(dialog.getByRole("button", { name: `${address("anna")} entfernen` })).toBeVisible();
+  return dialog;
+};
+
+test.describe("Kollegen einladen", () => {
+  test("schlägt Anna beim Tippen vor und zeigt gleich, wann sie belegt ist", async ({ page }) => {
+    const day = wednesday();
+    const remove = await busyAt("anna", day, "09:30", "PT2H");
+    try {
+      const dialog = await pickAnna(page, day);
+      const planning = dialog.getByRole("region", { name: "Verfügbarkeit" });
+      await expect(planning.getByText("Anna ist zu dieser Zeit belegt.")).toBeVisible();
+    } finally {
+      await remove();
+    }
+  });
+
+  test("schlägt Anna am Handy vor @phone", async ({ page }) => {
+    const day = wednesday();
+    const remove = await busyAt("anna", day, "09:30", "PT2H");
+    try {
+      const dialog = await pickAnna(page, day);
+      await expect(dialog.getByText("Anna ist zu dieser Zeit belegt.")).toBeVisible();
     } finally {
       await remove();
     }
@@ -174,7 +218,7 @@ test.describe("Verfügbarkeit beim Ändern", () => {
       await page.goto(`/calendar?date=${day}&event=new&start=${day}T08:00`);
       const dialog = page.getByRole("dialog");
       await dialog.getByLabel("Titel").fill(title);
-      await dialog.getByLabel("Teilnehmer").fill("anna@weber-haustechnik.test");
+      await addAttendees(dialog, "anna@weber-haustechnik.test");
       await dialog.getByRole("button", { name: "Speichern" }).click();
       await expect(dialog).toBeHidden();
       await expect.poll(() => titlesOf("anna", day), { timeout: 20_000 }).toContain(title);

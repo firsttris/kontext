@@ -8,9 +8,13 @@ import { Button } from "@/components/ui/button";
 import { Input, Label, Select, Textarea } from "@/components/ui/input";
 import { useToast } from "@/components/ui/toast";
 import { MeetingField } from "@/features/calls/meeting-field";
+import { useAddressSuggestions } from "@/features/contacts/use-suggestions";
 import { EventDocuments } from "@/features/documents/document-actions";
 import { useShareWith } from "@/features/documents/use-share-with";
+import { RecipientField } from "@/features/mail/recipient-field";
+import { formatAddressInput } from "@/lib/addresses";
 import {
+  attendeeAddresses,
   attendeeEmails,
   type EventForm,
   eventToForm,
@@ -22,6 +26,7 @@ import {
 } from "@/lib/event-form";
 import { type CalendarEvent, isInstance, toLocal } from "@/lib/jscalendar";
 import { formAt, formSlot } from "@/lib/planning";
+import { withNames } from "@/lib/suggestions";
 import { m } from "@/paraglide/messages";
 import { AvailabilityPanel } from "./availability-panel";
 import { attendeeList } from "./availability-queries";
@@ -61,6 +66,7 @@ export const EventEditor = ({ event, series, start, onDone, onCancel }: Props) =
     writable[0];
   const toast = useToast();
   const shareWith = useShareWith();
+  const suggestions = useAddressSuggestions();
   const instance = event && isInstance(event) && series ? event : undefined;
   const [initial] = useState<EventForm>(() =>
     event
@@ -205,14 +211,16 @@ export const EventEditor = ({ event, series, start, onDone, onCancel }: Props) =
           onTime={set("endTime")}
         />
       </div>
-      <Label>
-        {m.calendar_event_attendees()}
-        <Input
-          value={form.attendees}
-          onChange={set("attendees")}
-          placeholder={m.calendar_event_attendees_hint()}
-        />
-      </Label>
+      <RecipientField
+        boxed
+        label={m.calendar_event_attendees()}
+        placeholder={m.calendar_event_attendees_hint()}
+        value={withNames(attendeeAddresses(form.attendees), suggestions)}
+        onChange={(addresses) =>
+          setForm((current) => ({ ...current, attendees: formatAddressInput(addresses) }))
+        }
+        suggestions={suggestions}
+      />
       <AvailabilityPanel
         form={form}
         editing={editing}

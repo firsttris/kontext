@@ -1,4 +1,4 @@
-import { type Cookie, expect, type Page } from "@playwright/test";
+import { type Cookie, expect, type Locator, type Page } from "@playwright/test";
 import { DEV_DOMAIN, DEV_PASSWORD } from "../dev/config";
 import { assertSetOk, createJmapClient } from "../src/jmap/client";
 
@@ -101,6 +101,13 @@ export const inboxMails = async (
 };
 
 export const unique = (text: string) => `${text} ${Date.now().toString(36)}`;
+
+/** Types addresses into an appointment's attendee field and turns them into chips. */
+export const addAttendees = async (dialog: Locator, addresses: string) => {
+  const field = dialog.getByRole("combobox", { name: "Teilnehmer" });
+  await field.fill(addresses);
+  await field.press("Enter");
+};
 
 /**
  * Puts a read mail straight into the inbox of a mailbox the user can open (their own or a shared
