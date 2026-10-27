@@ -147,3 +147,34 @@ test.describe("Darstellung", () => {
     await page.getByText("Wie das Gerät").click();
   });
 });
+
+test.describe("Tab-Leiste am Handy @phone", () => {
+  test("legt Kontakte in die Tab-Leiste und setzt sie zurück @phone", async ({ page }) => {
+    await login(page);
+    const tabBar = page.getByRole("navigation", { name: "Apps" });
+    await page.goto("/settings?section=appearance");
+    const card = page.locator("section").filter({ hasText: "Tab-Leiste am Handy" });
+    await card.getByLabel("Tab-Leiste, Platz 4").selectOption({ label: "Kontakte" });
+    await expect(card).toContainText("Unter „Mehr“: Aufgaben");
+
+    await page.goto("/mail");
+    await expect(tabBar.getByRole("link", { name: "Kontakte" })).toBeVisible();
+    await expect(tabBar.getByRole("link", { name: "Aufgaben" })).toHaveCount(0);
+    await tabBar.getByRole("button", { name: "Mehr" }).click();
+    await expect(page.getByRole("menuitem", { name: "Aufgaben" })).toBeVisible();
+    await page.keyboard.press("Escape");
+    await tabBar.getByRole("link", { name: "Kontakte" }).click();
+    await expect(page.getByRole("searchbox", { name: "Kontakte suchen" })).toBeVisible();
+
+    // Picking an app that already has a place swaps the two.
+    await page.goto("/settings?section=appearance");
+    await card.getByLabel("Tab-Leiste, Platz 1").selectOption({ label: "Kontakte" });
+    await expect(card.getByLabel("Tab-Leiste, Platz 4")).toHaveValue("/mail");
+
+    await card.getByRole("button", { name: "Zurücksetzen" }).click();
+    await expect(card.getByLabel("Tab-Leiste, Platz 1")).toHaveValue("/mail");
+    await expect(card.getByLabel("Tab-Leiste, Platz 4")).toHaveValue("/tasks");
+    await page.goto("/mail");
+    await expect(tabBar.getByRole("link", { name: "Aufgaben" })).toBeVisible();
+  });
+});
