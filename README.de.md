@@ -99,6 +99,7 @@ einschaltest. DNS-Einträge, Podman-Quadlets, Backups und Updates stehen in der
 - **Videobesprechung pro Termin**: ein Klick legt einen Link an; Kunden kommen im Browser ohne Konto dazu.
 - **Kalender und Adressbücher teilen** mit Kollegen – nur Verfügbarkeit, lesen oder bearbeiten.
 - **Der Kunde auf einen Blick**: letzte Mails, nächste Termine, offene Aufgaben, Dokumente und „Anrufen“; **Gruppen**, **vCard-Import und -Export**.
+- **Weitere Kontakte** wie bei Gmail: alle, mit denen du Mails hattest und die in keinem Adressbuch stehen, mit einem Klick gespeichert; doppelte Kontakte und Namen in Großbuchstaben **zusammenführen und korrigieren**.
 
 ### ✅ Aufgaben
 

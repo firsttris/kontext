@@ -209,3 +209,15 @@ export const deleteContact = async (
 ): Promise<void> => {
   assertSetOk(await client.call("ContactCard/set", { accountId, destroy: [id] }, USING), "Kontakt");
 };
+
+/** Changes to several cards of one account in one call, as when duplicates are merged. */
+export const setContacts = async (
+  client: JmapClient,
+  accountId: string,
+  { update, destroy }: { update: Record<string, Record<string, unknown>>; destroy: string[] },
+): Promise<void> => {
+  assertSetOk(
+    await client.call("ContactCard/set", { accountId, update, destroy }, USING),
+    "Kontakt",
+  );
+};

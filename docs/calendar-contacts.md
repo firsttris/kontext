@@ -37,6 +37,19 @@ Kontext steht, steht auch am iPhone, unter Android (DAVx⁵) und in Thunderbird.
 - **Anlegen und bearbeiten**, auch „Als Kontakt speichern“ direkt neben einer Mail.
 - **Gruppen** wie „Lieferanten“, an die eine Mail geht.
 - **vCard-Import und -Export**; Doppeltes wird beim Import erkannt.
+- **Weitere Kontakte** wie bei Google: Wer einem geschrieben hat oder wem man geschrieben hat,
+  aber in keinem Adressbuch steht, erscheint hier – mit „Zu Kontakten hinzufügen“ und „Mail
+  schreiben“. Kontext liest dafür die letzten 500 Mails jedes Postfachs (ohne Spam und
+  Papierkorb); Newsletter (`List-Id`, `List-Unsubscribe`), Absender wie `noreply@`, Kollegen und
+  die eigenen Adressen fehlen. Gespeichert wird nichts: Wer Kontakt wird, verschwindet aus der
+  Liste.
+- **Zusammenführen und korrigieren:** Kontakte mit derselben Mail-Adresse, Telefonnummer
+  (`07223 4711` und `+49 7223 4711` zählen gleich) oder demselben Namen schlägt Kontext zum
+  Zusammenführen vor, die Zahl steht neben dem Eintrag. Es bleibt der vollständigste Kontakt; er
+  bekommt alle Adressen, Nummern, Notizen, Links und Adressbücher der anderen, und Gruppen
+  zeigen auf ihn. Zusammengeführt wird nur innerhalb eines Kontos und nur, wo man schreiben
+  darf. Namen ganz in Groß- oder Kleinbuchstaben („MAX MUSTERMANN“) bietet Kontext in üblicher
+  Schreibweise an. „Ignorieren“ merkt sich der Browser.
 - **Adressbücher teilen** mit Kollegen – lesen oder bearbeiten.
 
 ![Kontakt Markus Hoffmann mit nächsten Terminen und letzten Mails](screenshots/contacts.png)
