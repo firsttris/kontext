@@ -2,8 +2,10 @@ import { describe, expect, it } from "vitest";
 import { asDownload, asFile, asViewable, imageUrl, sniffRaster, viewableType } from "./safe-blob";
 
 describe("blobs from mails", () => {
-  it("open only PDFs and raster images in a tab, whatever the case of their type", () => {
+  it("open only PDFs, raster images and audio in a tab, whatever the case of their type", () => {
     expect(viewableType("application/pdf")).toBe("application/pdf");
+    expect(viewableType("audio/webm;codecs=opus")).toBe("audio/webm");
+    expect(viewableType("audio/mp4")).toBe("audio/mp4");
     expect(viewableType("IMAGE/PNG; name=x.png")).toBe("image/png");
     expect(viewableType("text/html")).toBeNull();
     expect(viewableType("image/svg+xml")).toBeNull();

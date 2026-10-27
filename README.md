@@ -111,7 +111,7 @@ records, Podman Quadlets, backups and updates are in the
 
 - **Channels** (#allgemein, one per shared mailbox, your own) and **direct messages**, live with "typing …", who is online, **@mentions**, **threads** and **reactions**.
 - **Mails, tasks, contacts and documents as cards**: "Discuss" on a mail (`b`) talks about it in the channel instead of forwarding it internally – nothing is copied.
-- **Photos and files**, **search**, **retention** set by the company admin.
+- **Photos and files**, **voice messages** as on WhatsApp (record, play right in the conversation, faster at 1.5× or 2×), **search**, **retention** set by the company admin.
 - **Calls, video calls and screen sharing** right from a conversation, on your own server with [LiveKit](https://github.com/livekit/livekit); the call stays open while you switch to mail.
 - **Confidential conversations**, end-to-end encrypted – messages, files and calls.
 

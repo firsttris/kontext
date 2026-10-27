@@ -1,13 +1,15 @@
 /**
  * Writing a message: Enter sends, Shift+Enter starts a new line; "@" suggests colleagues (arrow
  * keys and Enter or Tab pick one). While one writes, the others see "… schreibt". With
- * `attachments`: photos and files (also pasted), and mails, tasks or contacts as cards.
+ * `attachments`: photos and files (also pasted), mails, tasks or contacts as cards, and voice
+ * messages (on a phone the microphone stands where "Senden" does while there is nothing to send).
  */
-import { AtSign, Camera, Link2, Paperclip, Plus, SendHorizontal } from "lucide-react";
-import { type KeyboardEvent, useLayoutEffect, useRef, useState } from "react";
+import { AtSign, Camera, Link2, Mic, Paperclip, Plus, SendHorizontal } from "lucide-react";
+import { type KeyboardEvent, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { Avatar } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { MenuContent, MenuItem, MenuRoot, MenuTrigger } from "@/components/ui/menu";
+import { useToast } from "@/components/ui/toast";
 import {
   insertMention,
   keptMentions,
@@ -20,6 +22,8 @@ import { m } from "@/paraglide/messages";
 import { InputTray } from "./input-tray";
 import { LinkPicker } from "./link-picker";
 import type { Attachments } from "./use-attachments";
+import { useVoiceRecorder } from "./use-voice-recorder";
+import { VoiceRecorderBar } from "./voice-recorder-bar";
 
 type Props = {
   placeholder: string;
@@ -98,6 +102,39 @@ export const MessageInput = ({
     setCaret(0);
     setPicked([]);
   };
+
+  const toast = useToast();
+  const voice = useVoiceRecorder({ onError: (message) => toast.show(message, "error") });
+  // A finished recording goes up like a file and is sent once it is there.
+  const [sendVoice, setSendVoice] = useState(false);
+  const sendNow = useRef(send);
+  sendNow.current = send;
+  const uploading = Boolean(attachments?.uploading);
+  const nothingAttached = attachments?.empty ?? true;
+  useEffect(() => {
+    if (!sendVoice || uploading) return;
+    setSendVoice(false);
+    // Nothing there: the upload failed, and said so.
+    if (!nothingAttached) sendNow.current();
+  }, [sendVoice, uploading, nothingAttached]);
+  const sendRecording = async () => {
+    const file = await voice.stop();
+    if (!file || !attachments) return;
+    attachments.addFiles([file]);
+    setSendVoice(true);
+  };
+  const micInsteadOfSend = Boolean(attachments) && !hasContent;
+  const micButton = (
+    <Button
+      variant="primary"
+      aria-label={m.chat_voice_record()}
+      title={m.chat_voice_record()}
+      onClick={() => void voice.start()}
+      className="size-11 rounded-full p-0 md:hidden"
+    >
+      <Mic size={18} />
+    </Button>
+  );
 
   /** "@ Erwähnen": an "@" at the cursor, which opens the suggestions. */
   const startMention = () => {
@@ -195,7 +232,19 @@ export const MessageInput = ({
       ) : null}
       <div className="md:rounded-xl md:border md:border-border md:focus-within:border-muted">
         {attachments ? <InputTray attachments={attachments} /> : null}
-        <div className="flex items-end gap-1.5 md:flex-col md:items-stretch md:gap-0">
+        {voice.recording ? (
+          <VoiceRecorderBar
+            seconds={voice.seconds}
+            onDiscard={voice.discard}
+            onSend={() => void sendRecording()}
+          />
+        ) : null}
+        <div
+          className={cn(
+            "flex items-end gap-1.5 md:flex-col md:items-stretch md:gap-0",
+            voice.recording && "hidden",
+          )}
+        >
           {attachments ? (
             <MenuRoot>
               <MenuTrigger
@@ -263,6 +312,16 @@ export const MessageInput = ({
                     <Link2 size={16} />
                   </Button>
                 ) : null}
+                <Button
+                  variant="ghost"
+                  size="iconSm"
+                  aria-label={m.chat_voice_record()}
+                  title={m.chat_voice_record()}
+                  className="hidden md:inline-flex"
+                  onClick={() => void voice.start()}
+                >
+                  <Mic size={16} />
+                </Button>
               </>
             ) : null}
             <Button
@@ -274,12 +333,16 @@ export const MessageInput = ({
               <AtSign size={14} /> {m.chat_mention()}
             </Button>
             <span className="hidden flex-1 md:block" />
+            {micInsteadOfSend ? micButton : null}
             <Button
               variant="primary"
               aria-label={m.chat_send()}
               disabled={!canSend}
               onClick={send}
-              className="size-11 rounded-full p-0 md:h-8 md:w-auto md:rounded-lg md:px-3.5"
+              className={cn(
+                "size-11 rounded-full p-0 md:h-8 md:w-auto md:rounded-lg md:px-3.5",
+                micInsteadOfSend && "hidden md:inline-flex",
+              )}
             >
               <SendHorizontal size={17} className="md:hidden" />
               <span className="hidden md:inline">{m.chat_send()}</span>

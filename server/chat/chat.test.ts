@@ -14,6 +14,7 @@ import {
   retentionCutoff,
   retentionSchema,
   toggleReaction,
+  voiceType,
 } from "./chat";
 
 const jonas = { me: "jonas", accountIds: ["jonas", "info"] };
@@ -102,6 +103,30 @@ describe("chatNotice", () => {
     expect(
       channelLabel({ kind: "mailbox", name: null, accountId: "i" }, () => "info@weber.test"),
     ).toBe("info@");
+  });
+});
+
+describe("messageSummary of a voice message", () => {
+  const file = (name: string, type: string) => ({ id: "f1", name, type, size: 10 });
+  it("names a voice message, other files by their name", () => {
+    expect(
+      messageSummary({ text: "", files: [file("Sprachnachricht.webm", "audio/webm")], cards: [] }),
+    ).toBe("Sprachnachricht");
+    expect(
+      messageSummary({ text: "", files: [file("plan.pdf", "application/pdf")], cards: [] }),
+    ).toBe("plan.pdf");
+    expect(
+      messageSummary({ text: "Hör mal", files: [file("a.webm", "audio/webm")], cards: [] }),
+    ).toBe("Hör mal");
+  });
+});
+
+describe("voiceType", () => {
+  it("names the audio of a voice message by its extension", () => {
+    expect(voiceType("Sprachnachricht.webm")).toBe("audio/webm");
+    expect(voiceType("Sprachnachricht.M4A")).toBe("audio/mp4");
+    expect(voiceType("aufnahme.ogg")).toBe("audio/ogg");
+    expect(voiceType("plan.pdf")).toBeUndefined();
   });
 });
 

@@ -25,6 +25,11 @@ info@ – wer das Postfach öffnen darf, öffnet die Mail, kopiert wird nichts.
 - **Threads und Reaktionen:** im Thread antworten, ohne den Kanal zu füllen; 👍 ✅ 🎉 statt
   „ok“.
 - **Fotos und Dateien** von der Kamera, per Ziehen oder Einfügen; Fotos werden vorher verkleinert.
+- **Sprachnachrichten** wie bei WhatsApp: das Mikrofon (am Handy anstelle von „Senden“, solange
+  nichts geschrieben ist) nimmt auf, bis man „Senden“ drückt oder verwirft; nach einer
+  Viertelstunde geht die Aufnahme von selbst. In der Unterhaltung spielt sie direkt ab, mit
+  Wellenform zum Springen, Dauer und Tempo 1×, 1,5× oder 2×; es spielt immer nur eine. In der
+  Liste und in Benachrichtigungen steht „Sprachnachricht“.
 - **Suche** über alle Kanäle; eigene Nachrichten bearbeiten und löschen; stummschalten,
   verlassen, löschen.
 - **Aufbewahrung** legt die Firmenverwaltung fest (30 Tage bis 5 Jahre oder unbegrenzt).

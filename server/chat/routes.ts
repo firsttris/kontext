@@ -17,6 +17,7 @@ import {
   editMessageSchema,
   fitsConfidential,
   INLINE_TYPES,
+  isVoice,
   looksSealed,
   MAIL_COPY_TYPE,
   MAX_FILE_BYTES,
@@ -30,9 +31,11 @@ import {
   SEALED_FILE_TYPE,
   searchSchema,
   type Viewer,
+  voiceType,
 } from "./chat";
 import type { ChatFiles } from "./files";
 import type { MessageStore } from "./messages";
+import { byteRange } from "./range";
 import type { ChatStore } from "./store";
 import { createThreadRoutes, publishChanged } from "./thread-routes";
 
@@ -378,8 +381,15 @@ export const createChatRoutes = ({
       );
     }
     const small = thumb && typeof thumb !== "string" ? thumb : undefined;
-    // A mail shared as a copy says so; its content is shown only from its card.
-    const type = form?.get("kind") === "mail-copy" ? MAIL_COPY_TYPE : file.type;
+    // A mail shared as a copy says so; its content is shown only from its card. A voice message
+    // is audio, whatever its name makes of it.
+    const kind = form?.get("kind");
+    const type =
+      kind === "mail-copy"
+        ? MAIL_COPY_TYPE
+        : kind === "voice"
+          ? (voiceType(file.name) ?? file.type)
+          : file.type;
     return c.json({ file: await files.save(channel.id, viewer.me, file, small, type) }, 201);
   });
 
@@ -398,16 +408,35 @@ export const createChatRoutes = ({
         },
       });
     }
-    // Photos show in the page; everything else is a download that cannot run in this origin.
-    const inline = INLINE_TYPES.includes(file.type);
-    return new Response(Bun.file(file.path), {
+    // Photos and voice messages show in the page; everything else is a download that cannot run
+    // in this origin.
+    const inline = INLINE_TYPES.includes(file.type) || isVoice(file.type);
+    const headers = {
+      "content-type": inline ? file.type : "application/octet-stream",
+      "content-disposition": `${inline ? "inline" : "attachment"}; filename*=UTF-8''${encodeURIComponent(file.name)}`,
+      "content-security-policy": "sandbox",
+      "x-content-type-options": "nosniff",
+      "cache-control": "private, max-age=31536000, immutable",
+      "accept-ranges": "bytes",
+    };
+    const range = byteRange(c.req.header("range"), file.size);
+    if (range === "unsatisfiable") {
+      return new Response(null, {
+        status: 416,
+        headers: { ...headers, "content-range": `bytes */${file.size}` },
+      });
+    }
+    if (!range) {
+      return new Response(Bun.file(file.path), {
+        headers: { ...headers, "content-length": String(file.size) },
+      });
+    }
+    return new Response(Bun.file(file.path).slice(range.start, range.end + 1), {
+      status: 206,
       headers: {
-        "content-type": inline ? file.type : "application/octet-stream",
-        "content-length": String(file.size),
-        "content-disposition": `${inline ? "inline" : "attachment"}; filename*=UTF-8''${encodeURIComponent(file.name)}`,
-        "content-security-policy": "sandbox",
-        "x-content-type-options": "nosniff",
-        "cache-control": "private, max-age=31536000, immutable",
+        ...headers,
+        "content-length": String(range.end - range.start + 1),
+        "content-range": `bytes ${range.start}-${range.end}/${file.size}`,
       },
     });
   });

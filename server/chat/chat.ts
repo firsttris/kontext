@@ -133,6 +133,7 @@ export type Message = {
 export const isSealed = (text: string): boolean => text.startsWith("-----BEGIN PGP MESSAGE-----");
 
 export const SEALED_SUMMARY = "Vertrauliche Nachricht";
+export const VOICE_SUMMARY = "Sprachnachricht";
 
 /** What a message is about in one line: its text, else its card or file. */
 export const messageSummary = (
@@ -140,7 +141,7 @@ export const messageSummary = (
 ): string =>
   (isSealed(message.text) ? SEALED_SUMMARY : message.text) ||
   message.cards[0]?.label ||
-  message.files[0]?.name ||
+  (message.files[0] && isVoice(message.files[0].type) ? VOICE_SUMMARY : message.files[0]?.name) ||
   (message.call ? callSummary(message.call) : "");
 
 /** A call in one line, as the channel list and notifications show it. */
@@ -158,6 +159,27 @@ export const MAX_FILE_BYTES = 25 * 1024 * 1024;
 export const MAX_FILES = 10;
 /** Shown in the page; everything else is downloaded (no HTML or SVG from the same origin). */
 export const INLINE_TYPES = ["image/jpeg", "image/png", "image/webp", "image/gif"];
+/**
+ * Voice messages: what browsers record (WebM or Ogg with Opus, MP4 with AAC in Safari) and MP3.
+ * Played in the page, so served as what they are; audio runs no script.
+ */
+export const AUDIO_TYPES = ["audio/webm", "audio/ogg", "audio/mp4", "audio/mpeg"];
+
+export const isVoice = (type: string) => AUDIO_TYPES.includes(type);
+
+const VOICE_EXTENSIONS: Record<string, string> = {
+  webm: "audio/webm",
+  ogg: "audio/ogg",
+  m4a: "audio/mp4",
+  mp3: "audio/mpeg",
+};
+
+/**
+ * The audio type of an upload the app sent as a voice message. Bun reads a form's file type from
+ * its name, not from what the browser said: ".webm" is "video/webm", ".m4a" "audio/x-m4a".
+ */
+export const voiceType = (name: string): string | undefined =>
+  VOICE_EXTENSIONS[name.split(".").pop()?.toLowerCase() ?? ""];
 
 /** Who is asking: their personal account and every account their JMAP session opens. */
 export type Viewer = { me: string; accountIds: string[] };

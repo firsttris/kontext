@@ -363,6 +363,25 @@ describe("/api/chat", () => {
     expect((await upload(channel, "x.jpg")).status).toBe(404);
   });
 
+  it("keeps a voice message as audio, whatever type its name gives it", async () => {
+    const { send, app } = setup();
+    const { body } = await send("POST", "/direct", { members: ["anna"] });
+    const upload = async (name: string, type: string, kind?: string) => {
+      const form = new FormData();
+      // Bun reads ".webm" as video (server/chat/chat.ts voiceType).
+      form.append("file", new File(["opus"], name, { type }));
+      if (kind) form.append("kind", kind);
+      const response = await app.request(`/channels/${body.channel.id}/files`, {
+        method: "POST",
+        body: form,
+      });
+      return ((await response.json()) as { file: ChatFile }).file.type;
+    };
+    expect(await upload("Sprachnachricht.webm", "video/webm", "voice")).toBe("audio/webm");
+    expect(await upload("Sprachnachricht.m4a", "audio/x-m4a", "voice")).toBe("audio/mp4");
+    expect(await upload("film.webm", "video/webm")).toBe("video/webm");
+  });
+
   it("refuses a message with neither text nor anything in it", async () => {
     const { send } = setup();
     const { body } = await send("POST", "/direct", { members: ["anna"] });

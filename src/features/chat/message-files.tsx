@@ -1,16 +1,18 @@
 /**
  * Photos and files of a message: photos as tiles (one large, several in a grid) that open big
- * with arrows between them, other files as rows to download. Files of a confidential channel come
- * with `urls`: opened in the app, they have local addresses (empty while they open).
+ * with arrows between them, voice messages to play, other files as rows to download. Files of a
+ * confidential channel come with `urls`: opened in the app, they have local addresses (empty while
+ * they open).
  */
 import * as DialogPrimitive from "@radix-ui/react-dialog";
 import { ChevronLeft, ChevronRight, Download, FileText, X } from "lucide-react";
 import { useState } from "react";
-import { type ChatFile, isPhoto } from "@/lib/chat-cards";
+import { type ChatFile, isPhoto, isVoice } from "@/lib/chat-cards";
 import { cn } from "@/lib/cn";
 import { formatSize } from "@/lib/format";
 import { m } from "@/paraglide/messages";
 import { fileUrl, thumbUrl } from "./upload";
+import { VoiceMessage } from "./voice-message";
 
 type Urls = Record<string, string> | undefined;
 
@@ -98,7 +100,8 @@ const PhotoViewer = ({
 export const MessageFiles = ({ files, urls }: { files: ChatFile[]; urls?: Urls }) => {
   const [open, setOpen] = useState<number | null>(null);
   const photos = files.filter((file) => isPhoto(file.type));
-  const others = files.filter((file) => !isPhoto(file.type));
+  const voices = files.filter((file) => isVoice(file.type));
+  const others = files.filter((file) => !isPhoto(file.type) && !isVoice(file.type));
   if (!files.length) return null;
   return (
     <div className="flex max-w-full flex-col gap-1.5">
@@ -128,6 +131,9 @@ export const MessageFiles = ({ files, urls }: { files: ChatFile[]; urls?: Urls }
           ))}
         </ul>
       ) : null}
+      {voices.map((file) => (
+        <VoiceMessage key={file.id} file={file} url={full(file, urls)} />
+      ))}
       {others.map((file) => (
         <a
           key={file.id}
