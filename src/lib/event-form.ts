@@ -90,25 +90,34 @@ export const newEventForm = (startLocal: string, minutes = 60): EventForm => {
   };
 };
 
-/** The addresses in the attendee field ("Anna Weber <a@x.de>, b@x.de"). */
+/** The form's start as a local date-time ("2026-10-31T17:30"). */
+export const startOfForm = (form: EventForm): string => `${form.date}T${form.startTime}`;
+
+/** Whether a local date-time is whole, not missing a date or time still being typed. */
+export const isComplete = (local: string): boolean => !Number.isNaN(Date.parse(`${local}Z`));
+
 /**
  * The form with a new start date or time; the end moves along so the length stays, as in Google
- * and Apple Calendar. An end that was not after the start gives the new start an hour. A field
- * left empty mid-typing changes only itself.
+ * and Apple Calendar. An end that was not after the start gives the new start an hour. A date or
+ * time field reports "" while a part of it is being retyped: then only the field changes, and the
+ * next complete start measures the length from `lastStart`, the start before it was cleared.
  */
 export const withStart = (
   form: EventForm,
   change: Partial<Pick<EventForm, "date" | "startTime">>,
+  lastStart = startOfForm(form),
 ): EventForm => {
   const next = { ...form, ...change };
-  const before = `${form.date}T${form.startTime}`;
-  const after = `${next.date}T${next.startTime}`;
-  const length = localDiff(before, `${form.endDate}T${form.endTime}`);
-  if (Number.isNaN(localDiff(before, after)) || Number.isNaN(length)) return next;
-  const end = shiftLocal(after, length > 0 ? length : 60);
-  return { ...next, endDate: end.slice(0, 10), endTime: end.slice(11, 16) };
+  const before = isComplete(startOfForm(form)) ? startOfForm(form) : lastStart;
+  const after = startOfForm(next);
+  const end = `${form.endDate}T${form.endTime}`;
+  if (![before, after, end].every(isComplete)) return next;
+  const length = localDiff(before, end);
+  const moved = shiftLocal(after, length > 0 ? length : 60);
+  return { ...next, endDate: moved.slice(0, 10), endTime: moved.slice(11, 16) };
 };
 
+/** The addresses in the attendee field ("Anna Weber <a@x.de>, b@x.de"). */
 export const attendeeAddresses = (text: string): EmailAddress[] => parseAddresses(text).addresses;
 
 export const attendeeEmails = (text: string): string[] =>

@@ -356,6 +356,18 @@ describe("withStart", () => {
     expect(withStart(broken, { startTime: "17:30" }).endTime).toBe("18:30");
   });
 
+  it("moves the end once a cleared start is whole again", () => {
+    const cleared = withStart(form, { date: "" });
+    const moved = withStart(cleared, { date: "2026-11-02" }, "2026-10-31T09:00");
+    expect([moved.endDate, moved.endTime]).toEqual(["2026-11-02", "10:30"]);
+    const time = withStart(
+      withStart(form, { startTime: "" }),
+      { startTime: "17:30" },
+      "2026-10-31T09:00",
+    );
+    expect([time.endDate, time.endTime]).toEqual(["2026-10-31", "19:00"]);
+  });
+
   it("changes only the start while a field is empty", () => {
     const moved = withStart(form, { startTime: "" });
     expect([moved.startTime, moved.endTime]).toEqual(["", "10:30"]);
