@@ -154,13 +154,18 @@ test.describe("Kalender", () => {
     await expect(block).toContainText("11:00–12:00");
     await expect(page.getByRole("dialog")).toHaveCount(0);
 
-    // Pull the lower edge half an hour further.
+    // Pull the lower edge half an hour further. The block shows the new length at once and saves
+    // it in the background; the reload below waits for the save, or it would cut it off.
+    const saved = page.waitForResponse((response) =>
+      (response.request().postData() ?? "").includes('"duration":"PT1H30M"'),
+    );
     const moved = (await block.boundingBox())!;
     await page.mouse.move(moved.x + moved.width / 2, moved.y + moved.height - 3);
     await page.mouse.down();
     await page.mouse.move(moved.x + moved.width / 2, moved.y + moved.height + 27, { steps: 6 });
     await page.mouse.up();
     await expect(block).toContainText("11:00–12:30");
+    expect((await saved).ok()).toBe(true);
 
     // It is stored: after a reload it is still there.
     await page.reload();

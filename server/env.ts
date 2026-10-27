@@ -26,7 +26,7 @@ const schema = z.object({
   BETTER_AUTH_URL: z.url().default("http://localhost:5173"),
   /** At least 32 random characters; signs the session cookies and encrypts the Stalwart tokens. */
   BETTER_AUTH_SECRET: secret(),
-  /** The SQLite file with sessions (and later passkeys). */
+  /** The SQLite file: sessions, tasks, chat, telephony and the rest of server/db/schema.ts. */
   DATABASE_PATH: z.string().default(".dev/server/kontext.db"),
   /** Sign-in attempts per minute and address (the e2e tests sign in far more often). */
   SIGN_IN_PER_MINUTE: z.coerce.number().default(10),

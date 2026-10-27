@@ -56,6 +56,20 @@ IMAP und SMTP.
 - **Vertraulich senden** und **PGP/S/MIME**: siehe [Verschlüsselung](encryption.md).
 - **Aus Dokumente anhängen**, Anhänge **in Dokumente ablegen**: siehe [Dokumente](documents.md).
 
+## Abwesenheit und Signaturen
+
+- **Abwesenheitsnotiz** unter *Einstellungen → Abwesenheit*: „Abwesenheitsnotiz einschalten“,
+  auf Wunsch mit Zeitraum („Ab“, „Bis“), Betreff und Nachricht. Wer einem schreibt, bekommt einmal
+  diese Antwort. Sie kommt vom Mailserver, also auch, wenn Kontext und der Rechner aus sind, und
+  sie verträgt sich mit eigenen [Regeln](#ordnen-und-finden).
+- **Für Kollegen** (etwa bei Krankheit) trägt die Firmenverwaltung die Abwesenheit ein, mit einer
+  Vertretung in der Antwort ([Firmenverwaltung](company.md)).
+- **Signatur** unter *Einstellungen → Signatur*: für jede Adresse, von der man sendet (die eigene,
+  info@ …), Absendername und Signatur mit Formatierung. Eine neue Mail bekommt die Signatur der
+  Absenderadresse, eine Antwort über dem Zitat.
+- **Firmen-Signatur:** Legt die Firmenverwaltung eine an und übernimmt sie für alle, ersetzt sie
+  die Signaturen aller Mitarbeiter, auch selbst geänderte.
+
 ## Sicherheit
 
 - **Warnung vor gefälschten Absendern:** wenn der Absender nicht bestätigt ist, sich jemand von

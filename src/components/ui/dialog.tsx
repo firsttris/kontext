@@ -22,7 +22,7 @@ const keepOpenForList = (event: KeyboardEvent) => {
     event.preventDefault();
 };
 
-/** A centered dialog on desktop, a bottom sheet on phones. */
+/** A centered dialog on desktop, a bottom sheet on phones that stays above the keyboard. */
 export const Dialog = ({
   open,
   onOpenChange,
@@ -37,8 +37,9 @@ export const Dialog = ({
       <DialogPrimitive.Overlay className="fixed inset-0 z-40 bg-black/30" />
       <DialogPrimitive.Content
         className={cn(
-          "fixed z-50 flex max-h-[92dvh] flex-col gap-4 overflow-y-auto border border-border bg-bg p-5 shadow-xl outline-none",
-          "inset-x-0 bottom-0 rounded-t-2xl safe-bottom",
+          "fixed z-50 flex max-h-[min(92dvh,calc(var(--app-height,100dvh)-var(--safe-top)-8px))] flex-col gap-4 overflow-y-auto border border-border bg-bg p-5 shadow-xl outline-none",
+          // Above the keyboard on a phone: fixed sits on the page, which iOS doesn't shorten.
+          "inset-x-0 bottom-[var(--keyboard-height,0px)] rounded-t-2xl safe-bottom",
           "md:inset-auto md:top-1/2 md:left-1/2 md:w-[min(520px,calc(100vw-32px))] md:-translate-x-1/2 md:-translate-y-1/2 md:rounded-2xl",
           className,
         )}

@@ -1,3 +1,10 @@
+---
+description: >-
+  Einen neuen VPS für Kontext einrichten: SSH nur mit Schlüssel, Mail-Sperre und Reverse DNS beim
+  Anbieter, Podman und Quadlet, DNS bei Cloudflare, Firewall mit nftables, Stalwart ohne
+  Oberfläche, Backup auf Cloudflare R2, Mail umstellen, automatische Updates.
+---
+
 # VPS einrichten – erste Schritte
 
 Bevor Kontext auf einen neuen Server kommt ([Installation](installation.md)), wird der Zugang
@@ -258,16 +265,22 @@ umask 022
 Werte über mehrere Zeilen.
 
 Die Quadlet-Dateien kopieren und Domain und Let's-Encrypt-Adresse eintragen (Quadlet setzt keine
-Variablen ein). Die Telefonbox (`kontext-box.container`) läuft im Büro, nicht hier:
+Variablen ein) – in den `.container`-Dateien und in den eben geschriebenen `kontext.env` und
+`schreibzeug.env`, die die Beispiel-Domain auch enthalten. Die Telefonbox (`kontext-box.container`)
+läuft im Büro, nicht hier:
 
 ```bash
 cp quadlet/*.network quadlet/*.container /etc/containers/systemd/
 rm /etc/containers/systemd/kontext-box.container
+sed -i 's/firma\.de/meinefirma.de/g' kontext.env schreibzeug.env
 cd /etc/containers/systemd
 sed -i 's/firma\.de/meinefirma.de/g' *.container
 sed -i 's/^Environment=ACME_EMAIL=.*/Environment=ACME_EMAIL=admin@meinefirma.de/' caddy.container
+grep -h 'firma\.de' *.container /opt/kontext/deploy/*.env   # jede Zeile nennt jetzt die eigene Domain
 systemctl daemon-reload
 ```
+
+Jedes `sed` nur einmal laufen lassen: `meinefirma.de` enthält selbst `firma.de`.
 
 Images laden und starten. Mit dem Server starten sie danach von selbst (`[Install]` in jeder
 Datei):

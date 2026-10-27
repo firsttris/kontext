@@ -198,6 +198,58 @@ test.describe("Chat", () => {
     await expect.poll(() => liveTracks(page)).toBe(0);
   });
 
+  test("Sprachnachricht: eine Aufnahme hält die abspielende Nachricht an und behält das Mikrofon", async ({
+    page,
+  }) => {
+    // Safari's Audio Session API, as a stand-in: under "playback" it ends a microphone track
+    // (https://www.w3.org/TR/audio-session/, "Microphone MediaStreamTrack"). The page notes the
+    // type each time the microphone is asked for.
+    await page.addInitScript(() => {
+      const host = window as unknown as { micTypes: string[] };
+      const session = { type: "auto" };
+      Object.defineProperty(navigator, "audioSession", { value: session });
+      host.micTypes = [];
+      const original = navigator.mediaDevices.getUserMedia.bind(navigator.mediaDevices);
+      navigator.mediaDevices.getUserMedia = (constraints) => {
+        host.micTypes.push(session.type);
+        return original(constraints);
+      };
+    });
+    const sessionType = () =>
+      page.evaluate(
+        () => (navigator as unknown as { audioSession: { type: string } }).audioSession.type,
+      );
+    await login(page);
+    await openChat(page);
+    await openDirectWithMax(page);
+    const mic = page.getByRole("button", { name: "Sprachnachricht aufnehmen" });
+    await mic.click();
+    await expect(page.getByRole("timer")).toHaveText("0:04", { timeout: 10_000 });
+    await page.getByRole("button", { name: "Sprachnachricht senden" }).click();
+    const voice = page
+      .getByRole("list", { name: "Nachrichten" })
+      .getByRole("group", { name: /^Sprachnachricht, 0:0[4-5]$/ })
+      .last();
+    await voice.getByRole("button", { name: "Abspielen" }).click();
+    await expect(voice.getByRole("button", { name: "Anhalten" })).toBeVisible();
+    expect(await sessionType()).toBe("playback");
+
+    await mic.click();
+    await expect(page.getByRole("group", { name: "Aufnahme läuft" })).toBeVisible();
+    await expect(voice.getByRole("button", { name: "Abspielen" })).toBeVisible();
+    expect(
+      await page.evaluate(() => (window as unknown as { micTypes: string[] }).micTypes),
+    ).toEqual(["auto", "auto"]);
+    // Playing while recording leaves the microphone its session.
+    await voice.getByRole("button", { name: "Abspielen" }).click();
+    await expect(voice.getByRole("button", { name: "Anhalten" })).toBeVisible();
+    expect(await sessionType()).toBe("auto");
+    await page.getByRole("button", { name: "Aufnahme verwerfen" }).click();
+    await voice.getByRole("button", { name: "Anhalten" }).click();
+    await voice.getByRole("button", { name: "Abspielen" }).click();
+    expect(await sessionType()).toBe("playback");
+  });
+
   test("ein Kanal gehört seinen Mitgliedern", async ({ page, browser }) => {
     const name = unique("Baustelle Hoffmann");
     const slug = name.toLowerCase().replace(/ /g, "-");

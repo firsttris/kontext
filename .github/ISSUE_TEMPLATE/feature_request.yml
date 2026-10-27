@@ -1,0 +1,34 @@
+name: Feature request
+description: An idea for Kontext, or something it should do differently.
+labels: [enhancement]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        What comes next is in the [roadmap](https://github.com/firsttris/kontext/blob/main/ROADMAP.md);
+        please have a look whether it is already there. German or English, both are fine.
+  - type: textarea
+    id: problem
+    attributes:
+      label: What do you want to do?
+      description: The task or situation in your business, not yet the solution.
+      placeholder: "When a customer calls, we want to …"
+    validations:
+      required: true
+  - type: textarea
+    id: idea
+    attributes:
+      label: How could Kontext help?
+      description: How you imagine it, and where in Kontext (mail, calendar, contacts, tasks, chat, telephony, company admin …).
+    validations:
+      required: true
+  - type: textarea
+    id: today
+    attributes:
+      label: How do you do it today?
+      description: Another program (Outlook, Gmail, 3CX …), a workaround, or not at all.
+  - type: textarea
+    id: screenshot
+    attributes:
+      label: Screenshots or examples
+      description: Optional – a sketch, or how another program does it.

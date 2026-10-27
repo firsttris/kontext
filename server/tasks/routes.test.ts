@@ -88,6 +88,15 @@ describe("task routes", () => {
     expect((await call("PATCH", "/t1", { dueDate: "2028-02-30" })).status).toBe(400);
   });
 
+  it("takes a due time only if it is one of the day", async () => {
+    const { call } = setup();
+    const post = (dueTime: string) =>
+      call("POST", "/", { accountId: "jonas", title: "x", dueDate: "2026-10-30", dueTime });
+    expect((await post("24:00")).status).toBe(400);
+    expect((await post("12:60")).status).toBe(400);
+    expect((await post("23:59")).status).toBe(201);
+  });
+
   it("knows the days of any year, also 0000–0099", () => {
     expect(isCalendarDay("0050-01-01")).toBe(true);
     expect(isCalendarDay("0000-02-29")).toBe(true);

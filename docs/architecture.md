@@ -1,9 +1,16 @@
+---
+description: >-
+  Wie Kontext aufgebaut ist: die React-App, der Kontext-Server (Bun, Hono, Better Auth, SQLite),
+  Stalwart über JMAP, Caddy, LiveKit, die Telefonbox und Schreibzeug – und wie jede Funktion
+  darauf gebaut ist.
+---
+
 # Architektur
 
 ```mermaid
 flowchart LR
   Browser["Browser / Handy<br>Kontext (React-SPA)"] -->|HTTPS| Caddy
-  Caddy -->|"App, /api, /jmap, /mcp"| Server["Kontext-Server<br>(Bun, Hono, Better Auth)"]
+  Caddy -->|"App, /api, /jmap, /mcp, WKD"| Server["Kontext-Server<br>(Bun, Hono, Better Auth)"]
   Agenten["KI-Agenten (MCP)"] -->|"/mcp, OAuth"| Caddy
   Server -->|"JMAP mit Token"| Stalwart
   Server --> SQLite[("Sitzungen, Aufgaben, Chat, Telefonie")]
@@ -14,7 +21,7 @@ flowchart LR
   Box -->|"SIP, RTP"| SIP["LiveKit SIP"] --> LiveKit
   Caddy -->|"dokumente.firma.de"| Schreibzeug["Schreibzeug<br>(Dokumente)"]
   Schreibzeug -->|"OpenID Connect"| Server
-  Caddy -->|"/dav, /.well-known (außer OAuth)"| Stalwart
+  Caddy -->|"/dav, /.well-known (außer OAuth und WKD)"| Stalwart
   Clients["Mailprogramme, Handys"] -->|"IMAP, SMTP, CalDAV, CardDAV"| Stalwart
   Internet["andere Mailserver"] -->|SMTP 25| Stalwart
   Stalwart --> Daten[("RocksDB-Volume")]
@@ -503,7 +510,16 @@ das Manifest steht in `vite.config.ts`, der Service Worker in `src/sw/service-wo
   Version (`src/pwa/pwa-status.tsx`).
 - **Neu laden auf Wunsch.** Eine neue Version wartet und meldet sich mit „Eine neue Version von
   Kontext ist da – Neu laden“; sie übernimmt erst nach dem Klick, damit eine angefangene Mail
-  nicht verloren geht. Sind alle Fenster zu, startet beim nächsten Öffnen ohnehin die neue.
+  nicht verloren geht. Nach dem Klick lädt die Seite immer neu – auch ein Tab, der mit
+  Strg+Umschalt+R am Service Worker vorbei geladen wurde, oder wenn schon ein anderer Tab die
+  neue Version übernommen hat (`src/pwa/activate-update.ts`). Sind alle Fenster zu, startet beim nächsten Öffnen ohnehin die
+  neue.
+- **Welche Version läuft:** *Einstellungen → Darstellung → App auf diesem Gerät* zeigt die
+  Version der geladenen App („Kontext 0.1.5“, aus `package.json` beim Build). Der Server nennt
+  seine unter `/api/version` (ohne Anmeldung wie `/healthz`; die öffentlichen Dateien der App
+  verraten sie ohnehin). Weichen beide ab – auf dem Server läuft schon eine neue, das Gerät hat
+  noch die alte im Service Worker –, steht die des Servers darunter, und die App fragt sofort
+  nach der neuen, damit „Neu laden“ gleich erscheint (`src/features/settings/version-row.tsx`).
 - **Was gecacht wird:** nur die App selbst (HTML, Skripte, Styles, Schriften, Symbole). Mails,
   Kalender und Anmeldung (`/jmap`, `/api`) gehen nie über einen Cache. Ohne Netz startet die App
   und sagt „Keine Verbindung“; neue Daten kommen, sobald das Gerät wieder online ist.
@@ -540,7 +556,9 @@ das Manifest steht in `vite.config.ts`, der Service Worker in `src/sw/service-wo
   der Browser schiebt dann die ganze Seite nach oben. Deshalb ist die App so hoch wie der
   sichtbare Teil (`--app-height` aus `visualViewport`, `src/components/use-visible-height.ts`)
   und bleibt oben; Listen von Nachrichten bleiben dabei unten, wenn man unten war
-  (`use-scroll-place.ts`).
+  (`use-scroll-place.ts`). Feste Elemente hängen an der Seite, nicht am sichtbaren Teil: Ein
+  Dialog unten (Bottom Sheet) läge unter der Tastatur. Er rückt deshalb um `--keyboard-height`
+  nach oben und wird höchstens so hoch wie der sichtbare Teil (`src/components/ui/dialog.tsx`).
 - **Gespräch öffnet unten:** Ein Chat geht bei der neuesten Nachricht auf und bleibt dort, auch
   wenn Bilder, Vorschauen oder entschlüsselte Texte danach noch wachsen. Bis man selbst scrollt
   (Finger, Mausrad, Tasten), zieht jede Scroll-Meldung die Liste wieder nach unten: Safari am
@@ -550,6 +568,11 @@ das Manifest steht in `vite.config.ts`, der Service Worker in `src/sw/service-wo
   danach vergrößert; die Seite ragt dann rechts hinaus und rutscht oben unter Safaris Glasleiste.
   Felder, Auswahllisten und der Mail-Editor haben dort deshalb 16 px (`src/styles.css`, geprüft
   von `src/lib/ios-zoom.test.ts`).
+- **Oberer Rand der installierten App am iPhone:** iOS 26 legt über die obersten etwa 40 pt unter
+  der Statusleiste eine Unschärfe („Liquid Glass“), über der Seite, die sich weder per CSS noch
+  per Meta-Tag abschalten lässt. In der installierten App im Hochformat beginnt der Inhalt deshalb
+  um 2,5 rem tiefer (`--safe-top` in `src/styles.css`, geprüft von `src/lib/ios-edge-blur.test.ts`);
+  Safari-Tabs, Querformat und andere Systeme bleiben beim Rand der Statusleiste.
 - **Zurück am Handy:** Ein Bildschirm, der aus einem anderen geöffnet wurde (Gespräch aus der
   Liste, Thread aus dem Gespräch), trägt `fromParent` im Verlaufseintrag; sein „Zurück“ geht dann
   im Verlauf des Browsers zurück, sodass ein Wischen danach nicht wieder auf ihm landet. Ohne
@@ -590,7 +613,8 @@ oder Reihenfolge.
 - **Am Kontakt:** die Aufgaben, die mit der Karte verknüpft sind oder mit einer Unterhaltung der
   letzten Mails mit der Person (`src/lib/task-context.ts`); „Aufgabe“ legt eine verknüpfte an.
 - **Im Kalender:** meine offenen Aufgaben am Tag ihrer Fälligkeit, Überfälliges auf heute, in Rot;
-  in Woche und Tag bei den ganztägigen Terminen. Abhaken mit „Rückgängig“; unter „Meine Kalender“
+  in Woche und Tag zu ihrer Uhrzeit im Raster neben den Terminen, ohne Uhrzeit (und überfällig)
+  bei den ganztägigen. Abhaken mit „Rückgängig“; unter „Meine Kalender“
   ausblendbar (merkt sich der Browser wie ausgeblendete Kalender).
 - **In der Glocke:** „Neu für dich“ – was mir jemand anderes in den letzten 7 Tagen zugewiesen hat
   (`assigned_by`, `assigned_at`; ungesehene zählen zum Punkt an der Glocke) – und „Fällige
@@ -683,7 +707,13 @@ Principal-ID), die Namen holt die App wie bei den Aufgaben über die Principals.
   liefert er wie Fotos mit seinem Typ aus, und mit Byte-Bereichen (`Range`,
   `server/chat/range.ts`), ohne die Safari nichts abspielt. Länge und Wellenform rechnet die App
   aus dem dekodierten Ton (`OfflineAudioContext`), weil eine WebM-Aufnahme des Browsers ihre
-  Länge nicht angibt. In einem vertraulichen Kanal geht die Aufnahme verschlüsselt wie jede Datei.
+  Länge nicht angibt. Beim Abspielen stellt die App die Audio-Session auf „playback“
+  (`src/lib/audio-session.ts`, Audio Session API): am iPhone macht das Dekodieren sie sonst
+  „ambient“ (stumm mit dem Lautlos-Schalter), eine Aufnahme lässt sie bei „play-and-record“ (leise
+  an der Hörmuschel), und die erste Wiedergabe bliebe still. Unter „playback“ beendet Safari
+  aber das Mikrofon: solange eine Aufnahme oder ein Anruf es hält (`holdMicrophone`), bleibt die
+  Session beim Browser, und eine neue Aufnahme hält die Wiedergabe vorher an. In einem
+  vertraulichen Kanal geht die Aufnahme verschlüsselt wie jede Datei.
 - **Karten:** Mails, Aufgaben und Kontakte hängen als Karte an einer Nachricht (`chat_cards`).
   Die Karte hält fest, worum es geht (Betreff, Absender, Zeit; Titel; Name, Firma) – öffnen kann
   sie nur, wer die Mail, die Aufgabe oder den Kontakt ohnehin sehen darf. Alle anderen sehen
@@ -1158,6 +1188,23 @@ Einladungen, die damals noch nicht da waren – beides merkt sich der Browser.
 Browser um Erlaubnis und meldet das Gerät für **Web Push** an. Ob die Erlaubnis noch besteht, fragt
 die App über die Permissions-API ab; nimmt man sie im Browser zurück, schaltet sich der Schalter aus.
 
+Damit niemand Schalter und Browsermenü suchen muss, steht oben in der Mailliste eine Karte
+(`src/features/notifications/device-offer.tsx`, Regeln in `offer.ts`) – immer nur eine:
+
+1. **Als App installieren**, auf dem Handy, solange Kontext nicht installiert ist. Unter Android
+   (Chromium) öffnet „Installieren“ den Dialog des Browsers (`beforeinstallprompt`); wer dort
+   ablehnt, hat „Später“ gewählt. Safari auf iPhone und iPad kennt keinen solchen Knopf, die Karte
+   zeigt die Schritte über „Teilen“ → „Zum Home-Bildschirm“; neuere iOS-Versionen zeigen „Teilen“
+   erst nach langem Tippen auf die Adresszeile oder unter „•••“. Am Rechner gibt es diese Karte nicht,
+   dort steht das Installieren in den Einstellungen.
+2. **Benachrichtigungen**, auf jedem Gerät, auf dem der Schalter noch nie gestellt wurde. Erst ihr
+   Knopf „Einschalten“ fragt den Browser – Safari und Firefox fragen ohnehin nur nach einem Tipp,
+   und wer im Dialog des Browsers ablehnt, kann von der Seite nicht noch einmal gefragt werden. Auf
+   iPhone und iPad kommt sie erst in der installierten App, die ihren eigenen Speicher hat.
+
+„Später“ blendet eine Karte aus (dann kommt die nächste); eine Woche danach kommt sie ein letztes
+Mal („Nein, danke“). Gemerkt wird das im Browser, je Gerät.
+
 - **Bei geschlossener App:** neue Mails in allen Posteingängen, Chat-Nachrichten an einen selbst
   (Direktnachrichten, @Erwähnungen, nicht aus stummgeschalteten Kanälen) und eingehende
   [Anrufe](#anrufe) kommen als Push, auch wenn Kontext ganz zu ist. Den Push sendet der Kontext-Server (`server/push/`): mit seinem
@@ -1455,7 +1502,10 @@ Handy unter „Mehr“, wenn es nicht in die Tab-Leiste gelegt ist). `/documents
 (`src/features/documents/documents-host.tsx`), der beim ersten Besuch entsteht und beim Wechsel zu
 Mail und zurück stehen bleibt, damit ein offenes Dokument offen bleibt. Die Adresse folgt der Seite
 im Rahmen (`/documents/edit/…`, ohne eigenen Verlaufseintrag: den hat der Rahmen), und Kontexts
-Navigation zu einer solchen Adresse öffnet die Seite im Rahmen. Kontext schickt Hell/Dunkel und
+Navigation zu einer solchen Adresse öffnet die Seite im Rahmen. Am Handy steht die Tab-Leiste unter den
+Listen von Dokumente, nicht unter einer offenen Datei, sobald der Rahmen den Editor meldet: dort
+gehört der Bildschirm dem Editor, und sein Zurück führt zu den Listen. Bleibt der Rahmen leer
+(Schreibzeug nicht erreichbar), bleibt die Tab-Leiste. Kontext schickt Hell/Dunkel und
 beim Abmelden `logout` (und wartet bis zu zwei Sekunden auf `signed-out`); Schreibzeug meldet die
 Seite, den Namen des Dokuments, ungespeicherte Änderungen (ein Punkt an „Dokumente“ in der Leiste)
 und Kontexts Tastenkürzel, die außerhalb von Feldern und Dokument gedrückt wurden. Nachrichten
@@ -1622,6 +1672,6 @@ der Person, die ihn verbunden hat (`server/mcp/`).
 | `src/sw/`       | Service Worker: App-Cache, Web Push, Teilen in Kontext                                                                     |
 | `server/`       | Kontext-Server: Anmeldung und JMAP-Weiterleitung, je Funktion ein Ordner – Firmenverwaltung (`company/`), Umzug (`migration/`), weitere Postfächer (`external/`), Regeln, Kategorien, Aufgaben und CalDAV (`tasks/`, `dav/`), Chat, Anrufe (`calls/`), Telefonie (`phone/`), Push, Live-Verbindung, Wiedervorlage, Textbausteine, Verschlüsselung (`pgp/`, `smime/`, `secure/`), Anbieter für Schreibzeug (`oidc/`, `documents/`), Agenten über MCP (`mcp/`) |
 | `box/`          | die Telefonbox: Asterisk und der Box-Agent, der Konfiguration und Dialplan schreibt                                        |
-| `dev/`          | lokaler Stalwart, Testdaten (Seed), Attrappen (Graph, Schreibzeug, Telefonbox)                                             |
+| `dev/`          | lokaler Stalwart, Testdaten (Seed), Attrappen (Graph, Photon, Schreibzeug, Telefonbox)                                     |
 | `deploy/`       | Caddy, Compose, Quadlets, LiveKit, Backup                                                                                  |
 | `e2e/`          | Playwright-Tests gegen einen eigenen Stalwart                                                                              |
