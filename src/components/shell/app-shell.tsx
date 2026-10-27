@@ -188,7 +188,7 @@ export const AppShell = ({ children, bell }: { children: ReactNode; bell?: React
 };
 
 /** "Mehr" in the tab bar: the apps not in it, the account and signing out. */
-const MoreMenu = () => {
+const MoreMenu = ({ chatUnread }: { chatUnread: number }) => {
   const { logout } = useAuth();
   const { data: session } = useSession();
   const pathname = useRouterState({ select: (state) => state.location.pathname });
@@ -196,16 +196,21 @@ const MoreMenu = () => {
   const active = [...moreItems.map((entry) => entry.to), "/settings"].some((to) =>
     pathname.startsWith(to),
   );
+  // Chat moved under "Mehr" keeps its unread count on the phone: on "Mehr" and on its entry.
+  const unreadOf = (to: string) => (to === "/chat" ? chatUnread : 0);
+  const unread = moreItems.reduce((sum, { to }) => sum + unreadOf(to), 0);
   return (
     <MenuRoot>
       <MenuTrigger
+        aria-label={unreadLabel(m.nav_more(), unread)}
         className={cn(
-          "flex w-16 flex-col items-center gap-1 text-[11px]",
+          "relative flex w-16 flex-col items-center gap-1 text-[11px]",
           active ? "font-medium text-fg" : "text-muted",
         )}
       >
         <Ellipsis size={22} strokeWidth={1.75} />
         {m.nav_more()}
+        <UnreadBadge count={unread} className="-top-1 left-[calc(50%+4px)]" />
       </MenuTrigger>
       <MenuContent side="top" align="end">
         <MenuLabel>{session?.username ?? ""}</MenuLabel>
@@ -213,8 +218,15 @@ const MoreMenu = () => {
         <MenuSeparator />
         {moreItems.map(({ to, label, icon: Icon }) => (
           <MenuItem key={to} asChild>
-            <Link to={to} className="text-fg no-underline">
+            <Link
+              to={to}
+              aria-label={unreadLabel(label(), unreadOf(to))}
+              className="text-fg no-underline"
+            >
               <Icon size={15} /> {label()}
+              {unreadOf(to) > 0 ? (
+                <span className="ml-auto font-mono text-[11px] text-muted">{unreadOf(to)}</span>
+              ) : null}
             </Link>
           </MenuItem>
         ))}
@@ -265,7 +277,7 @@ export const TabBar = () => {
           </Link>
         );
       })}
-      <MoreMenu />
+      <MoreMenu chatUnread={chatUnread} />
     </nav>
   );
 };
