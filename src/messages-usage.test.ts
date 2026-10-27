@@ -7,8 +7,9 @@ import { readdirSync, readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 
 const IMPORT = /^import \{ m \} from "@\/paraglide\/messages";$/m;
-// `m` not followed by `.name`; not the "m-0" of a class name, the "m" flag of a RegExp or a key `m:`.
-const BARE = /(?<![\w$.\-"'`])m(?!\s*\.\s*[A-Za-z_$])(?![\w$\-"'`:])/g;
+// `m` not followed by `.name` (or spread as `...m`); not the "m-0" of a class name, the "m" flag of
+// a RegExp or a key `m:`.
+const BARE = /(?<![\w$\-"'`]|(?<!\.\.)\.)m(?!\s*\.\s*[A-Za-z_$])(?![\w$\-"'`:])/g;
 
 const files = readdirSync("src", { recursive: true, encoding: "utf8" })
   .map((file) => `src/${file}`)

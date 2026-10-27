@@ -12,7 +12,7 @@ const GROUPS: [ShortcutGroup, () => string][] = [
 
 /**
  * The description of each shortcut's action. Named one by one: a computed `m[…]` would keep
- * every message in the chunk of every page (dev/messages-per-chunk.ts).
+ * every message in the chunk of every page (src/messages-usage.test.ts).
  */
 const ACTION_LABELS: Record<ShortcutAction, () => string> = {
   help: m.shortcuts_help,
