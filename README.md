@@ -1,12 +1,9 @@
 <div align="center">
 
-<h1>Kontext: self-hosted Google Workspace and Microsoft 365 alternative</h1>
+<h1>Kontext: mail, calendar, chat and telephony (CTI) for your team – self-hosted and open source</h1>
 
-<h3>Mail, calendar, chat and telephony for your team – self-hosted and open source.</h3>
-
-**Mail, calendar, contacts, tasks, team chat and phone (CTI) for small businesses – on your own server.**<br>
-Shared mailboxes, a team calendar and contacts that connect everything: every customer's mails, appointments, tasks and calls at a glance.<br>
-Open source (AGPL), a web app and PWA on top of the Stalwart mail server, no per-seat pricing. Made in Europe.
+The self-hosted Google Workspace and Microsoft 365 alternative. Shared mailboxes, a team calendar and contacts that connect everything: every customer's mails, appointments, tasks and calls at a glance.<br>
+AGPL, a web app and PWA on top of the Stalwart mail server, no per-seat pricing. Made in Europe.
 
 **English** · [Deutsch](README.de.md)
 
@@ -23,9 +20,9 @@ Open source (AGPL), a web app and PWA on top of the Stalwart mail server, no per
 [![Made in Europe](https://img.shields.io/badge/made%20in-Europe-003399)](#-your-data-stays-in-europe--with-ai)
 
 ```bash
-git clone https://github.com/firsttris/kontext && cd kontext
-cp deploy/.env.example deploy/.env            # your domain and secrets
-docker compose -f deploy/compose.yaml up -d   # or Podman
+git clone https://github.com/firsttris/kontext /opt/kontext && cd /opt/kontext
+cp deploy/.env.example deploy/.env && nano deploy/.env   # domain, replace every change-me
+docker compose -f deploy/compose.yaml up -d              # or Podman
 ```
 
 [Privacy & GoBD](#-your-data-stays-in-europe--with-ai) •
@@ -43,7 +40,7 @@ docker compose -f deploy/compose.yaml up -d   # or Podman
 
 ## 🇪🇺 Your data stays in Europe – with AI
 
-- **GDPR**: mails, appointments, contacts, chat and calls live on your server, in a European data centre or in your own office. No US provider in between, no trackers, no sharing. The only data processing agreement you need is with your hosting provider.
+- **GDPR**: mails, appointments, contacts, chat and calls live on your server, in a data centre in Germany or elsewhere in Europe, or in your own office. No US provider in between, no trackers, no sharing. The only data processing agreement you need is with your hosting provider.
 - **GoBD** (German retention rules): nothing is deleted when someone leaves, and backups go encrypted and unalterable (Object Lock) to S3 storage. The software is one part; the company's processes and its procedure documentation are the other.
 - **AI on your terms**: Kontext is an MCP server. You connect the AI assistant you choose; it works with your rights, writes drafts instead of sending, never deletes anything, and every access is logged and can be revoked.
 - **No lock-in**: open standards (IMAP, CalDAV, CardDAV), take everything with you any time; moving *to* Kontext is built in.
@@ -77,11 +74,17 @@ chmod 600 deploy/.env                   # replace every change-me: Kontext refus
 docker compose -f deploy/compose.yaml up -d
 ```
 
-Then create the domain, DKIM and users in Stalwart's admin (port 8080, only through an SSH tunnel or Tailscale),
-enter Kontext's container network `10.89.250.0/24` as an allowed IP (otherwise wrong passwords can
-get Kontext itself banned) and sign in at `https://<your domain>`. Ten users run fine on a VPS with 2 vCPUs and 4 GB RAM. Calls
-(LiveKit), telephony and documents are Compose profiles you switch on when you need them. DNS
-records, Podman Quadlets, backups and updates are in the
+Then set up Stalwart in its admin (port 8080, only through an SSH tunnel or Tailscale) as the
+[guide](https://firsttris.github.io/kontext/installation.html#3-stalwart-einrichten) lists it: the domain and DKIM, the boss's account (everyone else
+is added later in Kontext), Kontext's container network `10.89.250.0/24` as an allowed IP
+(otherwise wrong passwords can get Kontext itself banned) and the API key for the company admin
+(`STALWART_ADMIN_KEY`; without it there is no company admin, no other mailboxes and no answer
+buttons in invitations, see [company admin](https://firsttris.github.io/kontext/installation.html#firmenverwaltung-einschalten)). Then sign in at
+`https://<your domain>`. Ten users run fine on a VPS with 2 vCPUs and 4 GB RAM.
+
+Calls (LiveKit) and documents (Schreibzeug) are Compose profiles that `.env.example` switches on
+(`COMPOSE_PROFILES=calls,documents`): set their secrets and DNS names, or remove them there.
+Telephony adds a small box in the office. DNS records, Podman Quadlets, backups and updates are in the
 [installation guide](https://firsttris.github.io/kontext/installation.html) (German).
 
 ## ✨ Features
@@ -98,7 +101,7 @@ records, Podman Quadlets, backups and updates are in the
 | 📄 **Documents** | **Word, Excel, PowerPoint and PDF** in Kontext with [Schreibzeug](https://github.com/firsttris/schreibzeug), a folder per shared mailbox, attachments into documents and back · [more →](https://firsttris.github.io/kontext/documents.html) |
 | 🤖 **AI agents (MCP)** | **Kontext is an MCP server**: Claude and other agents look up customers, mails, appointments and tasks with your rights and write drafts – no sending, no deleting, every change logged · [more →](https://firsttris.github.io/kontext/agents.html) |
 | 🏢 **Company admin** | **People, shared mailboxes and rights** without IT skills, out-of-office with a deputy, company signature, **offboarding without deleting**, backups at a glance, **moving in from Microsoft 365, Gmail, IMAP and Outlook (PST)** · [more →](https://firsttris.github.io/kontext/company.html) |
-| 📱 **On every device** | **An app on desktop, Android and iPhone** (PWA, no app store), push notifications even when closed, a tab bar with your apps, light and dark, two-factor sign-in · [more →](https://firsttris.github.io/kontext/index.html) |
+| 📱 **On every device** | **An app on desktop, Android and iPhone** (PWA, no app store), push notifications even when closed, a tab bar with your apps, light and dark, two-factor sign-in · [more →](https://firsttris.github.io/kontext/app.html) |
 
 <img src="docs/screenshots/phone-call.png" alt="CTI in Kontext: an incoming call from the Fritzbox rings in the browser with the caller's contact, company, number and last mail, next to the inbox" width="900">
 
@@ -206,7 +209,7 @@ directly. Kontext is the browser interface on top, and its tasks are CalDAV task
 <details>
 <summary><b>Can I move from Gmail, Microsoft 365 or Outlook?</b></summary>
 
-Yes, under *Settings → Company → Move*: IMAP mailboxes (kept in sync until the move is finished),
+Yes, under *Einstellungen → Firma → Umzug* (Settings → Company → Move; the app is in German for now): IMAP mailboxes (kept in sync until the move is finished),
 Microsoft 365 through an app in the company's Microsoft account, Outlook as a PST file, contacts and
 calendars from a Google export. See [Company admin and moving in](https://firsttris.github.io/kontext/company.html).
 </details>
@@ -214,7 +217,7 @@ calendars from a Google export. See [Company admin and moving in](https://firstt
 <details>
 <summary><b>Can I keep using my Gmail address?</b></summary>
 
-Yes, under *Settings → Other mailboxes*: new mail comes into Kontext, and you send as that address
+Yes, under *Einstellungen → Weitere Postfächer* (Settings → Other mailboxes): new mail comes into Kontext, and you send as that address
 through the provider's server, so recipients see it as genuine.
 </details>
 
@@ -236,12 +239,13 @@ The app is in German for now; English and other European languages are planned.
 The full documentation (German), with search, is at **[firsttris.github.io/kontext](https://firsttris.github.io/kontext/)**:
 every feature in detail, [installation](https://firsttris.github.io/kontext/installation.html),
 [architecture](https://firsttris.github.io/kontext/architecture.html) and
-[development](https://firsttris.github.io/kontext/development.html). What comes next is in the
+[development](https://firsttris.github.io/kontext/development.html). What changed in each release,
+with the steps an update needs, is in the [changelog](CHANGELOG.md); what comes next is in the
 [roadmap](ROADMAP.md) (German).
 
 ## 🛠️ Development
 
-Needs [Bun](https://bun.sh) 1.4 and Linux or macOS.
+Needs [Bun](https://bun.sh) 1.4 and Linux or macOS (Windows through WSL).
 
 ```bash
 git clone https://github.com/firsttris/kontext && cd kontext
@@ -259,16 +263,24 @@ Asterisk in the telephone box. Tests, CI and releases: [Development](https://fir
 
 ## 🤝 Contributing
 
-Issues and pull requests are welcome. A good bug report names the browser or phone, the view and
-what was shown (a screenshot helps). Before a pull request please run
-`bun run check && bun run e2e`.
+Issues and pull requests are welcome. A good bug report names the browser or phone, the view,
+what happened and the Kontext version (a screenshot helps); the
+[bug report form](https://github.com/firsttris/kontext/issues/new?template=bug_report.yml) asks for
+all of it. Security problems please report privately, see [SECURITY.md](SECURITY.md). Before a pull
+request please run the checks from [CONTRIBUTING.md](CONTRIBUTING.md):
+
+```bash
+bun run typecheck && bun run lint && bun run test && bun run build   # or: bun run check
+bun run e2e                                                          # Playwright against its own Stalwart
+mkdocs build --strict                                                # when docs/ changed
+```
 
 ---
 
 <div align="center">
 
 ⭐ Like Kontext? A [star on GitHub](https://github.com/firsttris/kontext) helps others find it.<br>
-🐛 [Report a bug](https://github.com/firsttris/kontext/issues/new) · 💡 [Request a feature](https://github.com/firsttris/kontext/issues/new)
+🐛 [Report a bug](https://github.com/firsttris/kontext/issues/new?template=bug_report.yml) · 💡 [Request a feature](https://github.com/firsttris/kontext/issues/new?template=feature_request.yml)
 
 <sub>License: <a href="LICENSE">AGPL-3.0</a> · © Tristan Teufel and contributors · <a href="README.de.md">Deutsche Version</a><br>
 Changed versions you pass on or run for others must offer their source code under the AGPL; a commercial license without these obligations is available via <a href="https://teufel-it.de">teufel-it.de</a>.<br>

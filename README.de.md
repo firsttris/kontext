@@ -1,12 +1,9 @@
 <div align="center">
 
-<h1>Kontext: die selbst gehostete Alternative zu Google Workspace und Microsoft 365</h1>
+<h1>Kontext: Mail, Kalender, Chat und Telefonie (CTI) für dein Team – selbst gehostet und Open Source</h1>
 
-<h3>Mail, Kalender, Chat und Telefonie für dein Team – selbst gehostet und Open Source.</h3>
-
-**Mail, Kalender, Kontakte, Aufgaben, Team-Chat und Telefonie (CTI) für kleine Betriebe – auf deinem eigenen Server.**<br>
-Gemeinsame Postfächer, ein Kalender fürs Team und Kontakte, die alles verbinden: zu jedem Kunden Mails, Termine, Aufgaben und Anrufe auf einen Blick.<br>
-Open Source (AGPL), eine Web-App und PWA auf dem Mailserver Stalwart, keine Kosten pro Benutzer. Made in Europe.
+Die selbst gehostete Alternative zu Google Workspace und Microsoft 365. Gemeinsame Postfächer, ein Kalender fürs Team und Kontakte, die alles verbinden: zu jedem Kunden Mails, Termine, Aufgaben und Anrufe auf einen Blick.<br>
+AGPL, eine Web-App und PWA auf dem Mailserver Stalwart, keine Kosten pro Benutzer. Made in Europe.
 
 [English](README.md) · **Deutsch**
 
@@ -23,9 +20,9 @@ Open Source (AGPL), eine Web-App und PWA auf dem Mailserver Stalwart, keine Kost
 [![Made in Europe](https://img.shields.io/badge/made%20in-Europe-003399)](#-deine-daten-bleiben-in-europa--mit-ki)
 
 ```bash
-git clone https://github.com/firsttris/kontext && cd kontext
-cp deploy/.env.example deploy/.env            # deine Domain und Geheimnisse
-docker compose -f deploy/compose.yaml up -d   # oder Podman
+git clone https://github.com/firsttris/kontext /opt/kontext && cd /opt/kontext
+cp deploy/.env.example deploy/.env && nano deploy/.env   # Domain, jedes change-me ersetzen
+docker compose -f deploy/compose.yaml up -d              # oder Podman
 ```
 
 [Datenschutz & GoBD](#-deine-daten-bleiben-in-europa--mit-ki) •
@@ -43,7 +40,7 @@ docker compose -f deploy/compose.yaml up -d   # oder Podman
 
 ## 🇪🇺 Deine Daten bleiben in Europa – mit KI
 
-- **DSGVO**: Mails, Termine, Kontakte, Chat und Anrufe liegen auf deinem Server, in einem deutschen Rechenzentrum oder im eigenen Büro. Kein US-Anbieter dazwischen, keine Tracker, keine Weitergabe. Einen Auftragsverarbeitungsvertrag brauchst du nur mit deinem Hoster.
+- **DSGVO**: Mails, Termine, Kontakte, Chat und Anrufe liegen auf deinem Server, in einem Rechenzentrum in Deutschland oder anderswo in Europa oder im eigenen Büro. Kein US-Anbieter dazwischen, keine Tracker, keine Weitergabe. Einen Auftragsverarbeitungsvertrag brauchst du nur mit deinem Hoster.
 - **GoBD**: Beim Austritt wird nichts gelöscht, Backups gehen verschlüsselt und unveränderbar (Object Lock) auf S3-Speicher. Die Software ist ein Baustein; dazu gehören die Abläufe im Betrieb und eine Verfahrensdokumentation.
 - **KI nach deinen Regeln**: Kontext ist ein MCP-Server. Du verbindest den KI-Assistenten, den du willst; er arbeitet mit deinen Rechten, schreibt Entwürfe statt zu senden, löscht nie etwas, und jeder Zugriff wird protokolliert und lässt sich trennen.
 - **Kein Lock-in**: offene Standards (IMAP, CalDAV, CardDAV), mitnehmen jederzeit; der Umzug *zu* Kontext ist eingebaut.
@@ -77,11 +74,19 @@ chmod 600 deploy/.env                   # jedes change-me ersetzen: damit starte
 docker compose -f deploy/compose.yaml up -d
 ```
 
-Danach in Stalwarts Verwaltung (Port 8080, nur über SSH-Tunnel oder Tailscale) Domain, DKIM und Benutzer anlegen,
-Kontexts Container-Netz `10.89.250.0/24` als erlaubte IP eintragen (sonst können falsche
-Passwörter Kontext selbst sperren lassen) und unter `https://<deine Domain>` anmelden. Für zehn Benutzer reicht ein VPS mit 2 vCPU und 4 GB
-RAM. Anrufe (LiveKit), Telefonie und Dokumente sind Compose-Profile, die du bei Bedarf
-einschaltest. DNS-Einträge, Podman-Quadlets, Backups und Updates stehen in der
+Danach Stalwart in seiner Verwaltung (Port 8080, nur über SSH-Tunnel oder Tailscale) so einrichten,
+wie es die [Anleitung](https://firsttris.github.io/kontext/installation.html#3-stalwart-einrichten) aufzählt: Domain und DKIM, das Konto des Chefs
+(alle anderen legt er später in Kontext an), Kontexts Container-Netz `10.89.250.0/24` als erlaubte
+IP (sonst können falsche Passwörter Kontext selbst sperren lassen) und den API-Schlüssel für die
+Firmenverwaltung (`STALWART_ADMIN_KEY`; ohne ihn gibt es keine Firmenverwaltung, keine weiteren
+Postfächer und keine Antwort-Knöpfe in Einladungen, siehe
+[Firmenverwaltung](https://firsttris.github.io/kontext/installation.html#firmenverwaltung-einschalten)). Dann unter `https://<deine Domain>`
+anmelden. Für zehn Benutzer reicht ein VPS mit 2 vCPU und 4 GB RAM.
+
+Anrufe (LiveKit) und Dokumente (Schreibzeug) sind Compose-Profile, die `.env.example` schon
+einschaltet (`COMPOSE_PROFILES=calls,documents`): ihre Geheimnisse und DNS-Namen setzen oder sie
+dort herausnehmen. Für Telefonie kommt eine kleine Box ins Büro. DNS-Einträge, Podman-Quadlets,
+Backups und Updates stehen in der
 [Installationsanleitung](https://firsttris.github.io/kontext/installation.html).
 
 ## ✨ Funktionen
@@ -98,7 +103,7 @@ einschaltest. DNS-Einträge, Podman-Quadlets, Backups und Updates stehen in der
 | 📄 **Dokumente** | **Word, Excel, PowerPoint und PDF** in Kontext mit [Schreibzeug](https://github.com/firsttris/schreibzeug), ein Ordner pro gemeinsamem Postfach, Anhänge in Dokumente und zurück · [mehr →](https://firsttris.github.io/kontext/documents.html) |
 | 🤖 **KI-Agenten (MCP)** | **Kontext ist ein MCP-Server**: Claude und andere Agenten schlagen Kunden, Mails, Termine und Aufgaben mit deinen Rechten nach und schreiben Entwürfe – kein Senden, kein Löschen, jede Änderung protokolliert · [mehr →](https://firsttris.github.io/kontext/agents.html) |
 | 🏢 **Firmenverwaltung** | **Mitarbeiter, gemeinsame Postfächer und Rechte** ohne IT-Kenntnisse, Abwesenheit mit Vertretung, Firmen-Signatur, **Austritt ohne Löschen**, Datensicherung im Blick, **Umzug von Microsoft 365, Gmail, IMAP und Outlook (PST)** · [mehr →](https://firsttris.github.io/kontext/company.html) |
-| 📱 **Auf jedem Gerät** | **Eine App am PC, unter Android und am iPhone** (PWA, ohne App Store), Benachrichtigungen auch bei geschlossener App, eine Tab-Leiste mit deinen Apps, hell und dunkel, Anmeldung mit zweitem Faktor · [mehr →](https://firsttris.github.io/kontext/index.html) |
+| 📱 **Auf jedem Gerät** | **Eine App am PC, unter Android und am iPhone** (PWA, ohne App Store), Benachrichtigungen auch bei geschlossener App, eine Tab-Leiste mit deinen Apps, hell und dunkel, Anmeldung mit zweitem Faktor · [mehr →](https://firsttris.github.io/kontext/app.html) |
 
 <img src="docs/screenshots/phone-call.png" alt="CTI in Kontext: ein Anruf über die Fritzbox klingelt im Browser mit Kontakt, Firma, Nummer und letzter Mail des Anrufers, neben dem Posteingang" width="900">
 
@@ -238,12 +243,13 @@ Die App ist vorerst auf Deutsch; Englisch und weitere europäische Sprachen sind
 Die ganze Dokumentation, mit Suche, steht unter **[firsttris.github.io/kontext](https://firsttris.github.io/kontext/)**:
 jede Funktion im Detail, [Installation](https://firsttris.github.io/kontext/installation.html),
 [Architektur](https://firsttris.github.io/kontext/architecture.html) und
-[Entwicklung](https://firsttris.github.io/kontext/development.html). Was als Nächstes kommt, steht
-in der [Roadmap](ROADMAP.md).
+[Entwicklung](https://firsttris.github.io/kontext/development.html). Was sich in jeder Version
+geändert hat, samt den Schritten für ein Update, steht im [Changelog](CHANGELOG.md) (Englisch); was
+als Nächstes kommt, in der [Roadmap](ROADMAP.md).
 
 ## 🛠️ Entwicklung
 
-Benötigt [Bun](https://bun.sh) 1.4 und Linux oder macOS.
+Benötigt [Bun](https://bun.sh) 1.4 und Linux oder macOS (Windows über WSL).
 
 ```bash
 git clone https://github.com/firsttris/kontext && cd kontext
@@ -262,15 +268,23 @@ Anrufe, Asterisk in der Telefonbox. Tests, CI und Releases: [Entwicklung](https:
 ## 🤝 Mitmachen
 
 Issues und Pull Requests sind willkommen. Ein guter Fehlerbericht nennt Browser oder Handy, die
-Ansicht und was zu sehen war (ein Screenshot hilft). Vor einem Pull Request bitte
-`bun run check && bun run e2e` laufen lassen.
+Ansicht, was passiert ist und die Version von Kontext (ein Screenshot hilft); das
+[Formular für Fehlerberichte](https://github.com/firsttris/kontext/issues/new?template=bug_report.yml)
+fragt all das ab. Sicherheitslücken bitte vertraulich melden, siehe [SECURITY.md](SECURITY.md). Vor
+einem Pull Request bitte die Prüfungen aus [CONTRIBUTING.md](CONTRIBUTING.md) laufen lassen:
+
+```bash
+bun run typecheck && bun run lint && bun run test && bun run build   # oder: bun run check
+bun run e2e                                                          # Playwright gegen einen eigenen Stalwart
+mkdocs build --strict                                                # wenn sich docs/ geändert hat
+```
 
 ---
 
 <div align="center">
 
 ⭐ Gefällt dir Kontext? Ein [Stern auf GitHub](https://github.com/firsttris/kontext) hilft anderen, es zu finden.<br>
-🐛 [Fehler melden](https://github.com/firsttris/kontext/issues/new) · 💡 [Idee vorschlagen](https://github.com/firsttris/kontext/issues/new)
+🐛 [Fehler melden](https://github.com/firsttris/kontext/issues/new?template=bug_report.yml) · 💡 [Idee vorschlagen](https://github.com/firsttris/kontext/issues/new?template=feature_request.yml)
 
 <sub>Lizenz: <a href="LICENSE">AGPL-3.0</a> · © Tristan Teufel und Mitwirkende · <a href="README.md">English version</a><br>
 Wer eine veränderte Version weitergibt oder für andere betreibt, muss ihren Quellcode unter der AGPL anbieten; eine kommerzielle Lizenz ohne diese Pflichten gibt es über <a href="https://teufel-it.de">teufel-it.de</a>.<br>

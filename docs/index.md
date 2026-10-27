@@ -34,7 +34,7 @@ CardDAV.
 | [**Verschlüsselung**](encryption.md) | OpenPGP und S/MIME im Browser, „Vertraulich senden“ an jeden Empfänger, Ende-zu-Ende verschlüsselter Chat |
 | [**KI-Agenten (MCP)**](agents.md) | Claude & Co. schlagen Kunden, Mails, Termine und Aufgaben nach und legen Entwürfe an – nie selbst senden oder löschen |
 | [**Firmenverwaltung und Umzug**](company.md) | Mitarbeiter, gemeinsame Postfächer mit Rechten, Abwesenheit mit Vertretung, Austritt, Umzug von Microsoft 365, Gmail, Outlook (PST) |
-| **Handy** | jede Ansicht als eigener Bildschirm mit Tab-Leiste (welche Apps darin stehen, wählt man selbst); als App installierbar, Benachrichtigungen auch bei geschlossener App |
+| [**App, Handy und Konto**](app.md) | als App installierbar am PC, unter Android und am iPhone; Benachrichtigungen auch bei geschlossener App; am Handy jede Ansicht als eigener Bildschirm mit Tab-Leiste (welche Apps darin stehen, wählt man selbst); hell und dunkel, Anmeldung mit Code |
 
 ## Betrieb
 
@@ -46,15 +46,8 @@ braucht. Backups gehen verschlüsselt mit Restic auf S3 mit Object Lock.
 
 ## Wie es weitergeht
 
-1. **Pilot** bei einem Kunden, vier Wochen parallel zum alten System, mit der Telefonie im Test.
-2. **Kern abrunden:** Erinnerungen an Termine auch bei geschlossener App, App-Passwörter für
-   CalDAV mit Anmeldung in zwei Schritten, Regeln für Mitarbeiter in der Firmenverwaltung.
-3. **Telefonie: mehr** – Anschluss direkt beim Anbieter (SIP-Trunk), SIP über TLS, Warteschleife,
-   weitere Tischtelefone.
-4. **Die App auf Englisch** und in weiteren Sprachen.
-5. **Zusatzmodule**, eins nach dem anderen: Arbeitsberichte fürs Handwerk, Belege, Terminbuchung,
-   Tickets; ein **Leitstand** für den Betreiber mit allen Kunden-Servern.
-
-Alles im Einzelnen: [Roadmap](https://github.com/firsttris/kontext/blob/main/ROADMAP.md).
+Was als Nächstes kommt und welche Punkte noch offen sind, steht in der
+[Roadmap](https://github.com/firsttris/kontext/blob/main/ROADMAP.md); was sich in jeder Version
+geändert hat, im [Changelog](https://github.com/firsttris/kontext/blob/main/CHANGELOG.md).
 
 Weiter: [Installation](installation.md) · [Architektur](architecture.md) · [Entwicklung](development.md)

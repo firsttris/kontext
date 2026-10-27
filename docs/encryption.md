@@ -1,3 +1,10 @@
+---
+description: >-
+  Verschlüsselung in Kontext: TLS mit MTA-STS und DANE, verschlüsselte Platte und Backups,
+  OpenPGP und S/MIME im Browser, „Vertraulich senden“ per Link und Ende-zu-Ende verschlüsselter
+  Chat – das Konzept in Schichten.
+---
+
 # Verschlüsselung
 
 Wie Kontext Mails, Chat, Aufgaben und Dateien schützt – ein Konzept in Schichten. Nicht alles
@@ -36,7 +43,8 @@ wer auf dem Server Administrator ist, kann alles außer Ende-zu-Ende-Verschlüss
 - **Geprüft:** Die Firmenverwaltung („Sicherheit der Mails“) zeigt je Domain MX, SPF, DMARC,
   MTA-STS samt Modus der Richtlinie, TLS-RPT und DANE (TLSA mit DNSSEC) und ob Kontext über HTTPS
   läuft – jeweils mit dem, was zu tun ist. Abgefragt über DNS-over-HTTPS (`DOH_URL`, sonst
-  Cloudflare), das auch sagt, ob eine Antwort signiert ist (`server/company/security.ts`). Die
+  Cloudflare; `compose.yaml` reicht die Variable nicht von selbst weiter, siehe
+  [Einstellungen](installation.md#der-kontext-server)), das auch sagt, ob eine Antwort signiert ist (`server/company/security.ts`). Die
   verschlüsselte Platte lässt sich von dort nicht sehen; die Seite verweist auf die Anleitung.
 
 ## Baustein 2: ein Schlüssel pro Person
@@ -240,7 +248,9 @@ Was Kontext bewusst nicht schützt, oder (noch) nicht kann:
   (Telefon, persönlich); einen Versand per SMS gibt es bewusst nicht.
 - **S/MIME, offen:**
   - Eigene anerkannte Stellen pflegt man heute über `SMIME_ROOTS` auf dem Server, noch nicht in der
-    Firmenverwaltung.
+    Firmenverwaltung: eine PEM-Datei, die in den Container eingebunden und als Variable gesetzt
+    wird – `compose.yaml` tut beides nicht von selbst, siehe
+    [Einstellungen](installation.md#der-kontext-server).
   - Sperrlisten (CRL) fragt Kontext nicht ab; bei Stellen ohne OCSP bleibt der Sperrstatus offen.
   - Verzeichnisse einzelner Stellen (LDAP) durchsucht Kontext nicht, nur SMIMEA im DNS.
   - Mit AuthEnvelopedData (RFC 5083, `smime-type=authEnveloped-data`) verschlüsselte Mails

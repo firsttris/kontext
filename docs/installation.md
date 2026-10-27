@@ -1,3 +1,10 @@
+---
+description: >-
+  Kontext auf dem eigenen Server installieren: DNS, Docker Compose oder Podman Quadlet, Stalwart
+  einrichten, Firmenverwaltung, Anrufe, Telefonbox, Dokumente, Backups mit Restic und
+  Wiederherstellen, Updates, alle Einstellungen und Fehlersuche.
+---
+
 # Installation
 
 Ein Server pro Kunde. Er braucht Docker (oder Podman), eine feste IPv4-Adresse und eine Domain.
@@ -46,7 +53,9 @@ docker compose -f deploy/compose.yaml up -d
 
 Für `KONTEXT_SECRET` eine lange Zufallszeichenfolge nehmen (`openssl rand -base64 48`); damit
 sind die Sitzungen signiert und die Stalwart-Tokens verschlüsselt. Alle `change-me`-Platzhalter
-ersetzen: Kontext startet nicht mit ihnen, `backup.sh` sichert nicht. Für Anrufe im Chat ebenso
+ersetzen: Kontext startet nicht mit ihnen, `backup.sh` sichert nicht. `STALWART_ADMIN_KEY` bleibt
+vorerst leer; er kommt in Schritt 3 dazu ([Firmenverwaltung einschalten](#firmenverwaltung-einschalten)).
+Alle Einstellungen stehen unter [Einstellungen im Überblick](#einstellungen-im-uberblick). Für Anrufe im Chat ebenso
 `LIVEKIT_SECRET` setzen und in der Firewall **TCP 7881 und UDP 7882** öffnen (siehe
 [Anrufe](#anrufe)). Caddy holt das Zertifikat für
 `KONTEXT_DOMAIN` selbst. Mit Podman liegen die Quadlet-Dateien in
@@ -78,8 +87,10 @@ jedem Neustart vor der Einrichtung gibt es ein neues.
    ([ohne Oberfläche](vps.md#10-stalwart-ohne-oberflache-einrichten)).
 3. **Port 587** (Submission mit STARTTLS) unter *Netzwerk → Listener* anlegen: Stalwarts
    Standard hat nur 465, viele Mailprogramme nehmen 587.
-4. **Firmenverwaltung einschalten** (siehe unten) und das Konto des Chefs anlegen. Weitere
-   Mitarbeiter und gemeinsame Postfächer legt der Chef danach selbst in Kontext an.
+4. **Firmenverwaltung einschalten** – nötig, nicht optional: den API-Schlüssel anlegen und als
+   `STALWART_ADMIN_KEY` eintragen ([Anleitung unten](#firmenverwaltung-einschalten)), dann das
+   Konto des Chefs anlegen. Weitere Mitarbeiter und gemeinsame Postfächer legt der Chef danach
+   selbst in Kontext an.
 5. Unter *Netzwerk → HTTP* **X-Forwarded-For verwenden** (`useXForwarded`) einschalten, damit
    Stalwart bei CalDAV/CardDAV und Autoconfig (über Caddy) die echten IP-Adressen sieht.
 6. Unter *Sicherheit → Erlaubte IPs* das Container-Netz **`10.89.250.0/24`** eintragen
@@ -107,7 +118,7 @@ hinzufügen“ wählen: Kontext startet dann wie eine App und bleibt angemeldet.
 ### Anrufe
 
 Anrufe und Besprechungen im Chat laufen über LiveKit, das `compose.yaml` mit dem Profil `calls`
-startet (`COMPOSE_PROFILES=calls` in `.env`, so in `.env.example`). Dafür braucht es:
+startet (`COMPOSE_PROFILES=calls` in `.env`; `.env.example` hat `calls,documents`). Dafür braucht es:
 
 - `LIVEKIT_SECRET` in `.env`: mindestens 32 Zeichen (`openssl rand -base64 48`). Kontext und
   LiveKit nutzen denselben.
@@ -131,7 +142,14 @@ LiveKit SIP und Redis auf dem Server (im Profil `calls` schon dabei) und eine Te
 
 **Auf dem Server:** in der Firewall zusätzlich **TCP 5060** (SIP von den Boxen) und
 **UDP 20000–20100** (Sprache) öffnen. Kontext meldet die Boxen bei LiveKit SIP selbst an; unter
-Einstellungen → Telefonie steht, ob das geklappt hat.
+Einstellungen → Telefonie steht, ob das geklappt hat. Die Telefonie-Einstellungen gehören zur
+Firmenverwaltung und brauchen deshalb auch `STALWART_ADMIN_KEY`.
+
+Mit Podman kommen zu `livekit.container` (siehe [Anrufe](#anrufe)) `redis.container` und
+`livekit-sip.container` nach `/etc/containers/systemd/`, dazu `/opt/kontext/deploy/livekit-sip.env`
+mit `SIP_CONFIG_BODY` in einer Zeile und dem LiveKit-Geheimnis als `api_secret`. Die Befehle
+dafür stehen in [VPS einrichten, Schritt 9](vps.md#9-kontext-mit-quadlet-starten); danach
+`systemctl daemon-reload` und `systemctl start redis livekit livekit-sip`.
 
 **In der Fritzbox:** Telefonie → Telefoniegeräte → Neues Gerät einrichten → „Telefon (mit und
 ohne Anrufbeantworter)“ → „LAN/WLAN (IP-Telefon)“, Name „Kontext“. Benutzername und Kennwort
@@ -147,11 +165,23 @@ Seite zeigt von selbst, sobald die Box verbunden und an der Fritzbox angemeldet 
 
 **Die Box:** ein Gerät im Büronetz, das immer läuft – gebrauchter Thin Client (Futro S740,
 Wyse 5070), Raspberry Pi mit SSD, der Firmenserver oder ein NAS mit Docker. Am besten per Kabel.
+Auf das Gerät kommt nur eine Datei, `deploy/box.compose.yaml` – heruntergeladen (die Version im
+Pfad passend zum Kontext-Server) oder mit dem ganzen Repository (`git clone`, dann
+`-f deploy/box.compose.yaml`):
 
 ```bash
+mkdir -p /opt/kontext-box && cd /opt/kontext-box
+curl -fsSLO https://raw.githubusercontent.com/firsttris/kontext/v0.1.6/deploy/box.compose.yaml
+echo KONTEXT_VERSION=0.1.6 > .env      # dieselbe Version wie der Server; ohne Zeile: latest
 KONTEXT_URL=https://kontext.firma.de PAIRING_CODE=K7QM-4XPA \
-  docker compose -f deploy/box.compose.yaml up -d
+  docker compose -f box.compose.yaml up -d
 ```
+
+Der Code steht in Kontext unter Einstellungen → Telefonie → „Box koppeln“ und wird nur beim
+ersten Start gebraucht. `box.compose.yaml` nimmt das Image `tristanteu/kontext-box` in der Version
+aus `KONTEXT_VERSION` (Compose liest die `.env` im Ordner der Datei) und sonst `latest`. Für ein
+Update dort die Version heben, dann `docker compose -f box.compose.yaml pull` und
+`docker compose -f box.compose.yaml up -d`; von selbst aktualisiert sich die Box nicht.
 
 Die Box braucht eine **feste Adresse im LAN** (in der Fritzbox unter Heimnetz → Netzwerk →
 Gerät → „Diesem Netzwerkgerät immer die gleiche IPv4-Adresse zuweisen“). Nach außen braucht sie
@@ -166,9 +196,12 @@ von der Box. Die Box braucht dafür eine feste Adresse im LAN. Das Passwort gibt
 ersten Abruf heraus; nach einem Zurücksetzen des Telefons das Tischtelefon in Kontext löschen und
 neu anlegen.
 
-Mit Podman: `deploy/quadlet/kontext-box.container` nach `/etc/containers/systemd/` kopieren,
-`systemctl daemon-reload`, `systemctl start kontext-box`; nach einem Neustart startet die Box von
-selbst. Ohne Code beim Start zeigt die Box auf `http://<box>:8089` ein Formular für Kontexts
+Mit Podman: `deploy/quadlet/kontext-box.container` nach `/etc/containers/systemd/` kopieren
+(auch einzeln herunterladen wie oben), `systemctl daemon-reload`, `systemctl start kontext-box`;
+nach einem Neustart startet die Box von selbst. Die Datei nennt `Image=…/kontext-box:latest`; besser
+dort die Version des Servers eintragen (`kontext-box:0.1.6`). Für ein Update die Version heben,
+`systemctl daemon-reload`, `podman pull docker.io/tristanteu/kontext-box:<version>` und
+`systemctl restart kontext-box` – mit `latest` holt ein Neustart kein neues Image. Ohne Code beim Start zeigt die Box auf `http://<box>:8089` ein Formular für Kontexts
 Adresse und den Code; mit Code stehen `KONTEXT_URL` und `PAIRING_CODE` in `/etc/kontext-box.env`.
 Sie läuft im Host-Netz (SIP mit der Fritzbox auf 5070, Sprache auf 10000–10200 im LAN).
 
@@ -224,8 +257,14 @@ Schreibzeug läuft auch für sich unter seiner Adresse, mit „Anmelden mit Kont
 Mit Podman: `deploy/quadlet/schreibzeug.container` mitkopieren, in
 `/opt/kontext/deploy/schreibzeug.env` `SCHREIBZEUG_URL`, `SCHREIBZEUG_EMBED_ORIGIN=https://kontext.firma.de`,
 `OIDC_ISSUER=https://kontext.firma.de/api/auth` und `OIDC_CLIENT_SECRET` (dasselbe Geheimnis)
-eintragen, `SCHREIBZEUG_URL` und `SCHREIBZEUG_CLIENT_SECRET` auch in `kontext.env`. Ohne Dokumente
-die beiden Zeilen aus `.env` löschen (nicht leer lassen: Caddy liest sie dort).
+eintragen, `SCHREIBZEUG_URL` und `SCHREIBZEUG_CLIENT_SECRET` auch in `kontext.env`.
+
+**Ohne Dokumente:** mit Compose `documents` aus `COMPOSE_PROFILES` nehmen und die beiden Zeilen
+`SCHREIBZEUG_URL` und `SCHREIBZEUG_CLIENT_SECRET` aus `.env` löschen; leer ginge auch, denn
+`compose.yaml` gibt Caddy dann einen Platzhalter (`https://schreibzeug.internal`), der niemandem
+antwortet. Mit Quadlet `schreibzeug.container` nicht kopieren, die beiden Zeilen in `kontext.env`
+weglassen und in `caddy.container` die Zeile `Environment=SCHREIBZEUG_URL=…` löschen: Caddy liest
+die Adresse dort, nicht aus `kontext.env`, und holte sonst weiter ein Zertifikat für sie.
 
 Der Server bleibt schlank: Bearbeiten und Texterkennung laufen im Browser.
 
@@ -244,7 +283,23 @@ einer Tipp-Pause und ab drei Buchstaben.
 
 Unter *Einstellungen → Firma* legt der Chef (oder die Büroleitung) Mitarbeiter und gemeinsame
 Postfächer an, setzt Passwörter und die Anmeldung mit Code zurück und sperrt Zugänge. Dafür
-braucht der Kontext-Server einen API-Schlüssel von Stalwart, der nur Konten verwalten darf:
+braucht der Kontext-Server einen API-Schlüssel von Stalwart, der nur Konten verwalten darf
+(`STALWART_ADMIN_KEY`).
+
+!!! warning "Ohne den Schlüssel fehlt viel"
+    Kontext startet auch ohne `STALWART_ADMIN_KEY`, aber dann fehlen:
+
+    - die **Firmenverwaltung** ganz – Mitarbeiter, gemeinsame Postfächer, Firmen-Signatur,
+      Datensicherung, Telefonie-Einstellungen und der [Umzug](#umzug);
+    - **Weitere Postfächer** (Gmail, GMX …): der Eintrag fehlt in den Einstellungen, weil der
+      Server die abgerufenen Mails mit dem Schlüssel ins Postfach legt;
+    - die **Antwort-Knöpfe** in Einladungen: Kontext verschickt sie ohne Ja / Nein / Vielleicht,
+      denn eingetragen wird die Antwort mit dem Schlüssel
+      ([Einladungen](architecture.md#einladungen));
+    - in [Dokumente](#dokumente) die **Ordner je gemeinsamem Postfach**: Kontext liest die
+      Mitglieder mit dem Schlüssel.
+
+    Darum gehört er zur Einrichtung dazu (Schritt 4 unter [Stalwart einrichten](#3-stalwart-einrichten)).
 
 1. In Stalwarts Verwaltung eine **Rolle** `Kontext-Server` anlegen: sie erbt die Rolle *User*
    und bekommt dazu die Rechte `sysAccountGet`, `sysAccountQuery`, `sysAccountCreate`,
@@ -256,7 +311,9 @@ braucht der Kontext-Server einen API-Schlüssel von Stalwart, der nur Konten ver
    Zufallspasswort anlegen.
 3. Mit diesem Konto einen **API-Schlüssel** erzeugen (*Credentials → API Key*, Rechte
    *Inherit*). Er beginnt mit `API_`; in `deploy/.env` als `STALWART_ADMIN_KEY` eintragen und
-   Kontext neu starten (`docker compose -f deploy/compose.yaml up -d`).
+   Kontext neu starten (`docker compose -f deploy/compose.yaml up -d`); mit Quadlet in
+   `deploy/kontext.env`, dann `systemctl restart kontext`. Ohne Oberfläche geht dasselbe über
+   Stalwarts API ([VPS einrichten, Schritt 10](vps.md#10-stalwart-ohne-oberflache-einrichten)).
 4. Beim ersten Aufruf legt Kontext die Rolle `Firmenverwaltung (Kontext)` an. Dem Konto des
    Chefs in Stalwart diese Rolle **zusätzlich zu User** geben. Danach kann er sie in Kontext
    selbst an weitere Personen weitergeben.
@@ -419,36 +476,146 @@ AWS_SECRET_ACCESS_KEY=…
 
 Der Mailserver hält dafür ein paar Sekunden an; absendende Server versuchen es einfach
 erneut. Die Kontext-Datenbank wird im laufenden Betrieb kopiert (`VACUUM INTO`). Einmal im Monat
-eine Wiederherstellung auf einem Testserver üben:
+eine Wiederherstellung auf einem Testserver üben, wie unten beschrieben.
+
+### Wiederherstellen
+
+Restic legt je Lauf drei Sicherungen an, erkennbar am Tag: `stalwart` (Stalwarts Datenvolume),
+`kontext` (die Kopie der Datenbank unter `backup/kontext.db` und die Ordner `chat-files`,
+`photos`, `phone`, `secure`) und mit Dokumente `schreibzeug` (`backup/schreibzeug.db`, `blobs`,
+`auth-secret`). Gesichert sind die Volumes unter ihrem Pfad auf dem Server, etwa
+`/var/lib/docker/volumes/kontext_stalwart-data/_data` (Compose mit Docker) oder
+`/var/lib/containers/storage/volumes/stalwart-data/_data` (Quadlet). Die Volumes heißen mit
+Compose `kontext_stalwart-data`, `kontext_kontext-data`, `kontext_schreibzeug-data`, mit Quadlet
+ohne Vorsilbe `stalwart-data`, `kontext-data`, `schreibzeug-data`.
+
+Nicht in der Sicherung: die Einstellungen (`deploy/.env` bzw. die Quadlet-Dateien und
+`kontext.env` … – darum gehören sie in den Passwortmanager, siehe
+[Zugangsdaten sichern](vps.md#13-zugangsdaten-sichern)) und Stalwarts Volume `stalwart-config`.
+Darin steht nur `config.json` mit dem Speicherort; alles andere (Domains, Konten, DKIM-Schlüssel,
+Einstellungen) liegt in Stalwarts Datenbank und kommt mit `stalwart` zurück.
+
+**1. Server bereitstellen.** Auf einem neuen Server Kontext wie in den Schritten 1 und 2 mit
+denselben Einstellungen installieren und starten, dann Stalwarts Ersteinrichtung durchlaufen
+(Benutzer `admin`, Passwort aus dem Log), mit dem vorgegebenen Speicher (RocksDB unter
+`/var/lib/stalwart/`) – erst dann gibt es `config.json`. Was man dabei einträgt, ersetzt gleich
+die Sicherung. Auf dem alten Server entfällt dieser Schritt.
+
+**2. Restic die Einstellungen geben** – dieselben, mit denen `backup.sh` sichert, als root:
 
 ```bash
-restic restore latest --tag stalwart --target /tmp/restore     # Stalwart
-restic restore latest --tag kontext --target /tmp/restore    # Kontext
-restic restore latest --tag schreibzeug --target /tmp/restore  # Dokumente
+apt-get install -y restic
+cd /opt/kontext/deploy
+set -a; . ./.env; set +a          # mit Quadlet: . ./backup.env
+restic snapshots                  # alle Sicherungen mit Tag, Zeit und Pfad
 ```
 
-Bei Dokumente kommt `…/backup/schreibzeug.db` als `schreibzeug.db` ins Volume
-`kontext_schreibzeug-data`, `blobs` und `auth-secret` daneben.
+**3. Dienste anhalten**, damit nichts in die Volumes schreibt:
 
-Die Kopie der Kontext-Datenbank (`…/backup/kontext.db`) kommt bei gestopptem Container als
-`kontext.db` ins Volume `kontext_kontext-data`, die Ordner `…/chat-files`, `…/photos`, `…/phone`
-und `…/secure` daneben. Fehlt sie, geht nichts in Stalwart verloren: alle melden sich einmal neu an, die
-Vorlage der Firmen-Signatur ist neu einzutragen; Aufgaben und Chat sind dann leer.
+```bash
+docker compose -f compose.yaml stop                      # Compose
+systemctl stop caddy schreibzeug kontext stalwart        # Quadlet
+```
+
+**4. Zurückholen** in einen leeren Ordner, dann in die Volumes. `vol` nennt den Pfad eines
+Volumes; mit Podman Compose `podman` statt `docker`:
+
+```bash
+vol() { docker volume inspect -f '{{ .Mountpoint }}' "kontext_$1"; }   # Compose
+vol() { podman volume inspect -f '{{ .Mountpoint }}' "$1"; }           # Quadlet
+
+restic restore latest --tag stalwart --target /tmp/restore
+restic restore latest --tag kontext --target /tmp/restore
+restic restore latest --tag schreibzeug --target /tmp/restore   # nur mit Dokumente
+
+S=$(vol stalwart-data)
+find "$S" -mindepth 1 -delete && cp -a "/tmp/restore$S/." "$S/"
+
+K=$(vol kontext-data)
+rm -f "$K/kontext.db" "$K/kontext.db-wal" "$K/kontext.db-shm"
+cp -a "/tmp/restore$K/backup/kontext.db" "$K/kontext.db"
+for d in chat-files photos phone secure; do rm -rf "${K:?}/$d"; cp -a "/tmp/restore$K/$d" "$K/"; done
+
+D=$(vol schreibzeug-data)                                        # nur mit Dokumente
+rm -f "$D/schreibzeug.db" "$D/schreibzeug.db-wal" "$D/schreibzeug.db-shm"
+cp -a "/tmp/restore$D/backup/schreibzeug.db" "$D/schreibzeug.db"
+rm -rf "${D:?}/blobs" "$D/auth-secret"
+cp -a "/tmp/restore$D/blobs" "/tmp/restore$D/auth-secret" "$D/"
+```
+
+Die Pfade in der Sicherung sind die des alten Servers. Läuft der neue genauso (Compose mit Docker
+bzw. Quadlet), sind sie gleich; sonst zeigt `restic snapshots` sie in der Spalte *Paths*, und statt
+`/tmp/restore$S` steht dann `/tmp/restore<alter Pfad>`. Restic stellt Besitzer und Rechte mit
+her, `cp -a` behält sie.
+
+Mit Quadlet in Schritt 3 und 5 nur die Units nennen, die es auf dem Server gibt (ohne Dokumente
+kein `schreibzeug`, ohne Anrufe kein `redis`, `livekit`, `livekit-sip`).
+
+**5. Starten und prüfen:**
+
+```bash
+docker compose -f compose.yaml up -d                                      # Compose
+systemctl start stalwart redis livekit livekit-sip kontext schreibzeug caddy   # Quadlet
+```
+
+Danach in Kontext anmelden: Mails, Termine, Aufgaben und Chat sind wieder da. Ändern sich auf
+einem neuen Server die IP-Adressen, die DNS-Einträge (A, PTR) nachziehen. `/tmp/restore` zum
+Schluss löschen.
+
+Fehlt die Kopie der Kontext-Datenbank, geht nichts in Stalwart verloren: alle melden sich einmal
+neu an, die Vorlage der Firmen-Signatur ist neu einzutragen; Aufgaben und Chat sind dann leer.
 
 ## 6. Updates
 
+Was sich in jeder Version geändert hat und welche Versionen einen Schritt mehr brauchen, steht im
+[Changelog](https://github.com/firsttris/kontext/blob/main/CHANGELOG.md). Vorher ein Backup machen
+(`systemctl start kontext-backup.service` oder „Jetzt sichern“ in der Firmenverwaltung).
+
+**Mit Compose:**
+
 ```bash
 cd /opt/kontext && git pull
-nano deploy/.env                 # KONTEXT_VERSION auf die neue Version setzen, z. B. 0.1.3
+git diff ORIG_HEAD -- deploy/    # was sich in deploy/ geändert hat: .env.example, compose.yaml, Caddyfile, Units
+nano deploy/.env                 # KONTEXT_VERSION auf die neue Version, z. B. 0.1.6; neue Zeilen aus .env.example übernehmen
 docker compose -f deploy/compose.yaml pull && docker compose -f deploy/compose.yaml up -d
 ```
 
-Die Images laufen mit festen Versionen und aktualisieren sich nicht selbst (auch nicht mit
-Podman-Auto-Update): Ein neues Image kommt nur, wenn man die Version hebt. Mit Quadlet steht sie in
-`deploy/quadlet/kontext.container`.
+- `deploy/.env` ist die eigene Kopie von `.env.example` und ändert sich mit `git pull` nicht. Neue
+  Einstellungen zeigt `git diff ORIG_HEAD -- deploy/.env.example` (oder ein Vergleich beider
+  Dateien); was dort neu ist, in `.env` übernehmen.
+- `KONTEXT_VERSION` hebt Kontext; die aktuelle Version steht in `.env.example` und unter
+  [Releases](https://github.com/firsttris/kontext/releases). `SCHREIBZEUG_VERSION` hebt
+  Schreibzeug, das eigene Versionen hat ([Releases von Schreibzeug](https://github.com/firsttris/schreibzeug/releases));
+  fehlt die Zeile, nimmt `compose.yaml` `latest`.
+- Stalwart, LiveKit, LiveKit SIP, Redis und Caddy stehen mit festen Versionen in
+  `deploy/compose.yaml`; neue kommen mit `git pull`, und `pull` holt sie.
+- Hat sich `deploy/Caddyfile` geändert, Caddy neu laden:
+  `docker compose -f deploy/compose.yaml restart caddy`.
+- Haben sich die Units in `deploy/systemd/` geändert, in `deploy/` `./backup-control.sh install`
+  erneut ausführen.
 
-Hat sich `deploy/Caddyfile` geändert (etwa für die KI-Agenten), Caddy neu laden:
-`docker compose -f deploy/compose.yaml restart caddy`.
+**Mit Quadlet:** Die Dateien unter `/etc/containers/systemd/` sind Kopien aus `deploy/quadlet/`
+mit der eigenen Domain ([VPS einrichten, Schritt 9](vps.md#9-kontext-mit-quadlet-starten)); `git
+pull` ändert sie nicht.
+
+```bash
+cd /opt/kontext && git pull
+git diff ORIG_HEAD -- deploy/              # neue Image-Versionen, Einstellungen, Units
+cd /etc/containers/systemd
+nano kontext.container schreibzeug.container   # Image=…/kontext:<neue Version>, …/schreibzeug:<neue Version>
+systemctl daemon-reload
+for i in $(grep -h '^Image=' *.container | cut -d= -f2); do podman pull $i; done
+systemctl restart kontext schreibzeug          # und jeder Dienst, dessen Image sich geändert hat
+```
+
+Hat sich in `deploy/quadlet/` mehr geändert als die Version (etwa eine neue `Environment=`-Zeile),
+das auch in die Kopie übernehmen; `deploy/Caddyfile` wird direkt eingebunden, dann
+`systemctl restart caddy`.
+
+Die Images aktualisieren sich nicht selbst (auch nicht mit Podman-Auto-Update): Ein neues kommt
+nur, wenn man die Version hebt. Ausnahmen, die auf `latest` stehen, bis man eine Version einträgt:
+Schreibzeug mit Compose ohne `SCHREIBZEUG_VERSION` und die Telefonbox (siehe
+[Telefonie](#telefonie)).
 
 Seit 0.1.3 läuft der Kontext-Server nicht mehr als root, sondern als Benutzer `bun`. Ein Volume aus
 einer älteren Version gehört noch root; einmal übergeben, dann starten:
@@ -464,3 +631,129 @@ vorher ein Backup machen.
 Kontext und Schreibzeug haben getrennte Images und Versionen (`KONTEXT_VERSION`,
 `SCHREIBZEUG_VERSION`); beim Start prüft Kontext nur, ob Schreibzeug antwortet, und schreibt sonst
 eine Warnung ins Log.
+
+## Einstellungen im Überblick
+
+### `deploy/.env` (Compose)
+
+`compose.yaml` liest diese Datei und reicht daraus an jeden Dienst nur, was er braucht;
+`backup.sh` liest sie ganz. Mit Quadlet gibt es sie nicht: Die Werte stehen dort in den
+`.container`-Dateien und in `kontext.env`, `livekit.env` …, die Backup-Werte in `backup.env`.
+
+| Variable | Standard | Wofür |
+| --- | --- | --- |
+| `KONTEXT_DOMAIN` | – | Adresse von Kontext im Browser; Caddy holt das Zertifikat, Kontext bekommt `https://<…>` als `BETTER_AUTH_URL`, Stalwart als öffentliche Adresse |
+| `STALWART_HOSTNAME` | – | Name des Mailservers (MX, Reverse DNS) |
+| `MAIL_DOMAIN` | leer | die Mail-Domain: Caddy liefert `mta-sts.<…>` (MTA-STS) und `openpgpkey.<…>` (WKD) |
+| `ACME_EMAIL` | – | Adresse für Let's Encrypt |
+| `TAILSCALE_IP` | `127.0.0.1` | wo Stalwarts Verwaltung (Port 8080) lauscht; mit Tailscale die Tailscale-Adresse des Servers |
+| `KONTEXT_SECRET` | – | Pflicht, mindestens 32 Zeichen; wird zu `BETTER_AUTH_SECRET` |
+| `STALWART_ADMIN_KEY` | leer | API-Schlüssel für die [Firmenverwaltung](#firmenverwaltung-einschalten) |
+| `KONTEXT_VERSION` | – | Pflicht: Version des Images `tristanteu/kontext` |
+| `COMPOSE_PROFILES` | – | `calls` (LiveKit, LiveKit SIP, Redis) und `documents` (Schreibzeug) |
+| `LIVEKIT_SECRET` | leer | Geheimnis für LiveKit und LiveKit SIP; leer: keine Anrufe |
+| `SCHREIBZEUG_URL` | leer | Adresse von Dokumente; leer: kein Modul |
+| `SCHREIBZEUG_CLIENT_SECRET` | leer | Geheimnis, mit dem sich Schreibzeug bei Kontext anmeldet |
+| `SCHREIBZEUG_VERSION` | `latest` | Version des Images `tristanteu/schreibzeug` |
+| `PLACES_URL` | Photon von komoot | Ortsvorschläge; leer: aus ([Ortsvorschläge](#ortsvorschlage)) |
+| `RESTIC_REPOSITORY`, `RESTIC_PASSWORD` | – | Ziel und Passwort der [Backups](#5-backups) |
+| `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY` | – | Schlüssel für ein S3-Ziel |
+| `BACKUP_WARN_GB` | `8` | ab dieser Größe des Backups schreibt `backup.sh` eine Warnung |
+
+### Der Kontext-Server
+
+Was der Server selbst liest (`server/env.ts`). `compose.yaml` setzt davon nur die Zeilen unter
+`kontext: environment:`; mit Quadlet stehen sie in `kontext.container` und `kontext.env`. Das
+Image setzt `PORT=3000`, `STATIC_DIR=/app/dist`, `DATABASE_PATH=/data/kontext.db` und
+`NODE_ENV=production`. Die Standardwerte in der Tabelle sind die ohne Image (Entwicklung).
+
+| Variable | Standard | Wofür |
+| --- | --- | --- |
+| `PORT` | `18090` | Port des Servers (im Image 3000) |
+| `STALWART_URL` | `http://127.0.0.1:18080` | Stalwarts HTTP, direkt (in Compose `http://stalwart:8080`) |
+| `BETTER_AUTH_URL` | `http://localhost:5173` | öffentliche Adresse von Kontext |
+| `BETTER_AUTH_SECRET` | – | Pflicht, mindestens 32 Zeichen, kein `change-me`: signiert die Sitzungen, verschlüsselt die Stalwart-Tokens |
+| `DATABASE_PATH` | `.dev/server/kontext.db` | die SQLite-Datenbank (im Image `/data/kontext.db`) |
+| `SIGN_IN_PER_MINUTE` | `10` | Anmeldungen je Minute und IP-Adresse |
+| `STALWART_ADMIN_KEY` | leer | API-Schlüssel (`API_…`) oder `name:passwort` für die Firmenverwaltung |
+| `DOH_URL` | `https://cloudflare-dns.com/dns-query` | DNS-over-HTTPS (JSON-API) für „Sicherheit der Mails“ und die Suche nach S/MIME-Zertifikaten |
+| `SMIME_ROOTS` | leer | Pfad zu einer PEM-Datei mit weiteren anerkannten S/MIME-Stellen, etwa der Verwaltungs-PKI |
+| `LIVEKIT_URL` | leer | LiveKits API, wie der Server sie erreicht (in Compose `http://livekit:7880`) |
+| `LIVEKIT_API_KEY` | leer | LiveKit-Schlüssel (in Compose `kontext`) |
+| `LIVEKIT_API_SECRET` | leer | LiveKit-Geheimnis, mindestens 32 Zeichen; ohne die drei keine Anrufe |
+| `LIVEKIT_PUBLIC_URL` | leer | wo Browser LiveKit erreichen, wenn nicht über Kontexts Adresse (`/rtc` über Caddy) |
+| `PHONE_SIP_HOST` | Host von `BETTER_AUTH_URL` | wo die Telefonboxen LiveKit SIP erreichen |
+| `PHONE_SIP_PORT` | `5060` | SIP-Port (TCP) dafür |
+| `SCHREIBZEUG_URL` | leer | Adresse von Schreibzeug; damit gibt es „Dokumente“ |
+| `SCHREIBZEUG_CLIENT_ID` | `schreibzeug` | Client-ID von Schreibzeug (dessen `OIDC_CLIENT_ID`) |
+| `SCHREIBZEUG_CLIENT_SECRET` | leer | dessen `OIDC_CLIENT_SECRET`, mindestens 32 Zeichen |
+| `PLACES_URL` | `https://photon.komoot.io/api/` | Photon für Ortsvorschläge; leer: aus |
+| `STATIC_DIR` | leer | die gebaute App; gesetzt, liefert der Server sie mit aus |
+| `NODE_ENV` | – | `production` im Image; sonst nimmt der Server Entwicklungswerte (ein festes Geheimnis, Admin und LiveKit aus `dev/config.ts`) |
+
+Nur für Tests: `MAIL_SYNC_ALLOW_PLAIN`, `UNSUBSCRIBE_ANY_TARGET`, `PUSH_ANY_ENDPOINT`,
+`SNOOZE_TICK_MS`, `REMINDER_TICK_MS`, `RULE_TASK_TICK_MS`, `M365_LOGIN_URL` und `GRAPH_URL`
+(siehe [Entwicklung](development.md)).
+
+**Variablen, die `compose.yaml` nicht weitergibt** (`DOH_URL`, `SMIME_ROOTS`,
+`LIVEKIT_PUBLIC_URL`, `PHONE_SIP_HOST`, `PHONE_SIP_PORT`, `SIGN_IN_PER_MINUTE`): In `.env`
+eingetragen kommen sie nicht im Container an. Mit Compose gehören sie als Zeile unter
+`kontext: environment:` in `deploy/compose.yaml` – eine lokale Änderung; stößt ein `git pull` auf
+dieselbe Stelle, vorher `git stash`, danach `git stash pop`. Eine PEM-Datei für `SMIME_ROOTS` muss
+außerdem in den Container:
+
+```yaml
+  kontext:
+    environment:
+      # … die vorhandenen Zeilen
+      SMIME_ROOTS: /etc/kontext/smime-roots.pem
+      DOH_URL: https://<eigener DoH-Dienst mit JSON-API>/dns-query
+    volumes:
+      - kontext-data:/data
+      - ./smime-roots.pem:/etc/kontext/smime-roots.pem:ro
+```
+
+Die Datei liegt dann als `deploy/smime-roots.pem` daneben und muss für den Benutzer `bun` im
+Container lesbar sein (`chmod 644`). Mit Quadlet kommen die Variablen in `kontext.env` und die
+Datei per `Volume=/opt/kontext/deploy/smime-roots.pem:/etc/kontext/smime-roots.pem:ro` in
+`kontext.container`; danach `systemctl daemon-reload` und `systemctl restart kontext`.
+
+## Fehlersuche
+
+Die Logs: `docker compose -f deploy/compose.yaml logs <dienst>` (Compose) bzw.
+`podman logs <dienst>` (Quadlet), für die Sicherung `journalctl -u kontext-backup`.
+
+- **Niemand kann sich mehr anmelden, auch mit richtigem Passwort:** Stalwart hat Kontexts Adresse
+  gesperrt. Kontext meldet alle von einer Adresse an; ohne den Eintrag **`10.89.250.0/24`** unter
+  den erlaubten IPs ([Stalwart einrichten](#3-stalwart-einrichten), Schritt 6) sperrt Stalwart
+  sie nach 100 Fehlversuchen am Tag. Den Eintrag nachholen und die Sperre löschen: Stalwart führt
+  sie als `BlockedIp` (über die API `x:BlockedIp/get`, dann `x:BlockedIp/set` mit `destroy`;
+  Helfer in [VPS einrichten, Schritt 10](vps.md#10-stalwart-ohne-oberflache-einrichten)). Mit
+  einer Sperrdauer (Schritt 7) läuft sie von selbst ab.
+- **Kein Zertifikat, der Browser warnt:** Caddy holt die Zertifikate beim Start
+  (`logs caddy`). Die A-Einträge müssen vorher auf den Server zeigen und dürfen bei Cloudflare
+  nicht über den Proxy laufen (siehe [Server und DNS](#1-server-und-dns)); Ports 80 und 443 müssen
+  offen sein. Fragte der Server, bevor es die Einträge gab, merkt sich sein Resolver das eine Weile
+  ([VPS einrichten, Schritt 7](vps.md#7-dns-bei-cloudflare)).
+- **Mails kommen nicht an oder landen im Spam:** Port 25 beim Anbieter freigegeben, Reverse DNS
+  gesetzt ([VPS einrichten, Schritt 5](vps.md#5-mail-sperre-aufheben)), SPF, DKIM und DMARC
+  gesetzt; die Firmenverwaltung prüft unter „Sicherheit der Mails“, was fehlt. Sperrlisten:
+  [VPS einrichten, Schritt 12](vps.md#12-mail-umstellen).
+- **„Schreibzeug antwortet nicht“ im Log von Kontext:** Beim ersten Start harmlos, wenn
+  Schreibzeug Kontext noch nicht fand ([VPS einrichten, Schritt 9](vps.md#9-kontext-mit-quadlet-starten)).
+  Bleibt es, prüfen, ob `SCHREIBZEUG_URL` im DNS steht (`getent hosts dokumente.firma.de` auf dem
+  Server) und der Dienst läuft (`logs schreibzeug`).
+- **Neue Mails erscheinen erst nach dem Neuladen:** Push braucht eine Verbindung, die ein Proxy
+  nicht puffert. Durch den Cloudflare-Proxy geht sie nicht (siehe [Server und DNS](#1-server-und-dns));
+  ein eigener Proxy vor Caddy muss `/api/live` und `/jmap/eventsource` ungepuffert und
+  unkomprimiert durchreichen, wie es `deploy/Caddyfile` selbst tut.
+- **Anrufe ohne Ton oder Bild:** TCP 7881 und UDP 7882 offen, hinter NAT `node_ip` setzen
+  ([Anrufe](#anrufe)).
+- **Die Telefonbox meldet sich nicht an der Fritzbox an:** siehe [Telefonie](#telefonie), „Wenn die
+  Box sich nicht an der Fritzbox anmeldet“; eine Box vor v0.1.4 kann es nicht.
+- **„Steuerung auf dem Server nicht eingerichtet“ unter Datensicherung:** die systemd-Units sind
+  nicht installiert oder laufen nicht ([Backups](#5-backups)).
+- **Weitere Postfächer fehlen in den Einstellungen, Einladungen haben keine Knöpfe:**
+  `STALWART_ADMIN_KEY` fehlt ([Firmenverwaltung einschalten](#firmenverwaltung-einschalten)).
+  Fehlt nur die Firmenverwaltung, hat das eigene Konto in Stalwart die Rolle
+  `Firmenverwaltung (Kontext)` noch nicht (dort Schritt 4).

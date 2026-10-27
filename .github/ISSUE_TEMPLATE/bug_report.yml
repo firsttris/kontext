@@ -1,0 +1,57 @@
+name: Bug report
+description: Something in Kontext does not work as it should.
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time. Security problems please **not** here, but privately:
+        see the [security policy](https://github.com/firsttris/kontext/blob/main/SECURITY.md).
+        German or English, both are fine.
+  - type: input
+    id: version
+    attributes:
+      label: Kontext version
+      description: 'Einstellungen → Darstellung → App auf diesem Gerät shows it ("Kontext 0.1.6"), and the server''s when it differs.'
+      placeholder: "0.1.6"
+    validations:
+      required: true
+  - type: input
+    id: device
+    attributes:
+      label: Browser or phone
+      description: Browser and version, or the phone and whether Kontext runs in the browser or as the installed app.
+      placeholder: "Chrome 141 on Windows 11 / iPhone 15, iOS 26, installed app"
+    validations:
+      required: true
+  - type: input
+    id: view
+    attributes:
+      label: View
+      description: Where in Kontext it happens.
+      placeholder: "Mail → info@ → Posteingang, Kalender (Woche), Einstellungen → Telefonie …"
+    validations:
+      required: true
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened
+      description: What you did, what you expected and what was shown instead.
+      placeholder: |
+        1. Opened …
+        2. Clicked …
+        Expected: …
+        Shown: …
+    validations:
+      required: true
+  - type: textarea
+    id: screenshot
+    attributes:
+      label: Screenshot
+      description: Drag a screenshot or a short recording in here. Please hide names and mail contents that are not yours to share.
+  - type: textarea
+    id: logs
+    attributes:
+      label: Server log (if you run the server)
+      description: "Lines from `docker compose -f deploy/compose.yaml logs kontext` (or `podman logs kontext`) around the time it happened, without secrets."
+      render: text
