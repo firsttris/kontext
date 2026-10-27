@@ -8,7 +8,7 @@
 #
 #   backup-control.sh install   copies the units from deploy/systemd/ to /etc/systemd/system
 #   backup-control.sh apply     (kontext-backup-control.service) settings to the timer, run-now
-#   backup-control.sh run       (kontext-backup.service) backup.sh under flock, with the status
+#   backup-control.sh run       (kontext-backup.service) backup.sh (locks itself), with the status
 #   backup-control.sh finish    (its ExecStopPost) the status after the run, also when killed
 #   backup-control.sh status    writes status.json again
 set -eu
@@ -18,7 +18,6 @@ deploy="$(pwd)"
 
 # Other places only for the tests (backup-control.test.ts).
 state="${KONTEXT_BACKUP_STATE:-/var/lib/kontext-backup}"
-lock="$state/run.lock"
 units="${KONTEXT_BACKUP_UNITS:-/etc/systemd/system}"
 dropin="$units/kontext-backup.timer.d/time.conf"
 default_time=03:00
@@ -28,27 +27,35 @@ app="$(volume_path kontext-data)"
 control="$app/backup-control"
 mkdir -p "$state"
 
-# The control directory belongs to Kontext's user (it writes there); a link is not followed.
-control_dir() {
-  if [ -L "$control" ]; then
-    echo "backup-control: $control ist ein Link, wird nicht benutzt" >&2
-    exit 1
-  fi
-  if [ ! -d "$control" ]; then
-    mkdir -p "$control"
-    chown --reference="$app" "$control"
-  fi
+# Runs "$@" in a subshell inside the control directory, which belongs to Kontext's user (it
+# writes there). The directory is entered once and checked to be the one in the volume; after
+# that only names relative to it are used, so swapping its name for a link (Kontext owns the
+# volume) cannot send what follows elsewhere.
+in_control() {
+  (
+    if [ ! -d "$control" ] && [ ! -L "$control" ]; then
+      mkdir "$control"
+      chown --reference="$app" "$control"
+    fi
+    if ! cd -P -- "$control" 2>/dev/null ||
+      [ "$(pwd -P)" != "$(cd -P -- "$app" && pwd -P)/backup-control" ]; then
+      echo "backup-control: $control ist kein Verzeichnis im Volume, wird nicht benutzt" >&2
+      exit 1
+    fi
+    "$@"
+  )
 }
 
-# Writes stdin to a file in the control directory: beside it first, then renamed over it (also
-# over a link or file Kontext put there, never into a directory of that name).
-publish() {
-  control_dir
-  tmp="$(mktemp "$control/.host.XXXXXX")"
+# Writes stdin to a file here: beside it first, then renamed over it (also over a link or file
+# Kontext put there, never into a directory of that name).
+write_here() {
+  tmp="$(mktemp .host.XXXXXX)"
   cat >"$tmp"
   chmod 644 "$tmp"
-  mv -fT "$tmp" "$control/$1"
+  mv -fT "$tmp" "$1"
 }
+
+publish() { in_control write_here "$1"; }
 
 json_string() {
   printf '"%s"' "$(printf '%s' "$1" | tr -d '\000-\037' | sed 's/\\/\\\\/g; s/"/\\"/g')"
@@ -79,7 +86,10 @@ target_name() {
         *) echo "S3 $host/$bucket" ;;
       esac
       ;;
-    sftp:*) echo "SFTP ${repo#sftp:*@}" ;;
+    sftp:*)
+      rest="${repo#sftp:}"
+      echo "SFTP ${rest#*@}"
+      ;;
     rest:*)
       url="${repo#rest:}"
       url="${url#*://}"
@@ -146,11 +156,21 @@ publish_log() {
   tail -n 200 "$state/run.log" 2>/dev/null | publish log.txt
 }
 
-# settings.json from Kontext: only a regular file, only the first 4 KB, only checked values.
+# settings.json from Kontext: only a regular file, only the first 4 KB.
+read_settings() {
+  [ -f settings.json ] && [ ! -L settings.json ] || return 0
+  head -c 4096 settings.json | tr -d '\000-\037'
+}
+
+# "Jetzt sichern": the marker taken away, true when there was one.
+take_run_wish() {
+  [ -e run-now ] || [ -L run-now ] || return 1
+  rm -rf -- run-now
+}
+
+# Only checked values from the settings into the timer.
 apply_settings() {
-  file="$control/settings.json"
-  [ -f "$file" ] && [ ! -L "$file" ] || return 0
-  json="$(head -c 4096 "$file" | tr -d '\000-\037')"
+  json="$1"
   if printf '%s' "$json" | grep -Eq '"enabled"[[:space:]]*:[[:space:]]*true'; then
     enabled=true
   elif printf '%s' "$json" | grep -Eq '"enabled"[[:space:]]*:[[:space:]]*false'; then
@@ -180,18 +200,19 @@ apply_settings() {
   fi
 }
 
+# The run first: whatever fails after it, run-now is gone, so PathExists= does not fire again
+# and again until systemd gives up on the path unit.
 apply() {
-  control_dir
-  apply_settings
-  if [ -e "$control/run-now" ] || [ -L "$control/run-now" ]; then
-    rm -rf -- "$control/run-now"
+  if in_control take_run_wish; then
     systemctl start --no-block kontext-backup.service
   fi
+  settings_json="$(in_control read_settings)" || settings_json=""
+  apply_settings "$settings_json" || echo "backup-control: Uhrzeit nicht übernommen" >&2
   write_status
 }
 
-# backup.sh under the lock (never two at once, also not with one started by hand), its output
-# to the journal and to log.txt; afterwards how it went.
+# backup.sh (it takes the lock itself: never two at once, also not by hand or from cron), its
+# output to the journal and to log.txt; afterwards how it went.
 run() {
   save start "$(now)"
   rm -f "$state/end" "$state/rc"
@@ -200,7 +221,7 @@ run() {
   publish_log
   {
     code=0
-    flock --nonblock --conflict-exit-code 75 "$lock" ./backup.sh 2>&1 || code=$?
+    ./backup.sh 2>&1 || code=$?
     echo "$code" >"$state/rc"
   } | tee "$state/run.log"
   finish
@@ -230,7 +251,6 @@ install_units() {
     sed -e "s|@DEPLOY@|$deploy|g" -e "s|@CONTROL@|$control|g" "$unit" >"$units/$(basename "$unit")"
   done
   systemctl daemon-reload
-  control_dir
   write_status
   echo "Installiert. Weiter mit:"
   echo "  systemctl enable --now kontext-backup.timer kontext-backup-control.path"

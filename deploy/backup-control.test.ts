@@ -3,10 +3,11 @@
  * deploy/backup-control.sh with stand-ins for systemctl and podman: what it takes from Kontext's
  * files, what it writes into the timer and back into the volume.
  */
-import { spawnSync } from "node:child_process";
+import { spawn, spawnSync } from "node:child_process";
 import {
   chmodSync,
   cpSync,
+  existsSync,
   mkdirSync,
   mkdtempSync,
   readFileSync,
@@ -19,7 +20,10 @@ import { afterEach, describe, expect, it } from "vitest";
 
 const roots: string[] = [];
 
-const setup = (backup = 'echo "$(date -Is) backup size: 838860 bytes"\necho "backup ok"') => {
+/** `backup` is the stand-in for backup.sh; null takes the real one (for its lock). */
+const setup = (
+  backup: string | null = 'echo "$(date -Is) backup size: 838860 bytes"\necho "backup ok"',
+) => {
   const root = mkdtempSync(join(tmpdir(), "backup-control-"));
   roots.push(root);
   const bin = join(root, "bin");
@@ -49,31 +53,49 @@ case "$1 $2" in
   "show kontext-backup.timer") echo "@1793156400" ;;
 esac`,
   );
-  for (const name of ["backup-control.sh", "backup-host.sh", "systemd"]) {
+  for (const name of ["backup-control.sh", "backup-host.sh", "backup.sh", "systemd"]) {
     cpSync(join(import.meta.dirname, name), join(deploy, name), { recursive: true });
   }
-  script(join(deploy, "backup.sh"), backup);
+  if (backup !== null) script(join(deploy, "backup.sh"), backup);
   writeFileSync(
     join(deploy, ".env"),
     "RESTIC_REPOSITORY=s3:https://abc.eu.r2.cloudflarestorage.com/kontext-firma\nRESTIC_PASSWORD=geheim\n",
   );
   const control = join(volume, "backup-control");
+  const lock = join(root, "backup.lock");
+  const env = {
+    ...process.env,
+    PATH: `${bin}:${process.env.PATH}`,
+    KONTEXT_BACKUP_STATE: join(root, "state"),
+    KONTEXT_BACKUP_UNITS: units,
+    KONTEXT_BACKUP_LOCK: lock,
+  };
   const run = (command: string) =>
-    spawnSync(join(deploy, "backup-control.sh"), [command], {
-      encoding: "utf8",
-      env: {
-        ...process.env,
-        PATH: `${bin}:${process.env.PATH}`,
-        KONTEXT_BACKUP_STATE: join(root, "state"),
-        KONTEXT_BACKUP_UNITS: units,
-      },
-    });
+    spawnSync(join(deploy, "backup-control.sh"), [command], { encoding: "utf8", env });
   const kontextWrites = (name: string, content: string) =>
     writeFileSync(join(control, name), content);
   const status = () => JSON.parse(readFileSync(join(control, "status.json"), "utf8"));
   const timeConf = () => readFileSync(join(units, "kontext-backup.timer.d", "time.conf"), "utf8");
   const systemctl = () => readFileSync(calls, "utf8");
-  return { root, control, units, run, kontextWrites, status, timeConf, systemctl };
+  /** Kontext (owner of the volume) swaps the control directory for a link to `outside`. */
+  const swapCommand = (outside: string) =>
+    `if [ ! -L "${control}" ]; then mv "${control}" "${control}.old"; ln -s "${outside}" "${control}"; fi`;
+  return {
+    root,
+    bin,
+    deploy,
+    control,
+    units,
+    lock,
+    env,
+    script,
+    swapCommand,
+    run,
+    kontextWrites,
+    status,
+    timeConf,
+    systemctl,
+  };
 };
 
 afterEach(() => {
@@ -166,5 +188,74 @@ describe("backup-control.sh", () => {
     spawnSync("ln", ["-s", outside, join(control, "status.json")]);
     run("status");
     expect(readFileSync(outside, "utf8")).toBe("unverändert");
+  });
+
+  it("stays in the control directory when Kontext swaps it for a link after the check", () => {
+    const { root, bin, run, script, swapCommand } = setup();
+    run("install");
+    const outside = join(root, "outside");
+    mkdirSync(outside);
+    // The swap at the moment the host makes its temporary file.
+    const mktemp = spawnSync("sh", ["-c", "command -v mktemp"]).stdout.toString().trim();
+    script(join(bin, "mktemp"), `${swapCommand(outside)}\nexec ${mktemp} "$@"`);
+    run("status");
+    expect(existsSync(join(outside, "status.json"))).toBe(false);
+  });
+
+  it("does not delete a run-now outside the volume when the directory is swapped", () => {
+    const { root, bin, run, kontextWrites, script, swapCommand } = setup();
+    run("install");
+    const outside = join(root, "outside");
+    mkdirSync(outside);
+    writeFileSync(join(outside, "run-now"), "not Kontext's");
+    kontextWrites("run-now", "");
+    kontextWrites("settings.json", '{"enabled":true,"time":"04:30"}');
+    const systemctl = readFileSync(join(bin, "systemctl"), "utf8").replace("#!/bin/sh\n", "");
+    script(join(bin, "systemctl"), `${swapCommand(outside)}\n${systemctl}`);
+    run("apply");
+    expect(readFileSync(join(outside, "run-now"), "utf8")).toBe("not Kontext's");
+  });
+
+  it("refuses a control directory that already is a link", () => {
+    const { root, run, control } = setup();
+    run("install");
+    const outside = join(root, "outside");
+    mkdirSync(outside);
+    rmSync(control, { recursive: true });
+    spawnSync("ln", ["-s", outside, control]);
+    expect(run("status").status).not.toBe(0);
+    expect(existsSync(join(outside, "status.json"))).toBe(false);
+  });
+
+  it("takes up run-now even when the time cannot be applied", () => {
+    const { bin, run, kontextWrites, control, script, systemctl } = setup();
+    run("install");
+    const stand = readFileSync(join(bin, "systemctl"), "utf8").replace("#!/bin/sh\n", "");
+    script(join(bin, "systemctl"), `[ "$1" = daemon-reload ] && exit 1\n${stand}`);
+    kontextWrites("run-now", "");
+    kontextWrites("settings.json", '{"enabled":true,"time":"04:30"}');
+    run("apply");
+    expect(existsSync(join(control, "run-now"))).toBe(false);
+    expect(systemctl()).toContain("start --no-block kontext-backup.service");
+  });
+
+  it("skips the timer's run while backup.sh started by hand holds the lock", async () => {
+    const { run, status, lock } = setup(null);
+    run("install");
+    const byHand = spawn("flock", [lock, "sleep", "3"]);
+    await new Promise((resolve) => setTimeout(resolve, 300));
+    run("run");
+    byHand.kill();
+    expect(status().lastRun).toMatchObject({
+      ok: false,
+      message: "Übersprungen: Eine andere Sicherung lief gerade.",
+    });
+  });
+
+  it("names an SFTP target without a user", () => {
+    const { deploy, run, status } = setup();
+    writeFileSync(join(deploy, ".env"), "RESTIC_REPOSITORY=sftp:nas.firma.de:/kontext\n");
+    run("install");
+    expect(status().target).toBe("SFTP nas.firma.de:/kontext");
   });
 });

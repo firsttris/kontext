@@ -53,6 +53,12 @@ describe("hostState", () => {
     expect(hostState(status(), NOW - MINUTE, NOW)).toBe("ready");
   });
 
+  it("is ready when the host answered within the same second (it writes whole seconds)", () => {
+    const wish = Date.parse("2026-10-27T09:50:00.400Z");
+    expect(hostState(status({ updatedAt: "2026-10-27T09:50:00Z" }), wish, NOW)).toBe("ready");
+    expect(hostState(status({ updatedAt: "2026-10-27T09:49:59Z" }), wish, NOW)).toBe("stale");
+  });
+
   it("is stale when a wish is not taken up or a run is long overdue", () => {
     expect(hostState(status(), NOW - 5 * MINUTE, NOW)).toBe("stale");
     expect(hostState(status({ nextRun: "2026-10-27T03:00:00Z" }), null, NOW)).toBe("stale");

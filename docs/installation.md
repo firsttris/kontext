@@ -387,7 +387,7 @@ Die Units:
 
 | Unit | Aufgabe |
 | --- | --- |
-| `kontext-backup.service` | ruft `backup.sh` unter `flock` auf (nie zwei Läufe gleichzeitig), Ausgabe ins Journal und an Kontext, Status am Anfang und am Ende |
+| `kontext-backup.service` | ruft `backup.sh` auf (das sperrt per `flock`: nie zwei Läufe gleichzeitig, auch nicht von Hand oder per Cron), Ausgabe ins Journal und an Kontext, Status am Anfang und am Ende |
 | `kontext-backup.timer` | jede Nacht um 03:00 (Europe/Berlin), holt eine verpasste Nacht nach (`Persistent=true`) |
 | `kontext-backup-control.path` | beobachtet die Uhrzeit und „Jetzt sichern“ aus Kontext und startet `kontext-backup-control.service` |
 

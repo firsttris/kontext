@@ -247,9 +247,12 @@ mit einem eigenen API-Schlüssel an und erlaubt nur, was die Firmenverwaltung br
   Dateien und startet `deploy/backup-control.sh apply`: Es nimmt aus `settings.json` nur `true`/`false`
   und eine Uhrzeit, die genau `HH:MM` ist, schreibt sie als Drop-in in den Timer
   (`kontext-backup.timer.d/time.conf`, Zeitzone Europe/Berlin) und startet für `run-now` die
-  Sicherung. `kontext-backup.service` ruft `backup.sh` unter `flock` auf und schreibt den Status
-  am Anfang und am Ende, auch nach einem Abbruch (`ExecStopPost`). Geschrieben wird ins Volume
-  nur über eine Datei daneben und `mv -T`, einem Link dort folgt das Skript nicht. Fehlt
+  Sicherung. `kontext-backup.service` ruft `backup.sh` auf (das nimmt selbst eine Sperre per `flock`, auch von
+  Hand oder per Cron laufen nie zwei Sicherungen gleichzeitig) und schreibt den Status
+  am Anfang und am Ende, auch nach einem Abbruch (`ExecStopPost`). Das Skript betritt das Verzeichnis
+  im Volume einmal, prüft, dass es wirklich dort liegt, und arbeitet danach nur mit Namen darin;
+  geschrieben wird über eine Datei daneben und `mv -T`. So kann Kontext es nicht per Link auf
+  andere Pfade umlenken, auch nicht durch Austauschen des Verzeichnisses während eines Laufs. Fehlt
   `status.json` oder holt der Host einen Wunsch nicht innerhalb von drei Minuten ab (oder ist ein
   Lauf mehr als sechs Stunden überfällig), zeigt die App „Steuerung auf dem Server nicht
   eingerichtet“ bzw. „Der Server reagiert nicht“. Nicht `/data/backup/`: Dort legt `backup.sh`

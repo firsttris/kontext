@@ -19,6 +19,17 @@
 set -eu
 cd "$(dirname "$0")"
 
+# Never two at once: not by hand or from cron while the timer's run goes. Exit code 75 says
+# another one was running (backup-control.sh reports it as skipped).
+lock="${KONTEXT_BACKUP_LOCK:-/run/lock/kontext-backup.lock}"
+if [ -z "${KONTEXT_BACKUP_LOCKED:-}" ]; then
+  KONTEXT_BACKUP_LOCKED=1 flock --nonblock --conflict-exit-code 75 "$lock" \
+    "./$(basename "$0")" "$@" && exit 0
+  code=$?
+  [ "$code" != 75 ] || echo "backup.sh: eine andere Sicherung läuft gerade" >&2
+  exit "$code"
+fi
+
 . ./backup-host.sh
 set -a
 # shellcheck source=/dev/null
@@ -88,7 +99,9 @@ restic check --read-data-subset 1%
 # end at 10 GB (Cloudflare R2, Backblaze B2), and a warning before that leaves time to act.
 size="$(restic stats --mode raw-data --json | sed -n 's/.*"total_size":\([0-9]*\).*/\1/p')"
 limit_gb="${BACKUP_WARN_GB:-8}"
-echo "$(date -Is) backup size: ${size:-0} bytes"
+if [ -n "$size" ]; then
+  echo "$(date -Is) backup size: $size bytes"
+fi
 if [ "${size:-0}" -gt $((limit_gb * 1024 * 1024 * 1024)) ]; then
   echo "$(date -Is) backup: $((size / 1024 / 1024)) MB in the repository, more than ${limit_gb} GB" >&2
 fi

@@ -59,7 +59,9 @@ export const hostState = (
 ): HostState => {
   if (!status) return "missing";
   const updated = Date.parse(status.updatedAt);
-  if (lastWish !== null && lastWish > updated && now - lastWish > PICKUP_MS) return "stale";
+  // The host writes whole seconds: an answer in the same second as the wish took it up.
+  const answered = updated + 1000;
+  if (lastWish !== null && lastWish >= answered && now - lastWish > PICKUP_MS) return "stale";
   const next = status.nextRun ? Date.parse(status.nextRun) : null;
   if (status.state === "idle" && next !== null && now - next > OVERDUE_MS) return "stale";
   return "ready";
