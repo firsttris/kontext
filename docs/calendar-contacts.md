@@ -18,6 +18,8 @@ Kontext steht, steht auch am iPhone, unter Android (DAVx⁵) und in Thunderbird.
   Ausnahmen („nur dieser“ oder „ganze Serie“).
 - **Einladungen** mit Zusage und Absage; die Glocke zeigt, was noch auf Antwort wartet, und die
   Termine des Tages.
+- **Beginn verschieben:** Wer Datum oder Uhrzeit des Beginns ändert, nimmt das Ende mit; die
+  Dauer bleibt, wie bei Google und Apple.
 - **Kollegen einladen:** Im Feld „Teilnehmer“ schlägt Kontext beim Tippen die Kollegen aus der
   Firma vor (danach Kontakte und Kontaktgruppen); die Adresse muss man nicht kennen.
 - **Wer ist frei?** Beim Einladen von Kollegen zeigt Kontext, wer zu der Zeit belegt ist, und

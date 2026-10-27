@@ -2,7 +2,7 @@
  * Create or edit an appointment. For one date of a series the user picks whether the change is
  * for that date only (Stalwart keeps it as an override) or for the whole series.
  */
-import { type FormEvent, useState } from "react";
+import { type FormEvent, useRef, useState } from "react";
 import { useSession } from "@/components/shell/app-shell";
 import { Button } from "@/components/ui/button";
 import { Input, Label, Select, Textarea } from "@/components/ui/input";
@@ -20,9 +20,12 @@ import {
   eventToForm,
   type FormProblem,
   formToEvent,
+  isComplete,
   newEventForm,
   seriesStart,
+  startOfForm,
   validateEventForm,
+  withStart,
 } from "@/lib/event-form";
 import { type CalendarEvent, isInstance, toLocal } from "@/lib/jscalendar";
 import { formAt, formSlot } from "@/lib/planning";
@@ -89,12 +92,15 @@ export const EventEditor = ({ event, series, start, onDone, onCancel }: Props) =
   });
   const [scope, setScope] = useState<Scope>("this");
   const [problem, setProblem] = useState<string | null>(null);
+  // The last whole start, for when a date or time field was empty while being retyped.
+  const lastStart = useRef(startOfForm(form));
   const set = (key: keyof EventForm) => (e: { target: { value: string } }) =>
     setForm((current) => {
-      const next = { ...current, [key]: e.target.value };
+      if (isComplete(startOfForm(current))) lastStart.current = startOfForm(current);
       // Moving the start keeps the length, like in every calendar.
-      if (key === "date" && current.endDate === current.date) next.endDate = e.target.value;
-      return next;
+      return key === "date" || key === "startTime"
+        ? withStart(current, { [key]: e.target.value }, lastStart.current)
+        : { ...current, [key]: e.target.value };
     });
 
   const save = (data: Record<string, unknown>) => {

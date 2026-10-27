@@ -145,12 +145,14 @@
 /* iOS Safari zooms into a focused field whose text is smaller than 16px and stays zoomed in: the
    page then reaches past the screen on the right and below the tab bar. -webkit-touch-callout
    exists only in Safari on iOS and iPadOS, so Chromium, Firefox and desktop Safari keep the
-   smaller fields. Unlayered, so it wins over the text-[…] utilities. */
+   smaller fields. Unlayered, so it wins over the text-[…] utilities; the compose editor is named
+   too, since its own 15px above is unlayered and more specific than [contenteditable]. */
 @supports (-webkit-touch-callout: none) {
   input,
   textarea,
   select,
-  [contenteditable="true"] {
+  [contenteditable="true"],
+  .editor-content .ProseMirror {
     font-size: 16px;
   }
 }

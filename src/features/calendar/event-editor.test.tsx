@@ -57,3 +57,20 @@ describe("EventEditor attendees", () => {
     expect(screen.queryByRole("listbox")).toBeNull();
   });
 });
+
+describe("EventEditor times", () => {
+  it("moves the end with the start, keeping the length", () => {
+    render(<EventEditor start="2026-10-31T09:00" onDone={vi.fn()} onCancel={vi.fn()} />);
+    fireEvent.change(screen.getByLabelText("Beginn Uhrzeit"), { target: { value: "17:30" } });
+    expect((screen.getByLabelText("Ende Uhrzeit") as HTMLInputElement).value).toBe("18:30");
+  });
+
+  // A date field reports "" while a part of it is retyped (Backspace in Chrome).
+  it("moves the end date after the start date was empty for a moment", () => {
+    render(<EventEditor start="2026-10-31T09:00" onDone={vi.fn()} onCancel={vi.fn()} />);
+    const date = screen.getByLabelText("Beginn Datum");
+    fireEvent.change(date, { target: { value: "" } });
+    fireEvent.change(date, { target: { value: "2026-11-02" } });
+    expect((screen.getByLabelText("Ende Datum") as HTMLInputElement).value).toBe("2026-11-02");
+  });
+});

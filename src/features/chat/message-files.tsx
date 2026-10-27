@@ -12,6 +12,7 @@ import { cn } from "@/lib/cn";
 import { formatSize } from "@/lib/format";
 import { m } from "@/paraglide/messages";
 import { fileUrl, thumbUrl } from "./upload";
+import { shareFile, useSharedFile } from "./use-shared-file";
 import { VoiceMessage } from "./voice-message";
 
 type Urls = Record<string, string> | undefined;
@@ -32,6 +33,7 @@ const PhotoViewer = ({
 }) => {
   const [index, setIndex] = useState(start);
   const photo = photos[index]!;
+  const shared = useSharedFile(full(photo, urls), photo.name, photo.type);
   const step = (by: number) =>
     setIndex((current) => (current + by + photos.length) % photos.length);
   const button =
@@ -55,6 +57,13 @@ const PhotoViewer = ({
             <a
               href={full(photo, urls)}
               download={photo.name}
+              target="_blank"
+              rel="noopener"
+              onClick={(event) => {
+                if (!shared) return;
+                event.preventDefault();
+                shareFile(shared);
+              }}
               aria-label={m.chat_download()}
               className={button}
             >
@@ -139,6 +148,9 @@ export const MessageFiles = ({ files, urls }: { files: ChatFile[]; urls?: Urls }
           key={file.id}
           href={full(file, urls)}
           download={file.name}
+          // Where a browser shows the file instead (Safari on an iPhone), it opens beside the app.
+          target="_blank"
+          rel="noopener"
           className="flex max-w-[360px] items-center gap-3 rounded-xl border border-border bg-bg px-3 py-2 text-fg no-underline hover:bg-hover"
         >
           <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-subtle text-muted">
