@@ -198,7 +198,7 @@ test.describe("Chat", () => {
     await expect.poll(() => liveTracks(page)).toBe(0);
   });
 
-  test("Sprachnachricht: eine Aufnahme hält die abspielende Nachricht an und bekommt das Mikrofon", async ({
+  test("Sprachnachricht: eine Aufnahme hält die abspielende Nachricht an und behält das Mikrofon", async ({
     page,
   }) => {
     // Safari's Audio Session API, as a stand-in: under "playback" it ends a microphone track
@@ -240,7 +240,14 @@ test.describe("Chat", () => {
     expect(
       await page.evaluate(() => (window as unknown as { micTypes: string[] }).micTypes),
     ).toEqual(["auto", "auto"]);
+    // Playing while recording leaves the microphone its session.
+    await voice.getByRole("button", { name: "Abspielen" }).click();
+    await expect(voice.getByRole("button", { name: "Anhalten" })).toBeVisible();
+    expect(await sessionType()).toBe("auto");
     await page.getByRole("button", { name: "Aufnahme verwerfen" }).click();
+    await voice.getByRole("button", { name: "Anhalten" }).click();
+    await voice.getByRole("button", { name: "Abspielen" }).click();
+    expect(await sessionType()).toBe("playback");
   });
 
   test("ein Kanal gehört seinen Mitgliedern", async ({ page, browser }) => {

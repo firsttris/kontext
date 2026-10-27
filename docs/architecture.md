@@ -696,9 +696,10 @@ Principal-ID), die Namen holt die App wie bei den Aufgaben über die Principals.
   Länge nicht angibt. Beim Abspielen stellt die App die Audio-Session auf „playback“
   (`src/lib/audio-session.ts`, Audio Session API): am iPhone macht das Dekodieren sie sonst
   „ambient“ (stumm mit dem Lautlos-Schalter), eine Aufnahme lässt sie bei „play-and-record“ (leise
-  an der Hörmuschel), und die erste Wiedergabe bliebe still. Eine neue Aufnahme hält die
-  Wiedergabe vorher an und gibt die Session zurück, denn unter „playback“ beendet Safari das
-  Mikrofon. In einem vertraulichen Kanal geht die Aufnahme verschlüsselt wie jede Datei.
+  an der Hörmuschel), und die erste Wiedergabe bliebe still. Unter „playback“ beendet Safari
+  aber das Mikrofon: solange eine Aufnahme oder ein Anruf es hält (`holdMicrophone`), bleibt die
+  Session beim Browser, und eine neue Aufnahme hält die Wiedergabe vorher an. In einem
+  vertraulichen Kanal geht die Aufnahme verschlüsselt wie jede Datei.
 - **Karten:** Mails, Aufgaben und Kontakte hängen als Karte an einer Nachricht (`chat_cards`).
   Die Karte hält fest, worum es geht (Betreff, Absender, Zeit; Titel; Name, Firma) – öffnen kann
   sie nur, wer die Mail, die Aufgabe oder den Kontakt ohnehin sehen darf. Alle anderen sehen

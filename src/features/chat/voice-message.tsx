@@ -6,7 +6,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { Pause, Play } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
-import { setAudioSession } from "@/lib/audio-session";
+import { setAudioSession, setPlaybackSession } from "@/lib/audio-session";
 import type { ChatFile } from "@/lib/chat-cards";
 import { cn } from "@/lib/cn";
 import { formatDuration, waveform } from "@/lib/voice";
@@ -18,15 +18,8 @@ const SPEEDS = [1, 1.5, 2];
 /** The voice message playing now, paused when another starts. */
 let playing: HTMLAudioElement | null = null;
 
-/**
- * Stops the voice message playing now and hands the session back to the browser, before the
- * microphone is asked for: under "playback" Safari ends a microphone track (Audio Session API,
- * "Microphone MediaStreamTrack"), and the recording would stay empty.
- */
-export const stopVoiceMessage = () => {
-  playing?.pause();
-  setAudioSession("auto");
-};
+/** Stops the voice message playing now, as a recording starts. */
+export const stopVoiceMessage = () => playing?.pause();
 
 const useVoiceShape = (url: string | undefined) =>
   useQuery({
@@ -85,7 +78,7 @@ export const VoiceMessage = ({ file, url }: { file: ChatFile; url: string | unde
     if (playing && playing !== element) playing.pause();
     playing = element;
     // Set within the tap, before playing starts: otherwise an iPhone plays the first time silent.
-    setAudioSession("playback");
+    setPlaybackSession();
     element.play().catch(() => stopped(element));
   };
 

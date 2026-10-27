@@ -20,3 +20,27 @@ export const setAudioSession = (
 ) => {
   if (host?.audioSession) host.audioSession.type = type;
 };
+
+/** Who holds the microphone now: a recording, a call. */
+let microphoneHolds = 0;
+
+/**
+ * Takes the microphone for a recording or a call until the returned function is called. The
+ * session goes back to the browser, which makes it "play-and-record": under "playback" Safari
+ * ends a microphone track (Audio Session API, "Microphone MediaStreamTrack").
+ */
+export const holdMicrophone = (host?: WithAudioSession) => {
+  microphoneHolds += 1;
+  setAudioSession("auto", host);
+  let held = true;
+  return () => {
+    if (!held) return;
+    held = false;
+    microphoneHolds -= 1;
+  };
+};
+
+/** "playback" for a voice message, unless the microphone is held: that would end it. */
+export const setPlaybackSession = (host?: WithAudioSession) => {
+  if (microphoneHolds === 0) setAudioSession("playback", host);
+};
