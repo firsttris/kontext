@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { darkBackgroundColor, darkTextColor, parseColor } from "./mail-colors";
+import { darkBackgroundColor, darkStylesheet, darkTextColor, parseColor } from "./mail-colors";
 
 describe("parseColor", () => {
   it("reads hex, rgb() and the names mails use", () => {
@@ -46,8 +46,35 @@ describe("darkBackgroundColor", () => {
     expect(darkBackgroundColor("#f4f4f5")).toBe("rgb(10, 10, 11)");
   });
 
+  it("turns saturated paper dark too: Outlook's highlight colours", () => {
+    for (const highlight of ["yellow", "lime", "cyan", "magenta"]) {
+      const turned = parseColor(darkBackgroundColor(highlight)!)!;
+      expect(Math.max(turned.r, turned.g, turned.b)).toBeLessThan(80);
+    }
+  });
+
   it("keeps dark and middle colours, as a blue button", () => {
     expect(darkBackgroundColor("#2563eb")).toBeNull();
     expect(darkBackgroundColor("#000000")).toBeNull();
+  });
+});
+
+describe("darkStylesheet", () => {
+  it("turns lone colours in declarations and keeps the rest", () => {
+    expect(
+      darkStylesheet(
+        ".card { background: #ffffff; color:#000 !important; border-color: black }\n" +
+          "a { background-color: white; background: url(x.png) white }",
+      ),
+    ).toBe(
+      ".card { background: rgb(0, 0, 0); color:rgb(255, 255, 255) !important; border-color: black }\n" +
+        "a { background-color: rgb(0, 0, 0); background: url(x.png) white }",
+    );
+  });
+
+  it("leaves selectors alone", () => {
+    expect(darkStylesheet(".color:hover { text-decoration: underline }")).toBe(
+      ".color:hover { text-decoration: underline }",
+    );
   });
 });

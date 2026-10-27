@@ -40,6 +40,11 @@ const NAMED: Record<string, string> = {
   beige: "#f5f5dc",
   lightyellow: "#ffffe0",
   yellow: "#ffff00",
+  lime: "#00ff00",
+  cyan: "#00ffff",
+  aqua: "#00ffff",
+  magenta: "#ff00ff",
+  fuchsia: "#ff00ff",
   orange: "#ffa500",
 };
 
@@ -133,10 +138,18 @@ const toRgb = ({ h, s, l }: Hsl): Rgb => {
 const css = ({ r, g, b }: Rgb) => `rgb(${r}, ${g}, ${b})`;
 
 /**
- * Text needs 4.5:1 against the page (`#09090b`, luminance ≈ 0.003): a luminance of 0.19.
+ * Turned paper is at most this light; dark like the page, whatever its hue. Turning the lightness
+ * alone is not enough: a saturated colour at half lightness (Outlook's yellow highlight) stays
+ * itself, and white text would stand on yellow.
+ */
+const DARK_PAPER = 0.02;
+
+/**
+ * Text needs 4.5:1 against the darkest it can stand on: the page (`#09090b`, luminance ≈ 0.003)
+ * and turned paper (≤ 0.02). (0.27 + 0.05) / (0.02 + 0.05) ≈ 4.6.
  * The lightness is turned around first, then raised further if that is not enough (pure blue).
  */
-const READABLE = 0.19;
+const READABLE = 0.27;
 
 /** The text colour for the dark theme, or null if it can stay. */
 export const darkTextColor = (value: string): string | null => {
@@ -150,13 +163,37 @@ export const darkTextColor = (value: string): string | null => {
   return css(toRgb(turned));
 };
 
-/** Light paper turns dark; brand colours in the middle (a blue button) stay. */
-const LIGHT_PAPER = 0.4;
+/**
+ * Paper lighter than this turns dark; darker colours (a blue button) stay. Black text, turned
+ * white, still reaches 4.5:1 on what stays: (1 + 0.05) / (0.18 + 0.05) ≈ 4.6.
+ */
+const LIGHT_PAPER = 0.18;
 
 /** The background colour for the dark theme, or null if it can stay. */
 export const darkBackgroundColor = (value: string): string | null => {
   const color = parseColor(value);
   if (!color || luminance(color) < LIGHT_PAPER) return null;
   const hsl = toHsl(color);
-  return css(toRgb({ ...hsl, l: 1 - hsl.l }));
+  let turned: Hsl = { ...hsl, l: 1 - hsl.l };
+  while (luminance(toRgb(turned)) > DARK_PAPER && turned.l > 0) {
+    turned = { ...turned, l: Math.max(0, turned.l - 0.02) };
+  }
+  return css(toRgb(turned));
 };
+
+/**
+ * `color`, `background-color` and `background` declarations in a stylesheet (`<style>`), each
+ * turned when its value is a lone colour; everything else stays as written. Inline colours alone
+ * are not enough: text turned light on a card made white by a class would vanish.
+ */
+const DECLARATION = /(?<![\w-])(background-color|background|color)(\s*:\s*)([^;{}]*)/gi;
+
+export const darkStylesheet = (css: string): string =>
+  css.replace(DECLARATION, (whole, property: string, colon: string, value: string) => {
+    const important = /\s*!important\s*$/i.exec(value)?.[0] ?? "";
+    const trailing = /\s*$/.exec(value.slice(0, value.length - important.length))?.[0] ?? "";
+    const color = value.slice(0, value.length - important.length - trailing.length);
+    const turned =
+      property.toLowerCase() === "color" ? darkTextColor(color) : darkBackgroundColor(color);
+    return turned ? `${property}${colon}${turned}${trailing}${important}` : whole;
+  });

@@ -3,7 +3,7 @@
  * the quoted original for replies. DOMPurify needs a DOM, so `sanitizeMailHtml` runs in the browser.
  */
 import DOMPurify from "dompurify";
-import { darkBackgroundColor, darkTextColor, parseColor } from "./mail-colors";
+import { darkBackgroundColor, darkStylesheet, darkTextColor, parseColor } from "./mail-colors";
 import { cleanCss } from "./mail-css";
 
 export const escapeHtml = (text: string): string =>
@@ -72,8 +72,8 @@ const isCss = (name: string) =>
 
 /**
  * Fixed colours in `style`, `<font color>` and `bgcolor`, turned for the dark theme
- * (mail-colors.ts). `style` is rewritten only where a colour changes, after it was cleaned.
- * Colours set in the mail's `<style>` stay as they are.
+ * (mail-colors.ts). `style` is rewritten only where a colour changes, after it was cleaned;
+ * the mail's `<style>` goes through `darkStylesheet`.
  */
 const darkenColors = (element: Element) => {
   const style = (element as HTMLElement).style;
@@ -114,14 +114,17 @@ export const sanitizeMailHtml = (
   let blockedImages = 0;
   const purify = DOMPurify();
   purify.addHook("afterSanitizeElements", (node) => {
-    if (allowRemote || (node as Element).localName !== "style") return;
-    const { css, blocked } = cleanCss(node.textContent ?? "", {
-      allowRemote,
-      cidUrls,
-      rules: true,
-    });
-    node.textContent = css;
-    blockedImages += blocked;
+    if ((node as Element).localName !== "style") return;
+    if (!allowRemote) {
+      const { css, blocked } = cleanCss(node.textContent ?? "", {
+        allowRemote,
+        cidUrls,
+        rules: true,
+      });
+      node.textContent = css;
+      blockedImages += blocked;
+    }
+    if (dark) node.textContent = darkStylesheet(node.textContent ?? "");
   });
   purify.addHook("afterSanitizeAttributes", (node) => {
     const element = node as Element;

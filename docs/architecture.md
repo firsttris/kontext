@@ -1044,9 +1044,11 @@ Zwei Dinge gleicht er an fremde Mails an:
 - **Dunkles Design:** Feste Farben für weißes Papier (Outlook: `color:black;background:white`,
   sein Dunkelblau `#1F497D`) wären auf dunklem Grund unlesbar oder stünden als weißer Balken.
   `sanitizeMailHtml` dreht sie mit `dark` um (`src/lib/mail-colors.ts`), wie Gmail und Outlook im
-  Web: Die Helligkeit kehrt sich um, Farbton und Sättigung bleiben – heller Hintergrund wird
-  dunkel, dunkler Text hell, bis er sich mit 4,5:1 vom Grund abhebt. Farben in der Mitte (ein
-  blauer Knopf) bleiben, ebenso Farben aus dem `<style>` der Mail. Antwortzitat und Druck
+  Web: Die Helligkeit kehrt sich um, Farbton und Sättigung bleiben. Heller Hintergrund wird so
+  dunkel wie die Seite – auch satte Farben, deren Helligkeit in der Mitte liegt (Outlooks gelbe
+  Markierung) –, dunkler Text hell, bis er sich auf beiden mit 4,5:1 abhebt. Dunklere Farben (ein
+  blauer Knopf) bleiben; schwarzer Text, weiß geworden, ist auch auf ihnen lesbar. Das gilt für
+  `style`, `<font color>`, `bgcolor` und die Farben im `<style>` der Mail. Antwortzitat und Druck
   behalten die Farben der Mail.
 
 ## Anhänge
