@@ -101,11 +101,13 @@ const observances = (kind: "STANDARD" | "DAYLIGHT", changes: Change[]): string[]
 };
 
 /**
- * The VTIMEZONE lines for the zone, around the year of the event: for a few years before and
- * after, which covers an event and a series that follows the same rule on.
+ * The VTIMEZONE lines for the zone, from the year of the event to `lastYear` (the end of a
+ * series), with a few years around: changes that follow one rule become it and hold on from
+ * there; a zone without such a rule (Israel, Egypt, Chile, Morocco) has each change listed, and
+ * after the last one listed a program keeps that offset – so the list must reach the series' end.
  */
-export const vtimezone = (zone: string, year: number): string[] => {
-  const changes = changesIn(zone, year - YEARS_AROUND, year + YEARS_AROUND);
+export const vtimezone = (zone: string, year: number, lastYear = year): string[] => {
+  const changes = changesIn(zone, year - YEARS_AROUND, Math.max(year, lastYear) + YEARS_AROUND);
   const fixed = offsetText(offsetAt(zone, new Date(Date.UTC(year, 0, 1))));
   const body = changes.length
     ? [
