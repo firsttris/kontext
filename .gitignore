@@ -8,3 +8,7 @@ playwright-report
 .DS_Store
 site
 .box-sample
+
+# Secrets of a deployment (deploy/.env for Compose, one env file per service for Quadlet)
+deploy/.env
+deploy/*.env
