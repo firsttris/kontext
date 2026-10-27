@@ -7,6 +7,7 @@ import { Hono } from "hono";
 import { retentionSchema } from "../chat/chat";
 import { migrationRoutes } from "../migration/routes";
 import { syncRoutes } from "../migration/sync-routes";
+import { backupRoutes } from "./backup-routes";
 import { bad, bodyOf, type CompanyDeps, createLoader, type Env } from "./context";
 import { employeeRoutes } from "./employees";
 import { mailboxRoutes } from "./mailboxes";
@@ -65,6 +66,7 @@ export const createCompanyRoutes = (deps: CompanyDeps) => {
       ),
     });
   });
+  if (deps.backup) app.route("/backup", backupRoutes(deps.backup));
   app.route("/migrations", migrationRoutes(deps.migrations));
   app.route("/syncs", syncRoutes(deps.syncs));
   return app;

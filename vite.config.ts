@@ -119,6 +119,7 @@ export default defineConfig({
       "dev/**/*.test.ts",
       "server/**/*.test.ts",
       "box/**/*.test.ts",
+      "deploy/**/*.test.ts",
     ],
     setupFiles: ["./src/test-setup.ts"],
   },

@@ -1,0 +1,8 @@
+# Takes up Kontext's wishes for the backup: the time into the timer, "Jetzt sichern" as a run.
+# Reads only checked values from the volume (deploy/backup-control.sh apply).
+[Unit]
+Description=Kontext: Wünsche zur Datensicherung übernehmen
+
+[Service]
+Type=oneshot
+ExecStart=@DEPLOY@/backup-control.sh apply

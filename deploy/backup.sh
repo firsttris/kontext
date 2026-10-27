@@ -13,28 +13,13 @@
 #
 # Works with Docker Compose (settings in deploy/.env) and with Podman Quadlet (the units in
 # /etc/containers/systemd/; settings in deploy/backup.env, since Quadlet has no deploy/.env).
-# Run from cron or a systemd timer at night, e.g.:
+# Run at night by the systemd units in deploy/systemd/ (backup-control.sh install; then the
+# Firmenverwaltung shows the backups and sets the time), or from cron:
 #   0 3 * * *  /opt/kontext/deploy/backup.sh >> /var/log/kontext-backup.log 2>&1
 set -eu
 cd "$(dirname "$0")"
 
-if [ -f /etc/containers/systemd/kontext.container ]; then
-  settings=backup.env
-  # Quadlet names the containers and volumes after the files, without a project prefix.
-  run_in() { podman exec -i "$@"; }
-  is_running() { systemctl is-active --quiet "$1"; }
-  stop() { systemctl stop "$1"; }
-  start() { systemctl start "$1"; }
-  volume_path() { podman volume inspect -f '{{ .Mountpoint }}' "$1"; }
-else
-  settings=.env
-  compose="docker compose -f compose.yaml"
-  run_in() { $compose exec -T "$@"; }
-  is_running() { $compose ps --services --status running | grep -qx "$1"; }
-  stop() { $compose stop "$1"; }
-  start() { $compose start "$1"; }
-  volume_path() { docker volume inspect -f '{{ .Mountpoint }}' "kontext_$1"; }
-fi
+. ./backup-host.sh
 set -a
 # shellcheck source=/dev/null
 . "./$settings"
@@ -103,6 +88,7 @@ restic check --read-data-subset 1%
 # end at 10 GB (Cloudflare R2, Backblaze B2), and a warning before that leaves time to act.
 size="$(restic stats --mode raw-data --json | sed -n 's/.*"total_size":\([0-9]*\).*/\1/p')"
 limit_gb="${BACKUP_WARN_GB:-8}"
+echo "$(date -Is) backup size: ${size:-0} bytes"
 if [ "${size:-0}" -gt $((limit_gb * 1024 * 1024 * 1024)) ]; then
   echo "$(date -Is) backup: $((size / 1024 / 1024)) MB in the repository, more than ${limit_gb} GB" >&2
 fi
