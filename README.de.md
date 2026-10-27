@@ -243,8 +243,9 @@ Die App ist vorerst auf Deutsch; Englisch und weitere europäische Sprachen sind
 Die ganze Dokumentation, mit Suche, steht unter **[firsttris.github.io/kontext](https://firsttris.github.io/kontext/)**:
 jede Funktion im Detail, [Installation](https://firsttris.github.io/kontext/installation.html),
 [Architektur](https://firsttris.github.io/kontext/architecture.html) und
-[Entwicklung](https://firsttris.github.io/kontext/development.html). Was als Nächstes kommt, steht
-in der [Roadmap](ROADMAP.md).
+[Entwicklung](https://firsttris.github.io/kontext/development.html). Was sich in jeder Version
+geändert hat, samt den Schritten für ein Update, steht im [Changelog](CHANGELOG.md) (Englisch); was
+als Nächstes kommt, in der [Roadmap](ROADMAP.md).
 
 ## 🛠️ Entwicklung
 

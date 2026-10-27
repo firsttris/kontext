@@ -239,7 +239,8 @@ The app is in German for now; English and other European languages are planned.
 The full documentation (German), with search, is at **[firsttris.github.io/kontext](https://firsttris.github.io/kontext/)**:
 every feature in detail, [installation](https://firsttris.github.io/kontext/installation.html),
 [architecture](https://firsttris.github.io/kontext/architecture.html) and
-[development](https://firsttris.github.io/kontext/development.html). What comes next is in the
+[development](https://firsttris.github.io/kontext/development.html). What changed in each release,
+with the steps an update needs, is in the [changelog](CHANGELOG.md); what comes next is in the
 [roadmap](ROADMAP.md) (German).
 
 ## 🛠️ Development

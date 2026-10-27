@@ -1,0 +1,103 @@
+# Changelog
+
+What changed in each release of Kontext, newest first. The images are `tristanteu/kontext` and
+`tristanteu/kontext-box` with the same version; how to update is in the
+[installation guide](https://firsttris.github.io/kontext/installation.html#6-updates) (German).
+Steps that an update needs beyond raising the version are marked **Upgrade**.
+
+## Unreleased
+
+- A card above the mail list offers to install Kontext as an app (on phones) and to turn on
+  notifications, one at a time.
+- Calendar: a task due at a time sits at that time in the week and day view.
+- "Neu laden" after an update also works in a tab the service worker does not control.
+- Backups: the systemd unit gives Restic a cache directory, so it no longer reads the repository's
+  metadata from S3 on every run. **Upgrade:** after `git pull`, run `./backup-control.sh install`
+  in `deploy/` again (it copies the changed units).
+
+## 0.1.6 – 2026-10-27
+
+- Settings show which version runs: the app's on this device and, when it differs, the server's.
+- Company admin: **Datensicherung** shows the last backup, the space used, sets the time and
+  starts a backup on demand. **Upgrade:** install the systemd units once
+  (`./backup-control.sh install`, then `systemctl enable --now kontext-backup.timer
+  kontext-backup-control.path`) and remove the old cron entry; without them the page says
+  "Steuerung auf dem Server nicht eingerichtet" and cron keeps working.
+- Faster on phones: OpenPGP loads only when needed, texts per page, Brotli, a smaller precache.
+- Chat: a conversation opens at the newest message, also in Safari on iOS.
+- Invitations write the time zone out over the whole series.
+- vCards and calendar files are parsed 10 per request, Stalwart's default limit.
+- The release now points `deploy/.env.example` and `deploy/quadlet/kontext.container` at the new
+  image version.
+
+## 0.1.5 – 2026-10-27
+
+- Calendar: invitations in Kontext's look, answered with one click without an account (needs
+  `STALWART_ADMIN_KEY`); suggestions of colleagues in the attendee field; the end follows the
+  start.
+- Place suggestions for an appointment's location (Photon, OpenStreetMap) and "In Karten öffnen".
+- Photos of people: profile photos, contact photos, a face next to the mail.
+- Contacts: "Weitere Kontakte" and "Zusammenführen und korrigieren", as in Google Contacts.
+- Chat: voice messages; on a phone the screen stays in place with the keyboard and back goes back.
+- Phone tab bar: choose which apps sit in it (*Einstellungen → Darstellung*).
+- Reading: a centred column, Outlook-like lines, dark colours; one sidebar width for every module;
+  shared mailboxes with their full address in the mail sidebar.
+- Settings: two-factor sign-in shows its state at a glance; the settings overview scrolls to its
+  last entry on a phone.
+- iPhone: no zoom into the search field or the editor, photos save via the share sheet.
+- Telephone box: reports its real version instead of "dev".
+- **Upgrade:** turn off Stalwart's own RSVP buttons (`httpRsvpEnable: false`, see
+  [Stalwart einrichten](https://firsttris.github.io/kontext/installation.html#3-stalwart-einrichten),
+  step 10), since Kontext sends invitations itself.
+
+## 0.1.4 – 2026-10-27
+
+- Telephone box: pairs, applies Kontext's configuration and registers at the Fritzbox for real;
+  starts cleanly with Podman; its image `tristanteu/kontext-box` is published from this version
+  on. **Upgrade:** a box before v0.1.4 never loads Kontext's configuration and never signs in at
+  the Fritzbox – use 0.1.4 or newer.
+- Settings → Telefonie follows the box connecting without reloading; the Fritzbox's address
+  defaults to `192.168.178.1`.
+- Backups also with Podman Quadlet (settings in `deploy/backup.env`) and to SFTP targets (the S3
+  keys only for S3). **Upgrade (Quadlet):** create `deploy/backup.env` as described under
+  [Backups](https://firsttris.github.io/kontext/installation.html#5-backups).
+- Deployment: secrets in `deploy/.env` and the Quadlet env files are ignored by git; Stalwart's
+  admin listens on `127.0.0.1` (SSH tunnel), Tailscale optional; the guide
+  [VPS einrichten](https://firsttris.github.io/kontext/vps.html).
+
+## 0.1.3 – 2026-10-26
+
+- Security fixes from a review before the first deployment, among them: Kontext limits wrong
+  passwords itself so Stalwart no longer bans its address; attachments can no longer run as pages
+  of Kontext; changes with the session cookie only from Kontext's own pages; agents see only the
+  task boards the app shows; the placeholder secrets from `.env.example` are refused.
+- The Kontext container runs as the user `bun` instead of root. **Upgrade:** a data volume from an
+  older version still belongs to root; hand it over once
+  (`docker compose -f deploy/compose.yaml run --rm --user root --entrypoint chown kontext -R bun:bun /data`),
+  then start as usual.
+- **Upgrade:** enter Kontext's container network `10.89.250.0/24` in Stalwart as an allowed IP and
+  set ban periods
+  ([Stalwart einrichten](https://firsttris.github.io/kontext/installation.html#3-stalwart-einrichten),
+  steps 6 and 7).
+
+## 0.1.2 – 2026-10-26
+
+- No changes to the code since 0.1.1; the same state released again.
+
+## 0.1.1 – 2026-10-26
+
+The first release.
+
+- Mail on Stalwart over JMAP: shared mailboxes, all inboxes in one list, categories, rules on the
+  server, search like Gmail, snooze, undo send and send later, text snippets, read receipts,
+  unsubscribe, pictures from trusted senders, printing, picking several mails, other mailboxes
+  (Gmail, GMX & Co.).
+- Calendar and contacts, with availability when inviting and a video meeting per event.
+- Tasks: list and Kanban board per mailbox, from mails and rules, repeating, reminders by push,
+  CalDAV task lists.
+- Team chat with threads, reactions, files, mails as cards, and calls and video over LiveKit.
+- Telephony through a telephone box at the Fritzbox.
+- Encryption: OpenPGP, S/MIME, "Vertraulich senden", confidential chat conversations.
+- Documents with Schreibzeug, AI agents over MCP, notifications and Web Push, the app as a PWA.
+- Company admin: people, shared mailboxes and rights, moving in from Microsoft 365, IMAP and
+  Outlook (PST).
