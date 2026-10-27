@@ -270,7 +270,7 @@ test.describe("Gemeinsames Postfach erkennen und verschieben", () => {
       page.getByText("Gemeinsames Postfach info@weber-haustechnik.test", { exact: true }),
     ).toBeVisible();
     await expect(page.getByRole("navigation", { name: "Eigene Ordner" })).toContainText(
-      "Ordner von info@",
+      "Ordner von info@weber-haustechnik.test",
     );
     // The own mailbox has no such note.
     await page.getByRole("link", { name: /^jonas@/ }).click();
