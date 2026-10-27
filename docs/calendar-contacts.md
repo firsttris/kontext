@@ -41,7 +41,8 @@ Kontext steht, steht auch am iPhone, unter Android (DAVx⁵) und in Thunderbird.
   Kontext selbst zeigt keine Karte.
 - **Videobesprechung am Termin:** Ein Klick legt einen Link an; Kunden kommen im Browser ohne
   Konto dazu, sobald jemand aus der Firma da ist. Siehe [Team-Chat und Videocalls](chat.md#videocalls-und-besprechungen).
-- **Aufgaben im Kalender:** die eigenen offenen Aufgaben am Tag ihrer Fälligkeit.
+- **Aufgaben im Kalender:** die eigenen offenen Aufgaben am Tag ihrer Fälligkeit, mit Uhrzeit
+  zu dieser Zeit im Raster, ohne bei den ganztägigen Terminen.
 - **Dokumente am Termin:** eine Datei aus [Dokumente](documents.md) anhängen, die Eingeladenen
   dürfen sie öffnen.
 - **Am Handy:** Tagesansicht mit Wochenleiste, Monat und Liste.

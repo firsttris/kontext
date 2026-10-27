@@ -4,6 +4,7 @@ import {
   assignedToMe,
   calendarTasks,
   contactLink,
+  dueMinutes,
   dueTasks,
   tasksOfContact,
   tasksOnDay,
@@ -55,6 +56,23 @@ describe("tasks in the calendar", () => {
       ["soon", "2026-10-27", false],
     ]);
     expect(tasksOnDay(list, "2026-10-27").map((entry) => entry.task.id)).toEqual(["soon"]);
+  });
+
+  it("at their time in the grid, unless overdue or without a time", () => {
+    const list = calendarTasks(
+      [
+        ...tasks,
+        sampleTask({ id: "late-timed", assigneeId: "me", dueDate: "2026-10-20", dueTime: "08:00" }),
+      ],
+      "me",
+      today,
+    );
+    expect(list.map((entry) => [entry.task.id, dueMinutes(entry)])).toEqual([
+      ["late-timed", null],
+      ["late", null],
+      ["today", 540],
+      ["soon", null],
+    ]);
   });
 
   it("the bell has what is due today or before", () => {

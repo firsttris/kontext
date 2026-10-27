@@ -9,6 +9,7 @@ import {
   isoWeek,
   layoutDay,
   onDay,
+  placeInColumns,
   toDuration,
   toLocal,
   weekDays,
@@ -95,6 +96,16 @@ describe("layoutDay", () => {
     expect(byId.a).toMatchObject({ top: 540, height: 60, column: 0, columns: 2 });
     expect(byId.b).toMatchObject({ top: 570, column: 1, columns: 2 });
     expect(byId.c).toMatchObject({ top: 660, column: 0, columns: 1 });
+  });
+  it("places anything with a span, such as a task due at a time", () => {
+    const placed = placeInColumns([
+      { item: "event", top: 540, bottom: 600 },
+      { item: "task", top: 570, bottom: 600 },
+    ]);
+    expect(placed).toEqual([
+      { item: "event", top: 540, height: 60, column: 0, columns: 2 },
+      { item: "task", top: 570, height: 30, column: 1, columns: 2 },
+    ]);
   });
   it("cuts events that run past midnight", () => {
     const [placed] = layoutDay([event("n", "2026-10-23T23:00:00", "PT2H")], "2026-10-23");
