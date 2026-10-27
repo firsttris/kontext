@@ -724,12 +724,20 @@ flowchart LR
   angenommen, beendet (mit Q.850-Ursache). Ereignisse tragen eine laufende Nummer; nach einem
   Abbruch schickt die Box nach, was Kontext nicht bestätigt hat. Ohne Kontext telefoniert sie mit
   der letzten Konfiguration weiter (`/data/config.json`).
+- **Konfiguration anwenden:** Der Agent schreibt die Dateien nach `/etc/asterisk` und lädt
+  Asterisk über die Manager-Schnittstelle (AMI, nur 127.0.0.1) mit `core reload` neu; dafür
+  braucht sein Benutzer das Recht `command` (`box/entrypoint.sh`). Lehnt Asterisk ab, meldet die
+  Box der Konfiguration einen Fehler, statt sie als übernommen zu melden (`refusalOf`). Den Namen
+  der Fritzbox löst sie vorher nach IPv4 auf (`box/agent/registrar.ts`): `fritz.box` zeigt auch
+  auf ihre IPv6-Adresse, die Transporte der Box sind aber IPv4 – Asterisk würde die Anmeldung
+  sonst nie abschicken, und Anrufe von der IPv4-Adresse passten zu keinem Endpunkt.
 - **Koppeln:** In der Firmenverwaltung unter Telefonie gibt es einen Code (30 Minuten gültig).
   Die Box tauscht ihn einmal gegen ein Token (`POST /api/phone/box/pair`); beides liegt nur als
   SHA-256 in der Datenbank. Nach 10 falschen Codes in 15 Minuten nimmt Kontext von derselben
   IP-Adresse eine Weile keinen mehr an. Den Code gibt man der Box beim ersten Start mit oder auf ihrer
   Statusseite (`http://<box>:8089`), die sonst nur anzeigt, ob sie verbunden und an der Fritzbox
-  angemeldet ist.
+  angemeldet ist (gekoppelt lädt sie sich alle 5 Sekunden neu). Die Firmenverwaltung fragt
+  ebenso alle 3 Sekunden nach, solange eine Box wartet, offline oder nicht angemeldet ist.
 - **Ein Anruf kommt rein:** Die Fritzbox klingelt bei der Box (und bei den Tischtelefonen). Die
   Box meldet „klingelt“; Kontext legt den Anruf an, schaut aber nicht ins Adressbuch – das macht
   die App mit den Rechten der angemeldeten Person (`contactOfNumber`, Nummern in E.164,

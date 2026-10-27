@@ -49,7 +49,8 @@ curl -XPOST localhost:18096/mailbox -d '{"call":"fake.1","seconds":5}' # oder sp
 
 Zu hören ist dabei nichts (lokal läuft kein LiveKit SIP). Die echte Box (`box/`, Asterisk und der
 Agent) baut `docker build -f box/Dockerfile -t kontext-box .`; CI baut sie und prüft, ob Asterisk
-mit PJSIP startet. Stalwarts eigenes Log steht in `.dev/stalwart.log`. Strg+C
+mit PJSIP startet, kein Modul beim Laden scheitert (`box/asterisk/modules.conf`) und der
+Manager-Benutzer des Agents `command` darf – ohne das lehnt Asterisk sein `core reload` ab. Stalwarts eigenes Log steht in `.dev/stalwart.log`. Strg+C
 beendet alles, und endet einer der Prozesse, stoppt auch der Rest.
 
 Läuft schon ein Stalwart auf 18080, nimmt `bun run dev` diesen. So lässt sich Stalwart in einem

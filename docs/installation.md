@@ -167,22 +167,36 @@ selbst. Ohne Code beim Start zeigt die Box auf `http://<box>:8089` ein Formular 
 Adresse und den Code; mit Code stehen `KONTEXT_URL` und `PAIRING_CODE` in `/etc/kontext-box.env`.
 Sie läuft im Host-Netz (SIP mit der Fritzbox auf 5070, Sprache auf 10000–10200 im LAN).
 
-Die Box selbst bauen (etwa für eine Version, die noch nicht auf Docker Hub ist):
+Die Box selbst bauen (etwa für eine Version, die noch nicht auf Docker Hub ist), ab v0.1.4 –
+die Box bis v0.1.3 lädt die Konfiguration aus Kontext nicht und meldet sich nie an der Fritzbox an:
 
 ```bash
-git clone --depth 1 --branch v0.1.3 https://github.com/firsttris/kontext.git /opt/kontext-box-src
+git clone --depth 1 --branch v0.1.4 https://github.com/firsttris/kontext.git /opt/kontext-box-src
 cd /opt/kontext-box-src
-podman build -f box/Dockerfile --build-arg BOX_VERSION=0.1.3 -t kontext-box:0.1.3 .
+podman build -f box/Dockerfile --build-arg BOX_VERSION=0.1.4 -t kontext-box:0.1.4 .
 ```
 
-Im Quadlet dann `Image=localhost/kontext-box:0.1.3` (Podman setzt `localhost/` vor lokal gebaute
-Images); mit Docker heißt es `kontext-box:0.1.3`, und `docker build` statt `podman build`.
+Im Quadlet dann `Image=localhost/kontext-box:0.1.4` (Podman setzt `localhost/` vor lokal gebaute
+Images); mit Docker heißt es `kontext-box:0.1.4`, und `docker build` statt `podman build`.
 
 Prüfen: `curl http://127.0.0.1:8089/` zeigt „Kontext-Telefonbox“, und
 `podman exec kontext-box asterisk -rx "module show like res_pjsip.so"` zeigt `res_pjsip.so`.
 Die Meldung „There are no local system nameservers configured, resorting to system resolution“
 beim Start ist harmlos: Asterisk auf Alpine liest die Nameserver nicht selbst und nimmt dann die
 des Systems.
+
+**Wenn die Box sich nicht an der Fritzbox anmeldet** (mit Docker `docker` statt `podman`):
+
+- `podman exec kontext-box asterisk -rx "pjsip show registrations"` zeigt die Anmeldung.
+  „No objects found“: Asterisk hat die Konfiguration nicht geladen – auf der Statusseite steht
+  dann bei „Konfiguration“ der Grund. `Registered`: alles gut.
+- „Rejected“ mit „No response received“ im Log (`podman logs kontext-box`): Die Fritzbox hat nie
+  geantwortet. Als Adresse der Fritzbox ihre IP eintragen; `ping 192.168.178.1` prüft, ob sie
+  erreichbar ist.
+- „Rejected“ mit `403 Forbidden`: Benutzername oder Kennwort passen nicht zum IP-Telefon in der
+  Fritzbox (die Box versucht es dann erst nach 5 Minuten wieder).
+- `ss -lunp | grep 5070` zeigt, ob die Box auf 5070 lauscht; eine Firewall auf dem Gerät muss
+  5070 und 10000–10200 aus dem LAN durchlassen.
 
 ### Dokumente
 
