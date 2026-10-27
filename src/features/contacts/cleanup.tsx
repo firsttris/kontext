@@ -17,7 +17,7 @@ import {
 } from "@/lib/contact-duplicates";
 import { type NameFix, nameFixes } from "@/lib/contact-fixes";
 import { isGroup } from "@/lib/groups";
-import { company, fullName, primaryEmail, primaryPhone } from "@/lib/jscontact";
+import { company, contactPhoto, fullName, primaryEmail, primaryPhone } from "@/lib/jscontact";
 import { m } from "@/paraglide/messages";
 import {
   type BookRef,
@@ -193,7 +193,7 @@ const DuplicateCard = ({ set, books, busy, onMerge, onIgnore }: DuplicateCardPro
             .join(" · ");
           return (
             <li key={contactKey(card)} className="flex items-center gap-3">
-              <Avatar name={fullName(card)} size={30} />
+              <Avatar name={fullName(card)} photo={contactPhoto(card)} size={30} />
               <span className="flex min-w-0 flex-col">
                 <span className="truncate text-[14px]">{fullName(card)}</span>
                 <span className="truncate text-[12px] text-muted">
