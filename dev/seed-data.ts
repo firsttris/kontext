@@ -267,6 +267,40 @@ export const mails: SeedMail[] = [
 </body></html>`,
     hoursAgo: 52,
   },
+  {
+    /**
+     * Written in Outlook, as it arrives forwarded through Gmail: every line a `MsoNormal`
+     * paragraph without the `<style>` that took their margin, blank paragraphs between, and the
+     * signature in fixed colours (black on white, Outlook's dark blue). See e2e "Outlook".
+     */
+    id: "outlook-zaehler@stadtwerke-buehl.test",
+    owner: "jonas",
+    folder: "Posteingang",
+    from: stadtwerke,
+    to: [jonas],
+    subject: "Zählerwechsel Gewerbehalle Industriestraße",
+    body: "Sehr geehrter Herr Weber,\n\nam Dienstag tauschen wir den Stromzähler in Ihrer Gewerbehalle.\n\nViele Grüße\nSabine Roth",
+    html: `<div lang="DE" style="word-wrap:break-word"><div class="WordSection1">
+<p class="MsoNormal"><span>Sehr geehrter Herr Weber,<o:p></o:p></span></p>
+<p class="MsoNormal"><span><o:p>&nbsp;</o:p></span></p>
+<p class="MsoNormal"><span>am Dienstag, 3.11., tauschen wir zwischen 8 und 12 Uhr den Stromzähler in Ihrer Gewerbehalle in der Industriestraße 14. Für etwa eine Stunde ist dabei der Strom in der Halle abgeschaltet.<o:p></o:p></span></p>
+<p class="MsoNormal"><span><o:p>&nbsp;</o:p></span></p>
+<p class="MsoNormal"><span>Dafür bräuchten wir bitte bis Freitag:<o:p></o:p></span></p>
+<p class="MsoNormal"><span>1. Eine kurze Bestätigung, dass unser Monteur den Zählerraum ab 8 Uhr betreten kann.<o:p></o:p></span></p>
+<p class="MsoNormal"><span>2. Den Namen einer Ansprechperson vor Ort, falls der Schlüssel nicht im Büro liegt.<o:p></o:p></span></p>
+<p class="MsoNormal"><span><o:p>&nbsp;</o:p></span></p>
+<p class="MsoNormal"><span>Der neue Zähler wird aus der Ferne ausgelesen; Sie müssen den Stand also nicht mehr selbst melden.<o:p></o:p></span></p>
+<p class="MsoNormal"><span><o:p>&nbsp;</o:p></span></p>
+<p class="MsoNormal"><span>Viele Grüße<o:p></o:p></span></p>
+<p class="MsoNormal"><span>Sabine Roth<o:p></o:p></span></p>
+<p class="MsoNormal"><o:p>&nbsp;</o:p></p>
+<p class="MsoNormal" style="margin-bottom:12.0pt"><span style="font-size:10pt;font-family:&quot;Franklin Gothic Book&quot;,sans-serif;color:black;background:white">Netzservice Gewerbekunden</span></p>
+<p class="MsoNormal"><span style="font-size:10pt;color:#1F497D">Stadtwerke Bühl GmbH · Telefon 07223 9400-0</span></p>
+<p class="MsoNormal"><span style="font-size:10pt;color:windowtext">Sitz Bühl, Amtsgericht Mannheim HRB 700123</span></p>
+</div></div>`,
+    hoursAgo: 60,
+    seen: true,
+  },
 ];
 
 /** Contact groups (JSContact cards of kind "group"); members by uid. */

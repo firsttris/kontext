@@ -164,7 +164,7 @@ Das [Verschlüsselungskonzept](https://firsttris.github.io/kontext/encryption.ht
 
 - **Eine App auf jedem Gerät** (PWA): aus dem Browser installieren am PC, unter Android und am iPhone, Ungelesen-Zahl am Symbol, Fotos aus anderen Apps in eine neue Mail teilen, `mailto:`-Links in Kontext öffnen.
 - **Benachrichtigungen** auch bei geschlossener App (Web Push, Ende-zu-Ende verschlüsselt): neue Mails, Direktnachrichten, @Erwähnungen, Erinnerungen an Aufgaben und eingehende Anrufe.
-- **Hell oder dunkel**, **Anmeldung mit zweitem Faktor**, **Speicherplatz auf einen Blick**.
+- **Hell oder dunkel** (Mails, die für weißes Papier geschrieben sind, passen sich an), **Anmeldung mit zweitem Faktor**, **Speicherplatz auf einen Blick**.
 
 ## 📸 Screenshots
 

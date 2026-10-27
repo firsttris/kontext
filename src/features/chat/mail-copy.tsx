@@ -69,7 +69,10 @@ export const MailCopyDialog = ({ copyId, onClose }: { copyId: string; onClose: (
   const document = useMemo(() => {
     if (!copy) return "";
     const source = copy.kind === "html" ? copy.body : textToHtml(copy.body);
-    return mailDocument(sanitizeMailHtml(source, { allowRemote: false, cidUrls: {} }).html, dark);
+    return mailDocument(
+      sanitizeMailHtml(source, { allowRemote: false, cidUrls: {}, dark }).html,
+      dark,
+    );
   }, [copy, dark]);
 
   return (

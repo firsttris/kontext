@@ -85,10 +85,10 @@ export const MailBody = ({ accountId, email }: { accountId: string; email: Email
           }))(splitTextQuote(body.value));
     const source = parts.quote && !showQuote ? parts.main : parts.main + (parts.quote ?? "");
     return {
-      ...sanitizeMailHtml(source, { allowRemote, cidUrls }),
+      ...sanitizeMailHtml(source, { allowRemote, cidUrls, dark }),
       folded: parts.quote !== null,
     };
-  }, [email, allowRemote, cidUrls, showQuote]);
+  }, [email, allowRemote, cidUrls, showQuote, dark]);
 
   const document = useMemo(() => mailDocument(html, dark, allowRemote), [html, dark, allowRemote]);
 

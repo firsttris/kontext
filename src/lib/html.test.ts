@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import { escapeHtml, htmlToText, mailDocument, sanitizeMailHtml, textToHtml } from "./html";
+import { parseColor } from "./mail-colors";
 
 const clean = (html: string, allowRemote = false) =>
   sanitizeMailHtml(html, { allowRemote, cidUrls: { "logo@x": "blob:logo" } });
@@ -122,10 +123,79 @@ describe("sanitizeMailHtml", () => {
   });
 });
 
+describe("sanitizeMailHtml in the dark theme", () => {
+  const dark = (html: string) =>
+    sanitizeMailHtml(html, { allowRemote: false, cidUrls: {}, dark: true }).html;
+
+  it("turns colours set for white paper around", () => {
+    const html = dark(
+      '<span style="font-size:10pt;color:black;background:white">Netzservice</span>' +
+        '<font color="#000000">Text</font><table bgcolor="#ffffff"><tr><td>x</td></tr></table>',
+    );
+    expect(html).toContain("color: rgb(255, 255, 255)");
+    expect(html).toContain("background: rgb(0, 0, 0)");
+    expect(html).toContain("font-size: 10pt");
+    expect(html).toContain('<font color="rgb(255, 255, 255)">');
+    expect(html).toContain('bgcolor="rgb(0, 0, 0)"');
+  });
+
+  /** WCAG contrast of two colours as the browser writes them. */
+  const contrast = (a: string, b: string) => {
+    const luminance = (value: string) => {
+      const { r, g, b: blue } = parseColor(value)!;
+      const linear = (channel: number) => {
+        const c = channel / 255;
+        return c <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4;
+      };
+      return 0.2126 * linear(r) + 0.7152 * linear(g) + 0.0722 * linear(blue);
+    };
+    const [light, darker] = [luminance(a), luminance(b)].sort((x, y) => y - x) as [number, number];
+    return (light + 0.05) / (darker + 0.05);
+  };
+
+  /** Text and background of `selector` as the browser computes them in the cleaned mail. */
+  const shown = (html: string, selector: string, paper = selector) => {
+    const host = document.createElement("div");
+    host.innerHTML = dark(html);
+    document.body.append(host);
+    const color = getComputedStyle(host.querySelector(selector)!).color;
+    const background = getComputedStyle(host.querySelector(paper)!).backgroundColor;
+    host.remove();
+    return contrast(color, background);
+  };
+
+  it("keeps Outlook's highlight readable (black on yellow)", () => {
+    expect(
+      shown(
+        '<span style="color:black;background:yellow;mso-highlight:yellow">Frist</span>',
+        "span",
+      ),
+    ).toBeGreaterThanOrEqual(4.5);
+  });
+
+  it("keeps dark text readable on a card made white in the mail's <style>", () => {
+    const html =
+      '<div><style>.card { background: #ffffff; }</style><div class="card">' +
+      '<span style="color:#333333">Text</span></div></div>';
+    expect(shown(html, "span", ".card")).toBeGreaterThanOrEqual(4.5);
+  });
+
+  it("leaves readable colours and the light theme alone", () => {
+    const span = '<span style="color:#60a5fa;background:#2563eb">x</span>';
+    expect(dark(span)).toBe(span);
+    const black = '<span style="color:black">x</span>';
+    expect(sanitizeMailHtml(black, { allowRemote: false, cidUrls: {} }).html).toBe(black);
+  });
+});
+
 describe("mailDocument", () => {
   it("lets the frame fetch remote content only once allowed", () => {
     expect(mailDocument("", false)).toContain("img-src data: blob:;");
     expect(mailDocument("", false, true)).toContain("img-src data: blob: https: http:;");
+  });
+
+  it("keeps Outlook's lines together", () => {
+    expect(mailDocument("", false)).toContain(".MsoNormal { margin: 0; }");
   });
 });
 

@@ -3,6 +3,7 @@
  * the quoted original for replies. DOMPurify needs a DOM, so `sanitizeMailHtml` runs in the browser.
  */
 import DOMPurify from "dompurify";
+import { darkBackgroundColor, darkStylesheet, darkTextColor, parseColor } from "./mail-colors";
 import { cleanCss } from "./mail-css";
 
 export const escapeHtml = (text: string): string =>
@@ -70,27 +71,60 @@ const isCss = (name: string) =>
   !name.startsWith("aria-");
 
 /**
+ * Fixed colours in `style`, `<font color>` and `bgcolor`, turned for the dark theme
+ * (mail-colors.ts). `style` is rewritten only where a colour changes, after it was cleaned;
+ * the mail's `<style>` goes through `darkStylesheet`.
+ */
+const darkenColors = (element: Element) => {
+  const style = (element as HTMLElement).style;
+  if (style) {
+    const text = style.color && darkTextColor(style.color);
+    if (text) style.color = text;
+    const background = style.backgroundColor && darkBackgroundColor(style.backgroundColor);
+    // `background: white` is set as a whole; jsdom (the tests) ignores the longhand beside it.
+    if (background && parseColor(style.getPropertyValue("background"))) {
+      style.setProperty("background", background);
+    } else if (background) style.backgroundColor = background;
+  }
+  const text = element.getAttribute?.("color");
+  const darkText = text && element.localName === "font" ? darkTextColor(text) : null;
+  if (darkText) element.setAttribute("color", darkText);
+  const background = element.getAttribute?.("bgcolor");
+  const darkBackground = background ? darkBackgroundColor(background) : null;
+  if (darkBackground) element.setAttribute("bgcolor", darkBackground);
+};
+
+/**
  * Cleans foreign mail HTML. Scripts, forms and event handlers go; links open in a new tab.
  * Remote images stay blocked (they reveal that the mail was read) until `allowRemote` is set:
  * every address that would be fetched goes (img, video poster, SVG image, CSS in style
  * attributes and `<style>`), counted in `blockedImages`. `cidUrls` maps Content-IDs of inline
- * images to local object URLs. `mailDocument` adds a CSP as a second line of defence.
+ * images to local object URLs. `mailDocument` adds a CSP as a second line of defence. `dark`
+ * turns colours set for white paper around, for the reading pane in the dark theme; a quote in a
+ * reply or a printout keeps them.
  */
 export const sanitizeMailHtml = (
   html: string,
-  { allowRemote, cidUrls }: { allowRemote: boolean; cidUrls: Record<string, string> },
+  {
+    allowRemote,
+    cidUrls,
+    dark = false,
+  }: { allowRemote: boolean; cidUrls: Record<string, string>; dark?: boolean },
 ): SanitizedMail => {
   let blockedImages = 0;
   const purify = DOMPurify();
   purify.addHook("afterSanitizeElements", (node) => {
-    if (allowRemote || (node as Element).localName !== "style") return;
-    const { css, blocked } = cleanCss(node.textContent ?? "", {
-      allowRemote,
-      cidUrls,
-      rules: true,
-    });
-    node.textContent = css;
-    blockedImages += blocked;
+    if ((node as Element).localName !== "style") return;
+    if (!allowRemote) {
+      const { css, blocked } = cleanCss(node.textContent ?? "", {
+        allowRemote,
+        cidUrls,
+        rules: true,
+      });
+      node.textContent = css;
+      blockedImages += blocked;
+    }
+    if (dark) node.textContent = darkStylesheet(node.textContent ?? "");
   });
   purify.addHook("afterSanitizeAttributes", (node) => {
     const element = node as Element;
@@ -122,6 +156,7 @@ export const sanitizeMailHtml = (
       if (css !== value) element.setAttribute(name, css);
       blockedImages += blocked;
     }
+    if (dark) darkenColors(element);
   });
   const clean = purify.sanitize(html, {
     WHOLE_DOCUMENT: false,
@@ -180,6 +215,9 @@ export const mailDocument = (
   html { color-scheme: ${dark ? "dark" : "light"}; }
   body { margin: 0; display: flow-root; font: 15px/1.65 "Geist Variable", system-ui, sans-serif; color: ${dark ? "#fafafa" : "#09090b"}; background: transparent; overflow-wrap: anywhere; }
   p { margin: 0 0 0.9em; }
+  /* Outlook writes every line as such a paragraph and sets their margin to 0 in a <style> that
+     forwarding (Gmail) drops: with the margin above, each line would stand apart. */
+  .MsoNormal { margin: 0; }
   img { max-width: 100%; height: auto; }
   a { color: ${dark ? "#60a5fa" : "#2563eb"}; }
   blockquote { margin: 0.5em 0; padding-left: 12px; border-left: 2px solid ${dark ? "#3f3f46" : "#e4e4e7"}; color: ${dark ? "#a1a1aa" : "#52525b"}; }

@@ -581,6 +581,23 @@ test.describe("Sicherheit", () => {
   });
 });
 
+test.describe("Outlook-Mail im dunklen Design", () => {
+  test.use({ colorScheme: "dark" });
+
+  test("hält die Zeilen zusammen und dreht Schwarz auf Weiß um", async ({ page }) => {
+    await login(page);
+    await page.getByText("Zählerwechsel Gewerbehalle Industriestraße").click();
+    const body = page.frameLocator('iframe[title="Inhalt der Mail"]');
+    const line = body.getByText("Dafür bräuchten wir bitte bis Freitag:");
+    await expect(line).toBeVisible();
+    // Every line its own MsoNormal paragraph: no gap between them, as in Outlook.
+    await expect(line.locator("xpath=ancestor::p")).toHaveCSS("margin-bottom", "0px");
+    const signature = body.getByText("Netzservice Gewerbekunden");
+    await expect(signature).toHaveCSS("color", "rgb(255, 255, 255)");
+    await expect(signature).toHaveCSS("background-color", "rgb(0, 0, 0)");
+  });
+});
+
 test.describe("Alle Posteingänge", () => {
   test("zeigt eigene und gemeinsame Mails in einer Liste und antwortet als info@", async ({
     page,
