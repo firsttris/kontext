@@ -94,6 +94,10 @@ describe("contact photos", () => {
       }),
     ).toBe(photo);
   });
+  it("shows a photo synced from an iPhone, which Stalwart gives no media type", () => {
+    const card = { media: { k1: { kind: "photo", uri: "data:;base64,/9j/4AAQSkZJRgABAQ==" } } };
+    expect(contactPhoto(card)).toBe("data:image/jpeg;base64,/9j/4AAQSkZJRgABAQ==");
+  });
   it("sets and removes the photo, keeping its key and the logo", () => {
     const card = {
       media: {

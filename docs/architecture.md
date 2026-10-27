@@ -1149,8 +1149,10 @@ die Initialen. Zwei Quellen:
   Stalwart nimmt dort nur `uri`, kein `blobId` (`crates/jmap/src/contact/set.rs`), darum schreibt
   die App das Foto als `data:`-URI in die Karte; über CardDAV kommt es als `PHOTO` aufs Handy. Die
   App zeigt nur Fotos, die in der Karte stecken: ein Link auf ein Bild anderswo würde dessen
-  Server verraten, wann man den Kontakt ansieht. Logos und Töne in `media` bleiben beim Speichern
-  erhalten.
+  Server verraten, wann man den Kontakt ansieht. Vom iPhone oder Mac (vCard 3.0,
+  `PHOTO;ENCODING=b;TYPE=JPEG`) kommt das Foto von Stalwart ohne Bildtyp als `data:;base64,…`
+  (calcard 0.3.14, `src/vcard/utils.rs`); die App erkennt dann JPEG, PNG, GIF und WebP an den
+  ersten Bytes, SVG nie. Logos und Töne in `media` bleiben beim Speichern erhalten.
 
 Eine Mail selbst bringt kein Foto mit: Gmail zeigt Profilbilder aus Googles eigenen Konten, nicht
 aus der Mail. Kontext zeigt neben einer Mail das Foto des Kollegen oder Kontakts mit der Adresse

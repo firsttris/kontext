@@ -14,12 +14,33 @@ export const squareCrop = (width: number, height: number) => {
   return { x: Math.round((width - side) / 2), y: Math.round((height - side) / 2), side };
 };
 
+/** Raster formats by how their base64 starts: the first bytes of JPEG, PNG, GIF and WebP (RIFF). */
+const SNIFFED: [prefix: string, type: string][] = [
+  ["/9j/", "image/jpeg"],
+  ["iVBORw0KGgo", "image/png"],
+  ["R0lGOD", "image/gif"],
+  ["UklGR", "image/webp"],
+];
+
 /**
- * A contact photo the app may show: only one carried in the card itself (`data:`). A link to a
- * picture elsewhere would tell its server when one looks at the contact, so it stays unloaded.
+ * A contact photo the app may show, as `data:image/…;base64,…`: only one carried in the card
+ * itself. A link to a picture elsewhere would tell its server when one looks at the contact, so it
+ * stays unloaded. A photo synced from an iPhone or Mac (vCard 3.0 `PHOTO;ENCODING=b;TYPE=JPEG`)
+ * comes from Stalwart without a media type, as `data:;base64,…` (calcard 0.3.14:
+ * src/vcard/parser.rs keeps it as Binary without content type, src/vcard/utils.rs
+ * `to_unwrapped_string`); its type is then read from its first bytes. Never SVG, which can carry
+ * links and scripts.
  */
-export const isInlinePhoto = (uri: string): boolean =>
-  /^data:image\/(jpeg|png|webp|gif);base64,/i.test(uri);
+export const inlinePhoto = (uri: string): string | undefined => {
+  const match = /^data:([^;,]*);base64,(.+)$/is.exec(uri.trim());
+  if (!match) return undefined;
+  const [, declared = "", data = ""] = match;
+  const type = declared.toLowerCase();
+  if (/^image\/(jpeg|png|webp|gif)$/.test(type)) return uri.trim();
+  if (type && type !== "application/octet-stream") return undefined;
+  const sniffed = SNIFFED.find(([prefix]) => data.startsWith(prefix))?.[1];
+  return sniffed ? `data:${sniffed};base64,${data}` : undefined;
+};
 
 /** "jonas@firma.de" and "Jonas@Firma.de" are the same person. */
 export const addressKey = (address: string | null | undefined): string =>

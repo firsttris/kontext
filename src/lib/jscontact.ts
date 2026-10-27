@@ -3,7 +3,7 @@
  * address, note and photo. Other properties of a card are kept untouched when it is saved.
  */
 import type { EmailAddress } from "@/jmap/types";
-import { isInlinePhoto } from "./photo";
+import { inlinePhoto } from "./photo";
 
 type NameComponent = { kind: string; value: string };
 
@@ -177,13 +177,15 @@ export const formToCard = (
 
 const photoEntries = (card: Pick<ContactCard, "media">) =>
   Object.entries(card.media ?? {})
-    .filter(([, media]) => media.kind === "photo" && media.uri && isInlinePhoto(media.uri))
+    .filter(([, media]) => media.kind === "photo" && media.uri && inlinePhoto(media.uri))
     // The preferred one first (lower `pref` wins, none comes last).
     .sort(([, a], [, b]) => (a.pref ?? 101) - (b.pref ?? 101));
 
 /** The card's photo as a `data:` URI, if it carries one (links elsewhere are not loaded). */
-export const contactPhoto = (card: Pick<ContactCard, "media">): string | undefined =>
-  photoEntries(card)[0]?.[1].uri;
+export const contactPhoto = (card: Pick<ContactCard, "media">): string | undefined => {
+  const uri = photoEntries(card)[0]?.[1].uri;
+  return uri ? inlinePhoto(uri) : undefined;
+};
 
 /**
  * The `media` to write for a new photo (a `data:` URI) or none (`null`): logos and sounds stay,
