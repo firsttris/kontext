@@ -6,6 +6,7 @@ import { useNavigate } from "@tanstack/react-router";
 import { MessagesSquare } from "lucide-react";
 import { useState } from "react";
 import { TabBar } from "@/components/shell/app-shell";
+import { FROM_PARENT } from "@/components/use-back";
 import type { Channel } from "@/lib/chat";
 import { cn } from "@/lib/cn";
 import { m } from "@/paraglide/messages";
@@ -32,8 +33,12 @@ export const ChatPage = ({
   const actions = useChatActions(me);
   const [editing, setEditing] = useState<Editing>(null);
   const open = channels.find((channel) => channel.id === channelId);
-  const show = (channel: Channel) =>
-    void navigate({ to: "/chat", search: { channel: channel.id } });
+  // Started from the list (a phone's "Neue Nachricht"): "Zurück" leads there. The open one
+  // (saved in "Kanal bearbeiten") stays as it is, without a second entry in the history.
+  const show = (channel: Channel) => {
+    if (channel.id === channelId) return;
+    void navigate({ to: "/chat", search: { channel: channel.id }, state: FROM_PARENT });
+  };
 
   return (
     <>

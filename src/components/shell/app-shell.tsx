@@ -13,6 +13,7 @@ import {
   MenuTrigger,
 } from "@/components/ui/menu";
 import { useShortcuts } from "@/components/use-shortcuts";
+import { useVisibleHeight } from "@/components/use-visible-height";
 import { useChannels } from "@/features/chat/queries";
 import { useFrameState } from "@/features/documents/frame-store";
 import { usePhone } from "@/features/phone/queries";
@@ -173,6 +174,7 @@ const Rail = ({ onHelp, bell }: { onHelp: () => void; bell: ReactNode }) => {
 
 /** `bell`: the notifications (features/notifications), placed in the rail by the route. */
 export const AppShell = ({ children, bell }: { children: ReactNode; bell?: ReactNode }) => {
+  useVisibleHeight();
   const navigate = useNavigate();
   const [help, setHelp] = useState(false);
   // "?" shows all shortcuts, 1–6 switch between the apps.
@@ -184,7 +186,7 @@ export const AppShell = ({ children, bell }: { children: ReactNode; bell?: React
     ),
   });
   return (
-    <div className="flex h-dvh overflow-hidden bg-bg text-fg safe-top md:pt-0">
+    <div className="flex h-[var(--app-height,100dvh)] overflow-hidden bg-bg text-fg safe-top md:pt-0">
       <Rail onHelp={() => setHelp(true)} bell={bell} />
       <div className="flex min-w-0 flex-1">{children}</div>
       <ShortcutsDialog open={help} onOpenChange={setHelp} />
