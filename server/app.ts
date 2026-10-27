@@ -235,6 +235,14 @@ export const createApp = async (env: Env) => {
   pruneChat();
   setInterval(pruneChat, 3_600_000).unref();
   app.get("/healthz", (c) => c.text("ok"));
+  // Which Kontext runs here (package.json, raised by the release); the settings set it beside the
+  // app the device has loaded, which the service worker may still hold from before an update.
+  // Only for people signed in: a version tells a scanner which flaws to try.
+  app.get("/api/version", async (c) =>
+    (await auth.api.getSession({ headers: c.req.raw.headers }))
+      ? c.json({ version: packageVersion })
+      : c.json({ error: "Nicht angemeldet" }, 401),
+  );
   if (schreibzeug) {
     // Better Auth keeps discovery server-only; Schreibzeug reads it here (issuer + well-known path).
     const discovery = oauthProviderOpenIdConfigMetadata(auth);
