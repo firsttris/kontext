@@ -14,17 +14,15 @@ import { useSession } from "@/components/shell/app-shell";
 import {
   type Calendar,
   createCalendar,
-  createEvent,
   deleteCalendar,
-  deleteEvent,
   getEvent,
   listCalendars,
   queryEvents,
   respondToEvent,
   updateCalendar,
-  updateEvent,
 } from "@/jmap/calendar";
 import { CAPABILITIES } from "@/jmap/client";
+import { type AnswerLinksOf, type EventChange, saveEvent } from "@/jmap/invitations";
 import { principalName } from "@/jmap/principals";
 import {
   addDays,
@@ -244,12 +242,26 @@ export const useSeries = (event: CalendarEvent | undefined) => {
   });
 };
 
+/** The pages on which attendees answer, signed by Kontext's server (/api/invitations). */
+const answerLinksOf: AnswerLinksOf = async (accountId, eventId) => {
+  const response = await fetch("/api/invitations/links", {
+    method: "POST",
+    credentials: "same-origin",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ accountId, eventId }),
+  });
+  if (!response.ok) return {};
+  return ((await response.json()) as { links: Awaited<ReturnType<AnswerLinksOf>> }).links;
+};
+
 export const useEventMutations = () => {
   const client = useClient();
   const queryClient = useQueryClient();
   const refresh = (accountId: string | undefined) =>
     queryClient.invalidateQueries({ queryKey: [accountId, "events"] });
   const account = (event: CalendarEvent) => event.accountId!;
+  const save = (accountId: string, change: EventChange) =>
+    saveEvent(client, accountId, change, answerLinksOf);
 
   return {
     create: useMutation({
@@ -259,7 +271,7 @@ export const useEventMutations = () => {
       }: {
         event: Record<string, unknown>;
         calendar: CalendarRef;
-      }) => createEvent(client, calendar.accountId, calendar.calendar.id, event),
+      }) => save(calendar.accountId, { kind: "create", calendarId: calendar.calendar.id, event }),
       onSettled: (_data, _error, { calendar }) => refresh(calendar.accountId),
     }),
     update: useMutation({
@@ -272,7 +284,7 @@ export const useEventMutations = () => {
         /** The instance or series to change; defaults to the event itself. */
         id?: string;
         patch: Record<string, unknown>;
-      }) => updateEvent(client, account(event), id ?? event.id, patch),
+      }) => save(account(event), { kind: "update", id: id ?? event.id, patch }),
       onSettled: (_data, _error, { event }) => refresh(account(event)),
     }),
     /** Drag in the grid: shown at once, saved in the background. */
@@ -285,7 +297,7 @@ export const useEventMutations = () => {
         patch: Record<string, unknown>;
         start: Date;
         end: Date;
-      }) => updateEvent(client, account(event), event.id, patch),
+      }) => save(account(event), { kind: "update", id: event.id, patch }),
       onMutate: async ({ event, start, end }) => {
         const queryKey = [account(event), "events"];
         await queryClient.cancelQueries({ queryKey });
@@ -303,7 +315,7 @@ export const useEventMutations = () => {
     }),
     remove: useMutation({
       mutationFn: ({ event, id }: { event: CalendarEvent; id?: string }) =>
-        deleteEvent(client, account(event), id ?? event.id),
+        save(account(event), { kind: "destroy", id: id ?? event.id }),
       onSettled: (_data, _error, { event }) => refresh(account(event)),
     }),
     respond: useMutation({

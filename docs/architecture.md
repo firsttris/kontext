@@ -1294,6 +1294,70 @@ Text bleibt, wie er ist; ein Vorschlag schreibt eine einzeilige Adresse ins Feld
   `https://www.google.com/maps/search/?api=1&query=…`; am Handy öffnen beide die Karten-App.
   Für Besprechungslinks und andere Web-Adressen im Ort gibt es ihn nicht.
 
+## Einladungen
+
+Einladungen verschickt Kontext selbst, nicht Stalwart. Stalwarts eigene Mail (iMIP,
+`crates/services/src/task_manager/imip.rs`) trägt sein Logo und Knöpfe auf
+`https://<STALWART_HOSTNAME>/calendar/rsvp` (`crates/common/src/config/groupware.rs`); dort
+antwortet Caddy und nicht Stalwart, und eigene Vorlagen und Logos kann nur die Enterprise-Edition
+(`crates/common/src/enterprise/config.rs`). Deshalb bleibt in Stalwart unter
+`x:CalendarScheduling` **`httpRsvpEnable` aus**, das Scheduling selbst (`enable`) aber an: Es
+liest die Antworten (REPLY), die zurückkommen.
+
+**Senden** (`src/jmap/invitations.ts`): Ein Termin mit Teilnehmern geht mit
+`sendSchedulingMessages: false` an Stalwart. Danach vergleicht die App den gespeicherten Termin
+vorher und nachher (`src/lib/invitation-plan.ts`) und schickt jedem Teilnehmer eine eigene Mail
+vom Organisator – wie aus dem Fenster „Neue Mail“, mit `Email/import` und `EmailSubmission/set`,
+die Kopie liegt in „Gesendet“:
+
+| Was                                     | Wer bekommt was                               | iCalendar                       |
+| --------------------------------------- | --------------------------------------------- | ------------------------------- |
+| neuer Termin                            | alle: „… lädt dich ein“                       | `METHOD:REQUEST`                |
+| Zeit, Ort, Titel, Notiz, Serie geändert | alle außer denen, die abgesagt haben: „… hat den Termin geändert“ | `REQUEST`, `SEQUENCE` + 1 |
+| neuer Teilnehmer                        | er: die Einladung                             | `REQUEST`                       |
+| Teilnehmer entfernt                     | er: „… hat dich ausgeladen“                   | `CANCEL` nur mit ihm            |
+| Termin gelöscht                         | alle: „… hat den Termin abgesagt“             | `CANCEL`, `STATUS:CANCELLED`    |
+
+Antworten oder wer sonst kommt, zählen nicht als Änderung; vergangene Termine bekommen keine Mail
+(wie Stalwarts `EventInPast`). Kontext sendet nur, wenn man als Organisator senden darf (eine
+Identität mit dessen Adresse im Konto des Kalenders); ändert man einen Termin im geteilten Kalender
+einer Kollegin, die ihn organisiert, schickt weiter Stalwart. Zusagen im eigenen Kalender gehen
+wie bisher über Stalwart (REPLY an den Organisator).
+
+**Die Mail** (`src/lib/invitation-mail.ts`): HTML im Kontext-Look (Zinc-Farben, Tabellen und
+Inline-Styles für Mailprogramme), dieselben Angaben als Text, und das iCalendar zweimal – als
+`text/calendar; method=…` in `multipart/alternative`, damit Gmail, Outlook und Apple ihre eigenen
+Knöpfe zeigen (RFC 6047), und als `invite.ics`. Das iCalendar baut `src/lib/itip.ts` aus dem
+JSCalendar-Termin, den Stalwart liefert: JMAP kennt keinen Export (in
+`crates/jmap-proto/src/request/method.rs` gibt es nur `CalendarEvent/parse`, die andere Richtung,
+und ein Termin hat keine `blobId`). Es enthält `UID`, `SEQUENCE`, `ORGANIZER`, jeden Teilnehmer als
+`ATTENDEE;PARTSTAT=…;RSVP=TRUE`, Serien mit `RRULE`, `EXDATE` und einem `VEVENT` je geänderten
+Termin (`RECURRENCE-ID`), Ganztägiges als `VALUE=DATE` und für die Zeitzone ein `VTIMEZONE`
+(`src/lib/ical-zone.ts`, aus den Zeitzonendaten des Browsers, mit jährlicher Regel, wo sie
+passt). Wer `SEQUENCE` hochzählt, ist Kontext: Bei einer Änderung schreibt die App
+`sequence` + 1 in den Termin.
+
+**Kollegen auf demselben Server** bekommen dieselbe Mail. Stalwart liest den `text/calendar`-Teil
+jeder Mail, die es zustellt, wenn der Absender angemeldet war (`crates/email/src/message/ingest.rs`,
+`itip_ingest`), und trägt den Termin in ihren Kalender ein – genau so kamen auch Stalwarts eigene
+Einladungen an. Sie sagen dann im Kalender zu wie bisher.
+
+**Ja / Nein / Vielleicht** in der Mail führen auf `/rsvp?t=<token>&r=<antwort>` – eine Seite von
+Kontext ohne Anmeldung (`src/features/calendar/rsvp-page.tsx`). Den Token signiert der Server
+(`/api/invitations/links`, nur für den Organisator, der den Termin mit dem eigenen Token lesen
+kann): HMAC-SHA-256 mit einem aus `BETTER_AUTH_SECRET` abgeleiteten Schlüssel, für ein Konto,
+einen Termin, dessen UID und einen Teilnehmer, gültig bis 60 Tage nach dem Termin (bei Serien nach
+dem letzten, ohne Ende gut ein Jahr; `server/invitations/`). Die Seite zeigt den Termin und trägt
+die Antwort mit dem Schlüssel des Servers (`STALWART_ADMIN_KEY`, `impersonate` wie die
+Firmenverwaltung) als `participationStatus` beim Organisator ein, bei Kollegen auch in ihrer
+eigenen Kopie; danach steht „Du hast zugesagt.“, und die Antwort lässt sich ändern. Die Antwort
+schickt die Seite, nicht schon das Öffnen des Links – ein Virenscanner, der Links in Mails
+aufruft, sagt so nichts zu. Versuche zählen je Adresse wie das Anmelden (`SIGN_IN_PER_MINUTE`).
+Ohne `STALWART_ADMIN_KEY` gehen die Einladungen ohne diese Knöpfe hinaus.
+
+**Mailprogramme und Handys** (CalDAV) bleiben bei Stalwarts Scheduling: Wer am iPhone einlädt,
+verschickt Stalwarts Mail.
+
 ## Anmeldung
 
 Benutzer und Passwörter bleiben in Stalwart. Bei der Anmeldung schickt die App E-Mail, Passwort

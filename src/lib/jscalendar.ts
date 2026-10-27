@@ -21,6 +21,8 @@ export type CalendarEvent = {
   /** The colour of its calendar; set by the app. */
   color?: string;
   uid?: string;
+  /** Counts the organizer's changes that attendees must hear of (RFC 5546 §2.1.4). */
+  sequence?: number;
   calendarIds: Record<string, boolean>;
   title?: string;
   description?: string;

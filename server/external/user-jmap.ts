@@ -1,6 +1,7 @@
 /**
  * JMAP with the signed-in person's own token: what they may do in Stalwart, nothing more. Used to
- * read a mail before it goes out through another provider and to file it under Sent afterwards.
+ * read a mail before it goes out through another provider and to file it under Sent afterwards,
+ * and to read an event before its invitations are signed.
  */
 import type { Grants } from "../auth";
 import type { Env } from "../env";
@@ -10,7 +11,8 @@ const USING = ["urn:ietf:params:jmap:core", "urn:ietf:params:jmap:mail"];
 type JmapSession = { apiUrl: string; downloadUrl: string };
 
 export type UserJmap = {
-  call: <T>(calls: unknown[]) => Promise<(T | undefined)[]>;
+  /** `using`: the capabilities, mail by default. */
+  call: <T>(calls: unknown[], using?: string[]) => Promise<(T | undefined)[]>;
   download: (accountId: string, blobId: string) => Promise<Uint8Array>;
 };
 
@@ -29,11 +31,11 @@ export const createUserJmap =
       return `${env.STALWART_URL}${parsed.pathname}${parsed.search}`;
     };
 
-    const call: UserJmap["call"] = async <T>(calls: unknown[]) => {
+    const call: UserJmap["call"] = async <T>(calls: unknown[], using = USING) => {
       const answer = await fetch(onStalwart(session.apiUrl), {
         method: "POST",
         headers: { ...auth, "content-type": "application/json" },
-        body: JSON.stringify({ using: USING, methodCalls: calls }),
+        body: JSON.stringify({ using, methodCalls: calls }),
       });
       if (!answer.ok) throw new Error(`JMAP ${answer.status}`);
       const { methodResponses } = (await answer.json()) as { methodResponses: [string, T][] };

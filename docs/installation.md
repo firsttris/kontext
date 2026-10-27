@@ -95,6 +95,11 @@ jedem Neustart vor der Einrichtung gibt es ein neues.
    Stalwart erlaubt sonst 4 je Person – für alle Tabs und Geräte zusammen; Kontext fragt beim
    Start mehr auf einmal (Ordner jedes Postfachs, Liste, Unterhaltungen), und was darüber liegt,
    lehnt Stalwart ab.
+10. In den Kalender-Einstellungen (`x:CalendarScheduling`) **HTTP-RSVP ausschalten**
+    (`httpRsvpEnable: false`), das Scheduling selbst (`enable`) aber anlassen. Einladungen
+    verschickt Kontext mit eigenen Knöpfen; Stalwarts Knöpfe zeigten auf eine Adresse, unter der
+    Caddy antwortet (siehe [Einladungen](architecture.md#einladungen)). Die Knöpfe in Kontexts
+    Einladungen brauchen die Firmenverwaltung (den Schlüssel unten).
 
 Danach unter `https://kontext.firma.de` anmelden. Am Handy im Browser „Zum Startbildschirm
 hinzufügen“ wählen: Kontext startet dann wie eine App und bleibt angemeldet.
@@ -245,8 +250,8 @@ braucht der Kontext-Server einen API-Schlüssel von Stalwart, der nur Konten ver
    und bekommt dazu die Rechte `sysAccountGet`, `sysAccountQuery`, `sysAccountCreate`,
    `sysAccountUpdate`, `sysRoleGet`, `sysRoleCreate`, `sysDomainGet`, `sysAuthenticationGet`
    und `impersonate`. Mit `impersonate` arbeitet der Server in den Postfächern der Mitarbeiter
-   (Abwesenheit, Leserechte für gemeinsame Postfächer); die App zeigt dem Chef dabei nie fremde
-   Mails.
+   (Abwesenheit, Leserechte für gemeinsame Postfächer) und trägt Antworten auf Einladungen ein;
+   die App zeigt dem Chef dabei nie fremde Mails.
 2. Ein **Konto** `kontext-server@firma.de` mit dieser Rolle (statt *User*) und einem langen
    Zufallspasswort anlegen.
 3. Mit diesem Konto einen **API-Schlüssel** erzeugen (*Credentials → API Key*, Rechte

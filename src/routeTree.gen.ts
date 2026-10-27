@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as AppRouteImport } from './routes/_app'
 import { Route as AgentConsentRouteImport } from './routes/agent-consent'
 import { Route as LoginRouteImport } from './routes/login'
+import { Route as RsvpRouteImport } from './routes/rsvp'
 import { Route as AppIndexRouteImport } from './routes/_app/index'
 import { Route as AppCalendarRouteImport } from './routes/_app/calendar'
 import { Route as AppChatRouteImport } from './routes/_app/chat'
@@ -40,6 +41,11 @@ const AgentConsentRoute = AgentConsentRouteImport.update({
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
   path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RsvpRoute = RsvpRouteImport.update({
+  id: '/rsvp',
+  path: '/rsvp',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AppIndexRoute = AppIndexRouteImport.update({
@@ -123,6 +129,7 @@ export interface FileRoutesByFullPath {
   '/': typeof AppIndexRoute
   '/agent-consent': typeof AgentConsentRoute
   '/login': typeof LoginRoute
+  '/rsvp': typeof RsvpRoute
   '/calendar': typeof AppCalendarRoute
   '/chat': typeof AppChatRoute
   '/compose': typeof AppComposeRoute
@@ -141,6 +148,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/agent-consent': typeof AgentConsentRoute
   '/login': typeof LoginRoute
+  '/rsvp': typeof RsvpRoute
   '/calendar': typeof AppCalendarRoute
   '/chat': typeof AppChatRoute
   '/compose': typeof AppComposeRoute
@@ -162,6 +170,7 @@ export interface FileRoutesById {
   '/_app': typeof AppRouteWithChildren
   '/agent-consent': typeof AgentConsentRoute
   '/login': typeof LoginRoute
+  '/rsvp': typeof RsvpRoute
   '/_app/calendar': typeof AppCalendarRoute
   '/_app/chat': typeof AppChatRoute
   '/_app/compose': typeof AppComposeRoute
@@ -184,6 +193,7 @@ export interface FileRouteTypes {
     | '/'
     | '/agent-consent'
     | '/login'
+    | '/rsvp'
     | '/calendar'
     | '/chat'
     | '/compose'
@@ -202,6 +212,7 @@ export interface FileRouteTypes {
   to:
     | '/agent-consent'
     | '/login'
+    | '/rsvp'
     | '/calendar'
     | '/chat'
     | '/compose'
@@ -222,6 +233,7 @@ export interface FileRouteTypes {
     | '/_app'
     | '/agent-consent'
     | '/login'
+    | '/rsvp'
     | '/_app/calendar'
     | '/_app/chat'
     | '/_app/compose'
@@ -243,6 +255,7 @@ export interface RootRouteChildren {
   AppRoute: typeof AppRouteWithChildren
   AgentConsentRoute: typeof AgentConsentRoute
   LoginRoute: typeof LoginRoute
+  RsvpRoute: typeof RsvpRoute
   MeetIdRoute: typeof MeetIdRoute
   SIdRoute: typeof SIdRoute
 }
@@ -268,6 +281,13 @@ declare module '@tanstack/react-router' {
       path: '/login'
       fullPath: '/login'
       preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/rsvp': {
+      id: '/rsvp'
+      path: '/rsvp'
+      fullPath: '/rsvp'
+      preLoaderRoute: typeof RsvpRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_app/': {
@@ -426,6 +446,7 @@ const rootRouteChildren: RootRouteChildren = {
   AppRoute: AppRouteWithChildren,
   AgentConsentRoute: AgentConsentRoute,
   LoginRoute: LoginRoute,
+  RsvpRoute: RsvpRoute,
   MeetIdRoute: MeetIdRoute,
   SIdRoute: SIdRoute,
 }
