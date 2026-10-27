@@ -484,9 +484,23 @@ echo QUIT | openssl s_client -starttls smtp -connect mail.firma.de:25 -verify_re
       echo "$bl: $(dig +short $R.$bl | head -1)"; done
     ```
 
-    Leer heißt nicht gelistet. Bei Spamhaus auf *check.spamhaus.org* die Austragung beantragen –
-    erst wenn Reverse-DNS und SPF/DKIM/DMARC stimmen. Lässt sie sich nicht austragen: beim Anbieter
-    eine andere IP erfragen oder ausgehend über einen Versanddienst (Smarthost) senden.
+    Leer heißt nicht gelistet. Bei Spamhaus auf *check.spamhaus.org* die IP prüfen und die
+    Austragung beantragen – erst wenn Reverse-DNS und SPF/DKIM/DMARC stimmen:
+
+    - Spamhaus nimmt **keine Freemail-Adresse** (Gmail, GMX …) an, nur eine der eigenen Domain.
+      Die Bestätigung kommt also erst an, wenn die Mail schon auf dem Server läuft – die Austragung
+      kommt deshalb **nach** der Umstellung.
+    - Unter *Most recently seen HELO values* steht, wie sich die IP zuletzt gemeldet hat. Fremde
+      Namen vor dem eigenen Start sind der Vormieter. Die Empfehlung, den PTR auf diesen Namen zu
+      setzen, **nicht** befolgen: PTR, HELO und A-Eintrag bleiben `mail.firma.de`.
+    - Im Formular *Immediate removal*; als Begründung: neuer Mieter seit <Datum>, die gesehenen
+      HELOs gehören dem Vormieter, eigener Mailserver mit PTR/HELO `mail.firma.de`, SPF, DKIM,
+      DMARC, kein offenes Relay. Art der Mails „Personal and business correspondence“, Menge pro
+      Woche, *new IP: Yes*. Dann den Link in der Bestätigungsmail; ein Bearbeiter prüft den Fall
+      und meldet sich per Mail.
+
+    Lässt sie sich nicht austragen: beim Anbieter eine andere IP erfragen oder ausgehend über einen
+    Versanddienst (Smarthost) senden.
 
     Die ersten Mails eines neuen Servers landen bei Gmail oft im Spam, auch ohne Sperrliste:
     beim Empfänger „Kein Spam“, die Domain in den Google Postmaster Tools eintragen.
