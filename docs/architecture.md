@@ -507,6 +507,10 @@ das Manifest steht in `vite.config.ts`, der Service Worker in `src/sw/service-wo
   sichtbare Teil (`--app-height` aus `visualViewport`, `src/components/use-visible-height.ts`)
   und bleibt oben; Listen von Nachrichten bleiben dabei unten, wenn man unten war
   (`use-scroll-place.ts`).
+- **Kein Zoom ins Feld am iPhone:** Safari zoomt in jedes Feld mit Schrift unter 16 px und bleibt
+  danach vergrößert; die Seite ragt dann rechts hinaus und rutscht oben unter Safaris Glasleiste.
+  Felder, Auswahllisten und der Mail-Editor haben dort deshalb 16 px (`src/styles.css`, geprüft
+  von `src/lib/ios-zoom.test.ts`).
 - **Zurück am Handy:** Ein Bildschirm, der aus einem anderen geöffnet wurde (Gespräch aus der
   Liste, Thread aus dem Gespräch), trägt `fromParent` im Verlaufseintrag; sein „Zurück“ geht dann
   im Verlauf des Browsers zurück, sodass ein Wischen danach nicht wieder auf ihm landet. Ohne
@@ -630,6 +634,9 @@ Principal-ID), die Namen holt die App wie bei den Aufgaben über die Principals.
   an Personen, die den Kanal sehen; Fotos (JPEG, PNG, WebP, GIF) zeigt der Browser an, alles andere
   wird heruntergeladen (`Content-Security-Policy: sandbox`, nie HTML oder SVG aus derselben
   Herkunft). Hochgeladenes, das nie verschickt wurde, löscht der Server nach einem Tag.
+  „Herunterladen“ eines Fotos öffnet am iPhone und iPad das Teilen-Menü („Bild sichern“,
+  `use-shared-file.ts`): Safaris Download-Seite hätte in der installierten App keinen Weg zurück.
+  Andere Dateien öffnen dort neben der App; Android und Desktop laden wie gewohnt herunter.
 - **Sprachnachrichten:** Die App nimmt mit `MediaRecorder` auf (Opus in WebM, in Safari AAC in
   MP4; `src/lib/voice.ts`) und lädt die Aufnahme wie eine Datei hoch, mit `kind=voice`: Bun
   liest den Typ einer Datei im Formular aus ihrem Namen (`.webm` wäre `video/webm`), der Server

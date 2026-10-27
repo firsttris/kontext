@@ -57,3 +57,11 @@ describe("EventEditor attendees", () => {
     expect(screen.queryByRole("listbox")).toBeNull();
   });
 });
+
+describe("EventEditor times", () => {
+  it("moves the end with the start, keeping the length", () => {
+    render(<EventEditor start="2026-10-31T09:00" onDone={vi.fn()} onCancel={vi.fn()} />);
+    fireEvent.change(screen.getByLabelText("Beginn Uhrzeit"), { target: { value: "17:30" } });
+    expect((screen.getByLabelText("Ende Uhrzeit") as HTMLInputElement).value).toBe("18:30");
+  });
+});

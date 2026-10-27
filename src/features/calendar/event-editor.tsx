@@ -23,6 +23,7 @@ import {
   newEventForm,
   seriesStart,
   validateEventForm,
+  withStart,
 } from "@/lib/event-form";
 import { type CalendarEvent, isInstance, toLocal } from "@/lib/jscalendar";
 import { formAt, formSlot } from "@/lib/planning";
@@ -90,12 +91,12 @@ export const EventEditor = ({ event, series, start, onDone, onCancel }: Props) =
   const [scope, setScope] = useState<Scope>("this");
   const [problem, setProblem] = useState<string | null>(null);
   const set = (key: keyof EventForm) => (e: { target: { value: string } }) =>
-    setForm((current) => {
-      const next = { ...current, [key]: e.target.value };
+    setForm((current) =>
       // Moving the start keeps the length, like in every calendar.
-      if (key === "date" && current.endDate === current.date) next.endDate = e.target.value;
-      return next;
-    });
+      key === "date" || key === "startTime"
+        ? withStart(current, { [key]: e.target.value })
+        : { ...current, [key]: e.target.value },
+    );
 
   const save = (data: Record<string, unknown>) => {
     if (!event) {

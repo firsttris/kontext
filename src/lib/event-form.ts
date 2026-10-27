@@ -91,6 +91,24 @@ export const newEventForm = (startLocal: string, minutes = 60): EventForm => {
 };
 
 /** The addresses in the attendee field ("Anna Weber <a@x.de>, b@x.de"). */
+/**
+ * The form with a new start date or time; the end moves along so the length stays, as in Google
+ * and Apple Calendar. An end that was not after the start gives the new start an hour. A field
+ * left empty mid-typing changes only itself.
+ */
+export const withStart = (
+  form: EventForm,
+  change: Partial<Pick<EventForm, "date" | "startTime">>,
+): EventForm => {
+  const next = { ...form, ...change };
+  const before = `${form.date}T${form.startTime}`;
+  const after = `${next.date}T${next.startTime}`;
+  const length = localDiff(before, `${form.endDate}T${form.endTime}`);
+  if (Number.isNaN(localDiff(before, after)) || Number.isNaN(length)) return next;
+  const end = shiftLocal(after, length > 0 ? length : 60);
+  return { ...next, endDate: end.slice(0, 10), endTime: end.slice(11, 16) };
+};
+
 export const attendeeAddresses = (text: string): EmailAddress[] => parseAddresses(text).addresses;
 
 export const attendeeEmails = (text: string): string[] =>

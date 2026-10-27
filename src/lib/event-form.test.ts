@@ -10,6 +10,7 @@ import {
   removeMeetingNote,
   seriesStart,
   validateEventForm,
+  withStart,
 } from "./event-form";
 import {
   type CalendarEvent,
@@ -319,5 +320,44 @@ describe("attendeeEmails", () => {
       "petra@keller.test",
       "anna@weber.test",
     ]);
+  });
+});
+
+describe("withStart", () => {
+  const form = newEventForm("2026-10-31T09:00:00", 90);
+
+  it("moves the end with a new start time, keeping the length", () => {
+    const moved = withStart(form, { startTime: "17:30" });
+    expect([moved.date, moved.startTime, moved.endDate, moved.endTime]).toEqual([
+      "2026-10-31",
+      "17:30",
+      "2026-10-31",
+      "19:00",
+    ]);
+  });
+
+  it("carries the end into the next day", () => {
+    const moved = withStart(form, { startTime: "23:30" });
+    expect([moved.endDate, moved.endTime]).toEqual(["2026-11-01", "01:00"]);
+  });
+
+  it("moves the end with a new date", () => {
+    const moved = withStart(form, { date: "2026-11-02" });
+    expect([moved.endDate, moved.endTime]).toEqual(["2026-11-02", "10:30"]);
+  });
+
+  it("keeps the days of an all-day event", () => {
+    const allDay = { ...form, allDay: true, endDate: "2026-11-01" };
+    expect(withStart(allDay, { date: "2026-11-05" }).endDate).toBe("2026-11-06");
+  });
+
+  it("gives an hour when the end was not after the start", () => {
+    const broken = { ...form, endTime: "08:00" };
+    expect(withStart(broken, { startTime: "17:30" }).endTime).toBe("18:30");
+  });
+
+  it("changes only the start while a field is empty", () => {
+    const moved = withStart(form, { startTime: "" });
+    expect([moved.startTime, moved.endTime]).toEqual(["", "10:30"]);
   });
 });
