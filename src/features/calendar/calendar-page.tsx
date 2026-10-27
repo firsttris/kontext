@@ -220,7 +220,7 @@ export const CalendarPage = ({ search }: { search: Search }) => {
 
   return (
     <>
-      <aside className="hidden h-full w-[248px] shrink-0 flex-col gap-6 border-r border-border bg-side p-4 lg:flex">
+      <aside className="hidden h-full w-sidebar shrink-0 flex-col gap-6 border-r border-border bg-side p-4 lg:flex">
         <Button asChild variant="primary" className="h-[38px]">
           <Link
             to="/calendar"
