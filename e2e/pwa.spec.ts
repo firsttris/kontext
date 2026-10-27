@@ -5,8 +5,15 @@
  */
 import { readFile, writeFile } from "node:fs/promises";
 import { expect, type Page, test } from "@playwright/test";
+import { compressFile } from "../dev/precompress";
 
 const WORKER = "dist/service-worker.js";
+
+/** The worker as a build writes it: with its Brotli and gzip copies, which the server prefers. */
+const writeWorker = async (source: string) => {
+  await writeFile(WORKER, source);
+  await compressFile(WORKER);
+};
 
 /** The page is controlled by an active service worker (after a reload on first visit). */
 const controlled = async (page: Page) => {
@@ -39,6 +46,33 @@ test.describe("App (PWA)", () => {
     );
   });
 
+  test("liefert Seite und Bausteine mit Brotli, wenn der Browser es nimmt", async ({ request }) => {
+    const page = await request.get("/login", { headers: { "accept-encoding": "br, gzip" } });
+    expect(page.headers()["content-encoding"]).toBe("br");
+    expect(await page.text()).toContain('<div id="root">');
+    const script = (await page.text()).match(/\/assets\/index-[\w-]+\.js/)?.[0];
+    expect(script).toBeTruthy();
+    for (const [accept, encoding] of [
+      ["br, gzip", "br"],
+      ["gzip", "gzip"],
+    ] as const) {
+      const response = await request.get(script!, { headers: { "accept-encoding": accept } });
+      expect(response.headers()["content-encoding"], accept).toBe(encoding);
+      expect(response.headers().vary, accept).toContain("Accept-Encoding");
+      expect(response.headers()["cache-control"]).toContain("immutable");
+    }
+  });
+
+  test("lädt beim ersten Besuch nur vor, was ohne Netz gebraucht wird", async ({ request }) => {
+    const worker = await (await request.get("/service-worker.js")).text();
+    const precached = [...worker.matchAll(/assets\/[\w.-]+/g)].map((match) => match[0]);
+    expect(precached.some((path) => /^assets\/index-.+\.js$/.test(path))).toBe(true);
+    // Calls need the network, S/MIME and other alphabets are rare: cached when first used.
+    expect(precached.filter((path) => /livekit|node-forge|cyrillic|vietnamese/.test(path))).toEqual(
+      [],
+    );
+  });
+
   test("startet auch ohne Netz", async ({ page, context }) => {
     await controlled(page);
     await context.setOffline(true);
@@ -56,7 +90,7 @@ test.describe("App (PWA)", () => {
     const original = await readFile(WORKER, "utf8");
     try {
       // A new build on the server: the worker's bytes change.
-      await writeFile(WORKER, `${original}\n// new build ${Date.now()}\n`);
+      await writeWorker(`${original}\n// new build ${Date.now()}\n`);
       await page.evaluate(async () => (await navigator.serviceWorker.getRegistration())?.update());
       const banner = page
         .getByRole("status")
@@ -83,7 +117,7 @@ test.describe("App (PWA)", () => {
       await expect(banner).toHaveCount(0);
       expect(first).toContain("/service-worker.js");
     } finally {
-      await writeFile(WORKER, original);
+      await writeWorker(original);
     }
   });
 

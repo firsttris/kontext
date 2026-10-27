@@ -159,6 +159,7 @@ The [encryption concept](https://firsttris.github.io/kontext/encryption.html) ex
 
 - **Add people**, reset passwords and second factors, **lock access**; **shared mailboxes** with rights per person; extra addresses.
 - **Out-of-office for colleagues** with a deputy, **company signature** for everyone, **offboarding** without deleting anything.
+- **Backups at a glance**: target, last run, storage used, the nightly time and "back up now" – Kontext only asks, the server runs the backup.
 - **Move in** from Microsoft 365, Gmail, GMX and other IMAP providers (kept in sync until you switch), from Outlook (PST) and from a Google export.
 
 ### 📱 On every device

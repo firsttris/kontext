@@ -446,8 +446,13 @@ printf '%s\n' "KONTEXT_DOMAIN=kontext.firma.de" \
   "AWS_ACCESS_KEY_ID=<access-key-id>" "AWS_SECRET_ACCESS_KEY=<secret-access-key>" > backup.env
 apt-get install -y restic
 ./backup.sh                                   # erste Sicherung, legt das Repository an
-( crontab -l 2>/dev/null; echo '0 3 * * *  /opt/kontext/deploy/backup.sh >> /var/log/kontext-backup.log 2>&1' ) | crontab -
+./backup-control.sh install                   # Units für die nächtliche Sicherung
+systemctl enable --now kontext-backup.timer kontext-backup-control.path
 ```
+
+Wer die Sicherung bisher per Cron startet, nimmt den Eintrag heraus, sobald der Timer läuft:
+`crontab -l | grep -v 'deploy/backup.sh' | crontab -`. Danach zeigt die Firmenverwaltung unter
+*Datensicherung* Ziel, letzten Lauf und Speicher; Uhrzeit und „Jetzt sichern“ gehen von dort.
 
 **Das Restic-Passwort** (`grep RESTIC_PASSWORD backup.env`) zusätzlich außerhalb des Servers
 ablegen, etwa im Passwortmanager: Ohne es ist das Backup nicht lesbar, wenn der Server weg ist.

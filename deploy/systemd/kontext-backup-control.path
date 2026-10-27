@@ -1,0 +1,12 @@
+# Watches what Kontext writes into its volume: a new time (settings.json) or "Jetzt sichern"
+# (run-now). @CONTROL@ is <volume kontext-data>/backup-control, filled in on install.
+[Unit]
+Description=Kontext: Wünsche zur Datensicherung
+
+[Path]
+PathChanged=@CONTROL@/settings.json
+PathExists=@CONTROL@/run-now
+Unit=kontext-backup-control.service
+
+[Install]
+WantedBy=paths.target

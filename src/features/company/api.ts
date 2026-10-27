@@ -9,6 +9,7 @@ import type {
   Employee,
   SharedMailbox,
 } from "../../../server/company/accounts";
+import type { BackupSettings, BackupView } from "../../../server/company/backup-schema";
 import type { FolderName } from "../../../server/company/mailstore";
 import type { Check } from "../../../server/company/security";
 import type { Job } from "../../../server/migration/jobs";
@@ -118,6 +119,17 @@ export type SecurityReport = {
 
 /** How safe the company's mail travels (server/company/security.ts). */
 export const getSecurity = () => send<SecurityReport>("GET", "/security");
+
+export type { BackupSettings, BackupView };
+
+/** The Datensicherung as the host reports it (server/company/backup.ts). */
+export const getBackup = () => send<BackupView>("GET", "/backup");
+
+export const saveBackupSettings = (settings: BackupSettings) =>
+  send<BackupSettings>("PUT", "/backup/settings", settings);
+
+/** "Jetzt sichern": the host starts it within moments; 409 while one runs. */
+export const runBackup = () => send<{ ok: true }>("POST", "/backup/run");
 
 /** How long the team chat keeps messages, in days; 0: for ever. */
 export const getChatRetention = () => send<{ days: number }>("GET", "/chat-retention");

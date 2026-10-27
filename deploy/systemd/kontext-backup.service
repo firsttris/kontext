@@ -1,0 +1,15 @@
+# The nightly backup (deploy/backup.sh) with the status for Kontext's Firmenverwaltung.
+# Installed by `deploy/backup-control.sh install`, which fills in @DEPLOY@ and @CONTROL@.
+[Unit]
+Description=Kontext: Datensicherung
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=oneshot
+# backup.sh (it takes its flock itself); output to the journal and to log.txt in Kontext's volume.
+ExecStart=@DEPLOY@/backup-control.sh run
+# Also after a run that was stopped or killed: status.json says so instead of "running".
+ExecStopPost=@DEPLOY@/backup-control.sh finish
+Nice=10
+IOSchedulingClass=idle

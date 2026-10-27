@@ -1,7 +1,7 @@
 // @vitest-environment node
 import { generateKey } from "openpgp";
 import { describe, expect, it } from "vitest";
-import { groupFingerprint, lockedPrivateKey, publicKeyInfo, wkdHash } from "./keys";
+import { lockedPrivateKey, publicKeyInfo, wkdHash } from "./keys";
 
 describe("OpenPGP keys", () => {
   it("reads a public key's addresses and fingerprint; a secret one only if locked", async () => {
@@ -25,6 +25,5 @@ describe("OpenPGP keys", () => {
   it("names an address for WKD as the draft does", async () => {
     // The example of draft-koch-openpgp-webkey-service: "Joe.Doe" → this hash.
     expect(await wkdHash("Joe.Doe")).toBe("iy9q119eutrkn8s1mk4r39qejnbu3n5q");
-    expect(groupFingerprint("ABCD1234EF56")).toBe("ABCD 1234 EF56");
   });
 });

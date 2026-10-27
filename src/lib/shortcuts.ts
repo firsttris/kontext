@@ -31,8 +31,34 @@ const NAMES: Record<string, string> = { Escape: "esc", ArrowLeft: "left", ArrowR
 
 export type ShortcutGroup = "general" | "mail" | "calendar" | "contacts";
 
+export type ShortcutAction =
+  | "help"
+  | "apps"
+  | "compose"
+  | "search"
+  | "nextPrev"
+  | "reply"
+  | "replyAll"
+  | "forward"
+  | "archive"
+  | "snooze"
+  | "delete"
+  | "flag"
+  | "spam"
+  | "unread"
+  | "select"
+  | "print"
+  | "newTask"
+  | "discuss"
+  | "close"
+  | "newEvent"
+  | "today"
+  | "prevNext"
+  | "views"
+  | "newContact";
+
 /** Every shortcut with its group; `keys` as shown in the help ("j / k"). */
-export const SHORTCUTS: { group: ShortcutGroup; keys: string[]; action: string }[] = [
+export const SHORTCUTS: { group: ShortcutGroup; keys: string[]; action: ShortcutAction }[] = [
   { group: "general", keys: ["?"], action: "help" },
   { group: "general", keys: ["1", "2", "3", "4", "5"], action: "apps" },
   { group: "mail", keys: ["c"], action: "compose" },

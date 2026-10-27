@@ -310,4 +310,34 @@ test.describe("Chat am Handy @phone", () => {
     await page.getByRole("menuitem", { name: "Kontakte" }).click();
     await expect(page.getByRole("searchbox", { name: "Kontakte suchen" })).toBeVisible();
   });
+
+  test("ein Kanal öffnet unten, bei der neuesten Nachricht", async ({ page }) => {
+    await login(page);
+    await page
+      .getByRole("navigation", { name: "Apps" })
+      .getByRole("link", { name: /^Chat/ })
+      .click();
+    const channels = page.getByRole("navigation", { name: "Kanäle" });
+    await channels.getByRole("link", { name: /allgemein/ }).click();
+    const messages = page.getByRole("list", { name: "Nachrichten" });
+    // More than a screen, so that the list scrolls.
+    const texts = Array.from({ length: 14 }, (_, index) => unique(`Zeile ${index + 1}`));
+    for (const text of texts) {
+      await write(page, text);
+      await expect(messages).toContainText(text);
+    }
+    await page.getByRole("button", { name: "Zurück zu den Chats" }).click();
+    await channels.getByRole("link", { name: /allgemein/ }).click();
+    await expect(messages).toContainText(texts.at(-1)!);
+    const scroller = messages.locator("xpath=..");
+    await expect
+      .poll(() =>
+        scroller.evaluate((element) => ({
+          scrolls: element.scrollHeight > element.clientHeight,
+          atBottom: element.scrollHeight - element.scrollTop - element.clientHeight < 2,
+        })),
+      )
+      .toEqual({ scrolls: true, atBottom: true });
+    await expect(messages.getByText(texts.at(-1)!)).toBeInViewport();
+  });
 });
