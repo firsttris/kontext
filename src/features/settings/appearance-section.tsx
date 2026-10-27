@@ -1,7 +1,6 @@
 /**
- * Per device: light or dark, the mail list as single mails or conversations, Kontext as an app,
- * notifications; and the keyboard shortcuts for
- * reference.
+ * Per device: light or dark, the apps in the phone's tab bar, the mail list as single mails or
+ * conversations, Kontext as an app, notifications; and the keyboard shortcuts for reference.
  */
 import { Monitor, Moon, Sun } from "lucide-react";
 import { useId } from "react";
@@ -18,6 +17,7 @@ import { setThreadView, useThreadView } from "../mail/thread-view";
 import { DeviceSwitch } from "../notifications/device-switch";
 import { AppSection } from "./app-section";
 import { SettingsCard } from "./settings-page";
+import { TabBarSection } from "./tab-bar-section";
 
 const CHOICES: [ThemeChoice, () => string, typeof Sun][] = [
   ["system", m.settings_theme_system, Monitor],
@@ -57,6 +57,7 @@ export const AppearanceSection = () => {
           ))}
         </fieldset>
       </SettingsCard>
+      <TabBarSection />
       <AppSection />
       <SettingsCard title={m.settings_mail_list()}>
         <div className="flex flex-col gap-1">

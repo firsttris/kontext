@@ -16,12 +16,11 @@ import { useShortcuts } from "@/components/use-shortcuts";
 import { useVisibleHeight } from "@/components/use-visible-height";
 import { useChannels } from "@/features/chat/queries";
 import { useFrameState } from "@/features/documents/frame-store";
-import { usePhone } from "@/features/phone/queries";
 import { totalUnread } from "@/lib/chat";
 import { cn } from "@/lib/cn";
 import { m } from "@/paraglide/messages";
 import { AccountAvatar, StorageSummary, storageText, useOwnQuota } from "./account-avatar";
-import { TAB_ITEMS, useMoreItems, useNavItems } from "./nav-items";
+import { useMoreItems, useNavItems, usePhoneNav, useTabItems } from "./nav-items";
 import { useSession } from "./session";
 
 export { useSession };
@@ -62,12 +61,6 @@ export const railButton = (active: boolean) =>
     "flex size-10 items-center justify-center rounded-[10px] hover:bg-hover",
     active ? "bg-subtle text-fg" : "text-muted hover:text-fg",
   );
-
-/** "Telefon" in the rail and under "Mehr", for whoever may telephone through the box. */
-const usePhoneNav = (): boolean => {
-  const { enabled, allowed } = usePhone();
-  return enabled && allowed;
-};
 
 /** Unread chat messages, for the badge on "Chat". */
 const useChatUnread = (): number => totalUnread(useChannels().channels);
@@ -194,26 +187,30 @@ export const AppShell = ({ children, bell }: { children: ReactNode; bell?: React
   );
 };
 
-/** "Mehr" in the tab bar: the other apps, the account and signing out. */
-const MoreMenu = () => {
+/** "Mehr" in the tab bar: the apps not in it, the account and signing out. */
+const MoreMenu = ({ chatUnread }: { chatUnread: number }) => {
   const { logout } = useAuth();
   const { data: session } = useSession();
   const pathname = useRouterState({ select: (state) => state.location.pathname });
-  const phone = usePhoneNav();
   const moreItems = useMoreItems();
-  const active = [...moreItems.map((entry) => entry.to), "/settings", "/phone"].some((to) =>
+  const active = [...moreItems.map((entry) => entry.to), "/settings"].some((to) =>
     pathname.startsWith(to),
   );
+  // Chat moved under "Mehr" keeps its unread count on the phone: on "Mehr" and on its entry.
+  const unreadOf = (to: string) => (to === "/chat" ? chatUnread : 0);
+  const unread = moreItems.reduce((sum, { to }) => sum + unreadOf(to), 0);
   return (
     <MenuRoot>
       <MenuTrigger
+        aria-label={unreadLabel(m.nav_more(), unread)}
         className={cn(
-          "flex w-16 flex-col items-center gap-1 text-[11px]",
+          "relative flex w-16 flex-col items-center gap-1 text-[11px]",
           active ? "font-medium text-fg" : "text-muted",
         )}
       >
         <Ellipsis size={22} strokeWidth={1.75} />
         {m.nav_more()}
+        <UnreadBadge count={unread} className="-top-1 left-[calc(50%+4px)]" />
       </MenuTrigger>
       <MenuContent side="top" align="end">
         <MenuLabel>{session?.username ?? ""}</MenuLabel>
@@ -221,18 +218,18 @@ const MoreMenu = () => {
         <MenuSeparator />
         {moreItems.map(({ to, label, icon: Icon }) => (
           <MenuItem key={to} asChild>
-            <Link to={to} className="text-fg no-underline">
+            <Link
+              to={to}
+              aria-label={unreadLabel(label(), unreadOf(to))}
+              className="text-fg no-underline"
+            >
               <Icon size={15} /> {label()}
+              {unreadOf(to) > 0 ? (
+                <span className="ml-auto font-mono text-[11px] text-muted">{unreadOf(to)}</span>
+              ) : null}
             </Link>
           </MenuItem>
         ))}
-        {phone ? (
-          <MenuItem asChild>
-            <Link to="/phone" className="text-fg no-underline">
-              <Phone size={15} /> {m.nav_phone()}
-            </Link>
-          </MenuItem>
-        ) : null}
         <MenuItem asChild>
           <Link to="/settings" search={{}} className="text-fg no-underline">
             <Settings size={15} /> {m.nav_settings()}
@@ -247,16 +244,20 @@ const MoreMenu = () => {
   );
 };
 
-/** The tab bar of the phone views; each list screen places it at its bottom. */
+/**
+ * The tab bar of the phone views; each list screen places it at its bottom. Which apps it shows
+ * is chosen under Einstellungen → Darstellung (per device).
+ */
 export const TabBar = () => {
   const pathname = useRouterState({ select: (state) => state.location.pathname });
   const chatUnread = useChatUnread();
+  const items = useTabItems();
   return (
     <nav
       aria-label="Apps"
       className="flex shrink-0 justify-around border-t border-border bg-bg px-3 pt-2 safe-bottom md:hidden"
     >
-      {TAB_ITEMS.map(({ to, label, icon: Icon }) => {
+      {items.map(({ to, label, icon: Icon }) => {
         const active = pathname.startsWith(to);
         const unread = to === "/chat" ? chatUnread : 0;
         return (
@@ -276,7 +277,7 @@ export const TabBar = () => {
           </Link>
         );
       })}
-      <MoreMenu />
+      <MoreMenu chatUnread={chatUnread} />
     </nav>
   );
 };

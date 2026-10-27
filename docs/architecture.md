@@ -1093,6 +1093,14 @@ gleich breit (`w-sidebar`, 236 px, in `src/styles.css`), damit beim Wechsel zwis
 nichts springt. Kontakte hat keine Seitenleiste: die Spalte dort ist die Kontaktliste und so
 breit wie die Mailliste (320 px).
 
+Am Handy zeigt die Tab-Leiste vier Apps neben „Mehr“, anfangs Mail, Kalender, Chat und Aufgaben.
+Unter Einstellungen → Darstellung → „Tab-Leiste am Handy“ wählt man pro Platz eine App; wer eine
+App wählt, die schon einen Platz hat, tauscht die beiden. Zur Wahl stehen nur Apps, die man hat
+(Dokumente mit Schreibzeug, Telefon mit Telefonbox und Freigabe); alle übrigen stehen unter
+„Mehr“. Die Wahl gilt pro Gerät (im Browser gespeichert, `kontext.tabbar`); eine App, die es
+nicht mehr gibt, fällt heraus, und die Plätze füllen sich mit der Grundeinstellung
+(`src/lib/tab-bar.ts`). „Zurücksetzen“ stellt sie wieder her.
+
 Tastaturkürzel sind einzelne Tasten wie in Gmail und stehen als Liste in `src/lib/shortcuts.ts`;
 die Hilfe (`?` oder das Tastatur-Symbol unten in der Leiste) und die Einstellungen zeigen dieselbe
 Liste. Solange ein Eingabefeld oder ein Dialog den Fokus hat, greift keine Taste.
@@ -1312,7 +1320,7 @@ weiter zu Schreibzeug. Im Rahmen fragt Schreibzeug mit `prompt=none`: mit Sitzun
 sofort zurück, ohne Sitzung `login_required`.
 
 **Das Modul.** Mit `SCHREIBZEUG_URL` zeigt Kontext „Dokumente“ als sechstes Modul (Kürzel 6, am
-Handy unter „Mehr“). `/documents/…` zeigt Schreibzeug in einem Rahmen im Inhaltsbereich
+Handy unter „Mehr“, wenn es nicht in die Tab-Leiste gelegt ist). `/documents/…` zeigt Schreibzeug in einem Rahmen im Inhaltsbereich
 (`src/features/documents/documents-host.tsx`), der beim ersten Besuch entsteht und beim Wechsel zu
 Mail und zurück stehen bleibt, damit ein offenes Dokument offen bleibt. Die Adresse folgt der Seite
 im Rahmen (`/documents/edit/…`, ohne eigenen Verlaufseintrag: den hat der Rahmen), und Kontexts

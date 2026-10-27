@@ -44,7 +44,7 @@ oder einem eigenen Rechner.
 - **Keine Kosten pro Kopf**: zehn Mitarbeiter kosten dasselbe wie einer; bezahlt wird der Server.
 - **Kontext statt Inseln**: zu jedem Kontakt die letzten Mails, nächsten Termine, offenen Aufgaben und Anrufe – ein kleines CRM ohne Extra-Tool.
 - **Eine App statt fünf**: Mail, Kalender, Aufgaben, Team-Chat mit Videocalls, das Firmentelefon und Dokumente, mit einer Anmeldung.
-- **Am Handy wie am PC**: jede Ansicht ist fürs Handy gebaut; als App auf jedem Gerät installierbar – ohne App-Store.
+- **Am Handy wie am PC**: jede Ansicht ist fürs Handy gebaut, mit einer Tab-Leiste für die Apps, die man am meisten braucht; als App auf jedem Gerät installierbar – ohne App-Store.
 - **Offen**: Open Source (AGPL), Standardprotokolle (JMAP, IMAP, SMTP, CalDAV, CardDAV) – Outlook, Thunderbird, iPhone und Android funktionieren weiter.
 
 **Für wen:** Freelancer und Selbstständige, Handwerk, Kanzleien, Praxen und den Mittelstand (mit

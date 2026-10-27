@@ -44,7 +44,7 @@ your own.
 - **No per-seat pricing**: ten people cost the same as one; you pay for the server.
 - **Context instead of silos**: every contact with their latest mails, upcoming appointments, open tasks and calls – a small CRM without another tool.
 - **One app instead of five**: mail, calendar, tasks, team chat with video calls, the office phone and documents, with one sign-in.
-- **Phone and desktop alike**: every view is built for the phone; install it as an app on any device – no app store needed.
+- **Phone and desktop alike**: every view is built for the phone, with a tab bar you can fill with the apps you use most; install it as an app on any device – no app store needed.
 - **Open**: open source (AGPL), standard protocols (JMAP, IMAP, SMTP, CalDAV, CardDAV) – Outlook, Thunderbird, iPhone and Android keep working.
 
 **Who it's for:** freelancers and the self-employed, trades, law firms, medical practices and
