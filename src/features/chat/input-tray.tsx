@@ -5,7 +5,8 @@ import { MessageCard } from "./message-card";
 import type { Attachments } from "./use-attachments";
 
 export const InputTray = ({ attachments }: { attachments: Attachments }) => {
-  const { files, cards, removeFile, removeCard } = attachments;
+  const { cards, removeFile, removeCard } = attachments;
+  const files = attachments.files.filter((file) => !file.quiet);
   if (!files.length && !cards.length) return null;
   return (
     <section

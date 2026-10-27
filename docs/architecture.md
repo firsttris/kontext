@@ -713,7 +713,13 @@ Principal-ID), die Namen holt die App wie bei den Aufgaben über die Principals.
   liefert er wie Fotos mit seinem Typ aus, und mit Byte-Bereichen (`Range`,
   `server/chat/range.ts`), ohne die Safari nichts abspielt. Länge und Wellenform rechnet die App
   aus dem dekodierten Ton (`OfflineAudioContext`), weil eine WebM-Aufnahme des Browsers ihre
-  Länge nicht angibt. Beim Abspielen stellt die App die Audio-Session auf „playback“
+  Länge nicht angibt; bei einer eigenen Aufnahme schon aus der Datei vor Ort, während sie hochgeht
+  (`use-attachments.ts`, im Cache unter der Datei-ID), damit die gesendete Nachricht gleich mit
+  Wellenform erscheint. Bis dahin bleibt die Aufnahmeleiste stehen, die Datei erscheint nicht als
+  Anhang über dem Feld. Den Pegel während der Aufnahme liest ein `AnalyserNode` am Mikrofon
+  (`use-voice-recorder.ts`, `liveLevel` in `src/lib/voice.ts`); den Fortschritt beim Abspielen
+  liest die App jedes Bild (`requestAnimationFrame`), weil `timeupdate` nur etwa viermal pro
+  Sekunde kommt. Beim Abspielen stellt die App die Audio-Session auf „playback“
   (`src/lib/audio-session.ts`, Audio Session API): am iPhone macht das Dekodieren sie sonst
   „ambient“ (stumm mit dem Lautlos-Schalter), eine Aufnahme lässt sie bei „play-and-record“ (leise
   an der Hörmuschel), und die erste Wiedergabe bliebe still. Unter „playback“ beendet Safari

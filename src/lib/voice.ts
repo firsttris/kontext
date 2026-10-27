@@ -60,3 +60,19 @@ export const waveform = (samples: ArrayLike<number>, bars: number): number[] => 
   const loudest = Math.max(...peaks);
   return peaks.map((peak) => (loudest > 0 ? Math.max(FLOOR, peak / loudest) : FLOOR));
 };
+
+/**
+ * How loud the microphone is now, between FLOOR and 1: the furthest sample from silence in the
+ * analyser's time domain bytes (128 is silence), lifted a little so speaking fills the bar.
+ */
+export const liveLevel = (samples: ArrayLike<number>): number => {
+  let peak = 0;
+  for (let i = 0; i < samples.length; i++) {
+    peak = Math.max(peak, Math.abs((samples[i] ?? 128) - 128) / 128);
+  }
+  return Math.max(FLOOR, Math.min(1, Math.sqrt(peak)));
+};
+
+/** The last `count` levels, the newest at the end. */
+export const keepLatest = (levels: number[], level: number, count: number): number[] =>
+  [...levels, level].slice(-count);

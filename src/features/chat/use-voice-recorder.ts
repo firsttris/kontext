@@ -1,24 +1,57 @@
 /**
  * Recording a voice message with the microphone: `start` asks for it (the browser asks the person
  * the first time), `stop` gives the recording as a file, `discard` throws it away. The microphone
- * is let go as soon as the recording ends, also when the conversation closes.
+ * is let go as soon as the recording ends, also when the conversation closes. Meanwhile `levels`
+ * says how loud it was lately, for the waveform growing in the recorder bar.
  */
 import { useCallback, useEffect, useRef, useState } from "react";
 import { holdMicrophone } from "@/lib/audio-session";
-import { recordingType, voiceFile } from "@/lib/voice";
+import { keepLatest, liveLevel, recordingType, voiceFile } from "@/lib/voice";
 import { m } from "@/paraglide/messages";
 import { stopVoiceMessage } from "./voice-message";
+
+/** How many levels the recorder bar shows. */
+export const LIVE_BARS = 40;
+
+/** How often the time and the level are read. */
+const TICK_MS = 100;
+
+type Meter = { read: () => number; close: () => void };
 
 type Session = {
   recorder: MediaRecorder;
   stream: MediaStream;
   chunks: Blob[];
   timer: ReturnType<typeof setInterval>;
+  meter: Meter | null;
   letGo: () => void;
 };
 
-const release = ({ stream, timer, letGo }: Session) => {
+/** Listens to the microphone for its level; none where Web Audio is missing or refuses. */
+const meterOf = (stream: MediaStream): Meter | null => {
+  if (typeof AudioContext === "undefined") return null;
+  try {
+    const context = new AudioContext();
+    const analyser = context.createAnalyser();
+    analyser.fftSize = 512;
+    context.createMediaStreamSource(stream).connect(analyser);
+    void context.resume().catch(() => undefined);
+    const samples = new Uint8Array(analyser.fftSize);
+    return {
+      read: () => {
+        analyser.getByteTimeDomainData(samples);
+        return liveLevel(samples);
+      },
+      close: () => void context.close().catch(() => undefined),
+    };
+  } catch {
+    return null;
+  }
+};
+
+const release = ({ stream, timer, meter, letGo }: Session) => {
   clearInterval(timer);
+  meter?.close();
   for (const track of stream.getTracks()) track.stop();
   letGo();
 };
@@ -31,6 +64,7 @@ export const useVoiceRecorder = ({ onError }: { onError: (message: string) => vo
   const mounted = useRef(true);
   const [recording, setRecording] = useState(false);
   const [seconds, setSeconds] = useState(0);
+  const [levels, setLevels] = useState<number[]>([]);
 
   useEffect(() => {
     mounted.current = true;
@@ -74,11 +108,16 @@ export const useVoiceRecorder = ({ onError }: { onError: (message: string) => vo
     recorder.ondataavailable = (event) => {
       if (event.data.size) chunks.push(event.data);
     };
+    const meter = meterOf(stream);
     const startedAt = Date.now();
-    const timer = setInterval(() => setSeconds(Math.floor((Date.now() - startedAt) / 1000)), 250);
-    session.current = { recorder, stream, chunks, timer, letGo };
+    const timer = setInterval(() => {
+      setSeconds(Math.floor((Date.now() - startedAt) / 1000));
+      if (meter) setLevels((current) => keepLatest(current, meter.read(), LIVE_BARS));
+    }, TICK_MS);
+    session.current = { recorder, stream, chunks, timer, meter, letGo };
     recorder.start();
     setSeconds(0);
+    setLevels([]);
     setRecording(true);
   }, [onError]);
 
@@ -93,12 +132,20 @@ export const useVoiceRecorder = ({ onError }: { onError: (message: string) => vo
           resolve(null);
           return;
         }
-        // The last piece of the recording arrives before "stop".
-        current.recorder.onstop = () => {
+        const done = () => {
           release(current);
           const type = current.recorder.mimeType || current.chunks[0]?.type || "";
           resolve(keep && current.chunks.length ? voiceFile(current.chunks, type) : null);
         };
+        // Stopped already: the microphone ended (unplugged, taken by a call), and the recorder
+        // with it, its last piece handed over; "stop" would not come again (MediaStream Recording,
+        // stop() on an inactive recorder does nothing).
+        if (current.recorder.state === "inactive") {
+          done();
+          return;
+        }
+        // The last piece of the recording arrives before "stop".
+        current.recorder.onstop = done;
         current.recorder.stop();
       }),
     [],
@@ -107,6 +154,7 @@ export const useVoiceRecorder = ({ onError }: { onError: (message: string) => vo
   return {
     recording,
     seconds,
+    levels,
     start,
     stop: useCallback(() => finish(true), [finish]),
     discard: useCallback(() => void finish(false), [finish]),

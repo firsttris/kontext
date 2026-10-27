@@ -106,24 +106,31 @@ export const MessageInput = ({
 
   const toast = useToast();
   const voice = useVoiceRecorder({ onError: (message) => toast.show(message, "error") });
-  // A finished recording goes up like a file and is sent once it is there.
-  const [sendVoice, setSendVoice] = useState(false);
+  // A finished recording goes up like a file, unseen, and is sent once it is there; until then the
+  // recorder bar stays ("stopping" while the recorder hands over the last piece, then "uploading").
+  const [voiceSend, setVoiceSend] = useState<"idle" | "stopping" | "uploading">("idle");
   const sendNow = useRef(send);
   sendNow.current = send;
   const uploading = Boolean(attachments?.uploading);
   const nothingAttached = attachments?.empty ?? true;
   useEffect(() => {
-    if (!sendVoice || uploading) return;
-    setSendVoice(false);
+    if (voiceSend !== "uploading" || uploading) return;
+    setVoiceSend("idle");
     // Nothing there: the upload failed, and said so.
     if (!nothingAttached) sendNow.current();
-  }, [sendVoice, uploading, nothingAttached]);
+  }, [voiceSend, uploading, nothingAttached]);
   const sendRecording = async () => {
+    if (voiceSend !== "idle") return;
+    setVoiceSend("stopping");
     const file = await voice.stop();
-    if (!file || !attachments) return;
-    attachments.addFiles([file]);
-    setSendVoice(true);
+    if (!file || !attachments) {
+      setVoiceSend("idle");
+      return;
+    }
+    attachments.addFiles([file], { quiet: true });
+    setVoiceSend("uploading");
   };
+  const voiceBar = voice.recording || voiceSend !== "idle";
   const micInsteadOfSend = Boolean(attachments) && !hasContent;
   const micButton = (
     <Button
@@ -233,9 +240,11 @@ export const MessageInput = ({
       ) : null}
       <div className="md:rounded-xl md:border md:border-border md:focus-within:border-muted">
         {attachments ? <InputTray attachments={attachments} /> : null}
-        {voice.recording ? (
+        {voiceBar ? (
           <VoiceRecorderBar
             seconds={voice.seconds}
+            levels={voice.levels}
+            sending={voiceSend !== "idle"}
             onDiscard={voice.discard}
             onSend={() => void sendRecording()}
           />
@@ -243,7 +252,7 @@ export const MessageInput = ({
         <div
           className={cn(
             "flex items-end gap-1.5 md:flex-col md:items-stretch md:gap-0",
-            voice.recording && "hidden",
+            voiceBar && "hidden",
           )}
         >
           {attachments ? (

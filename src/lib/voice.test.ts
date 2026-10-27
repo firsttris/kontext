@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { formatDuration, recordingType, voiceFile, waveform } from "./voice";
+import { formatDuration, keepLatest, liveLevel, recordingType, voiceFile, waveform } from "./voice";
 
 describe("voice messages", () => {
   it("record in Opus where the browser can, else in what it has", () => {
@@ -28,5 +28,16 @@ describe("voice messages", () => {
     expect(waveform(samples, 4)).toEqual([0.25, 0.5, 0.08, 1]);
     expect(waveform([0, 0, 0, 0], 2)).toEqual([0.08, 0.08]);
     expect(waveform([0.5], 3)).toEqual([1, 0.08, 0.08]);
+  });
+
+  it("show the microphone's level while recording, silence as a dot", () => {
+    expect(liveLevel(new Uint8Array(64).fill(128))).toBe(0.08);
+    expect(liveLevel(Uint8Array.from([128, 255, 0, 128]))).toBeCloseTo(1);
+    expect(liveLevel(Uint8Array.from([128, 160, 96]))).toBeCloseTo(0.5);
+  });
+
+  it("keep only the latest levels, the newest last", () => {
+    expect(keepLatest([0.1, 0.2], 0.3, 2)).toEqual([0.2, 0.3]);
+    expect(keepLatest([], 0.5, 3)).toEqual([0.5]);
   });
 });

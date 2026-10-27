@@ -250,6 +250,113 @@ test.describe("Chat", () => {
     expect(await sessionType()).toBe("playback");
   });
 
+  test("Sprachnachricht: beim Schicken bleibt die Aufnahme stehen, bis die Nachricht mit Wellenform da ist", async ({
+    page,
+  }) => {
+    await login(page);
+    await openChat(page);
+    await openDirectWithMax(page);
+    // A slow upload, and the audio itself slower still: what the message shows comes from the
+    // recording at hand, not from loading it again.
+    await page.route("**/api/chat/channels/*/files", async (route) => {
+      await new Promise((done) => setTimeout(done, 1500));
+      await route.continue();
+    });
+    await page.route("**/api/chat/files/**", async (route) => {
+      await new Promise((done) => setTimeout(done, 10_000));
+      await route.continue().catch(() => undefined);
+    });
+    await page.getByRole("button", { name: "Sprachnachricht aufnehmen" }).click();
+    const bar = page.getByRole("group", { name: "Aufnahme läuft" });
+    await expect(page.getByRole("timer")).toHaveText("0:02");
+    // The fake microphone beeps: the bars grow.
+    await expect
+      .poll(() =>
+        bar.evaluate((element) =>
+          Math.max(
+            ...[...element.querySelectorAll<HTMLElement>("span[style]")].map((span) =>
+              Number.parseFloat(span.style.height),
+            ),
+          ),
+        ),
+      )
+      .toBeGreaterThan(10);
+    await page.getByRole("button", { name: "Sprachnachricht senden" }).click();
+
+    // While it goes up: the bar, still, and neither the empty field nor a file above it.
+    await expect(bar).toHaveAttribute("aria-busy", "true");
+    await expect(page.getByRole("button", { name: "Sprachnachricht senden" })).toBeDisabled();
+    await expect(page.getByRole("textbox", { name: "Nachricht" })).toBeHidden();
+    await expect(page.getByRole("status", { name: /wird hochgeladen/ })).toHaveCount(0);
+
+    const voice = page
+      .getByRole("list", { name: "Nachrichten" })
+      .getByRole("group", { name: /^Sprachnachricht, / })
+      .last();
+    await expect(voice).toHaveAccessibleName(/^Sprachnachricht, 0:0[2-3]$/, { timeout: 5000 });
+    await expect(bar).toBeHidden();
+    await expect(page.getByRole("textbox", { name: "Nachricht" })).toBeVisible();
+  });
+
+  test("Sprachnachricht: endet das Mikrofon während der Aufnahme, geht sie trotzdem", async ({
+    page,
+  }) => {
+    // A microphone unplugged, or taken by a phone call: its track ends, and the recorder stops on
+    // its own before "Senden" (MediaStream Recording, "stop the recorder" when all tracks end).
+    await slowMicrophone(page);
+    await login(page);
+    await openChat(page);
+    await openDirectWithMax(page);
+    const voices = page
+      .getByRole("list", { name: "Nachrichten" })
+      .getByRole("group", { name: /^Sprachnachricht, / });
+    const before = await voices.count();
+    await page.getByRole("button", { name: "Sprachnachricht aufnehmen" }).click();
+    await expect(page.getByRole("timer")).toHaveText("0:02", { timeout: 10_000 });
+    await page.evaluate(() => {
+      for (const stream of (window as unknown as { streams: MediaStream[] }).streams)
+        for (const track of stream.getTracks()) track.stop();
+    });
+    await page.waitForTimeout(500);
+    await page.getByRole("button", { name: "Sprachnachricht senden" }).click();
+    await expect(voices).toHaveCount(before + 1);
+    await expect(page.getByRole("group", { name: "Aufnahme läuft" })).toBeHidden();
+    await expect(page.getByRole("textbox", { name: "Nachricht" })).toBeVisible();
+  });
+
+  test("Sprachnachricht: der gespielte Teil der Wellenform wächst flüssig", async ({ page }) => {
+    await login(page);
+    await openChat(page);
+    await openDirectWithMax(page);
+    const voices = page
+      .getByRole("list", { name: "Nachrichten" })
+      .getByRole("group", { name: /^Sprachnachricht, / });
+    const before = await voices.count();
+    await page.getByRole("button", { name: "Sprachnachricht aufnehmen" }).click();
+    await expect(page.getByRole("timer")).toHaveText("0:03", { timeout: 10_000 });
+    await page.getByRole("button", { name: "Sprachnachricht senden" }).click();
+    await expect(voices).toHaveCount(before + 1);
+    const voice = voices.last();
+    await voice.getByRole("button", { name: "Abspielen" }).click();
+    await expect(voice.getByRole("button", { name: "Anhalten" })).toBeVisible();
+    // "timeupdate" alone would move it about four times a second; every frame moves it on.
+    const steps = await voice.evaluate(
+      (element) =>
+        new Promise<number>((done) => {
+          const played = element.querySelector<HTMLElement>("[style*='clip-path']");
+          const seen = new Set<string>();
+          const end = performance.now() + 1000;
+          const look = () => {
+            seen.add(played?.style.clipPath ?? "");
+            if (performance.now() < end) requestAnimationFrame(look);
+            else done(seen.size);
+          };
+          requestAnimationFrame(look);
+        }),
+    );
+    expect(steps).toBeGreaterThan(15);
+  });
+
   test("ein Kanal gehört seinen Mitgliedern", async ({ page, browser }) => {
     const name = unique("Baustelle Hoffmann");
     const slug = name.toLowerCase().replace(/ /g, "-");
