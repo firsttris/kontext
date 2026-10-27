@@ -11,6 +11,7 @@ import { lookup } from "node:dns/promises";
 import { existsSync } from "node:fs";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
+import { version as packageVersion } from "../../package.json";
 import type { BoxConfig } from "../../server/phone/protocol";
 import { createBoxFiles } from "./files";
 import { createHandedOut } from "./handed-out";
@@ -20,7 +21,9 @@ import { type BoxState, runBox } from "./run";
 import { macOfPath, snomSettings } from "./snom";
 import { statusPage } from "./status-page";
 
-const VERSION = process.env.BOX_VERSION ?? "dev";
+// The release builds without build arguments (firsttris/workflows docker-release), so the version
+// comes from package.json, which "Bump version" sets together with the tag; BOX_VERSION overrides it.
+const VERSION = process.env.BOX_VERSION || packageVersion;
 const DATA_DIR = process.env.DATA_DIR ?? "/data";
 const CONFIG_DIR = process.env.ASTERISK_CONFIG_DIR ?? "/etc/asterisk";
 const STATUS_PORT = Number(process.env.STATUS_PORT ?? 8089);
