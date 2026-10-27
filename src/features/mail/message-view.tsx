@@ -93,9 +93,12 @@ export const MessageView = ({ accountId, mailbox, emailId }: Props) => {
     <div className="flex h-full min-h-0 flex-col">
       <Toolbar accountId={accountId} mailbox={mailbox} email={email} />
       <div className="flex min-h-0 flex-1">
-        {/* Left-aligned with the toolbar; the column stays narrow enough to read (about 70 characters). */}
+        {/*
+          The column stays narrow enough to read (about 80 characters) and stands in the middle:
+          on a wide pane, left-aligned, it left an empty half beside it.
+        */}
         <article className="min-h-0 min-w-0 flex-1 overflow-y-auto">
-          <div className="flex w-full max-w-[780px] flex-col gap-[18px] px-5 pt-5 pb-8 md:px-6 xl:px-8">
+          <div className="mx-auto flex w-full max-w-[780px] flex-col gap-[18px] px-5 pt-5 pb-8 md:px-6 xl:px-8">
             <header className="flex flex-col gap-3">
               {notice && account ? (
                 <p

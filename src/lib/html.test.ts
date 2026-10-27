@@ -122,10 +122,38 @@ describe("sanitizeMailHtml", () => {
   });
 });
 
+describe("sanitizeMailHtml in the dark theme", () => {
+  const dark = (html: string) =>
+    sanitizeMailHtml(html, { allowRemote: false, cidUrls: {}, dark: true }).html;
+
+  it("turns colours set for white paper around", () => {
+    const html = dark(
+      '<span style="font-size:10pt;color:black;background:white">Netzservice</span>' +
+        '<font color="#000000">Text</font><table bgcolor="#ffffff"><tr><td>x</td></tr></table>',
+    );
+    expect(html).toContain("color: rgb(255, 255, 255)");
+    expect(html).toContain("background: rgb(0, 0, 0)");
+    expect(html).toContain("font-size: 10pt");
+    expect(html).toContain('<font color="rgb(255, 255, 255)">');
+    expect(html).toContain('bgcolor="rgb(0, 0, 0)"');
+  });
+
+  it("leaves readable colours and the light theme alone", () => {
+    const span = '<span style="color:#60a5fa;background:#2563eb">x</span>';
+    expect(dark(span)).toBe(span);
+    const black = '<span style="color:black">x</span>';
+    expect(sanitizeMailHtml(black, { allowRemote: false, cidUrls: {} }).html).toBe(black);
+  });
+});
+
 describe("mailDocument", () => {
   it("lets the frame fetch remote content only once allowed", () => {
     expect(mailDocument("", false)).toContain("img-src data: blob:;");
     expect(mailDocument("", false, true)).toContain("img-src data: blob: https: http:;");
+  });
+
+  it("keeps Outlook's lines together", () => {
+    expect(mailDocument("", false)).toContain(".MsoNormal { margin: 0; }");
   });
 });
 

@@ -130,7 +130,10 @@ export const Body = ({ read }: { read: Pick<ReadMail, "html" | "text"> }) => {
   const [height, setHeight] = useState(160);
   const document = useMemo(() => {
     const source = read.html ?? textToHtml(read.text);
-    return mailDocument(sanitizeMailHtml(source, { allowRemote: false, cidUrls: {} }).html, dark);
+    return mailDocument(
+      sanitizeMailHtml(source, { allowRemote: false, cidUrls: {}, dark }).html,
+      dark,
+    );
   }, [read, dark]);
   return (
     <iframe

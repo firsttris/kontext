@@ -65,7 +65,7 @@ const Text = ({ html, text }: { html: string; text: string }) => {
   const document = useMemo(
     () =>
       mailDocument(
-        sanitizeMailHtml(html || textToHtml(text), { allowRemote: false, cidUrls: {} }).html,
+        sanitizeMailHtml(html || textToHtml(text), { allowRemote: false, cidUrls: {}, dark }).html,
         dark,
       ),
     [html, text, dark],

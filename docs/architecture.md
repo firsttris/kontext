@@ -1026,13 +1026,28 @@ URL (`account`); Antworten gehen deshalb aus dem richtigen Postfach.
 
 ## Leseansicht auf breiten Bildschirmen
 
-Die Mail steht linksbündig unter der Werkzeugleiste, die Textspalte bleibt höchstens 780 px breit
-(etwa 70 Zeichen pro Zeile, gut zu lesen). Ab 1536 px (`2xl`) füllt eine Spalte rechts den Platz
+Die Textspalte bleibt höchstens 780 px breit (etwa 80 Zeichen pro Zeile, gut zu lesen) und steht
+in der Mitte des Lesebereichs; linksbündig ließ sie auf breiten Bildschirmen eine leere Hälfte
+neben sich. Ab 1536 px (`2xl`) füllt eine Spalte rechts den Platz
 (`src/features/mail/sender-panel.tsx`): die Person, mit der die Mail ist – der Absender, bei
 eigenen Mails (auch aus info@) der erste andere Empfänger (`src/lib/correspondent.ts`) –, ihre
 Kontaktkarte, falls es eine gibt, sonst „Als Kontakt speichern“ ins eigene Adressbuch; dazu Mail,
 Termin und Anrufen, die nächsten Termine (`useEventsWith`) und die letzten Mails mit ihr aus dem
 Postfach der geöffneten Mail.
+
+Den Inhalt der Mail zeigt ein Rahmen mit eigenem Stil (`mailDocument` in `src/lib/html.ts`).
+Zwei Dinge gleicht er an fremde Mails an:
+
+- **Outlook-Zeilen:** Outlook schreibt jede Zeile als Absatz `MsoNormal` und nimmt dessen Abstand
+  in einem `<style>` weg, das beim Weiterleiten (Gmail) verloren geht. Kontext setzt den Abstand
+  dieser Absätze selbst auf 0; sonst stünde jede Zeile für sich.
+- **Dunkles Design:** Feste Farben für weißes Papier (Outlook: `color:black;background:white`,
+  sein Dunkelblau `#1F497D`) wären auf dunklem Grund unlesbar oder stünden als weißer Balken.
+  `sanitizeMailHtml` dreht sie mit `dark` um (`src/lib/mail-colors.ts`), wie Gmail und Outlook im
+  Web: Die Helligkeit kehrt sich um, Farbton und Sättigung bleiben – heller Hintergrund wird
+  dunkel, dunkler Text hell, bis er sich mit 4,5:1 vom Grund abhebt. Farben in der Mitte (ein
+  blauer Knopf) bleiben, ebenso Farben aus dem `<style>` der Mail. Antwortzitat und Druck
+  behalten die Farben der Mail.
 
 ## Anhänge
 
