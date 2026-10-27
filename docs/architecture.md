@@ -501,6 +501,17 @@ das Manifest steht in `vite.config.ts`, der Service Worker in `src/sw/service-wo
   Fenster. Bei ganz geschlossener App kommen sie als Web Push vom Kontext-Server, siehe
   [Benachrichtigungen](#benachrichtigungen).
 - **Ungelesen-Zahl am App-Symbol** (Badging API) als Summe aller Posteingänge.
+- **Tastatur am Handy:** Sie verdeckt den unteren Teil, ohne die Seite kürzer zu machen (iPhone;
+  Android nur mit `interactive-widget=resizes-content` im Viewport, den `index.html` setzt), und
+  der Browser schiebt dann die ganze Seite nach oben. Deshalb ist die App so hoch wie der
+  sichtbare Teil (`--app-height` aus `visualViewport`, `src/components/use-visible-height.ts`)
+  und bleibt oben; Listen von Nachrichten bleiben dabei unten, wenn man unten war
+  (`use-scroll-place.ts`).
+- **Zurück am Handy:** Ein Bildschirm, der aus einem anderen geöffnet wurde (Gespräch aus der
+  Liste, Thread aus dem Gespräch), trägt `fromParent` im Verlaufseintrag; sein „Zurück“ geht dann
+  im Verlauf des Browsers zurück, sodass ein Wischen danach nicht wieder auf ihm landet. Ohne
+  diese Marke (Link, Benachrichtigung, neu geladen) tritt der übergeordnete Bildschirm an seine
+  Stelle (`src/components/use-back.ts`).
 
 ## Aufgaben
 
@@ -596,7 +607,8 @@ Principal-ID), die Namen holt die App wie bei den Aufgaben über die Principals.
 - **Verlauf:** 50 Nachrichten je Seite, ältere auf Knopfdruck; Nachrichten einer Person kurz
   hintereinander stehen unter einem Namen, eine Linie „Neu“ zeigt, wo das Ungelesene beginnt.
 - **Antworten im Thread:** „Antworten“ an einer Nachricht öffnet ihren Thread – auf breiten
-  Bildschirmen neben dem Gespräch, am Handy statt seiner. Antworten tragen `parent_id`, stehen
+  Bildschirmen neben dem Gespräch, am Handy statt seiner (dort ohne Tastatur, die kommt erst mit
+  einem Tipp ins Feld). Antworten tragen `parent_id`, stehen
   nicht im Kanal und zählen dort nicht als ungelesen; unter der Nachricht steht „3 Antworten ·
   zuletzt 10:42“ mit den Köpfen, „Neu“, wenn seit dem letzten Lesen welche kamen. Wer im Thread
   geschrieben hat (auch die erste Nachricht), bekommt neue Antworten aufs Gerät

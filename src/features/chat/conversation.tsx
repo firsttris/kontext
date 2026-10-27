@@ -4,10 +4,11 @@
  * photos and files (also dropped onto the conversation) and cards. What one sees counts as read.
  * A message's thread opens beside it (on a phone instead of it).
  */
-import { Link, useNavigate } from "@tanstack/react-router";
+import { useNavigate } from "@tanstack/react-router";
 import { BellOff, ChevronLeft, Clock, ImageUp, LockKeyhole, Users } from "lucide-react";
 import { type DragEvent, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
+import { FROM_PARENT, useBack } from "@/components/use-back";
 import { useMediaQuery } from "@/components/use-media-query";
 import { CallButtons } from "@/features/calls/call-buttons";
 import { useShareWith } from "@/features/documents/use-share-with";
@@ -28,6 +29,7 @@ import { useReact } from "./thread-queries";
 import { useTyping } from "./typing";
 import { useAttachments } from "./use-attachments";
 import { useChatNames } from "./use-chat-names";
+import { useScrollPlace } from "./use-scroll-place";
 
 const subtitle = (
   channel: ChannelSummary,
@@ -68,8 +70,18 @@ export const Conversation = ({
   onEdit: () => void;
 }) => {
   const navigate = useNavigate();
-  const openThread = (id: string | undefined) =>
-    void navigate({ to: "/chat", search: { channel: channel.id, thread: id } });
+  const back = useBack();
+  // A thread opened from here goes back here; another thread takes the open one's place.
+  const openThread = (id: string) =>
+    void navigate({
+      to: "/chat",
+      search: { channel: channel.id, thread: id },
+      replace: Boolean(threadId),
+      state: (current) => (threadId ? { fromParent: current.fromParent } : FROM_PARENT),
+    });
+  const closeThread = () =>
+    back(() => void navigate({ to: "/chat", search: { channel: channel.id }, replace: true }));
+  const toList = () => back(() => void navigate({ to: "/chat", search: {}, replace: true }));
   const { retentionDays } = useChannels();
   const { me, people, nameOf, titleOf } = useChatNames();
   const {
@@ -107,8 +119,7 @@ export const Conversation = ({
   }, [newest, channel.id, channel.readAt, markRead]);
 
   // Stay at the bottom while one is there; keep the place when older messages come in above.
-  const scroller = useRef<HTMLDivElement>(null);
-  const atBottom = useRef(true);
+  const { scroller, atBottom, onScroll } = useScrollPlace();
   const heightBefore = useRef<number | null>(null);
   useLayoutEffect(() => {
     const element = scroller.current;
@@ -119,7 +130,7 @@ export const Conversation = ({
     } else if (atBottom.current) {
       element.scrollTop = element.scrollHeight;
     }
-  }, [messages.length]);
+  }, [messages.length, scroller, atBottom]);
   const older = () => {
     heightBefore.current = scroller.current?.scrollHeight ?? null;
     loadOlder();
@@ -210,14 +221,14 @@ export const Conversation = ({
           </div>
         ) : null}
         <header className="flex h-14 shrink-0 items-center gap-1 border-b border-border px-2 md:gap-3 md:px-5">
-          <Link
-            to="/chat"
-            search={{}}
+          <button
+            type="button"
+            onClick={toList}
             aria-label={m.chat_back()}
             className="flex size-11 items-center justify-center text-fg md:hidden"
           >
             <ChevronLeft size={20} />
-          </Link>
+          </button>
           <div className="flex min-w-0 flex-1 flex-col md:flex-row md:items-baseline md:gap-3">
             <h1 className="m-0 truncate text-[16px] font-semibold md:text-[17px]">
               {prefix}
@@ -257,10 +268,7 @@ export const Conversation = ({
         {channel.confidential ? <ChangedKeys channel={channel} nameOf={nameOf} /> : null}
         <div
           ref={scroller}
-          onScroll={(event) => {
-            const element = event.currentTarget;
-            atBottom.current = element.scrollHeight - element.scrollTop - element.clientHeight < 80;
-          }}
+          onScroll={onScroll}
           className="min-h-0 flex-1 overflow-y-auto px-3.5 py-4 md:px-6"
         >
           {!hasOlder && !loading && retentionDays ? (
@@ -390,7 +398,7 @@ export const Conversation = ({
           channel={channel}
           parentId={threadId}
           title={`${prefix}${title}`}
-          onClose={() => openThread(undefined)}
+          onClose={closeThread}
           onMakeTask={makeTask}
         />
       ) : null}

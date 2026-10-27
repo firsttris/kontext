@@ -4,7 +4,8 @@
  * who wrote in the thread hears of new ones.
  */
 import { ChevronLeft, X } from "lucide-react";
-import { useEffect, useLayoutEffect, useRef } from "react";
+import { useEffect, useLayoutEffect } from "react";
+import { useMediaQuery } from "@/components/use-media-query";
 import { type ChannelSummary, firstName, type Message, timeline } from "@/lib/chat";
 import { m } from "@/paraglide/messages";
 import { useUnlockedKey } from "../pgp/queries";
@@ -15,6 +16,7 @@ import { useChatActions } from "./queries";
 import { useReact, useThread } from "./thread-queries";
 import { useAttachments } from "./use-attachments";
 import { useChatNames } from "./use-chat-names";
+import { useScrollPlace } from "./use-scroll-place";
 
 export const ThreadPanel = ({
   channel,
@@ -47,12 +49,15 @@ export const ThreadPanel = ({
     markRead({ channelId: channel.id, at: newest.createdAt });
   }, [newest, channel.id, channel.readAt, markRead]);
 
-  const scroller = useRef<HTMLDivElement>(null);
+  // Down to the newest answer; on a phone without the keyboard, which would cover the thread
+  // just opened (it comes with a tap into the field).
+  const { scroller, onScroll } = useScrollPlace();
   useLayoutEffect(() => {
     if (scroller.current && replies.length) {
       scroller.current.scrollTop = scroller.current.scrollHeight;
     }
-  }, [replies.length]);
+  }, [replies.length, scroller]);
+  const desktop = useMediaQuery("(min-width: 768px)");
 
   const shared = {
     me,
@@ -104,7 +109,11 @@ export const ThreadPanel = ({
           <X size={16} />
         </button>
       </header>
-      <div ref={scroller} className="min-h-0 flex-1 overflow-y-auto px-3.5 py-4 md:px-5">
+      <div
+        ref={scroller}
+        onScroll={onScroll}
+        className="min-h-0 flex-1 overflow-y-auto px-3.5 py-4 md:px-5"
+      >
         {isError ? (
           <p className="m-0 py-10 text-center text-[14px] text-muted">{m.chat_thread_gone()}</p>
         ) : null}
@@ -147,7 +156,7 @@ export const ThreadPanel = ({
             }
             people={mentionable}
             me={me}
-            autoFocus
+            autoFocus={desktop}
             onTyping={() => undefined}
             attachments={attachments}
             cards={!channel.confidential}

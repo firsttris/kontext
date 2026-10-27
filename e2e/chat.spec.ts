@@ -303,7 +303,7 @@ test.describe("Chat am Handy @phone", () => {
     const text = unique("Freitag gibt es Kuchen");
     await write(page, text);
     await expect(page.getByRole("list", { name: "Nachrichten" })).toContainText(text);
-    await page.getByRole("link", { name: "Zurück zu den Chats" }).click();
+    await page.getByRole("button", { name: "Zurück zu den Chats" }).click();
     await expect(page.getByRole("navigation", { name: "Kanäle" })).toContainText(text);
 
     await page.getByRole("button", { name: "Mehr" }).click();

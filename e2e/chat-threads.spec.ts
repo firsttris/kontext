@@ -191,6 +191,38 @@ test.describe("Chat: Reaktionen und Antworten", () => {
       messageIn(page, question).getByRole("button", { name: /1 Antwort/ }),
     ).toBeVisible();
   });
+
+  test("am Handy führt Zurück dorthin, woher man kam @phone", async ({ page }) => {
+    const question = unique("Leiter in Halle 3?");
+    await login(page);
+    await openChannel(page, /allgemein/);
+    await write(page, question);
+    await messageIn(page, question).getByRole("button", { name: "Antworten" }).click();
+    const thread = page.getByRole("complementary", { name: "Thread" });
+    await expect(thread).toBeVisible();
+    // No keyboard over the thread just opened.
+    await expect(thread.getByRole("textbox", { name: "Nachricht" })).not.toBeFocused();
+
+    await thread.getByRole("button", { name: "Zurück zum Gespräch" }).click();
+    await expect(thread).toHaveCount(0);
+    await expect(messageIn(page, question)).toBeInViewport();
+    // One swipe back from the conversation is the list, not the thread again.
+    await page.goBack();
+    await expect(page).not.toHaveURL(/channel=/);
+    await expect(page.getByRole("navigation", { name: "Kanäle" })).toBeVisible();
+
+    // Swiped back instead of tapped: the same way.
+    await page.goForward();
+    await messageIn(page, question).getByRole("button", { name: "Antworten" }).click();
+    await expect(thread).toBeVisible();
+    await page.goBack();
+    await expect(thread).toHaveCount(0);
+    await expect(messageIn(page, question)).toBeInViewport();
+    await page.getByRole("button", { name: "Zurück zu den Chats" }).click();
+    await expect(page).not.toHaveURL(/channel=/);
+    await page.goBack();
+    await expect(page).not.toHaveURL(/\/chat/);
+  });
 });
 
 test.describe("Firmenverwaltung: Team-Chat", () => {

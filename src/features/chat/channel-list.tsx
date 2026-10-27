@@ -8,6 +8,7 @@ import { AtSign, BellOff, Hash, LockKeyhole, Phone, Plus } from "lucide-react";
 import { useState } from "react";
 import { Avatar } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
+import { FROM_PARENT } from "@/components/use-back";
 import { usePhone } from "@/features/phone/queries";
 import { type ChannelSummary, firstName, shortTime, sortChannels, sortDirect } from "@/lib/chat";
 import { cn } from "@/lib/cn";
@@ -201,6 +202,7 @@ const PhoneRow = ({ row }: { row: ReturnType<typeof useRows>["named"][number] })
     <Link
       to="/chat"
       search={{ channel: channel.id }}
+      state={FROM_PARENT}
       className="flex items-center gap-3 rounded-xl p-2.5 text-fg no-underline active:bg-hover"
     >
       {person ? (
