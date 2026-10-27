@@ -262,16 +262,24 @@ Asterisk in the telephone box. Tests, CI and releases: [Development](https://fir
 
 ## 🤝 Contributing
 
-Issues and pull requests are welcome. A good bug report names the browser or phone, the view and
-what was shown (a screenshot helps). Before a pull request please run
-`bun run check && bun run e2e`.
+Issues and pull requests are welcome. A good bug report names the browser or phone, the view,
+what happened and the Kontext version (a screenshot helps); the
+[bug report form](https://github.com/firsttris/kontext/issues/new?template=bug_report.yml) asks for
+all of it. Security problems please report privately, see [SECURITY.md](SECURITY.md). Before a pull
+request please run the checks from [CONTRIBUTING.md](CONTRIBUTING.md):
+
+```bash
+bun run typecheck && bun run lint && bun run test && bun run build   # or: bun run check
+bun run e2e                                                          # Playwright against its own Stalwart
+mkdocs build --strict                                                # when docs/ changed
+```
 
 ---
 
 <div align="center">
 
 ⭐ Like Kontext? A [star on GitHub](https://github.com/firsttris/kontext) helps others find it.<br>
-🐛 [Report a bug](https://github.com/firsttris/kontext/issues/new) · 💡 [Request a feature](https://github.com/firsttris/kontext/issues/new)
+🐛 [Report a bug](https://github.com/firsttris/kontext/issues/new?template=bug_report.yml) · 💡 [Request a feature](https://github.com/firsttris/kontext/issues/new?template=feature_request.yml)
 
 <sub>License: <a href="LICENSE">AGPL-3.0</a> · © Tristan Teufel and contributors · <a href="README.de.md">Deutsche Version</a><br>
 Changed versions you pass on or run for others must offer their source code under the AGPL; a commercial license without these obligations is available via <a href="https://teufel-it.de">teufel-it.de</a>.<br>

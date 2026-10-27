@@ -267,15 +267,23 @@ Anrufe, Asterisk in der Telefonbox. Tests, CI und Releases: [Entwicklung](https:
 ## 🤝 Mitmachen
 
 Issues und Pull Requests sind willkommen. Ein guter Fehlerbericht nennt Browser oder Handy, die
-Ansicht und was zu sehen war (ein Screenshot hilft). Vor einem Pull Request bitte
-`bun run check && bun run e2e` laufen lassen.
+Ansicht, was passiert ist und die Version von Kontext (ein Screenshot hilft); das
+[Formular für Fehlerberichte](https://github.com/firsttris/kontext/issues/new?template=bug_report.yml)
+fragt all das ab. Sicherheitslücken bitte vertraulich melden, siehe [SECURITY.md](SECURITY.md). Vor
+einem Pull Request bitte die Prüfungen aus [CONTRIBUTING.md](CONTRIBUTING.md) laufen lassen:
+
+```bash
+bun run typecheck && bun run lint && bun run test && bun run build   # oder: bun run check
+bun run e2e                                                          # Playwright gegen einen eigenen Stalwart
+mkdocs build --strict                                                # wenn sich docs/ geändert hat
+```
 
 ---
 
 <div align="center">
 
 ⭐ Gefällt dir Kontext? Ein [Stern auf GitHub](https://github.com/firsttris/kontext) hilft anderen, es zu finden.<br>
-🐛 [Fehler melden](https://github.com/firsttris/kontext/issues/new) · 💡 [Idee vorschlagen](https://github.com/firsttris/kontext/issues/new)
+🐛 [Fehler melden](https://github.com/firsttris/kontext/issues/new?template=bug_report.yml) · 💡 [Idee vorschlagen](https://github.com/firsttris/kontext/issues/new?template=feature_request.yml)
 
 <sub>Lizenz: <a href="LICENSE">AGPL-3.0</a> · © Tristan Teufel und Mitwirkende · <a href="README.md">English version</a><br>
 Wer eine veränderte Version weitergibt oder für andere betreibt, muss ihren Quellcode unter der AGPL anbieten; eine kommerzielle Lizenz ohne diese Pflichten gibt es über <a href="https://teufel-it.de">teufel-it.de</a>.<br>
