@@ -1,3 +1,10 @@
+---
+description: >-
+  Kontext entwickeln: lokaler Stalwart mit Testdaten, Kontext-Server und App mit bun run dev,
+  Attrappen für Microsoft 365, Photon, Schreibzeug und die Telefonbox, Unit-, Komponenten- und
+  E2E-Tests mit Playwright, CI und Releases.
+---
+
 # Entwicklung
 
 Benötigt [Bun](https://bun.sh) 1.4 auf Linux oder macOS (Windows über WSL). Docker ist nicht
@@ -45,11 +52,15 @@ spricht mit dem Server wie die echte, klingelt aber nur auf Zuruf. Unter Einstel
 Telefonie „Box koppeln“, dann:
 
 ```bash
-bun dev/fake-box.ts --code K7QM-4XPA                                  # Steuerung auf 18096
-curl -XPOST localhost:18096/ring -d '{"from":"07223 81234"}'          # Petra Keller ruft an
-curl -XPOST localhost:18096/hangup -d '{"call":"fake.1"}'             # sie legt auf
-curl -XPOST localhost:18096/mailbox -d '{"call":"fake.1","seconds":5}' # oder spricht auf die Mailbox
+bun dev/fake-box.ts --code K7QM-4XPA                                  # Steuerung auf 18097
+curl -XPOST localhost:18097/ring -d '{"from":"07223 81234"}'          # Petra Keller ruft an
+curl -XPOST localhost:18097/hangup -d '{"call":"fake.1"}'             # sie legt auf
+curl -XPOST localhost:18097/mailbox -d '{"call":"fake.1","seconds":5}' # oder spricht auf die Mailbox
 ```
+
+Die Steuerung liegt auf 18097, damit die Attrappe neben `dev/fake-schreibzeug.ts` (18096) laufen
+kann; ein anderer Port mit `--control <port>`. Die e2e-Tests nehmen 28096
+(`e2e/phone.spec.ts`) und 28098 (Screenshots).
 
 Zu hören ist dabei nichts (lokal läuft kein LiveKit SIP). Die echte Box (`box/`, Asterisk und der
 Agent) baut `docker build -f box/Dockerfile -t kontext-box .`; CI baut sie und prüft, ob Asterisk
@@ -96,9 +107,13 @@ Antwort-Links.
 
 ## Datenbank des Servers
 
-Der Server speichert nur Sitzungen (und später Passkeys) in SQLite, Standard
-`.dev/server/kontext.db`. Das Schema steht in `server/db/schema.ts`; nach einer Änderung
-`bunx drizzle-kit generate` – der Server spielt die Migrationen beim Start ein.
+Der Server speichert in SQLite (Standard `.dev/server/kontext.db`) alles, was nicht in Stalwart
+liegt: Sitzungen und die verschlüsselten Stalwart-Tokens, Einstellungen der Firma, Umzüge und
+weitere Postfächer, Kategorien, Aufgaben, den Chat, Web-Push-Anmeldungen, Textbausteine,
+Wiedervorlagen, Schlüssel und Zertifikate für PGP und S/MIME, vertraulich gesendete Mails, die
+Telefonie, die Ordner in Dokumente und die Schlüssel und das Protokoll der Agenten. Das Schema
+steht in `server/db/schema.ts`; nach einer Änderung `bunx drizzle-kit generate` – der Server
+spielt die Migrationen beim Start ein.
 
 ## Testdaten
 
@@ -128,6 +143,11 @@ und „Team“, Termine der laufenden Woche, eine wöchentliche Teambesprechung 
 | App (PWA)       | `bun run e2e`         | `e2e/pwa.spec.ts` gegen die gebaute App wie in Produktion (Server auf 28090 liefert `dist/`): Updates, Offline-Start, Cache-Header, Brotli, was vorab gecacht wird, Teilen |
 | Abhängigkeiten  | `bun audit`           | bekannte Lücken; in CI bei jedem Push und nachts                                                            |
 | Screenshots     | `bun run screenshots` | die Bilder in `docs/screenshots/` und für den Installationsdialog in `public/screenshots/`                  |
+
+Vor dem ersten `bun run e2e` (oder `bun run screenshots`) einmal Playwrights Chromium laden:
+`bunx playwright install chromium`. Wer schon ein Chromium hat, zeigt stattdessen mit
+`PW_CHROMIUM_PATH=/pfad/zu/chromium` darauf (`playwright.config.ts`). In CI laufen die Tests im
+offiziellen Playwright-Image, das den Browser mitbringt.
 
 `bun run check` macht Typen, Lint, Unit- und Komponententests und den Build. `bun run e2e` baut
 die App vorher (`bun run build`: `vite build`, dann Brotli und gzip vorab, `dev/precompress.ts`), weil die PWA-Tests den Service Worker brauchen, den es nur im Build
@@ -186,9 +206,16 @@ Integrationstests sich verbinden können.
 - **Release**: Actions → _Bump version_ → Run workflow auf `main` und `patch`, `minor` oder `major`
   wählen (für einen Release Candidate `preminor`, dann `prerelease`, am Ende `patch`). Der Lauf hebt
   die Version in `package.json`, committet sie als „Release vX.Y.Z“, setzt den Tag und startet
-  _Release_ (`.github/workflows/release.yml`) darauf. Von einem Checkout aus geht dasselbe mit
-  `bun run release:patch` (`:minor`, `:major`), das den Commit samt Tag pusht. Das Release
-  überspringt die CI, wenn `main` den Stand schon grün getestet hat, baut die Images
-  `tristanteu/kontext` (Docker Hub und GHCR) und `tristanteu/kontext-box` (Docker Hub) für amd64
-  und arm64 und legt das GitHub-Release an. Die Abläufe kommen aus
-  [firsttris/workflows](https://github.com/firsttris/workflows).
+  _Release_ (`.github/workflows/release.yml`) darauf. Das ist der Weg für ein Release. Die Skripte
+  `release:patch` (`:minor`, `:major`) in `package.json` rufen `npm version` auf, brauchen also
+  npm, und pushen Commit und Tag direkt auf `main` – an Pull Requests vorbei; sie nicht nehmen.
+- **Was das Release veröffentlicht:** Es überspringt die CI, wenn `main` den Stand schon grün
+  getestet hat, und baut für `linux/amd64` und `linux/arm64` die Images
+  `docker.io/tristanteu/kontext` und `ghcr.io/firsttris/kontext` (Docker Hub und GitHub Container
+  Registry) sowie `docker.io/tristanteu/kontext-box` (nur Docker Hub; in GHCR liegt nur sein
+  Build-Cache), jeweils mit den Tags `X.Y.Z`, `X.Y` und `latest` (ein Release Candidate nur `X.Y.Z-rc…` und
+  `next`). Dazu legt es das GitHub-Release an und setzt danach `KONTEXT_VERSION` in
+  `deploy/.env.example` und das Image in `deploy/quadlet/kontext.container` auf die neue Version
+  (Commit „deploy: images of vX.Y.Z“ auf `main`). Die Abläufe kommen aus
+  [firsttris/workflows](https://github.com/firsttris/workflows) (`docker-release.yml`,
+  `bump-version.yml`).

@@ -1,9 +1,16 @@
+---
+description: >-
+  Wie Kontext aufgebaut ist: die React-App, der Kontext-Server (Bun, Hono, Better Auth, SQLite),
+  Stalwart über JMAP, Caddy, LiveKit, die Telefonbox und Schreibzeug – und wie jede Funktion
+  darauf gebaut ist.
+---
+
 # Architektur
 
 ```mermaid
 flowchart LR
   Browser["Browser / Handy<br>Kontext (React-SPA)"] -->|HTTPS| Caddy
-  Caddy -->|"App, /api, /jmap, /mcp"| Server["Kontext-Server<br>(Bun, Hono, Better Auth)"]
+  Caddy -->|"App, /api, /jmap, /mcp, WKD"| Server["Kontext-Server<br>(Bun, Hono, Better Auth)"]
   Agenten["KI-Agenten (MCP)"] -->|"/mcp, OAuth"| Caddy
   Server -->|"JMAP mit Token"| Stalwart
   Server --> SQLite[("Sitzungen, Aufgaben, Chat, Telefonie")]
@@ -14,7 +21,7 @@ flowchart LR
   Box -->|"SIP, RTP"| SIP["LiveKit SIP"] --> LiveKit
   Caddy -->|"dokumente.firma.de"| Schreibzeug["Schreibzeug<br>(Dokumente)"]
   Schreibzeug -->|"OpenID Connect"| Server
-  Caddy -->|"/dav, /.well-known (außer OAuth)"| Stalwart
+  Caddy -->|"/dav, /.well-known (außer OAuth und WKD)"| Stalwart
   Clients["Mailprogramme, Handys"] -->|"IMAP, SMTP, CalDAV, CardDAV"| Stalwart
   Internet["andere Mailserver"] -->|SMTP 25| Stalwart
   Stalwart --> Daten[("RocksDB-Volume")]
@@ -1648,6 +1655,6 @@ der Person, die ihn verbunden hat (`server/mcp/`).
 | `src/sw/`       | Service Worker: App-Cache, Web Push, Teilen in Kontext                                                                     |
 | `server/`       | Kontext-Server: Anmeldung und JMAP-Weiterleitung, je Funktion ein Ordner – Firmenverwaltung (`company/`), Umzug (`migration/`), weitere Postfächer (`external/`), Regeln, Kategorien, Aufgaben und CalDAV (`tasks/`, `dav/`), Chat, Anrufe (`calls/`), Telefonie (`phone/`), Push, Live-Verbindung, Wiedervorlage, Textbausteine, Verschlüsselung (`pgp/`, `smime/`, `secure/`), Anbieter für Schreibzeug (`oidc/`, `documents/`), Agenten über MCP (`mcp/`) |
 | `box/`          | die Telefonbox: Asterisk und der Box-Agent, der Konfiguration und Dialplan schreibt                                        |
-| `dev/`          | lokaler Stalwart, Testdaten (Seed), Attrappen (Graph, Schreibzeug, Telefonbox)                                             |
+| `dev/`          | lokaler Stalwart, Testdaten (Seed), Attrappen (Graph, Photon, Schreibzeug, Telefonbox)                                     |
 | `deploy/`       | Caddy, Compose, Quadlets, LiveKit, Backup                                                                                  |
 | `e2e/`          | Playwright-Tests gegen einen eigenen Stalwart                                                                              |

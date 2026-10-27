@@ -2,16 +2,16 @@
  * A telephone box without a telephone, for development and the e2e tests: it pairs and talks to
  * Kontext exactly like the real one (box/agent), and a small HTTP control lets one ring it.
  *
- *   bun dev/fake-box.ts --url http://127.0.0.1:18090 --code K7QM-4XPA [--control 18096]
+ *   bun dev/fake-box.ts --url http://127.0.0.1:18090 --code K7QM-4XPA [--control 18097]
  *
- *   curl -XPOST localhost:18096/ring -d '{"from":"07223 123456"}'      # someone calls
- *   curl -XPOST localhost:18096/ring -d '{"from":"…","line":"anna620"}' # … a direct number
- *   curl -XPOST localhost:18096/hangup -d '{"call":"…","cause":16}'    # the caller hangs up
- *   curl -XPOST localhost:18096/mailbox -d '{"call":"…","seconds":5}'  # leaves a message (silence)
- *   curl -XPOST localhost:18096/closed -d '{"from":"07223 123456"}'    # calls outside the hours
- *   curl -XPOST localhost:18096/fax -d '{"from":"07223 123456"}'       # sends a fax
- *   curl -XPOST localhost:18096/event -d '{"call":"…","state":"answered","desk":"…"}'  # any step
- *   curl localhost:18096/state                                         # what Kontext told the box
+ *   curl -XPOST localhost:18097/ring -d '{"from":"07223 123456"}'      # someone calls
+ *   curl -XPOST localhost:18097/ring -d '{"from":"…","line":"anna620"}' # … a direct number
+ *   curl -XPOST localhost:18097/hangup -d '{"call":"…","cause":16}'    # the caller hangs up
+ *   curl -XPOST localhost:18097/mailbox -d '{"call":"…","seconds":5}'  # leaves a message (silence)
+ *   curl -XPOST localhost:18097/closed -d '{"from":"07223 123456"}'    # calls outside the hours
+ *   curl -XPOST localhost:18097/fax -d '{"from":"07223 123456"}'       # sends a fax
+ *   curl -XPOST localhost:18097/event -d '{"call":"…","state":"answered","desk":"…"}'  # any step
+ *   curl localhost:18097/state                                         # what Kontext told the box
  *
  * Answered calls and dialled ones are "answered" at once; nobody talks, there is no audio.
  */
@@ -27,7 +27,8 @@ const { values: args } = parseArgs({
   options: {
     url: { type: "string", default: "http://127.0.0.1:18090" },
     code: { type: "string" },
-    control: { type: "string", default: "18096" },
+    // Not 18096: dev/fake-schreibzeug.ts listens there, and both run next to `bun run dev`.
+    control: { type: "string", default: "18097" },
   },
 });
 if (!args.code) throw new Error("--code fehlt (Einstellungen → Telefonie → Box koppeln)");

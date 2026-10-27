@@ -40,7 +40,7 @@ docker compose -f deploy/compose.yaml up -d              # or Podman
 
 ## 🇪🇺 Your data stays in Europe – with AI
 
-- **GDPR**: mails, appointments, contacts, chat and calls live on your server, in a European data centre or in your own office. No US provider in between, no trackers, no sharing. The only data processing agreement you need is with your hosting provider.
+- **GDPR**: mails, appointments, contacts, chat and calls live on your server, in a data centre in Germany or elsewhere in Europe, or in your own office. No US provider in between, no trackers, no sharing. The only data processing agreement you need is with your hosting provider.
 - **GoBD** (German retention rules): nothing is deleted when someone leaves, and backups go encrypted and unalterable (Object Lock) to S3 storage. The software is one part; the company's processes and its procedure documentation are the other.
 - **AI on your terms**: Kontext is an MCP server. You connect the AI assistant you choose; it works with your rights, writes drafts instead of sending, never deletes anything, and every access is logged and can be revoked.
 - **No lock-in**: open standards (IMAP, CalDAV, CardDAV), take everything with you any time; moving *to* Kontext is built in.
@@ -209,7 +209,7 @@ directly. Kontext is the browser interface on top, and its tasks are CalDAV task
 <details>
 <summary><b>Can I move from Gmail, Microsoft 365 or Outlook?</b></summary>
 
-Yes, under *Settings → Company → Move*: IMAP mailboxes (kept in sync until the move is finished),
+Yes, under *Einstellungen → Firma → Umzug* (Settings → Company → Move; the app is in German for now): IMAP mailboxes (kept in sync until the move is finished),
 Microsoft 365 through an app in the company's Microsoft account, Outlook as a PST file, contacts and
 calendars from a Google export. See [Company admin and moving in](https://firsttris.github.io/kontext/company.html).
 </details>
@@ -217,7 +217,7 @@ calendars from a Google export. See [Company admin and moving in](https://firstt
 <details>
 <summary><b>Can I keep using my Gmail address?</b></summary>
 
-Yes, under *Settings → Other mailboxes*: new mail comes into Kontext, and you send as that address
+Yes, under *Einstellungen → Weitere Postfächer* (Settings → Other mailboxes): new mail comes into Kontext, and you send as that address
 through the provider's server, so recipients see it as genuine.
 </details>
 
@@ -245,7 +245,7 @@ with the steps an update needs, is in the [changelog](CHANGELOG.md); what comes 
 
 ## 🛠️ Development
 
-Needs [Bun](https://bun.sh) 1.4 and Linux or macOS.
+Needs [Bun](https://bun.sh) 1.4 and Linux or macOS (Windows through WSL).
 
 ```bash
 git clone https://github.com/firsttris/kontext && cd kontext

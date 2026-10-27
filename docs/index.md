@@ -46,15 +46,8 @@ braucht. Backups gehen verschlüsselt mit Restic auf S3 mit Object Lock.
 
 ## Wie es weitergeht
 
-1. **Pilot** bei einem Kunden, vier Wochen parallel zum alten System, mit der Telefonie im Test.
-2. **Kern abrunden:** Erinnerungen an Termine auch bei geschlossener App, App-Passwörter für
-   CalDAV mit Anmeldung in zwei Schritten, Regeln für Mitarbeiter in der Firmenverwaltung.
-3. **Telefonie: mehr** – Anschluss direkt beim Anbieter (SIP-Trunk), SIP über TLS, Warteschleife,
-   weitere Tischtelefone.
-4. **Die App auf Englisch** und in weiteren Sprachen.
-5. **Zusatzmodule**, eins nach dem anderen: Arbeitsberichte fürs Handwerk, Belege, Terminbuchung,
-   Tickets; ein **Leitstand** für den Betreiber mit allen Kunden-Servern.
-
-Alles im Einzelnen: [Roadmap](https://github.com/firsttris/kontext/blob/main/ROADMAP.md).
+Was als Nächstes kommt und welche Punkte noch offen sind, steht in der
+[Roadmap](https://github.com/firsttris/kontext/blob/main/ROADMAP.md); was sich in jeder Version
+geändert hat, im [Changelog](https://github.com/firsttris/kontext/blob/main/CHANGELOG.md).
 
 Weiter: [Installation](installation.md) · [Architektur](architecture.md) · [Entwicklung](development.md)
