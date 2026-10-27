@@ -166,148 +166,154 @@ export const Toolbar = ({
       >
         <ChevronLeft size={20} />
       </Button>
-      {canRemove && mailbox.role !== "archive" ? (
-        <Button
-          variant="ghost"
-          size="icon"
-          aria-label={m.mail_archive_action()}
-          title={m.mail_archive_action()}
-          onClick={() => run(() => actions.archive(ids, mailbox.id), true)}
-        >
-          <Archive size={16} strokeWidth={1.75} />
-        </Button>
-      ) : null}
-      {canRemove ? (
-        <Button
-          variant="ghost"
-          size="icon"
-          aria-label={m.mail_delete()}
-          title={m.mail_delete()}
-          onClick={() => run(() => actions.remove(ids, mailbox.id), true)}
-        >
-          <Trash2 size={16} strokeWidth={1.75} />
-        </Button>
-      ) : null}
-      {canRemove && mailbox.role !== "drafts" && mailbox.role !== "sent" ? (
-        <SnoozeMenu
-          accountId={accountId}
-          ids={ids}
-          from={mailbox.id}
-          onLeave={mailbox.role === "snoozed" ? undefined : close}
-          shortcut
-        />
-      ) : null}
-      {toggleSpam ? (
-        <Button
-          variant="ghost"
-          size="icon"
-          aria-label={inJunk ? m.mail_spam_unmark() : m.mail_spam_mark()}
-          title={inJunk ? m.mail_spam_unmark() : m.mail_spam_mark()}
-          onClick={toggleSpam}
-        >
-          {inJunk ? (
-            <ShieldCheck size={16} strokeWidth={1.75} />
-          ) : (
-            <ShieldAlert size={16} strokeWidth={1.75} />
-          )}
-        </Button>
-      ) : null}
-      {canMarkSeen ? (
-        <Button
-          variant="ghost"
-          size="icon"
-          aria-label={m.mail_mark_unread()}
-          title={m.mail_mark_unread()}
-          onClick={() => run(() => actions.setSeen(ids, false), true)}
-        >
-          <MailOpen size={16} strokeWidth={1.75} />
-        </Button>
-      ) : null}
-      {canFlag ? (
-        <Button
-          variant="ghost"
-          size="icon"
-          aria-label={flagged ? m.mail_unflag() : m.mail_flag()}
-          aria-pressed={flagged}
-          title={flagged ? m.mail_unflag() : m.mail_flag()}
-          onClick={() => run(() => actions.setFlagged([email.id], !flagged), false)}
-        >
-          <Star
-            size={16}
-            strokeWidth={1.75}
-            className={flagged ? "fill-warn text-warn" : undefined}
+      {/* On a phone the icons do not all fit: they scroll sideways, "Mehr" stays in reach. */}
+      <div className="flex min-w-0 flex-1 items-center gap-1 overflow-x-auto [scrollbar-width:none]">
+        {canRemove && mailbox.role !== "archive" ? (
+          <Button
+            variant="ghost"
+            size="icon"
+            aria-label={m.mail_archive_action()}
+            title={m.mail_archive_action()}
+            onClick={() => run(() => actions.archive(ids, mailbox.id), true)}
+          >
+            <Archive size={16} strokeWidth={1.75} />
+          </Button>
+        ) : null}
+        {canRemove ? (
+          <Button
+            variant="ghost"
+            size="icon"
+            aria-label={m.mail_delete()}
+            title={m.mail_delete()}
+            onClick={() => run(() => actions.remove(ids, mailbox.id), true)}
+          >
+            <Trash2 size={16} strokeWidth={1.75} />
+          </Button>
+        ) : null}
+        {canRemove && mailbox.role !== "drafts" && mailbox.role !== "sent" ? (
+          <SnoozeMenu
+            accountId={accountId}
+            ids={ids}
+            from={mailbox.id}
+            onLeave={mailbox.role === "snoozed" ? undefined : close}
+            shortcut
           />
+        ) : null}
+        {toggleSpam ? (
+          <Button
+            variant="ghost"
+            size="icon"
+            aria-label={inJunk ? m.mail_spam_unmark() : m.mail_spam_mark()}
+            title={inJunk ? m.mail_spam_unmark() : m.mail_spam_mark()}
+            onClick={toggleSpam}
+          >
+            {inJunk ? (
+              <ShieldCheck size={16} strokeWidth={1.75} />
+            ) : (
+              <ShieldAlert size={16} strokeWidth={1.75} />
+            )}
+          </Button>
+        ) : null}
+        {canMarkSeen ? (
+          <Button
+            variant="ghost"
+            size="icon"
+            aria-label={m.mail_mark_unread()}
+            title={m.mail_mark_unread()}
+            // On a phone it is in "Mehr" only, one icon fewer to scroll past.
+            className="hidden sm:inline-flex"
+            onClick={() => run(() => actions.setSeen(ids, false), true)}
+          >
+            <MailOpen size={16} strokeWidth={1.75} />
+          </Button>
+        ) : null}
+        {canFlag ? (
+          <Button
+            variant="ghost"
+            size="icon"
+            aria-label={flagged ? m.mail_unflag() : m.mail_flag()}
+            aria-pressed={flagged}
+            title={flagged ? m.mail_unflag() : m.mail_flag()}
+            onClick={() => run(() => actions.setFlagged([email.id], !flagged), false)}
+          >
+            <Star
+              size={16}
+              strokeWidth={1.75}
+              className={flagged ? "fill-warn text-warn" : undefined}
+            />
+          </Button>
+        ) : null}
+        {canFlag ? (
+          <CategoryMenu accountId={accountId} mailbox={mailboxLabel} email={email} />
+        ) : null}
+        <Button
+          variant="ghost"
+          size="icon"
+          aria-label={m.tasks_from_mail_title()}
+          title={`${m.tasks_from_mail_title()} (t)`}
+          onClick={newTask}
+        >
+          <ListChecks size={16} strokeWidth={1.75} />
         </Button>
-      ) : null}
-      {canFlag ? <CategoryMenu accountId={accountId} mailbox={mailboxLabel} email={email} /> : null}
-      <Button
-        variant="ghost"
-        size="icon"
-        aria-label={m.tasks_from_mail_title()}
-        title={`${m.tasks_from_mail_title()} (t)`}
-        onClick={newTask}
-      >
-        <ListChecks size={16} strokeWidth={1.75} />
-      </Button>
-      <Button
-        variant="ghost"
-        size="icon"
-        aria-label={m.chat_discuss()}
-        title={`${m.chat_discuss()} (b)`}
-        onClick={() => setDiscussing(true)}
-      >
-        <MessagesSquare size={16} strokeWidth={1.75} />
-      </Button>
-      {canRemove ? (
-        <MenuRoot>
-          <MenuTrigger asChild>
-            <Button variant="ghost" size="icon" aria-label={m.mail_move()} title={m.mail_move()}>
-              <FolderInput size={16} strokeWidth={1.75} />
-            </Button>
-          </MenuTrigger>
-          <MenuContent align="start">
-            {groups.length === 1 ? <MenuLabel>{m.mail_move()}</MenuLabel> : null}
-            {groups.map((group, index) => (
-              <Fragment key={group.account.id}>
-                {groups.length > 1 ? (
-                  <>
-                    {index > 0 ? <MenuSeparator /> : null}
-                    <MenuLabel>
-                      {group.account.isPersonal ? m.mail_own_mailbox() : group.account.name}
-                    </MenuLabel>
-                  </>
-                ) : null}
-                {group.targets.map((target) => (
-                  <MenuItem
-                    key={target.mailbox.id}
-                    onSelect={() =>
-                      run(
-                        () =>
-                          actions.moveTo(targets, mailbox.id, {
-                            accountId: target.accountId,
-                            mailboxId: target.mailbox.id,
-                          }),
-                        true,
-                      )
-                    }
-                  >
-                    {target.label}
-                  </MenuItem>
-                ))}
-              </Fragment>
-            ))}
-          </MenuContent>
-        </MenuRoot>
-      ) : null}
-      <div className="flex-1" />
-      <Button asChild variant="outline" size="sm" className="hidden sm:inline-flex">
+        <Button
+          variant="ghost"
+          size="icon"
+          aria-label={m.chat_discuss()}
+          title={`${m.chat_discuss()} (b)`}
+          onClick={() => setDiscussing(true)}
+        >
+          <MessagesSquare size={16} strokeWidth={1.75} />
+        </Button>
+        {canRemove ? (
+          <MenuRoot>
+            <MenuTrigger asChild>
+              <Button variant="ghost" size="icon" aria-label={m.mail_move()} title={m.mail_move()}>
+                <FolderInput size={16} strokeWidth={1.75} />
+              </Button>
+            </MenuTrigger>
+            <MenuContent align="start">
+              {groups.length === 1 ? <MenuLabel>{m.mail_move()}</MenuLabel> : null}
+              {groups.map((group, index) => (
+                <Fragment key={group.account.id}>
+                  {groups.length > 1 ? (
+                    <>
+                      {index > 0 ? <MenuSeparator /> : null}
+                      <MenuLabel>
+                        {group.account.isPersonal ? m.mail_own_mailbox() : group.account.name}
+                      </MenuLabel>
+                    </>
+                  ) : null}
+                  {group.targets.map((target) => (
+                    <MenuItem
+                      key={target.mailbox.id}
+                      onSelect={() =>
+                        run(
+                          () =>
+                            actions.moveTo(targets, mailbox.id, {
+                              accountId: target.accountId,
+                              mailboxId: target.mailbox.id,
+                            }),
+                          true,
+                        )
+                      }
+                    >
+                      {target.label}
+                    </MenuItem>
+                  ))}
+                </Fragment>
+              ))}
+            </MenuContent>
+          </MenuRoot>
+        ) : null}
+      </div>
+      <Button asChild variant="outline" size="sm" className="hidden shrink-0 sm:inline-flex">
         <Link to="." search={(prev) => ({ ...prev, compose: "reply" })}>
           <Reply size={15} /> {m.mail_reply()}
         </Link>
       </Button>
       <MenuRoot>
         <MenuTrigger asChild>
-          <Button variant="ghost" size="icon" aria-label={m.mail_more()}>
+          <Button variant="ghost" size="icon" aria-label={m.mail_more()} className="shrink-0">
             <MoreHorizontal size={16} />
           </Button>
         </MenuTrigger>
