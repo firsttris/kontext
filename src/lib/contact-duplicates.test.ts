@@ -37,6 +37,7 @@ describe("normalizePhone", () => {
     expect(normalizePhone("0049 (7223) 4711")).toBe("4972234711");
     expect(normalizePhone("07223 / 47-11")).toBe("4972234711");
     expect(normalizePhone("+41 44 123")).toBe("4144123");
+    expect(normalizePhone("+49 (0) 7223 4711")).toBe("4972234711");
   });
 });
 
@@ -117,6 +118,43 @@ describe("mergeCards", () => {
       notes: { n: { note: "Rückruf vormittags" } },
       addressBookIds: { b: true, other: true },
     });
+  });
+});
+
+describe("mergeCards with more than the app edits", () => {
+  it("keeps birthdays, nicknames and other properties of the removed cards", () => {
+    const rich = person("1", "Petra", "Keller", {
+      emails: { e: { address: "petra@keller.test" } },
+      phones: { p: { number: "07223 4711" } },
+      organizations: { o: { name: "Keller GmbH" } },
+      nicknames: { n1: { name: "Pe" } },
+    } as Partial<ContactCard>);
+    const poor = {
+      ...person("2", "Petra", "Keller", { emails: { e: { address: "petra@keller.test" } } }),
+      anniversaries: { k1: { kind: "birth", date: { year: 1980, month: 5, day: 4 } } },
+      nicknames: { n1: { name: "Pe" }, n2: { name: "Petty" } },
+      keywords: { kunde: true },
+      language: "de",
+    } as Card;
+    const { keep, patch } = mergeCards([rich, poor]);
+    expect(keep).toBe(rich);
+    expect(patch.anniversaries).toEqual({
+      k1: { kind: "birth", date: { year: 1980, month: 5, day: 4 } },
+    });
+    expect(patch.nicknames).toEqual({ n1: { name: "Pe" }, n2: { name: "Petty" } });
+    expect(patch.keywords).toEqual({ kunde: true });
+    expect(patch.language).toBe("de");
+    expect(patch).not.toHaveProperty("accountId");
+    expect(patch).not.toHaveProperty("uid");
+    expect(patch).not.toHaveProperty("id");
+  });
+
+  it("matches +49 (0) with the national number", () => {
+    const cards = [
+      person("1", "A", "A", { phones: { p: { number: "+49 (0) 7223 4711" } } }),
+      person("2", "B", "B", { phones: { p: { number: "07223 4711" } } }),
+    ];
+    expect(findDuplicates(cards)).toHaveLength(1);
   });
 });
 

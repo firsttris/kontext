@@ -14,14 +14,15 @@ const isLower = (text: string): boolean =>
 /**
  * "MÜLLER-LÜDENSCHEIDT" → "Müller-Lüdenscheidt", "anna von der heide" → "Anna von der Heide":
  * every word and every part of a double name starts with a capital, name particles after the
- * first word stay small.
+ * first word of the whole name stay small. `startsName` is false for a part after the first,
+ * like the surname "von der heide" after the given name.
  */
-export const nameCase = (text: string): string =>
+export const nameCase = (text: string, startsName = true): string =>
   text
     .split(/(\s+)/)
     .map((word, index) => {
       const lower = word.toLocaleLowerCase("de");
-      if (index > 0 && NAME_PARTICLES.has(lower)) return lower;
+      if ((index > 0 || !startsName) && NAME_PARTICLES.has(lower)) return lower;
       return lower.replace(
         /(^|[-'’])(\p{L})/gu,
         (_, before: string, letter: string) => `${before}${letter.toLocaleUpperCase("de")}`,
@@ -44,7 +45,12 @@ export const nameFix = <T extends ContactCard>(card: T): NameFix<T> | undefined 
   const name = {
     ...card.name,
     ...(components
-      ? { components: components.map((c) => ({ ...c, value: nameCase(c.value) })) }
+      ? {
+          components: components.map((c, index) => ({
+            ...c,
+            value: nameCase(c.value, index === 0),
+          })),
+        }
       : {}),
     ...(full ? { full: nameCase(full) } : {}),
   };

@@ -35,6 +35,8 @@ describe("nameFix", () => {
       name: components("Max", "Mustermann"),
     });
     expect(nameFix(card({ full: "petra keller" }))?.after).toBe("Petra Keller");
+    // The particle opens the surname component, not the name.
+    expect(nameFix(card(components("anna", "von der heide")))?.after).toBe("Anna von der Heide");
   });
 
   it("leaves well written names, companies and groups alone", () => {

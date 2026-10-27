@@ -13,11 +13,12 @@ export type DuplicateSet<T> = { cards: T[]; reasons: DuplicateReason[] };
 
 /**
  * A phone number as digits with its country code, so "+49 7223 4711", "0049 7223 4711" and
- * "07223 / 4711" compare equal. A national number without a code is taken as German: the first
+ * "07223 / 4711" compare equal, and so does "+49 (0) 7223 4711". A national number without a code is taken as German: the first
  * users are German businesses.
  */
 export const normalizePhone = (number: string): string => {
-  const digits = number.replace(/[^\d+]/g, "");
+  // "+49 (0) 7223 4711": the bracketed 0 is only dialled within the country.
+  const digits = number.replace(/\(\s*0\s*\)/g, "").replace(/[^\d+]/g, "");
   if (digits.startsWith("+")) return digits.slice(1).replace(/\+/g, "");
   if (digits.startsWith("00")) return digits.slice(2);
   if (digits.startsWith("0")) return `49${digits.slice(1)}`;
@@ -135,11 +136,75 @@ export type Merge<T> = {
   remove: T[];
 };
 
+/**
+ * The other maps of a card (RFC 9553): their entries are united as they are, an entry that is
+ * the same in two cards only once. Birthdays, nicknames, photos and the like stay this way.
+ */
+const ENTRY_MAPS = [
+  "anniversaries",
+  "calendars",
+  "cryptoKeys",
+  "directories",
+  "media",
+  "nicknames",
+  "onlineServices",
+  "personalInfo",
+  "preferredLanguages",
+  "schedulingAddresses",
+  "titles",
+];
+
+/** Maps whose keys are what counts (`keywords`, related cards by uid): united by key. */
+const KEY_MAPS = ["addressBookIds", "keywords", "relatedTo"];
+
+/** What the server or the card itself sets (and the app's `accountId`); never taken over. */
+const OWN = new Set([
+  "accountId",
+  "id",
+  "uid",
+  "@type",
+  "version",
+  "created",
+  "updated",
+  "prodId",
+  "kind",
+]);
+
+type Props = Record<string, unknown>;
+
 /** One card out of a set of duplicates. */
 export const mergeCards = <T extends ContactCard>(cards: T[]): Merge<T> => {
   const keep = cards.reduce((best, card) => (richness(card) > richness(best) ? card : best));
   const all = [keep, ...cards.filter((card) => card !== keep)];
+  const props = all as unknown as Props[];
+  const handled = new Set([
+    ...OWN,
+    ...ENTRY_MAPS,
+    ...KEY_MAPS,
+    ...["name", "organizations", "emails", "phones", "addresses", "notes", "links"],
+  ]);
+  const others = [...new Set(props.flatMap(Object.keys))].filter((key) => !handled.has(key));
   const patch = {
+    // Whatever else a card has (language, speakToAs …): the kept card's, else the first one's.
+    ...Object.fromEntries(
+      others.map((key) => [key, props.find((card) => card[key] !== undefined)?.[key]]),
+    ),
+    ...Object.fromEntries(
+      ENTRY_MAPS.map((key) => [
+        key,
+        unite(
+          props.map((card) => card[key] as Props | undefined),
+          (entry) => JSON.stringify(entry),
+          key.charAt(0),
+        ),
+      ]),
+    ),
+    ...Object.fromEntries(
+      KEY_MAPS.map((key) => {
+        const united = Object.assign({}, ...props.map((card) => card[key] ?? {}));
+        return [key, Object.keys(united).length ? united : undefined];
+      }),
+    ),
     name: all.find((card) => card.name)?.name,
     organizations: unite(
       all.map((card) => card.organizations),
@@ -171,7 +236,6 @@ export const mergeCards = <T extends ContactCard>(cards: T[]): Merge<T> => {
       (link) => link.uri,
       "l",
     ),
-    addressBookIds: Object.assign({}, ...all.map((card) => card.addressBookIds)),
   };
   return {
     keep,
