@@ -87,6 +87,13 @@ swaks --server 127.0.0.1:10025 --from chef@weber-haustechnik.test \
 
 Die E2E-Tests stellen solche Mails mit `deliverMail` aus `e2e/protocols.ts` zu.
 
+Wie auf einem Kundenserver schaltet das Skript Stalwarts RSVP-Seite aus (`x:CalendarScheduling`,
+`httpRsvpEnable: false`); Einladungen verschickt Kontext (siehe
+[Einladungen](architecture.md#einladungen)). Mails an Adressen außerhalb (etwa
+`@hoffmann-bau.test`) kommen nirgends an, die Domains gibt es nicht; was hinausging, steht im
+Gesendet-Ordner des Organisators – dort liest `e2e/invitations.spec.ts` die Einladungen und ihre
+Antwort-Links.
+
 ## Datenbank des Servers
 
 Der Server speichert nur Sitzungen (und später Passkeys) in SQLite, Standard

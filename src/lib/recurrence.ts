@@ -10,6 +10,17 @@ export type RecurrenceRule = {
   interval?: number;
   byDay?: { "@type"?: "NDay"; day: string; nthOfPeriod?: number }[];
   byMonthDay?: number[];
+  /** What other programs write and the form does not: kept as they are (RFC 8984 §4.3.3). */
+  byMonth?: string[];
+  byYearDay?: number[];
+  byWeekNo?: number[];
+  byHour?: number[];
+  byMinute?: number[];
+  bySecond?: number[];
+  bySetPosition?: number[];
+  firstDayOfWeek?: string;
+  rscale?: string;
+  skip?: "omit" | "backward" | "forward";
   count?: number;
   /** Local date-time of the last possible start. */
   until?: string;

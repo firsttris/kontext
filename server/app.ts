@@ -51,6 +51,9 @@ import { createExternalStore } from "./external/store";
 import { createUserJmap } from "./external/user-jmap";
 import { appPolicy, hardenDownload, isDownload, withAppHeaders } from "./headers";
 import { createImageSenderRoutes } from "./images/routes";
+import { createInvitationRoutes, createRsvpRoutes } from "./invitations/routes";
+import { createRsvp } from "./invitations/rsvp";
+import { createRsvpTokens } from "./invitations/token";
 import { createServerJmap } from "./jmap-server";
 import { createHub } from "./live/hub";
 import { createLiveRoutes } from "./live/routes";
@@ -643,6 +646,30 @@ export const createApp = async (env: Env) => {
     "/api/secure-public",
     createSecurePublicRoutes({ store: secure, notify: pusher.notify }),
   );
+  // Invitations Kontext sends itself: signed answer links, and the page that enters the answer
+  // with the server's key (without it, invitations go out without the buttons).
+  const rsvpTokens = await createRsvpTokens(env.BETTER_AUTH_SECRET);
+  app.route(
+    "/api/invitations",
+    createInvitationRoutes({
+      tokens: rsvpTokens,
+      publicUrl: env.BETTER_AUTH_URL,
+      infoOf,
+      sendersOf,
+      jmapFor: createUserJmap(env, grants),
+      enabled: Boolean(env.STALWART_ADMIN_KEY),
+    }),
+  );
+  if (env.STALWART_ADMIN_KEY) {
+    app.route(
+      "/api/rsvp",
+      createRsvpRoutes({
+        tokens: rsvpTokens,
+        rsvp: createRsvp(createRequest(env.STALWART_URL, env.STALWART_ADMIN_KEY)),
+        mayTry: createAttempts(env.SIGN_IN_PER_MINUTE),
+      }),
+    );
+  }
   const pruneSecure = () => void secure.pruneExpired(new Date()).catch(() => undefined);
   pruneSecure();
   setInterval(pruneSecure, 3_600_000).unref();

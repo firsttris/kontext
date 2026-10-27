@@ -223,6 +223,15 @@ const treatSmtpAsInbound = async (port: number, smtpPort: string): Promise<void>
   if (updates.length) await adminRequest(port, updates);
 };
 
+/**
+ * As on a customer's server (docs/installation.md): Kontext sends the invitations with its own
+ * answer page, Stalwart's RSVP page stays off; its scheduling stays on for the answers that come.
+ */
+const withoutStalwartRsvp = (port: number) =>
+  adminRequest(port, [
+    ["x:CalendarScheduling/set", { update: { singleton: { httpRsvpEnable: false } } }, "0"],
+  ]);
+
 const stop = (child: ReturnType<typeof spawn>): Promise<void> =>
   new Promise((ok) => {
     child.on("exit", () => ok());
@@ -252,6 +261,7 @@ const main = async (): Promise<void> => {
   const server = startServer({ STALWART_HOSTNAME: "localhost" });
   await waitForHttp(httpPort);
   await treatSmtpAsInbound(httpPort, args.smtp);
+  await withoutStalwartRsvp(httpPort);
   console.log(
     `Stalwart ${STALWART_VERSION} läuft: http://127.0.0.1:${httpPort} (SMTP ${args.smtp}, IMAP ${args.imap}), Admin ${STALWART_ADMIN.user}`,
   );

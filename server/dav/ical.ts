@@ -5,6 +5,7 @@
  * and VTODO has not (its checklist, links, column beyond open / in progress / done) stays in
  * Kontext. Pure.
  */
+import { fold, utcStamp as utc, writeText } from "../../src/lib/ical-text";
 import { berlinInstant, isCalendarDay, type Repeat, type Task, zonedInstant } from "../tasks/tasks";
 
 export type Prop = { name: string; params: Record<string, string>; value: string };
@@ -41,27 +42,6 @@ export const parseLines = (text: string): Prop[] =>
 /** A TEXT value as written: "\n" a line break, "\;" "\," "\\" the characters themselves. */
 const readText = (value: string) =>
   value.replace(/\\([\\;,nN])/g, (_, char: string) => (char.toLowerCase() === "n" ? "\n" : char));
-
-const writeText = (value: string) =>
-  value.replace(/\\/g, "\\\\").replace(/;/g, "\\;").replace(/,/g, "\\,").replace(/\r?\n/g, "\\n");
-
-/** Lines longer than 75 octets folded (RFC 5545 §3.1), not inside a character. */
-const fold = (line: string): string => {
-  const bytes = new TextEncoder();
-  if (bytes.encode(line).length <= 75) return line;
-  const parts: string[] = [];
-  let current = "";
-  for (const char of line) {
-    if (bytes.encode(current + char).length > (parts.length ? 74 : 75)) {
-      parts.push(current);
-      current = "";
-    }
-    current += char;
-  }
-  return [...parts, current].join("\r\n ");
-};
-
-const utc = (date: Date) => date.toISOString().replace(/[-:]/g, "").replace(/\.\d+/, "");
 
 const berlinParts = (date: Date) => {
   const local = new Intl.DateTimeFormat("sv-SE", {
