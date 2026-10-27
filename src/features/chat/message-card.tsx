@@ -14,7 +14,6 @@ import { principalName } from "@/jmap/principals";
 import type { Card } from "@/lib/chat-cards";
 import { cn } from "@/lib/cn";
 import { dateKey } from "@/lib/jscalendar";
-import { shortAddress } from "@/lib/mail-accounts";
 import { dueLabel, type Task } from "@/lib/tasks";
 import { m } from "@/paraglide/messages";
 import { MailCopyDialog } from "./mail-copy";
@@ -43,14 +42,12 @@ const useCardAccess = (card: Card): { open: boolean; task?: Task } => {
   };
 };
 
-/** "Liegt im Postfach von Jonas Weber" / "… von info@". */
+/** "Liegt im Postfach von Jonas Weber" / "… von info@weber-haustechnik.test". */
 const useOwner = (accountId: string): string => {
   const { data: principals = [] } = usePrincipals();
   const owner = principals.find((principal) => principal.id === accountId);
   if (!owner) return "";
-  return owner.type === "individual"
-    ? principalName(owner)
-    : shortAddress(owner.email ?? owner.name);
+  return owner.type === "individual" ? principalName(owner) : (owner.email ?? owner.name);
 };
 
 const frame =

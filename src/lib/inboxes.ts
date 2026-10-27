@@ -1,6 +1,6 @@
 /** Lists over several accounts ("Alle Posteingänge", search): merging their paged lists. */
 import type { EmailSummary, Mailbox } from "@/jmap/types";
-import { type MailAccount, mailboxNotice, shortAddress } from "./mail-accounts";
+import { type MailAccount, mailboxNotice } from "./mail-accounts";
 
 /** A row of the combined list; `label` is empty for the own account (no badge). */
 export type MergedRow = {
@@ -20,8 +20,8 @@ export type Feed = {
 
 export type Inbox = { account: MailAccount; mailbox: Mailbox };
 
-/** Shared mailboxes are labelled by their address ("info@"), the own one is not labelled. */
-const label = (account: MailAccount) => (account.isPersonal ? "" : shortAddress(account.name));
+/** Shared mailboxes are labelled by their full address, the own one is not labelled. */
+const label = (account: MailAccount) => (account.isPersonal ? "" : account.name);
 
 /**
  * The merged rows. While an account has older mails still to load, nothing older than its oldest

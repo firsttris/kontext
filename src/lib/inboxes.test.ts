@@ -32,7 +32,7 @@ describe("mergeFeeds", () => {
       b: feed([mail("c", 10)]),
     });
     expect(rows.map((r) => r.email.id)).toEqual(["a", "c", "b"]);
-    expect(rows.map((r) => r.account.label)).toEqual(["", "info@", ""]);
+    expect(rows.map((r) => r.account.label)).toEqual(["", "info@weber.test", ""]);
   });
   it("holds back older mails while another account still has pages to load", () => {
     const rows = mergeFeeds([inbox(own), inbox(info)], {

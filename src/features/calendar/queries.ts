@@ -44,7 +44,7 @@ export type CalendarRef = {
   key: string;
   accountId: string;
   isPersonal: boolean;
-  /** Who it belongs to: a colleague's name or a shared mailbox like "info@". */
+  /** Who it belongs to: a colleague's name or a shared mailbox by its address. */
   owner: string;
   /** The owner's address; counts as organizer when the user edits a colleague's calendar. */
   ownerEmail: string;
@@ -100,12 +100,7 @@ export const useCalendarRefs = (): { calendars: CalendarRef[]; isPending: boolea
   let index = 0;
   const calendars = accounts.flatMap((account, position) => {
     const principal = principals.find((p) => p.id === account.id);
-    const owner =
-      principal?.type === "group"
-        ? account.name.replace(/@.*/, "@")
-        : principal
-          ? principalName(principal)
-          : account.name;
+    const owner = principal && principal.type !== "group" ? principalName(principal) : account.name;
     return (results[position]?.data ?? [])
       .filter((calendar) => account.isPersonal || calendar.myRights?.mayReadItems)
       .sort((a, b) => Number(b.isDefault) - Number(a.isDefault) || a.name.localeCompare(b.name))

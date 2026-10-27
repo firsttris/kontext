@@ -14,7 +14,6 @@ import { useShareWith } from "@/features/documents/use-share-with";
 import { ItemLink, LinkIcon } from "@/features/links/item-link";
 import { cn } from "@/lib/cn";
 import { documentLink } from "@/lib/document-links";
-import { shortAddress } from "@/lib/mail-accounts";
 import { shiftedReminder } from "@/lib/task-reminders";
 import { columnLabel, dueLabel, REPEAT_LABELS, REPEATS, type Repeat, type Task } from "@/lib/tasks";
 import { m } from "@/paraglide/messages";
@@ -194,7 +193,7 @@ export const TaskDetail = ({ task, onClose }: { task: Task; onClose?: () => void
                 )}
                 {boards.map((board) => (
                   <option key={board.id} value={board.id}>
-                    {board.isPersonal ? m.tasks_my_board() : shortAddress(board.name)}
+                    {board.isPersonal ? m.tasks_my_board() : board.name}
                   </option>
                 ))}
               </Select>

@@ -17,7 +17,6 @@ import {
 import { useMailAccounts } from "@/features/mail/queries";
 import type { EmailAddress } from "@/jmap/types";
 import { textToHtml } from "@/lib/html";
-import { shortAddress } from "@/lib/mail-accounts";
 import { m } from "@/paraglide/messages";
 import { fillSnippet } from "../../../server/snippets/snippets";
 import { useSnippets } from "./queries";
@@ -42,7 +41,7 @@ export const SnippetMenu = ({
       label:
         id === own
           ? m.snippets_mine()
-          : shortAddress(accounts.find((account) => account.id === id)?.name ?? ""),
+          : (accounts.find((account) => account.id === id)?.name ?? ""),
       snippets: snippets.filter((snippet) => snippet.accountId === id),
     }))
     .filter((group) => group.snippets.length);

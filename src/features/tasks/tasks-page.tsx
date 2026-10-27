@@ -9,7 +9,6 @@ import { TabBar } from "@/components/shell/app-shell";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/cn";
 import { dateKey } from "@/lib/jscalendar";
-import { shortAddress } from "@/lib/mail-accounts";
 import { inView, type TaskView } from "@/lib/tasks";
 import { m } from "@/paraglide/messages";
 import type { TasksSearch } from "@/routes/_app/tasks";
@@ -74,7 +73,7 @@ export const TasksPage = ({ search }: { search: TasksSearch }) => {
   const title = board
     ? board.isPersonal
       ? m.tasks_my_board()
-      : m.tasks_board_of({ mailbox: shortAddress(board.name) })
+      : m.tasks_board_of({ mailbox: board.name })
     : VIEWS.find((entry) => entry.view === view)!.label();
   const counts = Object.fromEntries(
     VIEWS.map(({ view: key }) => [
@@ -107,7 +106,7 @@ export const TasksPage = ({ search }: { search: TasksSearch }) => {
           search={{ board: entry.id }}
           className={chip(board?.id === entry.id)}
         >
-          {entry.isPersonal ? m.tasks_my_board() : shortAddress(entry.name)}
+          {entry.isPersonal ? m.tasks_my_board() : entry.name}
         </Link>
       ))}
     </nav>

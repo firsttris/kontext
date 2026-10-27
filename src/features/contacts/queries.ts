@@ -31,7 +31,7 @@ export type BookRef = {
   key: string;
   accountId: string;
   isPersonal: boolean;
-  /** Who it belongs to: a colleague's name or a shared mailbox like "info@". */
+  /** Who it belongs to: a colleague's name or a shared mailbox by its address. */
   owner: string;
   name: string;
   book: AddressBook;
@@ -76,12 +76,7 @@ export const useBooks = (): { books: BookRef[]; isPending: boolean } => {
   });
   const books = accounts.flatMap((account, index) => {
     const principal = principals.find((p) => p.id === account.id);
-    const owner =
-      principal?.type === "group"
-        ? account.name.replace(/@.*/, "@")
-        : principal
-          ? principalName(principal)
-          : account.name;
+    const owner = principal && principal.type !== "group" ? principalName(principal) : account.name;
     return (results[index]?.data ?? [])
       .filter((book) => book.myRights?.mayRead !== false)
       .sort((a, b) => Number(b.isDefault) - Number(a.isDefault) || a.name.localeCompare(b.name))

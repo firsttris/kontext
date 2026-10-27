@@ -3,7 +3,6 @@ import { Link } from "@tanstack/react-router";
 import { BellRing, Mail, Repeat } from "lucide-react";
 import { ColleagueAvatar } from "@/features/photos/colleague-avatar";
 import { cn } from "@/lib/cn";
-import { shortAddress } from "@/lib/mail-accounts";
 import { dueGroup, dueLabel, type Task } from "@/lib/tasks";
 import { m } from "@/paraglide/messages";
 
@@ -76,8 +75,8 @@ export const TaskRow = ({
             </span>
           ) : null}
           {board ? (
-            <span className="shrink-0 rounded-md bg-subtle px-1.5 text-[11px] font-medium">
-              {shortAddress(board)}
+            <span className="min-w-0 truncate rounded-md bg-subtle px-1.5 text-[11px] font-medium">
+              {board}
             </span>
           ) : null}
           {task.checklist.length ? (

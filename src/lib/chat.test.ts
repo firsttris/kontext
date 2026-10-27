@@ -58,7 +58,9 @@ describe("channelTitle", () => {
     channelTitle(c, "jonas", nameOf, () => "info@weber-haustechnik.test");
 
   it("names a mailbox channel after the mailbox", () => {
-    expect(title(channel({ kind: "mailbox", accountId: "info" }))).toBe("info@");
+    expect(title(channel({ kind: "mailbox", accountId: "info" }))).toBe(
+      "info@weber-haustechnik.test",
+    );
   });
 
   it("names a direct conversation after the others", () => {

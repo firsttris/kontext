@@ -21,7 +21,6 @@ import { cn } from "@/lib/cn";
 import { documentCard } from "@/lib/document-links";
 import { dateKey } from "@/lib/jscalendar";
 import { matchesSearch } from "@/lib/jscontact";
-import { shortAddress } from "@/lib/mail-accounts";
 import { parseSearch, toEmailFilter } from "@/lib/mail-search";
 import { mailboxPath } from "@/lib/mailboxes";
 import { m } from "@/paraglide/messages";
@@ -46,7 +45,7 @@ const useMailHits = (text: string, enabled: boolean): Hit[] => {
     const filter =
       list &&
       toEmailFilter(query, {
-        label: account.isPersonal ? account.name : shortAddress(account.name),
+        label: account.name,
         isPersonal: account.isPersonal,
         mailboxes: list,
         path: (mailbox) => mailboxPath(mailbox, list),

@@ -25,7 +25,7 @@ export const CategoryMenu = ({
   email,
 }: {
   accountId: string;
-  /** "info@" or the own address, for the editing dialog. */
+  /** The mailbox's address, for the editing dialog. */
   mailbox: string;
   email: EmailSummary;
 }) => {

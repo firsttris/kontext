@@ -174,7 +174,7 @@ const findFolder = (mailboxes: Mailbox[], name: string, path: (m: Mailbox) => st
 };
 
 export type SearchAccount = {
-  /** "info@" for a shared mailbox, the address for the own one. */
+  /** The mailbox's address. */
   label: string;
   isPersonal: boolean;
   mailboxes: Mailbox[];

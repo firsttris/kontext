@@ -162,10 +162,10 @@ export const MessageRow = ({
             {account?.label ? (
               <span
                 title={account.title}
-                className="flex shrink-0 items-center gap-1 rounded-md bg-subtle px-1.5 text-[11px] font-medium text-muted"
+                className="flex min-w-0 items-center gap-1 rounded-md bg-subtle px-1.5 text-[11px] font-medium text-muted"
               >
-                <Users size={11} strokeWidth={2} aria-hidden="true" />
-                {account.label}
+                <Users size={11} strokeWidth={2} className="shrink-0" aria-hidden="true" />
+                <span className="truncate">{account.label}</span>
               </span>
             ) : null}
             {sendAt ? (

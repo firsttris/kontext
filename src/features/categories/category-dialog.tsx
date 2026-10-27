@@ -70,7 +70,7 @@ export const CategoryDialog = ({
   onClose,
 }: {
   accountId: string;
-  /** "info@" or the own address, for the title. */
+  /** The mailbox's address, for the title. */
   mailbox: string;
   onClose: () => void;
 }) => {

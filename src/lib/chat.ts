@@ -6,7 +6,6 @@
 import { m } from "@/paraglide/messages";
 import type { Channel, ChannelSummary, Message } from "../../server/chat/chat";
 import { dateKey } from "./jscalendar";
-import { shortAddress } from "./mail-accounts";
 
 export type { MailCopy, Reaction, Replies } from "../../server/chat/chat";
 export {
@@ -33,7 +32,7 @@ export const channelTitle = (
   nameOf: (id: string) => string,
   accountName: (id: string) => string,
 ): string => {
-  if (channel.kind === "mailbox") return shortAddress(accountName(channel.accountId ?? ""));
+  if (channel.kind === "mailbox") return accountName(channel.accountId ?? "");
   if (channel.kind !== "direct") return channel.name ?? "";
   const others = channel.members.filter((member) => member !== me);
   if (others.length === 0) return nameOf(me);
