@@ -16,7 +16,9 @@ import { extractPst, listItems, type PstItem } from "./pst";
 import { folderResolver } from "./resolve";
 
 const BATCH = 25;
-const PARSE_BATCH = 50;
+// Stalwart parses 10 vCards or calendar files per `…/parse` by default (parseLimitContact/Event)
+// and does not say so in the session; more ends the import with "exceeds the maximum".
+const PARSE_BATCH = 10;
 
 export type RunnerDeps = {
   jobs: Jobs;

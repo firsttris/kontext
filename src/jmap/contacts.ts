@@ -53,7 +53,8 @@ export const listContacts = async (
 /**
  * Reads vCards with the server's parser (RFC 9555 mapping). `ContactCard/parse` reads one card
  * per blob, so each card becomes its own blob, created inline with `Blob/upload` (RFC 9404) in the
- * same request; 50 cards per request.
+ * same request; 10 cards per request, Stalwart's default limit for `…/parse` (parseLimitContact),
+ * which the session does not show.
  */
 export const parseVCards = async (
   client: JmapClient,
@@ -62,7 +63,7 @@ export const parseVCards = async (
 ): Promise<(ContactCard | null)[]> => {
   const using = [...USING, CAPABILITIES.blob, CAPABILITIES.contactsParse];
   const results: (ContactCard | null)[] = [];
-  for (const page of chunk(vcards, 50)) {
+  for (const page of chunk(vcards, 10)) {
     const create = Object.fromEntries(
       page.map((text, i) => [`v${i}`, { data: [{ "data:asText": text }], type: "text/vcard" }]),
     );
