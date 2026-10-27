@@ -6,6 +6,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { recordingType, voiceFile } from "@/lib/voice";
 import { m } from "@/paraglide/messages";
+import { stopVoiceMessage } from "./voice-message";
 
 type Session = {
   recorder: MediaRecorder;
@@ -48,6 +49,7 @@ export const useVoiceRecorder = ({ onError }: { onError: (message: string) => vo
     }
     let stream: MediaStream;
     asking.current = true;
+    stopVoiceMessage();
     try {
       stream = await navigator.mediaDevices.getUserMedia({ audio: true });
     } catch {

@@ -18,6 +18,16 @@ const SPEEDS = [1, 1.5, 2];
 /** The voice message playing now, paused when another starts. */
 let playing: HTMLAudioElement | null = null;
 
+/**
+ * Stops the voice message playing now and hands the session back to the browser, before the
+ * microphone is asked for: under "playback" Safari ends a microphone track (Audio Session API,
+ * "Microphone MediaStreamTrack"), and the recording would stay empty.
+ */
+export const stopVoiceMessage = () => {
+  playing?.pause();
+  setAudioSession("auto");
+};
+
 const useVoiceShape = (url: string | undefined) =>
   useQuery({
     queryKey: ["chat", "voice-shape", url],
