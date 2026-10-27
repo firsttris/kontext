@@ -369,8 +369,18 @@ Sperrdauer ein Tag, deutsche Suche, 16 gleichzeitige JMAP-Anfragen):
  ["x:Security/set",{"update":{"singleton":{"authBanPeriod":86400000,"scanBanPeriod":86400000,
    "abuseBanPeriod":86400000,"loiterBanPeriod":86400000}}},"2"],
  ["x:Search/set",{"update":{"singleton":{"defaultLanguage":"de-DE"}}},"3"],
- ["x:Jmap/set",{"update":{"singleton":{"maxConcurrentRequests":16}}},"4"]]'
+ ["x:Jmap/set",{"update":{"singleton":{"maxConcurrentRequests":16,
+   "parseLimitContact":50,"parseLimitEvent":50}}},"4"],
+ ["x:CalendarScheduling/set",{"update":{"singleton":{"httpRsvpEnable":false}}},"5"]]'
 ```
+
+- `parseLimitContact`/`parseLimitEvent`: Stalwart 0.16 liest standardmäßig nur 10 vCards bzw.
+  Termine pro `…/parse`; Kontext schickt beim vCard-Import und im Umzug 50 auf einmal, und ab
+  dem elften bricht der Import ab (*The number of ids requested … exceeds the maximum*).
+- `httpRsvpEnable`: Stalwarts Einladungsmails haben sonst Knöpfe *Yes/No/Maybe* auf
+  `https://mail.firma.de/calendar/rsvp` – dort antwortet Caddy, nicht Stalwart, der Klick endet
+  in einem TLS-Fehler. Zugesagt wird im Kalender in Kontext; externe Gäste antworten mit ihrem
+  Mailprogramm auf die angehängte Einladung (iMIP).
 
 Mit `useXForwarded` erwartet Stalwart den Header bei jeder HTTP-Anfrage; Kontext spricht es
 direkt an, ohne ihn, und jede Anfrage schreibt `X-Forwarded-For header is missing` ins Log
@@ -412,7 +422,10 @@ nano /opt/kontext/deploy/kontext.env && systemctl restart kontext
 der Firmenverwaltung an, nur mit diesem Namen (`server/company/management.ts`); sie lässt sich
 genauso vorher anlegen. Das Konto bekommt *User* (`b`) und diese Rolle, dazu auf Wunsch einen
 Alias (`vorname.nachname@`, landet im selben Postfach). Danach legt der Chef alle weiteren
-Mitarbeiter in Kontext an.
+Mitarbeiter und gemeinsamen Postfächer **in Kontext** an: Kontext gibt dabei auch die Kalender als
+„Nur Verfügbarkeit“ für die Kollegen frei (`newcomerPatches` in `server/company/availability.ts`).
+Wer Konten an Kontext vorbei per API anlegt, holt das unter *Einstellungen → Firma → Mitarbeiter
+→ Verfügbarkeit im Kalender → Für alle einschalten* nach.
 
 ```bash
 /root/stalwart-api.sh '[["x:Role/set",{"create":{"r":{"description":"Firmenverwaltung (Kontext)"}}},"0"]]'
