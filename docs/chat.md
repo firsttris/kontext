@@ -27,8 +27,10 @@ info@ – wer das Postfach öffnen darf, öffnet die Mail, kopiert wird nichts.
 - **Fotos und Dateien** von der Kamera, per Ziehen oder Einfügen; Fotos werden vorher verkleinert.
 - **Sprachnachrichten** wie bei WhatsApp: das Mikrofon (am Handy anstelle von „Senden“, solange
   nichts geschrieben ist) nimmt auf, bis man „Senden“ drückt oder verwirft; nach einer
-  Viertelstunde geht die Aufnahme von selbst. In der Unterhaltung spielt sie direkt ab, mit
-  Wellenform zum Springen, Dauer und Tempo 1×, 1,5× oder 2×; es spielt immer nur eine. In der
+  Viertelstunde geht die Aufnahme von selbst. Während der Aufnahme wächst eine Wellenform mit dem,
+  was man sagt; nach „Senden“ bleibt die Leiste stehen, bis die Nachricht samt Wellenform in der
+  Unterhaltung steht. Dort spielt sie direkt ab, mit Wellenform zum Springen, die sich beim
+  Abspielen gleichmäßig füllt, Dauer und Tempo 1×, 1,5× oder 2×; es spielt immer nur eine. In der
   Liste und in Benachrichtigungen steht „Sprachnachricht“.
 - **Suche** über alle Kanäle; eigene Nachrichten bearbeiten und löschen; stummschalten,
   verlassen, löschen.
