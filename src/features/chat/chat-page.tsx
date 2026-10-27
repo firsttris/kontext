@@ -33,9 +33,12 @@ export const ChatPage = ({
   const actions = useChatActions(me);
   const [editing, setEditing] = useState<Editing>(null);
   const open = channels.find((channel) => channel.id === channelId);
-  // Started from the list (a phone's "Neue Nachricht"): "Zurück" leads there.
-  const show = (channel: Channel) =>
+  // Started from the list (a phone's "Neue Nachricht"): "Zurück" leads there. The open one
+  // (saved in "Kanal bearbeiten") stays as it is, without a second entry in the history.
+  const show = (channel: Channel) => {
+    if (channel.id === channelId) return;
     void navigate({ to: "/chat", search: { channel: channel.id }, state: FROM_PARENT });
+  };
 
   return (
     <>

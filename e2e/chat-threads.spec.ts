@@ -223,6 +223,35 @@ test.describe("Chat: Reaktionen und Antworten", () => {
     await page.goBack();
     await expect(page).not.toHaveURL(/\/chat/);
   });
+
+  test("Kanal bearbeiten legt keinen zweiten Eintrag im Verlauf an", async ({ page }) => {
+    await login(page);
+    const slug = await newChannel(page, ["Max Becker"]);
+    await page.goto("/chat");
+    await openChannel(page, slug);
+    await page.getByRole("button", { name: "Kanal bearbeiten" }).click();
+    const dialog = page.getByRole("dialog", { name: "Kanal bearbeiten" });
+    await dialog.getByRole("button", { name: "Speichern" }).click();
+    await expect(dialog).toHaveCount(0);
+    await page.goBack();
+    await expect(page).not.toHaveURL(/channel=/);
+  });
+
+  test("Kanal bearbeiten, dann Zurück zur Liste @phone", async ({ page }) => {
+    await login(page);
+    const slug = await newChannel(page, ["Max Becker"]);
+    const url = page.url();
+    await page.goto("/mail");
+    // Opened by a link: nothing before it to go back to.
+    await page.goto(url);
+    await expect(page.getByRole("heading", { name: `# ${slug}` })).toBeVisible();
+    await page.getByRole("button", { name: "Kanal bearbeiten" }).click();
+    const dialog = page.getByRole("dialog", { name: "Kanal bearbeiten" });
+    await dialog.getByRole("button", { name: "Speichern" }).click();
+    await expect(dialog).toHaveCount(0);
+    await page.getByRole("button", { name: "Zurück zu den Chats" }).click();
+    await expect(page).not.toHaveURL(/channel=/);
+  });
 });
 
 test.describe("Firmenverwaltung: Team-Chat", () => {
