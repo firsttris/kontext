@@ -137,4 +137,4 @@ export const readAutocrypt = async (
   }
 };
 
-export { groupFingerprint } from "../../server/pgp/keys";
+export { groupFingerprint } from "./fingerprint";

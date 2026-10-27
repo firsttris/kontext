@@ -470,6 +470,18 @@ test.describe("Mail am Handy @phone", () => {
     await page.getByRole("link", { name: address("jonas") }).click();
     await expect(page.getByRole("link", { name: "Papierkorb" })).toBeVisible();
   });
+
+  test("lädt für Liste und Mail keine Verschlüsselung nach @phone", async ({ page }) => {
+    // OpenPGP.js and node-forge (some 200 kB with gzip) only for a mail that needs them.
+    const subject = unique("Rückruf Heizung Handy");
+    await addMail("jonas", "jonas", subject);
+    const loaded: string[] = [];
+    page.on("request", (request) => loaded.push(request.url()));
+    await login(page);
+    await page.getByRole("list", { name: "Posteingang" }).getByText(subject).click();
+    await expect(page.getByRole("heading", { name: subject })).toBeVisible();
+    expect(loaded.filter((url) => /openpgp|node-forge/.test(url))).toEqual([]);
+  });
 });
 
 test.describe("Entwürfe", () => {
