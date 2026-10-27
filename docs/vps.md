@@ -20,6 +20,7 @@ Was wo passiert:
 | 10. Stalwart ohne Oberfläche einrichten | Server         |
 | 11. Backup auf Cloudflare R2    | Cloudflare und Server  |
 | 12. Mail umstellen              | Cloudflare und Server  |
+| 13. Zugangsdaten sichern        | Passwortmanager        |
 
 ## 1. Root-Passwort setzen
 
@@ -517,3 +518,20 @@ echo QUIT | openssl s_client -starttls smtp -connect mail.firma.de:25 -verify_re
     (Outlook, Hotmail, Microsoft 365) führt eine eigene Sperre ohne öffentliche Liste; kommt beim
     Senden dorthin eine Absage mit `S3140`, die IP unter *sender.office.com* freischalten lassen.
     Alle öffentlichen Listen auf einmal: *mxtoolbox.com/blacklists.aspx*.
+
+## 13. Zugangsdaten sichern
+
+Was außerhalb des Servers in einen Passwortmanager gehört – nicht in eine Textdatei:
+
+| Eintrag | Wozu | Auf dem Server |
+| --- | --- | --- |
+| **Restic-Passwort** | Ohne es ist das Backup nicht lesbar | `deploy/backup.env` |
+| **Stalwart-Admin** (`admin@firma.de`) | Notzugang zu Stalwarts Verwaltung | `/root/.stalwart-admin` |
+| **Konto des Chefs** | Anmeldung in Kontext und Mailprogrammen (nach dem Ändern das neue) | – |
+| **SSH-Schlüssel, Zugang zum Anbieter** | Server und Panel | – |
+| `deploy/kontext.env`, `deploy/backup.env` (als sichere Notiz) | Schnellere Wiederherstellung; das Backup sichert sie nicht | `deploy/` |
+
+Das vorläufige Passwort aus dem Log von Stalwart (Benutzer `admin`) gilt nach der Ersteinrichtung
+nicht mehr. Nicht nötig, weil jederzeit neu zu erzeugen: das Konto `kontext-server@` und sein
+API-Schlüssel, der Cloudflare-Token, die R2-Schlüssel. Ansehen auf dem Server, etwa
+`cat /root/.stalwart-admin`; Startpasswörter danach dort löschen.
