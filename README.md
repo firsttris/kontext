@@ -4,9 +4,8 @@
 
 <h3>Mail, calendar, chat and telephony for your team – self-hosted and open source.</h3>
 
-**Mail, calendar, contacts, tasks, team chat and phone (CTI) for small businesses – on your own server.**<br>
 Shared mailboxes, a team calendar and contacts that connect everything: every customer's mails, appointments, tasks and calls at a glance.<br>
-Open source (AGPL), a web app and PWA on top of the Stalwart mail server, no per-seat pricing. Made in Europe.
+AGPL, a web app and PWA on top of the Stalwart mail server, no per-seat pricing. Made in Europe.
 
 **English** · [Deutsch](README.de.md)
 
