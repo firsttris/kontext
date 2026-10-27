@@ -81,6 +81,11 @@ const schema = z.object({
   SCHREIBZEUG_CLIENT_ID: z.string().min(1).default("schreibzeug"),
   /** The secret Schreibzeug sends with the code (its OIDC_CLIENT_SECRET), at least 32 characters. */
   SCHREIBZEUG_CLIENT_SECRET: optional(secret()),
+  /**
+   * Place suggestions for an appointment's "Ort": a Photon search address (komoot/photon, /api).
+   * What people type there goes to it from the server; empty turns the suggestions off.
+   */
+  PLACES_URL: z.union([z.literal(""), z.url()]).default("https://photon.komoot.io/api/"),
   /** The built app (dist/); when set, the server delivers it too. Empty in dev (Vite does). */
   STATIC_DIR: z.string().optional(),
 });

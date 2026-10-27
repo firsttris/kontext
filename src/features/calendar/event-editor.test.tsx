@@ -18,6 +18,7 @@ vi.mock("@/features/contacts/use-suggestions", () => ({
   useAddressSuggestions: () => [anna],
 }));
 vi.mock("./availability-panel", () => ({ AvailabilityPanel: () => null }));
+vi.mock("./place-queries", () => ({ usePlaceSuggestions: () => [] }));
 vi.mock("./queries", () => ({
   calendarLabel: () => "Kalender",
   useCalendarRefs: () => ({ calendars: [] }),

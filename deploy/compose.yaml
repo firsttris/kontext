@@ -47,6 +47,8 @@ services:
       # Documents (Schreibzeug); without the address the module is off.
       SCHREIBZEUG_URL: ${SCHREIBZEUG_URL:-}
       SCHREIBZEUG_CLIENT_SECRET: ${SCHREIBZEUG_CLIENT_SECRET:-}
+      # Place suggestions for an appointment's "Ort" (Photon); set but empty turns them off.
+      PLACES_URL: ${PLACES_URL-https://photon.komoot.io/api/}
     volumes:
       - kontext-data:/data
 

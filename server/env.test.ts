@@ -25,4 +25,14 @@ describe("settings", () => {
     const env = readEnv({ BETTER_AUTH_SECRET: SECRET, LIVEKIT_API_SECRET: "" });
     expect(env.LIVEKIT_API_SECRET).toBeUndefined();
   });
+
+  it("ask Photon for places unless PLACES_URL is set empty", () => {
+    expect(readEnv({ BETTER_AUTH_SECRET: SECRET }).PLACES_URL).toBe(
+      "https://photon.komoot.io/api/",
+    );
+    expect(readEnv({ BETTER_AUTH_SECRET: SECRET, PLACES_URL: "" }).PLACES_URL).toBe("");
+    expect(() => readEnv({ BETTER_AUTH_SECRET: SECRET, PLACES_URL: "photon" })).toThrow(
+      /PLACES_URL/,
+    );
+  });
 });

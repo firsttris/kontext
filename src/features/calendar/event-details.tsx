@@ -19,6 +19,7 @@ import {
   participantEmail,
   toLocal,
 } from "@/lib/jscalendar";
+import { mapsUrl } from "@/lib/maps";
 import { describeRecurrence } from "@/lib/recurrence";
 import { m } from "@/paraglide/messages";
 import {
@@ -66,6 +67,8 @@ export const EventDetails = ({ event, series, onEdit, onDone }: Props) => {
   const editable = mayEdit(calendar, event, mine);
   const people = attendees(event);
   const repeats = describeRecurrence((series ?? event).recurrenceRule);
+  const place = locationName(event);
+  const inMaps = mapsUrl(place, navigator.userAgent);
 
   const run = async (action: () => Promise<unknown>, done?: () => void) => {
     try {
@@ -117,10 +120,22 @@ export const EventDetails = ({ event, series, onEdit, onDone }: Props) => {
           <span>{repeats}</span>
         </div>
       ) : null}
-      {locationName(event) ? (
+      {place ? (
         <div className="flex items-start gap-3 text-[14px]">
           <MapPin size={16} className="mt-0.5 shrink-0 text-muted" />
-          <span>{locationName(event)}</span>
+          <span className="flex min-w-0 flex-col gap-0.5">
+            <span className="break-words">{place}</span>
+            {inMaps ? (
+              <a
+                href={inMaps}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-[13px] text-accent hover:underline"
+              >
+                {m.calendar_open_in_maps()}
+              </a>
+            ) : null}
+          </span>
         </div>
       ) : null}
       {meetingLink(event) ? (

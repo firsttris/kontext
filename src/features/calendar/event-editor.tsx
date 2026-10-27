@@ -33,6 +33,7 @@ import { withNames } from "@/lib/suggestions";
 import { m } from "@/paraglide/messages";
 import { AvailabilityPanel } from "./availability-panel";
 import { attendeeList } from "./availability-queries";
+import { PlaceField } from "./place-field";
 import { calendarLabel, useCalendarRefs, useEventMutations, useMyAddresses } from "./queries";
 import { RepeatFields } from "./repeat-fields";
 
@@ -250,10 +251,10 @@ export const EventEditor = ({ event, series, start, onDone, onCancel }: Props) =
           onChange={(recurrence) => setForm((current) => ({ ...current, recurrence }))}
         />
       ) : null}
-      <Label>
-        {m.calendar_event_location()}
-        <Input value={form.location} onChange={set("location")} />
-      </Label>
+      <PlaceField
+        value={form.location}
+        onChange={(location) => setForm((current) => ({ ...current, location }))}
+      />
       <MeetingField
         meeting={form.meeting}
         description={form.description}

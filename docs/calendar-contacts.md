@@ -27,6 +27,14 @@ Kontext steht, steht auch am iPhone, unter Android (DAVx⁵) und in Thunderbird.
   Terminplanungs-Assistent. In der Firma sieht jeder, wann Kollegen belegt sind (ohne Titel);
   abschaltbar je Kalender. [Mehr](architecture.md#verfugbarkeit)
 - **Kalender teilen** mit Kollegen: nur Verfügbarkeit, lesen oder bearbeiten.
+- **Orte vorschlagen:** Im Feld „Ort“ schlägt Kontext ab drei Buchstaben Adressen und Firmen vor
+  (aus OpenStreetMap), etwa „Bäckerei Müller, Hauptstraße 5, 79098 Freiburg“; freier Text wie
+  „Besprechungsraum 2“ geht weiter. Was man dort tippt, schickt der Kontext-Server an den
+  Ortsdienst Photon (komoot), nicht der Browser; abschaltbar mit `PLACES_URL=`.
+  [Mehr](architecture.md#orte-im-termin)
+- **In Karten öffnen:** Am Termin öffnet der Link den Ort in Apple Karten (iPhone, iPad, Mac) oder
+  Google Maps (sonst); am Handy öffnet sich die Karten-App, die Navigation ist einen Tipp entfernt.
+  Kontext selbst zeigt keine Karte.
 - **Videobesprechung am Termin:** Ein Klick legt einen Link an; Kunden kommen im Browser ohne
   Konto dazu, sobald jemand aus der Firma da ist. Siehe [Team-Chat und Videocalls](chat.md#videocalls-und-besprechungen).
 - **Aufgaben im Kalender:** die eigenen offenen Aufgaben am Tag ihrer Fälligkeit.

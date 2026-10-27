@@ -72,6 +72,7 @@ import { createPgpStore } from "./pgp/store";
 import { createPhone } from "./phone/setup";
 import { createPhotoRoutes } from "./photos/routes";
 import { createPhotoStore } from "./photos/store";
+import { createPlaceRoutes } from "./places/routes";
 import { createMailWatch } from "./push/mail-watch";
 import { createPusher } from "./push/pusher";
 import { createPushRoutes } from "./push/routes";
@@ -606,6 +607,15 @@ export const createApp = async (env: Env) => {
   app.route("/api/snoozes", createSnoozeRoutes({ store: snoozes, infoOf }));
   app.route("/api/unsubscribe", createUnsubscribeRoutes({ env, grants, infoOf }));
   app.route("/api/image-senders", createImageSenderRoutes({ db, accountsOf }));
+  // Place suggestions for an appointment's "Ort", from Photon through the server (places/routes.ts).
+  app.route(
+    "/api/places",
+    createPlaceRoutes({
+      url: env.PLACES_URL,
+      userAgent: `Kontext/${packageVersion} (+https://github.com/firsttris/kontext)`,
+      accountsOf,
+    }),
+  );
   app.route(
     "/api/photos",
     createPhotoRoutes({

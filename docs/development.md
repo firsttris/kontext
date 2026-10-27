@@ -13,6 +13,10 @@ Anmeldung zum Senden annimmt. Für Microsoft 365 ersetzt `bun dev/fake-graph.ts`
 `M365_LOGIN_URL=http://127.0.0.1:18095 GRAPH_URL=http://127.0.0.1:18095/v1.0` starten und
 Mandant `contoso`, Anwendung `kontext-test`, Schlüssel `geheim` eintragen.
 
+Die Ortsvorschläge im Termin fragen in der Entwicklung das echte Photon (komoot); ohne Internet
+ersetzt es `bun dev/fake-places.ts` (Port 18099, ein paar Orte um Freiburg), dann `bun run dev`
+mit `PLACES_URL=http://127.0.0.1:18099/api/` starten. Die e2e-Tests nehmen es immer (28099).
+
 Für das Modul „Dokumente“ ersetzt `bun dev/fake-schreibzeug.ts` (Port 18096) Schreibzeug: es meldet
 sich über Kontexts Anbieter an (OIDC mit PKCE und `prompt=none`), spricht die Nachrichten des
 Rahmens und nimmt Dateien mit Kontexts Tokens an. `bun run dev` dann mit
@@ -113,6 +117,7 @@ und „Team“, Termine der laufenden Woche, eine wöchentliche Teambesprechung 
 | Integration     | `bun run e2e`         | `e2e/integration.spec.ts`: JMAP-Funktionen, IMAP (gemeinsame Postfächer), CalDAV und CardDAV gegen Stalwart |
 | End-to-End      | `bun run e2e`         | Playwright, Desktop und Handy (Pixel 7), gegen einen frisch angelegten Stalwart auf 28080, LiveKit auf 27880 und Vite auf 5174; Chromium mit unechter Kamera und Mikrofon |
 | Dokumente       | `bun run e2e`         | `e2e/documents.spec.ts` und `e2e/documents-links.spec.ts` gegen `dev/fake-schreibzeug.ts` (28097): Anmeldung über Kontexts Anbieter, Rahmen, Anhänge ablegen und anhängen, Abmelden, Dokumente in Chat, Aufgaben, Terminen und an Kontakten mit ihren Freigaben, der Ordner von info@ |
+| Orte            | `bun run e2e`         | `e2e/places.spec.ts` gegen `dev/fake-places.ts` (28099, statt Photon): Vorschlag wählen, Escape, „In Karten öffnen“, am Desktop und am Handy |
 | App (PWA)       | `bun run e2e`         | `e2e/pwa.spec.ts` gegen die gebaute App wie in Produktion (Server auf 28090 liefert `dist/`): Updates, Offline-Start, Cache-Header, Teilen |
 | Abhängigkeiten  | `bun audit`           | bekannte Lücken; in CI bei jedem Push und nachts                                                            |
 | Screenshots     | `bun run screenshots` | die Bilder in `docs/screenshots/` und für den Installationsdialog in `public/screenshots/`                  |
