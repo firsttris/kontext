@@ -1,5 +1,12 @@
 import { describe, expect, it } from "vitest";
-import { ASK_AGAIN_AFTER, lastOffer, offerDue, offerKind, parsePostponed } from "./offer";
+import {
+  ASK_AGAIN_AFTER,
+  lastOffer,
+  offerCandidates,
+  offerDue,
+  parsePostponed,
+  pickOffer,
+} from "./offer";
 
 describe("offerDue", () => {
   it("asks at first, once more a week after 'Später', then never", () => {
@@ -23,20 +30,46 @@ describe("parsePostponed", () => {
   });
 });
 
-describe("offerKind", () => {
-  const device = { chosen: false, supported: true, apple: false, installed: false };
+describe("offerCandidates", () => {
+  const computer = {
+    chosen: false,
+    supported: true,
+    installed: false,
+    apple: false,
+    promptOnPhone: false,
+  };
 
-  it("offers the switch where the browser can notify", () => {
-    expect(offerKind(device)).toBe("push");
-    expect(offerKind({ ...device, apple: true, installed: true })).toBe("push");
+  it("offers a computer the notifications only", () => {
+    expect(offerCandidates(computer)).toEqual(["push"]);
+    expect(offerCandidates({ ...computer, chosen: true })).toEqual([]);
   });
 
-  it("offers nothing once the switch was set on this device", () => {
-    expect(offerKind({ ...device, chosen: true })).toBeNull();
+  it("asks a phone to install first, then offers the notifications", () => {
+    expect(offerCandidates({ ...computer, promptOnPhone: true })).toEqual(["install", "push"]);
+    expect(offerCandidates({ ...computer, promptOnPhone: true, installed: true })).toEqual([
+      "push",
+    ]);
   });
 
-  it("asks iPhone and iPad to install first, other browsers without notifications get nothing", () => {
-    expect(offerKind({ ...device, supported: false, apple: true })).toBe("install");
-    expect(offerKind({ ...device, supported: false })).toBeNull();
+  it("asks Safari on iPhone and iPad to install, where it has no notifications", () => {
+    expect(offerCandidates({ ...computer, apple: true, supported: false })).toEqual(["install"]);
+    expect(offerCandidates({ ...computer, apple: true, installed: true })).toEqual(["push"]);
+  });
+
+  it("offers nothing where the browser can neither install nor notify", () => {
+    expect(offerCandidates({ ...computer, supported: false })).toEqual([]);
+  });
+});
+
+describe("pickOffer", () => {
+  const fresh = { times: 0, at: 0 };
+
+  it("shows one card at a time, the next once the first was postponed", () => {
+    expect(pickOffer(["install", "push"], { install: fresh, push: fresh }, 1000)).toBe("install");
+    const postponed = { times: 1, at: 1000 };
+    expect(pickOffer(["install", "push"], { install: postponed, push: fresh }, 2000)).toBe("push");
+    expect(
+      pickOffer(["install", "push"], { install: postponed, push: postponed }, 2000),
+    ).toBeNull();
   });
 });

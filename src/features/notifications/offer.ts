@@ -1,12 +1,13 @@
 /**
- * Whether to offer notifications in a card above the mail list, instead of leaving them to the
- * switch in the bell and the settings. Asked once; after "Später" once more a week later, then not
- * again. The browser's own prompt comes only from the card's button: Safari and Firefox show it
- * only after a tap, and a site refused there cannot ask again.
+ * Which card to show above the mail list: on a phone, to install Kontext as an app; then, to switch
+ * on notifications. At most one at a time, installing first. Each is asked once; after "Später"
+ * once more a week later, then not again. Browser prompts come only from a card's button: Safari
+ * and Firefox show the notification prompt only after a tap, and a site refused there cannot ask
+ * again.
  */
 
-/** "push" offers the switch; "install" tells iPhone and iPad to add Kontext to the home screen. */
-export type OfferKind = "push" | "install";
+/** "install" asks to add Kontext to the home screen, "push" offers the notifications switch. */
+export type OfferKind = "install" | "push";
 
 /** How often "Später" was chosen on this device, and when last. */
 export type Postponed = { times: number; at: number };
@@ -29,20 +30,27 @@ export const offerDue = ({ times, at }: Postponed, now: number): boolean =>
 /** The second time is the last: its "Später" means "not again". */
 export const lastOffer = ({ times }: Postponed): boolean => times >= 1;
 
-type Device = {
-  /** The switch was set on this device, on or off: the person has decided. */
+export type Device = {
+  /** The notifications switch was set on this device, on or off: the person has decided. */
   chosen: boolean;
+  /** The browser can show notifications (Safari on iPhone and iPad only in the installed app). */
   supported: boolean;
-  apple: boolean;
   installed: boolean;
+  /** iPhone or iPad: installed through Safari's share menu, which the card explains. */
+  apple: boolean;
+  /** The browser offers its install dialog (Chromium on Android); on a phone-sized screen. */
+  promptOnPhone: boolean;
 };
 
-/**
- * Which card this device gets, if any. Safari on iPhone and iPad has notifications only in the
- * installed app, so there the card asks for that first.
- */
-export const offerKind = ({ chosen, supported, apple, installed }: Device): OfferKind | null => {
-  if (chosen) return null;
-  if (supported) return "push";
-  return apple && !installed ? "install" : null;
-};
+/** The cards this device could get, in order. Computers install from the settings only. */
+export const offerCandidates = (device: Device): OfferKind[] => [
+  ...(!device.installed && (device.apple || device.promptOnPhone) ? (["install"] as const) : []),
+  ...(!device.chosen && device.supported ? (["push"] as const) : []),
+];
+
+/** The first card that is due, if any. */
+export const pickOffer = (
+  candidates: OfferKind[],
+  postponed: Record<OfferKind, Postponed>,
+  now: number,
+): OfferKind | null => candidates.find((kind) => offerDue(postponed[kind], now)) ?? null;

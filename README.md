@@ -164,8 +164,8 @@ The [encryption concept](https://firsttris.github.io/kontext/encryption.html) ex
 
 ### 📱 On every device
 
-- **An app on every device** (PWA): install it from the browser on desktop, Android and iPhone, unread count on the icon, share photos into a new mail, open `mailto:` links in Kontext, updates offered with one click and the running version in the settings.
-- **Notifications** even with Kontext closed (Web Push, end-to-end encrypted): new mail, direct messages, @mentions, task reminders and incoming calls; a card above the mail list offers to switch them on (on iPhone: first add Kontext to the home screen).
+- **An app on every device** (PWA): install it from the browser on desktop, Android and iPhone (on the phone a card in the mail list shows how), unread count on the icon, share photos into a new mail, open `mailto:` links in Kontext, updates offered with one click and the running version in the settings.
+- **Notifications** even with Kontext closed (Web Push, end-to-end encrypted): new mail, direct messages, @mentions, task reminders and incoming calls; a card above the mail list offers to switch them on.
 - **Light or dark** (mails written for white paper follow along), **two-factor sign-in**, **storage at a glance**.
 
 ## 📸 Screenshots

@@ -1164,14 +1164,21 @@ Einladungen, die damals noch nicht da waren – beides merkt sich der Browser.
 Browser um Erlaubnis und meldet das Gerät für **Web Push** an. Ob die Erlaubnis noch besteht, fragt
 die App über die Permissions-API ab; nimmt man sie im Browser zurück, schaltet sich der Schalter aus.
 
-Damit niemand den Schalter suchen muss, bietet eine Karte oben in der Mailliste die
-Benachrichtigungen an (`src/features/notifications/push-offer.tsx`, Regeln in `offer.ts`), auf
-jedem Gerät, auf dem der Schalter noch nie gestellt wurde. Erst ihr Knopf „Einschalten“ fragt den
-Browser – Safari und Firefox fragen ohnehin nur nach einem Tipp, und wer im Dialog des Browsers
-ablehnt, kann von der Seite nicht noch einmal gefragt werden. „Später“ blendet sie aus, eine Woche
-danach kommt sie ein letztes Mal („Nein, danke“). Im Safari-Tab auf iPhone und iPad, wo es keine
-Benachrichtigungen gibt, erklärt die Karte stattdessen „Zum Home-Bildschirm“; in der installierten
-App kommt dann die Karte mit dem Schalter.
+Damit niemand Schalter und Browsermenü suchen muss, steht oben in der Mailliste eine Karte
+(`src/features/notifications/device-offer.tsx`, Regeln in `offer.ts`) – immer nur eine:
+
+1. **Als App installieren**, auf dem Handy, solange Kontext nicht installiert ist. Unter Android
+   (Chromium) öffnet „Installieren“ den Dialog des Browsers (`beforeinstallprompt`); wer dort
+   ablehnt, hat „Später“ gewählt. Safari auf iPhone und iPad kennt keinen solchen Knopf, die Karte
+   zeigt die Schritte über „Teilen“ → „Zum Home-Bildschirm“. Am Rechner gibt es diese Karte nicht,
+   dort steht das Installieren in den Einstellungen.
+2. **Benachrichtigungen**, auf jedem Gerät, auf dem der Schalter noch nie gestellt wurde. Erst ihr
+   Knopf „Einschalten“ fragt den Browser – Safari und Firefox fragen ohnehin nur nach einem Tipp,
+   und wer im Dialog des Browsers ablehnt, kann von der Seite nicht noch einmal gefragt werden. Auf
+   iPhone und iPad kommt sie erst in der installierten App, die ihren eigenen Speicher hat.
+
+„Später“ blendet eine Karte aus (dann kommt die nächste); eine Woche danach kommt sie ein letztes
+Mal („Nein, danke“). Gemerkt wird das im Browser, je Gerät.
 
 - **Bei geschlossener App:** neue Mails in allen Posteingängen, Chat-Nachrichten an einen selbst
   (Direktnachrichten, @Erwähnungen, nicht aus stummgeschalteten Kanälen) und eingehende

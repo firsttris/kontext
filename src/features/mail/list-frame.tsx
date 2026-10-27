@@ -9,7 +9,7 @@ import { type ReactNode, useEffect, useRef, useState } from "react";
 import { TabBar } from "@/components/shell/app-shell";
 import { Button } from "@/components/ui/button";
 import { useShortcuts } from "@/components/use-shortcuts";
-import { PushOffer } from "@/features/notifications/push-offer";
+import { DeviceOffer } from "@/features/notifications/device-offer";
 import type { EmailSummary } from "@/jmap/types";
 import { cn } from "@/lib/cn";
 import { addRange, keepListed, type Picked, pickKey, toggleKey } from "@/lib/selection";
@@ -258,7 +258,7 @@ export const ListFrame = ({
           />
         )}
       </header>
-      <PushOffer />
+      <DeviceOffer />
 
       <div ref={scrollRef} className="min-h-0 flex-1 overflow-y-auto px-2 pb-3">
         {isPending ? (

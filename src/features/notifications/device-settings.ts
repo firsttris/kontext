@@ -1,7 +1,7 @@
 /**
  * Per-device state of the notifications, kept in the browser: when the bell was last opened, the
- * invitations seen then, whether this device shows system notifications, and how often the offer
- * to switch them on was postponed. Storage can be
+ * invitations seen then, whether this device shows system notifications, and how often the offers
+ * to install Kontext and to switch them on were postponed. Storage can be
  * missing (private window, blocked site data); everything then falls back to defaults.
  */
 import { useEffect, useSyncExternalStore } from "react";
@@ -87,8 +87,10 @@ export const useDeviceNotifications = (): boolean => {
 export const useDeviceChosen = (): boolean =>
   useSyncExternalStore(subscribe, () => read(DEVICE) !== null);
 
-export const usePostponed = (kind: OfferKind): Postponed =>
-  parsePostponed(useSyncExternalStore(subscribe, () => read(POSTPONED(kind))));
+export const usePostponed = (): Record<OfferKind, Postponed> => ({
+  install: parsePostponed(useSyncExternalStore(subscribe, () => read(POSTPONED("install")))),
+  push: parsePostponed(useSyncExternalStore(subscribe, () => read(POSTPONED("push")))),
+});
 
 export const postponeOffer = (kind: OfferKind, { times }: Postponed, now: number) =>
   write(POSTPONED(kind), JSON.stringify({ times: times + 1, at: now }));

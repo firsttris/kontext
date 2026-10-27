@@ -44,17 +44,17 @@ const signedInWithKept = async (page: Page, user: string) => {
 };
 
 /**
- * The card offering notifications above the mail list stays away unless a test is about it
- * (`pushOffer`): it would push the list down in every other test.
+ * The cards above the mail list that offer installing and notifications stay away unless a test
+ * is about them (`offers`): they would push the list down in every other test.
  */
-export const login = async (page: Page, user = "jonas", { pushOffer = false } = {}) => {
-  if (!pushOffer) {
-    await page.addInitScript(() =>
-      window.localStorage.setItem(
-        "kontext.notifications.offer.push",
-        JSON.stringify({ times: 2, at: 0 }),
-      ),
-    );
+export const login = async (page: Page, user = "jonas", { offers = false } = {}) => {
+  if (!offers) {
+    await page.addInitScript(() => {
+      for (const kind of ["install", "push"]) {
+        const key = `kontext.notifications.offer.${kind}`;
+        window.localStorage.setItem(key, JSON.stringify({ times: 2, at: 0 }));
+      }
+    });
   }
   if (!(await signedInWithKept(page, user))) await signInWithForm(page, user);
   // Mails go out at once in the tests; "Rückgängig" has its own (e2e/send-later.spec.ts).

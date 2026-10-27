@@ -5,7 +5,10 @@
  */
 import { useEffect, useState, useSyncExternalStore } from "react";
 
-type InstallPrompt = Event & { prompt: () => Promise<void>; userChoice: Promise<unknown> };
+type InstallPrompt = Event & {
+  prompt: () => Promise<void>;
+  userChoice: Promise<{ outcome: "accepted" | "dismissed" }>;
+};
 
 /** Kept from the moment the browser offers it, which can be before the settings are open. */
 let offered: InstallPrompt | null = null;
@@ -31,8 +34,11 @@ export const isApple = (): boolean =>
   /iPhone|iPad|iPod/.test(navigator.userAgent) ||
   (navigator.userAgent.includes("Macintosh") && navigator.maxTouchPoints > 1);
 
-/** The browser's install dialog, when it offers one; it can be shown once. */
-export const useInstallPrompt = (): (() => Promise<void>) | null => {
+/**
+ * The browser's install dialog, when it offers one; it can be shown once. True if the person
+ * installed.
+ */
+export const useInstallPrompt = (): (() => Promise<boolean>) | null => {
   const available = useSyncExternalStore(
     (listener) => {
       listeners.add(listener);
@@ -46,6 +52,7 @@ export const useInstallPrompt = (): (() => Promise<void>) | null => {
         offered = null;
         for (const listener of listeners) listener();
         await prompt?.prompt();
+        return (await prompt?.userChoice)?.outcome === "accepted";
       }
     : null;
 };
