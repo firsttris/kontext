@@ -31,6 +31,12 @@ test.describe("Senden rückgängig und später senden", () => {
     const subject = unique("Erst morgen früh");
     await login(page);
     await writeToAnna(page, subject);
+    // Send and the arrow form one button: the same height, edge to edge, no overlap.
+    const send = await page.getByRole("button", { name: "Senden", exact: true }).boundingBox();
+    const arrow = await page.getByRole("button", { name: "Später senden" }).boundingBox();
+    expect(arrow?.height).toBe(send?.height);
+    expect(arrow?.y).toBe(send?.y);
+    expect(arrow?.x).toBeCloseTo((send?.x ?? 0) + (send?.width ?? 0), 0);
     await page.getByRole("button", { name: "Später senden" }).click();
     await page.getByRole("menuitem", { name: "Zeitpunkt wählen …" }).click();
     const dialog = page.getByRole("dialog", { name: "Später senden" });
