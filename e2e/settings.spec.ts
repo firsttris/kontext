@@ -1,5 +1,6 @@
 import { expect, test } from "@playwright/test";
 import { DEV_PASSWORD } from "../dev/config";
+import packageJson from "../package.json" with { type: "json" };
 import { totp } from "../src/lib/totp";
 import { address, inboxMails, jmapAs, login, unique } from "./helpers";
 
@@ -145,6 +146,25 @@ test.describe("Darstellung", () => {
     await page.getByText("Hell", { exact: true }).click();
     await expect(page.locator("html")).toHaveClass(/\blight\b/);
     await page.getByText("Wie das Gerät").click();
+  });
+
+  test("zeigt die Version und sagt, wenn der Server schon weiter ist", async ({
+    page,
+    request,
+  }) => {
+    expect(await (await request.get("/api/version")).json()).toEqual({
+      version: packageJson.version,
+    });
+    await login(page);
+    await page.goto("/settings?section=appearance");
+    const card = page.locator("section").filter({ hasText: "App auf diesem Gerät" });
+    await expect(card).toContainText(`Kontext ${packageJson.version}`);
+    await expect(card).not.toContainText("Auf dem Server");
+
+    // An update on the server while the device still runs the app it loaded before.
+    await page.route("/api/version", (route) => route.fulfill({ json: { version: "99.0.0" } }));
+    await page.reload();
+    await expect(card).toContainText("Auf dem Server läuft schon 99.0.0.");
   });
 });
 

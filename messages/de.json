@@ -754,6 +754,8 @@
   "pwa_mailto": "Als Mailprogramm verwenden",
   "pwa_mailto_hint": "Ein Klick auf eine E-Mail-Adresse auf einer Webseite öffnet dann eine neue Mail in Kontext.",
   "pwa_mailto_done": "Der Browser fragt jetzt nach, ob Kontext E-Mail-Links öffnen soll.",
+  "pwa_version": "Kontext {version}",
+  "pwa_version_server": "Auf dem Server läuft schon {version}. Sobald sie geladen ist, erscheint „Neu laden“.",
   "nav_tasks": "Aufgaben",
   "tasks_title": "Aufgaben",
   "tasks_view_mine": "Meine Aufgaben",
