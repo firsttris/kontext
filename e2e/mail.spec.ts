@@ -866,6 +866,95 @@ test.describe("Benachrichtigungen", () => {
     await expect(device).toHaveAttribute("aria-checked", "true");
   });
 
+  test("bietet Benachrichtigungen oben in der Liste an und schaltet sie ein", async ({ page }) => {
+    await page.context().grantPermissions(["notifications"]);
+    await login(page, "jonas", { offers: true });
+    const offer = page.getByRole("region", { name: "Benachrichtigungen auf diesem Gerät" });
+    await offer.getByRole("button", { name: "Einschalten" }).click();
+    await expect(offer).toBeHidden();
+    await bell(page).click();
+    await expect(
+      page.getByRole("switch", { name: "Auf diesem Gerät benachrichtigen" }),
+    ).toHaveAttribute("aria-checked", "true");
+  });
+
+  test("fragt nach „Später“ noch einmal nach einer Woche, dann nicht mehr", async ({ page }) => {
+    await login(page, "jonas", { offers: true });
+    const offer = page.getByRole("region", { name: "Benachrichtigungen auf diesem Gerät" });
+    await offer.getByRole("button", { name: "Später" }).click();
+    await expect(offer).toBeHidden();
+    await page.reload();
+    await expect(page.getByRole("heading", { name: "Posteingang" })).toBeVisible();
+    await expect(offer).toBeHidden();
+
+    // A week on: the last time, so its button says no for good.
+    await page.evaluate(() => {
+      const key = "kontext.notifications.offer.push";
+      const postponed = JSON.parse(window.localStorage.getItem(key)!);
+      const weekAgo = Date.now() - 7 * 86_400_000;
+      window.localStorage.setItem(key, JSON.stringify({ ...postponed, at: weekAgo }));
+    });
+    await page.reload();
+    await offer.getByRole("button", { name: "Nein, danke" }).click();
+    await expect(offer).toBeHidden();
+    await page.reload();
+    await expect(page.getByRole("heading", { name: "Posteingang" })).toBeVisible();
+    await expect(offer).toBeHidden();
+  });
+
+  test("bietet sie am Handy über der Liste an @phone", async ({ page }) => {
+    await page.context().grantPermissions(["notifications"]);
+    await login(page, "jonas", { offers: true });
+    const offer = page.getByRole("region", { name: "Benachrichtigungen auf diesem Gerät" });
+    await offer.getByRole("button", { name: "Einschalten" }).click();
+    await expect(offer).toBeHidden();
+    await page.goto("/settings?section=appearance");
+    await expect(
+      page.getByRole("switch", { name: "Auf diesem Gerät benachrichtigen" }),
+    ).toHaveAttribute("aria-checked", "true");
+  });
+
+  test("bietet am Handy erst die Installation an, dann die Benachrichtigungen @phone", async ({
+    page,
+  }) => {
+    await login(page, "jonas", { offers: true });
+    const push = page.getByRole("region", { name: "Benachrichtigungen auf diesem Gerät" });
+    await expect(push).toBeVisible();
+    // Chromium on Android offers its install dialog; headless Chromium does not, so it is played.
+    await page.evaluate(() => {
+      const offered = Object.assign(new Event("beforeinstallprompt"), {
+        prompt: async () => undefined,
+        userChoice: Promise.resolve({ outcome: "accepted" }),
+      });
+      window.dispatchEvent(offered);
+    });
+    const install = page.getByRole("region", { name: "Kontext als App aufs Handy" });
+    await expect(push).toBeHidden();
+    await install.getByRole("button", { name: "Installieren" }).click();
+    await expect(install).toBeHidden();
+    await expect(push).toBeVisible();
+  });
+
+  test.describe("auf dem iPhone", () => {
+    test.use({
+      userAgent:
+        "Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 Mobile/15E148 Safari/604.1",
+    });
+
+    test("erklärt, wie Kontext auf den Home-Bildschirm kommt @phone", async ({ page }) => {
+      await login(page, "jonas", { offers: true });
+      const install = page.getByRole("region", { name: "Kontext als App aufs Handy" });
+      await expect(install.getByRole("listitem")).toHaveText([
+        /In Safari auf „Teilen“ tippen.*Lange auf die Adresszeile tippen/,
+        "„Zum Home-Bildschirm“ wählen",
+        "Kontext dann über das Symbol auf dem Home-Bildschirm öffnen",
+      ]);
+      await expect(install.getByRole("button", { name: "Installieren" })).toHaveCount(0);
+      await install.getByRole("button", { name: "Später" }).click();
+      await expect(install).toBeHidden();
+    });
+  });
+
   test("zeigt Anna die Einladung, die auf ihre Antwort wartet", async ({ page, browser }) => {
     test.setTimeout(90_000);
     const title = unique("Aufmaß Bad");
