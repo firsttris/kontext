@@ -224,10 +224,8 @@ the office phone in one web app on your own server, with documents through
 [Schreibzeug](https://github.com/firsttris/schreibzeug). See the [installation guide](https://firsttris.github.io/kontext/installation.html).
 
 ### What does it cost?
-The software is free (AGPL). You need a server – a VPS from about €5 a month, about €10 for ten
-people – and someone who sets it up and keeps it updated. For comparison: Google Workspace and
-Microsoft 365 Business Standard cost about €12–14 per person and month (annual plan, net, 2026),
-so about €1,600 a year for ten people, and more with every new colleague.
+The software is free (AGPL). You need a server – a VPS from about €5 a month – and someone who
+sets it up and keeps it updated.
 
 ### Is there a web interface for the Stalwart mail server?
 Yes, that is what Kontext is: a JMAP web client for mail, calendar and contacts on

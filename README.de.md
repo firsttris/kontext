@@ -225,10 +225,8 @@ Videoanrufen und die Telefonanlage in einer Web-App auf deinem eigenen Server, D
 [Schreibzeug](https://github.com/firsttris/schreibzeug). Siehe [Installation](https://firsttris.github.io/kontext/installation.html).
 
 ### Was kostet das?
-Die Software ist kostenlos (AGPL). Du brauchst einen Server – einen VPS ab etwa 5 € im Monat, rund
-10 € für zehn Leute – und jemanden, der ihn einrichtet und aktuell hält. Zum Vergleich: Google
-Workspace und Microsoft 365 Business Standard kosten rund 12–14 € pro Person und Monat (Jahresabo,
-netto, 2026), für zehn Leute also rund 1.600 € im Jahr, und mehr mit jedem neuen Kollegen.
+Die Software ist kostenlos (AGPL). Du brauchst einen Server – einen VPS ab etwa 5 € im Monat – und
+jemanden, der ihn einrichtet und aktuell hält.
 
 ### Gibt es eine Weboberfläche für den Mailserver Stalwart?
 Ja, das ist Kontext: ein JMAP-Webclient für Mail, Kalender und Kontakte auf
