@@ -24,11 +24,11 @@ export const SendLater = ({
         <MenuTrigger asChild>
           <Button
             variant="primary"
-            size="iconSm"
+            size="icon"
             aria-label={m.mail_later()}
             title={m.mail_later()}
             disabled={disabled}
-            className="-ml-1.5 rounded-l-none border-l border-onprimary/20"
+            className="w-8 rounded-l-none border-l border-onprimary/20"
           >
             <ChevronDown size={15} />
           </Button>
