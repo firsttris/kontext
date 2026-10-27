@@ -18,7 +18,9 @@ Open source (AGPL), a web app and PWA on top of the Stalwart mail server, no per
 [![License: AGPL-3.0](https://img.shields.io/badge/license-AGPL--3.0-blue)](LICENSE)
 [![Stalwart 0.16](https://img.shields.io/badge/Stalwart-0.16-18181b)](https://stalw.art)
 [![JMAP](https://img.shields.io/badge/JMAP-mail%20%7C%20calendar%20%7C%20contacts-0f766e)](https://jmap.io)
-[![Made in Europe](https://img.shields.io/badge/made%20in-Europe-003399)](#-your-data-your-rules)
+[![GDPR](https://img.shields.io/badge/GDPR-data%20on%20your%20server-15803d)](#-your-data-stays-in-europe--with-ai)
+[![GoBD](https://img.shields.io/badge/GoBD-nothing%20deleted-15803d)](#-your-data-stays-in-europe--with-ai)
+[![Made in Europe](https://img.shields.io/badge/made%20in-Europe-003399)](#-your-data-stays-in-europe--with-ai)
 
 ```bash
 git clone https://github.com/firsttris/kontext && cd kontext
@@ -26,8 +28,8 @@ cp deploy/.env.example deploy/.env            # your domain and secrets
 docker compose -f deploy/compose.yaml up -d   # or Podman
 ```
 
+[Privacy & GoBD](#-your-data-stays-in-europe--with-ai) •
 [Why](#-why-kontext) •
-[Privacy](#-your-data-your-rules) •
 [Install](#-install) •
 [Features](#-features) •
 [Screenshots](#-screenshots) •
@@ -38,6 +40,13 @@ docker compose -f deploy/compose.yaml up -d   # or Podman
 <img src="docs/screenshots/mail.png" alt="Kontext self-hosted webmail: inbox with folders, the shared mailboxes info@ and rechnung@, categories and an open mail with a preview of its PDF attachment" width="900">
 
 </div>
+
+## 🇪🇺 Your data stays in Europe – with AI
+
+- **GDPR**: mails, appointments, contacts, chat and calls live on your server, in a European data centre or in your own office. No US provider in between, no trackers, no sharing. The only data processing agreement you need is with your hosting provider.
+- **GoBD** (German retention rules): nothing is deleted when someone leaves, and backups go encrypted and unalterable (Object Lock) to S3 storage. The software is one part; the company's processes and its procedure documentation are the other.
+- **AI on your terms**: Kontext is an MCP server. You connect the AI assistant you choose; it works with your rights, writes drafts instead of sending, never deletes anything, and every access is logged and can be revoked.
+- **No lock-in**: open standards (IMAP, CalDAV, CardDAV), take everything with you any time; moving *to* Kontext is built in.
 
 ## 💡 Why Kontext?
 
@@ -56,13 +65,6 @@ your own.
 **Who it's for:** freelancers and the self-employed, trades, law firms, medical practices and
 small and mid-sized businesses (with a company admin area the boss can use without IT skills) –
 and self-hosters who want a modern web client for [Stalwart](https://stalw.art).
-
-## 🔒 Your data, your rules
-
-- **GDPR**: the data stays on your server, in a European data centre if you like. No trackers, no ads, no sharing; the only data processing agreement you need is with your hosting provider.
-- **GoBD** (German retention rules): nothing is deleted when someone leaves, and backups go encrypted to S3 storage with Object Lock, so they cannot be altered. (Compliance also depends on the company's processes; the software is one part of it.)
-- **No lock-in**: take mails, contacts and calendars with you any time via IMAP, vCard and iCalendar; moving *to* Kontext is built in.
-- **Secure**: two-factor sign-in, mails rendered in an isolated frame, warnings about forged senders, OpenPGP and S/MIME.
 
 ## 🚀 Install
 

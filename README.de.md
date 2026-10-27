@@ -18,7 +18,9 @@ Open Source (AGPL), eine Web-App und PWA auf dem Mailserver Stalwart, keine Kost
 [![License: AGPL-3.0](https://img.shields.io/badge/license-AGPL--3.0-blue)](LICENSE)
 [![Stalwart 0.16](https://img.shields.io/badge/Stalwart-0.16-18181b)](https://stalw.art)
 [![JMAP](https://img.shields.io/badge/JMAP-mail%20%7C%20calendar%20%7C%20contacts-0f766e)](https://jmap.io)
-[![Made in Europe](https://img.shields.io/badge/made%20in-Europe-003399)](#-deine-daten-deine-regeln)
+[![DSGVO](https://img.shields.io/badge/DSGVO-Daten%20auf%20deinem%20Server-15803d)](#-deine-daten-bleiben-in-europa--mit-ki)
+[![GoBD](https://img.shields.io/badge/GoBD-nichts%20wird%20gel%C3%B6scht-15803d)](#-deine-daten-bleiben-in-europa--mit-ki)
+[![Made in Europe](https://img.shields.io/badge/made%20in-Europe-003399)](#-deine-daten-bleiben-in-europa--mit-ki)
 
 ```bash
 git clone https://github.com/firsttris/kontext && cd kontext
@@ -26,8 +28,8 @@ cp deploy/.env.example deploy/.env            # deine Domain und Geheimnisse
 docker compose -f deploy/compose.yaml up -d   # oder Podman
 ```
 
+[Datenschutz & GoBD](#-deine-daten-bleiben-in-europa--mit-ki) •
 [Warum](#-warum-kontext) •
-[Datenschutz & GoBD](#-deine-daten-deine-regeln) •
 [Installation](#-installation) •
 [Funktionen](#-funktionen) •
 [Screenshots](#-screenshots) •
@@ -38,6 +40,13 @@ docker compose -f deploy/compose.yaml up -d   # oder Podman
 <img src="docs/screenshots/mail.png" alt="Kontext, Webmail auf dem eigenen Server: Posteingang mit Ordnern, gemeinsamen Postfächern info@ und rechnung@, Kategorien und einer geöffneten Mail mit Vorschau des PDF-Anhangs" width="900">
 
 </div>
+
+## 🇪🇺 Deine Daten bleiben in Europa – mit KI
+
+- **DSGVO**: Mails, Termine, Kontakte, Chat und Anrufe liegen auf deinem Server, in einem deutschen Rechenzentrum oder im eigenen Büro. Kein US-Anbieter dazwischen, keine Tracker, keine Weitergabe. Einen Auftragsverarbeitungsvertrag brauchst du nur mit deinem Hoster.
+- **GoBD**: Beim Austritt wird nichts gelöscht, Backups gehen verschlüsselt und unveränderbar (Object Lock) auf S3-Speicher. Die Software ist ein Baustein; dazu gehören die Abläufe im Betrieb und eine Verfahrensdokumentation.
+- **KI nach deinen Regeln**: Kontext ist ein MCP-Server. Du verbindest den KI-Assistenten, den du willst; er arbeitet mit deinen Rechten, schreibt Entwürfe statt zu senden, löscht nie etwas, und jeder Zugriff wird protokolliert und lässt sich trennen.
+- **Kein Lock-in**: offene Standards (IMAP, CalDAV, CardDAV), mitnehmen jederzeit; der Umzug *zu* Kontext ist eingebaut.
 
 ## 💡 Warum Kontext?
 
@@ -56,13 +65,6 @@ oder einem eigenen Rechner.
 **Für wen:** Freelancer und Selbstständige, Handwerk, Kanzleien, Praxen und den Mittelstand (mit
 einer Firmenverwaltung, die der Chef ohne IT-Kenntnisse bedient) – und für Selfhoster, die eine
 moderne Weboberfläche für [Stalwart](https://stalw.art) suchen.
-
-## 🔒 Deine Daten, deine Regeln
-
-- **DSGVO**: die Daten liegen auf deinem Server, auf Wunsch in einem deutschen Rechenzentrum. Keine Tracker, keine Werbung, keine Weitergabe; einen Auftragsverarbeitungsvertrag brauchst du nur mit deinem Hoster.
-- **GoBD**: Kontext unterstützt die GoBD-gerechte Aufbewahrung – beim Austritt eines Mitarbeiters wird nichts gelöscht, Backups gehen verschlüsselt auf einen S3-Speicher mit Object Lock und sind damit unveränderbar. (GoBD-Konformität entsteht im Zusammenspiel mit den Abläufen im Betrieb und einer Verfahrensdokumentation; die Software ist ein Baustein davon.)
-- **Kein Lock-in**: Mails, Kontakte und Kalender lassen sich jederzeit per IMAP, vCard und iCalendar mitnehmen; der Umzug *zu* Kontext ist eingebaut.
-- **Sicher**: Anmeldung mit zweitem Faktor, Mails in einem abgeschotteten Rahmen, Warnungen vor gefälschten Absendern, OpenPGP und S/MIME.
 
 ## 🚀 Installation
 
