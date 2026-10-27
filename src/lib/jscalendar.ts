@@ -235,14 +235,6 @@ export const minutesInDay = (instant: Date, key: string): number => {
   return h! * 60 + m!;
 };
 
-export type PlacedEvent = {
-  event: CalendarEvent;
-  top: number;
-  height: number;
-  column: number;
-  columns: number;
-};
-
 /** Something in a day's time grid, in minutes from midnight. */
 export type Span<T> = { item: T; top: number; bottom: number };
 
@@ -293,12 +285,6 @@ export const eventSpan = (
   const top = minutesInDay(start, key);
   return { item: event, top, bottom: Math.max(minutesInDay(end, key), top + minHeight) };
 };
-
-/** Places the timed events of one day. Returns minutes from midnight for top and height. */
-export const layoutDay = (events: CalendarEvent[], key: string, minHeight = 20): PlacedEvent[] =>
-  placeInColumns(events.map((event) => eventSpan(event, key, minHeight))).map(
-    ({ item, ...rest }) => ({ event: item, ...rest }),
-  );
 
 /** Does the event touch the local day? */
 export const onDay = (event: CalendarEvent, key: string): boolean => {

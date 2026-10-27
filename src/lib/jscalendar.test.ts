@@ -3,11 +3,11 @@ import {
   addDays,
   type CalendarEvent,
   durationMinutes,
+  eventSpan,
   eventTimes,
   fromLocal,
   isMeetingLink,
   isoWeek,
-  layoutDay,
   onDay,
   placeInColumns,
   toDuration,
@@ -82,9 +82,13 @@ describe("weeks", () => {
   });
 });
 
-describe("layoutDay", () => {
+/** The timed events of one day, placed as in the week grid. */
+const placeEvents = (events: CalendarEvent[], key: string) =>
+  placeInColumns(events.map((e) => eventSpan(e, key)));
+
+describe("placeInColumns", () => {
   it("puts overlapping events side by side", () => {
-    const placed = layoutDay(
+    const placed = placeEvents(
       [
         event("a", "2026-10-23T09:00:00", "PT1H"),
         event("b", "2026-10-23T09:30:00", "PT1H"),
@@ -92,7 +96,7 @@ describe("layoutDay", () => {
       ],
       "2026-10-23",
     );
-    const byId = Object.fromEntries(placed.map((p) => [p.event.id, p]));
+    const byId = Object.fromEntries(placed.map((p) => [p.item.id, p]));
     expect(byId.a).toMatchObject({ top: 540, height: 60, column: 0, columns: 2 });
     expect(byId.b).toMatchObject({ top: 570, column: 1, columns: 2 });
     expect(byId.c).toMatchObject({ top: 660, column: 0, columns: 1 });
@@ -108,7 +112,7 @@ describe("layoutDay", () => {
     ]);
   });
   it("cuts events that run past midnight", () => {
-    const [placed] = layoutDay([event("n", "2026-10-23T23:00:00", "PT2H")], "2026-10-23");
+    const [placed] = placeEvents([event("n", "2026-10-23T23:00:00", "PT2H")], "2026-10-23");
     expect(placed).toMatchObject({ top: 1380, height: 60 });
   });
 });
