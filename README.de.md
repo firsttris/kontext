@@ -30,7 +30,6 @@ docker compose -f deploy/compose.yaml up -d   # oder Podman
 [Datenschutz & GoBD](#-deine-daten-deine-regeln) •
 [Installation](#-installation) •
 [Funktionen](#-funktionen) •
-[Telefonie (CTI)](#-telefonie-cti-mit-der-fritzbox) •
 [Screenshots](#-screenshots) •
 [Alternativen](#-kontext-und-die-alternativen) •
 [FAQ](#-faq) •
@@ -85,96 +84,21 @@ einschaltest. DNS-Einträge, Podman-Quadlets, Backups und Updates stehen in der
 
 ## ✨ Funktionen
 
-### ✉️ Mail
-
-- **Gemeinsame Postfächer**: info@ und Co. stehen bei jedem Mitglied in der Seitenleiste; Antworten gehen als info@ hinaus, mit dem Namen der Person, die geantwortet hat, und die Liste zeigt, wer schon geantwortet hat („Jonas · 14:02“). Rechte pro Person: kein Zugriff, nur lesen, lesen und senden.
-- **Alle Posteingänge in einer Liste**, **Ordner und Unterordner**, Verschieben per Ziehen, auch zwischen info@ und den eigenen Ordnern.
-- **Kategorien**: farbige Markierungen wie „In Bearbeitung“, „Wartet auf Antwort“, „Erledigt“ – mehrere pro Mail, per Regel gesetzt, im gemeinsamen Postfach fürs ganze Team: eine kleine Aufgabentafel.
-- **Regeln auf dem Server** („wenn Absender, Empfänger, Betreff oder Text … dann verschieben, markieren, Kategorie setzen, weiterleiten, Aufgabe anlegen“) – sie wirken beim Eingang, auch wenn Kontext zu ist.
-- **Suche wie in Gmail** über Ordner und Postfächer: `von:`, `an:`, `betreff:`, `hat:anhang`, `kategorie:`, `in:info@`, `nach:`/`vor:`.
-- **Wiedervorlage**, **Senden rückgängig** und **später senden** – der Server verschickt sie, auch wenn der Rechner aus ist. **Textbausteine** für Standardantworten, eigene und gemeinsame.
-- **Weitere Postfächer**: Gmail, GMX, WEB.DE & Co. behalten – neue Mails kommen alle zwei Minuten herein, gesendet wird als diese Adresse über deren Server.
-- **Schutz vor Phishing und gefälschten Mails**: ein Hinweis, wenn der Absender nicht bestätigt ist, sich jemand von außen als deine Firma ausgibt oder Antworten an eine andere Adresse gehen; SPF, DKIM, DMARC und Spam-Bewertung in den Details; als Spam markieren, und der Filter lernt.
-- **Bilder aus dem Internet** nur auf Wunsch (oder sofort bei Absendern, denen du vertraust), **Newsletter abbestellen** mit einem Klick, **Lesebestätigungen**, die nie von selbst hinausgehen.
-- **Signatur pro Absenderadresse**, **Abwesenheitsnotiz** mit Zeitraum, **Wer schreibt?** neben der Mail auf breiten Bildschirmen (Firma, Termine, letzte Mails).
-- **Unterhaltungen ohne Durcheinander**, **Anhänge mit Vorschau** (Fotos, erste PDF-Seite), **Schreiben mit Formatierung**, **Drucken** auf A4, **Tastaturkürzel** wie in Gmail, **immer aktuell** per JMAP-Push.
-
-### 📅 Kalender und 👥 Kontakte
-
-- **Tag, Woche, Monat und Liste**, Termine per Ziehen verschieben, Serien mit Ausnahmen, **Einladungen** mit Zusage und Absage.
-- **Einladungen im Kontext-Look**: im Namen des Organisators mit Ja / Nein / Vielleicht – ein Klick sagt zu, ganz ohne Konto; Gmail, Outlook und Apple zeigen auch ihre eigenen Knöpfe, und die Antwort steht im Termin.
-- **Wer hat Zeit?** Das Feld „Teilnehmer“ schlägt beim Tippen die Kollegen vor; beim Einladen zeigt Kontext, wer belegt ist, und schlägt Zeiten vor, in denen alle frei sind – wie der Terminplanungs-Assistent in Outlook.
-- **Videobesprechung pro Termin**: ein Klick legt einen Link an; Kunden kommen im Browser ohne Konto dazu.
-- **Orte beim Tippen**: Das Feld „Ort“ schlägt Adressen und Firmen vor (OpenStreetMap, über den eigenen Server); „In Karten öffnen“ öffnet Apple oder Google Maps, am Handy direkt zur Navigation.
-- **Kalender und Adressbücher teilen** mit Kollegen – nur Verfügbarkeit, lesen oder bearbeiten.
-- **Der Kunde auf einen Blick**: letzte Mails, nächste Termine, offene Aufgaben, Dokumente und „Anrufen“; **Kontaktfotos**, **Gruppen**, **vCard-Import und -Export**.
-- **Weitere Kontakte** wie bei Gmail: alle, mit denen du Mails hattest und die in keinem Adressbuch stehen, mit einem Klick gespeichert; doppelte Kontakte und Namen in Großbuchstaben **zusammenführen und korrigieren**.
-
-### ✅ Aufgaben
-
-- **Liste oder Kanban-Board** für das eigene Postfach und eins pro gemeinsamem Postfach, mit eigenen Spalten und **wiederkehrenden Aufgaben**.
-- **Aus einer Mail** (`t`), einer Chat-Nachricht, einer Mail-Regel oder einem verpassten Anruf; **Schnelleingabe** wie „Rückruf Hoffmann morgen“.
-- **Überall**: am Kontakt, im Kalender, in der Glocke; Erinnerungen als Benachrichtigung, auch wenn Kontext zu ist.
-- **In Thunderbird und am Handy**: die Boards als CalDAV-Aufgabenlisten (DAVx⁵ mit tasks.org, Apple Erinnerungen), in beide Richtungen.
-
-### 💬 Team-Chat und Videocalls
-
-- **Kanäle** (#allgemein, einer pro gemeinsamem Postfach, eigene) und **Direktnachrichten**, live mit „schreibt …“, wer online ist, **@Erwähnungen**, **Threads**, **Reaktionen** und ein **Profilfoto** für jeden (auch bei Anrufen, an Aufgaben und in Mails unter Kollegen).
-- **Mails, Aufgaben, Kontakte und Dokumente als Karten**: „Besprechen“ an einer Mail (`b`) bespricht sie im Kanal, statt sie intern weiterzuleiten – kopiert wird nichts.
-- **Fotos und Dateien**, **Sprachnachrichten** wie bei WhatsApp (aufnehmen, direkt in der Unterhaltung abspielen, schneller mit 1,5× oder 2×), **Suche**, **Aufbewahrungsfrist** aus der Firmenverwaltung.
-- **Anrufe, Videocalls und Bildschirm teilen** direkt aus einer Unterhaltung, auf dem eigenen Server mit [LiveKit](https://github.com/livekit/livekit); das Gespräch bleibt offen, während du zur Mail wechselst.
-- **Vertrauliche Unterhaltungen**, Ende-zu-Ende verschlüsselt – Nachrichten, Dateien und Anrufe.
-
-### 📞 Telefonie (CTI) mit der Fritzbox
-
-Telefonie mit Computer-Anbindung fürs Firmentelefon: Eine kleine **Telefonbox** (Asterisk im
-Container, auf einem Thin Client, einem Raspberry Pi oder einem NAS) meldet sich an der Fritzbox
-als IP-Telefon an. Nummern und Tischtelefone bleiben, wie sie sind; im Büro wird nichts zum
-Internet geöffnet.
+| | |
+|---|---|
+| ✉️ **Mail** | **Gemeinsame Postfächer** (info@ mit Rechten pro Person, Antworten zeigen, wer geantwortet hat), alle Posteingänge in einer Liste, **Kategorien**, **Regeln auf dem Server**, Suche wie in Gmail, Wiedervorlage, Senden rückgängig und später senden, Textbausteine, **weitere Postfächer** (Gmail, GMX, WEB.DE), **Warnungen vor Phishing und gefälschten Absendern**, Signaturen, Abwesenheitsnotiz, immer aktuell per JMAP-Push · [mehr →](https://firsttris.github.io/kontext/mail.html) |
+| 📅 **Kalender** | Tag, Woche, Monat und Liste, Serien, **Einladungen mit einem Klick beantworten**, ganz ohne Konto, **Wer hat Zeit?** wie der Terminplanungs-Assistent in Outlook, **Videobesprechung pro Termin**, Orte aus OpenStreetMap, geteilte Kalender · [mehr →](https://firsttris.github.io/kontext/calendar-contacts.html) |
+| 👥 **Kontakte** | **Der Kunde auf einen Blick**: letzte Mails, nächste Termine, offene Aufgaben, Dokumente und Anrufe – ein kleines CRM; Fotos, Gruppen, vCard, weitere Kontakte wie bei Gmail, Doppelte zusammenführen · [mehr →](https://firsttris.github.io/kontext/calendar-contacts.html#kontakte) |
+| ✅ **Aufgaben** | **Liste oder Kanban-Board** pro Postfach, wiederkehrende Aufgaben, **aus einer Mail, einer Chat-Nachricht, einer Regel oder einem verpassten Anruf**, Schnelleingabe („Rückruf Hoffmann morgen“), Erinnerungen als Push, CalDAV für Thunderbird und Handy · [mehr →](https://firsttris.github.io/kontext/tasks.html) |
+| 💬 **Team-Chat & Video** | Kanäle und Direktnachrichten, @Erwähnungen, Threads, Reaktionen, **Mails, Aufgaben und Kontakte als Karten**, Sprachnachrichten, **Anrufe, Video und Bildschirm teilen** auf dem eigenen Server (LiveKit), **Ende-zu-Ende verschlüsselte Unterhaltungen** · [mehr →](https://firsttris.github.io/kontext/chat.html) |
+| 📞 **Telefonie (CTI)** | **Fritzbox und Nummern bleiben**: Anrufe klingeln in Kontext mit Kontakt, letzter Mail und nächstem Termin des Anrufers, **Anrufen per Klick**, **Mailbox als Mail**, verpasste Anrufe werden Aufgaben, Öffnungszeiten und Sprachmenü, Weitervermitteln und Konferenz, Snom-Tischtelefone, Fax als PDF · [mehr →](https://firsttris.github.io/kontext/telephony.html) |
+| 🔐 **Verschlüsselung** | **OpenPGP** im Browser, **S/MIME** für Behörden und Kanzleien, **vertraulich senden an jeden** über einen Link auf den eigenen Server, TLS mit MTA-STS und DANE, verschlüsselte Backups · [mehr →](https://firsttris.github.io/kontext/encryption.html) |
+| 📄 **Dokumente** | **Word, Excel, PowerPoint und PDF** in Kontext mit [Schreibzeug](https://github.com/firsttris/schreibzeug), ein Ordner pro gemeinsamem Postfach, Anhänge in Dokumente und zurück · [mehr →](https://firsttris.github.io/kontext/documents.html) |
+| 🤖 **KI-Agenten (MCP)** | **Kontext ist ein MCP-Server**: Claude und andere Agenten schlagen Kunden, Mails, Termine und Aufgaben mit deinen Rechten nach und schreiben Entwürfe – kein Senden, kein Löschen, jede Änderung protokolliert · [mehr →](https://firsttris.github.io/kontext/agents.html) |
+| 🏢 **Firmenverwaltung** | **Mitarbeiter, gemeinsame Postfächer und Rechte** ohne IT-Kenntnisse, Abwesenheit mit Vertretung, Firmen-Signatur, **Austritt ohne Löschen**, Datensicherung im Blick, **Umzug von Microsoft 365, Gmail, IMAP und Outlook (PST)** · [mehr →](https://firsttris.github.io/kontext/company.html) |
+| 📱 **Auf jedem Gerät** | **Eine App am PC, unter Android und am iPhone** (PWA, ohne App Store), Benachrichtigungen auch bei geschlossener App, eine Tab-Leiste mit deinen Apps, hell und dunkel, Anmeldung mit zweitem Faktor · [mehr →](https://firsttris.github.io/kontext/index.html) |
 
 <img src="docs/screenshots/phone-call.png" alt="CTI in Kontext: ein Anruf über die Fritzbox klingelt im Browser mit Kontakt, Firma, Nummer und letzter Mail des Anrufers, neben dem Posteingang" width="900">
-
-- **Anrufe klingeln in Kontext** mit allem zum Anrufer – Kontakt, Firma, letzte Mail, nächster Termin – bei allen gewählten Personen am Rechner und am Handy; annehmen im Browser (Softphone) oder am Tischtelefon.
-- **Anrufen per Klick** aus jedem Kontakt und jeder Mail; ein Tastenfeld für Sprachmenüs; eine **Anrufliste** mit Notizen und „Zurückrufen“.
-- **Verpasste Anrufe werden Aufgaben**, die sich selbst abhaken, sobald jemand mit der Nummer gesprochen hat.
-- **Mailbox als Mail**: die Ansage im Browser einsprechen; Nachrichten kommen als Mail mit der Aufnahme.
-- **Öffnungszeiten** mit geschlossenen Tagen und Feiertagen, ein **Sprachmenü** („Für den Kundendienst drücken Sie die 1 …“), eine **Sperrliste**.
-- **Weitervermitteln, Halten, Rückfrage und Dreierkonferenz**; alle gleichzeitig oder der Reihe nach klingeln lassen, dazu nach einer Weile ein Handy; **Durchwahlen** pro Team.
-- **Snom-Tischtelefone**, die sich an der Box selbst einrichten, **Präsenz** und *Bitte nicht stören*, die **Türsprechstelle**, **Fax als PDF-Mail**, **Gespräche aufnehmen** mit Hinweis, **Anrufstatistik**.
-
-Mehr in der [Doku zur Telefonie](https://firsttris.github.io/kontext/telephony.html) (im Test).
-
-### 🔐 Verschlüsselung
-
-- **OpenPGP im Browser**: eigener Schlüssel, gesperrt aufbewahrt; Mails lesen, unterschreiben und verschlüsseln, Schlüssel anderer aus Autocrypt, WKD und keys.openpgp.org.
-- **S/MIME** für Behörden und Kanzleien: eigenes Zertifikat importieren, Unterschriften mit Kette und OCSP prüfen, Zertifikate im DNS finden.
-- **Vertraulich senden an jeden**: Empfänger mit Schlüssel bekommen PGP oder S/MIME, alle anderen einen Link auf deinen Server und einen Code, den du telefonisch weitergibst.
-- **Grundschutz für alles**: TLS auf dem Weg (MTA-STS und DANE prüft die Firmenverwaltung), verschlüsselte Platte und Backups.
-
-Das [Verschlüsselungskonzept](https://firsttris.github.io/kontext/encryption.html) erklärt, was wovor geschützt ist.
-
-### 📄 Dokumente
-
-- **Word, Excel, PowerPoint und PDF** in Kontexts Fenster mit [Schreibzeug](https://github.com/firsttris/schreibzeug) (optional): keine zweite Anmeldung, ein Ordner pro gemeinsamem Postfach.
-- **Anhänge in Dokumente ablegen**, **aus Dokumente anhängen**, Dateien an Aufgaben, Kontakten, Terminen und Chat-Nachrichten.
-
-### 🤖 KI-Agenten (MCP)
-
-- **Kontext ist ein MCP-Server**: in Claude als Connector eintragen (OAuth) oder einem Agenten einen Zugangsschlüssel geben. Er schlägt Kunden, Mails, Termine und Aufgaben mit deinen Rechten nach und legt, wenn du es erlaubst, Entwürfe, Termine, Kontakte und Aufgaben an.
-- **Nichts verlässt das Haus von selbst**: kein Senden, kein Löschen; jede Änderung wird protokolliert, jede Verbindung lässt sich trennen.
-
-### 🏢 Firmenverwaltung und Umzug
-
-- **Mitarbeiter anlegen**, Passwort und zweiten Faktor zurücksetzen, **Zugang sperren**; **gemeinsame Postfächer** mit Rechten pro Person; weitere Adressen.
-- **Abwesenheit für Kollegen** mit Vertretung, **Firmen-Signatur** für alle, **Austritt**, ohne etwas zu löschen.
-- **Datensicherung im Blick**: Ziel, letzter Lauf, belegter Speicher, die nächtliche Uhrzeit und „Jetzt sichern“ – Kontext bittet nur darum, sichern tut der Server.
-- **Umzug** von Microsoft 365, Gmail, GMX und anderen IMAP-Anbietern (abgeglichen bis zum Wechsel), aus Outlook (PST) und aus einem Google-Export.
-
-### 📱 Auf jedem Gerät
-
-- **Eine App auf jedem Gerät** (PWA): aus dem Browser installieren am PC, unter Android und am iPhone (am Handy zeigt eine Karte in der Mailliste, wie), Ungelesen-Zahl am Symbol, Fotos aus anderen Apps in eine neue Mail teilen, `mailto:`-Links in Kontext öffnen, Updates mit einem Klick und die laufende Version in den Einstellungen.
-- **Benachrichtigungen** auch bei geschlossener App (Web Push, Ende-zu-Ende verschlüsselt): neue Mails, Direktnachrichten, @Erwähnungen, Erinnerungen an Aufgaben und eingehende Anrufe; eine Karte über der Mailliste bietet an, sie einzuschalten.
-- **Hell oder dunkel** (Mails, die für weißes Papier geschrieben sind, passen sich an), **Anmeldung mit zweitem Faktor**, **Speicherplatz auf einen Blick**.
 
 ## 📸 Screenshots
 
@@ -221,79 +145,99 @@ eigenen Server will, mit Mail, Kalender, Chat und Firmentelefon an einem Ort.
 
 ## ❓ FAQ
 
-### Gibt es eine Open-Source-Alternative zu Google Workspace und Microsoft 365?
+<details>
+<summary><b>Gibt es eine Open-Source-Alternative zu Google Workspace und Microsoft 365?</b></summary>
+
 Ja, Kontext: Mail mit gemeinsamen Postfächern, Kalender, Kontakte, Aufgaben, Team-Chat mit
 Videoanrufen und die Telefonanlage in einer Web-App auf deinem eigenen Server, Dokumente über
 [Schreibzeug](https://github.com/firsttris/schreibzeug). Siehe [Installation](https://firsttris.github.io/kontext/installation.html).
+</details>
 
-### Was kostet das?
+<details>
+<summary><b>Was kostet das?</b></summary>
+
 Die Software ist kostenlos (AGPL). Du brauchst einen Server – einen VPS ab etwa 5 € im Monat – und
 jemanden, der ihn einrichtet und aktuell hält.
+</details>
 
-### Gibt es eine Weboberfläche für den Mailserver Stalwart?
+<details>
+<summary><b>Gibt es eine Weboberfläche für den Mailserver Stalwart?</b></summary>
+
 Ja, das ist Kontext: ein JMAP-Webclient für Mail, Kalender und Kontakte auf
 [Stalwart](https://stalw.art), dazu Aufgaben, Chat, Telefonie und eine Firmenverwaltung, die
 Stalwarts Konten und Gruppen pflegt. Siehe [Architektur](https://firsttris.github.io/kontext/architecture.html).
+</details>
 
-### Funktioniert Kontext mit meiner Fritzbox (CTI)?
+<details>
+<summary><b>Funktioniert Kontext mit meiner Fritzbox (CTI)?</b></summary>
+
 Ja. Eine Telefonbox im Büro meldet sich an der Fritzbox als IP-Telefon an; Anrufe klingeln dann in
 Kontext mit Kontakt, letzter Mail und nächstem Termin des Anrufers, und du rufst aus jedem Kontakt
 an. Siehe [Telefonie](https://firsttris.github.io/kontext/telephony.html).
+</details>
 
-### Läuft das auf meinem eigenen PC oder NAS?
+<details>
+<summary><b>Läuft das auf meinem eigenen PC oder NAS?</b></summary>
+
 Ja, Kontext läuft überall, wo Docker oder Podman läuft. Um Mails aus dem Internet zu empfangen,
 braucht der Rechner aber Port 25 von außen, eine feste IP-Adresse und einen Reverse-DNS-Eintrag;
 private Internetanschlüsse sperren Port 25 meist. Zu Hause geht es am besten mit einem Mail-Relay
 davor – ein kleiner VPS ist einfacher. Die Telefonbox läuft auf einem NAS, einem Raspberry Pi oder
 einem Thin Client im Büro.
+</details>
 
-### Ist das DSGVO-konform?
+<details>
+<summary><b>Ist das DSGVO-konform?</b></summary>
+
 Es ist dafür gebaut: Die Daten bleiben auf deinem Server, ohne Tracker oder Dritte. Einen
 Auftragsverarbeitungsvertrag schließt du mit deinem Hoster; bei einem Server im eigenen Haus
 nicht einmal das. Für die GoBD wird beim Austritt nichts gelöscht, und Backups gehen verschlüsselt
 auf S3-Speicher mit Object Lock.
+</details>
 
-### Funktionieren iPhone, Android, Outlook und Thunderbird weiter?
+<details>
+<summary><b>Funktionieren iPhone, Android, Outlook und Thunderbird weiter?</b></summary>
+
 Ja. Stalwart spricht IMAP, SMTP, CalDAV und CardDAV; jedes Mailprogramm und Handy kann sich direkt
 verbinden. Kontext ist die Oberfläche im Browser obendrauf, und die Aufgaben sind auch
 CalDAV-Aufgabenlisten.
+</details>
 
-### Kann ich von Gmail, Microsoft 365 oder Outlook umziehen?
+<details>
+<summary><b>Kann ich von Gmail, Microsoft 365 oder Outlook umziehen?</b></summary>
+
 Ja, unter *Einstellungen → Firma → Umzug*: IMAP-Postfächer (abgeglichen, bis der Umzug
 abgeschlossen ist), Microsoft 365 über eine App im Microsoft-Konto der Firma, Outlook als PST-Datei,
 Kontakte und Kalender aus dem Google-Export. Siehe [Firmenverwaltung und Umzug](https://firsttris.github.io/kontext/company.html).
+</details>
 
-### Kann ich meine Gmail-Adresse weiter nutzen?
+<details>
+<summary><b>Kann ich meine Gmail-Adresse weiter nutzen?</b></summary>
+
 Ja, unter *Einstellungen → Weitere Postfächer*: Neue Mails kommen in Kontext an, und du sendest als
 diese Adresse über den Server des Anbieters, damit Empfänger sie als echt sehen.
+</details>
 
-### Kann ich Claude oder andere KI-Agenten mit meinen Mails nutzen?
+<details>
+<summary><b>Kann ich Claude oder andere KI-Agenten mit meinen Mails nutzen?</b></summary>
+
 Ja, Kontext ist ein MCP-Server. Ein Agent arbeitet mit deinen Rechten, legt Entwürfe an statt zu
 senden und löscht nie etwas. Siehe [KI-Agenten](https://firsttris.github.io/kontext/agents.html).
+</details>
 
-### Welche Sprachen?
+<details>
+<summary><b>Welche Sprachen?</b></summary>
+
 Die App ist vorerst auf Deutsch; Englisch und weitere europäische Sprachen sind geplant.
+</details>
 
 ## 📚 Dokumentation
 
-Die ganze Dokumentation, mit Suche, steht unter **[firsttris.github.io/kontext](https://firsttris.github.io/kontext/)**.
-
-| | |
-| --- | --- |
-| [Mail](https://firsttris.github.io/kontext/mail.html) | gemeinsame Postfächer, Kategorien, Regeln, Suche, weitere Postfächer, Prüfung des Absenders |
-| [Kalender und Kontakte](https://firsttris.github.io/kontext/calendar-contacts.html) | Teilen, Verfügbarkeit, Videobesprechungen, Kundenansicht, vCard |
-| [Aufgaben](https://firsttris.github.io/kontext/tasks.html) | Boards, Aufgaben aus Mails und Regeln, CalDAV für Thunderbird und Handy |
-| [Team-Chat und Videocalls](https://firsttris.github.io/kontext/chat.html) | Kanäle, Karten, Anrufe über LiveKit, vertrauliche Unterhaltungen |
-| [Telefonie (CTI)](https://firsttris.github.io/kontext/telephony.html) | Fritzbox, Telefonbox, Mailbox, Öffnungszeiten, Weitervermitteln, Snom, Fax |
-| [Dokumente](https://firsttris.github.io/kontext/documents.html) | Schreibzeug als Modul, Ordner pro gemeinsamem Postfach |
-| [Verschlüsselung](https://firsttris.github.io/kontext/encryption.html) | OpenPGP, S/MIME, vertraulich senden, Ende-zu-Ende verschlüsselter Chat |
-| [KI-Agenten (MCP)](https://firsttris.github.io/kontext/agents.html) | Werkzeuge, OAuth und Zugangsschlüssel, was ein Agent darf |
-| [Firmenverwaltung und Umzug](https://firsttris.github.io/kontext/company.html) | Mitarbeiter, gemeinsame Postfächer, Austritt, Microsoft 365, Gmail, PST |
-| [Installation](https://firsttris.github.io/kontext/installation.html) | Server, DNS, Stalwart, Anrufe, Telefonie, Dokumente, Backups, Updates |
-| [Architektur](https://firsttris.github.io/kontext/architecture.html) | wie Kontext, Stalwart, LiveKit und die Box zusammenspielen |
-| [Entwicklung](https://firsttris.github.io/kontext/development.html) | lokal mit Testdaten, Tests, CI und Releases |
-
-Was als Nächstes kommt, steht in der [Roadmap](ROADMAP.md).
+Die ganze Dokumentation, mit Suche, steht unter **[firsttris.github.io/kontext](https://firsttris.github.io/kontext/)**:
+jede Funktion im Detail, [Installation](https://firsttris.github.io/kontext/installation.html),
+[Architektur](https://firsttris.github.io/kontext/architecture.html) und
+[Entwicklung](https://firsttris.github.io/kontext/development.html). Was als Nächstes kommt, steht
+in der [Roadmap](ROADMAP.md).
 
 ## 🛠️ Entwicklung
 
