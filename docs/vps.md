@@ -19,6 +19,7 @@ Was wo passiert:
 | 9. Kontext mit Quadlet starten  | Server                 |
 | 10. Stalwart ohne Oberfläche einrichten | Server         |
 | 11. Backup auf Cloudflare R2    | Cloudflare und Server  |
+| 12. Mail umstellen              | Cloudflare und Server  |
 
 ## 1. Root-Passwort setzen
 
@@ -428,3 +429,45 @@ apt-get install -y restic
 
 **Das Restic-Passwort** (`grep RESTIC_PASSWORD backup.env`) zusätzlich außerhalb des Servers
 ablegen, etwa im Passwortmanager: Ohne es ist das Backup nicht lesbar, wenn der Server weg ist.
+
+## 12. Mail umstellen
+
+Zuletzt kommt die Mail der Domain auf den Server. Vorher die Adressen anlegen, die bisher
+ankamen: Bei **Cloudflare Email Routing** stehen sie unter *Routing-Regeln* (einzelne Adressen
+und ein Catch-all). Einzelne Adressen werden Aliase eines Kontos, ein Catch-all wird zur
+`catchAllAddress` der Domain:
+
+```bash
+/root/stalwart-api.sh '[
+ ["x:Account/set",{"update":{"<konto-id>":{"aliases":{"0":{"enabled":true,"name":"info","domainId":"<domain-id>"}}}}},"0"],
+ ["x:Domain/set",{"update":{"<domain-id>":{"catchAllAddress":"chef@firma.de"}}},"1"]]'
+```
+
+(`aliases` ersetzt die Liste: vorhandene Aliase mit angeben.)
+
+Dann in Cloudflare unter *Email → Email Routing → Einstellungen* ganz unten **Email Routing
+deaktivieren**; Cloudflare entfernt dabei seine MX-, SPF- und DKIM-Einträge. Website-Einträge
+bleiben. Sofort danach die eigenen setzen (Bis dahin gibt es keinen MX; absendende Server
+versuchen es später erneut):
+
+| Typ | Name | Wert |
+| --- | --- | --- |
+| MX | `firma.de` | `10 mail.firma.de` |
+| TXT | `firma.de` | `v=spf1 mx -all` |
+| TXT | `mail.firma.de` | `v=spf1 a -all` |
+| TXT | `_dmarc.firma.de` | `v=DMARC1; p=none; rua=mailto:postmaster@firma.de` |
+| TXT | `_mta-sts.firma.de` | `v=STSv1; id=…` (aus Stalwart, `x:Domain/get` → `dnsZoneFile`) |
+| TXT | `_smtp._tls.firma.de` | `v=TLSRPTv1; rua=mailto:postmaster@firma.de` |
+
+Die DKIM-Einträge hat Stalwart schon gesetzt (Schritt 10). Stalwart schlägt DMARC gleich mit
+`p=reject` vor; zum Start `p=none` und nach ein paar Wochen ohne Fehlberichte `quarantine`. Die
+Einträge für Autoconfig und SRV (`autoconfig.`, `_imaps._tcp` …), die Stalwart ebenfalls vorschlägt,
+zeigen auf `mail.firma.de:443` – dort antwortet Caddy, nicht Stalwart: weglassen.
+
+Prüfen, dann eine Mail von außen hin und eine zurück (im Original beim Empfänger: SPF, DKIM und
+DMARC *pass*):
+
+```bash
+dig +short MX firma.de @1.1.1.1
+echo QUIT | openssl s_client -starttls smtp -connect mail.firma.de:25 -verify_return_error | grep -E "subject=|Verify"
+```
