@@ -559,6 +559,11 @@ das Manifest steht in `vite.config.ts`, der Service Worker in `src/sw/service-wo
   danach vergrößert; die Seite ragt dann rechts hinaus und rutscht oben unter Safaris Glasleiste.
   Felder, Auswahllisten und der Mail-Editor haben dort deshalb 16 px (`src/styles.css`, geprüft
   von `src/lib/ios-zoom.test.ts`).
+- **Oberer Rand der installierten App am iPhone:** iOS 26 legt über die obersten etwa 40 pt unter
+  der Statusleiste eine Unschärfe („Liquid Glass“), über der Seite, die sich weder per CSS noch
+  per Meta-Tag abschalten lässt. In der installierten App im Hochformat beginnt der Inhalt deshalb
+  um 2,5 rem tiefer (`--safe-top` in `src/styles.css`, geprüft von `src/lib/ios-edge-blur.test.ts`);
+  Safari-Tabs, Querformat und andere Systeme bleiben beim Rand der Statusleiste.
 - **Zurück am Handy:** Ein Bildschirm, der aus einem anderen geöffnet wurde (Gespräch aus der
   Liste, Thread aus dem Gespräch), trägt `fromParent` im Verlaufseintrag; sein „Zurück“ geht dann
   im Verlauf des Browsers zurück, sodass ein Wischen danach nicht wieder auf ihm landet. Ohne
