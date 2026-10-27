@@ -15,6 +15,8 @@ Was wo passiert:
 | 5. Mail-Sperre aufheben         | Kundenbereich des Anbieters |
 | 6. Podman installieren          | Server                 |
 | 7. DNS bei Cloudflare           | Cloudflare und Server  |
+| 8. Firewall                     | Server                 |
+| 9. Kontext mit Quadlet starten  | Server                 |
 
 ## 1. Root-Passwort setzen
 
@@ -185,4 +187,95 @@ apt-get install -y bind9-dnsutils
 for n in kontext mail dokumente mta-sts openpgpkey; do dig +short $n.firma.de @1.1.1.1; done
 ```
 
-Danach weiter mit der [Installation](installation.md).
+Die Einträge **vor** dem ersten Start anlegen und warten, bis auch der Server selbst sie auflöst
+(`getent hosts kontext.firma.de`): Hat er vorher schon gefragt, merkt sich der Resolver des
+Anbieters das „gibt es nicht“ bis zu 30 Minuten (bei Cloudflare), und Schreibzeug findet Kontext
+beim Start nicht.
+
+## 8. Firewall
+
+Von außen soll den Server selbst nur SSH erreichen. Die Ports der Container (Web, Mail, Anrufe)
+leitet Podman weiter (netavark: DNAT, dann *forward*); sie laufen nicht durch die Eingangskette
+des Servers und brauchen dort keine Regel. **Kein ufw**: Es verwirft weitergeleitete Pakete und
+damit die Container-Ports. Stattdessen nftables, in `/etc/nftables.conf`:
+
+```
+#!/usr/sbin/nft -f
+# Kein "flush ruleset": das würfe auch Podmans Regeln weg.
+table inet hostfw
+delete table inet hostfw
+
+table inet hostfw {
+	chain input {
+		type filter hook input priority filter; policy drop;
+		ct state established,related accept
+		ct state invalid drop
+		iif lo accept
+		meta l4proto { icmp, ipv6-icmp } accept
+		tcp dport 22 accept
+		# Container fragen Podmans DNS (aardvark) am Gateway der Bridge
+		iifname "podman*" accept
+	}
+}
+```
+
+```bash
+nft -c -f /etc/nftables.conf && nft -f /etc/nftables.conf && systemctl enable --now nftables
+```
+
+Die angemeldete SSH-Sitzung offen lassen und aus einem zweiten Terminal prüfen, dass `ssh`
+weiter geht.
+
+## 9. Kontext mit Quadlet starten
+
+Jeder Dienst bekommt nur seine eigenen Einstellungen, in einer Datei unter `/opt/kontext/deploy/`,
+nur für root lesbar (sie stehen in `.gitignore`). Die Geheimnisse für LiveKit und Schreibzeug als
+hex, weil das LiveKit-Geheimnis auch in YAML steht:
+
+```bash
+cd /opt/kontext/deploy && umask 077
+KS=$(openssl rand -base64 48 | tr -d '\n'); LS=$(openssl rand -hex 32); SS=$(openssl rand -hex 32)
+printf '%s\n' "BETTER_AUTH_URL=https://kontext.firma.de" "BETTER_AUTH_SECRET=$KS" \
+  "STALWART_ADMIN_KEY=" "LIVEKIT_API_SECRET=$LS" \
+  "SCHREIBZEUG_URL=https://dokumente.firma.de" "SCHREIBZEUG_CLIENT_SECRET=$SS" > kontext.env
+printf '%s\n' "SCHREIBZEUG_URL=https://dokumente.firma.de" \
+  "SCHREIBZEUG_EMBED_ORIGIN=https://kontext.firma.de" \
+  "OIDC_ISSUER=https://kontext.firma.de/api/auth" "OIDC_CLIENT_SECRET=$SS" > schreibzeug.env
+echo "LIVEKIT_KEYS=kontext: $LS" > livekit.env
+echo "SIP_CONFIG_BODY={api_key: kontext, api_secret: \"$LS\", ws_url: \"ws://livekit:7880\", redis: {address: \"redis:6379\"}, sip_port: 5060, rtp_port: \"20000-20100\", use_external_ip: true, symmetric_rtp: true, hide_inbound_port: true, logging: {level: warn}}" > livekit-sip.env
+umask 022
+```
+
+`SIP_CONFIG_BODY` steht in einer Zeile (YAML in Klammerschreibweise): Eine Env-Datei kennt keine
+Werte über mehrere Zeilen.
+
+Die Quadlet-Dateien kopieren und Domain und Let's-Encrypt-Adresse eintragen (Quadlet setzt keine
+Variablen ein). Die Telefonbox (`kontext-box.container`) läuft im Büro, nicht hier:
+
+```bash
+cp quadlet/*.network quadlet/*.container /etc/containers/systemd/
+rm /etc/containers/systemd/kontext-box.container
+cd /etc/containers/systemd
+sed -i 's/firma\.de/meinefirma.de/g' *.container
+sed -i 's/^Environment=ACME_EMAIL=.*/Environment=ACME_EMAIL=admin@meinefirma.de/' caddy.container
+systemctl daemon-reload
+```
+
+Images laden und starten. Mit dem Server starten sie danach von selbst (`[Install]` in jeder
+Datei):
+
+```bash
+for i in $(grep -h '^Image=' *.container | cut -d= -f2); do podman pull $i; done
+systemctl start stalwart redis livekit livekit-sip kontext schreibzeug caddy
+podman ps
+```
+
+Caddy holt die Zertifikate gleich beim Start (`podman logs caddy`). Im Log von Stalwart steht das
+vorläufige Admin-Passwort (`podman logs stalwart`). Stalwarts Verwaltung ist nur auf dem Server
+selbst erreichbar; vom eigenen Rechner über einen Tunnel, dann `http://localhost:8080` im Browser:
+
+```bash
+ssh -L 8080:127.0.0.1:8080 kunde-vps
+```
+
+Danach weiter mit [Stalwart einrichten](installation.md#3-stalwart-einrichten).
