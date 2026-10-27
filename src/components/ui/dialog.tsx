@@ -15,6 +15,13 @@ type DialogProps = {
   onCloseAutoFocus?: (event: Event) => void;
 };
 
+/** Escape in a field with an open suggestion list closes the list, not the dialog around it. */
+const keepOpenForList = (event: KeyboardEvent) => {
+  const target = event.target;
+  if (target instanceof HTMLElement && target.closest('[role="combobox"][aria-expanded="true"]'))
+    event.preventDefault();
+};
+
 /** A centered dialog on desktop, a bottom sheet on phones. */
 export const Dialog = ({
   open,
@@ -37,6 +44,7 @@ export const Dialog = ({
         )}
         aria-describedby={description ? undefined : undefined}
         onCloseAutoFocus={onCloseAutoFocus}
+        onEscapeKeyDown={keepOpenForList}
       >
         <div className="flex items-start gap-3">
           <div className="flex flex-1 flex-col gap-1">

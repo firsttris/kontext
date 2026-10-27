@@ -34,11 +34,13 @@ export const RecipientField = ({
 }: Props) => {
   const [text, setText] = useState("");
   const [highlight, setHighlight] = useState(0);
+  // Escape closes the list until the text changes.
+  const [dismissed, setDismissed] = useState(false);
   const listId = useId();
 
   const matches = useMemo(() => {
     const needle = text.trim().toLowerCase();
-    if (needle.length < 1) return [];
+    if (needle.length < 1 || dismissed) return [];
     const taken = new Set(value.map((a) => a.email.toLowerCase()));
     return suggestions
       .filter((a) => !taken.has(a.email.toLowerCase()))
@@ -47,7 +49,7 @@ export const RecipientField = ({
           a.email.toLowerCase().includes(needle) || (a.name ?? "").toLowerCase().includes(needle),
       )
       .slice(0, 6);
-  }, [text, suggestions, value]);
+  }, [text, suggestions, value, dismissed]);
 
   /** A group stands for its members. */
   const pick = (suggestion: Suggestion) => add(suggestion.members ?? [suggestion]);
@@ -69,7 +71,9 @@ export const RecipientField = ({
   };
 
   const onKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
-    if (matches.length > 0 && (event.key === "ArrowDown" || event.key === "ArrowUp")) {
+    if (matches.length > 0 && event.key === "Escape") {
+      setDismissed(true);
+    } else if (matches.length > 0 && (event.key === "ArrowDown" || event.key === "ArrowUp")) {
       event.preventDefault();
       setHighlight(
         (h) => (h + (event.key === "ArrowDown" ? 1 : matches.length - 1)) % matches.length,
@@ -130,6 +134,7 @@ export const RecipientField = ({
         onChange={(e) => {
           setText(e.target.value);
           setHighlight(0);
+          setDismissed(false);
         }}
         onKeyDown={onKeyDown}
         onBlur={() => {

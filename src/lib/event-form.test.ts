@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   addMeetingNote,
+  attendeeEmails,
   eventToForm,
   formToEvent,
   meetingNote,
@@ -309,5 +310,14 @@ describe("video meeting", () => {
     expect(free.freeBusyStatus).toBe("free");
     const event = { id: "e", calendarIds: {}, ...free } as unknown as CalendarEvent;
     expect(eventToForm(event, []).showAs).toBe("free");
+  });
+});
+
+describe("attendeeEmails", () => {
+  it("reads the addresses of the chips, with or without a name", () => {
+    expect(attendeeEmails('"Keller, Petra" <petra@keller.test>, anna@weber.test')).toEqual([
+      "petra@keller.test",
+      "anna@weber.test",
+    ]);
   });
 });

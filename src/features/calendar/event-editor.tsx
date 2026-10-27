@@ -12,7 +12,9 @@ import { useAddressSuggestions } from "@/features/contacts/use-suggestions";
 import { EventDocuments } from "@/features/documents/document-actions";
 import { useShareWith } from "@/features/documents/use-share-with";
 import { RecipientField } from "@/features/mail/recipient-field";
+import { formatAddressInput } from "@/lib/addresses";
 import {
+  attendeeAddresses,
   attendeeEmails,
   type EventForm,
   eventToForm,
@@ -213,12 +215,9 @@ export const EventEditor = ({ event, series, start, onDone, onCancel }: Props) =
         boxed
         label={m.calendar_event_attendees()}
         placeholder={m.calendar_event_attendees_hint()}
-        value={withNames(attendeeEmails(form.attendees), suggestions)}
+        value={withNames(attendeeAddresses(form.attendees), suggestions)}
         onChange={(addresses) =>
-          setForm((current) => ({
-            ...current,
-            attendees: addresses.map((address) => address.email).join(", "),
-          }))
+          setForm((current) => ({ ...current, attendees: formatAddressInput(addresses) }))
         }
         suggestions={suggestions}
       />

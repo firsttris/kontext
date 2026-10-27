@@ -24,8 +24,11 @@ export const mergeSuggestions = (...lists: Suggestion[][]): Suggestion[] => {
   });
 };
 
-/** Bare addresses with the name a suggestion knows for them, for the chips. */
-export const withNames = (emails: string[], known: EmailAddress[]): EmailAddress[] => {
+/** Addresses without a name get the one a suggestion knows for them, for the chips. */
+export const withNames = (addresses: EmailAddress[], known: EmailAddress[]): EmailAddress[] => {
   const names = new Map(known.map((a) => [a.email.toLowerCase(), a.name ?? null]));
-  return emails.map((email) => ({ name: names.get(email.toLowerCase()) ?? null, email }));
+  return addresses.map(({ name, email }) => ({
+    name: name || names.get(email.toLowerCase()) || null,
+    email,
+  }));
 };

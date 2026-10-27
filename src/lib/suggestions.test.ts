@@ -35,14 +35,22 @@ describe("mergeSuggestions", () => {
 });
 
 describe("withNames", () => {
-  it("names the known addresses and leaves the others bare", () => {
+  it("names the known addresses, keeps a typed name and leaves the others bare", () => {
     expect(
       withNames(
-        ["ANNA@weber.test", "kunde@example.test"],
-        [{ name: "Anna Weber", email: "anna@weber.test" }],
+        [
+          { name: null, email: "ANNA@weber.test" },
+          { name: "Petra Keller", email: "petra@keller.test" },
+          { name: null, email: "kunde@example.test" },
+        ],
+        [
+          { name: "Anna Weber", email: "anna@weber.test" },
+          { name: "Petra (Kontakt)", email: "petra@keller.test" },
+        ],
       ),
     ).toEqual([
       { name: "Anna Weber", email: "ANNA@weber.test" },
+      { name: "Petra Keller", email: "petra@keller.test" },
       { name: null, email: "kunde@example.test" },
     ]);
   });
