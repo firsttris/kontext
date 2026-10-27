@@ -156,7 +156,7 @@ export const SettingsPage = ({ section }: { section: Section | undefined }) => {
       <nav
         aria-label={m.nav_settings()}
         className={cn(
-          "h-full w-full shrink-0 flex-col gap-4 border-border bg-bg px-3 py-4 md:w-[236px] md:border-r md:bg-side",
+          "h-full w-full shrink-0 flex-col gap-4 border-border bg-bg px-3 py-4 md:w-sidebar md:border-r md:bg-side",
           section ? "hidden md:flex" : "flex",
         )}
       >

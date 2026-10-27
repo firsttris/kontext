@@ -62,6 +62,8 @@
   --color-noteborder: var(--noteborder);
   --font-sans: "Geist Variable", system-ui, sans-serif;
   --font-mono: "Geist Mono Variable", ui-monospace, monospace;
+  /* One width for every module sidebar, so switching modules doesn't shift the columns. */
+  --spacing-sidebar: 236px;
 }
 
 @layer base {
