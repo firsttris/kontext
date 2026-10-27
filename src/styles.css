@@ -139,3 +139,16 @@
 @utility safe-bottom {
   padding-bottom: max(env(safe-area-inset-bottom), 8px);
 }
+
+/* iOS Safari zooms into a focused field whose text is smaller than 16px and stays zoomed in: the
+   page then reaches past the screen on the right and below the tab bar. -webkit-touch-callout
+   exists only in Safari on iOS and iPadOS, so Chromium, Firefox and desktop Safari keep the
+   smaller fields. Unlayered, so it wins over the text-[…] utilities. */
+@supports (-webkit-touch-callout: none) {
+  input,
+  textarea,
+  select,
+  [contenteditable="true"] {
+    font-size: 16px;
+  }
+}
