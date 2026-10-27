@@ -95,6 +95,7 @@ records, Podman Quadlets, backups and updates are in the
 ### 📅 Calendar and 👥 contacts
 
 - **Day, week, month and list**, drag to move, recurring events with exceptions, **invitations** with accept and decline.
+- **Invitations in Kontext's look**: sent in the organizer's name with Yes / No / Maybe – one click answers, no account needed; Gmail, Outlook and Apple show their own buttons too, and the answer lands in the event.
 - **Who is free?** The attendee field suggests colleagues as you type; inviting them shows who is busy and suggests times everyone is free, like Outlook's scheduling assistant.
 - **Video meeting per event**: one click adds a link; customers join in the browser without an account.
 - **Share calendars and address books** with colleagues – free/busy only, read, or edit.

@@ -20,6 +20,10 @@ Kontext steht, steht auch am iPhone, unter Android (DAVx⁵) und in Thunderbird.
   Termine des Tages.
 - **Beginn verschieben:** Wer Datum oder Uhrzeit des Beginns ändert, nimmt das Ende mit; die
   Dauer bleibt, wie bei Google und Apple.
+- **Einladungen im Kontext-Look:** Kontext verschickt sie selbst, im Namen des Organisators, mit
+  Zeit samt Zeitzone, Ort, Videobesprechung, Teilnehmern und den Knöpfen Ja / Nein / Vielleicht.
+  Ein Klick genügt, auch für Kunden ohne Konto; Gmail, Outlook und Apple zeigen außerdem ihre
+  eigenen Knöpfe. Änderungen und Absagen gehen genauso hinaus. [Mehr](architecture.md#einladungen)
 - **Kollegen einladen:** Im Feld „Teilnehmer“ schlägt Kontext beim Tippen die Kollegen aus der
   Firma vor (danach Kontakte und Kontaktgruppen); die Adresse muss man nicht kennen.
 - **Wer ist frei?** Beim Einladen von Kollegen zeigt Kontext, wer zu der Zeit belegt ist, und

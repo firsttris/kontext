@@ -10,6 +10,7 @@ const USING = [CAPABILITIES.core, CAPABILITIES.calendars];
 const EVENT_PROPERTIES = [
   "calendarIds",
   "uid",
+  "sequence",
   "title",
   "description",
   "start",
@@ -179,6 +180,32 @@ export const getEvent = async (
   (await getEvents(client, accountId, [id], EVENT_PROPERTIES))[0] ?? null;
 
 /**
+ * The event as stored, the series for a date of one: its own properties (WITHOUT_OVERRIDES, see
+ * there) and its changed dates. What an invitation is made of.
+ */
+export const getStoredEvent = async (
+  client: JmapClient,
+  accountId: string,
+  id: string,
+): Promise<CalendarEvent | null> => {
+  const [found] = await getEvents(client, accountId, [id], ["baseEventId"]);
+  if (!found) return null;
+  const baseId = found.baseEventId ?? id;
+  const [own] = await getEvents(client, accountId, [baseId], EVENT_PROPERTIES, WITHOUT_OVERRIDES);
+  if (!own) return null;
+  const [dates] = await getEvents(client, accountId, [baseId], ["recurrenceOverrides"]);
+  return { ...own, id: baseId, recurrenceOverrides: dates?.recurrenceOverrides ?? null };
+};
+
+/**
+ * Who sends the invitations: Stalwart (`true`: its own mails, crates/services/src/task_manager/
+ * imip.rs) or Kontext, which then sends them itself (invitations.ts).
+ */
+export type Scheduling = { sendSchedulingMessages: boolean };
+
+const STALWART_SENDS: Scheduling = { sendSchedulingMessages: true };
+
+/**
  * Changing or deleting an instance id changes only that date: Stalwart writes it to the series'
  * `recurrenceOverrides` (an exclusion for a delete). The base id changes the whole series.
  */
@@ -187,12 +214,13 @@ export const createEvent = async (
   accountId: string,
   calendarId: string,
   event: Record<string, unknown>,
+  { sendSchedulingMessages }: Scheduling = STALWART_SENDS,
 ): Promise<string> => {
   const result = await client.call<{ created?: Record<string, { id: string }> }>(
     "CalendarEvent/set",
     {
       accountId,
-      sendSchedulingMessages: true,
+      sendSchedulingMessages,
       create: {
         e: {
           "@type": "Event",
@@ -213,11 +241,12 @@ export const updateEvent = async (
   accountId: string,
   id: string,
   patch: Record<string, unknown>,
+  { sendSchedulingMessages }: Scheduling = STALWART_SENDS,
 ): Promise<void> => {
   assertSetOk(
     await client.call(
       "CalendarEvent/set",
-      { accountId, sendSchedulingMessages: true, update: { [id]: patch } },
+      { accountId, sendSchedulingMessages, update: { [id]: patch } },
       USING,
     ),
     "Termin",
@@ -228,18 +257,19 @@ export const deleteEvent = async (
   client: JmapClient,
   accountId: string,
   id: string,
+  { sendSchedulingMessages }: Scheduling = STALWART_SENDS,
 ): Promise<void> => {
   assertSetOk(
     await client.call(
       "CalendarEvent/set",
-      { accountId, sendSchedulingMessages: true, destroy: [id] },
+      { accountId, sendSchedulingMessages, destroy: [id] },
       USING,
     ),
     "Termin",
   );
 };
 
-/** Accept, decline or maybe: the server tells the organizer (iMIP reply). */
+/** Accept, decline or maybe: Stalwart tells the organizer (iMIP REPLY), also one outside. */
 export const respondToEvent = (
   client: JmapClient,
   accountId: string,

@@ -360,7 +360,7 @@ Mailprogramme nehmen:
 ```
 
 **Einstellungen aus der Installation** (X-Forwarded-For, Kontexts Netz als erlaubte IP,
-Sperrdauer ein Tag, deutsche Suche, 16 gleichzeitige JMAP-Anfragen):
+Sperrdauer ein Tag, deutsche Suche, 16 gleichzeitige JMAP-Anfragen, Stalwarts RSVP-Seite aus):
 
 ```bash
 /root/stalwart-api.sh '[
@@ -379,8 +379,9 @@ Sperrdauer ein Tag, deutsche Suche, 16 gleichzeitige JMAP-Anfragen):
   dem elften bricht der Import ab (*The number of ids requested … exceeds the maximum*).
 - `httpRsvpEnable`: Stalwarts Einladungsmails haben sonst Knöpfe *Yes/No/Maybe* auf
   `https://mail.firma.de/calendar/rsvp` – dort antwortet Caddy, nicht Stalwart, der Klick endet
-  in einem TLS-Fehler. Zugesagt wird im Kalender in Kontext; externe Gäste antworten mit ihrem
-  Mailprogramm auf die angehängte Einladung (iMIP).
+  in einem TLS-Fehler. Einladungen verschickt Kontext selbst, mit Knöpfen auf seine eigene Seite
+  (siehe [Einladungen](architecture.md#einladungen)); Stalwarts Mails gibt es nur noch, wenn ein
+  Handy oder Mailprogramm über CalDAV einlädt.
 
 Mit `useXForwarded` erwartet Stalwart den Header bei jeder HTTP-Anfrage; Kontext spricht es
 direkt an, ohne ihn, und jede Anfrage schreibt `X-Forwarded-For header is missing` ins Log

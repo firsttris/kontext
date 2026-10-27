@@ -95,6 +95,7 @@ einschaltest. DNS-Einträge, Podman-Quadlets, Backups und Updates stehen in der
 ### 📅 Kalender und 👥 Kontakte
 
 - **Tag, Woche, Monat und Liste**, Termine per Ziehen verschieben, Serien mit Ausnahmen, **Einladungen** mit Zusage und Absage.
+- **Einladungen im Kontext-Look**: im Namen des Organisators mit Ja / Nein / Vielleicht – ein Klick sagt zu, ganz ohne Konto; Gmail, Outlook und Apple zeigen auch ihre eigenen Knöpfe, und die Antwort steht im Termin.
 - **Wer hat Zeit?** Das Feld „Teilnehmer“ schlägt beim Tippen die Kollegen vor; beim Einladen zeigt Kontext, wer belegt ist, und schlägt Zeiten vor, in denen alle frei sind – wie der Terminplanungs-Assistent in Outlook.
 - **Videobesprechung pro Termin**: ein Klick legt einen Link an; Kunden kommen im Browser ohne Konto dazu.
 - **Kalender und Adressbücher teilen** mit Kollegen – nur Verfügbarkeit, lesen oder bearbeiten.

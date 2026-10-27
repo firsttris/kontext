@@ -64,7 +64,7 @@ const fileName = (name: string) =>
     ? `name="${name}"`
     : `name*=UTF-8''${encodeURIComponent(name)}`;
 
-const textPart = (type: string, text: string) =>
+export const textPart = (type: string, text: string) =>
   [
     `Content-Type: ${type}; charset=utf-8`,
     "Content-Transfer-Encoding: base64",
@@ -72,13 +72,23 @@ const textPart = (type: string, text: string) =>
     lines(base64(encoder.encode(text.replace(/\r?\n/g, "\r\n")))),
   ].join("\r\n");
 
-const multipart = (type: string, boundary: string, parts: string[], params = "") =>
+export const multipart = (type: string, boundary: string, parts: string[], params = "") =>
   [
     `Content-Type: multipart/${type}; boundary="${boundary}"${params}`,
     "",
     ...parts.flatMap((part) => [`--${boundary}`, part]),
     `--${boundary}--`,
     "",
+  ].join("\r\n");
+
+/** A file attached, base64. */
+export const attachmentPart = (file: MimeAttachment) =>
+  [
+    `Content-Type: ${file.type || "application/octet-stream"}; ${fileName(file.name)}`,
+    "Content-Transfer-Encoding: base64",
+    `Content-Disposition: attachment; ${fileName(file.name).replace(/^name/, "filename")}`,
+    "",
+    lines(base64(file.bytes)),
   ].join("\r\n");
 
 /** The content of a mail: text and HTML as alternatives, attachments after. */
@@ -91,18 +101,7 @@ export const contentPart = (
     textPart("text/html", html),
   ]);
   if (!attachments.length) return alternative;
-  return multipart("mixed", `mix-${id}`, [
-    alternative,
-    ...attachments.map((file) =>
-      [
-        `Content-Type: ${file.type || "application/octet-stream"}; ${fileName(file.name)}`,
-        "Content-Transfer-Encoding: base64",
-        `Content-Disposition: attachment; ${fileName(file.name).replace(/^name/, "filename")}`,
-        "",
-        lines(base64(file.bytes)),
-      ].join("\r\n"),
-    ),
-  ]);
+  return multipart("mixed", `mix-${id}`, [alternative, ...attachments.map(attachmentPart)]);
 };
 
 /** The subject an encrypted mail shows outside: the real one is inside (Protected Headers). */
