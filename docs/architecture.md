@@ -551,14 +551,20 @@ das Manifest steht in `vite.config.ts`, der Service Worker in `src/sw/service-wo
   Fenster. Bei ganz geschlossener App kommen sie als Web Push vom Kontext-Server, siehe
   [Benachrichtigungen](#benachrichtigungen).
 - **Ungelesen-Zahl am App-Symbol** (Badging API) als Summe aller Posteingänge.
-- **Tastatur am Handy:** Sie verdeckt den unteren Teil, ohne die Seite kürzer zu machen (iPhone;
-  Android nur mit `interactive-widget=resizes-content` im Viewport, den `index.html` setzt), und
-  der Browser schiebt dann die ganze Seite nach oben. Deshalb ist die App so hoch wie der
+- **Tastatur am Handy:** Am iPhone verdeckt sie den unteren Teil, ohne die Seite kürzer zu
+  machen, und Safari schiebt dann die ganze Seite nach oben. Deshalb ist die App so hoch wie der
   sichtbare Teil (`--app-height` aus `visualViewport`, `src/components/use-visible-height.ts`)
   und bleibt oben; Listen von Nachrichten bleiben dabei unten, wenn man unten war
-  (`use-scroll-place.ts`). Feste Elemente hängen an der Seite, nicht am sichtbaren Teil: Ein
+  (`use-scroll-place.ts`). Chrome, Brave, Edge und Samsung Internet unter Android würden die
+  Seite mit `interactive-widget=resizes-content` (in `index.html`) schon beim Start der
+  Tastatur kürzen, den Streifen darunter weiß malen, bis sie oben ist, und die Seite
+  hochschieben. Dort legt sich die Tastatur deshalb über die Seite (VirtualKeyboard API,
+  `overlaysContent`), und die App wird in einem Schritt um ihre Höhe kürzer: Hinter der
+  aufgehenden Tastatur bleibt die App, nichts springt. Browser ohne diese API (Firefox) bleiben
+  bei `resizes-content`. Feste Elemente hängen an der Seite, nicht am sichtbaren Teil: Ein
   Dialog unten (Bottom Sheet) läge unter der Tastatur. Er rückt deshalb um `--keyboard-height`
-  nach oben und wird höchstens so hoch wie der sichtbare Teil (`src/components/ui/dialog.tsx`).
+  nach oben und wird höchstens so hoch wie der sichtbare Teil (`src/components/ui/dialog.tsx`);
+  ab `md` (Tablet) steht er in der Mitte von `--app-height`, nicht der ganzen Seite.
 - **Gespräch öffnet unten:** Ein Chat geht bei der neuesten Nachricht auf und bleibt dort, auch
   wenn Bilder, Vorschauen oder entschlüsselte Texte danach noch wachsen. Bis man selbst scrollt
   (Finger, Mausrad, Tasten), zieht jede Scroll-Meldung die Liste wieder nach unten: Safari am

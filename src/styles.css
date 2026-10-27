@@ -72,9 +72,13 @@
   #root {
     height: 100%;
   }
+  /* What shows behind a keyboard that is still rising or a page the browser just resized. */
+  html,
+  body {
+    background: var(--bg);
+  }
   body {
     margin: 0;
-    background: var(--bg);
     color: var(--fg);
     font-family: var(--font-sans);
     font-size: 14px;

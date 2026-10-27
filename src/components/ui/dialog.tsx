@@ -40,7 +40,8 @@ export const Dialog = ({
           "fixed z-50 flex max-h-[min(92dvh,calc(var(--app-height,100dvh)-var(--safe-top)-8px))] flex-col gap-4 overflow-y-auto border border-border bg-bg p-5 shadow-xl outline-none",
           // Above the keyboard on a phone: fixed sits on the page, which iOS doesn't shorten.
           "inset-x-0 bottom-[var(--keyboard-height,0px)] rounded-t-2xl safe-bottom",
-          "md:inset-auto md:top-1/2 md:left-1/2 md:w-[min(520px,calc(100vw-32px))] md:-translate-x-1/2 md:-translate-y-1/2 md:rounded-2xl",
+          // Centered in what one sees: a keyboard over the page (tablet) covers its lower part.
+          "md:inset-auto md:top-[calc(var(--app-height,100dvh)/2)] md:left-1/2 md:w-[min(520px,calc(100vw-32px))] md:-translate-x-1/2 md:-translate-y-1/2 md:rounded-2xl",
           className,
         )}
         aria-describedby={description ? undefined : undefined}

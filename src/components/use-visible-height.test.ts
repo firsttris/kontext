@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { hiddenBelow } from "./use-visible-height";
+import { fitAboveKeyboard, hiddenBelow } from "./use-visible-height";
 
 describe("hiddenBelow", () => {
   it("is nothing without a keyboard", () => {
@@ -20,5 +20,28 @@ describe("hiddenBelow", () => {
 
   it("never goes below zero", () => {
     expect(hiddenBelow(800, { height: 800.4, offsetTop: 0.3 })).toBe(0);
+  });
+});
+
+describe("fitAboveKeyboard", () => {
+  it("leaves the app as high as the screen without a keyboard", () => {
+    expect(fitAboveKeyboard(844, { height: 844, offsetTop: 0 }, 0)).toEqual({
+      appHeight: 844,
+      keyboardHeight: 0,
+    });
+  });
+
+  it("takes the visible height when the keyboard shrinks what one sees (iOS)", () => {
+    expect(fitAboveKeyboard(844, { height: 508, offsetTop: 0 }, 0)).toEqual({
+      appHeight: 508,
+      keyboardHeight: 336,
+    });
+  });
+
+  it("makes room for a keyboard that lies over the page (Android, VirtualKeyboard API)", () => {
+    expect(fitAboveKeyboard(915, { height: 915, offsetTop: 0 }, 330.4)).toEqual({
+      appHeight: 584.6,
+      keyboardHeight: 330,
+    });
   });
 });

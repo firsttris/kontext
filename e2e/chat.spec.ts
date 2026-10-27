@@ -1,5 +1,5 @@
 import { type Browser, expect, type Page, test } from "@playwright/test";
-import { login, unique } from "./helpers";
+import { fakeKeyboard, login, showKeyboard, unique } from "./helpers";
 
 /** A second person in a browser of their own. */
 const colleague = async (browser: Browser, user: string) => {
@@ -391,5 +391,42 @@ test.describe("Chat am Handy @phone", () => {
       )
       .toEqual({ scrolls: true, atBottom: true });
     await expect(messages.getByText(texts.at(-1)!)).toBeInViewport();
+  });
+  test("die Tastatur legt sich über den Kanal, das Eingabefeld bleibt darüber", async ({
+    page,
+  }) => {
+    // Chrome on Android: with the VirtualKeyboard API the keyboard lies over the page instead of
+    // shrinking it (no white strip, no page scrolled up). Chromium can't show a keyboard, so a
+    // stand-in announces one.
+    await fakeKeyboard(page);
+    await login(page);
+    await page
+      .getByRole("navigation", { name: "Apps" })
+      .getByRole("link", { name: /^Chat/ })
+      .click();
+    await page
+      .getByRole("navigation", { name: "Kanäle" })
+      .getByRole("link", { name: /allgemein/ })
+      .click();
+    const overlays = () =>
+      page.evaluate(
+        () =>
+          (navigator as unknown as { virtualKeyboard: { overlaysContent: boolean } })
+            .virtualKeyboard.overlaysContent,
+      );
+    await expect.poll(overlays).toBe(true);
+    const field = page.getByRole("textbox", { name: "Nachricht" });
+    await field.focus();
+    const keyboard = 330;
+    await showKeyboard(page, keyboard);
+    const visibleBottom = (await page.evaluate(() => window.innerHeight)) - keyboard;
+    await expect
+      .poll(async () => {
+        const box = (await field.boundingBox())!;
+        return box.y + box.height;
+      })
+      .toBeLessThanOrEqual(visibleBottom);
+    await expect(page.getByRole("heading", { name: "# allgemein" })).toBeInViewport();
+    expect(await page.evaluate(() => window.scrollY)).toBe(0);
   });
 });
