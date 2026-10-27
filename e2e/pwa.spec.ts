@@ -39,6 +39,33 @@ test.describe("App (PWA)", () => {
     );
   });
 
+  test("liefert Seite und Bausteine mit Brotli, wenn der Browser es nimmt", async ({ request }) => {
+    const page = await request.get("/login", { headers: { "accept-encoding": "br, gzip" } });
+    expect(page.headers()["content-encoding"]).toBe("br");
+    expect(await page.text()).toContain('<div id="root">');
+    const script = (await page.text()).match(/\/assets\/index-[\w-]+\.js/)?.[0];
+    expect(script).toBeTruthy();
+    for (const [accept, encoding] of [
+      ["br, gzip", "br"],
+      ["gzip", "gzip"],
+    ] as const) {
+      const response = await request.get(script!, { headers: { "accept-encoding": accept } });
+      expect(response.headers()["content-encoding"], accept).toBe(encoding);
+      expect(response.headers().vary, accept).toContain("Accept-Encoding");
+      expect(response.headers()["cache-control"]).toContain("immutable");
+    }
+  });
+
+  test("lädt beim ersten Besuch nur vor, was ohne Netz gebraucht wird", async ({ request }) => {
+    const worker = await (await request.get("/service-worker.js")).text();
+    const precached = [...worker.matchAll(/assets\/[\w.-]+/g)].map((match) => match[0]);
+    expect(precached.some((path) => /^assets\/index-.+\.js$/.test(path))).toBe(true);
+    // Calls need the network, S/MIME and other alphabets are rare: cached when first used.
+    expect(precached.filter((path) => /livekit|node-forge|cyrillic|vietnamese/.test(path))).toEqual(
+      [],
+    );
+  });
+
   test("startet auch ohne Netz", async ({ page, context }) => {
     await controlled(page);
     await context.setOffline(true);
