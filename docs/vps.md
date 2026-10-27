@@ -13,6 +13,8 @@ Was wo passiert:
 | 3. Kurzname in `~/.ssh/config`  | eigener Rechner        |
 | 4. Passwort-Login abschalten    | Server                 |
 | 5. Mail-Sperre aufheben         | Kundenbereich des Anbieters |
+| 6. Podman installieren          | Server                 |
+| 7. DNS bei Cloudflare           | Cloudflare und Server  |
 
 ## 1. Root-Passwort setzen
 
@@ -123,5 +125,56 @@ timeout 5 bash -c 'echo > /dev/tcp/gmail-smtp-in.l.google.com/25' && echo offen 
 
 Im selben Panel unter *Netzwerk* den **Reverse-DNS** (PTR) der IPv4- und IPv6-Adresse auf den
 Namen des Mailservers setzen (`mail.firma.de`); ohne passenden PTR landen Mails schnell im Spam.
+
+## 6. Podman installieren
+
+Kontext läuft mit Podman und Quadlet: Jeder Dienst ist eine systemd-Unit, startet mit dem Server
+und braucht keinen Daemon. Die Dateien liegen in `deploy/quadlet/`. Auf dem **Server**:
+
+```bash
+apt-get update && apt-get install -y git podman
+git clone https://github.com/firsttris/kontext /opt/kontext
+```
+
+Debian 13 bringt Podman 5.4 mit, Quadlet ist dabei. Docker nicht zusätzlich installieren: Es legt
+eigene Firewall-Regeln an, die sich mit Podmans Netz in die Quere kommen. War es schon drauf, mit
+`apt-get purge docker-ce docker-ce-cli containerd.io docker-compose-plugin` entfernen und die
+übrig gebliebenen Tabellen löschen (`nft list tables` zeigt sie, `nft delete table ip nat` usw.).
+
+## 7. DNS bei Cloudflare
+
+Liegt die Domain bei Cloudflare, bekommt der Server einen **API-Token**: Stalwart holt damit sein
+Zertifikat für `mail.firma.de` (ACME DNS-01, siehe [Installation](installation.md#3-stalwart-einrichten)),
+und die Einträge lassen sich vom Server aus setzen.
+
+Im Cloudflare-Dashboard unter *Profil → API Tokens → Create Token* die Vorlage **„Edit zone DNS“**:
+
+- *Zone Resources*: nur die eine Zone (`firma.de`), nicht alle Zonen des Kontos;
+- *Client IP Address Filtering*: die IPv4-Adresse des Servers und sein IPv6-Netz (`…::/64`) –
+  dann taugt der Token nirgends sonst etwas;
+- *TTL*: kein Ablauf, Stalwart erneuert das Zertifikat alle paar Wochen.
+
+Den Token auf dem Server nur für root lesbar ablegen:
+
+```bash
+umask 077 && nano /root/.cloudflare-token
+```
+
+Prüfen und die vorhandenen Einträge ansehen:
+
+```bash
+T=$(cat /root/.cloudflare-token)
+curl -s -H "Authorization: Bearer $T" "https://api.cloudflare.com/client/v4/zones?name=firma.de" \
+  | grep -o '"id":"[a-f0-9]\{32\}"' | head -1        # die Zonen-ID
+curl -s -H "Authorization: Bearer $T" "https://api.cloudflare.com/client/v4/zones/<zonen-id>/dns_records"
+```
+
+Läuft die Mail der Domain bisher über **Cloudflare Email Routing** (MX auf
+`route1.mx.cloudflare.net` …), bleibt das bis zum Schluss so: Erst wenn der Server läuft, wird
+Email Routing abgeschaltet und der MX umgestellt.
+
+Für den Server zuerst nur die A-Einträge, alle **DNS only** (graue Wolke), auf die IP des Servers:
+`kontext`, `mail`, `dokumente`, `mta-sts` und `openpgpkey`. Die Website und die bisherige Mail
+bleiben davon unberührt.
 
 Danach weiter mit der [Installation](installation.md).
