@@ -121,6 +121,36 @@ test.describe("App (PWA)", () => {
     }
   });
 
+  test("lädt die neue Version auch in einem hart neu geladenen Tab", async ({ page, context }) => {
+    await controlled(page);
+    const original = await readFile(WORKER, "utf8");
+    const other = await context.newPage();
+    try {
+      await writeWorker(`${original}\n// new build ${Date.now()}\n`);
+      await page.evaluate(async () => (await navigator.serviceWorker.getRegistration())?.update());
+      const bannerIn = (tab: Page) =>
+        tab.getByRole("status").filter({ hasText: "Eine neue Version von Kontext ist da." });
+      await expect(bannerIn(page)).toBeVisible();
+      // A second tab after Ctrl+Shift+R (or reload with DevTools' "Disable cache"): loaded past
+      // the worker, so no controller, while the first tab keeps the new version waiting.
+      await other.goto("/login");
+      const cdp = await context.newCDPSession(other);
+      const hardReloaded = other.waitForEvent("load");
+      await cdp.send("Page.reload", { ignoreCache: true });
+      await hardReloaded;
+      expect(await other.evaluate(() => Boolean(navigator.serviceWorker.controller))).toBe(false);
+      await expect(bannerIn(other)).toBeVisible();
+      const reloaded = other.waitForEvent("load");
+      await bannerIn(other).getByRole("button", { name: "Neu laden" }).click();
+      await reloaded;
+      await expect(bannerIn(other)).toHaveCount(0);
+      expect(await other.evaluate(() => Boolean(navigator.serviceWorker.controller))).toBe(true);
+    } finally {
+      await writeWorker(original);
+      await other.close();
+    }
+  });
+
   test("nimmt geteilte Dateien für eine neue Mail an", async ({ page }) => {
     await controlled(page);
     const kept = await page.evaluate(async () => {
