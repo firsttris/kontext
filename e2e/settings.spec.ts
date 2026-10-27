@@ -153,6 +153,8 @@ test.describe("Einstellungen am Handy @phone", () => {
     await login(page, "jonas");
     await page.goto("/settings");
     const last = page.getByRole("link", { name: "Umzug" });
+    // The Firmenverwaltung shows once the admin check answers; only then is the list full length.
+    await expect(last).toBeAttached();
     await expect(last).not.toBeInViewport();
     // Scrolled as a finger would, not programmatically: that also moves a clipped container.
     const first = page.getByRole("link", { name: "Profil" });
