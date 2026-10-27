@@ -255,7 +255,8 @@ Server ablegen, sondern beim Neustart eingeben oder per Netzwerk entsperren (Cle
 
 ## 5. Backups
 
-`deploy/backup.sh` sichert mit [Restic](https://restic.net) auf einen S3-Speicher – Restic
+`deploy/backup.sh` sichert mit [Restic](https://restic.net) auf einen S3-Speicher, am einfachsten
+Cloudflare R2 (S3-kompatibel, 10 GB frei) – Restic
 verschlüsselt jede Sicherung mit dem Passwort aus `deploy/.env`, der Speicheranbieter sieht nur
 Verschlüsseltes; das Passwort gehört zusätzlich an einen sicheren Ort außerhalb des Servers. Gesichert werden Stalwarts
 Datenvolume (Mails, Kalender, Kontakte, Konten), eine Kopie der Kontext-Datenbank
