@@ -556,7 +556,9 @@ das Manifest steht in `vite.config.ts`, der Service Worker in `src/sw/service-wo
   der Browser schiebt dann die ganze Seite nach oben. Deshalb ist die App so hoch wie der
   sichtbare Teil (`--app-height` aus `visualViewport`, `src/components/use-visible-height.ts`)
   und bleibt oben; Listen von Nachrichten bleiben dabei unten, wenn man unten war
-  (`use-scroll-place.ts`).
+  (`use-scroll-place.ts`). Feste Elemente hängen an der Seite, nicht am sichtbaren Teil: Ein
+  Dialog unten (Bottom Sheet) läge unter der Tastatur. Er rückt deshalb um `--keyboard-height`
+  nach oben und wird höchstens so hoch wie der sichtbare Teil (`src/components/ui/dialog.tsx`).
 - **Gespräch öffnet unten:** Ein Chat geht bei der neuesten Nachricht auf und bleibt dort, auch
   wenn Bilder, Vorschauen oder entschlüsselte Texte danach noch wachsen. Bis man selbst scrollt
   (Finger, Mausrad, Tasten), zieht jede Scroll-Meldung die Liste wieder nach unten: Safari am

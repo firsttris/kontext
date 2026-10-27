@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test";
+import { expect, type Locator, test } from "@playwright/test";
 import { readKey } from "openpgp";
 import { DEV_DOMAIN } from "../dev/config";
 import { wkdHash } from "../server/pgp/keys";
@@ -81,5 +81,55 @@ test.describe("Verschlüsselung: persönlicher Schlüssel", () => {
     await expect(known).toContainText(`jonas@${DEV_DOMAIN}`);
     await expect(known).toContainText("Aus einer Mail (Autocrypt)");
     await max.context().close();
+  });
+});
+
+test.describe("Verschlüsselung am Handy @phone", () => {
+  test("der Dialog zum Anlegen bleibt über der Tastatur @phone", async ({ page }) => {
+    // iOS covers the page with the keyboard without making it shorter; only the visual
+    // viewport shrinks. Chromium can't show a keyboard, so a stand-in visual viewport does.
+    await page.addInitScript(() => {
+      const viewport = Object.assign(new EventTarget(), {
+        offsetTop: 0,
+        offsetLeft: 0,
+        scale: 1,
+        get width() {
+          return window.innerWidth;
+        },
+        height: window.innerHeight,
+      });
+      Object.defineProperty(window, "visualViewport", { value: viewport, configurable: true });
+      Object.assign(window, {
+        showKeyboard: (keyboard: number) => {
+          viewport.height = window.innerHeight - keyboard;
+          viewport.dispatchEvent(new Event("resize"));
+        },
+      });
+    });
+    await login(page);
+    // Only without a key is there one to create; the desktop test above made one for jonas.
+    await page.request.delete("/api/pgp/me");
+    await page.goto("/settings?section=encryption");
+    await page
+      .getByRole("region", { name: "Mein Schlüssel" })
+      .getByRole("button", { name: "Schlüssel anlegen" })
+      .click();
+    const dialog = page.getByRole("dialog", { name: "Schlüssel anlegen" });
+    await dialog.getByLabel("Neue Passphrase").focus();
+    const keyboard = 340;
+    await page.evaluate(
+      (height) => (window as unknown as { showKeyboard: (h: number) => void }).showKeyboard(height),
+      keyboard,
+    );
+    const visibleBottom = (await page.evaluate(() => window.innerHeight)) - keyboard;
+    const bottomOf = async (locator: Locator) => {
+      const box = (await locator.boundingBox())!;
+      return box.y + box.height;
+    };
+    await expect
+      .poll(() => bottomOf(dialog.getByRole("button", { name: "Weiter" })))
+      .toBeLessThanOrEqual(visibleBottom);
+    expect(await bottomOf(dialog.getByLabel("Neue Passphrase"))).toBeLessThanOrEqual(visibleBottom);
+    expect((await dialog.boundingBox())!.y).toBeGreaterThanOrEqual(0);
   });
 });
