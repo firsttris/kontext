@@ -386,3 +386,17 @@ curl -s -u "$(cat /root/.stalwart-kontext-server)" http://127.0.0.1:8080/jmap/ -
   {"create":{"k":{"description":"Kontext","permissions":{"@type":"Inherit"}}}},"0"]]}'
 nano /opt/kontext/deploy/kontext.env && systemctl restart kontext
 ```
+
+**Das Konto des Chefs.** Kontext legt die Rolle `Firmenverwaltung (Kontext)` beim ersten Aufruf
+der Firmenverwaltung an, nur mit diesem Namen (`server/company/management.ts`); sie lässt sich
+genauso vorher anlegen. Das Konto bekommt *User* (`b`) und diese Rolle, dazu auf Wunsch einen
+Alias (`vorname.nachname@`, landet im selben Postfach). Danach legt der Chef alle weiteren
+Mitarbeiter in Kontext an.
+
+```bash
+/root/stalwart-api.sh '[["x:Role/set",{"create":{"r":{"description":"Firmenverwaltung (Kontext)"}}},"0"]]'
+/root/stalwart-api.sh '[["x:Account/set",{"create":{"c":{"@type":"User","name":"chef","domainId":"<domain-id>",
+  "roles":{"@type":"Custom","roleIds":{"b":true,"<firmenrollen-id>":true}},
+  "aliases":{"0":{"enabled":true,"name":"vorname.nachname","domainId":"<domain-id>"}},
+  "credentials":{"0":{"@type":"Password","secret":"<startpasswort>"}}}}},"0"]]'
+```
