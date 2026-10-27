@@ -2,6 +2,8 @@
 
 <h1>Kontext: self-hosted Google Workspace and Microsoft 365 alternative</h1>
 
+<h3>Mail, calendar, chat and telephony for your team – self-hosted and open source.</h3>
+
 **Mail, calendar, contacts, tasks, team chat and phone (CTI) for small businesses – on your own server.**<br>
 Shared mailboxes, a team calendar and contacts that connect everything: every customer's mails, appointments, tasks and calls at a glance.<br>
 Open source (AGPL), a web app and PWA on top of the Stalwart mail server, no per-seat pricing. Made in Europe.
@@ -9,21 +11,27 @@ Open source (AGPL), a web app and PWA on top of the Stalwart mail server, no per
 **English** · [Deutsch](README.de.md)
 
 [![CI](https://github.com/firsttris/kontext/actions/workflows/ci.yml/badge.svg)](https://github.com/firsttris/kontext/actions/workflows/ci.yml)
+[![Release](https://img.shields.io/github/v/release/firsttris/kontext?logo=github&label=release)](https://github.com/firsttris/kontext/releases/latest)
+[![Docker Pulls](https://img.shields.io/docker/pulls/tristanteu/kontext?logo=docker&logoColor=white)](https://hub.docker.com/r/tristanteu/kontext)
+[![Platforms](https://img.shields.io/badge/platform-amd64%20%7C%20arm64-lightgrey)](https://hub.docker.com/r/tristanteu/kontext/tags)
 [![Docs](https://img.shields.io/badge/docs-firsttris.github.io%2Fkontext-4f46e5?logo=materialformkdocs&logoColor=white)](https://firsttris.github.io/kontext/)
 [![License: AGPL-3.0](https://img.shields.io/badge/license-AGPL--3.0-blue)](LICENSE)
 [![Stalwart 0.16](https://img.shields.io/badge/Stalwart-0.16-18181b)](https://stalw.art)
 [![JMAP](https://img.shields.io/badge/JMAP-mail%20%7C%20calendar%20%7C%20contacts-0f766e)](https://jmap.io)
-[![Docker](https://img.shields.io/badge/Docker-Compose%20%7C%20Podman-2496ed?logo=docker&logoColor=white)](https://firsttris.github.io/kontext/installation.html)
+[![GDPR](https://img.shields.io/badge/GDPR-data%20on%20your%20server-15803d)](#-your-data-stays-in-europe--with-ai)
+[![GoBD](https://img.shields.io/badge/GoBD-nothing%20deleted-15803d)](#-your-data-stays-in-europe--with-ai)
+[![Made in Europe](https://img.shields.io/badge/made%20in-Europe-003399)](#-your-data-stays-in-europe--with-ai)
 
 ```bash
-docker compose -f deploy/compose.yaml up -d
+git clone https://github.com/firsttris/kontext && cd kontext
+cp deploy/.env.example deploy/.env            # your domain and secrets
+docker compose -f deploy/compose.yaml up -d   # or Podman
 ```
 
+[Privacy & GoBD](#-your-data-stays-in-europe--with-ai) •
 [Why](#-why-kontext) •
-[Privacy](#-your-data-your-rules) •
 [Install](#-install) •
 [Features](#-features) •
-[Telephony (CTI)](#-telephony-cti-with-the-fritzbox) •
 [Screenshots](#-screenshots) •
 [Alternatives](#-kontext-and-the-alternatives) •
 [FAQ](#-faq) •
@@ -32,6 +40,13 @@ docker compose -f deploy/compose.yaml up -d
 <img src="docs/screenshots/mail.png" alt="Kontext self-hosted webmail: inbox with folders, the shared mailboxes info@ and rechnung@, categories and an open mail with a preview of its PDF attachment" width="900">
 
 </div>
+
+## 🇪🇺 Your data stays in Europe – with AI
+
+- **GDPR**: mails, appointments, contacts, chat and calls live on your server, in a European data centre or in your own office. No US provider in between, no trackers, no sharing. The only data processing agreement you need is with your hosting provider.
+- **GoBD** (German retention rules): nothing is deleted when someone leaves, and backups go encrypted and unalterable (Object Lock) to S3 storage. The software is one part; the company's processes and its procedure documentation are the other.
+- **AI on your terms**: Kontext is an MCP server. You connect the AI assistant you choose; it works with your rights, writes drafts instead of sending, never deletes anything, and every access is logged and can be revoked.
+- **No lock-in**: open standards (IMAP, CalDAV, CardDAV), take everything with you any time; moving *to* Kontext is built in.
 
 ## 💡 Why Kontext?
 
@@ -50,13 +65,6 @@ your own.
 **Who it's for:** freelancers and the self-employed, trades, law firms, medical practices and
 small and mid-sized businesses (with a company admin area the boss can use without IT skills) –
 and self-hosters who want a modern web client for [Stalwart](https://stalw.art).
-
-## 🔒 Your data, your rules
-
-- **GDPR**: the data stays on your server, in a European data centre if you like. No trackers, no ads, no sharing; the only data processing agreement you need is with your hosting provider.
-- **GoBD** (German retention rules): nothing is deleted when someone leaves, and backups go encrypted to S3 storage with Object Lock, so they cannot be altered. (Compliance also depends on the company's processes; the software is one part of it.)
-- **No lock-in**: take mails, contacts and calendars with you any time via IMAP, vCard and iCalendar; moving *to* Kontext is built in.
-- **Secure**: two-factor sign-in, mails rendered in an isolated frame, warnings about forged senders, OpenPGP and S/MIME.
 
 ## 🚀 Install
 
@@ -78,95 +86,21 @@ records, Podman Quadlets, backups and updates are in the
 
 ## ✨ Features
 
-### ✉️ Mail
-
-- **Shared mailboxes**: info@ and co. appear in every member's sidebar; replies go out as info@, with the name of the person who answered, and the list shows who already did ("Jonas · 14:02"). Rights per person: none, read only, read and send.
-- **All inboxes in one list**, **folders and subfolders**, drag and drop also between info@ and your own folders.
-- **Categories**: coloured tags like "In progress", "Waiting for reply", "Done" – several per mail, set by rules, shared in team mailboxes: a small task board.
-- **Rules on the server** ("if sender, recipient, subject or text … then move, mark, categorise, forward, create a task") – they run as mail arrives, even when Kontext is closed.
-- **Search like Gmail** across folders and mailboxes: `from:`, `to:`, `subject:`, `has:attachment`, `label:`, `in:info@`, `after:`/`before:`.
-- **Snooze**, **undo send** and **send later** – the server sends it, even with your computer off. **Text snippets** for standard answers, own and shared.
-- **Other mailboxes**: keep Gmail, GMX, WEB.DE and the like – new mail comes in every two minutes, and mail goes out as that address through its own server.
-- **Protection against phishing and forged mail**: a warning when the sender is not verified, someone outside pretends to be your company, or replies go to another address; SPF, DKIM, DMARC and spam score in the details; mark as spam, and the filter learns.
-- **Pictures from the internet** only when you ask (or at once for senders you trust), **unsubscribe** with one click, **read receipts** that never go out by themselves.
-- **Signature per sender address**, **out-of-office reply** with dates, **who is writing?** next to the mail on wide screens (company, appointments, latest mails).
-- **Conversations without the clutter**, **attachments with previews** (photos, first PDF page), **rich text**, **printing** on A4, **keyboard shortcuts** like Gmail, **live updates** over JMAP push.
-
-### 📅 Calendar and 👥 contacts
-
-- **Day, week, month and list**, drag to move, recurring events with exceptions, **invitations** with accept and decline.
-- **Invitations in Kontext's look**: sent in the organizer's name with Yes / No / Maybe – one click answers, no account needed; Gmail, Outlook and Apple show their own buttons too, and the answer lands in the event.
-- **Who is free?** The attendee field suggests colleagues as you type; inviting them shows who is busy and suggests times everyone is free, like Outlook's scheduling assistant.
-- **Video meeting per event**: one click adds a link; customers join in the browser without an account.
-- **Places as you type**: the location field suggests addresses and businesses (OpenStreetMap, through your own server); "Open in Maps" opens Apple or Google Maps, on the phone straight to navigation.
-- **Share calendars and address books** with colleagues – free/busy only, read, or edit.
-- **The customer at a glance**: latest mails, upcoming appointments, open tasks, documents and "Call"; **contact photos**, **groups**, **vCard import and export**.
-- **Other contacts** like Gmail: everyone you exchanged mails with who is in no address book, saved with one click; **merge and fix** duplicate contacts and names written in capitals.
-
-### ✅ Tasks
-
-- **List or Kanban board** for your own mailbox and one per shared mailbox, with your own columns and **repeating tasks**.
-- **From a mail** (`t`), a chat message, a mail rule or a missed call; **quick entry** like "Call Hoffmann tomorrow".
-- **Everywhere**: on the contact, in the calendar, in the bell; reminders as push notifications even with Kontext closed.
-- **In Thunderbird and on your phone**: your boards as CalDAV task lists (DAVx⁵ with tasks.org, Apple Reminders), both ways.
-
-### 💬 Team chat and video calls
-
-- **Channels** (#allgemein, one per shared mailbox, your own) and **direct messages**, live with "typing …", who is online, **@mentions**, **threads**, **reactions** and a **profile photo** for everyone (also on calls, tasks and mail between colleagues).
-- **Mails, tasks, contacts and documents as cards**: "Discuss" on a mail (`b`) talks about it in the channel instead of forwarding it internally – nothing is copied.
-- **Photos and files**, **voice messages** as on WhatsApp (record, play right in the conversation, faster at 1.5× or 2×), **search**, **retention** set by the company admin.
-- **Calls, video calls and screen sharing** right from a conversation, on your own server with [LiveKit](https://github.com/livekit/livekit); the call stays open while you switch to mail.
-- **Confidential conversations**, end-to-end encrypted – messages, files and calls.
-
-### 📞 Telephony (CTI) with the Fritzbox
-
-Computer telephony integration for the office phone: a small **telephone box** (Asterisk in a
-container, on a thin client, a Raspberry Pi or a NAS) joins your Fritzbox as an IP phone. Numbers
-and desk phones stay as they are; nothing in the office is opened to the internet.
+| | |
+|---|---|
+| ✉️ **Mail** | **Shared mailboxes** (info@ with rights per person, replies show who answered), all inboxes in one list, **categories**, **rules on the server**, search like Gmail, snooze, undo send and send later, text snippets, **other mailboxes** (Gmail, GMX, WEB.DE), **warnings about phishing and forged senders**, signatures, out-of-office, live updates over JMAP push · [more →](https://firsttris.github.io/kontext/mail.html) |
+| 📅 **Calendar** | Day, week, month and list, recurring events, **invitations answered with one click** without an account, **who is free?** like Outlook's scheduling assistant, a **video meeting per event**, places from OpenStreetMap, shared calendars · [more →](https://firsttris.github.io/kontext/calendar-contacts.html) |
+| 👥 **Contacts** | **The customer at a glance**: latest mails, upcoming appointments, open tasks, documents and calls – a small CRM; photos, groups, vCard, other contacts like Gmail, merging duplicates · [more →](https://firsttris.github.io/kontext/calendar-contacts.html#kontakte) |
+| ✅ **Tasks** | **List or Kanban board** per mailbox, repeating tasks, **from a mail, a chat message, a rule or a missed call**, quick entry ("Call Hoffmann tomorrow"), reminders as push, CalDAV for Thunderbird and phones · [more →](https://firsttris.github.io/kontext/tasks.html) |
+| 💬 **Team chat & video** | Channels and direct messages, @mentions, threads, reactions, **mails, tasks and contacts as cards**, voice messages, **calls, video and screen sharing** on your own server (LiveKit), **end-to-end encrypted conversations** · [more →](https://firsttris.github.io/kontext/chat.html) |
+| 📞 **Telephony (CTI)** | **Your Fritzbox and numbers stay**: calls ring in Kontext with the caller's contact, last mail and next appointment, **click to call**, **voicemail as mail**, missed calls become tasks, opening hours and voice menu, transfer and conference, Snom desk phones, fax as PDF · [more →](https://firsttris.github.io/kontext/telephony.html) |
+| 🔐 **Encryption** | **OpenPGP** in the browser, **S/MIME** for authorities and law firms, **send confidentially to anyone** through a link to your own server, TLS with MTA-STS and DANE, encrypted backups · [more →](https://firsttris.github.io/kontext/encryption.html) |
+| 📄 **Documents** | **Word, Excel, PowerPoint and PDF** in Kontext with [Schreibzeug](https://github.com/firsttris/schreibzeug), a folder per shared mailbox, attachments into documents and back · [more →](https://firsttris.github.io/kontext/documents.html) |
+| 🤖 **AI agents (MCP)** | **Kontext is an MCP server**: Claude and other agents look up customers, mails, appointments and tasks with your rights and write drafts – no sending, no deleting, every change logged · [more →](https://firsttris.github.io/kontext/agents.html) |
+| 🏢 **Company admin** | **People, shared mailboxes and rights** without IT skills, out-of-office with a deputy, company signature, **offboarding without deleting**, backups at a glance, **moving in from Microsoft 365, Gmail, IMAP and Outlook (PST)** · [more →](https://firsttris.github.io/kontext/company.html) |
+| 📱 **On every device** | **An app on desktop, Android and iPhone** (PWA, no app store), push notifications even when closed, a tab bar with your apps, light and dark, two-factor sign-in · [more →](https://firsttris.github.io/kontext/index.html) |
 
 <img src="docs/screenshots/phone-call.png" alt="CTI in Kontext: an incoming call from the Fritzbox rings in the browser with the caller's contact, company, number and last mail, next to the inbox" width="900">
-
-- **Calls ring in Kontext** with who it is – contact, company, last mail, next appointment – on every chosen person's screen and phone; answer in the browser (softphone) or at the desk phone.
-- **Click to call** from any contact or mail; a keypad for voice menus; a **call list** with notes and "call back".
-- **Missed calls become tasks** that tick themselves off once someone talked to that number.
-- **Voicemail as mail**: the greeting is recorded in the browser; messages arrive as mail with the recording.
-- **Opening hours** with closed days and public holidays, a **voice menu** ("press 1 for service …"), a **block list**.
-- **Transfer, hold, consult and three-way calls**; ring everyone at once or one after another, plus a mobile phone after a while; **direct numbers** per team.
-- **Snom desk phones** provisioned by the box, **presence** and *Do not disturb*, the **door intercom**, **fax as PDF mail**, **call recording** with a notice, **call statistics**.
-
-More in the [telephony docs](https://firsttris.github.io/kontext/telephony.html) (being tested).
-
-### 🔐 Encryption
-
-- **OpenPGP in the browser**: your own key, kept locked; read, sign and encrypt mail, keys of others from Autocrypt, WKD and keys.openpgp.org.
-- **S/MIME** for authorities and law firms: import your certificate, check signatures with chain and OCSP, find certificates in DNS.
-- **Send confidentially to anyone**: recipients with a key get PGP or S/MIME, everyone else a link to your own server and a code you pass on by phone.
-- **Basic protection for everything**: TLS on the way (MTA-STS, DANE checked in the company admin), encrypted disk and backups.
-
-The [encryption concept](https://firsttris.github.io/kontext/encryption.html) explains what is protected from whom.
-
-### 📄 Documents
-
-- **Word, Excel, PowerPoint and PDF** in Kontext's window with [Schreibzeug](https://github.com/firsttris/schreibzeug) (optional): no second sign-in, a folder per shared mailbox.
-- **Attachments into Documents**, **attach from Documents**, and files linked to tasks, contacts, appointments and chat messages.
-
-### 🤖 AI agents (MCP)
-
-- **Kontext is an MCP server**: add it to Claude as a connector (OAuth) or give an agent an access key. It looks up customers, mails, appointments and tasks with your rights and, if you allow it, writes drafts and creates appointments, contacts and tasks.
-- **Nothing leaves by itself**: no sending, no deleting; every change is logged, every connection can be revoked.
-
-### 🏢 Company admin and moving in
-
-- **Add people**, reset passwords and second factors, **lock access**; **shared mailboxes** with rights per person; extra addresses.
-- **Out-of-office for colleagues** with a deputy, **company signature** for everyone, **offboarding** without deleting anything.
-- **Backups at a glance**: target, last run, storage used, the nightly time and "back up now" – Kontext only asks, the server runs the backup.
-- **Move in** from Microsoft 365, Gmail, GMX and other IMAP providers (kept in sync until you switch), from Outlook (PST) and from a Google export.
-
-### 📱 On every device
-
-- **An app on every device** (PWA): install it from the browser on desktop, Android and iPhone (on the phone a card in the mail list shows how), unread count on the icon, share photos into a new mail, open `mailto:` links in Kontext, updates offered with one click and the running version in the settings.
-- **Notifications** even with Kontext closed (Web Push, end-to-end encrypted): new mail, direct messages, @mentions, task reminders and incoming calls; a card above the mail list offers to switch them on.
-- **Light or dark** (mails written for white paper follow along), **two-factor sign-in**, **storage at a glance**.
 
 ## 📸 Screenshots
 
@@ -213,72 +147,97 @@ mail, calendar, chat and the office phone in one place.
 
 ## ❓ FAQ
 
-### What does it cost?
+<details>
+<summary><b>Is there an open-source alternative to Google Workspace and Microsoft 365?</b></summary>
+
+Yes, Kontext: mail with shared mailboxes, calendar, contacts, tasks, team chat with video calls and
+the office phone in one web app on your own server, with documents through
+[Schreibzeug](https://github.com/firsttris/schreibzeug). See the [installation guide](https://firsttris.github.io/kontext/installation.html).
+</details>
+
+<details>
+<summary><b>What does it cost?</b></summary>
+
 The software is free (AGPL). You need a server – a VPS from about €5 a month – and someone who
 sets it up and keeps it updated.
+</details>
 
-### Is there a web interface for the Stalwart mail server?
+<details>
+<summary><b>Is there a web interface for the Stalwart mail server?</b></summary>
+
 Yes, that is what Kontext is: a JMAP web client for mail, calendar and contacts on
 [Stalwart](https://stalw.art), plus tasks, chat, telephony and a company admin area that manages
 Stalwart's accounts and groups. See the [architecture](https://firsttris.github.io/kontext/architecture.html).
+</details>
 
-### Does Kontext work with my Fritzbox (CTI)?
+<details>
+<summary><b>Does Kontext work with my Fritzbox (CTI)?</b></summary>
+
 Yes. A telephone box in the office registers as an IP phone at the Fritzbox; calls then ring in
 Kontext with the caller's contact, last mail and next appointment, and you call out from any
 contact. See [Telephony](https://firsttris.github.io/kontext/telephony.html).
+</details>
 
-### Can it run on my own PC or NAS?
+<details>
+<summary><b>Can it run on my own PC or NAS?</b></summary>
+
 Yes, Kontext runs wherever Docker or Podman runs. To receive mail from the internet the machine
 needs port 25 reachable from outside, a fixed IP address and a reverse DNS entry; home internet
 connections usually block port 25. At home it works best with a mail relay in front – a small VPS
 is simpler. The telephone box runs on a NAS, a Raspberry Pi or a thin client in the office.
+</details>
 
-### Is it GDPR compliant?
+<details>
+<summary><b>Is it GDPR compliant?</b></summary>
+
 It is built for it: the data stays on your server, without trackers or third parties. You sign a
 data processing agreement with your hosting provider; with a server in your own building not even
 that. For German retention rules (GoBD) nothing is deleted when someone leaves, and backups go
 encrypted to S3 storage with Object Lock.
+</details>
 
-### Do iPhone, Android, Outlook and Thunderbird keep working?
+<details>
+<summary><b>Do iPhone, Android, Outlook and Thunderbird keep working?</b></summary>
+
 Yes. Stalwart speaks IMAP, SMTP, CalDAV and CardDAV; every mail program and phone can connect
 directly. Kontext is the browser interface on top, and its tasks are CalDAV task lists too.
+</details>
 
-### Can I move from Gmail, Microsoft 365 or Outlook?
+<details>
+<summary><b>Can I move from Gmail, Microsoft 365 or Outlook?</b></summary>
+
 Yes, under *Settings → Company → Move*: IMAP mailboxes (kept in sync until the move is finished),
 Microsoft 365 through an app in the company's Microsoft account, Outlook as a PST file, contacts and
 calendars from a Google export. See [Company admin and moving in](https://firsttris.github.io/kontext/company.html).
+</details>
 
-### Can I keep using my Gmail address?
+<details>
+<summary><b>Can I keep using my Gmail address?</b></summary>
+
 Yes, under *Settings → Other mailboxes*: new mail comes into Kontext, and you send as that address
 through the provider's server, so recipients see it as genuine.
+</details>
 
-### Can I use Claude or other AI agents with my mail?
+<details>
+<summary><b>Can I use Claude or other AI agents with my mail?</b></summary>
+
 Yes, Kontext is an MCP server. An agent works with your rights, writes drafts instead of sending,
 and never deletes anything. See [AI agents](https://firsttris.github.io/kontext/agents.html).
+</details>
 
-### Which languages?
+<details>
+<summary><b>Which languages?</b></summary>
+
 The app is in German for now; English and other European languages are planned.
+</details>
 
 ## 📚 Documentation
 
-The full documentation (German), with search, is at **[firsttris.github.io/kontext](https://firsttris.github.io/kontext/)**.
-
-| | |
-| --- | --- |
-| [Mail](https://firsttris.github.io/kontext/mail.html) | shared mailboxes, categories, rules, search, other mailboxes, sender checks |
-| [Calendar and contacts](https://firsttris.github.io/kontext/calendar-contacts.html) | sharing, availability, video meetings, customer view, vCard |
-| [Tasks](https://firsttris.github.io/kontext/tasks.html) | boards, tasks from mails and rules, CalDAV for Thunderbird and phones |
-| [Team chat and video calls](https://firsttris.github.io/kontext/chat.html) | channels, cards, LiveKit calls, confidential conversations |
-| [Telephony (CTI)](https://firsttris.github.io/kontext/telephony.html) | Fritzbox, telephone box, voicemail, opening hours, transfer, Snom, fax |
-| [Documents](https://firsttris.github.io/kontext/documents.html) | Schreibzeug as a module, folders per shared mailbox |
-| [Encryption](https://firsttris.github.io/kontext/encryption.html) | OpenPGP, S/MIME, sending confidentially, end-to-end encrypted chat |
-| [AI agents (MCP)](https://firsttris.github.io/kontext/agents.html) | tools, OAuth and access keys, what an agent may do |
-| [Company admin and moving in](https://firsttris.github.io/kontext/company.html) | employees, shared mailboxes, offboarding, Microsoft 365, Gmail, PST |
-| [Installation](https://firsttris.github.io/kontext/installation.html) | server, DNS, Stalwart, calls, telephony, documents, backups, updates |
-| [Architecture](https://firsttris.github.io/kontext/architecture.html) | how Kontext, Stalwart, LiveKit and the box fit together |
-| [Development](https://firsttris.github.io/kontext/development.html) | local setup with test data, tests, CI and releases |
-
-What comes next is in the [roadmap](ROADMAP.md) (German).
+The full documentation (German), with search, is at **[firsttris.github.io/kontext](https://firsttris.github.io/kontext/)**:
+every feature in detail, [installation](https://firsttris.github.io/kontext/installation.html),
+[architecture](https://firsttris.github.io/kontext/architecture.html) and
+[development](https://firsttris.github.io/kontext/development.html). What comes next is in the
+[roadmap](ROADMAP.md) (German).
 
 ## 🛠️ Development
 

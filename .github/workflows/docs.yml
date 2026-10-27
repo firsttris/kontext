@@ -1,5 +1,6 @@
 # Builds docs/ with MkDocs Material and publishes it on GitHub Pages:
 # https://firsttris.github.io/kontext/
+# On a pull request it only builds (--strict), so broken links show up before the merge.
 # One-time prerequisite: Settings → Pages → Source "GitHub Actions"
 # (configure-pages with enablement switches it on by itself on the first run).
 name: Docs
@@ -7,6 +8,11 @@ name: Docs
 on:
   push:
     branches: [main]
+    paths:
+      - "docs/**"
+      - "mkdocs.yml"
+      - ".github/workflows/docs.yml"
+  pull_request:
     paths:
       - "docs/**"
       - "mkdocs.yml"
@@ -19,7 +25,7 @@ permissions:
   id-token: write
 
 concurrency:
-  group: pages
+  group: pages-${{ github.ref }}
   cancel-in-progress: false
 
 jobs:
@@ -31,15 +37,18 @@ jobs:
         with:
           python-version: "3.12"
       - run: pip install mkdocs-material
-      - uses: actions/configure-pages@v5
+      - run: mkdocs build --strict
+      - if: github.event_name != 'pull_request'
+        uses: actions/configure-pages@v5
         with:
           enablement: true
-      - run: mkdocs build --strict
-      - uses: actions/upload-pages-artifact@v3
+      - if: github.event_name != 'pull_request'
+        uses: actions/upload-pages-artifact@v3
         with:
           path: site
 
   deploy:
+    if: github.event_name != 'pull_request'
     needs: build
     runs-on: ubuntu-latest
     environment:

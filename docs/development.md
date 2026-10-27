@@ -175,9 +175,11 @@ Integrationstests sich verbinden können.
   erst „Ready for review“ startet den Lauf; ein neuer Push bricht den alten Lauf eines Pull Requests
   ab, Läufe auf `main` laufen zu Ende. Nachts läuft alles noch einmal, damit neue Sicherheitsmeldungen auffallen, die
   E2E-Tests dabei dreimal ohne Wiederholung (siehe [Robuste E2E-Tests](#robuste-e2e-tests)).
-- **Dokumentation** (`.github/workflows/docs.yml`): jeder Push auf `main`, der `docs/` oder
-  `mkdocs.yml` ändert, baut die Seiten mit MkDocs Material und veröffentlicht sie auf GitHub
-  Pages (einmalig: Settings → Pages → Source „GitHub Actions“). Lokal: `pip install mkdocs-material
+  Ändert ein Push oder Pull Request nur Text (Markdown-Dateien, `docs/`, `LICENSE`), läuft die CI
+  nicht; ein Release danach testet dann selbst, bevor es baut.
+- **Dokumentation** (`.github/workflows/docs.yml`): jeder Pull Request und jeder Push auf `main`,
+  der `docs/` oder `mkdocs.yml` ändert, baut die Seiten mit MkDocs Material (`--strict`); auf `main`
+  werden sie danach auf GitHub Pages veröffentlicht (einmalig: Settings → Pages → Source „GitHub Actions“). Lokal: `pip install mkdocs-material
   && mkdocs serve`.
 - **Screenshots**: Actions → _Update screenshots_ → Run workflow (oder `bun run screenshots`, lokal mit
   `PW_CHROMIUM_PATH`, wenn Playwrights eigener Browser fehlt).
