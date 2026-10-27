@@ -503,4 +503,7 @@ echo QUIT | openssl s_client -starttls smtp -connect mail.firma.de:25 -verify_re
     Versanddienst (Smarthost) senden.
 
     Die ersten Mails eines neuen Servers landen bei Gmail oft im Spam, auch ohne Sperrliste:
-    beim Empfänger „Kein Spam“, die Domain in den Google Postmaster Tools eintragen.
+    beim Empfänger „Kein Spam“, die Domain in den Google Postmaster Tools eintragen. Microsoft
+    (Outlook, Hotmail, Microsoft 365) führt eine eigene Sperre ohne öffentliche Liste; kommt beim
+    Senden dorthin eine Absage mit `S3140`, die IP unter *sender.office.com* freischalten lassen.
+    Alle öffentlichen Listen auf einmal: *mxtoolbox.com/blacklists.aspx*.
