@@ -705,10 +705,13 @@ export const createApp = async (env: Env) => {
   app.all("/jmap/*", (c) => proxy(c.req.raw));
   if (env.STATIC_DIR) {
     const root = env.STATIC_DIR;
+    // `precompressed`: the .br or .gz made at build time (dev/precompress.ts), as the browser
+    // accepts; Caddy passes an encoded answer on as it is.
     app.use(
       "/assets/*",
       serveStatic({
         root,
+        precompressed: true,
         onFound: (_path, c) => c.header("cache-control", "public, max-age=31536000, immutable"),
       }),
     );
@@ -719,6 +722,7 @@ export const createApp = async (env: Env) => {
       "*",
       serveStatic({
         root,
+        precompressed: true,
         onFound: (path, c) => {
           if (fresh(path)) c.header("cache-control", "no-cache");
         },
@@ -730,6 +734,7 @@ export const createApp = async (env: Env) => {
       serveStatic({
         root,
         path: "index.html",
+        precompressed: true,
         onFound: (_path, c) => c.header("cache-control", "no-cache"),
       }),
     );

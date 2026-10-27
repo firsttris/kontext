@@ -125,12 +125,12 @@ und „Team“, Termine der laufenden Woche, eine wöchentliche Teambesprechung 
 | End-to-End      | `bun run e2e`         | Playwright, Desktop und Handy (Pixel 7), gegen einen frisch angelegten Stalwart auf 28080, LiveKit auf 27880 und Vite auf 5174; Chromium mit unechter Kamera und Mikrofon |
 | Dokumente       | `bun run e2e`         | `e2e/documents.spec.ts` und `e2e/documents-links.spec.ts` gegen `dev/fake-schreibzeug.ts` (28097): Anmeldung über Kontexts Anbieter, Rahmen, Anhänge ablegen und anhängen, Abmelden, Dokumente in Chat, Aufgaben, Terminen und an Kontakten mit ihren Freigaben, der Ordner von info@ |
 | Orte            | `bun run e2e`         | `e2e/places.spec.ts` gegen `dev/fake-places.ts` (28099, statt Photon): Vorschlag wählen, Escape, „In Karten öffnen“, am Desktop und am Handy |
-| App (PWA)       | `bun run e2e`         | `e2e/pwa.spec.ts` gegen die gebaute App wie in Produktion (Server auf 28090 liefert `dist/`): Updates, Offline-Start, Cache-Header, Teilen |
+| App (PWA)       | `bun run e2e`         | `e2e/pwa.spec.ts` gegen die gebaute App wie in Produktion (Server auf 28090 liefert `dist/`): Updates, Offline-Start, Cache-Header, Brotli, was vorab gecacht wird, Teilen |
 | Abhängigkeiten  | `bun audit`           | bekannte Lücken; in CI bei jedem Push und nachts                                                            |
 | Screenshots     | `bun run screenshots` | die Bilder in `docs/screenshots/` und für den Installationsdialog in `public/screenshots/`                  |
 
 `bun run check` macht Typen, Lint, Unit- und Komponententests und den Build. `bun run e2e` baut
-die App vorher (`vite build`), weil die PWA-Tests den Service Worker brauchen, den es nur im Build
+die App vorher (`bun run build`: `vite build`, dann Brotli und gzip vorab, `dev/precompress.ts`), weil die PWA-Tests den Service Worker brauchen, den es nur im Build
 gibt; im Dev-Server ist er bewusst aus, damit Neuladen nichts aus einem Cache holt. Die übrigen
 Tests laufen dann auch gegen die gebaute App (`vite preview`, `E2E_BUILT=1`), die sofort lädt,
 statt jedes Modul erst beim ersten Aufruf zu übersetzen; ihr Service Worker ist dort blockiert.

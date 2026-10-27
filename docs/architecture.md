@@ -507,6 +507,19 @@ das Manifest steht in `vite.config.ts`, der Service Worker in `src/sw/service-wo
 - **Was gecacht wird:** nur die App selbst (HTML, Skripte, Styles, Schriften, Symbole). Mails,
   Kalender und Anmeldung (`/jmap`, `/api`) gehen nie über einen Cache. Ohne Netz startet die App
   und sagt „Keine Verbindung“; neue Daten kommen, sobald das Gerät wieder online ist.
+- **Klein übers Mobilnetz.** Der erste Aufruf braucht rund 150 kB Skript (Brotli); jede Seite lädt
+  ihren Teil erst, wenn sie gebraucht wird. Große Bibliotheken kommen nur mit ihrer Aufgabe:
+  OpenPGP.js und node-forge mit einer verschlüsselten oder signierten Mail, tiptap mit dem
+  Schreiben, LiveKit mit einem Anruf, pdf.js mit einer PDF-Vorschau. Darum importiert nichts davon
+  statisch in Code, den die Listen brauchen (`src/lib/fingerprint.ts` statt `server/pgp/keys.ts`),
+  und die Texte nur als `m.name` (`src/messages-usage.test.ts`): ein berechnetes `m[…]` hätte alle
+  Texte in jede Seite gebracht. Vorab gecacht wird alles, was ohne Netz gebraucht wird; LiveKit,
+  node-forge, pdf.js und die Schriftschnitte für Kyrillisch und Vietnamesisch nicht (sie liegen
+  nach dem ersten Gebrauch im Browser-Cache).
+- **Brotli.** `bun run build` legt neben jede Text-Datei eine `.br` und eine `.gz`
+  (`dev/precompress.ts`); der Server gibt die, die der Browser nimmt (`precompressed` in
+  `server/app.ts`), Caddy reicht sie unverändert weiter. Caddy selbst kann kein Brotli und
+  Safari kein zstd; JMAP-Antworten komprimiert Caddy wie bisher mit zstd oder gzip.
 - **Als Mailprogramm:** `mailto:`-Links öffnen eine neue Mail in Kontext – in der installierten
   App über das Manifest (`protocol_handlers`), im Browser über *Einstellungen → Darstellung →
   Als Mailprogramm verwenden* (`registerProtocolHandler`). `/compose?mailto=…` wertet Empfänger,

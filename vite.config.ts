@@ -40,9 +40,18 @@ export default defineConfig({
       registerType: "prompt",
       injectManifest: {
         globPatterns: ["**/*.{js,css,html,svg,png,woff2,webmanifest}"],
-        // pdf.js and its worker load only for PDF thumbnails; cached when used, not precached.
-        // The manifest's screenshots are for the install dialog only.
-        globIgnores: ["**/pdf*.js", "**/pdf*.mjs", "screenshots/**"],
+        // Not precached, so the first visit on a phone loads less; the browser keeps them when
+        // used (/assets/ is cached for a year): pdf.js and its worker (PDF thumbnails), LiveKit
+        // (calls, which need the network anyway), node-forge (S/MIME), and the font subsets for
+        // Cyrillic and Vietnamese. The manifest's screenshots are for the install dialog only.
+        globIgnores: [
+          "**/pdf*.js",
+          "**/pdf*.mjs",
+          "**/livekit*.js",
+          "**/node-forge*.js",
+          "**/*-{cyrillic,cyrillic-ext,vietnamese,symbols2}-wght-*.woff2",
+          "screenshots/**",
+        ],
         maximumFileSizeToCacheInBytes: 4_000_000,
       },
       devOptions: { enabled: false },
@@ -108,7 +117,23 @@ export default defineConfig({
       },
     }),
   ],
-  build: { target: "es2022" },
+  build: {
+    target: "es2022",
+    rolldownOptions: {
+      output: {
+        // Fixed names for the big libraries loaded only on demand, which the service worker leaves
+        // out of its precache (globIgnores above). Only their own modules: helpers they share with
+        // the app stay where they were, or the first page would load the group with them.
+        codeSplitting: {
+          includeDependenciesRecursively: false,
+          groups: [
+            { name: "livekit", test: /node_modules[\\/](livekit-client|@livekit)[\\/]/ },
+            { name: "node-forge", test: /node_modules[\\/]node-forge[\\/]/ },
+          ],
+        },
+      },
+    },
+  },
   resolve: { alias: { "@": new URL("./src", import.meta.url).pathname } },
   server: { port: Number(process.env.PORT ?? 5173), strictPort: true, proxy },
   preview: { port: Number(process.env.PORT ?? 4173), strictPort: true, proxy },

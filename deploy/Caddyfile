@@ -28,6 +28,8 @@
 {$KONTEXT_DOMAIN} {
 	# The live streams (Kontext's /api/live, Stalwart's JMAP push) uncompressed: a compressor
 	# may hold events back until its buffer is full.
+	# The app's own files come from Kontext already compressed (Brotli, made at build time,
+	# dev/precompress.ts); Caddy passes an encoded answer on as it is.
 	@compressible not path /api/live /jmap/eventsource*
 	encode @compressible zstd gzip
 

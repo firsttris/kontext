@@ -1,7 +1,8 @@
 /**
  * OpenPGP keys as Kontext keeps them: reading an armored key (which addresses, which
  * fingerprint, public or encrypted secret), and the WKD hash of an address (draft-koch-openpgp-
- * webkey-service: z-base-32 of SHA-1 of the lower-case local part). For the app and the server.
+ * webkey-service: z-base-32 of SHA-1 of the lower-case local part). For the server; the app
+ * groups fingerprints with src/lib/fingerprint.ts, which needs no OpenPGP.js.
  */
 import { readKey, readPrivateKey } from "openpgp";
 
@@ -56,7 +57,3 @@ export const wkdHash = async (local: string): Promise<string> =>
       await crypto.subtle.digest("SHA-1", new TextEncoder().encode(local.toLowerCase())),
     ),
   );
-
-/** "5A3F 9C21 …": a fingerprint in groups of four, as people compare them. */
-export const groupFingerprint = (fingerprint: string): string =>
-  fingerprint.replace(/(.{4})/g, "$1 ").trim();
