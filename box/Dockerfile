@@ -15,8 +15,9 @@ RUN bun build box/agent/main.ts --target=bun --outfile=/out/agent.js
 FROM docker.io/oven/bun:1.4-alpine
 # Asterisk with PJSIP (Alpine's package), its English core sounds for the beep before a message,
 # music for held calls, fax (res_fax_spandsp) and tiff2pdf for the received pages; greetings in
-# German come from Kontext.
-RUN apk add --no-cache asterisk asterisk-sounds-en asterisk-sounds-moh asterisk-fax tiff-tools tini
+# German come from Kontext. Asterisk logs an error at start when its keys directory is missing.
+RUN apk add --no-cache asterisk asterisk-sounds-en asterisk-sounds-moh asterisk-fax tiff-tools tini \
+  && mkdir -p /var/lib/asterisk/keys
 COPY box/asterisk/ /etc/asterisk/
 COPY box/entrypoint.sh /entrypoint.sh
 COPY --from=build /out/agent.js /app/agent.js
