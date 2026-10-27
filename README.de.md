@@ -97,6 +97,7 @@ einschaltest. DNS-Einträge, Podman-Quadlets, Backups und Updates stehen in der
 - **Tag, Woche, Monat und Liste**, Termine per Ziehen verschieben, Serien mit Ausnahmen, **Einladungen** mit Zusage und Absage.
 - **Wer hat Zeit?** Das Feld „Teilnehmer“ schlägt beim Tippen die Kollegen vor; beim Einladen zeigt Kontext, wer belegt ist, und schlägt Zeiten vor, in denen alle frei sind – wie der Terminplanungs-Assistent in Outlook.
 - **Videobesprechung pro Termin**: ein Klick legt einen Link an; Kunden kommen im Browser ohne Konto dazu.
+- **Orte beim Tippen**: Das Feld „Ort“ schlägt Adressen und Firmen vor (OpenStreetMap, über den eigenen Server); „In Karten öffnen“ öffnet Apple oder Google Maps, am Handy direkt zur Navigation.
 - **Kalender und Adressbücher teilen** mit Kollegen – nur Verfügbarkeit, lesen oder bearbeiten.
 - **Der Kunde auf einen Blick**: letzte Mails, nächste Termine, offene Aufgaben, Dokumente und „Anrufen“; **Kontaktfotos**, **Gruppen**, **vCard-Import und -Export**.
 - **Weitere Kontakte** wie bei Gmail: alle, mit denen du Mails hattest und die in keinem Adressbuch stehen, mit einem Klick gespeichert; doppelte Kontakte und Namen in Großbuchstaben **zusammenführen und korrigieren**.

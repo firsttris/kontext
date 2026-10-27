@@ -97,6 +97,7 @@ records, Podman Quadlets, backups and updates are in the
 - **Day, week, month and list**, drag to move, recurring events with exceptions, **invitations** with accept and decline.
 - **Who is free?** The attendee field suggests colleagues as you type; inviting them shows who is busy and suggests times everyone is free, like Outlook's scheduling assistant.
 - **Video meeting per event**: one click adds a link; customers join in the browser without an account.
+- **Places as you type**: the location field suggests addresses and businesses (OpenStreetMap, through your own server); "Open in Maps" opens Apple or Google Maps, on the phone straight to navigation.
 - **Share calendars and address books** with colleagues – free/busy only, read, or edit.
 - **The customer at a glance**: latest mails, upcoming appointments, open tasks, documents and "Call"; **contact photos**, **groups**, **vCard import and export**.
 - **Other contacts** like Gmail: everyone you exchanged mails with who is in no address book, saved with one click; **merge and fix** duplicate contacts and names written in capitals.

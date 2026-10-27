@@ -1262,6 +1262,30 @@ jeden einzelnen Termin mit eigener ID, `baseEventId` und `recurrenceId`.
 
 Ziehen im Wochenraster ändert immer nur den einen Termin.
 
+## Orte im Termin
+
+Das Feld „Ort“ (`src/features/calendar/place-field.tsx`) schlägt beim Tippen Orte vor, wie das
+Feld „Teilnehmer“: Pfeiltasten, Enter, Escape schließt die Liste und nicht den Termin. Freier
+Text bleibt, wie er ist; ein Vorschlag schreibt eine einzeilige Adresse ins Feld (JSCalendar
+`locations`, RFC 8984 – nur der Name, wie bisher).
+
+- **Woher:** Die App fragt nach einer kurzen Tipp-Pause (ab drei Buchstaben) den Kontext-Server,
+  `GET /api/places?q=…` (`server/places/routes.ts`, nur angemeldet). Der fragt
+  [Photon](https://github.com/komoot/photon), komoots Ortssuche auf OpenStreetMap
+  (`https://photon.komoot.io/api/?q=…&limit=5&lang=de`), mit eigenem User-Agent, vier Sekunden
+  Zeit und höchstens 120 Zeichen. Aus der GeoJSON-Antwort macht `server/places/places.ts` die
+  Zeile „Name, Straße Hausnummer, PLZ Ort“ (ohne Doppeltes, das Land nur außerhalb Deutschlands).
+  Antwortet Photon nicht oder Unsinn, gibt es keine Vorschläge – das Feld bleibt ein Textfeld.
+- **Datenschutz:** Der Browser spricht nur mit Kontext (`connect-src 'self'` bleibt), die
+  IP-Adresse der Leute geht nicht an komoot. Der getippte Ort aber geht vom Kontext-Server an
+  Photon – mit der IP des Servers. Wer das nicht will, setzt `PLACES_URL=` (leer: keine
+  Vorschläge) oder betreibt ein eigenes Photon und trägt dessen `/api/` ein
+  ([Installation](installation.md#ortsvorschlage)).
+- **In Karten öffnen** (`src/lib/maps.ts`): ein einfacher Link, keine Karte und keine
+  Kartenbibliothek in der App. Auf iPhone, iPad und Mac `https://maps.apple.com/?q=…`, sonst
+  `https://www.google.com/maps/search/?api=1&query=…`; am Handy öffnen beide die Karten-App.
+  Für Besprechungslinks und andere Web-Adressen im Ort gibt es ihn nicht.
+
 ## Anmeldung
 
 Benutzer und Passwörter bleiben in Stalwart. Bei der Anmeldung schickt die App E-Mail, Passwort

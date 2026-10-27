@@ -224,6 +224,17 @@ die beiden Zeilen aus `.env` löschen (nicht leer lassen: Caddy liest sie dort).
 
 Der Server bleibt schlank: Bearbeiten und Texterkennung laufen im Browser.
 
+### Ortsvorschläge
+
+Im Feld „Ort“ eines Termins schlägt Kontext Adressen vor. Dafür fragt der Kontext-Server
+[Photon](https://github.com/komoot/photon) (komoot, Daten von OpenStreetMap) unter
+`https://photon.komoot.io/api/` – ohne Einstellung ist das an. Was jemand als Ort tippt, geht so
+vom Server an komoot (nicht die Adresse des Browsers). Mit `PLACES_URL=` (leer) in `.env` bzw.
+`kontext.env` sind die Vorschläge aus, das Feld nimmt weiter jeden Text. Ein eigenes Photon
+(etwa nur mit den Daten für Deutschland) trägt man als `PLACES_URL=https://photon.firma.de/api/`
+ein. Der öffentliche Dienst von komoot ist für maßvolle Nutzung gedacht; Kontext fragt erst nach
+einer Tipp-Pause und ab drei Buchstaben.
+
 ### Firmenverwaltung einschalten
 
 Unter *Einstellungen → Firma* legt der Chef (oder die Büroleitung) Mitarbeiter und gemeinsame

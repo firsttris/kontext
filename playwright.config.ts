@@ -11,6 +11,7 @@ const APP_PORT = 5174;
 const GRAPH_PORT = 28095;
 const LIVEKIT_PORT = 27880;
 const SCHREIBZEUG_PORT = 28097;
+const PLACES_PORT = 28099;
 
 const launchOptions = {
   ...(process.env.PW_CHROMIUM_PATH ? { executablePath: process.env.PW_CHROMIUM_PATH } : {}),
@@ -97,6 +98,12 @@ export default defineConfig({
       reuseExistingServer: false,
     },
     {
+      // Place suggestions: a stand-in for Photon (dev/fake-places.ts), no lookups on the internet.
+      command: `bun dev/fake-places.ts --port ${PLACES_PORT}`,
+      url: `http://127.0.0.1:${PLACES_PORT}/`,
+      reuseExistingServer: false,
+    },
+    {
       command: "rm -rf .dev/e2e-server && bun server/main.ts",
       url: `http://127.0.0.1:${SERVER_PORT}/healthz`,
       env: {
@@ -124,6 +131,7 @@ export default defineConfig({
         GRAPH_URL: `http://127.0.0.1:${GRAPH_PORT}/v1.0`,
         SCHREIBZEUG_URL: `http://localhost:${SCHREIBZEUG_PORT}`,
         SCHREIBZEUG_CLIENT_SECRET: SCHREIBZEUG_DEV_SECRET,
+        PLACES_URL: `http://127.0.0.1:${PLACES_PORT}/api/`,
       },
       reuseExistingServer: false,
       timeout: 60_000,
