@@ -502,7 +502,7 @@
   "install_offer_apple_share": "In Safari auf „Teilen“ tippen",
   "install_offer_apple_add": "„Zum Home-Bildschirm“ wählen",
   "install_offer_apple_open": "Kontext dann über das Symbol auf dem Home-Bildschirm öffnen",
-  "install_offer_apple_more": "Kein „Teilen“ zu sehen? Erst auf „•••“ tippen.",
+  "install_offer_apple_more": "Nicht zu sehen? Lange auf die Adresszeile tippen (neuere iOS-Versionen) oder auf „•••“.",
   "offer_later": "Später",
   "offer_never": "Nein, danke",
   "storage_used": "{used} von {total} belegt ({percent} %)",

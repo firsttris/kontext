@@ -945,10 +945,9 @@ test.describe("Benachrichtigungen", () => {
       await login(page, "jonas", { offers: true });
       const install = page.getByRole("region", { name: "Kontext als App aufs Handy" });
       await expect(install.getByRole("listitem")).toHaveText([
-        "In Safari auf „Teilen“ tippen",
+        /In Safari auf „Teilen“ tippen.*Lange auf die Adresszeile tippen/,
         "„Zum Home-Bildschirm“ wählen",
         "Kontext dann über das Symbol auf dem Home-Bildschirm öffnen",
-        "Kein „Teilen“ zu sehen? Erst auf „•••“ tippen.",
       ]);
       await expect(install.getByRole("button", { name: "Installieren" })).toHaveCount(0);
       await install.getByRole("button", { name: "Später" }).click();

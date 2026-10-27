@@ -1170,7 +1170,8 @@ Damit niemand Schalter und Browsermenü suchen muss, steht oben in der Mailliste
 1. **Als App installieren**, auf dem Handy, solange Kontext nicht installiert ist. Unter Android
    (Chromium) öffnet „Installieren“ den Dialog des Browsers (`beforeinstallprompt`); wer dort
    ablehnt, hat „Später“ gewählt. Safari auf iPhone und iPad kennt keinen solchen Knopf, die Karte
-   zeigt die Schritte über „Teilen“ → „Zum Home-Bildschirm“. Am Rechner gibt es diese Karte nicht,
+   zeigt die Schritte über „Teilen“ → „Zum Home-Bildschirm“; neuere iOS-Versionen zeigen „Teilen“
+   erst nach langem Tippen auf die Adresszeile oder unter „•••“. Am Rechner gibt es diese Karte nicht,
    dort steht das Installieren in den Einstellungen.
 2. **Benachrichtigungen**, auf jedem Gerät, auf dem der Schalter noch nie gestellt wurde. Erst ihr
    Knopf „Einschalten“ fragt den Browser – Safari und Firefox fragen ohnehin nur nach einem Tipp,

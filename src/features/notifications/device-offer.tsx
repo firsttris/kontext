@@ -2,7 +2,7 @@
  * The card above the mail list: on a phone, install Kontext as an app; then, notifications on this
  * device. Which one, and when, is decided in `offer.ts`.
  */
-import { BellRing, Ellipsis, Share, Smartphone, SquarePlus } from "lucide-react";
+import { BellRing, Share, Smartphone, SquarePlus } from "lucide-react";
 import type { ReactNode } from "react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/toast";
@@ -41,8 +41,13 @@ const OfferCard = ({
 /** Safari has no install button for a page to press; these are the steps through its menu. */
 const AppleSteps = () => (
   <ol className="m-0 flex list-none flex-col gap-1.5 p-0 text-[12px]">
-    <li className="flex items-center gap-2">
-      <Share size={15} aria-hidden="true" className="shrink-0" /> {m.install_offer_apple_share()}
+    <li className="flex gap-2">
+      <Share size={15} aria-hidden="true" className="mt-px shrink-0" />
+      {/* Newer iOS hides "Teilen" behind a long press on the address bar. */}
+      <span className="flex flex-col">
+        {m.install_offer_apple_share()}
+        <span className="text-muted">{m.install_offer_apple_more()}</span>
+      </span>
     </li>
     <li className="flex items-center gap-2">
       <SquarePlus size={15} aria-hidden="true" className="shrink-0" /> {m.install_offer_apple_add()}
@@ -50,9 +55,6 @@ const AppleSteps = () => (
     <li className="flex items-center gap-2">
       <Smartphone size={15} aria-hidden="true" className="shrink-0" />{" "}
       {m.install_offer_apple_open()}
-    </li>
-    <li className="flex items-center gap-2 text-muted">
-      <Ellipsis size={15} aria-hidden="true" className="shrink-0" /> {m.install_offer_apple_more()}
     </li>
   </ol>
 );
