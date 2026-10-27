@@ -152,7 +152,9 @@ test.describe("Darstellung", () => {
     page,
     request,
   }) => {
-    expect((await request.get("/api/version")).status()).toBe(401);
+    expect(await (await request.get("/api/version")).json()).toEqual({
+      version: packageJson.version,
+    });
     await login(page);
     await page.goto("/settings?section=appearance");
     const card = page.locator("section").filter({ hasText: "App auf diesem Gerät" });

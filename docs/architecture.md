@@ -485,10 +485,10 @@ das Manifest steht in `vite.config.ts`, der Service Worker in `src/sw/service-wo
   nicht verloren geht. Sind alle Fenster zu, startet beim nächsten Öffnen ohnehin die neue.
 - **Welche Version läuft:** *Einstellungen → Darstellung → App auf diesem Gerät* zeigt die
   Version der geladenen App („Kontext 0.1.5“, aus `package.json` beim Build). Der Server nennt
-  seine unter `/api/version` (nur angemeldet). Weichen beide ab – auf dem Server läuft schon eine
-  neue, das Gerät hat noch die alte im Service Worker –, steht die des Servers darunter, und die
-  App fragt sofort nach der neuen, damit „Neu laden“ gleich erscheint
-  (`src/features/settings/version-row.tsx`).
+  seine unter `/api/version` (ohne Anmeldung wie `/healthz`; die öffentlichen Dateien der App
+  verraten sie ohnehin). Weichen beide ab – auf dem Server läuft schon eine neue, das Gerät hat
+  noch die alte im Service Worker –, steht die des Servers darunter, und die App fragt sofort
+  nach der neuen, damit „Neu laden“ gleich erscheint (`src/features/settings/version-row.tsx`).
 - **Was gecacht wird:** nur die App selbst (HTML, Skripte, Styles, Schriften, Symbole). Mails,
   Kalender und Anmeldung (`/jmap`, `/api`) gehen nie über einen Cache. Ohne Netz startet die App
   und sagt „Keine Verbindung“; neue Daten kommen, sobald das Gerät wieder online ist.

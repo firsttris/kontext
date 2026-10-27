@@ -237,12 +237,9 @@ export const createApp = async (env: Env) => {
   app.get("/healthz", (c) => c.text("ok"));
   // Which Kontext runs here (package.json, raised by the release); the settings set it beside the
   // app the device has loaded, which the service worker may still hold from before an update.
-  // Only for people signed in: a version tells a scanner which flaws to try.
-  app.get("/api/version", async (c) =>
-    (await auth.api.getSession({ headers: c.req.raw.headers }))
-      ? c.json({ version: packageVersion })
-      : c.json({ error: "Nicht angemeldet" }, 401),
-  );
+  // Open like /healthz: the app's public files carry the version too, and their hashed names tell
+  // one release from the next, so hiding it here would hide nothing.
+  app.get("/api/version", (c) => c.json({ version: packageVersion }));
   if (schreibzeug) {
     // Better Auth keeps discovery server-only; Schreibzeug reads it here (issuer + well-known path).
     const discovery = oauthProviderOpenIdConfigMetadata(auth);
