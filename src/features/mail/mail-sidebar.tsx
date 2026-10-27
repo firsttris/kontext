@@ -206,7 +206,8 @@ export const MailSidebar = ({ accountId, mailbox, view, query }: Props) => {
           </div>
           {accounts.map((entry) => {
             const inbox = inboxes.find((candidate) => candidate.account.id === entry.id)?.mailbox;
-            const label = entry.isPersonal ? entry.name : shortAddress(entry.name);
+            // The full address, like the own one; the badges in the lists keep the short "info@".
+            const label = entry.name;
             return (
               <Link
                 key={entry.id}
@@ -232,7 +233,7 @@ export const MailSidebar = ({ accountId, mailbox, view, query }: Props) => {
         <div className="flex items-center pr-1 pb-1.5 pl-2.5">
           <span className="flex-1 truncate text-[12px] font-medium text-muted">
             {account && !account.isPersonal && !unified
-              ? m.mail_folders_of({ name: shortAddress(account.name) })
+              ? m.mail_folders_of({ name: account.name })
               : m.mail_folders()}
           </span>
           <button
