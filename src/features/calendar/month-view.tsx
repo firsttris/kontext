@@ -123,7 +123,7 @@ export const MonthView = ({
                     />
                   ))}
                   {due.slice(0, taskLines).map((entry) => (
-                    <TaskChip key={entry.task.id} entry={entry} />
+                    <TaskChip key={entry.task.id} entry={entry} stacked />
                   ))}
                   {hidden > 0 ? (
                     <Link

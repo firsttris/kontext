@@ -38,11 +38,18 @@ export const TasksToggle = () => {
 export const TaskChip = ({
   entry,
   size = "sm",
+  stacked = false,
 }: {
   entry: DayTask;
   /** "sm" in the grids, "md" in the list. */
   size?: "sm" | "md";
+  /**
+   * One of rows right under each other (the all-day row, a month's day): on a phone each row is a
+   * touch target of 24 px at least (WCAG 2.5.8). A task at its time in the grid has room around it.
+   */
+  stacked?: boolean;
 }) => {
+  const touch = size === "sm" && stacked;
   const { task, overdue } = entry;
   const actions = useTaskActions();
   const toast = useToast();
@@ -63,10 +70,8 @@ export const TaskChip = ({
     <span
       className={cn(
         "group flex min-w-0 items-center gap-1.5 rounded-md text-fg",
-        // On a phone the row is a touch target of 24 px at least (WCAG 2.5.8).
-        size === "sm"
-          ? "px-1 py-px text-[12px] max-md:min-h-[26px]"
-          : "-ml-[5px] flex-1 text-[14px] font-medium",
+        size === "sm" ? "px-1 py-px text-[12px]" : "-ml-[5px] flex-1 text-[14px] font-medium",
+        touch && "max-md:min-h-[26px]",
       )}
     >
       {/* The ring is small in the grids; the button around it is larger to hit, so a click
@@ -78,9 +83,8 @@ export const TaskChip = ({
         title={m.tasks_complete()}
         className={cn(
           "group/done flex shrink-0 items-center justify-center",
-          size === "sm"
-            ? "-mx-1.5 -my-1 px-1.5 py-1 max-md:my-0 max-md:self-stretch max-md:py-0"
-            : "-m-2 p-2",
+          size === "sm" ? "-mx-1.5 -my-1 px-1.5 py-1" : "-m-2 p-2",
+          touch && "max-md:my-0 max-md:self-stretch max-md:py-0",
         )}
       >
         <span
@@ -96,7 +100,10 @@ export const TaskChip = ({
       <Link
         to="/tasks"
         search={{ task: task.id }}
-        className="flex min-w-0 flex-1 items-baseline gap-1 text-inherit no-underline hover:underline max-md:self-stretch max-md:items-center"
+        className={cn(
+          "flex min-w-0 flex-1 items-baseline gap-1 text-inherit no-underline hover:underline",
+          touch && "max-md:self-stretch max-md:items-center",
+        )}
       >
         {task.dueTime && !overdue && size === "sm" ? (
           <span className="shrink-0 font-mono text-[11px] text-muted">{task.dueTime}</span>

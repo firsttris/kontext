@@ -162,7 +162,7 @@ export const WeekGrid = ({
                 <EventChip key={eventKey(event)} event={event} invitation={isInvitation(event)} />
               ))}
               {untimedTasks[index]!.map((entry) => (
-                <TaskChip key={entry.task.id} entry={entry} />
+                <TaskChip key={entry.task.id} entry={entry} stacked />
               ))}
             </div>
           ))}
