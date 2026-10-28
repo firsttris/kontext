@@ -42,6 +42,7 @@ test.describe("Anrufe", () => {
     const ringing = anna.page.getByRole("dialog", { name: "Jonas Weber ruft an" });
     await expect(ringing).toBeVisible();
     await expect(ringing).toContainText("Videoanruf");
+    await expect(ringing).toHaveCSS("padding-top", "16px");
     await ringing.getByRole("button", { name: "Annehmen", exact: true }).click();
     await expect(ringing).toHaveCount(0);
 

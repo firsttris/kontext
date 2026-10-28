@@ -58,7 +58,7 @@ export const IncomingCall = () => {
           aria-describedby={undefined}
           onOpenAutoFocus={(event) => event.preventDefault()}
           onInteractOutside={(event) => event.preventDefault()}
-          className="fixed inset-x-3 top-3 z-[70] flex flex-col gap-4 rounded-2xl border border-border bg-bg p-4 shadow-2xl outline-none safe-top md:inset-x-auto md:top-4 md:right-4 md:w-[340px]"
+          className="fixed inset-x-3 top-[calc(var(--safe-top)+0.75rem)] z-[70] flex flex-col gap-4 rounded-2xl border border-border bg-bg p-4 shadow-2xl outline-none md:inset-x-auto md:top-4 md:right-4 md:w-[340px]"
         >
           <div className="flex items-center gap-3">
             <ColleagueAvatar
