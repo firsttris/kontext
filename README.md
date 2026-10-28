@@ -19,13 +19,6 @@ Shared mailboxes, a team calendar, and every customer's mails, appointments and 
 [![GDPR](https://img.shields.io/badge/GDPR-data%20on%20your%20server-15803d)](#-why-kontext)
 [![Made in Europe](https://img.shields.io/badge/made%20in-Europe-003399)](#-why-kontext)
 
-```bash
-git clone https://github.com/firsttris/kontext /opt/kontext && cd /opt/kontext
-cp deploy/.env.example deploy/.env && chmod 600 deploy/.env
-nano deploy/.env                              # domain, backup target, replace every change-me
-docker compose -f deploy/compose.yaml up -d   # or Podman
-```
-
 [Why](#-why-kontext) •
 [Install](#-install) •
 [Features](#-features) •
@@ -67,10 +60,11 @@ businesses · self-hosters looking for a web client for [Stalwart](https://stalw
 On a server with Docker (or Podman), your own domain and open ports 25, 80, 443, 465, 587 and 993:
 
 ```bash
+# The configuration (compose.yaml, .env.example, Caddyfile, backups); the programs come from Docker Hub
 git clone https://github.com/firsttris/kontext /opt/kontext && cd /opt/kontext
 cp deploy/.env.example deploy/.env && chmod 600 deploy/.env
-nano deploy/.env                              # domain, backup target, replace every change-me
-docker compose -f deploy/compose.yaml up -d   # or Podman
+nano deploy/.env                              # domain, version, backup target, replace every change-me
+docker compose -f deploy/compose.yaml up -d   # pulls Kontext, Stalwart and Caddy and starts them (or Podman)
 ```
 
 Then the main steps in Stalwart's admin (port 8080, only through an SSH tunnel or Tailscale); the
@@ -83,7 +77,7 @@ Then the main steps in Stalwart's admin (port 8080, only through an SSH tunnel o
    start Kontext again ([how](https://firsttris.github.io/kontext/installation.html#firmenverwaltung-einschalten)).
 4. Sign in at `https://<your domain>`.
 
-Calls and documents are switched on in `.env.example`; to leave them out, remove them from
+Calls and documents (Schreibzeug, no install of its own needed) are switched on in `.env.example`; to leave them out, remove them from
 `COMPOSE_PROFILES`. Telephony adds a small box in the office. Ten users run fine on a VPS with
 2 vCPUs and 4 GB RAM. Everything else – DNS, Podman, backups, updates – is in the
 [installation guide](https://firsttris.github.io/kontext/installation.html) (German).

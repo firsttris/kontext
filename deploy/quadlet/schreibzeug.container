@@ -14,6 +14,8 @@ ContainerName=schreibzeug
 Network=kontext.network
 Volume=schreibzeug-data:/data
 Environment=OIDC_CLIENT_ID=schreibzeug
+# Caddy, as Schreibzeug sees it (kontext.network), so sign-ins count per client, not as Caddy's
+Environment=SCHREIBZEUG_TRUSTED_PROXIES=10.89.250.0/24
 EnvironmentFile=/opt/kontext/deploy/schreibzeug.env
 
 [Service]

@@ -7,6 +7,10 @@ Steps that an update needs beyond raising the version are marked **Upgrade**.
 
 ## Unreleased
 
+- Documents: Schreibzeug trusts Caddy as its proxy (`SCHREIBZEUG_TRUSTED_PROXIES` in
+  `deploy/compose.yaml` and `schreibzeug.container`), so its sign-in limit counts per person, not
+  for everyone at once. **Upgrade:** with Compose, `git pull` and start again; with Quadlet, copy
+  the new `schreibzeug.container` (with your domain) and `systemctl daemon-reload`.
 - Documents: `deploy/.env.example` and the Quadlet use Schreibzeug 0.1.8 (was 0.1.4). **Upgrade:**
   raise `SCHREIBZEUG_VERSION` in `deploy/.env` (or the image in `schreibzeug.container`) and start
   again; Schreibzeug's [changelog](https://github.com/firsttris/schreibzeug/blob/main/CHANGELOG.md)
