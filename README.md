@@ -101,7 +101,7 @@ Calls and documents (Schreibzeug, no install of its own needed) are switched on 
 | 📞 **Telephony (CTI)** | **Your Fritzbox and numbers stay**: calls ring in Kontext with the caller's contact and last mail, **click to call**, **voicemail as mail**, missed calls become tasks · [more →](https://firsttris.github.io/kontext/telephony.html) |
 | 🔐 **Encryption** | **OpenPGP** and **S/MIME**, **send confidentially to anyone** through a link to your own server, encrypted backups · [more →](https://firsttris.github.io/kontext/encryption.html) |
 | 📄 **Documents** | **Word, Excel, PowerPoint and PDF** in Kontext with [Schreibzeug](https://github.com/firsttris/schreibzeug), a folder per shared mailbox · [more →](https://firsttris.github.io/kontext/documents.html) |
-| 🤖 **AI agents (MCP)** | Claude and other agents look up customers, mails and appointments with your rights and **write drafts** – no sending, no deleting, every change logged · [more →](https://firsttris.github.io/kontext/agents.html) |
+| 🤖 **AI agents (MCP)** | Claude and other agents look up customers, mails and appointments with your rights, **write drafts** and **invite colleagues to appointments** – nothing goes outside the company, no deleting, every change logged · [more →](https://firsttris.github.io/kontext/agents.html) |
 | 🏢 **Company admin** | **People, shared mailboxes and rights** without IT skills, company signature, **offboarding without deleting**, backups at a glance, **moving in from Microsoft 365, Gmail and Outlook** · [more →](https://firsttris.github.io/kontext/company.html) |
 | 📱 **On every device** | **An app on desktop, Android and iPhone** without an app store, push notifications, light and dark, two-factor sign-in, **built for keyboard and screen reader**, checked automatically against WCAG 2.2 AA on every push ([accessibility](https://firsttris.github.io/kontext/accessibility.html)) · [more →](https://firsttris.github.io/kontext/app.html) |
 
@@ -234,8 +234,8 @@ through the provider's server, so recipients see it as genuine.
 <details>
 <summary><b>Can I use Claude or other AI agents with my mail?</b></summary>
 
-Yes. Kontext is an MCP server, so Claude and other agents can look things up with your rights and
-write drafts; they never send or delete anything. See [AI agents](https://firsttris.github.io/kontext/agents.html).
+Yes. Kontext is an MCP server, so Claude and other agents can look things up with your rights,
+write drafts and invite colleagues to appointments; they never mail anyone outside or delete anything. See [AI agents](https://firsttris.github.io/kontext/agents.html).
 </details>
 
 <details>

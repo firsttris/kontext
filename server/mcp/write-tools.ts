@@ -1,7 +1,8 @@
 /**
  * The tools that create and change (scope "write"): a draft, an appointment, a contact, a task.
- * None sends, deletes or invites – what leaves the house is sent by a person in Kontext. Each
- * answers with a `message` that also goes into the connection's log.
+ * None deletes, and nothing leaves the company: mail outside is sent by a person in Kontext, an
+ * appointment invites colleagues only. Each answers with a `message` that also goes into the
+ * connection's log.
  */
 import { z } from "zod";
 import { CLOCK_TIME } from "../tasks/tasks";
@@ -55,9 +56,10 @@ export const WRITE_TOOLS = [
     name: "create_event",
     title: "Termin eintragen",
     description:
-      "Put an appointment into a calendar (own or shared mailbox), in German local time. " +
-      "Attendees cannot be invited from here; mention them in the description and the user " +
-      "invites them in Kontext.",
+      "Put an appointment into a calendar (own or shared mailbox), in German local time, and " +
+      "invite colleagues: they get an invitation mail and the event in their calendar. Only " +
+      "the company's people (list_colleagues) can be invited; people outside are refused – " +
+      "mention them in the description and the user invites them in Kontext.",
     scope: "write",
     input: {
       title: z.string().min(1).max(300).describe("What it is."),
@@ -75,6 +77,11 @@ export const WRITE_TOOLS = [
       allDay: z.boolean().optional(),
       location: z.string().max(500).optional(),
       description: optionalText("Notes."),
+      attendees: z
+        .array(z.string())
+        .max(50)
+        .optional()
+        .describe("Colleagues to invite: their e-mail address or id from list_colleagues."),
       accountId: z.string().optional().describe("Whose calendar; the own one when left out."),
       calendarId: z.string().optional().describe("Which calendar; the default one when left out."),
     },

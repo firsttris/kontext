@@ -35,7 +35,7 @@ Einen Rundgang in Bildern, gemacht zum Weiterschicken an Kunden und Kollegen, is
 | [**Telefonie (CTI)**](telephony.md) | Fritzbox-Anrufe klingeln in Kontext mit Kontakt, letzter Mail und nächstem Termin; Softphone im Browser, Mailbox als Mail, Öffnungszeiten, Weitervermitteln, Snom-Tischtelefone, Fax als PDF |
 | [**Dokumente**](documents.md) | Word, Excel, PowerPoint und PDF im Browser (Schreibzeug), ein Ordner pro gemeinsamem Postfach, Anhänge ablegen und anhängen |
 | [**Verschlüsselung**](encryption.md) | OpenPGP und S/MIME im Browser, „Vertraulich senden“ an jeden Empfänger, Ende-zu-Ende verschlüsselter Chat |
-| [**KI-Agenten (MCP)**](agents.md) | Claude & Co. schlagen Kunden, Mails, Termine und Aufgaben nach und legen Entwürfe an – nie selbst senden oder löschen |
+| [**KI-Agenten (MCP)**](agents.md) | Claude & Co. schlagen Kunden, Mails, Termine und Aufgaben nach legen Entwürfe an und laden Kollegen zu Terminen ein – nie nach draußen senden oder löschen |
 | [**Firmenverwaltung und Umzug**](company.md) | Mitarbeiter, gemeinsame Postfächer mit Rechten, Abwesenheit mit Vertretung, Austritt, Umzug von Microsoft 365, Gmail, Outlook (PST) |
 | [**App, Handy und Konto**](app.md) | als App installierbar am PC, unter Android und am iPhone; Benachrichtigungen auch bei geschlossener App; am Handy jede Ansicht als eigener Bildschirm mit Tab-Leiste (welche Apps darin stehen, wählt man selbst); hell und dunkel, Anmeldung mit Code |
 | [**Barrierefreiheit**](accessibility.md) | Ziel WCAG 2.2 AA (EN 301 549, BITV 2.0): Screenreader, Tastatur, Kontraste, weniger Bewegung; jede Seite automatisch mit axe geprüft |

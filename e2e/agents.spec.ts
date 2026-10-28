@@ -1,6 +1,6 @@
 import { expect, type Page, test } from "@playwright/test";
 import { DEV_PASSWORD } from "../dev/config";
-import { addMail, jmapAs, login, unique } from "./helpers";
+import { addMail, address, jmapAs, login, personalAccountId, unique } from "./helpers";
 
 /** One MCP request with the key, as an agent makes it (server/mcp/). */
 const mcp = (page: Page, key: string, method: string, params: Record<string, unknown> = {}) =>
@@ -28,6 +28,26 @@ const createKey = async (page: Page, name: string, write = false) => {
   await page.getByRole("button", { name: "Schlüssel anlegen" }).click();
   await expect(page.getByText("Der Schlüssel ist nur jetzt zu sehen.")).toBeVisible();
   return (await page.getByTestId("mcp-key").textContent()) ?? "";
+};
+
+/** Invitations go out only for events to come. */
+const tomorrow = () =>
+  new Intl.DateTimeFormat("sv-SE", { timeZone: "Europe/Berlin" }).format(
+    new Date(Date.now() + 86_400_000),
+  );
+
+/** The titles in a person's calendars, read behind the UI's back. */
+const eventTitles = async (user: string): Promise<string[]> => {
+  const client = jmapAs(user);
+  const accountId = await personalAccountId(user);
+  const using = ["urn:ietf:params:jmap:core", "urn:ietf:params:jmap:calendars"];
+  const { ids } = await client.call<{ ids: string[] }>("CalendarEvent/query", { accountId }, using);
+  const { list } = await client.call<{ list: { title?: string }[] }>(
+    "CalendarEvent/get",
+    { accountId, ids, properties: ["title"] },
+    using,
+  );
+  return list.map((event) => event.title ?? "");
 };
 
 /** The id of a mail in Jonas' inbox, found behind the UI's back. */
@@ -111,6 +131,33 @@ test.describe("KI-Agenten (MCP)", () => {
     await expect(listed.getByRole("list", { name: `Letzte Änderungen von ${name}` })).toContainText(
       "Entwurf an erika@example.test",
     );
+  });
+
+  test("ein Agent lädt Kollegen zu einem Termin ein, niemanden von draußen", async ({ page }) => {
+    const title = unique("Baustellenbesprechung");
+    await login(page);
+    const key = await createKey(page, unique("Claude plant"), true);
+
+    // Someone outside the company is refused, and nothing is written.
+    const refused = await callTool(page, key, "create_event", {
+      title,
+      start: `${tomorrow()} 10:00`,
+      attendees: [address("anna"), "markus.hoffmann@hoffmann-bau.test"],
+    });
+    expect(await answer(refused)).toContain("Nur Kollegen der Firma");
+    expect(await eventTitles("jonas")).not.toContain(title);
+
+    const done = await answer(
+      await callTool(page, key, "create_event", {
+        title,
+        start: `${tomorrow()} 10:00`,
+        attendees: [address("anna")],
+      }),
+    );
+    expect(done).toContain(`eingeladen: ${address("anna")}`);
+
+    // Anna gets the invitation and with it the event in her calendar.
+    await expect.poll(() => eventTitles("anna"), { timeout: 20_000 }).toContain(title);
   });
 
   test("ohne Schlüssel oder mit falschem Passwort gibt es nichts", async ({ page }) => {

@@ -101,7 +101,7 @@ VPS mit 2 vCPU und 4 GB RAM. Alles Weitere – DNS, Podman, Backups, Updates –
 | 📞 **Telefonie (CTI)** | **Fritzbox und Nummern bleiben**: Anrufe klingeln in Kontext mit Kontakt und letzter Mail des Anrufers, **Anrufen per Klick**, **Mailbox als Mail**, verpasste Anrufe werden Aufgaben · [mehr →](https://firsttris.github.io/kontext/telephony.html) |
 | 🔐 **Verschlüsselung** | **OpenPGP** und **S/MIME**, **vertraulich senden an jeden** über einen Link auf den eigenen Server, verschlüsselte Backups · [mehr →](https://firsttris.github.io/kontext/encryption.html) |
 | 📄 **Dokumente** | **Word, Excel, PowerPoint und PDF** in Kontext mit [Schreibzeug](https://github.com/firsttris/schreibzeug), ein Ordner pro gemeinsamem Postfach · [mehr →](https://firsttris.github.io/kontext/documents.html) |
-| 🤖 **KI-Agenten (MCP)** | Claude und andere Agenten schlagen Kunden, Mails und Termine mit deinen Rechten nach und **schreiben Entwürfe** – kein Senden, kein Löschen, jede Änderung protokolliert · [mehr →](https://firsttris.github.io/kontext/agents.html) |
+| 🤖 **KI-Agenten (MCP)** | Claude und andere Agenten schlagen Kunden, Mails und Termine mit deinen Rechten nach, **schreiben Entwürfe** und **laden Kollegen zu Terminen ein** – nichts geht nach draußen, kein Löschen, jede Änderung protokolliert · [mehr →](https://firsttris.github.io/kontext/agents.html) |
 | 🏢 **Firmenverwaltung** | **Mitarbeiter, gemeinsame Postfächer und Rechte** ohne IT-Kenntnisse, Firmen-Signatur, **Austritt ohne Löschen**, Datensicherung im Blick, **Umzug von Microsoft 365, Gmail und Outlook** · [mehr →](https://firsttris.github.io/kontext/company.html) |
 | 📱 **Auf jedem Gerät** | **Eine App am PC, unter Android und am iPhone** ohne App Store, Benachrichtigungen, hell und dunkel, Anmeldung mit zweitem Faktor, **für Tastatur und Screenreader gebaut**, bei jedem Push automatisch gegen WCAG 2.2 AA geprüft ([Barrierefreiheit](https://firsttris.github.io/kontext/accessibility.html)) · [mehr →](https://firsttris.github.io/kontext/app.html) |
 
@@ -236,8 +236,8 @@ diese Adresse über den Server des Anbieters, damit Empfänger sie als echt sehe
 <details>
 <summary><b>Kann ich Claude oder andere KI-Agenten mit meinen Mails nutzen?</b></summary>
 
-Ja. Kontext ist ein MCP-Server: Claude und andere Agenten schlagen mit deinen Rechten nach und
-schreiben Entwürfe; sie senden und löschen nie etwas. Siehe [KI-Agenten](https://firsttris.github.io/kontext/agents.html).
+Ja. Kontext ist ein MCP-Server: Claude und andere Agenten schlagen mit deinen Rechten nach,
+schreiben Entwürfe und laden Kollegen zu Terminen ein; nach draußen schicken und löschen sie nie etwas. Siehe [KI-Agenten](https://firsttris.github.io/kontext/agents.html).
 </details>
 
 <details>

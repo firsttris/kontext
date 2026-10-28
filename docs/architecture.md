@@ -1651,15 +1651,19 @@ der Person, die ihn verbunden hat (`server/mcp/`).
   | Werkzeug         | Tut                                                                                 |
   | ---------------- | ----------------------------------------------------------------------------------- |
   | `create_draft`   | Mail als Entwurf in „Entwürfe“ (eigenes oder gemeinsames Postfach); als Antwort mit Empfängern, „Re:“, Zitat und Thread-Headern wie in der App (`startCompose`) |
-  | `create_event`   | Termin in einen Kalender, ohne Teilnehmer                                           |
+  | `create_event`   | Termin in einen Kalender; lädt Kollegen ein (Adresse oder Id aus `list_colleagues`), niemanden von draußen |
   | `create_contact` | Kontakt in ein Adressbuch                                                           |
   | `update_contact` | Felder eines Kontakts ändern                                                        |
   | `create_task`    | Aufgabe auf ein Board, mit Fälligkeit, Zuständiger und Verknüpfung zu Mail und Kontakt |
   | `update_task`    | Aufgabe ändern, auch erledigen                                                      |
 
-  **Nichts verlässt das Haus von selbst:** Es gibt kein Senden und kein Löschen; ein Entwurf wartet,
-  bis ihn jemand in Kontext abschickt, und ein Termin bekommt keine Teilnehmer, weil Stalwart
-  ihnen sonst eine Einladung schickt. Mails sind fremder Text und können einem Agenten
+  **Nichts verlässt das Haus von selbst:** Es gibt kein Löschen und keine Mail nach draußen; ein
+  Entwurf wartet, bis ihn jemand in Kontext abschickt. Ein Termin lädt nur Kollegen ein: Jede
+  Adresse muss zu einer Person der Firma gehören (`Principal/get`, wie `list_colleagues`), sonst
+  lehnt `create_event` den ganzen Termin ab (`colleagueAddresses`). Gespeichert wird wie in der
+  App mit `saveEvent` ([Einladungen](#einladungen)): Kontext schickt die Einladung vom Organisator,
+  Stalwart trägt sie bei den Kollegen ein, und sie sagen im Kalender zu – Antwort-Links werden
+  dafür nicht signiert. Mails sind fremder Text und können einem Agenten
   Anweisungen unterschieben (Prompt Injection); die Beschreibung von `get_mail` und die
   Anweisungen des Servers sagen ihm, Mailtext nur als Information zu nehmen.
 - **Protokoll und Grenze:** Jede Änderung steht mit ihrer Meldung in `mcp_log` und in den
