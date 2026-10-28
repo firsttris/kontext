@@ -1,9 +1,10 @@
 <div align="center">
 
-<h1>Kontext: Mail, Kalender, Chat und Telefonie (CTI) für dein Team – selbst gehostet und Open Source</h1>
+<h1>Alles, was dein Team von Outlook kennt. Ohne dass Microsoft dein Team kennt.</h1>
 
-Die selbst gehostete Alternative zu Google Workspace und Microsoft 365. Gemeinsame Postfächer, ein Kalender fürs Team und Kontakte, die alles verbinden: zu jedem Kunden Mails, Termine, Aufgaben und Anrufe auf einen Blick.<br>
-AGPL, eine Web-App und PWA auf dem Mailserver Stalwart, keine Kosten pro Benutzer. Made in Europe.
+**Kontext: Mail, Kalender, Chat und Telefonie (CTI) für dein Team – selbst gehostet und Open Source**
+
+Gemeinsame Postfächer, ein Kalender fürs Team und zu jedem Kunden alle Mails, Termine und Anrufe auf einen Blick. Ohne Kosten pro Benutzer. Made in Europe.
 
 [English](README.md) · **Deutsch**
 
@@ -15,17 +16,16 @@ AGPL, eine Web-App und PWA auf dem Mailserver Stalwart, keine Kosten pro Benutze
 [![License: AGPL-3.0](https://img.shields.io/badge/license-AGPL--3.0-blue)](LICENSE)
 [![Stalwart 0.16](https://img.shields.io/badge/Stalwart-0.16-18181b)](https://stalw.art)
 [![JMAP](https://img.shields.io/badge/JMAP-mail%20%7C%20calendar%20%7C%20contacts-0f766e)](https://jmap.io)
-[![DSGVO](https://img.shields.io/badge/DSGVO-Daten%20auf%20deinem%20Server-15803d)](#-deine-daten-bleiben-in-europa--mit-ki)
-[![GoBD](https://img.shields.io/badge/GoBD-nichts%20wird%20gel%C3%B6scht-15803d)](#-deine-daten-bleiben-in-europa--mit-ki)
-[![Made in Europe](https://img.shields.io/badge/made%20in-Europe-003399)](#-deine-daten-bleiben-in-europa--mit-ki)
+[![DSGVO](https://img.shields.io/badge/DSGVO-Daten%20auf%20deinem%20Server-15803d)](#-warum-kontext)
+[![Made in Europe](https://img.shields.io/badge/made%20in-Europe-003399)](#-warum-kontext)
 
 ```bash
 git clone https://github.com/firsttris/kontext /opt/kontext && cd /opt/kontext
-cp deploy/.env.example deploy/.env && nano deploy/.env   # Domain, jedes change-me ersetzen
-docker compose -f deploy/compose.yaml up -d              # oder Podman
+cp deploy/.env.example deploy/.env && chmod 600 deploy/.env
+nano deploy/.env                              # Domain, Backup-Ziel, jedes change-me ersetzen
+docker compose -f deploy/compose.yaml up -d   # oder Podman
 ```
 
-[Datenschutz & GoBD](#-deine-daten-bleiben-in-europa--mit-ki) •
 [Warum](#-warum-kontext) •
 [Installation](#-installation) •
 [Funktionen](#-funktionen) •
@@ -38,30 +38,29 @@ docker compose -f deploy/compose.yaml up -d              # oder Podman
 
 </div>
 
-## 🇪🇺 Deine Daten bleiben in Europa – mit KI
-
-- **DSGVO**: Mails, Termine, Kontakte, Chat und Anrufe liegen auf deinem Server, in einem Rechenzentrum in Deutschland oder anderswo in Europa oder im eigenen Büro. Kein US-Anbieter dazwischen, keine Tracker, keine Weitergabe. Einen Auftragsverarbeitungsvertrag brauchst du nur mit deinem Hoster.
-- **GoBD**: Beim Austritt wird nichts gelöscht, Backups gehen verschlüsselt und unveränderbar (Object Lock) auf S3-Speicher. Die Software ist ein Baustein; dazu gehören die Abläufe im Betrieb und eine Verfahrensdokumentation.
-- **KI nach deinen Regeln**: Kontext ist ein MCP-Server. Du verbindest den KI-Assistenten, den du willst; er arbeitet mit deinen Rechten, schreibt Entwürfe statt zu senden, löscht nie etwas, und jeder Zugriff wird protokolliert und lässt sich trennen.
-- **Kein Lock-in**: offene Standards (IMAP, CalDAV, CardDAV), mitnehmen jederzeit; der Umzug *zu* Kontext ist eingebaut.
-
 ## 💡 Warum Kontext?
 
-Google Workspace und Microsoft 365 sind bequem – aber jeder Benutzer kostet jeden Monat, und die
-Daten liegen bei einem US-Konzern. Kontext bietet dasselbe Gefühl im Browser und am Handy, läuft
+Google Workspace und Microsoft 365 sind bequem, aber jeder Benutzer kostet jeden Monat, und die
+Daten liegen bei einem US-Konzern. Kontext fühlt sich im Browser und am Handy genauso an, läuft
 aber auf **deinem** Server: einem kleinen VPS ab etwa 5 € im Monat (z. B. bei IONOS oder Hetzner)
 oder einem eigenen Rechner.
 
-- **Alles gehört dir**: Mails, Termine, Kontakte, Chat und Anrufe liegen auf deinem Server, nicht bei einem Anbieter.
-- **Keine Kosten pro Kopf**: zehn Mitarbeiter kosten dasselbe wie einer; bezahlt wird der Server.
-- **Kontext statt Inseln**: zu jedem Kontakt die letzten Mails, nächsten Termine, offenen Aufgaben und Anrufe – ein kleines CRM ohne Extra-Tool.
-- **Eine App statt fünf**: Mail, Kalender, Aufgaben, Team-Chat mit Videocalls, das Firmentelefon und Dokumente, mit einer Anmeldung.
-- **Am Handy wie am PC**: jede Ansicht ist fürs Handy gebaut, mit einer Tab-Leiste für die Apps, die man am meisten braucht; als App auf jedem Gerät installierbar – ohne App-Store.
-- **Offen**: Open Source (AGPL), Standardprotokolle (JMAP, IMAP, SMTP, CalDAV, CardDAV) – Outlook, Thunderbird, iPhone und Android funktionieren weiter.
+- **Deine Daten bleiben bei dir (DSGVO)**: Mails, Termine, Kontakte, Chat und Anrufe liegen auf
+  deinem Server, in Europa oder im eigenen Büro. Kein US-Anbieter, keine Tracker.
+- **Keine Kosten pro Kopf**: Zehn Mitarbeiter kosten dasselbe wie einer; bezahlt wird der Server.
+- **Alles zum Kunden an einem Ort**: seine letzten Mails, nächsten Termine, offenen Aufgaben und
+  Anrufe – ein kleines CRM ohne Extra-Tool.
+- **Eine App statt fünf**: Mail, Kalender, Aufgaben, Team-Chat mit Videocalls, das Firmentelefon
+  und Dokumente, mit einer Anmeldung.
+- **Auch fürs Handy gebaut**: Jede Ansicht funktioniert am Handy, und Kontext lässt sich ohne App
+  Store als App installieren.
+- **KI, wenn du willst**: Claude und andere Assistenten finden Kunden, Mails und Termine für dich
+  und schreiben Entwürfe – sie senden und löschen nie etwas.
+- **Offen, kein Lock-in**: Open Source (AGPL) und Standardprotokolle, damit Outlook, Thunderbird,
+  iPhone und Android weiter funktionieren und du jederzeit alles mitnehmen kannst.
 
-**Für wen:** Freelancer und Selbstständige, Handwerk, Kanzleien, Praxen und den Mittelstand (mit
-einer Firmenverwaltung, die der Chef ohne IT-Kenntnisse bedient) – und für Selfhoster, die eine
-moderne Weboberfläche für [Stalwart](https://stalw.art) suchen.
+**Für wen:** Selbstständige · Handwerk · Kanzleien und Praxen · kleine und mittlere Betriebe ·
+Selfhoster, die eine Weboberfläche für [Stalwart](https://stalw.art) suchen.
 
 ## 🚀 Installation
 
@@ -69,41 +68,41 @@ Auf einem Server mit Docker (oder Podman), eigener Domain und offenen Ports 25, 
 
 ```bash
 git clone https://github.com/firsttris/kontext /opt/kontext && cd /opt/kontext
-cp deploy/.env.example deploy/.env      # Domain, Mailserver-Name, Geheimnisse, Backup-Ziel
-chmod 600 deploy/.env                   # jedes change-me ersetzen: damit startet Kontext nicht
-docker compose -f deploy/compose.yaml up -d
+cp deploy/.env.example deploy/.env && chmod 600 deploy/.env
+nano deploy/.env                              # Domain, Backup-Ziel, jedes change-me ersetzen
+docker compose -f deploy/compose.yaml up -d   # oder Podman
 ```
 
-Danach Stalwart in seiner Verwaltung (Port 8080, nur über SSH-Tunnel oder Tailscale) so einrichten,
-wie es die [Anleitung](https://firsttris.github.io/kontext/installation.html#3-stalwart-einrichten) aufzählt: Domain und DKIM, das Konto des Chefs
-(alle anderen legt er später in Kontext an), Kontexts Container-Netz `10.89.250.0/24` als erlaubte
-IP (sonst können falsche Passwörter Kontext selbst sperren lassen) und den API-Schlüssel für die
-Firmenverwaltung (`STALWART_ADMIN_KEY`; ohne ihn gibt es keine Firmenverwaltung, keine weiteren
-Postfächer und keine Antwort-Knöpfe in Einladungen, siehe
-[Firmenverwaltung](https://firsttris.github.io/kontext/installation.html#firmenverwaltung-einschalten)). Dann unter `https://<deine Domain>`
-anmelden. Für zehn Benutzer reicht ein VPS mit 2 vCPU und 4 GB RAM.
+Danach die wichtigsten Schritte in Stalwarts Verwaltung (Port 8080, nur über SSH-Tunnel oder
+Tailscale); die [Anleitung](https://firsttris.github.io/kontext/installation.html#3-stalwart-einrichten) nennt alle:
 
-Anrufe (LiveKit) und Dokumente (Schreibzeug) sind Compose-Profile, die `.env.example` schon
-einschaltet (`COMPOSE_PROFILES=calls,documents`): ihre Geheimnisse und DNS-Namen setzen oder sie
-dort herausnehmen. Für Telefonie kommt eine kleine Box ins Büro. DNS-Einträge, Podman-Quadlets,
-Backups und Updates stehen in der
+1. Domain und DKIM einrichten und das Konto des Chefs anlegen; alle anderen legt der Chef in Kontext an.
+2. Kontexts Netz `10.89.250.0/24` als erlaubte IP eintragen, damit falsche Passwörter nie Kontext
+   selbst sperren.
+3. Den API-Schlüssel für die Firmenverwaltung anlegen, in `deploy/.env` als `STALWART_ADMIN_KEY`
+   eintragen und Kontext neu starten ([wie](https://firsttris.github.io/kontext/installation.html#firmenverwaltung-einschalten)).
+4. Unter `https://<deine Domain>` anmelden.
+
+Anrufe und Dokumente sind in `.env.example` schon eingeschaltet; wer sie nicht braucht, nimmt sie
+aus `COMPOSE_PROFILES`. Für Telefonie kommt eine kleine Box ins Büro. Für zehn Benutzer reicht ein
+VPS mit 2 vCPU und 4 GB RAM. Alles Weitere – DNS, Podman, Backups, Updates – steht in der
 [Installationsanleitung](https://firsttris.github.io/kontext/installation.html).
 
 ## ✨ Funktionen
 
 | | |
 |---|---|
-| ✉️ **Mail** | **Gemeinsame Postfächer** (info@ mit Rechten pro Person, Antworten zeigen, wer geantwortet hat), alle Posteingänge in einer Liste, **Kategorien**, **Regeln auf dem Server**, Suche wie in Gmail, Wiedervorlage, Senden rückgängig und später senden, Textbausteine, **weitere Postfächer** (Gmail, GMX, WEB.DE), **Warnungen vor Phishing und gefälschten Absendern**, Signaturen, Abwesenheitsnotiz, immer aktuell per JMAP-Push · [mehr →](https://firsttris.github.io/kontext/mail.html) |
-| 📅 **Kalender** | Tag, Woche, Monat und Liste, Serien, **Einladungen mit einem Klick beantworten**, ganz ohne Konto, **Wer hat Zeit?** wie der Terminplanungs-Assistent in Outlook, **Videobesprechung pro Termin**, Orte aus OpenStreetMap, geteilte Kalender · [mehr →](https://firsttris.github.io/kontext/calendar-contacts.html) |
-| 👥 **Kontakte** | **Der Kunde auf einen Blick**: letzte Mails, nächste Termine, offene Aufgaben, Dokumente und Anrufe – ein kleines CRM; Fotos, Gruppen, vCard, weitere Kontakte wie bei Gmail, Doppelte zusammenführen · [mehr →](https://firsttris.github.io/kontext/calendar-contacts.html#kontakte) |
-| ✅ **Aufgaben** | **Liste oder Kanban-Board** pro Postfach, wiederkehrende Aufgaben, **aus einer Mail, einer Chat-Nachricht, einer Regel oder einem verpassten Anruf**, Schnelleingabe („Rückruf Hoffmann morgen“), Erinnerungen als Push, CalDAV für Thunderbird und Handy · [mehr →](https://firsttris.github.io/kontext/tasks.html) |
-| 💬 **Team-Chat & Video** | Kanäle und Direktnachrichten, @Erwähnungen, Threads, Reaktionen, **Mails, Aufgaben und Kontakte als Karten**, Sprachnachrichten, **Anrufe, Video und Bildschirm teilen** auf dem eigenen Server (LiveKit), **Ende-zu-Ende verschlüsselte Unterhaltungen** · [mehr →](https://firsttris.github.io/kontext/chat.html) |
-| 📞 **Telefonie (CTI)** | **Fritzbox und Nummern bleiben**: Anrufe klingeln in Kontext mit Kontakt, letzter Mail und nächstem Termin des Anrufers, **Anrufen per Klick**, **Mailbox als Mail**, verpasste Anrufe werden Aufgaben, Öffnungszeiten und Sprachmenü, Weitervermitteln und Konferenz, Snom-Tischtelefone, Fax als PDF · [mehr →](https://firsttris.github.io/kontext/telephony.html) |
-| 🔐 **Verschlüsselung** | **OpenPGP** im Browser, **S/MIME** für Behörden und Kanzleien, **vertraulich senden an jeden** über einen Link auf den eigenen Server, TLS mit MTA-STS und DANE, verschlüsselte Backups · [mehr →](https://firsttris.github.io/kontext/encryption.html) |
-| 📄 **Dokumente** | **Word, Excel, PowerPoint und PDF** in Kontext mit [Schreibzeug](https://github.com/firsttris/schreibzeug), ein Ordner pro gemeinsamem Postfach, Anhänge in Dokumente und zurück · [mehr →](https://firsttris.github.io/kontext/documents.html) |
-| 🤖 **KI-Agenten (MCP)** | **Kontext ist ein MCP-Server**: Claude und andere Agenten schlagen Kunden, Mails, Termine und Aufgaben mit deinen Rechten nach und schreiben Entwürfe – kein Senden, kein Löschen, jede Änderung protokolliert · [mehr →](https://firsttris.github.io/kontext/agents.html) |
-| 🏢 **Firmenverwaltung** | **Mitarbeiter, gemeinsame Postfächer und Rechte** ohne IT-Kenntnisse, Abwesenheit mit Vertretung, Firmen-Signatur, **Austritt ohne Löschen**, Datensicherung im Blick, **Umzug von Microsoft 365, Gmail, IMAP und Outlook (PST)** · [mehr →](https://firsttris.github.io/kontext/company.html) |
-| 📱 **Auf jedem Gerät** | **Eine App am PC, unter Android und am iPhone** (PWA, ohne App Store), Benachrichtigungen auch bei geschlossener App, eine Tab-Leiste mit deinen Apps, hell und dunkel, Anmeldung mit zweitem Faktor · [mehr →](https://firsttris.github.io/kontext/app.html) |
+| ✉️ **Mail** | **Gemeinsame Postfächer** wie info@ mit Rechten pro Person, **Kategorien** und **Regeln auf dem Server**, Suche wie in Gmail, später senden, **weitere Postfächer** (Gmail, GMX), **Warnungen vor gefälschten Absendern** · [mehr →](https://firsttris.github.io/kontext/mail.html) |
+| 📅 **Kalender** | Tag, Woche, Monat, Serien, **Einladungen mit einem Klick beantworten**, **Wer hat Zeit?**, **Videobesprechung pro Termin**, geteilte Kalender · [mehr →](https://firsttris.github.io/kontext/calendar-contacts.html) |
+| 👥 **Kontakte** | **Der Kunde auf einen Blick**: letzte Mails, nächste Termine, offene Aufgaben und Anrufe; Gruppen, vCard, Doppelte zusammenführen · [mehr →](https://firsttris.github.io/kontext/calendar-contacts.html#kontakte) |
+| ✅ **Aufgaben** | **Liste oder Kanban-Board** pro Postfach, **aus einer Mail, einer Chat-Nachricht oder einem verpassten Anruf**, Erinnerungen, per CalDAV in Thunderbird und am Handy · [mehr →](https://firsttris.github.io/kontext/tasks.html) |
+| 💬 **Team-Chat & Video** | Kanäle und Direktnachrichten, **Mails und Aufgaben als Karten**, Sprachnachrichten, **Videocalls und Bildschirm teilen** auf dem eigenen Server, Ende-zu-Ende verschlüsselte Unterhaltungen · [mehr →](https://firsttris.github.io/kontext/chat.html) |
+| 📞 **Telefonie (CTI)** | **Fritzbox und Nummern bleiben**: Anrufe klingeln in Kontext mit Kontakt und letzter Mail des Anrufers, **Anrufen per Klick**, **Mailbox als Mail**, verpasste Anrufe werden Aufgaben · [mehr →](https://firsttris.github.io/kontext/telephony.html) |
+| 🔐 **Verschlüsselung** | **OpenPGP** und **S/MIME**, **vertraulich senden an jeden** über einen Link auf den eigenen Server, verschlüsselte Backups · [mehr →](https://firsttris.github.io/kontext/encryption.html) |
+| 📄 **Dokumente** | **Word, Excel, PowerPoint und PDF** in Kontext mit [Schreibzeug](https://github.com/firsttris/schreibzeug), ein Ordner pro gemeinsamem Postfach · [mehr →](https://firsttris.github.io/kontext/documents.html) |
+| 🤖 **KI-Agenten (MCP)** | Claude und andere Agenten schlagen Kunden, Mails und Termine mit deinen Rechten nach und **schreiben Entwürfe** – kein Senden, kein Löschen, jede Änderung protokolliert · [mehr →](https://firsttris.github.io/kontext/agents.html) |
+| 🏢 **Firmenverwaltung** | **Mitarbeiter, gemeinsame Postfächer und Rechte** ohne IT-Kenntnisse, Firmen-Signatur, **Austritt ohne Löschen**, Datensicherung im Blick, **Umzug von Microsoft 365, Gmail und Outlook** · [mehr →](https://firsttris.github.io/kontext/company.html) |
+| 📱 **Auf jedem Gerät** | **Eine App am PC, unter Android und am iPhone** ohne App Store, Benachrichtigungen, hell und dunkel, Anmeldung mit zweitem Faktor · [mehr →](https://firsttris.github.io/kontext/app.html) |
 
 <img src="docs/screenshots/phone-call.png" alt="CTI in Kontext: ein Anruf über die Fritzbox klingelt im Browser mit Kontakt, Firma, Nummer und letzter Mail des Anrufers, neben dem Posteingang" width="900">
 
@@ -148,7 +147,7 @@ eigenen Server will, mit Mail, Kalender, Chat und Firmentelefon an einem Ort.
 | [Roundcube](https://roundcube.net), [SOGo](https://www.sogo.nu) | bewährte Webmailer und Groupware für IMAP | moderne Oberfläche fürs Handy, JMAP-Push, Kontakte mit Kundenansicht, Aufgaben und Chat |
 | [Zimbra](https://www.zimbra.com), [Open-Xchange](https://www.open-xchange.com) | Groupware-Pakete für Provider und größere Firmen | ein kleiner Server pro Firma, an einem Nachmittag eingerichtet, eine Firmenverwaltung für den Chef |
 | [3CX](https://www.3cx.com), [Placetel](https://www.placetel.de) | Telefonanlagen mit CTI-Apps | Fritzbox und Nummern bleiben, Anrufe stehen neben den Mails des Kunden, keine Lizenz pro Nebenstelle |
-| Bulwark | JMAP-Webmail für Stalwart | Kalender, Kontakte, Aufgaben, Chat, Telefonie und Firmenverwaltung |
+| [Bulwark](https://www.bulwarkmail.org) | JMAP-Webmail mit Kalender und Kontakten für Stalwart | Kundenansicht, gemeinsame Postfächer fürs Team, Aufgaben, Chat, Telefonie und Firmenverwaltung |
 
 ## ❓ FAQ
 
@@ -198,8 +197,16 @@ einem Thin Client im Büro.
 
 Es ist dafür gebaut: Die Daten bleiben auf deinem Server, ohne Tracker oder Dritte. Einen
 Auftragsverarbeitungsvertrag schließt du mit deinem Hoster; bei einem Server im eigenen Haus
-nicht einmal das. Für die GoBD wird beim Austritt nichts gelöscht, und Backups gehen verschlüsselt
-auf S3-Speicher mit Object Lock.
+nicht einmal das.
+</details>
+
+<details>
+<summary><b>Ist Kontext GoBD-konform?</b></summary>
+
+Nein, Kontext ist kein Mailarchiv. Die GoBD verlangen, dass geschäftliche Mails über Jahre so
+aufbewahrt werden, dass niemand sie löschen oder ändern kann; in Kontext kann man Mails löschen.
+Dafür gehört ein GoBD-Archiv daneben. Kontext liefert die Bausteine drumherum: Beim Austritt wird
+nichts gelöscht, und Backups gehen verschlüsselt und unveränderbar (Object Lock) auf S3-Speicher.
 </details>
 
 <details>
@@ -228,8 +235,8 @@ diese Adresse über den Server des Anbieters, damit Empfänger sie als echt sehe
 <details>
 <summary><b>Kann ich Claude oder andere KI-Agenten mit meinen Mails nutzen?</b></summary>
 
-Ja, Kontext ist ein MCP-Server. Ein Agent arbeitet mit deinen Rechten, legt Entwürfe an statt zu
-senden und löscht nie etwas. Siehe [KI-Agenten](https://firsttris.github.io/kontext/agents.html).
+Ja. Kontext ist ein MCP-Server: Claude und andere Agenten schlagen mit deinen Rechten nach und
+schreiben Entwürfe; sie senden und löschen nie etwas. Siehe [KI-Agenten](https://firsttris.github.io/kontext/agents.html).
 </details>
 
 <details>

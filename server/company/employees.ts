@@ -222,7 +222,7 @@ export const employeeRoutes = ({
 
   /**
    * Someone leaves: access locked, the mailbox handed over, new mail forwarded and answered.
-   * Nothing is deleted; the mailbox stays for the GoBD retention.
+   * Nothing is deleted; the mailbox and its mail stay.
    */
   app.post("/:id/offboarding", async (c) => {
     const loaded = c.get("loaded");

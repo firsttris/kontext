@@ -15,7 +15,7 @@ Mittelstand.
 
 Jede Installation hat ihren eigenen Mailserver [Stalwart](https://stalw.art); Kontext ist die
 Oberfläche im Browser und am Handy (installierbar als App) und spricht mit Stalwart über JMAP.
-Die Daten bleiben auf dem eigenen Server – DSGVO, GoBD-gerechte Aufbewahrung, keine Kosten pro
+Die Daten bleiben auf dem eigenen Server – DSGVO, nichts geht beim Austritt verloren, keine Kosten pro
 Benutzer. Thunderbird, Outlook, iPhone und Android verbinden sich weiter per IMAP, SMTP, CalDAV und
 CardDAV.
 
