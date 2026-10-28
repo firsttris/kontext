@@ -8,7 +8,6 @@ import { useQueries } from "@tanstack/react-query";
 import { useClient } from "@/auth/auth";
 import { queryEmails } from "@/jmap/mail";
 import { addDays, type CalendarEvent, dateKey, eventKey, eventTimes } from "@/lib/jscalendar";
-import { shortAddress } from "@/lib/mail-accounts";
 import { type InboxMail, newMails, restOfToday } from "@/lib/notifications";
 import { assignedToMe, dueTasks } from "@/lib/task-context";
 import { isInvitation, useEvents, useMyAddresses } from "../calendar/queries";
@@ -43,7 +42,7 @@ export const useNotificationFeed = (now: Date) => {
     inboxes.flatMap(({ account }, index) =>
       (unread[index]?.data?.emails ?? []).map((email) => ({
         accountId: account.id,
-        label: account.isPersonal ? "" : shortAddress(account.name),
+        label: account.isPersonal ? "" : account.name,
         email,
       })),
     ),

@@ -9,7 +9,6 @@ import { Input, Label, Textarea } from "@/components/ui/input";
 import { useToast } from "@/components/ui/toast";
 import { useMailAccounts } from "@/features/mail/queries";
 import { SettingsCard } from "@/features/settings/settings-page";
-import { shortAddress } from "@/lib/mail-accounts";
 import { m } from "@/paraglide/messages";
 import { type Snippet, useSnippetActions, useSnippets } from "./queries";
 
@@ -180,7 +179,7 @@ export const SnippetsSection = () => {
         <Mailbox
           key={account.id}
           accountId={account.id}
-          title={account.isPersonal ? m.snippets_mine() : shortAddress(account.name)}
+          title={account.isPersonal ? m.snippets_mine() : account.name}
           hint={
             account.isPersonal
               ? m.snippets_mine_hint(PLACEHOLDERS)

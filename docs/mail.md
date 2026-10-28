@@ -17,7 +17,8 @@ IMAP und SMTP.
 ## Im Team
 
 - **Gemeinsame Postfächer** (info@, rechnung@) stehen bei jedem Mitglied in der Seitenleiste,
-  dort mit voller Adresse wie das eigene; in den Listen markiert sie ein kurzes „info@“.
+  mit voller Adresse wie das eigene – so heißen sie überall, auch in den Listen, bei Aufgaben,
+  im Chat, im Kalender und in den Kontakten.
   Antworten gehen als info@ hinaus, mit dem Namen der Person, die geantwortet hat; die Liste
   zeigt, wer schon geantwortet hat („Jonas · 14:02“). Rechte je Person: kein Zugriff, nur lesen,
   lesen und senden. [Mehr](architecture.md#gemeinsame-postfacher)

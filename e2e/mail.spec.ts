@@ -641,7 +641,7 @@ test.describe("Alle Posteingänge am Handy @phone", () => {
     await expect(
       page
         .getByRole("list", { name: "Alle Posteingänge" })
-        .getByText("info@", { exact: true })
+        .getByText("info@weber-haustechnik.test", { exact: true })
         .first(),
     ).toBeVisible();
   });

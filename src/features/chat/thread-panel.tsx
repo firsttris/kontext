@@ -27,7 +27,7 @@ export const ThreadPanel = ({
 }: {
   channel: ChannelSummary;
   parentId: string;
-  /** "#lager", "info@", the colleague's name. */
+  /** "#lager", "info@weber-haustechnik.test", the colleague's name. */
   title: string;
   onClose: () => void;
   onMakeTask: (message: Message) => void;

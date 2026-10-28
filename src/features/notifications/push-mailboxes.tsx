@@ -6,7 +6,6 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/components/ui/toast";
 import { useMailAccounts } from "@/features/mail/queries";
-import { shortAddress } from "@/lib/mail-accounts";
 import { m } from "@/paraglide/messages";
 
 const KEY = ["push", "mailboxes"];
@@ -53,7 +52,7 @@ export const PushMailboxes = () => {
           checked={!off.includes(account.id)}
           onChange={(on) => toggle.mutate({ accountId: account.id, on })}
         >
-          {account.isPersonal ? m.notifications_own_mailbox() : shortAddress(account.name)}
+          {account.isPersonal ? m.notifications_own_mailbox() : account.name}
         </Switch>
       ))}
     </fieldset>

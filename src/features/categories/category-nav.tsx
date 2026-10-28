@@ -18,7 +18,7 @@ export const CategoryNav = ({
   navClass,
 }: {
   accountId: string;
-  /** "info@" or the own address. */
+  /** The mailbox's address. */
   mailbox: string;
   /** The search that is open, to mark its category. */
   activeQuery: string | undefined;

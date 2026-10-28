@@ -28,7 +28,7 @@ import { useToast } from "@/components/ui/toast";
 import type { Mailbox } from "@/jmap/types";
 import { cn } from "@/lib/cn";
 import { formatSize } from "@/lib/format";
-import { mailboxNotice, shortAddress } from "@/lib/mail-accounts";
+import { mailboxNotice } from "@/lib/mail-accounts";
 import {
   type FolderNode,
   flattenTree,
@@ -206,7 +206,7 @@ export const MailSidebar = ({ accountId, mailbox, view, query }: Props) => {
           </div>
           {accounts.map((entry) => {
             const inbox = inboxes.find((candidate) => candidate.account.id === entry.id)?.mailbox;
-            // The full address, like the own one; the badges in the lists keep the short "info@".
+            // The full address, like everywhere else: a bare "info@" means nothing to most people.
             const label = entry.name;
             return (
               <Link
@@ -252,7 +252,7 @@ export const MailSidebar = ({ accountId, mailbox, view, query }: Props) => {
       {account ? (
         <CategoryNav
           accountId={account.id}
-          mailbox={account.isPersonal ? account.name : shortAddress(account.name)}
+          mailbox={account.name}
           activeQuery={view === "search" ? query : undefined}
           navClass={navClass}
         />

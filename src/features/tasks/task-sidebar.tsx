@@ -4,7 +4,6 @@ import { CalendarDays, CheckCircle2, Plus, Sun, User, Users } from "lucide-react
 import type { ReactNode } from "react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/cn";
-import { shortAddress } from "@/lib/mail-accounts";
 import type { TaskView } from "@/lib/tasks";
 import { m } from "@/paraglide/messages";
 import type { TasksSearch } from "@/routes/_app/tasks";
@@ -77,9 +76,7 @@ export const TaskSidebar = ({
             ) : (
               <Users size={15} strokeWidth={1.75} />
             )}
-            <span className="truncate">
-              {board.isPersonal ? m.tasks_my_board() : shortAddress(board.name)}
-            </span>
+            <span className="truncate">{board.isPersonal ? m.tasks_my_board() : board.name}</span>
             <Count value={board.open} />
           </Link>
         );

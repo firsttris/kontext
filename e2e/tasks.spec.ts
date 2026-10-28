@@ -80,6 +80,10 @@ test.describe("Aufgaben", () => {
     const anna = await (await browser.newContext()).newPage();
     await login(anna, "anna");
     await anna.goto(`/tasks?board=${created!.accountId}`);
+    // Named by its full address: a bare "info@" says nothing to most people.
+    await expect(
+      anna.getByRole("heading", { name: "Board von info@weber-haustechnik.test" }),
+    ).toBeVisible();
     const open = anna.getByRole("region", { name: "Offen" });
     const doing = anna.getByRole("region", { name: "In Arbeit" });
     await expect(open.getByRole("link", { name: new RegExp(subject) })).toBeVisible();

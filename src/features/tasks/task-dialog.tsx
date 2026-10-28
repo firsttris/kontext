@@ -13,7 +13,6 @@ import { cn } from "@/lib/cn";
 import { findContact } from "@/lib/correspondent";
 import { addDays, dateKey } from "@/lib/jscalendar";
 import { fullName } from "@/lib/jscontact";
-import { shortAddress } from "@/lib/mail-accounts";
 import { contactLink } from "@/lib/task-context";
 import type { TaskLink } from "@/lib/tasks";
 import { m } from "@/paraglide/messages";
@@ -242,7 +241,7 @@ export const TaskDialog = ({
             <Select value={accountId} onChange={(e) => setAccountId(e.target.value)}>
               {boards.map((board) => (
                 <option key={board.id} value={board.id}>
-                  {board.isPersonal ? m.tasks_my_board() : shortAddress(board.name)}
+                  {board.isPersonal ? m.tasks_my_board() : board.name}
                 </option>
               ))}
             </Select>

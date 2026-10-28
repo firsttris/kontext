@@ -409,7 +409,7 @@ test.describe("Chat", () => {
     const channels = page.getByRole("navigation", { name: "Kanäle" }).first();
     await expect(channels.getByRole("link", { name: "allgemein" })).toBeVisible();
     await channels.getByRole("link", { name: "info@" }).click();
-    await expect(page.getByRole("heading", { name: "info@" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "info@weber-haustechnik.test" })).toBeVisible();
     await write(page, text);
 
     const anna = await colleague(browser, "anna");

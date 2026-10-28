@@ -94,7 +94,9 @@ test.describe("Chat: Fotos, Dateien und Karten", () => {
     await expect(dialog.getByRole("radio", { name: /^info@/ })).toBeChecked();
     await dialog.getByRole("textbox", { name: "Nachricht" }).fill("Wer ruft zurück?");
     await dialog.getByRole("button", { name: "Senden", exact: true }).click();
-    await expect(page.getByRole("status").filter({ hasText: "An info@ geschickt." })).toBeVisible();
+    await expect(
+      page.getByRole("status").filter({ hasText: "An info@weber-haustechnik.test geschickt." }),
+    ).toBeVisible();
     await expect(page.getByRole("link", { name: "Besprochen in info@" })).toBeVisible();
 
     const anna = await colleague(browser, "anna");
@@ -108,7 +110,9 @@ test.describe("Chat: Fotos, Dateien und Karten", () => {
     await openChannel(anna, /^info@/);
     await anna.getByRole("textbox", { name: "Nachricht" }).fill("Mache ich.");
     await anna.keyboard.press("Enter");
-    await expect(page.getByRole("link", { name: /Besprochen in info@ · 1 Antwort/ })).toBeVisible();
+    await expect(
+      page.getByRole("link", { name: /Besprochen in info@weber-haustechnik\.test · 1 Antwort/ }),
+    ).toBeVisible();
   });
 
   test("eine Mail aus dem eigenen Postfach sieht der andere nur als Karte", async ({

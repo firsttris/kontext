@@ -33,7 +33,6 @@ import { useShortcuts } from "@/components/use-shortcuts";
 import { isFlagged } from "@/jmap/mail";
 import type { EmailDetail, EmailSummary, Mailbox } from "@/jmap/types";
 import { correspondent } from "@/lib/correspondent";
-import { shortAddress } from "@/lib/mail-accounts";
 import { mailboxRights } from "@/lib/mailboxes";
 import { moveTargets } from "@/lib/move-targets";
 import { type Rule, ruleFromSender } from "@/lib/rules";
@@ -100,11 +99,7 @@ export const Toolbar = ({
   };
 
   const account = accounts.find((candidate) => candidate.id === accountId);
-  const mailboxLabel = !account
-    ? ""
-    : account.isPersonal
-      ? account.name
-      : shortAddress(account.name);
+  const mailboxLabel = account?.name ?? "";
   const groups = moveTargets(accounts, mailboxes, { accountId, mailboxId: mailbox.id });
   const flagged = isFlagged(email);
   const { canRemove, canMarkSeen, canFlag } = mailboxRights(mailbox);
