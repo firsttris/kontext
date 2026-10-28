@@ -2,25 +2,26 @@
 
 Was als Nächstes in Kontext kommt, sortiert nach Nutzen für kleine Betriebe. Die Reihenfolge ist
 ein Plan, kein Versprechen; Wünsche und Hinweise gern als
-[Issue](https://github.com/firsttris/kontext/issues).
+[Issue](https://github.com/firsttris/kontext/issues). Was schon fertig ist, steht im
+[Changelog](CHANGELOG.md) und in der [Dokumentation](https://firsttris.github.io/kontext/).
 
 ## Als Nächstes
 
 | Funktion | Worum es geht |
 | --- | --- |
 | **Pilot** | Vier Wochen bei einem Kunden parallel zum alten System, mit der [Telefonie](https://firsttris.github.io/kontext/telephony.html) im Test. |
-| **Offene Punkte** | die kleineren Dinge unten, etwa Erinnerungen an Termine bei geschlossener App und App-Passwörter für CalDAV. |
+| **Offene Punkte** | die Lücken unten, etwa Erinnerungen an Termine bei geschlossener App und App-Passwörter für CalDAV. |
 
 ## Danach
 
 | Funktion | Worum es geht |
 | --- | --- |
 | **Telefonie: mehr** | Anschluss direkt beim Anbieter oder per SIP-Trunk statt über die Fritzbox, SIP über TLS, Warteschleife mit Position, weitere Tischtelefone (Yealink, Grandstream). |
-| **Arbeitsberichte** | ein Modul, etwa fürs Handwerk. |
+| **Module für Kunden** | Was nur manche Betriebe brauchen, kommt als eigenes Projekt wie [Schreibzeug](https://github.com/firsttris/schreibzeug) (Dokumente): eigener Dienst mit eigenen Daten und Releases, im Rahmen in Kontext eingebunden, Anmelden mit Kontext (OpenID Connect), je Kunde zuschaltbar. Ideen: **Arbeitsberichte** (etwa fürs Handwerk, mit Fotos von der Baustelle), **Belege**, **Team-Wissen** (Seiten pro Postfach: Abläufe, Zugänge, Preise), **Tickets**. |
 
 ## Offene Punkte
 
-Kleinere Dinge, die beim Bauen aufgefallen sind und noch erledigt werden.
+Lücken und Befunde, die beim Bauen offen geblieben sind und noch angegangen werden.
 
 **Funktionen**
 
@@ -37,7 +38,6 @@ Kleinere Dinge, die beim Bauen aufgefallen sind und noch erledigt werden.
 - [ ] Wiedervorlage für mehrere ausgewählte Mails auf einmal (heute aus der geöffneten Mail) und „Wieder vorgelegt“ auch in „Alle Posteingänge“ (heute im Posteingang des Postfachs).
 - [ ] Lesebestätigungen von Programmen, die kein `In-Reply-To` setzen, erkennt die gesendete Mail noch nicht (dazu müsste Kontext `Original-Message-ID` im Bericht lesen); eingegangene Bestätigungen könnten von selbst gelesen und still abgelegt werden.
 - [ ] **Drucken mit Bildern aus dem Internet**, wenn sie in der Mail freigegeben wurden.
-- [ ] Ideen aus dem ersten Entwurf, noch nicht eingeplant: **Belege**, **Buchung**, **Leitstand**, **Tickets**.
 
 **Technik**
 
@@ -56,70 +56,3 @@ Kleinere Dinge, die beim Bauen aufgefallen sind und noch erledigt werden.
   Namen.
 - **Kategorien in Handy-Apps:** Apple Mail und die Gmail-App zeigen eigene Schlagworte nicht;
   sichtbar sind sie in Kontext und Thunderbird.
-
-## Zuletzt fertig geworden
-
-S/MIME: Kette bis zu einer anerkannten Stelle und Sperrstatus (OCSP) geprüft, Zertifikate anderer im DNS (SMIMEA) finden.
-Mails nur unterschreiben, ohne zu verschlüsseln (S/MIME oder PGP).
-Chat: eine Unterhaltung oder einen Kanal „vertraulich weiterführen“ (neue verschlüsselte mit denselben Mitgliedern, Hinweis in der alten).
-Vertraulicher Chat: ein neuer Schlüssel eines Mitglieds fällt auf (mit Fingerabdruck) und gilt erst nach Bestätigung.
-Verschlüsselte Mails: nach dem Öffnen mit Text in Liste und Unterhaltung, Antworten zitieren ihn, Weiterleiten mit Inhalt und Anhängen.
-„Vertraulich senden“: Laufzeit des Links beim Senden wählbar (7, 30 oder 90 Tage).
-Anrufe und Videocalls in vertraulichen Unterhaltungen gehen Ende-zu-Ende verschlüsselt (LiveKit E2EE, Schlüssel je Anruf an die Mitglieder verschlüsselt).
-Verschlüsselte Mails (PGP und S/MIME) verschlüsseln auch den Betreff; außen steht „Vertrauliche Nachricht“, nach dem Öffnen der echte.
-Vertraulicher Chat: Fotos und Dateien gehen Ende-zu-Ende verschlüsselt, ohne lesbaren Namen auf dem Server.
-Verschlüsselung, Baustein 5: vertrauliche Direktnachrichten und Kanäle im Chat, Ende-zu-Ende
-verschlüsselt mit den persönlichen Schlüsseln, unterschrieben; der Server sieht nur Verschlüsseltes.
-Verschlüsselung, S/MIME: eigenes Zertifikat (.p12) importieren, Zertifikate anderer aus
-unterschriebenen Mails und Dateien, S/MIME-Mails lesen und Unterschriften prüfen, „Vertraulich
-senden“ nimmt S/MIME für Empfänger mit Zertifikat.
-Telefonie über die Fritzbox, mehr (im Test): Rückruf-Aufgaben, Mailbox als Mail, Öffnungszeiten
-und Feiertage, Weitervermitteln, wer klingelt wann (alle oder der Reihe nach, Handy dazu),
-Durchwahlen, Halten/Rückfrage/Dreierkonferenz, Snom-Tischtelefone, Präsenz und Bitte nicht stören,
-Sprachmenü, Sperrliste, Anrufstatistik, Türsprechstelle, Fax als PDF-Mail, Gespräche aufnehmen.
-Telefonie über eine Telefonbox an der Fritzbox (im Test): Anrufe klingeln in Kontext mit Kontakt,
-letzter Mail und nächstem Termin, Annehmen im Browser, Anrufen aus Kontakten, Anrufliste mit
-Notiz und Zurückrufen.
-Verschlüsselung, Baustein 4: „Vertraulich senden“ – PGP für Empfänger mit Schlüssel, für alle
-anderen ein Link mit Code auf den eigenen Server (Schlüssel nur im Link), Antworten dort, Übersicht
-„Vertraulich gesendet“.
-Verschlüsselung, Baustein 3: PGP-Mails lesen (entschlüsseln im Browser, Unterschrift prüfen) und
-verschlüsselt und unterschrieben senden, mit Anhängen; Antworten darauf gehen verschlüsselt.
-Verschlüsselung, Baustein 2: persönlicher OpenPGP-Schlüssel (anlegen, importieren, mit Passphrase
-und Wiederherstellungscode), Schlüssel anderer aus Autocrypt, WKD, keys.openpgp.org und Dateien, WKD
-für die eigenen Leute.
-Verschlüsselung, Baustein 1: Schloss an Mails (verschlüsselt angekommen?), Prüfung von SPF,
-DMARC, MTA-STS, TLS-RPT, DANE und HTTPS in der Firmenverwaltung, Anleitung für Platte und Backups.
-Lesebestätigung anfordern, beantworten und sehen.
-Newsletter abbestellen mit einem Klick, per Mail oder auf der Webseite des Absenders. Bilder je
-Absender, Domain oder für alle Kontakte erlauben.
-Aufgaben: eigene Spalten pro Board, wiederkehrende Aufgaben, Regel-Aktion „Aufgabe anlegen“,
-Abgleich mit Thunderbird und Handy-Apps über CalDAV.
-Team-Chat: Antworten im Thread, Reaktionen, Aufbewahrungsfrist in der Firmenverwaltung, Suche
-mit Umlauten, Vorschaubilder für Fotos, Mail als Kopie teilen.
-Aufgaben überall im Kontext: offene Aufgaben am Kontakt, Fälliges im Kalender, neu Zugewiesenes
-und heute Fälliges in der Glocke, Erinnerungen als Benachrichtigung auch bei geschlossener App,
-„Aufgaben erstellen“ für mehrere Mails.
-Wiedervorlage (eine Mail bis zu einem Zeitpunkt aus dem Weg, dann oben im Posteingang – auch bei
-geschlossener App).
-Anrufe und Videobesprechungen im Chat (LiveKit auf dem eigenen Server): anrufen in
-Direktnachrichten, mit Klingeln auch bei geschlossener App, Besprechungen in Kanälen zum
-Beitreten, Bildschirm teilen, das Gespräch bleibt beim Wechsel zwischen den Apps offen;
-„Verpasster Anruf“ und Gesprächsdauer im Verlauf; Videobesprechung am Termin mit Gästen per Link.
-Senden rückgängig und später senden, Textbausteine.
-Unterhaltungen beim Lesen (frühere Mails, Antworten seitdem, Zitate eingeklappt, „wer hat
-geantwortet“ in gemeinsamen Postfächern), auf Wunsch gruppiert.
-Benachrichtigungen bei geschlossener App (Web Push, Ende-zu-Ende verschlüsselt) für neue Mails,
-Direktnachrichten und @Erwähnungen.
-Team-Chat mit Kanälen (#allgemein, einer pro gemeinsamem Postfach, eigene), Direktnachrichten,
-@Erwähnungen, „schreibt …“, Gelesen und Ungelesen, Fotos und Dateien, Mails, Aufgaben und
-Kontakte als Karten, „Über diese Mail sprechen“, Aufgaben aus Nachrichten, Suche, Bearbeiten,
-Löschen und Stummschalten – live über eine
-eigene Verbindung, die auch Aufgaben sofort abgleicht; am Handy eine Tab-Leiste mit Chat und „Mehr“.
-Aufgaben mit Liste und Kanban-Board (eigene und pro gemeinsamem Postfach, aus Mails heraus, mit
-Checkliste, Zuständigen und Fälligkeit), Kontext als installierbare App (PWA),
-Regeln (auch für gemeinsame Postfächer und auf vorhandene Mails), Kategorien (im Team geteilt,
-per Regel gesetzt, beim Umzug übernommen), mehrere Mails auf einmal bearbeiten, Drucken,
-Benachrichtigungen, Speicherplatz, Warnungen vor gefälschten Absendern, Anhänge mit Vorschau,
-Mails zwischen Postfächern verschieben. Alles Weitere steht in der
-[Dokumentation](https://firsttris.github.io/kontext/).
