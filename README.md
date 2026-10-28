@@ -31,10 +31,6 @@ Shared mailboxes, a team calendar, and every customer's mails, appointments and 
 
 </div>
 
-> [!TIP]
-> **Let an AI set it up for you.** Give Claude Code or another coding agent this repository and SSH access to
-> your server and say: "Set up Kontext on my server following the [installation guide](https://firsttris.github.io/kontext/installation.html)."
-
 ## 💡 Why Kontext?
 
 Google Workspace and Microsoft 365 are convenient, but every user costs money every month and the
@@ -60,6 +56,13 @@ of your own.
 businesses · self-hosters looking for a web client for [Stalwart](https://stalw.art).
 
 ## 🚀 Install
+
+### 1. Let an AI set it up
+
+Give Claude Code or another coding agent this repository and SSH access to your server and say:
+"Set up Kontext on my server following the [installation guide](https://firsttris.github.io/kontext/installation.html)."
+
+### 2. Manually
 
 On a server with Docker (or Podman), your own domain and open ports 25, 80, 443, 465, 587 and 993:
 

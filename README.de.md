@@ -31,10 +31,6 @@ Gemeinsame Postfächer, ein Kalender fürs Team und zu jedem Kunden alle Mails, 
 
 </div>
 
-> [!TIP]
-> **Lass es dir von einer KI aufsetzen.** Gib Claude Code oder einem anderen Coding-Agenten dieses Repository und
-> SSH-Zugang zu deinem Server und sag: „Setz Kontext auf meinem Server auf, nach der [Installationsanleitung](https://firsttris.github.io/kontext/installation.html).“
-
 ## 💡 Warum Kontext?
 
 Google Workspace und Microsoft 365 sind bequem, aber jeder Benutzer kostet jeden Monat, und die
@@ -60,6 +56,13 @@ oder einem eigenen Rechner.
 Selfhoster, die eine Weboberfläche für [Stalwart](https://stalw.art) suchen.
 
 ## 🚀 Installation
+
+### 1. Von einer KI aufsetzen lassen
+
+Gib Claude Code oder einem anderen Coding-Agenten dieses Repository und SSH-Zugang zu deinem Server und sag:
+„Setz Kontext auf meinem Server auf, nach der [Installationsanleitung](https://firsttris.github.io/kontext/installation.html).“
+
+### 2. Manuell
 
 Auf einem Server mit Docker (oder Podman), eigener Domain und offenen Ports 25, 80, 443, 465, 587 und 993:
 
