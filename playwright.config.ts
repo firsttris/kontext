@@ -68,7 +68,12 @@ export default defineConfig({
     // Pictures for the README and the docs: `bun run screenshots` (or the workflow).
     {
       name: "screenshots",
-      use: { ...devices["Desktop Chrome"], launchOptions },
+      // German browser, so date and time fields read 28.10.2026 and 10:00, not 10/28/2026 10:00 AM.
+      use: {
+        ...devices["Desktop Chrome"],
+        // Chromium on Linux takes the language of its fields from LANG, not from --lang.
+        launchOptions: { ...launchOptions, env: { ...process.env, LANG: "de_DE.UTF-8" } },
+      },
       grep: /@screenshots/,
     },
   ],
