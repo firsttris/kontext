@@ -567,5 +567,22 @@ test.describe("Chat am Handy @phone", () => {
       .toBeLessThanOrEqual(visibleBottom);
     await expect(page.getByRole("heading", { name: "# allgemein" })).toBeInViewport();
     expect(await page.evaluate(() => window.scrollY)).toBe(0);
+
+    // While the keyboard rises, Chrome shrinks its view by the keyboard for a few frames and
+    // then counters it. The app keeps its height through that: the field used to shoot up by a
+    // second keyboard height and sink back.
+    const appHeight = () =>
+      page.evaluate(() => document.documentElement.style.getPropertyValue("--app-height"));
+    const settled = await appHeight();
+    const fieldTop = (await field.boundingBox())!.y;
+    const screen = page.viewportSize()!;
+    await page.setViewportSize({ width: screen.width, height: screen.height - keyboard });
+    await page.evaluate(() => new Promise(requestAnimationFrame));
+    expect(await appHeight()).toBe(settled);
+    await page.setViewportSize(screen);
+    await page.evaluate(() => new Promise(requestAnimationFrame));
+    expect(await appHeight()).toBe(settled);
+    expect((await field.boundingBox())!.y).toBe(fieldTop);
+    expect(await page.evaluate(() => window.scrollY)).toBe(0);
   });
 });

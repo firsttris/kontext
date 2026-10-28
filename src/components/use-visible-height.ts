@@ -35,11 +35,19 @@ export const hiddenBelow = (pageHeight: number, visible: VisibleArea) =>
  * lies over the page (VirtualKeyboard API); the visible area doesn't shrink for it. Nothing to
  * set when zoomed in with two fingers and no keyboard lies over the page: the visible part is
  * smaller then, the page is not.
+ *
+ * `closedHeight` is the visible height last seen without a keyboard. Under an overlaid keyboard
+ * the app is that minus the keyboard, not the visible height minus the keyboard: while the
+ * keyboard rises, Chrome on Android shrinks its view first and counters it a few frames later,
+ * so the visible height dips by the keyboard for those frames ("transient view resize",
+ * chrome/android/.../compositor/CompositorViewHolder.java). Taken from there, the app shrank
+ * twice, the field shot up, and sank back once the keyboard was in.
  */
 export const fitAboveKeyboard = (
   pageHeight: number,
   visible: ZoomedArea,
   overlay: number,
+  closedHeight?: number,
 ): { appHeight?: number; keyboardHeight: number } | undefined => {
   if (visible.scale > 1.01)
     return overlay > 0
@@ -50,10 +58,12 @@ export const fitAboveKeyboard = (
   // 100dvh. A height in px would lag a frame behind each resize, and the browser would scroll the
   // page up to the field in that frame.
   if (hidden === 0 && overlay === 0) return { keyboardHeight: 0 };
-  return {
-    appHeight: Math.max(0, visible.height - overlay),
-    keyboardHeight: hidden + Math.round(overlay),
-  };
+  if (overlay > 0) {
+    const appHeight = Math.max(0, (closedHeight ?? visible.height) - overlay);
+    // Fixed elements sit on the page: they rise to the app's bottom edge, the keyboard's top.
+    return { appHeight, keyboardHeight: Math.max(0, Math.round(pageHeight - appHeight)) };
+  }
+  return { appHeight: visible.height, keyboardHeight: hidden };
 };
 
 const virtualKeyboardOf = (nav: Navigator) =>
@@ -66,8 +76,16 @@ export const useVisibleHeight = () =>
     const root = document.documentElement;
     const keyboard = virtualKeyboardOf(navigator);
     if (keyboard) keyboard.overlaysContent = true;
+    // The visible height without a keyboard, for this width (a turned phone starts afresh).
+    let closed: { width: number; height: number } | undefined;
+    let appHeight: number | undefined;
     const fitToView = () => {
-      const fit = fitAboveKeyboard(root.clientHeight, viewport, keyboard?.boundingRect.height ?? 0);
+      const overlay = keyboard?.boundingRect.height ?? 0;
+      if (overlay === 0 && viewport.scale <= 1.01 && hiddenBelow(root.clientHeight, viewport) === 0)
+        closed = { width: window.innerWidth, height: viewport.height };
+      const closedHeight = closed?.width === window.innerWidth ? closed.height : undefined;
+      const fit = fitAboveKeyboard(root.clientHeight, viewport, overlay, closedHeight);
+      appHeight = fit?.appHeight;
       if (!fit) {
         root.style.removeProperty("--app-height");
         root.style.removeProperty("--keyboard-height");
@@ -83,10 +101,16 @@ export const useVisibleHeight = () =>
     viewport.addEventListener("resize", fitToView);
     viewport.addEventListener("scroll", fitToView);
     // An overlaid keyboard doesn't make the browser scroll to the field; once the app is shorter,
-    // the field moves into view itself (a field in the middle of a long form).
+    // a field it now covers (one in the middle of a long form) moves into view. Only then: in a
+    // frame where Chrome's view is still short, scrolling a field that is already above the
+    // keyboard would push the page up, and it would drop back right after.
     const fitAndReveal = () => {
       fitToView();
-      requestAnimationFrame(() => document.activeElement?.scrollIntoView({ block: "nearest" }));
+      requestAnimationFrame(() => {
+        const field = document.activeElement;
+        if (field && appHeight !== undefined && field.getBoundingClientRect().bottom > appHeight)
+          field.scrollIntoView({ block: "nearest" });
+      });
     };
     keyboard?.addEventListener("geometrychange", fitAndReveal);
     return () => {

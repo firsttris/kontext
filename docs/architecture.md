@@ -560,7 +560,11 @@ das Manifest steht in `vite.config.ts`, der Service Worker in `src/sw/service-wo
   Tastatur kürzen, den Streifen darunter weiß malen, bis sie oben ist, und die Seite
   hochschieben. Dort legt sich die Tastatur deshalb über die Seite (VirtualKeyboard API,
   `overlaysContent`), und die App wird in einem Schritt um ihre Höhe kürzer: Hinter der
-  aufgehenden Tastatur bleibt die App, nichts springt. Browser ohne diese API (Firefox, und
+  aufgehenden Tastatur bleibt die App, nichts springt. Die Höhe darunter ist die sichtbare Höhe
+  ohne Tastatur minus die Tastatur, nicht die gerade gemeldete: Chrome verkleinert beim
+  Aufgehen der Tastatur für ein paar Bilder seine Ansicht und gleicht das erst danach aus
+  (`CompositorViewHolder.java`); mit der gemeldeten Höhe schrumpfte die App doppelt, das
+  Eingabefeld schoss hoch und sank zurück. Browser ohne diese API (Firefox, und
   Chromium-Builds, die sie weglassen) bleiben bei `resizes-content`; dort folgt die App der
   kürzeren Seite allein per CSS (`100dvh`) im selben Bild, ohne eine Höhe in Pixeln, die ein
   Bild hinterherhinge und die Seite hochrutschen ließe. Was in der installierten App unter einer

@@ -50,6 +50,26 @@ describe("fitAboveKeyboard", () => {
     });
   });
 
+  it("stays put while Chrome's view dips under a rising keyboard", () => {
+    // Chrome shrinks its view by the keyboard for a few frames before it counters that: the
+    // visible height drops to 585 although the page under the keyboard keeps its 915.
+    expect(fitAboveKeyboard(585, { height: 585, offsetTop: 0, scale: 1 }, 330, 915)).toEqual({
+      appHeight: 585,
+      keyboardHeight: 0,
+    });
+    expect(fitAboveKeyboard(915, { height: 915, offsetTop: 0, scale: 1 }, 330, 915)).toEqual({
+      appHeight: 585,
+      keyboardHeight: 330,
+    });
+  });
+
+  it("ignores a visible height that overshoots while the keyboard is in flight", () => {
+    expect(fitAboveKeyboard(1000, { height: 1000, offsetTop: 0, scale: 1 }, 330, 915)).toEqual({
+      appHeight: 585,
+      keyboardHeight: 415,
+    });
+  });
+
   it("leaves the page alone when zoomed in without a keyboard over it", () => {
     expect(fitAboveKeyboard(844, { height: 422, offsetTop: 200, scale: 2 }, 0)).toBeUndefined();
   });
