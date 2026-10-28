@@ -19,13 +19,6 @@ Gemeinsame Postfächer, ein Kalender fürs Team und zu jedem Kunden alle Mails, 
 [![DSGVO](https://img.shields.io/badge/DSGVO-Daten%20auf%20deinem%20Server-15803d)](#-warum-kontext)
 [![Made in Europe](https://img.shields.io/badge/made%20in-Europe-003399)](#-warum-kontext)
 
-```bash
-git clone https://github.com/firsttris/kontext /opt/kontext && cd /opt/kontext
-cp deploy/.env.example deploy/.env && chmod 600 deploy/.env
-nano deploy/.env                              # Domain, Backup-Ziel, jedes change-me ersetzen
-docker compose -f deploy/compose.yaml up -d   # oder Podman
-```
-
 [Warum](#-warum-kontext) •
 [Installation](#-installation) •
 [Funktionen](#-funktionen) •
@@ -67,10 +60,11 @@ Selfhoster, die eine Weboberfläche für [Stalwart](https://stalw.art) suchen.
 Auf einem Server mit Docker (oder Podman), eigener Domain und offenen Ports 25, 80, 443, 465, 587 und 993:
 
 ```bash
+# Die Konfiguration (compose.yaml, .env.example, Caddyfile, Backups); die Programme kommen von Docker Hub
 git clone https://github.com/firsttris/kontext /opt/kontext && cd /opt/kontext
 cp deploy/.env.example deploy/.env && chmod 600 deploy/.env
-nano deploy/.env                              # Domain, Backup-Ziel, jedes change-me ersetzen
-docker compose -f deploy/compose.yaml up -d   # oder Podman
+nano deploy/.env                              # Domain, Version, Backup-Ziel, jedes change-me ersetzen
+docker compose -f deploy/compose.yaml up -d   # lädt Kontext, Stalwart und Caddy und startet sie (oder Podman)
 ```
 
 Danach die wichtigsten Schritte in Stalwarts Verwaltung (Port 8080, nur über SSH-Tunnel oder
@@ -83,7 +77,7 @@ Tailscale); die [Anleitung](https://firsttris.github.io/kontext/installation.htm
    eintragen und Kontext neu starten ([wie](https://firsttris.github.io/kontext/installation.html#firmenverwaltung-einschalten)).
 4. Unter `https://<deine Domain>` anmelden.
 
-Anrufe und Dokumente sind in `.env.example` schon eingeschaltet; wer sie nicht braucht, nimmt sie
+Anrufe und Dokumente (Schreibzeug, ohne eigene Installation) sind in `.env.example` schon eingeschaltet; wer sie nicht braucht, nimmt sie
 aus `COMPOSE_PROFILES`. Für Telefonie kommt eine kleine Box ins Büro. Für zehn Benutzer reicht ein
 VPS mit 2 vCPU und 4 GB RAM. Alles Weitere – DNS, Podman, Backups, Updates – steht in der
 [Installationsanleitung](https://firsttris.github.io/kontext/installation.html).

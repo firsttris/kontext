@@ -62,6 +62,9 @@ services:
     environment:
       SCHREIBZEUG_URL: ${SCHREIBZEUG_URL:-}
       SCHREIBZEUG_EMBED_ORIGIN: https://${KONTEXT_DOMAIN}
+      # Caddy, as Schreibzeug sees it (the network below): without it every sign-in counts as
+      # Caddy's, and all of them share the few tries per client (docs/installation.md there)
+      SCHREIBZEUG_TRUSTED_PROXIES: 10.89.250.0/24
       OIDC_ISSUER: https://${KONTEXT_DOMAIN}/api/auth
       OIDC_CLIENT_ID: schreibzeug
       OIDC_CLIENT_SECRET: ${SCHREIBZEUG_CLIENT_SECRET:-}
