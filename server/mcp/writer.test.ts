@@ -95,6 +95,16 @@ describe("whom an agent invites", () => {
     );
   });
 
+  it("refuse an entry that holds an outside address after a colleague's", () => {
+    expect(() =>
+      colleagueAddresses(
+        ["anna@weber-haustechnik.test, markus.hoffmann@hoffmann-bau.test"],
+        team,
+        organizer,
+      ),
+    ).toThrow("Nur Kollegen");
+  });
+
   it("are checked before anything is written", async () => {
     const call = vi.fn();
     const w = createWriter({
