@@ -82,7 +82,7 @@ export const ReactionBar = ({
               className={cn(
                 "flex h-8 items-center gap-1 rounded-full border px-2.5 text-[13px] transition-colors md:h-7 md:px-2",
                 mine
-                  ? "border-accent/60 bg-accent/10 font-medium text-accent"
+                  ? "border-accent/60 bg-accent/10 font-medium text-accent-ink"
                   : "border-border bg-bg text-muted hover:border-muted hover:text-fg",
               )}
             >

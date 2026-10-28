@@ -67,7 +67,7 @@ export const MessageCard = ({ card, onRemove }: { card: Card; onRemove?: () => v
       <span
         className={cn(
           "flex size-8 shrink-0 items-center justify-center rounded-lg",
-          card.kind === "task" ? "bg-accent/10 text-accent" : "bg-subtle text-muted",
+          card.kind === "task" ? "bg-accent/10 text-accent-ink" : "bg-subtle text-muted",
         )}
       >
         <LinkIcon kind={card.kind} />

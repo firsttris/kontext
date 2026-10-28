@@ -9,13 +9,17 @@
   --bg: #ffffff;
   --side: #fafafa;
   --fg: #09090b;
-  --muted: #71717a;
+  --muted: #68686f;
   --subtle: #f4f4f5;
   --border: #e4e4e7;
   --hover: #f4f4f5;
   --primary: #18181b;
   --onprimary: #fafafa;
   --accent: #2563eb;
+  /* Behind white text, in both themes: the dark accent #3b82f6 gives only 3.7:1 (WCAG AA: 4.5:1). */
+  --accent-fill: #2563eb;
+  /* Blue text on a blue tint (bg-accent/10, /15): the accent gives only 3.8:1 there. */
+  --accent-ink: #1d58d4;
   --danger: #b91c1c;
   --warn: #b45309;
   --ok: #15803d;
@@ -36,6 +40,7 @@
   --primary: #fafafa;
   --onprimary: #09090b;
   --accent: #3b82f6;
+  --accent-ink: #4f8ff7;
   --danger: #f87171;
   --warn: #f59e0b;
   --ok: #22c55e;
@@ -55,6 +60,8 @@
   --color-primary: var(--primary);
   --color-onprimary: var(--onprimary);
   --color-accent: var(--accent);
+  --color-accent-fill: var(--accent-fill);
+  --color-accent-ink: var(--accent-ink);
   --color-danger: var(--danger);
   --color-warn: var(--warn);
   --color-ok: var(--ok);
@@ -96,6 +103,20 @@
   textarea::placeholder {
     color: var(--muted);
   }
+  /* "Reduce motion" in the system settings: sheets, toasts and scrolling arrive at once. Only
+     !important beats the transitions and animations each component sets with its classes. */
+  /* biome-ignore-start lint/complexity/noImportantStyles: see above */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    ::before,
+    ::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+  /* biome-ignore-end lint/complexity/noImportantStyles: see above */
 }
 
 /* The compose editor (Tiptap): paragraphs and lists like in a mail. */

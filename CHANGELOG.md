@@ -7,6 +7,12 @@ Steps that an update needs beyond raising the version are marked **Upgrade**.
 
 ## Unreleased
 
+- Accessibility: WCAG 2.2 AA as the goal, checked by axe-core on every page, light and dark, desktop
+  and phone (`e2e/accessibility.spec.ts`). Grey text and white text on blue have enough contrast
+  now, days outside the month in the small calendar too; tasks in the calendar are touch targets of
+  24 px on phones; view and filter switches are marked as
+  the current page instead of as pressed buttons; "Reduce motion" turns animations off. New page
+  [Barrierefreiheit](https://firsttris.github.io/kontext/accessibility.html).
 - Documents: Schreibzeug trusts Caddy as its proxy (`SCHREIBZEUG_TRUSTED_PROXIES` in
   `deploy/compose.yaml` and `schreibzeug.container`), so its sign-in limit counts per person, not
   for everyone at once. **Upgrade:** with Compose, `git pull` and start again; with Quadlet, copy

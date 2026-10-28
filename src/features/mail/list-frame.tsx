@@ -78,7 +78,7 @@ export const FilterChips = ({
         key={option.label}
         to="."
         search={(prev) => ({ ...prev, ...option.set })}
-        aria-pressed={option.on}
+        aria-current={option.on ? "page" : undefined}
         className={cn(
           "flex h-7 items-center rounded-[7px] px-3 text-[13px] no-underline",
           option.on ? "bg-bg text-fg shadow-sm" : "text-muted",

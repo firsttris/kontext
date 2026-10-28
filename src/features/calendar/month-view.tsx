@@ -87,7 +87,7 @@ export const MonthView = ({
                 aria-label={day}
                 className={cn(
                   "inline-flex size-6 items-center justify-center self-start rounded-full font-mono text-[12px] no-underline",
-                  day === today ? "bg-accent font-semibold text-white" : "text-fg",
+                  day === today ? "bg-accent-fill font-semibold text-white" : "text-fg",
                   day.slice(0, 7) !== month && day !== today && "text-muted",
                 )}
               >
@@ -123,7 +123,7 @@ export const MonthView = ({
                     />
                   ))}
                   {due.slice(0, taskLines).map((entry) => (
-                    <TaskChip key={entry.task.id} entry={entry} />
+                    <TaskChip key={entry.task.id} entry={entry} stacked />
                   ))}
                   {hidden > 0 ? (
                     <Link

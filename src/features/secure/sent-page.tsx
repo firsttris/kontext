@@ -152,7 +152,7 @@ export const SecureSentPage = ({ messageId }: { messageId?: string }) => {
                 <span className="flex items-center gap-2">
                   <span className="min-w-0 flex-1 truncate font-medium">{message.to}</span>
                   {message.unreadReplies ? (
-                    <span className="rounded-full bg-accent px-1.5 text-[11px] font-medium text-white">
+                    <span className="rounded-full bg-accent-fill px-1.5 text-[11px] font-medium text-white">
                       {m.secure_new_replies({ count: message.unreadReplies })}
                     </span>
                   ) : null}

@@ -139,7 +139,7 @@ export const WeekGrid = ({
               <span
                 className={cn(
                   "inline-flex size-7 items-center justify-center rounded-full text-[16px] font-semibold",
-                  isToday && "bg-accent text-white",
+                  isToday && "bg-accent-fill text-white",
                 )}
               >
                 {Number(day.slice(8))}
@@ -162,7 +162,7 @@ export const WeekGrid = ({
                 <EventChip key={eventKey(event)} event={event} invitation={isInvitation(event)} />
               ))}
               {untimedTasks[index]!.map((entry) => (
-                <TaskChip key={entry.task.id} entry={entry} />
+                <TaskChip key={entry.task.id} entry={entry} stacked />
               ))}
             </div>
           ))}

@@ -47,10 +47,10 @@ export const MessageText = ({
                 "rounded font-medium",
                 !(own && part.id !== me) && "px-0.5",
                 part.id === me
-                  ? "bg-accent text-white"
+                  ? "bg-accent-fill text-white"
                   : own
-                    ? "font-semibold md:bg-accent/10 md:font-medium md:text-accent"
-                    : "bg-accent/10 text-accent",
+                    ? "font-semibold md:bg-accent/10 md:font-medium md:text-accent-ink"
+                    : "bg-accent/10 text-accent-ink",
               )}
             >
               {part.text}

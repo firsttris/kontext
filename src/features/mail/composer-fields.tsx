@@ -237,7 +237,7 @@ export const ComposerActions = ({
         title={m.mail_receipt_request()}
         aria-pressed={receipt}
         onClick={() => onReceipt(!receipt)}
-        className={receipt ? "bg-accent/10 text-accent hover:bg-accent/15" : undefined}
+        className={receipt ? "bg-accent/10 text-accent-ink hover:bg-accent/15" : undefined}
       >
         <MailCheck size={16} />
       </Button>
@@ -256,7 +256,7 @@ export const ComposerActions = ({
           encrypt
             ? encryptBlocked
               ? "bg-warn/10 text-warn hover:bg-warn/15"
-              : "bg-accent/10 text-accent hover:bg-accent/15"
+              : "bg-accent/10 text-accent-ink hover:bg-accent/15"
             : undefined
         }
       >
@@ -272,7 +272,7 @@ export const ComposerActions = ({
           }
           aria-pressed={sign}
           onClick={() => onSign(!sign)}
-          className={sign ? "bg-accent/10 text-accent hover:bg-accent/15" : undefined}
+          className={sign ? "bg-accent/10 text-accent-ink hover:bg-accent/15" : undefined}
         >
           <Signature size={16} />
         </Button>

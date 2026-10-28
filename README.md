@@ -103,7 +103,7 @@ Calls and documents (Schreibzeug, no install of its own needed) are switched on 
 | 📄 **Documents** | **Word, Excel, PowerPoint and PDF** in Kontext with [Schreibzeug](https://github.com/firsttris/schreibzeug), a folder per shared mailbox · [more →](https://firsttris.github.io/kontext/documents.html) |
 | 🤖 **AI agents (MCP)** | Claude and other agents look up customers, mails and appointments with your rights and **write drafts** – no sending, no deleting, every change logged · [more →](https://firsttris.github.io/kontext/agents.html) |
 | 🏢 **Company admin** | **People, shared mailboxes and rights** without IT skills, company signature, **offboarding without deleting**, backups at a glance, **moving in from Microsoft 365, Gmail and Outlook** · [more →](https://firsttris.github.io/kontext/company.html) |
-| 📱 **On every device** | **An app on desktop, Android and iPhone** without an app store, push notifications, light and dark, two-factor sign-in · [more →](https://firsttris.github.io/kontext/app.html) |
+| 📱 **On every device** | **An app on desktop, Android and iPhone** without an app store, push notifications, light and dark, two-factor sign-in, **built for keyboard and screen reader**, checked automatically against WCAG 2.2 AA on every push ([accessibility](https://firsttris.github.io/kontext/accessibility.html)) · [more →](https://firsttris.github.io/kontext/app.html) |
 
 <img src="docs/screenshots/phone-call.png" alt="CTI in Kontext: an incoming call from the Fritzbox rings in the browser with the caller's contact, company, number and last mail, next to the inbox" width="900">
 
