@@ -7,6 +7,10 @@ Steps that an update needs beyond raising the version are marked **Upgrade**.
 
 ## Unreleased
 
+- Documents: `deploy/.env.example` and the Quadlet use Schreibzeug 0.1.8 (was 0.1.4). **Upgrade:**
+  raise `SCHREIBZEUG_VERSION` in `deploy/.env` (or the image in `schreibzeug.container`) and start
+  again; Schreibzeug's [changelog](https://github.com/firsttris/schreibzeug/blob/main/CHANGELOG.md)
+  names its own steps.
 - A card above the mail list offers to install Kontext as an app (on phones) and to turn on
   notifications, one at a time.
 - Calendar: a task due at a time sits at that time in the week and day view.

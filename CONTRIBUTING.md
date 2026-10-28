@@ -48,6 +48,19 @@ mkdocs build --strict    # when docs/ or mkdocs.yml changed (pip install mkdocs-
 the tests are their own, so a running `bun run dev` (Stalwart 18080, server 18090, Vite 5173) is
 not disturbed.
 
-## License
+## License of contributions
 
-Kontext is licensed under the [AGPL-3.0](LICENSE).
+Kontext is licensed under the [AGPL-3.0](LICENSE), and contributions are accepted under the same
+license.
+
+Please sign off every commit (`git commit -s`), which adds a `Signed-off-by:` line with your name
+and e-mail address. With it you certify the [Developer Certificate of Origin 1.1](https://developercertificate.org/):
+in short, that you wrote the contribution or otherwise have the right to submit it under this
+license.
+
+The author also offers Kontext under a commercial license without the AGPL's obligations (see the
+README's footer). So that this stays possible, by submitting a contribution you additionally grant
+Tristan Teufel a perpetual, worldwide, non-exclusive, royalty-free, irrevocable license to use,
+modify and distribute your contribution as part of Kontext under other license terms as well,
+including that commercial license. You keep the copyright of your contribution, and it stays
+available to everyone under the AGPL-3.0.
