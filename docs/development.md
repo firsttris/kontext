@@ -200,7 +200,9 @@ Integrationstests sich verbinden können.
 - **Dokumentation** (`.github/workflows/docs.yml`): jeder Pull Request und jeder Push auf `main`,
   der `docs/` oder `mkdocs.yml` ändert, baut die Seiten mit MkDocs Material (`--strict`); auf `main`
   werden sie danach auf GitHub Pages veröffentlicht (einmalig: Settings → Pages → Source „GitHub Actions“). Lokal: `pip install mkdocs-material
-  && mkdocs serve`.
+  mkdocs-static-i18n && mkdocs serve`. Deutsch steht unter `/`, Englisch unter `/en/`: Übersetzt wird
+  eine Seite mit einer Datei daneben (`index.en.md` zu `index.md`); ohne sie zeigt die englische
+  Seite den deutschen Text. Die Startseite ist der Rundgang in Bildern, `ueberblick.md` die Übersicht.
 - **Screenshots**: Actions → _Update screenshots_ → Run workflow (oder `bun run screenshots`, lokal mit
   `PW_CHROMIUM_PATH`, wenn Playwrights eigener Browser fehlt).
 - **Release**: Actions → _Bump version_ → Run workflow auf `main` und `patch`, `minor` oder `major`

@@ -41,7 +41,7 @@ Run these before every push; CI runs the same:
 bun install --frozen-lockfile
 bun run typecheck && bun run lint && bun run test && bun run build   # or: bun run check
 bun run e2e              # own Stalwart on 28080, server on 28090, Vite on 5174, seeded fresh
-mkdocs build --strict    # when docs/ or mkdocs.yml changed (pip install mkdocs-material)
+mkdocs build --strict    # when docs/ or mkdocs.yml changed (pip install mkdocs-material mkdocs-static-i18n)
 ```
 
 `bun run e2e` needs Playwright's Chromium once (`bunx playwright install chromium`). The ports of
