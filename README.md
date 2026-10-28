@@ -281,6 +281,11 @@ React, TanStack Router/Query, Tailwind and Tiptap in the browser; a small Bun se
 Better Auth and SQLite (Drizzle) for sign-in, JMAP to Stalwart, chat and tasks; LiveKit for calls,
 Asterisk in the telephone box. Tests, CI and releases: [Development](https://firsttris.github.io/kontext/development.html).
 
+## 🧩 More from us
+
+- Word, Excel and PowerPoint without Microsoft 365? **[Schreibzeug](https://github.com/firsttris/schreibzeug)** edits them in the browser and keeps them as .docx, .xlsx and .pptx.
+- Doing your own books in Germany? **[Haben](https://github.com/firsttris/haben)**: invoices with e-invoicing, receipts, bank reconciliation and VAT returns via ELSTER.
+
 ## 🤝 Contributing
 
 Issues and pull requests are welcome. A good bug report names the browser or phone, the view,
