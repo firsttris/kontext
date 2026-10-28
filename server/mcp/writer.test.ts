@@ -3,7 +3,14 @@ import { describe, expect, it, vi } from "vitest";
 import type { JmapClient } from "@/jmap/client";
 import type { Identity } from "@/jmap/types";
 import type { AccountInfo, Reader } from "./reader";
-import { appointmentForm, createWriter, senderOf, type TaskApi, taskApiOf } from "./writer";
+import {
+  appointmentForm,
+  colleagueAddresses,
+  createWriter,
+  senderOf,
+  type TaskApi,
+  taskApiOf,
+} from "./writer";
 
 const account = (patch: Partial<AccountInfo> = {}): AccountInfo => ({
   id: "d",
@@ -56,6 +63,67 @@ describe("an agent's appointment", () => {
     expect(() =>
       appointmentForm({ title: "x", start: "2026-11-03 09:00", end: "2026-11-03 08:00" }),
     ).toThrow("Ende");
+  });
+});
+
+describe("whom an agent invites", () => {
+  const team = [
+    { id: "a", name: "Anna Weber", email: "anna@weber-haustechnik.test" },
+    { id: "m", name: "Max Weber", email: "Max@weber-haustechnik.test" },
+    { id: "x", name: "Ohne Adresse", email: null },
+  ];
+  const organizer = "jonas@weber-haustechnik.test";
+
+  it("are colleagues, by address or id, each once, without the organizer", () => {
+    expect(
+      colleagueAddresses(
+        ["Anna Weber <ANNA@weber-haustechnik.test>", "m", "anna@weber-haustechnik.test"],
+        [...team, { id: "j", name: "Jonas", email: organizer }],
+        organizer,
+      ),
+    ).toEqual(["anna@weber-haustechnik.test", "max@weber-haustechnik.test"]);
+    expect(
+      colleagueAddresses(["j"], [{ id: "j", name: "J", email: organizer }], organizer),
+    ).toEqual([]);
+  });
+
+  it("never are people outside the company", () => {
+    expect(() =>
+      colleagueAddresses(["a", "markus.hoffmann@hoffmann-bau.test", "x"], team, organizer),
+    ).toThrow(
+      "Nur Kollegen der Firma können eingeladen werden (list_colleagues), nicht: markus.hoffmann@hoffmann-bau.test, x",
+    );
+  });
+
+  it("refuse an entry that holds an outside address after a colleague's", () => {
+    expect(() =>
+      colleagueAddresses(
+        ["anna@weber-haustechnik.test, markus.hoffmann@hoffmann-bau.test"],
+        team,
+        organizer,
+      ),
+    ).toThrow("Nur Kollegen");
+  });
+
+  it("are checked before anything is written", async () => {
+    const call = vi.fn();
+    const w = createWriter({
+      client: { call } as unknown as JmapClient,
+      reader: {
+        accounts: async () => [account()],
+        colleagues: async () => team,
+      } as unknown as Reader,
+      taskApi: async () => ({ status: 200, body: {} }),
+    });
+    call.mockResolvedValueOnce({ list: [{ id: "cal", name: "Kalender", isDefault: true }] });
+    await expect(
+      w.createAppointment({
+        title: "Aufmaß",
+        start: "2026-11-03 09:00",
+        attendees: ["markus.hoffmann@hoffmann-bau.test"],
+      }),
+    ).rejects.toThrow("Nur Kollegen");
+    expect(call.mock.calls.map(([method]) => method)).not.toContain("CalendarEvent/set");
   });
 });
 

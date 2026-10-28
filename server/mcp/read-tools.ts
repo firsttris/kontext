@@ -177,7 +177,7 @@ export const READ_TOOLS = [
     title: "Kollegen",
     description:
       "The company's people, with the id to give them a task (create_task / update_task " +
-      "assigneeId).",
+      "assigneeId) or invite them to an appointment (create_event attendees).",
     scope: "read",
     input: {},
     run: ({ reader }) => reader.colleagues(),

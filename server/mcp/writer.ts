@@ -1,14 +1,16 @@
 /**
  * What an agent may create and change (scope "write"): drafts, appointments, contacts and tasks.
- * Never sending, never deleting: a draft waits in Drafts for a person to send it, an appointment
- * gets no attendees (they would be mailed an invitation). Everything goes the way the app does it
- * – the app's compose, event and contact forms (src/lib/), the task routes with their rights and
+ * Never deleting, and nothing leaves the company: a draft waits in Drafts for a person to send
+ * it, an appointment invites only colleagues (the company's people), never anyone outside.
+ * Everything goes the way the app does it – the app's compose, event and contact forms
+ * (src/lib/), its invitations (src/jmap/invitations.ts), the task routes with their rights and
  * notices – with the agent's own Stalwart token.
  */
 
-import { createEvent, listCalendars } from "@/jmap/calendar";
+import { listCalendars } from "@/jmap/calendar";
 import type { JmapClient } from "@/jmap/client";
 import { createContact, listAddressBooks, updateContact } from "@/jmap/contacts";
+import { saveEvent } from "@/jmap/invitations";
 import { getEmail, listIdentities, listMailboxes, saveDraft } from "@/jmap/mail";
 import type { EmailAddress, Identity } from "@/jmap/types";
 import { parseAddresses } from "@/lib/addresses";
@@ -66,6 +68,42 @@ const addresses = (list: string[] | undefined, what: string): EmailAddress[] => 
 export const senderOf = (identities: Identity[], account: AccountInfo): Identity | undefined =>
   identities.find((identity) => identity.email.toLowerCase() === account.name.toLowerCase()) ??
   identities[0];
+
+type Colleague = { id: string; name: string; email: string | null };
+
+/**
+ * The colleagues an agent invites, by address or by id from list_colleagues; anyone else is
+ * refused, so no invitation leaves the company. The organizer is left out.
+ */
+export const colleagueAddresses = (
+  wanted: string[],
+  team: Colleague[],
+  organizer: string,
+): string[] => {
+  const emailOf = new Map(
+    team.flatMap(({ id, email }) =>
+      email ? [id, email.toLowerCase()].map((key) => [key, email.toLowerCase()] as const) : [],
+    ),
+  );
+  // An entry is an id or addresses; every address in it must be a colleague's.
+  const lookup = (entry: string): string[] | null => {
+    const byId = emailOf.get(entry.trim());
+    if (byId) return [byId];
+    const { addresses, invalid } = parseAddresses(entry);
+    const emails = addresses.map(({ email }) => emailOf.get(email.toLowerCase()));
+    if (invalid.length || !emails.length || emails.some((email) => !email)) return null;
+    return emails as string[];
+  };
+  const outside = wanted.filter((entry) => !lookup(entry));
+  if (outside.length) {
+    throw new Error(
+      `Nur Kollegen der Firma können eingeladen werden (list_colleagues), nicht: ${outside.join(", ")}`,
+    );
+  }
+  const emails = new Set(wanted.flatMap((entry) => lookup(entry)!));
+  emails.delete(organizer.toLowerCase());
+  return [...emails];
+};
 
 const taskError = (body: Record<string, unknown>) =>
   new Error(String(body.error ?? "Aufgabe nicht gespeichert"));
@@ -155,6 +193,7 @@ export const createWriter = ({ client, reader, taskApi }: WriterDeps) => {
     allDay?: boolean;
     location?: string;
     description?: string;
+    attendees?: string[];
   }): Promise<Done> => {
     const account = await accountFor("calendars", input.accountId);
     const calendars = await listCalendars(client, account.id);
@@ -162,12 +201,23 @@ export const createWriter = ({ client, reader, taskApi }: WriterDeps) => {
       ? calendars.find((candidate) => candidate.id === input.calendarId)
       : (calendars.find((candidate) => candidate.isDefault) ?? calendars[0]);
     if (!calendar) throw new Error(`Kein Kalender in ${account.name}.`);
-    const form = appointmentForm(input);
+    const invited = input.attendees?.length
+      ? colleagueAddresses(input.attendees, await reader.colleagues(), account.name)
+      : [];
+    const form = { ...appointmentForm(input), attendees: invited.join(", ") };
     const event = formToEvent(form, { email: account.name });
-    const id = await createEvent(client, account.id, calendar.id, event);
+    // As the app saves it: Kontext mails the invitations from the organizer; colleagues answer
+    // in their calendar, so no answer links (/api/invitations/links) are signed.
+    const id = await saveEvent(
+      client,
+      account.id,
+      { kind: "create", calendarId: calendar.id, event },
+      async () => ({}),
+    );
     const when = form.allDay ? form.date : `${form.date} ${form.startTime}–${form.endTime}`;
+    const invitedText = invited.length ? `; eingeladen: ${invited.join(", ")}` : "";
     return {
-      message: `Termin „${form.title}“ am ${when} in „${calendar.name}“ eingetragen.`,
+      message: `Termin „${form.title}“ am ${when} in „${calendar.name}“ eingetragen${invitedText}.`,
       accountId: account.id,
       eventId: id,
     };
