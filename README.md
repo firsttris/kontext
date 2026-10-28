@@ -57,7 +57,7 @@ businesses · self-hosters looking for a web client for [Stalwart](https://stalw
 
 ## 🚀 Install
 
-### 1. Let an AI set it up
+### 1. Let an agent set it up
 
 Give Claude Code or another coding agent this repository and SSH access to your server and say:
 "Set up Kontext on my server following the [installation guide](https://firsttris.github.io/kontext/installation.html)."
@@ -247,7 +247,7 @@ The app is in German for now; English and other European languages are planned.
 <details>
 <summary><b>Is it secure?</b></summary>
 
-Check it yourself, the code is open: let your AI agent run Cloudflare's [Security Audit Skill](https://github.com/cloudflare/security-audit-skill) or
+Check it yourself, the code is open: let your agent run Cloudflare's [Security Audit Skill](https://github.com/cloudflare/security-audit-skill) or
 Claude Code's `/security-review` on this repository.
 Report vulnerabilities privately as described in [SECURITY.md](SECURITY.md).
 </details>

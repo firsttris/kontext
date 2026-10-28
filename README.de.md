@@ -57,7 +57,7 @@ Selfhoster, die eine Weboberfläche für [Stalwart](https://stalw.art) suchen.
 
 ## 🚀 Installation
 
-### 1. Von einer KI aufsetzen lassen
+### 1. Von einem Agenten aufsetzen lassen
 
 Gib Claude Code oder einem anderen Coding-Agenten dieses Repository und SSH-Zugang zu deinem Server und sag:
 „Setz Kontext auf meinem Server auf, nach der [Installationsanleitung](https://firsttris.github.io/kontext/installation.html).“
@@ -249,7 +249,7 @@ Die App ist vorerst auf Deutsch; Englisch und weitere europäische Sprachen sind
 <details>
 <summary><b>Ist das sicher?</b></summary>
 
-Prüf es selbst, der Code ist offen: Lass deinen KI-Agenten Cloudflares [Security Audit Skill](https://github.com/cloudflare/security-audit-skill) oder
+Prüf es selbst, der Code ist offen: Lass deinen Agenten Cloudflares [Security Audit Skill](https://github.com/cloudflare/security-audit-skill) oder
 `/security-review` von Claude Code über dieses Repository laufen.
 Sicherheitslücken meldest du vertraulich, wie in [SECURITY.md](SECURITY.md) beschrieben.
 </details>
