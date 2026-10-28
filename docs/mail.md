@@ -40,8 +40,8 @@ IMAP und SMTP.
   ist; aus einer Mail heraus angelegt, auf Wunsch auch auf vorhandene Mails.
 - **Ordner und Unterordner**, verschieben per Menü oder Ziehen, auch zwischen info@ und den
   eigenen Ordnern.
-- **Mehrere Mails auf einmal** (Kästchen, Shift-Klick, `x`): archivieren, löschen, gelesen,
-  Kategorie, verschieben, Aufgaben erstellen.
+- **Mehrere Mails auf einmal** (Kästchen links an jeder Zeile, Strg-/Shift-Klick, `x`; am Handy
+  lange drücken): archivieren, löschen, gelesen, Kategorie, verschieben, Aufgaben erstellen.
 - **Unterhaltungen beim Lesen:** frühere Mails und die Antworten seitdem, Zitate eingeklappt;
   gruppiert wie Gmail auf Wunsch.
 - **Wiedervorlage:** eine Mail aus dem Weg bis morgen, Montag oder einem Zeitpunkt – dann ist sie

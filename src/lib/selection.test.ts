@@ -9,6 +9,7 @@ import {
   marksRead,
   type Picked,
   pickKey,
+  rowClick,
   singleAccount,
   toggleKey,
 } from "./selection";
@@ -68,5 +69,15 @@ describe("selection", () => {
     expect(categoryState([read], done)).toBe("all");
     expect(categoryState([read, unread], done)).toBe("some");
     expect(categoryState([unread], done)).toBe("none");
+  });
+
+  it("picks on a click with Shift or Ctrl, and on a phone's tap while picking", () => {
+    const click = { shift: false, ctrl: false, picking: false, phone: false };
+    expect(rowClick(click)).toBe("open");
+    expect(rowClick({ ...click, shift: true })).toBe("range");
+    expect(rowClick({ ...click, ctrl: true })).toBe("toggle");
+    expect(rowClick({ ...click, picking: true })).toBe("open");
+    expect(rowClick({ ...click, phone: true })).toBe("open");
+    expect(rowClick({ ...click, picking: true, phone: true })).toBe("toggle");
   });
 });

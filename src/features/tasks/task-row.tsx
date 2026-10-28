@@ -41,13 +41,16 @@ export const TaskRow = ({
         active && "bg-subtle",
       )}
     >
-      <input
-        type="checkbox"
-        checked={done}
-        onChange={onToggle}
-        aria-label={m.tasks_toggle_done({ title: task.title })}
-        className="mt-0.5 size-[18px] shrink-0 cursor-pointer rounded-full accent-[var(--primary)]"
-      />
+      {/* More to hit than the box shows: a click just beside it ticks off, not opens. */}
+      <label className="-m-2.5 mt-[-8px] flex shrink-0 cursor-pointer p-2.5">
+        <input
+          type="checkbox"
+          checked={done}
+          onChange={onToggle}
+          aria-label={m.tasks_toggle_done({ title: task.title })}
+          className="size-[18px] cursor-pointer rounded-full accent-[var(--primary)]"
+        />
+      </label>
       <Link
         to="/tasks"
         search={inTasks ? (prev) => ({ ...prev, task: task.id }) : { task: task.id }}

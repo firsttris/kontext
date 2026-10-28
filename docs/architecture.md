@@ -624,7 +624,8 @@ oder Reihenfolge.
   letzten Mails mit der Person (`src/lib/task-context.ts`); „Aufgabe“ legt eine verknüpfte an.
 - **Im Kalender:** meine offenen Aufgaben am Tag ihrer Fälligkeit, Überfälliges auf heute, in Rot;
   in Woche und Tag zu ihrer Uhrzeit im Raster neben den Terminen, ohne Uhrzeit (und überfällig)
-  bei den ganztägigen. Abhaken mit „Rückgängig“; unter „Meine Kalender“
+  bei den ganztägigen. Abhaken mit „Rückgängig“ (der Kreis ist klein, die Fläche zum Treffen um ihn
+  größer, damit ein Klick daneben nicht die Aufgabe öffnet); unter „Meine Kalender“
   ausblendbar (merkt sich der Browser wie ausgeblendete Kalender).
 - **In der Glocke:** „Neu für dich“ – was mir jemand anderes in den letzten 7 Tagen zugewiesen hat
   (`assigned_by`, `assigned_at`; ungesehene zählen zum Punkt an der Glocke) – und „Fällige
@@ -1008,9 +1009,14 @@ bereinigte wie im Lesebereich, eingebettete Bilder kommen mit, Bilder aus dem In
 
 ## Mehrere Mails auswählen
 
-Wie in Gmail: am Desktop erscheint beim Überfahren einer Zeile links ein Kästchen, Shift-Klick
-nimmt den Bereich bis zur zuletzt gewählten Mail dazu, `x` die offene Mail; am Handy schaltet
-„Auswählen“ die Kästchen ein. Solange etwas gewählt ist, ersetzt eine Leiste den Titel der Liste:
+Am Desktop hat jede Zeile links eine eigene Spalte mit einem blassen Kästchen, das beim Überfahren
+kräftig wird; ein Klick irgendwo in der Spalte wählt, ohne die Mail zu öffnen, denn die Spalte
+liegt neben dem Link, nicht darüber. Strg/⌘-Klick auf die Zeile wählt sie, Shift-Klick nimmt den
+Bereich bis zur zuletzt gewählten Mail dazu, `x` die offene Mail. Ein einfacher Klick öffnet die
+Mail weiter, wie in Gmail: Liste und Lesebereich stehen nebeneinander, die Auswahl bleibt. Am
+Handy beginnt die Auswahl mit „Auswählen“ oder langem Drücken auf eine Mail; solange sie läuft,
+wählt ein Tipp auf die Zeile, statt die Mail zu öffnen (`rowClick` in `src/lib/selection.ts`,
+`src/components/use-long-press.ts`). Solange etwas gewählt ist, ersetzt eine Leiste den Titel der Liste:
 archivieren, löschen, Spam, gelesen/ungelesen, markieren, Kategorie, verschieben.
 
 Gewählt wird nach Konto und Mail (`src/lib/selection.ts`), denn „Alle Posteingänge“ und die Suche

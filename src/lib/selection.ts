@@ -30,6 +30,26 @@ export const addRange = (
   return new Set([...selected, ...order.slice(low, high + 1)]);
 };
 
+export type RowClick = "open" | "toggle" | "range";
+
+/**
+ * What a click on a mail's line does. Shift and Ctrl/⌘ pick instead of opening, as in Outlook
+ * and a file manager. On a phone, while picking, a tap anywhere on the line picks, as in Gmail's
+ * app: the box alone is a small target there. The desktop keeps opening, as Gmail does: list and
+ * pane side by side show what is picked, and the box has a column of its own.
+ */
+export const rowClick = ({
+  shift,
+  ctrl,
+  picking,
+  phone,
+}: {
+  shift: boolean;
+  ctrl: boolean;
+  picking: boolean;
+  phone: boolean;
+}): RowClick => (shift ? "range" : ctrl || (picking && phone) ? "toggle" : "open");
+
 /** Only what is still in the list (after moving, a new page, another filter). */
 export const keepListed = (selected: Set<string>, order: string[]): Set<string> => {
   const listed = new Set(order);
