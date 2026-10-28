@@ -171,6 +171,8 @@ test.describe("Telefonie über die Telefonbox", () => {
     const card = page.getByRole("dialog", { name: "Anruf von Petra Keller" });
     await expect(card).toBeVisible();
     await expect(card).toContainText("Keller Elektro GmbH");
+    // The safe area moves the card down, it does not take the padding at the top.
+    await expect(card).toHaveCSS("padding-top", "16px");
     await expect(anna.page.getByRole("dialog", { name: "Anruf von 07223 81234" })).toBeVisible();
 
     await card.getByRole("button", { name: "Annehmen" }).click();
