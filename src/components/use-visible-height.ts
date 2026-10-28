@@ -66,6 +66,12 @@ export const fitAboveKeyboard = (
   return { appHeight: visible.height, keyboardHeight: hidden };
 };
 
+/** Whether a field that brings up the keyboard has the focus. */
+const typing = () =>
+  document.activeElement?.matches(
+    "input, textarea, select, [contenteditable]:not([contenteditable='false'])",
+  ) ?? false;
+
 const virtualKeyboardOf = (nav: Navigator) =>
   (nav as Navigator & { virtualKeyboard?: VirtualKeyboard }).virtualKeyboard;
 
@@ -81,7 +87,14 @@ export const useVisibleHeight = () =>
     let appHeight: number | undefined;
     const fitToView = () => {
       const overlay = keyboard?.boundingRect.height ?? 0;
-      if (overlay === 0 && viewport.scale <= 1.01 && hiddenBelow(root.clientHeight, viewport) === 0)
+      // Not while a field has the focus: its keyboard may be on its way, and Chrome can shrink the
+      // view before it tells the keyboard's size.
+      if (
+        overlay === 0 &&
+        !typing() &&
+        viewport.scale <= 1.01 &&
+        hiddenBelow(root.clientHeight, viewport) === 0
+      )
         closed = { width: window.innerWidth, height: viewport.height };
       const closedHeight = closed?.width === window.innerWidth ? closed.height : undefined;
       const fit = fitAboveKeyboard(root.clientHeight, viewport, overlay, closedHeight);
