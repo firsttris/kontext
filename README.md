@@ -27,7 +27,9 @@ Shared mailboxes, a team calendar, and every customer's mails, appointments and 
 [FAQ](#-faq) •
 [Documentation](https://firsttris.github.io/kontext/)
 
-<img src="docs/screenshots/mail.png" alt="Kontext self-hosted webmail: inbox with folders, the shared mailboxes info@ and rechnung@, categories and an open mail with a preview of its PDF attachment" width="900">
+<a href="https://firsttris.github.io/kontext/"><img src="docs/assets/kontext-teaser.webp" alt="Kontext in motion: every module at a glance, the inbox with a PDF preview, a video call from the laptop to a phone, Word in the browser with comments, and an AI agent that looks up a customer and leaves a draft" width="900"></a>
+
+▶️ **[Watch the whole film (2 minutes)](https://firsttris.github.io/kontext/)** – every module, made from the real app
 
 </div>
 

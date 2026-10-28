@@ -147,6 +147,7 @@ export default defineConfig({
       "server/**/*.test.ts",
       "box/**/*.test.ts",
       "deploy/**/*.test.ts",
+      "video/**/*.test.ts",
     ],
     setupFiles: ["./src/test-setup.ts"],
   },
