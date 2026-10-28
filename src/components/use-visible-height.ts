@@ -92,9 +92,11 @@ export const useVisibleHeight = () =>
     let closed: { width: number; height: number } | undefined;
     let appHeight: number | undefined;
     let settling: ReturnType<typeof setTimeout> | undefined;
+    // Zoomed in, the visible height is smaller while the window is not: no new height then.
     const differs = () =>
       closed !== undefined &&
       closed.width === window.innerWidth &&
+      viewport.scale <= 1.01 &&
       Math.abs(viewport.height - closed.height) > 1;
     // Under the keyboard a different visible height is first taken for Chrome's dip; if it lasts,
     // the window itself changed, and that height is the one without a keyboard from now on.
