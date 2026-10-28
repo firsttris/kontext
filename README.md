@@ -57,6 +57,13 @@ businesses · self-hosters looking for a web client for [Stalwart](https://stalw
 
 ## 🚀 Install
 
+### 1. Let an AI set it up
+
+Give Claude Code or another coding agent this repository and SSH access to your server and say:
+"Set up Kontext on my server following the [installation guide](https://firsttris.github.io/kontext/installation.html)."
+
+### 2. Manually
+
 On a server with Docker (or Podman), your own domain and open ports 25, 80, 443, 465, 587 and 993:
 
 ```bash
@@ -235,13 +242,6 @@ write drafts; they never send or delete anything. See [AI agents](https://firstt
 <summary><b>Which languages?</b></summary>
 
 The app is in German for now; English and other European languages are planned.
-</details>
-
-<details>
-<summary><b>Can an AI assistant set it up for me?</b></summary>
-
-Yes. Give Claude Code or another coding agent this repository and SSH access to your server and
-say: "Set up Kontext on my server following the [installation guide](https://firsttris.github.io/kontext/installation.html)."
 </details>
 
 <details>

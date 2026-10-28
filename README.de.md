@@ -57,6 +57,13 @@ Selfhoster, die eine Weboberfläche für [Stalwart](https://stalw.art) suchen.
 
 ## 🚀 Installation
 
+### 1. Von einer KI aufsetzen lassen
+
+Gib Claude Code oder einem anderen Coding-Agenten dieses Repository und SSH-Zugang zu deinem Server und sag:
+„Setz Kontext auf meinem Server auf, nach der [Installationsanleitung](https://firsttris.github.io/kontext/installation.html).“
+
+### 2. Manuell
+
 Auf einem Server mit Docker (oder Podman), eigener Domain und offenen Ports 25, 80, 443, 465, 587 und 993:
 
 ```bash
@@ -237,13 +244,6 @@ schreiben Entwürfe; sie senden und löschen nie etwas. Siehe [KI-Agenten](https
 <summary><b>Welche Sprachen?</b></summary>
 
 Die App ist vorerst auf Deutsch; Englisch und weitere europäische Sprachen sind geplant.
-</details>
-
-<details>
-<summary><b>Kann eine KI das für mich aufsetzen?</b></summary>
-
-Ja. Gib Claude Code oder einem anderen Coding-Agenten dieses Repository und SSH-Zugang zu deinem
-Server und sag: „Setz Kontext auf meinem Server auf, nach der [Installationsanleitung](https://firsttris.github.io/kontext/installation.html).“
 </details>
 
 <details>
