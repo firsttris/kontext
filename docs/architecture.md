@@ -566,7 +566,8 @@ das Manifest steht in `vite.config.ts`, der Service Worker in `src/sw/service-wo
   (`CompositorViewHolder.java`); mit der gemeldeten Höhe schrumpfte die App doppelt, das
   Eingabefeld schoss hoch und sank zurück. Gemerkt wird diese Höhe nur, solange kein Feld den
   Fokus hat: Chrome kann die Ansicht schon verkleinern, bevor es die Größe der Tastatur
-  meldet. Browser ohne diese API (Firefox, und
+  meldet. Weicht die sichtbare Höhe unter der Tastatur länger als 400 ms ab, hat sich das
+  Fenster selbst geändert (geteilter Bildschirm), und die App übernimmt sie. Browser ohne diese API (Firefox, und
   Chromium-Builds, die sie weglassen) bleiben bei `resizes-content`; dort folgt die App der
   kürzeren Seite allein per CSS (`100dvh`) im selben Bild, ohne eine Höhe in Pixeln, die ein
   Bild hinterherhinge und die Seite hochrutschen ließe. Was in der installierten App unter einer

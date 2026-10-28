@@ -72,6 +72,12 @@ const typing = () =>
     "input, textarea, select, [contenteditable]:not([contenteditable='false'])",
   ) ?? false;
 
+/**
+ * How long a visible height under an overlaid keyboard may differ from the one without it before
+ * it counts as the window's own (split screen, a resized window): Chrome's dip lasts a few frames.
+ */
+const SETTLE_MS = 400;
+
 const virtualKeyboardOf = (nav: Navigator) =>
   (nav as Navigator & { virtualKeyboard?: VirtualKeyboard }).virtualKeyboard;
 
@@ -85,8 +91,29 @@ export const useVisibleHeight = () =>
     // The visible height without a keyboard, for this width (a turned phone starts afresh).
     let closed: { width: number; height: number } | undefined;
     let appHeight: number | undefined;
+    let settling: ReturnType<typeof setTimeout> | undefined;
+    const differs = () =>
+      closed !== undefined &&
+      closed.width === window.innerWidth &&
+      Math.abs(viewport.height - closed.height) > 1;
+    // Under the keyboard a different visible height is first taken for Chrome's dip; if it lasts,
+    // the window itself changed, and that height is the one without a keyboard from now on.
+    const adoptIfLasting = (overlay: number) => {
+      if (overlay === 0 || !differs()) {
+        clearTimeout(settling);
+        settling = undefined;
+        return;
+      }
+      settling ??= setTimeout(() => {
+        settling = undefined;
+        if ((keyboard?.boundingRect.height ?? 0) === 0 || !differs()) return;
+        closed = { width: window.innerWidth, height: viewport.height };
+        fitToView();
+      }, SETTLE_MS);
+    };
     const fitToView = () => {
       const overlay = keyboard?.boundingRect.height ?? 0;
+      adoptIfLasting(overlay);
       // Not while a field has the focus: its keyboard may be on its way, and Chrome can shrink the
       // view before it tells the keyboard's size.
       if (
@@ -127,6 +154,7 @@ export const useVisibleHeight = () =>
     };
     keyboard?.addEventListener("geometrychange", fitAndReveal);
     return () => {
+      clearTimeout(settling);
       viewport.removeEventListener("resize", fitToView);
       viewport.removeEventListener("scroll", fitToView);
       keyboard?.removeEventListener("geometrychange", fitAndReveal);
