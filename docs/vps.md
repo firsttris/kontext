@@ -373,7 +373,8 @@ Mailprogramme nehmen:
 ```
 
 **Einstellungen aus der Installation** (X-Forwarded-For, Kontexts Netz als erlaubte IP,
-Sperrdauer ein Tag, deutsche Suche, 16 gleichzeitige JMAP-Anfragen, Stalwarts RSVP-Seite aus):
+Sperrdauer ein Tag, deutsche Suche, 16 gleichzeitige JMAP-Anfragen, Stalwarts RSVP-Seite aus,
+Anmeldung auf 587 nur nach STARTTLS):
 
 ```bash
 /root/stalwart-api.sh '[
@@ -383,7 +384,11 @@ Sperrdauer ein Tag, deutsche Suche, 16 gleichzeitige JMAP-Anfragen, Stalwarts RS
    "abuseBanPeriod":86400000,"loiterBanPeriod":86400000}}},"2"],
  ["x:Search/set",{"update":{"singleton":{"defaultLanguage":"de-DE"}}},"3"],
  ["x:Jmap/set",{"update":{"singleton":{"maxConcurrentRequests":16}}},"4"],
- ["x:CalendarScheduling/set",{"update":{"singleton":{"httpRsvpEnable":false}}},"5"]]'
+ ["x:CalendarScheduling/set",{"update":{"singleton":{"httpRsvpEnable":false}}},"5"],
+ ["x:MtaStageAuth/set",{"update":{"singleton":{"saslMechanisms":{"match":{"0":{
+   "if":"local_port != 25 && is_tls","then":"[plain, login, oauthbearer, xoauth2]"}},
+   "else":"false"}}}},"6"],
+ ["x:Action/set",{"create":{"r":{"@type":"ReloadSettings"}}},"7"]]'
 ```
 
 - `httpRsvpEnable`: Stalwarts Einladungsmails haben sonst Knöpfe *Yes/No/Maybe* auf
@@ -391,6 +396,11 @@ Sperrdauer ein Tag, deutsche Suche, 16 gleichzeitige JMAP-Anfragen, Stalwarts RS
   in einem TLS-Fehler. Einladungen verschickt Kontext selbst, mit Knöpfen auf seine eigene Seite
   (siehe [Einladungen](architecture.md#einladungen)); Stalwarts Mails gibt es nur noch, wenn ein
   Handy oder Mailprogramm über CalDAV einlädt.
+- `saslMechanisms`: Stalwarts Standard hat eine zweite Regel, die auf 587 `oauthbearer` und
+  `xoauth2` schon **vor** STARTTLS anbietet (ein externer Scan meldet das). Ohne sie bietet 587
+  im Klartext gar kein `AUTH` an, nach STARTTLS alle vier wie bisher. Prüfen:
+  `printf 'EHLO test\r\nQUIT\r\n' | nc mail.firma.de 587 | grep -i auth` gibt nichts aus.
+  `ReloadSettings` lädt das ohne Neustart.
 
 Mit `useXForwarded` erwartet Stalwart den Header bei jeder HTTP-Anfrage; Kontext spricht es
 direkt an, ohne ihn, und jede Anfrage schreibt `X-Forwarded-For header is missing` ins Log

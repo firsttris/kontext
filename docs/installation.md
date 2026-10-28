@@ -112,6 +112,11 @@ jedem Neustart vor der Einrichtung gibt es ein neues.
     verschickt Kontext mit eigenen Knöpfen; Stalwarts Knöpfe zeigten auf eine Adresse, unter der
     Caddy antwortet (siehe [Einladungen](architecture.md#einladungen)). Die Knöpfe in Kontexts
     Einladungen brauchen die Firmenverwaltung (den Schlüssel unten).
+11. In den SMTP-Anmeldeeinstellungen (`x:MtaStageAuth`, `saslMechanisms`) die zweite Regel
+    löschen, die auf 587 `oauthbearer` und `xoauth2` **ohne TLS** anbietet, sodass nur noch
+    `local_port != 25 && is_tls` → `[plain, login, oauthbearer, xoauth2]` stehen bleibt. Ein
+    Token ginge sonst im Klartext, wenn jemand STARTTLS aus der Verbindung streicht. Kontext
+    selbst verschickt über JMAP, nicht über SMTP.
 
 Danach unter `https://kontext.firma.de` anmelden. Am Handy im Browser „Zum Startbildschirm
 hinzufügen“ wählen: Kontext startet dann wie eine App und bleibt angemeldet.
