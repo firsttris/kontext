@@ -57,7 +57,7 @@ export const recordChat = async (browser: Browser, channelId: string) => {
     await take.hold("app", 1.4, { note: "Kanäle fürs Team – die Kundenmail als Karte" });
     const field = page.getByRole("textbox", { name: "Nachricht" });
     await field.click();
-    await take.type("app", field, "Fliesen kommen Donnerstag 👍", {
+    await take.type("app", field, "Fliesen kommen Donnerstag, passt!", {
       note: "Wie WhatsApp – nur auf deinem Server",
     });
     await take.after(

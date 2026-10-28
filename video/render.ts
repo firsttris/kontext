@@ -1,7 +1,7 @@
 /**
  * Renders the film from the takes (bun run video:record makes them):
  *
- *   bun video/render.ts                      # docs/assets/kontext-film.mp4 and .webm, the poster
+ *   bun video/render.ts                      # docs/assets/kontext-film.mp4 and its poster
  *   bun video/render.ts --stills 3,12.5,40   # single frames as PNG into .dev/video/stills
  *   bun video/render.ts --from 20 --to 35 --out .dev/video/part.mp4   # a part, to look at
  *
@@ -77,29 +77,27 @@ const serve = () =>
     },
   });
 
-const encoders = (out: string) =>
-  out.endsWith(".webm")
-    ? ["-c:v", "libvpx-vp9", "-crf", "36", "-b:v", "0", "-row-mt", "1", "-deadline", "good"]
-    : [
-        "-c:v",
-        "libx264",
-        "-preset",
-        "slow",
-        "-crf",
-        "24",
-        "-tune",
-        "animation",
-        "-pix_fmt",
-        "yuv420p",
-        "-movflags",
-        "+faststart",
-      ];
+/** H.264 plays everywhere; CRF 30 keeps the film under 10 MB with the text still sharp. */
+const ENCODER = [
+  "-c:v",
+  "libx264",
+  "-preset",
+  "slow",
+  "-crf",
+  "30",
+  "-tune",
+  "animation",
+  "-pix_fmt",
+  "yuv420p",
+  "-movflags",
+  "+faststart",
+];
 
 const ffmpeg = (fps: number, out: string) => {
   const child = spawn(
     "ffmpeg",
     ["-y", "-loglevel", "error", "-f", "image2pipe", "-framerate", String(fps), "-i", "-"]
-      .concat(encoders(out))
+      .concat(ENCODER)
       .concat([out]),
     { stdio: ["pipe", "inherit", "inherit"] },
   );
@@ -144,26 +142,23 @@ if (args.stills) {
   const from = Number(args.from ?? 0);
   const to = Math.min(seconds, Number(args.to ?? seconds));
   const out = args.out ?? join(root, "docs", "assets", "kontext-film.mp4");
-  const outputs = args.out ? [out] : [out, out.replace(/\.mp4$/, ".webm")];
-  const pipes = outputs.map((file) => ffmpeg(fps, file));
+  const encoder = ffmpeg(fps, out);
   const frames = Math.round((to - from) * fps);
   for (let frame = 0; frame < frames; frame += 1) {
     await renderAt(from + frame / fps);
     const shot = await picture({ type: "jpeg", quality: 95 });
-    for (const pipe of pipes) {
-      if (!pipe.stdin.write(shot)) await new Promise((ok) => pipe.stdin.once("drain", ok));
-    }
+    if (!encoder.stdin.write(shot)) await new Promise((ok) => encoder.stdin.once("drain", ok));
     if (frame % (fps * 5) === 0)
       console.log(`${(from + frame / fps).toFixed(0)} / ${to.toFixed(0)} s`);
   }
-  for (const pipe of pipes) pipe.stdin.end();
-  await Promise.all(pipes.map((pipe) => pipe.done));
+  encoder.stdin.end();
+  await encoder.done;
   if (!args.out) {
     // The poster: a moment that shows the app, for before the film plays.
     await renderAt(Number(process.env.POSTER_AT ?? 8));
     await picture({ path: out.replace(/\.mp4$/, ".jpg"), type: "jpeg", quality: 85 });
   }
-  console.log(`${outputs.join(", ")}: ${(to - from).toFixed(1)} s`);
+  console.log(`${out}: ${(to - from).toFixed(1)} s`);
 }
 await browser.close();
 server.stop();

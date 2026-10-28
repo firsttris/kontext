@@ -19,7 +19,9 @@ export const recordCompany = async (browser: Browser) => {
   await take.type("app", dialog.getByLabel("Name", { exact: true }), "Lena Schmid", {
     note: "Mitarbeiter anlegen – ohne IT-Kenntnisse",
   });
-  await dialog.getByLabel("Name vor dem @").fill("lena");
+  await take.type("app", dialog.getByLabel("Name vor dem @"), "lena", {
+    note: "Mitarbeiter anlegen – ohne IT-Kenntnisse",
+  });
   await take.click("app", dialog.getByLabel("info@weber-haustechnik.test"), 0.9, {
     note: "Mit Zugang zu info@",
   });

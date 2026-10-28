@@ -205,7 +205,7 @@ Testdaten, nicht aus einer Bildschirmaufnahme. Zwei Schritte:
    in Browserfenster und Handys, bewegt Zeiger und Kamera, blendet über und setzt Titel und
    Untertitel. Sie ist eine Seite in Chromium, die zu jeder Zeit ein festes Bild zeigt
    (`window.film.render(t)`, die Zeitrechnung in `video/stage/timeline.ts`); gerendert wird Bild für
-   Bild, ffmpeg macht daraus MP4 (H.264) und WebM (VP9) und ein Vorschaubild. Mit
+   Bild, ffmpeg macht daraus ein MP4 (H.264, spielt überall) und ein Vorschaubild. Mit
    `--stills 12,40.5` entstehen einzelne Bilder in `.dev/video/stills/`, mit `--from 20 --to 35
    --out .dev/video/teil.mp4` ein Ausschnitt.
 
