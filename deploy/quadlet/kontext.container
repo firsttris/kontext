@@ -10,7 +10,7 @@ Wants=stalwart.service
 
 [Container]
 # A fixed version, raised by hand (docs/installation.md, Updates); no automatic updates.
-Image=docker.io/tristanteu/kontext:0.1.7
+Image=docker.io/tristanteu/kontext:0.1.8
 ContainerName=kontext
 Network=kontext.network
 Volume=kontext-data:/data
