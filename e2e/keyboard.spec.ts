@@ -86,4 +86,20 @@ test.describe("Mit der Tastatur", () => {
     await expect(page.getByRole("status")).toHaveText("Mail gesendet.");
     await expect.poll(() => inboxSubjects("anna")).toContain(subject);
   });
+
+  test("Strg+Enter im Dialog „Später senden“ sendet die Mail nicht sofort", async ({ page }) => {
+    const subject = unique("Nicht sofort");
+    await page.goto("/mail");
+    await page.getByRole("link", { name: "Neue Mail" }).first().click();
+    await page.getByRole("combobox", { name: "An" }).fill("anna@weber-haustechnik.test");
+    await page.keyboard.press("Enter");
+    await page.getByLabel("Betreff").fill(subject);
+    await page.getByRole("button", { name: "Später senden" }).click();
+    await page.getByRole("menuitem", { name: "Zeitpunkt wählen …" }).click();
+    const dialog = page.getByRole("dialog", { name: "Später senden" });
+    await dialog.getByLabel("Senden am").press("Control+Enter");
+    await page.waitForTimeout(3_000);
+    await expect(page.getByRole("status").filter({ hasText: "Mail gesendet." })).toHaveCount(0);
+    expect(await inboxSubjects("anna")).not.toContain(subject);
+  });
 });
