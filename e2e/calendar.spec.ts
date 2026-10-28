@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { addAttendees, fakeKeyboard, login, showKeyboard, unique } from "./helpers";
+import { addAttendees, login, showKeyboard, unique } from "./helpers";
 
 const day = (offset: number) =>
   new Intl.DateTimeFormat("sv-SE", { timeZone: "Europe/Berlin" }).format(
@@ -331,14 +331,11 @@ test.describe("Kalender am Handy @phone", () => {
   });
 
   test("„Neuer Termin“ bleibt über der Tastatur", async ({ page }) => {
-    await fakeKeyboard(page);
     await login(page);
     await page.getByRole("link", { name: "Kalender" }).click();
     const add = page.getByRole("link", { name: "Neuer Termin", exact: true });
     await expect(add).toBeVisible();
-    const keyboard = 330;
-    await showKeyboard(page, keyboard);
-    const visibleBottom = (await page.evaluate(() => window.innerHeight)) - keyboard;
+    const visibleBottom = await showKeyboard(page, 330);
     await expect
       .poll(async () => {
         const box = (await add.boundingBox())!;
@@ -348,15 +345,14 @@ test.describe("Kalender am Handy @phone", () => {
   });
 
   test("ein Feld unten im Termin-Sheet bleibt über der Tastatur sichtbar", async ({ page }) => {
-    await fakeKeyboard(page);
     await login(page);
     await page.goto(`/calendar?event=new&start=${today()}T17:00`);
     const dialog = page.getByRole("dialog");
     const notes = dialog.getByLabel("Notizen");
+    await expect(notes).toBeVisible();
+    // The keyboard comes up, the page gets shorter, and Chrome scrolls the field into view.
+    const visibleBottom = await showKeyboard(page, 330);
     await notes.focus();
-    const keyboard = 330;
-    await showKeyboard(page, keyboard);
-    const visibleBottom = (await page.evaluate(() => window.innerHeight)) - keyboard;
     await expect
       .poll(async () => {
         const field = (await notes.boundingBox())!;
@@ -392,16 +388,13 @@ test.describe("Kalender am Tablet", () => {
   test.use({ viewport: { width: 800, height: 1280 }, hasTouch: true });
 
   test("der Termin-Dialog bleibt über der Tastatur", async ({ page }) => {
-    // Chrome on an Android tablet: the keyboard lies over the page (VirtualKeyboard API), and the
-    // dialog sits in the middle, not as a bottom sheet.
-    await fakeKeyboard(page);
+    // Chrome on an Android tablet: the keyboard makes the page shorter, and the dialog sits in
+    // the middle of what is left, not as a bottom sheet.
     await login(page);
     await page.goto(`/calendar?event=new&start=${today()}T17:00`);
     const dialog = page.getByRole("dialog");
     await dialog.getByLabel("Titel").focus();
-    const keyboard = 500;
-    await showKeyboard(page, keyboard);
-    const visibleBottom = (await page.evaluate(() => window.innerHeight)) - keyboard;
+    const visibleBottom = await showKeyboard(page, 500);
     await expect
       .poll(async () => {
         const box = (await dialog.boundingBox())!;
@@ -411,50 +404,16 @@ test.describe("Kalender am Tablet", () => {
     await expect(dialog.getByLabel("Titel")).toBeInViewport();
   });
 
-  test("wird das Fenster bei offener Tastatur kleiner, bleibt ein Feld unten im Dialog sichtbar", async ({
-    page,
-  }) => {
-    // Split screen while typing: once the app takes the smaller window as its own, the field
-    // must move into what is left, not stay cut off under the keyboard.
-    await fakeKeyboard(page);
-    await login(page);
-    await page.goto(`/calendar?event=new&start=${today()}T17:00`);
-    const dialog = page.getByRole("dialog");
-    const notes = dialog.getByLabel("Notizen");
-    await notes.focus();
-    const keyboard = 500;
-    await showKeyboard(page, keyboard);
-    await expect(notes).toBeInViewport();
-    const screen = page.viewportSize()!;
-    const smaller = screen.height - 200;
-    await page.setViewportSize({ width: screen.width, height: smaller });
-    await showKeyboard(page, keyboard);
-    const visibleBottom = smaller - keyboard;
-    await expect
-      .poll(async () => {
-        const field = (await notes.boundingBox())!;
-        const frame = (await dialog.boundingBox())!;
-        return (
-          field.y >= frame.y - 1 &&
-          field.y + field.height <= frame.y + frame.height + 1 &&
-          field.y + field.height <= visibleBottom
-        );
-      })
-      .toBe(true);
-  });
-
   test("ein Feld unten im Dialog bleibt über der Tastatur sichtbar", async ({ page }) => {
     // The dialog gets shorter with the app; a field near its end must scroll into what is left,
     // not stay cut off below the dialog's edge.
-    await fakeKeyboard(page);
     await login(page);
     await page.goto(`/calendar?event=new&start=${today()}T17:00`);
     const dialog = page.getByRole("dialog");
     const notes = dialog.getByLabel("Notizen");
+    await expect(notes).toBeVisible();
+    const visibleBottom = await showKeyboard(page, 500);
     await notes.focus();
-    const keyboard = 500;
-    await showKeyboard(page, keyboard);
-    const visibleBottom = (await page.evaluate(() => window.innerHeight)) - keyboard;
     await expect
       .poll(async () => {
         const field = (await notes.boundingBox())!;

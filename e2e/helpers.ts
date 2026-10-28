@@ -160,36 +160,14 @@ export const addMail = async (
 };
 
 /**
- * A stand-in for the VirtualKeyboard API of Chromium on Android (Chromium in tests can't show a
- * keyboard). `showKeyboard(height)` in the page announces a keyboard of that height that lies over
- * the page, as with `overlaysContent`.
+ * The keyboard of Chrome on Android (Chromium in tests can't show one): with
+ * `interactive-widget=resizes-content` it makes the page shorter by its height.
  */
-export const fakeKeyboard = (page: Page) =>
-  page.addInitScript(() => {
-    const keyboard = Object.assign(new EventTarget(), {
-      overlaysContent: false,
-      boundingRect: new DOMRect(0, 0, 0, 0),
-    });
-    Object.defineProperty(navigator, "virtualKeyboard", { value: keyboard });
-    Object.assign(window, {
-      showKeyboard: (height: number) => {
-        keyboard.boundingRect = new DOMRect(
-          0,
-          window.innerHeight - height,
-          window.innerWidth,
-          height,
-        );
-        keyboard.dispatchEvent(new Event("geometrychange"));
-      },
-    });
-  });
-
-/** Shows the keyboard of `fakeKeyboard`. */
-export const showKeyboard = (page: Page, height: number) =>
-  page.evaluate(
-    (h) => (window as unknown as { showKeyboard: (h: number) => void }).showKeyboard(h),
-    height,
-  );
+export const showKeyboard = async (page: Page, height: number) => {
+  const screen = page.viewportSize()!;
+  await page.setViewportSize({ width: screen.width, height: screen.height - height });
+  return screen.height - height;
+};
 
 /**
  * Holds a finger on an element as long as a long press takes (`use-long-press.ts`), then lifts
