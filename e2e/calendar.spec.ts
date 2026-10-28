@@ -344,6 +344,29 @@ test.describe("Kalender am Handy @phone", () => {
       .toBeLessThanOrEqual(visibleBottom);
   });
 
+  test("ein Feld unten im Termin-Sheet bleibt über der Tastatur sichtbar", async ({ page }) => {
+    await fakeKeyboard(page);
+    await login(page);
+    await page.goto(`/calendar?event=new&start=${today()}T17:00`);
+    const dialog = page.getByRole("dialog");
+    const notes = dialog.getByLabel("Notizen");
+    await notes.focus();
+    const keyboard = 330;
+    await showKeyboard(page, keyboard);
+    const visibleBottom = (await page.evaluate(() => window.innerHeight)) - keyboard;
+    await expect
+      .poll(async () => {
+        const field = (await notes.boundingBox())!;
+        const frame = (await dialog.boundingBox())!;
+        return (
+          field.y >= frame.y - 1 &&
+          field.y + field.height <= frame.y + frame.height + 1 &&
+          field.y + field.height <= visibleBottom
+        );
+      })
+      .toBe(true);
+  });
+
   test("Kalender verwalten", async ({ page }) => {
     await login(page);
     await page.getByRole("link", { name: "Kalender" }).click();
@@ -383,5 +406,62 @@ test.describe("Kalender am Tablet", () => {
       })
       .toBeLessThanOrEqual(visibleBottom);
     await expect(dialog.getByLabel("Titel")).toBeInViewport();
+  });
+
+  test("wird das Fenster bei offener Tastatur kleiner, bleibt ein Feld unten im Dialog sichtbar", async ({
+    page,
+  }) => {
+    // Split screen while typing: once the app takes the smaller window as its own, the field
+    // must move into what is left, not stay cut off under the keyboard.
+    await fakeKeyboard(page);
+    await login(page);
+    await page.goto(`/calendar?event=new&start=${today()}T17:00`);
+    const dialog = page.getByRole("dialog");
+    const notes = dialog.getByLabel("Notizen");
+    await notes.focus();
+    const keyboard = 500;
+    await showKeyboard(page, keyboard);
+    await expect(notes).toBeInViewport();
+    const screen = page.viewportSize()!;
+    const smaller = screen.height - 200;
+    await page.setViewportSize({ width: screen.width, height: smaller });
+    await showKeyboard(page, keyboard);
+    const visibleBottom = smaller - keyboard;
+    await expect
+      .poll(async () => {
+        const field = (await notes.boundingBox())!;
+        const frame = (await dialog.boundingBox())!;
+        return (
+          field.y >= frame.y - 1 &&
+          field.y + field.height <= frame.y + frame.height + 1 &&
+          field.y + field.height <= visibleBottom
+        );
+      })
+      .toBe(true);
+  });
+
+  test("ein Feld unten im Dialog bleibt über der Tastatur sichtbar", async ({ page }) => {
+    // The dialog gets shorter with the app; a field near its end must scroll into what is left,
+    // not stay cut off below the dialog's edge.
+    await fakeKeyboard(page);
+    await login(page);
+    await page.goto(`/calendar?event=new&start=${today()}T17:00`);
+    const dialog = page.getByRole("dialog");
+    const notes = dialog.getByLabel("Notizen");
+    await notes.focus();
+    const keyboard = 500;
+    await showKeyboard(page, keyboard);
+    const visibleBottom = (await page.evaluate(() => window.innerHeight)) - keyboard;
+    await expect
+      .poll(async () => {
+        const field = (await notes.boundingBox())!;
+        const frame = (await dialog.boundingBox())!;
+        return (
+          field.y >= frame.y - 1 &&
+          field.y + field.height <= frame.y + frame.height + 1 &&
+          field.y + field.height <= visibleBottom
+        );
+      })
+      .toBe(true);
   });
 });
