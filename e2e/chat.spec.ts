@@ -586,6 +586,37 @@ test.describe("Chat am Handy @phone", () => {
     expect(await page.evaluate(() => window.scrollY)).toBe(0);
   });
 
+  test("wird das Fenster bei offener Tastatur wirklich kleiner, folgt die App", async ({
+    page,
+  }) => {
+    // Split screen or a resized window: unlike Chrome's dip of a few frames, the smaller height
+    // stays, and the field must not end up under the keyboard.
+    await fakeKeyboard(page);
+    await login(page);
+    await page
+      .getByRole("navigation", { name: "Apps" })
+      .getByRole("link", { name: /^Chat/ })
+      .click();
+    await page
+      .getByRole("navigation", { name: "Kanäle" })
+      .getByRole("link", { name: /allgemein/ })
+      .click();
+    const field = page.getByRole("textbox", { name: "Nachricht" });
+    await field.focus();
+    const keyboard = 330;
+    await showKeyboard(page, keyboard);
+    const screen = page.viewportSize()!;
+    const smaller = screen.height - 150;
+    await page.setViewportSize({ width: screen.width, height: smaller });
+    await showKeyboard(page, keyboard);
+    await expect
+      .poll(async () => {
+        const box = (await field.boundingBox())!;
+        return box.y + box.height;
+      })
+      .toBeLessThanOrEqual(smaller - keyboard);
+  });
+
   test("schrumpft Chrome die Ansicht, bevor die Tastatur gemeldet ist, bleibt die App richtig hoch", async ({
     page,
   }) => {
