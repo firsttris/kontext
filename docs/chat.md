@@ -23,7 +23,9 @@ info@ – wer das Postfach öffnen darf, öffnet die Mail, kopiert wird nichts.
 - **@Erwähnungen** mit Vorschlägen; eine Erwähnung oder Direktnachricht kommt aufs Handy, auch
   bei geschlossener App.
 - **Threads und Reaktionen:** im Thread antworten, ohne den Kanal zu füllen; 👍 ✅ 🎉 statt
-  „ok“.
+  „ok“. Am PC über die kleine Leiste, die beim Darüberfahren über der Nachricht erscheint; am
+  Handy hält man die Nachricht gedrückt, dann kommen von unten die Reaktionen und Antworten,
+  Text kopieren, Aufgabe, Bearbeiten und Löschen.
 - **Fotos und Dateien** von der Kamera, per Ziehen oder Einfügen; Fotos werden vorher verkleinert.
 - **Sprachnachrichten** wie bei WhatsApp: das Mikrofon (am Handy anstelle von „Senden“, solange
   nichts geschrieben ist) nimmt auf, bis man „Senden“ drückt oder verwirft; nach einer

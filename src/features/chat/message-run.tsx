@@ -3,10 +3,11 @@
  * as bubbles (the own on the right). Each message shows its text, photos, files and cards, the
  * tasks made from it, its reactions and answers, and its actions.
  */
-import { Ellipsis, ListChecks, MessageSquareReply, Pencil, Trash2 } from "lucide-react";
+import { ListChecks } from "lucide-react";
 import { type KeyboardEvent, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { MenuContent, MenuItem, MenuRoot, MenuTrigger } from "@/components/ui/menu";
+import { useLongPress } from "@/components/use-long-press";
+import { useMediaQuery } from "@/components/use-media-query";
 import { CallLine } from "@/features/calls/call-line";
 import { ItemLink } from "@/features/links/item-link";
 import { ColleagueAvatar } from "@/features/photos/colleague-avatar";
@@ -16,11 +17,12 @@ import { tasksOfMessage } from "@/lib/chat-cards";
 import { hasNewReplies } from "@/lib/chat-threads";
 import { cn } from "@/lib/cn";
 import { m } from "@/paraglide/messages";
-import { ForgedNote, SealedLine, useOpened, useSealedUrls } from "./confidential";
+import { ForgedNote, SealedLine, type Shown, useOpened, useSealedUrls } from "./confidential";
+import { ActionSheet, HoverBar, type MessageActions, useCopyText } from "./message-actions";
 import { MessageCard } from "./message-card";
 import { MessageFiles } from "./message-files";
 import { MessageText } from "./message-text";
-import { ReactionBar, ReactionPicker } from "./reactions";
+import { ReactionBar } from "./reactions";
 
 const time = (iso: string) =>
   new Date(iso).toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" });
@@ -43,9 +45,6 @@ type Props = {
   /** Answers after this are marked as new. */
   readUpTo?: string | null;
 };
-
-const hoverButton =
-  "flex size-7 shrink-0 items-center justify-center rounded-md text-muted opacity-60 hover:bg-hover hover:text-fg focus-visible:opacity-100 md:opacity-0 md:group-hover:opacity-100 md:data-[state=open]:opacity-100";
 
 const replyTime = (iso: string) =>
   new Date(iso).toLocaleString("de-DE", {
@@ -93,45 +92,6 @@ const RepliesLine = ({
     </button>
   );
 };
-
-const Actions = ({
-  message,
-  own,
-  onMakeTask,
-  onEdit,
-  onDelete,
-}: {
-  message: Message;
-  own: boolean;
-  onMakeTask: () => void;
-  onEdit: () => void;
-  onDelete: () => void;
-}) =>
-  isPending(message) || message.deleted ? null : (
-    <MenuRoot>
-      <MenuTrigger
-        aria-label={m.chat_message_actions()}
-        className="flex size-7 shrink-0 items-center justify-center rounded-md text-muted opacity-60 hover:bg-hover hover:text-fg focus-visible:opacity-100 md:opacity-0 md:group-hover:opacity-100 md:data-[state=open]:opacity-100"
-      >
-        <Ellipsis size={15} />
-      </MenuTrigger>
-      <MenuContent align="end">
-        <MenuItem onSelect={onMakeTask}>
-          <ListChecks size={15} /> {m.chat_make_task()}
-        </MenuItem>
-        {own && message.text ? (
-          <MenuItem onSelect={onEdit}>
-            <Pencil size={15} /> {m.chat_edit_message()}
-          </MenuItem>
-        ) : null}
-        {own ? (
-          <MenuItem onSelect={onDelete} className="text-danger">
-            <Trash2 size={15} /> {m.chat_delete_message()}
-          </MenuItem>
-        ) : null}
-      </MenuContent>
-    </MenuRoot>
-  );
 
 /** Changing one's message in place: Enter saves, Escape leaves it as it was. */
 const EditField = ({
@@ -186,6 +146,66 @@ const EditField = ({
   );
 };
 
+/** The message itself: its text as a bubble (phone) or a line (desktop), or what stands for it. */
+const Body = ({
+  message,
+  own,
+  me,
+  people,
+}: {
+  message: Shown;
+  own: boolean;
+  me: string;
+  people: Person[];
+}) => {
+  if (message.call) return <CallLine call={message.call} channelId={message.channelId} own={own} />;
+  if (message.deleted)
+    return (
+      <p className="m-0 rounded-2xl border border-dashed border-border px-3 py-1.5 text-[14px] text-muted italic md:border-0 md:p-0">
+        {m.chat_message_deleted()}
+      </p>
+    );
+  if (message.sealed && message.sealed !== "valid" && message.sealed !== "invalid")
+    return <SealedLine state={message.sealed} />;
+  if (!message.text) return null;
+  return (
+    <div
+      className={cn(
+        "max-w-[85vw] rounded-2xl px-3 py-2 md:max-w-none md:rounded-none md:bg-transparent md:p-0 md:text-fg",
+        own ? "rounded-br-md bg-primary text-onprimary" : "rounded-bl-md bg-subtle",
+      )}
+    >
+      <MessageText message={message} people={people} me={me} own={own} />
+    </div>
+  );
+};
+
+/** What one can do with this message: none while it is being sent or after it was deleted. */
+const useActions = (
+  message: Message,
+  stored: Message,
+  own: boolean,
+  {
+    onMakeTask,
+    onEdit,
+    onDelete,
+    onReact,
+    onReply,
+  }: Pick<Props, "onMakeTask" | "onDelete" | "onReact" | "onReply"> & { onEdit: () => void },
+): MessageActions => {
+  const copy = useCopyText();
+  if (isPending(message) || message.deleted) return {};
+  const reacts = !message.call;
+  return {
+    onReact: reacts ? (emoji) => onReact(message, emoji) : undefined,
+    onReply: reacts && onReply ? () => onReply(message) : undefined,
+    onCopy: message.text ? () => copy(message.text) : undefined,
+    onMakeTask: () => onMakeTask(stored),
+    onEdit: own && message.text ? onEdit : undefined,
+    onDelete: own ? () => onDelete(message) : undefined,
+  };
+};
+
 const Item = ({
   message: stored,
   own,
@@ -194,90 +214,63 @@ const Item = ({
   nameOf,
   highlight,
   readUpTo = null,
-  onMakeTask,
-  onEdit,
-  onDelete,
-  onReact,
   onReply,
+  ...handlers
 }: { message: Message; own: boolean } & Omit<Props, "run">) => {
   // In a confidential channel: the text as opened here; what leaves the chat (a task) is told
   // only that there was a message.
   const message = useOpened(stored);
   const sealedUrls = useSealedUrls(message.files, Boolean(message.sealed));
-  const live = !isPending(message) && !message.deleted && !message.call;
   const { tasks } = useTasks();
   const statusLabel = useStatusLabel();
   const made = tasksOfMessage(tasks, message.id);
   const [editing, setEditing] = useState(false);
+  const [sheet, setSheet] = useState(false);
+  const phone = useMediaQuery("(max-width: 767px)");
+  const actions = useActions(message, stored, own, {
+    ...handlers,
+    onReply,
+    onEdit: () => setEditing(true),
+  });
+  const hasActions = Object.values(actions).some(Boolean);
+  const press = useLongPress(() => {
+    if (!phone || editing || !hasActions) return;
+    navigator.vibrate?.(10);
+    setSheet(true);
+  });
   return (
     <div
       data-message={message.id}
+      {...press.handlers}
+      // The click that ends a long press would also follow a link or play a voice message.
+      onClickCapture={(event) => {
+        if (!press.consumeClick()) return;
+        event.preventDefault();
+        event.stopPropagation();
+      }}
       className={cn(
-        "group flex max-w-full flex-col gap-1.5 rounded-xl transition-colors duration-700 md:-mx-2 md:px-2 md:py-0.5",
+        "group relative flex max-w-full flex-col gap-1.5 rounded-xl transition-colors duration-700 hover:duration-100 md:-mx-2 md:px-2 md:py-0.5 md:hover:bg-hover/60",
+        // A long press picks the message, not a word of it (copying is in the sheet).
+        "max-md:select-none max-md:[-webkit-touch-callout:none]",
         own ? "items-end md:items-stretch" : "items-start md:items-stretch",
         highlight === message.id && "bg-accent/10",
+        sheet && "bg-hover",
         isPending(message) && "opacity-60",
       )}
     >
-      <div
-        className={cn("flex max-w-full items-start gap-1", own && "flex-row-reverse md:flex-row")}
-      >
-        {editing ? (
-          <EditField
-            message={message}
-            people={people}
-            onCancel={() => setEditing(false)}
-            onSave={(text, mentions) => {
-              onEdit(message, text, mentions);
-              setEditing(false);
-            }}
-          />
-        ) : message.call ? (
-          <CallLine call={message.call} channelId={message.channelId} own={own} />
-        ) : message.deleted ? (
-          <p className="m-0 rounded-2xl border border-dashed border-border px-3 py-1.5 text-[14px] text-muted italic md:border-0 md:p-0">
-            {m.chat_message_deleted()}
-          </p>
-        ) : message.sealed && message.sealed !== "valid" && message.sealed !== "invalid" ? (
-          <SealedLine state={message.sealed} />
-        ) : message.text ? (
-          <div
-            className={cn(
-              "max-w-[85vw] rounded-2xl px-3 py-2 md:max-w-none md:flex-1 md:rounded-none md:bg-transparent md:p-0 md:text-fg",
-              own ? "rounded-br-md bg-primary text-onprimary" : "rounded-bl-md bg-subtle",
-            )}
-          >
-            <MessageText message={message} people={people} me={me} own={own} />
-          </div>
-        ) : (
-          <span className="hidden flex-1 md:block" />
-        )}
-        {editing || !live ? null : (
-          <>
-            <ReactionPicker onPick={(emoji) => onReact(message, emoji)} className={hoverButton} />
-            {onReply ? (
-              <button
-                type="button"
-                aria-label={m.chat_reply()}
-                title={m.chat_reply()}
-                onClick={() => onReply(message)}
-                className={hoverButton}
-              >
-                <MessageSquareReply size={15} />
-              </button>
-            ) : null}
-          </>
-        )}
-        {editing ? null : (
-          <Actions
-            message={message}
-            own={own}
-            onMakeTask={() => onMakeTask(stored)}
-            onEdit={() => setEditing(true)}
-            onDelete={() => onDelete(message)}
-          />
-        )}
-      </div>
+      {editing ? (
+        <EditField
+          message={message}
+          people={people}
+          onCancel={() => setEditing(false)}
+          onSave={(text, mentions) => {
+            handlers.onEdit(message, text, mentions);
+            setEditing(false);
+          }}
+        />
+      ) : (
+        <Body message={message} own={own} me={me} people={people} />
+      )}
       {message.sealed === "invalid" ? <ForgedNote /> : null}
       <MessageFiles files={message.files} urls={message.sealed ? sealedUrls : undefined} />
       {message.cards.map((card) => (
@@ -287,7 +280,7 @@ const Item = ({
         message={message}
         me={me}
         nameOf={nameOf}
-        onReact={(emoji) => onReact(message, emoji)}
+        onReact={(emoji) => handlers.onReact(message, emoji)}
       />
       {message.replies && onReply ? (
         <RepliesLine
@@ -307,6 +300,19 @@ const Item = ({
           {m.chat_task_made({ title: task.title, status: statusLabel(task) })}
         </ItemLink>
       ))}
+      {editing || !hasActions ? null : (
+        <>
+          <HoverBar actions={actions} />
+          {/* A screen reader on a phone reaches the sheet without the long press. */}
+          <button
+            type="button"
+            aria-label={m.chat_message_actions()}
+            onClick={() => setSheet(true)}
+            className="sr-only md:hidden"
+          />
+          {phone ? <ActionSheet open={sheet} onOpenChange={setSheet} actions={actions} /> : null}
+        </>
+      )}
     </div>
   );
 };

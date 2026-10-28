@@ -1,5 +1,5 @@
 import { type Browser, expect, type Page, test } from "@playwright/test";
-import { addMail, login, unique } from "./helpers";
+import { addMail, login, longPress, unique } from "./helpers";
 
 const PNG = Buffer.from(
   "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==",
@@ -50,6 +50,12 @@ const messageIn = (page: Page, text: string) =>
     .first()
     .locator('[data-message]:not([data-message^="pending-"])')
     .filter({ hasText: text });
+
+/** On a phone: the thread through the sheet a long press on the message opens. */
+const replyOnPhone = async (page: Page, text: string) => {
+  await longPress(messageIn(page, text));
+  await page.getByRole("button", { name: "Im Thread antworten" }).click();
+};
 
 test.describe("Chat: Reaktionen und Antworten", () => {
   test("Reaktionen kommen live an, eigene lassen sich wegnehmen", async ({ page, browser }) => {
@@ -180,7 +186,7 @@ test.describe("Chat: Reaktionen und Antworten", () => {
     await login(page);
     await openChannel(page, /allgemein/);
     await write(page, question);
-    await messageIn(page, question).getByRole("button", { name: "Antworten" }).click();
+    await replyOnPhone(page, question);
     const thread = page.getByRole("complementary", { name: "Thread" });
     await expect(thread).toBeVisible();
     await expect(page.getByRole("list", { name: "Nachrichten" })).toBeHidden();
@@ -192,12 +198,35 @@ test.describe("Chat: Reaktionen und Antworten", () => {
     ).toBeVisible();
   });
 
+  test("am Handy öffnet langes Drücken Reaktionen und Aktionen @phone", async ({ page }) => {
+    const text = unique("Kran kommt um 7");
+    await page.context().grantPermissions(["clipboard-read", "clipboard-write"]);
+    await login(page);
+    await openChannel(page, /allgemein/);
+    await write(page, text);
+    const message = messageIn(page, text);
+    // Nothing next to the bubble: no small icons whose message one has to guess.
+    await expect(message.getByRole("button", { name: "Reagieren" })).toBeHidden();
+    await expect(message.getByRole("button", { name: "Antworten" })).toBeHidden();
+
+    await longPress(message);
+    const sheet = page.getByRole("dialog", { name: "Aktionen zur Nachricht" });
+    await sheet.getByRole("button", { name: "Mit 👍 reagieren" }).click();
+    await expect(sheet).toHaveCount(0);
+    await expect(message.getByRole("button", { name: /^👍 1/ })).toBeVisible();
+
+    await longPress(message);
+    await sheet.getByRole("button", { name: "Text kopieren" }).click();
+    await expect(page.getByRole("status").filter({ hasText: "Text kopiert" })).toBeVisible();
+    expect(await page.evaluate(() => navigator.clipboard.readText())).toBe(text);
+  });
+
   test("am Handy führt Zurück dorthin, woher man kam @phone", async ({ page }) => {
     const question = unique("Leiter in Halle 3?");
     await login(page);
     await openChannel(page, /allgemein/);
     await write(page, question);
-    await messageIn(page, question).getByRole("button", { name: "Antworten" }).click();
+    await replyOnPhone(page, question);
     const thread = page.getByRole("complementary", { name: "Thread" });
     await expect(thread).toBeVisible();
     // No keyboard over the thread just opened.
@@ -213,7 +242,7 @@ test.describe("Chat: Reaktionen und Antworten", () => {
 
     // Swiped back instead of tapped: the same way.
     await page.goForward();
-    await messageIn(page, question).getByRole("button", { name: "Antworten" }).click();
+    await replyOnPhone(page, question);
     await expect(thread).toBeVisible();
     await page.goBack();
     await expect(thread).toHaveCount(0);
