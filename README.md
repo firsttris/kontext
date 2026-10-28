@@ -237,6 +237,21 @@ write drafts; they never send or delete anything. See [AI agents](https://firstt
 The app is in German for now; English and other European languages are planned.
 </details>
 
+<details>
+<summary><b>Can an AI assistant set it up for me?</b></summary>
+
+Yes. Give Claude Code or another coding agent this repository and SSH access to your server and
+say: "Set up Kontext on my server following the [installation guide](https://firsttris.github.io/kontext/installation.html)."
+</details>
+
+<details>
+<summary><b>Is it secure?</b></summary>
+
+Check it yourself, the code is open: let your AI agent run Cloudflare's [Security Audit Skill](https://github.com/cloudflare/security-audit-skill) or
+Claude Code's `/security-review` on this repository.
+Report vulnerabilities privately as described in [SECURITY.md](SECURITY.md).
+</details>
+
 ## 📚 Documentation
 
 The documentation opens with a tour in pictures, made to send to customers: **[in English](https://firsttris.github.io/kontext/en/)** and **[in German](https://firsttris.github.io/kontext/)**.

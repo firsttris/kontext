@@ -239,6 +239,21 @@ schreiben Entwürfe; sie senden und löschen nie etwas. Siehe [KI-Agenten](https
 Die App ist vorerst auf Deutsch; Englisch und weitere europäische Sprachen sind geplant.
 </details>
 
+<details>
+<summary><b>Kann eine KI das für mich aufsetzen?</b></summary>
+
+Ja. Gib Claude Code oder einem anderen Coding-Agenten dieses Repository und SSH-Zugang zu deinem
+Server und sag: „Setz Kontext auf meinem Server auf, nach der [Installationsanleitung](https://firsttris.github.io/kontext/installation.html).“
+</details>
+
+<details>
+<summary><b>Ist das sicher?</b></summary>
+
+Prüf es selbst, der Code ist offen: Lass deinen KI-Agenten Cloudflares [Security Audit Skill](https://github.com/cloudflare/security-audit-skill) oder
+`/security-review` von Claude Code über dieses Repository laufen.
+Sicherheitslücken meldest du vertraulich, wie in [SECURITY.md](SECURITY.md) beschrieben.
+</details>
+
 ## 📚 Dokumentation
 
 Die Dokumentation beginnt mit einem Rundgang in Bildern, gemacht zum Weiterschicken an Kunden: **[auf Deutsch](https://firsttris.github.io/kontext/)** und **[auf Englisch](https://firsttris.github.io/kontext/en/)**.
