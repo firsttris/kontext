@@ -1,4 +1,7 @@
-/** One mail in the list: who, when, subject, categories, preview; and its box to pick it. */
+/**
+ * One mail in the list: who, when, subject, categories, preview; and its box to pick it. Picking
+ * also works with Shift/Ctrl on the line and, on phones, by a long press.
+ */
 import { Link, useParams } from "@tanstack/react-router";
 import {
   AlarmClock,
@@ -10,13 +13,17 @@ import {
   Star,
   Users,
 } from "lucide-react";
+import type { MouseEvent } from "react";
 import { Highlighted } from "@/components/highlighted";
+import { useLongPress } from "@/components/use-long-press";
+import { useMediaQuery } from "@/components/use-media-query";
 import { isFlagged, isUnread } from "@/jmap/mail";
 import { categoriesOn } from "@/lib/categories";
 import { cn } from "@/lib/cn";
 import { displayName, formatAddressList, listDate } from "@/lib/format";
 import { encryptedPreview } from "@/lib/pgp-mail";
 import { sendTimeLabel } from "@/lib/schedule";
+import { rowClick } from "@/lib/selection";
 import { tasksOfMail } from "@/lib/tasks";
 import { m } from "@/paraglide/messages";
 import { CategoryChips } from "../categories/category-chips";
@@ -46,7 +53,8 @@ export const MessageRow = ({
   /** A draft opens in the composer to be finished. */
   isDraft: boolean;
   drag: DraggedMail | undefined;
-  /** Some mail is picked (or the phone's "Auswählen" is on): every row shows its box. */
+  /** Some mail is picked (or the phone's "Auswählen" is on): every row shows its box, and on a
+   *  phone a tap on the line picks. */
   selecting: boolean;
   selected: boolean;
   /** Picks or drops the mail; with Shift, the range up to the last one picked. */
@@ -75,15 +83,35 @@ export const MessageRow = ({
     : group && group.count > 1
       ? group.names.map((name) => name.split(" ")[0]).join(", ")
       : displayName(email.from?.[0]);
-  const boxVisible = selecting || selected;
+  const boxShown = selecting || selected;
+  const phone = !useMediaQuery("(min-width: 768px)");
+  const pickByPress = useLongPress(() => onPick(false));
+  const onClick = (event: MouseEvent) => {
+    if (pickByPress.consumeClick()) return event.preventDefault();
+    const does = rowClick({
+      shift: event.shiftKey,
+      ctrl: event.ctrlKey || event.metaKey,
+      picking: selecting,
+      phone,
+    });
+    if (does === "open") return;
+    event.preventDefault();
+    onPick(does === "range");
+  };
   return (
-    <div className="group relative">
+    <div
+      className={cn(
+        "group flex rounded-[10px] hover:bg-hover",
+        active && "bg-subtle",
+        selected && "bg-accent/8",
+      )}
+    >
+      {/* Its own column the height of the line, beside the link: a click a bit off the box
+          still picks and never opens the mail. On phones it is there while picking. */}
       <label
         className={cn(
-          "absolute top-[11px] left-[5px] z-10 flex size-5 cursor-pointer items-center justify-center",
-          boxVisible
-            ? "flex"
-            : "opacity-0 group-hover:opacity-100 has-[:focus-visible]:opacity-100",
+          "w-9 shrink-0 cursor-pointer justify-end pt-[15px] pl-1",
+          boxShown ? "flex" : "hidden md:flex",
         )}
       >
         <input
@@ -92,7 +120,11 @@ export const MessageRow = ({
           readOnly
           aria-label={m.mail_select({ subject: subject || m.mail_no_subject() })}
           onClick={(event) => onPick(event.shiftKey)}
-          className="size-4 cursor-pointer accent-[var(--primary)]"
+          className={cn(
+            "size-4 cursor-pointer accent-[var(--primary)]",
+            // A faint box on every line says that mails can be picked; full on hover.
+            !boxShown && "opacity-35 group-hover:opacity-100 focus-visible:opacity-100",
+          )}
         />
       </label>
       <Link
@@ -104,28 +136,26 @@ export const MessageRow = ({
           compose: isDraft ? "draft" : undefined,
         })}
         aria-current={active ? "true" : undefined}
-        draggable={drag ? true : undefined}
+        draggable={drag && !phone ? true : undefined}
         onDragStart={
-          drag ? (event) => startMailDrag(event, drag) : (event) => event.preventDefault()
+          drag && !phone ? (event) => startMailDrag(event, drag) : (event) => event.preventDefault()
         }
+        onClick={onClick}
+        {...pickByPress.handlers}
         className={cn(
-          "flex gap-3 rounded-[10px] px-3 py-3 text-left text-fg no-underline hover:bg-hover",
-          active && "bg-subtle",
-          selected && "bg-accent/8",
+          "flex min-w-0 flex-1 py-3 pr-3 text-left text-fg no-underline [-webkit-touch-callout:none]",
+          boxShown ? "pl-2" : "pl-3 md:pl-2",
         )}
       >
-        <span
-          aria-hidden="true"
-          className={cn(
-            "mt-[7px] size-1.5 shrink-0 rounded-full",
-            unread ? "bg-accent" : "bg-transparent",
-            // The box takes the dot's place.
-            boxVisible ? "invisible" : "group-hover:invisible",
-          )}
-        />
         <span className="flex min-w-0 flex-1 flex-col gap-0.5">
           <span className="flex items-baseline gap-2">
             <span className={cn("min-w-0 flex-1 truncate", unread && "font-semibold")}>
+              {unread ? (
+                <span
+                  aria-hidden="true"
+                  className="mr-1.5 mb-px inline-block size-1.5 rounded-full bg-accent align-middle"
+                />
+              ) : null}
               <Highlighted text={who || "—"} terms={highlight} />
               {group && group.count > 1 ? (
                 <>

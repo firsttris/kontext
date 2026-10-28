@@ -80,6 +80,28 @@ test.describe("Mehrere Mails auswählen", () => {
       .toEqual(["archive", "archive", "archive"]);
   });
 
+  test("Strg-Klick und die Spalte neben dem Kästchen wählen, ohne die Mail zu öffnen", async ({
+    page,
+  }) => {
+    const subjects = [unique("Spalte A"), unique("Spalte B")];
+    for (const subject of subjects) await addMail("jonas", "jonas", subject);
+    await login(page);
+    const list = page.getByRole("list", { name: "Posteingang" });
+    await list.getByText(subjects[1]!).click({ modifiers: ["ControlOrMeta"] });
+    await expect(box(page, subjects[1]!)).toBeChecked();
+    // Below the box, still in its column: picks too.
+    const column = box(page, subjects[0]!).locator("xpath=..");
+    const area = (await column.boundingBox())!;
+    await page.mouse.click(area.x + area.width / 2, area.y + area.height - 6);
+    await expect(box(page, subjects[0]!)).toBeChecked();
+    await expect(page.getByText("2 ausgewählt")).toBeVisible();
+    await expect(page).not.toHaveURL(/email=/);
+    // A plain click still opens the mail, and the picking stays.
+    await list.getByText(subjects[0]!).click();
+    await expect(page.getByRole("heading", { name: subjects[0]! })).toBeVisible();
+    await expect(page.getByText("2 ausgewählt")).toBeVisible();
+  });
+
   test("x nimmt die offene Mail in die Auswahl", async ({ page }) => {
     const subject = unique("Auswahl per Taste");
     await addMail("jonas", "jonas", subject);
@@ -127,5 +149,24 @@ test.describe("Auswählen am Handy @phone", () => {
     await expect
       .poll(async () => Object.values(await stateOf("max", "max", subjects)).map((s) => s.folder))
       .toEqual(["trash", "trash"]);
+  });
+
+  test("langes Drücken beginnt die Auswahl, ein Tipp wählt dann statt zu öffnen @phone", async ({
+    page,
+  }) => {
+    const subjects = [unique("Handy lang 1"), unique("Handy lang 2")];
+    for (const subject of subjects) await addMail("max", "max", subject);
+    await login(page, "max");
+    const line = page.getByRole("link", { name: new RegExp(subjects[1]!) });
+    const at = (await line.boundingBox())!;
+    const point = { clientX: at.x + at.width / 2, clientY: at.y + at.height / 2 };
+    await line.dispatchEvent("pointerdown", { pointerType: "touch", isPrimary: true, ...point });
+    await expect(page.getByText("1 ausgewählt")).toBeVisible();
+    await line.dispatchEvent("pointerup", { pointerType: "touch", isPrimary: true, ...point });
+    await expect(box(page, subjects[1]!)).toBeChecked();
+    // Picking now: a tap on another line picks it and stays in the list.
+    await page.getByRole("link", { name: new RegExp(subjects[0]!) }).tap();
+    await expect(page.getByText("2 ausgewählt")).toBeVisible();
+    await expect(page).not.toHaveURL(/email=/);
   });
 });

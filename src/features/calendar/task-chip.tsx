@@ -66,18 +66,27 @@ export const TaskChip = ({
         size === "sm" ? "px-1 py-px text-[12px]" : "-ml-[5px] flex-1 text-[14px] font-medium",
       )}
     >
+      {/* The ring is small in the grids; the button around it is larger to hit, so a click
+          just beside it ticks off rather than opens the task. */}
       <button
         type="button"
         onClick={() => void complete()}
         aria-label={m.tasks_toggle_done({ title: task.title })}
         title={m.tasks_complete()}
         className={cn(
-          "flex shrink-0 items-center justify-center rounded-full border-[1.5px] text-transparent hover:border-ok hover:bg-ok/10 hover:text-ok",
-          size === "sm" ? "size-3.5" : "size-[18px]",
-          overdue ? "border-danger" : "border-muted",
+          "group/done flex shrink-0 items-center justify-center",
+          size === "sm" ? "-mx-1.5 -my-1 px-1.5 py-1" : "-m-2 p-2",
         )}
       >
-        <Check size={size === "sm" ? 9 : 12} strokeWidth={3} />
+        <span
+          className={cn(
+            "flex items-center justify-center rounded-full border-[1.5px] text-transparent group-hover/done:border-ok group-hover/done:bg-ok/10 group-hover/done:text-ok",
+            size === "sm" ? "size-3.5" : "size-[18px]",
+            overdue ? "border-danger" : "border-muted",
+          )}
+        >
+          <Check size={size === "sm" ? 9 : 12} strokeWidth={3} />
+        </span>
       </button>
       <Link
         to="/tasks"
