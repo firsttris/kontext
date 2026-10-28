@@ -481,6 +481,8 @@ export const Composer = ({ accountId, mode, sourceEmailId, prefill }: Props) => 
       // Strg+Enter (Cmd+Enter on a Mac) sends, as in Gmail and Outlook; only when "Senden" could.
       onKeyDown={(event) => {
         if (event.key !== "Enter" || !(event.ctrlKey || event.metaKey)) return;
+        // Not from a dialog in a portal ("Später senden"): React passes its keys up to here too.
+        if (!event.currentTarget.contains(event.target as Node)) return;
         const submit =
           event.currentTarget.querySelector<HTMLButtonElement>('button[type="submit"]');
         if (!submit || submit.disabled) return;
