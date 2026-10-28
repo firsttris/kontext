@@ -102,6 +102,22 @@ test.describe("Mehrere Mails auswählen", () => {
     await expect(page.getByText("2 ausgewählt")).toBeVisible();
   });
 
+  test("Shift-Klick in die Spalte neben dem Kästchen wählt einen Bereich", async ({ page }) => {
+    const subjects = [
+      unique("Spalte Bereich A"),
+      unique("Spalte Bereich B"),
+      unique("Spalte Bereich C"),
+    ];
+    for (const subject of subjects) await addMail("jonas", "jonas", subject);
+    await login(page);
+    await box(page, subjects[2]!).click();
+    const area = (await box(page, subjects[0]!).locator("xpath=..").boundingBox())!;
+    await page.keyboard.down("Shift");
+    await page.mouse.click(area.x + area.width / 2, area.y + area.height - 6);
+    await page.keyboard.up("Shift");
+    await expect(page.getByText("3 ausgewählt")).toBeVisible();
+  });
+
   test("x nimmt die offene Mail in die Auswahl", async ({ page }) => {
     const subject = unique("Auswahl per Taste");
     await addMail("jonas", "jonas", subject);
@@ -168,5 +184,46 @@ test.describe("Auswählen am Handy @phone", () => {
     await page.getByRole("link", { name: new RegExp(subjects[0]!) }).tap();
     await expect(page.getByText("2 ausgewählt")).toBeVisible();
     await expect(page).not.toHaveURL(/email=/);
+  });
+
+  /** Real fingers on the screen, as the browser gets them (pointer events follow from these). */
+  const touch = async (page: Page) => {
+    const cdp = await page.context().newCDPSession(page);
+    return (
+      type: "touchStart" | "touchEnd" | "touchCancel",
+      touchPoints: { x: number; y: number; id?: number }[],
+    ) => cdp.send("Input.dispatchTouchEvent", { type, touchPoints });
+  };
+
+  test("ein echter langer Finger-Druck wählt und öffnet nicht @phone", async ({ page }) => {
+    const subject = unique("Handy halten");
+    await addMail("max", "max", subject);
+    await login(page, "max");
+    const at = (await page.getByRole("link", { name: new RegExp(subject) }).boundingBox())!;
+    const finger = await touch(page);
+    await finger("touchStart", [{ x: at.x + at.width / 2, y: at.y + at.height / 2 }]);
+    await page.waitForTimeout(800);
+    await finger("touchEnd", []);
+    await expect(page.getByText("1 ausgewählt")).toBeVisible();
+    await page.waitForTimeout(500);
+    await expect(page).not.toHaveURL(/email=/);
+    await expect(box(page, subject)).toBeChecked();
+  });
+
+  test("zwei Finger auf einer Zeile (Zoomen) wählen nichts @phone", async ({ page }) => {
+    const subject = unique("Handy zoomen");
+    await addMail("max", "max", subject);
+    await login(page, "max");
+    const at = (await page.getByRole("link", { name: new RegExp(subject) }).boundingBox())!;
+    const y = at.y + at.height / 2;
+    const one = { x: at.x + 40, y, id: 1 };
+    const two = { x: at.x + 160, y, id: 2 };
+    const finger = await touch(page);
+    await finger("touchStart", [one]);
+    await finger("touchStart", [one, two]);
+    await page.waitForTimeout(100);
+    await finger("touchCancel", []);
+    await page.waitForTimeout(900);
+    await expect(page.getByText(/\d+ ausgewählt/)).toHaveCount(0);
   });
 });

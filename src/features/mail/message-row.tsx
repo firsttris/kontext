@@ -108,7 +108,12 @@ export const MessageRow = ({
     >
       {/* Its own column the height of the line, beside the link: a click a bit off the box
           still picks and never opens the mail. On phones it is there while picking. */}
-      <label
+      {/* A click on the box itself bubbles here too; a label would not hand on a Shift-click
+          beside the box to it. */}
+      {/* biome-ignore lint/a11y/noStaticElementInteractions: the checkbox inside is the control */}
+      {/* biome-ignore lint/a11y/useKeyWithClickEvents: Space on the checkbox clicks it, which bubbles here */}
+      <div
+        onClick={(event) => onPick(event.shiftKey)}
         className={cn(
           "w-9 shrink-0 cursor-pointer justify-end pt-[15px] pl-1",
           boxShown ? "flex" : "hidden md:flex",
@@ -119,14 +124,13 @@ export const MessageRow = ({
           checked={selected}
           readOnly
           aria-label={m.mail_select({ subject: subject || m.mail_no_subject() })}
-          onClick={(event) => onPick(event.shiftKey)}
           className={cn(
             "size-4 cursor-pointer accent-[var(--primary)]",
             // A faint box on every line says that mails can be picked; full on hover.
             !boxShown && "opacity-35 group-hover:opacity-100 focus-visible:opacity-100",
           )}
         />
-      </label>
+      </div>
       <Link
         to="."
         search={(prev) => ({

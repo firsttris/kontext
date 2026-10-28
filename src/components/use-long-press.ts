@@ -19,7 +19,9 @@ export const useLongPress = (onLongPress: () => void) => {
   const handlers = {
     onPointerDown: (event: PointerEvent) => {
       fired.current = false;
-      if (event.pointerType !== "touch") return;
+      // A second finger is a pinch or a zoom, not a press: it ends the first one's too.
+      cancel();
+      if (event.pointerType !== "touch" || !event.isPrimary) return;
       start.current = { x: event.clientX, y: event.clientY };
       timer.current = setTimeout(() => {
         fired.current = true;
