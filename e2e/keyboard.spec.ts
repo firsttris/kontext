@@ -102,4 +102,16 @@ test.describe("Mit der Tastatur", () => {
     await expect(page.getByRole("status").filter({ hasText: "Mail gesendet." })).toHaveCount(0);
     expect(await inboxSubjects("anna")).not.toContain(subject);
   });
+
+  test("die Pfeiltasten im kleinen Monat gehen vom angeklickten Tag aus", async ({ page }) => {
+    await page.goto("/calendar?date=2026-10-14");
+    const day = (name: string) => page.getByRole("link", { name, exact: true });
+    await day("Mittwoch, 14. Oktober 2026").focus();
+    await page.keyboard.press("ArrowRight");
+    await expect(day("Donnerstag, 15. Oktober 2026")).toBeFocused();
+    await day("Dienstag, 20. Oktober 2026").click();
+    await expect(page).toHaveURL(/date=2026-10-20/);
+    await page.keyboard.press("ArrowRight");
+    await expect(day("Mittwoch, 21. Oktober 2026")).toBeFocused();
+  });
 });
