@@ -11,6 +11,7 @@ import type { EmailDetail } from "@/jmap/types";
 import { MAIL_COPY_TYPE, type MailCopy } from "@/lib/chat";
 import type { Card, ChatFile } from "@/lib/chat-cards";
 import { mailDocument, sanitizeMailHtml, textToHtml } from "@/lib/html";
+import { LOCALE } from "@/lib/locale";
 import { copyAttachments, copyFileName, mailCopyOf } from "@/lib/mail-copy";
 import { m } from "@/paraglide/messages";
 import { fileUrl, uploadFile } from "./upload";
@@ -44,7 +45,7 @@ export const useShareCopy = () => {
 };
 
 const when = (iso: string) =>
-  new Date(iso).toLocaleString("de-DE", {
+  new Date(iso).toLocaleString(LOCALE, {
     timeZone: "Europe/Berlin",
     weekday: "short",
     day: "numeric",

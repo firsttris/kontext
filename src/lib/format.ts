@@ -1,30 +1,31 @@
 /** German formatting of dates, sizes and names. `now` is passed in so the functions stay pure. */
 import type { EmailAddress } from "@/jmap/types";
 import { m } from "@/paraglide/messages";
+import { LOCALE } from "./locale";
 
 export const TIME_ZONE = "Europe/Berlin";
 
 const dayKey = (date: Date): string =>
   new Intl.DateTimeFormat("sv-SE", { timeZone: TIME_ZONE }).format(date);
 
-const time = new Intl.DateTimeFormat("de-DE", {
+const time = new Intl.DateTimeFormat(LOCALE, {
   timeZone: TIME_ZONE,
   hour: "2-digit",
   minute: "2-digit",
 });
-const weekday = new Intl.DateTimeFormat("de-DE", { timeZone: TIME_ZONE, weekday: "short" });
-const shortDate = new Intl.DateTimeFormat("de-DE", {
+const weekday = new Intl.DateTimeFormat(LOCALE, { timeZone: TIME_ZONE, weekday: "short" });
+const shortDate = new Intl.DateTimeFormat(LOCALE, {
   timeZone: TIME_ZONE,
   day: "2-digit",
   month: "2-digit",
 });
-const fullDate = new Intl.DateTimeFormat("de-DE", {
+const fullDate = new Intl.DateTimeFormat(LOCALE, {
   timeZone: TIME_ZONE,
   day: "2-digit",
   month: "2-digit",
   year: "numeric",
 });
-const longDateTime = new Intl.DateTimeFormat("de-DE", {
+const longDateTime = new Intl.DateTimeFormat(LOCALE, {
   timeZone: TIME_ZONE,
   weekday: "short",
   day: "numeric",
@@ -81,5 +82,5 @@ export const formatSize = (bytes: number): string => {
     unit++;
   }
   const digits = unit === 0 || value >= 10 ? 0 : 1;
-  return `${value.toLocaleString("de-DE", { maximumFractionDigits: digits })} ${units[unit]}`;
+  return `${value.toLocaleString(LOCALE, { maximumFractionDigits: digits })} ${units[unit]}`;
 };

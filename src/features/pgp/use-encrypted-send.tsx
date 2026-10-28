@@ -15,6 +15,7 @@ import { type Hold, type OutgoingEmail, sendEmail } from "@/jmap/mail";
 import { sendRaw } from "@/jmap/send-raw";
 import type { EmailAddress } from "@/jmap/types";
 import { escapeHtml } from "@/lib/html";
+import { LOCALE } from "@/lib/locale";
 import { unlockKey } from "@/lib/pgp";
 import { encryptMail, signMail } from "@/lib/pgp-mail";
 import {
@@ -42,7 +43,7 @@ export const LINK_DAY_CHOICES = [7, 30, 90] as const;
 const LINK_DAYS = 30;
 
 const untilLabel = (date: Date) =>
-  date.toLocaleDateString("de-DE", { timeZone: "Europe/Berlin", dateStyle: "long" });
+  date.toLocaleDateString(LOCALE, { timeZone: "Europe/Berlin", dateStyle: "long" });
 
 export const useEncryptedSend = (from: string | undefined, recipients: string[]) => {
   const client = useClient();

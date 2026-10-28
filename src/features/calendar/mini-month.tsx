@@ -8,14 +8,15 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 import { type KeyboardEvent, useEffect, useRef, useState } from "react";
 import { cn } from "@/lib/cn";
 import { addDays, addMonths, weekDays, weekStart } from "@/lib/jscalendar";
+import { LOCALE } from "@/lib/locale";
 
-const monthTitle = new Intl.DateTimeFormat("de-DE", {
+const monthTitle = new Intl.DateTimeFormat(LOCALE, {
   month: "long",
   year: "numeric",
   timeZone: "UTC",
 });
 const WEEKDAYS = ["Mo", "Di", "Mi", "Do", "Fr", "Sa", "So"];
-const dayName = new Intl.DateTimeFormat("de-DE", {
+const dayName = new Intl.DateTimeFormat(LOCALE, {
   weekday: "long",
   day: "numeric",
   month: "long",

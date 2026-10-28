@@ -22,6 +22,7 @@ import {
   toLocal,
   weekDays,
 } from "@/lib/jscalendar";
+import { LOCALE } from "@/lib/locale";
 import { calendarTasks } from "@/lib/task-context";
 import { m } from "@/paraglide/messages";
 import { useMe, useTasks } from "../tasks/queries";
@@ -51,19 +52,19 @@ const VIEWS: [View, () => string][] = [
   ["agenda", m.calendar_agenda],
 ];
 
-const dayMonth = new Intl.DateTimeFormat("de-DE", {
+const dayMonth = new Intl.DateTimeFormat(LOCALE, {
   day: "numeric",
   month: "long",
   timeZone: "UTC",
 });
-const longDay = new Intl.DateTimeFormat("de-DE", {
+const longDay = new Intl.DateTimeFormat(LOCALE, {
   weekday: "long",
   day: "numeric",
   month: "long",
   timeZone: "UTC",
 });
 
-const monthTitle = new Intl.DateTimeFormat("de-DE", {
+const monthTitle = new Intl.DateTimeFormat(LOCALE, {
   month: "long",
   year: "numeric",
   timeZone: "UTC",
@@ -313,7 +314,7 @@ export const CalendarPage = ({ search }: { search: Search }) => {
   );
 };
 
-const weekdayShort = new Intl.DateTimeFormat("de-DE", { weekday: "short", timeZone: "UTC" });
+const weekdayShort = new Intl.DateTimeFormat(LOCALE, { weekday: "short", timeZone: "UTC" });
 
 /** Phone: the seven days of the week as buttons above the day view. */
 const DayStrip = ({

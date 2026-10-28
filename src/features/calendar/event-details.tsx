@@ -19,6 +19,7 @@ import {
   participantEmail,
   toLocal,
 } from "@/lib/jscalendar";
+import { LOCALE } from "@/lib/locale";
 import { mapsUrl } from "@/lib/maps";
 import { describeRecurrence } from "@/lib/recurrence";
 import { m } from "@/paraglide/messages";
@@ -31,7 +32,7 @@ import {
   useMyAddresses,
 } from "./queries";
 
-const longDay = new Intl.DateTimeFormat("de-DE", {
+const longDay = new Intl.DateTimeFormat(LOCALE, {
   timeZone: "Europe/Berlin",
   weekday: "long",
   day: "numeric",

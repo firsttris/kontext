@@ -19,6 +19,7 @@ import { contactFormFor, correspondent, findContact } from "@/lib/correspondent"
 import { displayName, listDate } from "@/lib/format";
 import { dateKey, eventTimes, toLocal } from "@/lib/jscalendar";
 import { company, formToCard, fullName, primaryPhone } from "@/lib/jscontact";
+import { LOCALE } from "@/lib/locale";
 import { mailSenderKey } from "@/lib/photo";
 import { m } from "@/paraglide/messages";
 import { useEventsWith } from "../calendar/queries";
@@ -26,7 +27,7 @@ import { useContactMutations, useContacts } from "../contacts/queries";
 import { usePhotoOf } from "../photos/queries";
 import { useMailAccounts } from "./queries";
 
-const dayFormat = new Intl.DateTimeFormat("de-DE", {
+const dayFormat = new Intl.DateTimeFormat(LOCALE, {
   timeZone: "Europe/Berlin",
   weekday: "short",
   day: "numeric",

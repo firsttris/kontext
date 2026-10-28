@@ -4,6 +4,7 @@ import type { CSSProperties } from "react";
 import { Button } from "@/components/ui/button";
 import type { BusyStatus, PersonStatus, Slot } from "@/lib/availability";
 import { addDays } from "@/lib/jscalendar";
+import { LOCALE } from "@/lib/locale";
 import { slotLabel, whenLabel } from "@/lib/planning";
 import { m } from "@/paraglide/messages";
 import type { PlanningRow } from "./use-planning";
@@ -33,7 +34,7 @@ export const barStyle = (status: BusyStatus): CSSProperties =>
 
 const firstName = (row: PlanningRow) => row.name.split(" ")[0] ?? row.name;
 
-const list = new Intl.ListFormat("de", { type: "conjunction" });
+const list = new Intl.ListFormat(LOCALE, { type: "conjunction" });
 
 /** "Anna ist zu dieser Zeit belegt." or that everyone is free. */
 export const clashText = (busy: PlanningRow[]): string => {
@@ -86,7 +87,7 @@ export const Suggestions = ({
     <span className="text-[13px] text-muted">{m.availability_no_suggestion()}</span>
   );
 
-const dayFormat = new Intl.DateTimeFormat("de-DE", {
+const dayFormat = new Intl.DateTimeFormat(LOCALE, {
   weekday: "short",
   day: "2-digit",
   month: "2-digit",

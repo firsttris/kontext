@@ -551,6 +551,13 @@ das Manifest steht in `vite.config.ts`, der Service Worker in `src/sw/service-wo
   Fenster. Bei ganz geschlossener App kommen sie als Web Push vom Kontext-Server, siehe
   [Benachrichtigungen](#benachrichtigungen).
 - **Ungelesen-Zahl am App-Symbol** (Badging API) als Summe aller Posteingänge.
+- **Sprachen:** Deutsch (`messages/de.json`, die Grundsprache) und Englisch (`messages/en.json`),
+  über Paraglides `m.*`. Die Sprache steht einmal je Seitenaufruf fest: die in den Einstellungen
+  gewählte (`kontext.language` in localStorage, eine eigene Paraglide-Strategie in
+  `src/lib/locale.ts`, weil Paraglides localStorage-Strategie die erkannte Sprache sofort
+  speichert und „Wie das Gerät“ so nicht mehr zu unterscheiden wäre), sonst die des Browsers,
+  sonst Deutsch. Daten und Zahlen formatiert `LOCALE` (`de-DE` oder `en-GB`). Ein Test hält
+  beide Dateien gleich (`dev/messages.test.ts`); die Unit-Tests laufen auf Deutsch.
 - **App-Symbol:** ein gefalteter Papierflieger, einmal in `dev/icons.ts` gezeichnet und mit
   `bun run icons` in alle Größen in `public/` geschrieben (Favicon, Manifest, Apple, maskierbar).
   Das kleine Symbol der Benachrichtigungen (`badge-96.png`) ist ein weißer Flieger auf

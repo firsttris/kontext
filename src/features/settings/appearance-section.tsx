@@ -1,5 +1,5 @@
 /**
- * Per device: light or dark, the apps in the phone's tab bar, the mail list as single mails or
+ * Per device: light or dark, the language, the apps in the phone's tab bar, the mail list as single mails or
  * conversations, Kontext as an app, notifications; and the keyboard shortcuts for reference.
  */
 import { Monitor, Moon, Sun } from "lucide-react";
@@ -16,6 +16,7 @@ import { setUndoSeconds, useUndoSeconds } from "../mail/send-settings";
 import { setThreadView, useThreadView } from "../mail/thread-view";
 import { DeviceSwitch } from "../notifications/device-switch";
 import { AppSection } from "./app-section";
+import { LanguageCard } from "./language-card";
 import { SettingsCard } from "./settings-page";
 import { TabBarSection } from "./tab-bar-section";
 
@@ -57,6 +58,7 @@ export const AppearanceSection = () => {
           ))}
         </fieldset>
       </SettingsCard>
+      <LanguageCard />
       <TabBarSection />
       <AppSection />
       <SettingsCard title={m.settings_mail_list()}>

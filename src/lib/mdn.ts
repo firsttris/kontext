@@ -4,6 +4,7 @@
  * is recognised. Stalwart has no JMAP MDN (RFC 9007), so the app builds it. Pure.
  */
 
+import { LOCALE } from "./locale";
 import { mailbox } from "./mime";
 
 /** Set on a mail once its receipt was sent or declined (RFC 3503), so nobody is asked twice. */
@@ -34,7 +35,7 @@ export type ReceiptInput = {
 export const receiptMessage = ({ from, to, original, now, id }: ReceiptInput): string => {
   const boundary = `kontext-mdn-${id}`;
   const domain = from.email.split("@")[1] ?? "kontext.local";
-  const when = new Date(original.sentAt).toLocaleString("de-DE", {
+  const when = new Date(original.sentAt).toLocaleString(LOCALE, {
     timeZone: "Europe/Berlin",
     dateStyle: "medium",
     timeStyle: "short",

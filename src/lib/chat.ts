@@ -15,6 +15,9 @@ export {
   RETENTION_DAYS,
   toggleReaction,
 } from "../../server/chat/chat";
+
+import { LOCALE } from "./locale";
+
 export type { Channel, ChannelSummary, Message };
 
 export type Person = { id: string; name: string };
@@ -72,7 +75,7 @@ export type TimelineItem =
 export const dayLabel = (day: string, today: string, yesterday: string): string => {
   if (day === today) return m.chat_today();
   if (day === yesterday) return m.chat_yesterday();
-  return new Date(`${day}T12:00:00`).toLocaleDateString("de-DE", {
+  return new Date(`${day}T12:00:00`).toLocaleDateString(LOCALE, {
     weekday: "long",
     day: "numeric",
     month: "long",
@@ -256,11 +259,11 @@ export const shortTime = (iso: string, now = new Date()): string => {
   const at = new Date(iso);
   const day = dateKey(at);
   if (day === dateKey(now)) {
-    return at.toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" });
+    return at.toLocaleTimeString(LOCALE, { hour: "2-digit", minute: "2-digit" });
   }
   if (day === dateKey(new Date(now.getTime() - 86_400_000))) return m.chat_yesterday();
   if (now.getTime() - at.getTime() < 6 * 86_400_000) {
-    return at.toLocaleDateString("de-DE", { weekday: "short" });
+    return at.toLocaleDateString(LOCALE, { weekday: "short" });
   }
-  return at.toLocaleDateString("de-DE", { day: "2-digit", month: "2-digit" });
+  return at.toLocaleDateString(LOCALE, { day: "2-digit", month: "2-digit" });
 };

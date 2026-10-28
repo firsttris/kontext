@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import type { EmailDetail } from "@/jmap/types";
 import { cn } from "@/lib/cn";
+import { LOCALE } from "@/lib/locale";
 import { base64ToBytes } from "@/lib/secure";
 import { fromSender } from "@/lib/sender-check";
 import { openP12, readSmime, type SmimeRead, type SmimeSignature } from "@/lib/smime";
@@ -26,7 +27,7 @@ import {
 } from "./queries";
 
 const untilLabel = (iso: string) =>
-  new Date(iso).toLocaleDateString("de-DE", { timeZone: "Europe/Berlin", dateStyle: "medium" });
+  new Date(iso).toLocaleDateString(LOCALE, { timeZone: "Europe/Berlin", dateStyle: "medium" });
 
 /** What the server found of a signer's certificate: chain to a trusted authority, revoked. */
 const useTrust = (signature: SmimeSignature) =>

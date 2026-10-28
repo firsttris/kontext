@@ -10,6 +10,7 @@ import { TabBar } from "@/components/shell/app-shell";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/toast";
 import { cn } from "@/lib/cn";
+import { LOCALE } from "@/lib/locale";
 import {
   type SecureContent,
   type SecureReply,
@@ -30,7 +31,7 @@ import {
 import { SecureContentView } from "./secure-view";
 
 const date = (iso: string) =>
-  new Date(iso).toLocaleString("de-DE", {
+  new Date(iso).toLocaleString(LOCALE, {
     timeZone: "Europe/Berlin",
     day: "numeric",
     month: "short",

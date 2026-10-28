@@ -17,11 +17,12 @@ import {
 import type { TaskLink } from "../../server/tasks/tasks";
 import { displayName } from "./format";
 import { type ContactCard, company, fullName, primaryEmail } from "./jscontact";
+import { LOCALE } from "./locale";
 
 export { type Card, type ChatFile, isVoice, MAX_FILE_BYTES, MAX_FILES, messageSummary };
 
 const when = (iso: string) =>
-  new Date(iso).toLocaleString("de-DE", {
+  new Date(iso).toLocaleString(LOCALE, {
     day: "numeric",
     month: "short",
     hour: "2-digit",

@@ -48,6 +48,22 @@ test.describe("Einstellungen", () => {
       .toBe(true);
   });
 
+  test("Sprache wechseln: Englisch und zurück zu wie das Gerät", async ({ page }) => {
+    await login(page, "anna");
+    await page.goto("/settings?section=appearance");
+    await page.getByRole("combobox", { name: "Sprache", exact: true }).selectOption("en");
+    // Paraglide reloads the page in the new language.
+    await expect(page.getByRole("combobox", { name: "Language", exact: true })).toHaveValue("en");
+    await expect(page.locator("html")).toHaveAttribute("lang", "en");
+    await expect(page.getByRole("heading", { name: "Appearance" }).first()).toBeVisible();
+
+    await page.getByRole("combobox", { name: "Language", exact: true }).selectOption("system");
+    await expect(page.getByRole("combobox", { name: "Sprache", exact: true })).toHaveValue(
+      "system",
+    );
+    await expect(page.locator("html")).toHaveAttribute("lang", "de");
+  });
+
   test("App auf diesem Gerät: installieren und als Mailprogramm verwenden", async ({ page }) => {
     await login(page, "anna");
     await page.goto("/settings?section=appearance");
@@ -145,7 +161,7 @@ test.describe("Darstellung", () => {
     await expect(page.locator("html")).toHaveClass(/\bdark\b/);
     await page.getByText("Hell", { exact: true }).click();
     await expect(page.locator("html")).toHaveClass(/\blight\b/);
-    await page.getByText("Wie das Gerät").click();
+    await page.getByText("Wie das Gerät", { exact: true }).click();
   });
 
   test("zeigt die Version und sagt, wenn der Server schon weiter ist", async ({

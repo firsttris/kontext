@@ -7,6 +7,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge, ConfirmButton } from "@/features/company/fields";
 import { SettingsCard } from "@/features/settings/settings-page";
+import { LOCALE } from "@/lib/locale";
 import { m } from "@/paraglide/messages";
 import { PROVIDERS } from "../../../server/migration/providers";
 import { type ExternalAccount, fetchExternalAccount, removeExternalAccount } from "./api";
@@ -20,7 +21,7 @@ const STATUS: Record<ExternalAccount["status"], () => string> = {
 };
 
 const time = (iso: string) =>
-  new Date(iso).toLocaleString("de-DE", { dateStyle: "short", timeStyle: "short" });
+  new Date(iso).toLocaleString(LOCALE, { dateStyle: "short", timeStyle: "short" });
 
 const AccountRow = ({ account }: { account: ExternalAccount }) => {
   const [password, setPassword] = useState(false);

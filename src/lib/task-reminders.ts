@@ -5,6 +5,7 @@
 import { m } from "@/paraglide/messages";
 import type { Task } from "../../server/tasks/tasks";
 import { addDays, fromLocal } from "./jscalendar";
+import { LOCALE } from "./locale";
 
 export type ReminderChoice = { key: string; label: string; at: Date };
 
@@ -63,7 +64,7 @@ export const shiftedReminder = (
 
 /** "Mo., 26. Okt., 08:00". */
 export const reminderLabel = (remindAt: string): string =>
-  new Date(remindAt).toLocaleString("de-DE", {
+  new Date(remindAt).toLocaleString(LOCALE, {
     timeZone: "Europe/Berlin",
     weekday: "short",
     day: "numeric",

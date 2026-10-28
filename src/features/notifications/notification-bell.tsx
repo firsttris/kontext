@@ -11,6 +11,7 @@ import { Avatar } from "@/components/ui/avatar";
 import { cn } from "@/lib/cn";
 import { displayName, listDate } from "@/lib/format";
 import { dateKey, locationName, toLocal } from "@/lib/jscalendar";
+import { LOCALE } from "@/lib/locale";
 import { unseenCount } from "@/lib/notifications";
 import { dueLabel, type Task } from "@/lib/tasks";
 import { m } from "@/paraglide/messages";
@@ -30,7 +31,7 @@ const useNow = (): Date => {
   return now;
 };
 
-const dayFormat = new Intl.DateTimeFormat("de-DE", {
+const dayFormat = new Intl.DateTimeFormat(LOCALE, {
   timeZone: "Europe/Berlin",
   weekday: "short",
   day: "numeric",

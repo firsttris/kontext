@@ -221,7 +221,7 @@ directly. Kontext is the browser interface on top, and its tasks are CalDAV task
 <details>
 <summary><b>Can I move from Gmail, Microsoft 365 or Outlook?</b></summary>
 
-Yes, under *Einstellungen → Firma → Umzug* (Settings → Company → Move; the app is in German for now): IMAP mailboxes (kept in sync until the move is finished),
+Yes, under *Settings → Company → Migration*: IMAP mailboxes (kept in sync until the move is finished),
 Microsoft 365 through an app in the company's Microsoft account, Outlook as a PST file, contacts and
 calendars from a Google export. See [Company admin and moving in](https://firsttris.github.io/kontext/company.html).
 </details>
@@ -243,7 +243,7 @@ write drafts and invite colleagues to appointments; they never mail anyone outsi
 <details>
 <summary><b>Which languages?</b></summary>
 
-The app is in German for now; English and other European languages are planned.
+German and English, per device under *Settings → Appearance → Language* (otherwise the browser's language). Other European languages are planned.
 </details>
 
 <details>

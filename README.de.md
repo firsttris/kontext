@@ -245,7 +245,7 @@ schreiben Entwürfe und laden Kollegen zu Terminen ein; nach draußen schicken u
 <details>
 <summary><b>Welche Sprachen?</b></summary>
 
-Die App ist vorerst auf Deutsch; Englisch und weitere europäische Sprachen sind geplant.
+Deutsch und Englisch, je Gerät unter *Einstellungen → Darstellung → Sprache* (sonst die Sprache des Browsers). Weitere europäische Sprachen sind geplant.
 </details>
 
 <details>

@@ -5,6 +5,7 @@
 import { type Slot, WORKDAY, type Workday } from "./availability";
 import type { EventForm } from "./event-form";
 import { addDays, dateKey, fromLocal, toLocal, ZONE } from "./jscalendar";
+import { LOCALE } from "./locale";
 
 /** The chosen time of a timed form, or null while it is all day or ends before it starts. */
 export const formSlot = (form: EventForm): Slot | null => {
@@ -30,7 +31,7 @@ export const formAt = (form: EventForm, slot: Slot): EventForm => {
 /** "11:30" in the calendar's zone. */
 export const clock = (time: number): string => toLocal(new Date(time)).slice(11, 16);
 
-const weekday = new Intl.DateTimeFormat("de-DE", { weekday: "short", timeZone: ZONE });
+const weekday = new Intl.DateTimeFormat(LOCALE, { weekday: "short", timeZone: ZONE });
 
 /** "Mi" on the day shown, else with the date ("Mi 28.10."). */
 const dayName = (time: number, day: string): string => {

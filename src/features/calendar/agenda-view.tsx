@@ -12,6 +12,7 @@ import {
   onDay,
   toLocal,
 } from "@/lib/jscalendar";
+import { LOCALE } from "@/lib/locale";
 import { type DayTask, tasksOnDay } from "@/lib/task-context";
 import { m } from "@/paraglide/messages";
 import { calendarColor } from "./event-style";
@@ -20,7 +21,7 @@ import { TaskChip } from "./task-chip";
 
 export const AGENDA_DAYS = 30;
 
-const dayTitle = new Intl.DateTimeFormat("de-DE", {
+const dayTitle = new Intl.DateTimeFormat(LOCALE, {
   weekday: "long",
   day: "numeric",
   month: "long",

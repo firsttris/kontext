@@ -7,6 +7,7 @@ import { useToast } from "@/components/ui/toast";
 import { PhotoPicker } from "@/features/photos/photo-picker";
 import { useOwnPhoto } from "@/features/photos/queries";
 import { updateAccountSettings, updateIdentity } from "@/jmap/settings";
+import { LOCALE } from "@/lib/locale";
 import { m } from "@/paraglide/messages";
 import {
   useAccountSettings,
@@ -34,7 +35,7 @@ export const ProfileSection = () => {
     async (value: string) => {
       await updateAccountSettings(client, {
         description: value,
-        locale: "de-DE",
+        locale: LOCALE,
         timeZone: "Europe/Berlin",
       });
       const own = identities.find((i) => i.email.toLowerCase() === session?.username.toLowerCase());

@@ -12,9 +12,10 @@ import {
   shiftLocal,
   ZONE,
 } from "./jscalendar";
+import { LOCALE } from "./locale";
 
 const dayIn = (zone: string) =>
-  new Intl.DateTimeFormat("de-DE", {
+  new Intl.DateTimeFormat(LOCALE, {
     weekday: "long",
     day: "numeric",
     month: "long",
@@ -23,11 +24,11 @@ const dayIn = (zone: string) =>
   });
 
 const timeIn = (zone: string) =>
-  new Intl.DateTimeFormat("de-DE", { hour: "2-digit", minute: "2-digit", timeZone: zone });
+  new Intl.DateTimeFormat(LOCALE, { hour: "2-digit", minute: "2-digit", timeZone: zone });
 
 /** "Mitteleuropäische Sommerzeit" at that instant; the zone's id if Intl has no name for it. */
 const zoneName = (zone: string, at: Date) =>
-  new Intl.DateTimeFormat("de-DE", { timeZone: zone, timeZoneName: "long" })
+  new Intl.DateTimeFormat(LOCALE, { timeZone: zone, timeZoneName: "long" })
     .formatToParts(at)
     .find((part) => part.type === "timeZoneName")?.value ?? zone;
 

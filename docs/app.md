@@ -57,6 +57,9 @@ Schalter unter *Einstellungen → Darstellung* und gelten für das eine Gerät.
 ## Darstellung
 
 - **Farbschema:** „Wie das Gerät“, „Hell“ oder „Dunkel“, je Gerät.
+- **Sprache:** „Wie das Gerät“ (die Sprache des Browsers), „Deutsch“ oder „English“, je Gerät;
+  beim Wechsel lädt Kontext neu. Daten, Uhrzeiten und Zahlen folgen der Sprache (Englisch mit
+  Tag vor Monat und 24-Stunden-Uhr).
 - **Mail:** „Mails als Unterhaltungen gruppieren“ und wie lange „Senden rückgängig machen“ eine
   Mail zurückhält (siehe [Mail](mail.md#schreiben)).
 - **Tastaturkürzel** stehen unten auf derselben Seite; am PC zeigt `?` sie überall.
