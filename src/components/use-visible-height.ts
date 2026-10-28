@@ -10,7 +10,10 @@
  * and scrolls the page up while our height still lags behind. So the keyboard lies over the page
  * instead (VirtualKeyboard API, `overlaysContent`), and the app gets shorter by the keyboard's
  * height in one step: the dark app stays behind the rising keyboard, nothing scrolls. Browsers
- * without the API (Firefox) keep `resizes-content` from `index.html`.
+ * without the API (Firefox, and Chromium builds that leave it out) keep `resizes-content` from
+ * `index.html`; there the page itself gets shorter and the app follows by CSS (100dvh) alone, in
+ * the same frame. What shows below a shrinking page in the installed app is the manifest's
+ * `background_color`, so it is the dark one (vite.config.ts).
  *
  * Fixed elements stick to the page, not to what one sees: a bottom sheet would sit under the
  * keyboard. They lift themselves by `--keyboard-height`.
@@ -33,14 +36,23 @@ export const hiddenBelow = (pageHeight: number, visible: VisibleArea) =>
  * set when zoomed in with two fingers and no keyboard lies over the page: the visible part is
  * smaller then, the page is not.
  */
-export const fitAboveKeyboard = (pageHeight: number, visible: ZoomedArea, overlay: number) => {
+export const fitAboveKeyboard = (
+  pageHeight: number,
+  visible: ZoomedArea,
+  overlay: number,
+): { appHeight?: number; keyboardHeight: number } | undefined => {
   if (visible.scale > 1.01)
     return overlay > 0
       ? { appHeight: Math.max(0, pageHeight - overlay), keyboardHeight: Math.round(overlay) }
       : undefined;
+  const hidden = hiddenBelow(pageHeight, visible);
+  // Nothing hidden (no keyboard, or one that made the page itself shorter): the app stays at
+  // 100dvh. A height in px would lag a frame behind each resize, and the browser would scroll the
+  // page up to the field in that frame.
+  if (hidden === 0 && overlay === 0) return { keyboardHeight: 0 };
   return {
     appHeight: Math.max(0, visible.height - overlay),
-    keyboardHeight: hiddenBelow(pageHeight, visible) + Math.round(overlay),
+    keyboardHeight: hidden + Math.round(overlay),
   };
 };
 
@@ -61,7 +73,8 @@ export const useVisibleHeight = () =>
         root.style.removeProperty("--keyboard-height");
         return;
       }
-      root.style.setProperty("--app-height", `${fit.appHeight}px`);
+      if (fit.appHeight === undefined) root.style.removeProperty("--app-height");
+      else root.style.setProperty("--app-height", `${fit.appHeight}px`);
       // Zoomed in, the page may move under the finger; otherwise it stays at its top.
       if (window.scrollY !== 0 && viewport.scale <= 1.01) window.scrollTo(0, 0);
       root.style.setProperty("--keyboard-height", `${fit.keyboardHeight}px`);

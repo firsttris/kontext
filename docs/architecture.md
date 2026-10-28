@@ -560,8 +560,13 @@ das Manifest steht in `vite.config.ts`, der Service Worker in `src/sw/service-wo
   Tastatur kürzen, den Streifen darunter weiß malen, bis sie oben ist, und die Seite
   hochschieben. Dort legt sich die Tastatur deshalb über die Seite (VirtualKeyboard API,
   `overlaysContent`), und die App wird in einem Schritt um ihre Höhe kürzer: Hinter der
-  aufgehenden Tastatur bleibt die App, nichts springt. Browser ohne diese API (Firefox) bleiben
-  bei `resizes-content`. Feste Elemente hängen an der Seite, nicht am sichtbaren Teil: Ein
+  aufgehenden Tastatur bleibt die App, nichts springt. Browser ohne diese API (Firefox, und
+  Chromium-Builds, die sie weglassen) bleiben bei `resizes-content`; dort folgt die App der
+  kürzeren Seite allein per CSS (`100dvh`) im selben Bild, ohne eine Höhe in Pixeln, die ein
+  Bild hinterherhinge und die Seite hochrutschen ließe. Was in der installierten App unter einer
+  schrumpfenden Seite und hinter der Navigationsleiste zu sehen ist, ist `background_color` aus
+  dem Manifest; sie ist deshalb das Dunkel der App (`#09090b`, `vite.config.ts`), nicht Weiß.
+  Feste Elemente hängen an der Seite, nicht am sichtbaren Teil: Ein
   Dialog unten (Bottom Sheet) läge unter der Tastatur. Er rückt deshalb um `--keyboard-height`
   nach oben und wird höchstens so hoch wie der sichtbare Teil (`src/components/ui/dialog.tsx`);
   ab `md` (Tablet) steht er in der Mitte von `--app-height`, nicht der ganzen Seite.
@@ -691,8 +696,16 @@ Principal-ID), die Namen holt die App wie bei den Aufgaben über die Principals.
   zuletzt 10:42“ mit den Köpfen, „Neu“, wenn seit dem letzten Lesen welche kamen. Wer im Thread
   geschrieben hat (auch die erste Nachricht), bekommt neue Antworten aufs Gerät
   (`notifyWho`). Antworten auf Antworten gibt es nicht.
-- **Reaktionen:** 👍 ❤️ 😂 🎉 👀 ✅ 🙏 über den Smiley an jeder Nachricht, jedes Emoji einmal pro
-  Person (`chat_reactions`); ein Klick auf eine Reaktion setzt oder nimmt die eigene, im Tooltip
+- **Aktionen an einer Nachricht** (`src/features/chat/message-actions.tsx`): am PC schwebt beim
+  Darüberfahren eine kleine Leiste über der rechten oberen Ecke (Reagieren, Antworten, „…“ mit
+  Aufgabe, Bearbeiten, Löschen); sie nimmt keinen Platz weg, nichts verschiebt sich. Am Handy
+  steht neben den Blasen nichts: Langes Drücken (`use-long-press.ts`) öffnet ein Blatt von unten
+  mit den Reaktionen in einer Reihe und darunter Im Thread antworten, Text kopieren, Aufgabe,
+  Bearbeiten und Löschen, wie in Messengern. Text in Blasen lässt sich dort nicht markieren
+  (das lange Drücken gehört der Nachricht), dafür gibt es „Text kopieren“. Ein Screenreader
+  erreicht das Blatt über einen unsichtbaren Knopf „Aktionen zur Nachricht“.
+- **Reaktionen:** 👍 ❤️ 😂 🎉 👀 ✅ 🙏 über den Smiley an jeder Nachricht (am Handy im Blatt), jedes
+  Emoji einmal pro Person (`chat_reactions`); ein Klick auf eine Reaktion setzt oder nimmt die eigene, im Tooltip
   steht, wer. Kommt bei allen sofort an, ohne Benachrichtigung.
 - **Aufbewahrung:** Die Firmenverwaltung stellt unter „Team-Chat“ ein, wie lange Nachrichten
   bleiben (unbegrenzt, 30 Tage bis 5 Jahre; `company_setting` `chat_retention_days`). Der Server
