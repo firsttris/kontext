@@ -551,6 +551,11 @@ das Manifest steht in `vite.config.ts`, der Service Worker in `src/sw/service-wo
   Fenster. Bei ganz geschlossener App kommen sie als Web Push vom Kontext-Server, siehe
   [Benachrichtigungen](#benachrichtigungen).
 - **Ungelesen-Zahl am App-Symbol** (Badging API) als Summe aller Posteingänge.
+- **App-Symbol:** ein gefalteter Papierflieger, einmal in `dev/icons.ts` gezeichnet und mit
+  `bun run icons` in alle Größen in `public/` geschrieben (Favicon, Manifest, Apple, maskierbar).
+  Das kleine Symbol der Benachrichtigungen (`badge-96.png`) ist ein weißer Flieger auf
+  Transparenz: Android zeichnet es in Statusleiste und Benachrichtigung nur aus dem Alphakanal,
+  ein deckendes Bild würde dort zum weißen Quadrat.
 - **Tastatur am Handy:** Am iPhone verdeckt sie den unteren Teil, ohne die Seite kürzer zu
   machen, und Safari schiebt dann die ganze Seite nach oben. Deshalb ist die App so hoch wie der
   sichtbare Teil (`--app-height` aus `visualViewport`, `src/components/use-visible-height.ts`)

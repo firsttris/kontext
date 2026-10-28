@@ -28,7 +28,9 @@ export const showNotification = (
   url: string,
   open: (url: string) => void,
 ) => {
-  const options = { body, tag, icon: "/icon-192.png", badge: "/icon-192.png", data: { url } };
+  // Android draws the badge (status bar, notification header) from its alpha channel alone: the
+  // opaque app icon became a white square there, so the badge is a white "K" on transparency.
+  const options = { body, tag, icon: "/icon-192.png", badge: "/badge-96.png", data: { url } };
   const registration = navigator.serviceWorker?.controller
     ? navigator.serviceWorker.ready
     : Promise.resolve(null);

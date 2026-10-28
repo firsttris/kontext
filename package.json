@@ -10,6 +10,7 @@
     "dev:app": "vite",
     "dev:stalwart": "bun dev/stalwart.ts",
     "seed": "bun dev/seed.ts",
+    "icons": "bun dev/icons.ts",
     "build": "vite build && bun dev/precompress.ts dist",
     "preview": "vite preview",
     "typecheck": "tsc --noEmit && tsc -p tsconfig.sw.json",
