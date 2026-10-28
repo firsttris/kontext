@@ -26,7 +26,12 @@ describe("hiddenBelow", () => {
 describe("fitAboveKeyboard", () => {
   it("leaves the app as high as the screen without a keyboard", () => {
     expect(fitAboveKeyboard(844, { height: 844, offsetTop: 0, scale: 1 }, 0)).toEqual({
-      appHeight: 844,
+      keyboardHeight: 0,
+    });
+  });
+
+  it("leaves the height to CSS when the keyboard made the page shorter (Android, resizes-content)", () => {
+    expect(fitAboveKeyboard(508, { height: 508, offsetTop: 0, scale: 1 }, 0)).toEqual({
       keyboardHeight: 0,
     });
   });

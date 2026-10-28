@@ -66,8 +66,10 @@ export default defineConfig({
         scope: "/",
         display: "standalone",
         display_override: ["standalone", "minimal-ui"],
-        background_color: "#ffffff",
-        theme_color: "#ffffff",
+        // The installed app's window: Android paints it below a page the keyboard is shrinking
+        // and behind the navigation bar. Dark, as the app's dark theme; white flashed there.
+        background_color: "#09090b",
+        theme_color: "#09090b",
         categories: ["business", "productivity"],
         icons: [
           { src: "/icon-192.png", sizes: "192x192", type: "image/png" },

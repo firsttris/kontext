@@ -190,3 +190,25 @@ export const showKeyboard = (page: Page, height: number) =>
     (h) => (window as unknown as { showKeyboard: (h: number) => void }).showKeyboard(h),
     height,
   );
+
+/**
+ * Holds a finger on an element as long as a long press takes (`use-long-press.ts`), then lifts
+ * it. Playwright's touchscreen only taps, so the pointer events are sent as a finger's.
+ */
+export const longPress = async (target: Locator) => {
+  // Held on to: the sheet the press opens hides the rest from the accessibility tree, so the
+  // locator would no longer find the element to lift the finger from.
+  const element = (await target.elementHandle())!;
+  const box = (await element.boundingBox())!;
+  const finger = {
+    pointerType: "touch",
+    isPrimary: true,
+    bubbles: true,
+    clientX: box.x + Math.min(20, box.width / 2),
+    clientY: box.y + Math.min(12, box.height / 2),
+  };
+  await element.dispatchEvent("pointerdown", finger);
+  await target.page().waitForTimeout(550);
+  await element.dispatchEvent("pointerup", finger);
+  await element.dispose();
+};
