@@ -85,7 +85,7 @@ const RepliesLine = ({
         {m.chat_replies_last({ when: replyTime(replies.lastAt) })}
       </span>
       {fresh ? (
-        <span className="shrink-0 rounded-full bg-accent px-1.5 text-[11px] font-medium text-white">
+        <span className="shrink-0 rounded-full bg-accent-fill px-1.5 text-[11px] font-medium text-white">
           {m.chat_new_badge()}
         </span>
       ) : null}

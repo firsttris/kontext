@@ -205,7 +205,7 @@ export const CalendarPage = ({ search }: { search: Search }) => {
             key={value}
             to="/calendar"
             search={(prev) => ({ ...prev, view: value })}
-            aria-pressed={view === value}
+            aria-current={view === value ? "page" : undefined}
             className={cn(
               "flex h-[30px] flex-1 items-center justify-center rounded-[7px] px-3 text-[13px] no-underline md:h-[26px] md:flex-none",
               view === value ? "bg-bg text-fg shadow-sm" : "text-muted",

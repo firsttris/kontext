@@ -38,7 +38,7 @@ const ModeSwitch = ({ board, mode }: { board: string; mode: "list" | "board" }) 
         key={value}
         to="/tasks"
         search={{ board, mode: value }}
-        aria-pressed={mode === value}
+        aria-current={mode === value ? "page" : undefined}
         aria-label={label}
         className={cn(
           "flex h-7 items-center gap-1.5 rounded-[7px] px-2.5 text-[13px] no-underline",

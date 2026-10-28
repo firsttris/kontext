@@ -69,7 +69,7 @@ const UnreadBadge = ({ count, className }: { count: number; className?: string }
   count > 0 ? (
     <span
       className={cn(
-        "absolute rounded-full bg-accent px-1 font-mono text-[10px] leading-[15px] font-medium text-white",
+        "absolute rounded-full bg-accent-fill px-1 font-mono text-[10px] leading-[15px] font-medium text-white",
         className,
       )}
     >

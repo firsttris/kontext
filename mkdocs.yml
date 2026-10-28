@@ -111,6 +111,7 @@ nav:
       - KI-Agenten (MCP): agents.md
       - Firmenverwaltung und Umzug: company.md
       - App, Handy und Konto: app.md
+      - Barrierefreiheit: accessibility.md
   - Betrieb:
       - VPS einrichten: vps.md
       - Installation: installation.md

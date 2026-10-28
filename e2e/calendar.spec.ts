@@ -182,7 +182,7 @@ test.describe("Kalender", () => {
       page.locator(`[data-month-day="${today()}"]`).getByText("Baubesprechung Hoffmann"),
     ).toBeVisible();
     await page.getByRole("link", { name: today(), exact: true }).click();
-    await expect(page.getByRole("link", { name: "Tag" })).toHaveAttribute("aria-pressed", "true");
+    await expect(page.getByRole("link", { name: "Tag" })).toHaveAttribute("aria-current", "page");
   });
 
   test("zeigt die wöchentliche Teambesprechung aus den Testdaten", async ({ page }) => {

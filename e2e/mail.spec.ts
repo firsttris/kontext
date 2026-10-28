@@ -683,7 +683,7 @@ test.describe("Tastaturkürzel", () => {
     await page.keyboard.press("2");
     await expect(page.getByText(/KW \d+/)).toBeVisible();
     await page.keyboard.press("m");
-    await expect(page.getByRole("link", { name: "Monat" })).toHaveAttribute("aria-pressed", "true");
+    await expect(page.getByRole("link", { name: "Monat" })).toHaveAttribute("aria-current", "page");
   });
 });
 
