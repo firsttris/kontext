@@ -40,7 +40,6 @@ docker compose -f deploy/compose.yaml up -d              # or Podman
 ## 🇪🇺 Your data stays in Europe – with AI
 
 - **GDPR**: mails, appointments, contacts, chat and calls live on your server, in a data centre in Germany or elsewhere in Europe, or in your own office. No US provider in between, no trackers, no sharing. The only data processing agreement you need is with your hosting provider.
-- **Kept safe**: nothing is deleted when someone leaves, and backups go encrypted and unalterable (Object Lock) to S3 storage.
 - **AI on your terms**: Kontext is an MCP server. You connect the AI assistant you choose; it works with your rights, writes drafts instead of sending, never deletes anything, and every access is logged and can be revoked.
 - **No lock-in**: open standards (IMAP, CalDAV, CardDAV), take everything with you any time; moving *to* Kontext is built in.
 

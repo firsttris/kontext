@@ -40,7 +40,6 @@ docker compose -f deploy/compose.yaml up -d              # oder Podman
 ## 🇪🇺 Deine Daten bleiben in Europa – mit KI
 
 - **DSGVO**: Mails, Termine, Kontakte, Chat und Anrufe liegen auf deinem Server, in einem Rechenzentrum in Deutschland oder anderswo in Europa oder im eigenen Büro. Kein US-Anbieter dazwischen, keine Tracker, keine Weitergabe. Einen Auftragsverarbeitungsvertrag brauchst du nur mit deinem Hoster.
-- **Sicher aufbewahrt**: Beim Austritt wird nichts gelöscht, Backups gehen verschlüsselt und unveränderbar (Object Lock) auf S3-Speicher.
 - **KI nach deinen Regeln**: Kontext ist ein MCP-Server. Du verbindest den KI-Assistenten, den du willst; er arbeitet mit deinen Rechten, schreibt Entwürfe statt zu senden, löscht nie etwas, und jeder Zugriff wird protokolliert und lässt sich trennen.
 - **Kein Lock-in**: offene Standards (IMAP, CalDAV, CardDAV), mitnehmen jederzeit; der Umzug *zu* Kontext ist eingebaut.
 
