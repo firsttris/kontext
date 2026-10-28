@@ -47,6 +47,12 @@ export const MiniMonth = ({ selected, today }: { selected: string; today: string
   const week = new Set(weekDays(selected));
   // The one day Tab stops at: the one the arrows went to, else the shown day, else the 1st.
   const [current, setCurrent] = useState<string | null>(null);
+  // A day shown another way (clicked, or from the URL) is where the arrows start again.
+  const [shown, setShown] = useState(selected);
+  if (shown !== selected) {
+    setShown(selected);
+    setCurrent(null);
+  }
   const tabStop = [current, selected].find((day) => day && cells.includes(day)) ?? month;
   const grid = useRef<HTMLDivElement>(null);
   const moved = useRef(false);
