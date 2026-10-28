@@ -74,8 +74,9 @@ test.describe("Mit der Tastatur", () => {
   test("Strg+Enter sendet die Mail", async ({ page }) => {
     const subject = unique("Per Tastatur");
     await page.goto("/mail");
-    await expect(page.getByRole("link", { name: "Neue Mail" }).first()).toBeVisible();
-    await page.keyboard.press("c");
+    // Opened from its link with Enter: the "c" shortcut has its own test (mail.spec.ts).
+    await page.getByRole("link", { name: "Neue Mail" }).first().focus();
+    await page.keyboard.press("Enter");
     const to = page.getByRole("combobox", { name: "An" });
     await expect(to).toBeFocused();
     await page.keyboard.type("anna");
