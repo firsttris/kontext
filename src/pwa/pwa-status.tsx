@@ -56,7 +56,7 @@ const useWorkerNavigation = () => {
 const Banner = ({ children }: { children: React.ReactNode }) => (
   <div
     role="status"
-    className="fixed inset-x-3 bottom-20 z-50 mx-auto flex max-w-md items-center gap-3 rounded-xl border border-border bg-bg px-4 py-3 text-[14px] shadow-lg md:bottom-4"
+    className="fixed inset-x-3 bottom-[calc(5rem+var(--keyboard-height,0px))] z-50 mx-auto flex max-w-md items-center gap-3 rounded-xl border border-border bg-bg px-4 py-3 text-[14px] shadow-lg md:bottom-[calc(1rem+var(--keyboard-height,0px))]"
   >
     {children}
   </div>

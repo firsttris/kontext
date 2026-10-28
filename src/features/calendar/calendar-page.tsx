@@ -294,7 +294,7 @@ export const CalendarPage = ({ search }: { search: Search }) => {
           to="/calendar"
           search={(prev) => ({ ...prev, event: "new", start: `${selected}T09:00` })}
           aria-label={m.calendar_new()}
-          className="fixed right-5 bottom-24 z-30 flex size-14 items-center justify-center rounded-2xl bg-primary text-onprimary shadow-lg md:hidden"
+          className="fixed right-5 bottom-[calc(6rem+var(--keyboard-height,0px))] z-30 flex size-14 items-center justify-center rounded-2xl bg-primary text-onprimary shadow-lg md:hidden"
         >
           <Plus size={24} />
         </Link>
