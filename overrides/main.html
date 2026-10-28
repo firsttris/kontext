@@ -1,0 +1,15 @@
+{#- Link previews (WhatsApp, Signal, Mail, LinkedIn): a page with `image:` in its front matter
+    shows that picture, its title and its description when its address is shared. -#}
+{% extends "base.html" %}
+
+{% block extrahead %}
+  {% if page and page.meta and page.meta.image %}
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="{{ config.site_name }}">
+    <meta property="og:title" content="{{ page.meta.og_title or page.title }}">
+    <meta property="og:description" content="{{ page.meta.description }}">
+    <meta property="og:url" content="{{ page.canonical_url }}">
+    <meta property="og:image" content="{{ config.site_url }}{{ page.meta.image }}">
+    <meta name="twitter:card" content="summary_large_image">
+  {% endif %}
+{% endblock %}

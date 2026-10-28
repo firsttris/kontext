@@ -1,7 +1,8 @@
 import { spawn } from "node:child_process";
 import { expect, type Page, test } from "@playwright/test";
 import { fillDemo } from "./demo-data";
-import { login } from "./helpers";
+import { addAttendees, login } from "./helpers";
+import { giveKey } from "./pgp-key";
 
 /**
  * The pictures in the README and the docs. Run with `bun run screenshots`. The pointer goes to
@@ -104,6 +105,49 @@ test.describe("Screenshots @screenshots", () => {
     await page.goto("/calendar");
     await expect(page.getByText("Baubesprechung Hoffmann")).toBeVisible();
     await shot(page, "phone-calendar");
+    await context.close();
+  });
+
+  test("Verfügbarkeit, Vertraulich, Firma", async ({ browser }) => {
+    const context = await browser.newContext({
+      viewport: { width: 1440, height: 900 },
+      locale: "de-DE",
+      timezoneId: "Europe/Berlin",
+    });
+    const page = await context.newPage();
+    await login(page);
+
+    await page.goto(`/calendar?date=${today()}&event=new&start=${today()}T10:00`);
+    const meeting = page.getByRole("dialog");
+    await meeting.getByLabel("Titel").fill("Abnahme Badsanierung Hoffmann");
+    await addAttendees(meeting, "anna@weber-haustechnik.test, sandra@weber-haustechnik.test");
+    await expect(meeting.getByRole("region", { name: "Verfügbarkeit" })).toBeVisible();
+    await shot(page, "availability");
+
+    // "Vertraulich senden" needs the sender's own key (as in e2e/secure.spec.ts).
+    await giveKey(page, "jonas");
+    await page.goto("/mail");
+    await page.getByRole("link", { name: "Neue Mail" }).first().click();
+    await page.getByRole("combobox", { name: "An" }).fill("markus.hoffmann@example.test");
+    await page.keyboard.press(",");
+    await page.getByLabel("Betreff").fill("Ihre Rechnung Badsanierung");
+    await page
+      .getByRole("textbox", { name: "Ihre Nachricht …" })
+      .fill("Guten Tag Herr Hoffmann,\n\nanbei Ihre Rechnung über die Badsanierung.");
+    await page.getByRole("button", { name: "Vertraulich senden" }).click();
+    await expect(page.getByRole("status").filter({ hasText: "per Link mit Code" })).toBeVisible();
+    await shot(page, "confidential");
+
+    // Each section with a line that shows its data has loaded.
+    const sections = {
+      employees: "Anna Weber",
+      mailboxes: "rechnung@weber-haustechnik.test",
+    };
+    for (const [section, loaded] of Object.entries(sections)) {
+      await page.goto(`/settings?section=${section}`);
+      await expect(page.getByRole("main").getByText(loaded).first()).toBeVisible();
+      await shot(page, `settings-${section}`);
+    }
     await context.close();
   });
 

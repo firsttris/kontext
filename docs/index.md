@@ -19,6 +19,9 @@ Die Daten bleiben auf dem eigenen Server – DSGVO, nichts geht beim Austritt ve
 Benutzer. Thunderbird, Outlook, iPhone und Android verbinden sich weiter per IMAP, SMTP, CalDAV und
 CardDAV.
 
+Einen Rundgang in Bildern, gemacht zum Weiterschicken an Kunden und Kollegen, gibt es unter
+[Kontext entdecken](entdecken.md).
+
 ![Kontext im Browser: Posteingang mit gemeinsamen Postfächern info@ und rechnung@, Kategorien und geöffneter Mail](screenshots/mail.png)
 
 ## Was drin ist

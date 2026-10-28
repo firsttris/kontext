@@ -1,0 +1,120 @@
+/* The showcase page (entdecken.md): big pictures, little text, one feature per row. */
+
+.showcase-hero {
+  text-align: center;
+  margin: 1rem 0 2.5rem;
+}
+
+.md-typeset .showcase-hero h1 {
+  margin: 0 auto 0.8rem;
+  max-width: 22em;
+  font-size: 2.3rem;
+  font-weight: 700;
+  line-height: 1.15;
+  color: var(--md-default-fg-color);
+}
+
+.showcase-hero .showcase-claim {
+  margin: 0 auto 1.4rem;
+  max-width: 36em;
+  font-size: 1.05rem;
+  color: var(--md-default-fg-color--light);
+}
+
+.showcase-shot img {
+  display: block;
+  border: 1px solid var(--md-default-fg-color--lightest);
+  border-radius: 0.6rem;
+  box-shadow: 0 0.8rem 2.4rem rgb(0 0 0 / 14%);
+}
+
+.showcase-feature {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.7fr);
+  gap: 2.5rem;
+  align-items: center;
+  margin: 4.5rem 0;
+}
+
+.showcase-feature--flip {
+  grid-template-columns: minmax(0, 1.7fr) minmax(0, 1fr);
+}
+
+.showcase-feature--flip > :first-child {
+  order: 2;
+}
+
+.md-typeset .showcase-feature h2 {
+  margin-top: 0.2rem;
+  font-weight: 700;
+  line-height: 1.25;
+}
+
+.showcase-kicker {
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--md-default-fg-color--light);
+}
+
+/* Markdown puts the pictures in one paragraph; that paragraph is the grid. */
+.md-typeset .showcase-phones > p {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 1.2rem;
+  max-width: 46rem;
+  margin: 1.5rem auto 0;
+}
+
+.showcase-phones img {
+  border-radius: 1.4rem;
+}
+
+.showcase-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+  gap: 1rem;
+  margin: 1.5rem 0 3rem;
+}
+
+.md-typeset .showcase-cards > div {
+  padding: 1rem 1.2rem;
+  border: 1px solid var(--md-default-fg-color--lightest);
+  border-radius: 0.6rem;
+}
+
+.md-typeset .showcase-cards p {
+  margin: 0.3rem 0 0;
+}
+
+.showcase-center {
+  text-align: center;
+}
+
+/* Phones: one column, text above its picture. */
+@media screen and (max-width: 59.99em) {
+  .showcase-feature,
+  .showcase-feature--flip {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 1rem;
+    margin: 3rem 0;
+  }
+
+  .showcase-feature--flip > :first-child {
+    order: 0;
+  }
+
+  .md-typeset .showcase-phones > p {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .md-typeset .showcase-hero h1 {
+    font-size: 1.7rem;
+  }
+}
+
+.md-typeset .showcase-center h2,
+.md-typeset .showcase-hero h2 {
+  font-weight: 700;
+}

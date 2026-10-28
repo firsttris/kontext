@@ -19,6 +19,8 @@ validation:
   anchors: warn
 theme:
   name: material
+  # Link previews for pages with an image (overrides/main.html)
+  custom_dir: overrides
   language: de
   icon:
     repo: fontawesome/brands/github
@@ -58,6 +60,8 @@ markdown_extensions:
           class: mermaid
           format: !!python/name:pymdownx.superfences.fence_code_format
   - pymdownx.details
+extra_css:
+  - assets/entdecken.css
 extra:
   social:
     - icon: fontawesome/brands/github
@@ -65,6 +69,7 @@ extra:
       name: Quellcode auf GitHub
 nav:
   - Start: index.md
+  - Entdecken: entdecken.md
   - Funktionen:
       - Mail: mail.md
       - Kalender und Kontakte: calendar-contacts.md
