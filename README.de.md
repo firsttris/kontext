@@ -239,6 +239,21 @@ schreiben Entwürfe; sie senden und löschen nie etwas. Siehe [KI-Agenten](https
 Die App ist vorerst auf Deutsch; Englisch und weitere europäische Sprachen sind geplant.
 </details>
 
+<details>
+<summary><b>Kann eine KI das für mich aufsetzen?</b></summary>
+
+Ja. Gib Claude Code oder einem anderen Coding-Agenten dieses Repository und SSH-Zugang zu deinem
+Server und sag: „Setz Kontext auf meinem Server auf, nach der [Installationsanleitung](https://firsttris.github.io/kontext/installation.html).“
+</details>
+
+<details>
+<summary><b>Ist das sicher?</b></summary>
+
+Prüf es selbst, der Code ist offen: Lass deinen KI-Agenten Cloudflares [Security Audit Skill](https://github.com/cloudflare/security-audit-skill) oder
+`/security-review` von Claude Code über dieses Repository laufen.
+Sicherheitslücken meldest du vertraulich, wie in [SECURITY.md](SECURITY.md) beschrieben.
+</details>
+
 ## 📚 Dokumentation
 
 Die Dokumentation beginnt mit einem Rundgang in Bildern, gemacht zum Weiterschicken an Kunden: **[auf Deutsch](https://firsttris.github.io/kontext/)** und **[auf Englisch](https://firsttris.github.io/kontext/en/)**.
@@ -267,6 +282,11 @@ gemeinsame Postfächer. `bun run dev:stalwart -- --fresh --seed` setzt die Testd
 React, TanStack Router/Query, Tailwind und Tiptap im Browser; ein kleiner Bun-Server mit Hono,
 Better Auth und SQLite (Drizzle) für Anmeldung, JMAP zu Stalwart, Chat und Aufgaben; LiveKit für
 Anrufe, Asterisk in der Telefonbox. Tests, CI und Releases: [Entwicklung](https://firsttris.github.io/kontext/development.html).
+
+## 🧩 Mehr von uns
+
+- Word, Excel und PowerPoint ohne Microsoft 365? **[Schreibzeug](https://github.com/firsttris/schreibzeug)** bearbeitet sie im Browser und speichert sie als .docx, .xlsx und .pptx.
+- Machst du deine Buchhaltung selbst? **[Haben](https://github.com/firsttris/haben)**: Rechnungen mit E-Rechnung, Belege, Bankabgleich und die Umsatzsteuer-Voranmeldung an ELSTER.
 
 ## 🤝 Mitmachen
 
