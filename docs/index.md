@@ -1,6 +1,6 @@
 ---
 title: Mail, Kalender, Chat und Telefon auf dem eigenen Server
-og_title: "Kontext: Alles, was dein Team von Outlook kennt. Ohne dass Microsoft dein Team kennt."
+og_title: "Kontext: Alles, was dein Team von Google kennt. Ohne dass Google dein Team kennt."
 description: >-
   Mail, Kalender, Kontakte, Aufgaben, Team-Chat, Telefon und Dokumente in einer App – auf deinem
   eigenen Server, ohne Kosten pro Benutzer. Ein Rundgang in Bildern.
@@ -14,7 +14,7 @@ hide:
 
 <div class="showcase-hero" markdown>
 
-# Alles, was dein Team von Outlook kennt. Ohne dass Microsoft dein Team kennt.
+# Alles, was dein Team von Google kennt. Ohne dass Google dein Team kennt.
 
 <p class="showcase-claim">Mail, Kalender, Kontakte, Aufgaben, Team-Chat, das Firmentelefon und
 Dokumente – in einer App, im Browser und am Handy. Deine Daten bleiben bei dir, und zehn

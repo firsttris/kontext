@@ -1,6 +1,6 @@
 <div align="center">
 
-<h1>Alles, was dein Team von Outlook kennt. Ohne dass Microsoft dein Team kennt.</h1>
+<h1>Alles, was dein Team von Google kennt. Ohne dass Google dein Team kennt.</h1>
 
 **Kontext: Mail, Kalender, Chat und Telefonie (CTI) für dein Team – selbst gehostet und Open Source**
 
