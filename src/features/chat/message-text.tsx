@@ -49,8 +49,8 @@ export const MessageText = ({
                 part.id === me
                   ? "bg-accent-fill text-white"
                   : own
-                    ? "font-semibold md:bg-accent/10 md:font-medium md:text-accent"
-                    : "bg-accent/10 text-accent",
+                    ? "font-semibold md:bg-accent/10 md:font-medium md:text-accent-ink"
+                    : "bg-accent/10 text-accent-ink",
               )}
             >
               {part.text}

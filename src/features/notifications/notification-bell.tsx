@@ -63,7 +63,7 @@ const EventRow = ({ item, invitation }: { item: FeedEvent; invitation?: boolean 
         <span
           className={cn(
             "flex size-8 shrink-0 items-center justify-center rounded-lg",
-            invitation ? "bg-accent/10 text-accent" : "bg-subtle text-muted",
+            invitation ? "bg-accent/10 text-accent-ink" : "bg-subtle text-muted",
           )}
         >
           {invitation ? <CalendarCheck size={15} /> : <CalendarDays size={15} />}
@@ -98,7 +98,7 @@ const TaskEntry = ({
       <span
         className={cn(
           "flex size-8 shrink-0 items-center justify-center rounded-lg",
-          fresh ? "bg-accent/10 text-accent" : "bg-subtle text-muted",
+          fresh ? "bg-accent/10 text-accent-ink" : "bg-subtle text-muted",
         )}
       >
         <ListChecks size={15} />

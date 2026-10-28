@@ -235,7 +235,7 @@ export const Conversation = ({
               {title}
             </h1>
             {channel.confidential ? (
-              <span className="hidden shrink-0 items-center gap-1 self-center rounded-md bg-accent/10 px-1.5 py-0.5 text-[12px] font-medium text-accent md:flex">
+              <span className="hidden shrink-0 items-center gap-1 self-center rounded-md bg-accent/10 px-1.5 py-0.5 text-[12px] font-medium text-accent-ink md:flex">
                 <LockKeyhole size={12} aria-hidden="true" /> {m.chat_confidential()}
               </span>
             ) : null}

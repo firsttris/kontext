@@ -209,7 +209,7 @@ export const MessageRow = ({
               </span>
             ) : null}
             {snoozedUntil ? (
-              <span className="inline-flex h-[18px] shrink-0 items-center gap-1 rounded-full bg-accent/10 px-1.5 text-[11px] font-medium text-accent">
+              <span className="inline-flex h-[18px] shrink-0 items-center gap-1 rounded-full bg-accent/10 px-1.5 text-[11px] font-medium text-accent-ink">
                 <AlarmClock size={11} strokeWidth={2.25} aria-hidden="true" />
                 {Date.parse(snoozedUntil) <= Date.now()
                   ? m.mail_snoozed_soon()
@@ -235,7 +235,7 @@ export const MessageRow = ({
               </span>
             ) : null}
             {task ? (
-              <span className="inline-flex h-[18px] shrink-0 items-center gap-1 rounded-full bg-accent/10 px-1.5 text-[11px] font-medium text-accent">
+              <span className="inline-flex h-[18px] shrink-0 items-center gap-1 rounded-full bg-accent/10 px-1.5 text-[11px] font-medium text-accent-ink">
                 <ListChecks size={11} strokeWidth={2.25} aria-hidden="true" />
                 {m.tasks_from_mail()}
               </span>
