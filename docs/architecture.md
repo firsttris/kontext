@@ -555,33 +555,24 @@ das Manifest steht in `vite.config.ts`, der Service Worker in `src/sw/service-wo
   machen, und Safari schiebt dann die ganze Seite nach oben. Deshalb ist die App so hoch wie der
   sichtbare Teil (`--app-height` aus `visualViewport`, `src/components/use-visible-height.ts`)
   und bleibt oben; Listen von Nachrichten bleiben dabei unten, wenn man unten war
-  (`use-scroll-place.ts`). Chrome, Brave, Edge und Samsung Internet unter Android würden die
-  Seite mit `interactive-widget=resizes-content` (in `index.html`) schon beim Start der
-  Tastatur kürzen, den Streifen darunter weiß malen, bis sie oben ist, und die Seite
-  hochschieben. Dort legt sich die Tastatur deshalb über die Seite (VirtualKeyboard API,
-  `overlaysContent`), und die App wird in einem Schritt um ihre Höhe kürzer: Hinter der
-  aufgehenden Tastatur bleibt die App, nichts springt. Die Höhe darunter ist die sichtbare Höhe
-  ohne Tastatur minus die Tastatur, nicht die gerade gemeldete: Chrome verkleinert beim
-  Aufgehen der Tastatur für ein paar Bilder seine Ansicht und gleicht das erst danach aus
-  (`CompositorViewHolder.java`); mit der gemeldeten Höhe schrumpfte die App doppelt, das
-  Eingabefeld schoss hoch und sank zurück. Gemerkt wird diese Höhe nur, solange kein Feld den
-  Fokus hat: Chrome kann die Ansicht schon verkleinern, bevor es die Größe der Tastatur
-  meldet. Weicht die sichtbare Höhe unter der Tastatur länger als 400 ms ab, hat sich das
-  Fenster selbst geändert (geteilter Bildschirm), und die App übernimmt sie (nicht beim Zoomen
-  mit zwei Fingern) und rückt das Feld mit dem Fokus ins Bild. Browser ohne diese API (Firefox, und
-  Chromium-Builds, die sie weglassen) bleiben bei `resizes-content`; dort folgt die App der
-  kürzeren Seite allein per CSS (`100dvh`) im selben Bild, ohne eine Höhe in Pixeln, die ein
-  Bild hinterherhinge und die Seite hochrutschen ließe. Was in der installierten App unter einer
-  schrumpfenden Seite und hinter der Navigationsleiste zu sehen ist, ist `background_color` aus
-  dem Manifest; sie ist deshalb das Dunkel der App (`#09090b`, `vite.config.ts`), nicht Weiß.
-  Feste Elemente hängen an der Seite, nicht am sichtbaren Teil: Ein
-  Dialog unten (Bottom Sheet) läge unter der Tastatur. Er rückt deshalb um `--keyboard-height`
+  (`use-scroll-place.ts`). Unter Android (Chrome, Brave, Edge, Samsung Internet, Firefox) macht
+  `interactive-widget=resizes-content` (in `index.html`) die Seite selbst um die Tastatur
+  kürzer, und die App folgt allein per CSS (`100dvh`) im selben Bild, ohne eine Höhe aus dem
+  Skript. Ein früherer Weg legte die Tastatur über die Seite (VirtualKeyboard API,
+  `overlaysContent`) und kürzte die App per Skript um ihre Höhe. Chrome meldet aber die
+  endgültige Höhe, bevor die Tastatur aufgeht, und verkleinert dabei kurz seine Ansicht
+  (`CompositorViewHolder.java`): Das Eingabefeld sprang der Tastatur voraus nach oben und
+  wieder zurück, wie auch immer die Höhen gehalten wurden. Was unter einer schrumpfenden Seite
+  und hinter der Navigationsleiste zu sehen ist, ist im Browser der Hintergrund der App
+  (`html`), in der installierten App `background_color` aus dem Manifest, das Dunkel der App
+  (`#09090b`, `vite.config.ts`); kein weißer Streifen.
+  Feste Elemente hängen an der Seite, nicht am sichtbaren Teil: Am iPhone läge ein
+  Dialog unten (Bottom Sheet) unter der Tastatur. Er rückt deshalb um `--keyboard-height`
   nach oben und wird höchstens so hoch wie der sichtbare Teil (`src/components/ui/dialog.tsx`);
   ab `md` (Tablet) steht er in der Mitte von `--app-height`, nicht der ganzen Seite.
   Ebenso rücken Hinweise (`toast.tsx`), das Banner der App (`pwa-status.tsx`) und der Knopf
   „Neuer Termin“ im Kalender um `--keyboard-height` nach oben. Mit zwei Fingern vergrößert
-  bleibt die Seite, wie sie ist; nur eine Tastatur über der Seite (Android) nimmt ihr dann
-  weiter ihre Höhe weg.
+  bleibt die Seite, wie sie ist.
 - **Gespräch öffnet unten:** Ein Chat geht bei der neuesten Nachricht auf und bleibt dort, auch
   wenn Bilder, Vorschauen oder entschlüsselte Texte danach noch wachsen. Bis man selbst scrollt
   (Finger, Mausrad, Tasten), zieht jede Scroll-Meldung die Liste wieder nach unten: Safari am

@@ -1,5 +1,5 @@
 import { type Browser, expect, type Page, test } from "@playwright/test";
-import { fakeKeyboard, login, showKeyboard, unique } from "./helpers";
+import { login, showKeyboard, unique } from "./helpers";
 
 /** A second person in a browser of their own. */
 const colleague = async (browser: Browser, user: string) => {
@@ -531,13 +531,15 @@ test.describe("Chat am Handy @phone", () => {
       .toEqual({ scrolls: true, atBottom: true });
     await expect(messages.getByText(texts.at(-1)!)).toBeInViewport();
   });
-  test("die Tastatur legt sich über den Kanal, das Eingabefeld bleibt darüber", async ({
-    page,
-  }) => {
-    // Chrome on Android: with the VirtualKeyboard API the keyboard lies over the page instead of
-    // shrinking it (no white strip, no page scrolled up). Chromium can't show a keyboard, so a
-    // stand-in announces one.
-    await fakeKeyboard(page);
+  test("die Tastatur macht die Seite kürzer, das Eingabefeld bleibt darüber", async ({ page }) => {
+    // Chrome on Android with resizes-content: the page gets shorter by the keyboard, the app
+    // follows by CSS alone. The VirtualKeyboard API stays off: laying the keyboard over the page
+    // and shortening the app from script made the field jump up ahead of the keyboard and back.
+    await page.addInitScript(() =>
+      Object.defineProperty(navigator, "virtualKeyboard", {
+        value: Object.assign(new EventTarget(), { overlaysContent: false }),
+      }),
+    );
     await login(page);
     await page
       .getByRole("navigation", { name: "Apps" })
@@ -547,18 +549,9 @@ test.describe("Chat am Handy @phone", () => {
       .getByRole("navigation", { name: "Kanäle" })
       .getByRole("link", { name: /allgemein/ })
       .click();
-    const overlays = () =>
-      page.evaluate(
-        () =>
-          (navigator as unknown as { virtualKeyboard: { overlaysContent: boolean } })
-            .virtualKeyboard.overlaysContent,
-      );
-    await expect.poll(overlays).toBe(true);
     const field = page.getByRole("textbox", { name: "Nachricht" });
     await field.focus();
-    const keyboard = 330;
-    await showKeyboard(page, keyboard);
-    const visibleBottom = (await page.evaluate(() => window.innerHeight)) - keyboard;
+    const visibleBottom = await showKeyboard(page, 330);
     await expect
       .poll(async () => {
         const box = (await field.boundingBox())!;
@@ -567,114 +560,12 @@ test.describe("Chat am Handy @phone", () => {
       .toBeLessThanOrEqual(visibleBottom);
     await expect(page.getByRole("heading", { name: "# allgemein" })).toBeInViewport();
     expect(await page.evaluate(() => window.scrollY)).toBe(0);
-
-    // While the keyboard rises, Chrome shrinks its view by the keyboard for a few frames and
-    // then counters it. The app keeps its height through that: the field used to shoot up by a
-    // second keyboard height and sink back.
-    const appHeight = () =>
-      page.evaluate(() => document.documentElement.style.getPropertyValue("--app-height"));
-    const settled = await appHeight();
-    const fieldTop = (await field.boundingBox())!.y;
-    const screen = page.viewportSize()!;
-    await page.setViewportSize({ width: screen.width, height: screen.height - keyboard });
-    await page.evaluate(() => new Promise(requestAnimationFrame));
-    expect(await appHeight()).toBe(settled);
-    await page.setViewportSize(screen);
-    await page.evaluate(() => new Promise(requestAnimationFrame));
-    expect(await appHeight()).toBe(settled);
-    expect((await field.boundingBox())!.y).toBe(fieldTop);
-    expect(await page.evaluate(() => window.scrollY)).toBe(0);
-  });
-
-  test("wird das Fenster bei offener Tastatur wirklich kleiner, folgt die App", async ({
-    page,
-  }) => {
-    // Split screen or a resized window: unlike Chrome's dip of a few frames, the smaller height
-    // stays, and the field must not end up under the keyboard.
-    await fakeKeyboard(page);
-    await login(page);
-    await page
-      .getByRole("navigation", { name: "Apps" })
-      .getByRole("link", { name: /^Chat/ })
-      .click();
-    await page
-      .getByRole("navigation", { name: "Kanäle" })
-      .getByRole("link", { name: /allgemein/ })
-      .click();
-    const field = page.getByRole("textbox", { name: "Nachricht" });
-    await field.focus();
-    const keyboard = 330;
-    await showKeyboard(page, keyboard);
-    const screen = page.viewportSize()!;
-    const smaller = screen.height - 150;
-    await page.setViewportSize({ width: screen.width, height: smaller });
-    await showKeyboard(page, keyboard);
-    await expect
-      .poll(async () => {
-        const box = (await field.boundingBox())!;
-        return box.y + box.height;
-      })
-      .toBeLessThanOrEqual(smaller - keyboard);
-  });
-
-  test("mit zwei Fingern vergrößert und wieder verkleinert, behält die App unter der Tastatur ihre Höhe", async ({
-    page,
-  }) => {
-    // Zoomed in, the visible height is smaller while the page is not; that is no new window
-    // height and must not be kept as the one without a keyboard.
-    await fakeKeyboard(page);
-    await login(page);
-    await page
-      .getByRole("navigation", { name: "Apps" })
-      .getByRole("link", { name: /^Chat/ })
-      .click();
-    await page
-      .getByRole("navigation", { name: "Kanäle" })
-      .getByRole("link", { name: /allgemein/ })
-      .click();
-    const field = page.getByRole("textbox", { name: "Nachricht" });
-    await field.focus();
-    const keyboard = 330;
-    await showKeyboard(page, keyboard);
-    const screen = page.viewportSize()!;
-    const cdp = await page.context().newCDPSession(page);
-    await cdp.send("Emulation.setPageScaleFactor", { pageScaleFactor: 2 });
-    await expect.poll(() => page.evaluate(() => window.visualViewport!.scale)).toBe(2);
-    await page.waitForTimeout(600);
-    await cdp.send("Emulation.setPageScaleFactor", { pageScaleFactor: 1 });
-    await expect.poll(() => page.evaluate(() => window.visualViewport!.scale)).toBe(1);
-    await page.evaluate(() => new Promise(requestAnimationFrame));
     expect(
-      await page.evaluate(() => document.documentElement.style.getPropertyValue("--app-height")),
-    ).toBe(`${screen.height - keyboard}px`);
-  });
-
-  test("schrumpft Chrome die Ansicht, bevor die Tastatur gemeldet ist, bleibt die App richtig hoch", async ({
-    page,
-  }) => {
-    await fakeKeyboard(page);
-    await login(page);
-    await page
-      .getByRole("navigation", { name: "Apps" })
-      .getByRole("link", { name: /^Chat/ })
-      .click();
-    await page
-      .getByRole("navigation", { name: "Kanäle" })
-      .getByRole("link", { name: /allgemein/ })
-      .click();
-    const field = page.getByRole("textbox", { name: "Nachricht" });
-    await field.focus();
-    const keyboard = 330;
-    const screen = page.viewportSize()!;
-    // The view shrinks first, while the keyboard's size isn't known yet; that is not the height
-    // without a keyboard and must not be kept as such.
-    await page.setViewportSize({ width: screen.width, height: screen.height - keyboard });
-    await page.evaluate(() => new Promise(requestAnimationFrame));
-    await showKeyboard(page, keyboard);
-    await page.setViewportSize(screen);
-    await page.evaluate(() => new Promise(requestAnimationFrame));
-    expect(
-      await page.evaluate(() => document.documentElement.style.getPropertyValue("--app-height")),
-    ).toBe(`${screen.height - keyboard}px`);
+      await page.evaluate(() => ({
+        appHeight: document.documentElement.style.getPropertyValue("--app-height"),
+        overlays: (navigator as unknown as { virtualKeyboard: { overlaysContent: boolean } })
+          .virtualKeyboard.overlaysContent,
+      })),
+    ).toEqual({ appHeight: "", overlays: false });
   });
 });
