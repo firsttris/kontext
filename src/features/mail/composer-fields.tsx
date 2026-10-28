@@ -15,6 +15,7 @@ import type { OutgoingAttachment } from "@/jmap/mail";
 import type { EmailAddress, Identity } from "@/jmap/types";
 import { formatSize } from "@/lib/format";
 import type { Suggestion } from "@/lib/groups";
+import { LOCALE } from "@/lib/locale";
 import { m } from "@/paraglide/messages";
 import { LINK_DAY_CHOICES } from "../pgp/use-encrypted-send";
 import { RecipientField } from "./recipient-field";
@@ -309,7 +310,7 @@ export const ComposerActions = ({
       {savedAt ? (
         <span role="status" className="hidden text-[12px] text-muted sm:inline">
           {m.mail_draft_autosaved({
-            time: savedAt.toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" }),
+            time: savedAt.toLocaleTimeString(LOCALE, { hour: "2-digit", minute: "2-digit" }),
           })}
         </span>
       ) : null}

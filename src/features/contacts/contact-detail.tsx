@@ -24,6 +24,7 @@ import {
   primaryEmail,
   primaryPhone,
 } from "@/lib/jscontact";
+import { LOCALE } from "@/lib/locale";
 import { toVCard } from "@/lib/vcard";
 import { m } from "@/paraglide/messages";
 import { useEventsWith } from "../calendar/queries";
@@ -46,7 +47,7 @@ const Field = ({ label, children }: { label: string; children: ReactNode }) => (
   </div>
 );
 
-const dayFormat = new Intl.DateTimeFormat("de-DE", {
+const dayFormat = new Intl.DateTimeFormat(LOCALE, {
   timeZone: "Europe/Berlin",
   weekday: "short",
   day: "numeric",

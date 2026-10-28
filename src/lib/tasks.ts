@@ -16,6 +16,7 @@ import type {
 import { DEFAULT_COLUMNS, isCalendarDay, REPEATS, TASK_STATUSES } from "../../server/tasks/tasks";
 import { displayName } from "./format";
 import { addDays, dateKey } from "./jscalendar";
+import { LOCALE } from "./locale";
 
 export {
   type BoardColumn,
@@ -128,7 +129,7 @@ export const groupByDue = (
   );
 };
 
-const dayFormat = new Intl.DateTimeFormat("de-DE", {
+const dayFormat = new Intl.DateTimeFormat(LOCALE, {
   weekday: "short",
   day: "numeric",
   month: "short",

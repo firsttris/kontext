@@ -1,15 +1,16 @@
 /** How the Datensicherung's times and size read in the Firmenverwaltung; `now` is passed in. */
 import { m } from "@/paraglide/messages";
 import { TIME_ZONE } from "./format";
+import { LOCALE } from "./locale";
 
 const dayKey = (date: Date) =>
   new Intl.DateTimeFormat("sv-SE", { timeZone: TIME_ZONE }).format(date);
-const clock = new Intl.DateTimeFormat("de-DE", {
+const clock = new Intl.DateTimeFormat(LOCALE, {
   timeZone: TIME_ZONE,
   hour: "2-digit",
   minute: "2-digit",
 });
-const day = new Intl.DateTimeFormat("de-DE", {
+const day = new Intl.DateTimeFormat(LOCALE, {
   timeZone: TIME_ZONE,
   weekday: "short",
   day: "2-digit",

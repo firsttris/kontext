@@ -1,3 +1,5 @@
+// First: the language choice must be known before any module formats a date.
+import "@/lib/locale";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { createRouter, RouterProvider } from "@tanstack/react-router";
 import { StrictMode, useCallback } from "react";
@@ -5,6 +7,7 @@ import { createRoot } from "react-dom/client";
 import { AuthProvider, createAppClient, hasSession } from "@/auth/auth";
 import { ToastProvider } from "@/components/ui/toast";
 import type { JmapClient } from "@/jmap/client";
+import { getLocale } from "@/paraglide/runtime";
 import { routeTree } from "./routeTree.gen";
 import "./styles.css";
 
@@ -51,6 +54,9 @@ const App = () => {
     </AuthProvider>
   );
 };
+
+// index.html says German; screen readers and hyphenation follow the language in use.
+document.documentElement.lang = getLocale();
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>

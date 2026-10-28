@@ -11,6 +11,7 @@ import { CAPABILITIES, type JmapClient } from "@/jmap/client";
 import { setKeyword } from "@/jmap/mail";
 import type { EmailAddress, EmailDetail } from "@/jmap/types";
 import { displayName } from "@/lib/format";
+import { LOCALE } from "@/lib/locale";
 import { findRole } from "@/lib/mailboxes";
 import { isReceipt, MDN_SENT, receiptAnswered, receiptMessage } from "@/lib/mdn";
 import { m } from "@/paraglide/messages";
@@ -178,7 +179,7 @@ const confirmations = async (
 };
 
 const when = (iso: string) =>
-  new Date(iso).toLocaleString("de-DE", {
+  new Date(iso).toLocaleString(LOCALE, {
     timeZone: "Europe/Berlin",
     day: "numeric",
     month: "short",

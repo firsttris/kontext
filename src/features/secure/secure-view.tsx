@@ -8,12 +8,13 @@ import { useEffect, useMemo, useState } from "react";
 import { useTheme } from "@/components/theme/use-theme";
 import { formatSize } from "@/lib/format";
 import { mailDocument, sanitizeMailHtml, textToHtml } from "@/lib/html";
+import { LOCALE } from "@/lib/locale";
 import { asDownload } from "@/lib/safe-blob";
 import { base64ToBytes, type SecureContent, type SecureFile, type SecureReply } from "@/lib/secure";
 import { m } from "@/paraglide/messages";
 
 const when = (iso: string) =>
-  new Date(iso).toLocaleString("de-DE", {
+  new Date(iso).toLocaleString(LOCALE, {
     timeZone: "Europe/Berlin",
     dateStyle: "medium",
     timeStyle: "short",

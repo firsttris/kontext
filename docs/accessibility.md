@@ -18,7 +18,7 @@ Arbeitsplätze von Beschäftigten mit Behinderung (SGB IX § 164) ist das die Me
   Symbole daneben sind ausgeblendet. Meldungen wie „Gesendet“ oder Fehler werden vorgelesen
   (`role="status"` und `role="alert"`). Listen, Auswahlfelder und das Empfängerfeld tragen die
   passenden Rollen; die geöffnete Mail, der gewählte Tag und die gewählte Ansicht sind als
-  aktuell markiert. Die Seite ist als Deutsch ausgezeichnet.
+  aktuell markiert. Die Seite ist in der gewählten Sprache ausgezeichnet (`lang`).
 - **Tastatur:** Alles ist mit der Tastatur erreichbar, der Fokus ist immer als Rahmen zu sehen.
   Der erste Tab-Stopp ist „Zum Inhalt springen“ (sichtbar, sobald er den Fokus hat): an App-Leiste
   und Seitenleiste vorbei zur Mailliste, zur Kontaktliste oder zum Inhalt der Seite. Dialoge und

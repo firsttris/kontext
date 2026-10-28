@@ -15,6 +15,7 @@ import {
   type Span,
   timeLabel,
 } from "@/lib/jscalendar";
+import { LOCALE } from "@/lib/locale";
 import { type DayTask, dueMinutes, tasksOnDay } from "@/lib/task-context";
 import { m } from "@/paraglide/messages";
 import { calendarColor, eventClass } from "./event-style";
@@ -36,7 +37,7 @@ const HOURS = Array.from({ length: 24 }, (_, hour) => ({ hour, label: timeLabel(
 const GUTTER = "[scrollbar-gutter:stable]";
 const FIXED_ROW = cn("grid shrink-0 overflow-y-hidden border-b border-border", GUTTER);
 
-const dayName = new Intl.DateTimeFormat("de-DE", { weekday: "short", timeZone: "UTC" });
+const dayName = new Intl.DateTimeFormat(LOCALE, { weekday: "short", timeZone: "UTC" });
 
 const useNow = (): Date => {
   const [now, setNow] = useState(() => new Date());

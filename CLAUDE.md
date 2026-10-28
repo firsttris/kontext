@@ -53,9 +53,9 @@ mkdocs build --strict    # when docs/ or mkdocs.yml changed
 - The user's running processes are not stopped; use other ports for tests (dev: Stalwart 18080,
   server 18090, Vite 5173; e2e: 28080, 28090, 5174).
 - Language: code, comments and commits in English; `README.md` in English with `README.de.md` in
-  German; docs and the app in German for now (the first users are German businesses; English
-  comes later; all app texts in
-  `messages/de.json`, used through Paraglide's `m.*`).
+  German; docs in German for now (the first users are German businesses); the app in German and
+  English: texts in `messages/de.json` and `messages/en.json`, used through Paraglide's `m.*`; a
+  new text goes into both, dates and numbers through `LOCALE` (`src/lib/locale.ts`).
 
 ## Code style
 

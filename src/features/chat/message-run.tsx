@@ -16,6 +16,7 @@ import { firstName, keptMentions, type Message, type MessageRun, type Person } f
 import { tasksOfMessage } from "@/lib/chat-cards";
 import { hasNewReplies } from "@/lib/chat-threads";
 import { cn } from "@/lib/cn";
+import { LOCALE } from "@/lib/locale";
 import { m } from "@/paraglide/messages";
 import { ForgedNote, SealedLine, type Shown, useOpened, useSealedUrls } from "./confidential";
 import { ActionSheet, HoverBar, type MessageActions, useCopyText } from "./message-actions";
@@ -25,7 +26,7 @@ import { MessageText } from "./message-text";
 import { ReactionBar } from "./reactions";
 
 const time = (iso: string) =>
-  new Date(iso).toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" });
+  new Date(iso).toLocaleTimeString(LOCALE, { hour: "2-digit", minute: "2-digit" });
 
 export const isPending = (message: Message) => message.id.startsWith("pending-");
 
@@ -47,7 +48,7 @@ type Props = {
 };
 
 const replyTime = (iso: string) =>
-  new Date(iso).toLocaleString("de-DE", {
+  new Date(iso).toLocaleString(LOCALE, {
     timeZone: "Europe/Berlin",
     ...(new Date(iso).toDateString() === new Date().toDateString()
       ? { hour: "2-digit", minute: "2-digit" }

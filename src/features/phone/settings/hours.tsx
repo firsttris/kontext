@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input, Label } from "@/components/ui/input";
 import { useToast } from "@/components/ui/toast";
 import { SettingsCard } from "@/features/settings/settings-page";
+import { LOCALE } from "@/lib/locale";
 import { fromWeek, type Span, toWeek, usualWeek, type WeekRow } from "@/lib/opening-hours";
 import { m } from "@/paraglide/messages";
 import { comingHolidays } from "../../../../server/phone/holidays";
@@ -25,7 +26,7 @@ const DAY_LABELS: Record<number, () => string> = {
   0: m.phone_day_sunday,
 };
 
-const dayFormat = new Intl.DateTimeFormat("de-DE", {
+const dayFormat = new Intl.DateTimeFormat(LOCALE, {
   weekday: "short",
   day: "numeric",
   month: "short",

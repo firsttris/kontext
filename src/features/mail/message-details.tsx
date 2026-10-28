@@ -8,6 +8,7 @@ import type { ReactNode } from "react";
 import type { EmailDetail } from "@/jmap/types";
 import { cn } from "@/lib/cn";
 import { formatSize, fullAddress, readingDate } from "@/lib/format";
+import { LOCALE } from "@/lib/locale";
 import {
   domainOf,
   isConfirmed,
@@ -133,7 +134,7 @@ const CheckSummary = ({ email }: { email: EmailDetail }) => {
         <dl className="m-0">
           <Field label={m.mail_details_spam()}>
             {spam.isSpam ? m.mail_spam_yes() : m.mail_spam_no()} ·{" "}
-            {spam.score.toLocaleString("de-DE")}
+            {spam.score.toLocaleString(LOCALE)}
           </Field>
         </dl>
       ) : null}

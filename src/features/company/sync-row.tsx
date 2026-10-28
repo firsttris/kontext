@@ -2,6 +2,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Dialog } from "@/components/ui/dialog";
+import { LOCALE } from "@/lib/locale";
 import { m } from "@/paraglide/messages";
 import { PROVIDERS } from "../../../server/migration/providers";
 import { type Company, finishSync, type MailSync, runSync } from "./api";
@@ -17,7 +18,7 @@ const STATUS: Record<MailSync["status"], () => string> = {
 };
 
 const time = (iso: string) =>
-  new Date(iso).toLocaleString("de-DE", { dateStyle: "short", timeStyle: "short" });
+  new Date(iso).toLocaleString(LOCALE, { dateStyle: "short", timeStyle: "short" });
 
 export const SyncRow = ({ sync, company }: { sync: MailSync; company: Company }) => {
   const [dialog, setDialog] = useState<"password" | "finished" | null>(null);

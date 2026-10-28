@@ -5,6 +5,7 @@
  */
 import type { EmailAddress } from "@/jmap/types";
 import { m } from "@/paraglide/messages";
+import { getLocale } from "@/paraglide/runtime";
 import { escapeHtml, mailPolicy } from "./html";
 
 export type PrintableMail = {
@@ -28,7 +29,7 @@ const row = (label: string, value: string) =>
   value ? `<tr><th>${escapeHtml(label)}</th><td>${value}</td></tr>` : "";
 
 export const printDocument = (mail: PrintableMail): string => `<!doctype html>
-<html lang="de"><head><meta charset="utf-8">
+<html lang="${getLocale()}"><head><meta charset="utf-8">
 <meta http-equiv="Content-Security-Policy" content="${mailPolicy(false)}"><title>${escapeHtml(mail.subject)}</title>
 <style>
   @page { size: A4; margin: 18mm 16mm; }

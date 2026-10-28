@@ -6,6 +6,7 @@
  * for answering without an account. Inline styles and tables only, as mail programs want. Pure.
  */
 import { m } from "@/paraglide/messages";
+import { getLocale } from "@/paraglide/runtime";
 import { eventWhen } from "./event-when";
 import { escapeHtml } from "./html";
 import type { InvitationKind } from "./invitation-plan";
@@ -163,7 +164,7 @@ export const invitationHtml = (mail: InvitationMail): string => {
         )}<p style="margin:4px 0 0;font-size:12px;line-height:18px;color:${C.muted};">${html(m.invitation_answer_elsewhere())}</p></td></tr>`
       : "";
   return `<!doctype html>
-<html lang="de"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="color-scheme" content="light"><title>${html(invitationSubject(kind, event))}</title></head>
+<html lang="${getLocale()}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="color-scheme" content="light"><title>${html(invitationSubject(kind, event))}</title></head>
 <body style="margin:0;padding:0;background:${C.page};">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:${C.page};"><tr><td align="center" style="padding:24px 12px;">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:520px;background:${C.card};border:1px solid ${C.border};border-radius:12px;font-family:${FONT};color:${C.fg};">

@@ -5,6 +5,7 @@
  */
 import { m } from "@/paraglide/messages";
 import { addDays, dateKey, fromLocal, toLocal } from "./jscalendar";
+import { LOCALE } from "./locale";
 
 /** Seconds a sent mail waits in the queue, so "Rückgängig" can still stop it. */
 export const UNDO_CHOICES = [0, 5, 10, 20, 30] as const;
@@ -61,7 +62,7 @@ export const sendChoices = (now: Date): SendChoice[] => {
 
 /** "Mo., 26. Okt., 08:00", for the notice and the scheduled mails. */
 export const sendTimeLabel = (at: Date): string =>
-  at.toLocaleString("de-DE", {
+  at.toLocaleString(LOCALE, {
     timeZone: "Europe/Berlin",
     weekday: "short",
     day: "numeric",

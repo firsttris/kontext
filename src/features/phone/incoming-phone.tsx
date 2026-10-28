@@ -16,6 +16,7 @@ import { startRinging } from "@/features/calls/ringtone";
 import { useChatNames } from "@/features/chat/use-chat-names";
 import { useMe } from "@/features/tasks/queries";
 import { eventTimes } from "@/lib/jscalendar";
+import { LOCALE } from "@/lib/locale";
 import {
   offeredPhoneCall,
   type PhoneCall,
@@ -28,7 +29,7 @@ import { dismissPhone, usePhoneStore } from "./phone-store";
 import { answerPhone, openDoor, takePhoneTransfer, usePhone } from "./queries";
 import { useCallerContext, useCallerName } from "./use-caller";
 
-const whenFormat = new Intl.DateTimeFormat("de-DE", {
+const whenFormat = new Intl.DateTimeFormat(LOCALE, {
   timeZone: "Europe/Berlin",
   weekday: "short",
   day: "numeric",

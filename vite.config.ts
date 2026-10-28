@@ -27,7 +27,13 @@ const proxy = {
 
 export default defineConfig({
   plugins: [
-    paraglideVitePlugin({ project: "./project.inlang", outdir: "./src/paraglide" }),
+    // The language chosen in Einstellungen (this device, src/lib/locale.ts), else the browser's,
+    // else German.
+    paraglideVitePlugin({
+      project: "./project.inlang",
+      outdir: "./src/paraglide",
+      strategy: ["custom-choice", "preferredLanguage", "baseLocale"],
+    }),
     tanstackRouter({ target: "react", autoCodeSplitting: true }),
     react(),
     tailwindcss(),

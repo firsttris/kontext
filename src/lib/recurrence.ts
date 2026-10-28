@@ -3,6 +3,7 @@
  * JSCalendar `recurrenceRule` and back. Stalwart 0.16 takes the singular `recurrenceRule`.
  */
 import { m } from "@/paraglide/messages";
+import { LOCALE } from "./locale";
 
 export type RecurrenceRule = {
   "@type"?: "RecurrenceRule";
@@ -129,7 +130,7 @@ const LABELS: Record<Exclude<Repeat, "none">, () => string> = {
 export const repeatLabel = (repeat: Repeat): string =>
   repeat === "none" ? m.calendar_repeat_none() : LABELS[repeat]();
 
-const dayFormat = new Intl.DateTimeFormat("de-DE", {
+const dayFormat = new Intl.DateTimeFormat(LOCALE, {
   day: "numeric",
   month: "long",
   year: "numeric",

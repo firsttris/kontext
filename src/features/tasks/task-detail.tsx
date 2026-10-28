@@ -14,6 +14,7 @@ import { useShareWith } from "@/features/documents/use-share-with";
 import { ItemLink, LinkIcon } from "@/features/links/item-link";
 import { cn } from "@/lib/cn";
 import { documentLink } from "@/lib/document-links";
+import { LOCALE } from "@/lib/locale";
 import { shiftedReminder } from "@/lib/task-reminders";
 import { columnLabel, dueLabel, REPEAT_LABELS, REPEATS, type Repeat, type Task } from "@/lib/tasks";
 import { m } from "@/paraglide/messages";
@@ -23,7 +24,7 @@ import { useBoards, useColumns, useMe, usePeople, useTaskActions } from "./queri
 import { TaskChecklist } from "./task-checklist";
 import { TaskReminder } from "./task-reminder";
 
-const createdFormat = new Intl.DateTimeFormat("de-DE", {
+const createdFormat = new Intl.DateTimeFormat(LOCALE, {
   timeZone: "Europe/Berlin",
   day: "numeric",
   month: "short",
