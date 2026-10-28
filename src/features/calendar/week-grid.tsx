@@ -29,9 +29,12 @@ const HOURS = Array.from({ length: 24 }, (_, hour) => ({ hour, label: timeLabel(
 
 /**
  * The time grid scrolls, the header and all-day rows above it don't: both keep room for a
- * scrollbar, so their columns stay above the grid's instead of shifting by its width.
+ * scrollbar, so their columns stay above the grid's instead of shifting by its width. The gutter
+ * needs an overflow other than visible, which lets a flex item shrink below its content: the rows
+ * don't shrink, so a long all-day row in a low window doesn't cut off the header.
  */
 const GUTTER = "[scrollbar-gutter:stable]";
+const FIXED_ROW = cn("grid shrink-0 overflow-y-hidden border-b border-border", GUTTER);
 
 const dayName = new Intl.DateTimeFormat("de-DE", { weekday: "short", timeZone: "UTC" });
 
@@ -115,11 +118,7 @@ export const WeekGrid = ({
   return (
     <div className="flex min-h-0 flex-1 flex-col">
       <div
-        className={cn(
-          "grid overflow-y-hidden border-b border-border",
-          GUTTER,
-          !showDayHeader && "hidden",
-        )}
+        className={cn(FIXED_ROW, !showDayHeader && "hidden")}
         style={{ gridTemplateColumns: columns }}
       >
         <span />
@@ -131,7 +130,8 @@ export const WeekGrid = ({
               data-day-header={day}
               to="/calendar"
               search={(prev) => ({ ...prev, date: day, view: "day" })}
-              className="flex items-baseline gap-1.5 border-l border-border px-2 py-2.5 text-fg no-underline"
+              // The row clips what lies outside the link: the focus ring sits inside it.
+              className="flex items-baseline gap-1.5 border-l border-border px-2 py-2.5 text-fg no-underline focus-visible:-outline-offset-2"
             >
               <span className="text-[12px] text-muted">
                 {dayName.format(new Date(`${day}T12:00:00Z`)).replace(".", "")}
@@ -149,10 +149,7 @@ export const WeekGrid = ({
         })}
       </div>
       {hasAllDay ? (
-        <div
-          className={cn("grid overflow-y-hidden border-b border-border", GUTTER)}
-          style={{ gridTemplateColumns: columns }}
-        >
+        <div className={FIXED_ROW} style={{ gridTemplateColumns: columns }}>
           <span className="px-2 py-1.5 text-right text-[11px] text-muted">
             {m.calendar_all_day()}
           </span>
