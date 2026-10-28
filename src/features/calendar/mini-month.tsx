@@ -59,7 +59,8 @@ export const MiniMonth = ({ selected, today }: { selected: string; today: string
               className={cn(
                 "flex h-7 items-center justify-center rounded-[7px] font-mono no-underline",
                 // Other months' days dimmed as far as WCAG AA's 4.5:1 allows, also on the week's grey (dark: 4.9:1 at 80 %).
-                inMonth ? "text-fg" : "text-muted dark:text-muted/80",
+                // Not for today: text-white below does not override the dark: variant.
+                inMonth || day === today ? "text-fg" : "text-muted dark:text-muted/80",
                 week.has(day) && "bg-subtle",
                 day === today && "bg-accent-fill font-semibold text-white",
               )}
