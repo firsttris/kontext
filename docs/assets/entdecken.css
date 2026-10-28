@@ -118,3 +118,34 @@
 .md-typeset .showcase-hero h2 {
   font-weight: 700;
 }
+
+/* The pictures carry their size, so the page doesn't move while they load. */
+.md-typeset .showcase-shot img,
+.md-typeset .showcase-phones img {
+  height: auto;
+}
+
+/* "Rundgang starten" lands with the whole first feature in view, below the header. */
+#rundgang {
+  scroll-margin-top: 4rem;
+}
+
+/* The buttons under a heading: side by side with room between, stacked and equally wide on phones. */
+.md-typeset .showcase-hero p:has(> .md-button) {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.8rem;
+}
+
+.md-typeset .showcase-hero .md-button {
+  margin: 0;
+}
+
+@media screen and (max-width: 29.99em) {
+  .md-typeset .showcase-hero .md-button {
+    width: 100%;
+    max-width: 20rem;
+    text-align: center;
+  }
+}
