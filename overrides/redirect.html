@@ -1,0 +1,14 @@
+{#- A page that moved: sends the reader on to `redirect` from its front matter, so links that
+    were already shared keep working. -#}
+<!doctype html>
+<html lang="{{ config.theme.language }}">
+  <head>
+    <meta charset="utf-8">
+    <meta name="robots" content="noindex">
+    <meta http-equiv="refresh" content="0; url={{ page.meta.redirect }}">
+    <title>{{ config.site_name }}</title>
+  </head>
+  <body>
+    <a href="{{ page.meta.redirect }}">{{ config.site_name }}</a>
+  </body>
+</html>

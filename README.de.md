@@ -247,10 +247,10 @@ Die App ist vorerst auf Deutsch; Englisch und weitere europäische Sprachen sind
 
 ## 📚 Dokumentation
 
-Ein Rundgang in Bildern, gemacht zum Weiterschicken an Kunden: **[Kontext entdecken](https://firsttris.github.io/kontext/entdecken.html)**.
+Die Dokumentation beginnt mit einem Rundgang in Bildern, gemacht zum Weiterschicken an Kunden: **[auf Deutsch](https://firsttris.github.io/kontext/)** und **[auf Englisch](https://firsttris.github.io/kontext/en/)**.
 
 Die ganze Dokumentation, mit Suche, steht unter **[firsttris.github.io/kontext](https://firsttris.github.io/kontext/)**:
-jede Funktion im Detail, [Installation](https://firsttris.github.io/kontext/installation.html),
+[jede Funktion im Detail](https://firsttris.github.io/kontext/ueberblick.html), [Installation](https://firsttris.github.io/kontext/installation.html),
 [Architektur](https://firsttris.github.io/kontext/architecture.html) und
 [Entwicklung](https://firsttris.github.io/kontext/development.html). Was sich in jeder Version
 geändert hat, samt den Schritten für ein Update, steht im [Changelog](CHANGELOG.md) (Englisch); was

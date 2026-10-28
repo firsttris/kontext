@@ -1,6 +1,8 @@
 # Documentation as a website: https://firsttris.github.io/kontext/
 # Source is docs/, built with MkDocs Material (.github/workflows/docs.yml publishes it).
-# Locally: pip install mkdocs-material && mkdocs serve
+# Locally: pip install mkdocs-material mkdocs-static-i18n && mkdocs serve
+# Languages: German at /, English at /en/. A page is translated by a file next to it with .en.md
+# (index.en.md); a page without one shows the German text in the English site too.
 site_name: Kontext
 site_description: >-
   Mail, Kalender, Kontakte, Aufgaben, Team-Chat und Telefonie (CTI) auf dem eigenen Server – die
@@ -25,8 +27,6 @@ theme:
   icon:
     repo: fontawesome/brands/github
   features:
-    - navigation.instant
-    - navigation.instant.progress
     - navigation.tracking
     - navigation.sections
     - navigation.top
@@ -46,8 +46,38 @@ theme:
       primary: black
       toggle: { icon: material/weather-sunny, name: Hell }
 plugins:
-  - search:
-      lang: de
+  - search
+  - i18n:
+      docs_structure: suffix
+      fallback_to_default: true
+      languages:
+        - locale: de
+          name: Deutsch
+          default: true
+        - locale: en
+          name: English
+          site_description: >-
+            Mail, calendar, contacts, tasks, team chat and telephony (CTI) on your own server – the
+            self-hosted alternative to Google Workspace and Microsoft 365, with Stalwart as the
+            mail server.
+          nav_translations:
+            Start: Home
+            Überblick: Overview
+            Funktionen: Features
+            Kalender und Kontakte: Calendar and contacts
+            Aufgaben: Tasks
+            Team-Chat und Videocalls: Team chat and video calls
+            Telefonie (CTI): Telephony (CTI)
+            Dokumente: Documents
+            Verschlüsselung: Encryption
+            KI-Agenten (MCP): AI agents (MCP)
+            Firmenverwaltung und Umzug: Company admin and migration
+            App, Handy und Konto: App, phone and account
+            Betrieb: Running it
+            VPS einrichten: Setting up a VPS
+            Technik: How it is built
+            Architektur: Architecture
+            Entwicklung: Development
 markdown_extensions:
   - admonition
   - attr_list
@@ -69,7 +99,7 @@ extra:
       name: Quellcode auf GitHub
 nav:
   - Start: index.md
-  - Entdecken: entdecken.md
+  - Überblick: ueberblick.md
   - Funktionen:
       - Mail: mail.md
       - Kalender und Kontakte: calendar-contacts.md

@@ -245,10 +245,10 @@ The app is in German for now; English and other European languages are planned.
 
 ## 📚 Documentation
 
-A tour in pictures, made to send to customers: **[Kontext entdecken](https://firsttris.github.io/kontext/entdecken.html)** (German).
+The documentation opens with a tour in pictures, made to send to customers: **[in English](https://firsttris.github.io/kontext/en/)** and **[in German](https://firsttris.github.io/kontext/)**.
 
 The full documentation (German), with search, is at **[firsttris.github.io/kontext](https://firsttris.github.io/kontext/)**:
-every feature in detail, [installation](https://firsttris.github.io/kontext/installation.html),
+[every feature in detail](https://firsttris.github.io/kontext/ueberblick.html), [installation](https://firsttris.github.io/kontext/installation.html),
 [architecture](https://firsttris.github.io/kontext/architecture.html) and
 [development](https://firsttris.github.io/kontext/development.html). What changed in each release,
 with the steps an update needs, is in the [changelog](CHANGELOG.md); what comes next is in the
