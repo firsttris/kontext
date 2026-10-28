@@ -193,7 +193,8 @@ export const TaskDialog = ({
         ) : (
           <Label>
             {m.tasks_title_field()}
-            <Input value={title} onChange={(e) => setTitle(e.target.value)} />
+            {/* The title first, not the dialog's close button: Radix leaves a focus already inside. */}
+            <Input autoFocus value={title} onChange={(e) => setTitle(e.target.value)} />
           </Label>
         )}
         <fieldset className="m-0 flex flex-col gap-1.5 border-0 p-0">

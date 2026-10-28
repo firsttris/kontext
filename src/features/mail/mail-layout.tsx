@@ -32,6 +32,7 @@ export const MailLayout = ({
         {sidebar}
       </div>
       <section
+        data-skip-target
         aria-label="Nachrichtenliste"
         className={cn(
           "h-full w-full shrink-0 flex-col border-border md:w-[320px] md:border-r xl:w-[370px] 2xl:w-[400px]",

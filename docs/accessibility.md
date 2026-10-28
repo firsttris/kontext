@@ -20,7 +20,12 @@ Arbeitsplätze von Beschäftigten mit Behinderung (SGB IX § 164) ist das die Me
   passenden Rollen; die geöffnete Mail, der gewählte Tag und die gewählte Ansicht sind als
   aktuell markiert. Die Seite ist als Deutsch ausgezeichnet.
 - **Tastatur:** Alles ist mit der Tastatur erreichbar, der Fokus ist immer als Rahmen zu sehen.
-  Dialoge und Menüs halten den Fokus, Escape schließt sie, danach steht er wieder, wo er war.
+  Der erste Tab-Stopp ist „Zum Inhalt springen“ (sichtbar, sobald er den Fokus hat): an App-Leiste
+  und Seitenleiste vorbei zur Mailliste, zur Kontaktliste oder zum Inhalt der Seite. Dialoge und
+  Menüs halten den Fokus, Escape schließt sie, danach steht er wieder auf dem, was sie geöffnet
+  hat; ein neuer Dialog beginnt im ersten Feld. Der kleine Monat im Kalender ist ein einziger
+  Tab-Stopp: die Pfeiltasten gehen von Tag zu Tag (hoch und runter um eine Woche), Bild auf und
+  Bild ab um einen Monat, Enter zeigt den Tag. Strg+Enter sendet die Mail, die man schreibt.
   Was sich ziehen lässt, geht auch ohne Maus: Mails über „Verschieben nach …“, Aufgaben über
   ihre Spalte in der Aufgabe, Termine über Datum und Uhrzeit im Termin, Dateien über „Anhängen“.
   Dazu kommen Tastaturkürzel wie in Gmail; `?` zeigt sie ([App, Handy und Konto](app.md)).
@@ -37,7 +42,8 @@ Arbeitsplätze von Beschäftigten mit Behinderung (SGB IX § 164) ist das die Me
 Bei jedem Push prüft `e2e/accessibility.spec.ts` mit [axe-core](https://github.com/dequelabs/axe-core)
 jede Seite (Anmeldung, Mail, Neue Mail, Kalender, Kontakte, Chat, Aufgaben, Einstellungen,
 Dokumente) hell und dunkel, am Desktop und am Handy, gegen die Regeln von WCAG 2.2 AA. Ein
-einziger Verstoß macht den Test rot. Dazu suchen die übrigen End-to-End-Tests Elemente so, wie ein
+einziger Verstoß macht den Test rot. `e2e/keyboard.spec.ts` geht die Wege nur mit der Tastatur:
+zum Inhalt springen, Dialoge auf und zu, der kleine Monat, Senden mit Strg+Enter. Dazu suchen die übrigen End-to-End-Tests Elemente so, wie ein
 Screenreader sie findet (nach Rolle und Name), und prüfen damit die Beschriftungen nebenbei mit.
 
 Eine Maschine findet aber nur einen Teil der Probleme. Ob eine Beschriftung verständlich ist, die

@@ -478,6 +478,15 @@ export const Composer = ({ accountId, mode, sourceEmailId, prefill }: Props) => 
         event.preventDefault();
         void send();
       }}
+      // Strg+Enter (Cmd+Enter on a Mac) sends, as in Gmail and Outlook; only when "Senden" could.
+      onKeyDown={(event) => {
+        if (event.key !== "Enter" || !(event.ctrlKey || event.metaKey)) return;
+        const submit =
+          event.currentTarget.querySelector<HTMLButtonElement>('button[type="submit"]');
+        if (!submit || submit.disabled) return;
+        event.preventDefault();
+        submit.click();
+      }}
       className="flex h-full min-h-0 flex-col gap-2.5 px-3 pt-2 pb-3 md:px-[18px] md:pt-3.5 md:pb-4"
     >
       <div className="flex items-center gap-2">

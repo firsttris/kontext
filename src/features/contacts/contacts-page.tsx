@@ -54,6 +54,7 @@ export const ContactsPage = ({ search }: { search: ContactsSearch }) => {
   return (
     <>
       <section
+        data-skip-target
         aria-label={m.contacts_title()}
         className={cn(
           "h-full w-full shrink-0 flex-col border-border bg-bg md:w-[320px] md:border-r md:bg-side",

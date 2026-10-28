@@ -35,6 +35,7 @@ export type ShortcutAction =
   | "help"
   | "apps"
   | "compose"
+  | "send"
   | "search"
   | "nextPrev"
   | "reply"
@@ -62,6 +63,8 @@ export const SHORTCUTS: { group: ShortcutGroup; keys: string[]; action: Shortcut
   { group: "general", keys: ["?"], action: "help" },
   { group: "general", keys: ["1", "2", "3", "4", "5"], action: "apps" },
   { group: "mail", keys: ["c"], action: "compose" },
+  // Inside the mail being written, unlike the single keys (composer.tsx).
+  { group: "mail", keys: ["Strg+Enter"], action: "send" },
   { group: "mail", keys: ["/"], action: "search" },
   { group: "mail", keys: ["j", "k"], action: "nextPrev" },
   { group: "mail", keys: ["r"], action: "reply" },
