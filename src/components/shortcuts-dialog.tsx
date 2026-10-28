@@ -18,6 +18,7 @@ const ACTION_LABELS: Record<ShortcutAction, () => string> = {
   help: m.shortcuts_help,
   apps: m.shortcuts_apps,
   compose: m.shortcuts_compose,
+  send: m.shortcuts_send,
   search: m.shortcuts_search,
   nextPrev: m.shortcuts_nextPrev,
   reply: m.shortcuts_reply,

@@ -7,6 +7,10 @@ Steps that an update needs beyond raising the version are marked **Upgrade**.
 
 ## Unreleased
 
+- Keyboard: "Zum Inhalt springen" as the first Tab stop (seen only with the focus) leads past the
+  rail and the sidebar; a dialog gives the focus back to what opened it, also one opened from the
+  URL like "Neuer Termin"; "Neue Aufgabe" starts in its title; the small month in the calendar is
+  one Tab stop with the arrow keys (Page Up and Page Down for months); Strg+Enter sends a mail.
 - Accessibility: WCAG 2.2 AA as the goal, checked by axe-core on every page, light and dark, desktop
   and phone (`e2e/accessibility.spec.ts`). Grey text and white text on blue have enough contrast
   now, days outside the month in the small calendar too; tasks in the calendar are touch targets of

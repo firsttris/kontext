@@ -165,6 +165,31 @@ const Rail = ({ onHelp, bell }: { onHelp: () => void; bell: ReactNode }) => {
   );
 };
 
+/**
+ * "Zum Inhalt springen": the first stop for Tab, seen only while it has the focus, past the rail
+ * and the sidebar to the page's own content: where a page marks it (`data-skip-target`, the mail
+ * and contact lists before their <main>), else its <main>; not one hidden on a phone's other
+ * screen.
+ */
+const SkipToContent = () => (
+  <button
+    type="button"
+    onClick={() => {
+      const visible = (selector: string) =>
+        [...document.querySelectorAll<HTMLElement>(selector)].find(
+          (el) => el.offsetParent !== null,
+        );
+      const main = visible("[data-skip-target]") ?? visible("main");
+      if (!main) return;
+      if (!main.hasAttribute("tabindex")) main.tabIndex = -1;
+      main.focus();
+    }}
+    className="sr-only rounded-lg border border-border bg-bg px-3 py-2 text-[14px] font-medium text-fg shadow-sm focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[100]"
+  >
+    {m.nav_skip_to_content()}
+  </button>
+);
+
 /** `bell`: the notifications (features/notifications), placed in the rail by the route. */
 export const AppShell = ({ children, bell }: { children: ReactNode; bell?: ReactNode }) => {
   useVisibleHeight();
@@ -180,6 +205,7 @@ export const AppShell = ({ children, bell }: { children: ReactNode; bell?: React
   });
   return (
     <div className="flex h-[var(--app-height,100dvh)] overflow-hidden bg-bg text-fg safe-top md:pt-0">
+      <SkipToContent />
       <Rail onHelp={() => setHelp(true)} bell={bell} />
       <div className="flex min-w-0 flex-1">{children}</div>
       <ShortcutsDialog open={help} onOpenChange={setHelp} />
