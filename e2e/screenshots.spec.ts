@@ -127,6 +127,9 @@ test.describe("Screenshots @screenshots", () => {
     // "Vertraulich senden" needs the sender's own key (as in e2e/secure.spec.ts).
     await giveKey(page, "jonas");
     await page.goto("/mail");
+    // From the customer's folder: the inbox gets the bounce of a seed mail a minute in.
+    await page.getByRole("link", { name: "Hoffmann", exact: true }).click();
+    await expect(page.getByText("Re: Badsanierung Obergeschoss").first()).toBeVisible();
     await page.getByRole("link", { name: "Neue Mail" }).first().click();
     await page.getByRole("combobox", { name: "An" }).fill("markus.hoffmann@example.test");
     await page.keyboard.press(",");
