@@ -234,86 +234,92 @@ const Item = ({
   });
   const hasActions = Object.values(actions).some(Boolean);
   const press = useLongPress(() => {
-    if (!phone || editing || !hasActions) return;
     navigator.vibrate?.(10);
     setSheet(true);
   });
+  // Armed only where it opens the sheet: elsewhere (a tablet, the field while editing) the long
+  // press stays the browser's (select, paste, a link's menu) and a slow tap stays a tap.
+  const pressable = phone && !editing && hasActions;
   return (
-    <div
-      data-message={message.id}
-      {...press.handlers}
-      // The click that ends a long press would also follow a link or play a voice message.
-      onClickCapture={(event) => {
-        if (!press.consumeClick()) return;
-        event.preventDefault();
-        event.stopPropagation();
-      }}
-      className={cn(
-        "group relative flex max-w-full flex-col gap-1.5 rounded-xl transition-colors duration-700 hover:duration-100 md:-mx-2 md:px-2 md:py-0.5 md:hover:bg-hover/60",
-        // A long press picks the message, not a word of it (copying is in the sheet).
-        "max-md:select-none max-md:[-webkit-touch-callout:none]",
-        own ? "items-end md:items-stretch" : "items-start md:items-stretch",
-        highlight === message.id && "bg-accent/10",
-        sheet && "bg-hover",
-        isPending(message) && "opacity-60",
-      )}
-    >
-      {editing ? (
-        <EditField
-          message={message}
-          people={people}
-          onCancel={() => setEditing(false)}
-          onSave={(text, mentions) => {
-            handlers.onEdit(message, text, mentions);
-            setEditing(false);
-          }}
-        />
-      ) : (
-        <Body message={message} own={own} me={me} people={people} />
-      )}
-      {message.sealed === "invalid" ? <ForgedNote /> : null}
-      <MessageFiles files={message.files} urls={message.sealed ? sealedUrls : undefined} />
-      {message.cards.map((card) => (
-        <MessageCard key={`${card.kind}-${card.ref}`} card={card} />
-      ))}
-      <ReactionBar
-        message={message}
-        me={me}
-        nameOf={nameOf}
-        onReact={(emoji) => handlers.onReact(message, emoji)}
-      />
-      {message.replies && onReply ? (
-        <RepliesLine
-          message={message}
-          nameOf={nameOf}
-          fresh={hasNewReplies(message, me, readUpTo)}
-          onOpen={() => onReply(message)}
-        />
-      ) : null}
-      {made.map((task) => (
-        <ItemLink
-          key={task.id}
-          item={{ kind: "task", accountId: task.accountId, ref: task.id }}
-          className="flex items-center gap-1.5 text-[12px] text-muted no-underline hover:text-fg"
-        >
-          <ListChecks size={13} aria-hidden="true" />
-          {m.chat_task_made({ title: task.title, status: statusLabel(task) })}
-        </ItemLink>
-      ))}
-      {editing || !hasActions ? null : (
-        <>
-          <HoverBar actions={actions} />
-          {/* A screen reader on a phone reaches the sheet without the long press. */}
-          <button
-            type="button"
-            aria-label={m.chat_message_actions()}
-            onClick={() => setSheet(true)}
-            className="sr-only md:hidden"
+    <>
+      <div
+        data-message={message.id}
+        {...(pressable ? press.handlers : {})}
+        // The click that ends a long press would also follow a link or play a voice message.
+        onClickCapture={(event) => {
+          if (!press.consumeClick()) return;
+          event.preventDefault();
+          event.stopPropagation();
+        }}
+        className={cn(
+          "group relative flex max-w-full flex-col gap-1.5 rounded-xl transition-colors duration-700 hover:duration-100 md:-mx-2 md:px-2 md:py-0.5 md:hover:bg-hover/60",
+          // A long press picks the message, not a word of it (copying is in the sheet).
+          "max-md:select-none max-md:[-webkit-touch-callout:none]",
+          own ? "items-end md:items-stretch" : "items-start md:items-stretch",
+          highlight === message.id && "bg-accent/10",
+          sheet && "bg-hover",
+          isPending(message) && "opacity-60",
+        )}
+      >
+        {editing ? (
+          <EditField
+            message={message}
+            people={people}
+            onCancel={() => setEditing(false)}
+            onSave={(text, mentions) => {
+              handlers.onEdit(message, text, mentions);
+              setEditing(false);
+            }}
           />
-          {phone ? <ActionSheet open={sheet} onOpenChange={setSheet} actions={actions} /> : null}
-        </>
-      )}
-    </div>
+        ) : (
+          <Body message={message} own={own} me={me} people={people} />
+        )}
+        {message.sealed === "invalid" ? <ForgedNote /> : null}
+        <MessageFiles files={message.files} urls={message.sealed ? sealedUrls : undefined} />
+        {message.cards.map((card) => (
+          <MessageCard key={`${card.kind}-${card.ref}`} card={card} />
+        ))}
+        <ReactionBar
+          message={message}
+          me={me}
+          nameOf={nameOf}
+          onReact={(emoji) => handlers.onReact(message, emoji)}
+        />
+        {message.replies && onReply ? (
+          <RepliesLine
+            message={message}
+            nameOf={nameOf}
+            fresh={hasNewReplies(message, me, readUpTo)}
+            onOpen={() => onReply(message)}
+          />
+        ) : null}
+        {made.map((task) => (
+          <ItemLink
+            key={task.id}
+            item={{ kind: "task", accountId: task.accountId, ref: task.id }}
+            className="flex items-center gap-1.5 text-[12px] text-muted no-underline hover:text-fg"
+          >
+            <ListChecks size={13} aria-hidden="true" />
+            {m.chat_task_made({ title: task.title, status: statusLabel(task) })}
+          </ItemLink>
+        ))}
+        {editing || !hasActions ? null : (
+          <>
+            <HoverBar actions={actions} />
+            {/* A screen reader on a phone reaches the sheet without the long press. */}
+            <button
+              type="button"
+              aria-label={m.chat_message_actions()}
+              onClick={() => setSheet(true)}
+              className="sr-only md:hidden"
+            />
+          </>
+        )}
+      </div>
+      {/* Beside the message, not in it: React passes the sheet's events up to its parents, and a
+        slow tap on a choice would be the message's long press. */}
+      {pressable ? <ActionSheet open={sheet} onOpenChange={setSheet} actions={actions} /> : null}
+    </>
   );
 };
 

@@ -1,4 +1,4 @@
-import { type Browser, expect, type Page, test } from "@playwright/test";
+import { type Browser, expect, type Locator, type Page, test } from "@playwright/test";
 import { addMail, login, longPress, unique } from "./helpers";
 
 const PNG = Buffer.from(
@@ -55,6 +55,40 @@ const messageIn = (page: Page, text: string) =>
 const replyOnPhone = async (page: Page, text: string) => {
   await longPress(messageIn(page, text));
   await page.getByRole("button", { name: "Im Thread antworten" }).click();
+};
+
+/**
+ * Holds a finger on an element as long as a long press takes and says whether the press keeps the
+ * browser's own menu away (text selection, paste, a link's menu), as it does for the sheet.
+ */
+const pressBlocksOwnMenu = (target: Locator) =>
+  target.evaluate(async (element) => {
+    const box = element.getBoundingClientRect();
+    const finger = {
+      pointerType: "touch",
+      isPrimary: true,
+      bubbles: true,
+      clientX: box.x + 10,
+      clientY: box.y + 10,
+    };
+    element.dispatchEvent(new PointerEvent("pointerdown", finger));
+    await new Promise((resolve) => setTimeout(resolve, 550));
+    const menu = new MouseEvent("contextmenu", { ...finger, cancelable: true });
+    element.dispatchEvent(menu);
+    element.dispatchEvent(new PointerEvent("pointerup", finger));
+    return menu.defaultPrevented;
+  });
+
+/** A tap held a little longer than a long press takes, the finger as Chrome sends it. */
+const slowTap = async (target: Locator) => {
+  const box = (await target.boundingBox())!;
+  const page = target.page();
+  const cdp = await page.context().newCDPSession(page);
+  const point = { x: box.x + box.width / 2, y: box.y + box.height / 2 };
+  await cdp.send("Input.dispatchTouchEvent", { type: "touchStart", touchPoints: [point] });
+  await page.waitForTimeout(550);
+  await cdp.send("Input.dispatchTouchEvent", { type: "touchEnd", touchPoints: [] });
+  await cdp.detach();
 };
 
 test.describe("Chat: Reaktionen und Antworten", () => {
@@ -221,6 +255,36 @@ test.describe("Chat: Reaktionen und Antworten", () => {
     expect(await page.evaluate(() => navigator.clipboard.readText())).toBe(text);
   });
 
+  test("am Handy kommt auch ein langsamer Tipp im Blatt an @phone", async ({ page }) => {
+    const text = unique("Kran kommt um 10");
+    await login(page);
+    await openChannel(page, /allgemein/);
+    await write(page, text);
+    const message = messageIn(page, text);
+    await longPress(message);
+    // The sheet's choice, not a second long press on the message behind it.
+    await slowTap(
+      page
+        .getByRole("dialog", { name: "Aktionen zur Nachricht" })
+        .getByRole("button", { name: "Mit 👍 reagieren" }),
+    );
+    await expect(message.getByRole("button", { name: /^👍 1/ })).toBeVisible();
+  });
+
+  test("am Handy gehört langes Drücken im Bearbeiten-Feld dem Text @phone", async ({ page }) => {
+    const text = unique("Kran kommt um 8");
+    await login(page);
+    await openChannel(page, /allgemein/);
+    await write(page, text);
+    await longPress(messageIn(page, text));
+    await page
+      .getByRole("dialog", { name: "Aktionen zur Nachricht" })
+      .getByRole("button", { name: "Bearbeiten" })
+      .click();
+    // Selecting or pasting in the field is the browser's long press, not a second sheet.
+    expect(await pressBlocksOwnMenu(page.getByRole("textbox", { name: "Bearbeiten" }))).toBe(false);
+  });
+
   test("am Handy führt Zurück dorthin, woher man kam @phone", async ({ page }) => {
     const question = unique("Leiter in Halle 3?");
     await login(page);
@@ -280,6 +344,28 @@ test.describe("Chat: Reaktionen und Antworten", () => {
     await expect(dialog).toHaveCount(0);
     await page.getByRole("button", { name: "Zurück zu den Chats" }).click();
     await expect(page).not.toHaveURL(/channel=/);
+  });
+});
+
+test.describe("Chat am Tablet", () => {
+  test.use({ viewport: { width: 1024, height: 1366 }, hasTouch: true, isMobile: true });
+
+  test("langes Drücken bleibt beim Browser, ein langsamer Tipp kommt an", async ({ page }) => {
+    const text = unique("Kran kommt um 9");
+    await login(page);
+    await openChannel(page, /allgemein/);
+    await write(page, text);
+    const message = messageIn(page, text);
+    await message.getByRole("button", { name: "Reagieren" }).click();
+    await page.getByRole("button", { name: "Mit 👍 reagieren" }).click();
+    const thumbs = message.getByRole("button", { name: /^👍 1/ });
+    await expect(thumbs).toBeVisible();
+    // No sheet on a tablet: the long press keeps the browser's menu (select, copy a link).
+    expect(await pressBlocksOwnMenu(message)).toBe(false);
+
+    // A tap held a little longer is still a tap.
+    await slowTap(thumbs);
+    await expect(thumbs).toHaveCount(0);
   });
 });
 
