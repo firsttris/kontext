@@ -138,6 +138,22 @@ describe("backup-control.sh", () => {
     expect(status().schedule.enabled).toBe(false);
   });
 
+  it("takes the next run from the calendar while the timer's own run is on", () => {
+    const { bin, run, kontextWrites, status, script } = setup();
+    run("install");
+    kontextWrites("settings.json", '{"enabled":true,"time":"04:30"}');
+    run("apply");
+    // During a run the timer started, systemd shows no next elapse yet.
+    const stand = readFileSync(join(bin, "systemctl"), "utf8").replace("#!/bin/sh\n", "");
+    script(join(bin, "systemctl"), `[ "$1" = show ] && exit 0\n${stand}`);
+    script(
+      join(bin, "systemd-analyze"),
+      `[ "$2" = "*-*-* 04:30:00 Europe/Berlin" ] && echo "       (in UTC): Thu 2026-10-29 03:30:00 UTC"`,
+    );
+    run("finish");
+    expect(status().nextRun).toBe("2026-10-29T03:30:00Z");
+  });
+
   it("ignores a time that is not exactly HH:MM", () => {
     const { root, run, kontextWrites, timeConf } = setup();
     run("install");
