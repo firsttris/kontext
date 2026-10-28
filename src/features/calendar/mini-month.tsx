@@ -53,7 +53,7 @@ export const MiniMonth = ({ selected, today }: { selected: string; today: string
   useEffect(() => {
     if (!moved.current) return;
     moved.current = false;
-    grid.current?.querySelector<HTMLElement>(`[data-day="${tabStop}"]`)?.focus();
+    grid.current?.querySelector<HTMLElement>(`[data-mini-day="${tabStop}"]`)?.focus();
   });
   const onKeyDown = (event: KeyboardEvent) => {
     const next = dayAfterKey(tabStop, event.key);
@@ -107,7 +107,7 @@ export const MiniMonth = ({ selected, today }: { selected: string; today: string
               key={day}
               to="/calendar"
               search={(prev) => ({ ...prev, date: day })}
-              data-day={day}
+              data-mini-day={day}
               tabIndex={day === tabStop ? 0 : -1}
               aria-label={dayName.format(new Date(`${day}T12:00:00Z`))}
               aria-current={day === today ? "date" : undefined}
