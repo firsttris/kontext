@@ -31,6 +31,10 @@ Shared mailboxes, a team calendar, and every customer's mails, appointments and 
 
 </div>
 
+> [!TIP]
+> **Let an AI set it up for you.** Give Claude Code or another coding agent this repository and SSH access to
+> your server and say: "Set up Kontext on my server following the [installation guide](https://firsttris.github.io/kontext/installation.html)."
+
 ## 💡 Why Kontext?
 
 Google Workspace and Microsoft 365 are convenient, but every user costs money every month and the
@@ -235,13 +239,6 @@ write drafts; they never send or delete anything. See [AI agents](https://firstt
 <summary><b>Which languages?</b></summary>
 
 The app is in German for now; English and other European languages are planned.
-</details>
-
-<details>
-<summary><b>Can an AI assistant set it up for me?</b></summary>
-
-Yes. Give Claude Code or another coding agent this repository and SSH access to your server and
-say: "Set up Kontext on my server following the [installation guide](https://firsttris.github.io/kontext/installation.html)."
 </details>
 
 <details>
