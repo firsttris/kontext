@@ -19,7 +19,7 @@ Stalwarts Admin-Oberfläche und ohne IT-Kenntnisse.
 - **Abwesenheit für Kollegen** (etwa bei Krankheit) mit Vertretung in der Antwort.
 - **Firmen-Signatur** mit `[Name]` und `[E-Mail]` für alle auf einmal.
 - **Austritt:** Zugang sperren, Postfach einer Kollegin übergeben, neue Mails weiterleiten und
-  automatisch antworten – gelöscht wird nichts (GoBD).
+  automatisch antworten – gelöscht wird nichts.
 - **Verfügbarkeit im Kalender** für alle einschalten.
 - **Team-Chat:** Aufbewahrungsfrist; **Telefonie:** Fritzbox, wer klingelt, Mailbox,
   Öffnungszeiten ([Telefonie](telephony.md)).

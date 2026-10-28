@@ -16,7 +16,6 @@ AGPL, eine Web-App und PWA auf dem Mailserver Stalwart, keine Kosten pro Benutze
 [![Stalwart 0.16](https://img.shields.io/badge/Stalwart-0.16-18181b)](https://stalw.art)
 [![JMAP](https://img.shields.io/badge/JMAP-mail%20%7C%20calendar%20%7C%20contacts-0f766e)](https://jmap.io)
 [![DSGVO](https://img.shields.io/badge/DSGVO-Daten%20auf%20deinem%20Server-15803d)](#-deine-daten-bleiben-in-europa--mit-ki)
-[![GoBD](https://img.shields.io/badge/GoBD-nichts%20wird%20gel%C3%B6scht-15803d)](#-deine-daten-bleiben-in-europa--mit-ki)
 [![Made in Europe](https://img.shields.io/badge/made%20in-Europe-003399)](#-deine-daten-bleiben-in-europa--mit-ki)
 
 ```bash
@@ -25,7 +24,7 @@ cp deploy/.env.example deploy/.env && nano deploy/.env   # Domain, jedes change-
 docker compose -f deploy/compose.yaml up -d              # oder Podman
 ```
 
-[Datenschutz & GoBD](#-deine-daten-bleiben-in-europa--mit-ki) •
+[Datenschutz](#-deine-daten-bleiben-in-europa--mit-ki) •
 [Warum](#-warum-kontext) •
 [Installation](#-installation) •
 [Funktionen](#-funktionen) •
@@ -41,7 +40,7 @@ docker compose -f deploy/compose.yaml up -d              # oder Podman
 ## 🇪🇺 Deine Daten bleiben in Europa – mit KI
 
 - **DSGVO**: Mails, Termine, Kontakte, Chat und Anrufe liegen auf deinem Server, in einem Rechenzentrum in Deutschland oder anderswo in Europa oder im eigenen Büro. Kein US-Anbieter dazwischen, keine Tracker, keine Weitergabe. Einen Auftragsverarbeitungsvertrag brauchst du nur mit deinem Hoster.
-- **GoBD**: Beim Austritt wird nichts gelöscht, Backups gehen verschlüsselt und unveränderbar (Object Lock) auf S3-Speicher. Die Software ist ein Baustein; dazu gehören die Abläufe im Betrieb und eine Verfahrensdokumentation.
+- **Sicher aufbewahrt**: Beim Austritt wird nichts gelöscht, Backups gehen verschlüsselt und unveränderbar (Object Lock) auf S3-Speicher.
 - **KI nach deinen Regeln**: Kontext ist ein MCP-Server. Du verbindest den KI-Assistenten, den du willst; er arbeitet mit deinen Rechten, schreibt Entwürfe statt zu senden, löscht nie etwas, und jeder Zugriff wird protokolliert und lässt sich trennen.
 - **Kein Lock-in**: offene Standards (IMAP, CalDAV, CardDAV), mitnehmen jederzeit; der Umzug *zu* Kontext ist eingebaut.
 
@@ -198,8 +197,16 @@ einem Thin Client im Büro.
 
 Es ist dafür gebaut: Die Daten bleiben auf deinem Server, ohne Tracker oder Dritte. Einen
 Auftragsverarbeitungsvertrag schließt du mit deinem Hoster; bei einem Server im eigenen Haus
-nicht einmal das. Für die GoBD wird beim Austritt nichts gelöscht, und Backups gehen verschlüsselt
-auf S3-Speicher mit Object Lock.
+nicht einmal das.
+</details>
+
+<details>
+<summary><b>Ist Kontext GoBD-konform?</b></summary>
+
+Nein, Kontext ist kein Mailarchiv. Die GoBD verlangen, dass geschäftliche Mails über Jahre so
+aufbewahrt werden, dass niemand sie löschen oder ändern kann; in Kontext kann man Mails löschen.
+Dafür gehört ein GoBD-Archiv daneben. Kontext liefert die Bausteine drumherum: Beim Austritt wird
+nichts gelöscht, und Backups gehen verschlüsselt und unveränderbar (Object Lock) auf S3-Speicher.
 </details>
 
 <details>

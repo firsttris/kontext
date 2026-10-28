@@ -16,7 +16,6 @@ AGPL, a web app and PWA on top of the Stalwart mail server, no per-seat pricing.
 [![Stalwart 0.16](https://img.shields.io/badge/Stalwart-0.16-18181b)](https://stalw.art)
 [![JMAP](https://img.shields.io/badge/JMAP-mail%20%7C%20calendar%20%7C%20contacts-0f766e)](https://jmap.io)
 [![GDPR](https://img.shields.io/badge/GDPR-data%20on%20your%20server-15803d)](#-your-data-stays-in-europe--with-ai)
-[![GoBD](https://img.shields.io/badge/GoBD-nothing%20deleted-15803d)](#-your-data-stays-in-europe--with-ai)
 [![Made in Europe](https://img.shields.io/badge/made%20in-Europe-003399)](#-your-data-stays-in-europe--with-ai)
 
 ```bash
@@ -25,7 +24,7 @@ cp deploy/.env.example deploy/.env && nano deploy/.env   # domain, replace every
 docker compose -f deploy/compose.yaml up -d              # or Podman
 ```
 
-[Privacy & GoBD](#-your-data-stays-in-europe--with-ai) •
+[Privacy](#-your-data-stays-in-europe--with-ai) •
 [Why](#-why-kontext) •
 [Install](#-install) •
 [Features](#-features) •
@@ -41,7 +40,7 @@ docker compose -f deploy/compose.yaml up -d              # or Podman
 ## 🇪🇺 Your data stays in Europe – with AI
 
 - **GDPR**: mails, appointments, contacts, chat and calls live on your server, in a data centre in Germany or elsewhere in Europe, or in your own office. No US provider in between, no trackers, no sharing. The only data processing agreement you need is with your hosting provider.
-- **GoBD** (German retention rules): nothing is deleted when someone leaves, and backups go encrypted and unalterable (Object Lock) to S3 storage. The software is one part; the company's processes and its procedure documentation are the other.
+- **Kept safe**: nothing is deleted when someone leaves, and backups go encrypted and unalterable (Object Lock) to S3 storage.
 - **AI on your terms**: Kontext is an MCP server. You connect the AI assistant you choose; it works with your rights, writes drafts instead of sending, never deletes anything, and every access is logged and can be revoked.
 - **No lock-in**: open standards (IMAP, CalDAV, CardDAV), take everything with you any time; moving *to* Kontext is built in.
 
@@ -195,8 +194,16 @@ is simpler. The telephone box runs on a NAS, a Raspberry Pi or a thin client in 
 
 It is built for it: the data stays on your server, without trackers or third parties. You sign a
 data processing agreement with your hosting provider; with a server in your own building not even
-that. For German retention rules (GoBD) nothing is deleted when someone leaves, and backups go
-encrypted to S3 storage with Object Lock.
+that.
+</details>
+
+<details>
+<summary><b>Is Kontext GoBD compliant?</b></summary>
+
+No, Kontext is no mail archive. The German retention rules (GoBD) ask that business mail is kept
+for years so that nobody can delete or change it; in Kontext people can delete their mail. For that
+a GoBD archive belongs beside it. Kontext gives the pieces around it: nothing is deleted when
+someone leaves, and backups go encrypted and unalterable (Object Lock) to S3 storage.
 </details>
 
 <details>
