@@ -585,4 +585,33 @@ test.describe("Chat am Handy @phone", () => {
     expect((await field.boundingBox())!.y).toBe(fieldTop);
     expect(await page.evaluate(() => window.scrollY)).toBe(0);
   });
+
+  test("schrumpft Chrome die Ansicht, bevor die Tastatur gemeldet ist, bleibt die App richtig hoch", async ({
+    page,
+  }) => {
+    await fakeKeyboard(page);
+    await login(page);
+    await page
+      .getByRole("navigation", { name: "Apps" })
+      .getByRole("link", { name: /^Chat/ })
+      .click();
+    await page
+      .getByRole("navigation", { name: "Kanäle" })
+      .getByRole("link", { name: /allgemein/ })
+      .click();
+    const field = page.getByRole("textbox", { name: "Nachricht" });
+    await field.focus();
+    const keyboard = 330;
+    const screen = page.viewportSize()!;
+    // The view shrinks first, while the keyboard's size isn't known yet; that is not the height
+    // without a keyboard and must not be kept as such.
+    await page.setViewportSize({ width: screen.width, height: screen.height - keyboard });
+    await page.evaluate(() => new Promise(requestAnimationFrame));
+    await showKeyboard(page, keyboard);
+    await page.setViewportSize(screen);
+    await page.evaluate(() => new Promise(requestAnimationFrame));
+    expect(
+      await page.evaluate(() => document.documentElement.style.getPropertyValue("--app-height")),
+    ).toBe(`${screen.height - keyboard}px`);
+  });
 });
