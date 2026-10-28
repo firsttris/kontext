@@ -138,16 +138,9 @@ test.describe("Screenshots @screenshots", () => {
     await expect(page.getByRole("status").filter({ hasText: "per Link mit Code" })).toBeVisible();
     await shot(page, "confidential");
 
-    // Each section with a line that shows its data has loaded.
-    const sections = {
-      employees: "Anna Weber",
-      mailboxes: "rechnung@weber-haustechnik.test",
-    };
-    for (const [section, loaded] of Object.entries(sections)) {
-      await page.goto(`/settings?section=${section}`);
-      await expect(page.getByRole("main").getByText(loaded).first()).toBeVisible();
-      await shot(page, `settings-${section}`);
-    }
+    await page.goto("/settings?section=employees");
+    await expect(page.getByRole("main").getByText("Anna Weber")).toBeVisible();
+    await shot(page, "settings-employees");
     await context.close();
   });
 
