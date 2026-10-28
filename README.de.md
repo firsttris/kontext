@@ -29,6 +29,8 @@ Gemeinsame Postfächer, ein Kalender fürs Team und zu jedem Kunden alle Mails, 
 
 <img src="docs/screenshots/mail.png" alt="Kontext, Webmail auf dem eigenen Server: Posteingang mit Ordnern, gemeinsamen Postfächern info@ und rechnung@, Kategorien und einer geöffneten Mail mit Vorschau des PDF-Anhangs" width="900">
 
+▶️ **[Kontext in zwei Minuten als Film](https://firsttris.github.io/kontext/)** – jedes Modul, aus der echten App
+
 </div>
 
 ## 💡 Warum Kontext?

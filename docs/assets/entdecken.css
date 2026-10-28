@@ -28,6 +28,16 @@
   box-shadow: 0 0.8rem 2.4rem rgb(0 0 0 / 14%);
 }
 
+/* The film at the top: dark like its stage, so its edges disappear in the dark theme. */
+.showcase-film video {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: 0.8rem;
+  background: #09090b;
+  box-shadow: 0 1.2rem 3.2rem rgb(0 0 0 / 22%);
+}
+
 .showcase-feature {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 1.7fr);

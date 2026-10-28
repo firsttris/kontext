@@ -26,6 +26,7 @@
     "e2e",
     "server",
     "box",
+    "video",
     "deploy",
     "vite.config.ts",
     "playwright.config.ts",

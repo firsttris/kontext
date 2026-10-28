@@ -25,9 +25,12 @@ cost as much as one.</p>
 
 </div>
 
-<div class="showcase-shot" markdown>
-![Kontext in the browser: inbox with the shared mailboxes info@ and rechnung@, categories and an open mail](screenshots/mail.png#only-light){ width="1440" height="900" }
-![Kontext in the browser in the dark theme: inbox with an open mail](screenshots/mail-dark.png#only-dark){ width="1440" height="900" }
+<!-- The film is made from the real app: bun run video (docs/development.md#film). -->
+<div class="showcase-film">
+<video controls autoplay muted loop playsinline preload="metadata" poster="assets/kontext-film.jpg" width="1920" height="1080" aria-label="Kontext in two minutes (in German): mail, calendar, contacts, phone, tasks, chat and video calls, documents, encryption, AI agents, company admin and the phone">
+<source src="assets/kontext-film.webm" type="video/webm">
+<source src="assets/kontext-film.mp4" type="video/mp4">
+</video>
 </div>
 
 <div class="showcase-feature" id="rundgang" markdown>

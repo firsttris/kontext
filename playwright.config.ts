@@ -46,7 +46,7 @@ export default defineConfig({
         // The built app brings its service worker; the PWA tests have their own (project "pwa").
         serviceWorkers: "block",
       },
-      grepInvert: /@phone|@screenshots/,
+      grepInvert: /@phone|@screenshots|@video/,
       testIgnore: /pwa\.spec\.ts/,
     },
     {
@@ -75,6 +75,16 @@ export default defineConfig({
         launchOptions: { ...launchOptions, env: { ...process.env, LANG: "de_DE.UTF-8" } },
       },
       grep: /@screenshots/,
+    },
+    // The takes of the film: `bun run video` (video/README in docs/development.md).
+    {
+      name: "video",
+      use: {
+        ...devices["Desktop Chrome"],
+        launchOptions: { ...launchOptions, env: { ...process.env, LANG: "de_DE.UTF-8" } },
+      },
+      grep: /@video/,
+      timeout: 180_000,
     },
   ],
   webServer: [

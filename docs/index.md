@@ -24,9 +24,12 @@ Mitarbeiter kosten so viel wie einer.</p>
 
 </div>
 
-<div class="showcase-shot" markdown>
-![Kontext im Browser: Posteingang mit gemeinsamen Postfächern info@ und rechnung@, Kategorien und geöffneter Mail](screenshots/mail.png#only-light){ width="1440" height="900" }
-![Kontext im Browser im dunklen Design: Posteingang mit geöffneter Mail](screenshots/mail-dark.png#only-dark){ width="1440" height="900" }
+<!-- The film is made from the real app: bun run video (docs/development.md#film). -->
+<div class="showcase-film">
+<video controls autoplay muted loop playsinline preload="metadata" poster="assets/kontext-film.jpg" width="1920" height="1080" aria-label="Kontext in zwei Minuten: Mail, Kalender, Kontakte, Telefon, Aufgaben, Chat und Videocalls, Dokumente, Verschlüsselung, KI-Agenten, Firmenverwaltung und das Handy">
+<source src="assets/kontext-film.webm" type="video/webm">
+<source src="assets/kontext-film.mp4" type="video/mp4">
+</video>
 </div>
 
 <div class="showcase-feature" id="rundgang" markdown>

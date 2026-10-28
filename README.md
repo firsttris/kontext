@@ -29,6 +29,8 @@ Shared mailboxes, a team calendar, and every customer's mails, appointments and 
 
 <img src="docs/screenshots/mail.png" alt="Kontext self-hosted webmail: inbox with folders, the shared mailboxes info@ and rechnung@, categories and an open mail with a preview of its PDF attachment" width="900">
 
+▶️ **[Watch Kontext in two minutes](https://firsttris.github.io/kontext/)** – every module, made from the real app
+
 </div>
 
 ## 💡 Why Kontext?

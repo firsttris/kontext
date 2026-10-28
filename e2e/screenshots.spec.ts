@@ -1,7 +1,7 @@
-import { spawn } from "node:child_process";
 import { expect, type Page, test } from "@playwright/test";
 import { fillDemo } from "./demo-data";
 import { addAttendees, login } from "./helpers";
+import { pairBox } from "./paired-box";
 import { giveKey } from "./pgp-key";
 
 /**
@@ -190,38 +190,8 @@ test.describe("Screenshots @screenshots", () => {
   test("Telefonie", async ({ page }) => {
     await page.setViewportSize({ width: 1440, height: 900 });
     await login(page);
-    await page.goto("/settings?section=phone");
-    const line = page.getByRole("region", { name: "Anmeldung an der Fritzbox" });
-    await line.getByLabel("Benutzername").fill("kontext620");
-    await line.getByLabel("Kennwort").fill("geheim");
-    await line.getByRole("button", { name: "Speichern" }).click();
-    const ring = page.getByRole("region", { name: "Wer klingelt" });
-    await ring.getByLabel("Jonas Weber").check();
-    await ring.getByRole("button", { name: "Speichern" }).click();
-    const boxes = page.getByRole("region", { name: "Telefonbox" });
-    await boxes.getByRole("button", { name: "Box koppeln" }).click();
-    const code = (await boxes.getByText(/^Kopplungscode: /).textContent())!.replace(
-      "Kopplungscode: ",
-      "",
-    );
-
-    // The fake box (dev/fake-box.ts) on a control port of its own, next to e2e/phone.spec.ts.
-    const control = "http://127.0.0.1:28098";
-    const box = spawn("bun", [
-      "dev/fake-box.ts",
-      "--url",
-      "http://127.0.0.1:28090",
-      "--code",
-      code,
-      "--control",
-      "28098",
-    ]);
+    const box = await pairBox(page, 28098);
     try {
-      await expect
-        .poll(async () => (await fetch(`${control}/state`).catch(() => null))?.ok ?? false, {
-          timeout: 20_000,
-        })
-        .toBe(true);
       await page.goto("/mail");
       await page
         .getByRole("list", { name: "Posteingang" })
@@ -229,19 +199,14 @@ test.describe("Screenshots @screenshots", () => {
         .click();
       await mailShown(page);
       // Petra Keller calls: the card shows her contact, company, last mail and next appointment.
-      const { call } = (await (
-        await fetch(`${control}/ring`, {
-          method: "POST",
-          body: JSON.stringify({ from: "07223 81234" }),
-        })
-      ).json()) as { call: string };
+      const call = await box.ring("07223 81234");
       await expect(page.getByRole("dialog", { name: "Anruf von Petra Keller" })).toContainText(
         "Keller Elektro GmbH",
       );
       await shot(page, "phone-call");
-      await fetch(`${control}/hangup`, { method: "POST", body: JSON.stringify({ call }) });
+      await box.hangup(call);
     } finally {
-      box.kill();
+      box.stop();
     }
   });
 });

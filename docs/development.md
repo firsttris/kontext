@@ -144,6 +144,7 @@ und „Team“, Termine der laufenden Woche, eine wöchentliche Teambesprechung 
 | App (PWA)       | `bun run e2e`         | `e2e/pwa.spec.ts` gegen die gebaute App wie in Produktion (Server auf 28090 liefert `dist/`): Updates, Offline-Start, Cache-Header, Brotli, was vorab gecacht wird, Teilen |
 | Abhängigkeiten  | `bun audit`           | bekannte Lücken; in CI bei jedem Push und nachts                                                            |
 | Screenshots     | `bun run screenshots` | die Bilder in `docs/screenshots/` und für den Installationsdialog in `public/screenshots/`                  |
+| Film            | `bun run video`       | der Film oben auf der Startseite der Doku, `docs/assets/kontext-film.*` (siehe [Film](#film))                |
 
 Vor dem ersten `bun run e2e` (oder `bun run screenshots`) einmal Playwrights Chromium laden:
 `bunx playwright install chromium`. Wer schon ein Chromium hat, zeigt stattdessen mit
@@ -186,6 +187,33 @@ Die lokale Instanz
 erlaubt IMAP-Anmeldungen ohne TLS (nur auf 127.0.0.1), damit Mailprogramme und die
 Integrationstests sich verbinden können.
 
+## Film
+
+Der Film oben auf der Startseite entsteht wie die Screenshots aus der echten App mit den
+Testdaten, nicht aus einer Bildschirmaufnahme. Zwei Schritte:
+
+1. **Aufnehmen** (`bun run video:record`, das Playwright-Projekt `video`): `e2e/video.spec.ts` ruft
+   für jede Szene eine Aufnahme aus `video/takes/` auf. Sie bedient die App Schritt für Schritt und
+   macht nach jedem Schritt ein scharfes Bild (doppelte Pixel am Desktop, dreifache am Handy), dazu,
+   wohin der Zeiger klickt und wohin die Kamera schaut (`video/take.ts`). Alles landet in
+   `.dev/video/takes/<Szene>/`. `TAKE=chat bun run video:record` nimmt nur eine Szene neu auf.
+   Der Videoanruf läuft wirklich über LiveKit, mit gezeichneten Personen als Kamera
+   (`video/camera.ts`); die KI-Szene ruft Kontexts MCP-Server wirklich auf, nur das Chatfenster des
+   Assistenten daneben ist gezeichnet (`video/panels.ts`), ebenso die Karte mit dem, was der Server
+   von einer vertraulichen Nachricht speichert – dessen Inhalt kommt aus der API.
+2. **Rendern** (`bun run video:render`, `video/render.ts`): Die Bühne (`video/stage/`) legt die Bilder
+   in Browserfenster und Handys, bewegt Zeiger und Kamera, blendet über und setzt Titel und
+   Untertitel. Sie ist eine Seite in Chromium, die zu jeder Zeit ein festes Bild zeigt
+   (`window.film.render(t)`, die Zeitrechnung in `video/stage/timeline.ts`); gerendert wird Bild für
+   Bild, ffmpeg macht daraus MP4 (H.264) und WebM (VP9) und ein Vorschaubild. Mit
+   `--stills 12,40.5` entstehen einzelne Bilder in `.dev/video/stills/`, mit `--from 20 --to 35
+   --out .dev/video/teil.mp4` ein Ausschnitt.
+
+Reihenfolge, Titel und Untertitel stehen in `video/storyboard.ts` und bei den Schritten der
+Aufnahmen: kurz, weil die meisten den Film ohne Ton sehen. Nach einer Änderung am Aussehen der App:
+Actions → _Update video_ → Run workflow (oder `bun run video`, braucht ffmpeg), dann den Film
+ansehen.
+
 ## CI und Releases
 
 - **CI** (`.github/workflows/ci.yml`): Typen, Lint, Unit-Tests, Build und `bun audit` in einem
@@ -206,6 +234,7 @@ Integrationstests sich verbinden können.
   Seite den deutschen Text. Die Startseite ist der Rundgang in Bildern, `ueberblick.md` die Übersicht.
 - **Screenshots**: Actions → _Update screenshots_ → Run workflow (oder `bun run screenshots`, lokal mit
   `PW_CHROMIUM_PATH`, wenn Playwrights eigener Browser fehlt).
+- **Film**: Actions → _Update video_ → Run workflow (oder `bun run video`, siehe [Film](#film)).
 - **Release**: Actions → _Bump version_ → Run workflow auf `main` und `patch`, `minor` oder `major`
   wählen (für einen Release Candidate `preminor`, dann `prerelease`, am Ende `patch`). Der Lauf hebt
   die Version in `package.json`, committet sie als „Release vX.Y.Z“, setzt den Tag und startet
