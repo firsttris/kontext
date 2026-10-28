@@ -1,5 +1,5 @@
 /**
- * The app icon, a folded paper plane ("Senden"), drawn once here and written to `public/` in every
+ * The app icon, a folded paper plane ("Senden") in greys on black, drawn once here and written to `public/` in every
  * size the browsers ask for: `bun run icons`. Rendered by Chromium from Playwright, so the PNGs
  * match the SVG exactly.
  */
@@ -18,12 +18,12 @@ const plane = (scale: number, faces: [string, string, string]) =>
 /** Rounded for the browser tab and the "any" icons; square where the system cuts its own shape. */
 const appIcon = ({ radius, scale }: { radius: number; scale: number }) =>
   `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><title>Kontext</title><defs>
-<linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#38bdf8"/><stop offset="1" stop-color="#4338ca"/></linearGradient>
-<linearGradient id="gloss" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".18"/><stop offset=".45" stop-color="#fff" stop-opacity="0"/></linearGradient>
-<filter id="shadow" x="-20%" y="-20%" width="140%" height="140%"><feDropShadow dx="0" dy="10" stdDeviation="14" flood-color="#0b1440" flood-opacity=".35"/></filter>
+<linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#3f3f46"/><stop offset="1" stop-color="#09090b"/></linearGradient>
+<linearGradient id="gloss" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".1"/><stop offset=".45" stop-color="#fff" stop-opacity="0"/></linearGradient>
+<filter id="shadow" x="-20%" y="-20%" width="140%" height="140%"><feDropShadow dx="0" dy="10" stdDeviation="14" flood-color="#000" flood-opacity=".5"/></filter>
 <clipPath id="tile"><rect width="512" height="512" rx="${radius}"/></clipPath></defs>
 <g clip-path="url(#tile)"><rect width="512" height="512" fill="url(#bg)"/><rect width="512" height="512" fill="url(#gloss)"/>
-<g filter="url(#shadow)">${plane(scale, ["#fff", "#e0e7ff", "#a5b4fc"])}</g></g></svg>`;
+<g filter="url(#shadow)">${plane(scale, ["#fafafa", "#d4d4d8", "#71717a"])}</g></g></svg>`;
 
 // Android draws the notification badge from its alpha channel alone: a white plane on transparency.
 // One outline, not the three faces: their shared edges would show as seams.
