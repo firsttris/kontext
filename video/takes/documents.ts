@@ -1,10 +1,41 @@
-import { type Browser, expect } from "@playwright/test";
+import { readFileSync } from "node:fs";
+import { type Browser, expect, type Page } from "@playwright/test";
 import { ADDRESS, closeAll, desktopOf, mailShown, READING } from "../screens";
 import { startTake } from "../take";
 
-/** Documents: an attachment filed in Documents with a click, and attached again from there. */
+/**
+ * Schreibzeug in Kontext's frame, as its own pictures (docs/screenshots of firsttris/schreibzeug,
+ * copied to video/schreibzeug/): the e2e stand-in (dev/fake-schreibzeug.ts) only says who is
+ * signed in. Each request to it gets a page with the pictures; `show` picks one.
+ */
+const PICTURES = ["files", "comments", "spreadsheet", "presentation"] as const;
+type Picture = (typeof PICTURES)[number];
+
+const schreibzeugPage = () => {
+  const images = PICTURES.map((name) => {
+    const data = readFileSync(`video/schreibzeug/${name}.png`).toString("base64");
+    return `<img data-name="${name}" src="data:image/png;base64,${data}">`;
+  }).join("");
+  return `<!doctype html><html><head><style>
+body { margin: 0; background: white; }
+img { display: none; width: 100%; height: auto; }
+${PICTURES.map((name) => `body[data-show="${name}"] img[data-name="${name}"] { display: block; }`).join("\n")}
+</style></head><body data-show="files">${images}</body></html>`;
+};
+
+const showSchreibzeug = (page: Page) => {
+  const frame = page.frameLocator('iframe[src*="embedded=kontext"]');
+  return (picture: Picture) =>
+    frame.locator("body").evaluate((body, name) => {
+      body.dataset.show = name;
+    }, picture);
+};
+
+/** Documents: an attachment filed with a click, then Word, Excel and PowerPoint beside the mail. */
 export const recordDocuments = async (browser: Browser) => {
   const page = await desktopOf(browser);
+  const body = schreibzeugPage();
+  await page.route(/:28097\//, (route) => route.fulfill({ contentType: "text/html", body }));
   const take = await startTake("documents", { app: { page, kind: "desktop", label: ADDRESS } });
   await page
     .getByRole("list", { name: "Posteingang" })
@@ -16,33 +47,44 @@ export const recordDocuments = async (browser: Browser) => {
   await take.click(
     "app",
     page.getByRole("button", { name: "„Angebot-Wartung-2027.pdf“ in Dokumente ablegen" }),
-    1.1,
+    1.0,
     {
       until: () => expect(file).toBeVisible(),
       focus: null,
       note: "Den Anhang mit einem Klick ablegen",
     },
   );
-  await take.click("app", file.getByRole("button", { name: "Hier ablegen" }), 1.2, {
+  await take.click("app", file.getByRole("button", { name: "Hier ablegen" }), 1.0, {
     until: () =>
       expect(page.getByText("„Angebot-Wartung-2027.pdf“ liegt jetzt in Dokumente.")).toBeVisible(),
     note: "Den Anhang mit einem Klick ablegen",
   });
-  await take.after("app", () => page.keyboard.press("c"), 0.6, {
-    note: "… und aus Dokumente wieder anhängen",
+
+  // The notice goes before Schreibzeug comes, so it does not lie over its pictures.
+  await expect(page.getByText("„Angebot-Wartung-2027.pdf“ liegt jetzt in Dokumente.")).toHaveCount(
+    0,
+    {
+      timeout: 15_000,
+    },
+  );
+  const show = showSchreibzeug(page);
+  const rail = page.getByRole("navigation", { name: "Apps" }).first();
+  await take.click("app", rail.getByRole("link", { name: "Dokumente" }), 1.3, {
+    until: async () => {
+      await expect(page).toHaveURL(/\/documents/);
+      await page.waitForTimeout(800);
+    },
+    note: "Dokumente mit Schreibzeug, gleich daneben",
   });
-  const pick = page.getByRole("dialog", { name: "Aus Dokumente anhängen" });
-  await take.click("app", page.getByRole("button", { name: "Aus Dokumente anhängen" }), 1.1, {
-    until: () => expect(pick).toBeVisible(),
-    note: "… und aus Dokumente wieder anhängen",
+  await show("comments");
+  await take.hold("app", 2.0, {
+    focus: { x: 640, y: 0, width: 800, height: 520 },
+    note: "Word im Browser – mit Kommentaren der Kollegen",
   });
-  await take.click("app", pick.getByRole("button", { name: "Angebot-Wartung-2027.pdf" }), 1.8, {
-    until: () =>
-      expect(
-        page.getByRole("list", { name: "Anhänge" }).getByText("Angebot-Wartung-2027.pdf"),
-      ).toBeVisible(),
-    note: "Word, Excel und PDF – gemeinsam im Browser bearbeiten",
-  });
+  await show("spreadsheet");
+  await take.hold("app", 1.4, { focus: null, note: "Excel mit Formeln" });
+  await show("presentation");
+  await take.hold("app", 1.6, { note: "PowerPoint – alles ohne Microsoft-Konto" });
   await take.save();
   await closeAll(page);
 };

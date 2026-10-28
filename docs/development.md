@@ -200,12 +200,12 @@ Testdaten, nicht aus einer Bildschirmaufnahme. Zwei Schritte:
    Der Videoanruf läuft wirklich über LiveKit, mit gezeichneten Personen als Kamera
    (`video/camera.ts`); die KI-Szene ruft Kontexts MCP-Server wirklich auf, nur das Chatfenster des
    Assistenten daneben ist gezeichnet (`video/panels.ts`), ebenso die Karte mit dem, was der Server
-   von einer vertraulichen Nachricht speichert – dessen Inhalt kommt aus der API.
+   von einer vertraulichen Nachricht speichert – dessen Inhalt kommt aus der API. In der Dokumente-Szene zeigt Kontexts Rahmen Bilder des echten Schreibzeug (`video/schreibzeug/`, aus `docs/screenshots/` von firsttris/schreibzeug), weil der Ersatz in den Tests nur sagt, wer angemeldet ist.
 2. **Rendern** (`bun run video:render`, `video/render.ts`): Die Bühne (`video/stage/`) legt die Bilder
    in Browserfenster und Handys, bewegt Zeiger und Kamera, blendet über und setzt Titel und
    Untertitel. Sie ist eine Seite in Chromium, die zu jeder Zeit ein festes Bild zeigt
    (`window.film.render(t)`, die Zeitrechnung in `video/stage/timeline.ts`); gerendert wird Bild für
-   Bild, ffmpeg macht daraus ein MP4 (H.264, spielt überall) und ein Vorschaubild. Mit
+   Bild, ffmpeg macht daraus ein MP4 (H.264, spielt überall), ein Vorschaubild und einen kurzen Zusammenschnitt als animiertes WebP für die READMEs (`docs/assets/kontext-teaser.webp`; GitHub spielt kein Video aus dem Repository ab, zeigt aber animierte Bilder). Welche Stellen in den Zusammenschnitt kommen, steht in `teaser` in `video/storyboard.ts`. Mit
    `--stills 12,40.5` entstehen einzelne Bilder in `.dev/video/stills/`, mit `--from 20 --to 35
    --out .dev/video/teil.mp4` ein Ausschnitt.
 

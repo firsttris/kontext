@@ -121,3 +121,15 @@ export const scenes: Scene[] = [
     seconds: 3.6,
   },
 ];
+
+/**
+ * The short loop in the READMEs (docs/assets/kontext-teaser.webp): parts of scenes, each from a
+ * time after the scene's start, cut from the rendered film.
+ */
+export const teaser: { scene: string; from: number; seconds: number }[] = [
+  { scene: "chips", from: 0.3, seconds: 3 },
+  { scene: "mail", from: 1.5, seconds: 4 },
+  { scene: "chat", from: 7.5, seconds: 5.5 },
+  { scene: "documents", from: 7, seconds: 3 },
+  { scene: "agents", from: 3, seconds: 5.5 },
+];

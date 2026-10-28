@@ -27,9 +27,9 @@ Gemeinsame Postfächer, ein Kalender fürs Team und zu jedem Kunden alle Mails, 
 [FAQ](#-faq) •
 [Dokumentation](https://firsttris.github.io/kontext/)
 
-<img src="docs/screenshots/mail.png" alt="Kontext, Webmail auf dem eigenen Server: Posteingang mit Ordnern, gemeinsamen Postfächern info@ und rechnung@, Kategorien und einer geöffneten Mail mit Vorschau des PDF-Anhangs" width="900">
+<a href="https://firsttris.github.io/kontext/"><img src="docs/assets/kontext-teaser.webp" alt="Kontext in Bewegung: alle Module auf einen Blick, der Posteingang mit PDF-Vorschau, ein Videoanruf vom Laptop aufs Handy, Word im Browser mit Kommentaren und ein KI-Agent, der einen Kunden nachschlägt und einen Entwurf hinterlegt" width="900"></a>
 
-▶️ **[Kontext in zwei Minuten als Film](https://firsttris.github.io/kontext/)** – jedes Modul, aus der echten App
+▶️ **[Den ganzen Film ansehen (2 Minuten)](https://firsttris.github.io/kontext/)** – jedes Modul, aus der echten App
 
 </div>
 
