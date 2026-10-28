@@ -122,7 +122,13 @@ timer_time() {
 next_run() {
   systemctl is-active --quiet kontext-backup.timer || return 0
   next="$(systemctl show kontext-backup.timer -p NextElapseUSecRealtime --value --timestamp=unix 2>/dev/null ||
-    systemctl show kontext-backup.timer -p NextElapseUSecRealtime --value)" || return 0
+    systemctl show kontext-backup.timer -p NextElapseUSecRealtime --value)" || next=
+  # Right after the timer fired (the status its run writes from ExecStopPost) systemd has not
+  # worked out the next run yet; the timer's calendar says it as well.
+  case "$next" in
+    "" | n/a) next="$(systemd-analyze calendar "*-*-* $(timer_time):00 $zone" 2>/dev/null |
+      sed -n 's/^ *(in UTC): //p')" ;;
+  esac
   [ -n "$next" ] && date -u -d "$next" +%Y-%m-%dT%H:%M:%SZ 2>/dev/null || true
 }
 
