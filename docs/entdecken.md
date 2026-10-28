@@ -20,16 +20,16 @@ hide:
 Dokumente – in einer App, im Browser und am Handy. Deine Daten bleiben bei dir, und zehn
 Mitarbeiter kosten so viel wie einer.</p>
 
-[Rundgang starten](#ein-posteingang-der-mitdenkt){ .md-button .md-button--primary } [Alle Funktionen im Detail](index.md){ .md-button }
+[Rundgang starten](#rundgang){ .md-button .md-button--primary } [Alle Funktionen im Detail](index.md){ .md-button }
 
 </div>
 
 <div class="showcase-shot" markdown>
-![Kontext im Browser: Posteingang mit gemeinsamen Postfächern info@ und rechnung@, Kategorien und geöffneter Mail](screenshots/mail.png#only-light)
-![Kontext im Browser im dunklen Design: Posteingang mit geöffneter Mail](screenshots/mail-dark.png#only-dark)
+![Kontext im Browser: Posteingang mit gemeinsamen Postfächern info@ und rechnung@, Kategorien und geöffneter Mail](screenshots/mail.png#only-light){ width="1440" height="900" }
+![Kontext im Browser im dunklen Design: Posteingang mit geöffneter Mail](screenshots/mail-dark.png#only-dark){ width="1440" height="900" }
 </div>
 
-<div class="showcase-feature" markdown>
+<div class="showcase-feature" id="rundgang" markdown>
 <div markdown>
 <span class="showcase-kicker">Mail · hell und dunkel</span>
 
@@ -40,8 +40,8 @@ wie bei Gmail. Mails später senden oder auf Wiedervorlage legen – und eine Wa
 Absender nur so tut, als wäre er die Bank. Hell oder dunkel, wie es dir gefällt.
 </div>
 <div class="showcase-shot" markdown>
-![Posteingang im dunklen Design mit Kategorien, Ordnern pro Kunde und einer Mail mit PDF-Vorschau](screenshots/mail-dark.png#only-light)
-![Posteingang im hellen Design mit Kategorien, Ordnern pro Kunde und einer Mail mit PDF-Vorschau](screenshots/mail.png#only-dark)
+![Posteingang im dunklen Design mit Kategorien, Ordnern pro Kunde und einer Mail mit PDF-Vorschau](screenshots/mail-dark.png#only-light){ width="1440" height="900" loading="lazy" }
+![Posteingang im hellen Design mit Kategorien, Ordnern pro Kunde und einer Mail mit PDF-Vorschau](screenshots/mail.png#only-dark){ width="1440" height="900" loading="lazy" }
 </div>
 </div>
 
@@ -55,7 +55,7 @@ info@ und rechnung@ stehen bei allen, die sie brauchen, direkt unter dem eigenen
 Jeder sieht, was erledigt ist und wer gerade dran ist – und antwortet gleich als info@.
 </div>
 <div class="showcase-shot" markdown>
-![Gemeinsames Postfach info@: eine Kundenanfrage zur Wärmepumpe mit der Kategorie In Bearbeitung](screenshots/shared-mailbox.png)
+![Gemeinsames Postfach info@: eine Kundenanfrage zur Wärmepumpe mit der Kategorie In Bearbeitung](screenshots/shared-mailbox.png){ width="1440" height="900" loading="lazy" }
 </div>
 </div>
 
@@ -69,7 +69,7 @@ Formatieren, zitieren, den richtigen Absender wählen. Textbausteine für die Fr
 kommen, und eine Firmen-Signatur, die bei allen gleich aussieht.
 </div>
 <div class="showcase-shot" markdown>
-![Antwort schreiben mit Formatierungsleiste, Zitat und Absenderwahl](screenshots/compose.png)
+![Antwort schreiben mit Formatierungsleiste, Zitat und Absenderwahl](screenshots/compose.png){ width="1440" height="900" loading="lazy" }
 </div>
 </div>
 
@@ -83,8 +83,8 @@ Tag, Woche, Monat. Baustellen, Kundentermine und Teambesprechungen an einem Ort,
 einem Klick beantworten, eine Videobesprechung an jeden Termin hängen.
 </div>
 <div class="showcase-shot" markdown>
-![Teamkalender in der Wochenansicht mit Baubesprechung, Wartungstermin und Monatsübersicht](screenshots/calendar.png#only-light)
-![Teamkalender im dunklen Design](screenshots/calendar-dark.png#only-dark)
+![Teamkalender in der Wochenansicht mit Baubesprechung, Wartungstermin und Monatsübersicht](screenshots/calendar.png#only-light){ width="1440" height="900" loading="lazy" }
+![Teamkalender im dunklen Design](screenshots/calendar-dark.png#only-dark){ width="1440" height="900" loading="lazy" }
 </div>
 </div>
 
@@ -98,7 +98,7 @@ Kollegen in den Termin eintragen – Kontext zeigt sofort, wer belegt ist, und s
 Zeit vor, in der alle können. Wie in Outlook, nur ohne Outlook.
 </div>
 <div class="showcase-shot" markdown>
-![Neuer Termin mit Anna und Sandra: Anna ist belegt, Kontext schlägt freie Zeiten vor](screenshots/availability.png)
+![Neuer Termin mit Anna und Sandra: Anna ist belegt, Kontext schlägt freie Zeiten vor](screenshots/availability.png){ width="1440" height="900" loading="lazy" }
 </div>
 </div>
 
@@ -112,7 +112,7 @@ Ein Klick auf den Kunden zeigt seine letzten Mails, die nächsten Termine, offen
 Anrufe. Ein kleines CRM, ohne ein weiteres Programm.
 </div>
 <div class="showcase-shot" markdown>
-![Kontakt Markus Hoffmann mit nächsten Terminen und letzten Mails](screenshots/contacts.png)
+![Kontakt Markus Hoffmann mit nächsten Terminen und letzten Mails](screenshots/contacts.png){ width="1440" height="900" loading="lazy" }
 </div>
 </div>
 
@@ -127,7 +127,7 @@ letzten Mail des Anrufers. Anrufen per Klick, die Mailbox kommt als Mail, ein ve
 wird zur Aufgabe.
 </div>
 <div class="showcase-shot" markdown>
-![Ein Anruf von Petra Keller klingelt in Kontext mit Firma, Nummer und ihrer letzten Mail](screenshots/phone-call.png)
+![Ein Anruf von Petra Keller klingelt in Kontext mit Firma, Nummer und ihrer letzten Mail](screenshots/phone-call.png){ width="1440" height="900" loading="lazy" }
 </div>
 </div>
 
@@ -141,7 +141,7 @@ Als Liste oder Kanban-Board, für jedes Postfach. Aus einer Mail, einer Chat-Nac
 verpassten Anruf mit einem Klick, mit Erinnerung aufs Handy.
 </div>
 <div class="showcase-shot" markdown>
-![Kanban-Board des Postfachs info@ mit Offen, In Arbeit, Wartet und Erledigt](screenshots/tasks-board.png)
+![Kanban-Board des Postfachs info@ mit Offen, In Arbeit, Wartet und Erledigt](screenshots/tasks-board.png){ width="1440" height="900" loading="lazy" }
 </div>
 </div>
 
@@ -155,7 +155,7 @@ Kanäle und Direktnachrichten, eine Kundenmail als Karte in den Chat teilen, Spr
 Videocalls und Bildschirm teilen. Alles auf deinem Server, auf Wunsch Ende-zu-Ende verschlüsselt.
 </div>
 <div class="showcase-shot" markdown>
-![Team-Chat mit Baustellenbericht, einer geteilten Kundenmail als Karte und einer Aufgabe](screenshots/chat.png)
+![Team-Chat mit Baustellenbericht, einer geteilten Kundenmail als Karte und einer Aufgabe](screenshots/chat.png){ width="1440" height="900" loading="lazy" }
 </div>
 </div>
 
@@ -170,8 +170,8 @@ Anhang mit einem Klick ablegen, eine Datei aus den Dokumenten anhängen. Mit
 [Schreibzeug](https://firsttris.github.io/schreibzeug/entdecken.html).
 </div>
 <div class="showcase-shot" markdown>
-![Ein Angebot als Word-Dokument im Browser bearbeiten, mit Kommentar einer Kollegin](https://firsttris.github.io/schreibzeug/screenshots/comments-light.png#only-light)
-![Ein Angebot als Word-Dokument im Browser, dunkles Design](https://firsttris.github.io/schreibzeug/screenshots/comments-dark.png#only-dark)
+![Ein Angebot als Word-Dokument im Browser bearbeiten, mit Kommentar einer Kollegin](https://firsttris.github.io/schreibzeug/screenshots/comments-light.png#only-light){ width="1280" height="800" loading="lazy" }
+![Ein Angebot als Word-Dokument im Browser, dunkles Design](https://firsttris.github.io/schreibzeug/screenshots/comments-dark.png#only-dark){ width="1280" height="800" loading="lazy" }
 </div>
 </div>
 
@@ -186,7 +186,7 @@ den, der von Verschlüsselung noch nie gehört hat: Er öffnet sie über einen L
 deinem Server.
 </div>
 <div class="showcase-shot" markdown>
-![Eine Mail an einen Kunden wird vertraulich gesendet, per Link mit Code](screenshots/confidential.png)
+![Eine Mail an einen Kunden wird vertraulich gesendet, per Link mit Code](screenshots/confidential.png){ width="1440" height="900" loading="lazy" }
 </div>
 </div>
 
@@ -200,7 +200,7 @@ Mitarbeiter anlegen, Passwörter zurücksetzen, gemeinsame Postfächer und Recht
 IT-Kenntnisse. Wer geht, wird gesperrt, nicht gelöscht: Seine Mails bleiben in der Firma.
 </div>
 <div class="showcase-shot" markdown>
-![Firmenverwaltung: die Mitarbeiter der Firma mit Anlegen-Knopf](screenshots/settings-employees.png)
+![Firmenverwaltung: die Mitarbeiter der Firma mit Anlegen-Knopf](screenshots/settings-employees.png){ width="1440" height="900" loading="lazy" }
 </div>
 </div>
 
@@ -213,10 +213,10 @@ Jede Ansicht ist fürs Handy gebaut, mit Tab-Leiste und Benachrichtigungen – a
 Android und am PC mit einem Fingertipp installiert.
 
 <div class="showcase-phones" markdown>
-![Posteingang am Handy mit Tab-Leiste](screenshots/phone-mail.png)
-![Eine Mail am Handy lesen](screenshots/phone-read.png)
-![Kalender-Tagesansicht am Handy](screenshots/phone-calendar.png)
-![Team-Chat am Handy](screenshots/phone-chat.png)
+![Posteingang am Handy mit Tab-Leiste](screenshots/phone-mail.png){ width="780" height="1688" loading="lazy" }
+![Eine Mail am Handy lesen](screenshots/phone-read.png){ width="780" height="1688" loading="lazy" }
+![Kalender-Tagesansicht am Handy](screenshots/phone-calendar.png){ width="780" height="1688" loading="lazy" }
+![Team-Chat am Handy](screenshots/phone-chat.png){ width="780" height="1688" loading="lazy" }
 </div>
 </div>
 

@@ -395,7 +395,11 @@ const ensureEvents = async (): Promise<number> => {
                           calendarAddress: `mailto:${address}`,
                           roles: { attendee: true },
                           participationStatus: "needs-action",
-                          expectReply: true,
+                          // Colleagues get their invitation; a customer's (a .test domain
+                          // without MX) would only bounce into the organizer's inbox. Stalwart
+                          // invites only who is expected to reply (RSVP, `send_invite_messages`
+                          // in crates/groupware/src/scheduling/mod.rs).
+                          expectReply: address.endsWith(`@${DEV_DOMAIN}`),
                         },
                       ]),
                     ),
