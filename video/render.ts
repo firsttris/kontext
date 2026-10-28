@@ -3,6 +3,7 @@
  *
  *   bun video/render.ts                      # docs/assets/kontext-film.mp4, its poster, the teaser
  *   bun video/render.ts --stills 3,12.5,40   # single frames as PNG into .dev/video/stills
+ *   bun video/render.ts --teaser             # only the teaser, cut again from the rendered film
  *   bun video/render.ts --from 20 --to 35 --out .dev/video/part.mp4   # a part, to look at
  *
  * The stage (video/stage/) is bundled, served, opened in Chromium and stepped frame by frame;
@@ -25,6 +26,7 @@ const { values: args } = parseArgs({
     to: { type: "string" },
     out: { type: "string" },
     stills: { type: "string" },
+    teaser: { type: "boolean", default: false },
   },
 });
 
@@ -110,13 +112,14 @@ const teaserParts = (takes: Take[]) => {
 
 /**
  * The teaser for the READMEs, cut from the film: GitHub plays no video from the repository, but
- * it shows an animated WebP. Smaller and slower than the film, so it stays a few MB.
+ * it shows an animated WebP. Narrower than the film to stay at a few MB, but as fluid: at fewer
+ * frames per second the camera and the pointer stutter.
  */
 const cutTeaser = async (film: string, parts: { start: number; end: number }[], out: string) => {
   const cuts = parts
     .map(
       ({ start, end }, index) =>
-        `[0:v]trim=${start.toFixed(2)}:${end.toFixed(2)},setpts=PTS-STARTPTS,fps=12,scale=960:-2:flags=lanczos[p${index}]`,
+        `[0:v]trim=${start.toFixed(2)}:${end.toFixed(2)},setpts=PTS-STARTPTS,fps=30,scale=960:-2:flags=lanczos[p${index}]`,
     )
     .join(";");
   const joined = `${parts.map((_, index) => `[p${index}]`).join("")}concat=n=${parts.length}:v=1[out]`;
@@ -129,7 +132,7 @@ const cutTeaser = async (film: string, parts: { start: number; end: number }[], 
         "-c:v",
         "libwebp_anim",
         "-quality",
-        "62",
+        "60",
         "-loop",
         "0",
         out,
@@ -175,7 +178,13 @@ const frame = { x: 0, y: 0, width: 1920, height: 1080 };
 const picture = (options: { path?: string; type?: "jpeg" | "png"; quality?: number }) =>
   page.screenshot({ ...options, clip: frame });
 
-if (args.stills) {
+const film = join(root, "docs", "assets", "kontext-film.mp4");
+const teaserPath = join(root, "docs", "assets", "kontext-teaser.webp");
+
+if (args.teaser) {
+  await cutTeaser(film, teaserParts(takes), teaserPath);
+  console.log(teaserPath);
+} else if (args.stills) {
   const dir = join(root, ".dev", "video", "stills");
   await mkdir(dir, { recursive: true });
   for (const at of args.stills.split(",").map(Number)) {
@@ -187,7 +196,7 @@ if (args.stills) {
   const fps = Number(args.fps);
   const from = Number(args.from ?? 0);
   const to = Math.min(seconds, Number(args.to ?? seconds));
-  const out = args.out ?? join(root, "docs", "assets", "kontext-film.mp4");
+  const out = args.out ?? film;
   const encoder = ffmpeg(fps, out);
   const frames = Math.round((to - from) * fps);
   for (let frame = 0; frame < frames; frame += 1) {
@@ -203,7 +212,7 @@ if (args.stills) {
     // The poster: a moment that shows the app, for before the film plays.
     await renderAt(Number(process.env.POSTER_AT ?? 8));
     await picture({ path: out.replace(/\.mp4$/, ".jpg"), type: "jpeg", quality: 85 });
-    await cutTeaser(out, teaserParts(takes), join(root, "docs", "assets", "kontext-teaser.webp"));
+    await cutTeaser(out, teaserParts(takes), teaserPath);
   }
   console.log(`${out}: ${(to - from).toFixed(1)} s`);
 }
