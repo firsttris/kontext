@@ -80,7 +80,7 @@ export const ReactionBar = ({
               title={`${who}: ${reaction.emoji}`}
               onClick={() => onReact(reaction.emoji)}
               className={cn(
-                "flex h-7 items-center gap-1 rounded-full border px-2 text-[13px] transition-colors",
+                "flex h-8 items-center gap-1 rounded-full border px-2.5 text-[13px] transition-colors md:h-7 md:px-2",
                 mine
                   ? "border-accent/60 bg-accent/10 font-medium text-accent"
                   : "border-border bg-bg text-muted hover:border-muted hover:text-fg",
@@ -92,7 +92,8 @@ export const ReactionBar = ({
           </li>
         );
       })}
-      <li>
+      {/* On a phone a long press on the message reacts; the chips stay alone under the bubble. */}
+      <li className="hidden md:block">
         <ReactionPicker
           onPick={onReact}
           className="flex h-7 items-center rounded-full border border-dashed border-border px-2 text-muted hover:border-muted hover:text-fg"

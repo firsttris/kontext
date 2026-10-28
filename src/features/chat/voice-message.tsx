@@ -54,7 +54,11 @@ const Bars = ({
   className: string;
   style?: CSSProperties;
 }) => (
-  <div aria-hidden="true" className="absolute inset-0 flex items-center gap-[2px]" style={style}>
+  <div
+    aria-hidden="true"
+    className="absolute inset-0 flex items-center gap-[2px] overflow-hidden"
+    style={style}
+  >
     {heights.map((height, index) => (
       <span
         // biome-ignore lint/suspicious/noArrayIndexKey: a fixed row of bars, never reordered
@@ -136,7 +140,7 @@ export const VoiceMessage = ({ file, url }: { file: ChatFile; url: string | unde
     <fieldset
       aria-label={m.chat_voice_message({ duration: formatDuration(duration) })}
       data-voice={file.id}
-      className="m-0 flex w-[min(100%,320px)] min-w-0 items-center gap-2.5 rounded-xl border border-border bg-bg py-2 pr-2.5 pl-2"
+      className="m-0 flex w-72 max-w-full min-w-0 items-center gap-2.5 rounded-xl border border-border bg-bg py-2 pr-2.5 pl-2"
     >
       <button
         type="button"

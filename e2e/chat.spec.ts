@@ -470,6 +470,38 @@ test.describe("Chat am Handy @phone", () => {
     await expect(page.getByRole("searchbox", { name: "Kontakte suchen" })).toBeVisible();
   });
 
+  test("eine Sprachnachricht bleibt in ihrem Rahmen", async ({ page }) => {
+    await login(page);
+    await page
+      .getByRole("navigation", { name: "Apps" })
+      .getByRole("link", { name: /^Chat/ })
+      .click();
+    await page
+      .getByRole("navigation", { name: "Kanäle" })
+      .getByRole("link", { name: /allgemein/ })
+      .click();
+    const voices = page.getByRole("list", { name: "Nachrichten" }).getByRole("group", {
+      name: /^Sprachnachricht, /,
+    });
+    const before = await voices.count();
+    await page.getByRole("button", { name: "Sprachnachricht aufnehmen" }).click();
+    await expect(page.getByRole("timer")).toHaveText("0:01");
+    await page.getByRole("button", { name: "Sprachnachricht senden" }).click();
+    await expect(voices).toHaveCount(before + 1);
+    // The waveform used to have no width of its own on a phone: its bars ran out of the frame,
+    // over the length and the speed, and the page could be pushed sideways.
+    const overflow = await voices.last().evaluate((frame) => {
+      const right = frame.getBoundingClientRect().right;
+      const bars = [...frame.querySelectorAll("span.rounded-full")];
+      return {
+        wide: frame.getBoundingClientRect().width > 200,
+        barsOut: bars.filter((bar) => bar.getBoundingClientRect().right > right).length,
+        pageWider: document.documentElement.scrollWidth > window.innerWidth,
+      };
+    });
+    expect(overflow).toEqual({ wide: true, barsOut: 0, pageWider: false });
+  });
+
   test("ein Kanal öffnet unten, bei der neuesten Nachricht", async ({ page }) => {
     await login(page);
     await page
