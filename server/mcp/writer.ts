@@ -85,16 +85,22 @@ export const colleagueAddresses = (
       email ? [id, email.toLowerCase()].map((key) => [key, email.toLowerCase()] as const) : [],
     ),
   );
-  const lookup = (entry: string) =>
-    emailOf.get(entry.trim()) ??
-    emailOf.get(parseAddresses(entry).addresses[0]?.email.toLowerCase() ?? "");
+  // An entry is an id or addresses; every address in it must be a colleague's.
+  const lookup = (entry: string): string[] | null => {
+    const byId = emailOf.get(entry.trim());
+    if (byId) return [byId];
+    const { addresses, invalid } = parseAddresses(entry);
+    const emails = addresses.map(({ email }) => emailOf.get(email.toLowerCase()));
+    if (invalid.length || !emails.length || emails.some((email) => !email)) return null;
+    return emails as string[];
+  };
   const outside = wanted.filter((entry) => !lookup(entry));
   if (outside.length) {
     throw new Error(
       `Nur Kollegen der Firma können eingeladen werden (list_colleagues), nicht: ${outside.join(", ")}`,
     );
   }
-  const emails = new Set(wanted.map((entry) => lookup(entry)!));
+  const emails = new Set(wanted.flatMap((entry) => lookup(entry)!));
   emails.delete(organizer.toLowerCase());
   return [...emails];
 };
