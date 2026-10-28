@@ -110,7 +110,8 @@ export const useVisibleHeight = () =>
         settling = undefined;
         if ((keyboard?.boundingRect.height ?? 0) === 0 || !differs()) return;
         closed = { width: window.innerWidth, height: viewport.height };
-        fitToView();
+        // The app gets shorter only now, so a field it now covers moves into view.
+        fitAndReveal();
       }, SETTLE_MS);
     };
     const fitToView = () => {
