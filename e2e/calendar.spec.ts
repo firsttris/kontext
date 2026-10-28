@@ -185,6 +185,19 @@ test.describe("Kalender", () => {
     await expect(page.getByRole("link", { name: "Tag" })).toHaveAttribute("aria-current", "page");
   });
 
+  test("heute bleibt im kleinen Monat weiß auf Blau, auch als Tag eines anderen Monats (dunkel)", async ({
+    page,
+  }) => {
+    await page.emulateMedia({ colorScheme: "dark" });
+    await login(page);
+    // Today on the 28th: November's small month starts on Monday the 26th of October.
+    await page.clock.setFixedTime(new Date("2026-10-28T10:00:00+01:00"));
+    await page.goto("/calendar?date=2026-11-10");
+    const cell = page.getByRole("link", { name: "28", exact: true }).first();
+    await expect(cell).toHaveCSS("background-color", "rgb(37, 99, 235)");
+    await expect(cell).toHaveCSS("color", "rgb(255, 255, 255)");
+  });
+
   test("zeigt die wöchentliche Teambesprechung aus den Testdaten", async ({ page }) => {
     await login(page);
     await page.goto("/calendar?view=agenda");
