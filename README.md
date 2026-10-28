@@ -1,9 +1,10 @@
 <div align="center">
 
-<h1>Kontext: mail, calendar, chat and telephony (CTI) for your team – self-hosted and open source</h1>
+<h1>Everything your team knows from Google. Without Google knowing your team.</h1>
 
-The self-hosted alternative to Google Workspace and Microsoft 365: shared mailboxes, a team calendar, and every customer's mails, appointments and calls at a glance.<br>
-Open source, no per-seat pricing. Made in Europe.
+**Kontext: mail, calendar, chat and telephony (CTI) for your team – self-hosted and open source**
+
+Shared mailboxes, a team calendar, and every customer's mails, appointments and calls at a glance. No per-seat pricing. Made in Europe.
 
 **English** · [Deutsch](README.de.md)
 

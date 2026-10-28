@@ -1,9 +1,10 @@
 <div align="center">
 
-<h1>Kontext: Mail, Kalender, Chat und Telefonie (CTI) für dein Team – selbst gehostet und Open Source</h1>
+<h1>Alles, was dein Team von Outlook kennt. Ohne dass Microsoft dein Team kennt.</h1>
 
-Die selbst gehostete Alternative zu Google Workspace und Microsoft 365: gemeinsame Postfächer, ein Kalender fürs Team und zu jedem Kunden alle Mails, Termine und Anrufe auf einen Blick.<br>
-Open Source, ohne Kosten pro Benutzer. Made in Europe.
+**Kontext: Mail, Kalender, Chat und Telefonie (CTI) für dein Team – selbst gehostet und Open Source**
+
+Gemeinsame Postfächer, ein Kalender fürs Team und zu jedem Kunden alle Mails, Termine und Anrufe auf einen Blick. Ohne Kosten pro Benutzer. Made in Europe.
 
 [English](README.md) · **Deutsch**
 
