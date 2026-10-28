@@ -27,6 +27,12 @@ export const HOUR_HEIGHT = 56;
 /** The hours of a day as labels, so they can serve as stable keys. */
 const HOURS = Array.from({ length: 24 }, (_, hour) => ({ hour, label: timeLabel(hour * 60) }));
 
+/**
+ * The time grid scrolls, the header and all-day rows above it don't: both keep room for a
+ * scrollbar, so their columns stay above the grid's instead of shifting by its width.
+ */
+const GUTTER = "[scrollbar-gutter:stable]";
+
 const dayName = new Intl.DateTimeFormat("de-DE", { weekday: "short", timeZone: "UTC" });
 
 const useNow = (): Date => {
@@ -109,7 +115,11 @@ export const WeekGrid = ({
   return (
     <div className="flex min-h-0 flex-1 flex-col">
       <div
-        className={cn("grid border-b border-border", !showDayHeader && "hidden")}
+        className={cn(
+          "grid overflow-y-hidden border-b border-border",
+          GUTTER,
+          !showDayHeader && "hidden",
+        )}
         style={{ gridTemplateColumns: columns }}
       >
         <span />
@@ -118,6 +128,7 @@ export const WeekGrid = ({
           return (
             <Link
               key={day}
+              data-day-header={day}
               to="/calendar"
               search={(prev) => ({ ...prev, date: day, view: "day" })}
               className="flex items-baseline gap-1.5 border-l border-border px-2 py-2.5 text-fg no-underline"
@@ -138,7 +149,10 @@ export const WeekGrid = ({
         })}
       </div>
       {hasAllDay ? (
-        <div className="grid border-b border-border" style={{ gridTemplateColumns: columns }}>
+        <div
+          className={cn("grid overflow-y-hidden border-b border-border", GUTTER)}
+          style={{ gridTemplateColumns: columns }}
+        >
           <span className="px-2 py-1.5 text-right text-[11px] text-muted">
             {m.calendar_all_day()}
           </span>
@@ -157,7 +171,7 @@ export const WeekGrid = ({
           ))}
         </div>
       ) : null}
-      <div ref={scroller} className="min-h-0 flex-1 overflow-y-auto">
+      <div ref={scroller} className={cn("min-h-0 flex-1 overflow-y-auto", GUTTER)}>
         <div className="relative grid" style={{ gridTemplateColumns: columns }}>
           <div className="flex flex-col">
             {HOURS.map(({ hour, label }) => (
