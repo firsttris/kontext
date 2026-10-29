@@ -648,6 +648,59 @@ test.describe("Mail am Handy @phone", () => {
     await expect(page.getByRole("link", { name: "Papierkorb" })).toBeVisible();
   });
 
+  test("erreicht im Schreibfenster jede Aktion, ohne dass die Seite breiter wird @phone", async ({
+    page,
+  }) => {
+    await login(page);
+    await page.getByRole("link", { name: "Neue Mail" }).first().click();
+    const form = page.getByRole("form", { name: "Neue Mail" });
+    await form.getByLabel("Betreff").fill(unique("Aktionen am Handy"));
+    const width = page.viewportSize()?.width ?? 0;
+    expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(
+      width,
+    );
+    for (const name of [
+      "Senden",
+      "Später senden",
+      "Datei anhängen",
+      "Verwerfen",
+      "Weitere Aktionen",
+    ]) {
+      await expect(form.getByRole("button", { name, exact: true })).toBeInViewport({ ratio: 1 });
+    }
+
+    // The less-used actions sit in "Weitere Aktionen"; the toggles stay on while it is open.
+    await form.getByRole("button", { name: "Weitere Aktionen" }).click();
+    const menu = page.getByRole("menu");
+    for (const name of [
+      "Lesebestätigung anfordern",
+      "Zustellbestätigung anfordern",
+      "Vertraulich senden",
+    ]) {
+      const toggle = menu.getByRole("menuitemcheckbox", { name });
+      await expect(toggle).toBeInViewport({ ratio: 1 });
+      await expect(toggle).toHaveAttribute("aria-checked", "false");
+    }
+    await menu.getByRole("menuitemcheckbox", { name: "Lesebestätigung anfordern" }).click();
+    await expect(
+      menu.getByRole("menuitemcheckbox", { name: "Lesebestätigung anfordern" }),
+    ).toHaveAttribute("aria-checked", "true");
+    await expect(menu.getByRole("menuitem", { name: "Als Entwurf speichern" })).toBeInViewport({
+      ratio: 1,
+    });
+    await page.keyboard.press("Escape");
+    await form.getByRole("button", { name: "Verwerfen" }).click();
+    await expect(form).toHaveCount(0);
+
+    // "Als Entwurf speichern" from the menu saves and closes the mail.
+    await page.getByRole("link", { name: "Neue Mail" }).first().click();
+    await form.getByLabel("Betreff").fill(unique("Entwurf am Handy"));
+    await form.getByRole("button", { name: "Weitere Aktionen" }).click();
+    await page.getByRole("menuitem", { name: "Als Entwurf speichern" }).click();
+    await expect(page.getByRole("status").filter({ hasText: "Entwurf gespeichert" })).toBeVisible();
+    await expect(form).toHaveCount(0);
+  });
+
   test("lädt für Liste und Mail keine Verschlüsselung nach @phone", async ({ page }) => {
     // OpenPGP.js and node-forge (some 200 kB with gzip) only for a mail that needs them.
     const subject = unique("Rückruf Heizung Handy");
