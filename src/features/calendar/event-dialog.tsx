@@ -1,4 +1,4 @@
-/** Show, answer, create and edit an appointment, in a dialog (a sheet on phones). */
+/** Show, answer, create, edit and duplicate an appointment, in a dialog (a sheet on phones). */
 import { useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { Dialog } from "@/components/ui/dialog";
@@ -13,7 +13,9 @@ type Props = { eventId: string; event: CalendarEvent | undefined; start?: string
 export const EventDialog = ({ eventId, event, start }: Props) => {
   const navigate = useNavigate();
   const isNew = eventId === "new";
-  const [editing, setEditing] = useState(isNew);
+  const [mode, setMode] = useState<"show" | "edit" | "copy">(isNew ? "edit" : "show");
+  const editing = mode !== "show";
+  const copying = mode === "copy";
   // An instance shows and edits the rule of its series.
   const { data: found, isPending: seriesPending } = useSeries(
     event && isInstance(event) ? event : undefined,
@@ -33,7 +35,15 @@ export const EventDialog = ({ eventId, event, start }: Props) => {
       onOpenChange={(open) => {
         if (!open) void close();
       }}
-      title={isNew ? m.calendar_new() : editing ? (event?.title ?? "") : event?.title || "—"}
+      title={
+        isNew
+          ? m.calendar_new()
+          : copying
+            ? m.calendar_duplicate_title()
+            : editing
+              ? (event?.title ?? "")
+              : event?.title || "—"
+      }
       // Editing gets room for the attendees' schedules.
       className={editing ? "md:w-[min(760px,calc(100vw-32px))]" : undefined}
     >
@@ -41,17 +51,20 @@ export const EventDialog = ({ eventId, event, start }: Props) => {
         <p className="m-0 text-[14px] text-muted">{m.common_loading()}</p>
       ) : editing ? (
         <EventEditor
-          event={isNew ? undefined : event}
-          series={series}
+          // A copy is a new appointment, so the editor gets no event and no series.
+          event={isNew || copying ? undefined : event}
+          series={copying ? undefined : series}
+          copyOf={copying ? event : undefined}
           start={start}
           onDone={close}
-          onCancel={() => (isNew ? close() : setEditing(false))}
+          onCancel={() => (isNew ? close() : setMode("show"))}
         />
       ) : (
         <EventDetails
           event={event!}
           series={series}
-          onEdit={() => setEditing(true)}
+          onEdit={() => setMode("edit")}
+          onDuplicate={() => setMode("copy")}
           onDone={close}
         />
       )}
