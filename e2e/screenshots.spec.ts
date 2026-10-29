@@ -9,8 +9,8 @@ import {
   jmapAs,
   login,
   personalAccountId,
-  revokeDeputy,
   removeSnippet,
+  revokeDeputy,
 } from "./helpers";
 import { calendarOnTheWeb } from "./ics-server";
 import { deliverInvitation } from "./invitation-mail";
