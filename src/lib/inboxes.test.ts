@@ -129,3 +129,19 @@ describe("resurfacedFilter", () => {
     ]);
   });
 });
+
+describe("pinResurfaced over several accounts", () => {
+  it("keeps another account's mail that has the same id as one that came back", () => {
+    // Stalwart counts ids per account: info@'s mail "a" is not jonas's mail "a".
+    const back = mergeFeeds([inbox(info)], { b: feed([mail("a", 9)]) });
+    const listed = mergeFeeds([inbox(own), inbox(info)], {
+      d: feed([mail("a", 12)]),
+      b: feed([mail("a", 9)]),
+    });
+    const rows = pinResurfaced(back, listed, { back: "Wieder vorgelegt", rest: "Weitere" });
+    expect(rows.map((r) => [r.account.id, r.email.id])).toEqual([
+      ["b", "a"],
+      ["d", "a"],
+    ]);
+  });
+});

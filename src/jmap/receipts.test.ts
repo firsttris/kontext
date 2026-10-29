@@ -130,3 +130,59 @@ describe("receiptsToFile", () => {
     expect(filters).toHaveLength(1);
   });
 });
+
+describe("receiptsToFile in a busy inbox", () => {
+  it("files a new receipt behind more than a hundred unread mails", async () => {
+    // A Stalwart that keeps to sort, position and limit: 120 unread mails, then the receipt.
+    const at = (index: number) => new Date(Date.UTC(2026, 9, 20) + index * 3_600_000).toISOString();
+    const ordinary = Array.from({ length: 120 }, (_, index) => ({
+      id: `m${index}`,
+      from: [{ name: null, email: "kunde@example.test" }],
+      receivedAt: at(index),
+      inReplyTo: null,
+      references: null,
+      "header:Content-Type": "text/plain",
+      bodyStructure: { type: "text/plain", subParts: null },
+    }));
+    const receipt = {
+      id: "r",
+      from: [{ name: null, email: "petra@keller-elektro.test" }],
+      receivedAt: at(120),
+      inReplyTo: ["angebot.1@weber.test"],
+      references: null,
+      "header:Content-Type": REPORT,
+      bodyStructure: { type: "multipart/report", subParts: [] },
+    };
+    const inbox = [...ordinary, receipt];
+    const client = {
+      request: async (calls: [string, Record<string, unknown>, string][]) => {
+        const [, query] = calls[0]!;
+        if (JSON.stringify(query.filter).includes('"inMailbox":"sent"')) {
+          const list = [
+            {
+              messageId: ["angebot.1@weber.test"],
+              "header:Disposition-Notification-To:asAddresses": [{ email: "jonas@weber.test" }],
+            },
+          ];
+          return [
+            ["Email/query", { ids: [] }, "q"],
+            ["Email/get", { list }, "g"],
+          ];
+        }
+        const [sort] = query.sort as { isAscending: boolean }[];
+        const sorted = sort?.isAscending === false ? [...inbox].reverse() : inbox;
+        const position = (query.position as number) ?? 0;
+        const list = sorted.slice(position, position + (query.limit as number));
+        return [
+          ["Email/query", { ids: [] }, "q"],
+          ["Email/get", { list }, "g"],
+        ];
+      },
+      download: async () => new Blob([""]),
+    } as unknown as JmapClient;
+    const now = new Date("2026-10-29T12:00:00Z");
+    expect(await receiptsToFile(client, "acc", { inboxId: "inbox", sentId: "sent" }, now)).toEqual([
+      "r",
+    ]);
+  });
+});
