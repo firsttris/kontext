@@ -6,6 +6,7 @@ import {
   type IdlePhase,
   type IdleStore,
   idlePhase,
+  recordActivity,
   secondsLeft,
   storageIdleStore,
   untilNextPhase,
@@ -184,5 +185,23 @@ describe("createIdleTimer", () => {
     vi.advanceTimersByTime(20 * MINUTE);
     expect(phases).toEqual([]);
     expect(timer.expiresAt()).toBe(Date.now() - 5 * MINUTE);
+  });
+});
+
+describe("recordActivity", () => {
+  it("writes the input while the sign-out is off, once a second at most", () => {
+    const writes: number[] = [];
+    let value: number | null = null;
+    const store: IdleStore = {
+      read: () => value,
+      write: (at) => {
+        value = at;
+        writes.push(at);
+      },
+    };
+    recordActivity(store, 5000);
+    recordActivity(store, 5500);
+    recordActivity(store, 6000);
+    expect(writes).toEqual([5000, 6000]);
   });
 });

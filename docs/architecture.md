@@ -259,8 +259,11 @@ mit einem eigenen API-Schlüssel an und erlaubt nur, was die Firmenverwaltung br
   Sichtbarwerden des Tabs (der holt erst einen im Hintergrund verspäteten Timer nach, zählt dann);
   ein laufender Anruf zählt alle 20 Sekunden als Eingabe. Während der Frage zählen Eingaben nicht,
   nur „Angemeldet bleiben“. Ist die Zeit um, speichert jeder offene Composer, was seit dem
-  letzten Autosave geändert wurde (`src/features/mail/draft-flush.ts`), dann meldet die App über
-  den gewohnten Weg ab (`logout` in `src/auth/auth.tsx`).
+  letzten Autosave geändert wurde (`src/features/mail/draft-flush.ts`, höchstens 10 Sekunden
+  lang, damit eine hängende Anfrage die Abmeldung nicht aufhält), dann meldet die App über den
+  gewohnten Weg ab (`logout` in `src/auth/auth.tsx`). Auch während die Funktion aus ist, schreibt
+  die App den Zeitpunkt der letzten Eingabe: Schaltet die Firmenverwaltung sie ein, zählt die Zeit
+  ab dort und nicht ab der Anmeldung, die Stunden zurückliegen kann.
 
   *Mehrere Tabs:* Der Zeitpunkt der letzten Eingabe steht in `localStorage`
   (`kontext.lastActive`, höchstens einmal je Sekunde geschrieben); das `storage`-Ereignis sagt den

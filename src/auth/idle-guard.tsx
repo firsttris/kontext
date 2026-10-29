@@ -17,6 +17,7 @@ import {
   IDLE_STORAGE_KEY,
   type IdlePhase,
   type IdleTimer,
+  recordActivity,
   secondsLeft,
 } from "@/lib/idle-logout";
 import { m } from "@/paraglide/messages";
@@ -29,13 +30,51 @@ const ACTIVITY_EVENTS = ["pointerdown", "pointermove", "keydown", "wheel", "touc
 /** A call has no input for long stretches; it counts as activity this often. */
 const CALL_BEAT_MS = 20_000;
 
+/** This tab's input, the tab coming back into view and the other tabs' writes, for as long as mounted. */
+const listenForActivity = ({
+  onActivity,
+  onVisible,
+  onStorage,
+}: {
+  onActivity: () => void;
+  onVisible: () => void;
+  onStorage: () => void;
+}) => {
+  const storage = (event: StorageEvent) => {
+    if (event.key === IDLE_STORAGE_KEY) onStorage();
+  };
+  const visible = () => {
+    if (document.visibilityState === "visible") onVisible();
+  };
+  const options = { capture: true, passive: true };
+  for (const type of ACTIVITY_EVENTS) window.addEventListener(type, onActivity, options);
+  window.addEventListener("storage", storage);
+  document.addEventListener("visibilitychange", visible);
+  return () => {
+    for (const type of ACTIVITY_EVENTS) window.removeEventListener(type, onActivity, options);
+    window.removeEventListener("storage", storage);
+    document.removeEventListener("visibilitychange", visible);
+  };
+};
+
+/** While off, the input is still written: switching it on then counts from the last input. */
+const recordOnly = () => recordActivity(idleStore, Date.now());
+
 /** The timer for `minutes` (none while 0), fed by this tab's input and the other tabs' writes. */
 const useIdleTimer = (minutes: number) => {
   const [phase, setPhase] = useState<IdlePhase>("active");
   const [timer, setTimer] = useState<IdleTimer | null>(null);
   useEffect(() => {
     setPhase("active");
-    if (!minutes) return setTimer(null);
+    if (!minutes) {
+      setTimer(null);
+      recordOnly();
+      return listenForActivity({
+        onActivity: recordOnly,
+        onVisible: recordOnly,
+        onStorage: () => {},
+      });
+    }
     const next = createIdleTimer({
       timeoutMs: minutes * 60_000,
       store: idleStore,
@@ -43,34 +82,28 @@ const useIdleTimer = (minutes: number) => {
     });
     setTimer(next);
     setPhase(next.phase());
-    const onActivity = () => next.activity();
-    const onStorage = (event: StorageEvent) => {
-      if (event.key === IDLE_STORAGE_KEY) next.check();
-    };
-    // Back in view: a timer held back in the background catches up first, then it counts.
-    const onVisible = () => {
-      if (document.visibilityState !== "visible") return;
-      next.check();
-      next.activity();
-    };
-    const options = { capture: true, passive: true };
-    for (const type of ACTIVITY_EVENTS) window.addEventListener(type, onActivity, options);
-    window.addEventListener("storage", onStorage);
-    document.addEventListener("visibilitychange", onVisible);
+    const stopListening = listenForActivity({
+      onActivity: () => next.activity(),
+      // Back in view: a timer held back in the background catches up first, then it counts.
+      onVisible: () => {
+        next.check();
+        next.activity();
+      },
+      onStorage: () => next.check(),
+    });
     return () => {
-      for (const type of ACTIVITY_EVENTS) window.removeEventListener(type, onActivity, options);
-      window.removeEventListener("storage", onStorage);
-      document.removeEventListener("visibilitychange", onVisible);
+      stopListening();
       next.stop();
     };
   }, [minutes]);
 
   const inCall = useCallStore().active !== null;
   useEffect(() => {
-    if (!timer || !inCall) return;
-    timer.activity();
-    const beat = setInterval(() => timer.activity(), CALL_BEAT_MS);
-    return () => clearInterval(beat);
+    if (!inCall) return;
+    const beat = () => (timer ? timer.activity() : recordOnly());
+    beat();
+    const interval = setInterval(beat, CALL_BEAT_MS);
+    return () => clearInterval(interval);
   }, [timer, inCall]);
 
   return { phase, timer };

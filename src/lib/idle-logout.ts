@@ -73,6 +73,15 @@ export const storageIdleStore = (storage: () => Storage | undefined): IdleStore 
 /** Inputs closer together than this are written once: a moving mouse writes once a second. */
 const ACTIVITY_STEP = 1000;
 
+/**
+ * An input while the sign-out is off: still written, so that switching it on later counts from
+ * the last input, not from the sign-in hours ago (which would sign out at once).
+ */
+export const recordActivity = (store: IdleStore, at: number): void => {
+  const last = store.read();
+  if (last === null || at - last >= ACTIVITY_STEP) store.write(at);
+};
+
 export type IdleTimer = {
   /** An input in this tab; ignored once the question is up, which wants an answer. */
   activity: () => void;

@@ -15,7 +15,20 @@ export const registerDraftFlush = (flush: Flush): (() => void) => {
   };
 };
 
-/** Saves every open composer's mail as its draft; a failed save does not stop the others. */
+/** How long the sign-out waits for the saves: a request that never answers must not keep it open. */
+export const FLUSH_LIMIT_MS = 10_000;
+
+/**
+ * Saves every open composer's mail as its draft; a failed save does not stop the others, and
+ * after FLUSH_LIMIT_MS the sign-out goes on without the saves still running.
+ */
 export const flushDrafts = async (): Promise<void> => {
-  await Promise.allSettled([...flushes].map((flush) => flush()));
+  let limit: ReturnType<typeof setTimeout> | undefined;
+  await Promise.race([
+    Promise.allSettled([...flushes].map((flush) => flush())),
+    new Promise<void>((resolve) => {
+      limit = setTimeout(resolve, FLUSH_LIMIT_MS);
+    }),
+  ]);
+  clearTimeout(limit);
 };
