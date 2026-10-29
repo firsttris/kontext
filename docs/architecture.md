@@ -1546,7 +1546,9 @@ JavaScript noch Formulare zu.
   geänderte Folge einer Serie, deren Serie nicht im Kalender steht, lässt sich so nicht eintragen;
   dann fehlen die Knöpfe.
 - **Absagen** (`cancel`): Stalwart lässt den Termin mit `status: cancelled` im Kalender stehen;
-  „Aus dem Kalender entfernen“ löscht ihn, ohne Nachricht.
+  „Aus dem Kalender entfernen“ löscht ihn, ohne Nachricht. Nicht angeboten wird es für die
+  Absage einer einzelnen Folge (unter der UID steht die ganze Serie) und für eine Absage, die
+  älter ist als der Termin im Kalender (der Organisator hat danach neu eingeladen).
 - Der `text/calendar`-Teil erscheint nicht mehr als eigener Anhang (die Karte steht für ihn);
   eine angehängte `invite.ics` bleibt. „Im Kalender öffnen“ führt auf den Tag und öffnet den
   Termin – bei einer Serie ihren ersten.

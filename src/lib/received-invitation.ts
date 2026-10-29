@@ -48,7 +48,7 @@ export type InvitationCard = {
   me: [string, Participant] | undefined;
   /** Zusagen / Vielleicht / Absagen. */
   canAnswer: boolean;
-  /** A cancelled event that is still in the calendar. */
+  /** A cancelled event that is still in the calendar (the whole event, as cancelled now). */
   canRemove: boolean;
   /** The organizer changed the event since this mail. */
   outdated: boolean;
@@ -94,7 +94,9 @@ export const invitationCard = ({
     organizer: organizerOf(event),
     me,
     canAnswer: !cancelled && Boolean(me) && Boolean(stored || !event.recurrenceId),
-    canRemove: method === "cancel" && Boolean(stored),
+    // A cancelled single date is not the series stored under the UID, and a cancellation older
+    // than the stored event was overtaken by a new invitation: removing would lose either.
+    canRemove: method === "cancel" && Boolean(stored) && !event.recurrenceId && !outdated,
     outdated,
   };
 };
