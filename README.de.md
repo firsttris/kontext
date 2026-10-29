@@ -1,10 +1,10 @@
 <div align="center">
 
-<h1>Alles, was dein Team von Google kennt. Ohne dass Google dein Team kennt.</h1>
+<h1>Fühlt sich vertraut an. Gehört dir.</h1>
 
-**Kontext: Mail, Kalender, Chat und Telefonie (CTI) für dein Team – selbst gehostet und Open Source**
+**Kontext: Mail, Kalender, Chat, Dokumente und Telefon für dein Team – auf deinem eigenen Server, Open Source**
 
-Gemeinsame Postfächer, ein Kalender fürs Team und zu jedem Kunden alle Mails, Termine und Anrufe auf einen Blick. Ohne Kosten pro Benutzer. Made in Europe.
+Ohne Kosten pro Benutzer. Made in Europe.
 
 [English](README.md) · **Deutsch**
 
