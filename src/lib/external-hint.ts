@@ -36,6 +36,20 @@ export const domainOf = (address: string): string => {
   return at < 0 ? "" : normalDomain(address.slice(at + 1));
 };
 
+/**
+ * A domain in its ASCII form (RFC 5890: "müller.de" is "xn--mller-kva.de"), so that both spellings
+ * compare alike: headers mostly carry the ASCII form, people type the Unicode one. Only plain
+ * labels are converted; anything else stays as it is (and so stays outside).
+ */
+const asciiDomain = (domain: string): string => {
+  if (!/^[\p{L}\p{N}.-]+$/u.test(domain)) return domain;
+  try {
+    return new URL(`http://${domain}`).hostname;
+  } catch {
+    return domain;
+  }
+};
+
 /** Whether `domain` is one of `inside` or below one of them. */
 const coveredBy = (domain: string, inside: readonly string[]): boolean =>
   inside.some((own) => domain === own || domain.endsWith(`.${own}`));
@@ -46,7 +60,13 @@ const coveredBy = (domain: string, inside: readonly string[]): boolean =>
  */
 export const isExternal = (address: string, inside: readonly string[]): boolean => {
   const domain = domainOf(address);
-  return domain !== "" && !coveredBy(domain, inside.map(normalDomain));
+  return (
+    domain !== "" &&
+    !coveredBy(
+      asciiDomain(domain),
+      inside.map((own) => asciiDomain(normalDomain(own))),
+    )
+  );
 };
 
 /** The addresses outside the company, each once and in the order given. */
