@@ -123,6 +123,58 @@ describe("createCrlCheck", () => {
   });
 });
 
+describe("createCrlCheck, lists that are not the certificate's", () => {
+  const utf8 = (text: string) => new TextEncoder().encode(text);
+  /** An issuing distribution point (RFC 5280 §5.2.5) naming the list's own address. */
+  const partition = (url: string) =>
+    crlExtension(
+      "2.5.29.28",
+      encode(TAG.SEQUENCE, encode(0xa0, encode(0xa0, encode(0x86, utf8(url))))),
+      true,
+    );
+
+  it("takes a partitioned list only for the address the certificate names (§6.3.3 b.2.i)", async () => {
+    const listFor = (url: string) => async () =>
+      makeCrl({
+        issuer: root,
+        thisUpdate: yesterday,
+        nextUpdate: tomorrow,
+        extensions: [partition(url)],
+      });
+    // Another part of the same authority's lists, put in place of the one asked for (http).
+    const swapped = createCrlCheck({
+      get: listFor("http://crl.stelle.test/teil-2.crl"),
+      now: () => now,
+    });
+    expect(await swapped(leaf.x509, root.x509)).toBe("unknown");
+    const own = createCrlCheck({ get: listFor(URL_A), now: () => now });
+    expect(await own(leaf.x509, root.x509)).toBe("good");
+  });
+
+  it("does not share a fetch between two issuers whose certificates name the same list", async () => {
+    const leafOfOther = makeCert({
+      organization: "Andere Behörde",
+      serial: "0c",
+      issuer: other,
+      email: "post@andere.test",
+      crl: [URL_A],
+      now,
+    });
+    const get = async () => {
+      await new Promise((resolve) => setTimeout(resolve, 5));
+      return makeCrl({ issuer: root, thisUpdate: yesterday, nextUpdate: tomorrow });
+    };
+    const check = createCrlCheck({ get, now: () => now });
+    const [own, foreign] = await Promise.all([
+      check(leaf.x509, root.x509),
+      check(leafOfOther.x509, other.x509),
+    ]);
+    expect(own).toBe("good");
+    // The list is the other authority's: it says nothing of this certificate.
+    expect(foreign).toBe("unknown");
+  });
+});
+
 describe("checkTrust with revocation lists", () => {
   const post = async () => null;
   it("asks the list when the certificate names no OCSP responder", async () => {
