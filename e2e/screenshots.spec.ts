@@ -1,6 +1,7 @@
 import { expect, type Page, test } from "@playwright/test";
 import { fillDemo } from "./demo-data";
 import { addAttendees, addMail, address, login } from "./helpers";
+import { calendarOnTheWeb } from "./ics-server";
 import { deliverInvitation } from "./invitation-mail";
 import { pairBox } from "./paired-box";
 import { giveKey } from "./pgp-key";
@@ -176,6 +177,25 @@ test.describe("Screenshots @screenshots", () => {
     await dialog.getByLabel("Erinnern per").selectOption({ label: "Mail" });
     await dialog.getByLabel("Erinnerung").scrollIntoViewIfNeeded();
     await shot(page, "event-reminder");
+  });
+
+  test("Kalender abonnieren", async ({ page }) => {
+    const web = await calendarOnTheWeb();
+    web.serve(["Pädagogischer Tag", "Bewegliche Ferientage"]);
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await login(page);
+    await page.goto("/calendar");
+    await page.getByRole("button", { name: "Kalender verwalten" }).first().click();
+    const dialog = page.getByRole("dialog", { name: "Kalender verwalten" });
+    await dialog.getByLabel("Adresse des Kalenders").fill(web.url);
+    await dialog.getByLabel("Name", { exact: true }).fill("Schulferien Bühl");
+    await dialog.getByRole("button", { name: "Abonnieren" }).click();
+    await expect(dialog.getByRole("list", { name: "Kalender abonnieren" })).toBeVisible();
+    await dialog.getByLabel("Adresse des Kalenders").fill("webcal://abfall.buehl.de/termine.ics");
+    await dialog.getByLabel("Name", { exact: true }).fill("Müllabfuhr");
+    await page.mouse.move(1, 1);
+    await shot(page, "calendar-subscriptions");
+    web.close();
   });
 
   test("Serie ab einem Termin ändern", async ({ page }) => {

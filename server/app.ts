@@ -96,6 +96,10 @@ import { createSnoozeStore } from "./snooze/store";
 import { createSnoozeWaker } from "./snooze/waker";
 import { loginAtStalwart } from "./stalwart";
 import { tokenOrUnavailable, unavailable } from "./stalwart-away";
+import { createSubscribedCalendars } from "./subscriptions/calendars";
+import { createSubscriptionRoutes } from "./subscriptions/routes";
+import { createSubscriptionRunner } from "./subscriptions/runner";
+import { createSubscriptionStore } from "./subscriptions/store";
 import { createRuleTasks } from "./tasks/from-rules";
 import { createTaskReminder } from "./tasks/notices";
 import { createTaskRoutes } from "./tasks/routes";
@@ -269,6 +273,12 @@ export const createApp = async (env: Env) => {
   app.on(["GET", "POST"], "/api/auth/*", (c) => auth.handler(c.req.raw));
   /** Fetching for external accounts imports with the server's key, like a move. */
   let externalImporter: Importer | null = null;
+  // Subscribed calendars: written with the key, so only with it.
+  let subscriptionRoutes:
+    | ((
+        accountsOf: (request: Request) => Promise<SessionAccount[] | null>,
+      ) => ReturnType<typeof createSubscriptionRoutes>)
+    | null = null;
   // The own details for the company signature; only with the key, which writes signatures.
   let signatureDetailRoutes:
     | ((
@@ -305,6 +315,23 @@ export const createApp = async (env: Env) => {
       },
     });
     await syncRunner.start();
+    const subscriptions = createSubscriptionStore(db);
+    const subscribedCalendars = createSubscribedCalendars(request);
+    const subscriptionFetch = { anyTarget: env.CALENDAR_SUBSCRIBE_ANY_TARGET };
+    const subscriptionRunner = createSubscriptionRunner({
+      store: subscriptions,
+      calendars: subscribedCalendars,
+      fetchDeps: subscriptionFetch,
+    });
+    subscriptionRunner.start().unref();
+    subscriptionRoutes = (accountsOf) =>
+      createSubscriptionRoutes({
+        store: subscriptions,
+        calendars: subscribedCalendars,
+        runner: subscriptionRunner,
+        fetchDeps: subscriptionFetch,
+        accountsOf,
+      });
     const management = createManagement(request);
     const mailstore = createMailstore(
       request,
@@ -349,6 +376,7 @@ export const createApp = async (env: Env) => {
     app.route("/api/company", company);
   }
   const { accountsOf, infoOf, sendersOf } = createSessionInfo(env, auth, grants);
+  if (subscriptionRoutes) app.route("/api/calendar-subscriptions", subscriptionRoutes(accountsOf));
   if (signatureDetailRoutes) app.route("/api/signature-details", signatureDetailRoutes(accountsOf));
   if (externalImporter) {
     // Other mailboxes of a person (Gmail, GMX, …): fetched into Kontext, sent through them.
