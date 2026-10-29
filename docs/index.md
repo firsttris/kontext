@@ -24,10 +24,12 @@ Mitarbeiter kosten so viel wie einer.</p>
 
 </div>
 
-<!-- The film is made from the real app: bun run video (docs/development.md#film). -->
+<!-- The film is made from the real app: bun run video (docs/development.md#film). The i18n plugin
+     publishes kontext-film.de.* as assets/kontext-film.* and kontext-film.en.* as
+     en/assets/kontext-film.*, so both pages name the file without its language. -->
 <div class="showcase-film">
-<video controls autoplay muted loop playsinline preload="metadata" poster="assets/kontext-film.de.jpg" width="1920" height="1080" aria-label="Kontext in zwei Minuten: Mail, Kalender, Kontakte, Telefon, Aufgaben, Chat und Videocalls, Dokumente, Verschlüsselung, KI-Agenten, Firmenverwaltung und das Handy">
-<source src="assets/kontext-film.de.mp4" type="video/mp4">
+<video controls autoplay muted loop playsinline preload="metadata" poster="assets/kontext-film.jpg" width="1920" height="1080" aria-label="Kontext in zwei Minuten: Mail, Kalender, Kontakte, Telefon, Aufgaben, Chat und Videocalls, Dokumente, Verschlüsselung, KI-Agenten, Firmenverwaltung und das Handy">
+<source src="assets/kontext-film.mp4" type="video/mp4">
 </video>
 </div>
 
