@@ -154,6 +154,23 @@ test.describe("Screenshots @screenshots", () => {
     await shot(page, "forgotten-attachment");
   });
 
+  test("Erinnerung je Kalender", async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await login(page);
+    await page.goto("/calendar");
+    await page.getByRole("button", { name: "Kalender verwalten" }).first().click();
+    await page
+      .getByRole("dialog", { name: "Kalender verwalten" })
+      .getByRole("button", { name: "Erinnerung: Mein Kalender" })
+      .click();
+    const defaults = page.getByRole("dialog", { name: "Erinnerung für „Mein Kalender“" });
+    await defaults.getByLabel("Termine mit Uhrzeit").selectOption({ label: "30 Minuten vorher" });
+    await defaults.getByLabel("Ganztägige Termine").selectOption({ label: "1 Tag vorher" });
+    await defaults.getByLabel("Erinnern per").last().selectOption({ label: "Mail" });
+    await page.mouse.move(1, 1);
+    await shot(page, "calendar-default-reminder");
+  });
+
   test("Erinnerung am Termin", async ({ page }) => {
     await page.setViewportSize({ width: 1440, height: 900 });
     await login(page);

@@ -35,9 +35,13 @@ type Props = {
   value: ReminderChoice;
   allDay: boolean;
   onChange: (value: ReminderChoice) => void;
+  /** The field's name; "Erinnerung" by default. */
+  label?: string;
+  /** What no reminder is called; "Keine" by default. */
+  noneLabel?: string;
 };
 
-export const ReminderFields = ({ value, allDay, onChange }: Props) => {
+export const ReminderFields = ({ value, allDay, onChange, label, noneLabel }: Props) => {
   const action: ReminderAction = value && value !== "kept" ? value.action : "display";
   const selected = value === "kept" ? "kept" : value ? String(value.minutes) : "none";
   const pick = (choice: string) =>
@@ -47,9 +51,9 @@ export const ReminderFields = ({ value, allDay, onChange }: Props) => {
   return (
     <div className="flex gap-2">
       <Label className="flex-1">
-        {m.calendar_reminder()}
+        {label ?? m.calendar_reminder()}
         <Select value={selected} onChange={(e) => pick(e.target.value)}>
-          <option value="none">{m.calendar_reminder_none()}</option>
+          <option value="none">{noneLabel ?? m.calendar_reminder_none()}</option>
           {value === "kept" ? <option value="kept">{m.calendar_reminder_kept()}</option> : null}
           {reminderMinutes(value, allDay).map((minutes) => (
             <option key={minutes} value={minutes}>

@@ -24,11 +24,13 @@ vi.mock("./split-series", () => ({
   useSplitSeries: () => ({ changeFollowing, endBeforeDate: vi.fn(), isPending: false }),
 }));
 vi.mock("./place-queries", () => ({ usePlaceSuggestions: () => [] }));
+const refs = vi.hoisted(() => ({ calendars: [] as unknown[] }));
+const createEvent = vi.fn(async (_input: { event: Record<string, unknown> }) => {});
 vi.mock("./queries", () => ({
   calendarLabel: () => "Kalender",
-  useCalendarRefs: () => ({ calendars: [] }),
+  useCalendarRefs: () => refs,
   useEventMutations: () => ({
-    create: { mutateAsync: vi.fn(), isPending: false },
+    create: { mutateAsync: createEvent, isPending: false },
     update: { mutateAsync: updateEvent, isPending: false },
   }),
   useMyAddresses: () => ["jonas@weber.test"],
@@ -159,5 +161,82 @@ describe("EventEditor series", () => {
     });
     expect(changeFollowing).not.toHaveBeenCalled();
     expect(updateEvent).toHaveBeenCalledWith(expect.objectContaining({ id: "s" }));
+  });
+});
+
+describe("EventEditor reminder of a new appointment", () => {
+  const dayBefore = {
+    reminder: {
+      "@type": "Alert",
+      trigger: { "@type": "OffsetTrigger", offset: "-P1D", relativeTo: "start" },
+      action: "email",
+    },
+  };
+  const onTheDay = {
+    reminder: {
+      "@type": "Alert",
+      trigger: { "@type": "OffsetTrigger", offset: "PT9H", relativeTo: "start" },
+      action: "display",
+    },
+  };
+  afterEach(() => {
+    refs.calendars = [];
+    createEvent.mockClear();
+  });
+
+  it("takes the calendar's default reminder, for times and all day", async () => {
+    refs.calendars = [
+      {
+        key: "a/1",
+        accountId: "a",
+        isPersonal: true,
+        mayWrite: true,
+        calendar: {
+          id: "1",
+          isDefault: true,
+          defaultAlertsWithTime: dayBefore,
+          defaultAlertsWithoutTime: onTheDay,
+        },
+      },
+    ];
+    render(<EventEditor start="2026-11-02T09:00" onDone={vi.fn()} onCancel={vi.fn()} />);
+    expect(screen.getByLabelText("Erinnerung")).toHaveProperty("value", "1440");
+    expect(screen.getByLabelText("Erinnern per")).toHaveProperty("value", "email");
+    fireEvent.click(screen.getByLabelText("Ganztägig"));
+    expect(screen.getByLabelText("Erinnerung")).toHaveProperty("value", "-540");
+    fireEvent.click(screen.getByLabelText("Ganztägig"));
+    fireEvent.change(screen.getByLabelText("Titel"), { target: { value: "Abnahme" } });
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: "Speichern" }));
+    });
+    expect(createEvent.mock.calls[0]?.[0].event.alerts).toEqual({
+      reminder: {
+        "@type": "Alert",
+        trigger: { "@type": "OffsetTrigger", offset: "-P1D", relativeTo: "start" },
+        action: "email",
+      },
+    });
+  });
+
+  it("keeps the usual 15 minutes without a default, and what was picked", async () => {
+    refs.calendars = [
+      {
+        key: "a/1",
+        accountId: "a",
+        isPersonal: true,
+        mayWrite: true,
+        calendar: { id: "1", isDefault: true, defaultAlertsWithTime: {} },
+      },
+    ];
+    render(<EventEditor start="2026-11-02T09:00" onDone={vi.fn()} onCancel={vi.fn()} />);
+    expect(screen.getByLabelText("Erinnerung")).toHaveProperty("value", "15");
+    fireEvent.change(screen.getByLabelText("Erinnerung"), { target: { value: "60" } });
+    fireEvent.change(screen.getByLabelText("Titel"), { target: { value: "Abnahme" } });
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: "Speichern" }));
+    });
+    expect(createEvent.mock.calls[0]?.[0].event.alerts).toMatchObject({
+      reminder: { trigger: { offset: "-PT1H" }, action: "display" },
+    });
   });
 });
