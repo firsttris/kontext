@@ -1,9 +1,9 @@
 /**
  * The files inside a winmail.dat (TNEF, application/ms-tnef), which old Outlook versions send
  * instead of attachments: [MS-OXTNEF] 2.1.3. A TNEF stream is a signature and a run of
- * attributes; an attachment begins with attAttachRendData and has its bytes in attAttachData,
- * its short name in attAttachTitle and its long name and type among its MAPI properties
- * (attAttachment). Embedded Outlook items are left out. Pure; a broken stream gives null.
+ * attributes; an attachment begins with attAttachRendData and has its bytes in attAttachData (or
+ * in PidTagAttachDataBinary), its short name in attAttachTitle and its long name and type among
+ * its MAPI properties (attAttachment). Embedded Outlook items are left out. Pure; a broken stream gives null.
  */
 
 export type TnefFile = { name: string; type: string; data: Uint8Array };
@@ -19,6 +19,9 @@ const ATT_ATTACHMENT = 0x00069005;
 const PR_ATTACH_LONG_FILENAME = 0x3707;
 const PR_ATTACH_MIME_TAG = 0x370e;
 const PR_ATTACH_METHOD = 0x3705;
+/** PidTagAttachDataBinary: some writers put the bytes here rather than in attAttachData. */
+const PR_ATTACH_DATA_BIN = 0x3701;
+const PT_BINARY = 0x0102;
 const ATTACH_EMBEDDED_MSG = 5;
 const MULTI = 0x1000;
 const FIXED_SIZE: Record<number, number> = {
@@ -172,6 +175,9 @@ export const tnefFiles = (bytes: Uint8Array): TnefFile[] | null => {
             current.mime = text(value, type);
           }
           if (id === PR_ATTACH_METHOD) current.embedded = value === ATTACH_EMBEDDED_MSG;
+          if (id === PR_ATTACH_DATA_BIN && type === PT_BINARY && value instanceof Uint8Array) {
+            current.data ??= value;
+          }
         }
       }
     }
