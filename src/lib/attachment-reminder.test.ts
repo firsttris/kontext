@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { attachmentMention } from "./attachment-reminder";
+import { attachmentMention, ownText } from "./attachment-reminder";
+import { startCompose } from "./compose";
 
 describe("attachmentMention", () => {
   it("finds what people write when something is attached", () => {
@@ -36,5 +37,29 @@ describe("attachmentMention: a subject taken over from the answered mail", () =>
     expect(attachmentMention("AW: Rechnung im Anhang", "Danke, ist angekommen.")).toBeUndefined();
     expect(attachmentMention("Re: Angebot anbei", "Passt so.")).toBeUndefined();
     expect(attachmentMention("Fwd: Pläne anbei", "Zur Info.")).toBeUndefined();
+  });
+});
+
+const original = {
+  id: "e1",
+  from: [{ name: "Markus Hoffmann", email: "markus@example.test" }],
+  to: [{ name: null, email: "jonas@weber-haustechnik.test" }],
+  subject: "Zahlung",
+  receivedAt: "2026-10-20T09:31:00Z",
+  sentAt: "2026-10-20T09:31:00Z",
+  attachments: [],
+} as unknown as Parameters<typeof startCompose>[1];
+
+describe("ownText: what the composer counts as the user's own words", () => {
+  it("leaves out a forwarded mail below the own text", () => {
+    const start = startCompose(
+      "forward",
+      original,
+      "<p>Danke für die Rechnung im Anhang, wir zahlen bis Freitag.</p>",
+      [],
+    );
+    const html = `<p>Zur Info, bitte buchen.</p>${start.html}`;
+    expect(ownText(html, "")).not.toMatch(/Anhang/);
+    expect(ownText(html, "")).toMatch(/bitte buchen/);
   });
 });
