@@ -147,7 +147,9 @@ Ein Schalter für Mails nach außen; Kontext nimmt je Empfänger den besten Weg:
      Points, RFC 5280 §4.2.1.13; nur http/https, nur Hosts im Internet, höchstens 10 MB und
      15 Sekunden) und prüft sie (`server/smime/crl.ts`): von der ausstellenden Stelle (Name und
      Unterschrift), aktuell (`nextUpdate` nicht vorbei), keine Delta- oder indirekte Liste und
-     keine unbekannte kritische Erweiterung (§5.2). Steht die Seriennummer darin, ist das
+     keine unbekannte kritische Erweiterung (§5.2); nennt die Liste ihre eigene Adresse
+     (Issuing Distribution Point, §5.2.5), muss es die aus dem Zertifikat sein – sonst könnte
+     ein anderer Teil der Listen derselben Stelle untergeschoben werden. Steht die Seriennummer darin, ist das
      Zertifikat gesperrt, sonst „nicht gesperrt“. Jede Liste bleibt bis zu ihrem `nextUpdate`
      im Speicher, höchstens einen Tag und höchstens 100 Listen; eine, die sich nicht laden ließ,
      wird nach zehn Minuten wieder gefragt. Ohne OCSP und ohne verwertbare Liste bleibt es bei

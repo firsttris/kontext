@@ -63,11 +63,26 @@ const serialKey = (bytes: Uint8Array) =>
     .replace(/^(00)+(?=..)/, "");
 
 /**
+ * The addresses an issuing distribution point names for its list (§5.2.5): its full names, or
+ * null when it names none; [] when it names the list otherwise (relative to the issuer).
+ */
+const pointNames = (fields: Node[]): string[] | null => {
+  const point = fields.find((field) => field.tag === 0xa0);
+  if (!point) return null;
+  const full = children(point).find((choice) => choice.tag === 0xa0);
+  return (full ? children(full) : [])
+    .filter((general) => general.tag === 0x86)
+    .map((general) => new TextDecoder().decode(content(general)));
+};
+
+/**
  * Whether the list's own extensions leave it usable: no delta list, and an issuing distribution
- * point (§5.2.5) only for user certificates at most; any other critical extension is not
+ * point (§5.2.5) only for user certificates at most and, when it names the list's address, for
+ * `url`, the address the certificate gave (§6.3.3 b.2.i: else another part of the authority's
+ * lists, current and signed too, could stand in for it); any other critical extension is not
  * understood, and such a list must not be used (§5.2).
  */
-const usableExtensions = (field: Node | undefined) => {
+const usableExtensions = (field: Node | undefined, url: string | undefined) => {
   if (!field) return true;
   for (const ext of children(inner(field))) {
     const parts = children(ext);
@@ -77,6 +92,8 @@ const usableExtensions = (field: Node | undefined) => {
       const flags = children(inner(parts.at(-1)!));
       // onlyContainsCACerts [2], onlySomeReasons [3], indirectCRL [4], onlyAttributeCerts [5]
       if (flags.some((flag) => [0x82, 0xa3, 0x83, 0x84, 0x85].includes(flag.tag))) return false;
+      const names = pointNames(flags);
+      if (names && url !== undefined && !names.includes(url)) return false;
       continue;
     }
     const critical = parts.length === 3 && parts[1]!.tag === 0x01 && content(parts[1]!)[0] !== 0;
@@ -89,9 +106,15 @@ export type Crl = { revoked: Set<string>; nextUpdate: Date };
 
 /**
  * A CertificateList (§5.1) when it is the issuer's: its name, signed with its key, current at
- * `now` (a list without nextUpdate or past it says nothing); null otherwise.
+ * `now` (a list without nextUpdate or past it says nothing), and, given the `url` it was fetched
+ * from, the list for that address; null otherwise.
  */
-export const readCrl = (bytes: Uint8Array, issuer: X509Certificate, now: Date): Crl | null => {
+export const readCrl = (
+  bytes: Uint8Array,
+  issuer: X509Certificate,
+  now: Date,
+  url?: string,
+): Crl | null => {
   try {
     const [tbs, algorithm, signature] = children(read(bytes));
     if (!tbs || !algorithm || signature?.tag !== TAG.BIT_STRING) return null;
@@ -108,7 +131,13 @@ export const readCrl = (bytes: Uint8Array, issuer: X509Certificate, now: Date): 
     if (!thisUpdate || !next || thisUpdate > now || next < now) return null;
     const rest = fields.slice(at + (isTime(fields[at + 3]) ? 4 : 3));
     const list = rest.find((field) => field.tag === TAG.SEQUENCE);
-    if (!usableExtensions(rest.find((field) => field.tag === 0xa0))) return null;
+    if (
+      !usableExtensions(
+        rest.find((field) => field.tag === 0xa0),
+        url,
+      )
+    )
+      return null;
     const revoked = new Set(
       (list ? children(list) : []).map((entry) => serialKey(content(children(entry)[0]!))),
     );
@@ -138,7 +167,8 @@ type Cached = { until: number; crl: Crl | null; issuer: string };
 /**
  * Revocation by the certificate's lists, each fetched once and kept until its next update (at
  * most `maxAgeMs`); a list that could not be had is asked again after `retryMs`. Requests for the
- * same list at the same time share one fetch.
+ * same list from the same issuer at the same time share one fetch (another issuer's check is its
+ * own: the list is read against the issuer's key).
  */
 export const createCrlCheck = ({
   get,
@@ -153,7 +183,7 @@ export const createCrlCheck = ({
   const load = async (url: string, issuer: X509Certificate): Promise<Cached> => {
     const at = now();
     const bytes = await get(url).catch(() => null);
-    const crl = bytes ? readCrl(bytes, issuer, at) : null;
+    const crl = bytes ? readCrl(bytes, issuer, at, url) : null;
     const until = crl
       ? Math.min(crl.nextUpdate.getTime(), at.getTime() + maxAgeMs)
       : at.getTime() + retryMs;
@@ -168,10 +198,11 @@ export const createCrlCheck = ({
     if (kept && kept.until > now().getTime() && kept.issuer === issuer.fingerprint256) {
       return Promise.resolve(kept);
     }
-    const running = pending.get(url);
+    const key = `${issuer.fingerprint256} ${url}`;
+    const running = pending.get(key);
     if (running) return running;
-    const loading = load(url, issuer).finally(() => pending.delete(url));
-    pending.set(url, loading);
+    const loading = load(url, issuer).finally(() => pending.delete(key));
+    pending.set(key, loading);
     return loading;
   };
 
