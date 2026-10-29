@@ -14,6 +14,21 @@ const removeMails = async (user: string, subject: string) => {
   if (ids.length) await client.call("Email/set", { accountId, destroy: ids });
 };
 
+/** Takes the default „Antwort an“ off every identity `user` has, in each of the accounts. */
+const clearDefaults = async (user: string) => {
+  const client = jmapAs(user);
+  const using = ["urn:ietf:params:jmap:core", "urn:ietf:params:jmap:submission"];
+  for (const accountId of Object.keys((await client.getSession()).accounts)) {
+    const { list } = await client.call<{ list: { id: string }[] }>(
+      "Identity/get",
+      { accountId },
+      using,
+    );
+    const update = Object.fromEntries(list.map((identity) => [identity.id, { replyTo: null }]));
+    await client.call("Identity/set", { accountId, update }, using);
+  }
+};
+
 /** The address chips of a composer field, by its label. */
 const chips = (page: Page, label: string) =>
   page.getByRole("combobox", { name: label, exact: true }).locator("xpath=..");
@@ -96,6 +111,25 @@ test.describe("Antwort an", () => {
         "urn:ietf:params:jmap:core",
         "urn:ietf:params:jmap:submission",
       ]);
+    }
+  });
+
+  test("nimmt im gemeinsamen Postfach die Vorgabe von info@", async ({ page }) => {
+    try {
+      await login(page);
+      await page.goto("/settings?section=signature");
+      const card = page.getByRole("region", { name: INFO, exact: true });
+      await card.getByLabel("Antwort an", { exact: true }).fill(address("rechnung"));
+      await card.getByRole("button", { name: "Speichern" }).click();
+      await expect(page.getByRole("status").filter({ hasText: "Gespeichert." })).toBeVisible();
+
+      await page.getByRole("link", { name: "Mail", exact: true }).first().click();
+      await page.getByRole("link", { name: "info@" }).click();
+      await page.getByRole("link", { name: "Neue Mail" }).first().click();
+      await expect(page.getByLabel("Von").locator("option:checked")).toHaveText(/info@/);
+      await expect(chips(page, "Antwort an").getByTitle(address("rechnung"))).toBeVisible();
+    } finally {
+      await clearDefaults("jonas");
     }
   });
 
