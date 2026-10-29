@@ -88,7 +88,23 @@ export const removeCancelled = (
     : deleteEvent(client, accountId, stored.id, QUIET);
 
 /**
- * Answers: the answer goes into the event in the calendar (put in first if it is not there yet),
+ * The mail carries a later version of the whole event (a higher SEQUENCE) than the calendar: the
+ * organizer moved or changed it. A changed date of a series alone is no new version of the series.
+ */
+const isNewerVersion = (parsed: ParsedEvent, stored: CalendarEvent) =>
+  !parsed.recurrenceId && (parsed.sequence ?? 0) > (stored.sequence ?? 0);
+
+/** An event as a patch for the stored one: what says which event and where it lives stays. */
+const withoutIdentity = ({
+  uid: _uid,
+  calendarIds: _calendarIds,
+  "@type": _type,
+  ...rest
+}: Record<string, unknown>) => rest;
+
+/**
+ * Answers: the answer goes into the event in the calendar (put in first if it is not there yet,
+ * brought up to the mail's version if that is newer),
  * then the REPLY to the organizer, from the identity with the user's address among the attendees.
  */
 export const answerInvitation = async (
@@ -112,7 +128,8 @@ export const answerInvitation = async (
   },
 ): Promise<void> => {
   const addresses = identities.map((identity) => identity.email);
-  const event = stored ?? parsed;
+  const newer = Boolean(stored && isNewerVersion(parsed, stored));
+  const event = stored && !newer ? stored : parsed;
   const me = myAttendee(event, addresses);
   const myEmail = me ? participantEmail(me[1]).toLowerCase() : "";
   const sender = identities.find((identity) => identity.email.toLowerCase() === myEmail);
@@ -122,7 +139,9 @@ export const answerInvitation = async (
       client,
       accountId,
       stored.id,
-      { [`participants/${me[0]}/participationStatus`]: status },
+      newer
+        ? withoutIdentity(importableEvent(parsed, addresses, status))
+        : { [`participants/${me[0]}/participationStatus`]: status },
       QUIET,
     );
   } else {

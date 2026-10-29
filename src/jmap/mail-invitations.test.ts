@@ -46,7 +46,10 @@ const participants = {
     name: "Petra Keller",
     roles: { owner: true },
   },
-  j: { calendarAddress: "mailto:jonas@weber-haustechnik.test", participationStatus: "needs-action" },
+  j: {
+    calendarAddress: "mailto:jonas@weber-haustechnik.test",
+    participationStatus: "needs-action",
+  },
 } as CalendarEvent["participants"];
 
 const series: CalendarEvent = {
@@ -123,7 +126,8 @@ describe("answerInvitation", () => {
     expect(patch.start).toBe("2026-11-05T14:00:00");
     expect(patch.sequence).toBe(2);
     const ics = atob(
-      uploads[0]!.split("text/calendar; method=REPLY")[1]!
+      uploads[0]!
+        .split("text/calendar; method=REPLY")[1]!
         .split("\r\n\r\n")[1]!
         .split("\r\n--")[0]!
         .replace(/\r\n/g, ""),

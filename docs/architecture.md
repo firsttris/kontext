@@ -1542,7 +1542,8 @@ Einen Termin, den der Teilnehmer über JMAP angelegt hat, kennt Stalwart ohne `s
 eine Änderung daran gilt ihm als neuer Termin, für den nur der Organisator senden darf
 (`itip_create` und `NotOrganizer` in `crates/jmap/src/calendar_event/set.rs`,
 `crates/groupware/src/scheduling/event_create.rs`). Darum schreibt Kontext die Antwort mit
-`sendSchedulingMessages: false` in den Termin und schickt danach eine Mail an den Organisator –
+`sendSchedulingMessages: false` in den Termin (trägt die Mail eine neuere Fassung, also eine
+höhere `SEQUENCE`, übernimmt er sie dabei ganz) und schickt danach eine Mail an den Organisator –
 von der Identität mit der eigenen Adresse unter den Eingeladenen, mit einer Zeile Text und dem
 iTIP-`REPLY` als `text/calendar; method=REPLY` (`src/lib/invitation-reply.ts`; nur UID, SEQUENCE,
 ORGANIZER und das eigene ATTENDEE mit PARTSTAT, RFC 5546 §3.2.3), Betreff wie bei Outlook
