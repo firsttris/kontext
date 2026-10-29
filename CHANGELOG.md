@@ -7,6 +7,14 @@ Steps that an update needs beyond raising the version are marked **Upgrade**.
 
 ## Unreleased
 
+- A short tour on the first start: five or six cards through Mail, "Neue Mail", a shared mailbox
+  like info@ (for whoever has one), Calendar and Chat, each lighting up the real place – the rail
+  on a desktop, the tab bar on a phone ("Mehr" where Chat is not in it), a centred card where the
+  place is not shown. "Weiter", "Zurück", "Überspringen"; the focus stays in the card and Escape
+  skips. Shown once per person and device (`kontext.tour.seen` in the browser: the server has no
+  per-person settings store, and the phone's tour points elsewhere); "Einführung" in the user
+  menu, or under "Mehr" on a phone, starts it again. Built on the Radix dialog already in the
+  project, no new dependency.
 - Fixed: on phones the composer's action row ran off the screen, so "Als Entwurf speichern" and
   "Verwerfen" could not be reached. Below `md` the receipt, delivery-report, confidential and
   sign switches and "Als Entwurf speichern" now sit under "Weitere Aktionen"; desktop is unchanged.

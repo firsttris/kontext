@@ -1,6 +1,6 @@
 /** The frame of every logged-in page: the app rail on the left (desktop), the page beside it. */
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
-import { Ellipsis, Keyboard, LogOut, Phone, Settings } from "lucide-react";
+import { Compass, Ellipsis, Keyboard, LogOut, Phone, Settings } from "lucide-react";
 import { type ReactNode, useState } from "react";
 import { useAuth } from "@/auth/auth";
 import { ShortcutsDialog } from "@/components/shortcuts-dialog";
@@ -16,14 +16,32 @@ import { useShortcuts } from "@/components/use-shortcuts";
 import { useVisibleHeight } from "@/components/use-visible-height";
 import { useChannels } from "@/features/chat/queries";
 import { useFrameState } from "@/features/documents/frame-store";
+import { restartTour } from "@/features/tour/seen";
+import { Tour } from "@/features/tour/tour";
 import { totalUnread } from "@/lib/chat";
 import { cn } from "@/lib/cn";
+import { appTarget, MORE_TARGET } from "@/lib/tour";
 import { m } from "@/paraglide/messages";
 import { AccountAvatar, StorageSummary, storageText, useOwnQuota } from "./account-avatar";
 import { useMoreItems, useNavItems, usePhoneNav, useTabItems } from "./nav-items";
 import { useSession } from "./session";
 
 export { useSession };
+
+/** "Einführung" in the menus: the tour again, from the inbox where it points at most. */
+const TourItem = ({ user }: { user: string }) => {
+  const navigate = useNavigate();
+  return (
+    <MenuItem
+      onSelect={() => {
+        void navigate({ to: "/mail" });
+        restartTour(user);
+      }}
+    >
+      <Compass size={15} /> {m.tour_open()}
+    </MenuItem>
+  );
+};
 
 const UserMenu = () => {
   const { logout } = useAuth();
@@ -48,6 +66,7 @@ const UserMenu = () => {
             <Settings size={15} /> {m.nav_settings()}
           </Link>
         </MenuItem>
+        <TourItem user={name} />
         <MenuItem onSelect={logout}>
           <LogOut size={15} /> {m.logout()}
         </MenuItem>
@@ -109,6 +128,7 @@ const Rail = ({ onHelp, bell }: { onHelp: () => void; bell: ReactNode }) => {
           <Link
             key={to}
             to={to}
+            data-tour={appTarget(to)}
             aria-label={railLabel(to, label(), chatUnread, unsaved)}
             title={label()}
             aria-current={active ? "page" : undefined}
@@ -209,6 +229,7 @@ export const AppShell = ({ children, bell }: { children: ReactNode; bell?: React
       <Rail onHelp={() => setHelp(true)} bell={bell} />
       <div className="flex min-w-0 flex-1">{children}</div>
       <ShortcutsDialog open={help} onOpenChange={setHelp} />
+      <Tour />
     </div>
   );
 };
@@ -228,6 +249,7 @@ const MoreMenu = ({ chatUnread }: { chatUnread: number }) => {
   return (
     <MenuRoot>
       <MenuTrigger
+        data-tour={MORE_TARGET}
         aria-label={unreadLabel(m.nav_more(), unread)}
         className={cn(
           "relative flex w-16 flex-col items-center gap-1 text-[11px]",
@@ -261,6 +283,7 @@ const MoreMenu = ({ chatUnread }: { chatUnread: number }) => {
             <Settings size={15} /> {m.nav_settings()}
           </Link>
         </MenuItem>
+        <TourItem user={session?.username ?? ""} />
         <MenuSeparator />
         <MenuItem onSelect={logout}>
           <LogOut size={15} /> {m.logout()}
@@ -290,6 +313,7 @@ export const TabBar = () => {
           <Link
             key={to}
             to={to}
+            data-tour={appTarget(to)}
             aria-label={unreadLabel(label(), unread)}
             aria-current={active ? "page" : undefined}
             className={cn(
