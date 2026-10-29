@@ -47,6 +47,8 @@ const schema = z.object({
   SMIME_ROOTS: z.preprocess((v) => v || undefined, z.string().optional()),
   /** Tests only: one-click unsubscribe to any address, inside the network, any certificate. */
   UNSUBSCRIBE_ANY_TARGET: z.stringbool().default(false),
+  /** Tests only: subscribed calendars from any address, also http and inside the network. */
+  CALENDAR_SUBSCRIBE_ANY_TARGET: z.stringbool().default(false),
   /** Tests only: push to any address, not only to the browsers' push services. */
   PUSH_ANY_ENDPOINT: z.stringbool().default(false),
   /** How often due Wiedervorlagen are brought back; tests make it short. */

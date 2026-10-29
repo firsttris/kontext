@@ -19,6 +19,7 @@ import { ShareDialog } from "../sharing/share-dialog";
 import { setCalendarHidden } from "./hidden-calendars";
 import { useAddHolidays } from "./holiday-queries";
 import { type CalendarRef, useCalendarMutations, useCalendarRefs } from "./queries";
+import { Subscriptions } from "./subscriptions";
 import { TasksToggle } from "./task-chip";
 
 const fail = (toast: ReturnType<typeof useToast>) => (error: Error) =>
@@ -235,6 +236,7 @@ export const CalendarsDialog = ({
         </form>
       </section>
       <Holidays />
+      <Subscriptions />
       {shared.length > 0 ? (
         <section className="flex flex-col gap-2">
           <h3 className="m-0 text-[12px] font-medium text-muted">{m.calendar_shared()}</h3>

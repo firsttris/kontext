@@ -149,6 +149,7 @@ export default defineConfig({
         REMINDER_TICK_MS: "1000",
         RULE_TASK_TICK_MS: "1000",
         UNSUBSCRIBE_ANY_TARGET: "true",
+        CALENDAR_SUBSCRIBE_ANY_TARGET: "true",
         // No lookups on the internet in the tests: the check finds nothing set.
         DOH_URL: "http://127.0.0.1:9/dns-query",
         // An authority of the tests' own, trusted for S/MIME (e2e/smime-ca, test keys only).

@@ -56,6 +56,14 @@ Kontext steht, steht auch am iPhone, unter Android (DAVx⁵) und in Thunderbird.
   nächstes Jahr ein, ganztägig und als „frei“ (sie blockieren niemandes Verfügbarkeit). Über
   CalDAV stehen sie auch am Handy. Im neuen Jahr noch einmal klicken ergänzt, was fehlt.
   [Mehr](architecture.md#feiertage)
+- **Kalender abonnieren:** Unter *Kalender verwalten* einen Kalender über seine Adresse einbinden
+  (iCal, `webcal://`), etwa Schulferien, Müllabfuhr oder die Termine eines Lieferanten. Er steht
+  als eigener Kalender da, auch über CalDAV am Handy, aktualisiert sich alle sechs Stunden (oder
+  auf Knopfdruck) und zählt nicht für die Verfügbarkeit. „Abo beenden“ löscht ihn wieder.
+  [Mehr](architecture.md#kalender-abonnieren)
+
+  ![Kalender verwalten mit einem abonnierten Kalender und der Adresse eines zweiten](screenshots/calendar-subscriptions.png)
+
 - **Kalender teilen** mit Kollegen: nur Verfügbarkeit, lesen oder bearbeiten.
 - **Orte vorschlagen:** Im Feld „Ort“ schlägt Kontext ab drei Buchstaben Adressen und Firmen vor
   (aus OpenStreetMap), etwa „Bäckerei Müller, Hauptstraße 5, 79098 Freiburg“; freier Text wie
