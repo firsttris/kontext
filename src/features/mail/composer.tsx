@@ -57,6 +57,10 @@ const defaultIdentity = (identities: Identity[], preferred: string): Identity | 
   identities.find((identity) => identity.email.toLowerCase() === preferred.toLowerCase()) ??
   identities[0];
 
+/** The sender's signature as HTML, as the composer puts it below the text. */
+const signatureOf = (identity: Identity | undefined): string =>
+  identity?.htmlSignature || (identity?.textSignature ? textToHtml(identity.textSignature) : "");
+
 export const Composer = ({ accountId, mode, sourceEmailId, prefill }: Props) => {
   const prefillTo = prefill?.to;
   const client = useClient();
@@ -201,11 +205,7 @@ export const Composer = ({ accountId, mode, sourceEmailId, prefill }: Props) => 
     }
     setThreading({ inReplyTo: start.inReplyTo, references: start.references });
     // A draft already has its signature; a new mail gets the one of the sender.
-    const signature =
-      mode === "draft"
-        ? ""
-        : identity?.htmlSignature ||
-          (identity?.textSignature ? textToHtml(identity.textSignature) : "");
+    const signature = mode === "draft" ? "" : signatureOf(identity);
     const text = prefill?.body ? textToHtml(prefill.body) : "";
     editor.commands.setContent(`${text}${signature ? `<p></p>${signature}` : ""}${start.html}`);
     // Into the text – unless one is already typing elsewhere (e.g. the recipient).
@@ -367,7 +367,7 @@ export const Composer = ({ accountId, mode, sourceEmailId, prefill }: Props) => 
     const word =
       withoutAttachment || attachments.length
         ? undefined
-        : attachmentMention(subject, ownText(editor?.getHTML() ?? ""));
+        : attachmentMention(subject, ownText(editor?.getHTML() ?? "", signatureOf(identity)));
     if (word) {
       setForgotten({ word, later });
       return;

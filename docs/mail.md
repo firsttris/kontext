@@ -53,7 +53,8 @@ IMAP und SMTP.
   Signatur je Absenderadresse.
 - **„Anhang vergessen?“** Steht im eigenen Text oder im Betreff „Anhang“, „anbei“, „angehängt“,
   „beigefügt“, „attached“ …, aber nichts ist angehängt, fragt Kontext vor dem Senden nach: „Datei
-  anhängen“ oder „Ohne Anhang senden“. Das Zitat der beantworteten Mail zählt nicht mit.
+  anhängen“ oder „Ohne Anhang senden“. Nur der eigene Text zählt: nicht das Zitat, nicht die
+  weitergeleitete Mail, nicht die Signatur und nicht ein übernommener Betreff („AW: …“).
 
   ![Rückfrage „Anhang vergessen?“ beim Senden einer Mail mit „anbei“ ohne Anhang](screenshots/forgotten-attachment.png)
 

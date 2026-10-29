@@ -21,9 +21,18 @@ const TAKEN_OVER = /^\s*(re|aw|antw|fwd?|wg)\s*:/i;
 export const attachmentMention = (subject: string, text: string): string | undefined =>
   `${TAKEN_OVER.test(subject) ? "" : subject}\n${text}`.match(MENTIONS)?.[1];
 
-/** The text the user wrote in the composer's HTML: without the quoted reply or a forwarded mail. */
-export const ownText = (html: string): string => {
-  const text = htmlToText(splitQuote(html).main);
+/** Words only: the editor lays out a signature's lines a little differently than it came. */
+const words = (text: string) => text.replace(/\s+/g, " ").trim();
+
+/**
+ * The text the user wrote in the composer's HTML: without the quoted reply, a forwarded mail or
+ * the sender's `signature` (HTML), whose disclaimer ("… und etwaige Anhänge …") would ask every
+ * time.
+ */
+export const ownText = (html: string, signature = ""): string => {
+  const text = words(htmlToText(splitQuote(html).main));
   const forward = text.indexOf(FORWARD_MARKER);
-  return forward < 0 ? text : text.slice(0, forward);
+  const own = forward < 0 ? text : text.slice(0, forward);
+  const signed = words(htmlToText(signature));
+  return signed ? own.replace(signed, "") : own;
 };
