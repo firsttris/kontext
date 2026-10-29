@@ -133,6 +133,24 @@ describe("invitationCard", () => {
     expect(gone.canRemove).toBe(false);
   });
 
+  it("removes no whole series for the cancellation of a single date", () => {
+    const date = receivedInvitation([
+      parsed({ method: "cancel", sequence: 1, recurrenceId: "2026-11-27T14:00:00" }),
+    ]);
+    const card = invitationCard({ received: date, stored: stored(), mine: [ANNA] })!;
+    expect(card.canRemove).toBe(false);
+  });
+
+  it("removes no event the organizer invited to again after this cancellation", () => {
+    const cancel = receivedInvitation([parsed({ method: "cancel", sequence: 1 })]);
+    const card = invitationCard({
+      received: cancel,
+      stored: stored({ sequence: 2, status: "confirmed" }),
+      mine: [ANNA],
+    })!;
+    expect(card.canRemove).toBe(false);
+  });
+
   it("answers no invitation whose event was called off since", () => {
     const card = invitationCard({
       received: request,
