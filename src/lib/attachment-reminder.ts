@@ -6,7 +6,7 @@
 
 /** German and English, as people write it: "anbei", "im Anhang", "attached" … */
 const MENTIONS =
-  /(?<!\p{L})(anh[aä]ng(?:e|en|s)?|dateianhang|anbei|beiliegend|angeh[aä]ngt(?:e|en)?|beigef[uü]gt(?:e|en)?|attach(?:ed|ment|ments)?|enclosed)(?!\p{L})/iu;
+  /(?<!\p{L})(anh[aä]ng(?:e|en|s)?|dateianhang|anbei|beiliegend|anliegend|angeh[aä]ngt(?:e[nmrs]?)?|beigef[uü]gt(?:e[nmrs]?)?|attach(?:ed|ing|ment|ments)?|enclosed)(?!\p{L})/iu;
 
 /** The word that speaks of an attachment, in the subject or the text; none if nothing does. */
 export const attachmentMention = (subject: string, text: string): string | undefined =>
