@@ -42,6 +42,13 @@ IMAP und SMTP.
   eigenen Ordnern.
 - **Mehrere Mails auf einmal** (Kästchen links an jeder Zeile, Strg-/Shift-Klick, `x`; am Handy
   lange drücken): archivieren, löschen, gelesen, Kategorie, verschieben, Aufgaben erstellen.
+- **Spam und Papierkorb leeren:** oben in der Liste der beiden Ordner, nach einer Rückfrage mit
+  der Zahl der Mails. Gelöscht ist dann gelöscht – Stalwarts Community-Edition hebt nichts auf.
+  Eine Mail, die zugleich in einem anderen Ordner liegt, verlässt nur Spam bzw. Papierkorb. In
+  gemeinsamen Postfächern nur, wer dort löschen darf.
+
+  ![Papierkorb mit „Papierkorb leeren“ und der Rückfrage](screenshots/empty-trash.png)
+
 - **Unterhaltungen beim Lesen:** frühere Mails und die Antworten seitdem, Zitate eingeklappt;
   gruppiert wie Gmail auf Wunsch.
 - **Wiedervorlage:** eine Mail aus dem Weg bis morgen, Montag oder einem Zeitpunkt – dann ist sie
@@ -51,6 +58,13 @@ IMAP und SMTP.
 
 - **Formatierter Text**, Antworten mit Zitat, Anhänge, Empfänger-Vorschläge aus der Firma und den Kontakten,
   Signatur je Absenderadresse.
+- **„Anhang vergessen?“** Steht im eigenen Text oder im Betreff „Anhang“, „anbei“, „angehängt“,
+  „beigefügt“, „attached“ …, aber nichts ist angehängt, fragt Kontext vor dem Senden nach: „Datei
+  anhängen“ oder „Ohne Anhang senden“. Nur der eigene Text zählt: nicht das Zitat, nicht die
+  weitergeleitete Mail, nicht die Signatur und nicht ein übernommener Betreff („AW: …“).
+
+  ![Rückfrage „Anhang vergessen?“ beim Senden einer Mail mit „anbei“ ohne Anhang](screenshots/forgotten-attachment.png)
+
 - **Senden rückgängig** (5 bis 30 Sekunden) und **später senden** („morgen 8 Uhr“) – der Server
   sendet, auch wenn der Rechner aus ist.
 - **Lesebestätigung** anfordern; eine erbetene beantwortet man mit einem Klick, nie von selbst.

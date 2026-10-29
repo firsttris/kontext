@@ -1,6 +1,6 @@
 import { expect, type Page, test } from "@playwright/test";
 import { fillDemo } from "./demo-data";
-import { addAttendees, address, login } from "./helpers";
+import { addAttendees, addMail, address, login } from "./helpers";
 import { deliverInvitation } from "./invitation-mail";
 import { pairBox } from "./paired-box";
 import { giveKey } from "./pgp-key";
@@ -106,6 +106,53 @@ test.describe("Screenshots @screenshots", () => {
     await shot(page, "mail-invitation");
   });
 
+  test("Angaben für die Signatur", async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await login(page);
+    await page.goto("/settings?section=profile");
+    const card = page.getByRole("region", { name: "Angaben für die Signatur" });
+    await card.getByLabel("Position").fill("Geschäftsführer");
+    await card.getByLabel("Abteilung").fill("Kundendienst");
+    await card.getByLabel("Telefon").fill("07223 4711-10");
+    await card.getByLabel("Mobil").fill("0170 1234567");
+    await card.scrollIntoViewIfNeeded();
+    await shot(page, "signature-details");
+  });
+
+  test("Papierkorb leeren", async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    // Something in the Papierkorb: a mail of its own, so the other pictures keep the seed's.
+    await addMail("jonas", "jonas", "Newsletter: Frühjahrsaktion Solarthermie", {
+      name: "Großhandel Richter",
+      email: "newsletter@richter-sanitaer.test",
+    });
+    await login(page);
+    await page
+      .getByRole("list", { name: "Posteingang" })
+      .getByText("Newsletter: Frühjahrsaktion Solarthermie")
+      .click();
+    await page.getByRole("button", { name: "Löschen" }).first().click();
+    await page.getByRole("link", { name: "Papierkorb" }).click();
+    await page.getByRole("button", { name: "Papierkorb leeren" }).click();
+    await expect(page.getByRole("dialog", { name: "Papierkorb leeren?" })).toBeVisible();
+    await shot(page, "empty-trash");
+  });
+
+  test("Anhang vergessen", async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await login(page);
+    await page.getByRole("link", { name: "Neue Mail" }).first().click();
+    await page.getByRole("combobox", { name: "An" }).fill("petra");
+    await page.getByRole("option", { name: /Petra Keller/ }).click();
+    await page.getByLabel("Betreff").fill("Angebot Wartungsvertrag 2027");
+    await page
+      .getByRole("textbox", { name: "Ihre Nachricht …" })
+      .fill("Hallo Frau Keller, anbei unser Angebot für den Wartungsvertrag.");
+    await page.getByRole("button", { name: "Senden", exact: true }).click();
+    await expect(page.getByRole("dialog", { name: "Anhang vergessen?" })).toBeVisible();
+    await shot(page, "forgotten-attachment");
+  });
+
   test("Erinnerung am Termin", async ({ page }) => {
     await page.setViewportSize({ width: 1440, height: 900 });
     await login(page);
@@ -117,6 +164,16 @@ test.describe("Screenshots @screenshots", () => {
     await dialog.getByLabel("Erinnern per").selectOption({ label: "Mail" });
     await dialog.getByLabel("Erinnerung").scrollIntoViewIfNeeded();
     await shot(page, "event-reminder");
+  });
+
+  test("Serie ab einem Termin ändern", async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await login(page);
+    await page.goto(`/calendar?date=${today()}&view=agenda`);
+    await page.getByRole("list", { name: "Liste" }).getByText("Teambesprechung").nth(1).click();
+    await page.getByRole("dialog").getByRole("button", { name: "Bearbeiten" }).click();
+    await page.getByRole("dialog").getByLabel("Dieser und alle folgenden").check();
+    await shot(page, "series-following");
   });
 
   test("Handy", async ({ browser }) => {

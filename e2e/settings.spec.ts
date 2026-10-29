@@ -233,3 +233,14 @@ test.describe("Einstellungen am Handy @phone", () => {
     await expect(page.getByRole("heading", { name: "Umzug", level: 2 })).toBeVisible();
   });
 });
+
+test.describe("Angaben für die Signatur am Handy @phone", () => {
+  test("stehen im Profil", async ({ page }) => {
+    await login(page, "max");
+    await page.goto("/settings?section=profile");
+    const card = page.getByRole("region", { name: "Angaben für die Signatur" });
+    for (const field of ["Position", "Abteilung", "Telefon", "Mobil"]) {
+      await expect(card.getByLabel(field)).toBeVisible();
+    }
+  });
+});

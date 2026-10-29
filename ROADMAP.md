@@ -27,9 +27,6 @@ Kleinere und mittlere Funktionen, sortiert nach Nutzen: oben, was fast jedem Bet
 
 | # | Funktion | Worum es geht |
 | --- | --- | --- |
-| 3 | **Serien ab einem Termin ändern** | Neben „Nur dieser Termin“ und „Alle Termine der Serie“ auch „Dieser und alle folgenden“. |
-| 4 | **Firmen-Signatur mit mehr Angaben** | Telefon, Position, Abteilung als Platzhalter; jede Person trägt ihre Angaben einmal ein, leere Zeilen fallen weg (heute `[Name]` und `[E-Mail]`). |
-| 5 | **„Anhang vergessen?“** | Steht im Text „Anhang“, „anbei“, „attached“ …, aber nichts ist angehängt, fragt Kontext vor dem Senden nach. |
 | 6 | **Mails zuweisen** | In info@ eine Mail einer Person zuweisen und als erledigt markieren, Filter „Mir zugewiesen“ und „Offen“. |
 | 7 | **Kalender abonnieren** | Kalender über eine Adresse (iCal, webcal) einbinden: Feiertage, Schulferien, Müllabfuhr, Kalender von Lieferanten; aktualisiert sich von selbst. |
 | 8 | **Mehr Formatierung beim Schreiben** | Tabellen, Schriftgröße, Text- und Hintergrundfarbe, eingefügte Bilder in der Größe ändern. |
@@ -44,7 +41,6 @@ Kleinere und mittlere Funktionen, sortiert nach Nutzen: oben, was fast jedem Bet
 | 12 | **winmail.dat entpacken** | Anhänge und Text aus Mails alter Outlook-Versionen zeigen. |
 | 13 | **Hinweis „Extern“** | Mails von außerhalb der Firma tragen ein Kennzeichen; vor dem Senden oder Einladen an Externe fragt Kontext nach. Partnerdomains zählen als intern; je Firma einschaltbar. |
 | 14 | **Vertretung in einem Schritt** | Einer Kollegin Postfach, Kalender und Kontakte auf einmal freigeben (lesen oder bearbeiten), sehen, wer worauf Zugriff hat, und alles auf einmal wieder entziehen. |
-| 15 | **Spam und Papierkorb leeren** | Mit einem Klick und einer Rückfrage. |
 | 16 | **Textbausteine mit mehr Platzhaltern** | `{Datum}` und eigene Felder, nach denen Kontext beim Einfügen fragt („Auftragsnummer?“); heute nur `{Name}`. |
 | 17 | **Pflichtangaben unter jeder Mail** | Ein Zusatz der Firmenverwaltung (etwa Handelsregister, Geschäftsführer), beim Senden angehängt, nie in Entwürfen; beim Schreiben zu sehen, aber nicht änderbar. |
 | 18 | **Als Anhang weiterleiten** | Eine Mail als .eml-Datei weiterleiten, etwa an den Steuerberater oder die IT. |

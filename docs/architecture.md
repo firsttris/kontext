@@ -226,7 +226,13 @@ mit einem eigenen API-Schlüssel an und erlaubt nur, was die Firmenverwaltung br
 - **Firmen-Signatur:** eine Vorlage mit `[Name]` und `[E-Mail]`, gespeichert in der
   SQLite-Datenbank von Kontext (`company_setting`). „Für alle übernehmen“ schreibt sie in jede Absenderadresse
   (`Identity`) aller aktiven Mitarbeiter, ausgefüllt mit Name und Adresse der Identität; neue
-  Mitarbeiter bekommen sie beim Anlegen.
+  Mitarbeiter bekommen sie beim Anlegen. `[Telefon]`, `[Mobil]`, `[Position]` und `[Abteilung]`
+  trägt jede Person selbst ein (*Einstellungen → Profil*, `/api/signature-details`, Tabelle
+  `signature_detail`; Stalwarts `x:Account` hat dafür keine Felder). Speichern schreibt die
+  Firmen-Signatur sofort neu in die eigenen Absenderadressen. Eine Zeile mit einem Platzhalter
+  ohne Wert fällt weg (`server/company/signature.ts`): im Text die Zeile, im HTML ihr Text samt
+  `<br>` und was sie leer zurücklässt (Fett, ein ganzer Absatz); absichtliche Leerzeilen der
+  Vorlage bleiben.
 - **Austritt:** Zugang sperren, das Postfach einer Kollegin übergeben (alle Ordner per
   `shareWith` mit allen Rechten außer Teilen), neue Mails weiterleiten und einmal am Tag
   automatisch antworten. Weiterleitung und Antwort sind ein Sieve-Skript
@@ -1403,6 +1409,15 @@ jeden einzelnen Termin mit eigener ID, `baseEventId` und `recurrenceId`.
   in `recurrenceOverrides` der Serie ein (beim Löschen als `excluded`).
 - **Ganze Serie**: Ändern oder Löschen über die `baseEventId`. Wird dabei die Uhrzeit geändert,
   verschiebt sich der Beginn der Serie um denselben Betrag.
+- **Dieser und alle folgenden** (`src/lib/series-split.ts`, `src/features/calendar/split-series.ts`):
+  Die Serie bekommt `until` eine Minute vor dem Termin (statt `count`), geänderte Termine ab dort
+  fallen aus `recurrenceOverrides`. Beim Ändern legt Kontext ab dem Termin eine neue Serie mit den
+  Angaben des Formulars an (neue `uid`); endete die alte nach einer Anzahl, bekommt die neue, was
+  davon übrig ist, damit es insgesamt so viele bleiben (ausgelassene und verschobene Termine
+  zählen mit, RFC 8984 §4.3.3). Die neue Serie wird zuerst angelegt, die alte erst danach beendet:
+  schlägt das Anlegen fehl, bleibt die alte ganz. Beides geht über `saveEvent`: Teilnehmer
+  bekommen die geänderte alte Serie und eine Einladung zur neuen, wie bei Outlook. Ist der Termin
+  der erste der Serie, ist das dasselbe wie „Alle Termine der Serie“.
 - Regeln, die das Formular nicht abbildet (etwa „letzter Freitag im Monat“ aus einem anderen
   Programm), bleiben beim Speichern unverändert.
 

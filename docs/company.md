@@ -17,7 +17,13 @@ Stalwarts Admin-Oberfläche und ohne IT-Kenntnisse.
 - **Gemeinsame Postfächer** mit Rechten je Person: kein Zugriff, nur lesen, lesen und senden;
   eigene Regeln je Postfach.
 - **Abwesenheit für Kollegen** (etwa bei Krankheit) mit Vertretung in der Antwort.
-- **Firmen-Signatur** mit `[Name]` und `[E-Mail]` für alle auf einmal.
+- **Firmen-Signatur** für alle auf einmal, mit `[Name]` und `[E-Mail]` je Absender und
+  `[Telefon]`, `[Mobil]`, `[Position]`, `[Abteilung]`: die trägt jede Person einmal unter
+  *Einstellungen → Profil* ein („Angaben für die Signatur“), und ihre Signatur ist sofort
+  aktualisiert. Eine Zeile, deren Angabe fehlt, fällt weg – niemand hat „Mobil:“ ohne Nummer.
+
+  ![Angaben für die Signatur im Profil: Position, Abteilung, Telefon, Mobil](screenshots/signature-details.png)
+
 - **Austritt:** Zugang sperren, Postfach einer Kollegin übergeben, neue Mails weiterleiten und
   automatisch antworten – gelöscht wird nichts.
 - **Verfügbarkeit im Kalender** für alle einschalten.

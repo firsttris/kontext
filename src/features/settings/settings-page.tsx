@@ -48,6 +48,7 @@ import type { settingsSections } from "@/routes/_app/settings";
 import { AppearanceSection } from "./appearance-section";
 import { ProfileSection } from "./profile-section";
 import { SecuritySection } from "./security-section";
+import { SignatureDetailsCard } from "./signature-details-card";
 import { SyncSection } from "./sync-section";
 import { VacationSection } from "./vacation-section";
 
@@ -101,7 +102,12 @@ const COMPANY: Entry[] = [
 ];
 
 const CONTENT: Record<Section, () => ReactNode> = {
-  profile: () => <ProfileSection />,
+  profile: () => (
+    <>
+      <ProfileSection />
+      <SignatureDetailsCard />
+    </>
+  ),
   signature: () => <SignatureSection />,
   accounts: () => <ExternalSection />,
   vacation: () => <VacationSection />,

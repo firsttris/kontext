@@ -14,8 +14,13 @@ Kontext steht, steht auch am iPhone, unter Android (DAVx⁵) und in Thunderbird.
 
 ## Kalender
 
-- **Tag, Woche, Monat und Liste**; Termine per Ziehen verschieben, wiederkehrende Termine mit
-  Ausnahmen („nur dieser“ oder „ganze Serie“).
+- **Tag, Woche, Monat und Liste**; Termine per Ziehen verschieben, wiederkehrende Termine ändern
+  oder löschen: „Nur dieser Termin“, **„Dieser und alle folgenden“** oder „Alle Termine der
+  Serie“. Ab einem Termin endet die bisherige Serie davor, und ab dort beginnt eine neue mit den
+  Änderungen – wie bei Google und Outlook. [Mehr](architecture.md#wiederkehrende-termine)
+
+  ![Termin einer Serie bearbeiten mit „Dieser und alle folgenden“](screenshots/series-following.png)
+
 - **Einladungen in der Mail:** Kommt eine Einladung per Mail – aus Outlook, Google, Apple oder von
   Kollegen –, steht über dem Text, was, wann und wo, ob der Termin schon im Kalender steht und
   was man geantwortet hat, dazu **Zusagen**, **Vielleicht**, **Absagen** und **In den Kalender**.

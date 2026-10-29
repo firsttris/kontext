@@ -18,13 +18,18 @@ vi.mock("@/features/contacts/use-suggestions", () => ({
   useAddressSuggestions: () => [anna],
 }));
 vi.mock("./availability-panel", () => ({ AvailabilityPanel: () => null }));
+const changeFollowing = vi.fn(async () => {});
+const updateEvent = vi.fn(async () => {});
+vi.mock("./split-series", () => ({
+  useSplitSeries: () => ({ changeFollowing, endBeforeDate: vi.fn(), isPending: false }),
+}));
 vi.mock("./place-queries", () => ({ usePlaceSuggestions: () => [] }));
 vi.mock("./queries", () => ({
   calendarLabel: () => "Kalender",
   useCalendarRefs: () => ({ calendars: [] }),
   useEventMutations: () => ({
     create: { mutateAsync: vi.fn(), isPending: false },
-    update: { mutateAsync: vi.fn(), isPending: false },
+    update: { mutateAsync: updateEvent, isPending: false },
   }),
   useMyAddresses: () => ["jonas@weber.test"],
 }));
@@ -93,5 +98,66 @@ describe("EventEditor reminder", () => {
     expect((screen.getByLabelText("Erinnern per") as HTMLSelectElement).value).toBe("email");
     fireEvent.change(screen.getByLabelText("Erinnerung"), { target: { value: "none" } });
     expect(screen.queryByLabelText("Erinnern per")).toBeNull();
+  });
+});
+
+describe("EventEditor series", () => {
+  const series = {
+    id: "s",
+    accountId: "a",
+    calendarIds: { c: true },
+    title: "Teambesprechung",
+    start: "2026-11-02T10:00:00",
+    timeZone: "Europe/Berlin",
+    duration: "PT1H",
+    recurrenceRule: { "@type": "RecurrenceRule" as const, frequency: "weekly" as const, count: 10 },
+  };
+  const date = (recurrenceId: string) => ({
+    ...series,
+    id: `i-${recurrenceId}`,
+    baseEventId: "s",
+    recurrenceId,
+    start: recurrenceId,
+    recurrenceRule: undefined,
+  });
+
+  it("starts a new series from this date with the changes", async () => {
+    const instance = date("2026-11-16T10:00:00");
+    render(<EventEditor event={instance} series={series} onDone={vi.fn()} onCancel={vi.fn()} />);
+    fireEvent.click(screen.getByLabelText("Dieser und alle folgenden"));
+    // The rule of the series is there to change, as for the whole series.
+    expect(screen.getByLabelText("Wiederholen")).toBeTruthy();
+    fireEvent.change(screen.getByLabelText("Titel"), { target: { value: "Jour fixe" } });
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: "Speichern" }));
+    });
+    expect(changeFollowing).toHaveBeenCalledWith(
+      instance,
+      series,
+      expect.objectContaining({
+        title: "Jour fixe",
+        start: "2026-11-16T10:00:00",
+        recurrenceRule: expect.objectContaining({ frequency: "weekly", count: 10 }),
+      }),
+    );
+  });
+
+  it("changes the whole series when it is its first date", async () => {
+    changeFollowing.mockClear();
+    updateEvent.mockClear();
+    render(
+      <EventEditor
+        event={date("2026-11-02T10:00:00")}
+        series={series}
+        onDone={vi.fn()}
+        onCancel={vi.fn()}
+      />,
+    );
+    fireEvent.click(screen.getByLabelText("Dieser und alle folgenden"));
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: "Speichern" }));
+    });
+    expect(changeFollowing).not.toHaveBeenCalled();
+    expect(updateEvent).toHaveBeenCalledWith(expect.objectContaining({ id: "s" }));
   });
 });

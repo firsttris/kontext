@@ -203,6 +203,42 @@ test.describe("Kalender", () => {
     await expect(page.getByText(title)).toHaveCount(0);
   });
 
+  test("ändert eine Serie ab einem Termin und löscht ab einem Termin", async ({ page }) => {
+    const title = unique("Montageplanung");
+    await login(page);
+    await page.goto(`/calendar?date=${tomorrow()}&event=new&start=${tomorrow()}T07:30`);
+    const dialog = page.getByRole("dialog");
+    await dialog.getByLabel("Titel").fill(title);
+    await dialog.getByLabel("Wiederholen").selectOption("daily");
+    await dialog.getByLabel("Endet").selectOption("count");
+    await dialog.getByLabel("Anzahl Termine").fill("5");
+    await dialog.getByRole("button", { name: "Speichern" }).click();
+    await expect(dialog).toHaveCount(0);
+
+    await page.goto(`/calendar?date=${tomorrow()}&view=agenda`);
+    const list = page.getByRole("list", { name: "Liste" });
+    await expect(list.getByText(title, { exact: true })).toHaveCount(5);
+
+    // From the third date on, a new title: two stay as they were, the series still has five.
+    await list.getByText(title, { exact: true }).nth(2).click();
+    await page.getByRole("dialog").getByRole("button", { name: "Bearbeiten" }).click();
+    await page.getByRole("dialog").getByLabel("Dieser und alle folgenden").check();
+    await page.getByRole("dialog").getByLabel("Titel").fill(`${title} Baustelle`);
+    await page.getByRole("dialog").getByRole("button", { name: "Speichern" }).click();
+    await expect(page.getByRole("dialog")).toHaveCount(0);
+    await expect(list.getByText(title, { exact: true })).toHaveCount(2);
+    await expect(list.getByText(`${title} Baustelle`)).toHaveCount(3);
+
+    // From the new series' second date on, gone; its first stays.
+    await list.getByText(`${title} Baustelle`).nth(1).click();
+    await page
+      .getByRole("dialog")
+      .getByRole("button", { name: "Diesen und alle folgenden löschen" })
+      .click();
+    await expect(list.getByText(`${title} Baustelle`)).toHaveCount(1);
+    await expect(list.getByText(title, { exact: true })).toHaveCount(2);
+  });
+
   test("verschiebt einen Termin per Ziehen und ändert seine Länge", async ({ page }) => {
     const title = unique("Kundentermin");
     await login(page);
@@ -479,6 +515,28 @@ test.describe("Kalender am Handy @phone", () => {
     await sheet.getByRole("button", { name: "Speichern" }).click();
     await expect(sheet).toHaveCount(0);
     expect(await alertsOf("jonas", title)).toEqual([{ offset: "-PT1H", action: "display" }]);
+  });
+
+  test("löscht eine Serie ab einem Termin", async ({ page }) => {
+    const title = unique("Frühschicht");
+    await login(page);
+    await page.goto(`/calendar?date=${tomorrow()}&event=new&start=${tomorrow()}T06:00`);
+    const sheet = page.getByRole("dialog");
+    await sheet.getByLabel("Titel").fill(title);
+    await sheet.getByLabel("Wiederholen").selectOption("daily");
+    await sheet.getByLabel("Endet").selectOption("count");
+    await sheet.getByLabel("Anzahl Termine").fill("3");
+    await sheet.getByRole("button", { name: "Speichern" }).click();
+    await expect(sheet).toHaveCount(0);
+    await page.goto(`/calendar?date=${tomorrow()}&view=agenda`);
+    const list = page.getByRole("list", { name: "Liste" });
+    await expect(list.getByText(title)).toHaveCount(3);
+    await list.getByText(title).nth(1).click();
+    await page
+      .getByRole("dialog")
+      .getByRole("button", { name: "Diesen und alle folgenden löschen" })
+      .click();
+    await expect(list.getByText(title)).toHaveCount(1);
   });
 
   test("Kalender verwalten", async ({ page }) => {

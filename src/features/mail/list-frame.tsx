@@ -59,6 +59,8 @@ type Props = {
   filters?: ReactNode;
   /** Shown when the list is empty. */
   empty?: string;
+  /** An action for the whole folder below the filters, e.g. "Papierkorb leeren". */
+  folderAction?: ReactNode;
   /** What dragging a row carries onto a folder; rows without it cannot be dragged. */
   dragMail?: (row: Row) => DraggedMail | undefined;
   /** The open folder, for actions on picked mails; none in combined lists. */
@@ -104,6 +106,7 @@ export const ListFrame = ({
   isDraft,
   filters,
   empty,
+  folderAction,
   dragMail,
   folderId,
   inJunk = false,
@@ -257,6 +260,7 @@ export const ListFrame = ({
             ]}
           />
         )}
+        {folderAction}
       </header>
       <DeviceOffer />
 
