@@ -78,6 +78,29 @@ describe("fileEvents", () => {
     expect(once[0]!.uid).toMatch(/^import-/);
     expect(again[0]!.uid).toBe(once[0]!.uid);
   });
+
+  it("finds one without UID again whatever order Stalwart gives its properties in", () => {
+    // CalendarEvent/parse returns the keys in another order each time (probed on 0.16.27).
+    const entry: ParsedEntry = {
+      title: "Ohne UID",
+      start: "2026-11-20T00:00:00",
+      showWithoutTime: true,
+      iCalendar: {
+        name: "vevent",
+        convertedProperties: { start: { parameters: { value: "DATE" } } },
+      },
+    };
+    const reordered: ParsedEntry = {
+      iCalendar: {
+        convertedProperties: { start: { parameters: { value: "DATE" } } },
+        name: "vevent",
+      },
+      showWithoutTime: true,
+      start: "2026-11-20T00:00:00",
+      title: "Ohne UID",
+    };
+    expect(fileEvents([reordered])[0]!.uid).toBe(fileEvents([entry])[0]!.uid);
+  });
 });
 
 describe("importPlan", () => {
