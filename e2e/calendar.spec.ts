@@ -105,6 +105,8 @@ test.describe("Kalender", () => {
     await dialog.getByLabel("Endet").selectOption("count");
     await dialog.getByLabel("Anzahl Termine").fill("3");
     await dialog.getByRole("button", { name: "Speichern" }).click();
+    // The dialog closes once the series is stored; navigating earlier cuts off the save.
+    await expect(dialog).toHaveCount(0);
 
     await page.goto(`/calendar?date=${tomorrow()}&view=agenda`);
     const list = page.getByRole("list", { name: "Liste" });
