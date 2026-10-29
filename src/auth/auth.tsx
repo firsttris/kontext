@@ -5,6 +5,7 @@
 import { createContext, type ReactNode, useCallback, useContext, useMemo, useState } from "react";
 import { signOutFrame } from "@/features/documents/frame-store";
 import { createJmapClient, type JmapClient } from "@/jmap/client";
+import { markSignedIn } from "./idle-store";
 import { signedOAuthQuery } from "./oauth-query";
 
 /** "continue": the sign-in was for an OAuth client (Schreibzeug, an agent); the browser goes on. */
@@ -95,6 +96,7 @@ export const AuthProvider = ({
     async (email: string, password: string, code?: string) => {
       const result = await signIn(email, password, code);
       if (result === "ok") {
+        markSignedIn();
         const next = makeClient();
         setClient(next);
         onChange(next);

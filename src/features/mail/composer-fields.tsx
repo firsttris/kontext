@@ -3,6 +3,7 @@ import {
   LockKeyhole,
   LockKeyholeOpen,
   MailCheck,
+  PackageCheck,
   Paperclip,
   Send,
   Signature,
@@ -184,6 +185,8 @@ export const ComposerActions = ({
   onDiscard,
   receipt,
   onReceipt,
+  delivery,
+  onDelivery,
   encrypt,
   onEncrypt,
   encryptBlocked,
@@ -196,6 +199,9 @@ export const ComposerActions = ({
 }: {
   receipt: boolean;
   onReceipt: (on: boolean) => void;
+  /** Ask the receiving server for a delivery report (DSN). */
+  delivery: boolean;
+  onDelivery: (on: boolean) => void;
   encrypt: boolean;
   onEncrypt: (on: boolean) => void;
   /** Why it cannot be encrypted now, or null. */
@@ -260,6 +266,17 @@ export const ComposerActions = ({
         className={receipt ? "bg-accent/10 text-accent-ink hover:bg-accent/15" : undefined}
       >
         <MailCheck size={16} />
+      </Button>
+      <Button
+        variant="ghost"
+        size="icon"
+        aria-label={m.mail_dsn_request()}
+        title={m.mail_dsn_request()}
+        aria-pressed={delivery}
+        onClick={() => onDelivery(!delivery)}
+        className={delivery ? "bg-accent/10 text-accent-ink hover:bg-accent/15" : undefined}
+      >
+        <PackageCheck size={16} />
       </Button>
       <Button
         variant="ghost"

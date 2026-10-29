@@ -15,11 +15,15 @@ export type CompanySettings = {
   /** The Pflichtangaben under every mail sent (legal-footer.ts); empty while there are none. */
   legalFooter: () => Promise<string>;
   saveLegalFooter: (text: string) => Promise<void>;
+  /** Abmelden nach Inaktivität in minutes (idle-logout.ts); 0 while it is off. */
+  idleLogout: () => Promise<number>;
+  saveIdleLogout: (minutes: number) => Promise<void>;
 };
 
 const SIGNATURE = "signature";
 const M365 = "m365";
 const LEGAL_FOOTER = "legalFooter";
+const IDLE_LOGOUT = "idleLogout";
 
 export const createCompanySettings = (db: Db, sealer: Sealer): CompanySettings => {
   const read = async (key: string): Promise<string | null> => {
@@ -50,5 +54,7 @@ export const createCompanySettings = (db: Db, sealer: Sealer): CompanySettings =
     saveM365: async (credentials) => write(M365, await sealer.seal(JSON.stringify(credentials))),
     legalFooter: async () => (await read(LEGAL_FOOTER)) ?? "",
     saveLegalFooter: (text) => write(LEGAL_FOOTER, text),
+    idleLogout: async () => Number(await read(IDLE_LOGOUT)) || 0,
+    saveIdleLogout: (minutes) => write(IDLE_LOGOUT, String(minutes)),
   };
 };

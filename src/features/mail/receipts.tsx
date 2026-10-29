@@ -10,8 +10,7 @@ import { useToast } from "@/components/ui/toast";
 import { CAPABILITIES, type JmapClient } from "@/jmap/client";
 import { setKeyword } from "@/jmap/mail";
 import type { EmailAddress, EmailDetail } from "@/jmap/types";
-import { displayName } from "@/lib/format";
-import { LOCALE } from "@/lib/locale";
+import { displayName, noteDate } from "@/lib/format";
 import { findRole } from "@/lib/mailboxes";
 import { isReceipt, MDN_SENT, receiptAnswered, receiptMessage } from "@/lib/mdn";
 import { m } from "@/paraglide/messages";
@@ -178,15 +177,6 @@ const confirmations = async (
   );
 };
 
-const when = (iso: string) =>
-  new Date(iso).toLocaleString(LOCALE, {
-    timeZone: "Europe/Berlin",
-    day: "numeric",
-    month: "short",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-
 /** At a mail one sent asking for receipts: who confirmed it, and when. */
 export const ReceiptsReceived = ({
   accountId,
@@ -214,7 +204,7 @@ export const ReceiptsReceived = ({
               .map((receipt) =>
                 m.mail_receipt_by({
                   name: displayName(receipt.from?.[0]),
-                  when: when(receipt.receivedAt),
+                  when: noteDate(receipt.receivedAt),
                 }),
               )
               .join(" · ")

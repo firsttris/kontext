@@ -132,6 +132,36 @@ Zeichen, wie es war: eingebettete Bilder und Schriften (`cid:`, `data:`), Text w
 verbietet eine Content-Security-Policy im Dokument des Rahmens (`mailDocument`) das Laden von
 außen, bis die Bilder erlaubt sind; die Druckseite (`src/lib/print.ts`) verbietet es immer.
 
+## Zustellbestätigung
+
+Ein Zustellbericht (DSN) kommt vom Mailserver, nicht vom Empfänger (`src/lib/envelope.ts`,
+`src/lib/dsn.ts`, `src/jmap/delivery-reports.ts`, `src/features/mail/delivery-reports.tsx`):
+
+- **Anfordern:** Mit dem Schalter in „Neue Mail“ bekommt die `EmailSubmission` einen eigenen
+  `envelope` (RFC 8621 §7): jeder Empfänger aus An, Cc und Bcc mit `NOTIFY=SUCCESS,FAILURE`,
+  `mailFrom` mit `RET=HDRS` (der Bericht bringt nur die Kopfzeilen zurück) und `ENVID` (RFC 3461).
+  Die Mail bekommt ihre `Message-ID` von Kontext; deren lokaler Teil ist die `ENVID`. Zusammen mit
+  „Rückgängig“ oder „Später senden“ steht `HOLDFOR`/`HOLDUNTIL` daneben.
+- **Stalwart 0.16:** nimmt die Parameter an und gibt sie an seine SMTP-Sitzung weiter
+  (`crates/jmap/src/submission/set.rs`); die Warteschlange schreibt den Bericht
+  (`crates/smtp/src/queue/dsn.rs`) – auch bei Zustellung im eigenen Server, mit
+  `Original-Envelope-Id` und den Kopfzeilen der Mail als `message/rfc822`. `dsnBlobIds` der
+  `EmailSubmission` bleibt leer; Kontext sucht die Berichte deshalb unter den Mails.
+- **Sehen:** Ob eine gesendete Mail einen Bericht angefordert hat, steht in ihrer
+  `EmailSubmission` (`EmailSubmission/query` mit `emailIds`). Gesucht wird nach Mails ab dem
+  Senden mit ihrem Betreff (Stalwart indiziert die zurückgegebenen Kopfzeilen, nicht den
+  Statusteil), seitenweise zu 50 bis zu 1000 Mails – ein Fehlerbericht kann Tage später kommen,
+  nach vielen Mails mit denselben Wörtern; behalten wird, was ein `multipart/report; report-type=delivery-status` ist und
+  dessen `Original-Envelope-Id` passt. Ein Bericht selbst zeigt oben seinen
+  `message/delivery-status`-Teil (RFC 3464) lesbar: je Empfänger zugestellt, nicht zugestellt,
+  verzögert oder ohne Bestätigung weitergereicht, die Zeit und den `Diagnostic-Code`; der Teil
+  steht nicht mehr unter den Anhängen.
+- **Grenzen:** Ob ein fremder Server einen Bericht schickt, entscheidet er; kann er kein DSN,
+  meldet der letzte Server, der es kann, „weitergereicht ohne Bestätigung“ (`relayed`).
+  Verschlüsselte und signierte Mails (die Kontext selbst baut und per `Email/import` verschickt)
+  fordern keinen Bericht an. Eine Mail ohne Betreff sucht ihren Bericht unter den ersten 50 Mails
+  nach dem Senden.
+
 ## Lesebestätigung
 
 Stalwart kennt JMAP-MDN (RFC 9007) nicht; Kontext baut Lesebestätigungen nach RFC 8098 selbst
@@ -250,6 +280,36 @@ mit einem eigenen API-Schlüssel an und erlaubt nur, was die Firmenverwaltung br
   „Rückgängig“ zurückgeholte Mail wurde mit ihm gesendet; beim Öffnen als Entwurf nimmt der
   Composer ihn heraus (`withoutLegalFooter`, am Block `data-legal-footer`). Angehängt wird
   er von der App, nicht vom Mailserver; darum gilt er nur für Mails aus Kontext.
+- **Abmelden nach Inaktivität:** die Zeit in Minuten in `company_setting` (Schlüssel
+  `idleLogout`, 0 = aus; erlaubt sind 15, 30, 60, 240 und 480), gelesen von jedem Angemeldeten
+  (`GET /api/company/idle-logout`), geändert nur von der Firmenverwaltung (`PUT`,
+  `server/company/idle-logout.ts`). Die App zählt selbst: `src/lib/idle-logout.ts` ist der Zustand
+  aktiv → Warnung → abgelaufen über dem Zeitpunkt der letzten Eingabe, `src/auth/idle-guard.tsx`
+  füttert ihn mit `pointerdown`, `pointermove`, `keydown`, `wheel`, `touchstart` und dem
+  Sichtbarwerden des Tabs (der holt erst einen im Hintergrund verspäteten Timer nach, zählt dann);
+  ein laufender Anruf zählt alle 20 Sekunden als Eingabe. Während der Frage zählen Eingaben nicht,
+  nur „Angemeldet bleiben“. Ist die Zeit um, speichert jeder offene Composer, was seit dem
+  letzten Autosave geändert wurde (`src/features/mail/draft-flush.ts`, höchstens 10 Sekunden
+  lang, damit eine hängende Anfrage die Abmeldung nicht aufhält), dann meldet die App über den
+  gewohnten Weg ab (`logout` in `src/auth/auth.tsx`). Auch während die Funktion aus ist, schreibt
+  die App den Zeitpunkt der letzten Eingabe: Schaltet die Firmenverwaltung sie ein, zählt die Zeit
+  ab dort und nicht ab der Anmeldung, die Stunden zurückliegen kann.
+
+  *Mehrere Tabs:* Der Zeitpunkt der letzten Eingabe steht in `localStorage`
+  (`kontext.lastActive`, höchstens einmal je Sekunde geschrieben); das `storage`-Ereignis sagt den
+  anderen Tabs Bescheid. So hält Tippen in einem Tab alle angemeldet, alle Tabs fragen zur selben
+  Zeit, und ein Tab, der nach Ablauf wieder geöffnet wird (Browser geschlossen statt abgemeldet),
+  meldet sofort ab. Eine Anmeldung setzt den Zeitpunkt neu. `BroadcastChannel` wäre die
+  Alternative gewesen, kennt aber nur offene Tabs – den geschlossenen Browser nicht. Wo der Browser
+  `localStorage` verweigert, zählt jeder Tab für sich.
+
+  *Nur im Browser, nicht auf dem Server:* Der Server sieht keine Eingaben, nur Anfragen – und die
+  App fragt auch ohne Menschen davor (Live-Verbindung, Push, Aktualisierungen). Ein Ablauf der
+  Better-Auth-Sitzung nach Untätigkeit bräuchte also eine Meldung „hier wurde getippt“ vom
+  Browser, also dasselbe Vertrauen in den Browser wie die Abmeldung dort, dazu eine eigene
+  Zählung je Sitzung, und die Sitzungen für IMAP, CalDAV und Agenten müssten davon ausgenommen
+  sein. Die Funktion schützt vor dem Nächsten am selben Rechner, nicht vor einem gestohlenen
+  Cookie; dafür reicht der Browser. Die Sitzung selbst bleibt bei 90 Tagen.
 - **Austritt:** Zugang sperren, das Postfach einer Kollegin übergeben (alle Ordner per
   `shareWith` mit allen Rechten außer Teilen), neue Mails weiterleiten und einmal am Tag
   automatisch antworten. Weiterleitung und Antwort sind ein Sieve-Skript

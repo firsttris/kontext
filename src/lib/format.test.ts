@@ -6,6 +6,7 @@ import {
   fullAddress,
   initials,
   listDate,
+  noteDate,
   weekdayHeads,
 } from "./format";
 
@@ -15,6 +16,12 @@ describe("weekdayHeads", () => {
   it("names the week from Monday in two letters, in the app's language", () => {
     expect(weekdayHeads("de-DE")).toEqual(["Mo", "Di", "Mi", "Do", "Fr", "Sa", "So"]);
     expect(weekdayHeads("en-GB")).toEqual(["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"]);
+  });
+});
+
+describe("noteDate", () => {
+  it("gives day, short month and time in Berlin", () => {
+    expect(noteDate("2026-10-29T17:24:00Z")).toBe("29. Okt., 18:24");
   });
 });
 

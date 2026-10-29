@@ -159,6 +159,18 @@ IMAP und SMTP.
 - **Senden rückgängig** (5 bis 30 Sekunden) und **später senden** („morgen 8 Uhr“) – der Server
   sendet, auch wenn der Rechner aus ist.
 - **Lesebestätigung** anfordern; eine erbetene beantwortet man mit einem Klick, nie von selbst.
+- **Zustellbestätigung** anfordern (das Paket mit Häkchen in „Neue Mail“): Die empfangenden
+  Server schicken einen Zustellbericht (DSN, RFC 3461) – der Nachweis, dass die Mail angenommen
+  wurde, oder warum nicht. Anders als die Lesebestätigung hängt sie nicht vom Empfänger ab,
+  sondern von seinem Mailserver; sie sagt nichts übers Lesen. Die gesendete Mail zeigt dann
+  „Zugestellt an … · Zeit“ (oder „Nicht zugestellt“, „Verzögert“); der Bericht selbst liegt im
+  Posteingang und zeigt oben, wen er betrifft, ob zugestellt, wann und – bei einem Fehler – die
+  Begründung des Servers. Verschlüsselte und signierte Mails gehen ohne diese Anfrage.
+
+  ![Ein Zustellbericht: an Petra Keller zugestellt, an p.keller nicht, mit der Begründung des Servers](screenshots/dsn.png)
+
+  Was Stalwart dabei tut und was nicht, steht unter
+  [Architektur → Zustellbestätigung](architecture.md#zustellbestatigung).
 - **Vertraulich senden** und **PGP/S/MIME**: siehe [Verschlüsselung](encryption.md).
 - **Aus Dokumente anhängen**, Anhänge **in Dokumente ablegen**: siehe [Dokumente](documents.md).
 
