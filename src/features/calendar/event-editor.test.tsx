@@ -17,6 +17,8 @@ vi.mock("@/features/documents/use-share-with", () => ({
 vi.mock("@/features/contacts/use-suggestions", () => ({
   useAddressSuggestions: () => [anna],
 }));
+const hint = vi.hoisted(() => ({ inside: null as string[] | null }));
+vi.mock("@/features/company/external-hint", () => ({ useInsideDomains: () => hint.inside }));
 vi.mock("./availability-panel", () => ({ AvailabilityPanel: () => null }));
 const changeFollowing = vi.fn(async () => {});
 const updateEvent = vi.fn(async () => {});
@@ -238,5 +240,52 @@ describe("EventEditor reminder of a new appointment", () => {
     expect(createEvent.mock.calls[0]?.[0].event.alerts).toMatchObject({
       reminder: { trigger: { offset: "-PT1H" }, action: "display" },
     });
+  });
+});
+
+describe("EventEditor invitations outside the company", () => {
+  afterEach(() => {
+    refs.calendars = [];
+    hint.inside = null;
+    createEvent.mockClear();
+  });
+
+  const invite = async (address: string) => {
+    refs.calendars = [
+      { key: "a/1", accountId: "a", isPersonal: true, mayWrite: true, calendar: { id: "1" } },
+    ];
+    render(<EventEditor start="2026-11-02T09:00" onDone={vi.fn()} onCancel={vi.fn()} />);
+    fireEvent.change(screen.getByLabelText("Titel"), { target: { value: "Abnahme" } });
+    const field = screen.getByRole("combobox", { name: "Teilnehmer" });
+    fireEvent.change(field, { target: { value: address } });
+    act(() => {
+      fireEvent.keyDown(field, { key: "Enter" });
+    });
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: "Speichern" }));
+    });
+  };
+
+  it("asks before inviting someone outside, and invites after the answer", async () => {
+    hint.inside = ["weber.test"];
+    await invite("kunde@example.test");
+    expect(createEvent).not.toHaveBeenCalled();
+    const question = screen.getByRole("dialog", { name: "An externe Empfänger senden?" });
+    expect(question.textContent).toContain("kunde@example.test");
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: "Trotzdem senden" }));
+    });
+    expect(createEvent).toHaveBeenCalledTimes(1);
+  });
+
+  it("does not ask for colleagues, nor while the hint is off", async () => {
+    hint.inside = ["weber.test"];
+    await invite("anna@weber.test");
+    expect(createEvent).toHaveBeenCalledTimes(1);
+    cleanup();
+    hint.inside = null;
+    await invite("kunde@example.test");
+    expect(screen.queryByRole("dialog")).toBeNull();
+    expect(createEvent).toHaveBeenCalledTimes(2);
   });
 });

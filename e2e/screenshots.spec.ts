@@ -1,6 +1,14 @@
 import { expect, type Page, test } from "@playwright/test";
 import { fillDemo } from "./demo-data";
-import { addAttendees, addMail, address, jmapAs, login, personalAccountId } from "./helpers";
+import {
+  addAttendees,
+  addMail,
+  address,
+  externalHintOn,
+  jmapAs,
+  login,
+  personalAccountId,
+} from "./helpers";
 import { calendarOnTheWeb } from "./ics-server";
 import { deliverInvitation } from "./invitation-mail";
 import { pairBox } from "./paired-box";
@@ -195,6 +203,25 @@ test.describe("Screenshots @screenshots", () => {
       .fill("Hallo, anbei das Angebot als Mail für die Unterlagen.");
     await expect(page.getByText(`${original}.eml`)).toBeVisible();
     await shot(page, "forward-eml");
+  });
+
+  // Switched on for this page only (externalHintOn): the setting at the server stays as it is.
+  test("Hinweis Extern", async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await externalHintOn(page, { partners: ["braun-steuer.test"] });
+    await login(page);
+    await page
+      .getByRole("list", { name: "Posteingang" })
+      .getByText("Angebot Wartungsvertrag 2027")
+      .click();
+    await mailShown(page);
+    await page.getByRole("link", { name: /Antworten an Petra/ }).click();
+    await page
+      .getByRole("textbox", { name: "Ihre Nachricht …" })
+      .fill("Hallo Frau Keller, Halle 2 nehmen wir mit auf. Viele Grüße, Jonas Weber");
+    await page.getByRole("button", { name: "Senden", exact: true }).click();
+    await expect(page.getByRole("dialog", { name: "An externe Empfänger senden?" })).toBeVisible();
+    await shot(page, "external-hint");
   });
 
   test("Erinnerung je Kalender", async ({ page }) => {
