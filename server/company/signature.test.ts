@@ -22,3 +22,42 @@ describe("signaturePatches", () => {
     });
   });
 });
+
+describe("signature details", () => {
+  const anna = [{ id: "a", name: "Anna Weber", email: "anna@weber.test" }];
+  const details = { phone: "07223 4711-12", mobile: "", position: "Büro", department: "" };
+
+  it("fills phone, mobile, position and department and drops lines left empty (text)", () => {
+    const text =
+      "[Name]\n[Position] · [Abteilung]\nTel. [Telefon]\nMobil [Mobil]\n\nWeber Haustechnik";
+    expect(signaturePatches({ html: "", text }, anna, details).a?.textSignature).toBe(
+      "Anna Weber\nTel. 07223 4711-12\n\nWeber Haustechnik",
+    );
+  });
+
+  it("drops a line of a paragraph with its <br>, and a paragraph of nothing else (HTML)", () => {
+    const html =
+      "<p>[Name]<br>[Position]<br>Mobil [Mobil]</p><p><strong>Abteilung:</strong> [Abteilung]</p><p></p><p>Tel. [Telefon]</p>";
+    expect(signaturePatches({ html, text: "" }, anna, details).a?.htmlSignature).toBe(
+      "<p>Anna Weber<br>Büro</p><p></p><p>Tel. 07223 4711-12</p>",
+    );
+  });
+
+  it("drops a first line too and escapes what people entered", () => {
+    expect(
+      signaturePatches({ html: "<p>Mobil [Mobil]<br>[Position]</p>", text: "" }, anna, {
+        ...details,
+        position: "Chef <&> Büro",
+      }).a?.htmlSignature,
+    ).toBe("<p>Chef &#60;&#38;&#62; Büro</p>");
+  });
+
+  it("keeps everything as it was without placeholders of details", () => {
+    expect(
+      signaturePatches({ html: "<p>[Name]</p><p></p><p>Weber</p>", text: "[Name]" }, anna).a,
+    ).toEqual({
+      htmlSignature: "<p>Anna Weber</p><p></p><p>Weber</p>",
+      textSignature: "Anna Weber",
+    });
+  });
+});

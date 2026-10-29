@@ -7,6 +7,10 @@ Steps that an update needs beyond raising the version are marked **Upgrade**.
 
 ## Unreleased
 
+- Company signature: besides `[Name]` and `[E-Mail]` the placeholders `[Telefon]`, `[Mobil]`,
+  `[Position]` and `[Abteilung]`. Each person enters them once under *Einstellungen → Profil*
+  ("Angaben für die Signatur"); saving updates their signature at once. A line whose placeholder
+  has no value is left out. The database gets the table `signature_detail` at start.
 - Calendar: "Feiertage eintragen" under *Kalender verwalten* puts the public holidays of a German
   state (all 16) into a calendar of their own, this year and next, all-day and shown as free;
   running it again adds only what is missing. The phone's opening hours take the state too

@@ -13,6 +13,7 @@ import { type Auth, createAuth, createGrants, type Grants } from "./auth";
 import { currentRoomEvents, type LiveKitConfig } from "./calls/livekit";
 import { createMeetRoutes } from "./calls/meet-routes";
 import { createCallRoutes, createCallState } from "./calls/routes";
+import type { SessionAccount } from "./categories/routes";
 import { createCategoryRoutes } from "./categories/routes";
 import { createCategoryStore } from "./categories/store";
 import { createChatFiles } from "./chat/files";
@@ -33,6 +34,8 @@ import {
 import { createCompanyRoutes } from "./company/routes";
 import { dohResolver } from "./company/security";
 import { createCompanySettings } from "./company/settings";
+import { createSignatureDetails } from "./company/signature-details";
+import { createSignatureDetailRoutes } from "./company/signature-details-routes";
 import { createSealer } from "./crypto";
 import { fromOwnPage } from "./csrf";
 import { createDavAuth } from "./dav/auth";
@@ -266,6 +269,12 @@ export const createApp = async (env: Env) => {
   app.on(["GET", "POST"], "/api/auth/*", (c) => auth.handler(c.req.raw));
   /** Fetching for external accounts imports with the server's key, like a move. */
   let externalImporter: Importer | null = null;
+  // The own details for the company signature; only with the key, which writes signatures.
+  let signatureDetailRoutes:
+    | ((
+        accountsOf: (request: Request) => Promise<SessionAccount[] | null>,
+      ) => ReturnType<typeof createSignatureDetailRoutes>)
+    | null = null;
   if (env.STALWART_ADMIN_KEY) {
     const request = createRequest(env.STALWART_URL, env.STALWART_ADMIN_KEY);
     const upload = createUpload(env.STALWART_URL, env.STALWART_ADMIN_KEY);
@@ -311,6 +320,9 @@ export const createApp = async (env: Env) => {
         ids: createFolderIds(db),
       });
     }
+    const signatureDetails = createSignatureDetails(db);
+    signatureDetailRoutes = (accountsOf) =>
+      createSignatureDetailRoutes({ store: signatureDetails, settings, mailstore, accountsOf });
     const company = createCompanyRoutes({
       categories,
       management,
@@ -323,6 +335,7 @@ export const createApp = async (env: Env) => {
           .catch((error: Error) => console.warn(`Dokumente: ${error.message}`));
       },
       settings,
+      signatureDetails,
       migrations: { jobs, runner, workDir },
       syncs: { syncs, runner: syncRunner, sealer: syncSealer, allowPlain, microsoft },
       currentEmail: async (request) =>
@@ -336,6 +349,7 @@ export const createApp = async (env: Env) => {
     app.route("/api/company", company);
   }
   const { accountsOf, infoOf, sendersOf } = createSessionInfo(env, auth, grants);
+  if (signatureDetailRoutes) app.route("/api/signature-details", signatureDetailRoutes(accountsOf));
   if (externalImporter) {
     // Other mailboxes of a person (Gmail, GMX, …): fetched into Kontext, sent through them.
     const store = createExternalStore(db);

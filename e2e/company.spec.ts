@@ -160,26 +160,59 @@ test.describe("Firmenverwaltung", () => {
     expect(vacation.textBody).toContain("Anna Weber (anna@weber-haustechnik.test)");
   });
 
-  test("Firmen-Signatur für alle", async ({ page }) => {
+  test("Firmen-Signatur für alle, mit den Angaben jeder Person", async ({ page, browser }) => {
     await login(page, "jonas");
     await page.goto("/settings?section=company-signature");
     const editor = page.getByRole("textbox", { name: "Firmen-Signatur" });
     await editor.click();
     await page.keyboard.type("[Name] · Weber Haustechnik · [E-Mail]");
+    await page.keyboard.press("Enter");
+    await page.keyboard.type("[Position], Tel. [Telefon]");
+    await page.keyboard.press("Enter");
+    await page.keyboard.type("Mobil [Mobil]");
     await page.getByRole("button", { name: "Speichern und für alle übernehmen" }).click();
     await page.getByRole("button", { name: "Ja, weiter" }).click();
     await expect(page.getByRole("status").filter({ hasText: "übernommen" })).toBeVisible();
 
     const sandra = jmapAs("sandra");
-    const { list } = await sandra.call<{ list: { email: string; textSignature: string }[] }>(
-      "Identity/get",
-      { accountId: await personalAccountId("sandra") },
-      ["urn:ietf:params:jmap:core", "urn:ietf:params:jmap:mail", "urn:ietf:params:jmap:submission"],
+    const signatures = async () =>
+      (
+        await sandra.call<{ list: { email: string; textSignature: string }[] }>(
+          "Identity/get",
+          { accountId: await personalAccountId("sandra") },
+          [
+            "urn:ietf:params:jmap:core",
+            "urn:ietf:params:jmap:mail",
+            "urn:ietf:params:jmap:submission",
+          ],
+        )
+      ).list;
+    const own = async () =>
+      (await signatures()).find((i) => i.email === address("sandra"))?.textSignature;
+    // Without her details, their lines are left out.
+    const before = await own();
+    expect(before).toContain(`Sandra Klein · Weber Haustechnik · ${address("sandra")}`);
+    expect(before).not.toContain("Tel.");
+    expect(before).not.toContain("Mobil");
+    expect((await signatures()).find((i) => i.email === address("info"))?.textSignature).toContain(
+      address("info"),
     );
-    expect(list.find((i) => i.email === address("sandra"))?.textSignature).toBe(
-      `Sandra Klein · Weber Haustechnik · ${address("sandra")}`,
-    );
-    expect(list.find((i) => i.email === address("info"))?.textSignature).toContain(address("info"));
+
+    // Sandra enters hers once; her signature has them at once, the empty mobile stays out.
+    const her = await (await browser.newContext()).newPage();
+    await login(her, "sandra");
+    await her.goto("/settings?section=profile");
+    const card = her.getByRole("region", { name: "Angaben für die Signatur" });
+    await card.getByLabel("Position").fill("Kundendienst");
+    await card.getByLabel("Telefon").fill("07223 4711-30");
+    await card.getByRole("button", { name: "Speichern" }).click();
+    await expect(her.getByRole("status")).toHaveText("Gespeichert, die Signatur ist aktualisiert.");
+    await expect.poll(own).toContain("Kundendienst, Tel. 07223 4711-30");
+    expect(await own()).not.toContain("Mobil");
+    // Empty again for the other tests.
+    await her.request.put("/api/signature-details", {
+      data: { phone: "", mobile: "", position: "", department: "" },
+    });
 
     // empty again, so the other tests start without signatures
     await editor.click();

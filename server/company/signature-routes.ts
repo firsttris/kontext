@@ -3,7 +3,7 @@ import { Hono } from "hono";
 import { z } from "zod";
 import { bad, bodyOf, type CompanyDeps, type Env } from "./context";
 import type { Mailstore } from "./mailstore";
-import { type SignatureTemplate, signaturePatches } from "./signature";
+import { type SignatureDetails, type SignatureTemplate, signaturePatches } from "./signature";
 
 const template = z.object({
   html: z.string().max(50_000),
@@ -17,12 +17,14 @@ export const applySignature = async (
   mailstore: Mailstore,
   accountId: string,
   signature: SignatureTemplate,
+  details?: SignatureDetails,
 ): Promise<boolean> => {
   const identities = await mailstore.listIdentities(accountId);
-  return (await mailstore.updateIdentities(accountId, signaturePatches(signature, identities))).ok;
+  const patches = signaturePatches(signature, identities, details);
+  return (await mailstore.updateIdentities(accountId, patches)).ok;
 };
 
-export const signatureRoutes = ({ mailstore, settings }: CompanyDeps) => {
+export const signatureRoutes = ({ mailstore, settings, signatureDetails }: CompanyDeps) => {
   const app = new Hono<Env>();
 
   app.get("/", async (c) => c.json((await settings.signature()) ?? { html: "", text: "" }));
@@ -35,7 +37,9 @@ export const signatureRoutes = ({ mailstore, settings }: CompanyDeps) => {
     if (!body.apply) return c.json({ updated: 0 });
     const people = c.get("loaded").company.employees.filter((e) => e.active);
     const results = await Promise.all(
-      people.map((person) => applySignature(mailstore, person.id, signature)),
+      people.map(async (person) =>
+        applySignature(mailstore, person.id, signature, await signatureDetails.of(person.id)),
+      ),
     );
     const failed = results.filter((ok) => !ok).length;
     if (failed) return bad(`Bei ${failed} Personen nicht übernommen.`);
