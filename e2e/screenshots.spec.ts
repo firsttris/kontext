@@ -1,6 +1,7 @@
 import { expect, type Page, test } from "@playwright/test";
 import { fillDemo } from "./demo-data";
-import { addAttendees, addMail, login } from "./helpers";
+import { addAttendees, addMail, address, login } from "./helpers";
+import { deliverInvitation } from "./invitation-mail";
 import { pairBox } from "./paired-box";
 import { giveKey } from "./pgp-key";
 
@@ -84,6 +85,25 @@ test.describe("Screenshots @screenshots", () => {
     ).toBeVisible();
     await shot(page, "calendar-dark");
     await context.close();
+  });
+
+  test("Einladung in der Mail", async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await login(page);
+    await deliverInvitation(address("jonas"), {
+      uid: crypto.randomUUID(),
+      title: "Abstimmung Elektroplanung Neubau",
+    });
+    await page.reload();
+    await page
+      .getByRole("list", { name: "Posteingang" })
+      .getByText("Einladung: Abstimmung Elektroplanung Neubau")
+      .first()
+      .click();
+    await expect(page.getByRole("region", { name: "Einladung" })).toContainText(
+      "Noch nicht beantwortet",
+    );
+    await shot(page, "mail-invitation");
   });
 
   test("Angaben für die Signatur", async ({ page }) => {
