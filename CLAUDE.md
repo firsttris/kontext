@@ -81,6 +81,9 @@ split it past ~400 lines, a function past ~80. A refactor changes no behaviour.
   admin, passkeys) go there.
 - Shared mailboxes are Stalwart group accounts: every member sees the group's account in the JMAP
   session (`isPersonal: false`) and can send as its address.
+- The demo (`src/demo/`, `bun run build:demo`, on GitHub Pages under `/kontext/demo/`) is the app
+  without a server: it answers `/jmap` and `/api` in the page from the seed. A new `/api` route the
+  app asks for on start needs an answer in `src/demo/api.ts`.
 - Test data: `dev/seed-data.ts` ("Weber Haustechnik"). Logins `jonas@`, `anna@`, `sandra@`,
   `max@weber-haustechnik.test`, password `kaffee-werkbank-kontext` (`dev/config.ts`). Shared
   mailboxes `info@` and `rechnung@`.

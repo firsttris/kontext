@@ -131,6 +131,30 @@ Einladung. Das Skript ist idempotent – es ergänzt nur, was fehlt.
 | `anna@weber-haustechnik.test` (Büro, info@, rechnung@)  | dasselbe                    |
 | `sandra@…`, `max@…`                                     | dasselbe                    |
 
+## Demo
+
+Die [Demo](https://firsttris.github.io/kontext/demo/) ist die App ohne Server: Ein eigener Build
+(`bun run build:demo`, Vite-Modus `demo`, nach `dist-demo/`) beantwortet die Anfragen an `/jmap`
+und `/api` in der Seite selbst (`src/demo/`). Die Daten sind die Testdaten aus `dev/seed-data.ts`
+ohne die XSS-Testmail, als JMAP-Objekte im Browser; Neu laden fängt von vorn an. Man meldet sich
+mit einem Klick als Jonas, Anna, Sandra oder Max an.
+
+- **Was geht:** Mail – Ordner, gemeinsame Postfächer, Lesen mit Anhängen und PDF-Vorschau,
+  Suchen, Markieren, Kategorien, Verschieben (auch zwischen Postfächern), Entwürfe und Senden mit
+  „Rückgängig“ und „Später senden“. Eine Mail an Kollegen oder info@/rechnung@ kommt dort an;
+  alles andere geht nirgendwohin.
+- **Was noch fehlt:** Kalender, Kontakte, Aufgaben, Chat und die übrigen Module öffnen leer.
+  Methoden, die die Demo nicht kennt, beantwortet sie wie ein leerer Server (`src/demo/jmap.ts`);
+  Module, die einen eigenen Dienst brauchen (Anrufe, Telefon, Dokumente mit Schreibzeug), sind
+  wie auf einem Server ohne sie abgeschaltet (`src/demo/api.ts`).
+- **Neue Server-Route:** Fragt die App beim Start eine neue `/api`-Route ab, braucht sie in
+  `src/demo/api.ts` eine Antwort, sonst steht `[demo] GET /api/…` in der Konsole.
+- **Ausprobieren:** `bun run build:demo`, dann `dist-demo/` unter `/kontext/demo/` ausliefern
+  (oder mit `DEMO_BASE=/ bun run build:demo` unter `/`). Die Routen stehen hinter `#`, weil GitHub
+  Pages keine Weiterleitung auf `index.html` kennt; einen Service Worker hat die Demo nicht.
+- **Veröffentlicht** wird sie vom Docs-Workflow bei jedem Push auf `main`, neben der Doku unter
+  `/kontext/demo/`.
+
 ## Tests
 
 |                 | Befehl                |                                                                                                             |

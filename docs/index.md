@@ -20,7 +20,7 @@ hide:
 Dokumente – in einer App, im Browser und am Handy. Deine Daten bleiben bei dir, und zehn
 Mitarbeiter kosten so viel wie einer.</p>
 
-[Rundgang starten](#rundgang){ .md-button .md-button--primary } [Alle Funktionen im Detail](ueberblick.md){ .md-button }
+[Rundgang starten](#rundgang){ .md-button .md-button--primary } [Demo ausprobieren](https://firsttris.github.io/kontext/demo/){ .md-button } [Alle Funktionen im Detail](ueberblick.md){ .md-button }
 
 </div>
 

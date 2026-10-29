@@ -25,7 +25,9 @@ const proxy = {
   "/rtc": { target: livekit, ws: true },
 };
 
-export default defineConfig({
+export default defineConfig(({ mode }) => ({
+  // The demo (src/demo) is served from GitHub Pages next to the docs.
+  base: mode === "demo" ? (process.env.DEMO_BASE ?? "/kontext/demo/") : "/",
   plugins: [
     // The language chosen in Einstellungen (this device, src/lib/locale.ts), else the browser's,
     // else German.
@@ -61,6 +63,8 @@ export default defineConfig({
         maximumFileSizeToCacheInBytes: 4_000_000,
       },
       devOptions: { enabled: false },
+      // The demo is no app to install; its requests stay in the page.
+      disable: mode === "demo",
       manifest: {
         id: "/",
         name: "Kontext",
@@ -127,6 +131,7 @@ export default defineConfig({
   ],
   build: {
     target: "es2022",
+    outDir: mode === "demo" ? "dist-demo" : "dist",
     rolldownOptions: {
       output: {
         // Fixed names for the big libraries loaded only on demand, which the service worker leaves
@@ -157,4 +162,4 @@ export default defineConfig({
     ],
     setupFiles: ["./src/test-setup.ts"],
   },
-});
+}));

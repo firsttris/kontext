@@ -21,7 +21,7 @@ hide:
 documents – in one app, in the browser and on the phone. Your data stays with you, and ten people
 cost as much as one.</p>
 
-[Take the tour](#rundgang){ .md-button .md-button--primary } [Every feature in detail](ueberblick.md){ .md-button }
+[Take the tour](#rundgang){ .md-button .md-button--primary } [Try the demo](https://firsttris.github.io/kontext/demo/){ .md-button } [Every feature in detail](ueberblick.md){ .md-button }
 
 </div>
 

@@ -1,12 +1,16 @@
 /**
  * Real one-page PDFs for the seed, so attachment previews have something to draw: a coloured
  * letterhead, a title and lines of text in Helvetica (PDF 1.4, ISO 32000-1 §7.5 file structure).
- * Text is WinAnsi, so German umlauts work; the file is returned as bytes.
+ * Text is WinAnsi, so German umlauts work; the file is returned as bytes. No Node APIs: the demo
+ * (src/demo) builds the same files in the browser.
  */
 
 export type PdfLine = { text: string; size?: number; bold?: boolean; gap?: number };
 
 const pdfString = (text: string) => text.replace(/[\\()]/g, "\\$&");
+
+/** Latin-1: one character is one byte. */
+const latin1 = (text: string) => Uint8Array.from(text, (char) => char.charCodeAt(0));
 
 export const simplePdf = ({
   letterhead,
@@ -38,7 +42,7 @@ export const simplePdf = ({
     "<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 4 0 R /F2 5 0 R >> >> /Contents 6 0 R >>",
     "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>",
     "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding >>",
-    `<< /Length ${Buffer.byteLength(content, "latin1")} >>\nstream\n${content}\nendstream`,
+    `<< /Length ${latin1(content).length} >>\nstream\n${content}\nendstream`,
   ];
   // Latin-1: one character is one byte, so string lengths are byte offsets.
   let pdf = "%PDF-1.4\n";
@@ -51,5 +55,5 @@ export const simplePdf = ({
   pdf += `xref\n0 ${objects.length + 1}\n0000000000 65535 f \n`;
   pdf += offsets.map((offset) => `${String(offset).padStart(10, "0")} 00000 n \n`).join("");
   pdf += `trailer\n<< /Size ${objects.length + 1} /Root 1 0 R >>\nstartxref\n${xref}\n%%EOF\n`;
-  return Buffer.from(pdf, "latin1");
+  return latin1(pdf);
 };
