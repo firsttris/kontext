@@ -205,6 +205,34 @@ test.describe("Screenshots @screenshots", () => {
     await shot(page, "forward-eml");
   });
 
+  test("Pflichtangaben unter der Mail", async ({ page }) => {
+    // Answered for this page only: set at the server, other tests' mails would carry them.
+    await page.route("**/api/company/legal-footer", (route) =>
+      route.request().method() === "GET"
+        ? route.fulfill({
+            json: {
+              text: "Weber Haustechnik GmbH · Sitz: Bühl (Baden) · Amtsgericht Mannheim HRB 712345\nGeschäftsführer: Jonas Weber · USt-IdNr. DE 287 654 321",
+            },
+          })
+        : route.fallback(),
+    );
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await login(page);
+    await page.getByRole("link", { name: "Neue Mail" }).first().click();
+    await page.getByRole("combobox", { name: "An" }).fill("petra");
+    await page.getByRole("option", { name: /Petra Keller/ }).click();
+    await page.getByLabel("Betreff").fill("Termin Heizungswartung");
+    await page
+      .getByRole("textbox", { name: "Ihre Nachricht …" })
+      .fill(
+        "Hallo Frau Keller,\nwir kommen am Dienstag gegen 9 Uhr zur Wartung Ihrer Heizung.\nViele Grüße\nJonas Weber",
+      );
+    await expect(page.getByRole("region", { name: "Pflichtangaben der Firma" })).toBeVisible();
+    await shot(page, "legal-footer");
+    // No draft left behind.
+    await page.getByRole("button", { name: "Verwerfen" }).click();
+  });
+
   // Switched on for this page only (externalHintOn): the setting at the server stays as it is.
   test("Hinweis Extern", async ({ page }) => {
     await page.setViewportSize({ width: 1440, height: 900 });

@@ -84,6 +84,7 @@ const setup = (
 ) => {
   const { welcomeError } = options;
   const fake = fakeManagement(options);
+  const footer = { text: "" };
   const ended: string[] = [];
   const welcomed: { newcomer: string; people: string[] }[] = [];
   const shownToAll: string[][] = [];
@@ -111,6 +112,10 @@ const setup = (
       saveSignature: async () => {},
       m365: async () => null,
       saveM365: async () => {},
+      legalFooter: async () => footer.text,
+      saveLegalFooter: async (text) => {
+        footer.text = text;
+      },
     },
     externalHint: {
       read: async () => externalHint,
@@ -151,7 +156,7 @@ const setup = (
       body: body === undefined ? undefined : JSON.stringify(body),
     });
   const hint = () => externalHint;
-  return { ...fake, ended, welcomed, shownToAll, changedMailboxes, send, hint };
+  return { ...fake, ended, welcomed, shownToAll, changedMailboxes, footer, send, hint };
 };
 
 type Setup = ReturnType<typeof setup>;
@@ -353,5 +358,29 @@ describe("Firmenverwaltung", () => {
     const wrong = await chef.send("PUT", "/external-hint", { enabled: true, partners: ["kein"] });
     expect(wrong.status).toBe(400);
     expect(chef.hint().partners).toEqual(["partner-bau.de", "steuer.de"]);
+  });
+
+  it("lets everyone signed in read the Pflichtangaben, only the admin change them", async () => {
+    const anna = setup("anna@firma.de");
+    anna.footer.text = "Firma GmbH · HRB 1";
+    expect(await (await anna.send("GET", "/legal-footer")).json()).toEqual({
+      text: "Firma GmbH · HRB 1",
+    });
+    expect((await anna.send("PUT", "/legal-footer", { text: "x" })).status).toBe(403);
+    expect(anna.footer.text).toBe("Firma GmbH · HRB 1");
+    expect((await setup(null).send("GET", "/legal-footer")).status).toBe(401);
+  });
+
+  it("keeps the Pflichtangaben tidied, and empty switches them off", async () => {
+    const chef = setup("chef@firma.de");
+    const saved = await chef.send("PUT", "/legal-footer", {
+      text: "  Firma GmbH  \r\nHRB 1\n\n\n",
+    });
+    expect(await saved.json()).toEqual({ text: "Firma GmbH\nHRB 1" });
+    expect(chef.footer.text).toBe("Firma GmbH\nHRB 1");
+    await chef.send("PUT", "/legal-footer", { text: "" });
+    expect(chef.footer.text).toBe("");
+    expect((await chef.send("PUT", "/legal-footer", { text: "x".repeat(2001) })).status).toBe(400);
+    expect((await chef.send("PUT", "/legal-footer", {})).status).toBe(400);
   });
 });
