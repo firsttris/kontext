@@ -25,11 +25,13 @@ import { type ComposeMode, sharedSenderName, startCompose } from "@/lib/compose"
 import { savedBlobs, withSavedBlob } from "@/lib/draft-blobs";
 import { htmlToText, sanitizeMailHtml, textToHtml } from "@/lib/html";
 import { markCids } from "@/lib/inline-images";
+import { withLegalFooter, withoutLegalFooter } from "@/lib/legal-footer";
 import { findRole } from "@/lib/mailboxes";
 import { pgpKind } from "@/lib/pgp-mail";
 import { holdUntil, sendTimeLabel } from "@/lib/schedule";
 import { signedOverEncrypted, smimeKind } from "@/lib/smime";
 import { m } from "@/paraglide/messages";
+import { useLegalFooter } from "../company/legal-footer";
 import { useAddressSuggestions } from "../contacts/use-suggestions";
 import { useAutocryptHeader } from "../pgp/autocrypt";
 import { useEncryptedSend } from "../pgp/use-encrypted-send";
@@ -40,6 +42,7 @@ import { EditorToolbar } from "./editor-toolbar";
 import { useExternalQuestion } from "./external-question";
 import { ForgottenAttachment } from "./forgotten-attachment";
 import { inlineParts, useInlineImageUrls } from "./inline-image-urls";
+import { LegalFooterPreview } from "./legal-footer-preview";
 import { type OpenedMail, openedMail, shownSubject } from "./opened-mails";
 import { useEmail } from "./queries";
 import { richText } from "./rich-text";
@@ -201,8 +204,9 @@ export const Composer = ({ accountId, mode, sourceEmailId, prefill }: Props) => 
           toast.show(m.mail_forward_encrypted_closed());
         }
       } else if (mode === "draft" && body.kind === "html") {
-        // A draft keeps its pictures: shown from local URLs, marked with their Content-ID.
-        originalHtml = sanitizeMailHtml(markCids(body.value), {
+        // A draft keeps its pictures: shown from local URLs, marked with their Content-ID. A mail
+        // taken back was sent with the Pflichtangaben; they go on again when it is sent.
+        originalHtml = sanitizeMailHtml(markCids(withoutLegalFooter(body.value)), {
           allowRemote: false,
           cidUrls: draftImages.urls,
         }).html;
@@ -321,6 +325,7 @@ export const Composer = ({ accountId, mode, sourceEmailId, prefill }: Props) => 
     identity?.email,
     [...to, ...cc, ...bcc].map((address) => address.email),
   );
+  const legalFooter = useLegalFooter();
   const outgoing = ({ draft = false } = {}) => {
     const { html, images } = pics.outgoing(editor?.getHTML() ?? "", { draft });
     return {
@@ -476,14 +481,16 @@ export const Composer = ({ accountId, mode, sourceEmailId, prefill }: Props) => 
             ? { seconds: undoSeconds }
             : undefined;
       const folders = { draftsId: drafts.id, sentId: sent.id };
-      const refused = externalId ? await sendExternal(externalId, outgoing(), folders) : [];
+      // The Pflichtangaben go with the mail sent, never into a draft (autosave uses `outgoing`).
+      const mail = withLegalFooter(outgoing(), legalFooter);
+      const refused = externalId ? await sendExternal(externalId, mail, folders) : [];
       const held = externalId
         ? null
         : encrypt
-          ? await pgp.send(outgoing(), folders, hold)
+          ? await pgp.send(mail, folders, hold)
           : sign
-            ? await pgp.sendSigned(outgoing(), folders, hold)
-            : await sendEmail(client, outgoing(), folders, hold);
+            ? await pgp.sendSigned(mail, folders, hold)
+            : await sendEmail(client, mail, folders, hold);
       // Links and other mailboxes go out at once: nothing to take back, nothing held.
       const kept = held && !(encrypt && pgp.viaLink.length) ? held : null;
       if ((mode === "reply" || mode === "replyAll") && sourceEmailId) {
@@ -648,6 +655,7 @@ export const Composer = ({ accountId, mode, sourceEmailId, prefill }: Props) => 
           editor={editor}
           className="editor-content min-h-[160px] flex-1 overflow-y-auto"
         />
+        <LegalFooterPreview footer={legalFooter} />
         <AttachmentList
           attachments={attachments}
           uploading={uploading}

@@ -24,6 +24,14 @@ Stalwarts Admin-Oberfläche und ohne IT-Kenntnisse.
 
   ![Angaben für die Signatur im Profil: Position, Abteilung, Telefon, Mobil](screenshots/signature-details.png)
 
+- **Pflichtangaben** unter *Einstellungen → Firma → Pflichtangaben*: was unter jeder
+  geschäftlichen Mail stehen muss – Firma mit Rechtsform, Sitz, Registergericht und
+  Handelsregisternummer, Geschäftsführer, USt-IdNr. (§ 35a GmbHG, § 37a HGB). Einmal eingetragen,
+  setzt Kontext den Text beim Senden unter jede Mail aller Mitarbeiter, auch aus gemeinsamen
+  Postfächern, verschlüsselt und signiert; anders als die Signatur kann ihn niemand weglassen oder
+  ändern. Nur Text, Zeilenumbrüche bleiben; leer (so ist es zu Beginn) fügt Kontext nichts an.
+  Wer mit einem anderen Mailprogramm über IMAP und SMTP sendet (etwa am Handy), bekommt ihn nicht:
+  dort kann Kontext nichts anfügen.
 - **Austritt:** Zugang sperren, Postfach einer Kollegin übergeben, neue Mails weiterleiten und
   automatisch antworten – gelöscht wird nichts.
 - **Verfügbarkeit im Kalender** für alle einschalten.

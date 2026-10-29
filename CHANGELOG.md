@@ -28,6 +28,12 @@ Steps that an update needs beyond raising the version are marked **Upgrade**.
   "Anhang vergessen?" when both come. Inside are the company's own domains (Stalwart's
   `x:Domain`) and the partner domains entered there, each with its subdomains. The database gets
   the table `partner_domain` (migration `0038_partner_domains`) at start.
+- Company: "Pflichtangaben" – a legal footer (register court and number, managing directors,
+  registered office, VAT ID …) set once under *Einstellungen → Firma → Pflichtangaben* and put
+  under every mail sent, as text and HTML, encrypted and signed mails and the mail with a
+  "Vertraulich senden" link included. While writing it shows below the text, not editable; drafts
+  never carry it. Kept as a `company_setting` row, so no migration; empty (the default) adds
+  nothing.
 - Mail: pictures in the text – by the "Bild einfügen" button, pasted (a screenshot) or dropped
   in, and resized by their corners. They go out as inline images (`cid:` in multipart/related),
   so Outlook, Gmail and Apple Mail show them in the text; drafts keep them. Files of a reopened

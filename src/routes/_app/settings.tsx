@@ -18,6 +18,7 @@ export const settingsSections = [
   "employees",
   "mailboxes",
   "company-signature",
+  "company-legal",
   "company-chat",
   "company-security",
   "company-external",
