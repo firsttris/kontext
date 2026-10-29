@@ -1,6 +1,14 @@
 import { readFile } from "node:fs/promises";
 import { expect, type Page, test } from "@playwright/test";
-import { createContact, listAddressBooks } from "../src/jmap/contacts";
+import {
+  createAddressBook,
+  createContact,
+  deleteAddressBook,
+  deleteContact,
+  listAddressBooks,
+  listContacts,
+  shareAddressBook,
+} from "../src/jmap/contacts";
 import { addMail, jmapAs, login, personalAccountId, unique } from "./helpers";
 
 test.describe("Kontakte", () => {
@@ -438,5 +446,134 @@ test.describe("Zusammenführen und korrigieren", () => {
       page.getByRole("heading", { name: "Zusammenführen und korrigieren" }),
     ).toBeVisible();
     await expect(udo).toHaveCount(0);
+  });
+});
+
+/** The cards of Jonas' default address book, as the server has them. */
+const jonasCards = async () => {
+  const client = jmapAs("jonas");
+  const accountId = await personalAccountId("jonas");
+  const book = (await listAddressBooks(client, accountId)).find((b) => b.isDefault)!;
+  return { client, accountId, cards: await listContacts(client, accountId, book.id) };
+};
+
+/** Takes away what a test left behind, so parallel tests see the seed's contacts. */
+const removeCards = async (match: string) => {
+  const { client, accountId, cards } = await jonasCards();
+  for (const card of cards.filter((c) => JSON.stringify(c.name).includes(match)))
+    await deleteContact(client, accountId, card.id);
+};
+
+test.describe("Mehrere Kontakte", () => {
+  test("wählt drei, nimmt sie in eine Gruppe, exportiert und löscht sie", async ({ page }) => {
+    const id = Date.now().toString(36);
+    const surname = `Menge${id}`;
+    const group = `Rundbrief ${id}`;
+    await addContacts([
+      { ...named("Ada", surname), emails: { e: { address: `ada-${id}@menge.test` } } },
+      named("Bea", surname),
+      named("Cem", surname),
+      { kind: "group", name: { full: group }, members: {} },
+    ]);
+    try {
+      await login(page);
+      await page.goto("/contacts");
+      await page.getByRole("searchbox", { name: "Kontakte suchen" }).fill(surname);
+
+      // The box picks one, Shift on another line the range in between.
+      await page.getByRole("checkbox", { name: `Ada ${surname} auswählen` }).click();
+      await expect(page.getByText("1 ausgewählt")).toBeVisible();
+      await page.getByRole("link", { name: new RegExp(`Cem ${surname}`) }).click({
+        modifiers: ["Shift"],
+      });
+      await expect(page.getByText("3 ausgewählt")).toBeVisible();
+      await expect(page).not.toHaveURL(/id=/);
+
+      await page.getByRole("button", { name: "Zu Gruppe hinzufügen" }).click();
+      await page.getByRole("menuitem", { name: group }).click();
+      await expect(page.getByRole("status")).toHaveText(`3 zu „${group}“ hinzugefügt.`);
+      await expect
+        .poll(async () => {
+          const card = (await jonasCards()).cards.find((c) => c.name?.full === group);
+          return Object.keys(card?.members ?? {}).length;
+        })
+        .toBe(3);
+
+      const [download] = await Promise.all([
+        page.waitForEvent("download"),
+        page.getByRole("button", { name: "Als vCard exportieren" }).click(),
+      ]);
+      expect(download.suggestedFilename()).toBe("Kontakte.vcf");
+      const content = await readFile(await download.path(), "utf8");
+      for (const given of ["Ada", "Bea", "Cem"])
+        expect(content).toContain(`FN:${given} ${surname}`);
+      expect(content).toContain(`ada-${id}@menge.test`);
+
+      page.once("dialog", (dialog) => {
+        expect(dialog.message()).toBe("3 Kontakte löschen?");
+        void dialog.accept();
+      });
+      await page.getByRole("button", { name: "Löschen", exact: true }).click();
+      await expect(page.getByRole("status").filter({ hasText: "gelöscht" })).toHaveText(
+        "3 Kontakte gelöscht.",
+      );
+      await expect(page.getByRole("link", { name: new RegExp(surname) })).toHaveCount(0);
+      await expect(page.getByText("ausgewählt")).toHaveCount(0);
+    } finally {
+      await removeCards(id);
+    }
+  });
+
+  test("am Handy: langes Drücken beginnt, ein Tipp wählt weitere @phone", async ({ page }) => {
+    const id = Date.now().toString(36);
+    const surname = `Finger${id}`;
+    await addContacts([named("Ole", surname), named("Pia", surname)]);
+    try {
+      await login(page);
+      await page.getByRole("button", { name: "Mehr" }).click();
+      await page.getByRole("menuitem", { name: "Kontakte" }).click();
+      await page.getByRole("searchbox", { name: "Kontakte suchen" }).fill(surname);
+
+      const line = page.getByRole("link", { name: new RegExp(`Ole ${surname}`) });
+      const at = (await line.boundingBox())!;
+      const point = { clientX: at.x + at.width / 2, clientY: at.y + at.height / 2 };
+      await line.dispatchEvent("pointerdown", { pointerType: "touch", isPrimary: true, ...point });
+      await expect(page.getByText("1 ausgewählt")).toBeVisible();
+      await line.dispatchEvent("pointerup", { pointerType: "touch", isPrimary: true, ...point });
+      await page.getByRole("link", { name: new RegExp(`Pia ${surname}`) }).tap();
+      await expect(page.getByText("2 ausgewählt")).toBeVisible();
+      await expect(page).not.toHaveURL(/id=/);
+
+      page.once("dialog", (dialog) => void dialog.accept());
+      await page.getByRole("button", { name: "Löschen", exact: true }).click();
+      await expect(page.getByRole("status")).toHaveText("2 Kontakte gelöscht.");
+      await expect(page.getByRole("link", { name: new RegExp(surname) })).toHaveCount(0);
+    } finally {
+      await removeCards(id);
+    }
+  });
+
+  test("löscht nichts aus einem Adressbuch, das nur zum Lesen geteilt ist", async ({ page }) => {
+    const id = Date.now().toString(36);
+    const surname = `Lesend${id}`;
+    const jonas = jmapAs("jonas");
+    const jonasId = await personalAccountId("jonas");
+    const annaId = await personalAccountId("anna");
+    const book = await createAddressBook(jonas, jonasId, `Nur lesen ${id}`);
+    try {
+      await createContact(jonas, jonasId, book, named("Udo", surname));
+      await shareAddressBook(jonas, jonasId, book, {
+        [annaId]: { mayRead: true, mayWrite: false, mayDelete: false, mayShare: false },
+      });
+      await login(page, "anna");
+      await page.goto("/contacts");
+      await page.getByRole("searchbox", { name: "Kontakte suchen" }).fill(surname);
+      await page.getByRole("checkbox", { name: `Udo ${surname} auswählen` }).click();
+      await expect(page.getByText("1 ausgewählt")).toBeVisible();
+      // As in the contact's own pane: no deleting where Anna may only read.
+      await expect(page.getByRole("button", { name: "Löschen", exact: true })).toBeDisabled();
+    } finally {
+      await deleteAddressBook(jonas, jonasId, book);
+    }
   });
 });

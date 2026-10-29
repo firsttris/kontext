@@ -7,6 +7,10 @@ Steps that an update needs beyond raising the version are marked **Upgrade**.
 
 ## Unreleased
 
+- Contacts: several at once – pick contacts by their box (Shift for a range, Ctrl/⌘ for one more;
+  on phones "Auswählen" or a long press), then add them to a group, export them as one vCard file
+  or delete them after one question with the count. Groups are offered within the account the
+  contacts are in, as members are named by uid there.
 - Mail: the "External" hint, switched on per company under *Einstellungen → Externe
   Empfänger* (off until then). Mail from outside the company carries the mark "Extern" in the
   list and when reading; before a mail goes to recipients outside, or an appointment invites new
