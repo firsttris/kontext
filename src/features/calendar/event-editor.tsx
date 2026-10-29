@@ -1,6 +1,7 @@
 /**
  * Create or edit an appointment. For one date of a series the user picks whether the change is
- * for that date only (Stalwart keeps it as an override) or for the whole series.
+ * for that date only (Stalwart keeps it as an override) or for the whole series. A new
+ * appointment can start as a copy of another ("Duplizieren").
  */
 import { type FormEvent, useRef, useState } from "react";
 import { useSession } from "@/components/shell/app-shell";
@@ -13,6 +14,7 @@ import { EventDocuments } from "@/features/documents/document-actions";
 import { useShareWith } from "@/features/documents/use-share-with";
 import { RecipientField } from "@/features/mail/recipient-field";
 import { formatAddressInput } from "@/lib/addresses";
+import { copyForm, copyToEvent } from "@/lib/event-copy";
 import {
   attendeeAddresses,
   attendeeEmails,
@@ -36,7 +38,13 @@ import { m } from "@/paraglide/messages";
 import { AvailabilityPanel } from "./availability-panel";
 import { attendeeList } from "./availability-queries";
 import { PlaceField } from "./place-field";
-import { calendarLabel, useCalendarRefs, useEventMutations, useMyAddresses } from "./queries";
+import {
+  calendarLabel,
+  calendarOf,
+  useCalendarRefs,
+  useEventMutations,
+  useMyAddresses,
+} from "./queries";
 import { ReminderFields } from "./reminder-fields";
 import { RepeatFields } from "./repeat-fields";
 import { useSplitSeries } from "./split-series";
@@ -57,18 +65,23 @@ type Props = {
   /** The series of an instance. */
   series?: CalendarEvent;
   start?: string;
+  /** For a new appointment: the one it copies. */
+  copyOf?: CalendarEvent;
   onDone: () => void;
   onCancel: () => void;
 };
 
-export const EventEditor = ({ event, series, start, onDone, onCancel }: Props) => {
+export const EventEditor = ({ event, series, start, copyOf, onDone, onCancel }: Props) => {
   const { data: session } = useSession();
   const mine = useMyAddresses();
   const { create, update } = useEventMutations();
   const split = useSplitSeries();
   const { calendars } = useCalendarRefs();
   const writable = calendars.filter((calendar) => calendar.mayWrite);
-  const [calendarKey, setCalendarKey] = useState("");
+  // A copy goes into the original's calendar, when the user may write there.
+  const [calendarKey, setCalendarKey] = useState(
+    () => (copyOf && calendarOf(calendars, copyOf)?.key) ?? "",
+  );
   const target =
     writable.find((calendar) => calendar.key === calendarKey) ??
     writable.find((calendar) => calendar.isPersonal && calendar.calendar.isDefault) ??
@@ -80,11 +93,13 @@ export const EventEditor = ({ event, series, start, onDone, onCancel }: Props) =
   const [initial] = useState<EventForm>(() =>
     event
       ? eventToForm(event, mine, series)
-      : newEventForm(`${start ?? `${toLocal(new Date()).slice(0, 11)}09:00`}:00`.slice(0, 19)),
+      : copyOf
+        ? copyForm(copyOf, mine)
+        : newEventForm(`${start ?? `${toLocal(new Date()).slice(0, 11)}09:00`}:00`.slice(0, 19)),
   );
   const [form, setForm] = useState(initial);
   // A new appointment takes the reminder of the calendar it goes into, until one is picked.
-  const [reminderPicked, setReminderPicked] = useState(Boolean(event));
+  const [reminderPicked, setReminderPicked] = useState(Boolean(event ?? copyOf));
   const reminder = reminderPicked ? form.reminder : defaultReminder(form.allDay, target?.calendar);
   // Its old time is in the calendar of everyone it went to; planning leaves it out there.
   const [editing] = useState(() => {
@@ -139,12 +154,11 @@ export const EventEditor = ({ event, series, start, onDone, onCancel }: Props) =
       return;
     }
     const forSeries = !instance || scope !== "this";
-    const data = formToEvent(
-      filled,
-      { email: session?.username ?? "" },
-      instance && scope !== "this" ? series : event,
-      forSeries,
-    );
+    const organizer = { email: session?.username ?? "" };
+    const data =
+      copyOf && !event
+        ? copyToEvent(filled, organizer, copyOf)
+        : formToEvent(filled, organizer, instance && scope !== "this" ? series : event, forSeries);
     try {
       await save(data);
       // The colleagues invited can open the appointment's documents.

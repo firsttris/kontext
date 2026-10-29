@@ -7,6 +7,11 @@ Steps that an update needs beyond raising the version are marked **Upgrade**.
 
 ## Unreleased
 
+- Calendar: "Duplizieren" on an appointment opens the editor with a copy – same title, place,
+  video meeting, attendees, notes, reminder, show-as, calendar, documents and length, on the
+  original's date until changed. Saved as a new appointment (new uid), so the attendees get
+  invitations as for any new one. A date of a series is copied as that date alone, without the
+  repetition.
 - Mail: pictures in the text – by the "Bild einfügen" button, pasted (a screenshot) or dropped
   in, and resized by their corners. They go out as inline images (`cid:` in multipart/related),
   so Outlook, Gmail and Apple Mail show them in the text; drafts keep them. Files of a reopened

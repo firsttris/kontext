@@ -37,6 +37,50 @@ const minutesAhead = (minutes: number) => {
   return { date: local.slice(0, 10), time: local.slice(11, 16) };
 };
 
+type Stored = {
+  id: string;
+  uid: string;
+  title: string;
+  start: string;
+  duration: string;
+  description: string | null;
+  locations: Record<string, { name: string }> | null;
+  participants: Record<string, { calendarAddress: string }> | null;
+};
+
+/** A person's events with a title, read behind the UI's back, earliest first. */
+const eventsTitled = async (user: string, title: string): Promise<Stored[]> => {
+  const { list } = await jmapAs(user).call<{ list: Stored[] }>(
+    "CalendarEvent/get",
+    {
+      accountId: await personalAccountId(user),
+      properties: ["uid", "title", "start", "duration", "description", "locations", "participants"],
+    },
+    CALENDARS,
+  );
+  return list
+    .filter((event) => event.title === title)
+    .sort((a, b) => a.start.localeCompare(b.start));
+};
+
+const removeEvents = async (user: string, events: Stored[]) =>
+  jmapAs(user).call(
+    "CalendarEvent/set",
+    { accountId: await personalAccountId(user), destroy: events.map((event) => event.id) },
+    CALENDARS,
+  );
+
+/** What a copy must have like its original. */
+const details = ({ title, duration, description, locations, participants }: Stored) => ({
+  title,
+  time: duration,
+  description,
+  place: Object.values(locations ?? {}).map((place) => place.name),
+  people: Object.values(participants ?? {})
+    .map((person) => person.calendarAddress)
+    .sort(),
+});
+
 const day = (offset: number) =>
   new Intl.DateTimeFormat("sv-SE", { timeZone: "Europe/Berlin" }).format(
     new Date(Date.now() + offset * 86_400_000),
@@ -109,6 +153,51 @@ test.describe("Kalender", () => {
         { timeout: 20_000 },
       )
       .toMatch(/anna@weber-haustechnik\.test\s*zugesagt/);
+  });
+
+  test("dupliziert einen Termin auf einen anderen Tag", async ({ page }) => {
+    const title = unique("Wartung Heizung");
+    await login(page);
+    await page.goto(`/calendar?date=${tomorrow()}&event=new&start=${tomorrow()}T14:00`);
+    const dialog = page.getByRole("dialog");
+    await dialog.getByLabel("Titel").fill(title);
+    await dialog.getByLabel("Ende Uhrzeit").fill("15:30");
+    await dialog.getByLabel("Ort").fill("Lindenweg 7");
+    await dialog.getByLabel("Notizen").fill("Schlüssel beim Nachbarn");
+    await addAttendees(dialog, "anna@weber-haustechnik.test");
+    await dialog.getByRole("button", { name: "Speichern" }).click();
+    await expect(dialog).toHaveCount(0);
+
+    await page.locator(`[data-day="${tomorrow()}"]`).getByText(title).click();
+    await dialog.getByRole("button", { name: "Duplizieren" }).click();
+    await expect(dialog.getByRole("heading", { name: "Termin duplizieren" })).toBeVisible();
+    await expect(dialog.getByLabel("Titel")).toHaveValue(title);
+    await expect(dialog.getByLabel("Beginn Datum")).toHaveValue(tomorrow());
+    await dialog.getByLabel("Beginn Datum").fill(day(2));
+    // The end moves along, so the copy is as long as the original.
+    await expect(dialog.getByLabel("Ende Datum")).toHaveValue(day(2));
+    await expect(dialog.getByLabel("Ende Uhrzeit")).toHaveValue("15:30");
+    await dialog.getByRole("button", { name: "Speichern" }).click();
+    await expect(page.getByRole("status")).toHaveText("Einladungen werden verschickt.");
+    await expect(dialog).toHaveCount(0);
+
+    await page.goto(`/calendar?date=${day(2)}`);
+    await expect(page.locator(`[data-day="${day(2)}"]`).getByText(title)).toBeVisible();
+    await expect(page.locator(`[data-day="${tomorrow()}"]`).getByText(title)).toBeVisible();
+    const [original, copy] = await eventsTitled("jonas", title);
+    try {
+      expect(original!.start).toBe(`${tomorrow()}T14:00:00`);
+      expect(copy!.start).toBe(`${day(2)}T14:00:00`);
+      expect(copy!.uid).not.toBe(original!.uid);
+      expect(details(copy!)).toEqual(details(original!));
+      expect(details(copy!)).toMatchObject({
+        time: "PT1H30M",
+        place: ["Lindenweg 7"],
+        people: ["mailto:anna@weber-haustechnik.test", "mailto:jonas@weber-haustechnik.test"],
+      });
+    } finally {
+      await removeEvents("jonas", [original!, copy!].filter(Boolean));
+    }
   });
 
   test("ändert und löscht einen Termin", async ({ page }) => {
@@ -574,6 +663,35 @@ test.describe("Kalender am Handy @phone", () => {
       .getByRole("button", { name: "Diesen und alle folgenden löschen" })
       .click();
     await expect(list.getByText(title)).toHaveCount(1);
+  });
+
+  test("dupliziert einen Termin", async ({ page }) => {
+    const title = unique("Kundendienst");
+    await login(page);
+    await page.goto(`/calendar?date=${tomorrow()}&event=new&start=${tomorrow()}T08:00`);
+    const sheet = page.getByRole("dialog");
+    await sheet.getByLabel("Titel").fill(title);
+    await sheet.getByLabel("Ort").fill("Mühlenstraße 3");
+    await sheet.getByRole("button", { name: "Speichern" }).click();
+    await expect(sheet).toHaveCount(0);
+    await page.goto(`/calendar?date=${tomorrow()}&view=agenda`);
+    const list = page.getByRole("list", { name: "Liste" });
+    await list.getByText(title).click();
+    await sheet.getByRole("button", { name: "Duplizieren" }).click();
+    await sheet.getByLabel("Beginn Datum").fill(day(3));
+    await sheet.getByRole("button", { name: "Speichern" }).click();
+    await expect(sheet).toHaveCount(0);
+    await expect(list.getByText(title)).toHaveCount(2);
+    const events = await eventsTitled("jonas", title);
+    try {
+      expect(events.map((event) => event.start)).toEqual([
+        `${tomorrow()}T08:00:00`,
+        `${day(3)}T08:00:00`,
+      ]);
+      expect(details(events[1]!)).toEqual(details(events[0]!));
+    } finally {
+      await removeEvents("jonas", events);
+    }
   });
 
   test("Kalender verwalten", async ({ page }) => {

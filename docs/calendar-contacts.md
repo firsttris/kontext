@@ -48,6 +48,17 @@ Kontext steht, steht auch am iPhone, unter Android (DAVx⁵) und in Thunderbird.
 
   ![Erinnerung für „Mein Kalender“: 30 Minuten vorher, ganztägig einen Tag vorher per Mail](screenshots/calendar-default-reminder.png)
 
+- **Termin duplizieren:** Am Termin öffnet „Duplizieren“ den Editor mit einer Kopie: gleicher
+  Titel, Ort, Videobesprechung, Teilnehmer, Notizen, Erinnerung, „Anzeigen als“, Kalender,
+  Dokumente und Dauer – etwa für den zweiten Termin auf der Baustelle. Das Datum ist zunächst das
+  des Originals; wer den Beginn ändert, nimmt das Ende mit. Gespeichert wird ein neuer Termin, die
+  Teilnehmer bekommen also eine Einladung wie bei jedem neuen. Von einer Serie kopiert Kontext
+  nur den einen Termin, ohne Wiederholung (sie lässt sich im Editor neu wählen); die Kopie hat
+  nichts mehr mit der Serie zu tun. Duplizieren geht auch bei Terminen, die man nur lesen darf
+  (etwa eine Einladung), dann landet die Kopie im eigenen Kalender.
+
+  ![Termin „Baubesprechung Hoffmann“ als Kopie im Editor](screenshots/event-duplicate.png)
+
 - **Beginn verschieben:** Wer Datum oder Uhrzeit des Beginns ändert, nimmt das Ende mit; die
   Dauer bleibt, wie bei Google und Apple.
 - **Einladungen im Kontext-Look:** Kontext verschickt sie selbst, im Namen des Organisators, mit
