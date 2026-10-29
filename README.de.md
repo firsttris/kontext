@@ -47,8 +47,8 @@ oder einem eigenen Rechner.
   Anrufe – ein kleines CRM ohne Extra-Tool.
 - **Eine App statt fünf**: Mail, Kalender, Aufgaben, Team-Chat mit Videocalls, das Firmentelefon
   und Dokumente, mit einer Anmeldung.
-- **Auch fürs Handy gebaut**: Jede Ansicht funktioniert am Handy, und Kontext lässt sich ohne App
-  Store als App installieren.
+- **Auch fürs Handy gebaut**: Jede Ansicht funktioniert am Handy, eine Mail wischt man zur Seite
+  ins Archiv, und Kontext lässt sich ohne App Store als App installieren.
 - **KI, wenn du willst**: Claude und andere Assistenten finden Kunden, Mails und Termine für dich
   und schreiben Entwürfe – sie senden und löschen nie etwas.
 - **Offen, kein Lock-in**: Open Source (AGPL) und Standardprotokolle, damit Outlook, Thunderbird,

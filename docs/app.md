@@ -50,7 +50,15 @@ eingehende Anrufe, **auch wenn Kontext ganz geschlossen ist**.
   „Mehr“, anfangs Mail, Kalender, Chat und Aufgaben. Unter *Einstellungen → Darstellung →
   Tab-Leiste am Handy* wählt man pro Platz eine App; alle anderen stehen unter „Mehr“.
   „Zurücksetzen“ stellt die Leiste wie anfangs.
-- „Zurück“ und das Wischen gehen dorthin zurück, woher man kam, etwa vom Gespräch in die Liste.
+- „Zurück“ und das Wischen vom Rand gehen dorthin zurück, woher man kam, etwa vom Gespräch in die
+  Liste.
+- **Mails wischen:** In der Mailliste eine Mail nach links wischen archiviert sie, nach rechts
+  wird sie gelesen bzw. ungelesen. Was jede Richtung tut (Archivieren, Löschen, Gelesen /
+  ungelesen, Markieren oder Nichts), steht unter *Einstellungen → Darstellung → Wischen in der
+  Mail-Liste*, je Gerät. Erst ab etwa einem Drittel der Breite zählt es; kürzer schnappt die
+  Zeile zurück.
+
+  ![Eine Mail am Handy nach links wischen: darunter „Archivieren“](screenshots/phone-swipe.png){ width="260" }
 - **Teilen in Kontext:** Im Teilen-Menü anderer Apps steht Kontext. Geteilte Fotos, Dateien,
   Texte und Links zeigt Kontext zuerst an; „In neue Mail übernehmen“ öffnet eine neue Mail mit
   ihnen als Anhang.
@@ -63,6 +71,8 @@ eingehende Anrufe, **auch wenn Kontext ganz geschlossen ist**.
   Tag vor Monat und 24-Stunden-Uhr).
 - **Mail:** „Mails als Unterhaltungen gruppieren“ und wie lange „Senden rückgängig machen“ eine
   Mail zurückhält (siehe [Mail](mail.md#schreiben)).
+- **Wischen in der Mail-Liste:** was Wischen nach links und nach rechts am Handy tut
+  (siehe [Am Handy](#am-handy)).
 - **Tastaturkürzel** stehen unten auf derselben Seite; am PC zeigt `?` sie überall.
 
 ## Als Mailprogramm verwenden

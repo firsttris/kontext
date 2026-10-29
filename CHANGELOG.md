@@ -7,6 +7,9 @@ Steps that an update needs beyond raising the version are marked **Upgrade**.
 
 ## Unreleased
 
+- Mail on the phone: swipe a mail in the list to the left to archive it, to the right to mark it
+  read or unread. What each direction does (archive, delete, read/unread, flag or nothing) is set
+  per device under *Einstellungen → Darstellung → Wischen in der Mail-Liste*.
 - Company signature: besides `[Name]` and `[E-Mail]` the placeholders `[Telefon]`, `[Mobil]`,
   `[Position]` and `[Abteilung]`. Each person enters them once under *Einstellungen → Profil*
   ("Angaben für die Signatur"); saving updates their signature at once. A line whose placeholder

@@ -1892,5 +1892,14 @@
   "rsvp_not_invited": "You’re no longer invited to this event.",
   "rsvp_too_many": "Too many attempts. Please wait a minute.",
   "rsvp_failed": "Your response couldn’t be saved: {message}",
-  "rsvp_footer": "Sent with Kontext"
+  "rsvp_footer": "Sent with Kontext",
+  "settings_swipe": "Swiping in the mail list",
+  "settings_swipe_hint": "On the phone: swipe an email to the side. Applies to this device.",
+  "settings_swipe_left": "Swipe left",
+  "settings_swipe_right": "Swipe right",
+  "settings_swipe_archive": "Archive",
+  "settings_swipe_delete": "Delete",
+  "settings_swipe_read": "Read / unread",
+  "settings_swipe_flag": "Flag",
+  "settings_swipe_none": "Nothing"
 }
