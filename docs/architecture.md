@@ -1412,8 +1412,8 @@ Ziehen im Wochenraster ändert immer nur den einen Termin.
 
 `src/lib/holidays.ts` rechnet die gesetzlichen Feiertage der 16 Bundesländer aus: die neun
 bundesweiten und je Land die eigenen (Heilige Drei Könige, Frauentag, Oster- und Pfingstsonntag
-in Brandenburg, Fronleichnam, Mariä Himmelfahrt im Saarland, Weltkindertag, Reformationstag,
-Allerheiligen, Buß- und Bettag in Sachsen); Ostern nach Gauß. Tage, die nur manche Gemeinden
+in Brandenburg und Hessen, Fronleichnam, Mariä Himmelfahrt im Saarland, Weltkindertag,
+Reformationstag, Allerheiligen, Buß- und Bettag in Sachsen); Ostern nach Gauß. Tage, die nur manche Gemeinden
 feiern (Mariä Himmelfahrt in Bayern, Fronleichnam in Teilen Sachsens und Thüringens, das
 Augsburger Friedensfest), fehlen.
 
