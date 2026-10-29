@@ -7,6 +7,11 @@ Steps that an update needs beyond raising the version are marked **Upgrade**.
 
 ## Unreleased
 
+- Calendar: "Kalender abonnieren" under *Kalender verwalten* – a calendar by its address (iCal,
+  webcal) such as school holidays or the waste collection, as a calendar of its own that the
+  server keeps up to date every six hours (or on "Jetzt aktualisieren"). Only https on the
+  internet; it does not count for availability. The database gets the table
+  `calendar_subscription` at start.
 - Company signature: besides `[Name]` and `[E-Mail]` the placeholders `[Telefon]`, `[Mobil]`,
   `[Position]` and `[Abteilung]`. Each person enters them once under *Einstellungen → Profil*
   ("Angaben für die Signatur"); saving updates their signature at once. A line whose placeholder
