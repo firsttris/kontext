@@ -59,11 +59,12 @@ export const useSplitSeries = () => {
     const before = rule?.count
       ? await datesBefore({ ...series, accountId: instance.accountId }, instance.recurrenceId!)
       : 0;
-    await endBeforeDate(instance, series);
+    // The new series first: should it fail, the old one is still whole and no date is lost.
     await create.mutateAsync({
       event: { ...data, recurrenceRule: followingRule(rule, before), sequence: 0 },
       calendar,
     });
+    await endBeforeDate(instance, series);
   };
 
   return { changeFollowing, endBeforeDate, isPending: create.isPending || update.isPending };
