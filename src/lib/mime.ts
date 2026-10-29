@@ -133,6 +133,8 @@ export type Envelope = {
   from: MimeAddress;
   to: MimeAddress[];
   cc: MimeAddress[];
+  /** Where answers go instead of the sender (Reply-To, RFC 5322 §3.6.2). */
+  replyTo?: MimeAddress[];
   subject: string;
   date: Date;
   messageId: string;
@@ -142,10 +144,15 @@ export type Envelope = {
   extra?: string[];
 };
 
+/** Reply-To, where there is one; outside and inside an encrypted mail, so every program sees it. */
+const replyToLine = (mail: Envelope) =>
+  mail.replyTo?.length ? [`Reply-To: ${mail.replyTo.map(mailbox).join(", ")}`] : [];
+
 const headers = (mail: Envelope) => [
   `From: ${mailbox(mail.from)}`,
   ...(mail.to.length ? [`To: ${mail.to.map(mailbox).join(", ")}`] : []),
   ...(mail.cc.length ? [`Cc: ${mail.cc.map(mailbox).join(", ")}`] : []),
+  ...replyToLine(mail),
   `Subject: ${encodeWord(mail.subject)}`,
   `Date: ${mail.date.toUTCString().replace("GMT", "+0000")}`,
   `Message-ID: <${mail.messageId}>`,
@@ -176,6 +183,7 @@ export const protectHeaders = (entity: string, mail: Envelope): string => {
     `From: ${mailbox(mail.from)}`,
     ...(mail.to.length ? [`To: ${mail.to.map(mailbox).join(", ")}`] : []),
     ...(mail.cc.length ? [`Cc: ${mail.cc.map(mailbox).join(", ")}`] : []),
+    ...replyToLine(mail),
     `Message-ID: <${mail.messageId}>`,
     ...rest,
   ].join("\r\n");

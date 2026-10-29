@@ -21,7 +21,13 @@ import {
 import type { EmailAddress, Identity } from "@/jmap/types";
 import { parseAddresses } from "@/lib/addresses";
 import { attachmentMention, ownText } from "@/lib/attachment-reminder";
-import { type ComposeMode, sharedSenderName, startCompose } from "@/lib/compose";
+import {
+  type ComposeMode,
+  sharedSenderName,
+  startCompose,
+  startReplyTo,
+  switchReplyTo,
+} from "@/lib/compose";
 import { savedBlobs, withSavedBlob } from "@/lib/draft-blobs";
 import { htmlToText, sanitizeMailHtml, textToHtml } from "@/lib/html";
 import { markCids } from "@/lib/inline-images";
@@ -92,6 +98,8 @@ export const Composer = ({ accountId, mode, sourceEmailId, prefill }: Props) => 
   const [cc, setCc] = useState<EmailAddress[]>([]);
   const [bcc, setBcc] = useState<EmailAddress[]>([]);
   const [showCopies, setShowCopies] = useState(false);
+  const [replyTo, setReplyTo] = useState<EmailAddress[]>([]);
+  const [showReplyTo, setShowReplyTo] = useState(false);
   const [subject, setSubject] = useState("");
   const [attachments, setAttachments] = useState<OutgoingAttachment[]>([]);
   const [uploading, setUploading] = useState(0);
@@ -254,6 +262,9 @@ export const Composer = ({ accountId, mode, sourceEmailId, prefill }: Props) => 
     setCc(keep(prefill?.cc ? parseAddresses(prefill.cc).addresses : start.cc));
     setBcc(keep(start.bcc));
     if (start.cc.length || start.bcc.length || prefill?.cc) setShowCopies(true);
+    const startingReplyTo = startReplyTo(mode, start, identity);
+    setReplyTo(startingReplyTo);
+    if (startingReplyTo.length) setShowReplyTo(true);
     setSubject((current) => current || prefill?.subject || start.subject);
     // The parts of an encrypted original are cipher text; its real files go along instead.
     setAttachments(encryptedOriginal ? [] : start.attachments);
@@ -295,6 +306,17 @@ export const Composer = ({ accountId, mode, sourceEmailId, prefill }: Props) => 
   ]);
 
   const identity = identities.find((i) => i.id === identityId);
+  /** Another sender: its default „Antwort an“ comes along, unless one was written by hand. */
+  const pickIdentity = (id: string) => {
+    const next = switchReplyTo(
+      replyTo,
+      identity,
+      identities.find((i) => i.id === id),
+    );
+    setReplyTo(next);
+    if (next.length) setShowReplyTo(true);
+    setIdentityId(id);
+  };
   const drafts = findRole(mailboxes, "drafts");
   const sent = findRole(mailboxes, "sent");
 
@@ -337,6 +359,7 @@ export const Composer = ({ accountId, mode, sourceEmailId, prefill }: Props) => 
       to,
       cc,
       bcc,
+      replyTo,
       subject: subject.trim(),
       html,
       text: htmlToText(html),
@@ -391,7 +414,7 @@ export const Composer = ({ accountId, mode, sourceEmailId, prefill }: Props) => 
   };
 
   // Autosave two seconds after the last change.
-  const changeKey = `${changes}|${JSON.stringify([to, cc, bcc, subject, attachments.length, identityId])}`;
+  const changeKey = `${changes}|${JSON.stringify([to, cc, bcc, replyTo, subject, attachments.length, identityId])}`;
   const lastSaved = useRef(changeKey);
   useEffect(() => {
     if (!initialized.current || sending || changeKey === lastSaved.current) return;
@@ -626,7 +649,7 @@ export const Composer = ({ accountId, mode, sourceEmailId, prefill }: Props) => 
         <ComposerFields
           identities={identities}
           identityId={identityId}
-          onIdentity={setIdentityId}
+          onIdentity={pickIdentity}
           to={to}
           onTo={setTo}
           cc={cc}
@@ -635,6 +658,10 @@ export const Composer = ({ accountId, mode, sourceEmailId, prefill }: Props) => 
           onBcc={setBcc}
           showCopies={showCopies}
           onShowCopies={() => setShowCopies(true)}
+          replyTo={replyTo}
+          onReplyTo={setReplyTo}
+          showReplyTo={showReplyTo}
+          onShowReplyTo={() => setShowReplyTo(true)}
           subject={subject}
           onSubject={setSubject}
           suggestions={suggestions}

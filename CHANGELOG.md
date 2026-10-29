@@ -7,6 +7,13 @@ Steps that an update needs beyond raising the version are marked **Upgrade**.
 
 ## Unreleased
 
+- Mail: "Antwort an" (Reply-To) when writing – revealed next to "Cc / Bcc", with the same address
+  suggestions; replies then go to those addresses instead of the sender. It goes out with every
+  kind of sending (JMAP `replyTo`, and the `Reply-To` header of mails Kontext builds itself for
+  PGP and S/MIME, outside and in the protected headers) and stays in the draft. A default per
+  sending address (JMAP `Identity.replyTo`) is set under *Einstellungen → Signatur*; it fills the
+  field and follows a change of sender unless the field was edited. Answering a mail that carries
+  Reply-To already went to that address; now covered by tests.
 - Calendar: print the week or the month on landscape A4, e.g. for the pin board in the workshop –
   the printer in the calendar's header, `p` or Ctrl+P. The week as seven columns with every
   appointment's time, title and place, all-day ones first; the month as its grid with start and

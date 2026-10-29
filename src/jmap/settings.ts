@@ -4,6 +4,7 @@
  * names and signatures (Identity). The out-of-office reply is in rules.ts, with the mail rules.
  */
 import { assertSetOk, CAPABILITIES, type JmapClient } from "./client";
+import type { EmailAddress } from "./types";
 
 const STALWART = [CAPABILITIES.core, CAPABILITIES.stalwart];
 const SUBMISSION = [CAPABILITIES.core, CAPABILITIES.mail, CAPABILITIES.submission];
@@ -80,7 +81,12 @@ export const updateIdentity = async (
   client: JmapClient,
   accountId: string,
   id: string,
-  patch: { name?: string; htmlSignature?: string; textSignature?: string },
+  patch: {
+    name?: string;
+    htmlSignature?: string;
+    textSignature?: string;
+    replyTo?: EmailAddress[] | null;
+  },
 ) =>
   assertSetOk(
     await client.call("Identity/set", { accountId, update: { [id]: patch } }, SUBMISSION),
