@@ -108,6 +108,28 @@ test.describe("Mail", () => {
     expect((await download).suggestedFilename()).toBe("Angebot-Wartung-2027.pdf");
   });
 
+  test("packt eine winmail.dat aus alten Outlook-Versionen aus", async ({ page }) => {
+    await page.getByRole("link", { name: "Lieferanten" }).click();
+    await page.getByRole("list", { name: "Lieferanten" }).getByText("Lieferschein 48211").click();
+    const attachments = page.getByRole("list", { name: "Anhänge" });
+    await expect(attachments).toContainText("Lieferschein-48211.pdf");
+    await expect(attachments).toContainText("Datenblatt Stratos 25-1-6.txt");
+    await expect(attachments).not.toContainText("winmail.dat");
+    // The PDF inside gets its thumbnail and a file inside downloads as itself.
+    await expect(
+      attachments.getByRole("button", { name: "Lieferschein-48211.pdf ansehen" }).locator("img"),
+    ).toBeVisible();
+    const download = page.waitForEvent("download");
+    await attachments
+      .getByRole("button", { name: "Datenblatt Stratos 25-1-6.txt herunterladen" })
+      .click();
+    const file = await download;
+    expect(file.suggestedFilename()).toBe("Datenblatt Stratos 25-1-6.txt");
+    const chunks: Buffer[] = [];
+    for await (const chunk of await file.createReadStream()) chunks.push(chunk as Buffer);
+    expect(Buffer.concat(chunks).toString("utf8")).toContain("Förderhöhe max. 6 m");
+  });
+
   test("zeigt ein Bild im Anhang als Vorschau", async ({ page }) => {
     await page.getByRole("link", { name: "info@" }).click();
     await page

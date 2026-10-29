@@ -34,6 +34,7 @@ import { formatSize } from "@/lib/format";
 import { asDownload, asViewable, imageUrl, releaseImageUrl } from "@/lib/safe-blob";
 import { m } from "@/paraglide/messages";
 import { renderPdfThumbnail } from "./pdf-thumbnail";
+import { useUnpackedAttachments } from "./winmail";
 
 const LOOK: Record<AttachmentKind, { icon: LucideIcon; tone: string }> = {
   pdf: { icon: FileText, tone: "text-red-600 bg-red-500/10 dark:text-red-400" },
@@ -209,14 +210,17 @@ const AttachmentCard = ({ accountId, part }: { accountId: string; part: BodyPart
   );
 };
 
-export const Attachments = ({ accountId, parts }: { accountId: string; parts: BodyPart[] }) =>
-  parts.length === 0 ? null : (
+/** A winmail.dat shows as the files it holds (winmail.ts). */
+export const Attachments = ({ accountId, parts }: { accountId: string; parts: BodyPart[] }) => {
+  const shown = useUnpackedAttachments(accountId, parts);
+  return shown.length === 0 ? null : (
     <ul
       aria-label={m.mail_attachments()}
       className="m-0 grid list-none grid-cols-2 gap-3 p-0 sm:flex sm:flex-wrap"
     >
-      {parts.map((part) => (
+      {shown.map((part) => (
         <AttachmentCard key={part.blobId ?? part.partId} accountId={accountId} part={part} />
       ))}
     </ul>
   );
+};
