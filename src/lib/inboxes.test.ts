@@ -80,4 +80,23 @@ describe("mergeFeeds in another order", () => {
     );
     expect(rows.map((r) => r.email.id)).toEqual(["a", "b", "c"]);
   });
+  it("ranks a mail with several categories as the server does, one comparator per category", () => {
+    // The server sorts by hasKeyword per category in turn (RFC 8620 §5.5): a mail with both
+    // categories comes before a newer one with only the first; the merge must agree with that.
+    const tagged = (id: string, hour: number, keywords: string[]) =>
+      ({
+        ...mail(id, hour),
+        keywords: Object.fromEntries(keywords.map((k) => [k, true])),
+      }) as EmailSummary;
+    const rows = mergeFeeds(
+      [inbox(own), inbox(info)],
+      {
+        d: feed([tagged("both", 6, ["eilig", "privat"]), tagged("first", 12, ["eilig"])]),
+        b: feed([tagged("other", 9, ["eilig"])]),
+      },
+      "category",
+      () => ["eilig", "privat"],
+    );
+    expect(rows.map((r) => r.email.id)).toEqual(["both", "first", "other"]);
+  });
 });
