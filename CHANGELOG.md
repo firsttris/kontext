@@ -7,6 +7,9 @@ Steps that an update needs beyond raising the version are marked **Upgrade**.
 
 ## Unreleased
 
+- Tasks: "Erinnern" right in the "Neue Aufgabe" dialog (the same choices as in the open task,
+  from the due day or a time by hand); a new due day moves a chosen reminder along. Sent with the
+  task as `remindAt` on create.
 - Mail: "Wiedervorlage" for several picked mails at once, from the selection bar – also across
   the own and shared mailboxes in "Alle Posteingänge", each mail into its own account's snoozed
   folder, with one "Rückgängig" for all. Offered only when every picked mail may leave its folder.

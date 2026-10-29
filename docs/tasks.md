@@ -34,7 +34,8 @@ rechnung@, das alle sehen, die dort arbeiten.
   Nummer gesprochen hat ([Telefonie](telephony.md)).
 - **Wiederkehrend:** täglich, an Werktagen, wöchentlich, monatlich, jährlich.
 - **Checklisten, Notizen, Zuständige, Fälligkeit, Erinnerung**, verknüpfte
-  [Dokumente](documents.md).
+  [Dokumente](documents.md). Die Erinnerung lässt sich schon im Dialog „Neue Aufgabe“ wählen;
+  ein anderer Fälligkeitstag nimmt sie dort wie in der Aufgabe mit.
 
 ## Überall im Kontext
 

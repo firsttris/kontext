@@ -731,7 +731,8 @@ oder Reihenfolge.
   (`assigned_by`, `assigned_at`; ungesehene zählen zum Punkt an der Glocke) – und „Fällige
   Aufgaben“ von heute und davor.
 - **Push:** Wer eine Aufgabe jemand anderem zuweist, schickt ihr eine Benachrichtigung. Eine
-  Erinnerung (`remind_at`, „Erinnern“ in der Aufgabe: zur Fälligkeit, 15 Minuten oder eine Stunde
+  Erinnerung (`remind_at`, „Erinnern“ in der Aufgabe und schon im Dialog „Neue Aufgabe“, der sie
+  beim Anlegen mitschickt: zur Fälligkeit, 15 Minuten oder eine Stunde
   vorher, am Morgen, am Vortag, oder frei) verschickt der Server jede Minute
   (`server/tasks/notices.ts`, `REMINDER_TICK_MS`) an die zuständige Person, ohne Zuständige an
   die, die sie angelegt hat – auch bei geschlossener App, einmal (`reminded_at`). Wird der Tag

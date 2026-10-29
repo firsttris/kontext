@@ -31,6 +31,17 @@ const day = (offset = 0) =>
     new Date(Date.now() + offset * 86_400_000),
   );
 
+/** "+01:00" or "+02:00": Berlin's offset on that day, at noon. */
+const berlinOffset = (date: string) => {
+  const noon = new Date(`${date}T12:00:00Z`);
+  const local = new Intl.DateTimeFormat("en-GB", {
+    timeZone: "Europe/Berlin",
+    hour: "2-digit",
+    hourCycle: "h23",
+  }).format(noon);
+  return `+0${Number(local) - 12}:00`;
+};
+
 const createTask = async (page: Page, task: Record<string, unknown>) => {
   const response = await page.request.post("/api/tasks", {
     data: { accountId: await personalId(page), ...task },
@@ -160,6 +171,33 @@ test.describe("Aufgaben im Kontext", () => {
       .poll(async () => new Date((await taskOf(page, title))!.remindAt!).getTime())
       .toBe(first + 2 * 3_600_000);
     await expect(remind).toHaveValue("15");
+  });
+
+  test("Erinnern schon im Dialog „Neue Aufgabe“, zieht mit dem Tag mit", async ({ page }) => {
+    const title = unique("Prüfbericht schicken");
+    await login(page);
+    try {
+      await page.goto("/tasks");
+      await page.getByRole("button", { name: "Neue Aufgabe" }).click();
+      const dialog = page.getByRole("dialog", { name: "Neue Aufgabe" });
+      await dialog.getByLabel("Titel").fill(title);
+      const remind = dialog.getByRole("combobox", { name: /^Erinnern/ });
+      // Without a due day: none, or a time by hand.
+      await expect(remind.getByRole("option")).toHaveCount(2);
+      await dialog.getByRole("button", { name: "Morgen" }).click();
+      await remind.selectOption({ label: "Am Morgen um 08:00" });
+      // Another day: the reminder goes along.
+      await dialog.locator('input[type="date"]').fill(day(3));
+      await expect(dialog.getByRole("combobox", { name: /^Erinnern/ })).toHaveValue("morning");
+      await dialog.getByRole("button", { name: "Aufgabe erstellen" }).click();
+      await expect(dialog).toHaveCount(0);
+      await expect
+        .poll(async () => (await taskOf(page, title))?.remindAt)
+        .toBe(new Date(`${day(3)}T08:00:00${berlinOffset(day(3))}`).toISOString());
+    } finally {
+      const task = await taskOf(page, title);
+      if (task) await page.request.delete(`/api/tasks/${task.id}`);
+    }
   });
 
   test("Glocke und Push: neu zugewiesen und Erinnerung", async ({ page, browser }) => {
