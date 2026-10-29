@@ -11,6 +11,10 @@ Steps that an update needs beyond raising the version are marked **Upgrade**.
   in, and resized by their corners. They go out as inline images (`cid:` in multipart/related),
   so Outlook, Gmail and Apple Mail show them in the text; drafts keep them. Files of a reopened
   draft now stay with it when it is saved more than once.
+- Calendar: a default reminder per calendar – in *Kalender verwalten* the bell next to a calendar
+  sets the reminder new appointments in it get, one for appointments with a time and one for
+  all-day ones. Kept per person in Stalwart (`defaultAlertsWithTime`,
+  `defaultAlertsWithoutTime`); without one it stays 15 minutes before.
 - Mail: a winmail.dat from older Outlook versions (TNEF) shows as the files inside it, with
   preview, download and "In Dokumente"; the browser unpacks it and puts the files up as blobs of
   the mailbox.

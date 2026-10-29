@@ -31,9 +31,27 @@ export const TIMED_MINUTES = [0, 5, 10, 15, 30, 60, 120, 1440, 2880, 10080];
  */
 export const ALL_DAY_MINUTES = [-540, 900, 2340, 9540];
 
-/** What a new appointment gets: as before, a notice 15 minutes ahead; all day none. */
-export const defaultReminder = (allDay: boolean): Reminder | null =>
-  allDay ? null : { minutes: 15, action: "display" };
+/** A calendar's default alerts, per user (draft-ietf-jmap-calendars, Calendar). */
+export type DefaultAlerts = {
+  defaultAlertsWithTime?: Record<string, Alert> | null;
+  defaultAlertsWithoutTime?: Record<string, Alert> | null;
+};
+
+/**
+ * What a new appointment gets: the calendar's default reminder (Kalender verwalten →
+ * Erinnerung), else as before a notice 15 minutes ahead, and all day none.
+ */
+export const defaultReminder = (allDay: boolean, calendar?: DefaultAlerts): Reminder | null => {
+  const set = reminderOf(
+    allDay ? calendar?.defaultAlertsWithoutTime : calendar?.defaultAlertsWithTime,
+  );
+  if (set && set !== "kept") return set;
+  return allDay ? null : { minutes: 15, action: "display" };
+};
+
+/** A calendar's default alerts for the choice; none is the usual default above. */
+export const defaultAlertsOf = (choice: Reminder | null): Record<string, Alert> =>
+  alertsOf(choice) ?? {};
 
 const DURATION = /^([+-])?(P(?:\d+W)?(?:\d+D)?(?:T(?=\d)(?:\d+H)?(?:\d+M)?(?:\d+S)?)?)$/;
 
