@@ -108,4 +108,24 @@ describe("copyToEvent", () => {
       b: alerts.b,
     });
   });
+
+  it("leaves out a snooze of the original's reminder", () => {
+    // A snooze is a child alert of the one it delays (RFC 8984 §4.5.2, relatedTo with parent),
+    // with an absolute time for the original's date; Apple Calendar writes it over CalDAV.
+    const reminder = {
+      trigger: { "@type": "OffsetTrigger", offset: "-PT15M" },
+      action: "display",
+    };
+    const alerts = {
+      r: { ...reminder, acknowledged: "2026-11-04T09:45:00Z" },
+      s: {
+        trigger: { "@type": "AbsoluteTrigger", when: "2026-11-04T09:55:00Z" },
+        action: "display",
+        relatedTo: { r: { "@type": "Relation", relation: { parent: true } } },
+      },
+    };
+    const snoozed = { ...original, alerts } as CalendarEvent;
+    const data = copyToEvent(copyForm(snoozed, [me.email]), me, snoozed);
+    expect(data.alerts).toEqual({ r: reminder });
+  });
 });
