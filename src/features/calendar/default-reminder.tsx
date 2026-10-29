@@ -81,12 +81,14 @@ const DefaultReminderDialog = ({
         onChange={(choice) => setTimed(plain(choice))}
         label={m.calendar_default_reminder_timed()}
         noneLabel={m.calendar_default_reminder_usual()}
+        howLabel={`${m.calendar_reminder_how()} (${m.calendar_default_reminder_timed()})`}
       />
       <ReminderFields
         value={allDay}
         allDay
         onChange={(choice) => setAllDay(plain(choice))}
         label={m.calendar_default_reminder_all_day()}
+        howLabel={`${m.calendar_reminder_how()} (${m.calendar_default_reminder_all_day()})`}
       />
       <div className="flex justify-end gap-2">
         <Button variant="ghost" onClick={onClose}>

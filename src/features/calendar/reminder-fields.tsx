@@ -39,9 +39,11 @@ type Props = {
   label?: string;
   /** What no reminder is called; "Keine" by default. */
   noneLabel?: string;
+  /** The name of "Erinnern per", where two of these stand together. */
+  howLabel?: string;
 };
 
-export const ReminderFields = ({ value, allDay, onChange, label, noneLabel }: Props) => {
+export const ReminderFields = ({ value, allDay, onChange, label, noneLabel, howLabel }: Props) => {
   const action: ReminderAction = value && value !== "kept" ? value.action : "display";
   const selected = value === "kept" ? "kept" : value ? String(value.minutes) : "none";
   const pick = (choice: string) =>
@@ -64,8 +66,9 @@ export const ReminderFields = ({ value, allDay, onChange, label, noneLabel }: Pr
       </Label>
       {value && value !== "kept" ? (
         <Label className="flex-1">
-          {m.calendar_reminder_how()}
+          <span aria-hidden={howLabel ? true : undefined}>{m.calendar_reminder_how()}</span>
           <Select
+            aria-label={howLabel}
             value={value.action}
             onChange={(e) => onChange({ ...value, action: e.target.value as ReminderAction })}
           >
