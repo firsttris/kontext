@@ -14,18 +14,26 @@ import { validUntil } from "../../../server/snooze/snooze";
 import { TimeDialog } from "../mail/time-dialog";
 import { useSnoozeActions } from "./queries";
 
-/** Puts mails away and offers the way back in the notice. */
+/** Mails of one account, taken out of one folder. */
+export type SnoozeTarget = { accountId: string; ids: string[]; from: string };
+
+/**
+ * Puts mails away and offers the way back in the notice. Several targets (a selection over
+ * "Alle Posteingänge") go each into their own account's folder; one notice takes them all back.
+ */
 export const useSnooze = () => {
   const { snooze } = useSnoozeActions();
   const toast = useToast();
-  return async (accountId: string, ids: string[], from: string, until: Date) => {
+  return async (targets: SnoozeTarget[], until: Date) => {
+    const count = targets.reduce((sum, target) => sum + target.ids.length, 0);
     try {
-      const undo = await snooze(accountId, ids, from, until);
+      const undos = await Promise.all(
+        targets.map((target) => snooze(target.accountId, target.ids, target.from, until)),
+      );
+      const undo = () => Promise.all(undos.map((back) => back()));
       const when = sendTimeLabel(until);
       toast.show(
-        ids.length === 1
-          ? m.mail_snoozed_toast({ when })
-          : m.mail_snoozed_toast_many({ count: ids.length, when }),
+        count === 1 ? m.mail_snoozed_toast({ when }) : m.mail_snoozed_toast_many({ count, when }),
         "info",
         {
           duration: 8000,
@@ -45,19 +53,18 @@ export const useSnooze = () => {
 };
 
 export const SnoozeMenu = ({
-  accountId,
-  ids,
-  from,
+  targets,
   onLeave,
   shortcut = false,
+  small = false,
 }: {
-  accountId: string;
-  ids: string[];
-  from: string;
+  targets: SnoozeTarget[];
   /** Before the mails go: e.g. close the open mail. */
   onLeave?: () => unknown;
   /** "w" opens the menu (in the reading pane). */
   shortcut?: boolean;
+  /** The smaller button of the selection bar. */
+  small?: boolean;
 }) => {
   const [open, setOpen] = useState(false);
   const [picking, setPicking] = useState(false);
@@ -65,7 +72,7 @@ export const SnoozeMenu = ({
   useShortcuts(shortcut ? { w: () => setOpen(true) } : {});
   const pick = async (until: Date) => {
     await onLeave?.();
-    await snooze(accountId, ids, from, until);
+    await snooze(targets, until);
   };
   return (
     <>
@@ -73,11 +80,12 @@ export const SnoozeMenu = ({
         <MenuTrigger asChild>
           <Button
             variant="ghost"
-            size="icon"
+            size={small ? "iconSm" : "icon"}
+            disabled={targets.length === 0}
             aria-label={m.mail_snooze()}
             title={shortcut ? `${m.mail_snooze()} (w)` : m.mail_snooze()}
           >
-            <AlarmClock size={16} strokeWidth={1.75} />
+            <AlarmClock size={small ? 15 : 16} strokeWidth={1.75} />
           </Button>
         </MenuTrigger>
         <MenuContent align="start" aria-label={m.mail_snooze_title()}>

@@ -1,5 +1,5 @@
 import { expect, type Page, test } from "@playwright/test";
-import { addMail, inboxSubjects, login, unique } from "./helpers";
+import { addMail, findMails, inboxSubjects, login, removeMails, unique } from "./helpers";
 
 const openInInbox = async (page: Page, subject: string) => {
   await page.getByRole("list", { name: "Posteingang" }).getByText(subject).click();
@@ -93,5 +93,85 @@ test.describe("Wiedervorlage", () => {
     await snoozeUntilTomorrow(page);
     await expect(page.getByRole("list", { name: "Posteingang" })).toBeVisible();
     await expect(page.getByRole("list", { name: "Posteingang" }).getByText(subject)).toHaveCount(0);
+  });
+});
+
+const pick = (page: Page, subject: string) =>
+  page.getByRole("checkbox", { name: `„${subject}“ auswählen` });
+
+/** Sets the time of mails on Wiedervorlage to now, as "Anderer Zeitpunkt" would. */
+const dueNow = async (page: Page, mails: { accountId: string; id: string }[]) => {
+  for (const { accountId, id } of mails) {
+    const response = await page.request.put("/api/snoozes", {
+      data: { accountId, emailIds: [id], until: new Date(Date.now() + 2000).toISOString() },
+    });
+    expect(response.ok()).toBe(true);
+  }
+};
+
+test.describe("Wiedervorlage für mehrere Mails", () => {
+  test("legt Mails aus zwei Postfächern zurück, „Wieder vorgelegt“ in Alle Posteingänge", async ({
+    page,
+  }) => {
+    const own = unique("Viele zurück eigen");
+    const shared = unique("Viele zurück info");
+    await addMail("jonas", "jonas", own);
+    await addMail("jonas", "info", shared);
+    try {
+      await login(page);
+      await page.getByRole("link", { name: "Alle Posteingänge" }).click();
+      await pick(page, own).click();
+      await pick(page, shared).click();
+      await page.getByRole("button", { name: "Wiedervorlage" }).click();
+      await page.getByRole("menuitem", { name: /^Morgen 08:00/ }).click();
+      await expect(
+        page.getByRole("status").filter({ hasText: /^2 Mails kommen .* 08:00 wieder\./ }),
+      ).toBeVisible();
+      const list = page.getByRole("list", { name: "Alle Posteingänge" });
+      await expect(list.getByText(own)).toHaveCount(0);
+      await expect(list.getByText(shared)).toHaveCount(0);
+      const put = async () => [
+        ...(await findMails("jonas", "jonas", [own])),
+        ...(await findMails("jonas", "info", [shared])),
+      ];
+      await expect
+        .poll(async () => (await put()).map((mail) => mail.folder))
+        .toEqual(["snoozed", "snoozed"]);
+
+      // Both come back: on top of the combined list, own and shared alike.
+      await dueNow(page, await put());
+      const back = list.getByRole("listitem").filter({ hasText: "Wieder vorgelegt" });
+      await expect(back).toContainText(own, { timeout: 15_000 });
+      await expect(list.getByRole("heading", { name: "Wieder vorgelegt" })).toHaveCount(1);
+      await expect(list.getByRole("heading", { name: "Weitere Mails" })).toBeVisible();
+      // Both above the rest, whichever account they came back to.
+      const onTop = async () => {
+        const items = await list.getByRole("listitem").allInnerTexts();
+        const rest = items.findIndex((text) => text.includes("Weitere Mails"));
+        const at = (subject: string) => items.findIndex((text) => text.includes(subject));
+        return [at(own) >= 0 && at(own) < rest, at(shared) >= 0 && at(shared) < rest];
+      };
+      await expect.poll(onTop).toEqual([true, true]);
+    } finally {
+      await removeMails("jonas", "jonas", [own]);
+      await removeMails("jonas", "info", [shared]);
+    }
+  });
+
+  test("am Handy zwei ausgewählte Mails zurücklegen @phone", async ({ page }) => {
+    const subjects = [unique("Handy später 1"), unique("Handy später 2")];
+    for (const subject of subjects) await addMail("max", "max", subject);
+    try {
+      await login(page, "max");
+      await page.getByRole("button", { name: "Auswählen" }).click();
+      for (const subject of subjects) await pick(page, subject).click();
+      await page.getByRole("button", { name: "Wiedervorlage" }).click();
+      await page.getByRole("menuitem", { name: /^In einer Woche 08:00/ }).click();
+      await expect
+        .poll(async () => (await findMails("max", "max", subjects)).map((mail) => mail.folder))
+        .toEqual(["snoozed", "snoozed"]);
+    } finally {
+      await removeMails("max", "max", subjects);
+    }
   });
 });

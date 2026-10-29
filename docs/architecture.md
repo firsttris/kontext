@@ -1254,9 +1254,16 @@ Eine Mail „aus dem Weg bis …“: Knopf mit dem Wecker über der Mail oder `w
   sie über die Sitzung einer Kollegin, ohne Absender und Betreff (er könnte das Postfach inzwischen
   verloren haben). Abgelaufene Sitzungen nimmt kein Hintergrundjob.
   Hat jemand die Mail inzwischen anderswohin verschoben, bleibt sie, wo sie ist.
+- **Mehrere auf einmal:** die Leiste über ausgewählten Mails bietet den Wecker, wenn jede Mail in
+  einem Ordner liegt, aus dem sie weg darf (nicht Entwürfe, Gesendet oder ein Ordner nur zum
+  Lesen; `snoozeTargets` in `src/lib/selection.ts`) – sonst gar nicht, statt nur einen Teil
+  zurückzulegen. Je Konto und Ordner ein Aufruf, jede Mail in den Wiedervorlage-Ordner ihres
+  Kontos; ein „Rückgängig“ holt alle zurück.
 - **Wieder vorgelegt:** der Posteingang zeigt solche Mails, solange sie ungelesen sind, oben in
   einer eigenen Gruppe – nach Datum lägen sie weit unten. Gelesen nimmt Kontext das Schlagwort
-  wieder ab, und die Mail steht an ihrem Platz.
+  wieder ab, und die Mail steht an ihrem Platz. „Alle Posteingänge“ fragt dafür jeden Posteingang
+  einzeln (`resurfacedFilter`, `pinResurfaced` in `src/lib/inboxes.ts`) und zeigt die Mails aller
+  Konten oben gemeinsam.
 
 ## Alle Posteingänge
 

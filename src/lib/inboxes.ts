@@ -64,3 +64,31 @@ export const mergeFeeds = (
     heads[pick] = heads[pick]! + 1;
   }
 };
+
+/** What came back from Wiedervorlage into an inbox and is not read yet (server/snooze/snooze.ts). */
+export const resurfacedFilter = (mailboxId: string, keyword: string) => ({
+  search: {
+    operator: "AND",
+    conditions: [{ inMailbox: mailboxId }, { hasKeyword: keyword }, { notKeyword: "$seen" }],
+  },
+});
+
+type Sectioned = { email: EmailSummary; section?: string };
+
+/**
+ * The mails back from Wiedervorlage on top, under their own heading, and the rest below under
+ * another; a mail on top is not listed twice. Without any back, the list stays as it is.
+ */
+export const pinResurfaced = <R extends Sectioned>(
+  back: R[],
+  listed: R[],
+  headings: { back: string; rest: string },
+): R[] => {
+  if (!back.length) return listed;
+  const ids = new Set(back.map((row) => row.email.id));
+  const rest = listed.filter((row) => !ids.has(row.email.id));
+  return [
+    ...back.map((row, index) => (index === 0 ? { ...row, section: headings.back } : row)),
+    ...rest.map((row, index) => (index === 0 ? { ...row, section: headings.rest } : row)),
+  ];
+};

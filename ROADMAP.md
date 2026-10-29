@@ -51,7 +51,6 @@ Lücken und Befunde, die beim Bauen offen geblieben sind und noch angegangen wer
 - [ ] CalDAV für Aufgaben mit Bestätigung in zwei Schritten: App-Passwörter anlegen können (Thunderbird und Handy fragen keinen Code ab); dazu `sync-collection` für schnelleren Abgleich auf dem iPhone.
 - [ ] **Regeln für Mitarbeiter** in der Firmenverwaltung (heute nur für gemeinsame Postfächer und die eigenen).
 - [ ] **Weitere Sprachen** neben Deutsch und Englisch (Texte in `messages/*.json`).
-- [ ] Wiedervorlage für mehrere ausgewählte Mails auf einmal (heute aus der geöffneten Mail) und „Wieder vorgelegt“ auch in „Alle Posteingänge“ (heute im Posteingang des Postfachs).
 - [ ] Lesebestätigungen von Programmen, die kein `In-Reply-To` setzen, erkennt die gesendete Mail noch nicht (dazu müsste Kontext `Original-Message-ID` im Bericht lesen); eingegangene Bestätigungen könnten von selbst gelesen und still abgelegt werden.
 - [ ] **Drucken mit Bildern aus dem Internet**, wenn sie in der Mail freigegeben wurden.
 

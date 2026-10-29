@@ -85,7 +85,10 @@ IMAP und SMTP.
 - **Unterhaltungen beim Lesen:** frühere Mails und die Antworten seitdem, Zitate eingeklappt;
   gruppiert wie Gmail auf Wunsch.
 - **Wiedervorlage:** eine Mail aus dem Weg bis morgen, Montag oder einem Zeitpunkt – dann ist sie
-  wieder oben im Posteingang, ungelesen, auch bei geschlossener App.
+  wieder oben im Posteingang, ungelesen, auch bei geschlossener App. Auch für mehrere
+  ausgewählte Mails auf einmal (der Wecker in der Leiste über der Auswahl), in „Alle
+  Posteingänge“ über eigene und gemeinsame Postfächer hinweg; dort stehen die wieder vorgelegten
+  Mails aller Posteingänge ebenfalls oben.
 
 ## Schreiben
 

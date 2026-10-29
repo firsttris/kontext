@@ -177,9 +177,7 @@ export const Toolbar = ({
         ) : null}
         {canRemove && mailbox.role !== "drafts" && mailbox.role !== "sent" ? (
           <SnoozeMenu
-            accountId={accountId}
-            ids={ids}
-            from={mailbox.id}
+            targets={[{ accountId, ids, from: mailbox.id }]}
             onLeave={mailbox.role === "snoozed" ? undefined : close}
             shortcut
           />

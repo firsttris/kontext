@@ -7,6 +7,10 @@ Steps that an update needs beyond raising the version are marked **Upgrade**.
 
 ## Unreleased
 
+- Mail: "Wiedervorlage" for several picked mails at once, from the selection bar – also across
+  the own and shared mailboxes in "Alle Posteingänge", each mail into its own account's snoozed
+  folder, with one "Rückgängig" for all. Offered only when every picked mail may leave its folder.
+  "Alle Posteingänge" now shows what came back ("Wieder vorgelegt") from every inbox on top.
 - Fixed: on phones the composer's action row ran off the screen, so "Als Entwurf speichern" and
   "Verwerfen" could not be reached. Below `md` the receipt, delivery-report, confidential and
   sign switches and "Als Entwurf speichern" now sit under "Weitere Aktionen"; desktop is unchanged.

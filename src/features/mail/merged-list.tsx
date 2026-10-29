@@ -5,7 +5,7 @@
  */
 import { type ReactNode, useCallback, useEffect, useMemo, useState } from "react";
 import type { EmailFilter } from "@/jmap/mail";
-import { type Feed, mergeFeeds } from "@/lib/inboxes";
+import { type Feed, mergeFeeds, pinResurfaced } from "@/lib/inboxes";
 import type { MailAccount } from "@/lib/mail-accounts";
 import type { MailSearch } from "@/routes/_app/mail.$accountId.$mailboxId";
 import { useCategoryMap } from "../categories/queries";
@@ -28,6 +28,8 @@ type Props = {
   /** Adds to each row, e.g. the folder and the words to mark in search results. */
   decorate?: (row: Row) => Row;
   dragMail?: (row: Row) => DraggedMail | undefined;
+  /** Listed on top under their own heading, e.g. what came back from Wiedervorlage. */
+  pinned?: { sources: Source[]; headings: { back: string; rest: string } };
 };
 
 export const MergedList = ({
@@ -40,10 +42,17 @@ export const MergedList = ({
   empty,
   decorate,
   dragMail,
+  pinned,
 }: Props) => {
   const [feeds, setFeeds] = useState<Record<string, Feed | undefined>>({});
   const report = useCallback(
     (accountId: string, feed: Feed) => setFeeds((current) => ({ ...current, [accountId]: feed })),
+    [],
+  );
+  const [pinnedFeeds, setPinnedFeeds] = useState<Record<string, Feed | undefined>>({});
+  const reportPinned = useCallback(
+    (accountId: string, feed: Feed) =>
+      setPinnedFeeds((current) => ({ ...current, [accountId]: feed })),
     [],
   );
   const sort = useMailSort();
@@ -51,9 +60,12 @@ export const MergedList = ({
   const rows = useMemo(() => {
     const categoriesOf = (accountId: string) =>
       (categoryMap[accountId] ?? []).map((category) => category.keyword);
-    const merged = mergeFeeds(sources, feeds, sort, categoriesOf);
+    const listed = mergeFeeds(sources, feeds, sort, categoriesOf);
+    const merged = pinned
+      ? pinResurfaced(mergeFeeds(pinned.sources, pinnedFeeds), listed, pinned.headings)
+      : listed;
     return decorate ? merged.map(decorate) : merged;
-  }, [sources, feeds, decorate, sort, categoryMap]);
+  }, [sources, feeds, decorate, sort, categoryMap, pinned, pinnedFeeds]);
   const loaded = sources.map(({ account }) => feeds[account.id]);
   const onNearEnd = useCallback(() => {
     for (const feed of Object.values(feeds)) if (feed?.hasMore && !feed.fetching) feed.fetchMore();
@@ -64,6 +76,14 @@ export const MergedList = ({
     <>
       {sources.map(({ account, filter }) => (
         <FeedSource key={account.id} accountId={account.id} filter={filter} report={report} />
+      ))}
+      {pinned?.sources.map(({ account, filter }) => (
+        <FeedSource
+          key={`pinned-${account.id}`}
+          accountId={account.id}
+          filter={filter}
+          report={reportPinned}
+        />
       ))}
       <ListFrame
         title={title}

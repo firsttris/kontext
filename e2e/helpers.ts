@@ -164,6 +164,65 @@ export const addMail = async (
   assertSetOk(result, "Email/set");
 };
 
+/** The account id of a mailbox the user can open (their own or a shared one like info@). */
+export const mailboxAccountId = async (user: string, mailbox: string) => {
+  const session = await jmapAs(user).getSession();
+  return Object.entries(session.accounts).find(([, a]) => a.name === address(mailbox))![0];
+};
+
+/** Id and folder role of each mail with one of these subjects, wherever it lies in the mailbox. */
+export const findMails = async (user: string, mailbox: string, subjects: string[]) => {
+  const client = jmapAs(user);
+  const accountId = await mailboxAccountId(user, mailbox);
+  const [boxes, , got] = await client.request([
+    ["Mailbox/get", { accountId, properties: ["role"] }, "m"],
+    [
+      "Email/query",
+      {
+        accountId,
+        filter: { operator: "OR", conditions: subjects.map((subject) => ({ subject })) },
+      },
+      "q",
+    ],
+    [
+      "Email/get",
+      {
+        accountId,
+        "#ids": { resultOf: "q", name: "Email/query", path: "/ids" },
+        properties: ["subject", "mailboxIds", "keywords"],
+      },
+      "g",
+    ],
+  ]);
+  const roles = new Map(
+    (boxes![1].list as { id: string; role: string | null }[]).map((box) => [box.id, box.role]),
+  );
+  return (
+    got![1].list as {
+      id: string;
+      subject: string;
+      mailboxIds: Record<string, boolean>;
+      keywords: Record<string, boolean>;
+    }[]
+  ).map((email) => ({
+    accountId,
+    id: email.id,
+    subject: email.subject,
+    folder: roles.get(Object.keys(email.mailboxIds)[0] ?? "") ?? null,
+    keywords: Object.keys(email.keywords).sort(),
+  }));
+};
+
+/** Deletes a test's own mails again, wherever they went (moved, snoozed). */
+export const removeMails = async (user: string, mailbox: string, subjects: string[]) => {
+  const found = await findMails(user, mailbox, subjects);
+  if (!found.length) return;
+  await jmapAs(user).call("Email/set", {
+    accountId: found[0]!.accountId,
+    destroy: found.map((email) => email.id),
+  });
+};
+
 /**
  * The keyboard of Chrome on Android (Chromium in tests can't show one): with
  * `interactive-widget=resizes-content` it makes the page shorter by its height.
