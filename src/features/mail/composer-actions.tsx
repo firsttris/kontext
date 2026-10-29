@@ -122,7 +122,10 @@ const togglesOf = (p: Props): Toggle[] => [
 
 /** Phones: the switches and "Als Entwurf speichern"; the trigger shows when a switch is on. */
 const MoreMenu = ({ toggles, onSaveDraft }: { toggles: Toggle[]; onSaveDraft: () => void }) => {
-  const active = toggles.find((toggle) => toggle.on);
+  // A warning (encryption blocked) wins over the plain "on" look of an earlier switch.
+  const active =
+    toggles.find((toggle) => toggle.on && toggle.onClass === WARN) ??
+    toggles.find((toggle) => toggle.on);
   return (
     <MenuRoot>
       <MenuTrigger asChild>
@@ -229,7 +232,11 @@ export const ComposerActions = (props: Props) => {
       {encrypt ? (
         <span
           role="status"
-          className={`hidden min-w-0 truncate text-[12px] sm:inline ${encryptBlocked ? "text-warn" : "text-accent"}`}
+          className={cn(
+            // Phones: a line of its own below the buttons, so a blocked send stays in sight.
+            "order-last min-w-0 basis-full truncate text-[12px] sm:order-none sm:basis-auto",
+            encryptBlocked ? "text-warn" : "text-accent",
+          )}
         >
           {encryptBlocked ?? encryptNote}
         </span>
