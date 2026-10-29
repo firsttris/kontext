@@ -40,7 +40,7 @@ verbindet sie mit Kontext. Keine Telefonanlage aus der Cloud, keine Kosten pro N
 - **Mailbox:** Nimmt niemand ab, spielt die Box die Ansage und nimmt eine Nachricht auf (bis zu
   zwei Minuten). Sie kommt als **Mail mit der Aufnahme** in das gewählte Postfach und lässt sich
   am Anruf abspielen. Ansagen spricht man direkt im Browser ein oder lädt sie hoch.
-- **Öffnungszeiten** mit Mittagspause, geschlossenen Tagen und den Feiertagen mit einem Klick:
+- **Öffnungszeiten** mit Mittagspause, geschlossenen Tagen und den Feiertagen des eigenen Bundeslands mit einem Klick:
   Außerhalb klingelt nichts, Anrufer hören die Ansage für „geschlossen“ und können eine Nachricht
   hinterlassen. Das prüft die Box selbst, auch wenn Kontext gerade nicht erreichbar ist.
 - **Sprachmenü:** „Für den Kundendienst drücken Sie die 1 …“ – jede Taste klingelt bei ihren

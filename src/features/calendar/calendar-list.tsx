@@ -5,12 +5,13 @@
  */
 import { Settings2, Share2, Trash2 } from "lucide-react";
 import { type FormEvent, useState } from "react";
+import { StateSelect } from "@/components/state-select";
 import { Button } from "@/components/ui/button";
 import { Dialog } from "@/components/ui/dialog";
-import { Input, Label, Select } from "@/components/ui/input";
+import { Input } from "@/components/ui/input";
 import { useToast } from "@/components/ui/toast";
 import { principalName } from "@/jmap/principals";
-import { STATES, type State } from "@/lib/holidays";
+import type { State } from "@/lib/holidays";
 import { everyoneAccess, sharedWith } from "@/lib/sharing";
 import { m } from "@/paraglide/messages";
 import { useColleagues, usePrincipals } from "../sharing/queries";
@@ -185,16 +186,7 @@ const Holidays = () => {
       <h3 className="m-0 text-[12px] font-medium text-muted">{m.calendar_holidays()}</h3>
       <p className="m-0 text-[13px] text-muted">{m.calendar_holidays_hint()}</p>
       <div className="flex items-end gap-2">
-        <Label className="flex-1">
-          {m.calendar_holidays_state()}
-          <Select value={state} onChange={(e) => setState(e.target.value as State)}>
-            {Object.entries(STATES).map(([code, name]) => (
-              <option key={code} value={code}>
-                {name}
-              </option>
-            ))}
-          </Select>
-        </Label>
+        <StateSelect value={state} onChange={setState} className="flex-1" />
         <Button variant="outline" onClick={add} disabled={addHolidays.isPending}>
           {m.calendar_holidays_add()}
         </Button>
