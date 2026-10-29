@@ -1,16 +1,18 @@
 /**
  * Fetching a subscribed calendar file. Only https on the internet (internet-host.ts), so a
  * subscription cannot make the server read Stalwart, the cloud's metadata or another machine
- * inside; webcal:// is https. Redirects are followed by hand, each target checked the same way.
- * At most 5 MB and 15 seconds.
+ * inside; webcal:// is https. The connection goes to the address that was checked (pinned-get.ts).
+ * Redirects are followed by hand, each target checked the same way. At most 5 MB and 15 seconds.
  */
-import { dnsResolve, isInternetHost, type Resolve } from "../internet-host";
+import { dnsResolve, pinHost, type Resolve } from "../internet-host";
+import { type Get, pinnedGet } from "./pinned-get";
 
 export const MAX_BYTES = 5_000_000;
 const TIMEOUT_MS = 15_000;
 const MAX_REDIRECTS = 3;
 
 export type FetchDeps = {
+  /** For the tests: instead of connecting to the checked address. */
   fetch?: typeof fetch;
   resolve?: Resolve;
   /** For the tests only: any address, also http and inside. */
@@ -29,10 +31,13 @@ export const calendarUrl = (input: string): URL | null => {
   }
 };
 
-const allowed = async (url: URL, deps: FetchDeps) => {
-  if (deps.anyTarget) return true;
-  if (url.protocol !== "https:" || url.username || url.password) return false;
-  return isInternetHost(url.hostname, deps.resolve ?? dnsResolve);
+/** How to fetch this address, or null when it is not allowed. */
+const connection = async (url: URL, deps: FetchDeps): Promise<Get | null> => {
+  if (deps.anyTarget) return deps.fetch ?? fetch;
+  if (url.protocol !== "https:" || url.username || url.password) return null;
+  const pinned = await pinHost(url.hostname, deps.resolve ?? dnsResolve);
+  if (!pinned) return null;
+  return deps.fetch ?? pinnedGet(pinned.address);
 };
 
 /** Reads the body up to the limit; null if it is longer. */
@@ -57,9 +62,9 @@ const readLimited = async (response: Response): Promise<string | null> => {
 export const fetchCalendar = async (input: string, deps: FetchDeps = {}): Promise<Fetched> => {
   let url = calendarUrl(input);
   if (!url) return { ok: false, error: "Das ist keine Kalender-Adresse." };
-  const get = deps.fetch ?? fetch;
   for (let hop = 0; hop <= MAX_REDIRECTS; hop++) {
-    if (!(await allowed(url, deps))) {
+    const get = await connection(url, deps);
+    if (!get) {
       return { ok: false, error: "Diese Adresse ruft Kontext nicht ab: nur https im Internet." };
     }
     let response: Response;
