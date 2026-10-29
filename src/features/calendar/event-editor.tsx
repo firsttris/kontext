@@ -29,12 +29,14 @@ import {
 } from "@/lib/event-form";
 import { type CalendarEvent, isInstance, toLocal } from "@/lib/jscalendar";
 import { formAt, formSlot } from "@/lib/planning";
+import { reminderForKind } from "@/lib/reminders";
 import { withNames } from "@/lib/suggestions";
 import { m } from "@/paraglide/messages";
 import { AvailabilityPanel } from "./availability-panel";
 import { attendeeList } from "./availability-queries";
 import { PlaceField } from "./place-field";
 import { calendarLabel, useCalendarRefs, useEventMutations, useMyAddresses } from "./queries";
+import { ReminderFields } from "./reminder-fields";
 import { RepeatFields } from "./repeat-fields";
 
 type Scope = "this" | "series";
@@ -195,7 +197,14 @@ export const EventEditor = ({ event, series, start, onDone, onCancel }: Props) =
         <input
           type="checkbox"
           checked={form.allDay}
-          onChange={(e) => setForm((current) => ({ ...current, allDay: e.target.checked }))}
+          onChange={(e) => {
+            const allDay = e.target.checked;
+            setForm((current) => ({
+              ...current,
+              allDay,
+              reminder: reminderForKind(current.reminder, allDay),
+            }));
+          }}
           className="size-4 accent-[var(--accent)]"
         />
         {m.calendar_event_all_day()}
@@ -245,6 +254,11 @@ export const EventEditor = ({ event, series, start, onDone, onCancel }: Props) =
           <option value="free">{m.calendar_event_show_free()}</option>
         </Select>
       </Label>
+      <ReminderFields
+        value={form.reminder}
+        allDay={form.allDay}
+        onChange={(reminder) => setForm((current) => ({ ...current, reminder }))}
+      />
       {!instance || scope === "series" ? (
         <RepeatFields
           value={form.recurrence}

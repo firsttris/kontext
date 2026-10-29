@@ -1,10 +1,10 @@
 <div align="center">
 
-<h1>Alles, was dein Team von Google kennt. Ohne dass Google dein Team kennt.</h1>
+<h1>Fühlt sich vertraut an. Gehört dir.</h1>
 
-**Kontext: Mail, Kalender, Chat und Telefonie (CTI) für dein Team – selbst gehostet und Open Source**
+**Kontext: Mail, Kalender, Chat, Dokumente und Telefon für dein Team – auf deinem eigenen Server, Open Source**
 
-Gemeinsame Postfächer, ein Kalender fürs Team und zu jedem Kunden alle Mails, Termine und Anrufe auf einen Blick. Ohne Kosten pro Benutzer. Made in Europe.
+Ohne Kosten pro Benutzer. Made in Europe.
 
 [English](README.md) · **Deutsch**
 
@@ -96,7 +96,7 @@ VPS mit 2 vCPU und 4 GB RAM. Alles Weitere – DNS, Podman, Backups, Updates –
 | | |
 |---|---|
 | ✉️ **Mail** | **Gemeinsame Postfächer** wie info@ mit Rechten pro Person, **Kategorien** und **Regeln auf dem Server**, Suche wie in Gmail, später senden, **weitere Postfächer** (Gmail, GMX), **Warnungen vor gefälschten Absendern** · [mehr →](https://firsttris.github.io/kontext/mail.html) |
-| 📅 **Kalender** | Tag, Woche, Monat, Serien, **Einladungen mit einem Klick beantworten**, auch **Einladungen aus Outlook und Google direkt in der Mail**, **Wer hat Zeit?**, **Videobesprechung pro Termin**, geteilte Kalender, Feiertage je Bundesland · [mehr →](https://firsttris.github.io/kontext/calendar-contacts.html) |
+| 📅 **Kalender** | Tag, Woche, Monat, Serien, **Einladungen mit einem Klick beantworten**, auch **Einladungen aus Outlook und Google direkt in der Mail**, **Wer hat Zeit?**, **Videobesprechung pro Termin**, **Erinnerung als Hinweis oder Mail**, geteilte Kalender, Feiertage je Bundesland · [mehr →](https://firsttris.github.io/kontext/calendar-contacts.html) |
 | 👥 **Kontakte** | **Der Kunde auf einen Blick**: letzte Mails, nächste Termine, offene Aufgaben und Anrufe; Gruppen, vCard, Doppelte zusammenführen · [mehr →](https://firsttris.github.io/kontext/calendar-contacts.html#kontakte) |
 | ✅ **Aufgaben** | **Liste oder Kanban-Board** pro Postfach, **aus einer Mail, einer Chat-Nachricht oder einem verpassten Anruf**, Erinnerungen, per CalDAV in Thunderbird und am Handy · [mehr →](https://firsttris.github.io/kontext/tasks.html) |
 | 💬 **Team-Chat & Video** | Kanäle und Direktnachrichten, **Mails und Aufgaben als Karten**, Sprachnachrichten, **Videocalls und Bildschirm teilen** auf dem eigenen Server, Ende-zu-Ende verschlüsselte Unterhaltungen · [mehr →](https://firsttris.github.io/kontext/chat.html) |

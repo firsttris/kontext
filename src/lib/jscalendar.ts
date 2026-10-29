@@ -3,6 +3,7 @@
  * layout of overlapping events. Times are shown in Europe/Berlin; JMAP stores the event's own zone.
  */
 import type { RecurrenceRule } from "./recurrence";
+import type { Alert } from "./reminders";
 
 export type Participant = {
   "@type"?: "Participant";
@@ -40,6 +41,8 @@ export type CalendarEvent = {
   /** "free" when the time does not count as busy (RFC 8984 §5.2.2); "busy" when left out. */
   freeBusyStatus?: "free" | "busy";
   recurrenceRule?: RecurrenceRule | null;
+  /** Its reminder (RFC 8984 §4.5.2); see reminders.ts. */
+  alerts?: Record<string, Alert> | null;
   recurrenceOverrides?: Record<string, Record<string, unknown>> | null;
   /** Set on instances of a repeating event. */
   recurrenceId?: string | null;
@@ -308,7 +311,7 @@ export const meetingLink = (event: Pick<CalendarEvent, "virtualLocations">): str
     .map((place) => place.uri ?? "")
     .find(isMeetingLink) ?? "";
 
-export const locationName = (event: CalendarEvent): string =>
+export const locationName = (event: Pick<CalendarEvent, "locations">): string =>
   Object.values(event.locations ?? {})
     .map((location) => location.name)
     .filter(Boolean)
@@ -347,3 +350,20 @@ export const isInstance = (event: CalendarEvent): boolean =>
 
 export const timeLabel = (minutes: number): string =>
   `${pad(Math.floor(minutes / 60))}:${pad(minutes % 60)}`;
+
+/**
+ * The event a link opens (`?event=…&account=…&date=…`): by its id, or, from a reminder the server
+ * pushed, by the stored event's id and the day of the date (expanded events have ids of their own).
+ */
+export const findLinkedEvent = <T extends CalendarEvent>(
+  events: T[],
+  id: string,
+  account: string | undefined,
+  day: string,
+): T | undefined => {
+  const inAccount = events.filter((event) => !account || event.accountId === account);
+  return (
+    inAccount.find((event) => event.id === id) ??
+    inAccount.find((event) => event.baseEventId === id && dateKey(eventTimes(event).start) === day)
+  );
+};

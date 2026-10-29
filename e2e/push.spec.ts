@@ -1,7 +1,7 @@
 import { expect, type Page, test } from "@playwright/test";
 import { browserKeys, decryptPayload } from "../server/push/receive";
 import { fakePushService } from "./fake-push";
-import { address, login, unique } from "./helpers";
+import { address, jmapAs, login, personalAccountId, unique } from "./helpers";
 import { deliverMail } from "./protocols";
 
 const personalId = (page: Page) =>
@@ -75,6 +75,80 @@ test.describe("Benachrichtigungen bei geschlossener App (Web Push)", () => {
     });
     await page.waitForTimeout(1500);
     expect(service.received.length).toBe(before);
+    service.close();
+  });
+
+  test("Erinnerung an einen Termin kommt als Push, auch bei geschlossener App", async ({
+    browser,
+  }) => {
+    test.setTimeout(150_000);
+    const service = await fakePushService();
+    const keys = await browserKeys();
+    const sandra = await (await browser.newContext()).newPage();
+    await login(sandra, "sandra");
+    const endpoint = `${service.url}/sandra-${Date.now()}`;
+    await sandra.request.post("/api/push/subscriptions", {
+      data: { endpoint, keys: { p256dh: keys.p256dh, auth: keys.auth } },
+    });
+    await sandra.close();
+    const pushes = async () =>
+      Promise.all(
+        service.received
+          .filter((push) => endpoint.endsWith(push.path))
+          .map(async (push) => JSON.parse(await decryptPayload(new Uint8Array(push.body), keys))),
+      );
+
+    // An appointment in a minute and a half that reminds a minute before, made behind the
+    // UI's back: Stalwart tells the server, the server tells Sandra's device.
+    const using = ["urn:ietf:params:jmap:core", "urn:ietf:params:jmap:calendars"];
+    const client = jmapAs("sandra");
+    const accountId = await personalAccountId("sandra");
+    const { list } = await client.call<{ list: { id: string; isDefault: boolean }[] }>(
+      "Calendar/get",
+      { accountId },
+      using,
+    );
+    const calendar = list.find((c) => c.isDefault) ?? list[0]!;
+    const start = new Intl.DateTimeFormat("sv-SE", {
+      timeZone: "Europe/Berlin",
+      dateStyle: "short",
+      timeStyle: "medium",
+    })
+      .format(new Date(Date.now() + 90_000))
+      .replace(" ", "T");
+    const title = unique("Heizungscheck");
+    const { created } = await client.call<{ created: Record<string, { id: string }> }>(
+      "CalendarEvent/set",
+      {
+        accountId,
+        create: {
+          e: {
+            calendarIds: { [calendar.id]: true },
+            title,
+            start,
+            timeZone: "Europe/Berlin",
+            duration: "PT1H",
+            locations: { l: { "@type": "Location", name: "Werkstatt" } },
+            alerts: {
+              a: {
+                "@type": "Alert",
+                trigger: { "@type": "OffsetTrigger", offset: "-PT1M", relativeTo: "start" },
+                action: "display",
+              },
+            },
+          },
+        },
+      },
+      using,
+    );
+    const id = created.e!.id;
+    await expect.poll(pushes, { timeout: 120_000, intervals: [2000] }).toContainEqual({
+      title: `Erinnerung: ${title}`,
+      body: expect.stringMatching(/^\w{2}\., \d{2}\.\d{2}\., \d{2}:\d{2} · Werkstatt$/),
+      url: `/calendar?date=${start.slice(0, 10)}&event=${id}&account=${accountId}`,
+      tag: `reminder-${accountId}/${id}`,
+    });
+    await client.call("CalendarEvent/set", { accountId, destroy: [id] }, using);
     service.close();
   });
 

@@ -18,6 +18,7 @@ import {
   type CalendarEvent,
   dateKey,
   eventTimes,
+  findLinkedEvent,
   isoWeek,
   toLocal,
   weekDays,
@@ -149,10 +150,7 @@ export const CalendarPage = ({ search }: { search: Search }) => {
   const invited = (event: CalendarEvent) => isInvitation(calendars, event, mine);
   const invitations = events.filter(invited);
   const open = search.event
-    ? events.find(
-        (event) =>
-          event.id === search.event && (!search.account || event.accountId === search.account),
-      )
+    ? findLinkedEvent(events, search.event, search.account, selected)
     : undefined;
 
   const header = (

@@ -1,7 +1,7 @@
 /**
  * The entries of the bell: new mail in all inboxes (own and shared), invitations waiting for an
  * answer, the rest of today's appointments, tasks given to me lately and those due today or
- * before. All from the server's state, refreshed by push like every other view, so reading a
+ * before. Besides, the coming appointments whose reminders the device shows. All from the server's state, refreshed by push like every other view, so reading a
  * mail on the phone clears it here too.
  */
 import { useQueries } from "@tanstack/react-query";
@@ -58,16 +58,16 @@ export const useNotificationFeed = (now: Date) => {
     .filter((event) => event.end > now)
     .sort((a, b) => a.start.getTime() - b.start.getTime());
   const invited = new Set(invitations.map((event) => event.key));
-  const appointments = restOfToday(
-    events.filter((event) => !invited.has(eventKey(event))).map(asFeedEvent),
-    now,
-    today,
-  );
+  const coming = events
+    .filter((event) => !invited.has(eventKey(event)))
+    .map(asFeedEvent)
+    .filter((event) => event.end > now);
+  const appointments = restOfToday(coming, now, today);
 
   const me = useMe();
   const { tasks } = useTasks();
   const assigned = assignedToMe(tasks, me, now);
   const given = new Set(assigned.map((task) => task.id));
   const due = dueTasks(tasks, me, today).filter((task) => !given.has(task.id));
-  return { mails, invitations, appointments, assigned, due };
+  return { mails, invitations, appointments, coming, assigned, due };
 };

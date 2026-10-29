@@ -19,6 +19,7 @@ import {
   ZONE,
 } from "./jscalendar";
 import { fromRecurrenceRule, NO_REPEAT, type RepeatForm, toRecurrenceRule } from "./recurrence";
+import { alertsOf, defaultReminder, type ReminderChoice, reminderOf } from "./reminders";
 
 export type EventForm = {
   title: string;
@@ -36,6 +37,8 @@ export type EventForm = {
   description: string;
   /** How the event repeats; null for a rule the form cannot show, which is kept as it is. */
   recurrence: RepeatForm | null;
+  /** When and how it reminds; "kept" for alerts the form cannot show, which stay as they are. */
+  reminder: ReminderChoice;
   /** Files of Dokumente that belong to it, kept as its links. */
   documents: LinkedDocument[];
 };
@@ -66,6 +69,7 @@ export const eventToForm = (
     showAs: event.freeBusyStatus === "free" ? "free" : "busy",
     description: event.description ?? "",
     recurrence: fromRecurrenceRule((series ?? event).recurrenceRule),
+    reminder: reminderOf(event.alerts),
     documents: documentsOfLinks(event.links),
   };
 };
@@ -86,6 +90,7 @@ export const newEventForm = (startLocal: string, minutes = 60): EventForm => {
     showAs: "busy",
     description: "",
     recurrence: NO_REPEAT,
+    reminder: defaultReminder(false),
     documents: [],
   };
 };
@@ -188,6 +193,7 @@ export const formToEvent = (
         }),
       ])
     : null;
+  const alerts = alertsOf(form.reminder, existing?.alerts);
   return {
     title: form.title.trim(),
     start: startLocal,
@@ -208,6 +214,7 @@ export const formToEvent = (
     links: withDocuments(existing?.links, form.documents),
     organizerCalendarAddress: participants ? `mailto:${organizer.email}` : null,
     freeBusyStatus: form.showAs,
+    ...(alerts !== undefined ? { alerts } : {}),
     ...(withRecurrence && form.recurrence
       ? { recurrenceRule: toRecurrenceRule(form.recurrence) }
       : {}),
