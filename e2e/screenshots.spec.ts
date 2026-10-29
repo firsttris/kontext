@@ -171,6 +171,21 @@ test.describe("Screenshots @screenshots", () => {
     await shot(page, "empty-trash");
   });
 
+  test("Mailliste sortieren", async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await login(page);
+    await page
+      .getByRole("list", { name: "Posteingang" })
+      .getByText("Angebot Wartungsvertrag 2027")
+      .click();
+    await mailShown(page);
+    await page.getByRole("button", { name: /^Sortierung:/ }).click();
+    await page.getByRole("menuitemradio", { name: "Ungelesene zuerst" }).click();
+    await page.getByRole("button", { name: "Sortierung: Ungelesene zuerst" }).click();
+    await expect(page.getByRole("menuitemradio", { name: "Ungelesene zuerst" })).toBeChecked();
+    await shot(page, "mail-sort");
+  });
+
   test("Bild in der Mail", async ({ page }) => {
     await page.setViewportSize({ width: 1440, height: 900 });
     await login(page);

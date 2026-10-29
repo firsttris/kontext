@@ -26,7 +26,9 @@ import {
 import { heldMails } from "@/jmap/submissions";
 import type { Account, EmailSummary, Mailbox } from "@/jmap/types";
 import type { MailAccount } from "@/lib/mail-accounts";
+import { DEFAULT_SORT, type MailSort, sortComparators } from "@/lib/mail-sort";
 import { findRole } from "@/lib/mailboxes";
+import { useCategories } from "../categories/queries";
 import { usePrincipals } from "../sharing/queries";
 
 export const mailboxesKey = (accountId: string) => [accountId, "mailboxes"] as const;
@@ -96,12 +98,27 @@ export const useMailboxes = (accountId: string) => {
   });
 };
 
-/** A folder's mails, newest first; with `collapse`, one line per conversation. */
-export const useEmailList = (accountId: string, filter: EmailFilter, collapse = false) => {
+/**
+ * A folder's mails in the chosen order (newest first by default); with `collapse`, one line per
+ * conversation. Sorting by category needs the account's categories, in its order.
+ */
+export const useEmailList = (
+  accountId: string,
+  filter: EmailFilter,
+  { collapse = false, sort = DEFAULT_SORT }: { collapse?: boolean; sort?: MailSort } = {},
+) => {
   const client = useClient();
+  const categories = useCategories(sort === "category" ? accountId : undefined).map(
+    (category) => category.keyword,
+  );
+  const comparators = sortComparators(sort, { threads: collapse, categories });
   return useInfiniteQuery({
-    queryKey: [accountId, "emails", filter, collapse],
-    queryFn: ({ pageParam }) => queryEmails(client, accountId, filter, pageParam, 50, collapse),
+    queryKey: [accountId, "emails", filter, collapse, comparators],
+    queryFn: ({ pageParam }) =>
+      queryEmails(client, accountId, filter, pageParam, 50, {
+        collapseThreads: collapse,
+        sort: comparators,
+      }),
     // No account: nothing to list (e.g. "wieder vorgelegt" outside the inbox).
     enabled: Boolean(accountId),
     initialPageParam: 0,

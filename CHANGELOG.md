@@ -7,6 +7,12 @@ Steps that an update needs beyond raising the version are marked **Upgrade**.
 
 ## Unreleased
 
+- Mail: sort the mail list from its header (the arrows, on the phone too) – newest or oldest
+  first, unread, flagged or with a category first (in the account's order of categories), by
+  sender or subject, or the largest first; the newest first within each group. One choice for
+  every folder, "Alle Posteingänge" and the search, kept on the device. The server sorts
+  (`Email/query`, RFC 8621 §4.4.2), so loading more keeps the order; in the conversation view the
+  whole conversation counts (`someInThreadHaveKeyword`, `allInThreadHaveKeyword`).
 - Mail: "Antwort an" (Reply-To) when writing – revealed next to "Cc / Bcc", with the same address
   suggestions; replies then go to those addresses instead of the sender. It goes out with every
   kind of sending (JMAP `replyTo`, and the `Reply-To` header of mails Kontext builds itself for

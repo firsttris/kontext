@@ -10,6 +10,7 @@ import { RESURFACED, useSnoozes } from "../snooze/queries";
 import { canEmpty, EmptyFolder } from "./empty-folder";
 import { FilterChips, ListFrame, type Row } from "./list-frame";
 import { useEmailList, useHeldMails, useMailAccounts } from "./queries";
+import { useMailSort } from "./sort-setting";
 import { useThreadView } from "./thread-view";
 
 type Props = { accountId: string; mailbox: Mailbox; search: MailSearch };
@@ -21,7 +22,7 @@ export const MessageList = ({ accountId, mailbox, search }: Props) => {
     () => ({ mailboxId: mailbox.id, unreadOnly: search.unread }),
     [mailbox.id, search.unread],
   );
-  const list = useEmailList(accountId, filter, useThreadView());
+  const list = useEmailList(accountId, filter, { collapse: useThreadView(), sort: useMailSort() });
   // In the inbox, what came back from Wiedervorlage and is not read yet: on top, by itself.
   const isInbox = mailbox.role === "inbox";
   const backFilter = useMemo(
@@ -115,6 +116,7 @@ export const MessageList = ({ accountId, mailbox, search }: Props) => {
       dragMail={dragMail}
       folderId={mailbox.id}
       inJunk={mailbox.role === "junk"}
+      sortable={!scheduled && !isSnoozed}
       folderAction={
         canEmpty(mailbox) ? <EmptyFolder accountId={accountId} mailbox={mailbox} /> : undefined
       }
