@@ -64,3 +64,25 @@ export const MenuCheckboxItem = ({
     </Menu.ItemIndicator>
   </Menu.CheckboxItem>
 );
+
+export const MenuRadioGroup = Menu.RadioGroup;
+
+/** One of several choices; the chosen one has a check mark. */
+export const MenuRadioItem = ({
+  className,
+  children,
+  ...props
+}: ComponentProps<typeof Menu.RadioItem>) => (
+  <Menu.RadioItem
+    className={cn(
+      "flex h-9 cursor-pointer items-center gap-2.5 rounded-lg px-2.5 outline-none data-[highlighted]:bg-hover",
+      className,
+    )}
+    {...props}
+  >
+    {children}
+    <Menu.ItemIndicator className="ml-auto text-fg">
+      <Check size={15} />
+    </Menu.ItemIndicator>
+  </Menu.RadioItem>
+);

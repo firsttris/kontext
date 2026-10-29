@@ -1,15 +1,18 @@
 /**
  * A mail list over several accounts: each account keeps its own paged list (the same cache as its
- * folder view, so read/move/delete update everywhere); the lists are merged here by date.
+ * folder view, so read/move/delete update everywhere); the lists are merged here in the chosen
+ * order (src/lib/mail-sort.ts).
  */
 import { type ReactNode, useCallback, useEffect, useMemo, useState } from "react";
 import type { EmailFilter } from "@/jmap/mail";
 import { type Feed, mergeFeeds } from "@/lib/inboxes";
 import type { MailAccount } from "@/lib/mail-accounts";
 import type { MailSearch } from "@/routes/_app/mail.$accountId.$mailboxId";
+import { useCategoryMap } from "../categories/queries";
 import { ListFrame, type Row } from "./list-frame";
 import type { DraggedMail } from "./mail-drag";
 import { useEmailList } from "./queries";
+import { useMailSort } from "./sort-setting";
 import { useThreadView } from "./thread-view";
 
 export type Source = { account: MailAccount; filter: EmailFilter };
@@ -43,10 +46,14 @@ export const MergedList = ({
     (accountId: string, feed: Feed) => setFeeds((current) => ({ ...current, [accountId]: feed })),
     [],
   );
+  const sort = useMailSort();
+  const categoryMap = useCategoryMap();
   const rows = useMemo(() => {
-    const merged = mergeFeeds(sources, feeds);
+    const categoriesOf = (accountId: string) =>
+      (categoryMap[accountId] ?? []).map((category) => category.keyword);
+    const merged = mergeFeeds(sources, feeds, sort, categoriesOf);
     return decorate ? merged.map(decorate) : merged;
-  }, [sources, feeds, decorate]);
+  }, [sources, feeds, decorate, sort, categoryMap]);
   const loaded = sources.map(({ account }) => feeds[account.id]);
   const onNearEnd = useCallback(() => {
     for (const feed of Object.values(feeds)) if (feed?.hasMore && !feed.fetching) feed.fetchMore();
@@ -90,7 +97,7 @@ const FeedSource = ({
 }) => {
   // Search hits stay single mails; the combined inbox follows the list setting.
   const grouped = useThreadView() && !("search" in filter);
-  const list = useEmailList(accountId, filter, grouped);
+  const list = useEmailList(accountId, filter, { collapse: grouped, sort: useMailSort() });
   const { data, isPending, hasNextPage, isFetchingNextPage, fetchNextPage } = list;
   useEffect(() => {
     report(accountId, {

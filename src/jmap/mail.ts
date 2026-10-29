@@ -1,5 +1,6 @@
 /** Mail operations on top of the JMAP client (RFC 8621). Each function is one round-trip. */
 
+import type { Comparator } from "@/lib/mail-sort";
 import { bodyStructureOf } from "@/lib/mail-structure";
 import { replyReferences } from "@/lib/references";
 import { assertSetOk, CAPABILITIES, type JmapClient } from "./client";
@@ -105,8 +106,15 @@ export const queryEmails = async (
   filter: EmailFilter,
   position: number,
   limit = 50,
-  /** One mail per conversation, the newest (RFC 8621 §4.4.3). */
-  collapseThreads = false,
+  {
+    collapseThreads = false,
+    sort = [{ property: "receivedAt", isAscending: false }],
+  }: {
+    /** One mail per conversation, the first in the list's order (RFC 8621 §4.4.3). */
+    collapseThreads?: boolean;
+    /** The order (RFC 8621 §4.4.2), newest first by default; src/lib/mail-sort.ts. */
+    sort?: Comparator[];
+  } = {},
 ): Promise<EmailPage> => {
   const [query, get] = await client.request([
     [
@@ -114,7 +122,7 @@ export const queryEmails = async (
       {
         accountId,
         filter: emailQueryFilter(filter),
-        sort: [{ property: "receivedAt", isAscending: false }],
+        sort,
         collapseThreads,
         position,
         limit,

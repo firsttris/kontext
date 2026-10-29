@@ -1133,6 +1133,14 @@ eines Kontos – auch die Antworten im Gesendet-Ordner.
   Gerät) zeigt eine Zeile je Unterhaltung (`collapseThreads`, RFC 8621 §4.4.3) mit den Beteiligten
   und der Zahl der Mails; Archivieren, Löschen, Verschieben und Spam gelten dann für alle Mails der
   Unterhaltung im Ordner, Markieren für die eine. Die Suche zeigt weiter einzelne Mails.
+- **Sortieren:** eine Wahl je Gerät für alle Listen (`src/features/mail/sort-setting.ts`, wie die
+  Gruppierung im `localStorage`). `src/lib/mail-sort.ts` macht daraus das `sort` von `Email/query`
+  (RFC 8621 §4.4.2) mit „neueste zuerst“ als zweitem Kriterium; Stalwart 0.16.27 kann `receivedAt`,
+  `size`, `from`, `subject` und die Schlagwort-Kriterien (`crates/jmap/src/email/query.rs`).
+  Ungelesen ist `hasKeyword $seen` aufsteigend (ohne zuerst), „mit Kategorie“ ein Kriterium je
+  Kategorie des Kontos in ihrer Reihenfolge. Gruppiert gelten `someInThreadHaveKeyword` bzw.
+  `allInThreadHaveKeyword`, damit das ganze Gespräch zählt. Der Server sortiert, also stimmt die
+  Reihenfolge auch beim Nachladen; der Abfrageschlüssel enthält die Kriterien.
 
 ## Senden rückgängig und später senden
 
@@ -1194,9 +1202,10 @@ Eine Mail „aus dem Weg bis …“: Knopf mit dem Wecker über der Mail oder `w
 
 `/mail/all/inbox` zeigt die Posteingänge des eigenen Kontos und der gemeinsamen Postfächer in
 einer Liste. Jedes Konto lädt seine Seiten wie in der Ordneransicht (derselbe Cache, damit
-Gelesen, Verschieben und Löschen überall gleich ankommen); die App mischt sie nach Datum. Solange
-ein Konto noch ältere Mails nachladen kann, zeigt die Liste nichts, was älter ist als dessen
-älteste geladene Mail, damit die Reihenfolge stimmt. Eine geöffnete Mail trägt ihr Konto in der
+Gelesen, Verschieben und Löschen überall gleich ankommen); die App mischt die schon sortierten
+Listen in der gewählten Reihenfolge (`mergeFeeds`, `src/lib/inboxes.ts`), ohne die Reihenfolge
+eines Kontos zu ändern. Solange ein Konto noch weitere Mails nachladen kann, endet die Liste dort,
+wo dessen geladene Mails enden, damit die Reihenfolge stimmt. Eine geöffnete Mail trägt ihr Konto in der
 URL (`account`); Antworten gehen deshalb aus dem richtigen Postfach.
 
 ## Leseansicht auf breiten Bildschirmen
