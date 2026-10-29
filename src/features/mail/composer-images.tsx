@@ -25,8 +25,11 @@ export const useComposerImages = ({
   onError,
   onBusy,
 }: {
-  /** Uploads the picture, or keeps it in the browser (use-held-files.ts). */
-  place: (file: File) => Promise<OutgoingAttachment>;
+  /**
+   * Uploads the picture, or keeps it in the browser (use-held-files.ts); `alongside` are the
+   * sizes of the pictures placed before it from the same choice, for the encrypted mail's limit.
+   */
+  place: (file: File, alongside: number[]) => Promise<OutgoingAttachment>;
   editor: Editor | null;
   onError: (error: Error) => void;
   /** +1 while one goes up, -1 when it is done: sending waits for them. */
@@ -35,11 +38,13 @@ export const useComposerImages = ({
   const [images, setImages] = useState<OutgoingImage[]>([]);
 
   const insert = async (files: File[]) => {
+    const sizes: number[] = [];
     for (const file of files) {
       onBusy(1);
       try {
-        const [placed, src] = await Promise.all([place(file), imageUrl(file)]);
+        const [placed, src] = await Promise.all([place(file, sizes), imageUrl(file)]);
         if (!src) continue;
+        sizes.push(placed.size);
         const cid = newCid(crypto.randomUUID().slice(0, 12));
         setImages((current) => [...current, { ...placed, type: file.type, cid }]);
         editor

@@ -177,7 +177,7 @@ export const Composer = ({ accountId, mode, sourceEmailId, forwardIds, prefill }
   });
 
   const pics = useComposerImages({
-    place: (file) => placeFile(file),
+    place: (file, alongside) => placeFile(file, alongside),
     editor,
     onError: (error) => toast.show(m.common_error({ message: error.message }), "error"),
     onBusy: (by) => setUploading((n) => n + by),
@@ -401,9 +401,16 @@ export const Composer = ({ accountId, mode, sourceEmailId, forwardIds, prefill }
     };
   };
 
-  /** A new file: uploaded, or kept in the browser for an encrypted mail (within its limit). */
-  const placeFile = (file: File) => {
-    const sizes = [...attachments, ...pics.images, file].map((each) => each.size);
+  /**
+   * A new file: uploaded, or kept in the browser for an encrypted mail (within its limit).
+   * `alongside`: the sizes of the files placed before it from the same choice, which this
+   * render's attachments do not show yet.
+   */
+  const placeFile = (file: File, alongside: number[] = []) => {
+    const sizes = [
+      ...[...attachments, ...pics.images, file].map((each) => each.size),
+      ...alongside,
+    ];
     if (encrypt && !fitsEncrypted(sizes)) {
       throw new Error(m.mail_encrypted_too_large({ size: formatSize(HELD_LIMIT) }));
     }
@@ -665,10 +672,12 @@ export const Composer = ({ accountId, mode, sourceEmailId, forwardIds, prefill }
 
   const upload = async (files: FileList | File[] | null) => {
     if (!files) return;
+    const placed: number[] = [];
     for (const file of Array.from(files)) {
       setUploading((n) => n + 1);
       try {
-        const attachment = await placeFile(file);
+        const attachment = await placeFile(file, placed);
+        placed.push(attachment.size);
         setAttachments((current) => [...current, attachment]);
       } catch (error) {
         toast.show(m.common_error({ message: (error as Error).message }), "error");
