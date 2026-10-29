@@ -85,6 +85,7 @@ const setup = (
   const { welcomeError } = options;
   const fake = fakeManagement(options);
   const footer = { text: "" };
+  const idle = { minutes: 0 };
   const ended: string[] = [];
   const welcomed: { newcomer: string; people: string[] }[] = [];
   const shownToAll: string[][] = [];
@@ -115,6 +116,10 @@ const setup = (
       legalFooter: async () => footer.text,
       saveLegalFooter: async (text) => {
         footer.text = text;
+      },
+      idleLogout: async () => idle.minutes,
+      saveIdleLogout: async (minutes) => {
+        idle.minutes = minutes;
       },
     },
     externalHint: {
@@ -156,7 +161,7 @@ const setup = (
       body: body === undefined ? undefined : JSON.stringify(body),
     });
   const hint = () => externalHint;
-  return { ...fake, ended, welcomed, shownToAll, changedMailboxes, footer, send, hint };
+  return { ...fake, ended, welcomed, shownToAll, changedMailboxes, footer, idle, send, hint };
 };
 
 type Setup = ReturnType<typeof setup>;
@@ -382,5 +387,28 @@ describe("Firmenverwaltung", () => {
     expect(chef.footer.text).toBe("");
     expect((await chef.send("PUT", "/legal-footer", { text: "x".repeat(2001) })).status).toBe(400);
     expect((await chef.send("PUT", "/legal-footer", {})).status).toBe(400);
+  });
+
+  it("lets everyone signed in read the time for Abmelden nach Inaktivität, only the admin set it", async () => {
+    const anna = setup("anna@firma.de");
+    expect(await (await anna.send("GET", "/idle-logout")).json()).toEqual({ minutes: 0 });
+    anna.idle.minutes = 30;
+    expect(await (await anna.send("GET", "/idle-logout")).json()).toEqual({ minutes: 30 });
+    expect((await anna.send("PUT", "/idle-logout", { minutes: 15 })).status).toBe(403);
+    expect(anna.idle.minutes).toBe(30);
+    expect((await setup(null).send("GET", "/idle-logout")).status).toBe(401);
+  });
+
+  it("takes only the times offered, and 0 switches it off", async () => {
+    const chef = setup("chef@firma.de");
+    const saved = await chef.send("PUT", "/idle-logout", { minutes: 60 });
+    expect(await saved.json()).toEqual({ minutes: 60 });
+    expect(chef.idle.minutes).toBe(60);
+    expect((await chef.send("PUT", "/idle-logout", { minutes: 7 })).status).toBe(400);
+    expect((await chef.send("PUT", "/idle-logout", { minutes: "15" })).status).toBe(400);
+    expect((await chef.send("PUT", "/idle-logout", {})).status).toBe(400);
+    expect(chef.idle.minutes).toBe(60);
+    await chef.send("PUT", "/idle-logout", { minutes: 0 });
+    expect(chef.idle.minutes).toBe(0);
   });
 });

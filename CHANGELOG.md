@@ -7,6 +7,13 @@ Steps that an update needs beyond raising the version are marked **Upgrade**.
 
 ## Unreleased
 
+- Company admin: "Abmelden nach Inaktivität" for computers several people share – off by default,
+  or 15 / 30 minutes, 1 / 4 / 8 hours (a `company_setting`, `GET`/`PUT /api/company/idle-logout`).
+  Before the time runs out Kontext asks "Angemeldet bleiben?" with a one-minute countdown; without
+  an answer it saves open mails as drafts and signs out the usual way. Pointer, key and wheel
+  input, the tab coming into view and a running call count; the last input is shared by every
+  tab through localStorage, so a browser closed past the time signs out when opened again.
+  Enforced in the browser only (see docs/architecture.md for why not on the server).
 - Mail: import .eml files into a folder – with the button beside the "Alle / Ungelesen" filter
   (several files at once), or by dropping them onto the list or onto a folder in the sidebar. Each
   file is uploaded as a blob and imported with JMAP `Email/import` into that folder, marked read,

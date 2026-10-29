@@ -41,6 +41,20 @@ Stalwarts Admin-Oberfläche und ohne IT-Kenntnisse.
   die Marke „Extern“, und vor dem Senden oder Einladen nach außen fragt Kontext einmal nach
   ([Mail](mail.md#schreiben)). Als intern gelten die eigenen Domains und die **Partner-Domains**,
   die hier eingetragen werden (eine je Zeile, etwa das Steuerbüro).
+- **Abmelden nach Inaktivität** unter *Einstellungen → Firma → Abmelden nach Inaktivität*: für
+  Rechner, die mehrere nutzen (Empfang, Anmeldung). Die Firmenverwaltung wählt eine Zeit – aus
+  (so ist es zu Beginn), 15 oder 30 Minuten, 1, 4 oder 8 Stunden. Hat so lange niemand die Maus
+  bewegt, geklickt oder getippt, fragt Kontext „Angemeldet bleiben?“ und zählt eine Minute
+  herunter (bei kurzen Zeiten höchstens die Hälfte). Mausbewegen beantwortet die Frage nicht, nur
+  „Angemeldet bleiben“ (oder Schließen). Ohne Antwort speichert Kontext angefangene Mails als
+  Entwurf und meldet ab, zurück zur Anmeldung. Eine Eingabe in einem Tab zählt für alle Tabs im
+  selben Browser, ein laufender Anruf ebenso; war der Browser länger zu, als die Zeit erlaubt,
+  meldet Kontext beim nächsten Öffnen gleich ab. Wer nur in *Dokumente* schreibt, wird ebenfalls
+  gefragt: Eingaben in deren eigenem Rahmen sieht Kontext nicht. Gilt für die Web-App;
+  Mailprogramme über IMAP und Kalender-Apps über CalDAV bleiben angemeldet.
+
+  ![„Angemeldet bleiben?“ mit Countdown über dem Posteingang](screenshots/idle-logout.png)
+
 - **Sicherheit prüfen:** SPF, DMARC, MTA-STS, TLS-RPT, DANE und HTTPS der eigenen Domain
   ([Verschlüsselung](encryption.md#baustein-1-grundschutz-unsichtbar-fur-alles)).
 - **Datensicherung:** wohin gesichert wird, wie der letzte Lauf ausging, wie voll der Speicher

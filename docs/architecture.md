@@ -250,6 +250,33 @@ mit einem eigenen API-Schlüssel an und erlaubt nur, was die Firmenverwaltung br
   „Rückgängig“ zurückgeholte Mail wurde mit ihm gesendet; beim Öffnen als Entwurf nimmt der
   Composer ihn heraus (`withoutLegalFooter`, am Block `data-legal-footer`). Angehängt wird
   er von der App, nicht vom Mailserver; darum gilt er nur für Mails aus Kontext.
+- **Abmelden nach Inaktivität:** die Zeit in Minuten in `company_setting` (Schlüssel
+  `idleLogout`, 0 = aus; erlaubt sind 15, 30, 60, 240 und 480), gelesen von jedem Angemeldeten
+  (`GET /api/company/idle-logout`), geändert nur von der Firmenverwaltung (`PUT`,
+  `server/company/idle-logout.ts`). Die App zählt selbst: `src/lib/idle-logout.ts` ist der Zustand
+  aktiv → Warnung → abgelaufen über dem Zeitpunkt der letzten Eingabe, `src/auth/idle-guard.tsx`
+  füttert ihn mit `pointerdown`, `pointermove`, `keydown`, `wheel`, `touchstart` und dem
+  Sichtbarwerden des Tabs (der holt erst einen im Hintergrund verspäteten Timer nach, zählt dann);
+  ein laufender Anruf zählt alle 20 Sekunden als Eingabe. Während der Frage zählen Eingaben nicht,
+  nur „Angemeldet bleiben“. Ist die Zeit um, speichert jeder offene Composer, was seit dem
+  letzten Autosave geändert wurde (`src/features/mail/draft-flush.ts`), dann meldet die App über
+  den gewohnten Weg ab (`logout` in `src/auth/auth.tsx`).
+
+  *Mehrere Tabs:* Der Zeitpunkt der letzten Eingabe steht in `localStorage`
+  (`kontext.lastActive`, höchstens einmal je Sekunde geschrieben); das `storage`-Ereignis sagt den
+  anderen Tabs Bescheid. So hält Tippen in einem Tab alle angemeldet, alle Tabs fragen zur selben
+  Zeit, und ein Tab, der nach Ablauf wieder geöffnet wird (Browser geschlossen statt abgemeldet),
+  meldet sofort ab. Eine Anmeldung setzt den Zeitpunkt neu. `BroadcastChannel` wäre die
+  Alternative gewesen, kennt aber nur offene Tabs – den geschlossenen Browser nicht. Wo der Browser
+  `localStorage` verweigert, zählt jeder Tab für sich.
+
+  *Nur im Browser, nicht auf dem Server:* Der Server sieht keine Eingaben, nur Anfragen – und die
+  App fragt auch ohne Menschen davor (Live-Verbindung, Push, Aktualisierungen). Ein Ablauf der
+  Better-Auth-Sitzung nach Untätigkeit bräuchte also eine Meldung „hier wurde getippt“ vom
+  Browser, also dasselbe Vertrauen in den Browser wie die Abmeldung dort, dazu eine eigene
+  Zählung je Sitzung, und die Sitzungen für IMAP, CalDAV und Agenten müssten davon ausgenommen
+  sein. Die Funktion schützt vor dem Nächsten am selben Rechner, nicht vor einem gestohlenen
+  Cookie; dafür reicht der Browser. Die Sitzung selbst bleibt bei 90 Tagen.
 - **Austritt:** Zugang sperren, das Postfach einer Kollegin übergeben (alle Ordner per
   `shareWith` mit allen Rechten außer Teilen), neue Mails weiterleiten und einmal am Tag
   automatisch antworten. Weiterleitung und Antwort sind ein Sieve-Skript
