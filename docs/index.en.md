@@ -85,7 +85,7 @@ company signature that looks the same for everyone.
 ## One calendar for the whole team
 
 Day, week, month. Site visits, customer appointments and team meetings in one place, invitations
-answered with one click, a video meeting on any appointment.
+answered with one click right in the mail, a video meeting on any appointment.
 </div>
 <div class="showcase-shot" markdown>
 ![Team calendar in the week view with a site meeting, a service appointment and the month overview](screenshots/calendar.png#only-light){ width="1440" height="900" loading="lazy" }

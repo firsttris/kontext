@@ -13,6 +13,7 @@ import { mailboxNotice } from "@/lib/mail-accounts";
 import { mailboxRights } from "@/lib/mailboxes";
 import { pgpKind } from "@/lib/pgp-mail";
 import { mailSenderKey } from "@/lib/photo";
+import { isCalendarAlternative } from "@/lib/received-invitation";
 import { signedOverEncrypted, smimeKind } from "@/lib/smime";
 import { tasksOfMail } from "@/lib/tasks";
 import { m } from "@/paraglide/messages";
@@ -29,6 +30,7 @@ import { useStatusLabel, useTasks } from "../tasks/queries";
 import { useEmailActions } from "./actions";
 import { Attachments } from "./attachments";
 import { EarlierMails, LaterMails } from "./conversation";
+import { InvitationCard } from "./invitation-card";
 import { MailBody } from "./mail-body";
 import { MessageDetails, SenderWarnings } from "./message-details";
 import { Toolbar } from "./message-toolbar";
@@ -89,7 +91,7 @@ export const MessageView = ({ accountId, mailbox, emailId }: Props) => {
   const categories = categoriesOn(email.keywords, accountCategories);
   const mailTasks = tasksOfMail(tasks, email.id, email.threadId);
   const attachments = email.attachments.filter(
-    (part) => !part.cid || part.disposition === "attachment",
+    (part) => (!part.cid || part.disposition === "attachment") && !isCalendarAlternative(part),
   );
 
   return (
@@ -199,6 +201,7 @@ export const MessageView = ({ accountId, mailbox, emailId }: Props) => {
                 {smime === "signed" ? (
                   <SmimeSignedNote accountId={accountId} email={email} />
                 ) : null}
+                <InvitationCard accountId={accountId} email={email} />
                 <MailBody accountId={accountId} email={email} />
                 <Attachments accountId={accountId} parts={attachments} />
               </>

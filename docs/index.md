@@ -84,7 +84,7 @@ kommen, und eine Firmen-Signatur, die bei allen gleich aussieht.
 ## Der Kalender fürs ganze Team
 
 Tag, Woche, Monat. Baustellen, Kundentermine und Teambesprechungen an einem Ort, Einladungen mit
-einem Klick beantworten, eine Videobesprechung an jeden Termin hängen.
+einem Klick beantworten, direkt in der Mail, eine Videobesprechung an jeden Termin hängen.
 </div>
 <div class="showcase-shot" markdown>
 ![Teamkalender in der Wochenansicht mit Baubesprechung, Wartungstermin und Monatsübersicht](screenshots/calendar.png#only-light){ width="1440" height="900" loading="lazy" }

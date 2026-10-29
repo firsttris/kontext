@@ -1520,6 +1520,37 @@ Ohne `STALWART_ADMIN_KEY` gehen die Einladungen ohne diese Knöpfe hinaus.
 **Mailprogramme und Handys** (CalDAV) bleiben bei Stalwarts Scheduling: Wer am iPhone einlädt,
 verschickt Stalwarts Mail.
 
+### Einladungen empfangen
+
+Über einer Mail mit einem `text/calendar`-Teil (iMIP, RFC 6047) zeigt Kontext eine Karte
+(`src/features/mail/invitation-card.tsx`), wie Gmail und Outlook: Termin, Organisator, die eigene
+Antwort und Zusagen / Vielleicht / Absagen. Die Knöpfe im HTML der Mail führen dagegen auf eine
+Webseite – eine Mail selbst kann nichts Interaktives enthalten, Mailprogramme lassen weder
+JavaScript noch Formulare zu.
+
+- **Lesen:** Stalwart parst den Teil (`CalendarEvent/parse`,
+  `crates/jmap/src/calendar_event/parse.rs`) zu JSCalendar samt `method`; Kontext sucht den
+  Termin per UID im eigenen Kalender (`CalendarEvent/query` mit `filter.uid`). Was die Karte
+  zeigt, entscheidet `src/lib/received-invitation.ts`: `request` und `cancel`, keine Antworten
+  (`reply`) und keine einfachen `.ics`-Dateien; keine Karte auf der eigenen Einladung (Gesendet)
+  und nur im eigenen Postfach – in einem gemeinsamen würde man für das Postfach antworten. Ist
+  die `SEQUENCE` im Kalender höher als in der Mail, sagt die Karte, dass der Termin seitdem
+  geändert wurde.
+- **Antworten:** Steht der Termin schon im Kalender – bei Kollegen trägt Stalwart ihn beim
+  Zustellen ein, ebenso von außen, wenn der Absender in den Kontakten steht oder
+  `autoAddInvitations` an ist (`crates/groupware/src/calendar/itip.rs`) –, setzt die Karte den
+  eigenen `participationStatus` wie die Knöpfe im Kalender; Stalwart schickt die Antwort (REPLY)
+  an den Organisator. Sonst legt sie den Termin aus der Mail erst im Standardkalender an, ohne
+  Nachricht (als Teilnehmer verschickt Stalwart beim Anlegen nichts,
+  `crates/groupware/src/scheduling/event_create.rs`), und antwortet dann genauso. Eine einzelne
+  geänderte Folge einer Serie, deren Serie nicht im Kalender steht, lässt sich so nicht eintragen;
+  dann fehlen die Knöpfe.
+- **Absagen** (`cancel`): Stalwart lässt den Termin mit `status: cancelled` im Kalender stehen;
+  „Aus dem Kalender entfernen“ löscht ihn, ohne Nachricht.
+- Der `text/calendar`-Teil erscheint nicht mehr als eigener Anhang (die Karte steht für ihn);
+  eine angehängte `invite.ics` bleibt. „Im Kalender öffnen“ führt auf den Tag und öffnet den
+  Termin – bei einer Serie ihren ersten.
+
 ## Anmeldung
 
 Benutzer und Passwörter bleiben in Stalwart. Bei der Anmeldung schickt die App E-Mail, Passwort

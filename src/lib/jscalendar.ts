@@ -39,6 +39,8 @@ export type CalendarEvent = {
   organizerCalendarAddress?: string;
   /** "free" when the time does not count as busy (RFC 8984 §5.2.2); "busy" when left out. */
   freeBusyStatus?: "free" | "busy";
+  /** "cancelled" once the organizer called it off (RFC 8984 §5.1.3). */
+  status?: "confirmed" | "cancelled" | "tentative";
   recurrenceRule?: RecurrenceRule | null;
   recurrenceOverrides?: Record<string, Record<string, unknown>> | null;
   /** Set on instances of a repeating event. */

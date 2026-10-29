@@ -2,6 +2,7 @@
 
 import { chunk } from "@/lib/chunk";
 import { type CalendarEvent, withAllDayOf, ZONE } from "@/lib/jscalendar";
+import type { ParsedEvent } from "@/lib/received-invitation";
 import type { Rights, ShareWith } from "@/lib/sharing";
 import { assertSetOk, CAPABILITIES, type JmapClient } from "./client";
 
@@ -23,6 +24,7 @@ const EVENT_PROPERTIES = [
   "links",
   "organizerCalendarAddress",
   "freeBusyStatus",
+  "status",
   "recurrenceRule",
   "recurrenceOverrides",
   "recurrenceId",
@@ -197,6 +199,37 @@ export const getStoredEvent = async (
   return { ...own, id: baseId, recurrenceOverrides: dates?.recurrenceOverrides ?? null };
 };
 
+/** The event with this UID in the account (the series for a repeating one), if it has one. */
+export const findEventByUid = async (
+  client: JmapClient,
+  accountId: string,
+  uid: string,
+): Promise<CalendarEvent | null> => {
+  const { ids } = await client.call<{ ids: string[] }>(
+    "CalendarEvent/query",
+    { accountId, filter: { uid }, limit: 1 },
+    USING,
+  );
+  return ids[0] ? getStoredEvent(client, accountId, ids[0]) : null;
+};
+
+/**
+ * The events of an iCalendar part, as JSCalendar: Stalwart parses the blob
+ * (crates/jmap/src/calendar_event/parse.rs, draft-ietf-jmap-calendars CalendarEvent/parse).
+ */
+export const parseCalendarBlob = async (
+  client: JmapClient,
+  accountId: string,
+  blobId: string,
+): Promise<ParsedEvent[]> => {
+  const { parsed } = await client.call<{ parsed?: Record<string, ParsedEvent[] | null> }>(
+    "CalendarEvent/parse",
+    { accountId, blobIds: [blobId] },
+    USING,
+  );
+  return parsed?.[blobId] ?? [];
+};
+
 /**
  * Who sends the invitations: Stalwart (`true`: its own mails, crates/services/src/task_manager/
  * imip.rs) or Kontext, which then sends them itself (invitations.ts).
@@ -313,3 +346,34 @@ export const respondToEvent = (
   updateEvent(client, accountId, id, {
     [`participants/${participantId}/participationStatus`]: status,
   });
+
+/** An event into the default calendar, without a message to anyone. */
+const importEvent = async (
+  client: JmapClient,
+  accountId: string,
+  event: Record<string, unknown>,
+): Promise<string> => {
+  const calendars = await listCalendars(client, accountId);
+  const calendar = calendars.find((one) => one.isDefault) ?? calendars[0];
+  if (!calendar) throw new Error("Kein Kalender");
+  return createEvent(client, accountId, calendar.id, event, { sendSchedulingMessages: false });
+};
+
+/**
+ * Answers an invitation from a mail. One not yet in the calendar (Stalwart adds invitations only
+ * from senders it trusts: crates/groupware/src/calendar/itip.rs, `AutoAddDisabled`) first goes
+ * into the default calendar, since Stalwart sends nothing for an attendee's create
+ * (crates/groupware/src/scheduling/event_create.rs, `NotOrganizer`); the answer then reaches the
+ * organizer as for any event (event_update.rs → attendee_handle_update).
+ */
+export const answerInvitation = async (
+  client: JmapClient,
+  accountId: string,
+  invitation: { storedId: string | null; event: Record<string, unknown> },
+  participantId: string,
+  status: "accepted" | "declined" | "tentative",
+): Promise<string> => {
+  const id = invitation.storedId ?? (await importEvent(client, accountId, invitation.event));
+  await respondToEvent(client, accountId, id, participantId, status);
+  return id;
+};

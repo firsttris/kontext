@@ -1,4 +1,5 @@
 import { type Browser, expect, type Page, test } from "@playwright/test";
+import { assertSetOk } from "../src/jmap/client";
 import { addAttendees, address, jmapAs, login, personalAccountId, unique } from "./helpers";
 
 /** Invitations go out only for events to come. */
@@ -99,6 +100,97 @@ const createWithAttendees = async (page: Page, title: string, attendees: string)
   await expect(page.getByRole("status")).toHaveText("Einladungen werden verschickt.");
 };
 
+/** Opens a mail in the inbox once it is there (Stalwart delivers invitations within seconds). */
+const openMail = async (page: Page, subject: string) => {
+  await expect
+    .poll(
+      async () => {
+        await page.goto("/mail");
+        return page
+          .getByText(subject)
+          .first()
+          .waitFor({ timeout: 2_000 })
+          .then(() => true)
+          .catch(() => false);
+      },
+      { timeout: 30_000 },
+    )
+    .toBe(true);
+  await page.getByText(subject).first().click();
+};
+
+/** Jonas's view of whom he invited, as the event's dialog lists them. */
+const attendeesOf = async (page: Page, title: string) => {
+  await page.goto(`/calendar?date=${tomorrow()}`);
+  await page.locator(`[data-day="${tomorrow()}"]`).getByText(title).click();
+  const text = (await page.getByRole("list", { name: "Teilnehmer" }).textContent()) ?? "";
+  await page.keyboard.press("Escape");
+  return text;
+};
+
+/**
+ * An invitation from someone outside, straight into Anna's inbox (Email/import, so Stalwart
+ * doesn't put it into her calendar, as for a sender it doesn't know): iCalendar as mail programs
+ * send it, in multipart/alternative with METHOD:REQUEST.
+ */
+const outsideInvitation = async (title: string) => {
+  const uid = `${Date.now().toString(36)}@hoffmann-bau.test`;
+  const day = tomorrow().replace(/-/g, "");
+  const ics = [
+    "BEGIN:VCALENDAR",
+    "VERSION:2.0",
+    "PRODID:-//Hoffmann Bau//Test//DE",
+    "METHOD:REQUEST",
+    "BEGIN:VEVENT",
+    `UID:${uid}`,
+    "SEQUENCE:0",
+    "DTSTAMP:20260101T000000Z",
+    `DTSTART;TZID=Europe/Berlin:${day}T090000`,
+    `DTEND;TZID=Europe/Berlin:${day}T100000`,
+    `SUMMARY:${title}`,
+    "LOCATION:Baustelle Weingarten",
+    `ORGANIZER;CN=Markus Hoffmann:mailto:${CUSTOMER}`,
+    `ATTENDEE;CN=Markus Hoffmann;PARTSTAT=ACCEPTED:mailto:${CUSTOMER}`,
+    `ATTENDEE;PARTSTAT=NEEDS-ACTION;RSVP=TRUE:mailto:${address("anna")}`,
+    "END:VEVENT",
+    "END:VCALENDAR",
+    "",
+  ].join("\r\n");
+  const raw = [
+    `From: Markus Hoffmann <${CUSTOMER}>`,
+    `To: ${address("anna")}`,
+    `Subject: Einladung: ${title}`,
+    "MIME-Version: 1.0",
+    `Message-ID: <${uid}>`,
+    `Date: ${new Date().toUTCString()}`,
+    'Content-Type: multipart/alternative; boundary="b"',
+    "",
+    "--b",
+    "Content-Type: text/plain; charset=utf-8",
+    "",
+    `Einladung zu ${title}`,
+    "--b",
+    "Content-Type: text/calendar; charset=utf-8; method=REQUEST",
+    "",
+    ics,
+    "--b--",
+    "",
+  ].join("\r\n");
+  const client = jmapAs("anna");
+  const accountId = await personalAccountId("anna");
+  const { list } = await client.call<{ list: { id: string; role: string | null }[] }>(
+    "Mailbox/get",
+    { accountId, properties: ["role"] },
+  );
+  const inbox = list.find((box) => box.role === "inbox")!.id;
+  const { blobId } = await client.upload(accountId, raw, "message/rfc822");
+  const result = await client.call("Email/import", {
+    accountId,
+    emails: { m: { blobId, mailboxIds: { [inbox]: true }, receivedAt: new Date().toISOString() } },
+  });
+  assertSetOk(result, "Email/import");
+};
+
 test.describe("Einladungen", () => {
   test("Kontext lädt ein, Kunde sagt per Klick zu, Absage geht an alle", async ({
     page,
@@ -121,21 +213,7 @@ test.describe("Einladungen", () => {
     // Anna reads it in Kontext, and Stalwart put the event into her calendar from it.
     const anna = await outsider(browser);
     await login(anna, "anna");
-    await expect
-      .poll(
-        async () => {
-          await anna.goto("/mail");
-          return anna
-            .getByText(`Einladung: ${title}`)
-            .first()
-            .waitFor({ timeout: 2_000 })
-            .then(() => true)
-            .catch(() => false);
-        },
-        { timeout: 30_000 },
-      )
-      .toBe(true);
-    await anna.getByText(`Einladung: ${title}`).first().click();
+    await openMail(anna, `Einladung: ${title}`);
     const body = anna.frameLocator("iframe[title='Inhalt der Mail']");
     await expect(body.getByText("Jonas Weber lädt dich ein")).toBeVisible();
     await expect(body.getByRole("link", { name: "Ja", exact: true })).toBeVisible();
@@ -150,16 +228,7 @@ test.describe("Einladungen", () => {
     await expect(customer.getByRole("heading", { name: title })).toBeVisible();
     await expect(customer.getByText("Einladung von Jonas Weber")).toBeVisible();
     await expect
-      .poll(
-        async () => {
-          await page.goto(`/calendar?date=${tomorrow()}`);
-          await page.locator(`[data-day="${tomorrow()}"]`).getByText(title).click();
-          const text = (await page.getByRole("list", { name: "Teilnehmer" }).textContent()) ?? "";
-          await page.keyboard.press("Escape");
-          return text;
-        },
-        { timeout: 20_000 },
-      )
+      .poll(() => attendeesOf(page, title), { timeout: 20_000 })
       .toMatch(new RegExp(`${CUSTOMER.replace(/\./g, "\\.")}\\s*zugesagt`));
 
     // Jonas calls it off: a CANCEL to both.
@@ -205,6 +274,39 @@ test.describe("Einladungen", () => {
     expect(removed.calendar).toContain("METHOD:CANCEL");
     expect(removed.calendar.replace(/\r?\n /g, "")).not.toContain(`mailto:${CUSTOMER}`);
   });
+
+  test("Kollegin sagt direkt in der Mail zu, Jonas sieht die Antwort", async ({
+    page,
+    browser,
+  }) => {
+    test.setTimeout(90_000);
+    const title = unique("Montage Wärmepumpe");
+    await login(page);
+    await createWithAttendees(page, title, address("anna"));
+
+    const anna = await outsider(browser);
+    await login(anna, "anna");
+    await openMail(anna, `Einladung: ${title}`);
+    const card = anna.getByRole("region", { name: "Einladung" });
+    await expect(card.getByText("Einladung von Jonas Weber")).toBeVisible();
+    await expect(card.getByText(title)).toBeVisible();
+    await expect(card.getByRole("status")).toHaveText("Du hast noch nicht geantwortet.");
+    await card.getByRole("button", { name: "Vielleicht" }).click();
+    await expect(card.getByRole("status")).toHaveText("Du hast mit „Vielleicht“ geantwortet.");
+    await expect(card.getByRole("button", { name: "Vielleicht" })).toHaveAttribute(
+      "aria-pressed",
+      "true",
+    );
+    // The calendar part is the card now, not an attachment of its own; invite.ics stays.
+    await expect(anna.getByRole("list", { name: "Anhänge" }).getByRole("listitem")).toHaveCount(1);
+
+    await expect
+      .poll(() => attendeesOf(page, title), { timeout: 20_000 })
+      .toMatch(/anna@weber-haustechnik\.test\s*vielleicht/);
+
+    await card.getByRole("link", { name: "Im Kalender öffnen" }).click();
+    await expect(anna.getByRole("dialog").getByRole("heading", { name: title })).toBeVisible();
+  });
 });
 
 test.describe("Einladungen am Handy @phone", () => {
@@ -229,6 +331,30 @@ test.describe("Einladungen am Handy @phone", () => {
     await customer.goto("/rsvp?t=kaputt&r=accepted");
     await expect(customer.getByRole("alert")).toHaveText(
       "Dieser Link ist ungültig oder abgelaufen.",
+    );
+  });
+
+  test("Einladung von außen: in der Mail zusagen trägt den Termin ein", async ({ page }) => {
+    test.setTimeout(90_000);
+    const title = unique("Baubesprechung Hoffmann");
+    await outsideInvitation(title);
+    await login(page, "anna");
+    await openMail(page, `Einladung: ${title}`);
+    const card = page.getByRole("region", { name: "Einladung" });
+    await expect(card.getByText("Einladung von Markus Hoffmann")).toBeVisible();
+    await expect(card.getByText("Baustelle Weingarten")).toBeVisible();
+    await expect(card.getByRole("status")).toHaveText(
+      "Noch nicht in deinem Kalender – mit deiner Antwort wird der Termin eingetragen.",
+    );
+    await card.getByRole("button", { name: "Zusagen" }).click();
+    await expect(card.getByRole("status")).toHaveText("Du hast zugesagt.");
+
+    await card.getByRole("link", { name: "Im Kalender öffnen" }).click();
+    const dialog = page.getByRole("dialog");
+    await expect(dialog.getByRole("heading", { name: title })).toBeVisible();
+    await expect(dialog.getByRole("button", { name: "Zusagen" })).toHaveAttribute(
+      "aria-pressed",
+      "true",
     );
   });
 });

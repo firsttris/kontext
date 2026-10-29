@@ -148,11 +148,11 @@ export const CalendarPage = ({ search }: { search: Search }) => {
 
   const invited = (event: CalendarEvent) => isInvitation(calendars, event, mine);
   const invitations = events.filter(invited);
+  const inAccount = (event: CalendarEvent) => !search.account || event.accountId === search.account;
+  // By the shown date's id, or by the stored event's id (the invitation card of a mail links it).
   const open = search.event
-    ? events.find(
-        (event) =>
-          event.id === search.event && (!search.account || event.accountId === search.account),
-      )
+    ? (events.find((event) => event.id === search.event && inAccount(event)) ??
+      events.find((event) => event.baseEventId === search.event && inAccount(event)))
     : undefined;
 
   const header = (
