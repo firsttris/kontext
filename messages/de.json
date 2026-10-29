@@ -2001,5 +2001,19 @@
   "calendar_default_reminder_timed": "Termine mit Uhrzeit",
   "calendar_default_reminder_all_day": "Ganztägige Termine",
   "calendar_default_reminder_usual": "Wie üblich (15 Minuten vorher)",
-  "calendar_default_reminder_saved": "Erinnerung gespeichert."
+  "calendar_default_reminder_saved": "Erinnerung gespeichert.",
+  "mail_external": "Extern",
+  "mail_external_title": "Von außerhalb der Firma",
+  "mail_external_ask": "An externe Empfänger senden?",
+  "mail_external_ask_hint": "Diese Mail geht auch an Empfänger außerhalb der Firma:",
+  "mail_external_ask_invitation": "Die Einladung geht auch an Teilnehmer außerhalb der Firma:",
+  "mail_external_send": "Trotzdem senden",
+  "mail_external_back": "Zurück",
+  "company_external": "Externe Empfänger",
+  "company_external_intro": "Mails von außerhalb der Firma tragen in der Liste und beim Lesen die Marke „Extern“. Bevor eine Mail oder eine Einladung an externe Empfänger geht, fragt Kontext einmal nach.",
+  "company_external_enabled": "Hinweis „Extern“ einschalten",
+  "company_external_own": "Als intern gelten die eigenen Domains: {domains}",
+  "company_external_partners": "Partner-Domains",
+  "company_external_partners_hint": "Eine Domain pro Zeile, z. B. steuerbuero-schmidt.de. Adressen dieser Domains (und ihrer Subdomains) gelten als intern.",
+  "company_external_invalid": "Keine gültige Domain: {domains}"
 }

@@ -32,6 +32,7 @@ import { m } from "@/paraglide/messages";
 import { CategoryChips } from "../categories/category-chips";
 import { useCategoryMap } from "../categories/queries";
 import { useTasks } from "../tasks/queries";
+import { ExternalMark } from "./external-mark";
 import type { Row } from "./list-frame";
 import { type DraggedMail, startMailDrag } from "./mail-drag";
 import { useOpenedPreview, useShownSubject } from "./opened-mails";
@@ -250,6 +251,7 @@ export const MessageRow = ({
                   <span className="truncate">{account.label}</span>
                 </span>
               ) : null}
+              <ExternalMark address={email.from?.[0]?.email} />
               {sendAt ? (
                 <span className="inline-flex h-[18px] shrink-0 items-center gap-1 rounded-full bg-warn/10 px-1.5 text-[11px] font-medium text-warn">
                   <CalendarClock size={11} strokeWidth={2.25} aria-hidden="true" />
