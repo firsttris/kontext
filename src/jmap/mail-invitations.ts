@@ -61,9 +61,31 @@ export const addInvitation = (
 ): Promise<string> =>
   createEvent(client, accountId, calendarId, importableEvent(parsed, []), QUIET);
 
-/** Takes an event the organizer called off out of the calendar. */
-export const removeCancelled = (client: JmapClient, accountId: string, stored: CalendarEvent) =>
-  deleteEvent(client, accountId, stored.id, QUIET);
+/**
+ * Takes what the organizer called off out of the calendar: one date of a series (a CANCEL with
+ * RECURRENCE-ID) as an exclusion, else the whole event. The overrides go as a whole map: Stalwart
+ * refuses a patch path into overrides that are not there yet.
+ */
+export const removeCancelled = (
+  client: JmapClient,
+  accountId: string,
+  stored: CalendarEvent,
+  parsed: ParsedEvent,
+) =>
+  parsed.recurrenceId
+    ? updateEvent(
+        client,
+        accountId,
+        stored.id,
+        {
+          recurrenceOverrides: {
+            ...stored.recurrenceOverrides,
+            [parsed.recurrenceId]: { excluded: true },
+          },
+        },
+        QUIET,
+      )
+    : deleteEvent(client, accountId, stored.id, QUIET);
 
 /**
  * Answers: the answer goes into the event in the calendar (put in first if it is not there yet),

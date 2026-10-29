@@ -1528,7 +1528,9 @@ Stalwart lesen (`CalendarEvent/parse`, das JSCalendar mit der iTIP-Methode in `m
 und sucht im Konto der Mail den Termin mit derselben `uid` (`CalendarEvent/query`). Was sie zeigt,
 entscheidet `src/lib/mail-invitation.ts`: Bei `request` Zusagen / Vielleicht / Absagen (mit der
 bisherigen Antwort, aus dem Kalender, wenn der Termin dort steht) und „In den Kalender“; bei
-`cancel` „Aus dem Kalender entfernen“; bei `publish` oder einer `.ics` ohne Methode nur „In den
+`cancel` „Aus dem Kalender entfernen“ (sagt der Organisator nur einen Tag einer Serie ab, trägt
+das `RECURRENCE-ID` und Kontext nimmt nur diesen Tag heraus, als Ausnahme in
+`recurrenceOverrides`); bei `publish` oder einer `.ics` ohne Methode nur „In den
 Kalender“. Eigene Einladungen und Antworten (`reply`) zeigen nichts, die trägt Stalwart selbst
 ein. Der unbenannte `text/calendar`-Teil steht nicht mehr als Anhang da.
 

@@ -179,7 +179,7 @@ const Bar = ({ accountId, blobId }: { accountId: string; blobId: string }) => {
               disabled={busy}
               onClick={() =>
                 void run(
-                  () => removeCancelled(client, accountId, stored),
+                  () => removeCancelled(client, accountId, stored, parsed),
                   m.mail_invitation_removed(),
                 )
               }
