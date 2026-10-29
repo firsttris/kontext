@@ -15,8 +15,11 @@ import type { Row } from "./list-frame";
 import { useAllMailboxes } from "./queries";
 
 export type Answer = { name: string; at: string } | null;
-/** A conversation as one line: how many mails, who wrote them (oldest first), anything unread. */
-export type Group = { count: number; names: string[]; unread: boolean };
+/**
+ * A conversation as one line: how many mails, who wrote them (oldest first), anything unread and
+ * which of its mails those are (marking the line read marks them).
+ */
+export type Group = { count: number; names: string[]; unread: boolean; unreadIds: string[] };
 
 export const useThreadInfo = (rows: Row[], accountOf: (row: Row) => string, grouped: boolean) => {
   const client = useClient();
@@ -56,10 +59,14 @@ export const useThreadInfo = (rows: Row[], accountOf: (row: Row) => string, grou
       if (!grouped) continue;
       const { earlier, later } = aroundMail(thread, row.email, hidden);
       const all: EmailSummary[] = [...earlier, row.email, ...later];
+      const unreadIds = all
+        .filter((mail) => !mail.keywords.$seen && !(sent && mail.mailboxIds[sent]))
+        .map((mail) => mail.id);
       groups.set(key, {
         count: all.length,
         names: [...new Set(all.map((mail) => personOf(displayName(mail.from?.[0]))))],
-        unread: all.some((mail) => !mail.keywords.$seen && !(sent && mail.mailboxIds[sent])),
+        unread: unreadIds.length > 0,
+        unreadIds,
       });
     }
   });

@@ -10,6 +10,7 @@ import type { Mailbox } from "@/jmap/types";
 import { categoriesOn } from "@/lib/categories";
 import { displayName, firstName, formatAddressList, readingDate } from "@/lib/format";
 import { mailboxNotice } from "@/lib/mail-accounts";
+import { isInlineInvitation } from "@/lib/mail-invitation";
 import { mailboxRights } from "@/lib/mailboxes";
 import { pgpKind } from "@/lib/pgp-mail";
 import { mailSenderKey } from "@/lib/photo";
@@ -29,6 +30,7 @@ import { useStatusLabel, useTasks } from "../tasks/queries";
 import { useEmailActions } from "./actions";
 import { Attachments } from "./attachments";
 import { EarlierMails, LaterMails } from "./conversation";
+import { InvitationBar } from "./invitation-bar";
 import { MailBody } from "./mail-body";
 import { MessageDetails, SenderWarnings } from "./message-details";
 import { Toolbar } from "./message-toolbar";
@@ -89,7 +91,7 @@ export const MessageView = ({ accountId, mailbox, emailId }: Props) => {
   const categories = categoriesOn(email.keywords, accountCategories);
   const mailTasks = tasksOfMail(tasks, email.id, email.threadId);
   const attachments = email.attachments.filter(
-    (part) => !part.cid || part.disposition === "attachment",
+    (part) => (!part.cid || part.disposition === "attachment") && !isInlineInvitation(part),
   );
 
   return (
@@ -182,6 +184,7 @@ export const MessageView = ({ accountId, mailbox, emailId }: Props) => {
               />
             ) : null}
             <SenderWarnings email={email} />
+            <InvitationBar accountId={accountId} email={email} />
             <AutocryptCollector email={email} />
             {mailbox.role === "sent" ? (
               <ReceiptsReceived accountId={accountId} email={email} />

@@ -25,7 +25,7 @@ import type { RecurrenceRule } from "./recurrence";
 
 export type ItipMethod = "REQUEST" | "CANCEL";
 
-const PARTSTAT: Record<NonNullable<Participant["participationStatus"]>, string> = {
+export const PARTSTAT: Record<NonNullable<Participant["participationStatus"]>, string> = {
   "needs-action": "NEEDS-ACTION",
   accepted: "ACCEPTED",
   declined: "DECLINED",
@@ -111,7 +111,7 @@ const isOrganizerOf = (event: CalendarEvent, participant: Participant) =>
   participantEmail(participant).toLowerCase() ===
   (event.organizerCalendarAddress ?? "").replace(/^mailto:/i, "").toLowerCase();
 
-const organizerLine = (event: CalendarEvent) => {
+export const organizerLine = (event: CalendarEvent) => {
   const organizer = Object.values(event.participants ?? {}).find((p) => isOrganizerOf(event, p));
   const email = (event.organizerCalendarAddress ?? "").replace(/^mailto:/i, "");
   return `ORGANIZER${organizer?.name ? `;CN=${paramValue(organizer.name)}` : ""}:mailto:${email}`;

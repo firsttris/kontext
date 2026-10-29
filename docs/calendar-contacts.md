@@ -21,6 +21,14 @@ Kontext steht, steht auch am iPhone, unter Android (DAVx⁵) und in Thunderbird.
 
   ![Termin einer Serie bearbeiten mit „Dieser und alle folgenden“](screenshots/series-following.png)
 
+- **Einladungen in der Mail:** Kommt eine Einladung per Mail – aus Outlook, Google, Apple oder von
+  Kollegen –, steht über dem Text, was, wann und wo, ob der Termin schon im Kalender steht und
+  was man geantwortet hat, dazu **Zusagen**, **Vielleicht**, **Absagen** und **In den Kalender**.
+  Die Antwort geht an den Organisator, der Termin landet im Kalender; sagt der Organisator ab,
+  nimmt „Aus dem Kalender entfernen“ ihn heraus. [Mehr](architecture.md#einladungen-in-der-mail)
+
+  ![Einladung von Petra Keller in der Mail mit Zusagen, Vielleicht, Absagen und In den Kalender](screenshots/mail-invitation.png)
+
 - **Einladungen** mit Zusage und Absage; die Glocke zeigt, was noch auf Antwort wartet, und die
   Termine des Tages.
 - **Erinnerung je Termin:** von „Zu Beginn“ bis „1 Woche vorher“, ganztägige Termine morgens am

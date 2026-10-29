@@ -63,6 +63,8 @@ export const deliverMail = (mail: {
   inReplyTo?: string;
   /** More header lines as they are, e.g. List-Unsubscribe. */
   headers?: string[];
+  /** The body's type when it is not plain text, e.g. a multipart with its boundary. */
+  contentType?: string;
 }): Promise<void> =>
   new Promise((resolve, reject) => {
     const message = [
@@ -77,7 +79,7 @@ export const deliverMail = (mail: {
         : []),
       ...(mail.headers ?? []),
       "MIME-Version: 1.0",
-      "Content-Type: text/plain; charset=utf-8",
+      `Content-Type: ${mail.contentType ?? "text/plain; charset=utf-8"}`,
       "Content-Transfer-Encoding: 8bit",
       "",
       mail.body,

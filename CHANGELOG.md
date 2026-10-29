@@ -11,6 +11,9 @@ Steps that an update needs beyond raising the version are marked **Upgrade**.
   and columns added or removed from the menu, a header row on or off). Sent as inline styles, so
   Outlook and Gmail show it as written; the plain-text part has a table row per line. The
   signature editors have the same bar.
+- Mail on the phone: swipe a mail in the list to the left to archive it, to the right to mark it
+  read or unread. What each direction does (archive, delete, read/unread, flag or nothing) is set
+  per device under *Einstellungen → Darstellung → Wischen in der Mail-Liste*.
 - Calendar: "Dieser und alle folgenden" beside "Nur dieser Termin" and "Alle Termine der Serie",
   for changing and for deleting. The series so far ends before the date; when changing, a new
   series with the changes starts there (a series of so many dates keeps its number in all).
@@ -25,6 +28,11 @@ Steps that an update needs beyond raising the version are marked **Upgrade**.
 - Mail: "Anhang vergessen?" – when the own text or the subject speaks of an attachment ("Anhang",
   "anbei", "angehängt", "attached" …) and nothing is attached, Kontext asks before sending: attach
   a file or send without. The quoted mail below a reply does not count.
+- Mail: an invitation in a mail (Outlook, Google, Apple, a colleague) shows a line above the text
+  with what, when and where, whether it is in the calendar and the answer so far, and Zusagen /
+  Vielleicht / Absagen and "In den Kalender". Kontext puts the event into the calendar and sends
+  the answer to the organizer itself (iTIP REPLY); a called-off event has "Aus dem Kalender
+  entfernen". The bare iCalendar part no longer shows as an attachment.
 - Calendar: a reminder per appointment, from "Zu Beginn" to "1 Woche vorher" (all-day: on the day
   or days before, in the morning), as a notification or by mail. Stalwart sends the mail and tells
   the server when a notification is due, so both come with Kontext closed too (the notification as

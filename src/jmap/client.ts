@@ -15,6 +15,7 @@ export const CAPABILITIES = {
   availability: "urn:ietf:params:jmap:principals:availability",
   blob: "urn:ietf:params:jmap:blob",
   contactsParse: "urn:ietf:params:jmap:contacts:parse",
+  calendarsParse: "urn:ietf:params:jmap:calendars:parse",
   stalwart: "urn:stalwart:jmap",
 } as const;
 
