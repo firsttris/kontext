@@ -95,6 +95,17 @@ Kontext steht, steht auch am iPhone, unter Android (DAVx⁵) und in Thunderbird.
 
   ![Kalender verwalten mit der Vorschau einer .ics-Datei: vier neue Termine, einer schon vorhanden](screenshots/calendar-ics-import.png)
 
+- **Kalender drucken:** Der Drucker oben im Kalender (oder Strg+P, die Taste `p`) druckt die
+  offene Ansicht auf A4 quer, etwa für die Pinnwand in der Werkstatt: in Woche und Tag die
+  Woche als sieben Spalten mit allen Terminen samt Uhrzeit und Ort, ganztägige zuerst; im Monat
+  das Monatsraster mit Uhrzeit und Titel, was nicht in einen Tag passt, als „+2 weitere“; in der
+  Liste die nächsten sieben Tage ab ihrem ersten. Gedruckt werden die Kalender, die gerade
+  angezeigt sind, mit ihren Farben oben als Legende, unten steht, wann gedruckt wurde. Aufgaben
+  kommen nicht aufs Papier. Wie beim Drucken einer Mail geht nur dieses Blatt an den Drucker,
+  nicht die App, und es lädt nichts von außen nach.
+
+  ![Die gedruckte Woche: sieben Spalten mit Terminen, Uhrzeit und Ort](screenshots/calendar-print.png)
+
 - **Kalender teilen** mit Kollegen: nur Verfügbarkeit, lesen oder bearbeiten.
 - **Orte vorschlagen:** Im Feld „Ort“ schlägt Kontext ab drei Buchstaben Adressen und Firmen vor
   (aus OpenStreetMap), etwa „Bäckerei Müller, Hauptstraße 5, 79098 Freiburg“; freier Text wie
