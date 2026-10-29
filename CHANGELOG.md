@@ -15,6 +15,12 @@ Steps that an update needs beyond raising the version are marked **Upgrade**.
   in, and resized by their corners. They go out as inline images (`cid:` in multipart/related),
   so Outlook, Gmail and Apple Mail show them in the text; drafts keep them. Files of a reopened
   draft now stay with it when it is saved more than once.
+- Calendar: "Aus Datei übernehmen" under *Kalender verwalten* – appointments from an .ics file
+  (an export from Google, Outlook or Apple) into a calendar the user may write to, with a preview
+  of what is new and what is already there (same UID in the account), which is skipped. Stalwart
+  reads the file (`CalendarEvent/parse`); series keep their changed dates; attendees get no
+  message. The move now also leaves out the iTIP `method` (Google's `METHOD:PUBLISH`), which
+  Stalwart refuses on create.
 - Calendar: a default reminder per calendar – in *Kalender verwalten* the bell next to a calendar
   sets the reminder new appointments in it get, one for appointments with a time and one for
   all-day ones. Kept per person in Stalwart (`defaultAlertsWithTime`,

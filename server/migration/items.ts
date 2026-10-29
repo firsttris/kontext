@@ -1,6 +1,7 @@
 /**
  * Contacts and appointments from a move, ready for /set: into the default address book or
- * calendar, without the duplicates a second run would bring. Pure functions.
+ * calendar, without the duplicates a second run would bring. Pure functions; appointments are
+ * prepared like a file in the calendar (src/lib/ics-import.ts).
  */
 
 type Card = Record<string, unknown> & {
@@ -37,22 +38,6 @@ export const prepareCard = (card: Card, addressBookId: string): Record<string, u
  */
 export const eventUid = (uid: unknown, fallback: string): string =>
   typeof uid === "string" && uid && !/^0x[0-9a-f]+$/i.test(uid) ? uid : fallback;
-
-export const prepareEvent = (
-  event: Record<string, unknown>,
-  calendarId: string,
-  uid: string,
-): Record<string, unknown> => {
-  const { id: _, calendarIds: __, keywords, ...rest } = event;
-  // Outlook without categories writes "NONE".
-  const kept = Object.keys((keywords ?? {}) as Record<string, true>).filter((k) => k !== "NONE");
-  return {
-    ...rest,
-    uid,
-    calendarIds: { [calendarId]: true },
-    ...(kept.length ? { keywords: Object.fromEntries(kept.map((k) => [k, true])) } : {}),
-  };
-};
 
 /** A vCard file with many contacts (Google's export) as one text per card (RFC 6350 §3.1). */
 export const splitVCards = (text: string): string[] =>

@@ -66,3 +66,26 @@ export const eventWhen = (
         zone: zoneName(zone, start),
       });
 };
+
+const shortDay = (zone: string) =>
+  new Intl.DateTimeFormat(LOCALE, {
+    weekday: "short",
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+    timeZone: zone,
+  });
+
+/**
+ * The start in a line of a list, in the app's zone like the calendar shows it: "Do., 5. Nov.
+ * 2026, 09:00"; an all-day one as its date alone.
+ */
+export const eventStartShort = (
+  event: Pick<CalendarEvent, "start" | "timeZone" | "showWithoutTime">,
+): string => {
+  if (event.showWithoutTime) {
+    return shortDay("UTC").format(new Date(`${event.start.slice(0, 10)}T12:00:00Z`));
+  }
+  const start = fromLocal(event.start, event.timeZone);
+  return `${shortDay(ZONE).format(start)}, ${timeIn(ZONE).format(start)}`;
+};
