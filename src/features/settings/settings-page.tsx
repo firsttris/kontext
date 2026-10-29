@@ -21,6 +21,7 @@ import {
   PenLine,
   Phone,
   RefreshCw,
+  Scale,
   ShieldCheck,
   Signature,
   TextQuote,
@@ -35,6 +36,7 @@ import { BackupSection } from "@/features/company/backup-section";
 import { ChatSection } from "@/features/company/chat-section";
 import { EmployeesSection } from "@/features/company/employees-section";
 import { ExternalHintSection } from "@/features/company/external-hint-section";
+import { LegalFooterSection } from "@/features/company/legal-footer-section";
 import { MailboxesSection } from "@/features/company/mailboxes-section";
 import { MigrationSection } from "@/features/company/migration-section";
 import { useIsCompanyAdmin } from "@/features/company/queries";
@@ -96,6 +98,7 @@ const COMPANY: Entry[] = [
   { id: "employees", label: m.company_employees, icon: Users },
   { id: "mailboxes", label: m.company_mailboxes, icon: Inbox },
   { id: "company-signature", label: m.company_signature, icon: Signature },
+  { id: "company-legal", label: m.company_legal, icon: Scale },
   { id: "company-chat", label: m.company_chat, icon: MessagesSquare },
   { id: "company-security", label: m.company_security, icon: ShieldCheck },
   { id: "company-external", label: m.company_external, icon: Globe },
@@ -124,6 +127,7 @@ const CONTENT: Record<Section, () => ReactNode> = {
   employees: () => <EmployeesSection />,
   mailboxes: () => <MailboxesSection />,
   "company-signature": () => <CompanySignatureSection />,
+  "company-legal": () => <LegalFooterSection />,
   "company-chat": () => <ChatSection />,
   "company-security": () => <CompanySecuritySection />,
   "company-external": () => <ExternalHintSection />,
