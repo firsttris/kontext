@@ -1895,7 +1895,10 @@ einen gewählten Ordner („Ablegen und öffnen“ öffnet sie danach im Modul),
 -Upload), die Dokumente-Seite mit einem Token, das Kontext mit seinen Anbieter-Schlüsseln für die
 Person signiert (5 Minuten gültig, Zielgruppe `SCHREIBZEUG_URL`). Schreibzeug prüft es gegen
 Kontexts Schlüssel und handelt mit genau den Rechten der Person. Ein schon vergebener Name kommt
-mit Schreibzeugs Meldung zurück.
+mit Schreibzeugs Meldung zurück. Einzige Ausnahme: Für eine Mail, die verschlüsselt gehen soll,
+holt der Browser die Datei selbst (`POST /api/documents/download`) und behält sie, bis sie mit der
+Mail verschlüsselt ist – sie soll Stalwart nicht unverschlüsselt erreichen
+([Verschlüsselung](encryption.md#grenzen-und-offene-punkte)).
 
 **Dokumente überall, wo sie hingehören.** Eine Datei aus Dokumente lässt sich im Chat als Karte
 teilen („Mail, Aufgabe, Kontakt oder Dokument verknüpfen“, Reiter „Dokument“; ohne Dokumente

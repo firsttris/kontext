@@ -7,6 +7,13 @@ Steps that an update needs beyond raising the version are marked **Upgrade**.
 
 ## Unreleased
 
+- Encryption: attachments of a mail to be encrypted no longer reach Stalwart unencrypted. While
+  "Vertraulich senden" is on, files, pictures in the text, files "Aus Dokumente" (fetched by the
+  browser through the new `POST /api/documents/download`) and the files of a forwarded encrypted
+  mail stay in the browser until they are encrypted with the mail; this covers PGP, S/MIME and the
+  link. Switching encryption on after adding files pulls them into the browser and deletes the
+  draft that held them unencrypted; switching it off uploads them as before. Files and pictures
+  of an encrypted mail may be 25 MB together.
 - A short tour on the first start: five or six cards through Mail, "Neue Mail", a shared mailbox
   like info@ (for whoever has one), Calendar and Chat, each lighting up the real place – the rail
   on a desktop, the tab bar on a phone ("Mehr" where Chat is not in it), a centred card where the

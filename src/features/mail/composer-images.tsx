@@ -1,14 +1,14 @@
 /**
  * Pictures in the text of a mail: picked with the button, pasted or dropped into the text. Each
- * goes up as a blob of the sending account at once and shows from a local URL with its Content-ID
+ * goes up as a blob of the sending account at once (or, for an encrypted mail, stays in the browser:
+ * use-held-files.ts) and shows from a local URL with its Content-ID
  * (`data-cid`); sending turns them into `cid:` and parts of their own (lib/inline-images.ts,
  * lib/mail-structure.ts). Photos, screenshots and GIFs; an SVG goes as an attachment.
  */
 import type { Editor } from "@tiptap/react";
 import { ImagePlus } from "lucide-react";
 import { useRef, useState } from "react";
-import type { JmapClient } from "@/jmap/client";
-import type { OutgoingImage } from "@/jmap/mail";
+import type { OutgoingAttachment, OutgoingImage } from "@/jmap/mail";
 import { newCid, sendableHtml } from "@/lib/inline-images";
 import { imageUrl } from "@/lib/safe-blob";
 import { m } from "@/paraglide/messages";
@@ -20,14 +20,13 @@ export const pictures = (files: FileList | File[] | null | undefined): File[] =>
   Array.from(files ?? []).filter((file) => PICTURE_TYPES.includes(file.type));
 
 export const useComposerImages = ({
-  client,
-  accountId,
+  place,
   editor,
   onError,
   onBusy,
 }: {
-  client: JmapClient;
-  accountId: string;
+  /** Uploads the picture, or keeps it in the browser (use-held-files.ts). */
+  place: (file: File) => Promise<OutgoingAttachment>;
   editor: Editor | null;
   onError: (error: Error) => void;
   /** +1 while one goes up, -1 when it is done: sending waits for them. */
@@ -39,16 +38,10 @@ export const useComposerImages = ({
     for (const file of files) {
       onBusy(1);
       try {
-        const [uploaded, src] = await Promise.all([
-          client.upload(accountId, file, file.type),
-          imageUrl(file),
-        ]);
+        const [placed, src] = await Promise.all([place(file), imageUrl(file)]);
         if (!src) continue;
         const cid = newCid(crypto.randomUUID().slice(0, 12));
-        setImages((current) => [
-          ...current,
-          { blobId: uploaded.blobId, name: file.name, type: file.type, size: uploaded.size, cid },
-        ]);
+        setImages((current) => [...current, { ...placed, type: file.type, cid }]);
         editor
           ?.chain()
           .focus()

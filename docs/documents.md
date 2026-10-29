@@ -17,7 +17,8 @@ beantwortet.
 
 - **Anhänge in Dokumente ablegen** – in einen Ordner, oder gleich dort öffnen. **Aus Dokumente
   anhängen** beim Schreiben einer Mail. Die Dateien gehen von Server zu Server, jeweils mit den
-  Rechten der Person.
+  Rechten der Person; für eine verschlüsselte Mail holt der Browser sie, damit sie Stalwart nur
+  verschlüsselt erreicht.
 - **Ein Ordner pro gemeinsamem Postfach:** info@ und rechnung@ haben eigene Dokumente, offen für
   alle, die im Postfach arbeiten, und immer passend zur Firmenverwaltung. Ein Anhang aus info@
   landet zuerst dort.

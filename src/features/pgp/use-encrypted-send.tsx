@@ -54,7 +54,15 @@ const LINK_DAYS = 30;
 const untilLabel = (date: Date) =>
   date.toLocaleDateString(LOCALE, { timeZone: "Europe/Berlin", dateStyle: "long" });
 
-export const useEncryptedSend = (from: string | undefined, recipients: string[]) => {
+/**
+ * `heldBlob`: the bytes of a file the composer kept in the browser (features/mail/use-held-files.ts);
+ * a file without (a forwarded original's part, a mail as .eml) is fetched from Stalwart.
+ */
+export const useEncryptedSend = (
+  from: string | undefined,
+  recipients: string[],
+  heldBlob: (blobId: string) => Blob | undefined = () => undefined,
+) => {
   const client = useClient();
   const { data: own } = useOwnKey();
   const known = useKnownKeys();
@@ -123,7 +131,6 @@ export const useEncryptedSend = (from: string | undefined, recipients: string[])
           setAsking({ kind: "smime", resolve: resolve as (value: unknown) => void, reject }),
         );
 
-  /** The mail's attachments, fetched to go inside what is signed or encrypted. */
   /** The attachments and the images in the text (by their Content-ID), as bytes. */
   const filesOf = (mail: OutgoingEmail) =>
     Promise.all(
@@ -133,7 +140,8 @@ export const useEncryptedSend = (from: string | undefined, recipients: string[])
           type: file.type,
           bytes: new Uint8Array(
             await (
-              await client.download(mail.accountId, file.blobId, file.name, file.type)
+              heldBlob(file.blobId) ??
+              (await client.download(mail.accountId, file.blobId, file.name, file.type))
             ).arrayBuffer(),
           ),
           ...(file.cid ? { cid: file.cid } : {}),
