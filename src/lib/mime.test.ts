@@ -31,6 +31,33 @@ describe("MIME built in the app", () => {
     );
   });
 
+  it("an image in the text goes with the HTML as an inline part with its Content-ID", async () => {
+    const part = contentPart(
+      {
+        text: "Foto",
+        html: '<p><img src="cid:bild-1@kontext"></p>',
+        attachments: [
+          {
+            name: "foto.png",
+            type: "image/png",
+            bytes: new Uint8Array([9, 8, 7]),
+            cid: "bild-1@kontext",
+          },
+          { name: "Aufmaß.pdf", type: "application/pdf", bytes: new Uint8Array([1]) },
+        ],
+      },
+      "y",
+    );
+    expect(part).toMatch(/multipart\/related/);
+    const parsed = await PostalMime.parse(`Subject: t\r\nMIME-Version: 1.0\r\n${part}`);
+    const image = parsed.attachments.find((file) => file.filename === "foto.png");
+    expect(image?.contentId).toBe("<bild-1@kontext>");
+    expect(image?.disposition).toBe("inline");
+    expect(parsed.attachments.find((file) => file.filename === "Aufmaß.pdf")?.disposition).toBe(
+      "attachment",
+    );
+  });
+
   it("the PGP/MIME envelope with its headers", async () => {
     const raw = encryptedMail(
       {

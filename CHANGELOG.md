@@ -7,6 +7,10 @@ Steps that an update needs beyond raising the version are marked **Upgrade**.
 
 ## Unreleased
 
+- Mail: pictures in the text – by the "Bild einfügen" button, pasted (a screenshot) or dropped
+  in, and resized by their corners. They go out as inline images (`cid:` in multipart/related),
+  so Outlook, Gmail and Apple Mail show them in the text; drafts keep them. Files of a reopened
+  draft now stay with it when it is saved more than once.
 - Mail: snippets know more placeholders – `{Datum}` (today's date), `{Absender}` (one's own name)
   and own fields: any other `{Wort}`, such as `{Auftragsnummer}`, is asked for in one small
   dialog when the snippet is inserted and filled in; a field left empty stays visible.

@@ -73,6 +73,15 @@ IMAP und SMTP.
   die Zellen mit Tabulator getrennt. Dieselbe Leiste haben die Signaturen.
 
   ![Neue Mail mit Tabelle, blauem Text und dem Menü „Hintergrundfarbe“](screenshots/compose-formatting.png)
+- **Bilder im Text:** über „Bild einfügen“ in der Leiste, mit Einfügen aus der Zwischenablage
+  (etwa ein Bildschirmfoto) oder durch Ziehen in den Text; Fotos (JPEG), PNG, GIF und WebP. An
+  den Ecken lässt sich ein Bild größer oder kleiner ziehen, das Seitenverhältnis bleibt. Es geht
+  als Inline-Bild hinaus (`cid:`, zusammen mit dem HTML in `multipart/related`), so zeigen es
+  Outlook, Gmail und Apple Mail im Text statt als Anhang; ein Entwurf behält seine Bilder.
+  Andere Dateien, auch SVG, kommen weiter als Anhang mit. Bilder im zitierten oder
+  weitergeleiteten Original nimmt Kontext noch nicht mit.
+
+  ![Neue Mail mit einem Foto im Text, ausgewählt mit den Ecken zum Ziehen](screenshots/compose-image.png)
 - **„Anhang vergessen?“** Steht im eigenen Text oder im Betreff „Anhang“, „anbei“, „angehängt“,
   „beigefügt“, „attached“ …, aber nichts ist angehängt, fragt Kontext vor dem Senden nach: „Datei
   anhängen“ oder „Ohne Anhang senden“. Nur der eigene Text zählt: nicht das Zitat, nicht die
