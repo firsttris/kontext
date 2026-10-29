@@ -55,6 +55,8 @@ Anrufe laufen über [LiveKit](https://github.com/livekit/livekit) auf dem eigene
   **Besprechung starten** in einem Kanal, andere treten bei.
 - **Mikrofon, Kamera, Bildschirm teilen**; das Gespräch bleibt offen, während man zu Mail oder
   Kalender wechselt.
+- **Große Bilder:** zu zweit füllt das Gegenüber den Bildschirm, das eigene Bild steht klein in
+  der Ecke; in der Gruppe teilen sich alle die Fläche, ein geteilter Bildschirm kommt nach vorn.
 - **Im Verlauf:** „Anruf · 5 Min“, verpasste Anrufe mit „Zurückrufen“.
 - **Videobesprechung am Termin** mit einem Link für Gäste ohne Konto; sie kommen hinein, sobald
   jemand aus der Firma da ist.

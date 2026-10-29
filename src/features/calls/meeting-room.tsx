@@ -36,7 +36,7 @@ const Room = ({ onLeave }: { onLeave: () => void }) => {
   );
   return (
     <>
-      <CallTiles tracks={tracks} expanded nameOf={nameOf} />
+      <CallTiles tracks={tracks} nameOf={nameOf} />
       {canPlayAudio ? null : (
         <button
           type="button"
