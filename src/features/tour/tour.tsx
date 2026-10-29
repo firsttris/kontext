@@ -140,7 +140,8 @@ const Progress = ({ step, count }: { step: number; count: number }) => (
 const TourCard = ({ user }: { user: string }) => {
   const screen: TourScreen = useMediaQuery("(min-width: 768px)") ? "desktop" : "phone";
   const shared = useMailAccounts().some((account) => account.kind === "shared");
-  const steps = tourSteps(screen, { shared });
+  const sidebar = useMediaQuery("(min-width: 1024px)");
+  const steps = tourSteps(screen, { shared, sidebar });
   const [step, setStep] = useState(0);
   const state = { step: Math.min(step, steps.length - 1), count: steps.length };
   const current = steps[state.step]!;

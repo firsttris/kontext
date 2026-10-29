@@ -28,6 +28,18 @@ describe("tourSteps", () => {
     expect(tourSteps("desktop", { shared: false }).map((step) => step.id)).not.toContain("shared");
   });
 
+  it("leaves out what only the mail sidebar has on a desktop without it (md to lg)", () => {
+    expect(tourSteps("desktop", { shared: true, sidebar: false }).map((step) => step.id)).toEqual([
+      "welcome",
+      "mail",
+      "calendar",
+      "chat",
+    ]);
+    expect(tourSteps("phone", { shared: true, sidebar: false }).map((step) => step.id)).toContain(
+      "compose",
+    );
+  });
+
   it("falls back to „Mehr“ on a phone, where an app may not be in the tab bar", () => {
     const steps = tourSteps("phone", { shared: true });
     expect(steps.find((step) => step.id === "chat")?.targets).toEqual(["app:/chat", MORE_TARGET]);

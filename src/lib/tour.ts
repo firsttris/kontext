@@ -20,11 +20,20 @@ export const appTarget = (to: string) => `app:${to}`;
 /** "Mehr" in the tab bar: where Chat sits on a phone that has not put it into the bar. */
 export const MORE_TARGET = "app:more";
 
+/** The steps that point into the mail sidebar, or into the phone's header of the mail list. */
+const MAIL_PLACES: readonly TourStepId[] = ["compose", "shared"];
+
 /**
  * The steps for a screen: the rail on a desktop, the tab bar on a phone (with "Mehr" when an app
- * is not in it). The step on shared mailboxes only for whoever has one, like info@.
+ * is not in it). The step on shared mailboxes only for whoever has one, like info@. `sidebar`:
+ * whether a desktop shows the mail sidebar; between md and lg it does not (mail-layout.tsx), and
+ * the phone's header with its compose button is gone too, so "Neue E-Mail" and the shared
+ * mailboxes would have nothing to point at.
  */
-export const tourSteps = (screen: TourScreen, { shared }: { shared: boolean }): TourStep[] => {
+export const tourSteps = (
+  screen: TourScreen,
+  { shared, sidebar = true }: { shared: boolean; sidebar?: boolean },
+): TourStep[] => {
   const app = (to: string) => (screen === "phone" ? [appTarget(to), MORE_TARGET] : [appTarget(to)]);
   const steps: TourStep[] = [
     { id: "welcome", targets: [] },
@@ -34,7 +43,10 @@ export const tourSteps = (screen: TourScreen, { shared }: { shared: boolean }): 
     { id: "calendar", targets: app("/calendar") },
     { id: "chat", targets: app("/chat") },
   ];
-  return shared ? steps : steps.filter((step) => step.id !== "shared");
+  const shown = (step: TourStep) =>
+    (shared || step.id !== "shared") &&
+    (screen === "phone" || sidebar || !MAIL_PLACES.includes(step.id));
+  return steps.filter(shown);
 };
 
 /** Where the tour stands: the step shown, of how many. */
