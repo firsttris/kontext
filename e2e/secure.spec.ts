@@ -168,8 +168,7 @@ test.describe("Vertraulich senden mit Bild", () => {
     const codes = page.getByRole("dialog", { name: "Zugangscodes" });
     await expect(codes.getByRole("status", { name: `Code für ${customer}` })).toBeVisible();
     await codes.getByRole("button", { name: "Weitergegeben" }).click();
-    let link: string | undefined;
-    await expect.poll(async () => (link = await sentLink("jonas", customer))).toBeTruthy();
+    await expect.poll(() => sentLink("jonas", customer)).toBeTruthy();
     const client = jmapAs("jonas");
     const session = await client.getSession();
     const accountId = session.primaryAccounts["urn:ietf:params:jmap:mail"]!;
