@@ -7,6 +7,11 @@ Steps that an update needs beyond raising the version are marked **Upgrade**.
 
 ## Unreleased
 
+- Calendar: "Geburtstage" – the contacts' birthdays (JSContact `anniversaries` of kind "birth")
+  from every address book you can see, as all-day entries in day, week, month and list, with the
+  age when the year is known ("Petra Keller (52)"). A click opens the contact. Worked out in the
+  browser, so it is always current and read-only; 29 February falls on the 28th in other years.
+  Switched off like a calendar under "Meine Kalender".
 - Mail: "Als Anhang weiterleiten" – in a mail's "Weitere Aktionen" menu, and for several picked
   mails in the selection bar: the original goes whole as `<subject>.eml` (message/rfc822) in a
   new mail, by the blob Stalwart already holds (JMAP `blobId`), so nothing is downloaded or

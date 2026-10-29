@@ -17,8 +17,8 @@ import {
 import { LOCALE } from "@/lib/locale";
 import { type DayTask, tasksOnDay } from "@/lib/task-context";
 import { m } from "@/paraglide/messages";
+import { EventLink } from "./event-link";
 import { calendarColor } from "./event-style";
-import { eventSearch } from "./queries";
 import { TaskChip } from "./task-chip";
 
 const WEEKDAYS = weekdayHeads(LOCALE);
@@ -149,9 +149,8 @@ export const MonthView = ({
 const MonthChip = ({ event, invitation }: { event: CalendarEvent; invitation: boolean }) => {
   const { start, allDay } = eventTimes(event);
   return (
-    <Link
-      to="/calendar"
-      search={(prev) => ({ ...prev, ...eventSearch(event) })}
+    <EventLink
+      event={event}
       style={calendarColor(event)}
       className={cn(
         "flex min-w-0 items-baseline gap-1 rounded-md px-1.5 py-px text-[12px] text-fg no-underline",
@@ -165,6 +164,6 @@ const MonthChip = ({ event, invitation }: { event: CalendarEvent; invitation: bo
         </span>
       )}
       <span className="truncate">{event.title || "—"}</span>
-    </Link>
+    </EventLink>
   );
 };

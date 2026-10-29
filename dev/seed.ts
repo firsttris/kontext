@@ -274,6 +274,21 @@ const defaultCollectionId = async (
   return found.id;
 };
 
+/** A PartialDate (RFC 9553 §2.8.1) `days` from today, with the year when the age is given. */
+const birthAnniversary = ({ day, age }: { day: number; age?: number }) => {
+  const [year, month, date] = localStart(day, "00:00").slice(0, 10).split("-").map(Number);
+  return {
+    "@type": "Anniversary",
+    kind: "birth",
+    date: {
+      "@type": "PartialDate",
+      ...(age === undefined ? {} : { year: year! - age }),
+      month,
+      day: date,
+    },
+  };
+};
+
 const ensureContacts = async (): Promise<number> => {
   let created = 0;
   for (const owner of new Set(contacts.map((c) => c.owner))) {
@@ -319,6 +334,7 @@ const ensureContacts = async (): Promise<number> => {
                 }
               : {}),
             ...(c.note ? { notes: { n: { note: c.note } } } : {}),
+            ...(c.birthday ? { anniversaries: { b: birthAnniversary(c.birthday) } } : {}),
           },
         ]),
     );

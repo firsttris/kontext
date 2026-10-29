@@ -1472,6 +1472,8 @@
   "calendar_tasks": "Tasks due",
   "calendar_tasks_hint": "Mine, on their due date",
   "calendar_tasks_count": "{count} tasks due",
+  "calendar_birthdays": "Birthdays",
+  "calendar_birthdays_hint": "From the contacts",
   "calendar_task": "Task",
   "calendar_task_overdue": "overdue",
   "calendar_task_done": "“{title}” done.",
