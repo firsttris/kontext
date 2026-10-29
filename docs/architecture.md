@@ -1055,8 +1055,8 @@ bereinigte wie im Lesebereich, eingebettete Bilder kommen mit, Bilder aus dem In
 Der Kalender druckt genauso (`src/features/calendar/print-calendar.ts`): der Drucker im Kopf des
 Kalenders, `p` oder Strg+P. Was auf das Blatt kommt, rechnet `src/lib/calendar-print.ts` aus –
 je Tag die Termine der angezeigten Kalender, ganztägige zuerst, dann nach Beginn; ein Termin, der
-vor dem Tag beginnt oder danach endet, steht als „22:00–“ oder „–10:00“ da, ein ganzer Tag
-dazwischen als ganztägig. Im Monat fallen Wochen ohne einen Tag des Monats weg, und jeder Tag
+vor dem Tag beginnt oder danach endet, steht als „22:00–“ oder „–10:00“ da, ein Tag, den er von
+Mitternacht bis Mitternacht füllt, als ganztägig. Im Monat fallen Wochen ohne einen Tag des Monats weg, und jeder Tag
 bekommt so viele Zeilen, wie bei vier bis sechs Wochen auf A4 quer passen (`monthLines`); der
 Rest steht als „+2 weitere“ da. `src/lib/calendar-print-document.ts` baut daraus die Seite (A4
 quer, Woche als sieben Spalten mit Ort, Monat als Raster nur mit Beginn und Titel). Titel und Orte
