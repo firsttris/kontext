@@ -5,6 +5,7 @@
  */
 import { FLOOR_PLAN } from "./floor-plan";
 import { simplePdf } from "./pdf";
+import { winmailDat } from "./tnef";
 
 /** `companyAdmin`: may use the Firmenverwaltung. */
 export type SeedUser = { name: string; fullName: string; groups: string[]; companyAdmin?: boolean };
@@ -141,6 +142,44 @@ export const mails: SeedMail[] = [
     body: "Hallo Jonas,\n\ndanke für das Angebot. Wir würden gerne im Januar anfangen. Passt der 12.01. als Starttermin?\n\nGruß Markus",
     hoursAgo: 50,
     seen: true,
+  },
+  {
+    // Old Outlook sends its attachments packed into a winmail.dat (TNEF); Kontext unpacks it.
+    id: "lieferschein-48211@richter-sanitaer.test",
+    owner: "jonas",
+    folder: "Lieferanten",
+    from: richter,
+    to: [jonas],
+    subject: "Lieferschein 48211",
+    body: "Sehr geehrte Damen und Herren,\n\nanbei der Lieferschein und das Datenblatt zur Umwälzpumpe.\n\nIhr Team vom Großhandel Richter",
+    hoursAgo: 26,
+    seen: true,
+    attachment: {
+      name: "winmail.dat",
+      type: "application/ms-tnef",
+      content: winmailDat([
+        {
+          shortName: "LIEFER~1.PDF",
+          longName: "Lieferschein-48211.pdf",
+          type: "application/pdf",
+          data: simplePdf({
+            letterhead: "Großhandel Richter",
+            colour: [0.13, 0.45, 0.33],
+            lines: [
+              { text: "Lieferschein 48211", size: 16, bold: true },
+              { text: "Weber Haustechnik, Bühl", gap: 4 },
+              { text: "1× Umwälzpumpe Wilo Stratos 25/1-6", gap: 18 },
+            ],
+          }),
+        },
+        {
+          shortName: "DATENB~1.TXT",
+          longName: "Datenblatt Stratos 25-1-6.txt",
+          type: "text/plain",
+          data: new TextEncoder().encode("Wilo Stratos 25/1-6\nFörderhöhe max. 6 m\n"),
+        },
+      ]),
+    },
   },
   {
     id: "abschlag-oktober@stadtwerke-buehl.test",

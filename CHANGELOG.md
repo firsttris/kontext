@@ -7,6 +7,9 @@ Steps that an update needs beyond raising the version are marked **Upgrade**.
 
 ## Unreleased
 
+- Mail: a winmail.dat from older Outlook versions (TNEF) shows as the files inside it, with
+  preview, download and "In Dokumente"; the browser unpacks it and puts the files up as blobs of
+  the mailbox.
 - Mail: more formatting when writing – font size, text and background color, and tables (rows
   and columns added or removed from the menu, a header row on or off). Sent as inline styles, so
   Outlook and Gmail show it as written; the plain-text part has a table row per line. The

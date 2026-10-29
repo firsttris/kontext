@@ -116,6 +116,14 @@ kommt alle zwei Minuten in Kontext, gesendet wird als diese Adresse über den Se
 ## Anhänge, Drucken, Tastatur
 
 - **Vorschau** von Fotos und der ersten PDF-Seite; ein Klick öffnet sie groß.
+- **winmail.dat:** Ältere Outlook-Versionen packen ihre Anhänge in eine Datei „winmail.dat“
+  (TNEF). Kontext packt sie im Browser aus und zeigt die Dateien darin als normale Anhänge, mit
+  Vorschau, Herunterladen und „In Dokumente“. Dafür lädt Kontext sie als Blobs ins Postfach hoch
+  (Stalwart räumt nicht verwendete nach einer Weile weg). Eingebettete Outlook-Elemente bleiben
+  draußen. Geht das nicht (eine Datei, die Kontext nicht lesen kann, ein Postfach nur zum
+  Lesen), bleibt die winmail.dat selbst stehen.
+
+  ![Eine Mail mit winmail.dat: darunter Lieferschein-48211.pdf mit Vorschau und eine Textdatei](screenshots/winmail.png)
 - **Drucken** nur der Mail, sauber auf A4 (auch mit Strg+P).
 - **Tastaturkürzel wie in Gmail**; `?` zeigt alle.
 - **Neben der Mail** (auf breiten Bildschirmen): wer schreibt, mit Firma, nächsten Terminen,

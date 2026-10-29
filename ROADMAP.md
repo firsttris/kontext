@@ -36,7 +36,6 @@ Kleinere und mittlere Funktionen, sortiert nach Nutzen: oben, was fast jedem Bet
 | --- | --- | --- |
 | 10 | **Standard-Erinnerungen je Kalender** | Erinnerungen, die jeder neue Termin des Kalenders bekommt, getrennt für Termine mit Uhrzeit und ganztägige; Stalwart kennt sie schon (`defaultAlertsWithTime`, `defaultAlertsWithoutTime`), Kontext fehlt die Einstellung. |
 | 11 | **Termine aus .ics-Dateien übernehmen** | Mit Vorschau; schon vorhandene Termine werden übersprungen (heute nur beim Umzug). |
-| 12 | **winmail.dat entpacken** | Anhänge und Text aus Mails alter Outlook-Versionen zeigen. |
 | 13 | **Hinweis „Extern“** | Mails von außerhalb der Firma tragen ein Kennzeichen; vor dem Senden oder Einladen an Externe fragt Kontext nach. Partnerdomains zählen als intern; je Firma einschaltbar. |
 | 14 | **Vertretung in einem Schritt** | Einer Kollegin Postfach, Kalender und Kontakte auf einmal freigeben (lesen oder bearbeiten), sehen, wer worauf Zugriff hat, und alles auf einmal wieder entziehen. |
 | 16 | **Textbausteine mit mehr Platzhaltern** | `{Datum}` und eigene Felder, nach denen Kontext beim Einfügen fragt („Auftragsnummer?“); heute nur `{Name}`. |
