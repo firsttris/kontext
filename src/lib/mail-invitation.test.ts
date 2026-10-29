@@ -123,10 +123,24 @@ describe("invitationView", () => {
     expect(invitationView(parsed({ method: "cancel" }), undefined, mine)).toEqual({
       kind: "cancel",
       inCalendar: false,
+      outdated: false,
     });
     expect(invitationView(parsed({ method: undefined }), undefined, mine)).toEqual({
       kind: "publish",
       inCalendar: false,
+    });
+  });
+
+  it("offers no removal on a cancellation the organizer has invited again since", () => {
+    const stored: CalendarEvent = { ...parsed(), id: "e1", sequence: 2 };
+    const cancel = parsed({ method: "cancel", sequence: 1 });
+    expect(invitationView(cancel, stored, mine)).toEqual({
+      kind: "cancel",
+      inCalendar: true,
+      outdated: true,
+    });
+    expect(invitationView(parsed({ method: "cancel", sequence: 2 }), stored, mine)).toMatchObject({
+      outdated: false,
     });
   });
 
