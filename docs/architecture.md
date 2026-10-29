@@ -187,7 +187,8 @@ Stalwart kennt JMAP-MDN (RFC 9007) nicht; Kontext baut Lesebestätigungen nach R
 - **Still ablegen:** Eingehende Bestätigungen für eigene gesendete Mails gehören an die gesendete
   Mail, nicht in den Posteingang. Für jedes Postfach, aus dem man Mails nehmen darf (das eigene
   und gemeinsame), schaut die App bei jeder Änderung nach ungelesenen Bestätigungen der letzten
-  14 Tage im Posteingang (`QuietReceipts`, `receiptsToFile`), liest ihren Berichtsteil und
+  14 Tage im Posteingang (`QuietReceipts`, `receiptsToFile`; die neuesten 100 zuerst, damit
+  ungelesene andere Mails neue Bestätigungen nicht verdecken), liest ihren Berichtsteil und
   vergleicht mit den neuesten 200 gesendeten Mails an ihre Absender. Nur eine Bestätigung, die
   eine Mail in „Gesendet“ nennt, die selbst um eine Bestätigung gebeten hat, wandert gelesen ins
   Archiv (angelegt wie beim Archivieren, falls noch keins da ist). Alles andere – eine Mail, die
@@ -1292,7 +1293,9 @@ Eine Mail „aus dem Weg bis …“: Knopf mit dem Wecker über der Mail oder `w
   einem Ordner liegt, aus dem sie weg darf (nicht Entwürfe, Gesendet oder ein Ordner nur zum
   Lesen; `snoozeTargets` in `src/lib/selection.ts`) – sonst gar nicht, statt nur einen Teil
   zurückzulegen. Je Konto und Ordner ein Aufruf, jede Mail in den Wiedervorlage-Ordner ihres
-  Kontos; ein „Rückgängig“ holt alle zurück.
+  Kontos; ein „Rückgängig“ holt alle zurück. Scheitert ein Konto, kommen die Mails der anderen
+  gleich zurück (alles oder nichts), und die Meldung nennt den Fehler. In „Alle Posteingänge“
+  sind Mails nach Konto und ID verschieden: Stalwart zählt IDs je Konto.
 - **Wieder vorgelegt:** der Posteingang zeigt solche Mails, solange sie ungelesen sind, oben in
   einer eigenen Gruppe – nach Datum lägen sie weit unten. Gelesen nimmt Kontext das Schlagwort
   wieder ab, und die Mail steht an ihrem Platz. „Alle Posteingänge“ fragt dafür jeden Posteingang

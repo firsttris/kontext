@@ -182,7 +182,14 @@ export const receiptsToFile = async (
       { after: afterOf(now.getTime() - RECENT_DAYS * 86_400_000) },
     ],
   };
-  const found = await searchPages(client, accountId, { filter, ...RECEIPT_QUERY }, keepReceipt, 2);
+  // Newest first: the unread mails that are not receipts stay, and must not hide the new ones.
+  const found = await searchPages(
+    client,
+    accountId,
+    { filter, newestFirst: true, ...RECEIPT_QUERY },
+    keepReceipt,
+    2,
+  );
   if (!found.length) return [];
   const read = await Promise.all(found.map((mail) => readTargets(client, accountId, mail)));
   const people = [

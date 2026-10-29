@@ -1,7 +1,7 @@
 /**
- * Reading through what a search finds, page by page and oldest first, keeping only some: the
- * reports that come back for a sent mail (delivery reports, read receipts) hide among ordinary
- * mails, and Stalwart cannot search the parts that would tell them apart.
+ * Reading through what a search finds, page by page (oldest first unless asked), keeping only
+ * some: the reports that come back for a sent mail (delivery reports, read receipts) hide among
+ * ordinary mails, and Stalwart cannot search the parts that would tell them apart.
  */
 import type { JmapClient } from "./client";
 
@@ -10,6 +10,8 @@ export const PAGE = 50;
 
 export type PageQuery = {
   filter: Record<string, unknown>;
+  /** Newest first instead of oldest first. */
+  newestFirst?: boolean;
   properties: string[];
   bodyProperties?: string[];
 };
@@ -18,7 +20,7 @@ export type PageQuery = {
 const searchPage = async <T>(
   client: JmapClient,
   accountId: string,
-  { filter, properties, bodyProperties }: PageQuery,
+  { filter, newestFirst = false, properties, bodyProperties }: PageQuery,
   position: number,
 ): Promise<T[]> => {
   const [, got] = await client.request([
@@ -27,7 +29,7 @@ const searchPage = async <T>(
       {
         accountId,
         filter,
-        sort: [{ property: "receivedAt", isAscending: true }],
+        sort: [{ property: "receivedAt", isAscending: !newestFirst }],
         position,
         limit: PAGE,
       },

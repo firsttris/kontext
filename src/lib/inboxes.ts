@@ -73,7 +73,10 @@ export const resurfacedFilter = (mailboxId: string, keyword: string) => ({
   },
 });
 
-type Sectioned = { email: EmailSummary; section?: string };
+type Sectioned = { email: EmailSummary; section?: string; account?: { id: string } };
+
+/** A row's mail by account and id: ids are counted per account, so two may share one. */
+const rowKey = (row: Sectioned) => `${row.account?.id ?? ""}/${row.email.id}`;
 
 /**
  * The mails back from Wiedervorlage on top, under their own heading, and the rest below under
@@ -85,8 +88,8 @@ export const pinResurfaced = <R extends Sectioned>(
   headings: { back: string; rest: string },
 ): R[] => {
   if (!back.length) return listed;
-  const ids = new Set(back.map((row) => row.email.id));
-  const rest = listed.filter((row) => !ids.has(row.email.id));
+  const keys = new Set(back.map(rowKey));
+  const rest = listed.filter((row) => !keys.has(rowKey(row)));
   return [
     ...back.map((row, index) => (index === 0 ? { ...row, section: headings.back } : row)),
     ...rest.map((row, index) => (index === 0 ? { ...row, section: headings.rest } : row)),

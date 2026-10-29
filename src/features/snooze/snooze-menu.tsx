@@ -27,9 +27,18 @@ export const useSnooze = () => {
   return async (targets: SnoozeTarget[], until: Date) => {
     const count = targets.reduce((sum, target) => sum + target.ids.length, 0);
     try {
-      const undos = await Promise.all(
+      const results = await Promise.allSettled(
         targets.map((target) => snooze(target.accountId, target.ids, target.from, until)),
       );
+      const undos = results.flatMap((result) =>
+        result.status === "fulfilled" ? [result.value] : [],
+      );
+      const failed = results.find((result) => result.status === "rejected");
+      if (failed) {
+        // All or nothing, like the selection bar's choice: what did go away comes back.
+        await Promise.allSettled(undos.map((back) => back()));
+        throw failed.reason;
+      }
       const undo = () => Promise.all(undos.map((back) => back()));
       const when = sendTimeLabel(until);
       toast.show(
