@@ -131,3 +131,111 @@ test.describe("Vertraulich senden", () => {
     await expect(page.getByRole("region", { name: "Antworten" })).toContainText("Danke, passt so.");
   });
 });
+
+/** A red 60 × 40 PNG, for a picture in the text. */
+const RED_PNG =
+  "iVBORw0KGgoAAAANSUhEUgAAADwAAAAoCAIAAAAt2Q6oAAAAO0lEQVR42u3OQQkAAAgEsEtz/QMZxhQ+hMECLNO+E2lpaWlpaWlpaWlpaWlpaWlpaWlpaWlpaWlp6UsL/qHXl2FUdv0AAAAASUVORK5CYII=";
+
+test.describe("Vertraulich senden mit Bild", () => {
+  test("ein Bild im Text geht nur verschlüsselt mit, nicht in die Mail mit dem Link", async ({
+    page,
+  }) => {
+    test.setTimeout(90_000);
+    const subject = unique("Schadensfoto");
+    const customer = `kunde-bild-${Date.now()}@example.test`;
+    await login(page);
+    await giveKey(page, "jonas");
+    await page.goto("/mail");
+    await page.getByRole("link", { name: "Neue Mail" }).first().click();
+    await page.getByRole("combobox", { name: "An" }).fill(customer);
+    await page.keyboard.press(",");
+    await page.getByLabel("Betreff").fill(subject);
+    await page.getByRole("button", { name: "Vertraulich senden" }).click();
+    await expect(page.getByRole("status").filter({ hasText: "per Link mit Code" })).toBeVisible();
+    const body = page.getByRole("textbox", { name: "Ihre Nachricht …" });
+    await body.click();
+    await page.keyboard.type("Der Schaden:");
+    await page.keyboard.press("Enter");
+    await page.locator('input[type="file"][accept^="image/png"]').setInputFiles({
+      name: "schaden.png",
+      mimeType: "image/png",
+      buffer: Buffer.from(RED_PNG, "base64"),
+    });
+    await expect(body.locator('img[alt="schaden.png"]')).toHaveCount(1);
+    await page.getByRole("button", { name: "Senden", exact: true }).click();
+
+    // The link went out; the mail that brings it carries no picture of the confidential one.
+    const codes = page.getByRole("dialog", { name: "Zugangscodes" });
+    await expect(codes.getByRole("status", { name: `Code für ${customer}` })).toBeVisible();
+    await codes.getByRole("button", { name: "Weitergegeben" }).click();
+    let link: string | undefined;
+    await expect.poll(async () => (link = await sentLink("jonas", customer))).toBeTruthy();
+    const client = jmapAs("jonas");
+    const session = await client.getSession();
+    const accountId = session.primaryAccounts["urn:ietf:params:jmap:mail"]!;
+    const [, got] = await client.request([
+      ["Email/query", { accountId, filter: { to: customer }, limit: 1 }, "q"],
+      [
+        "Email/get",
+        {
+          accountId,
+          "#ids": { resultOf: "q", name: "Email/query", path: "/ids" },
+          properties: ["attachments", "hasAttachment"],
+        },
+        "g",
+      ],
+    ]);
+    const mail = (got![1] as { list: { attachments: unknown[] }[] }).list[0];
+    expect(mail?.attachments ?? []).toEqual([]);
+  });
+});
+
+test.describe("Vertraulich senden: Dateien im Browser", () => {
+  test("mehrere Dateien auf einmal halten zusammen die Grenze ein", async ({ page }) => {
+    test.setTimeout(90_000);
+    await login(page);
+    await giveKey(page, "jonas");
+    await page.goto("/mail");
+    await page.getByRole("link", { name: "Neue Mail" }).first().click();
+    await page.getByRole("combobox", { name: "An" }).fill(`kunde-gross-${Date.now()}@example.test`);
+    await page.keyboard.press(",");
+    await page.getByLabel("Betreff").fill(unique("Pläne"));
+    await page.getByRole("button", { name: "Vertraulich senden" }).click();
+    await expect(page.getByRole("status").filter({ hasText: "per Link mit Code" })).toBeVisible();
+    // Two files of 15 MB, chosen together: each fits, both together do not (25 MB).
+    const big = Buffer.alloc(15 * 1024 * 1024, 1);
+    await page.locator('form input[type="file"][multiple]:not([accept])').setInputFiles([
+      { name: "plan-eg.pdf", mimeType: "application/pdf", buffer: big },
+      { name: "plan-og.pdf", mimeType: "application/pdf", buffer: big },
+    ]);
+    await expect(page.getByText(/bis zusammen 25 MB mit/)).toBeVisible();
+    await expect(page.getByText("plan-eg.pdf")).toBeVisible();
+    await expect(page.getByText("plan-og.pdf")).toHaveCount(0);
+  });
+
+  test("„Als Entwurf speichern“ meldet bei Vertraulich nichts Gespeichertes", async ({ page }) => {
+    test.setTimeout(90_000);
+    const subject = unique("Vertrag Entwurf");
+    await login(page);
+    await giveKey(page, "jonas");
+    await page.goto("/mail");
+    await page.getByRole("link", { name: "Neue Mail" }).first().click();
+    await page
+      .getByRole("combobox", { name: "An" })
+      .fill(`kunde-entwurf-${Date.now()}@example.test`);
+    await page.keyboard.press(",");
+    await page.getByLabel("Betreff").fill(subject);
+    await page.getByRole("textbox", { name: "Ihre Nachricht …" }).fill("Der Vertrag, Entwurf 3.");
+    await expect(page.getByText(/Entwurf gespeichert um/)).toBeVisible({ timeout: 10_000 });
+    // On: the plain draft goes; an encrypted mail is kept nowhere on the server.
+    await page.getByRole("button", { name: "Vertraulich senden" }).click();
+    await expect(page.getByRole("status").filter({ hasText: "per Link mit Code" })).toBeVisible();
+    await page.getByRole("button", { name: "Als Entwurf speichern" }).click();
+    // Nothing was saved, so it must not say so and close the mail: it would be lost.
+    await page.waitForTimeout(1000);
+    await expect(page.getByRole("status").filter({ hasText: "Entwurf gespeichert." })).toHaveCount(
+      0,
+    );
+    await expect(page.getByLabel("Betreff")).toHaveValue(subject);
+  });
+});
