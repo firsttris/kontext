@@ -21,7 +21,7 @@ export const copyForm = (event: CalendarEvent, myAddresses: string[]): EventForm
 
 /**
  * The JSCalendar properties of the copy. Alerts the form cannot show ("kept") come along as they
- * are, not yet acknowledged; formToEvent would leave a new event without them.
+ * are, not yet acknowledged and without snoozes; formToEvent would leave a new event without them.
  */
 export const copyToEvent = (
   form: EventForm,
@@ -33,10 +33,25 @@ export const copyToEvent = (
   return { ...data, alerts: freshAlerts(original.alerts) };
 };
 
+type AlertState = Alert & {
+  acknowledged?: string;
+  relatedTo?: Record<string, { relation?: Record<string, boolean> }>;
+};
+
+/**
+ * A snooze is an alert a client added to delay another, its parent (RFC 8984 §4.5.2, relatedTo;
+ * Apple Calendar writes them over CalDAV). It belongs to the original's reminder having gone off.
+ */
+const isSnooze = (alert: AlertState): boolean =>
+  Object.values(alert.relatedTo ?? {}).some((relation) => relation.relation?.parent);
+
+/** The alerts as they were before any went off: not acknowledged, not snoozed. */
 const freshAlerts = (alerts: Record<string, Alert>): Record<string, Alert> =>
   Object.fromEntries(
-    Object.entries(alerts).map(([key, alert]) => {
-      const { acknowledged: _acknowledged, ...rest } = alert as Alert & { acknowledged?: string };
-      return [key, rest];
-    }),
+    Object.entries(alerts as Record<string, AlertState>)
+      .filter(([, alert]) => !isSnooze(alert))
+      .map(([key, alert]) => {
+        const { acknowledged: _acknowledged, ...rest } = alert;
+        return [key, rest];
+      }),
   );
