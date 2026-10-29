@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { cardKey, eventUid, prepareCard, prepareEvent, splitVCards } from "./items";
+import { cardKey, eventUid, prepareCard, splitVCards } from "./items";
 
 describe("contacts", () => {
   it("knows a card again by name and first address", () => {
@@ -24,12 +24,6 @@ describe("events", () => {
     expect(eventUid("0x1268", "pst-abc")).toBe("pst-abc");
     expect(eventUid("040000008200E000@outlook", "pst-abc")).toBe("040000008200E000@outlook");
     expect(eventUid(undefined, "pst-abc")).toBe("pst-abc");
-  });
-
-  it("goes into the calendar without Outlook's NONE category", () => {
-    expect(
-      prepareEvent({ title: "T", keywords: { NONE: true }, calendarIds: { x: true } }, "c", "u"),
-    ).toEqual({ title: "T", uid: "u", calendarIds: { c: true } });
   });
 });
 

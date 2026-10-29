@@ -73,6 +73,17 @@ Kontext steht, steht auch am iPhone, unter Android (DAVx⁵) und in Thunderbird.
 
   ![Kalender verwalten mit einem abonnierten Kalender und der Adresse eines zweiten](screenshots/calendar-subscriptions.png)
 
+- **Termine aus einer Datei übernehmen:** Unter *Kalender verwalten → Aus Datei übernehmen* eine
+  iCalendar-Datei (`.ics`) wählen – etwa einen Export aus Google, Outlook oder Apple oder die
+  Termine eines Lieferanten – und den Kalender, in den sie sollen (eigene, geteilte zum Bearbeiten
+  und die von info@ & Co.). Die Vorschau zeigt jeden Termin mit Datum und Uhrzeit, Serien als
+  „Serie“, und wie viele neu und wie viele schon vorhanden sind (gleiche UID); „Übernehmen“ trägt
+  nur die neuen ein. Serien behalten ihre geänderten Termine. Teilnehmer bekommen keine
+  Nachricht. Anders als ein Abo bleibt nichts verbunden: Eine neue Fassung der Datei noch einmal
+  übernehmen ergänzt nur, was dazukam. [Mehr](architecture.md#termine-aus-einer-datei)
+
+  ![Kalender verwalten mit der Vorschau einer .ics-Datei: vier neue Termine, einer schon vorhanden](screenshots/calendar-ics-import.png)
+
 - **Kalender teilen** mit Kollegen: nur Verfügbarkeit, lesen oder bearbeiten. Alle Kalender
   samt Postfach und Kontakten auf einmal: [Vertretung](mail.md#abwesenheit-und-signaturen).
 - **Orte vorschlagen:** Im Feld „Ort“ schlägt Kontext ab drei Buchstaben Adressen und Firmen vor
