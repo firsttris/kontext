@@ -306,6 +306,17 @@ test.describe("Screenshots @screenshots", () => {
     await shot(page, "event-reminder");
   });
 
+  test("Termin duplizieren", async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await login(page);
+    await page.goto(`/calendar?date=${today()}`);
+    await page.locator(`[data-day="${today()}"]`).getByText("Baubesprechung Hoffmann").click();
+    const dialog = page.getByRole("dialog");
+    await dialog.getByRole("button", { name: "Duplizieren" }).click();
+    await expect(dialog.getByLabel("Titel")).toHaveValue("Baubesprechung Hoffmann");
+    await shot(page, "event-duplicate");
+  });
+
   test("Kalender abonnieren", async ({ page }) => {
     const web = await calendarOnTheWeb();
     web.serve(["Pädagogischer Tag", "Bewegliche Ferientage"]);

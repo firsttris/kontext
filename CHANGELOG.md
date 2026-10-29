@@ -11,6 +11,11 @@ Steps that an update needs beyond raising the version are marked **Upgrade**.
   mails in the selection bar: the original goes whole as `<subject>.eml` (message/rfc822) in a
   new mail, by the blob Stalwart already holds (JMAP `blobId`), so nothing is downloaded or
   uploaded. An encrypted mail goes as it came, still encrypted.
+- Calendar: "Duplizieren" on an appointment opens the editor with a copy – same title, place,
+  video meeting, attendees, notes, reminder, show-as, calendar, documents and length, on the
+  original's date until changed. Saved as a new appointment (new uid), so the attendees get
+  invitations as for any new one. A date of a series is copied as that date alone, without the
+  repetition.
 - Contacts: several at once – pick contacts by their box (Shift for a range, Ctrl/⌘ for one more;
   on phones "Auswählen" or a long press), then add them to a group, export them as one vCard file
   or delete them after one question with the count. Groups are offered within the account the
