@@ -86,6 +86,41 @@ test.describe("Pflichtangaben", () => {
     expect(arrived!.html).toContain("Sitz: Freiburg<br>Amtsgericht Freiburg HRB 4711");
   });
 
+  test("kommen nach „Rückgängig“ nicht in den Entwurf und gehen beim neuen Senden nur einmal mit", async ({
+    page,
+  }) => {
+    await footerOn(page);
+    await login(page);
+    // The shortest hold (5 s), to take the mail back.
+    await page.evaluate(() => window.localStorage.setItem("kontext.mail.undo", "5"));
+    const subject = unique("Angebot Wartung");
+    await page.getByRole("link", { name: "Neue Mail" }).first().click();
+    await page.getByRole("combobox", { name: "An" }).fill("max");
+    await page.getByRole("option", { name: /Max Becker/ }).click();
+    await page.getByLabel("Betreff").fill(subject);
+    const editor = page.getByRole("textbox", { name: "Ihre Nachricht …" });
+    await editor.fill("Hallo Max, die Wartung kostet 180 Euro.");
+    await page.getByRole("button", { name: "Senden", exact: true }).click();
+    const sent = page.getByRole("status").filter({ hasText: "Mail gesendet." });
+    await sent.getByRole("button", { name: "Rückgängig" }).click();
+    await expect(page.getByRole("status").filter({ hasText: "Nicht gesendet" })).toBeVisible();
+    await expect(page.getByRole("textbox", { name: "Betreff" })).toHaveValue(subject);
+
+    // Back as a draft: the text, and the footer only below the editor, as before.
+    await expect(editor).toContainText("180 Euro");
+    await expect(editor).not.toContainText("HRB 4711");
+
+    await page.getByRole("button", { name: "Senden", exact: true }).click();
+    await expect
+      .poll(async () => (await bodiesOf("max", subject, false)).length, {
+        timeout: 20_000,
+      })
+      .toBe(1);
+    const [arrived] = await bodiesOf("max", subject, false);
+    expect(arrived!.text.split("HRB 4711").length - 1).toBe(1);
+    expect(arrived!.html.split("data-legal-footer").length - 1).toBe(1);
+  });
+
   test("setzt die Firmenverwaltung, für alle Mitarbeiter", async ({ page }) => {
     // The save is answered here, so no other test's mail gets the footer; the server's side is
     // in server/company/routes.test.ts.
