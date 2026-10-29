@@ -30,6 +30,11 @@ Kontext steht, steht auch am iPhone, unter Android (DAVx⁵) und in Thunderbird.
   schlägt die nächsten Zeiten vor, in denen alle frei sind – wie Outlooks
   Terminplanungs-Assistent. In der Firma sieht jeder, wann Kollegen belegt sind (ohne Titel);
   abschaltbar je Kalender. [Mehr](architecture.md#verfugbarkeit)
+- **Feiertage eintragen:** Unter *Kalender verwalten* das Bundesland wählen; Kontext legt den
+  Kalender „Feiertage <Bundesland>“ an und trägt die gesetzlichen Feiertage für dieses und
+  nächstes Jahr ein, ganztägig und als „frei“ (sie blockieren niemandes Verfügbarkeit). Über
+  CalDAV stehen sie auch am Handy. Im neuen Jahr noch einmal klicken ergänzt, was fehlt.
+  [Mehr](architecture.md#feiertage)
 - **Kalender teilen** mit Kollegen: nur Verfügbarkeit, lesen oder bearbeiten.
 - **Orte vorschlagen:** Im Feld „Ort“ schlägt Kontext ab drei Buchstaben Adressen und Firmen vor
   (aus OpenStreetMap), etwa „Bäckerei Müller, Hauptstraße 5, 79098 Freiburg“; freier Text wie

@@ -129,10 +129,13 @@ test.describe("Telefonie über die Telefonbox", () => {
     await expect(hours.getByLabel("Montag von")).toHaveValue("08:00");
     await hours.getByLabel("Samstag", { exact: true }).check();
     await hours.getByLabel("Samstag bis").fill("12:00");
-    await hours.getByRole("button", { name: "Feiertage (Baden-Württemberg) eintragen" }).click();
-    await expect(hours.getByRole("list", { name: "Geschlossene Tage" })).toContainText(
-      "1. Weihnachtstag",
-    );
+    // A company in Hamburg: Reformationstag closes, Allerheiligen (Baden-Württemberg) does not.
+    await hours.getByLabel("Bundesland").selectOption({ label: "Hamburg" });
+    await hours.getByRole("button", { name: "Feiertage eintragen" }).click();
+    const closed = hours.getByRole("list", { name: "Geschlossene Tage" });
+    await expect(closed).toContainText("1. Weihnachtstag");
+    await expect(closed).toContainText("Reformationstag");
+    await expect(closed).not.toContainText("Allerheiligen");
     await hours.getByRole("button", { name: "Speichern" }).click();
 
     const boxes = page.getByRole("region", { name: "Telefonbox" });

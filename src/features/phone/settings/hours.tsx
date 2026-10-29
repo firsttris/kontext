@@ -4,14 +4,15 @@
  * on). Closed days for holidays and company holidays; the box decides by itself.
  */
 import { useState } from "react";
+import { StateSelect } from "@/components/state-select";
 import { Button } from "@/components/ui/button";
 import { Input, Label } from "@/components/ui/input";
 import { useToast } from "@/components/ui/toast";
 import { SettingsCard } from "@/features/settings/settings-page";
+import { comingHolidays, type State } from "@/lib/holidays";
 import { LOCALE } from "@/lib/locale";
 import { fromWeek, type Span, toWeek, usualWeek, type WeekRow } from "@/lib/opening-hours";
 import { m } from "@/paraglide/messages";
-import { comingHolidays } from "../../../../server/phone/holidays";
 import { companyDay } from "../../../../server/tasks/tasks";
 import { type Admin, send, useAdminChange } from "./api";
 import { SoundSelect } from "./sounds";
@@ -128,6 +129,7 @@ export const HoursForm = ({
   const [closedDays, setClosedDays] = useState(hours.closedDays);
   const [greeting, setGreeting] = useState(hours.greeting ?? "");
   const [newDay, setNewDay] = useState("");
+  const [state, setState] = useState<State>("BW");
   const save = useAdminChange(() =>
     send("PUT", "/hours", {
       enabled,
@@ -224,7 +226,8 @@ export const HoursForm = ({
               >
                 {m.phone_hours_add()}
               </Button>
-              <Button onClick={() => addDays(comingHolidays(companyDay(new Date())))}>
+              <StateSelect value={state} onChange={setState} />
+              <Button onClick={() => addDays(comingHolidays(companyDay(new Date()), state))}>
                 {m.phone_hours_holidays()}
               </Button>
             </div>

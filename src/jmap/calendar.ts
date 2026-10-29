@@ -236,6 +236,39 @@ export const createEvent = async (
   return result.created!.e!.id;
 };
 
+/**
+ * Several events into one calendar, without invitations (such as public holidays); at most 100 per
+ * call, below Stalwart's `maxObjectsInSet`.
+ */
+export const createEvents = async (
+  client: JmapClient,
+  accountId: string,
+  calendarId: string,
+  events: Record<string, unknown>[],
+): Promise<void> => {
+  for (const page of chunk(events, 100)) {
+    const create = Object.fromEntries(
+      page.map((event, index) => [
+        `e${index}`,
+        {
+          "@type": "Event",
+          uid: crypto.randomUUID(),
+          calendarIds: { [calendarId]: true },
+          ...event,
+        },
+      ]),
+    );
+    assertSetOk(
+      await client.call(
+        "CalendarEvent/set",
+        { accountId, sendSchedulingMessages: false, create },
+        USING,
+      ),
+      "Termin",
+    );
+  }
+};
+
 export const updateEvent = async (
   client: JmapClient,
   accountId: string,

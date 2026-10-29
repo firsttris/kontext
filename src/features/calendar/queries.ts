@@ -83,7 +83,7 @@ const calendarName = (calendar: Calendar, own: boolean, owner: string): string =
 /** A colour per calendar when the user has not picked one. */
 const PALETTE = ["#2563eb", "#16a34a", "#d97706", "#9333ea", "#dc2626", "#0891b2", "#db2777"];
 
-const listKey = (accountId: string) => [accountId, "calendars"] as const;
+export const listKey = (accountId: string) => [accountId, "calendars"] as const;
 
 /** All calendars the user can read: own ones first, then shared mailboxes and colleagues. */
 export const useCalendarRefs = (): { calendars: CalendarRef[]; isPending: boolean } => {

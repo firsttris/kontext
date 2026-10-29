@@ -920,7 +920,7 @@ flowchart LR
   Kontext schickt deshalb nur Tage von heute bis vor demselben Datum im nächsten Jahr (ein Tag
   weiter weg würde dasselbe Datum in diesem Jahr schließen) und die Konfiguration einmal täglich
   neu. Tage, die es nicht gibt („2026-02-30“), nimmt die Firmenverwaltung nicht an. Die
-  Feiertage für Baden-Württemberg rechnet `server/phone/holidays.ts` aus (Ostern nach Gauß).
+  Feiertage des gewählten Bundeslands kommen aus `src/lib/holidays.ts` (siehe [Feiertage](#feiertage)).
 - **Durchwahlen:** Jede weitere Nummer ist ein weiteres IP-Telefon an derselben Fritzbox, das dort
   nur auf diese Nummer reagiert; die Box meldet sich mit jedem an (`fritzbox-<id>`). Anrufe
   kommen über den ersten Endpunkt herein (Zuordnung nach Adresse) und verraten ihre Leitung über
@@ -1407,6 +1407,26 @@ jeden einzelnen Termin mit eigener ID, `baseEventId` und `recurrenceId`.
   Programm), bleiben beim Speichern unverändert.
 
 Ziehen im Wochenraster ändert immer nur den einen Termin.
+
+## Feiertage
+
+`src/lib/holidays.ts` rechnet die gesetzlichen Feiertage der 16 Bundesländer aus: die neun
+bundesweiten und je Land die eigenen (Heilige Drei Könige, Frauentag, Oster- und Pfingstsonntag
+in Brandenburg und Hessen, Fronleichnam, Mariä Himmelfahrt im Saarland, Weltkindertag,
+Reformationstag, Allerheiligen, Buß- und Bettag in Sachsen); Ostern nach Gauß. Tage, die nur manche Gemeinden
+feiern (Mariä Himmelfahrt in Bayern, Fronleichnam in Teilen Sachsens und Thüringens, das
+Augsburger Friedensfest), fehlen.
+
+Dieselbe Auswahl des Bundeslands steht in den Öffnungszeiten der Telefonie: Dort trägt der Knopf
+die Feiertage ab heute für etwa ein Jahr als geschlossene Tage ein (`comingHolidays`).
+
+„Feiertage eintragen“ (`src/features/calendar/holiday-queries.ts`) sucht im eigenen Konto den
+Kalender „Feiertage <Bundesland>“ oder legt ihn an, liest seine Termine des laufenden und des
+nächsten Jahres und legt die fehlenden (gleicher Tag, gleicher Name) mit einem
+`CalendarEvent/set` an: ganztägig (`showWithoutTime`, ohne Zeitzone), `freeBusyStatus: "free"`
+und ohne Einladungen (`sendSchedulingMessages: false`). Ein Abonnement, das sich selbst
+aktualisiert, ist das nicht; dafür steht der Kalender wie jeder andere in Stalwart und über
+CalDAV am Handy.
 
 ## Orte im Termin
 

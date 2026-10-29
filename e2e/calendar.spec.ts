@@ -322,6 +322,38 @@ test.describe("Kalender teilen", () => {
   });
 });
 
+test.describe("Feiertage", () => {
+  test("Max trägt die Feiertage des Saarlands ein, ein zweites Mal ergänzt nichts", async ({
+    page,
+  }) => {
+    const christmas = `${today().slice(0, 4)}-12-25`;
+    await login(page, "max");
+    await page.goto("/calendar");
+    await page.getByRole("button", { name: "Kalender verwalten" }).first().click();
+    const manage = page.getByRole("dialog", { name: "Kalender verwalten" });
+    await manage.getByLabel("Bundesland").selectOption({ label: "Saarland" });
+    await manage.getByRole("button", { name: "Feiertage eintragen" }).click();
+    // Twelve days in the Saarland, this year and next.
+    await expect(
+      page.getByRole("status").filter({ hasText: "24 Feiertage eingetragen." }),
+    ).toBeVisible();
+    await expect(manage.getByText("Feiertage Saarland")).toBeVisible();
+    await manage.getByRole("button", { name: "Feiertage eintragen" }).click();
+    await expect(
+      page.getByRole("status").filter({ hasText: "Die Feiertage stehen schon im Kalender." }),
+    ).toBeVisible();
+    await page.keyboard.press("Escape");
+
+    await page.goto(`/calendar?date=${christmas}&view=day`);
+    await expect(page.getByText("1. Weihnachtstag")).toBeVisible();
+
+    await page.getByRole("button", { name: "Kalender verwalten" }).first().click();
+    page.once("dialog", (confirm) => confirm.accept());
+    await manage.getByRole("button", { name: "Kalender löschen: Feiertage Saarland" }).click();
+    await expect(manage.getByText("Feiertage Saarland")).toHaveCount(0);
+  });
+});
+
 test.describe("Kalender am Handy @phone", () => {
   test("Tagesansicht mit Wochenleiste und neuem Termin", async ({ page }) => {
     await login(page);
