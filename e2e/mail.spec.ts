@@ -165,10 +165,12 @@ test.describe("Mail", () => {
     await page.keyboard.type("Pumpe");
     await page.keyboard.press("Tab");
     await page.keyboard.type("240 €");
-    // In the table the menu offers rows and columns: the last row goes.
+    // In the table the menu offers rows and columns: one more row, then it goes again.
     await page.getByRole("button", { name: "Tabelle", exact: true }).click();
     await page.getByRole("menuitem", { name: "Zeile darunter" }).click();
     await expect(body.locator("tr")).toHaveCount(4);
+    // Into the empty row below, which goes again.
+    await page.keyboard.press("ArrowDown");
     await page.getByRole("button", { name: "Tabelle", exact: true }).click();
     await page.getByRole("menuitem", { name: "Zeile löschen" }).click();
     await expect(body.locator("tr")).toHaveCount(3);
