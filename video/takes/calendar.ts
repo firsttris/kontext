@@ -16,7 +16,7 @@ export const recordCalendar = async (browser: Browser) => {
   const newEvent = say("Ein neuer Termin", "A new event");
   await take.after(
     "app",
-    () => page.goto(`/calendar?date=${today()}&event=new&start=${today()}T10:00`),
+    () => page.goto(`/calendar?date=${today()}&event=new&start=${today()}T14:00`),
     0.6,
     { focus: page.getByRole("dialog"), pad: 0, note: newEvent },
   );
