@@ -222,3 +222,17 @@ export const setContacts = async (
     "Kontakt",
   );
 };
+
+/** Deletes many cards of one account, 500 per call (Stalwart's `maxObjectsInSet`). */
+export const destroyContacts = async (
+  client: JmapClient,
+  accountId: string,
+  ids: string[],
+): Promise<void> => {
+  for (const page of chunk(ids, 500)) {
+    assertSetOk(
+      await client.call("ContactCard/set", { accountId, destroy: page }, USING),
+      "Kontakt",
+    );
+  }
+};

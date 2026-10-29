@@ -1,11 +1,10 @@
 /** The list of the contacts column: groups first, then the contacts by letter. */
 import { Link } from "@tanstack/react-router";
-import { Plus, Users } from "lucide-react";
-import { Avatar } from "@/components/ui/avatar";
-import { cn } from "@/lib/cn";
-import { memberUids } from "@/lib/groups";
-import { company, contactPhoto, fullName, indexLetter, sortKey } from "@/lib/jscontact";
+import { Plus } from "lucide-react";
+import { byLetter } from "@/lib/contact-selection";
+import { sortKey } from "@/lib/jscontact";
 import { m } from "@/paraglide/messages";
+import { ContactRow } from "./contact-row";
 import { type Contact, contactKey } from "./queries";
 
 type Props = {
@@ -16,49 +15,44 @@ type Props = {
   book: string | undefined;
   /** While searching, the group section only shows matches and no "Neue Gruppe". */
   searching: boolean;
+  /** The picked people by `contactKey`; `picking`: every line shows its box. */
+  picked: Set<string>;
+  picking: boolean;
+  onPick: (key: string, shift: boolean) => void;
+  /** No boxes while a contact or group is edited: the editor's member boxes carry the names too. */
+  pickable: boolean;
 };
 
-const byLetter = (contacts: Contact[]): [string, Contact[]][] => {
-  const sorted = [...contacts].sort((a, b) => sortKey(a).localeCompare(sortKey(b), "de"));
-  const letters = new Map<string, Contact[]>();
-  for (const card of sorted) {
-    const letter = indexLetter(card);
-    letters.set(letter, [...(letters.get(letter) ?? []), card]);
-  }
-  return [...letters.entries()];
-};
-
-export const ContactList = ({ groups, contacts, selected, ownAccount, book, searching }: Props) => {
+export const ContactList = ({
+  groups,
+  contacts,
+  selected,
+  ownAccount,
+  book,
+  searching,
+  picked,
+  picking,
+  onPick,
+  pickable,
+}: Props) => {
   const row = (card: Contact, group: boolean) => (
-    <li key={contactKey(card)}>
-      <Link
-        to="/contacts"
-        search={{
-          id: card.id,
-          account: card.accountId === ownAccount ? undefined : card.accountId,
-          book,
-        }}
-        aria-current={card === selected ? "true" : undefined}
-        className={cn(
-          "flex items-center gap-3 rounded-[10px] px-3 py-2.5 text-fg no-underline hover:bg-hover",
-          card === selected && "bg-bg shadow-[0_0_0_1px_var(--border)]",
-        )}
-      >
-        {group ? (
-          <span className="flex size-[34px] shrink-0 items-center justify-center rounded-full bg-subtle text-muted">
-            <Users size={16} />
-          </span>
-        ) : (
-          <Avatar name={fullName(card)} photo={contactPhoto(card)} size={34} />
-        )}
-        <span className="flex min-w-0 flex-col">
-          <span className="truncate font-medium">{fullName(card)}</span>
-          <span className="truncate text-[13px] text-muted">
-            {group ? m.contacts_group_count({ count: memberUids(card).length }) : company(card)}
-          </span>
-        </span>
-      </Link>
-    </li>
+    <ContactRow
+      key={contactKey(card)}
+      card={card}
+      active={card === selected}
+      ownAccount={ownAccount}
+      book={book}
+      group={group}
+      picking={
+        group || !pickable
+          ? undefined
+          : {
+              on: picking,
+              selected: picked.has(contactKey(card)),
+              onPick: (shift) => onPick(contactKey(card), shift),
+            }
+      }
+    />
   );
 
   return (
