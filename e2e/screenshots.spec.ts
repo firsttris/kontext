@@ -1,10 +1,7 @@
 import { expect, type Page, test } from "@playwright/test";
 import { fillDemo } from "./demo-data";
-import { addAttendees, addMail, login } from "./helpers";
-import { calendarOnTheWeb } from "./ics-server";
-  });
-
 import { addAttendees, addMail, address, login } from "./helpers";
+import { calendarOnTheWeb } from "./ics-server";
 import { deliverInvitation } from "./invitation-mail";
 import { pairBox } from "./paired-box";
 import { giveKey } from "./pgp-key";
