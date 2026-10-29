@@ -157,7 +157,7 @@ test.describe("Mail", () => {
     await page.getByRole("button", { name: "Textfarbe" }).click();
     await page.getByRole("menuitemradio", { name: "Rot" }).click();
     await page.getByRole("button", { name: "Schriftgröße" }).click();
-    await page.getByRole("menuitemradio", { name: "Groß" }).click();
+    await page.getByRole("menuitemradio", { name: "Groß", exact: true }).click();
     await page.keyboard.type("Bitte bis Freitag");
     await page.keyboard.press("Enter");
     await page.getByRole("button", { name: "Tabelle", exact: true }).click();
