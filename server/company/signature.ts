@@ -66,6 +66,18 @@ const withoutEmpty = (html: string) => {
   return after;
 };
 
+/** A table row without a table inside, and a table left without rows. */
+const ROW = /<tr\b[^>]*>(?:(?!<\/?(?:tr|table)\b)[\s\S])*<\/tr>/gi;
+const ROWLESS_TABLE =
+  /<table\b[^>]*>\s*(?:<colgroup\b[^>]*>[\s\S]*?<\/colgroup>)?\s*(?:<tbody\b[^>]*>\s*<\/tbody>)?\s*<\/table>/gi;
+
+/**
+ * In a table a row is the line ("Telefon | [Telefon]"): it goes as a whole, label cell and all,
+ * and so does a table that loses every row.
+ */
+const withoutEmptyRows = (html: string, values: Values) =>
+  html.replace(ROW, (row) => (lacksValue(row, values) ? "" : row)).replace(ROWLESS_TABLE, "");
+
 /**
  * HTML lines end with <br> or a closing block such as a paragraph (as the editor writes them). A
  * line without a value loses its text and its <br>; what it leaves empty goes too: its bold or
@@ -77,7 +89,7 @@ export const fillHtml = (template: string, values: Values): string => {
   ) as Values;
   // Every block the editor writes (StarterKit: headings, quotes, lists, code, rules) ends a line,
   // or a heading before a line that goes would go with it.
-  const lines = template.split(
+  const lines = withoutEmptyRows(template, values).split(
     /(?<=<br\s*\/?>|<hr\s*\/?>|<\/(?:p|div|li|h[1-6]|blockquote|pre|ul|ol|table|tr|td|th)>)/i,
   );
   const kept = lines.map((line) =>
