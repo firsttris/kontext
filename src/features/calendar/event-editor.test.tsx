@@ -30,6 +30,7 @@ const refs = vi.hoisted(() => ({ calendars: [] as unknown[] }));
 const createEvent = vi.fn(async (_input: { event: Record<string, unknown> }) => {});
 vi.mock("./queries", () => ({
   calendarLabel: () => "Kalender",
+  calendarOf: () => undefined,
   useCalendarRefs: () => refs,
   useEventMutations: () => ({
     create: { mutateAsync: createEvent, isPending: false },
@@ -287,5 +288,33 @@ describe("EventEditor invitations outside the company", () => {
     await invite("kunde@example.test");
     expect(screen.queryByRole("dialog")).toBeNull();
     expect(createEvent).toHaveBeenCalledTimes(2);
+  });
+
+  it("asks for a copy too: it invites everyone on it afresh", async () => {
+    hint.inside = ["weber.test"];
+    refs.calendars = [
+      { key: "a/1", accountId: "a", isPersonal: true, mayWrite: true, calendar: { id: "1" } },
+    ];
+    const original = {
+      id: "e1",
+      accountId: "a",
+      calendarIds: { "1": true },
+      title: "Abnahme",
+      start: "2026-11-02T09:00:00",
+      timeZone: "Europe/Berlin",
+      duration: "PT1H",
+      participants: {
+        organizer: { calendarAddress: "mailto:jonas@weber.test", roles: { owner: true } },
+        a0: { calendarAddress: "mailto:kunde@example.test", roles: { attendee: true } },
+      },
+    };
+    render(<EventEditor copyOf={original} onDone={vi.fn()} onCancel={vi.fn()} />);
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: "Speichern" }));
+    });
+    expect(createEvent).not.toHaveBeenCalled();
+    expect(
+      screen.getByRole("dialog", { name: "An externe Empfänger senden?" }).textContent,
+    ).toContain("kunde@example.test");
   });
 });
