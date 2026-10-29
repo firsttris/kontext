@@ -167,6 +167,10 @@ describe("emlName", () => {
   it("keeps a long subject short", () => {
     expect(emlName("x".repeat(300))).toBe(`${"x".repeat(100)}.eml`);
   });
+  it("does not cut a character in two when it shortens", () => {
+    // "😀" is two UTF-16 code units; a cut between them leaves a lone surrogate in the name.
+    expect(emlName(`${"x".repeat(99)}😀 Angebot`)).toBe(`${"x".repeat(99)}😀.eml`);
+  });
 });
 
 describe("sharedSenderName", () => {
