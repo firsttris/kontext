@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { flushDrafts, registerDraftFlush } from "./draft-flush";
 
 describe("flushDrafts", () => {
@@ -21,5 +21,22 @@ describe("flushDrafts", () => {
     await flushDrafts();
     expect(saved).toEqual(["first", "second", "second"]);
     second();
+  });
+
+  it("does not wait forever for a save that never answers, so the sign-out still happens", async () => {
+    vi.useFakeTimers();
+    try {
+      const hanging = registerDraftFlush(() => new Promise<void>(() => undefined));
+      let done = false;
+      const flushed = flushDrafts().then(() => {
+        done = true;
+      });
+      await vi.advanceTimersByTimeAsync(30_000);
+      expect(done).toBe(true);
+      await flushed;
+      hanging();
+    } finally {
+      vi.useRealTimers();
+    }
   });
 });

@@ -82,6 +82,36 @@ test.describe("Abmelden nach Inaktivität", () => {
   });
 });
 
+test("meldet nicht sofort ab, wenn die Firmenverwaltung die Zeit einschaltet, während jemand arbeitet", async ({
+  page,
+}) => {
+  // Off first; the Firmenverwaltung switches it on while Jonas keeps working.
+  let minutes = 0;
+  await page.route("**/api/company/idle-logout", async (route) => {
+    if (route.request().method() !== "GET") return route.fallback();
+    expect((await route.fetch()).ok()).toBe(true);
+    await route.fulfill({ json: { minutes } });
+  });
+  await page.clock.install();
+  await login(page);
+  for (let step = 0; step < 4; step++) {
+    await page.clock.fastForward("05:00");
+    await page.mouse.move(100 + step * 50, 200);
+    await page.keyboard.press("Shift");
+  }
+  minutes = 15;
+  const read = page.waitForResponse("**/api/company/idle-logout");
+  await page.reload();
+  await read;
+  await page.evaluate(() => new Promise((resolve) => setTimeout(resolve, 500)));
+  // Twenty minutes of work since the sign-in, the last input just now: no sign-out, no question.
+  await expect(page).toHaveURL(/\/mail\//);
+  await expect(question(page)).toBeHidden();
+  await page.clock.fastForward("10:00");
+  await expect(question(page)).toBeHidden();
+  await expect(page).toHaveURL(/\/mail\//);
+});
+
 test("Abmelden nach Inaktivität setzt die Firmenverwaltung", async ({ page }) => {
   // The save is answered here, so no other test is signed out; the server's side is in
   // server/company/routes.test.ts.
