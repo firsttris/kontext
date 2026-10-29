@@ -33,13 +33,19 @@ type FieldsProps = {
   onBcc: (value: EmailAddress[]) => void;
   showCopies: boolean;
   onShowCopies: () => void;
+  replyTo: EmailAddress[];
+  onReplyTo: (value: EmailAddress[]) => void;
+  showReplyTo: boolean;
+  onShowReplyTo: () => void;
   subject: string;
   onSubject: (value: string) => void;
   suggestions: Suggestion[];
   autoFocusTo: boolean;
 };
 
-/** From, To, Cc/Bcc and subject. */
+const revealClass = "mt-2 shrink-0 text-[13px] text-muted hover:text-fg";
+
+/** From, To, Cc/Bcc, „Antwort an“ (the last two shown when asked for) and subject. */
 export const ComposerFields = ({
   identities,
   identityId,
@@ -52,6 +58,10 @@ export const ComposerFields = ({
   onBcc,
   showCopies,
   onShowCopies,
+  replyTo,
+  onReplyTo,
+  showReplyTo,
+  onShowReplyTo,
   subject,
   onSubject,
   suggestions,
@@ -82,12 +92,13 @@ export const ComposerFields = ({
         autoFocus={autoFocusTo}
       />
       {!showCopies ? (
-        <button
-          type="button"
-          onClick={onShowCopies}
-          className="mt-2 shrink-0 text-[13px] text-muted hover:text-fg"
-        >
+        <button type="button" onClick={onShowCopies} className={revealClass}>
           {m.mail_cc()} / {m.mail_bcc()}
+        </button>
+      ) : null}
+      {!showReplyTo ? (
+        <button type="button" onClick={onShowReplyTo} className={revealClass}>
+          {m.mail_reply_to_field()}
         </button>
       ) : null}
     </div>
@@ -101,6 +112,14 @@ export const ComposerFields = ({
           suggestions={suggestions}
         />
       </>
+    ) : null}
+    {showReplyTo ? (
+      <RecipientField
+        label={m.mail_reply_to_field()}
+        value={replyTo}
+        onChange={onReplyTo}
+        suggestions={suggestions}
+      />
     ) : null}
     <label className="flex h-9 items-center gap-2.5 border-t border-border">
       <span className="w-9 shrink-0 text-muted">{m.mail_subject()}</span>

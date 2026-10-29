@@ -37,7 +37,7 @@ export const parseAddresses = (input: string): { addresses: EmailAddress[]; inva
 export const formatAddressInput = (addresses: EmailAddress[]): string =>
   addresses.map(({ name, email }) => (name ? `${quoteName(name)} <${email}>` : email)).join(", ");
 
-const sameAddress = (a: string, b: string): boolean => a.toLowerCase() === b.toLowerCase();
+export const sameAddress = (a: string, b: string): boolean => a.toLowerCase() === b.toLowerCase();
 
 const unique = (addresses: EmailAddress[], exclude: string[]): EmailAddress[] => {
   const seen = new Set(exclude.map((e) => e.toLowerCase()));
