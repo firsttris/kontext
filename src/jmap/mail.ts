@@ -1,5 +1,6 @@
 /** Mail operations on top of the JMAP client (RFC 8621). Each function is one round-trip. */
 
+import { envelopeIdOf, type Hold, submissionEnvelope } from "@/lib/envelope";
 import type { Comparator } from "@/lib/mail-sort";
 import { bodyStructureOf } from "@/lib/mail-structure";
 import { replyReferences } from "@/lib/references";
@@ -359,6 +360,8 @@ export type OutgoingEmail = {
   draftId?: string | null;
   /** Ask for a read receipt (Disposition-Notification-To, RFC 8098), to the sender. */
   requestReceipt?: boolean;
+  /** Ask the receiving servers for a delivery report (DSN, RFC 3461), to the sender. */
+  requestDelivery?: boolean;
   /** One's public key along with the mail (the Autocrypt header's value). */
   autocrypt?: string | null;
 };
@@ -395,36 +398,41 @@ const emailCreate = (mail: OutgoingEmail, mailboxIds: Record<string, boolean>, d
   bodyStructure: bodyStructureOf(mail.attachments, mail.images),
 });
 
-/** Creates the mail in Drafts, submits it, and on success moves it to Sent (RFC 8621 §7.5). */
-/**
- * When the server sends it (FUTURERELEASE, RFC 4865): after a few seconds, so it can still be
- * taken back, or at a time ("Später senden"). The recipients then come from the headers.
- */
-export type Hold = { seconds: number } | { until: string };
+export type { Hold } from "@/lib/envelope";
 
+/**
+ * Creates the mail in Drafts, submits it, and on success moves it to Sent (RFC 8621 §7.5); held
+ * for "Rückgängig" or "Später senden", and with a delivery report asked for, through the envelope
+ * (src/lib/envelope.ts). A mail asking for a report gets its Message-ID from here: its local part
+ * is the envelope id the report brings back.
+ */
 export const sendEmail = async (
   client: JmapClient,
   mail: OutgoingEmail,
   mailboxes: { draftsId: string; sentId: string },
   hold?: Hold,
 ): Promise<{ emailId: string; submissionId: string }> => {
-  const envelope = hold
-    ? {
-        mailFrom: {
-          email: mail.identity.email,
-          parameters:
-            "until" in hold ? { HOLDUNTIL: hold.until } : { HOLDFOR: String(hold.seconds) },
-        },
-        rcptTo: [],
-      }
-    : undefined;
+  const messageId = mail.requestDelivery
+    ? `${crypto.randomUUID()}@${mail.identity.email.split("@")[1]}`
+    : null;
+  const envelope = submissionEnvelope({
+    from: mail.identity.email,
+    recipients: [...mail.to, ...mail.cc, ...mail.bcc].map((address) => address.email),
+    hold,
+    reportId: messageId ? envelopeIdOf(messageId) : null,
+  });
   const responses = await client.request(
     [
       [
         "Email/set",
         {
           accountId: mail.accountId,
-          create: { draft: emailCreate(mail, { [mailboxes.draftsId]: true }, true) },
+          create: {
+            draft: {
+              ...emailCreate(mail, { [mailboxes.draftsId]: true }, true),
+              ...(messageId ? { messageId: [messageId] } : {}),
+            },
+          },
           ...(mail.draftId ? { destroy: [mail.draftId] } : {}),
         },
         "0",

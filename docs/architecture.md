@@ -132,6 +132,36 @@ Zeichen, wie es war: eingebettete Bilder und Schriften (`cid:`, `data:`), Text w
 verbietet eine Content-Security-Policy im Dokument des Rahmens (`mailDocument`) das Laden von
 außen, bis die Bilder erlaubt sind; die Druckseite (`src/lib/print.ts`) verbietet es immer.
 
+## Zustellbestätigung
+
+Ein Zustellbericht (DSN) kommt vom Mailserver, nicht vom Empfänger (`src/lib/envelope.ts`,
+`src/lib/dsn.ts`, `src/jmap/delivery-reports.ts`, `src/features/mail/delivery-reports.tsx`):
+
+- **Anfordern:** Mit dem Schalter in „Neue Mail“ bekommt die `EmailSubmission` einen eigenen
+  `envelope` (RFC 8621 §7): jeder Empfänger aus An, Cc und Bcc mit `NOTIFY=SUCCESS,FAILURE`,
+  `mailFrom` mit `RET=HDRS` (der Bericht bringt nur die Kopfzeilen zurück) und `ENVID` (RFC 3461).
+  Die Mail bekommt ihre `Message-ID` von Kontext; deren lokaler Teil ist die `ENVID`. Zusammen mit
+  „Rückgängig“ oder „Später senden“ steht `HOLDFOR`/`HOLDUNTIL` daneben.
+- **Stalwart 0.16:** nimmt die Parameter an und gibt sie an seine SMTP-Sitzung weiter
+  (`crates/jmap/src/submission/set.rs`); die Warteschlange schreibt den Bericht
+  (`crates/smtp/src/queue/dsn.rs`) – auch bei Zustellung im eigenen Server, mit
+  `Original-Envelope-Id` und den Kopfzeilen der Mail als `message/rfc822`. `dsnBlobIds` der
+  `EmailSubmission` bleibt leer; Kontext sucht die Berichte deshalb unter den Mails.
+- **Sehen:** Ob eine gesendete Mail einen Bericht angefordert hat, steht in ihrer
+  `EmailSubmission` (`EmailSubmission/query` mit `emailIds`). Gesucht wird nach Mails ab dem
+  Senden mit ihrem Betreff (Stalwart indiziert die zurückgegebenen Kopfzeilen, nicht den
+  Statusteil), seitenweise zu 50 bis zu 1000 Mails – ein Fehlerbericht kann Tage später kommen,
+  nach vielen Mails mit denselben Wörtern; behalten wird, was ein `multipart/report; report-type=delivery-status` ist und
+  dessen `Original-Envelope-Id` passt. Ein Bericht selbst zeigt oben seinen
+  `message/delivery-status`-Teil (RFC 3464) lesbar: je Empfänger zugestellt, nicht zugestellt,
+  verzögert oder ohne Bestätigung weitergereicht, die Zeit und den `Diagnostic-Code`; der Teil
+  steht nicht mehr unter den Anhängen.
+- **Grenzen:** Ob ein fremder Server einen Bericht schickt, entscheidet er; kann er kein DSN,
+  meldet der letzte Server, der es kann, „weitergereicht ohne Bestätigung“ (`relayed`).
+  Verschlüsselte und signierte Mails (die Kontext selbst baut und per `Email/import` verschickt)
+  fordern keinen Bericht an. Eine Mail ohne Betreff sucht ihren Bericht unter den ersten 50 Mails
+  nach dem Senden.
+
 ## Lesebestätigung
 
 Stalwart kennt JMAP-MDN (RFC 9007) nicht; Kontext baut Lesebestätigungen nach RFC 8098 selbst
