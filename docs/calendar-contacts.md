@@ -95,8 +95,6 @@ Kontext steht, steht auch am iPhone, unter Android (DAVx⁵) und in Thunderbird.
 
   ![Kalender verwalten mit der Vorschau einer .ics-Datei: vier neue Termine, einer schon vorhanden](screenshots/calendar-ics-import.png)
 
-- **Kalender teilen** mit Kollegen: nur Verfügbarkeit, lesen oder bearbeiten. Alle Kalender
-  samt Postfach und Kontakten auf einmal: [Vertretung](mail.md#abwesenheit-und-signaturen).
 - **Kalender drucken:** Der Drucker oben im Kalender (oder Strg+P, die Taste `p`) druckt die
   offene Ansicht auf A4 quer, etwa für die Pinnwand in der Werkstatt: in Woche und Tag die
   Woche als sieben Spalten mit allen Terminen samt Uhrzeit und Ort, ganztägige zuerst; im Monat
@@ -108,7 +106,8 @@ Kontext steht, steht auch am iPhone, unter Android (DAVx⁵) und in Thunderbird.
 
   ![Die gedruckte Woche: sieben Spalten mit Terminen, Uhrzeit und Ort](screenshots/calendar-print.png)
 
-- **Kalender teilen** mit Kollegen: nur Verfügbarkeit, lesen oder bearbeiten.
+- **Kalender teilen** mit Kollegen: nur Verfügbarkeit, lesen oder bearbeiten. Alle Kalender
+  samt Postfach und Kontakten auf einmal: [Vertretung](mail.md#abwesenheit-und-signaturen).
 - **Orte vorschlagen:** Im Feld „Ort“ schlägt Kontext ab drei Buchstaben Adressen und Firmen vor
   (aus OpenStreetMap), etwa „Bäckerei Müller, Hauptstraße 5, 79098 Freiburg“; freier Text wie
   „Besprechungsraum 2“ geht weiter. Was man dort tippt, schickt der Kontext-Server an den
