@@ -55,6 +55,19 @@ describe("entriesOn", () => {
     expect(entriesOn([late], "2026-10-28")[0]?.time).toBe("20:00–24:00");
   });
 
+  it("counts a day the event fills from midnight to midnight as all day", () => {
+    // On call from Tuesday 00:00 to Thursday 00:00: both days are taken as a whole.
+    const onCall = event("Bereitschaft", "2026-10-27T00:00:00", "PT48H");
+    expect(entriesOn([onCall], "2026-10-27")[0]).toMatchObject({ time: "", allDay: true });
+    expect(entriesOn([onCall], "2026-10-28")[0]).toMatchObject({ time: "", allDay: true });
+    // From the evening before until midnight: the day is taken as a whole too.
+    const night = event("Notdienst", "2026-10-27T22:00:00", "PT26H");
+    expect(entriesOn([night], "2026-10-28")[0]).toMatchObject({ time: "", allDay: true });
+    // A single day from midnight to midnight keeps its times.
+    const day = event("Inventur", "2026-10-28T00:00:00", "PT24H");
+    expect(entriesOn([day], "2026-10-28")[0]?.time).toBe("00:00–24:00");
+  });
+
   it("names an event without a title with a dash", () => {
     expect(entriesOn([event(" ", "2026-10-28T08:00:00", "PT1H")], "2026-10-28")[0]?.title).toBe(
       "—",
