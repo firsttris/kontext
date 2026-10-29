@@ -684,6 +684,61 @@ test.describe("Entwürfe", () => {
     expect(JSON.stringify(mail.bodyStructure)).toContain("multipart/related");
   });
 
+  test("ein Bild, das nach dem Speichern zurück in den Text kommt, geht mit", async ({ page }) => {
+    const subject = unique("Foto Heizraum");
+    // How many pictures the draft on the server holds: shows when an autosave went through.
+    const draftPictures = async () => {
+      const client = jmapAs("jonas");
+      const accountId = await personalAccountId("jonas");
+      const [, get] = await client.request([
+        ["Email/query", { accountId, filter: { subject } }, "q"],
+        [
+          "Email/get",
+          {
+            accountId,
+            "#ids": { resultOf: "q", name: "Email/query", path: "/ids" },
+            properties: ["attachments"],
+          },
+          "g",
+        ],
+      ]);
+      const list = get![1].list as { attachments: { type: string }[] }[];
+      return list.length === 1
+        ? list[0]!.attachments.filter((part) => part.type === "image/png").length
+        : -1;
+    };
+    await page.getByRole("link", { name: "Neue Mail" }).first().click();
+    await page.getByRole("combobox", { name: "An" }).fill("anna@weber-haustechnik.test");
+    await page.keyboard.press("Enter");
+    await page.getByLabel("Betreff").fill(subject);
+    const body = page.getByRole("textbox", { name: "Ihre Nachricht …" });
+    await body.click();
+    await page.keyboard.type("Der Heizraum:");
+    await page.keyboard.press("Enter");
+    await page.locator('input[type="file"][accept^="image/png"]').setInputFiles({
+      name: "heizraum.png",
+      mimeType: "image/png",
+      buffer: Buffer.from(RED_PNG, "base64"),
+    });
+    const image = body.locator('img[alt="heizraum.png"]');
+    await expect(image).toHaveCount(1);
+    await expect.poll(draftPictures, { timeout: 15_000 }).toBe(1);
+    // Taken out of the text (the draft is saved without it), then brought back with „Rückgängig“.
+    await image.click();
+    await page.keyboard.press("Delete");
+    await expect(image).toHaveCount(0);
+    await expect.poll(draftPictures, { timeout: 15_000 }).toBe(0);
+    await body.focus();
+    await page.keyboard.press("ControlOrMeta+z");
+    await expect(image).toHaveCount(1);
+    await page.getByRole("button", { name: "Senden", exact: true }).click();
+    await expect(
+      page.getByRole("status").filter({ hasText: "Mail gesendet." }).or(page.getByRole("alert")),
+    ).toBeVisible({ timeout: 15_000 });
+    expect(await page.getByRole("alert").allTextContents()).toEqual([]);
+    await expect.poll(() => inboxSubjects("anna")).toContain(subject);
+  });
+
   test("sendet, während der Entwurf gerade gespeichert wird", async ({ page }) => {
     const subject = unique("Termin Wartung");
     await page.getByRole("link", { name: "Neue Mail" }).first().click();
