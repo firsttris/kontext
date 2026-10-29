@@ -1,6 +1,6 @@
 import { expect, type Page, test } from "@playwright/test";
 import { fillDemo } from "./demo-data";
-import { addAttendees, addMail, address, login } from "./helpers";
+import { addAttendees, addMail, address, jmapAs, login, personalAccountId } from "./helpers";
 import { calendarOnTheWeb } from "./ics-server";
 import { deliverInvitation } from "./invitation-mail";
 import { pairBox } from "./paired-box";
@@ -291,6 +291,66 @@ test.describe("Screenshots @screenshots", () => {
     await page.mouse.move(1, 1);
     await shot(page, "calendar-subscriptions");
     web.close();
+  });
+
+  test("Termine aus Datei", async ({ page }) => {
+    // A supplier's dates as a file, a few weeks ahead; one is already in Jonas' calendar.
+    const day = (offset: number) =>
+      new Intl.DateTimeFormat("sv-SE", { timeZone: "Europe/Berlin" })
+        .format(new Date(Date.now() + offset * 86_400_000))
+        .replaceAll("-", "");
+    const client = jmapAs("jonas");
+    const { list } = await client.call<{ list: { uid: string; title: string }[] }>(
+      "CalendarEvent/get",
+      { accountId: await personalAccountId("jonas"), properties: ["uid", "title"] },
+      ["urn:ietf:params:jmap:core", "urn:ietf:params:jmap:calendars"],
+    );
+    const known = list.find((event) => event.title === "Baubesprechung Hoffmann")!;
+    const event = (uid: string, title: string, start: string, end: string, extra = "") =>
+      `BEGIN:VEVENT\r\nUID:${uid}\r\nDTSTAMP:20261001T100000Z\r\nDTSTART;TZID=Europe/Berlin:${start}\r\nDTEND;TZID=Europe/Berlin:${end}\r\nSUMMARY:${title}\r\n${extra}END:VEVENT\r\n`;
+    const ics = [
+      "BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//Richter Großhandel//DE\r\n",
+      event(
+        "hausmesse@richter",
+        "Hausmesse Richter Großhandel",
+        `${day(16)}T090000`,
+        `${day(16)}T170000`,
+      ),
+      event(
+        "schulung@richter",
+        "Schulung Wärmepumpen-Inbetriebnahme",
+        `${day(23)}T080000`,
+        `${day(23)}T120000`,
+      ),
+      event(
+        "runde@richter",
+        "Lieferantenrunde Richter",
+        `${day(9)}T100000`,
+        `${day(9)}T110000`,
+        "RRULE:FREQ=MONTHLY;COUNT=6\r\n",
+      ),
+      event(
+        "abholung@richter",
+        "Abholung Heizkörper Lager Bühl",
+        `${day(12)}T070000`,
+        `${day(12)}T073000`,
+      ),
+      event(known.uid, known.title, `${day(0)}T100000`, `${day(0)}T110000`),
+      "END:VCALENDAR\r\n",
+    ].join("");
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await login(page);
+    await page.goto("/calendar");
+    await page.getByRole("button", { name: "Kalender verwalten" }).first().click();
+    const dialog = page.getByRole("dialog", { name: "Kalender verwalten" });
+    await dialog.getByLabel("Datei (.ics)", { exact: true }).setInputFiles({
+      name: "richter-termine.ics",
+      mimeType: "text/calendar",
+      buffer: Buffer.from(ics),
+    });
+    await expect(dialog.getByText("4 neu, 1 schon vorhanden")).toBeVisible();
+    await dialog.getByRole("button", { name: "Übernehmen" }).scrollIntoViewIfNeeded();
+    await shot(page, "calendar-ics-import");
   });
 
   test("Serie ab einem Termin ändern", async ({ page }) => {
