@@ -30,6 +30,7 @@ import {
 import { type CalendarEvent, isInstance, toLocal } from "@/lib/jscalendar";
 import { formAt, formSlot } from "@/lib/planning";
 import { reminderForKind } from "@/lib/reminders";
+import { isFirstDate } from "@/lib/series-split";
 import { withNames } from "@/lib/suggestions";
 import { m } from "@/paraglide/messages";
 import { AvailabilityPanel } from "./availability-panel";
@@ -38,8 +39,9 @@ import { PlaceField } from "./place-field";
 import { calendarLabel, useCalendarRefs, useEventMutations, useMyAddresses } from "./queries";
 import { ReminderFields } from "./reminder-fields";
 import { RepeatFields } from "./repeat-fields";
+import { useSplitSeries } from "./split-series";
 
-type Scope = "this" | "series";
+type Scope = "this" | "following" | "series";
 
 const PROBLEMS: Record<Exclude<FormProblem, null>, () => string> = {
   title: m.calendar_event_title_missing,
@@ -63,6 +65,7 @@ export const EventEditor = ({ event, series, start, onDone, onCancel }: Props) =
   const { data: session } = useSession();
   const mine = useMyAddresses();
   const { create, update } = useEventMutations();
+  const split = useSplitSeries();
   const { calendars } = useCalendarRefs();
   const writable = calendars.filter((calendar) => calendar.mayWrite);
   const [calendarKey, setCalendarKey] = useState("");
@@ -112,6 +115,10 @@ export const EventEditor = ({ event, series, start, onDone, onCancel }: Props) =
       return create.mutateAsync({ event: data, calendar: target });
     }
     if (!instance || scope === "this") return update.mutateAsync({ event, patch: data });
+    // This date and the following: a new series from here, unless it is the first date anyway.
+    if (scope === "following" && !isFirstDate(series!, instance.recurrenceId!)) {
+      return split.changeFollowing(instance, series!, data);
+    }
     // The whole series: its start moves by what this date moved.
     return update.mutateAsync({
       event,
@@ -127,11 +134,11 @@ export const EventEditor = ({ event, series, start, onDone, onCancel }: Props) =
       setProblem(PROBLEMS[invalid]());
       return;
     }
-    const forSeries = !instance || scope === "series";
+    const forSeries = !instance || scope !== "this";
     const data = formToEvent(
       form,
       { email: session?.username ?? "" },
-      instance && scope === "series" ? series : event,
+      instance && scope !== "this" ? series : event,
       forSeries,
     );
     try {
@@ -156,6 +163,7 @@ export const EventEditor = ({ event, series, start, onDone, onCancel }: Props) =
           {(
             [
               ["this", m.calendar_scope_this()],
+              ["following", m.calendar_scope_following()],
               ["series", m.calendar_scope_series()],
             ] as const
           ).map(([value, label]) => (
@@ -259,7 +267,7 @@ export const EventEditor = ({ event, series, start, onDone, onCancel }: Props) =
         allDay={form.allDay}
         onChange={(reminder) => setForm((current) => ({ ...current, reminder }))}
       />
-      {!instance || scope === "series" ? (
+      {!instance || scope !== "this" ? (
         <RepeatFields
           value={form.recurrence}
           onChange={(recurrence) => setForm((current) => ({ ...current, recurrence }))}

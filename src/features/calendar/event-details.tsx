@@ -22,6 +22,7 @@ import {
 import { LOCALE } from "@/lib/locale";
 import { mapsUrl } from "@/lib/maps";
 import { describeRecurrence } from "@/lib/recurrence";
+import { isFirstDate } from "@/lib/series-split";
 import { m } from "@/paraglide/messages";
 import {
   calendarLabel,
@@ -31,6 +32,7 @@ import {
   useEventMutations,
   useMyAddresses,
 } from "./queries";
+import { useSplitSeries } from "./split-series";
 
 const longDay = new Intl.DateTimeFormat(LOCALE, {
   timeZone: "Europe/Berlin",
@@ -58,6 +60,7 @@ export const EventDetails = ({ event, series, onEdit, onDone }: Props) => {
   const documents = documentsOfLinks(event.links);
   const mine = useMyAddresses();
   const { respond, remove } = useEventMutations();
+  const split = useSplitSeries();
   const toast = useToast();
   const { start, end, allDay } = eventTimes(event);
   const { calendars } = useCalendarRefs();
@@ -225,6 +228,14 @@ export const EventDetails = ({ event, series, onEdit, onDone }: Props) => {
             >
               {m.calendar_delete_this()}
             </Button>
+            {series && !isFirstDate(series, event.recurrenceId!) ? (
+              <Button
+                variant="outline"
+                onClick={() => void run(() => split.endBeforeDate(event, series), onDone)}
+              >
+                {m.calendar_delete_following()}
+              </Button>
+            ) : null}
             <Button
               variant="danger"
               onClick={() =>
