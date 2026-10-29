@@ -8,6 +8,7 @@ import {
   mailbox,
   outerEnvelope,
   protectHeaders,
+  withHeaders,
 } from "./mime";
 
 describe("MIME built in the app", () => {
@@ -159,5 +160,38 @@ describe("MIME built in the app", () => {
     expect(parsed.subject).toBe("Kündigung Müller");
     expect(parsed.text?.trim()).toBe("x");
     expect(outerEnvelope(mail).subject).toBe("Vertrauliche Nachricht");
+  });
+
+  it("sets Reply-To outside and inside, so answers go there (RFC 5322 §3.6.2)", async () => {
+    const mail = {
+      from: { name: "Jonas Weber", email: "jonas@w.test" },
+      to: [{ name: null, email: "petra@k.test" }],
+      cc: [],
+      replyTo: [{ name: "Weber Büro", email: "info@w.test" }],
+      subject: "Angebot",
+      date: new Date("2026-10-25T08:00:00Z"),
+      messageId: "m3@w.test",
+    };
+    const content = contentPart({ text: "x", html: "<p>x</p>", attachments: [] }, "r1");
+    const raw = withHeaders(mail, content);
+    const parsed = await PostalMime.parse(raw);
+    expect(parsed.replyTo).toEqual([{ name: "Weber Büro", address: "info@w.test" }]);
+    expect(protectHeaders(content, mail)).toContain("\r\nReply-To: ");
+  });
+
+  it("writes no Reply-To when there is none", () => {
+    const raw = withHeaders(
+      {
+        from: { name: null, email: "jonas@w.test" },
+        to: [],
+        cc: [],
+        replyTo: [],
+        subject: "x",
+        date: new Date("2026-10-25T08:00:00Z"),
+        messageId: "m4@w.test",
+      },
+      "",
+    );
+    expect(raw).not.toContain("Reply-To");
   });
 });

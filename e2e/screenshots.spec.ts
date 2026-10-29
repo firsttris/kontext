@@ -284,6 +284,26 @@ test.describe("Screenshots @screenshots", () => {
     await page.getByRole("button", { name: "Verwerfen" }).click();
   });
 
+  test("Antwort an", async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await login(page);
+    await page.getByRole("link", { name: "Neue Mail" }).first().click();
+    await page.getByRole("combobox", { name: "An", exact: true }).fill("petra");
+    await page.getByRole("option", { name: /Petra Keller/ }).click();
+    await page.getByRole("button", { name: "Antwort an" }).click();
+    await page.getByRole("combobox", { name: "Antwort an" }).fill(address("info"));
+    await page.keyboard.press("Enter");
+    await page.getByLabel("Betreff").fill("Angebot Wartungsvertrag 2027");
+    await page
+      .getByRole("textbox", { name: "Ihre Nachricht …" })
+      .fill(
+        "Hallo Frau Keller,\nIhre Antwort geht direkt an unser Büro, dort ist immer jemand erreichbar.\nViele Grüße\nJonas Weber",
+      );
+    await shot(page, "reply-to");
+    // No draft left behind.
+    await page.getByRole("button", { name: "Verwerfen" }).click();
+  });
+
   // Switched on for this page only (externalHintOn): the setting at the server stays as it is.
   test("Hinweis Extern", async ({ page }) => {
     await page.setViewportSize({ width: 1440, height: 900 });

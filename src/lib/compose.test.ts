@@ -2,7 +2,15 @@ import { describe, expect, it } from "vitest";
 import type { JmapClient } from "@/jmap/client";
 import { saveDraft } from "@/jmap/mail";
 import type { EmailDetail } from "@/jmap/types";
-import { emlName, sharedSenderName, startCompose, startEmlForward } from "./compose";
+import {
+  emlName,
+  sharedSenderName,
+  startCompose,
+  startEmlForward,
+  startReplyTo,
+  switchReplyTo,
+  withOwnReplyTo,
+} from "./compose";
 
 const original: EmailDetail = {
   id: "e1",
@@ -49,6 +57,17 @@ const original: EmailDetail = {
   unsubscribePost: null,
 };
 
+const jonas = {
+  id: "i1",
+  name: "Jonas",
+  email: "jonas@weber.test",
+  replyTo: null,
+  bcc: null,
+  textSignature: "",
+  htmlSignature: "",
+};
+const office = { name: "Büro", email: "buero@weber.test" };
+
 describe("startCompose", () => {
   it("answers the sender with the original quoted", () => {
     const start = startCompose("reply", original, "<p>Hallo</p>", ["jonas@weber.test"]);
@@ -59,6 +78,11 @@ describe("startCompose", () => {
     expect(start.references).toEqual(["start@keller.test"]);
     expect(start.html).toContain("<blockquote><p>Hallo</p></blockquote>");
     expect(start.html).toContain("schrieb Petra Keller:");
+  });
+  it("answers the Reply-To address instead of the sender", () => {
+    const desk = { name: "Keller Büro", email: "buero@keller.test" };
+    const start = startCompose("reply", { ...original, replyTo: [desk] }, "", ["jonas@weber.test"]);
+    expect(start.to).toEqual([desk]);
   });
   it("keeps the others in Cc for reply all", () => {
     const start = startCompose("replyAll", original, "", ["jonas@weber.test"]);
@@ -130,8 +154,53 @@ describe("startCompose", () => {
     const second = await save(startCompose("draft", draft, "", ["jonas@weber.test"]));
     expect(second.references).toEqual(["start@keller.test", "angebot@keller.test"]);
   });
+  it("keeps the Reply-To of a draft through saving and reopening", async () => {
+    let created: Partial<EmailDetail> = {};
+    const client = {
+      call: async (_method: string, args: { create: { draft: Partial<EmailDetail> } }) => {
+        created = args.create.draft;
+        return { created: { draft: { id: "d1" } } };
+      },
+    } as unknown as JmapClient;
+    const info = { name: null, email: "info@weber.test" };
+    await saveDraft(
+      client,
+      {
+        accountId: "a",
+        identity: jonas,
+        to: [],
+        cc: [],
+        bcc: [],
+        replyTo: [info],
+        subject: "x",
+        html: "",
+        text: "",
+        attachments: [],
+      },
+      "drafts",
+    );
+    expect(created.replyTo).toEqual([info]);
+    const draft = { ...original, replyTo: created.replyTo ?? null };
+    const start = startCompose("draft", draft, "", ["jonas@weber.test"]);
+    expect(startReplyTo("draft", start, { ...jonas, replyTo: [office] })).toEqual([info]);
+  });
   it("starts empty for a new mail", () => {
     expect(startCompose("new", original, "", []).subject).toBe("");
+  });
+});
+
+describe("Reply-To defaults", () => {
+  const empty = startCompose("new", null, "", []);
+  it("starts a new mail with the sender's default", () => {
+    expect(startReplyTo("new", empty, { ...jonas, replyTo: [office] })).toEqual([office]);
+    expect(startReplyTo("reply", empty, jonas)).toEqual([]);
+  });
+  it("follows another sender's default, unless written by hand", () => {
+    const info = { ...jonas, id: "i2", email: "info@weber.test", replyTo: [office] };
+    expect(switchReplyTo([], jonas, info)).toEqual([office]);
+    expect(switchReplyTo([office], info, jonas)).toEqual([]);
+    const own = [{ name: null, email: "anna@weber.test" }];
+    expect(switchReplyTo(own, jonas, info)).toEqual(own);
   });
 });
 
@@ -180,5 +249,21 @@ describe("sharedSenderName", () => {
     );
     expect(sharedSenderName("", "Weber Haustechnik")).toBe("Weber Haustechnik");
     expect(sharedSenderName("Jonas Weber", "")).toBe("Jonas Weber");
+  });
+});
+
+describe("withOwnReplyTo", () => {
+  const shared = { ...jonas, id: "b", email: "info@weber.test" };
+  it("gives a shared mailbox's identity the default set for its address in the settings", () => {
+    const own = [jonas, { ...jonas, id: "d", email: "INFO@weber.test", replyTo: [office] }];
+    expect(withOwnReplyTo([shared], own)).toEqual([{ ...shared, replyTo: [office] }]);
+  });
+  it("keeps a default the shared identity has itself", () => {
+    const desk = { name: null, email: "desk@weber.test" };
+    const own = [{ ...jonas, email: "info@weber.test", replyTo: [office] }];
+    expect(withOwnReplyTo([{ ...shared, replyTo: [desk] }], own)[0]!.replyTo).toEqual([desk]);
+  });
+  it("leaves it alone without a default", () => {
+    expect(withOwnReplyTo([shared], [jonas])).toEqual([shared]);
   });
 });

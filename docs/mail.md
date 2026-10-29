@@ -83,6 +83,20 @@ IMAP und SMTP.
   weitergeleiteten Original nimmt Kontext noch nicht mit.
 
   ![Neue Mail mit einem Foto im Text, ausgewählt mit den Ecken zum Ziehen](screenshots/compose-image.png)
+- **„Antwort an“** (Reply-To): neben „Cc / Bcc“ blendet „Antwort an“ ein weiteres Adressfeld ein,
+  mit denselben Vorschlägen. Antworten auf die Mail gehen dann an diese Adressen statt an den
+  Absender – etwa eine Mail von Jonas, auf die das Büro unter info@ antworten soll. Das Feld
+  gilt für jeden Versand, auch verschlüsselt oder unterschrieben (dort steht es außen und in den
+  geschützten Kopfzeilen), und bleibt im Entwurf erhalten. Eine Vorgabe je Absenderadresse steht
+  unter *Einstellungen → Signatur* („Antwort an“, mehrere Adressen mit Komma); sie füllt das Feld
+  bei jeder neuen Mail, Antwort und Weiterleitung von dieser Adresse (auch aus dem gemeinsamen
+  Postfach heraus), und wer den Absender
+  wechselt, bekommt dessen Vorgabe – außer, man hat das Feld selbst geändert.
+
+  Umgekehrt antwortet Kontext auf eine Mail mit „Antwort an“ an diese Adresse, nicht an den
+  Absender (bei einer fremden Adresse mit der Warnung beim Lesen, siehe unten).
+
+  ![Neue Mail an Petra Keller mit „Antwort an“ info@weber-haustechnik.test](screenshots/reply-to.png)
 - **„Anhang vergessen?“** Steht im eigenen Text oder im Betreff „Anhang“, „anbei“, „angehängt“,
   „beigefügt“, „attached“ …, aber nichts ist angehängt, fragt Kontext vor dem Senden nach: „Datei
   anhängen“ oder „Ohne Anhang senden“. Nur der eigene Text zählt: nicht das Zitat, nicht die
@@ -145,7 +159,7 @@ IMAP und SMTP.
 
   ![Einstellungen, Vertretung: Max Becker darf Postfach, Kalender und Kontakte bearbeiten](screenshots/deputy.png)
 - **Signatur** unter *Einstellungen → Signatur*: für jede Adresse, von der man sendet (die eigene,
-  info@ …), Absendername und Signatur mit Formatierung. Eine neue Mail bekommt die Signatur der
+  info@ …), Absendername, die Vorgabe für „Antwort an“ und Signatur mit Formatierung. Eine neue Mail bekommt die Signatur der
   Absenderadresse, eine Antwort über dem Zitat.
 - **Firmen-Signatur:** Legt die Firmenverwaltung eine an und übernimmt sie für alle, ersetzt sie
   die Signaturen aller Mitarbeiter, auch selbst geänderte.

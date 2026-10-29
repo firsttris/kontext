@@ -337,6 +337,8 @@ export type OutgoingEmail = {
   to: EmailAddress[];
   cc: EmailAddress[];
   bcc: EmailAddress[];
+  /** Where answers go; left out, the identity's default (Identity.replyTo, RFC 8621 §6). */
+  replyTo?: EmailAddress[];
   subject: string;
   html: string;
   text: string;
@@ -353,6 +355,10 @@ export type OutgoingEmail = {
   autocrypt?: string | null;
 };
 
+/** The Reply-To a mail goes with: the one written in the composer, else the identity's. */
+export const replyToOf = (mail: Pick<OutgoingEmail, "replyTo" | "identity">): EmailAddress[] =>
+  mail.replyTo ?? mail.identity.replyTo ?? [];
+
 /** A long header value folded into lines (RFC 5322 §2.2.3), as the raw form needs it. */
 const folded = (value: string) => ` ${value.replace(/(.{76})(?=.)/g, "$1\r\n ")}`;
 
@@ -363,7 +369,7 @@ const emailCreate = (mail: OutgoingEmail, mailboxIds: Record<string, boolean>, d
   to: mail.to,
   cc: mail.cc,
   bcc: mail.bcc,
-  ...(mail.identity.replyTo?.length ? { replyTo: mail.identity.replyTo } : {}),
+  ...(replyToOf(mail).length ? { replyTo: replyToOf(mail) } : {}),
   subject: mail.subject,
   ...(mail.requestReceipt
     ? {

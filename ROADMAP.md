@@ -40,7 +40,6 @@ Kleinere und mittlere Funktionen, sortiert nach Nutzen: oben, was fast jedem Bet
 | # | Funktion | Worum es geht |
 | --- | --- | --- |
 | 22 | **Abmelden nach Inaktivität** | Für Rechner, die mehrere nutzen (Empfang, Anmeldung): die Firmenverwaltung legt eine Zeit fest; vorher fragt Kontext „Angemeldet bleiben?“, angefangene Mails werden Entwürfe. |
-| 23 | **„Antwort an“ beim Schreiben** | Antworten an eine andere Adresse als den Absender lenken. |
 | 24 | **Zustellbestätigung** | Beim Senden den Bericht des empfangenden Servers anfordern (DSN): ein Nachweis, dass die Mail angenommen wurde. |
 | 26 | **Mailliste sortieren** | Ungelesene, markierte oder Mails mit Kategorie zuerst. |
 | 27 | **.eml-Dateien importieren** | Einzelne Mails als Datei in einen Ordner holen. |
