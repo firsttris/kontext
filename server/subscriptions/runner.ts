@@ -51,9 +51,16 @@ export const createSubscriptionRunner = ({
 
   /** Fetches and writes one subscription; the error, or null ("gone" when the calendar is). */
   const sync = async (subscription: Subscription): Promise<string | null> => {
-    if (!(await calendars.exists(subscription.accountId, subscription.calendarId))) {
-      await store.remove(subscription.memberId, subscription.id);
-      return "gone";
+    try {
+      if (!(await calendars.exists(subscription.accountId, subscription.calendarId))) {
+        await store.remove(subscription.memberId, subscription.id);
+        return "gone";
+      }
+    } catch (error) {
+      // Kept with the subscription, so it waits its six hours instead of blocking the others.
+      const message = (error as Error).message;
+      await store.synced(subscription.id, { error: message }, now());
+      return message;
     }
     const fetched = await fetchCalendar(subscription.url, fetchDeps);
     if (!fetched.ok) {
@@ -63,9 +70,13 @@ export const createSubscriptionRunner = ({
     return write(subscription, fetched.text);
   };
 
+  /** One subscription after the other; one that fails does not stop the rest. */
   const tick = async () => {
     for (const subscription of await store.all()) {
-      if (isDue(subscription, now())) await sync(subscription);
+      if (!isDue(subscription, now())) continue;
+      await sync(subscription).catch((error: Error) =>
+        console.warn(`Kalender-Abo ${subscription.id}: ${error.message}`),
+      );
     }
   };
 
