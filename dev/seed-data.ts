@@ -498,6 +498,19 @@ export const events: SeedEvent[] = [
     location: "Bühl-Weitenung",
   },
   {
+    // Anna's own appointment, so she is busy this afternoon whenever the seed runs (the film and
+    // the availability screenshot plan at 14:00). An invitation would not do: Stalwart sends
+    // none for an appointment that is already over (ItipSendStatus::EventInPast,
+    // crates/groupware/src/calendar/itip.rs), so after 11:00 Anna would miss the Baubesprechung.
+    uid: "kundendienst-sommer",
+    owner: "anna",
+    title: "Kundendienst Heizung Sommer",
+    day: 0,
+    time: "13:30",
+    minutes: 90,
+    location: "Rheinstraße 12, Bühl",
+  },
+  {
     uid: "wartung-keller",
     owner: "jonas",
     title: "Wartung Halle 2 – Keller Elektro",

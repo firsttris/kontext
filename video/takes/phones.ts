@@ -10,7 +10,9 @@ export const recordPhones = async (browser: Browser) => {
   const chat = await phoneOf(browser);
   await expect(mail.getByText("Angebot Wartungsvertrag 2027")).toBeVisible();
   await calendar.goto("/calendar");
-  await expect(calendar.getByText("Baubesprechung Hoffmann")).toBeVisible();
+  await expect(
+    calendar.getByText("Baubesprechung Hoffmann", { exact: true }).first(),
+  ).toBeVisible();
   await chat.goto("/chat");
   const take = await startTake("phones", {
     mail: { page: mail, kind: "phone", label: "" },
