@@ -27,8 +27,24 @@ export const createSubscriptionRunner = ({
   fetchDeps?: FetchDeps;
   now?: () => Date;
 }) => {
+  /**
+   * One run per subscription at a time: a refresh, the tick and the first write would otherwise
+   * both read the calendar before either writes, and create its events twice.
+   */
+  const running = new Map<string, Promise<unknown>>();
+  const oneAtATime = <T>(id: string, run: () => Promise<T>): Promise<T> => {
+    const next = (running.get(id) ?? Promise.resolve()).catch(() => {}).then(run);
+    running.set(id, next);
+    void next
+      .catch(() => {})
+      .finally(() => {
+        if (running.get(id) === next) running.delete(id);
+      });
+    return next;
+  };
+
   /** Writes the file's events into the calendar; the error is kept with the subscription. */
-  const write = async (subscription: Subscription, text: string): Promise<string | null> => {
+  const writeNow = async (subscription: Subscription, text: string): Promise<string | null> => {
     try {
       const entries = await calendars.parse(subscription.accountId, text);
       if (!entries.length && /BEGIN:VEVENT/i.test(text)) {
@@ -49,8 +65,14 @@ export const createSubscriptionRunner = ({
     }
   };
 
+  const write = (subscription: Subscription, text: string) =>
+    oneAtATime(subscription.id, () => writeNow(subscription, text));
+
   /** Fetches and writes one subscription; the error, or null ("gone" when the calendar is). */
-  const sync = async (subscription: Subscription): Promise<string | null> => {
+  const sync = (subscription: Subscription) =>
+    oneAtATime(subscription.id, () => syncNow(subscription));
+
+  const syncNow = async (subscription: Subscription): Promise<string | null> => {
     try {
       if (!(await calendars.exists(subscription.accountId, subscription.calendarId))) {
         await store.remove(subscription.memberId, subscription.id);
@@ -67,7 +89,7 @@ export const createSubscriptionRunner = ({
       await store.synced(subscription.id, { error: fetched.error }, now());
       return fetched.error;
     }
-    return write(subscription, fetched.text);
+    return writeNow(subscription, fetched.text);
   };
 
   /** One subscription after the other; one that fails does not stop the rest. */
