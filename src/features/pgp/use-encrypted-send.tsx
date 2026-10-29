@@ -233,7 +233,10 @@ export const useEncryptedSend = (
           },
           legalFooter,
         ),
+        // The link stands for the files and pictures: none of them goes along in plain (and a
+        // picture kept in the browser has no blob in Stalwart, features/mail/use-held-files.ts).
         attachments: [],
+        images: [],
         draftId: null,
         requestReceipt: false,
         requestDelivery: false,
