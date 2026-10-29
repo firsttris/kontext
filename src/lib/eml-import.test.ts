@@ -50,7 +50,7 @@ describe("parseMailDate", () => {
       "2025-03-03T08:00:00.000Z",
     );
     expect(parseMailDate("3 Mar 99 09:00:00 GMT")?.toISOString()).toBe("1999-03-03T09:00:00.000Z");
-    expect(parseMailDate("3 Mar 05 09:00:00 EST")?.toISOString()).toBe("2005-03-03T09:00:00.000Z");
+    expect(parseMailDate("3 Mar 05 09:00:00 UT")?.toISOString()).toBe("2005-03-03T09:00:00.000Z");
   });
 
   it("reads the US zone names RFC 5322 §4.3 defines, and three-digit years", () => {

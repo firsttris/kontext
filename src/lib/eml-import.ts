@@ -34,18 +34,33 @@ export const dateHeader = (raw: string): string | undefined => {
 
 const MONTHS = ["jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec"];
 
-/** Offset in minutes east of UTC; other old zone names count as -0000 (RFC 5322 §4.3). */
+/** The obsolete zone names with a fixed offset, in hours (RFC 5322 §4.3). */
+const NAMED_ZONES: Record<string, number> = {
+  edt: -4,
+  est: -5,
+  cdt: -5,
+  cst: -6,
+  mdt: -6,
+  mst: -7,
+  pdt: -7,
+  pst: -8,
+};
+
+/** Offset in minutes east of UTC; UT, GMT and other old zone names count as -0000 (§4.3). */
 const zoneOffset = (zone: string | undefined): number => {
+  const named = NAMED_ZONES[zone?.toLowerCase() ?? ""];
+  if (named !== undefined) return named * 60;
   const numeric = zone?.match(/^([+-])(\d{2})(\d{2})$/);
   if (!numeric) return 0;
   const minutes = Number(numeric[2]) * 60 + Number(numeric[3]);
   return numeric[1] === "-" ? -minutes : minutes;
 };
 
-/** Two-digit years as RFC 5322 §4.3 reads them. */
+/** Two- and three-digit years as RFC 5322 §4.3 reads them. */
 const fullYear = (year: string) => {
   const value = Number(year);
-  if (year.length > 2) return value;
+  if (year.length === 4) return value;
+  if (year.length === 3) return 1900 + value;
   return value < 50 ? 2000 + value : 1900 + value;
 };
 
