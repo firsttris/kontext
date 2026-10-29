@@ -188,3 +188,37 @@ describe("isDue", () => {
     expect(isDue({ lastSyncAt: new Date(now.getTime() - EVERY_MS + 60_000) }, now)).toBe(false);
   });
 });
+
+describe("the runner", () => {
+  const subscription = (id: string) => ({
+    id,
+    memberId: id,
+    accountId: id,
+    calendarId: `cal-${id}`,
+    name: id,
+    url: "https://kal.test/muell.ics",
+    createdAt: new Date(),
+  });
+  const fetchDeps = {
+    anyTarget: true,
+    fetch: (async () => new Response(ics("Gelber Sack"))) as unknown as typeof fetch,
+  };
+
+  it("goes on with the others when one subscription's run throws", async () => {
+    const store = memoryStore();
+    await store.add(subscription("a"));
+    await store.add(subscription("b"));
+    const calendars = {
+      exists: async (account: string) => {
+        if (account === "a") throw new Error("accountNotFound");
+        return true;
+      },
+      events: async () => [],
+      parse: async () => [{ uid: "u1", title: "Gelber Sack" }],
+      apply: async () => {},
+    } as unknown as SubscribedCalendars;
+    const runner = createSubscriptionRunner({ store, calendars, fetchDeps });
+    await runner.tick().catch(() => {});
+    expect((await store.get("b", "b"))?.lastSyncAt).not.toBeNull();
+  });
+});
