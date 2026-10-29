@@ -64,8 +64,22 @@ describe("eventsByUid", () => {
     expect(events.get("gelb-1")).toEqual({ start: "2026-11-07T00:00:00", title: "Gelber Sack" });
   });
 
-  it("drops a changed date whose series is not in the file", () => {
-    expect(eventsByUid([moved]).size).toBe(0);
+  it("keeps a changed date whose series is not in the file as an event of its own", () => {
+    // Stalwart's parse puts changed dates into a series that is there; one comes on its own only
+    // without its series, and a feed that publishes just that date still means it.
+    expect(eventsByUid([moved])).toEqual(
+      new Map([
+        [
+          "muell-1",
+          {
+            start: "2026-11-13T00:00:00",
+            showWithoutTime: true,
+            duration: "P1D",
+            title: "Restmüll (verschoben)",
+          },
+        ],
+      ]),
+    );
   });
 });
 

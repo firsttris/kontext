@@ -1480,9 +1480,10 @@ Das Abo selbst (Adresse, Kalender, Stand) steht in der Tabelle `calendar_subscri
   und die Antwort muss mit `BEGIN:VCALENDAR` beginnen. So lässt sich der Server nicht auf Stalwart,
   die Metadaten der Cloud oder andere Rechner im Netz lenken. Beim Anlegen holt der Server die
   Datei zuerst: Eine falsche Adresse meldet er sofort, und es entsteht nichts.
-- **Lesen:** `CalendarEvent/parse` (wie beim Umzug). Geänderte Termine einer Serie liefert Stalwart
-  als eigene Einträge, ihr Datum steht nur unter `iCalendar.properties` (`recurrence-id`); Kontext
-  sortiert sie in `recurrenceOverrides` der Serie ein (`sync-plan.ts`).
+- **Lesen:** `CalendarEvent/parse` (wie beim Umzug). Geänderte Termine einer Serie sortiert
+  Stalwart selbst in `recurrenceOverrides` der Serie ein. Als eigener Eintrag (das Datum nur unter
+  `iCalendar.properties`, `recurrence-id`) kommt einer nur, wenn seine Serie nicht in der Datei
+  steht; dann übernimmt Kontext ihn als einzelnen Termin (`sync-plan.ts`).
 - **Abgleichen:** je `uid` ein Termin. Neu angelegt, was dazukam; gelöscht, was die Datei nicht
   mehr hat; geändert, was sich seit dem letzten Schreiben geändert hat. Verglichen wird mit dem
   Fingerabdruck dessen, was Kontext zuletzt geschrieben hat (`written` je Abo), nicht mit dem, was

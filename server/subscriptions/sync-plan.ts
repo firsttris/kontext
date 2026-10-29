@@ -43,7 +43,11 @@ export const recurrenceIdOf = (entry: ParsedEntry): string | undefined => {
   return `${y}-${mo}-${d}T${h}:${mi}:${s}`;
 };
 
-/** One event per UID: a series with its changed dates in `recurrenceOverrides`. */
+/**
+ * One event per UID: a series with its changed dates in `recurrenceOverrides`. A changed date
+ * without its series in the file stands as an event of its own (the first, if there are several:
+ * a calendar holds one event per UID).
+ */
 export const eventsByUid = (entries: ParsedEntry[]): Map<string, Record<string, unknown>> => {
   const events = new Map<string, Record<string, unknown>>();
   for (const entry of entries.filter((e) => e.uid && !recurrenceIdOf(e))) {
@@ -51,8 +55,12 @@ export const eventsByUid = (entries: ParsedEntry[]): Map<string, Record<string, 
   }
   for (const entry of entries.filter((e) => e.uid && recurrenceIdOf(e))) {
     const series = events.get(entry.uid!);
-    if (!series) continue;
     const { recurrenceRule: _rule, recurrenceOverrides: _overrides, ...change } = keep(entry);
+    if (!series) {
+      events.set(entry.uid!, change);
+      continue;
+    }
+    if (!series.recurrenceRule) continue;
     series.recurrenceOverrides = {
       ...(series.recurrenceOverrides as Record<string, unknown> | undefined),
       [recurrenceIdOf(entry)!]: change,
