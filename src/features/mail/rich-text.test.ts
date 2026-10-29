@@ -45,4 +45,23 @@ describe("richText", () => {
     expect(e.getHTML()).toContain("<table");
     expect(e.getHTML()).toMatch(/color: (#2563eb|rgb\(37, 99, 235\))/);
   });
+
+  it("leaves a quoted mail's layout table as it looks: no lines added, its own colours kept", () => {
+    const e = write(
+      '<blockquote><table border="0"><tbody><tr>' +
+        '<td style="padding: 0px; background: rgb(0, 51, 102);"><p>Logo</p></td>' +
+        "<td><p>Weber Haustechnik</p></td></tr></tbody></table></blockquote>",
+    );
+    const html = e.getHTML();
+    expect(html).not.toMatch(/border: ?1px solid/);
+    expect(html).toMatch(/<td style="[^"]*background: rgb\(0, 51, 102\)/);
+  });
+
+  it("keeps the lines of a table written here when the draft is opened again", () => {
+    const e = write("<p></p>");
+    e.chain().insertTable({ rows: 2, cols: 2, withHeaderRow: true }).run();
+    const reopened = write(e.getHTML()).getHTML();
+    expect(reopened.match(/<td [^>]*>/)?.[0]).toMatch(/border: ?1px solid/);
+    expect(reopened.match(/<th [^>]*>/)?.[0]).toMatch(/font-weight: ?600/);
+  });
 });
