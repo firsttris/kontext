@@ -10,7 +10,7 @@ ein Plan, kein Versprechen; Wünsche und Hinweise gern als
 | Funktion | Worum es geht |
 | --- | --- |
 | **Pilot** | Vier Wochen bei einem Kunden parallel zum alten System, mit der [Telefonie](https://firsttris.github.io/kontext/telephony.html) im Test. |
-| **Offene Punkte** | die Lücken unten, etwa Erinnerungen an Termine bei geschlossener App und App-Passwörter für CalDAV. |
+| **Offene Punkte** | die Lücken unten, etwa App-Passwörter für CalDAV. |
 
 ## Danach
 
@@ -27,7 +27,6 @@ Kleinere und mittlere Funktionen, sortiert nach Nutzen: oben, was fast jedem Bet
 
 | # | Funktion | Worum es geht |
 | --- | --- | --- |
-| 1 | **Erinnerungen je Termin** | Pro Termin „30 Minuten vorher“, „1 Tag vorher“ …, als Hinweis oder als Mail. Die Mail verschickt Stalwart, also auch bei geschlossener App (heute fest 15 Minuten vorher und nur, solange Kontext offen ist). |
 | 3 | **Serien ab einem Termin ändern** | Neben „Nur dieser Termin“ und „Alle Termine der Serie“ auch „Dieser und alle folgenden“. |
 | 4 | **Firmen-Signatur mit mehr Angaben** | Telefon, Position, Abteilung als Platzhalter; jede Person trägt ihre Angaben einmal ein, leere Zeilen fallen weg (heute `[Name]` und `[E-Mail]`). |
 | 5 | **„Anhang vergessen?“** | Steht im Text „Anhang“, „anbei“, „attached“ …, aber nichts ist angehängt, fragt Kontext vor dem Senden nach. |
@@ -40,7 +39,7 @@ Kleinere und mittlere Funktionen, sortiert nach Nutzen: oben, was fast jedem Bet
 
 | # | Funktion | Worum es geht |
 | --- | --- | --- |
-| 10 | **Standard-Erinnerungen je Kalender** | Erinnerungen, die jeder neue Termin des Kalenders bekommt, getrennt für Termine mit Uhrzeit und ganztägige (baut auf Nr. 1 auf). |
+| 10 | **Standard-Erinnerungen je Kalender** | Erinnerungen, die jeder neue Termin des Kalenders bekommt, getrennt für Termine mit Uhrzeit und ganztägige; Stalwart kennt sie schon (`defaultAlertsWithTime`, `defaultAlertsWithoutTime`), Kontext fehlt die Einstellung. |
 | 11 | **Termine aus .ics-Dateien übernehmen** | Mit Vorschau; schon vorhandene Termine werden übersprungen (heute nur beim Umzug). |
 | 12 | **winmail.dat entpacken** | Anhänge und Text aus Mails alter Outlook-Versionen zeigen. |
 | 13 | **Hinweis „Extern“** | Mails von außerhalb der Firma tragen ein Kennzeichen; vor dem Senden oder Einladen an Externe fragt Kontext nach. Partnerdomains zählen als intern; je Firma einschaltbar. |
@@ -72,7 +71,6 @@ Lücken und Befunde, die beim Bauen offen geblieben sind und noch angegangen wer
 
 **Funktionen**
 
-- [ ] Erinnerungen an Termine auch bei geschlossener App (heute nur, solange Kontext offen ist): der Server müsste die Kalender beobachten wie die Posteingänge; Erinnerungen per Mail (siehe [Für den Alltag](#für-den-alltag), Nr. 1) wären ein erster Schritt.
 - [ ] Chat: Vorschaubilder für Fotos von vor diesem Stand fehlen (sie laden weiter in voller Größe); neue bekommen eins beim Hochladen.
 - [ ] Chat: Reaktionen mit beliebigen Emojis (heute die sieben Schnellwahlen), und im Thread „auch im Kanal zeigen“.
 - [ ] Aufgaben am Kontakt finden Mails nur über die letzten fünf Mails mit der Person im eigenen Postfach; ältere oder solche in info@ zählen nur, wenn die Aufgabe mit der Karte verknüpft ist (geschieht beim Anlegen aus der Mail). Die Verknüpfung „Termin“ wird noch nirgends angelegt.
@@ -81,7 +79,7 @@ Lücken und Befunde, die beim Bauen offen geblieben sind und noch angegangen wer
 - [ ] Anhänge verschlüsselter Mails ohne Umweg über Stalwart: heute liegen sie bis zum Senden unverschlüsselt in dessen Zwischenspeicher (siehe [Verschlüsselung](https://firsttris.github.io/kontext/encryption.html#grenzen-und-offene-punkte)).
 - [ ] CalDAV für Aufgaben mit Bestätigung in zwei Schritten: App-Passwörter anlegen können (Thunderbird und Handy fragen keinen Code ab); dazu `sync-collection` für schnelleren Abgleich auf dem iPhone.
 - [ ] **Regeln für Mitarbeiter** in der Firmenverwaltung (heute nur für gemeinsame Postfächer und die eigenen).
-- [ ] **App auf Englisch** und weiteren Sprachen (Texte liegen schon gesammelt in `messages/de.json`).
+- [ ] **Weitere Sprachen** neben Deutsch und Englisch (Texte in `messages/*.json`).
 - [ ] Wiedervorlage für mehrere ausgewählte Mails auf einmal (heute aus der geöffneten Mail) und „Wieder vorgelegt“ auch in „Alle Posteingänge“ (heute im Posteingang des Postfachs).
 - [ ] Lesebestätigungen von Programmen, die kein `In-Reply-To` setzen, erkennt die gesendete Mail noch nicht (dazu müsste Kontext `Original-Message-ID` im Bericht lesen); eingegangene Bestätigungen könnten von selbst gelesen und still abgelegt werden.
 - [ ] **Drucken mit Bildern aus dem Internet**, wenn sie in der Mail freigegeben wurden.

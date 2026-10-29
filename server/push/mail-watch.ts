@@ -1,13 +1,15 @@
 /**
- * New mail on the phone, also with Kontext closed: for everyone with a push subscription the
- * server listens to Stalwart's JMAP event stream (with the token of their newest session) and,
- * when an inbox changed, sends the new unread mails as notifications. The same `tag` as the
- * app's own notifications (features/notifications) keeps one mail from showing twice.
+ * New mail and reminders on the phone, also with Kontext closed: for everyone with a push
+ * subscription the server listens to Stalwart's JMAP event stream (with the token of their newest
+ * session) and, when an inbox changed, sends the new unread mails as notifications; when a
+ * reminder is due, the appointment (reminders.ts). The same `tag` as the app's own notifications
+ * (features/notifications) keeps one mail or reminder from showing twice.
  */
 import type { Grants } from "../auth";
 import type { Env } from "../env";
 import { fillTemplate, parseEvents } from "../jmap";
 import type { Notice, Pusher } from "./pusher";
+import { type CalendarAlertPush, EVENT_PROPERTIES, reminderNotice } from "./reminders";
 import type { PushStore } from "./store";
 
 export type NewMail = {
@@ -52,7 +54,11 @@ const sleep = (ms: number, signal: AbortSignal) =>
     });
   });
 
-const USING = ["urn:ietf:params:jmap:core", "urn:ietf:params:jmap:mail"];
+const USING = [
+  "urn:ietf:params:jmap:core",
+  "urn:ietf:params:jmap:mail",
+  "urn:ietf:params:jmap:calendars",
+];
 /** A reconnect now and then picks up a fresh token and changed access. */
 const RECONNECT_MS = 15 * 60_000;
 const RETRY_MS = 30_000;
@@ -160,8 +166,28 @@ export const createMailWatch = ({
           }
         };
 
+        const remind = async (alert: CalendarAlertPush) => {
+          const [got] = await call<{ list?: Parameters<typeof reminderNotice>[1][] }>([
+            [
+              "CalendarEvent/get",
+              {
+                accountId: alert.accountId,
+                ids: [alert.calendarEventId],
+                properties: EVENT_PROPERTIES,
+              },
+              "g",
+            ],
+          ]);
+          const event = got?.list?.[0];
+          if (event) await pusher.notify([memberId], reminderNotice(alert, event));
+        };
+
         const url = onStalwart(
-          fillTemplate(session.eventSourceUrl, { types: "Email", closeafter: "no", ping: "60" }),
+          fillTemplate(session.eventSourceUrl, {
+            types: "Email,CalendarAlert",
+            closeafter: "no",
+            ping: "60",
+          }),
         );
         const reconnect = AbortSignal.any([signal, AbortSignal.timeout(RECONNECT_MS)]);
         const response = await fetch(url, {
@@ -179,6 +205,10 @@ export const createMailWatch = ({
           const parsed = parseEvents(buffer + value);
           buffer = parsed.rest;
           for (const event of parsed.events) {
+            if (event.type === "calendarAlert") {
+              await remind(JSON.parse(event.data) as CalendarAlertPush);
+              continue;
+            }
             if (event.type !== "state") continue;
             const { changed } = JSON.parse(event.data) as {
               changed: Record<string, Record<string, string>>;

@@ -10,8 +10,8 @@ export const scenes: Scene[] = [
   {
     kind: "title",
     lines: [
-      say("Alles, was dein Team von Google kennt.", "Everything your team knows from Google."),
-      say("Ohne dass Google dein Team kennt.~", "Without Google knowing your team.~"),
+      say("Fühlt sich vertraut an.", "Feels familiar."),
+      say("Gehört dir.~", "Belongs to you.~"),
     ],
     seconds: 3.6,
   },

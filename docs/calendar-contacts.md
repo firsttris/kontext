@@ -26,6 +26,14 @@ Kontext steht, steht auch am iPhone, unter Android (DAVx⁵) und in Thunderbird.
 
 - **Einladungen** mit Zusage und Absage; die Glocke zeigt, was noch auf Antwort wartet, und die
   Termine des Tages.
+- **Erinnerung je Termin:** von „Zu Beginn“ bis „1 Woche vorher“, ganztägige Termine morgens am
+  Tag oder an Tagen davor; als **Hinweis** auf den Geräten oder als **Mail**. Beides kommt auch,
+  wenn Kontext zu ist: die Mail verschickt Stalwart, den Hinweis bringt der Kontext-Server als
+  Push (wo Benachrichtigungen an sind). Neue Termine erinnern wie bisher 15 Minuten vorher per
+  Hinweis. [Mehr](architecture.md#erinnerungen-an-termine)
+
+  ![Neuer Termin mit Erinnerung einen Tag vorher per Mail](screenshots/event-reminder.png)
+
 - **Beginn verschieben:** Wer Datum oder Uhrzeit des Beginns ändert, nimmt das Ende mit; die
   Dauer bleibt, wie bei Google und Apple.
 - **Einladungen im Kontext-Look:** Kontext verschickt sie selbst, im Namen des Organisators, mit

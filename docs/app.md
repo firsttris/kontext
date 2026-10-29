@@ -32,14 +32,15 @@ Schalter unter *Einstellungen → Darstellung* und gelten für das eine Gerät.
 
 „Auf diesem Gerät benachrichtigen“ – in der Glocke oben, unter *Einstellungen → Darstellung* oder
 über die Karte in der Mailliste – meldet neue Mails, Chat-Nachrichten an einen selbst
-(Direktnachrichten, @Erwähnungen), neue Aufgaben, Erinnerungen an Aufgaben und eingehende Anrufe,
-**auch wenn Kontext ganz geschlossen ist**.
+(Direktnachrichten, @Erwähnungen), neue Aufgaben, Erinnerungen an Aufgaben und Termine und
+eingehende Anrufe, **auch wenn Kontext ganz geschlossen ist**.
 
 - Unter „Neue Mails melden aus“ lassen sich Postfächer abwählen, etwa info@ für jemanden, der dort
   nur aushilft; das gilt für alle Geräte der Person.
 - Auf iPhone und iPad gibt es Benachrichtigungen nur in der installierten App.
 - Blockiert der Browser sie, in den Website-Einstellungen des Browsers für Kontext erlauben.
-- Erinnerungen 15 Minuten vor Terminen kommen nur, solange Kontext offen ist.
+- Wann ein Termin erinnert und ob per Hinweis oder Mail, steht am Termin
+  ([Erinnerung je Termin](calendar-contacts.md#kalender)).
 - Die Glocke selbst zeigt ungelesene Mails der letzten Tage, offene Einladungen und die Termine
   von heute. Mehr dazu in der [Architektur](architecture.md#benachrichtigungen).
 

@@ -1,6 +1,6 @@
 ---
 title: Mail, calendar, chat and phone on your own server
-og_title: "Kontext: Everything your team knows from Google. Without Google knowing your team."
+og_title: "Kontext: Feels familiar. Belongs to you."
 description: >-
   Mail, calendar, contacts, tasks, team chat, phone and documents in one app – on your own
   server, with no per-user cost. A tour in pictures.
@@ -15,7 +15,7 @@ hide:
 
 <div class="showcase-hero" markdown>
 
-# Everything your team knows from Google. Without Google knowing your team.
+# Feels familiar. Belongs to you.
 
 <p class="showcase-claim">Mail, calendar, contacts, tasks, team chat, the company phone and
 documents – in one app, in the browser and on the phone. Your data stays with you, and ten people
