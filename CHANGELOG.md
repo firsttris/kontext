@@ -13,6 +13,13 @@ Steps that an update needs beyond raising the version are marked **Upgrade**.
   every folder, "Alle Posteingänge" and the search, kept on the device. The server sorts
   (`Email/query`, RFC 8621 §4.4.2), so loading more keeps the order; in the conversation view the
   whole conversation counts (`someInThreadHaveKeyword`, `allInThreadHaveKeyword`).
+- Mail: "Antwort an" (Reply-To) when writing – revealed next to "Cc / Bcc", with the same address
+  suggestions; replies then go to those addresses instead of the sender. It goes out with every
+  kind of sending (JMAP `replyTo`, and the `Reply-To` header of mails Kontext builds itself for
+  PGP and S/MIME, outside and in the protected headers) and stays in the draft. A default per
+  sending address (JMAP `Identity.replyTo`) is set under *Einstellungen → Signatur*; it fills the
+  field and follows a change of sender unless the field was edited. Answering a mail that carries
+  Reply-To already went to that address; now covered by tests.
 - Mail: "Als Anhang weiterleiten" – in a mail's "Weitere Aktionen" menu, and for several picked
   mails in the selection bar: the original goes whole as `<subject>.eml` (message/rfc822) in a
   new mail, by the blob Stalwart already holds (JMAP `blobId`), so nothing is downloaded or

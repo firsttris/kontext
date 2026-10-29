@@ -11,7 +11,13 @@ import { useClient } from "@/auth/auth";
 import { Button } from "@/components/ui/button";
 import { Dialog } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { type Hold, type OutgoingAttachment, type OutgoingEmail, sendEmail } from "@/jmap/mail";
+import {
+  type Hold,
+  type OutgoingAttachment,
+  type OutgoingEmail,
+  replyToOf,
+  sendEmail,
+} from "@/jmap/mail";
 import { sendRaw } from "@/jmap/send-raw";
 import type { EmailAddress } from "@/jmap/types";
 import { escapeHtml } from "@/lib/html";
@@ -154,6 +160,7 @@ export const useEncryptedSend = (from: string | undefined, recipients: string[])
       from: { name: mail.identity.name || null, email: mail.identity.email },
       to: mail.to,
       cc: mail.cc,
+      replyTo: replyToOf(mail),
       subject: mail.subject,
       date: new Date(),
       messageId: `${id}@${mail.identity.email.split("@")[1]}`,
@@ -247,6 +254,7 @@ export const useEncryptedSend = (from: string | undefined, recipients: string[])
       from: { name: mail.identity.name || null, email: mail.identity.email },
       to: group(mail.to),
       cc: group(mail.cc),
+      replyTo: replyToOf(mail),
       subject: mail.subject,
       date: new Date(),
       messageId: `${messageId}@${mail.identity.email.split("@")[1]}`,
