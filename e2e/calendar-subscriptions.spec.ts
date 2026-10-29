@@ -55,7 +55,7 @@ test.describe("Kalender abonnieren", () => {
     const name = unique("Falsch");
     await dialog.getByLabel("Name", { exact: true }).fill(name);
     await dialog.getByRole("button", { name: "Abonnieren" }).click();
-    await expect(page.getByRole("status")).toContainText("Der Kalender ist nicht erreichbar.");
+    await expect(page.getByRole("alert")).toContainText("Der Kalender ist nicht erreichbar.");
     await expect(dialog.getByText(name, { exact: true })).toHaveCount(0);
   });
 });
