@@ -234,6 +234,13 @@ mit einem eigenen API-Schlüssel an und erlaubt nur, was die Firmenverwaltung br
   `<br>` und was sie leer zurücklässt (Fett, ein ganzer Absatz), in einer Tabelle die ganze Zeile
   samt Beschriftung (und die Tabelle, wenn keine Zeile bleibt); absichtliche Leerzeilen der
   Vorlage bleiben.
+- **Hinweis „Extern“:** Der Schalter steht in `company_setting`, die Partner-Domains in der
+  Tabelle `partner_domain` (`server/company/external-hint.ts`). `GET /api/company/external-hint`
+  darf jeder Angemeldete lesen – die App braucht dafür die eigenen Domains (`x:Domain`, mit
+  Kontexts Stalwart-Schlüssel gelesen) –, ändern (`PUT`) nur die Firmenverwaltung. Ob eine Adresse
+  außerhalb liegt, entscheidet die App selbst (`src/lib/external-hint.ts`: Domain samt
+  Subdomains); die Rückfrage vor dem Senden folgt auf „Anhang vergessen?“, bei Terminen nur für
+  Teilnehmer, die vorher nicht eingeladen waren.
 - **Pflichtangaben:** reiner Text in `company_setting` (Schlüssel `legalFooter`), gelesen von
   jedem Angemeldeten (`GET /api/company/legal-footer`), geändert nur von der Firmenverwaltung
   (`PUT`). Die App hängt ihn erst beim Senden an (`src/lib/legal-footer.ts`: HTML maskiert,

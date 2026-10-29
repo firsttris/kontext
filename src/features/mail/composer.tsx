@@ -39,6 +39,7 @@ import { SnippetMenu } from "../snippets/snippet-menu";
 import { AttachmentList, ComposerActions, ComposerFields } from "./composer-fields";
 import { InsertImageButton, pictures, useComposerImages } from "./composer-images";
 import { EditorToolbar } from "./editor-toolbar";
+import { useExternalQuestion } from "./external-question";
 import { ForgottenAttachment } from "./forgotten-attachment";
 import { inlineParts, useInlineImageUrls } from "./inline-image-urls";
 import { LegalFooterPreview } from "./legal-footer-preview";
@@ -97,6 +98,8 @@ export const Composer = ({ accountId, mode, sourceEmailId, prefill }: Props) => 
   const [sending, setSending] = useState(false);
   // "Anhang vergessen?": the word that asked, and when the mail was to go (now or later).
   const [forgotten, setForgotten] = useState<{ word: string; later?: Date } | null>(null);
+  // "An externe Empfänger senden?": asked after "Anhang vergessen?", right before sending.
+  const external = useExternalQuestion("mail");
   const undoSeconds = useUndoSeconds();
   const takeBack = useTakeBack();
   // A ref, not state: a send that waited for a running autosave must replace the draft that
@@ -437,9 +440,10 @@ export const Composer = ({ accountId, mode, sourceEmailId, prefill }: Props) => 
 
   /**
    * Now (held for the seconds of "Rückgängig"), or `later` at that time. Asks first when the own
-   * text speaks of an attachment and none is there, unless `withoutAttachment`.
+   * text speaks of an attachment and none is there, unless `withoutAttachment`; then, unless
+   * `toOutside`, when recipients are outside the company (Hinweis „Extern“).
    */
-  const send = async (later?: Date, withoutAttachment = false) => {
+  const send = async (later?: Date, withoutAttachment = false, toOutside = false) => {
     if (to.length + cc.length + bcc.length === 0) {
       toast.show(m.mail_recipients_missing(), "error");
       return;
@@ -450,6 +454,11 @@ export const Composer = ({ accountId, mode, sourceEmailId, prefill }: Props) => 
         : attachmentMention(subject, ownText(editor?.getHTML() ?? "", signatureOf(identity)));
     if (word) {
       setForgotten({ word, later });
+      return;
+    }
+    const outside = toOutside ? [] : external.outside([...to, ...cc, ...bcc].map((a) => a.email));
+    if (outside.length) {
+      external.ask(outside, () => void send(later, true, true));
       return;
     }
     if (!identity || !drafts || !sent) return;
@@ -681,6 +690,7 @@ export const Composer = ({ accountId, mode, sourceEmailId, prefill }: Props) => 
         onDiscard={() => void discard()}
       />
       {pgp.dialog}
+      {external.dialog}
       <ForgottenAttachment
         word={forgotten?.word ?? null}
         onAttach={(files) => void upload(files)}

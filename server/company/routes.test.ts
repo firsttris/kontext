@@ -89,6 +89,7 @@ const setup = (
   const welcomed: { newcomer: string; people: string[] }[] = [];
   const shownToAll: string[][] = [];
   const changedMailboxes: string[] = [];
+  let externalHint = { enabled: false, partners: [] as string[] };
   const app = createCompanyRoutes({
     categories: {
       list: async (ids) => Object.fromEntries(ids.map((id) => [id, []])),
@@ -114,6 +115,12 @@ const setup = (
       legalFooter: async () => footer.text,
       saveLegalFooter: async (text) => {
         footer.text = text;
+      },
+    },
+    externalHint: {
+      read: async () => externalHint,
+      save: async (settings) => {
+        externalHint = settings;
       },
     },
     signatureDetails: {
@@ -148,7 +155,8 @@ const setup = (
       headers: { "content-type": "application/json" },
       body: body === undefined ? undefined : JSON.stringify(body),
     });
-  return { ...fake, ended, welcomed, shownToAll, changedMailboxes, footer, send };
+  const hint = () => externalHint;
+  return { ...fake, ended, welcomed, shownToAll, changedMailboxes, footer, send, hint };
 };
 
 type Setup = ReturnType<typeof setup>;
@@ -322,6 +330,34 @@ describe("Firmenverwaltung", () => {
     // A new description changes nobody's access.
     await send("PATCH", "/mailboxes/g", { description: "Anfragen" });
     expect(changedMailboxes).toEqual(["g"]);
+  });
+
+  it("gives everyone signed in the hint „Extern“ with the company's domains", async () => {
+    const anna = setup("anna@firma.de");
+    expect(await (await anna.send("GET", "/external-hint")).json()).toEqual({
+      enabled: false,
+      partners: [],
+      domains: ["firma.de"],
+    });
+    expect((await setup(null).send("GET", "/external-hint")).status).toBe(401);
+  });
+
+  it("lets only the Firmenverwaltung switch the hint „Extern“ and name partners", async () => {
+    const change = { enabled: true, partners: ["@Partner-Bau.de", "steuer.de", "partner-bau.de"] };
+    const anna = setup("anna@firma.de");
+    expect((await anna.send("PUT", "/external-hint", change)).status).toBe(403);
+    expect(anna.hint().enabled).toBe(false);
+
+    const chef = setup("chef@firma.de");
+    const saved = await chef.send("PUT", "/external-hint", change);
+    expect(await saved.json()).toEqual({
+      enabled: true,
+      partners: ["partner-bau.de", "steuer.de"],
+    });
+    expect(chef.hint()).toEqual({ enabled: true, partners: ["partner-bau.de", "steuer.de"] });
+    const wrong = await chef.send("PUT", "/external-hint", { enabled: true, partners: ["kein"] });
+    expect(wrong.status).toBe(400);
+    expect(chef.hint().partners).toEqual(["partner-bau.de", "steuer.de"]);
   });
 
   it("lets everyone signed in read the Pflichtangaben, only the admin change them", async () => {

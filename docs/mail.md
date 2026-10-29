@@ -83,6 +83,16 @@ IMAP und SMTP.
 
   ![Rückfrage „Anhang vergessen?“ beim Senden einer Mail mit „anbei“ ohne Anhang](screenshots/forgotten-attachment.png)
 
+- **Hinweis „Extern“** (schaltet die [Firmenverwaltung](company.md#mitarbeiter-und-postfacher)
+  ein): Mails von außerhalb der Firma tragen in der Liste und beim Lesen die Marke „Extern“. Geht
+  eine Mail an Empfänger außerhalb, fragt Kontext vor dem Senden einmal nach – „An externe
+  Empfänger senden?“ mit diesen Adressen, „Zurück“ oder „Trotzdem senden“. Kommt vorher „Anhang
+  vergessen?“, folgt diese Frage danach. Dasselbe gilt für Einladungen im Kalender, die neue
+  Teilnehmer von außerhalb bekommen. Intern sind die eigenen Domains der Firma und die
+  eingetragenen Partner-Domains, jeweils mit ihren Subdomains.
+
+  ![Rückfrage „An externe Empfänger senden?“ vor einer Antwort an Petra Keller, in der Liste die Marke „Extern“](screenshots/external-hint.png)
+
 - **Pflichtangaben:** Hat die Firmenverwaltung sie eingetragen ([Firmenverwaltung](company.md)),
   stehen sie beim Schreiben grau unter dem Text – zu sehen, aber nicht änderbar. Kontext hängt
   sie erst beim Senden an, ganz unten (auch unter dem Zitat), im HTML- und im Textteil; Entwürfe

@@ -10,6 +10,7 @@ import { syncRoutes } from "../migration/sync-routes";
 import { backupRoutes } from "./backup-routes";
 import { bad, bodyOf, type CompanyDeps, createLoader, type Env } from "./context";
 import { employeeRoutes } from "./employees";
+import { externalHintRoutes, readExternalHint } from "./external-hint";
 import { legalFooterRoutes, readLegalFooter } from "./legal-footer";
 import { mailboxRoutes } from "./mailboxes";
 import { checkDomain, httpsCheck } from "./security";
@@ -20,12 +21,19 @@ export type { CompanyDeps };
 export const createCompanyRoutes = (deps: CompanyDeps) => {
   const load = createLoader(deps);
   const app = new Hono<Env>();
+  const externalHint = readExternalHint(deps);
   const legalFooter = readLegalFooter(deps);
 
   /** Whether to show the Firmenverwaltung at all; asked by every signed-in user. */
   app.get("/me", async (c) =>
     c.json({ admin: Boolean(await load(c.req.raw, { folders: false })) }),
   );
+
+  /** Hinweis „Extern“: every signed-in user's mail app marks and asks with it. */
+  app.get("/external-hint", async (c) => {
+    const hint = await externalHint(c.req.raw);
+    return hint ? c.json(hint) : c.json({ error: "Nicht angemeldet" }, 401);
+  });
 
   /** Pflichtangaben: every signed-in user's composer puts them under the mail it sends. */
   app.get("/legal-footer", async (c) => {
@@ -47,6 +55,7 @@ export const createCompanyRoutes = (deps: CompanyDeps) => {
   app.route("/employees", employeeRoutes(deps));
   app.route("/mailboxes", mailboxRoutes(deps));
   app.route("/signature", signatureRoutes(deps));
+  app.route("/external-hint", externalHintRoutes(deps));
   app.route("/legal-footer", legalFooterRoutes(deps));
   app.get("/chat-retention", async (c) =>
     c.json({ days: (await deps.chatRetention?.days()) ?? 0 }),

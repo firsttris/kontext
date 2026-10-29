@@ -191,3 +191,18 @@ export const longPress = async (target: Locator) => {
   await element.dispatchEvent("pointerup", finger);
   await element.dispose();
 };
+
+/**
+ * Hinweis „Extern“ switched on for this page only: the app's read of the setting is answered here
+ * (the server's own domains and partners kept unless `change` names others). Switching it on at
+ * the server would reach the tests running beside this one, which send to outside addresses.
+ */
+export const externalHintOn = (
+  page: Page,
+  change: { partners?: string[]; domains?: string[] } = {},
+) =>
+  page.route("**/api/company/external-hint", async (route) => {
+    if (route.request().method() !== "GET") return route.fallback();
+    const real = (await (await route.fetch()).json()) as { partners: string[]; domains: string[] };
+    await route.fulfill({ json: { ...real, ...change, enabled: true } });
+  });

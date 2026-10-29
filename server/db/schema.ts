@@ -74,6 +74,15 @@ export const companySetting = sqliteTable("company_setting", {
   updatedAt: integer("updated_at", { mode: "timestamp_ms" }).notNull(),
 });
 
+/**
+ * A partner's mail domain: its addresses count as inside the company for the hint „Extern“
+ * (server/company/external-hint.ts). One row per domain; the switch is a company_setting.
+ */
+export const partnerDomain = sqliteTable("partner_domain", {
+  domain: text("domain").primaryKey(),
+  createdAt: integer("created_at", { mode: "timestamp_ms" }).notNull(),
+});
+
 /** What a person entered for the company signature: [Telefon], [Mobil] … (server/company/signature.ts). */
 export const signatureDetail = sqliteTable("signature_detail", {
   memberId: text("member_id").primaryKey(),

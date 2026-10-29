@@ -20,6 +20,7 @@ export const settingsSections = [
   "company-legal",
   "company-chat",
   "company-security",
+  "company-external",
   "company-backup",
   "phone",
   "migration",

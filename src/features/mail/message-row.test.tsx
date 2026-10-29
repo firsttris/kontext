@@ -26,6 +26,8 @@ vi.mock("@tanstack/react-router", () => ({
 }));
 vi.mock("@/components/use-media-query", () => ({ useMediaQuery: () => false }));
 vi.mock("../categories/queries", () => ({ useCategoryMap: () => ({}) }));
+const hint = vi.hoisted(() => ({ inside: null as string[] | null }));
+vi.mock("@/features/company/external-hint", () => ({ useInsideDomains: () => hint.inside }));
 vi.mock("../tasks/queries", () => ({ useTasks: () => ({ tasks: [] }) }));
 vi.mock("./opened-mails", () => ({
   useShownSubject: (email: { subject: string | null }) => email.subject,
@@ -148,5 +150,28 @@ describe("MessageRow swiped on the phone", () => {
     await act(async () => undefined);
     expect(actions.setSeen).toHaveBeenCalledOnce();
     expect(actions.setSeen.mock.calls[0]).toEqual(["a1", ["e0"], true]);
+  });
+});
+
+describe("MessageRow from outside the company", () => {
+  afterEach(() => {
+    hint.inside = null;
+  });
+  const outside = { ...mail(), from: [{ name: "Kunde", email: "kunde@example.test" }] };
+
+  it("carries the mark „Extern“ while the hint is on", () => {
+    hint.inside = ["weber-haustechnik.test"];
+    render(<Row email={outside} />);
+    expect(screen.getByText("Extern")).toBeTruthy();
+  });
+
+  it("has no mark for colleagues, nor while the hint is off", () => {
+    hint.inside = ["weber-haustechnik.test"];
+    render(<Row email={mail()} />);
+    expect(screen.queryByText("Extern")).toBeNull();
+    cleanup();
+    hint.inside = null;
+    render(<Row email={outside} />);
+    expect(screen.queryByText("Extern")).toBeNull();
   });
 });
