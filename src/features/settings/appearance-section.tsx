@@ -1,6 +1,6 @@
 /**
  * Per device: light or dark, the language, the apps in the phone's tab bar, the mail list as single mails or
- * conversations, Kontext as an app, notifications; and the keyboard shortcuts for reference.
+ * conversations, what swiping a mail does, Kontext as an app, notifications; and the keyboard shortcuts for reference.
  */
 import { Monitor, Moon, Sun } from "lucide-react";
 import { useId } from "react";
@@ -18,6 +18,7 @@ import { DeviceSwitch } from "../notifications/device-switch";
 import { AppSection } from "./app-section";
 import { LanguageCard } from "./language-card";
 import { SettingsCard } from "./settings-page";
+import { SwipeCard } from "./swipe-card";
 import { TabBarSection } from "./tab-bar-section";
 
 const CHOICES: [ThemeChoice, () => string, typeof Sun][] = [
@@ -85,6 +86,7 @@ export const AppearanceSection = () => {
         </div>
         <p className="m-0 mt-1 text-[12px] text-muted">{m.settings_undo_hint()}</p>
       </SettingsCard>
+      <SwipeCard />
       <SettingsCard title={m.notifications_title()}>
         <DeviceSwitch />
       </SettingsCard>

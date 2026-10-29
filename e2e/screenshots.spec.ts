@@ -198,6 +198,38 @@ test.describe("Screenshots @screenshots", () => {
     await context.close();
   });
 
+  test("Wischen am Handy", async ({ browser }) => {
+    const context = await browser.newContext({
+      viewport: { width: 390, height: 844 },
+      deviceScaleFactor: 2,
+      isMobile: true,
+      hasTouch: true,
+      locale: "de-DE",
+      timezoneId: "Europe/Berlin",
+    });
+    const page = await context.newPage();
+    await login(page);
+    const line = page.getByRole("link", { name: /Angebot Wartungsvertrag 2027/ });
+    await expect(line).toBeVisible();
+    const at = (await line.boundingBox())!;
+    const y = at.y + at.height / 2;
+    const x = at.x + at.width - 40;
+    // A finger halfway through a swipe to the left: held there for the picture, then let go of
+    // as a cancel, so the mail stays.
+    const cdp = await context.newCDPSession(page);
+    await cdp.send("Input.dispatchTouchEvent", { type: "touchStart", touchPoints: [{ x, y }] });
+    for (let step = 1; step <= 8; step++) {
+      await cdp.send("Input.dispatchTouchEvent", {
+        type: "touchMove",
+        touchPoints: [{ x: x - step * 20, y }],
+      });
+    }
+    await expect(page.locator("[data-swipe=archive]")).toBeVisible();
+    await shot(page, "phone-swipe");
+    await cdp.send("Input.dispatchTouchEvent", { type: "touchCancel", touchPoints: [] });
+    await context.close();
+  });
+
   test("Verfügbarkeit, Vertraulich, Firma", async ({ browser }) => {
     const context = await browser.newContext({
       viewport: { width: 1440, height: 900 },

@@ -7,6 +7,9 @@ Steps that an update needs beyond raising the version are marked **Upgrade**.
 
 ## Unreleased
 
+- Mail on the phone: swipe a mail in the list to the left to archive it, to the right to mark it
+  read or unread. What each direction does (archive, delete, read/unread, flag or nothing) is set
+  per device under *Einstellungen → Darstellung → Wischen in der Mail-Liste*.
 - Calendar: "Dieser und alle folgenden" beside "Nur dieser Termin" and "Alle Termine der Serie",
   for changing and for deleting. The series so far ends before the date; when changing, a new
   series with the changes starts there (a series of so many dates keeps its number in all).

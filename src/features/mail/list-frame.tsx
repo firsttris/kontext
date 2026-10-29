@@ -20,6 +20,7 @@ import { MessageRow } from "./message-row";
 import { useMailAccounts } from "./queries";
 import { SearchBox, type SearchBoxHandle } from "./search-box";
 import { SelectionBar } from "./selection-bar";
+import { useSwipeAction } from "./swipe-action";
 import { useThreadView } from "./thread-view";
 import { useThreadInfo } from "./use-thread-info";
 
@@ -115,6 +116,7 @@ export const ListFrame = ({
   const routeAccount = useParams({ strict: false }).accountId ?? "";
   const accountOf = (row: Row) => row.account?.id ?? routeAccount;
   const grouped = useThreadView();
+  const swipe = useSwipeAction(folderId);
   const { answers, groups } = useThreadInfo(rows, accountOf, grouped);
   const personal = new Set(
     useMailAccounts()
@@ -305,6 +307,14 @@ export const ListFrame = ({
                     answer={answers.get(pickKey(accountOf(row), row.email.id))}
                     group={groups.get(pickKey(accountOf(row), row.email.id))}
                     shared={!personal.has(accountOf(row))}
+                    onSwipe={(action) =>
+                      swipe(
+                        accountOf(row),
+                        row.email,
+                        action,
+                        groups.get(pickKey(accountOf(row), row.email.id)),
+                      )
+                    }
                   />
                 </li>
               );

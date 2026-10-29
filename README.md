@@ -47,8 +47,8 @@ of your own.
   and calls – a small CRM without another tool.
 - **One app instead of five**: mail, calendar, tasks, team chat with video calls, the office phone
   and documents, with one sign-in.
-- **Built for the phone too**: every view works on the phone, and it installs as an app without an
-  app store.
+- **Built for the phone too**: every view works on the phone, swipe a mail to archive it, and it
+  installs as an app without an app store.
 - **AI if you want it**: Claude and other assistants find customers, mails and appointments for you
   and write drafts – they never send or delete anything.
 - **Open, no lock-in**: open source (AGPL) and standard protocols, so Outlook, Thunderbird, iPhone
