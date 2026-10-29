@@ -7,6 +7,13 @@ Steps that an update needs beyond raising the version are marked **Upgrade**.
 
 ## Unreleased
 
+- Mail: import .eml files into a folder – with the button beside the "Alle / Ungelesen" filter
+  (several files at once), or by dropping them onto the list or onto a folder in the sidebar. Each
+  file is uploaded as a blob and imported with JMAP `Email/import` into that folder, marked read,
+  with `receivedAt` taken from its Date header (Stalwart otherwise takes the newest Received
+  header). A notice says how many went in and names each file that did not, with the reason.
+  Outlook's .msg and whole .mbox mailboxes are not supported and say so; whole mailboxes move with
+  the Umzug.
 - Calendar: "Geburtstage" – the contacts' birthdays (JSContact `anniversaries` of kind "birth")
   from every address book you can see, as all-day entries in day, week, month and list, with the
   age when the year is known ("Petra Keller (52)"). A click opens the contact. Worked out in the
