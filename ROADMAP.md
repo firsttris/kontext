@@ -28,7 +28,6 @@ Kleinere und mittlere Funktionen, sortiert nach Nutzen: oben, was fast jedem Bet
 | # | Funktion | Worum es geht |
 | --- | --- | --- |
 | 6 | **Mails zuweisen** | In info@ eine Mail einer Person zuweisen und als erledigt markieren, Filter „Mir zugewiesen“ und „Offen“. |
-| 8 | **Bilder in der Mail** | Bilder in den Text einfügen (Einfügen, Ziehen) und in der Größe ändern; Tabellen, Schriftgröße und Farben gibt es schon. |
 
 **Spürbarer Nutzen**
 

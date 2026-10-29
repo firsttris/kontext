@@ -6,7 +6,8 @@
 import { replyReferences } from "./references";
 
 export type MimeAddress = { name: string | null; email: string };
-export type MimeAttachment = { name: string; type: string; bytes: Uint8Array };
+/** A file; with a Content-ID it is an image the HTML shows (`cid:`), not one to download. */
+export type MimeAttachment = { name: string; type: string; bytes: Uint8Array; cid?: string };
 
 const encoder = new TextEncoder();
 
@@ -91,17 +92,38 @@ export const attachmentPart = (file: MimeAttachment) =>
     lines(base64(file.bytes)),
   ].join("\r\n");
 
-/** The content of a mail: text and HTML as alternatives, attachments after. */
+/** An image the HTML shows, by its Content-ID (RFC 2392). */
+export const inlinePart = (file: MimeAttachment & { cid: string }) =>
+  [
+    `Content-Type: ${file.type || "application/octet-stream"}; ${fileName(file.name)}`,
+    "Content-Transfer-Encoding: base64",
+    `Content-ID: <${file.cid}>`,
+    `Content-Disposition: inline; ${fileName(file.name).replace(/^name/, "filename")}`,
+    "",
+    lines(base64(file.bytes)),
+  ].join("\r\n");
+
+/**
+ * The content of a mail: text and HTML as alternatives, the HTML with its images in
+ * multipart/related (RFC 2387), the other attachments after.
+ */
 export const contentPart = (
   { text, html, attachments }: { text: string; html: string; attachments: MimeAttachment[] },
   id: string,
 ): string => {
+  const images = attachments.filter((file): file is MimeAttachment & { cid: string } =>
+    Boolean(file.cid),
+  );
+  const files = attachments.filter((file) => !file.cid);
+  const htmlPart = textPart("text/html", html);
   const alternative = multipart("alternative", `alt-${id}`, [
     textPart("text/plain", text),
-    textPart("text/html", html),
+    images.length
+      ? multipart("related", `rel-${id}`, [htmlPart, ...images.map(inlinePart)])
+      : htmlPart,
   ]);
-  if (!attachments.length) return alternative;
-  return multipart("mixed", `mix-${id}`, [alternative, ...attachments.map(attachmentPart)]);
+  if (!files.length) return alternative;
+  return multipart("mixed", `mix-${id}`, [alternative, ...files.map(attachmentPart)]);
 };
 
 /** The subject an encrypted mail shows outside: the real one is inside (Protected Headers). */

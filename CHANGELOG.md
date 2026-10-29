@@ -12,6 +12,10 @@ Steps that an update needs beyond raising the version are marked **Upgrade**.
   all back with "Alles entziehen"; only seeing your free and busy times stays when every
   colleague sees them. Folders, sending in your name and further sharing stay with you. A mailbox
   shared this way (or handed over) is now labelled "Postfach von …".
+- Mail: pictures in the text – by the "Bild einfügen" button, pasted (a screenshot) or dropped
+  in, and resized by their corners. They go out as inline images (`cid:` in multipart/related),
+  so Outlook, Gmail and Apple Mail show them in the text; drafts keep them. Files of a reopened
+  draft now stay with it when it is saved more than once.
 - Calendar: a default reminder per calendar – in *Kalender verwalten* the bell next to a calendar
   sets the reminder new appointments in it get, one for appointments with a time and one for
   all-day ones. Kept per person in Stalwart (`defaultAlertsWithTime`,

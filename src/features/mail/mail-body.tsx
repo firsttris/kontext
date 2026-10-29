@@ -5,7 +5,6 @@
  */
 import { Ellipsis } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useClient } from "@/auth/auth";
 import { useTheme } from "@/components/theme/use-theme";
 import { displayBody } from "@/jmap/mail";
 import type { EmailDetail } from "@/jmap/types";
@@ -13,47 +12,11 @@ import { splitQuote, splitTextQuote } from "@/lib/conversation";
 import { findContact } from "@/lib/correspondent";
 import { mailDocument, sanitizeMailHtml, textToHtml } from "@/lib/html";
 import { imageState } from "@/lib/remote-images";
-import { imageUrl, releaseImageUrl } from "@/lib/safe-blob";
 import { m } from "@/paraglide/messages";
 import { trusts } from "../../../server/images/senders";
 import { useContacts } from "../contacts/queries";
 import { ImagesLine, useImageSenders } from "./image-senders";
-
-/** Object URLs for the inline images of a mail, keyed by Content-ID. */
-const useInlineImages = (accountId: string, email: EmailDetail): Record<string, string> => {
-  const client = useClient();
-  const [urls, setUrls] = useState<Record<string, string>>({});
-  useEffect(() => {
-    const inline = [...email.attachments, ...email.htmlBody].filter(
-      (part) => part.cid && part.blobId,
-    );
-    if (inline.length === 0) return;
-    let cancelled = false;
-    const created: string[] = [];
-    void Promise.all(
-      inline.map(async (part) => {
-        const blob = await client.download(accountId, part.blobId!, part.name ?? "bild", part.type);
-        // Only images get a URL, and none a tab could run as a page (safe-blob.ts).
-        const url = await imageUrl(blob);
-        if (url) created.push(url);
-        return [part.cid!.replace(/^<|>$/g, ""), url] as const;
-      }),
-    ).then((entries) => {
-      if (cancelled) for (const url of created) releaseImageUrl(url);
-      else
-        setUrls(
-          Object.fromEntries(
-            entries.filter((entry): entry is readonly [string, string] => entry[1] !== null),
-          ),
-        );
-    });
-    return () => {
-      cancelled = true;
-      for (const url of created) releaseImageUrl(url);
-    };
-  }, [client, accountId, email]);
-  return urls;
-};
+import { useInlineImages } from "./inline-image-urls";
 
 export const MailBody = ({ accountId, email }: { accountId: string; email: EmailDetail }) => {
   const dark = useTheme().theme === "dark";
