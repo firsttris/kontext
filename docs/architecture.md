@@ -150,7 +150,8 @@ Ein Zustellbericht (DSN) kommt vom Mailserver, nicht vom Empfänger (`src/lib/en
 - **Sehen:** Ob eine gesendete Mail einen Bericht angefordert hat, steht in ihrer
   `EmailSubmission` (`EmailSubmission/query` mit `emailIds`). Gesucht wird nach Mails ab dem
   Senden mit ihrem Betreff (Stalwart indiziert die zurückgegebenen Kopfzeilen, nicht den
-  Statusteil); behalten wird, was ein `multipart/report; report-type=delivery-status` ist und
+  Statusteil), seitenweise zu 50 bis zu 1000 Mails – ein Fehlerbericht kann Tage später kommen,
+  nach vielen Mails mit denselben Wörtern; behalten wird, was ein `multipart/report; report-type=delivery-status` ist und
   dessen `Original-Envelope-Id` passt. Ein Bericht selbst zeigt oben seinen
   `message/delivery-status`-Teil (RFC 3464) lesbar: je Empfänger zugestellt, nicht zugestellt,
   verzögert oder ohne Bestätigung weitergereicht, die Zeit und den `Diagnostic-Code`; der Teil

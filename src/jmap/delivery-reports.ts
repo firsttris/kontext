@@ -71,24 +71,31 @@ type Candidate = {
   bodyStructure: BodyStructure | null;
 };
 
+/** Mails per search page. */
+const PAGE = 50;
 /**
- * The reports on a sent mail: mails after it that carry its subject (Stalwart indexes the
- * returned headers, not the status part) and are reports with its envelope id.
+ * How many pages a search by subject reads at most (1000 mails that mention it); without a
+ * subject only the first, since every mail after the send would match.
  */
-export const reportsFor = async (
+const MAX_PAGES = 20;
+
+/** One page of the mails found: when each came, its Content-Type and its parts. */
+const candidatePage = async (
   client: JmapClient,
   accountId: string,
-  { reportId, subject, sentAt }: { reportId: string; subject: string; sentAt: string },
-): Promise<ReceivedReport[]> => {
-  // A minute early: the report may carry the same second as the mail.
-  const after = new Date(Date.parse(sentAt) - 60_000).toISOString().replace(/\.\d+Z$/, "Z");
-  const filter = subject
-    ? { operator: "AND", conditions: [{ after }, { text: subject }] }
-    : { after };
+  filter: Record<string, unknown>,
+  position: number,
+): Promise<Candidate[]> => {
   const [, got] = await client.request([
     [
       "Email/query",
-      { accountId, filter, sort: [{ property: "receivedAt", isAscending: true }], limit: 50 },
+      {
+        accountId,
+        filter,
+        sort: [{ property: "receivedAt", isAscending: true }],
+        position,
+        limit: PAGE,
+      },
       "q",
     ],
     [
@@ -102,9 +109,44 @@ export const reportsFor = async (
       "g",
     ],
   ]);
-  const candidates = ((got![1] as { list?: Candidate[] }).list ?? []).filter((mail) =>
-    isDeliveryReport(mail["header:Content-Type"]),
-  );
+  return (got![1] as { list?: Candidate[] }).list ?? [];
+};
+
+/** The reports among the mails the search finds, page by page, up to `pages` pages. */
+const reportCandidates = async (
+  client: JmapClient,
+  accountId: string,
+  filter: Record<string, unknown>,
+  pages: number,
+  position = 0,
+): Promise<Candidate[]> => {
+  const page = await candidatePage(client, accountId, filter, position);
+  const reports = page.filter((mail) => isDeliveryReport(mail["header:Content-Type"]));
+  return page.length < PAGE || pages <= 1
+    ? reports
+    : [
+        ...reports,
+        ...(await reportCandidates(client, accountId, filter, pages - 1, position + PAGE)),
+      ];
+};
+
+/**
+ * The reports on a sent mail: mails after it that carry its subject (Stalwart indexes the
+ * returned headers, not the status part) and are reports with its envelope id. A report can come
+ * days later (a failure after the retries), after many mails with the same words, so the search
+ * reads on past its first page.
+ */
+export const reportsFor = async (
+  client: JmapClient,
+  accountId: string,
+  { reportId, subject, sentAt }: { reportId: string; subject: string; sentAt: string },
+): Promise<ReceivedReport[]> => {
+  // A minute early: the report may carry the same second as the mail.
+  const after = new Date(Date.parse(sentAt) - 60_000).toISOString().replace(/\.\d+Z$/, "Z");
+  const filter = subject
+    ? { operator: "AND", conditions: [{ after }, { text: subject }] }
+    : { after };
+  const candidates = await reportCandidates(client, accountId, filter, subject ? MAX_PAGES : 1);
   const read = await Promise.all(
     candidates.map(async (mail) => {
       const report = await readDeliveryReport(client, accountId, mail.bodyStructure);
