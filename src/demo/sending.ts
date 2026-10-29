@@ -25,7 +25,7 @@ export type Submission = {
   undoStatus: "pending" | "final" | "canceled";
 };
 
-/** The other accounts' copies: unread in their inboxes. */
+/** The other accounts' copies: unread in their inboxes, without the Bcc line (RFC 5322 §3.6.3). */
 const deliverInside = (store: Store, sent: StoredEmail) => {
   const recipients = ["to", "cc", "bcc"].flatMap(
     (field) => (sent[field] as { email: string }[] | null) ?? [],
@@ -44,6 +44,7 @@ const deliverInside = (store: Store, sent: StoredEmail) => {
       ...sent,
       id,
       accountId,
+      bcc: null,
       threadId: `thread-${id}`,
       mailboxIds: { [inbox.id]: true },
       keywords: {},
