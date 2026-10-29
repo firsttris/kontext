@@ -38,6 +38,10 @@ describe("public holidays", () => {
     expect(holidays(2026, "HH")).toHaveLength(10);
   });
 
+  it("keeps Easter and Whit Sunday in Hesse, as § 1 HFeiertagsG names them", () => {
+    expect(names(2026, "HE")).toEqual(expect.arrayContaining(["Ostersonntag", "Pfingstsonntag"]));
+  });
+
   it("puts Buß- und Bettag on the Wednesday before 23 November", () => {
     const day = (year: number) =>
       holidays(year, "SN").find((h) => h.name === "Buß- und Bettag")?.day;
