@@ -1557,7 +1557,8 @@ ohne Jahr (aus einer vCard mit `BDAY:--0504` kommt keins) oder ein `Timestamp`, 
 UTC zählt. Ist das Jahr bekannt, steht das Alter, das die Person an dem Tag wird, hinter dem
 Namen („Petra Keller (52)“), und vor dem Geburtsjahr erscheint nichts; ohne Jahr nur der Name.
 Wer am 29. Februar Geburtstag hat, steht in Jahren ohne diesen Tag am 28. Februar. Steht dieselbe
-Person in zwei Adressbüchern, erscheint sie einmal (gleicher Name am gleichen Tag).
+Person in zwei Adressbüchern, erscheint sie einmal (gleicher Name am gleichen Tag, Groß- und
+Kleinschreibung und Leerzeichen zählen nicht).
 
 Warum kein Kalender auf dem Server: Ein angelegter Kalender müsste jedes Mal nachgezogen werden,
 wenn sich ein Kontakt ändert, und wäre je Konto ein Stapel Termine mehr. Im Browser ist er immer

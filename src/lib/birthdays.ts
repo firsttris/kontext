@@ -76,9 +76,14 @@ const birthdaysOf = (
     .map(({ day, age }) => (age > 0 ? { day, name, age, contact } : { day, name, contact }));
 };
 
+/** The name as a person reads it: copies typed with other case or spaces are the same name. */
+const sameNameKey = (name: string): string =>
+  name.trim().replace(/\s+/g, " ").toLocaleLowerCase("de");
+
 /**
  * The birthdays of the cards from `from` to `to` (inclusive), by day and name. A person in two
- * address books (their own and a shared one) is shown once: same name on the same day.
+ * address books (their own and a shared one) is shown once: same name on the same day, whatever
+ * the case and spaces.
  */
 export const birthdaysBetween = (
   cards: (ContactCard & { accountId: string })[],
@@ -89,7 +94,7 @@ export const birthdaysBetween = (
   return cards
     .flatMap((card) => birthdaysOf(card, from, to))
     .filter((birthday) => {
-      const key = `${birthday.day} ${birthday.name}`;
+      const key = `${birthday.day} ${sameNameKey(birthday.name)}`;
       if (seen.has(key)) return false;
       seen.add(key);
       return true;
