@@ -33,6 +33,14 @@ export const legalFooterHtml = (footer: string): string => {
   return `<div data-legal-footer="" style="margin-top:24px;padding-top:8px;border-top:1px solid #d4d4d8;color:#71717a;font-size:12px;line-height:1.5">${paragraphs}</div>`;
 };
 
+/**
+ * A mail's HTML without the footer `legalFooterHtml` put there: a mail taken back with
+ * „Rückgängig“ (or left over from a failed send) opens as a draft, and the footer goes on again
+ * when it is sent. The footer holds only paragraphs, so its block ends at the first `</div>`.
+ */
+export const withoutLegalFooter = (html: string): string =>
+  html.replace(/<div\b[^>]*\bdata-legal-footer\b[^>]*>[\s\S]*?<\/div>/gi, "");
+
 export type MailBody = { html: string; text: string };
 
 /** The body with the footer at its very end (below a quoted original too); unchanged without one. */

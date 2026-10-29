@@ -96,7 +96,8 @@ IMAP und SMTP.
 - **Pflichtangaben:** Hat die Firmenverwaltung sie eingetragen ([Firmenverwaltung](company.md)),
   stehen sie beim Schreiben grau unter dem Text – zu sehen, aber nicht änderbar. Kontext hängt
   sie erst beim Senden an, ganz unten (auch unter dem Zitat), im HTML- und im Textteil; Entwürfe
-  enthalten sie nie, so stehen sie auch nach dem Öffnen eines Entwurfs nicht doppelt da.
+  enthalten sie nie, so stehen sie auch nach dem Öffnen eines Entwurfs oder nach „Rückgängig“
+  nicht doppelt da.
 
   ![Neue Mail, darunter grau die Pflichtangaben der Firma](screenshots/legal-footer.png)
 

@@ -246,7 +246,9 @@ mit einem eigenen API-Schlüssel an und erlaubt nur, was die Firmenverwaltung br
   (`PUT`). Die App hängt ihn erst beim Senden an (`src/lib/legal-footer.ts`: HTML maskiert,
   Textteil mit Leerzeile) – an die normale, die verschlüsselte und signierte Mail und an die Mail
   mit dem Link von „Vertraulich senden“; das Autosave und „Als Entwurf speichern“ nehmen den Text
-  ohne ihn, so steht er nach dem erneuten Öffnen eines Entwurfs nicht doppelt da. Angehängt wird
+  ohne ihn, so steht er nach dem erneuten Öffnen eines Entwurfs nicht doppelt da. Eine mit
+  „Rückgängig“ zurückgeholte Mail wurde mit ihm gesendet; beim Öffnen als Entwurf nimmt der
+  Composer ihn heraus (`withoutLegalFooter`, am Block `data-legal-footer`). Angehängt wird
   er von der App, nicht vom Mailserver; darum gilt er nur für Mails aus Kontext.
 - **Austritt:** Zugang sperren, das Postfach einer Kollegin übergeben (alle Ordner per
   `shareWith` mit allen Rechten außer Teilen), neue Mails weiterleiten und einmal am Tag

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { legalFooterHtml, normalFooter, withLegalFooter } from "./legal-footer";
+import { legalFooterHtml, normalFooter, withLegalFooter, withoutLegalFooter } from "./legal-footer";
 
 const FOOTER = "Weber Haustechnik GmbH · Sitz Freiburg\nAmtsgericht Freiburg HRB 1234";
 
@@ -41,5 +41,19 @@ describe("withLegalFooter", () => {
 
   it("gives an empty text the footer alone", () => {
     expect(withLegalFooter({ html: "", text: "" }, FOOTER).text).toBe(FOOTER);
+  });
+});
+
+describe("withoutLegalFooter", () => {
+  it("takes the footer out of a mail sent with it, and nothing else", () => {
+    const sent = withLegalFooter({ html: "<p>Hallo</p><div>Gruß</div>", text: "" }, FOOTER);
+    expect(withoutLegalFooter(sent.html)).toBe("<p>Hallo</p><div>Gruß</div>");
+  });
+
+  it("finds it with the attributes in another order and leaves a mail without one alone", () => {
+    expect(withoutLegalFooter('<p>A</p><div style="x" data-legal-footer=""><p>B</p></div>')).toBe(
+      "<p>A</p>",
+    );
+    expect(withoutLegalFooter("<p>A</p><div>B</div>")).toBe("<p>A</p><div>B</div>");
   });
 });

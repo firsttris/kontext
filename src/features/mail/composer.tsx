@@ -25,7 +25,7 @@ import { type ComposeMode, sharedSenderName, startCompose } from "@/lib/compose"
 import { savedBlobs, withSavedBlob } from "@/lib/draft-blobs";
 import { htmlToText, sanitizeMailHtml, textToHtml } from "@/lib/html";
 import { markCids } from "@/lib/inline-images";
-import { withLegalFooter } from "@/lib/legal-footer";
+import { withLegalFooter, withoutLegalFooter } from "@/lib/legal-footer";
 import { findRole } from "@/lib/mailboxes";
 import { pgpKind } from "@/lib/pgp-mail";
 import { holdUntil, sendTimeLabel } from "@/lib/schedule";
@@ -204,8 +204,9 @@ export const Composer = ({ accountId, mode, sourceEmailId, prefill }: Props) => 
           toast.show(m.mail_forward_encrypted_closed());
         }
       } else if (mode === "draft" && body.kind === "html") {
-        // A draft keeps its pictures: shown from local URLs, marked with their Content-ID.
-        originalHtml = sanitizeMailHtml(markCids(body.value), {
+        // A draft keeps its pictures: shown from local URLs, marked with their Content-ID. A mail
+        // taken back was sent with the Pflichtangaben; they go on again when it is sent.
+        originalHtml = sanitizeMailHtml(markCids(withoutLegalFooter(body.value)), {
           allowRemote: false,
           cidUrls: draftImages.urls,
         }).html;
