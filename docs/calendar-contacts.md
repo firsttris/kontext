@@ -118,7 +118,8 @@ Kontext steht, steht auch am iPhone, unter Android (DAVx⁵) und in Thunderbird.
 - **Mehrere Kontakte auf einmal:** Das Kästchen vor einem Kontakt wählt ihn aus, mit Umschalt
   alle bis dorthin, mit Strg/⌘ einzelne dazu; am Handy beginnt „Auswählen“ oder langes Drücken
   die Auswahl, dann wählt ein Tipp. Über der Liste stehen dann „Zu Gruppe hinzufügen“, „Als vCard
-  exportieren“ (eine Datei `Kontakte.vcf`) und „Löschen“ (eine Frage mit der Anzahl). Gruppen
+  exportieren“ (eine Datei `Kontakte.vcf`) und „Löschen“ (eine Frage mit der Anzahl; nicht, wenn
+  ein Kontakt aus einem nur zum Lesen geteilten Adressbuch dabei ist). Gruppen
   bietet Kontext an, wenn alle ausgewählten Kontakte im selben Konto liegen wie die Gruppe und
   man sie ändern darf: Mitglieder nennt eine Gruppe über die `uid` der Karte, und die gilt nur
   innerhalb eines Kontos (RFC 9553).

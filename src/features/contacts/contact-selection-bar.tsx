@@ -62,7 +62,10 @@ export const ContactSelectionBar = ({
   const { update, removeMany } = useContactMutations();
   const toast = useToast();
   const none = picked.length === 0;
-  const targets = groupTargets(picked, cards, (group) => Boolean(bookOf(books, group)?.mayWrite));
+  const writable = (card: Contact) => Boolean(bookOf(books, card)?.mayWrite);
+  const targets = groupTargets(picked, cards, writable);
+  // As in the contact's pane (contact-detail.tsx): nothing is deleted from a read-only book.
+  const mayDelete = picked.every(writable);
   const failed = (error: unknown) =>
     toast.show(m.common_error({ message: (error as Error).message }), "error");
 
@@ -145,7 +148,7 @@ export const ContactSelectionBar = ({
       </IconButton>
       <IconButton
         label={m.contacts_bulk_delete()}
-        disabled={none || removeMany.isPending}
+        disabled={none || !mayDelete || removeMany.isPending}
         onClick={() => void remove()}
       >
         <Trash2 size={15} strokeWidth={1.75} />
