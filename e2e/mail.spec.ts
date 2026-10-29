@@ -12,6 +12,35 @@ import {
 } from "./helpers";
 import { deliverMail } from "./protocols";
 
+/** The subjects of the mails attached (message/rfc822) to a user's mail with this subject. */
+const attachedMails = async (user: string, subject: string): Promise<string[]> => {
+  const client = jmapAs(user);
+  const accountId = await personalAccountId(user);
+  const [, got] = await client.request([
+    ["Email/query", { accountId, filter: { subject } }, "q"],
+    [
+      "Email/get",
+      {
+        accountId,
+        "#ids": { resultOf: "q", name: "Email/query", path: "/ids" },
+        properties: ["attachments"],
+        bodyProperties: ["blobId", "type"],
+      },
+      "g",
+    ],
+  ]);
+  const mail = (got![1].list as { attachments: { blobId: string; type: string }[] }[])[0];
+  const blobIds = (mail?.attachments ?? [])
+    .filter((part) => part.type === "message/rfc822")
+    .map((part) => part.blobId);
+  if (!blobIds.length) return [];
+  const { parsed } = await client.call<{ parsed: Record<string, { subject: string }> }>(
+    "Email/parse",
+    { accountId, blobIds, properties: ["subject"] },
+  );
+  return blobIds.map((id) => parsed[id]?.subject ?? "");
+};
+
 test.describe("Anmeldung", () => {
   test("lehnt ein falsches Passwort ab", async ({ page }) => {
     await page.goto("/mail");
@@ -266,6 +295,42 @@ test.describe("Mail", () => {
     await expect
       .poll(() => inboxSubjects("anna"))
       .toContain("Re: Weihnachtsessen – wer ist dabei?");
+  });
+
+  test("leitet eine Mail als Anhang (.eml) an Anna weiter", async ({ page }) => {
+    const original = "Angebot Wartungsvertrag 2027";
+    await page.getByRole("list", { name: "Posteingang" }).getByText(original).click();
+    await page.getByRole("button", { name: "Weitere Aktionen" }).click();
+    await page.getByRole("menuitem", { name: "Als Anhang weiterleiten" }).click();
+    await expect(page.getByLabel("Betreff")).toHaveValue(`Fwd: ${original}`);
+    await expect(page.getByText(`${original}.eml`)).toBeVisible();
+    await page.getByRole("combobox", { name: "An" }).fill("anna");
+    await page.getByRole("option", { name: /Anna Weber/ }).click();
+    const subject = unique("Zur Ablage");
+    await page.getByLabel("Betreff").fill(subject);
+    await page.getByRole("button", { name: "Senden", exact: true }).click();
+    await expect(page.getByRole("status")).toHaveText("Mail gesendet.");
+    // Anna gets the original whole, as a mail in the mail.
+    await expect.poll(() => attachedMails("anna", subject)).toEqual([original]);
+  });
+
+  test("leitet mehrere gewählte Mails als Anhänge in einer Mail weiter", async ({ page }) => {
+    const subjects = [unique("Beleg A"), unique("Beleg B")];
+    for (const subject of subjects) await addMail("jonas", "jonas", subject);
+    await page.reload();
+    for (const subject of subjects)
+      await page.getByRole("checkbox", { name: `„${subject}“ auswählen` }).click();
+    await page.getByRole("button", { name: "Als Anhang weiterleiten" }).click();
+    for (const subject of subjects) await expect(page.getByText(`${subject}.eml`)).toBeVisible();
+    await page.getByRole("combobox", { name: "An" }).fill("anna");
+    await page.getByRole("option", { name: /Anna Weber/ }).click();
+    const subject = unique("Belege");
+    await page.getByLabel("Betreff").fill(subject);
+    await page.getByRole("button", { name: "Senden", exact: true }).click();
+    await expect(page.getByRole("status")).toHaveText("Mail gesendet.");
+    await expect
+      .poll(async () => (await attachedMails("anna", subject)).sort())
+      .toEqual([...subjects].sort());
   });
 
   test("legt einen Ordner an und verschiebt eine Mail hinein", async ({ page }) => {

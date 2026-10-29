@@ -181,6 +181,22 @@ test.describe("Screenshots @screenshots", () => {
     await shot(page, "forgotten-attachment");
   });
 
+  test("Als Anhang weiterleiten", async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await login(page);
+    const original = "Angebot Wartungsvertrag 2027";
+    await page.getByRole("list", { name: "Posteingang" }).getByText(original).click();
+    await page.getByRole("button", { name: "Weitere Aktionen" }).click();
+    await page.getByRole("menuitem", { name: "Als Anhang weiterleiten" }).click();
+    await page.getByRole("combobox", { name: "An" }).fill("kanzlei@steuerberatung-mueller.test");
+    await page.keyboard.press("Enter");
+    await page
+      .getByRole("textbox", { name: "Ihre Nachricht …" })
+      .fill("Hallo, anbei das Angebot als Mail für die Unterlagen.");
+    await expect(page.getByText(`${original}.eml`)).toBeVisible();
+    await shot(page, "forward-eml");
+  });
+
   test("Erinnerung je Kalender", async ({ page }) => {
     await page.setViewportSize({ width: 1440, height: 900 });
     await login(page);

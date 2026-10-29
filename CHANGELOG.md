@@ -7,6 +7,10 @@ Steps that an update needs beyond raising the version are marked **Upgrade**.
 
 ## Unreleased
 
+- Mail: "Als Anhang weiterleiten" – in a mail's "Weitere Aktionen" menu, and for several picked
+  mails in the selection bar: the original goes whole as `<subject>.eml` (message/rfc822) in a
+  new mail, by the blob Stalwart already holds (JMAP `blobId`), so nothing is downloaded or
+  uploaded. An encrypted mail goes as it came, still encrypted.
 - Mail: pictures in the text – by the "Bild einfügen" button, pasted (a screenshot) or dropped
   in, and resized by their corners. They go out as inline images (`cid:` in multipart/related),
   so Outlook, Gmail and Apple Mail show them in the text; drafts keep them. Files of a reopened

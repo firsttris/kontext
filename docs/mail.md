@@ -41,7 +41,8 @@ IMAP und SMTP.
 - **Ordner und Unterordner**, verschieben per Menü oder Ziehen, auch zwischen info@ und den
   eigenen Ordnern.
 - **Mehrere Mails auf einmal** (Kästchen links an jeder Zeile, Strg-/Shift-Klick, `x`; am Handy
-  lange drücken): archivieren, löschen, gelesen, Kategorie, verschieben, Aufgaben erstellen.
+  lange drücken): archivieren, löschen, gelesen, Kategorie, verschieben, Aufgaben erstellen, als
+  Anhang weiterleiten.
 - **Am Handy wischen:** eine Mail nach links wischen archiviert, nach rechts gelesen/ungelesen;
   je Richtung einstellbar ([Am Handy](app.md#am-handy)).
 - **Spam und Papierkorb leeren:** oben in der Liste der beiden Ordner, nach einer Rückfrage mit
@@ -82,6 +83,16 @@ IMAP und SMTP.
   weitergeleitete Mail, nicht die Signatur und nicht ein übernommener Betreff („AW: …“).
 
   ![Rückfrage „Anhang vergessen?“ beim Senden einer Mail mit „anbei“ ohne Anhang](screenshots/forgotten-attachment.png)
+
+- **Als Anhang weiterleiten:** im Menü „Weitere Aktionen“ einer Mail, oder für mehrere gewählte
+  Mails in der Leiste über der Liste. Das Original geht ganz und unverändert als Datei
+  `<Betreff>.eml` (`message/rfc822`) mit – mit allen Kopfzeilen und Anhängen, etwa für den
+  Steuerberater oder die IT, die die Kopfzeilen prüfen will. Mehrere Mails kommen als mehrere
+  Dateien in eine neue Mail. Kontext nimmt dafür die Rohfassung, die Stalwart von jeder Mail hat
+  (JMAP `blobId`), es wird nichts herunter- und wieder hochgeladen. Eine verschlüsselte Mail geht
+  so weiter, wie sie kam: verschlüsselt, lesen kann sie nur, wer den Schlüssel hat.
+
+  ![„Als Anhang weiterleiten“: neue Mail mit „Fwd: Angebot Wartungsvertrag 2027“ und der Datei „Angebot Wartungsvertrag 2027.eml“](screenshots/forward-eml.png)
 
 - **Senden rückgängig** (5 bis 30 Sekunden) und **später senden** („morgen 8 Uhr“) – der Server
   sendet, auch wenn der Rechner aus ist.

@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import type { JmapClient } from "@/jmap/client";
 import { saveDraft } from "@/jmap/mail";
 import type { EmailDetail } from "@/jmap/types";
-import { sharedSenderName, startCompose } from "./compose";
+import { emlName, sharedSenderName, startCompose, startEmlForward } from "./compose";
 
 const original: EmailDetail = {
   id: "e1",
@@ -132,6 +132,40 @@ describe("startCompose", () => {
   });
   it("starts empty for a new mail", () => {
     expect(startCompose("new", original, "", []).subject).toBe("");
+  });
+});
+
+describe("startEmlForward", () => {
+  it("forwards one mail as its raw message, named after its subject", () => {
+    const start = startEmlForward([{ blobId: "raw1", subject: "Angebot 2027", size: 3172 }]);
+    expect(start).toMatchObject({ to: [], subject: "Fwd: Angebot 2027", html: "" });
+    expect(start.attachments).toEqual([
+      { blobId: "raw1", name: "Angebot 2027.eml", type: "message/rfc822", size: 3172 },
+    ]);
+  });
+  it("puts several mails into one, without a subject", () => {
+    const start = startEmlForward([
+      { blobId: "raw1", subject: "Rechnung 1", size: 10 },
+      { blobId: "raw2", subject: "Rechnung 2", size: 20 },
+    ]);
+    expect(start.subject).toBe("");
+    expect(start.attachments.map((file) => file.name)).toEqual([
+      "Rechnung 1.eml",
+      "Rechnung 2.eml",
+    ]);
+  });
+});
+
+describe("emlName", () => {
+  it("takes out what a file name may not hold", () => {
+    expect(emlName('AW: Angebot <2027> / "Bad"?\tneu')).toBe("AW Angebot 2027 Bad neu.eml");
+  });
+  it("names a mail without subject", () => {
+    expect(emlName(null)).toBe("Nachricht.eml");
+    expect(emlName(" :: ")).toBe("Nachricht.eml");
+  });
+  it("keeps a long subject short", () => {
+    expect(emlName("x".repeat(300))).toBe(`${"x".repeat(100)}.eml`);
   });
 });
 

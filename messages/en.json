@@ -109,6 +109,8 @@
   "mail_reply_to": "Reply to {name} …",
   "mail_reply_all": "Reply all",
   "mail_forward": "Forward",
+  "mail_forward_eml": "Forward as attachment",
+  "mail_eml_unnamed": "message",
   "mail_back": "Back",
   "mail_more": "More actions",
   "mail_from": "From",

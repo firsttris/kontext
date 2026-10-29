@@ -26,10 +26,11 @@ export const UnifiedPage = ({ search }: { search: MailSearch }) => {
       main={
         search.compose && composeAccount ? (
           <Composer
-            key={`${search.compose}-${search.email ?? ""}`}
+            key={`${search.compose}-${search.email ?? search.emails ?? ""}`}
             accountId={composeAccount}
             mode={search.compose}
             sourceEmailId={search.compose === "new" ? undefined : search.email}
+            forwardIds={search.emails?.split(",")}
             prefill={{ to: search.to }}
           />
         ) : reader ? (
