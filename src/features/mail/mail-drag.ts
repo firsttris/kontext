@@ -1,7 +1,8 @@
 /**
  * Drag and drop of mails from the list onto a folder or a mailbox in the sidebar. The drag carries
  * the mail and where it comes from; dropping moves it like "Verschieben nach …" does, also into
- * another mailbox. On a phone there is no dragging, the menu does the same.
+ * another mailbox. On a phone there is no dragging, the menu does the same. Files (.eml) dropped
+ * onto a folder are imported into it (eml-import.tsx).
  */
 import { useNavigate } from "@tanstack/react-router";
 import { type DragEvent, useState } from "react";
@@ -9,6 +10,7 @@ import { useToast } from "@/components/ui/toast";
 import type { EmailSummary } from "@/jmap/types";
 import { m } from "@/paraglide/messages";
 import { useMoveTo } from "./actions";
+import { useEmlImport } from "./eml-import";
 
 const TYPE = "application/x-kontext-mail";
 
@@ -32,6 +34,7 @@ type Target = { accountId: string; mailboxId: string };
  */
 export const useMailDrop = () => {
   const moveTo = useMoveTo();
+  const importEml = useEmlImport();
   const toast = useToast();
   const navigate = useNavigate();
   const [over, setOver] = useState<string | null>(null);
@@ -57,14 +60,21 @@ export const useMailDrop = () => {
     return {
       "data-drop-over": over === key ? "" : undefined,
       onDragOver: (event: DragEvent) => {
-        if (!event.dataTransfer.types.includes(TYPE)) return;
+        const types = event.dataTransfer.types;
+        const isFile = types.includes("Files");
+        if (!types.includes(TYPE) && !isFile) return;
         event.preventDefault();
-        event.dataTransfer.dropEffect = "move";
+        event.dataTransfer.dropEffect = isFile ? "copy" : "move";
         setOver(key);
       },
       onDragLeave: () => setOver((current) => (current === key ? null : current)),
       onDrop: (event: DragEvent) => {
         setOver(null);
+        if (event.dataTransfer.files.length) {
+          event.preventDefault();
+          void importEml(target, [...event.dataTransfer.files]);
+          return;
+        }
         const mail = readMailDrag(event);
         if (!mail) return;
         event.preventDefault();
