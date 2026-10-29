@@ -80,4 +80,53 @@ test.describe("Aufgaben über CalDAV", () => {
     await expect(card).toContainText("/dav/");
     await expect(card).toContainText("Thunderbird");
   });
+
+  test("ein App-Passwort gilt für CalDAV, nicht für die Anmeldung, bis es widerrufen ist", async ({
+    page,
+    playwright,
+  }) => {
+    const name = unique("Thunderbird Büro");
+    await login(page, "max");
+    await page.goto("/settings?section=sync");
+    const card = page.getByRole("region", { name: "App-Passwörter" });
+    await card.getByLabel("Name").fill(name);
+    await card.getByLabel("Dein Passwort").fill(DEV_PASSWORD);
+    await card.getByRole("button", { name: "App-Passwort erstellen" }).click();
+    const password = (await card.getByTestId("app-password").textContent()) ?? "";
+    expect(password).toMatch(/^([a-z2-9]{4}-){4}[a-z2-9]{4}$/);
+    await card.getByRole("button", { name: "Fertig" }).click();
+    await expect(card.getByTestId("app-password")).toHaveCount(0);
+
+    // Thunderbird signs in with it; a wrong one gets nowhere.
+    const dav = await playwright.request.newContext({ baseURL: page.url() });
+    const propfind = (secret: string) =>
+      dav.fetch("/dav/tasks/", {
+        method: "PROPFIND",
+        headers: {
+          authorization: `Basic ${Buffer.from(`${address("max")}:${secret}`).toString("base64")}`,
+          depth: "1",
+        },
+      });
+    const good = await propfind(password);
+    expect(good.status()).toBe(207);
+    expect(await good.text()).toContain("Meine Aufgaben (Kontext)");
+    const wrong = `${password.slice(0, -1)}${password.endsWith("a") ? "b" : "a"}`;
+    expect((await propfind(wrong)).status()).toBe(401);
+    // Not for signing in to Kontext.
+    const signIn = await dav.post("/api/auth/sign-in/stalwart", {
+      data: { email: address("max"), password },
+      headers: { origin: new URL(page.url()).origin },
+    });
+    expect(signIn.status()).toBe(401);
+
+    // Listed with its use; revoked, it stops at once.
+    await page.reload();
+    const row = card.getByRole("listitem").filter({ hasText: name });
+    await expect(row).toContainText("zuletzt benutzt");
+    await row.getByRole("button", { name: "Widerrufen" }).click();
+    await row.getByRole("button", { name: "Ja, weiter" }).click();
+    await expect(card.getByRole("listitem").filter({ hasText: name })).toHaveCount(0);
+    expect((await propfind(password)).status()).toBe(401);
+    await dav.dispose();
+  });
 });

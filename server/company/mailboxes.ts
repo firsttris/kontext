@@ -4,7 +4,6 @@
  */
 import { Hono } from "hono";
 import { z } from "zod";
-import { ruleSchema } from "../rules/script";
 import { aliasesValue, membershipPatches, parseAddress, type Result } from "./accounts";
 import {
   addresses,
@@ -19,6 +18,7 @@ import {
   userOf,
   usersOf,
 } from "./context";
+import { addRulesRoutes } from "./rules-routes";
 import { READ_ONLY, sharePatches } from "./sharing";
 
 const newMailbox = z.object({
@@ -33,9 +33,6 @@ const mailboxPatch = z.object({
   memberIds: ids.optional(),
   readerIds: ids.optional(),
 });
-
-const rulesBody = z.object({ rules: z.array(ruleSchema).max(100) });
-const applyBody = z.object({ rule: ruleSchema });
 
 const knownPeople = (loaded: Loaded, people: string[]) => people.every((id) => userOf(loaded, id));
 
@@ -118,30 +115,7 @@ export const mailboxRoutes = ({
   });
 
   /** The mailbox's rules, run by Stalwart when mail for info@ & co. arrives. */
-  app.get("/:id/rules", async (c) => {
-    const id = c.req.param("id");
-    if (!mailboxOf(c.get("loaded"), id)) return notFound();
-    const [rules, own] = await Promise.all([mailstore.getRules(id), categories.list([id])]);
-    return c.json({ ...rules, categories: own[id] ?? [] });
-  });
-
-  app.put("/:id/rules", async (c) => {
-    const id = c.req.param("id");
-    if (!mailboxOf(c.get("loaded"), id)) return notFound();
-    const body = await bodyOf(c, rulesBody);
-    if (!body) return bad("Angaben unvollständig.");
-    const result = await mailstore.setRules(id, body.rules);
-    return result.ok ? c.json({ ok: true }) : bad(result.error);
-  });
-
-  /** One rule over the mails already in the inbox; how many it changed. */
-  app.post("/:id/rules/apply", async (c) => {
-    const id = c.req.param("id");
-    if (!mailboxOf(c.get("loaded"), id)) return notFound();
-    const body = await bodyOf(c, applyBody);
-    if (!body) return bad("Angaben unvollständig.");
-    return c.json({ changed: await mailstore.applyRules(id, [body.rule]) });
-  });
+  addRulesRoutes(app, { mailstore, categories }, (loaded, id) => Boolean(mailboxOf(loaded, id)));
 
   return app;
 };

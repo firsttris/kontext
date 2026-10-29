@@ -1,5 +1,6 @@
 import { expect, type Page, test } from "@playwright/test";
 import { addAttendees, address, externalHintOn, inboxSubjects, login, unique } from "./helpers";
+import { copySeedMail } from "./own-mails";
 
 const PETRA = "petra.keller@keller-elektro.test";
 
@@ -38,31 +39,39 @@ test.describe("Hinweis „Extern“", () => {
     page,
   }) => {
     await externalHintOn(page, { partners: ["braun-steuer.test"] });
-    await login(page);
-    const list = page.getByRole("list", { name: "Posteingang" });
-    const line = (subject: string) => list.getByRole("link").filter({ hasText: subject });
-    await expect(line("Angebot Wartungsvertrag 2027")).toContainText("Extern");
-    // Kanzlei Braun is a partner, Anna a colleague.
-    const partner = line("Rückfrage Fahrzeugkosten Q3");
-    await expect(partner).toBeVisible();
-    await expect(partner).not.toContainText("Extern");
+    // Copies of the seed's mails, on top of the inbox (own-mails.ts).
+    const offer = await copySeedMail("jonas", "angebot-wartung@keller-elektro.test");
+    const tax = await copySeedMail("jonas", "rueckfrage-steuer@braun-steuer.test");
+    try {
+      await login(page);
+      const list = page.getByRole("list", { name: "Posteingang" });
+      const line = (subject: string) => list.getByRole("link").filter({ hasText: subject });
+      await expect(line(offer.subject)).toContainText("Extern");
+      // Kanzlei Braun is a partner, Anna a colleague.
+      const partner = line(tax.subject);
+      await expect(partner).toBeVisible();
+      await expect(partner).not.toContainText("Extern");
 
-    await line("Angebot Wartungsvertrag 2027").click();
-    await expect(page.locator("article header")).toContainText("Extern");
+      await line(offer.subject).click();
+      await expect(page.locator("article header")).toContainText("Extern");
 
-    // "Anhang vergessen?" first, then the question about outside, one after the other.
-    await write(page, [address("max"), PETRA], unique("Termin"), "Anbei der Plan.");
-    await page
-      .getByRole("dialog", { name: "Anhang vergessen?" })
-      .getByRole("button", { name: "Ohne Anhang senden" })
-      .click();
-    const ask = page.getByRole("dialog", { name: "An externe Empfänger senden?" });
-    await expect(ask).toContainText(PETRA);
-    await expect(ask).not.toContainText(address("max"));
-    await ask.getByRole("button", { name: "Zurück" }).click();
-    await expect(ask).toHaveCount(0);
-    await expect(page.getByRole("button", { name: "Senden", exact: true })).toBeVisible();
-    await expect(page.getByRole("status")).toHaveCount(0);
+      // "Anhang vergessen?" first, then the question about outside, one after the other.
+      await write(page, [address("max"), PETRA], unique("Termin"), "Anbei der Plan.");
+      await page
+        .getByRole("dialog", { name: "Anhang vergessen?" })
+        .getByRole("button", { name: "Ohne Anhang senden" })
+        .click();
+      const ask = page.getByRole("dialog", { name: "An externe Empfänger senden?" });
+      await expect(ask).toContainText(PETRA);
+      await expect(ask).not.toContainText(address("max"));
+      await ask.getByRole("button", { name: "Zurück" }).click();
+      await expect(ask).toHaveCount(0);
+      await expect(page.getByRole("button", { name: "Senden", exact: true })).toBeVisible();
+      await expect(page.getByRole("status")).toHaveCount(0);
+    } finally {
+      await offer.remove();
+      await tax.remove();
+    }
   });
 
   test("sendet nach der Rückfrage, und fragt vor einer Einladung nach außen", async ({ page }) => {

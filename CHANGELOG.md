@@ -12,7 +12,7 @@ Steps that an update needs beyond raising the version are marked **Upgrade**.
   it. Only current CA certificates, at most 100; they count beside Mozilla's list and
   `SMIME_ROOTS`, and earlier trust answers are dropped on a change
   (`/api/company/smime-authorities`, `server/smime/authorities.ts`). **Upgrade:** migration
-  `0042_smime_authorities` adds the table `smime_authorities`; the server applies it at start.
+  `0041_smime_authorities` adds the table `smime_authorities`; the server applies it at start.
 - S/MIME: revocation by CRL where a certificate names no OCSP responder or it gives no usable
   answer: the http(s) CRL Distribution Points (RFC 5280 §4.2.1.13), at most 10 MB and 15 s, public
   hosts only; a list counts only when signed by the issuer under its name, current, and neither
@@ -31,7 +31,7 @@ Steps that an update needs beyond raising the version are marked **Upgrade**.
 - Chat: "Auch im Kanal zeigen" under the thread's reply field (like Slack's "Also send to
   channel"): the reply also stands in the channel, under "Antwort im Thread zu: …", which opens
   the thread; it counts as unread there and moves the channel up. Works in confidential channels.
-  **Upgrade:** migration `0041_chat_also_in_channel` adds `chat_messages.also_in_channel`; the
+  **Upgrade:** migration `0040_chat_also_in_channel` adds `chat_messages.also_in_channel`; the
   server applies it at start.
 - Development: `bun run dev` fills tasks and chat of the demo too (`dev/demo-data.ts`, once per
   server database, recognised by #baustelle-hoffmann): the people sign in through
@@ -44,6 +44,50 @@ Steps that an update needs beyond raising the version are marked **Upgrade**.
   mail for the session (`src/features/mail/remote-images.ts`). The printed page keeps its sandbox
   and gets a CSP of its own (`printPolicy`) that lets in images from outside and nothing else (no
   remote styles, fonts or media); a slow picture holds the print dialog back for at most 8 s.
+- Tasks over CalDAV: app passwords for people with two-step sign-in, whose Thunderbird or phone
+  cannot enter a code. Under *Einstellungen → Aufgaben in anderen Apps → App-Passwörter* one makes
+  a password per app (name, e.g. "Thunderbird Büro"; asks for the password and code again), sees
+  it once, and finds it listed with when it was last used, revocable on its own. Like an agent's
+  access key it has its own sign-in session and Stalwart grant; only its SHA-256 is kept, and it
+  works for `/dav` only, never for signing in to Kontext (`/api/app-passwords`,
+  `server/dav/app-passwords.ts`). A revoked one stops at once. **Upgrade:** the database gets the
+  table `app_password` (migration `0039_app_passwords`) at start; nothing else to do.
+- Tasks over CalDAV: `sync-collection` (RFC 6578), so clients fetch only what changed. The sync
+  token is the board's ctag; the server remembers, in memory, the tasks and ETags behind its last
+  50 tokens per board and answers with what is new, changed or gone (404). An unknown token (after
+  a restart) gets `DAV:valid-sync-token`, and the client syncs once from the start.
+- Encryption: attachments of a mail to be encrypted no longer reach Stalwart unencrypted. While
+  "Vertraulich senden" is on, files, pictures in the text, files "Aus Dokumente" (fetched by the
+  browser through the new `POST /api/documents/download`) and the files of a forwarded encrypted
+  mail stay in the browser until they are encrypted with the mail; this covers PGP, S/MIME and the
+  link. Switching encryption on after adding files pulls them into the browser and deletes the
+  draft that held them unencrypted; switching it off uploads them as before. Files and pictures
+  of an encrypted mail may be 25 MB together.
+- e2e: the tests that opened the seed's mails from Jonas' inbox list use copies of them made for
+  the test (`e2e/own-mails.ts`) and remove them afterwards, so a full inbox no longer pushes them
+  out of the rendered rows.
+
+- Tasks: the contact page lists the tasks about any mail the person sent or got – older ones and
+  mails in shared mailboxes too – by looking up the mails tasks link to (`Email/get` of `from`,
+  `to`, `cc`, at most 500 per account) instead of only the last five own mails; mails are matched
+  by account and id. New "Aufgabe zum Termin" in the appointment (desktop and phone) creates a task
+  linked to it (`kind: "event"`, the day in `threadId`), which opens the appointment again.
+- Mail: read receipts are matched by the report's `Original-Message-ID` too (RFC 8098), so
+  receipts from programs that set no `In-Reply-To` count; the sent mail looks for them by sender
+  (its recipients) or subject, paging like the delivery reports (`src/jmap/search-pages.ts`).
+  Incoming receipts for one's own sent mails are filed quietly: marked read and moved to the
+  archive – only when they name a mail in Sent that asked for a receipt; anything else stays.
+- Company admin: "Regeln" at an employee's entry – the admin sees and edits the person's mail
+  rules (`GET`/`PUT /api/company/employees/:id/rules`, `POST …/rules/apply`, admin only). They are
+  the person's own Sieve script, so the employee sees and changes them in Settings like their own;
+  the out-of-office reply stays as it is.
+- Tasks: "Erinnern" right in the "Neue Aufgabe" dialog (the same choices as in the open task,
+  from the due day or a time by hand); a new due day moves a chosen reminder along. Sent with the
+  task as `remindAt` on create.
+- Mail: "Wiedervorlage" for several picked mails at once, from the selection bar – also across
+  the own and shared mailboxes in "Alle Posteingänge", each mail into its own account's snoozed
+  folder, with one "Rückgängig" for all. Offered only when every picked mail may leave its folder.
+  "Alle Posteingänge" now shows what came back ("Wieder vorgelegt") from every inbox on top.
 - A short tour on the first start: five or six cards through Mail, "Neue Mail", a shared mailbox
   like info@ (for whoever has one), Calendar and Chat, each lighting up the real place – the rail
   on a desktop, the tab bar on a phone ("Mehr" where Chat is not in it), a centred card where the

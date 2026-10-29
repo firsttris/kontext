@@ -249,14 +249,27 @@ Was Kontext bewusst nicht schützt, oder (noch) nicht kann:
   (für Liste, Unterhaltung, Antworten, Weiterleiten) hält Kontext nur im Speicher des Tabs; nach
   dem Neuladen steht dort wieder „Verschlüsselt“, bis man sie erneut öffnet. Ebenso bleiben der
   Schlüssel und das S/MIME-Zertifikat nur bis zum Neuladen entsperrt.
-- **Anhänge verschlüsselter Mails:** Beim Schreiben gehen Anhänge wie sonst zuerst als Datei an
-  Stalwart (JMAP-Upload); erst beim Senden lädt der Browser sie wieder herunter und verschlüsselt
-  sie mit der Mail. Bis dahin liegen sie unverschlüsselt im Zwischenspeicher von Stalwart, der
-  nicht verwendete Uploads nach einiger Zeit selbst löscht. Gegen den eigenen Server schützt das
-  also nur eingeschränkt; gegen alle unterwegs und beim Empfänger voll. Dasselbe gilt für Anhänge,
-  die beim Weiterleiten einer geöffneten verschlüsselten Mail mitgehen.
+- **Anhänge verschlüsselter Mails:** Solange „Vertraulich senden“ an ist, bleiben Anhänge und
+  Bilder im Text im Browser, bis sie mit der Mail verschlüsselt sind; zu Stalwart geht nur die
+  fertige verschlüsselte Mail (`src/lib/held-files.ts`, `use-held-files.ts`). Das gilt auch für
+  Dateien aus „Aus Dokumente“ (der Kontext-Server reicht sie dann an den Browser statt an
+  Stalwart, `POST /api/documents/download`), für den Link von „Vertraulich senden“ und für die
+  Anhänge, die beim Weiterleiten einer geöffneten verschlüsselten Mail mitgehen. Die Mail mit dem
+  Link selbst nimmt keine Anhänge und keine Bilder mit.
+  - **Erst später eingeschaltet:** Waren Anhänge schon hochgeladen, holt Kontext sie beim
+    Einschalten in den Browser und löscht den bisherigen Entwurf, der sie (und den Text)
+    unverschlüsselt hielt; die nicht mehr verwendeten Dateien räumt Stalwart selbst weg. Was bis
+    dahin auf dem Server lag, lag dort – wer vertraulich schreibt, schaltet es am besten zuerst ein.
+  - **Wieder ausgeschaltet:** Die Dateien gehen beim nächsten Speichern des Entwurfs oder beim
+    Senden wie sonst zu Stalwart.
+  - **Was schon auf dem Server liegt,** etwa die Anhänge einer weitergeleiteten unverschlüsselten
+    Mail oder eine Mail „Als Anhang weiterleiten“ (.eml), lädt der Browser zum Verschlüsseln von
+    dort; neu hochgeladen wird dabei nichts.
+  - **Größe:** Anhänge und Bilder zusammen bis 25 MB. Die verschlüsselte Mail ist etwa 1,8-mal so
+    groß (zweimal Base64) und geht als ein Upload an Stalwart; der Browser hält sie im Speicher.
 - **Entwürfe:** Solange „Vertraulich senden“ an ist, speichert Kontext keinen Entwurf auf dem
-  Server; ein Fenster, das man schließt, ist weg.
+  Server; ein Fenster, das man schließt, ist weg. „Als Entwurf speichern“ sagt das und lässt die
+  Mail offen.
 - **Was der Server im vertraulichen Chat sieht:** wer Mitglied ist, wer wann schreibt, wer erwähnt
   wird, wer reagiert und wie groß Dateien sind – nur nicht, was drinsteht. Benachrichtigungen sagen
   deshalb nur „Vertrauliche Nachricht“.

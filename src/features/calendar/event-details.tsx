@@ -1,8 +1,9 @@
 /**
  * An appointment as the dialog shows it: when, where, who, its documents, the answer buttons,
- * delete.
+ * a task about it, delete.
  */
-import { CalendarDays, Copy, MapPin, Repeat, Users, Video } from "lucide-react";
+import { CalendarDays, Copy, ListChecks, MapPin, Repeat, Users, Video } from "lucide-react";
+import { useState } from "react";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { useToast } from "@/components/ui/toast";
 import { ItemLink, LinkIcon } from "@/features/links/item-link";
@@ -23,7 +24,9 @@ import { LOCALE } from "@/lib/locale";
 import { mapsUrl } from "@/lib/maps";
 import { describeRecurrence } from "@/lib/recurrence";
 import { isFirstDate } from "@/lib/series-split";
+import { eventLink } from "@/lib/task-context";
 import { m } from "@/paraglide/messages";
+import { TaskDialog, type TaskStart } from "../tasks/task-dialog";
 import {
   calendarLabel,
   calendarOf,
@@ -75,6 +78,8 @@ export const EventDetails = ({ event, series, onEdit, onDuplicate, onDone }: Pro
   const repeats = describeRecurrence((series ?? event).recurrenceRule);
   const place = locationName(event);
   const inMaps = mapsUrl(place, navigator.userAgent);
+  const [task, setTask] = useState<TaskStart | null>(null);
+  const { accountId } = event;
 
   const run = async (action: () => Promise<unknown>, done?: () => void) => {
     try {
@@ -227,6 +232,21 @@ export const EventDetails = ({ event, series, onEdit, onDuplicate, onDone }: Pro
             {m.calendar_duplicate()}
           </Button>
         ) : null}
+        {accountId ? (
+          <Button
+            variant="outline"
+            onClick={() =>
+              setTask({
+                title: event.title ?? "",
+                accountId,
+                link: eventLink({ ...event, accountId }, m.notifications_untitled()),
+              })
+            }
+          >
+            <ListChecks size={14} />
+            {m.calendar_task_for_event()}
+          </Button>
+        ) : null}
         <div className="flex-1" />
         {!calendar?.mayWrite ? null : isInstance(event) ? (
           <>
@@ -262,6 +282,7 @@ export const EventDetails = ({ event, series, onEdit, onDuplicate, onDone }: Pro
           </Button>
         )}
       </div>
+      {task ? <TaskDialog starts={[task]} onClose={() => setTask(null)} /> : null}
     </div>
   );
 };

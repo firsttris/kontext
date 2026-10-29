@@ -1,5 +1,6 @@
 import { expect, test } from "@playwright/test";
-import { inboxSubjects, login, unique } from "./helpers";
+import { findMails, inboxSubjects, login, removeMails, unique } from "./helpers";
+import { receiptInInbox, sentAskingReceipt } from "./read-receipt";
 
 test.describe("Lesebestätigung", () => {
   test("anfordern, bestätigen, beim Absender sehen", async ({ page, browser }) => {
@@ -40,6 +41,59 @@ test.describe("Lesebestätigung", () => {
     await expect(page.getByRole("note").filter({ hasText: "Gelesen von Max Becker" })).toBeVisible({
       timeout: 15_000,
     });
+    // The receipt itself is filed away: read, in the archive.
+    await expect
+      .poll(async () => {
+        const found = await findMails("jonas", "jonas", [`Gelesen: ${subject}`]);
+        return found.find((mail) => mail.subject === `Gelesen: ${subject}`)?.folder;
+      })
+      .toBe("archive");
     await max.context().close();
+  });
+
+  test("erkennt eine Bestätigung nur am Original-Message-ID und legt sie still ab", async ({
+    page,
+  }) => {
+    const subject = unique("Freigabe Schaltplan");
+    const stamp = Date.now().toString(36);
+    const messageId = `freigabe.${stamp}@weber-haustechnik.test`;
+    const receipt = unique("Read: Ihre Nachricht");
+    const lookalike = unique("Read: Unbekannt");
+    const petra = `petra.${stamp}@keller-elektro.test`;
+    await sentAskingReceipt("jonas", {
+      messageId,
+      subject,
+      to: petra,
+      at: new Date(Date.now() - 5 * 60_000),
+    });
+    // Another subject, no In-Reply-To: only the report names the mail.
+    await receiptInInbox("jonas", { from: petra, subject: receipt, original: messageId });
+    // Looks like a receipt, but for no mail in Sent: it stays.
+    await receiptInInbox("jonas", {
+      from: petra,
+      subject: lookalike,
+      original: `unbekannt.${stamp}@example.test`,
+    });
+    try {
+      await login(page);
+      await expect
+        .poll(async () =>
+          (await findMails("jonas", "jonas", [receipt, lookalike]))
+            .filter((mail) => mail.subject === receipt || mail.subject === lookalike)
+            .map((mail) => [mail.subject, mail.folder, mail.keywords.join(",")])
+            .sort(),
+        )
+        .toEqual([
+          [receipt, "archive", "$seen"],
+          [lookalike, "inbox", ""],
+        ]);
+      await page.getByRole("link", { name: "Gesendet", exact: true }).click();
+      await page.getByRole("list", { name: "Gesendet" }).getByText(subject).click();
+      await expect(
+        page.getByRole("note").filter({ hasText: "Gelesen von Petra Keller" }),
+      ).toBeVisible();
+    } finally {
+      await removeMails("jonas", "jonas", [subject, receipt, lookalike]);
+    }
   });
 });

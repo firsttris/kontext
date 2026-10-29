@@ -2,7 +2,7 @@
  * Several mails chosen in a list, as in Gmail: one by one, a range with Shift, all at once. A
  * mail is known by account and id, since "Alle Posteingänge" and the search mix mailboxes. Pure.
  */
-import type { EmailSummary } from "@/jmap/types";
+import type { EmailSummary, Mailbox } from "@/jmap/types";
 import type { Category } from "./categories";
 
 export type Picked = { accountId: string; email: EmailSummary };
@@ -94,4 +94,33 @@ export const categoryState = (picked: Picked[], category: Category): "all" | "so
 export const singleAccount = (picked: Picked[]): string | null => {
   const accounts = new Set(picked.map(({ accountId }) => accountId));
   return accounts.size === 1 ? [...accounts][0]! : null;
+};
+
+/** Folders whose mails cannot be put on Wiedervorlage: they do not come back to an inbox. */
+const NOT_SNOOZABLE = new Set(["drafts", "sent"]);
+
+/**
+ * The picked mails to put on Wiedervorlage, per account and folder, or null when one of the
+ * folders does not allow it (drafts, sent, or a shared folder only to read): then the whole
+ * selection is left alone rather than only a part of it.
+ */
+export const snoozeTargets = (
+  groups: Group[],
+  mailboxes: Record<string, Mailbox[] | undefined>,
+): { accountId: string; ids: string[]; from: string }[] | null => {
+  const allowed = groups.every(({ accountId, from }) => {
+    const folder = mailboxes[accountId]?.find((mailbox) => mailbox.id === from);
+    return (
+      folder !== undefined &&
+      !NOT_SNOOZABLE.has(folder.role ?? "") &&
+      folder.myRights?.mayRemoveItems !== false
+    );
+  });
+  return allowed && groups.length
+    ? groups.map(({ accountId, from, emails }) => ({
+        accountId,
+        from,
+        ids: emails.map((email) => email.id),
+      }))
+    : null;
 };

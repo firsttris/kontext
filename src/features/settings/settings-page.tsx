@@ -54,6 +54,7 @@ import { SnippetsSection } from "@/features/snippets/snippets-section";
 import { cn } from "@/lib/cn";
 import { m } from "@/paraglide/messages";
 import type { settingsSections } from "@/routes/_app/settings";
+import { AppPasswordsCard } from "./app-passwords-card";
 import { AppearanceSection } from "./appearance-section";
 import { DeputySection } from "./deputy-section";
 import { ProfileSection } from "./profile-section";
@@ -129,7 +130,12 @@ const CONTENT: Record<Section, () => ReactNode> = {
   deputy: () => <DeputySection />,
   rules: () => <RulesSection />,
   snippets: () => <SnippetsSection />,
-  sync: () => <SyncSection />,
+  sync: () => (
+    <>
+      <SyncSection />
+      <AppPasswordsCard />
+    </>
+  ),
   security: () => <SecuritySection />,
   encryption: () => <EncryptionSection />,
   agents: () => <AgentsSection />,

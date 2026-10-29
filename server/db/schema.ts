@@ -758,3 +758,27 @@ export const mcpLog = sqliteTable(
   },
   (table) => [index("mcp_log_connection").on(table.connectionId, table.createdAt)],
 );
+
+/**
+ * App passwords for CalDAV (server/dav/app-passwords.ts): Thunderbird and phones sign in to /dav
+ * with one when two-step sign-in is on. Each has its own sign-in session and so its own Stalwart
+ * grant; deleting the session revokes it (the row goes with it). Only its hash is kept.
+ */
+export const appPassword = sqliteTable(
+  "app_password",
+  {
+    id: text("id").primaryKey(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    sessionId: text("session_id")
+      .notNull()
+      .references(() => session.id, { onDelete: "cascade" }),
+    name: text("name").notNull(),
+    /** SHA-256 of the password (random, about 100 bits: no slow hash needed). */
+    passwordHash: text("password_hash").notNull().unique(),
+    createdAt: integer("created_at", { mode: "timestamp_ms" }).notNull(),
+    lastUsedAt: integer("last_used_at", { mode: "timestamp_ms" }),
+  },
+  (table) => [index("app_password_user").on(table.userId)],
+);

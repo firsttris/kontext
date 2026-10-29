@@ -171,17 +171,19 @@ export const createMailbox = (mailbox: NewMailbox) =>
 export const updateMailbox = (id: string, change: MailboxChange) =>
   send<{ ok: true }>("PATCH", `/mailboxes/${encodeURIComponent(id)}`, change);
 
-export const getMailboxRules = (id: string) =>
-  send<{ rules: Rule[]; folders: FolderName[]; categories: Category[] }>(
-    "GET",
-    `/mailboxes/${encodeURIComponent(id)}/rules`,
-  );
+/** Whose rules the admin keeps: a shared mailbox or an employee's own mailbox. */
+export type RulesOwner = { kind: "mailboxes" | "employees"; id: string };
 
-export const setMailboxRules = (id: string, rules: Rule[]) =>
-  send<{ ok: true }>("PUT", `/mailboxes/${encodeURIComponent(id)}/rules`, { rules });
+const rulesPath = ({ kind, id }: RulesOwner) => `/${kind}/${encodeURIComponent(id)}/rules`;
 
-export const applyMailboxRule = (id: string, rule: Rule) =>
-  send<{ changed: number }>("POST", `/mailboxes/${encodeURIComponent(id)}/rules/apply`, { rule });
+export const getAccountRules = (owner: RulesOwner) =>
+  send<{ rules: Rule[]; folders: FolderName[]; categories: Category[] }>("GET", rulesPath(owner));
+
+export const setAccountRules = (owner: RulesOwner, rules: Rule[]) =>
+  send<{ ok: true }>("PUT", rulesPath(owner), { rules });
+
+export const applyAccountRule = (owner: RulesOwner, rule: Rule) =>
+  send<{ changed: number }>("POST", `${rulesPath(owner)}/apply`, { rule });
 
 export const listMigrations = () => send<Migration[]>("GET", "/migrations");
 

@@ -311,6 +311,44 @@ describe("Firmenverwaltung", () => {
     });
   });
 
+  it("keeps an employee's own rules, not those of unknown accounts", async () => {
+    const { send, rules } = setup("chef@firma.de");
+    const rule = {
+      id: "r",
+      name: "",
+      enabled: true,
+      match: "all",
+      conditions: [{ field: "from", operator: "contains", value: "lieferant.de" }],
+      moveTo: null,
+      markRead: false,
+      flag: true,
+      forwardTo: null,
+      categories: [],
+      stop: false,
+      createTask: false,
+    };
+    expect(await (await send("GET", "/employees/2/rules")).json()).toEqual({
+      rules: [],
+      folders: [],
+      categories: [],
+    });
+    expect((await send("PUT", "/employees/2/rules", { rules: [rule] })).status).toBe(200);
+    expect(rules).toEqual([{ accountId: "2", rules: [rule] }]);
+    // A shared mailbox is not an employee, nor is an account outside the company.
+    expect((await send("PUT", "/employees/g/rules", { rules: [rule] })).status).toBe(404);
+    expect((await send("GET", "/employees/9/rules")).status).toBe(404);
+    expect(await (await send("POST", "/employees/2/rules/apply", { rule })).json()).toEqual({
+      changed: 2,
+    });
+  });
+
+  it("keeps employees' rules to the admin", async () => {
+    const { send, rules } = setup("anna@firma.de");
+    expect((await send("GET", "/employees/1/rules")).status).toBe(403);
+    expect((await send("PUT", "/employees/1/rules", { rules: [] })).status).toBe(403);
+    expect(rules).toEqual([]);
+  });
+
   it("does not let the admin lock themselves out", async () => {
     const { send, updates } = setup("chef@firma.de");
     expect((await send("PATCH", "/employees/1", { admin: false })).status).toBe(400);

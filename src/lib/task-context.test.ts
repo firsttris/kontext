@@ -6,6 +6,11 @@ import {
   contactLink,
   dueMinutes,
   dueTasks,
+  eventLink,
+  linkedMails,
+  MAX_LINKED_MAILS,
+  mailKey,
+  mailsWith,
   tasksOfContact,
   tasksOnDay,
 } from "./task-context";
@@ -30,10 +35,55 @@ describe("tasks of a contact", () => {
       sampleTask({ id: "d", links: [mail("t2")] }),
       sampleTask({ id: "e", links: [contactLink({ accountId: "lea", id: "c1" }, "x", "y")] }),
     ];
-    expect(tasksOfContact(tasks, card, new Set(["t1", "t9"])).map((task) => task.id)).toEqual([
-      "c",
-      "a",
-      "b",
+    const keys = new Set([mailKey("me", "m-t1"), mailKey("me", "m-t9")]);
+    expect(tasksOfContact(tasks, card, keys).map((task) => task.id)).toEqual(["c", "a", "b"]);
+  });
+
+  it("a mail is known by account and id: the same id in info@ is another mail", () => {
+    const tasks = [sampleTask({ id: "a", links: [{ ...mail("t1"), accountId: "info" }] })];
+    expect(tasksOfContact(tasks, card, new Set([mailKey("me", "m-t1")]))).toEqual([]);
+    expect(tasksOfContact(tasks, card, new Set([mailKey("info", "m-t1")]))).toHaveLength(1);
+  });
+});
+
+describe("mails linked to tasks", () => {
+  it("by account, only those one can open, each once", () => {
+    const tasks = [
+      sampleTask({ id: "a", links: [mail("t1"), { ...mail("t2"), accountId: "info" }] }),
+      sampleTask({ id: "b", links: [mail("t1"), { ...mail("t3"), accountId: "gone" }] }),
+    ];
+    expect(linkedMails(tasks, ["me", "info"])).toEqual({ me: ["m-t1"], info: ["m-t2"] });
+  });
+
+  it("at most so many per account, the newest tasks' first", () => {
+    const tasks = Array.from({ length: MAX_LINKED_MAILS + 5 }, (_, index) =>
+      sampleTask({
+        id: String(index),
+        updatedAt: new Date(Date.UTC(2026, 0, 1) + index * 60_000).toISOString(),
+        links: [mail(`t${index}`)],
+      }),
+    );
+    const ids = linkedMails(tasks, ["me"]).me!;
+    expect(ids).toHaveLength(MAX_LINKED_MAILS);
+    expect(ids[0]).toBe(`m-t${MAX_LINKED_MAILS + 4}`);
+  });
+
+  it("with the person when they sent it or got it, in any case of letters", () => {
+    const party = (email: string) => [{ email }];
+    const mails = [
+      { accountId: "me", id: "1", from: party("Petra@Keller.test"), to: null, cc: null },
+      {
+        accountId: "info",
+        id: "2",
+        from: party("x@y.test"),
+        to: null,
+        cc: party("petra@keller.test"),
+      },
+      { accountId: "me", id: "3", from: party("x@y.test"), to: party("z@y.test"), cc: null },
+    ];
+    expect([...mailsWith(mails, ["petra@keller.test"])]).toEqual([
+      mailKey("me", "1"),
+      mailKey("info", "2"),
     ]);
   });
 });
@@ -123,5 +173,36 @@ describe("given to me", () => {
       }),
     ];
     expect(assignedToMe(tasks, "me", now).map((task) => task.id)).toEqual(["b", "a"]);
+  });
+});
+
+describe("the link to an appointment", () => {
+  const event = {
+    id: "e1",
+    accountId: "me",
+    calendarIds: { c: true },
+    title: "Abnahme Hoffmann",
+    start: "2026-10-29T10:00:00",
+    timeZone: "Europe/Berlin",
+    duration: "PT1H",
+  };
+
+  it("opens the appointment and says when it is", () => {
+    expect(eventLink(event, "Ohne Titel")).toEqual({
+      kind: "event",
+      accountId: "me",
+      ref: "e1",
+      threadId: "2026-10-29",
+      label: "Abnahme Hoffmann",
+      detail: "Do., 29. Okt. 2026, 10:00",
+    });
+  });
+
+  it("a whole day without a time, and a name without a title", () => {
+    const link = eventLink(
+      { ...event, title: "", start: "2026-10-29T00:00:00", showWithoutTime: true, duration: "P1D" },
+      "Ohne Titel",
+    );
+    expect([link.label, link.detail]).toEqual(["Ohne Titel", "Do., 29. Okt. 2026"]);
   });
 });

@@ -9,7 +9,7 @@ import { Dialog } from "@/components/ui/dialog";
 import { Input, Label } from "@/components/ui/input";
 import { useToast } from "@/components/ui/toast";
 import { m } from "@/paraglide/messages";
-import { useMailboxRules } from "../rules/queries";
+import { useCompanyRules } from "../rules/queries";
 import { RulesList } from "../rules/rules-section";
 import { type Company, createMailbox, type SharedMailbox, updateMailbox } from "./api";
 import { AccessList, AddressInput, AliasesField, addressFor } from "./fields";
@@ -114,7 +114,7 @@ const MailboxRulesDialog = ({
     description={m.rules_mailbox_hint()}
     className="md:w-[min(640px,calc(100vw-32px))]"
   >
-    <RulesList store={useMailboxRules(mailbox.id)} />
+    <RulesList store={useCompanyRules({ kind: "mailboxes", id: mailbox.id })} />
   </Dialog>
 );
 

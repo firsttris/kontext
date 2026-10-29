@@ -85,6 +85,26 @@ export const attachDocument = (input: { accountId: string; fileId: string }) =>
   send<OutgoingAttachment>("POST", "/attach", input);
 
 /**
+ * A file of Dokumente into the browser, for an encrypted mail: its bytes must not reach Stalwart
+ * before they are encrypted (features/mail/use-held-files.ts).
+ */
+export const downloadDocument = async (fileId: string): Promise<File> => {
+  const response = await fetch("/api/documents/download", {
+    method: "POST",
+    credentials: "same-origin",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ fileId }),
+  });
+  if (!response.ok) {
+    const result = (await response.json().catch(() => ({}))) as { error?: string };
+    throw new Error(result.error ?? String(response.status));
+  }
+  const name = decodeURIComponent(response.headers.get("x-file-name") ?? "Dokument");
+  const type = response.headers.get("content-type") ?? "application/octet-stream";
+  return new File([await response.blob()], name, { type });
+};
+
+/**
  * Lets colleagues view a file of the one who asks (or of a shared mailbox they work in): their
  * addresses and the people of shared mailboxes by account id; the asker's own is skipped.
  */

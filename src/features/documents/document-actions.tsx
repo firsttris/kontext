@@ -16,6 +16,7 @@ import { DocumentPicker } from "./document-picker";
 import {
   attachDocument,
   type DocumentNode,
+  downloadDocument,
   saveAttachment,
   useDocumentsConnected,
   useMailboxFolders,
@@ -90,10 +91,15 @@ export const SaveToDocuments = ({
 /** The composer's button "Aus Dokumente anhängen". */
 export const AttachFromDocuments = ({
   accountId,
+  inBrowser = false,
+  onFile,
   onAttached,
   onBusy,
 }: {
   accountId: string;
+  /** For an encrypted mail: the file comes to the browser (`onFile`), not into Stalwart. */
+  inBrowser?: boolean;
+  onFile?: (file: File) => void;
   onAttached: (attachment: OutgoingAttachment) => void;
   /** +1 while a document is fetched, -1 after: sending waits for it. */
   onBusy: (change: 1 | -1) => void;
@@ -107,7 +113,8 @@ export const AttachFromDocuments = ({
     setOpen(false);
     onBusy(1);
     try {
-      onAttached(await attachDocument({ accountId, fileId }));
+      if (inBrowser && onFile) onFile(await downloadDocument(fileId));
+      else onAttached(await attachDocument({ accountId, fileId }));
     } catch (error) {
       toast.show(m.common_error({ message: (error as Error).message }), "error");
     } finally {

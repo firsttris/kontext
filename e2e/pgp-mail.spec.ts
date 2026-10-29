@@ -1,9 +1,18 @@
-import { expect, test } from "@playwright/test";
+import { expect, type Page, test } from "@playwright/test";
 import { DEV_DOMAIN } from "../dev/config";
 import { address, inboxSubjects, jmapAs, login, unique } from "./helpers";
 import { giveKey, PASSPHRASE } from "./pgp-key";
 
 const STAND_IN = "Vertrauliche Nachricht";
+
+/** What a page uploads to Stalwart, as text: a file of an encrypted mail must not be in it. */
+const recordUploads = (page: Page) => {
+  const bodies: string[] = [];
+  page.on("request", (request) => {
+    if (request.url().includes("/upload/")) bodies.push(request.postDataBuffer()?.toString() ?? "");
+  });
+  return bodies;
+};
 
 test.describe("Verschlüsselung: PGP in Mails", () => {
   test("verschlüsselt senden, unterwegs unlesbar, beim Empfänger entschlüsselt und geprüft", async ({
@@ -28,22 +37,26 @@ test.describe("Verschlüsselung: PGP in Mails", () => {
     await page
       .getByRole("textbox", { name: "Ihre Nachricht …" })
       .fill("Messwerte: 42 Grad, alles vertraulich.");
+    await page.getByRole("button", { name: "Vertraulich senden" }).click();
+    await expect(
+      page.getByRole("status").filter({ hasText: "Verschlüsselt und unterschrieben" }),
+    ).toBeVisible();
+    // The file stays in the browser until it is encrypted with the mail.
+    const uploads = recordUploads(page);
     await page.locator('form input[type="file"][multiple]:not([accept])').setInputFiles({
       name: "messung.csv",
       mimeType: "text/csv",
       buffer: Buffer.from("Grad;42\n"),
     });
     await expect(page.getByText("messung.csv")).toBeVisible();
-    await page.getByRole("button", { name: "Vertraulich senden" }).click();
-    await expect(
-      page.getByRole("status").filter({ hasText: "Verschlüsselt und unterschrieben" }),
-    ).toBeVisible();
     const before = (await inboxSubjects("max")).filter((s) => s === STAND_IN).length;
     await page.getByRole("button", { name: "Senden", exact: true }).click();
     const unlock = page.getByRole("dialog", { name: "Entsperren" });
     await unlock.getByLabel("Passphrase deines Schlüssels").fill(PASSPHRASE);
     await unlock.getByRole("button", { name: "Entsperren" }).click();
     await expect(page.getByRole("status").filter({ hasText: "Mail gesendet." })).toBeVisible();
+    expect(uploads.length).toBeGreaterThan(0);
+    expect(uploads.filter((body) => body.includes("Grad;42"))).toEqual([]);
     // The subject went inside; outside it says "Vertrauliche Nachricht" (Protected Headers).
     await expect
       .poll(async () => (await inboxSubjects("max")).filter((s) => s === STAND_IN).length)
@@ -92,10 +105,14 @@ test.describe("Verschlüsselung: PGP in Mails", () => {
     await expect(editor).not.toContainText("BEGIN PGP");
     await expect(max.getByRole("textbox", { name: "Betreff" })).toHaveValue(`Re: ${subject}`);
     await max.getByRole("button", { name: "Verwerfen" }).click();
-    // Forwarding takes the opened content and its file, not the encrypted parts.
+    // Forwarding takes the opened content and its file, not the encrypted parts; the file stays
+    // in the browser, as the forward goes encrypted too.
+    const forwarded = recordUploads(max);
     await max.getByRole("link", { name: "Weiterleiten" }).first().click();
     await expect(editor).toContainText("Messwerte: 42 Grad");
     await expect(max.getByText("messung.csv")).toBeVisible();
+    await max.waitForTimeout(2500);
+    expect(forwarded.filter((body) => body.includes("Grad;42"))).toEqual([]);
     await expect(max.getByText("encrypted.asc")).toHaveCount(0);
     await max.context().close();
   });

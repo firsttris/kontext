@@ -1,5 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { dueInstant, reminderChoices, reminderKey, shiftedReminder } from "./task-reminders";
+import {
+  dueInstant,
+  reminderChoices,
+  reminderKey,
+  reminderOnDueChange,
+  shiftedReminder,
+} from "./task-reminders";
 
 // Sunday morning in Berlin (winter time, UTC+1).
 const now = new Date("2026-10-25T08:00:00Z");
@@ -57,5 +63,25 @@ describe("moving the due day", () => {
 
   it("a day without time is due in the morning", () => {
     expect(dueInstant("2026-10-27", null)?.toISOString()).toBe("2026-10-27T07:00:00.000Z");
+  });
+});
+
+describe("reminder of a task being made", () => {
+  const none = { dueDate: null, dueTime: null };
+
+  it("moves a reminder chosen from the due day along with it", () => {
+    const morning = "2026-10-27T07:00:00.000Z";
+    const to = { dueDate: "2026-10-28", dueTime: null };
+    expect(reminderOnDueChange(morning, { dueDate: "2026-10-27", dueTime: null }, to, now)).toBe(
+      "2026-10-28T07:00:00.000Z",
+    );
+  });
+
+  it("keeps none, and a time picked without a due day", () => {
+    const to = { dueDate: "2026-10-28", dueTime: null };
+    expect(reminderOnDueChange(null, none, to, now)).toBeNull();
+    expect(reminderOnDueChange("2026-11-02T09:00:00.000Z", none, to, now)).toBe(
+      "2026-11-02T09:00:00.000Z",
+    );
   });
 });

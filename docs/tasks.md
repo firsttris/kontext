@@ -28,17 +28,22 @@ rechnung@, das alle sehen, die dort arbeiten.
   und archiviert die Mail auf Wunsch; die Mail zeigt danach ihre Aufgabe. „Aufgaben erstellen“
   macht eine je ausgewählter Mail.
 - **Aus einer Chat-Nachricht**, verknüpft in beide Richtungen.
+- **Aus einem Termin:** „Aufgabe zum Termin“ im geöffneten Termin, am Computer wie am Handy – etwa
+  „Material für die Abnahme bestellen“. Die Aufgabe zeigt den Termin und öffnet ihn mit einem
+  Klick.
 - **Per Regel:** Eine Mail-Regel legt für jede passende Mail eine Aufgabe an, auch bei
   geschlossener App.
 - **Aus einem verpassten Anruf:** „Zurückrufen“, das sich selbst abhakt, sobald jemand mit der
   Nummer gesprochen hat ([Telefonie](telephony.md)).
 - **Wiederkehrend:** täglich, an Werktagen, wöchentlich, monatlich, jährlich.
 - **Checklisten, Notizen, Zuständige, Fälligkeit, Erinnerung**, verknüpfte
-  [Dokumente](documents.md).
+  [Dokumente](documents.md). Die Erinnerung lässt sich schon im Dialog „Neue Aufgabe“ wählen;
+  ein anderer Fälligkeitstag nimmt sie dort wie in der Aufgabe mit.
 
 ## Überall im Kontext
 
-- **Am Kontakt** stehen seine offenen Aufgaben, **im Kalender** das Fällige am jeweiligen Tag,
+- **Am Kontakt** stehen seine offenen Aufgaben – die mit der Karte verknüpften und die zu jeder
+  Mail mit ihm, auch zu älteren und zu Mails in gemeinsamen Postfächern wie info@ –, **im Kalender** das Fällige am jeweiligen Tag,
   **in der Glocke** neu Zugewiesenes und heute Fälliges.
 - **Erinnerungen und Zuweisungen** kommen als Benachrichtigung aufs Gerät, auch wenn Kontext zu
   ist.
@@ -56,5 +61,14 @@ Notiz, Fälligkeit, Erledigt, Wiederholung und Erinnerung:
   Andere → CalDAV-Account*, als Server die ganze Adresse mit `/dav/` (die Domain allein führt zu
   den Kalendern in Stalwart).
 
-Angemeldet wird mit Mail-Adresse und Passwort; mit Anmeldung in zwei Schritten geht das noch nicht
-(App-Passwörter sind geplant). [Mehr](architecture.md#aufgaben)
+Angemeldet wird mit Mail-Adresse und Passwort. **Mit Bestätigung in zwei Schritten** legt man
+unter *Einstellungen → Aufgaben in anderen Apps → App-Passwörter* für jede App ein eigenes
+Passwort an (etwa „Thunderbird Büro“) und trägt es dort statt des eigenen ein. Es ist nur beim
+Anlegen zu sehen, gilt nur für die Aufgaben dort, nicht für die Anmeldung in Kontext, und lässt
+sich einzeln widerrufen; die Liste zeigt, wann jedes zuletzt benutzt wurde.
+
+![App-Passwörter in den Einstellungen](screenshots/app-passwords.png)
+
+Thunderbird, DAVx⁵ und das iPhone fragen nur nach dem, was sich seit dem letzten Abgleich
+geändert hat (`sync-collection`), statt jedes Mal alle Aufgaben zu laden.
+[Mehr](architecture.md#aufgaben)

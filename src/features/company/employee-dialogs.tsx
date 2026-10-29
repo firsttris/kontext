@@ -1,4 +1,5 @@
 /** Creating a person, and changing one: name, addresses, mailboxes, rights, password, access. */
+import { ListFilter } from "lucide-react";
 import { type FormEvent, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Dialog } from "@/components/ui/dialog";
@@ -23,6 +24,9 @@ import {
   PasswordNotice,
 } from "./fields";
 import { useCompanyChange } from "./queries";
+
+/** What the person's dialog opens in its place. */
+export type EmployeeSubDialog = "vacation" | "rules" | "offboarding";
 
 const mailboxOptions = (company: Company) =>
   company.mailboxes.map((mailbox) => ({
@@ -146,8 +150,8 @@ export const EmployeeDialog = ({
   company: Company;
   employee: Employee;
   onClose: () => void;
-  /** Opens the out-of-office reply or the leaving instead of this dialog. */
-  onOpen: (dialog: "vacation" | "offboarding") => void;
+  /** Opens the out-of-office reply, the rules or the leaving instead of this dialog. */
+  onOpen: (dialog: EmployeeSubDialog) => void;
 }) => {
   const toast = useToast();
   const self = employee.id === company.selfId;
@@ -225,6 +229,9 @@ export const EmployeeDialog = ({
         <div className="flex flex-wrap items-start gap-2">
           <Button disabled={busy} onClick={() => onOpen("vacation")}>
             {m.company_vacation()}
+          </Button>
+          <Button disabled={busy} onClick={() => onOpen("rules")}>
+            <ListFilter size={15} /> {m.rules_open()}
           </Button>
           {self ? null : (
             <Button variant="danger" disabled={busy} onClick={() => onOpen("offboarding")}>

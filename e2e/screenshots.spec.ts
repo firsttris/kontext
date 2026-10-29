@@ -1,4 +1,5 @@
 import { expect, type Page, test } from "@playwright/test";
+import { DEV_PASSWORD } from "../dev/config";
 import { deliverReport } from "./delivery-report";
 import { fillDemo } from "./demo-data";
 import {
@@ -11,6 +12,7 @@ import {
   jmapAs,
   login,
   personalAccountId,
+  removeMails,
   removeSnippet,
   revokeDeputy,
 } from "./helpers";
@@ -151,6 +153,46 @@ test.describe("Screenshots @screenshots", () => {
       await shot(page, "deputy");
     } finally {
       await revokeDeputy("sandra", "max");
+    }
+  });
+
+  test("App-Passwörter für CalDAV", async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await login(page);
+    const make = async (name: string) => {
+      const response = await page.request.post("/api/app-passwords", {
+        data: { name, password: DEV_PASSWORD },
+      });
+      return ((await response.json()) as { password: string }).password;
+    };
+    try {
+      // One in use (Thunderbird synced), one not yet; a third is made in the form and shown once.
+      const office = await make("Thunderbird Büro");
+      await make("iPhone Jonas");
+      await page.request.fetch("/dav/tasks/", {
+        method: "PROPFIND",
+        headers: {
+          authorization: `Basic ${Buffer.from(`${address("jonas")}:${office}`).toString("base64")}`,
+          depth: "1",
+        },
+      });
+      await page.goto("/settings?section=sync");
+      const card = page.getByRole("region", { name: "App-Passwörter" });
+      await card.getByLabel("Name").fill("Android Werkstatt");
+      await card.getByLabel("Dein Passwort").fill(DEV_PASSWORD);
+      await card.getByRole("button", { name: "App-Passwort erstellen" }).click();
+      await expect(card.getByTestId("app-password")).toBeVisible();
+      await expect(
+        card.getByRole("listitem").filter({ hasText: "Thunderbird Büro" }),
+      ).toContainText("zuletzt benutzt");
+      await card.scrollIntoViewIfNeeded();
+      await shot(page, "app-passwords");
+    } finally {
+      const listed = (await (await page.request.get("/api/app-passwords")).json()) as {
+        appPasswords: { id: string }[];
+      };
+      for (const { id } of listed.appPasswords)
+        await page.request.delete(`/api/app-passwords/${id}`);
     }
   });
 
@@ -922,5 +964,75 @@ test.describe("Screenshots @screenshots", () => {
       "Nicht zugestellt an p.keller@keller-elektro.test",
     );
     await shot(page, "dsn");
+  });
+
+  test("Wiedervorlage für mehrere Mails", async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    const own = "Rückfrage Heizlastberechnung Lang";
+    const shared = "Terminwunsch Wartung Gastherme";
+    await addMail("jonas", "jonas", own, { name: "Familie Lang", email: "lang@beispiel.test" });
+    await addMail("jonas", "info", shared, {
+      name: "Sabine Ott",
+      email: "s.ott@beispiel.test",
+    });
+    try {
+      await login(page);
+      await page.getByRole("link", { name: "Alle Posteingänge" }).click();
+      for (const subject of [own, shared]) {
+        await page.getByRole("checkbox", { name: `„${subject}“ auswählen` }).click();
+      }
+      await page.getByRole("button", { name: "Wiedervorlage" }).click();
+      await expect(page.getByRole("menuitem", { name: /^Morgen 08:00/ })).toBeVisible();
+      await shot(page, "snooze-many");
+      await page.keyboard.press("Escape");
+    } finally {
+      await removeMails("jonas", "jonas", [own]);
+      await removeMails("jonas", "info", [shared]);
+    }
+  });
+
+  test("Regeln für Mitarbeiter", async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await login(page);
+    const employees = (await (await page.request.get("/api/company")).json()).employees as {
+      id: string;
+      email: string;
+    }[];
+    const path = `/api/company/employees/${employees.find((e) => e.email === address("anna"))!.id}/rules`;
+    const before = (await (await page.request.get(path)).json()).rules;
+    const rule = (id: string, field: string, value: string, action: object) => ({
+      id,
+      name: "",
+      enabled: true,
+      match: "all",
+      conditions: [{ field, operator: "contains", value }],
+      moveTo: null,
+      markRead: false,
+      flag: false,
+      forwardTo: null,
+      categories: [],
+      stop: false,
+      createTask: false,
+      ...action,
+    });
+    await page.request.put(path, {
+      data: {
+        rules: [
+          rule("lieferant", "from", "grosshandel-richter.test", { markRead: true }),
+          rule("kunde", "subject", "Notdienst", { flag: true }),
+        ],
+      },
+    });
+    try {
+      await page.goto("/settings?section=employees");
+      await page.getByRole("button", { name: /^Anna Weber/ }).click();
+      await page.getByRole("dialog").getByRole("button", { name: "Regeln" }).click();
+      await expect(
+        page.getByRole("dialog", { name: "Regeln von Anna Weber" }).getByRole("listitem"),
+      ).toHaveCount(2);
+      await shot(page, "employee-rules");
+    } finally {
+      await page.request.put(path, { data: { rules: before } });
+    }
   });
 });
