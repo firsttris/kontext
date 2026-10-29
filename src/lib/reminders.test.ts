@@ -2,6 +2,8 @@ import { describe, expect, it } from "vitest";
 import {
   type Alert,
   alertsOf,
+  defaultAlertsOf,
+  defaultReminder,
   noticeDelay,
   reminderForKind,
   reminderMinutes,
@@ -149,5 +151,34 @@ describe("reminderWhen", () => {
     expect(reminderWhen(new Date("2026-10-28T23:00:00Z"), true, "de-DE", "Europe/Berlin")).toBe(
       "Do., 29.10.",
     );
+  });
+});
+
+describe("defaultReminder", () => {
+  it("is the calendar's default, else 15 minutes ahead and all day none", () => {
+    const calendar = {
+      defaultAlertsWithTime: { r: alert("-PT1H", "email") },
+      defaultAlertsWithoutTime: { r: alert("PT9H") },
+    };
+    expect(defaultReminder(false, calendar)).toEqual({ minutes: 60, action: "email" });
+    expect(defaultReminder(true, calendar)).toEqual({ minutes: -540, action: "display" });
+    expect(defaultReminder(false, { defaultAlertsWithTime: {} })).toEqual({
+      minutes: 15,
+      action: "display",
+    });
+    expect(defaultReminder(true)).toBeNull();
+    // Two alerts are none the form can show: the usual one then.
+    expect(
+      defaultReminder(false, { defaultAlertsWithTime: { a: alert("-PT5M"), b: alert("-PT1H") } }),
+    ).toEqual({ minutes: 15, action: "display" });
+  });
+});
+
+describe("defaultAlertsOf", () => {
+  it("stores one alert, or none for the usual default", () => {
+    expect(defaultAlertsOf({ minutes: 1440, action: "email" })).toEqual({
+      reminder: alert("-P1D", "email", "start"),
+    });
+    expect(defaultAlertsOf(null)).toEqual({});
   });
 });

@@ -164,6 +164,43 @@ test.describe("Kalender", () => {
       .toBe(true);
   });
 
+  test("ein Kalender gibt neuen Terminen seine Erinnerung mit", async ({ page }) => {
+    const calendar = unique("Baustellen");
+    const title = unique("Estrich prüfen");
+    await login(page);
+    await page.goto("/calendar");
+    await page.getByRole("button", { name: "Kalender verwalten" }).first().click();
+    const manage = page.getByRole("dialog", { name: "Kalender verwalten" });
+    await manage.getByLabel("Name des Kalenders").fill(calendar);
+    await manage.getByRole("button", { name: "Anlegen" }).click();
+    await manage.getByRole("button", { name: `Erinnerung: ${calendar}` }).click();
+    const defaults = page.getByRole("dialog", { name: `Erinnerung für „${calendar}“` });
+    await expect(defaults.getByLabel("Termine mit Uhrzeit")).toHaveValue("none");
+    await defaults.getByLabel("Termine mit Uhrzeit").selectOption({ label: "1 Tag vorher" });
+    await defaults.getByLabel("Erinnern per").selectOption({ label: "Mail" });
+    await defaults.getByRole("button", { name: "Speichern" }).click();
+    await expect(page.getByRole("status")).toHaveText("Erinnerung gespeichert.");
+    await page.keyboard.press("Escape");
+
+    await page.goto(`/calendar?date=${tomorrow()}&event=new&start=${tomorrow()}T10:00`);
+    const dialog = page.getByRole("dialog");
+    await dialog.getByLabel("Titel").fill(title);
+    // The usual 15 minutes in the default calendar; the calendar's own in the new one.
+    await expect(dialog.getByLabel("Erinnerung")).toHaveValue("15");
+    await dialog.getByLabel("Kalender", { exact: true }).selectOption({ label: calendar });
+    await expect(dialog.getByLabel("Erinnerung")).toHaveValue("1440");
+    await expect(dialog.getByLabel("Erinnern per")).toHaveValue("email");
+    await dialog.getByRole("button", { name: "Speichern" }).click();
+    await expect(dialog).toHaveCount(0);
+    expect(await alertsOf("jonas", title)).toEqual([{ offset: "-P1D", action: "email" }]);
+
+    await page.goto("/calendar");
+    await page.getByRole("button", { name: "Kalender verwalten" }).first().click();
+    page.once("dialog", (confirm) => void confirm.accept());
+    await manage.getByRole("button", { name: `Kalender löschen: ${calendar}` }).click();
+    await expect(manage.getByText(calendar)).toHaveCount(0);
+  });
+
   test("legt eine Terminserie an, ändert und löscht einzelne Termine", async ({ page }) => {
     const title = unique("Wochenrunde");
     await login(page);

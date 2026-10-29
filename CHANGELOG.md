@@ -7,6 +7,10 @@ Steps that an update needs beyond raising the version are marked **Upgrade**.
 
 ## Unreleased
 
+- Calendar: a default reminder per calendar – in *Kalender verwalten* the bell next to a calendar
+  sets the reminder new appointments in it get, one for appointments with a time and one for
+  all-day ones. Kept per person in Stalwart (`defaultAlertsWithTime`,
+  `defaultAlertsWithoutTime`); without one it stays 15 minutes before.
 - Mail: a winmail.dat from older Outlook versions (TNEF) shows as the files inside it, with
   preview, download and "In Dokumente"; the browser unpacks it and puts the files up as blobs of
   the mailbox.

@@ -29,7 +29,7 @@ import {
 } from "@/lib/event-form";
 import { type CalendarEvent, isInstance, toLocal } from "@/lib/jscalendar";
 import { formAt, formSlot } from "@/lib/planning";
-import { reminderForKind } from "@/lib/reminders";
+import { defaultReminder, reminderForKind } from "@/lib/reminders";
 import { isFirstDate } from "@/lib/series-split";
 import { withNames } from "@/lib/suggestions";
 import { m } from "@/paraglide/messages";
@@ -83,6 +83,9 @@ export const EventEditor = ({ event, series, start, onDone, onCancel }: Props) =
       : newEventForm(`${start ?? `${toLocal(new Date()).slice(0, 11)}09:00`}:00`.slice(0, 19)),
   );
   const [form, setForm] = useState(initial);
+  // A new appointment takes the reminder of the calendar it goes into, until one is picked.
+  const [reminderPicked, setReminderPicked] = useState(Boolean(event));
+  const reminder = reminderPicked ? form.reminder : defaultReminder(form.allDay, target?.calendar);
   // Its old time is in the calendar of everyone it went to; planning leaves it out there.
   const [editing] = useState(() => {
     const slot = event ? formSlot(initial) : null;
@@ -130,13 +133,14 @@ export const EventEditor = ({ event, series, start, onDone, onCancel }: Props) =
   const submit = async (e: FormEvent) => {
     e.preventDefault();
     const invalid = validateEventForm(form);
+    const filled = { ...form, reminder };
     if (invalid) {
       setProblem(PROBLEMS[invalid]());
       return;
     }
     const forSeries = !instance || scope !== "this";
     const data = formToEvent(
-      form,
+      filled,
       { email: session?.username ?? "" },
       instance && scope !== "this" ? series : event,
       forSeries,
@@ -210,7 +214,7 @@ export const EventEditor = ({ event, series, start, onDone, onCancel }: Props) =
             setForm((current) => ({
               ...current,
               allDay,
-              reminder: reminderForKind(current.reminder, allDay),
+              reminder: reminderForKind(reminder, allDay),
             }));
           }}
           className="size-4 accent-[var(--accent)]"
@@ -263,9 +267,12 @@ export const EventEditor = ({ event, series, start, onDone, onCancel }: Props) =
         </Select>
       </Label>
       <ReminderFields
-        value={form.reminder}
+        value={reminder}
         allDay={form.allDay}
-        onChange={(reminder) => setForm((current) => ({ ...current, reminder }))}
+        onChange={(picked) => {
+          setReminderPicked(true);
+          setForm((current) => ({ ...current, reminder: picked }));
+        }}
       />
       {!instance || scope !== "this" ? (
         <RepeatFields
