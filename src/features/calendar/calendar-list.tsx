@@ -1,7 +1,7 @@
 /**
  * The calendars the user can see, each with a box to show or hide it: in the sidebar, and in the
- * "Kalender verwalten" dialog with sharing, deleting and creating own calendars, and adding the
- * public holidays.
+ * "Kalender verwalten" dialog with sharing, deleting and creating own calendars, adding the
+ * public holidays and taking appointments over from an .ics file.
  */
 import { Settings2, Share2, Trash2 } from "lucide-react";
 import { type FormEvent, useState } from "react";
@@ -18,6 +18,7 @@ import { useColleagues, usePrincipals } from "../sharing/queries";
 import { ShareDialog } from "../sharing/share-dialog";
 import { setCalendarHidden } from "./hidden-calendars";
 import { useAddHolidays } from "./holiday-queries";
+import { IcsImport } from "./ics-import";
 import { type CalendarRef, useCalendarMutations, useCalendarRefs } from "./queries";
 import { Subscriptions } from "./subscriptions";
 import { TasksToggle } from "./task-chip";
@@ -237,6 +238,7 @@ export const CalendarsDialog = ({
       </section>
       <Holidays />
       <Subscriptions />
+      <IcsImport />
       {shared.length > 0 ? (
         <section className="flex flex-col gap-2">
           <h3 className="m-0 text-[12px] font-medium text-muted">{m.calendar_shared()}</h3>

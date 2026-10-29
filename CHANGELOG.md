@@ -7,6 +7,12 @@ Steps that an update needs beyond raising the version are marked **Upgrade**.
 
 ## Unreleased
 
+- Calendar: "Aus Datei übernehmen" under *Kalender verwalten* – appointments from an .ics file
+  (an export from Google, Outlook or Apple) into a calendar the user may write to, with a preview
+  of what is new and what is already there (same UID in the account), which is skipped. Stalwart
+  reads the file (`CalendarEvent/parse`); series keep their changed dates; attendees get no
+  message. The move now also leaves out the iTIP `method` (Google's `METHOD:PUBLISH`), which
+  Stalwart refuses on create.
 - Mail: a winmail.dat from older Outlook versions (TNEF) shows as the files inside it, with
   preview, download and "In Dokumente"; the browser unpacks it and puts the files up as blobs of
   the mailbox.

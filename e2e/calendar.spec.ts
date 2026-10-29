@@ -459,6 +459,136 @@ test.describe("Feiertage", () => {
   });
 });
 
+/** An export with a weekly series, one of its dates moved, and a day off; UIDs unique per run. */
+const icsFile = (run: string, year: number) => `BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//Kontext e2e//DE
+METHOD:PUBLISH
+BEGIN:VEVENT
+UID:${run}-series@e2e
+DTSTAMP:20261001T100000Z
+DTSTART;TZID=Europe/Berlin:${year}0304T090000
+DTEND;TZID=Europe/Berlin:${year}0304T100000
+RRULE:FREQ=WEEKLY;COUNT=4
+SUMMARY:Lieferantenrunde ${run}
+END:VEVENT
+BEGIN:VEVENT
+UID:${run}-series@e2e
+DTSTAMP:20261001T100000Z
+RECURRENCE-ID;TZID=Europe/Berlin:${year}0311T090000
+DTSTART;TZID=Europe/Berlin:${year}0311T140000
+DTEND;TZID=Europe/Berlin:${year}0311T150000
+SUMMARY:Lieferantenrunde verschoben ${run}
+END:VEVENT
+BEGIN:VEVENT
+UID:${run}-day@e2e
+DTSTAMP:20261001T100000Z
+DTSTART;VALUE=DATE:${year}0320
+DTEND;VALUE=DATE:${year}0321
+SUMMARY:Betriebsausflug ${run}
+END:VEVENT
+BEGIN:VEVENT
+UID:${run}-known@e2e
+DTSTAMP:20261001T100000Z
+DTSTART;TZID=Europe/Berlin:${year}0305T080000
+DTEND;TZID=Europe/Berlin:${year}0305T083000
+SUMMARY:Schon da ${run}
+END:VEVENT
+END:VCALENDAR
+`;
+
+test.describe("Termine aus Datei", () => {
+  test("übernimmt eine .ics-Datei mit Vorschau, was schon da ist, bleibt aus", async ({ page }) => {
+    test.setTimeout(60_000);
+    const run = Date.now().toString(36);
+    const year = Number(today().slice(0, 4)) + 1;
+    const calendar = unique("Lieferanten");
+    // One appointment of the file is already in Jonas' account (in another calendar).
+    const client = jmapAs("jonas");
+    const accountId = await personalAccountId("jonas");
+    const { list } = await client.call<{ list: { id: string; isDefault: boolean }[] }>(
+      "Calendar/get",
+      { accountId },
+      CALENDARS,
+    );
+    const known = await client.call<{ created: Record<string, { id: string }> }>(
+      "CalendarEvent/set",
+      {
+        accountId,
+        sendSchedulingMessages: false,
+        create: {
+          k: {
+            uid: `${run}-known@e2e`,
+            title: `Schon da ${run}`,
+            calendarIds: { [list.find((c) => c.isDefault)!.id]: true },
+            start: `${year}-03-05T08:00:00`,
+            timeZone: "Europe/Berlin",
+            duration: "PT30M",
+          },
+        },
+      },
+      CALENDARS,
+    );
+
+    await login(page);
+    await page.goto("/calendar");
+    await page.getByRole("button", { name: "Kalender verwalten" }).first().click();
+    const manage = page.getByRole("dialog", { name: "Kalender verwalten" });
+    await manage.getByLabel("Name des Kalenders").fill(calendar);
+    await manage.getByRole("button", { name: "Anlegen" }).click();
+    const row = manage.getByRole("listitem").filter({ hasText: calendar });
+    await expect(row).toBeVisible();
+
+    const file = { name: "termine.ics", mimeType: "text/calendar" };
+    await manage.getByLabel("In Kalender", { exact: true }).selectOption({ label: calendar });
+    await manage
+      .getByLabel("Datei (.ics)", { exact: true })
+      .setInputFiles({ ...file, buffer: Buffer.from(icsFile(run, year)) });
+    await expect(manage.getByText("2 neu, 1 schon vorhanden")).toBeVisible();
+    const preview = manage.getByRole("list", { name: "Aus Datei übernehmen" });
+    await expect(preview.getByRole("listitem")).toHaveCount(3);
+    await expect(
+      preview.getByRole("listitem").filter({ hasText: `Lieferantenrunde ${run}` }),
+    ).toContainText("Serie");
+    await expect(
+      preview.getByRole("listitem").filter({ hasText: `Schon da ${run}` }),
+    ).toContainText("schon vorhanden");
+    await manage.getByRole("button", { name: "Übernehmen" }).click();
+    await expect(
+      page.getByRole("status").filter({ hasText: "2 Termine übernommen." }),
+    ).toBeVisible();
+
+    // The same file again: nothing new.
+    await manage
+      .getByLabel("Datei (.ics)", { exact: true })
+      .setInputFiles({ ...file, buffer: Buffer.from(icsFile(run, year)) });
+    await expect(manage.getByText("0 neu, 3 schon vorhanden")).toBeVisible();
+    await expect(manage.getByRole("button", { name: "Übernehmen" })).toBeDisabled();
+    await page.keyboard.press("Escape");
+
+    // The series keeps its moved date.
+    const moved = `${year}-03-11`;
+    await page.goto(`/calendar?date=${moved}&view=day`);
+    await expect(
+      page.locator(`[data-day="${moved}"]`).getByText(`Lieferantenrunde verschoben ${run}`),
+    ).toBeVisible();
+    await page.goto(`/calendar?date=${year}-03-18&view=day`);
+    await expect(
+      page.locator(`[data-day="${year}-03-18"]`).getByText(`Lieferantenrunde ${run}`),
+    ).toBeVisible();
+
+    await page.getByRole("button", { name: "Kalender verwalten" }).first().click();
+    page.once("dialog", (confirm) => confirm.accept());
+    await manage.getByRole("button", { name: `Kalender löschen: ${calendar}` }).click();
+    await expect(row).toHaveCount(0);
+    await client.call(
+      "CalendarEvent/set",
+      { accountId, destroy: [known.created.k!.id] },
+      CALENDARS,
+    );
+  });
+});
+
 test.describe("Kalender am Handy @phone", () => {
   test("Tagesansicht mit Wochenleiste und neuem Termin", async ({ page }) => {
     await login(page);
