@@ -323,7 +323,9 @@ export const Conversation = ({
                   readUpTo={readUpTo}
                   onMakeTask={makeTask}
                   onReact={react}
-                  onReply={(message) => openThread(message.id)}
+                  // An answer shown in the channel leads into its own thread.
+                  onReply={(message) => openThread(message.parentId ?? message.id)}
+                  parentOf={(id) => messages.find((message) => message.id === id)}
                   onEdit={(message, text, mentions) =>
                     actions.edit.mutate({
                       id: message.id,

@@ -33,6 +33,8 @@ export type Post = {
   channelId: string;
   /** An answer in the thread of this message. */
   parentId?: string | null;
+  /** For an answer: shown in the channel too. */
+  alsoInChannel?: boolean;
   text: string;
   mentions: string[];
   cards: Card[];
@@ -158,7 +160,7 @@ const givesWay = (old: Message, message: Message, replaces?: string) =>
 
 /**
  * Puts a message where it shows, once (the live event and the answer may both come): an answer
- * into its thread, any other into the cached first page of its channel and, when its thread is
+ * into its thread (and the channel's first page too when it is shown there), any other into the cached first page of its channel and, when its thread is
  * open, as the thread's first message.
  */
 export const addMessage = (queryClient: QueryClient, message: Message, replaces?: string) => {
@@ -173,6 +175,7 @@ export const addMessage = (queryClient: QueryClient, message: Message, replaces?
           }
         : data,
     );
+    if (message.alsoInChannel) addToChannel(queryClient, message, replaces);
     return;
   }
   queryClient.setQueryData<Thread>(threadKey(message.id), (data) =>
@@ -244,7 +247,15 @@ export const useChatActions = (me: string) => {
           fileIds: files.map((file) => file.id),
         })
       ).message,
-    onMutate: ({ channelId, parentId = null, text, mentions, cards, files }) => {
+    onMutate: ({
+      channelId,
+      parentId = null,
+      alsoInChannel = false,
+      text,
+      mentions,
+      cards,
+      files,
+    }) => {
       const pending: Message = {
         id: `${PENDING}${crypto.randomUUID()}`,
         channelId,
@@ -257,6 +268,7 @@ export const useChatActions = (me: string) => {
         editedAt: null,
         deleted: false,
         parentId,
+        alsoInChannel: Boolean(parentId && alsoInChannel),
         reactions: [],
         replies: null,
         call: null,

@@ -1,75 +1,18 @@
 /**
  * Whether an S/MIME certificate can be trusted (docs/encryption.md, building block 4): a chain
- * up to an authority one trusts – those that come with Bun/Node (Mozilla's list), and the
- * company's own (`SMIME_ROOTS`) –, valid now, meant for mail, and not revoked (OCSP, the answer's
- * signature checked). And certificates others publish in DNS (SMIMEA, RFC 8162, signed with
+ * up to an authority one trusts – those that come with Bun/Node (Mozilla's list), the company's
+ * own (`SMIME_ROOTS`) and those the Firmenverwaltung added (authorities.ts) –, valid now, meant
+ * for mail, and not revoked (OCSP, the answer's signature checked; else the revocation lists,
+ * crl.ts). And certificates others publish in DNS (SMIMEA, RFC 8162, signed with
  * DNSSEC). The server does this, as the browser may not ask other sites.
  */
 import { createHash, verify, X509Certificate } from "node:crypto";
+import { extension, forMail, HASHES, OID, purposes, tbsOf } from "./cert-parts";
 import { children, content, encode, encodeOid, inner, oidOf, read, TAG, whole } from "./der";
 
 export type ChainState = "trusted" | "untrusted" | "expired" | "not-for-mail";
 export type Revocation = "good" | "revoked" | "unknown";
 export type Trust = { chain: ChainState; revocation: Revocation; root: string | null };
-
-const OID = {
-  extKeyUsage: "2.5.29.37",
-  anyKeyUsage: "2.5.29.37.0",
-  emailProtection: "1.3.6.1.5.5.7.3.4",
-  ocspSigning: "1.3.6.1.5.5.7.3.9",
-  infoAccess: "1.3.6.1.5.5.7.1.1",
-  ocsp: "1.3.6.1.5.5.7.48.1",
-  ocspBasic: "1.3.6.1.5.5.7.48.1.1",
-  sha1: "1.3.14.3.2.26",
-};
-
-/** The hash of a signature algorithm, as node:crypto names it. */
-const HASHES: Record<string, string> = {
-  "1.2.840.113549.1.1.5": "sha1",
-  "1.2.840.113549.1.1.11": "sha256",
-  "1.2.840.113549.1.1.12": "sha384",
-  "1.2.840.113549.1.1.13": "sha512",
-  "1.2.840.10045.4.3.2": "sha256",
-  "1.2.840.10045.4.3.3": "sha384",
-  "1.2.840.10045.4.3.4": "sha512",
-};
-
-/** The parts of a certificate's TBSCertificate, the optional version skipped. */
-const tbsOf = (cert: X509Certificate) => {
-  const der = new Uint8Array(cert.raw);
-  const tbs = children(read(der))[0]!;
-  const fields = children(tbs);
-  const offset = fields[0]?.tag === 0xa0 ? 1 : 0;
-  return {
-    serial: fields[offset]!,
-    issuer: fields[offset + 2]!,
-    subject: fields[offset + 4]!,
-    publicKey: fields[offset + 5]!,
-    extensions: fields.find((field) => field.tag === 0xa3),
-  };
-};
-
-/** An extension's value (inside its OCTET STRING), or undefined. */
-const extension = (cert: X509Certificate, oid: string) => {
-  const list = tbsOf(cert).extensions;
-  if (!list) return undefined;
-  for (const ext of children(inner(list))) {
-    const parts = children(ext);
-    if (oidOf(parts[0]!) === oid) return inner(parts.at(-1)!);
-  }
-  return undefined;
-};
-
-const purposes = (cert: X509Certificate) => {
-  const value = extension(cert, OID.extKeyUsage);
-  return value ? children(value).map(oidOf) : null;
-};
-
-/** Meant for mail: no limit on its use, or e-mail protection among them. */
-const forMail = (cert: X509Certificate) => {
-  const list = purposes(cert);
-  return !list || list.includes(OID.emailProtection) || list.includes(OID.anyKeyUsage);
-};
 
 /** "O=…" or "CN=…" of a name as node:crypto writes it. */
 export const nameOf = (distinguished: string) => {
@@ -246,12 +189,14 @@ export type TrustDeps = {
   roots: X509Certificate[];
   /** Posts an OCSP request; tests give a stand-in. */
   post: (url: string, body: Uint8Array) => Promise<Uint8Array | null>;
+  /** Revocation by the certificate's lists, where OCSP says nothing (crl.ts). */
+  crl?: (cert: X509Certificate, issuer: X509Certificate) => Promise<Revocation>;
   now?: () => Date;
 };
 
 export const checkTrust = async (
   { certificate, chain }: { certificate: string; chain: string[] },
-  { roots, post, now = () => new Date() }: TrustDeps,
+  { roots, post, crl, now = () => new Date() }: TrustDeps,
 ): Promise<Trust | null> => {
   const leaf = parseCert(certificate);
   if (!leaf) return null;
@@ -265,11 +210,10 @@ export const checkTrust = async (
   }
   const url = ocspUrl(leaf);
   const answer = url ? await post(url, ocspRequest(leaf, issuer)).catch(() => null) : null;
-  return {
-    chain: built.state,
-    revocation: answer ? readOcspResponse(answer, leaf, issuer, at) : "unknown",
-    root,
-  };
+  const ocsp = answer ? readOcspResponse(answer, leaf, issuer, at) : "unknown";
+  const revocation =
+    ocsp === "unknown" && crl ? await crl(leaf, issuer).catch(() => "unknown" as const) : ocsp;
+  return { chain: built.state, revocation, root };
 };
 
 /** Where SMIMEA records of an address are (RFC 8162 §3): the local part hashed, then the domain. */

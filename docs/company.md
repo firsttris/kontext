@@ -64,6 +64,11 @@ Stalwarts Admin-Oberfläche und ohne IT-Kenntnisse.
 
   ![„Angemeldet bleiben?“ mit Countdown über dem Posteingang](screenshots/idle-logout.png)
 
+- **S/MIME-Stellen** unter *Einstellungen → Firma → S/MIME-Stellen*: Zertifikate von Stellen,
+  denen die Firma bei S/MIME vertraut, zusätzlich zu Mozillas Liste – etwa die Wurzel einer
+  Landesverwaltung oder einer Kammer (.cer, .crt, .pem). Jede steht mit Name, Aussteller,
+  Gültigkeit und Fingerabdruck da und lässt sich wieder entfernen
+  ([Verschlüsselung](encryption.md#baustein-4-vertraulich-senden-fur-alle-empfanger)).
 - **Sicherheit prüfen:** SPF, DMARC, MTA-STS, TLS-RPT, DANE und HTTPS der eigenen Domain
   ([Verschlüsselung](encryption.md#baustein-1-grundschutz-unsichtbar-fur-alles)).
 - **Datensicherung:** wohin gesichert wird, wie der letzte Lauf ausging, wie voll der Speicher

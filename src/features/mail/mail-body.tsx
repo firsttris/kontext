@@ -9,24 +9,15 @@ import { useTheme } from "@/components/theme/use-theme";
 import { displayBody } from "@/jmap/mail";
 import type { EmailDetail } from "@/jmap/types";
 import { splitQuote, splitTextQuote } from "@/lib/conversation";
-import { findContact } from "@/lib/correspondent";
 import { mailDocument, sanitizeMailHtml, textToHtml } from "@/lib/html";
-import { imageState } from "@/lib/remote-images";
 import { m } from "@/paraglide/messages";
-import { trusts } from "../../../server/images/senders";
-import { useContacts } from "../contacts/queries";
-import { ImagesLine, useImageSenders } from "./image-senders";
+import { ImagesLine } from "./image-senders";
 import { useInlineImages } from "./inline-image-urls";
+import { useRemoteImages } from "./remote-images";
 
 export const MailBody = ({ accountId, email }: { accountId: string; email: EmailDetail }) => {
   const dark = useTheme().theme === "dark";
-  const [loadNow, setLoadNow] = useState(false);
-  const { senders } = useImageSenders();
-  const { data: contacts } = useContacts();
-  const sender = email.from?.[0]?.email ?? "";
-  const trusted = sender !== "" && trusts(senders, sender, Boolean(findContact(contacts, sender)));
-  const state = imageState(trusted, sender, email.authenticationResults);
-  const allowRemote = loadNow || state === "load";
+  const { sender, state, loadNow, allowRemote, load } = useRemoteImages(email);
   const cidUrls = useInlineImages(accountId, email);
   const frame = useRef<HTMLIFrameElement>(null);
   const [height, setHeight] = useState(120);
@@ -83,7 +74,7 @@ export const MailBody = ({ accountId, email }: { accountId: string; email: Email
         <ImagesLine
           state={state === "unconfirmed" ? "unconfirmed" : "blocked"}
           sender={sender}
-          onLoad={() => setLoadNow(true)}
+          onLoad={load}
         />
       ) : state === "load" && !loadNow && hasRemote ? (
         <ImagesLine state="trusted" sender={sender} onLoad={() => undefined} />

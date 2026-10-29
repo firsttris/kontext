@@ -132,6 +132,31 @@ export const saveBackupSettings = (settings: BackupSettings) =>
 export const runBackup = () => send<{ ok: true }>("POST", "/backup/run");
 
 /** How long the team chat keeps messages, in days; 0: for ever. */
+/** An S/MIME authority the company trusts (server/smime/authorities.ts). */
+export type SmimeAuthority = {
+  fingerprint: string;
+  subject: string;
+  issuer: string;
+  notBefore: string;
+  notAfter: string;
+  selfSigned: boolean;
+  addedBy: string;
+  createdAt: string;
+};
+
+export const getSmimeAuthorities = () =>
+  send<{ authorities: SmimeAuthority[] }>("GET", "/smime-authorities");
+
+/** `certificate`: PEM, or DER in base64. */
+export const addSmimeAuthority = (certificate: string) =>
+  send<{ authorities: SmimeAuthority[] }>("POST", "/smime-authorities", { certificate });
+
+export const removeSmimeAuthority = (fingerprint: string) =>
+  send<{ authorities: SmimeAuthority[] }>(
+    "DELETE",
+    `/smime-authorities/${encodeURIComponent(fingerprint)}`,
+  );
+
 export const getChatRetention = () => send<{ days: number }>("GET", "/chat-retention");
 
 export const saveChatRetention = (days: number) =>

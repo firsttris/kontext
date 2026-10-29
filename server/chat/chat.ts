@@ -113,6 +113,8 @@ export type Message = {
   channelId: string;
   /** An answer in the thread of this message; null in the channel itself. */
   parentId: string | null;
+  /** An answer that also stands in the channel, marked as one, with a way into its thread. */
+  alsoInChannel: boolean;
   authorId: string;
   text: string;
   mentions: string[];
@@ -247,6 +249,8 @@ export const newMessageSchema = z
   .object({
     /** An answer in the thread of this message. */
     parentId: z.string().min(1).max(64).nullable().default(null),
+    /** For an answer: show it in the channel too ("Auch im Kanal zeigen"). */
+    alsoInChannel: z.boolean().default(false),
     text: z.string().trim().max(4000).default(""),
     mentions: z.array(person).max(50).default([]),
     fileIds: z.array(z.string().min(1).max(64)).max(MAX_FILES).default([]),
@@ -264,15 +268,29 @@ export const editMessageSchema = z.object({
 
 export const muteSchema = z.object({ muted: z.boolean() });
 
-/** One emoji (with skin tone or joined parts), on or off. */
+const graphemes = new Intl.Segmenter("en", { granularity: "grapheme" });
+
+/**
+ * Whether `text` is a single emoji as the picker (src/lib/emoji-data.ts) or a keyboard sends it:
+ * one grapheme cluster (UAX #29) of emoji code points only – a picture with skin tone, joined
+ * parts (ZWJ) or variation selector, a flag (two regional indicators, or the tag sequence of
+ * England), or a keycap ("1️⃣": digit, U+FE0F, U+20E3). Words, bare digits and several emojis
+ * in a row are not one.
+ */
+export const isOneEmoji = (text: string): boolean => {
+  if ([...graphemes.segment(text)].length !== 1) return false;
+  if (!/^(?:\p{Extended_Pictographic}|\p{Emoji_Component}|\u200d|\ufe0f)+$/u.test(text))
+    return false;
+  return (
+    /\p{Extended_Pictographic}/u.test(text) ||
+    /^\p{Regional_Indicator}{2}$/u.test(text) ||
+    /^[0-9#*]\ufe0f?\u20e3$/u.test(text)
+  );
+};
+
+/** One emoji, on or off. */
 export const reactionSchema = z.object({
-  emoji: z
-    .string()
-    .min(1)
-    .max(32)
-    .regex(/^(?:\p{Extended_Pictographic}|\p{Emoji_Component}|\u200d|\ufe0f)+$/u)
-    // Digits and "#" are emoji components too; one real picture is needed.
-    .regex(/\p{Extended_Pictographic}/u),
+  emoji: z.string().min(1).max(32).refine(isOneEmoji),
   on: z.boolean(),
 });
 

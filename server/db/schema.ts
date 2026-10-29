@@ -291,6 +291,8 @@ export const chatMessages = sqliteTable(
     call: text("call"),
     /** An answer in the thread of this message (never an answer to an answer). */
     parentId: text("parent_id"),
+    /** An answer that also stands in the channel ("Auch im Kanal zeigen"); false otherwise. */
+    alsoInChannel: integer("also_in_channel", { mode: "boolean" }).notNull().default(false),
     /**
      * Text and card titles in lower case as German writes it ("Ö" → "ö"), for the search:
      * SQLite's own LIKE ignores case only for ASCII. Null until filled in at start.
@@ -541,6 +543,20 @@ export const smimeCerts = sqliteTable(
   },
   (table) => [primaryKey({ columns: [table.memberId, table.email] })],
 );
+
+/**
+ * Authorities the company trusts for S/MIME beyond Mozilla's list and `SMIME_ROOTS`: root or
+ * intermediate certificates the Firmenverwaltung added (server/smime/authorities.ts).
+ */
+export const smimeAuthorities = sqliteTable("smime_authorities", {
+  /** SHA-256 of the certificate, as node:crypto writes it ("AB:CD:…"). */
+  fingerprint: text("fingerprint").primaryKey(),
+  certificate: text("certificate").notNull(),
+  subject: text("subject").notNull(),
+  notAfter: integer("not_after", { mode: "timestamp_ms" }).notNull(),
+  addedBy: text("added_by").notNull(),
+  createdAt: integer("created_at", { mode: "timestamp_ms" }).notNull(),
+});
 
 /**
  * "Vertraulich senden" (server/secure/): a message for a recipient without a key, read on a page

@@ -32,6 +32,8 @@ export type CompanyDeps = {
   settings: CompanySettings;
   /** Hinweis „Extern“: the switch and the partner domains (external-hint.ts). */
   externalHint: ExternalHintStore;
+  /** S/MIME authorities the company trusts beyond Mozilla's list (smime/authorities.ts). */
+  smimeAuthorities?: import("../smime/authorities").AuthorityStore;
   /** What each person entered for the signature ([Telefon], [Mobil] …). */
   signatureDetails: SignatureDetailsStore;
   /** Categories of the shared mailboxes, for the rules that set them. */

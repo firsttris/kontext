@@ -10,7 +10,7 @@ ein Plan, kein Versprechen; Wünsche und Hinweise gern als
 | Funktion | Worum es geht |
 | --- | --- |
 | **Pilot** | Vier Wochen bei einem Kunden parallel zum alten System, mit der [Telefonie](https://firsttris.github.io/kontext/telephony.html) im Test. |
-| **Offene Punkte** | die Lücken unten, etwa beliebige Emojis im Chat. |
+| **Offene Punkte** | die Lücke unten: S/MIME-Zertifikate aus LDAP-Verzeichnissen. |
 
 ## Danach
 
@@ -41,16 +41,9 @@ Lücken und Befunde, die beim Bauen offen geblieben sind und noch angegangen wer
 
 **Funktionen**
 
-- [ ] **Drucken mit freigegebenen Bildern:** Bilder aus dem Internet, die in der Mail geladen
-  wurden, auch mitdrucken.
-- [ ] **Chat:** Reaktionen mit beliebigen Emojis (heute die sieben Schnellwahlen), und im Thread
-  „auch im Kanal zeigen“.
-- [ ] **README und lokale Entwicklung:** ein Bild der Regeln im README; Aufgaben und Chat mit
-  Beispieldaten auch in der lokalen Entwicklung (heute nur über die API für die Bilder,
-  `e2e/demo-data.ts`).
-- [ ] **S/MIME:** eigene anerkannte Stellen in der Firmenverwaltung pflegen (heute
-  `SMIME_ROOTS`); Sperrlisten (CRL), wo eine Stelle kein OCSP anbietet; LDAP-Verzeichnisse
-  einzelner Stellen; Unterschriften mit EC-Schlüsseln prüfen (heute „nicht prüfbar“).
+- [ ] **S/MIME:** Zertifikate von Empfängern im LDAP-Verzeichnis ihrer Stelle suchen (bewusst
+  offen, Gründe in der
+  [Verschlüsselung](https://firsttris.github.io/kontext/encryption.html#grenzen-und-offene-punkte)).
 
 ## Bekannte Einschränkungen
 
@@ -59,8 +52,8 @@ Lücken und Befunde, die beim Bauen offen geblieben sind und noch angegangen wer
 - **Regeln auf vorhandene Mails:** wirken auf die neuesten 1.000 Mails im Posteingang.
 - **Regeln und Umlaute:** Stalwart vergleicht Groß- und Kleinschreibung nur bei ASCII; „MÜLLER“
   trifft dort nicht „Müller“.
-- **Drucken:** Eingebettete Bilder werden mitgedruckt, Bilder aus dem Internet nicht; Anhänge
-  erscheinen nur mit Name und Größe.
+- **Drucken:** Eingebettete Bilder werden mitgedruckt, Bilder aus dem Internet nur, wenn sie in der
+  Mail geladen sind; Anhänge erscheinen nur mit Name und Größe.
 - **Fotos im vertraulichen Chat** bekommen kein Vorschaubild: Der Server kann sie nicht lesen, sie
   laden in voller Größe.
 - **Kategorien in Handy-Apps:** Apple Mail und die Gmail-App zeigen eigene Schlagworte nicht;

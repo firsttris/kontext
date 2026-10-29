@@ -129,21 +129,45 @@ Ein Schalter für Mails nach außen; Kontext nimmt je Empfänger den besten Weg:
      des Absenders, nur aus einer Mail mit bestätigtem Absender, und nie an Stelle eines
      importierten), oder man übernimmt sie aus einer Datei (.cer, .pem). Abgelaufene zählen nicht.
    - Eingehende S/MIME-Mails werden im Browser entschlüsselt; Unterschriften (getrennt oder
-     eingepackt) werden geprüft, und die Mail sagt, wer bürgt: die ausstellende Stelle, oder
-     „selbst ausgestellt“. Ob erst unterschrieben und dann verschlüsselt wurde oder umgekehrt,
+     eingepackt) werden geprüft – mit RSA- und mit EC-Schlüsseln (ECDSA auf P-256, P-384 und
+     P-521, RFC 5753; der Wert als `Ecdsa-Sig-Value` nach RFC 3279 §2.2.3, für WebCrypto in r‖s
+     umgesetzt, `src/lib/smime-cert.ts`) –, und die Mail sagt, wer bürgt: die ausstellende Stelle,
+     oder „selbst ausgestellt“. Ob erst unterschrieben und dann verschlüsselt wurde oder umgekehrt,
      ist gleich (RFC 8551 §3.7).
    - **Vertrauen:** Der Server prüft die Kette des Zertifikats (mit den Zwischenzertifikaten aus
      der Unterschrift) bis zu einer anerkannten Stelle – denen, die Bun mitbringt (Mozillas
-     Liste), und eigenen aus `SMIME_ROOTS` (eine PEM-Datei, z. B. die Wurzel der
-     Verwaltungs-PKI) –, ob es gilt und für Mails gedacht ist, und fragt per OCSP bei der Stelle,
-     ob es gesperrt wurde; die Antwort zählt nur mit gültiger Unterschrift der Stelle
-     (`server/smime/trust.ts`). Die Mail sagt dann „bestätigt von …, nicht gesperrt“, warnt bei
-     unbekannten Stellen, abgelaufenen oder nicht für Mails gedachten Zertifikaten und zeigt rot,
-     wenn es gesperrt ist. Ohne OCSP-Adresse oder Antwort bleibt es bei „bestätigt von …“.
+     Liste), den Stellen der Firmenverwaltung (unten) und eigenen aus `SMIME_ROOTS` (eine
+     PEM-Datei, z. B. die Wurzel der Verwaltungs-PKI) –, ob es gilt und für Mails gedacht ist, und
+     fragt per OCSP bei der Stelle, ob es gesperrt wurde; die Antwort zählt nur mit gültiger
+     Unterschrift der Stelle (`server/smime/trust.ts`). Die Mail sagt dann „bestätigt von …, nicht
+     gesperrt“, warnt bei unbekannten Stellen, abgelaufenen oder nicht für Mails gedachten
+     Zertifikaten und zeigt rot, wenn es gesperrt ist.
+   - **Sperrlisten (CRL):** Nennt das Zertifikat keinen OCSP-Dienst oder antwortet er nicht
+     verwertbar, lädt der Server die Sperrliste von der Adresse im Zertifikat (CRL Distribution
+     Points, RFC 5280 §4.2.1.13; nur http/https, nur Hosts im Internet, höchstens 10 MB und
+     15 Sekunden) und prüft sie (`server/smime/crl.ts`): von der ausstellenden Stelle (Name und
+     Unterschrift), aktuell (`nextUpdate` nicht vorbei), keine Delta- oder indirekte Liste und
+     keine unbekannte kritische Erweiterung (§5.2); nennt die Liste ihre eigene Adresse
+     (Issuing Distribution Point, §5.2.5), muss es die aus dem Zertifikat sein – sonst könnte
+     ein anderer Teil der Listen derselben Stelle untergeschoben werden. Steht die Seriennummer darin, ist das
+     Zertifikat gesperrt, sonst „nicht gesperrt“. Jede Liste bleibt bis zu ihrem `nextUpdate`
+     im Speicher, höchstens einen Tag und höchstens 100 Listen; eine, die sich nicht laden ließ,
+     wird nach zehn Minuten wieder gefragt. Ohne OCSP und ohne verwertbare Liste bleibt es bei
+     „bestätigt von …“. Geprüft wird das Zertifikat des Absenders, nicht die Zwischenstellen.
+   - **Anerkannte Stellen in der Firmenverwaltung:** Unter Firmenverwaltung → S/MIME-Stellen fügt
+     man das Zertifikat einer Stelle hinzu (Wurzel oder Zwischenstelle, .cer/.crt/.pem, PEM oder
+     DER) und sieht Name, Aussteller, Gültigkeit und Fingerabdruck. Der Server nimmt nur
+     Zertifikate einer Stelle (CA), die gerade gelten, höchstens 100, und speichert sie in der
+     Tabelle `smime_authorities` (`server/smime/authorities.ts`). Sie gelten zusätzlich zu
+     Mozillas Liste und `SMIME_ROOTS`; nach einer Änderung gelten frühere Prüfergebnisse nicht
+     mehr. Eine Zwischenstelle hier eingetragen gilt als Anker: Zertifikate darunter sind
+     bestätigt, auch wenn ihre Wurzel unbekannt ist.
+
+     ![Firmenverwaltung, S/MIME-Stellen: eine Wurzel mit Gültigkeit und Fingerabdruck](screenshots/smime-authorities.png)
    - **Zertifikate finden:** Unter Einstellungen → Verschlüsselung sucht „Im DNS suchen“ das
      Zertifikat einer Adresse in deren Domain (SMIMEA, RFC 8162) – nur aus einer mit DNSSEC
      signierten Antwort und nur, wenn es zur Adresse gehört. Verzeichnisse einzelner Stellen
-     (LDAP) fragt Kontext nicht ab.
+     (LDAP) fragt Kontext nicht ab, siehe unten.
    - Wer nur ein Zertifikat und keinen PGP-Schlüssel hat, kann an S/MIME-Empfänger vertraulich
      senden; für PGP und Links braucht es den PGP-Schlüssel.
 3. **Hat nichts davon** → eine Mail mit einem Link (`/s/<id>#<schlüssel>`). Umgesetzt so:
@@ -260,18 +284,25 @@ Was Kontext bewusst nicht schützt, oder (noch) nicht kann:
 - **„Vertraulich senden“ per Link:** Den Code gibt der Absender selbst auf anderem Weg weiter
   (Telefon, persönlich); einen Versand per SMS gibt es bewusst nicht.
 - **S/MIME, offen:**
-  - Eigene anerkannte Stellen pflegt man heute über `SMIME_ROOTS` auf dem Server, noch nicht in der
-    Firmenverwaltung: eine PEM-Datei, die in den Container eingebunden und als Variable gesetzt
-    wird – `compose.yaml` tut beides nicht von selbst, siehe
-    [Einstellungen](installation.md#der-kontext-server).
-  - Sperrlisten (CRL) fragt Kontext nicht ab; bei Stellen ohne OCSP bleibt der Sperrstatus offen.
-  - Verzeichnisse einzelner Stellen (LDAP) durchsucht Kontext nicht, nur SMIMEA im DNS.
+  - Verzeichnisse einzelner Stellen (LDAP) durchsucht Kontext nicht, nur SMIMEA im DNS und die
+    Zertifikate aus unterschriebenen Mails. Bewusst ausgelassen: LDAP spricht über eigene
+    TCP-Verbindungen (Port 389, mit TLS 636), die ein Kundenserver oft nicht nach außen öffnen
+    darf, und bräuchte einen LDAP-Client als neue Abhängigkeit (etwa `ldapts`; im Tech-Stack
+    steht keiner) oder einen eigenen BER-Client. Jede Stelle hat zudem ein anderes Verzeichnis
+    (Host, Basis-DN, Suchattribut `mail`, Attribut `userCertificate;binary`), das die
+    Firmenverwaltung je Stelle pflegen müsste, und viele geben Zertifikate nur nach Anmeldung
+    oder gar nicht heraus. Für kleine Betriebe kommt das Zertifikat einer Behörde meist mit ihrer
+    ersten unterschriebenen Mail; der Nutzen steht nicht im Verhältnis. Steht als einziger
+    S/MIME-Punkt in der Roadmap.
+  - Sperrlisten werden nur über http/https geladen (keine `ldap://`-Adressen), und nur für das
+    Zertifikat des Absenders, nicht für die Zwischenstellen der Kette.
   - Mit AuthEnvelopedData (RFC 5083, `smime-type=authEnveloped-data`) verschlüsselte Mails
     öffnet Kontext nicht (node-forge kann es nicht); die Mail sagt dann, dass sie sich nicht
     entschlüsseln lässt.
-  - Unterschriften prüft der Browser nur mit RSA-Zertifikaten (node-forge liest keine EC-Schlüssel);
-    eine Unterschrift mit einem EC-Schlüssel zeigt die Mail als „nicht prüfbar“ an, nicht als
-    gefälscht.
+  - EC-Unterschriften prüft der Browser auf den Kurven, die WebCrypto kennt (P-256, P-384,
+    P-521); eine mit anderen Schlüsseln (etwa Brainpool oder Ed25519) zeigt die Mail als „nicht
+    prüfbar“ an, nicht als gefälscht. Verschlüsseln an ein EC-Zertifikat (ECDH, RFC 5753) kann
+    Kontext nicht, node-forge kennt nur RSA.
 
 ## Reihenfolge
 

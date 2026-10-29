@@ -44,6 +44,8 @@ IMAP und SMTP.
 - **Regeln** („wenn Absender, Empfänger, Betreff oder Text … dann in Ordner, markieren, Kategorie
   setzen, weiterleiten, Aufgabe anlegen“) laufen auf dem Server beim Eingang, auch wenn Kontext zu
   ist; aus einer Mail heraus angelegt, auf Wunsch auch auf vorhandene Mails.
+
+  ![Einstellungen, Regeln: Mails einer Kanzlei nach „Steuerberater“, Lieferscheine nach „Lieferanten“ und gelesen, Newsletter gelesen](screenshots/rules.png)
 - **Mailliste sortieren:** das Symbol mit den zwei Pfeilen oben in der Liste (auch am Handy) –
   neueste oder älteste zuerst, ungelesene, markierte oder Mails mit Kategorie zuerst (in der
   Reihenfolge der Kategorien), nach Absender oder Betreff (A–Z) oder die größten zuerst. Innerhalb
@@ -246,7 +248,8 @@ kommt alle zwei Minuten in Kontext, gesendet wird als diese Adresse über den Se
   Lesen), bleibt die winmail.dat selbst stehen.
 
   ![Eine Mail mit winmail.dat: darunter Lieferschein-48211.pdf mit Vorschau und eine Textdatei](screenshots/winmail.png)
-- **Drucken** nur der Mail, sauber auf A4 (auch mit Strg+P).
+- **Drucken** nur der Mail, sauber auf A4 (auch mit Strg+P); Bilder aus dem Internet kommen mit,
+  wenn sie in der Mail geladen sind.
 - **Tastaturkürzel wie in Gmail**; `?` zeigt alle.
 - **Neben der Mail** (auf breiten Bildschirmen): wer schreibt, mit Firma, nächsten Terminen,
   letzten Mails und „Anrufen“.

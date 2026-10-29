@@ -23,6 +23,7 @@ export const settingsSections = [
   "company-security",
   "company-idle",
   "company-external",
+  "company-smime",
   "company-backup",
   "phone",
   "migration",

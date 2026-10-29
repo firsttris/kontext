@@ -1,10 +1,11 @@
 /**
  * The thread of a message: the message, its answers and a field to answer – beside the
- * conversation on a wide screen, instead of it on a phone. Answers stay out of the channel;
- * who wrote in the thread hears of new ones.
+ * conversation on a wide screen, instead of it on a phone. Answers stay out of the channel unless
+ * "Auch im Kanal zeigen" is ticked (like Slack's "Also send to channel"); who wrote in the thread
+ * hears of new ones.
  */
 import { ChevronLeft, X } from "lucide-react";
-import { useEffect, useLayoutEffect } from "react";
+import { useEffect, useLayoutEffect, useState } from "react";
 import { useMediaQuery } from "@/components/use-media-query";
 import { type ChannelSummary, firstName, type Message, timeline } from "@/lib/chat";
 import { m } from "@/paraglide/messages";
@@ -40,6 +41,7 @@ export const ThreadPanel = ({
   const attachments = useAttachments(channel.id, { seal });
   const unlocked = useUnlockedKey();
   const replies = thread?.replies ?? [];
+  const [alsoInChannel, setAlsoInChannel] = useState(false);
 
   // Opened: read up to its newest answer, so the channel shows no "neu" on it any more.
   const newest = replies.filter((reply) => !isPending(reply)).at(-1);
@@ -162,14 +164,27 @@ export const ThreadPanel = ({
               actions.post.mutate({
                 channelId: channel.id,
                 parentId,
+                alsoInChannel,
                 text,
                 mentions,
                 cards: attachments.cards,
                 files: attachments.files.flatMap((file) => (file.uploaded ? [file.uploaded] : [])),
               });
               attachments.clear();
+              setAlsoInChannel(false);
             }}
           />
+        )}
+        {channel.confidential && !unlocked ? null : (
+          <label className="mt-2 flex w-fit items-center gap-2 px-1 text-[13px] text-muted">
+            <input
+              type="checkbox"
+              checked={alsoInChannel}
+              onChange={(event) => setAlsoInChannel(event.target.checked)}
+              className="size-4 accent-[var(--primary)]"
+            />
+            {m.chat_also_in_channel()}
+          </label>
         )}
       </div>
     </aside>

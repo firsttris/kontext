@@ -6,6 +6,7 @@ import { addMessage, messagesKey, type Thread, threadKey } from "./queries";
 const message = (id: string, text: string, parentId: string | null = null): Message => ({
   id,
   channelId: "c1",
+  alsoInChannel: false,
   authorId: "jonas",
   text,
   mentions: [],

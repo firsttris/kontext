@@ -2,16 +2,26 @@
  * What one can do with a message. On a desktop a small bar floats over the message's top right
  * corner while the pointer is on it (react, answer in the thread, more); it takes no room, so
  * nothing moves when it shows. On a phone nothing sits next to the bubbles: a long press opens a
- * sheet with the quick reactions and the actions, as messengers do.
+ * sheet with the quick reactions and the actions, as messengers do; "+" there shows every emoji.
  */
 import * as DialogPrimitive from "@radix-ui/react-dialog";
-import { Copy, Ellipsis, ListChecks, MessageSquareReply, Pencil, Trash2 } from "lucide-react";
-import type { ReactNode } from "react";
+import {
+  ChevronLeft,
+  Copy,
+  Ellipsis,
+  ListChecks,
+  MessageSquareReply,
+  Pencil,
+  Plus,
+  Trash2,
+} from "lucide-react";
+import { type ReactNode, useState } from "react";
 import { MenuContent, MenuItem, MenuRoot, MenuTrigger } from "@/components/ui/menu";
 import { useToast } from "@/components/ui/toast";
 import { QUICK_REACTIONS } from "@/lib/chat-threads";
 import { cn } from "@/lib/cn";
 import { m } from "@/paraglide/messages";
+import { EmojiPicker } from "./emoji-picker";
 import { ReactionPicker } from "./reactions";
 
 /** What a message offers; a missing handler means the action isn't there. */
@@ -115,13 +125,19 @@ export const ActionSheet = ({
   onOpenChange: (open: boolean) => void;
   actions: MessageActions;
 }) => {
+  // "+": every emoji in place of the actions, until the sheet closes.
+  const [all, setAll] = useState(false);
+  const close = (next: boolean) => {
+    onOpenChange(next);
+    if (!next) setAll(false);
+  };
   const choose = (action: () => void) => () => {
-    onOpenChange(false);
+    close(false);
     action();
   };
   const { onReact, onReply, onCopy, onMakeTask, onEdit, onDelete } = actions;
   return (
-    <DialogPrimitive.Root open={open} onOpenChange={onOpenChange}>
+    <DialogPrimitive.Root open={open} onOpenChange={close}>
       <DialogPrimitive.Portal>
         <DialogPrimitive.Overlay className="fixed inset-0 z-40 bg-black/40" />
         <DialogPrimitive.Content
@@ -137,7 +153,19 @@ export const ActionSheet = ({
           <DialogPrimitive.Title className="sr-only">
             {m.chat_message_actions()}
           </DialogPrimitive.Title>
-          {onReact ? (
+          {onReact && all ? (
+            <div className="flex h-[min(60dvh,440px)] flex-col gap-1">
+              <button
+                type="button"
+                onClick={() => setAll(false)}
+                className="flex h-10 w-fit items-center gap-1 px-1 text-[14px] text-muted"
+              >
+                <ChevronLeft size={18} /> {m.emoji_back()}
+              </button>
+              <EmojiPicker onPick={(emoji) => choose(() => onReact(emoji))()} className="flex-1" />
+            </div>
+          ) : null}
+          {onReact && !all ? (
             <fieldset
               aria-label={m.chat_react()}
               className="m-0 flex min-w-0 justify-between border-0 border-b border-border px-1 pt-0 pb-3"
@@ -148,14 +176,22 @@ export const ActionSheet = ({
                   type="button"
                   aria-label={m.chat_react_with({ emoji })}
                   onClick={choose(() => onReact(emoji))}
-                  className="flex size-11 items-center justify-center rounded-full bg-subtle text-[22px] active:scale-110"
+                  className="flex size-10 items-center justify-center rounded-full bg-subtle text-[21px] active:scale-110"
                 >
                   {emoji}
                 </button>
               ))}
+              <button
+                type="button"
+                aria-label={m.emoji_more()}
+                onClick={() => setAll(true)}
+                className="flex size-10 items-center justify-center rounded-full bg-subtle text-muted"
+              >
+                <Plus size={20} />
+              </button>
             </fieldset>
           ) : null}
-          <div className="flex flex-col">
+          <div className={cn("flex flex-col", all && "hidden")}>
             {onReply ? (
               <SheetAction
                 icon={<MessageSquareReply size={20} />}

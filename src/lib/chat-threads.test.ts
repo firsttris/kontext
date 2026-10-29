@@ -5,6 +5,7 @@ import { hasNewReplies, newestActivity, reactionNames, retentionText } from "./c
 const message = (id: string, createdAt: string, patch: Partial<Message> = {}): Message => ({
   id,
   channelId: "c",
+  alsoInChannel: false,
   parentId: null,
   authorId: "max",
   text: "Hallo",

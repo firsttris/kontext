@@ -1,12 +1,13 @@
 /**
  * A mail as a page to print: subject, sender, recipients, date, the mailbox it is in, the text
- * and the names of the attachments; light, on A4, without the app around it. Remote content is
- * never printed: the body comes cleaned with it blocked, and the page's CSP holds it out. Pure.
+ * and the names of the attachments; light, on A4, without the app around it. Pictures from the
+ * internet are printed only when they were allowed for the mail; even then the page's CSP lets in
+ * images and nothing else from outside (no styles, fonts or media). Pure.
  */
 import type { EmailAddress } from "@/jmap/types";
 import { m } from "@/paraglide/messages";
 import { getLocale } from "@/paraglide/runtime";
-import { escapeHtml, mailPolicy } from "./html";
+import { escapeHtml } from "./html";
 
 export type PrintableMail = {
   subject: string;
@@ -20,7 +21,23 @@ export type PrintableMail = {
   /** Already sanitized (html.ts), with inline images resolved. */
   body: string;
   attachments: { name: string; size: string }[];
+  /** Pictures from the internet were allowed for this mail (and left in the body). */
+  remoteImages?: boolean;
 };
+
+/**
+ * What the printed page may fetch: inline styles, `data:` and `blob:`; with `remoteImages` also
+ * images from the web – a narrower list than the reading pane's (html.ts `mailPolicy`), as a page
+ * on paper needs no remote fonts, styles or media.
+ */
+export const printPolicy = (remoteImages: boolean) =>
+  [
+    "default-src 'none'",
+    "style-src 'unsafe-inline'",
+    `img-src data: blob:${remoteImages ? " https: http:" : ""}`,
+    "media-src data: blob:",
+    "font-src data:",
+  ].join("; ");
 
 const address = ({ name, email }: EmailAddress) =>
   name?.trim() ? `${escapeHtml(name.trim())} &lt;${escapeHtml(email)}&gt;` : escapeHtml(email);
@@ -30,7 +47,7 @@ const row = (label: string, value: string) =>
 
 export const printDocument = (mail: PrintableMail): string => `<!doctype html>
 <html lang="${getLocale()}"><head><meta charset="utf-8">
-<meta http-equiv="Content-Security-Policy" content="${mailPolicy(false)}"><title>${escapeHtml(mail.subject)}</title>
+<meta http-equiv="Content-Security-Policy" content="${printPolicy(mail.remoteImages ?? false)}"><title>${escapeHtml(mail.subject)}</title>
 <style>
   @page { size: A4; margin: 18mm 16mm; }
   html { color-scheme: light; }

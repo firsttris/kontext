@@ -57,6 +57,7 @@ const setup = () => {
         const message: Message = {
           id: `m${posted.length + 1}`,
           channelId,
+          alsoInChannel: false,
           authorId,
           text: "",
           mentions: [],

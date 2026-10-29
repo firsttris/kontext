@@ -39,6 +39,7 @@ const channel = (over: Partial<Channel>): Channel => ({
 const message = (id: string, authorId: string, createdAt: string, text = "Hallo"): Message => ({
   id,
   channelId: "c",
+  alsoInChannel: false,
   authorId,
   text,
   mentions: [],

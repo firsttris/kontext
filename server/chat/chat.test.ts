@@ -164,8 +164,10 @@ describe("reactions, search, keeping", () => {
 
   it("takes emojis with skin tone or joined, not words or digits", () => {
     const ok = (emoji: string) => reactionSchema.safeParse({ emoji, on: true }).success;
-    expect(["👍", "👍🏽", "❤️", "👩‍🔧", "✅"].every(ok)).toBe(true);
-    expect(["ok", "12", "#", "", "👍 ok"].some(ok)).toBe(false);
+    expect(["👍", "👍🏽", "❤️", "👩‍🔧", "✅", "🇩🇪", "🏴󠁧󠁢󠁥󠁮󠁧󠁿", "1️⃣", "🫶", "👨‍👩‍👧"].every(ok)).toBe(true);
+    expect(["ok", "12", "#", "", "👍 ok", "👍👍", "🇩", "🇩🇪🇫🇷", "1", "x".repeat(40)].some(ok)).toBe(
+      false,
+    );
   });
 
   it("folds umlauts for the search", () => {

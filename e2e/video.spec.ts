@@ -37,8 +37,8 @@ const takes: Record<string, (browser: Browser, demo: Demo) => Promise<void>> = {
 test.describe
   .serial("Film @video", () => {
     let demo: Demo;
-    test.beforeAll(async ({ browser }) => {
-      demo = await fillDemo(browser);
+    test.beforeAll(async () => {
+      demo = await fillDemo();
     });
     for (const [name, record] of Object.entries(takes)) {
       test(name, async ({ browser }) => {

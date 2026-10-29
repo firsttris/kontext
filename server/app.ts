@@ -90,6 +90,9 @@ import { createPushStore, loadVapidKeys } from "./push/store";
 import { createSecurePublicRoutes, createSecureRoutes } from "./secure/routes";
 import { createSecureStore } from "./secure/store";
 import { createNameOf, createSessionInfo } from "./session-info";
+import { createAuthorityStore } from "./smime/authorities";
+import { createCrlCheck } from "./smime/crl";
+import { crlGet } from "./smime/net";
 import { createSmimeRoutes, trustedRoots } from "./smime/routes";
 import { createSmimeStore } from "./smime/store";
 import { createSnippetRoutes } from "./snippets/routes";
@@ -288,6 +291,8 @@ export const createApp = async (env: Env) => {
         accountsOf: (request: Request) => Promise<SessionAccount[] | null>,
       ) => ReturnType<typeof createSignatureDetailRoutes>)
     | null = null;
+  // S/MIME authorities the Firmenverwaltung added; the trust check reads them too.
+  const smimeAuthorities = createAuthorityStore(db);
   if (env.STALWART_ADMIN_KEY) {
     const request = createRequest(env.STALWART_URL, env.STALWART_ADMIN_KEY);
     const upload = createUpload(env.STALWART_URL, env.STALWART_ADMIN_KEY);
@@ -366,6 +371,7 @@ export const createApp = async (env: Env) => {
       },
       settings,
       externalHint: createExternalHintStore(db),
+      smimeAuthorities,
       signatureDetails,
       migrations: { jobs, runner, workDir },
       syncs: { syncs, runner: syncRunner, sealer: syncSealer, allowPlain, microsoft },
@@ -689,6 +695,8 @@ export const createApp = async (env: Env) => {
       store: createSmimeStore(db),
       accountsOf,
       roots: trustedRoots(env.SMIME_ROOTS),
+      authorities: smimeAuthorities,
+      crl: createCrlCheck({ get: crlGet }),
       resolve: dohResolver(env.DOH_URL),
     }),
   );

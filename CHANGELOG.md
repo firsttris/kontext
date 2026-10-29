@@ -7,6 +7,43 @@ Steps that an update needs beyond raising the version are marked **Upgrade**.
 
 ## Unreleased
 
+- S/MIME: the company admin keeps the trusted authorities ("S/MIME-Stellen"): upload a root or
+  intermediate certificate (PEM or DER), see its name, issuer, validity and fingerprint, remove
+  it. Only current CA certificates, at most 100; they count beside Mozilla's list and
+  `SMIME_ROOTS`, and earlier trust answers are dropped on a change
+  (`/api/company/smime-authorities`, `server/smime/authorities.ts`). **Upgrade:** migration
+  `0041_smime_authorities` adds the table `smime_authorities`; the server applies it at start.
+- S/MIME: revocation by CRL where a certificate names no OCSP responder or it gives no usable
+  answer: the http(s) CRL Distribution Points (RFC 5280 §4.2.1.13), at most 10 MB and 15 s, public
+  hosts only; a list counts only when signed by the issuer under its name, current, and neither
+  delta nor indirect nor with an unknown critical extension. Lists are cached until their
+  nextUpdate (at most a day, 100 lists; a failed one is retried after ten minutes).
+- S/MIME: signatures with EC keys (ECDSA on P-256, P-384, P-521) are checked in the browser with
+  WebCrypto instead of showing "nicht prüfbar"; certificates with EC keys can be imported and
+  remembered. Checked against signatures made with OpenSSL.
+- S/MIME: looking up certificates in an authority's LDAP directory is left out on purpose (own
+  TCP connections, a new dependency, a directory per authority); see docs/encryption.md.
+- Chat: react with any emoji – "+" beside the seven quick reactions (in the long-press sheet on
+  phones) opens a picker with about 430 emojis in nine categories and a search by English or
+  German words (`src/lib/emoji.ts`, no library). The server now takes exactly one emoji per
+  reaction: one grapheme cluster of emoji code points, flags and keycaps included
+  (`isOneEmoji`); before, several in a row passed and flags did not.
+- Chat: "Auch im Kanal zeigen" under the thread's reply field (like Slack's "Also send to
+  channel"): the reply also stands in the channel, under "Antwort im Thread zu: …", which opens
+  the thread; it counts as unread there and moves the channel up. Works in confidential channels.
+  **Upgrade:** migration `0040_chat_also_in_channel` adds `chat_messages.also_in_channel`; the
+  server applies it at start.
+- Development: `bun run dev` fills tasks and chat of the demo too (`dev/demo-data.ts`, once per
+  server database, recognised by #baustelle-hoffmann): the people sign in through
+  `POST /api/auth/sign-in/stalwart` like the login form and use Kontext's API. The pictures and the
+  film use the same code (`e2e/demo-data.ts` is a thin wrapper); the e2e seed is unchanged. Fixed
+  on the way: Max's task on the info@ board was never made (he is no member there), now Anna's.
+- README: a picture of the rules (`docs/screenshots/rules.png`, from `e2e/screenshots.spec.ts`).
+- Mail: printing includes the pictures from the internet when the reading pane shows them – the
+  sender is trusted (and confirmed), or "Laden" was clicked for that mail. The choice is kept per
+  mail for the session (`src/features/mail/remote-images.ts`). The printed page keeps its sandbox
+  and gets a CSP of its own (`printPolicy`) that lets in images from outside and nothing else (no
+  remote styles, fonts or media); a slow picture holds the print dialog back for at most 8 s.
 - Tasks over CalDAV: app passwords for people with two-step sign-in, whose Thunderbird or phone
   cannot enter a code. Under *Einstellungen → Aufgaben in anderen Apps → App-Passwörter* one makes
   a password per app (name, e.g. "Thunderbird Büro"; asks for the password and code again), sees

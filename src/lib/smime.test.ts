@@ -4,6 +4,7 @@ import forge from "node-forge";
 import { beforeAll, describe, expect, it } from "vitest";
 import { contentPart, withHeaders } from "./mime";
 import {
+  certInfo,
   envelopeEntity,
   type OwnSmime,
   openP12,
@@ -209,11 +210,34 @@ describe("S/MIME", () => {
     expect((await readSmime(changed, null)).signature.state).toBe("invalid");
   });
 
-  it("calls an EC signature not checkable, not forged (made with OpenSSL)", async () => {
-    const raw = readFileSync(new URL("./fixtures/smime-ec-signed.eml", import.meta.url), "utf8");
-    const read = await readSmime(raw, null);
-    expect(read.text.trim()).toBe("EC-Unterschrift");
-    expect(read.signature.state).toBe("unsupported");
+  // Made with OpenSSL 3 (`openssl smime -sign -md sha256|sha384`, self-signed P-256 and P-384
+  // keys): ECDSA in CMS as other programs write it.
+  const ecMail = (name: string) =>
+    readFileSync(new URL(`./fixtures/${name}`, import.meta.url), "utf8");
+
+  it("checks EC signatures on P-256 and P-384 (made with OpenSSL)", async () => {
+    const p256 = await readSmime(ecMail("smime-ec-signed.eml"), null);
+    expect(p256.text.trim()).toBe("EC-Unterschrift");
+    expect(p256.signature).toMatchObject({ state: "valid", email: "ec@amt.test" });
+    const p384 = await readSmime(ecMail("smime-ec384-signed.eml"), null);
+    expect(p384.text.trim()).toBe("EC-384-Unterschrift");
+    expect(p384.signature).toMatchObject({ state: "valid", email: "ec384@amt.test" });
+    if (p384.signature.state === "valid") {
+      expect(p384.signature.pem).toContain("-----BEGIN CERTIFICATE-----");
+      expect((await certInfo(p384.signature.pem)).emails).toEqual(["ec384@amt.test"]);
+    }
+  });
+
+  it("finds a changed text or a changed ECDSA value", async () => {
+    const raw = ecMail("smime-ec384-signed.eml");
+    const text = await readSmime(raw.replace("EC-384-Unterschrift", "EC-384-Unterschrifx"), null);
+    expect(text.signature.state).toBe("invalid");
+    // The last bytes of the signature: the s value of the Ecdsa-Sig-Value.
+    const block = raw.match(/filename="smime\.p7s"\n\n([\s\S]+?)\n\n------/)![1]!;
+    const der = forge.util.decode64(block.replace(/\s+/g, ""));
+    const flipped = `${der.slice(0, -2)}${String.fromCharCode(der.charCodeAt(der.length - 2) ^ 1)}${der.slice(-1)}`;
+    const changed = raw.replace(block, forge.util.encode64(flipped, 64));
+    expect((await readSmime(changed, null)).signature.state).toBe("invalid");
   });
 
   it("reads a mail encrypted, then signed (RFC 8551 §3.7: either order)", async () => {

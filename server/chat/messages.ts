@@ -28,6 +28,8 @@ export type NewPost = {
   channelId: string;
   /** An answer in the thread of this message. */
   parentId?: string | null;
+  /** An answer shown in the channel too; ignored for a message in the channel itself. */
+  alsoInChannel?: boolean;
   authorId: string;
   text: string;
   mentions: string[];
@@ -46,7 +48,10 @@ export type Discussion = {
 };
 
 export type MessageStore = {
-  /** The newest messages of the channel itself (no answers) before `before`, newest first. */
+  /**
+   * The newest messages of the channel itself before `before`, newest first: no answers, but
+   * those also shown in the channel.
+   */
   page: (channelId: string, before: Date | null, limit: number) => Promise<Message[]>;
   /** The answers in a message's thread, oldest first. */
   replies: (parentId: string) => Promise<Message[]>;
@@ -69,6 +74,12 @@ export type MessageStore = {
   /** Messages in these channels whose text or card has the words, the latest first. */
   search: (channelIds: string[], words: string, limit: number) => Promise<Message[]>;
 };
+
+/** What the channel itself shows: its own messages and the answers shown there too. */
+const inChannel = or(
+  isNull(schema.chatMessages.parentId),
+  eq(schema.chatMessages.alsoInChannel, true),
+);
 
 /** For LIKE: the words as they are, % and _ not as wildcards. */
 const likeWords = (words: string) => `%${words.replace(/[\\%_]/g, (c) => `\\${c}`)}%`;
@@ -132,6 +143,7 @@ export const createMessageStore = (db: Db, files: ChatFiles): MessageStore => {
       id: row.id,
       channelId: row.channelId,
       parentId: row.parentId,
+      alsoInChannel: row.alsoInChannel,
       authorId: row.authorId,
       text: row.text,
       mentions: JSON.parse(row.mentions) as string[],
@@ -160,7 +172,7 @@ export const createMessageStore = (db: Db, files: ChatFiles): MessageStore => {
         .where(
           and(
             eq(schema.chatMessages.channelId, channelId),
-            isNull(schema.chatMessages.parentId),
+            inChannel,
             before ? lt(schema.chatMessages.createdAt, before) : undefined,
           ),
         )
@@ -185,6 +197,7 @@ export const createMessageStore = (db: Db, files: ChatFiles): MessageStore => {
     post: async ({
       channelId,
       parentId = null,
+      alsoInChannel = false,
       authorId,
       text,
       mentions,
@@ -196,6 +209,7 @@ export const createMessageStore = (db: Db, files: ChatFiles): MessageStore => {
         id: crypto.randomUUID(),
         channelId,
         parentId,
+        alsoInChannel: Boolean(parentId) && alsoInChannel,
         authorId,
         text,
         folded: foldedOf(text, cards),
@@ -227,8 +241,8 @@ export const createMessageStore = (db: Db, files: ChatFiles): MessageStore => {
           })),
         );
       }
-      // An answer leaves the channel's order as it is.
-      if (!parentId) {
+      // An answer leaves the channel's order as it is, unless it stands in the channel too.
+      if (!parentId || row.alsoInChannel) {
         await db
           .update(schema.chatChannels)
           .set({ lastMessageAt: row.createdAt })
@@ -242,9 +256,7 @@ export const createMessageStore = (db: Db, files: ChatFiles): MessageStore => {
         const [row] = await db
           .select()
           .from(schema.chatMessages)
-          .where(
-            and(eq(schema.chatMessages.channelId, channelId), isNull(schema.chatMessages.parentId)),
-          )
+          .where(and(eq(schema.chatMessages.channelId, channelId), inChannel))
           .orderBy(desc(schema.chatMessages.createdAt))
           .limit(1);
         if (!row) continue;

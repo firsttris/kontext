@@ -281,6 +281,20 @@
       "when": 1793300892296,
       "tag": "0039_app_passwords",
       "breakpoints": true
+    },
+    {
+      "idx": 40,
+      "version": "6",
+      "when": 1793301030464,
+      "tag": "0040_chat_also_in_channel",
+      "breakpoints": true
+    },
+    {
+      "idx": 41,
+      "version": "6",
+      "when": 1793301940796,
+      "tag": "0041_smime_authorities",
+      "breakpoints": true
     }
   ]
 }

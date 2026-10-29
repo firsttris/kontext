@@ -3,7 +3,6 @@
  * and the certificates of others one knows, from signed mails or a file. Certificates are checked
  * here for the address they claim; whether one trusts the issuer is the person's call.
  */
-import { lookup } from "node:dns/promises";
 import { readFileSync } from "node:fs";
 import tls from "node:tls";
 import { Hono } from "hono";
@@ -12,9 +11,17 @@ import { certInfo } from "../../src/lib/smime";
 import type { SessionAccount } from "../categories/routes";
 import type { Resolve } from "../company/security";
 import { mayReplace } from "../kept-keys";
-import { isPrivateAddress } from "../unsubscribe/private-address";
+import type { AuthorityStore } from "./authorities";
+import { ocspPost } from "./net";
 import type { SmimeStore } from "./store";
-import { certFromSmimea, checkTrust, parseCert, smimeaName, type Trust } from "./trust";
+import {
+  certFromSmimea,
+  checkTrust,
+  parseCert,
+  smimeaName,
+  type Trust,
+  type TrustDeps,
+} from "./trust";
 
 /** dns: published by the recipient's domain (SMIMEA, signed with DNSSEC). */
 const SOURCES = ["mail", "import", "dns"] as const;
@@ -26,8 +33,12 @@ export type SmimeDeps = {
   accountsOf: (request: Request) => Promise<SessionAccount[] | null>;
   /** The authorities one trusts; those Bun brings unless a test says otherwise. */
   roots?: ReturnType<typeof trustedRoots>;
+  /** Those the Firmenverwaltung added, read for each check (authorities.ts). */
+  authorities?: Pick<AuthorityStore, "certs" | "version">;
   /** Posts an OCSP request to an authority; tests give a stand-in. */
   post?: (url: string, body: Uint8Array) => Promise<Uint8Array | null>;
+  /** Revocation by the certificate's lists, where OCSP says nothing (crl.ts). */
+  crl?: TrustDeps["crl"];
   /** DNS lookups (DNS-over-HTTPS), for SMIMEA. */
   resolve?: Resolve;
   now?: () => Date;
@@ -41,27 +52,6 @@ export const trustedRoots = (extraFile?: string) => {
       ) ?? [])
     : [];
   return [...tls.rootCertificates, ...extra].flatMap((pem) => parseCert(pem) ?? []);
-};
-
-/** OCSP over http or https (its answers are signed), to hosts on the internet only, briefly. */
-const ocspPost = async (url: string, body: Uint8Array): Promise<Uint8Array | null> => {
-  const target = new URL(url);
-  const addresses = (await lookup(target.hostname, { all: true }).catch(() => [])).map(
-    (entry) => entry.address,
-  );
-  if (!/^https?:$/.test(target.protocol) || !addresses.length || addresses.some(isPrivateAddress)) {
-    return null;
-  }
-  const response = await fetch(target, {
-    method: "POST",
-    headers: { "content-type": "application/ocsp-request" },
-    body: body as Uint8Array<ArrayBuffer>,
-    redirect: "error",
-    signal: AbortSignal.timeout(6000),
-  }).catch(() => null);
-  if (!response?.ok) return null;
-  const bytes = new Uint8Array(await response.arrayBuffer());
-  return bytes.length > 100_000 ? null : bytes;
 };
 
 /** How long a check counts (per certificate): authorities answer for hours or days anyway. */
@@ -79,7 +69,9 @@ export const createSmimeRoutes = ({
   store,
   accountsOf,
   roots = trustedRoots(),
+  authorities,
   post = ocspPost,
+  crl,
   resolve,
   now = () => new Date(),
 }: SmimeDeps) => {
@@ -164,10 +156,16 @@ export const createSmimeRoutes = ({
     if (!leaf) return c.json({ error: "Kein Zertifikat." }, 400);
     // The answer holds for this leaf with this chain only: anyone may ask with a leaf and no
     // chain, and that "untrusted" must not stand for everyone else's mail with the full chain.
-    const key = [leaf, ...parsed.data.chain.map((cert) => parseCert(cert)?.fingerprint256)].join();
+    // A change of the company's authorities makes earlier answers void.
+    const key = [
+      authorities?.version() ?? 0,
+      leaf,
+      ...parsed.data.chain.map((cert) => parseCert(cert)?.fingerprint256),
+    ].join();
     const cached = checked.get(key);
     if (cached && now().getTime() - cached.at < TRUST_MS) return c.json({ trust: cached.trust });
-    const trust = await checkTrust(parsed.data, { roots, post, now });
+    const all = authorities ? [...roots, ...(await authorities.certs())] : roots;
+    const trust = await checkTrust(parsed.data, { roots: all, post, crl, now });
     if (!trust) return c.json({ error: "Kein Zertifikat." }, 400);
     checked.set(key, { at: now().getTime(), trust });
     return c.json({ trust });

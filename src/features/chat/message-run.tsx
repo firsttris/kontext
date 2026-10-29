@@ -25,6 +25,7 @@ import { MessageFiles } from "./message-files";
 import { MessageText } from "./message-text";
 import { isPending } from "./queries";
 import { ReactionBar } from "./reactions";
+import { ThreadNote } from "./thread-note";
 
 const time = (iso: string) =>
   new Date(iso).toLocaleTimeString(LOCALE, { hour: "2-digit", minute: "2-digit" });
@@ -44,6 +45,8 @@ type Props = {
   onReply?: (message: Message) => void;
   /** Answers after this are marked as new. */
   readUpTo?: string | null;
+  /** In the channel: the loaded message an answer shown there belongs to. */
+  parentOf?: (id: string) => Message | undefined;
 };
 
 const replyTime = (iso: string) =>
@@ -215,6 +218,7 @@ const Item = ({
   highlight,
   readUpTo = null,
   onReply,
+  parentOf,
   ...handlers
 }: { message: Message; own: boolean } & Omit<Props, "run">) => {
   // In a confidential channel: the text as opened here; what leaves the chat (a task) is told
@@ -261,6 +265,9 @@ const Item = ({
           isPending(message) && "opacity-60",
         )}
       >
+        {message.parentId && onReply ? (
+          <ThreadNote parent={parentOf?.(message.parentId)} onOpen={() => onReply(message)} />
+        ) : null}
         {editing ? (
           <EditField
             message={message}
@@ -274,6 +281,9 @@ const Item = ({
         ) : (
           <Body message={message} own={own} me={me} people={people} />
         )}
+        {message.alsoInChannel && !onReply ? (
+          <span className="text-[12px] text-muted">{m.chat_also_in_channel_note()}</span>
+        ) : null}
         {message.sealed === "invalid" ? <ForgedNote /> : null}
         <MessageFiles files={message.files} urls={message.sealed ? sealedUrls : undefined} />
         {message.cards.map((card) => (
