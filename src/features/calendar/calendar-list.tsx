@@ -1,19 +1,22 @@
 /**
  * The calendars the user can see, each with a box to show or hide it: in the sidebar, and in the
- * "Kalender verwalten" dialog with sharing, deleting and creating own calendars.
+ * "Kalender verwalten" dialog with sharing, deleting and creating own calendars, and adding the
+ * public holidays.
  */
 import { Settings2, Share2, Trash2 } from "lucide-react";
 import { type FormEvent, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Dialog } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
+import { Input, Label, Select } from "@/components/ui/input";
 import { useToast } from "@/components/ui/toast";
 import { principalName } from "@/jmap/principals";
+import { STATES, type State } from "@/lib/holidays";
 import { everyoneAccess, sharedWith } from "@/lib/sharing";
 import { m } from "@/paraglide/messages";
 import { useColleagues, usePrincipals } from "../sharing/queries";
 import { ShareDialog } from "../sharing/share-dialog";
 import { setCalendarHidden } from "./hidden-calendars";
+import { useAddHolidays } from "./holiday-queries";
 import { type CalendarRef, useCalendarMutations, useCalendarRefs } from "./queries";
 import { TasksToggle } from "./task-chip";
 
@@ -164,6 +167,42 @@ const OwnActions = ({ calendar }: { calendar: CalendarRef }) => {
   );
 };
 
+/** The public holidays of a state into a calendar of their own. */
+const Holidays = () => {
+  const addHolidays = useAddHolidays();
+  const toast = useToast();
+  const [state, setState] = useState<State>("BW");
+
+  const add = () =>
+    addHolidays.mutate(state, {
+      onSuccess: (count) =>
+        toast.show(count ? m.calendar_holidays_added({ count }) : m.calendar_holidays_none()),
+      onError: fail(toast),
+    });
+
+  return (
+    <section className="flex flex-col gap-2">
+      <h3 className="m-0 text-[12px] font-medium text-muted">{m.calendar_holidays()}</h3>
+      <p className="m-0 text-[13px] text-muted">{m.calendar_holidays_hint()}</p>
+      <div className="flex items-end gap-2">
+        <Label className="flex-1">
+          {m.calendar_holidays_state()}
+          <Select value={state} onChange={(e) => setState(e.target.value as State)}>
+            {Object.entries(STATES).map(([code, name]) => (
+              <option key={code} value={code}>
+                {name}
+              </option>
+            ))}
+          </Select>
+        </Label>
+        <Button variant="outline" onClick={add} disabled={addHolidays.isPending}>
+          {m.calendar_holidays_add()}
+        </Button>
+      </div>
+    </section>
+  );
+};
+
 /** All calendars: show/hide, share and delete own ones, create a new one. */
 export const CalendarsDialog = ({
   open,
@@ -203,6 +242,7 @@ export const CalendarsDialog = ({
           </Button>
         </form>
       </section>
+      <Holidays />
       {shared.length > 0 ? (
         <section className="flex flex-col gap-2">
           <h3 className="m-0 text-[12px] font-medium text-muted">{m.calendar_shared()}</h3>

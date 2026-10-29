@@ -7,6 +7,9 @@ Steps that an update needs beyond raising the version are marked **Upgrade**.
 
 ## Unreleased
 
+- Calendar: "Feiertage eintragen" under *Kalender verwalten* puts the public holidays of a German
+  state (all 16) into a calendar of their own, this year and next, all-day and shown as free;
+  running it again adds only what is missing.
 - Keyboard: "Zum Inhalt springen" as the first Tab stop (seen only with the focus) leads past the
   rail and the sidebar; a dialog gives the focus back to what opened it, also one opened from the
   URL like "Neuer Termin"; "Neue Aufgabe" starts in its title; the small month in the calendar is
