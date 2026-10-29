@@ -740,15 +740,36 @@ oder Reihenfolge.
   bereit (RFC 4791, nur VTODO; `server/dav/`), unter der Adresse aus den Einstellungen: eine Liste
   je Board, das man hat, „Meine Aufgaben (Kontext)“ und „Aufgaben info@“. Angemeldet wird mit
   Mail-Adresse und Passwort; Kontext fragt Stalwarts JMAP-Session damit und merkt sich die
-  Antwort eine Minute (ein gesperrtes Konto zählt also spätestens eine Minute später). Clients lesen per PROPFIND (mit `getctag`) und REPORT
-  `calendar-multiget`/`calendar-query`, schreiben mit PUT (`If-Match` auf den ETag) und löschen
-  mit DELETE; `sync-collection` gibt es nicht, die Clients fallen auf den ctag zurück. Titel,
-  Notiz, Fälligkeit (Zeiten in UTC hinaus; hinein in der Zone der `TZID`, ohne oder mit
-  unbekannter Zone als Berliner Zeit), Erledigt, Wiederholung (`RRULE`, nur was Kontext kennt)
-  und Erinnerung (`VALARM`) gehen hin und her;
-  „in Arbeit“ ist im Client `IN-PROCESS` und in Kontext die erste Spalte nach „Offen“. Checkliste
-  und Verknüpfungen bleiben in Kontext. Was ein Client anlegt, behält seinen Dateinamen und seine
-  UID (`dav_name`, `dav_uid`). Mit Bestätigung in zwei Schritten klappt die Anmeldung noch nicht.
+  Antwort eine Minute (ein gesperrtes Konto zählt also spätestens eine Minute später). Clients
+  lesen per PROPFIND (mit `getctag` und `sync-token`) und REPORT
+  `calendar-multiget`/`calendar-query`/`sync-collection`, schreiben mit PUT (`If-Match` auf den
+  ETag) und löschen mit DELETE. Titel, Notiz, Fälligkeit (Zeiten in UTC hinaus; hinein in der
+  Zone der `TZID`, ohne oder mit unbekannter Zone als Berliner Zeit), Erledigt, Wiederholung
+  (`RRULE`, nur was Kontext kennt) und Erinnerung (`VALARM`) gehen hin und her; „in Arbeit“ ist
+  im Client `IN-PROCESS` und in Kontext die erste Spalte nach „Offen“. Checkliste und
+  Verknüpfungen bleiben in Kontext. Was ein Client anlegt, behält seinen Dateinamen und seine UID
+  (`dav_name`, `dav_uid`).
+- **`sync-collection`** (RFC 6578, `server/dav/sync.ts`): Der Sync-Token ist der ctag des Boards
+  als URI (`urn:kontext:sync:<ctag>`; der ctag ist ein Hash über ID und Änderungszeit jeder
+  gelisteten Aufgabe). Ein Änderungsprotokoll führt Kontext nicht; stattdessen merkt sich der
+  Server im Speicher, welche Aufgaben mit welchem ETag ein Board zu den letzten 50 ausgegebenen
+  Tokens hatte. Mit einem davon vergleicht er diesen Stand mit dem heutigen: neue und geänderte
+  Aufgaben kommen mit ETag (und auf Wunsch mit Inhalt), verschwundene – gelöscht oder seit mehr als
+  30 Tagen erledigt – als 404. Einen Token, den er nicht (mehr) kennt, etwa nach einem Neustart,
+  lehnt er mit `DAV:valid-sync-token` ab; der Client gleicht dann einmal ganz neu ab (RFC 6578
+  §3.2), wie er es ohne `sync-collection` immer täte.
+- **App-Passwörter** (`server/dav/app-passwords.ts`, Tabelle `app_password`): Mit Bestätigung in
+  zwei Schritten fragen Thunderbird und Handy keinen Code ab. Unter *Einstellungen → Aufgaben in
+  anderen Apps* legt man deshalb je App ein Passwort an (`/api/app-passwords`): Kontext fragt
+  dafür Passwort und Code erneut, meldet sich bei Stalwart damit an und hält die Tokens in einer
+  eigenen Sitzung (wie ein [Zugangsschlüssel für Agenten](#agenten-mcp)); das Passwort wird nur
+  einmal gezeigt und nur als SHA-256 gespeichert (zufällig, etwa 100 Bit – ein langsamer Hash
+  brächte nichts). `/dav` erkennt es an seiner Form (fünf Vierergruppen) und seinem Hash, prüft
+  die Mail-Adresse dazu und holt die Session mit dem Token dieser Sitzung; „zuletzt benutzt“
+  steht höchstens minütlich neu. Für die Anmeldung in Kontext gilt es nicht – die geht zu
+  Stalwart, das es nicht kennt. Widerrufen löscht die Sitzung samt Tokens; die Prüfung läuft bei
+  jeder Anfrage, ein widerrufenes Passwort scheitert sofort. Ein falsches oder widerrufenes geht
+  wie jedes andere Passwort an Stalwart und zählt bei den Fehlversuchen mit.
 - **Schnelleingabe** (`src/lib/tasks.ts`): ein letztes Wort „heute“, „morgen“, „übermorgen“, ein
   Wochentag oder ein Datum wie „30.10.“ wird zur Fälligkeit. Ein Datum, das es nicht gibt („31.4.“,
   „29.2.“ außerhalb eines Schaltjahrs), bleibt Teil des Titels; der Server nimmt als Fälligkeit nur

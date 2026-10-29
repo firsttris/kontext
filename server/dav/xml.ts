@@ -13,13 +13,23 @@ export const response = (href: string, props: string[]) =>
 export const notFound = (href: string) =>
   `<D:response><D:href>${xmlText(href)}</D:href><D:status>HTTP/1.1 404 Not Found</D:status></D:response>`;
 
-export const multistatus = (responses: string[]) =>
+/** `syncToken`: the collection's new token, for a sync-collection REPORT (RFC 6578 §6.4). */
+export const multistatus = (responses: string[], syncToken?: string) =>
   new Response(
-    `<?xml version="1.0" encoding="utf-8"?>\n<D:multistatus ${NS}>${responses.join("")}</D:multistatus>`,
+    `<?xml version="1.0" encoding="utf-8"?>\n<D:multistatus ${NS}>${responses.join("")}${
+      syncToken ? `<D:sync-token>${xmlText(syncToken)}</D:sync-token>` : ""
+    }</D:multistatus>`,
     {
       status: 207,
       headers: { "content-type": 'application/xml; charset="utf-8"' },
     },
+  );
+
+/** A precondition that failed (RFC 4918 §16), e.g. `<D:valid-sync-token/>`, with its status. */
+export const davError = (condition: string, status: 403 | 409) =>
+  new Response(
+    `<?xml version="1.0" encoding="utf-8"?><D:error xmlns:D="DAV:">${condition}</D:error>`,
+    { status, headers: { "content-type": 'application/xml; charset="utf-8"' } },
   );
 
 /** The kind of REPORT asked for: its root element without namespace. */

@@ -56,5 +56,14 @@ Notiz, Fälligkeit, Erledigt, Wiederholung und Erinnerung:
   Andere → CalDAV-Account*, als Server die ganze Adresse mit `/dav/` (die Domain allein führt zu
   den Kalendern in Stalwart).
 
-Angemeldet wird mit Mail-Adresse und Passwort; mit Anmeldung in zwei Schritten geht das noch nicht
-(App-Passwörter sind geplant). [Mehr](architecture.md#aufgaben)
+Angemeldet wird mit Mail-Adresse und Passwort. **Mit Bestätigung in zwei Schritten** legt man
+unter *Einstellungen → Aufgaben in anderen Apps → App-Passwörter* für jede App ein eigenes
+Passwort an (etwa „Thunderbird Büro“) und trägt es dort statt des eigenen ein. Es ist nur beim
+Anlegen zu sehen, gilt nur für die Aufgaben dort, nicht für die Anmeldung in Kontext, und lässt
+sich einzeln widerrufen; die Liste zeigt, wann jedes zuletzt benutzt wurde.
+
+![App-Passwörter in den Einstellungen](screenshots/app-passwords.png)
+
+Thunderbird, DAVx⁵ und das iPhone fragen nur nach dem, was sich seit dem letzten Abgleich
+geändert hat (`sync-collection`), statt jedes Mal alle Aufgaben zu laden.
+[Mehr](architecture.md#aufgaben)

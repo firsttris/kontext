@@ -73,4 +73,41 @@ describe("DAV sign-in", () => {
     await auth(basic("a@firma.test", "x"), "203.0.113.5");
     expect(fetch).toHaveBeenCalledTimes(2);
   });
+
+  it("takes an app password through its own grant, and stops at once when it is revoked", async () => {
+    const fetch = vi.fn(async (_url: string, init?: RequestInit) =>
+      new Headers(init?.headers).get("authorization") === "Bearer grant-token"
+        ? Response.json({
+            apiUrl: "http://stalwart/jmap/",
+            primaryAccounts: { "urn:ietf:params:jmap:mail": "a1" },
+            accounts: {},
+          })
+        : new Response("", { status: 401 }),
+    );
+    vi.stubGlobal("fetch", fetch);
+    let revoked = false;
+    const auth = createDavAuth(
+      { STALWART_URL: "http://stalwart" },
+      Date.now,
+      createFailureLimit(5, 60_000),
+      {
+        resolve: async (email, password) =>
+          !revoked && email === "jonas@firma.test" && password === "abcd-efgh-jkmn-pqrs-tuvw"
+            ? { id: "p1", email, sessionId: "s1" }
+            : null,
+        tokenOf: async (sessionId) => (sessionId === "s1" ? "grant-token" : null),
+      },
+    );
+    const header = basic("Jonas@firma.test", "abcd-efgh-jkmn-pqrs-tuvw");
+    expect(await auth(header)).toEqual({ me: "a1", accounts: [] });
+    // Never sent to Stalwart as a password.
+    expect(fetch).not.toHaveBeenCalledWith(
+      "http://stalwart/jmap/session",
+      expect.objectContaining({ headers: { authorization: header } }),
+    );
+    revoked = true;
+    expect(await auth(header)).toBeNull();
+    // A wrong one is Stalwart's to refuse.
+    expect(await auth(basic("jonas@firma.test", "zzzz-zzzz-zzzz-zzzz-zzzz"))).toBeNull();
+  });
 });

@@ -5,6 +5,8 @@
  * find their way from /.well-known/caldav; changes reach Kontext's open views live.
  *
  * Paths: /dav/ → /dav/principals/me/ → /dav/tasks/ (home) → /dav/tasks/<board>/<name>.ics
+ *
+ * Clients learn of changes by the ctag and, quicker, by `sync-collection` (sync.ts).
  */
 import { Hono } from "hono";
 import type { TaskStore } from "../tasks/store";
@@ -18,7 +20,17 @@ import {
 } from "../tasks/tasks";
 import type { DavAccount, DavUser } from "./auth";
 import { type IncomingTodo, readVtodo, toVtodo } from "./ical";
-import { hrefsOf, multistatus, notFound, reportKind, response, xmlText } from "./xml";
+import {
+  changesSince,
+  createSnapshots,
+  ctagOf,
+  type Snapshot,
+  type Snapshots,
+  syncToken,
+  tokenIn,
+  wantsData,
+} from "./sync";
+import { davError, hrefsOf, multistatus, notFound, reportKind, response, xmlText } from "./xml";
 
 const ROOT = "/dav/";
 const PRINCIPAL = "/dav/principals/me/";
@@ -26,6 +38,7 @@ const HOME = "/dav/tasks/";
 /** Finished tasks stay in the lists this long, as in Kontext. */
 const DONE_DAYS = 30;
 const ICS = "text/calendar; charset=utf-8";
+const REPORTS = ["<C:calendar-multiget/>", "<C:calendar-query/>", "<D:sync-collection/>"];
 
 export type DavDeps = {
   /** The Authorization header and the caller's address. */
@@ -34,6 +47,8 @@ export type DavDeps = {
   /** Told after a change, with the board it touched. */
   changed?: (accountId: string) => void;
   now?: () => Date;
+  /** The tokens handed out for sync-collection; one set per server. */
+  snapshots?: Snapshots;
 };
 
 const boardHref = (accountId: string) => `${HOME}${encodeURIComponent(accountId)}/`;
@@ -78,6 +93,7 @@ export const createDavRoutes = ({
   store,
   changed = () => undefined,
   now = () => new Date(),
+  snapshots = createSnapshots(),
 }: DavDeps) => {
   const app = new Hono<{ Variables: { user: DavUser } }>();
 
@@ -95,14 +111,18 @@ export const createDavRoutes = ({
   const boardOf = (user: DavUser, id: string) => user.accounts.find((a) => a.id === id);
   const since = () => new Date(now().getTime() - DONE_DAYS * 86_400_000);
 
-  const ctag = async (accountId: string) => {
+  /** The tasks of a board, its ctag, and – remembered for the sync token – their ETags. */
+  const stateOf = async (accountId: string) => {
     const list = await store.davList(accountId, since());
     const text = list
       .map(({ task }) => `${task.id}:${task.updatedAt}`)
       .sort()
       .join(",");
     const digest = await crypto.subtle.digest("SHA-1", new TextEncoder().encode(text));
-    return Buffer.from(digest).toString("hex");
+    const ctag = Buffer.from(digest).toString("hex");
+    const snapshot: Snapshot = new Map(list.map(({ name, task }) => [name, etag(task)]));
+    snapshots.remember(accountId, ctag, snapshot);
+    return { list, ctag, snapshot };
   };
 
   const principalProps = [
@@ -111,12 +131,17 @@ export const createDavRoutes = ({
     `<C:calendar-home-set><D:href>${HOME}</D:href></C:calendar-home-set>`,
   ];
 
-  const boardResponse = async (user: DavUser, account: DavAccount) =>
-    response(boardHref(account.id), [
+  const boardResponse = async (user: DavUser, account: DavAccount) => {
+    const { ctag } = await stateOf(account.id);
+    return response(boardHref(account.id), [
       "<D:resourcetype><D:collection/><C:calendar/></D:resourcetype>",
       `<D:displayname>${xmlText(boardName(account, user.me))}</D:displayname>`,
       '<C:supported-calendar-component-set><C:comp name="VTODO"/></C:supported-calendar-component-set>',
-      `<CS:getctag>${await ctag(account.id)}</CS:getctag>`,
+      `<CS:getctag>${ctag}</CS:getctag>`,
+      `<D:sync-token>${xmlText(syncToken(ctag))}</D:sync-token>`,
+      `<D:supported-report-set>${REPORTS.map(
+        (report) => `<D:supported-report><D:report>${report}</D:report></D:supported-report>`,
+      ).join("")}</D:supported-report-set>`,
       `<D:current-user-principal><D:href>${PRINCIPAL}</D:href></D:current-user-principal>`,
       `<D:current-user-privilege-set><D:privilege><D:read/></D:privilege>${
         account.isReadOnly
@@ -124,6 +149,7 @@ export const createDavRoutes = ({
           : "<D:privilege><D:write/></D:privilege><D:privilege><D:write-content/></D:privilege><D:privilege><D:bind/></D:privilege><D:privilege><D:unbind/></D:privilege>"
       }</D:current-user-privilege-set>`,
     ]);
+  };
 
   const taskResponse = (accountId: string, name: string, uid: string, task: Task, data: boolean) =>
     response(taskHref(accountId, name), [
@@ -203,13 +229,34 @@ export const createDavRoutes = ({
         list.map(({ task, name, uid }) => taskResponse(account.id, name, uid, task, true)),
       );
     }
-    // No sync-collection: clients fall back to the ctag and PROPFIND.
-    return c.body(
-      `<?xml version="1.0" encoding="utf-8"?><D:error xmlns:D="DAV:"><D:supported-report/></D:error>`,
-      403,
-      { "content-type": 'application/xml; charset="utf-8"' },
-    );
+    if (kind === "sync-collection") return syncCollection(account.id, body);
+    return davError("<D:supported-report/>", 403);
   });
+
+  /**
+   * RFC 6578: what changed since the client's token – everything for the first sync (no token),
+   * a 404 for each task gone – and the new token. An unknown token makes the client start anew.
+   */
+  const syncCollection = async (accountId: string, body: string) => {
+    const token = tokenIn(body);
+    const ctag = token ? ctagOf(token) : null;
+    const before = token ? ctag && snapshots.recall(accountId, ctag) : new Map<string, string>();
+    if (!before) return davError("<D:valid-sync-token/>", 403);
+    const now = await stateOf(accountId);
+    const { changed, removed } = changesSince(before, now.snapshot);
+    const byName = new Map(now.list.map((entry) => [entry.name, entry]));
+    const data = wantsData(body);
+    return multistatus(
+      [
+        ...changed.map((name) => {
+          const { uid, task } = byName.get(name)!;
+          return taskResponse(accountId, name, uid, task, data);
+        }),
+        ...removed.map((name) => notFound(taskHref(accountId, name))),
+      ],
+      syncToken(now.ctag),
+    );
+  };
 
   /**
    * The board and the task's file name from a path, if the person has that board. `file` comes

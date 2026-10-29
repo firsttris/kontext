@@ -24,7 +24,15 @@ import {
 import { CredentialFields, type Credentials, WriteChoice } from "./credential-fields";
 
 /** A value to copy: shown in a code box with a copy button. */
-const CopyField = ({ label, value, testId }: { label: string; value: string; testId?: string }) => {
+export const CopyField = ({
+  label,
+  value,
+  testId,
+}: {
+  label: string;
+  value: string;
+  testId?: string;
+}) => {
   const [copied, setCopied] = useState(false);
   const copy = async () => {
     await navigator.clipboard?.writeText(value).catch(() => undefined);
