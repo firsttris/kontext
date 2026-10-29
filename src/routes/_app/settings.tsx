@@ -7,6 +7,7 @@ export const settingsSections = [
   "signature",
   "accounts",
   "vacation",
+  "deputy",
   "rules",
   "snippets",
   "sync",

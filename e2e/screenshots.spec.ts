@@ -10,6 +10,7 @@ import {
   login,
   personalAccountId,
   removeSnippet,
+  revokeDeputy,
 } from "./helpers";
 import { calendarOnTheWeb } from "./ics-server";
 import { deliverInvitation } from "./invitation-mail";
@@ -130,6 +131,25 @@ test.describe("Screenshots @screenshots", () => {
     await card.getByLabel("Mobil").fill("0170 1234567");
     await card.scrollIntoViewIfNeeded();
     await shot(page, "signature-details");
+  });
+
+  test("Vertretung", async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    try {
+      await login(page, "sandra");
+      await page.goto("/settings?section=deputy");
+      await page.getByLabel("Kollegin oder Kollege").selectOption({ label: "Max Becker" });
+      await page.getByLabel("Zugriff", { exact: true }).selectOption({ label: "Bearbeiten" });
+      await page.getByRole("button", { name: "Freigeben" }).click();
+      await expect(
+        page.getByRole("list", { name: "Wer hat Zugriff" }).getByText("Max Becker"),
+      ).toBeVisible();
+      // The toast would cover the list.
+      await expect(page.getByRole("status")).toHaveCount(0, { timeout: 10_000 });
+      await shot(page, "deputy");
+    } finally {
+      await revokeDeputy("sandra", "max");
+    }
   });
 
   test("Papierkorb leeren", async ({ page }) => {

@@ -14,6 +14,11 @@ Steps that an update needs beyond raising the version are marked **Upgrade**.
   sending address (JMAP `Identity.replyTo`) is set under *Einstellungen → Signatur*; it fills the
   field and follows a change of sender unless the field was edited. Answering a mail that carries
   Reply-To already went to that address; now covered by tests.
+- Settings: "Vertretung" – give a colleague your mailbox (every folder), calendars and contacts at
+  once, to view or to edit, see who has access to what (also from the share dialogs) and take it
+  all back with "Alles entziehen"; only seeing your free and busy times stays when every
+  colleague sees them. Folders, sending in your name and further sharing stay with you. A mailbox
+  shared this way (or handed over) is now labelled "Postfach von …".
 - Calendar: print the week or the month on landscape A4, e.g. for the pin board in the workshop –
   the printer in the calendar's header, `p` or Ctrl+P. The week as seven columns with every
   appointment's time, title and place, all-day ones first; the month as its grid with start and
