@@ -21,6 +21,7 @@
         "@tanstack/react-query": "^5.104.5",
         "@tanstack/react-router": "^1.170.46",
         "@tanstack/react-virtual": "^3.14.22",
+        "@tiptap/extension-image": "^3.32.0",
         "@tiptap/extension-placeholder": "^3.32.0",
         "@tiptap/extension-table": "^3.32.0",
         "@tiptap/extension-text-style": "^3.32.0",
@@ -797,6 +798,8 @@
     "@tiptap/extension-heading": ["@tiptap/extension-heading@3.32.0", "", { "peerDependencies": { "@tiptap/core": "3.32.0" } }, "sha512-XRiZxZuhfjvbgwCvoBHj04gOsPANEXxxRwrFCQVuFi5yeTHYIzMEioc81j6iAH9pV7aQeJCwLxuh6VHNz3dXEQ=="],
 
     "@tiptap/extension-horizontal-rule": ["@tiptap/extension-horizontal-rule@3.32.0", "", { "peerDependencies": { "@tiptap/core": "3.32.0", "@tiptap/pm": "3.32.0" } }, "sha512-Iry7ynsG4xgcxnH1cm+uXJnEtUzoop4sGA10NUN9I+08TOjhj/GrDiRKMQHKAiVI/R7t2MVav1MJlxFf2FdzGw=="],
+
+    "@tiptap/extension-image": ["@tiptap/extension-image@3.32.1", "", { "peerDependencies": { "@tiptap/core": "3.32.1" } }, "sha512-Prldt1k+oYWePgbgHwybDdlpKPJ97Pq2WJFvGyF/KslZjnCAO6DZFMve30I7Pc8shqJAedHk5pl4pwCNsfcm0g=="],
 
     "@tiptap/extension-italic": ["@tiptap/extension-italic@3.32.0", "", { "peerDependencies": { "@tiptap/core": "3.32.0" } }, "sha512-KB/i1xoHilbBGcQ+UotDWhi60KpdCde3RzRIpl2na0Yol4z4Fe2IRWg8ljIrlsssDRwel/fsHJbG7a13EP8oKA=="],
 

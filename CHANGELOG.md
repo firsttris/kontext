@@ -7,6 +7,10 @@ Steps that an update needs beyond raising the version are marked **Upgrade**.
 
 ## Unreleased
 
+- Mail: pictures in the text – by the "Bild einfügen" button, pasted (a screenshot) or dropped
+  in, and resized by their corners. They go out as inline images (`cid:` in multipart/related),
+  so Outlook, Gmail and Apple Mail show them in the text; drafts keep them. Files of a reopened
+  draft now stay with it when it is saved more than once.
 - Mail: a winmail.dat from older Outlook versions (TNEF) shows as the files inside it, with
   preview, download and "In Dokumente"; the browser unpacks it and puts the files up as blobs of
   the mailbox.

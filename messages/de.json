@@ -1966,5 +1966,6 @@
   "settings_swipe_delete": "Löschen",
   "settings_swipe_read": "Gelesen / ungelesen",
   "settings_swipe_flag": "Markieren",
-  "settings_swipe_none": "Nichts"
+  "settings_swipe_none": "Nichts",
+  "mail_insert_image": "Bild einfügen"
 }
