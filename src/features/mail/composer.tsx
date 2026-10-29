@@ -673,7 +673,12 @@ export const Composer = ({ accountId, mode, sourceEmailId, prefill }: Props) => 
             extra={
               <>
                 <InsertImageButton onFiles={(files) => void pics.insert(files)} />
-                <SnippetMenu editor={editor} accountId={sendAccountId} recipient={to[0]} />
+                <SnippetMenu
+                  editor={editor}
+                  accountId={sendAccountId}
+                  recipient={to[0]}
+                  sender={myName}
+                />
               </>
             }
           />
