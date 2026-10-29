@@ -285,6 +285,8 @@
   "rules_apply_hint": "Verschiebt und markiert die passenden Mails jetzt einmal; weitergeleitet wird dabei nichts.",
   "rules_mailbox_title": "Regeln für {address}",
   "rules_mailbox_hint": "Gelten für alle neuen Mails an dieses Postfach – für alle, die es nutzen.",
+  "rules_employee_title": "Regeln von {name}",
+  "rules_employee_hint": "Gelten für neue Mails an {name}. {first} sieht sie in den Einstellungen unter „Regeln“ wie selbst angelegte und kann sie dort auch ändern.",
   "rules_open": "Regeln",
   "rules_deleted": "Regel gelöscht.",
   "rules_delete": "Regel löschen",

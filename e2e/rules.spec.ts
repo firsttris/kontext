@@ -1,5 +1,5 @@
 import { expect, type Page, test } from "@playwright/test";
-import { addMail, address, inboxMails, jmapAs, login, unique } from "./helpers";
+import { addMail, address, inboxMails, jmapAs, login, removeMails, unique } from "./helpers";
 import { deliverMail } from "./protocols";
 
 /**
@@ -201,6 +201,64 @@ test.describe("Regeln auf vorhandene Mails und für gemeinsame Postfächer", () 
 
     await deleteRule(page, new RegExp(token));
     await expect(rules.getByText("Noch keine Regeln.")).toBeVisible();
+  });
+});
+
+test.describe("Regeln für Mitarbeiter", () => {
+  /** Takes the test's rules out of a person's list again, through the Firmenverwaltung. */
+  const removeRules = async (page: Page, employeeId: string, token: string) => {
+    const path = `/api/company/employees/${employeeId}/rules`;
+    const { rules } = (await (await page.request.get(path)).json()) as {
+      rules: { name: string; conditions: { value: string }[] }[];
+    };
+    const kept = rules.filter((rule) => !rule.conditions.some((c) => c.value.includes(token)));
+    if (kept.length !== rules.length) await page.request.put(path, { data: { rules: kept } });
+  };
+
+  test("der Chef legt Regeln für Anna an; sie sieht sie als ihre eigenen", async ({
+    page,
+    browser,
+  }) => {
+    const token = unique("Lieferant Brötje");
+    await addMail("anna", "anna", `${token} alt`);
+    await login(page, "jonas");
+    const employees = (await (await page.request.get("/api/company")).json()).employees as {
+      id: string;
+      email: string;
+    }[];
+    const annaId = employees.find((e) => e.email === address("anna"))!.id;
+    try {
+      await page.goto("/settings?section=employees");
+      await page.getByRole("button", { name: /^Anna Weber/ }).click();
+      await page.getByRole("dialog").getByRole("button", { name: "Regeln" }).click();
+      const rules = page.getByRole("dialog", { name: "Regeln von Anna Weber" });
+      await expect(rules).toContainText(`Gelten für neue Mails an ${address("anna")}`);
+      await rules.getByRole("button", { name: "Neue Regel" }).click();
+      const dialog = page.getByRole("dialog", { name: "Neue Regel" });
+      await dialog.getByLabel("Feld").selectOption("subject");
+      await dialog.getByLabel("Wert").fill(token);
+      await dialog.getByLabel("Markieren", { exact: true }).check();
+      await dialog.getByLabel("Auch auf die Mails anwenden").check();
+      await dialog.getByRole("button", { name: "Regel speichern" }).click();
+      await expect(
+        page.getByRole("status").filter({ hasText: "auf eine Mail im Posteingang angewendet" }),
+      ).toBeVisible();
+      await expect(rules.getByRole("list", { name: "Regeln" })).toContainText(token);
+      expect(await findMail("anna", `${token} alt`)).toEqual({
+        folder: "inbox",
+        keywords: ["$flagged", "$seen"],
+      });
+
+      // Anna finds it among her own rules, to change or delete there.
+      const anna = await (await browser.newContext()).newPage();
+      await login(anna, "anna");
+      await anna.goto("/settings?section=rules");
+      await expect(anna.getByRole("list", { name: "Regeln" })).toContainText(token);
+      await anna.context().close();
+    } finally {
+      await removeRules(page, annaId, token);
+      await removeMails("anna", "anna", [`${token} alt`]);
+    }
   });
 });
 

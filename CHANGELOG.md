@@ -7,6 +7,10 @@ Steps that an update needs beyond raising the version are marked **Upgrade**.
 
 ## Unreleased
 
+- Company admin: "Regeln" at an employee's entry – the admin sees and edits the person's mail
+  rules (`GET`/`PUT /api/company/employees/:id/rules`, `POST …/rules/apply`, admin only). They are
+  the person's own Sieve script, so the employee sees and changes them in Settings like their own;
+  the out-of-office reply stays as it is.
 - Tasks: "Erinnern" right in the "Neue Aufgabe" dialog (the same choices as in the open task,
   from the due day or a time by hand); a new due day moves a chosen reminder along. Sent with the
   task as `remindAt` on create.

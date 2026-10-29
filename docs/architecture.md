@@ -546,6 +546,12 @@ ins eigene Konto. So wirken sie auch, wenn niemand angemeldet ist, und gleich au
   delivery.rs`). Der Chef pflegt die Regeln in der Firmenverwaltung („Regeln“ am Postfach); der
   Server schreibt sie mit seinem Schlüssel ins Gruppenkonto (`/api/company/mailboxes/:id/rules`),
   mit demselben Code wie die App.
+- **Mitarbeiter:** genauso am Eintrag der Person (`/api/company/employees/:id/rules`, beide über
+  `server/company/rules-routes.ts`): der Server schreibt das Skript ins persönliche Konto, also
+  dasselbe, das die Person in ihren Einstellungen per JMAP liest und schreibt – es gibt keine
+  „Regeln des Chefs“ getrennt von ihren eigenen, und ihre Abwesenheitsnotiz bleibt dabei, wie sie
+  ist. Die Routen liegen hinter der Prüfung der Firmenverwaltung (nur Admins, sonst 403) und
+  nehmen nur Konten, die als Mitarbeiter der Firma gelten (`userOf`), sonst 404.
 - **Auf vorhandene Mails anwenden** (Häkchen im Dialog): Die gespeicherte Regel läuft einmal
   über die neuesten 1.000 Mails im Posteingang, mit derselben Logik wie das Skript
   (`server/rules/match.ts`: Teiltext ohne Groß/Klein, erster Ordner gewinnt, „keine weiteren

@@ -285,6 +285,8 @@
   "rules_apply_hint": "Moves and flags the matching mail once now; nothing is forwarded.",
   "rules_mailbox_title": "Rules for {address}",
   "rules_mailbox_hint": "Apply to all new mail to this mailbox, for everyone who uses it.",
+  "rules_employee_title": "Rules of {name}",
+  "rules_employee_hint": "Apply to new mail to {name}. {first} sees them in Settings under \"Rules\" like rules of their own and can change them there too.",
   "rules_open": "Rules",
   "rules_deleted": "Rule deleted.",
   "rules_delete": "Delete rule",

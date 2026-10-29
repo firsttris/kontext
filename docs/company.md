@@ -17,6 +17,12 @@ Stalwarts Admin-Oberfläche und ohne IT-Kenntnisse.
 - **Gemeinsame Postfächer** mit Rechten je Person: kein Zugriff, nur lesen, lesen und senden;
   eigene Regeln je Postfach.
 - **Abwesenheit für Kollegen** (etwa bei Krankheit) mit Vertretung in der Antwort.
+- **Regeln für Mitarbeiter:** am Eintrag der Person *Regeln* – etwa „Mails vom Lieferanten in den
+  Ordner Bestellungen“ für eine neue Kollegin. Es sind dieselben Regeln wie unter
+  *Einstellungen → Regeln* der Person: Sie sieht die vom Chef angelegten dort wie ihre eigenen
+  und kann sie ändern oder löschen; umgekehrt sieht der Chef ihre eigenen. „Auch auf die Mails
+  anwenden“ wirkt auf ihren Posteingang. Nur wer die Firmenverwaltung öffnen darf, kommt an
+  die Regeln anderer.
 - **Firmen-Signatur** für alle auf einmal, mit `[Name]` und `[E-Mail]` je Absender und
   `[Telefon]`, `[Mobil]`, `[Position]`, `[Abteilung]`: die trägt jede Person einmal unter
   *Einstellungen → Profil* ein („Angaben für die Signatur“), und ihre Signatur ist sofort
