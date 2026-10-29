@@ -1,12 +1,12 @@
 /** One signature for the whole company, written into every sender address on request. */
 import { useQuery } from "@tanstack/react-query";
 import { EditorContent, useEditor } from "@tiptap/react";
-import StarterKit from "@tiptap/starter-kit";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/toast";
 import { htmlToText } from "@/lib/html";
 import { m } from "@/paraglide/messages";
 import { EditorToolbar } from "../mail/editor-toolbar";
+import { richText } from "../mail/rich-text";
 import { getSignature, type SignatureTemplate, saveSignature } from "./api";
 import { ConfirmButton } from "./fields";
 import { useCompanyChange } from "./queries";
@@ -27,7 +27,7 @@ export const CompanySignatureSection = () => {
 const SignatureEditor = ({ template }: { template: SignatureTemplate }) => {
   const toast = useToast();
   const editor = useEditor({
-    extensions: [StarterKit.configure({ link: { openOnClick: false } })],
+    extensions: richText(),
     content: template.html,
     editorProps: {
       attributes: {

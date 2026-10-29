@@ -144,6 +144,77 @@ test.describe("Mail", () => {
     await expect(page.getByRole("list", { name: "Gesendet" }).getByText(subject)).toBeVisible();
   });
 
+  test("schreibt eine Tabelle, Farbe und Schriftgröße, die beim Empfänger ankommen", async ({
+    page,
+  }) => {
+    const subject = unique("Preisliste Pumpen");
+    await page.getByRole("link", { name: "Neue Mail" }).first().click();
+    await page.getByRole("combobox", { name: "An" }).fill("anna");
+    await page.getByRole("option", { name: /Anna Weber/ }).click();
+    await page.getByLabel("Betreff").fill(subject);
+    const body = page.getByRole("textbox", { name: "Ihre Nachricht …" });
+    await body.click();
+    await page.getByRole("button", { name: "Textfarbe" }).click();
+    await page.getByRole("menuitemradio", { name: "Rot" }).click();
+    await page.getByRole("button", { name: "Schriftgröße" }).click();
+    await page.getByRole("menuitemradio", { name: "Groß", exact: true }).click();
+    await page.keyboard.type("Bitte bis Freitag");
+    await page.keyboard.press("Enter");
+    await page.getByRole("button", { name: "Tabelle", exact: true }).click();
+    await page.getByRole("menuitem", { name: "Tabelle einfügen (3 × 3)" }).click();
+    await page.keyboard.type("Pumpe");
+    await page.keyboard.press("Tab");
+    await page.keyboard.type("240 €");
+    // In the table the menu offers rows and columns: one more row, then it goes again.
+    await page.getByRole("button", { name: "Tabelle", exact: true }).click();
+    await page.getByRole("menuitem", { name: "Zeile darunter" }).click();
+    await expect(body.locator("tr")).toHaveCount(4);
+    // Into the empty row below, which goes again.
+    await page.keyboard.press("ArrowDown");
+    await page.getByRole("button", { name: "Tabelle", exact: true }).click();
+    await page.getByRole("menuitem", { name: "Zeile löschen" }).click();
+    await expect(body.locator("tr")).toHaveCount(3);
+    await page.getByRole("button", { name: "Senden", exact: true }).click();
+    await expect(page.getByRole("status")).toHaveText("Mail gesendet.");
+
+    const received = async () => {
+      const client = jmapAs("anna");
+      const accountId = await personalAccountId("anna");
+      const [, get] = await client.request([
+        ["Email/query", { accountId, filter: { subject } }, "q"],
+        [
+          "Email/get",
+          {
+            accountId,
+            "#ids": { resultOf: "q", name: "Email/query", path: "/ids" },
+            properties: ["htmlBody", "textBody", "bodyValues"],
+            fetchHTMLBodyValues: true,
+            fetchTextBodyValues: true,
+          },
+          "g",
+        ],
+      ]);
+      const mail = (
+        get![1].list as {
+          htmlBody: { partId: string }[];
+          textBody: { partId: string }[];
+          bodyValues: Record<string, { value: string }>;
+        }[]
+      )[0];
+      if (!mail) return null;
+      const value = (parts: { partId: string }[]) => mail.bodyValues[parts[0]!.partId]!.value;
+      return { html: value(mail.htmlBody), text: value(mail.textBody) };
+    };
+    await expect.poll(received).not.toBeNull();
+    const { html, text } = (await received())!;
+    // Inline styles, as Outlook and Gmail show them; the table with its lines.
+    expect(html).toMatch(/font-size: ?18px/);
+    expect(html).toMatch(/color: ?(#dc2626|rgb\(220, 38, 38\))/);
+    expect(html).toMatch(/<table[^>]*border-collapse/);
+    expect(html).toMatch(/<td[^>]*border: ?1px solid/);
+    expect(text).toContain("Pumpe\t240 €");
+  });
+
   test("behält beim Schreiben den Fokus, auch wenn die Absender spät laden", async ({ page }) => {
     // Identities arrive late, while the recipient is already being typed.
     await page.route(/\/jmap/, async (route) => {

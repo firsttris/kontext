@@ -230,11 +230,20 @@ export const htmlToText = (html: string): string => {
   if (typeof DOMParser === "undefined") return html.replace(/<[^>]+>/g, "");
   // Parsed into a document of its own, which loads and runs nothing: an element of the page's
   // document would load an <img> and fire its onerror even without being attached.
+  // A table row on a line, its cells apart by tabs (the paragraph a cell holds ends no line).
   const parsed = new DOMParser().parseFromString(
-    html.replace(/<br\s*\/?>/gi, "\n").replace(/<\/(p|div|li|h[1-6]|blockquote)>/gi, "</$1>\n"),
+    html
+      .replace(/<br\s*\/?>/gi, "\n")
+      .replace(/<\/p>(\s*)<\/(td|th)>/gi, "</$2>")
+      .replace(/<\/(td|th)>/gi, "</$1>\t")
+      .replace(/<\/tr>/gi, "</tr>\n")
+      .replace(/<\/(p|div|li|h[1-6]|blockquote)>/gi, "</$1>\n"),
     "text/html",
   );
-  return (parsed.body.textContent ?? "").replace(/\n{3,}/g, "\n\n").trim();
+  return (parsed.body.textContent ?? "")
+    .replace(/\t+\n/g, "\n")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
 };
 
 /** The original below a reply, as an HTML quote. */
