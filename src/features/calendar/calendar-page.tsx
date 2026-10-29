@@ -3,12 +3,13 @@
  * invitations); on a phone one day with a strip of the week above it, the month, or the list.
  */
 import { Link, useNavigate } from "@tanstack/react-router";
-import { ChevronLeft, ChevronRight, Plus, Settings2 } from "lucide-react";
+import { ChevronLeft, ChevronRight, Plus, Printer, Settings2 } from "lucide-react";
 import { useState } from "react";
 import { TabBar, useSession } from "@/components/shell/app-shell";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/toast";
 import { useMediaQuery } from "@/components/use-media-query";
+import { usePrintKey } from "@/components/use-print-key";
 import { useShortcuts } from "@/components/use-shortcuts";
 import { cn } from "@/lib/cn";
 import { movePatch } from "@/lib/event-form";
@@ -32,6 +33,7 @@ import { CalendarList, CalendarsDialog } from "./calendar-list";
 import { EventDialog } from "./event-dialog";
 import { MiniMonth } from "./mini-month";
 import { MonthView, monthDays } from "./month-view";
+import { printCalendar } from "./print-calendar";
 import { calendarOf, isInvitation, mayEdit, useEventMutations, useEvents } from "./queries";
 import { useTasksShown } from "./task-chip";
 import type { Moved } from "./use-drag";
@@ -96,6 +98,9 @@ const rangeTitle = (days: string[]): string => {
     : `${dayMonth.format(first)} – ${dayMonth.format(last)}`;
 };
 
+const weekFrom = (first: string): string[] =>
+  Array.from({ length: 7 }, (_, index) => addDays(first, index));
+
 const useIsPhone = (): boolean => useMediaQuery("(max-width: 767px)");
 
 export const CalendarPage = ({ search }: { search: Search }) => {
@@ -120,6 +125,15 @@ export const CalendarPage = ({ search }: { search: Search }) => {
   const navigate = useNavigate();
   const go = (patch: Partial<Search>) =>
     void navigate({ to: "/calendar", search: (prev) => ({ ...prev, ...patch }) });
+  // The month as a month; the day with its week; the list's next seven days (what it has loaded).
+  const print = () =>
+    void printCalendar({
+      kind: view === "month" ? "month" : "week",
+      days: view === "month" ? [selected] : view === "agenda" ? weekFrom(from) : week,
+      events,
+      calendars,
+    });
+  usePrintKey(print);
   useShortcuts({
     c: () => go({ event: "new", start: `${selected}T09:00` }),
     t: () => go({ date: undefined }),
@@ -129,6 +143,7 @@ export const CalendarPage = ({ search }: { search: Search }) => {
     w: phone ? undefined : () => go({ view: "week" }),
     m: () => go({ view: "month" }),
     l: () => go({ view: "agenda" }),
+    p: print,
   });
 
   const canMove = (event: CalendarEvent) =>
@@ -168,6 +183,16 @@ export const CalendarPage = ({ search }: { search: Search }) => {
         </span>
       ) : null}
       <div className="flex-1" />
+      <Button
+        variant="ghost"
+        size="iconSm"
+        aria-label={m.calendar_print()}
+        title={m.calendar_print()}
+        onClick={print}
+        className="hidden md:inline-flex"
+      >
+        <Printer size={16} />
+      </Button>
       <Button
         variant="ghost"
         size="iconSm"

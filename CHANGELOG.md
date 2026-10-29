@@ -7,6 +7,12 @@ Steps that an update needs beyond raising the version are marked **Upgrade**.
 
 ## Unreleased
 
+- Calendar: print the week or the month on landscape A4, e.g. for the pin board in the workshop –
+  the printer in the calendar's header, `p` or Ctrl+P. The week as seven columns with every
+  appointment's time, title and place, all-day ones first; the month as its grid with start and
+  title, "+2 weitere" for what does not fit; the list prints its next seven days. Only the
+  calendars shown, with their colours as a legend. Like a printed mail, the sheet is a page of its
+  own in a hidden frame without scripts that loads nothing.
 - Mail: pictures in the text – by the "Bild einfügen" button, pasted (a screenshot) or dropped
   in, and resized by their corners. They go out as inline images (`cid:` in multipart/related),
   so Outlook, Gmail and Apple Mail show them in the text; drafts keep them. Files of a reopened

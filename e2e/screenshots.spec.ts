@@ -6,6 +6,7 @@ import { deliverInvitation } from "./invitation-mail";
 import { pairBox } from "./paired-box";
 import { giveKey } from "./pgp-key";
 import { buildingSitePng } from "./picture";
+import { printed, recordPrints } from "./printed";
 
 /**
  * The pictures in the README and the docs. Run with `bun run screenshots`. The pointer goes to
@@ -350,6 +351,26 @@ test.describe("Screenshots @screenshots", () => {
     await page.getByRole("dialog").getByRole("button", { name: "Bearbeiten" }).click();
     await page.getByRole("dialog").getByLabel("Dieser und alle folgenden").check();
     await shot(page, "series-following");
+  });
+
+  test("Kalender gedruckt", async ({ page, browser }) => {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await login(page);
+    await page.goto(`/calendar?view=week&date=${today()}`);
+    await expect(
+      page.locator(`[data-day="${today()}"]`).getByText("Baubesprechung Hoffmann"),
+    ).toBeVisible();
+    await recordPrints(page);
+    await page.getByRole("button", { name: "Drucken" }).click();
+    await expect.poll(async () => (await printed(page)).length).toBe(1);
+    // The sheet as on landscape A4 at 96 dpi; the page's margin (@page) drawn as padding.
+    const sheet = await (
+      await browser.newContext({ viewport: { width: 1123, height: 794 } })
+    ).newPage();
+    await sheet.setContent((await printed(page))[0]!);
+    await sheet.emulateMedia({ media: "print" });
+    await sheet.addStyleTag({ content: "body { padding: 10mm; }" });
+    await sheet.screenshot({ path: "docs/screenshots/calendar-print.png" });
   });
 
   test("Handy", async ({ browser }) => {

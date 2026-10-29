@@ -388,6 +388,8 @@
   "calendar_month": "Month",
   "calendar_agenda": "List",
   "calendar_more": "+{count} more",
+  "calendar_print": "Print",
+  "calendar_print_printed": "Printed on {date}",
   "calendar_agenda_empty": "No events in the next 30 days.",
   "calendar_moved": "Event moved.",
   "calendar_repeat": "Repeat",
