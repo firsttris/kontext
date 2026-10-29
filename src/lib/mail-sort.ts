@@ -86,19 +86,30 @@ export type SortItem = { email: EmailSummary; categories: string[] };
 const time = (email: EmailSummary) => Date.parse(email.receivedAt);
 const text = (value: string) => value.trim().toLocaleLowerCase();
 const byText = (a: string, b: string) => text(a).localeCompare(text(b));
-/** The place of a mail's first category in its account's order; none last. */
-const categoryRank = ({ email, categories }: SortItem) => {
-  const index = categories.findIndex((keyword) => email.keywords[keyword]);
-  return index === -1 ? Number.MAX_SAFE_INTEGER : index;
-};
 const flag = (email: EmailSummary, keyword: string) => (email.keywords[keyword] ? 1 : 0);
+/**
+ * Category by category in the account's order, as the server's one comparator per category
+ * does (RFC 8620 §5.5): having the first decides, then the second, and so on; none last.
+ */
+const byCategories = (a: SortItem, b: SortItem) => {
+  const length = Math.max(a.categories.length, b.categories.length);
+  for (let index = 0; index < length; index++) {
+    const has = (item: SortItem) => {
+      const keyword = item.categories[index];
+      return keyword === undefined ? 0 : flag(item.email, keyword);
+    };
+    const difference = has(b) - has(a);
+    if (difference) return difference;
+  }
+  return 0;
+};
 
 const PRIMARY: Record<MailSort, (a: SortItem, b: SortItem) => number> = {
   newest: () => 0,
   oldest: (a, b) => time(a.email) - time(b.email),
   unread: (a, b) => flag(a.email, "$seen") - flag(b.email, "$seen"),
   flagged: (a, b) => flag(b.email, "$flagged") - flag(a.email, "$flagged"),
-  category: (a, b) => categoryRank(a) - categoryRank(b),
+  category: byCategories,
   from: (a, b) => byText(displayName(a.email.from?.[0]), displayName(b.email.from?.[0])),
   subject: (a, b) => byText(a.email.subject ?? "", b.email.subject ?? ""),
   size: (a, b) => b.email.size - a.email.size,
