@@ -73,11 +73,19 @@ const hash = (text: string): string => {
   return (4294967296 * (2097151 & h2) + (h1 >>> 0)).toString(36);
 };
 
+/** The same content gives the same text: Stalwart's parse orders the keys anew each time. */
+const canonical = (value: unknown): string =>
+  JSON.stringify(value, (_key, v) =>
+    v && typeof v === "object" && !Array.isArray(v)
+      ? Object.fromEntries(Object.entries(v).sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0)))
+      : v,
+  );
+
 /** The UID, or one made from the content (`updated` left out: exports stamp the time). */
 const uidOf = (entry: ParsedEntry): string => {
   if (typeof entry.uid === "string" && entry.uid) return entry.uid;
   const { updated: _, ...content } = entry;
-  return `import-${hash(JSON.stringify(content))}`;
+  return `import-${hash(canonical(content))}`;
 };
 
 /**
