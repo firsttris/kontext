@@ -7,6 +7,11 @@ Steps that an update needs beyond raising the version are marked **Upgrade**.
 
 ## Unreleased
 
+- Mail: an invitation in a mail (Outlook, Google, Apple, a colleague) shows a line above the text
+  with what, when and where, whether it is in the calendar and the answer so far, and Zusagen /
+  Vielleicht / Absagen and "In den Kalender". Kontext puts the event into the calendar and sends
+  the answer to the organizer itself (iTIP REPLY); a called-off event has "Aus dem Kalender
+  entfernen". The bare iCalendar part no longer shows as an attachment.
 - Calendar: "Feiertage eintragen" under *Kalender verwalten* puts the public holidays of a German
   state (all 16) into a calendar of their own, this year and next, all-day and shown as free;
   running it again adds only what is missing. The phone's opening hours take the state too

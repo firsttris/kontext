@@ -28,7 +28,6 @@ Kleinere und mittlere Funktionen, sortiert nach Nutzen: oben, was fast jedem Bet
 | # | Funktion | Worum es geht |
 | --- | --- | --- |
 | 1 | **Erinnerungen je Termin** | Pro Termin „30 Minuten vorher“, „1 Tag vorher“ …, als Hinweis oder als Mail. Die Mail verschickt Stalwart, also auch bei geschlossener App (heute fest 15 Minuten vorher und nur, solange Kontext offen ist). |
-| 2 | **Einladungen in der Mail beantworten** | Eine Einladung von außen (Outlook, Google) zeigt oben in der Mail Zusagen, Vielleicht, Absagen und „In den Kalender“. |
 | 3 | **Serien ab einem Termin ändern** | Neben „Nur dieser Termin“ und „Alle Termine der Serie“ auch „Dieser und alle folgenden“. |
 | 4 | **Firmen-Signatur mit mehr Angaben** | Telefon, Position, Abteilung als Platzhalter; jede Person trägt ihre Angaben einmal ein, leere Zeilen fallen weg (heute `[Name]` und `[E-Mail]`). |
 | 5 | **„Anhang vergessen?“** | Steht im Text „Anhang“, „anbei“, „attached“ …, aber nichts ist angehängt, fragt Kontext vor dem Senden nach. |
