@@ -58,8 +58,11 @@ export type InvitationView =
       /** The calendar holds a newer version (higher SEQUENCE) than this mail. */
       outdated: boolean;
     }
-  /** The organizer called it off. */
-  | { kind: "cancel"; inCalendar: boolean }
+  /**
+   * The organizer called it off. `outdated`: the calendar holds a later version (a new
+   * invitation after this cancellation), which removing would wrongly delete.
+   */
+  | { kind: "cancel"; inCalendar: boolean; outdated: boolean }
   /** Something to put into the calendar without answering (iTIP PUBLISH, a plain .ics). */
   | { kind: "publish"; inCalendar: boolean }
   | { kind: "none" };
@@ -78,7 +81,8 @@ export const invitationView = (
   if (mine.has(organizerEmail(parsed))) return { kind: "none" };
   const method = parsed.method ?? "publish";
   const inCalendar = Boolean(stored);
-  if (method === "cancel") return { kind: "cancel", inCalendar };
+  const outdated = Boolean(stored && (stored.sequence ?? 0) > (parsed.sequence ?? 0));
+  if (method === "cancel") return { kind: "cancel", inCalendar, outdated };
   if (method === "publish") return { kind: "publish", inCalendar };
   if (method !== "request") return { kind: "none" };
   const me = myAttendee(stored ?? parsed, addresses) ?? myAttendee(parsed, addresses);
@@ -86,7 +90,7 @@ export const invitationView = (
     kind: "request",
     status: me ? (me[1].participationStatus ?? "needs-action") : null,
     inCalendar,
-    outdated: Boolean(stored && (stored.sequence ?? 0) > (parsed.sequence ?? 0)),
+    outdated,
   };
 };
 

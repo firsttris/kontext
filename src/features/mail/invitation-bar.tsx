@@ -127,7 +127,7 @@ const Bar = ({ accountId, blobId }: { accountId: string; blobId: string }) => {
           {view.kind === "request" && view.status ? (
             <span className="text-[13px]">{STATUS[view.status]?.() ?? ""}</span>
           ) : null}
-          {view.kind === "request" && view.outdated ? (
+          {(view.kind === "request" || view.kind === "cancel") && view.outdated ? (
             <span className="text-[13px] text-muted">{m.mail_invitation_outdated()}</span>
           ) : null}
           {view.inCalendar ? (
@@ -172,7 +172,7 @@ const Bar = ({ accountId, blobId }: { accountId: string; blobId: string }) => {
               {m.mail_invitation_add()}
             </Button>
           ) : null}
-          {view.kind === "cancel" && stored ? (
+          {view.kind === "cancel" && stored && !view.outdated ? (
             <Button
               size="sm"
               variant="outline"

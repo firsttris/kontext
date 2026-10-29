@@ -1530,7 +1530,8 @@ entscheidet `src/lib/mail-invitation.ts`: Bei `request` Zusagen / Vielleicht / A
 bisherigen Antwort, aus dem Kalender, wenn der Termin dort steht) und „In den Kalender“; bei
 `cancel` „Aus dem Kalender entfernen“ (sagt der Organisator nur einen Tag einer Serie ab, trägt
 das `RECURRENCE-ID` und Kontext nimmt nur diesen Tag heraus, als Ausnahme in
-`recurrenceOverrides`); bei `publish` oder einer `.ics` ohne Methode nur „In den
+`recurrenceOverrides`; steht im Kalender eine höhere `SEQUENCE` als in der Absage, hat der
+Organisator danach neu eingeladen, und der Knopf fehlt); bei `publish` oder einer `.ics` ohne Methode nur „In den
 Kalender“. Eigene Einladungen und Antworten (`reply`) zeigen nichts, die trägt Stalwart selbst
 ein. Der unbenannte `text/calendar`-Teil steht nicht mehr als Anhang da.
 
