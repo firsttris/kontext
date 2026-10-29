@@ -15,9 +15,8 @@ import { externalIdOf, replyingExternal, sendThroughExternal } from "@/features/
 import { displayBody, type OutgoingAttachment, saveDraft, sendEmail } from "@/jmap/mail";
 import type { EmailAddress, Identity } from "@/jmap/types";
 import { parseAddresses } from "@/lib/addresses";
-import { attachmentMention } from "@/lib/attachment-reminder";
+import { attachmentMention, ownText } from "@/lib/attachment-reminder";
 import { type ComposeMode, sharedSenderName, startCompose } from "@/lib/compose";
-import { splitQuote } from "@/lib/conversation";
 import { htmlToText, sanitizeMailHtml, textToHtml } from "@/lib/html";
 import { findRole } from "@/lib/mailboxes";
 import { pgpKind } from "@/lib/pgp-mail";
@@ -368,7 +367,7 @@ export const Composer = ({ accountId, mode, sourceEmailId, prefill }: Props) => 
     const word =
       withoutAttachment || attachments.length
         ? undefined
-        : attachmentMention(subject, htmlToText(splitQuote(editor?.getHTML() ?? "").main));
+        : attachmentMention(subject, ownText(editor?.getHTML() ?? ""));
     if (word) {
       setForgotten({ word, later });
       return;

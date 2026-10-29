@@ -3,6 +3,9 @@
  * user wrote counts, not the quoted mail below it (splitQuote in conversation.ts), where
  * "im Anhang" of the earlier mail would ask every time. Pure.
  */
+import { FORWARD_MARKER } from "./compose";
+import { splitQuote } from "./conversation";
+import { htmlToText } from "./html";
 
 /** German and English, as people write it: "anbei", "im Anhang", "attached" … */
 const MENTIONS =
@@ -17,3 +20,10 @@ const TAKEN_OVER = /^\s*(re|aw|antw|fwd?|wg)\s*:/i;
 /** The word that speaks of an attachment, in the subject or the text; none if nothing does. */
 export const attachmentMention = (subject: string, text: string): string | undefined =>
   `${TAKEN_OVER.test(subject) ? "" : subject}\n${text}`.match(MENTIONS)?.[1];
+
+/** The text the user wrote in the composer's HTML: without the quoted reply or a forwarded mail. */
+export const ownText = (html: string): string => {
+  const text = htmlToText(splitQuote(html).main);
+  const forward = text.indexOf(FORWARD_MARKER);
+  return forward < 0 ? text : text.slice(0, forward);
+};

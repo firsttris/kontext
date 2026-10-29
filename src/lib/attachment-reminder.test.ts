@@ -59,7 +59,7 @@ describe("ownText: what the composer counts as the user's own words", () => {
       [],
     );
     const html = `<p>Zur Info, bitte buchen.</p>${start.html}`;
-    expect(ownText(html, "")).not.toMatch(/Anhang/);
-    expect(ownText(html, "")).toMatch(/bitte buchen/);
+    expect(ownText(html)).not.toMatch(/Anhang/);
+    expect(ownText(html)).toMatch(/bitte buchen/);
   });
 });
