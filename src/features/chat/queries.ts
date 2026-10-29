@@ -22,6 +22,12 @@ export const messagesKey = (channelId: string) => ["chat", "messages", channelId
 export const threadKey = (parentId: string) => ["chat", "thread", parentId];
 export type Thread = { message: Message; replies: Message[] };
 
+/** The id prefix of a message shown before the server has it. */
+const PENDING = "pending-";
+
+/** Shown before the server has it. */
+export const isPending = (message: Message) => message.id.startsWith(PENDING);
+
 /** A message to send; `files` are already uploaded. */
 export type Post = {
   channelId: string;
@@ -138,6 +144,19 @@ export const useMessages = (channelId: string) => {
 };
 
 /**
+ * Whether `old` gives way to `message`: the same message, the one it `replaces`, or its pending
+ * copy, matched by author and text, since the live event may come before the answer that names
+ * the pending id.
+ */
+const givesWay = (old: Message, message: Message, replaces?: string) =>
+  old.id === message.id ||
+  old.id === replaces ||
+  (isPending(old) &&
+    !isPending(message) &&
+    old.authorId === message.authorId &&
+    old.text === message.text);
+
+/**
  * Puts a message where it shows, once (the live event and the answer may both come): an answer
  * into its thread, any other into the cached first page of its channel and, when its thread is
  * open, as the thread's first message.
@@ -148,10 +167,9 @@ export const addMessage = (queryClient: QueryClient, message: Message, replaces?
       data
         ? {
             ...data,
-            replies: [
-              ...data.replies.filter((m) => m.id !== message.id && m.id !== replaces),
-              message,
-            ].sort((a, b) => a.createdAt.localeCompare(b.createdAt)),
+            replies: [...data.replies.filter((m) => !givesWay(m, message, replaces)), message].sort(
+              (a, b) => a.createdAt.localeCompare(b.createdAt),
+            ),
           }
         : data,
     );
@@ -168,7 +186,7 @@ const addToChannel = (queryClient: QueryClient, message: Message, replaces?: str
     if (!data) return data;
     const [first, ...rest] = data.pages;
     if (!first) return data;
-    const others = first.messages.filter((m) => m.id !== message.id && m.id !== replaces);
+    const others = first.messages.filter((m) => !givesWay(m, message, replaces));
     const messages = [message, ...others].sort((a, b) => b.createdAt.localeCompare(a.createdAt));
     return { ...data, pages: [{ ...first, messages }, ...rest] };
   });
@@ -228,7 +246,7 @@ export const useChatActions = (me: string) => {
       ).message,
     onMutate: ({ channelId, parentId = null, text, mentions, cards, files }) => {
       const pending: Message = {
-        id: `pending-${crypto.randomUUID()}`,
+        id: `${PENDING}${crypto.randomUUID()}`,
         channelId,
         authorId: me,
         text,

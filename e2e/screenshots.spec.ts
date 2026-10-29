@@ -328,7 +328,7 @@ test.describe("Screenshots @screenshots", () => {
     const page = await context.newPage();
     await login(page);
 
-    await page.goto(`/calendar?date=${today()}&event=new&start=${today()}T10:00`);
+    await page.goto(`/calendar?date=${today()}&event=new&start=${today()}T14:00`);
     const meeting = page.getByRole("dialog");
     await meeting.getByLabel("Titel").fill("Abnahme Badsanierung Hoffmann");
     await addAttendees(meeting, "anna@weber-haustechnik.test, sandra@weber-haustechnik.test");

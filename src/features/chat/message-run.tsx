@@ -23,12 +23,11 @@ import { ActionSheet, HoverBar, type MessageActions, useCopyText } from "./messa
 import { MessageCard } from "./message-card";
 import { MessageFiles } from "./message-files";
 import { MessageText } from "./message-text";
+import { isPending } from "./queries";
 import { ReactionBar } from "./reactions";
 
 const time = (iso: string) =>
   new Date(iso).toLocaleTimeString(LOCALE, { hour: "2-digit", minute: "2-digit" });
-
-export const isPending = (message: Message) => message.id.startsWith("pending-");
 
 type Props = {
   run: MessageRun;
