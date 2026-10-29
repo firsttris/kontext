@@ -1598,6 +1598,38 @@ Ohne `STALWART_ADMIN_KEY` gehen die Einladungen ohne diese Knöpfe hinaus.
 **Mailprogramme und Handys** (CalDAV) bleiben bei Stalwarts Scheduling: Wer am iPhone einlädt,
 verschickt Stalwarts Mail.
 
+### Einladungen in der Mail
+
+Eine Mail mit Einladung trägt das iCalendar-Objekt als `text/calendar; method=…` (RFC 6047) oder
+als `.ics`-Datei. Die Leiste über dem Text (`src/features/mail/invitation-bar.tsx`) lässt es von
+Stalwart lesen (`CalendarEvent/parse`, das JSCalendar mit der iTIP-Methode in `method` liefert)
+und sucht im Konto der Mail den Termin mit derselben `uid` (`CalendarEvent/query`). Was sie zeigt,
+entscheidet `src/lib/mail-invitation.ts`: Bei `request` Zusagen / Vielleicht / Absagen (mit der
+bisherigen Antwort, aus dem Kalender, wenn der Termin dort steht) und „In den Kalender“; bei
+`cancel` „Aus dem Kalender entfernen“ (sagt der Organisator nur einen Tag einer Serie ab, trägt
+das `RECURRENCE-ID` und Kontext nimmt nur diesen Tag heraus, als Ausnahme in
+`recurrenceOverrides`; steht im Kalender eine höhere `SEQUENCE` als in der Absage, hat der
+Organisator danach neu eingeladen, und der Knopf fehlt); bei `publish` oder einer `.ics` ohne Methode nur „In den
+Kalender“. Eigene Einladungen und Antworten (`reply`) zeigen nichts, die trägt Stalwart selbst
+ein. Der unbenannte `text/calendar`-Teil steht nicht mehr als Anhang da.
+
+Stalwart trägt eine Einladung von außen nur selbst ein, wenn DMARC passt **und** der Absender in
+den Kontakten steht oder `autoAddInvitations` an ist (`itip_ingest` in
+`crates/groupware/src/calendar/itip.rs`, `crates/email/src/message/ingest.rs`). Sonst legt
+Kontext den Termin an. Die **Antwort schickt Kontext selbst** (`src/jmap/mail-invitations.ts`):
+Einen Termin, den der Teilnehmer über JMAP angelegt hat, kennt Stalwart ohne `schedule_tag`, und
+eine Änderung daran gilt ihm als neuer Termin, für den nur der Organisator senden darf
+(`itip_create` und `NotOrganizer` in `crates/jmap/src/calendar_event/set.rs`,
+`crates/groupware/src/scheduling/event_create.rs`). Darum schreibt Kontext die Antwort mit
+`sendSchedulingMessages: false` in den Termin (trägt die Mail eine neuere Fassung, also eine
+höhere `SEQUENCE`, übernimmt er sie dabei ganz) und schickt danach eine Mail an den Organisator –
+von der Identität mit der eigenen Adresse unter den Eingeladenen, mit einer Zeile Text und dem
+iTIP-`REPLY` als `text/calendar; method=REPLY` (`src/lib/invitation-reply.ts`; nur UID, SEQUENCE,
+ORGANIZER und das eigene ATTENDEE mit PARTSTAT, RFC 5546 §3.2.3), Betreff wie bei Outlook
+(„Angenommen: …“). Die Kopie liegt in „Gesendet“. Hat der Organisator `RSVP=FALSE` gesetzt, geht
+keine Antwort hinaus. So gilt es auch für Termine, die Stalwart selbst eingetragen hat: Es schickt
+dann nicht noch eine zweite Antwort.
+
 ## Anmeldung
 
 Benutzer und Passwörter bleiben in Stalwart. Bei der Anmeldung schickt die App E-Mail, Passwort

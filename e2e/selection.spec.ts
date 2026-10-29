@@ -227,3 +227,66 @@ test.describe("Auswählen am Handy @phone", () => {
     await expect(page.getByText(/\d+ ausgewählt/)).toHaveCount(0);
   });
 });
+
+test.describe("Wischen am Handy @phone", () => {
+  /** A finger drawn sideways across a line, in steps as the browser gets them. */
+  const swipe = async (page: Page, subject: string, by: number) => {
+    const at = (await page.getByRole("link", { name: new RegExp(subject) }).boundingBox())!;
+    const y = at.y + at.height / 2;
+    const x = at.x + at.width / 2;
+    const cdp = await page.context().newCDPSession(page);
+    const send = (
+      type: "touchStart" | "touchMove" | "touchEnd",
+      touchPoints: { x: number; y: number }[],
+    ) => cdp.send("Input.dispatchTouchEvent", { type, touchPoints });
+    await send("touchStart", [{ x, y }]);
+    for (let step = 1; step <= 10; step++)
+      await send("touchMove", [{ x: x + (by * step) / 10, y }]);
+    await send("touchEnd", []);
+    await cdp.detach();
+  };
+
+  test("nach links archiviert, nach rechts ungelesen, ohne die Mail zu öffnen @phone", async ({
+    page,
+  }) => {
+    const subjects = [unique("Wisch weg"), unique("Wisch ungelesen"), unique("Wisch kurz")];
+    for (const subject of subjects) await addMail("max", "max", subject);
+    await login(page, "max");
+    await expect(page.getByText(subjects[0]!)).toBeVisible();
+
+    await swipe(page, subjects[0]!, -250);
+    await expect(page.getByText(subjects[0]!)).toHaveCount(0);
+    await swipe(page, subjects[1]!, 250);
+    // Not far enough: nothing happens, and the line does not open either.
+    await swipe(page, subjects[2]!, -60);
+    await expect
+      .poll(async () => stateOf("max", "max", subjects))
+      .toMatchObject({
+        [subjects[0]!]: { folder: "archive" },
+        // addMail puts them in as read: right toggles to unread.
+        [subjects[1]!]: { folder: "inbox", keywords: [] },
+        [subjects[2]!]: { folder: "inbox", keywords: ["$seen"] },
+      });
+    await expect(page).not.toHaveURL(/email=/);
+  });
+
+  test("was Wischen tut, stellt man je Gerät ein @phone", async ({ page }) => {
+    const subject = unique("Wisch Papierkorb");
+    await addMail("max", "max", subject);
+    await login(page, "max");
+    await page.goto("/settings?section=appearance");
+    await page.getByLabel("Nach links wischen").selectOption({ label: "Löschen" });
+    await page.getByLabel("Nach rechts wischen").selectOption({ label: "Nichts" });
+    await page.goto("/");
+    await expect(page.getByText(subject)).toBeVisible();
+
+    // Right does nothing now; left deletes.
+    await swipe(page, subject, 250);
+    await page.waitForTimeout(300);
+    await expect(page.getByText(subject)).toBeVisible();
+    await swipe(page, subject, -250);
+    await expect
+      .poll(async () => (await stateOf("max", "max", [subject]))[subject]?.folder)
+      .toBe("trash");
+  });
+});

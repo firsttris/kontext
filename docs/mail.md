@@ -42,6 +42,8 @@ IMAP und SMTP.
   eigenen Ordnern.
 - **Mehrere Mails auf einmal** (Kästchen links an jeder Zeile, Strg-/Shift-Klick, `x`; am Handy
   lange drücken): archivieren, löschen, gelesen, Kategorie, verschieben, Aufgaben erstellen.
+- **Am Handy wischen:** eine Mail nach links wischen archiviert, nach rechts gelesen/ungelesen;
+  je Richtung einstellbar ([Am Handy](app.md#am-handy)).
 - **Spam und Papierkorb leeren:** oben in der Liste der beiden Ordner, nach einer Rückfrage mit
   der Zahl der Mails. Gelöscht ist dann gelöscht – Stalwarts Community-Edition hebt nichts auf.
   Eine Mail, die zugleich in einem anderen Ordner liegt, verlässt nur Spam bzw. Papierkorb. In

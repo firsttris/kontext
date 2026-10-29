@@ -2,6 +2,10 @@ import { expect, type Page, test } from "@playwright/test";
 import { fillDemo } from "./demo-data";
 import { addAttendees, addMail, login } from "./helpers";
 import { calendarOnTheWeb } from "./ics-server";
+  });
+
+import { addAttendees, addMail, address, login } from "./helpers";
+import { deliverInvitation } from "./invitation-mail";
 import { pairBox } from "./paired-box";
 import { giveKey } from "./pgp-key";
 
@@ -85,6 +89,25 @@ test.describe("Screenshots @screenshots", () => {
     ).toBeVisible();
     await shot(page, "calendar-dark");
     await context.close();
+  });
+
+  test("Einladung in der Mail", async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await login(page);
+    await deliverInvitation(address("jonas"), {
+      uid: crypto.randomUUID(),
+      title: "Abstimmung Elektroplanung Neubau",
+    });
+    await page.reload();
+    await page
+      .getByRole("list", { name: "Posteingang" })
+      .getByText("Einladung: Abstimmung Elektroplanung Neubau")
+      .first()
+      .click();
+    await expect(page.getByRole("region", { name: "Einladung" })).toContainText(
+      "Noch nicht beantwortet",
+    );
+    await shot(page, "mail-invitation");
   });
 
   test("Angaben für die Signatur", async ({ page }) => {
@@ -195,6 +218,38 @@ test.describe("Screenshots @screenshots", () => {
     await page.goto("/calendar");
     await expect(page.getByText("Baubesprechung Hoffmann")).toBeVisible();
     await shot(page, "phone-calendar");
+    await context.close();
+  });
+
+  test("Wischen am Handy", async ({ browser }) => {
+    const context = await browser.newContext({
+      viewport: { width: 390, height: 844 },
+      deviceScaleFactor: 2,
+      isMobile: true,
+      hasTouch: true,
+      locale: "de-DE",
+      timezoneId: "Europe/Berlin",
+    });
+    const page = await context.newPage();
+    await login(page);
+    const line = page.getByRole("link", { name: /Angebot Wartungsvertrag 2027/ });
+    await expect(line).toBeVisible();
+    const at = (await line.boundingBox())!;
+    const y = at.y + at.height / 2;
+    const x = at.x + at.width - 40;
+    // A finger halfway through a swipe to the left: held there for the picture, then let go of
+    // as a cancel, so the mail stays.
+    const cdp = await context.newCDPSession(page);
+    await cdp.send("Input.dispatchTouchEvent", { type: "touchStart", touchPoints: [{ x, y }] });
+    for (let step = 1; step <= 8; step++) {
+      await cdp.send("Input.dispatchTouchEvent", {
+        type: "touchMove",
+        touchPoints: [{ x: x - step * 20, y }],
+      });
+    }
+    await expect(page.locator("[data-swipe=archive]")).toBeVisible();
+    await shot(page, "phone-swipe");
+    await cdp.send("Input.dispatchTouchEvent", { type: "touchCancel", touchPoints: [] });
     await context.close();
   });
 
