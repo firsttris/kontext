@@ -7,6 +7,9 @@ Steps that an update needs beyond raising the version are marked **Upgrade**.
 
 ## Unreleased
 
+- Mail: a winmail.dat from older Outlook versions (TNEF) shows as the files inside it, with
+  preview, download and "In Dokumente"; the browser unpacks it and puts the files up as blobs of
+  the mailbox.
 - Calendar: "Dieser und alle folgenden" beside "Nur dieser Termin" and "Alle Termine der Serie",
   for changing and for deleting. The series so far ends before the date; when changing, a new
   series with the changes starts there (a series of so many dates keeps its number in all).

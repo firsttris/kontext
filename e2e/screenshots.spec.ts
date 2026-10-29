@@ -153,6 +153,18 @@ test.describe("Screenshots @screenshots", () => {
     await shot(page, "forgotten-attachment");
   });
 
+  test("winmail.dat ausgepackt", async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await login(page);
+    await page.getByRole("link", { name: "Lieferanten" }).click();
+    await page.getByRole("list", { name: "Lieferanten" }).getByText("Lieferschein 48211").click();
+    const attachments = page.getByRole("list", { name: "Anhänge" });
+    await expect(
+      attachments.getByRole("button", { name: "Lieferschein-48211.pdf ansehen" }).locator("img"),
+    ).toBeVisible();
+    await shot(page, "winmail");
+  });
+
   test("Erinnerung am Termin", async ({ page }) => {
     await page.setViewportSize({ width: 1440, height: 900 });
     await login(page);
