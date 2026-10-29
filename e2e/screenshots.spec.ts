@@ -99,6 +99,21 @@ test.describe("Screenshots @screenshots", () => {
     await shot(page, "signature-details");
   });
 
+  test("Anhang vergessen", async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await login(page);
+    await page.getByRole("link", { name: "Neue Mail" }).first().click();
+    await page.getByRole("combobox", { name: "An" }).fill("petra");
+    await page.getByRole("option", { name: /Petra Keller/ }).click();
+    await page.getByLabel("Betreff").fill("Angebot Wartungsvertrag 2027");
+    await page
+      .getByRole("textbox", { name: "Ihre Nachricht …" })
+      .fill("Hallo Frau Keller, anbei unser Angebot für den Wartungsvertrag.");
+    await page.getByRole("button", { name: "Senden", exact: true }).click();
+    await expect(page.getByRole("dialog", { name: "Anhang vergessen?" })).toBeVisible();
+    await shot(page, "forgotten-attachment");
+  });
+
   test("Erinnerung am Termin", async ({ page }) => {
     await page.setViewportSize({ width: 1440, height: 900 });
     await login(page);
