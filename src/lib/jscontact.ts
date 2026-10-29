@@ -22,9 +22,20 @@ export type ContactCard = {
   links?: Record<string, { "@type"?: "Link"; uri: string; label?: string }>;
   /** Photos, logos and sounds (RFC 9553 §2.6.4); Stalwart takes only `uri`, no `blobId`. */
   media?: Record<string, Media>;
+  /** Birthdays and other days (RFC 9553 §2.8.1); read for the birthday calendar (birthdays.ts). */
+  anniversaries?: Record<string, Anniversary>;
   /** Groups only: the member cards' `uid`s. */
   members?: Record<string, boolean>;
   updated?: string;
+};
+
+/** A day of a card: a date with or without its year, or an instant (RFC 9553 §2.8.1). */
+export type Anniversary = {
+  "@type"?: "Anniversary";
+  kind: "birth" | "death" | "wedding" | string;
+  date:
+    | { "@type"?: "PartialDate"; year?: number; month?: number; day?: number }
+    | { "@type": "Timestamp"; utc: string };
 };
 
 export type Media = {

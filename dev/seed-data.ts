@@ -366,6 +366,11 @@ export type SeedContact = {
   street?: string;
   city?: string;
   note?: string;
+  /**
+   * Birthday (for the calendar's "Geburtstage"): days from today, so it is near whenever the seed
+   * runs, and the age turned on it; without one the card knows only the day (`--MM-DD`).
+   */
+  birthday?: { day: number; age?: number };
 };
 
 export const contacts: SeedContact[] = [
@@ -380,6 +385,7 @@ export const contacts: SeedContact[] = [
     street: "Industriestraße 4",
     city: "77815 Bühl",
     note: "Ansprechpartnerin Wartungsvertrag",
+    birthday: { day: 9, age: 52 },
   },
   {
     uid: "markus-hoffmann",
@@ -403,6 +409,7 @@ export const contacts: SeedContact[] = [
     street: "Rheinstraße 12",
     city: "77815 Bühl",
     note: "Privatkundin, Gastherme Baujahr 2009",
+    birthday: { day: 16 },
   },
   {
     uid: "thomas-lang",
@@ -443,6 +450,7 @@ export const contacts: SeedContact[] = [
     company: "Weber Haustechnik",
     email: `anna@${d}`,
     phone: "+49 7223 1000-11",
+    birthday: { day: 23, age: 34 },
   },
   {
     uid: "sandra-klein",

@@ -41,7 +41,6 @@ Kleinere und mittlere Funktionen, sortiert nach Nutzen: oben, was fast jedem Bet
 | --- | --- | --- |
 | 22 | **Abmelden nach Inaktivität** | Für Rechner, die mehrere nutzen (Empfang, Anmeldung): die Firmenverwaltung legt eine Zeit fest; vorher fragt Kontext „Angemeldet bleiben?“, angefangene Mails werden Entwürfe. |
 | 24 | **Zustellbestätigung** | Beim Senden den Bericht des empfangenden Servers anfordern (DSN): ein Nachweis, dass die Mail angenommen wurde. |
-| 25 | **Geburtstage im Kalender** | Ein Kalender aus den Geburtstagen der Kontakte, abschaltbar. |
 | 28 | **Einführung beim ersten Start** | Ein kurzer Rundgang durch Mail, Kalender und Chat für Leute ohne IT-Kenntnisse. |
 | 29 | **Gelöschte Mails zurückholen** | Endgültig gelöschte Mails eine Zeit lang wiederherstellen; Stalwart bietet das nur in der Enterprise-Edition, Kontext bräuchte einen eigenen Weg. |
 

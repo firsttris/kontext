@@ -1495,6 +1495,8 @@
   "calendar_tasks": "Fällige Aufgaben",
   "calendar_tasks_hint": "Meine, am Tag ihrer Fälligkeit",
   "calendar_tasks_count": "{count} fällige Aufgaben",
+  "calendar_birthdays": "Geburtstage",
+  "calendar_birthdays_hint": "Aus den Kontakten",
   "calendar_task": "Aufgabe",
   "calendar_task_overdue": "überfällig",
   "calendar_task_done": "„{title}“ erledigt.",

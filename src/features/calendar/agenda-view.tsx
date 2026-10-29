@@ -1,5 +1,4 @@
 /** The coming appointments as a list, grouped by day – handy on a phone. */
-import { Link } from "@tanstack/react-router";
 import { Repeat } from "lucide-react";
 import { cn } from "@/lib/cn";
 import {
@@ -15,8 +14,8 @@ import {
 import { LOCALE } from "@/lib/locale";
 import { type DayTask, tasksOnDay } from "@/lib/task-context";
 import { m } from "@/paraglide/messages";
+import { EventLink } from "./event-link";
 import { calendarColor } from "./event-style";
-import { eventSearch } from "./queries";
 import { TaskChip } from "./task-chip";
 
 export const AGENDA_DAYS = 30;
@@ -93,9 +92,8 @@ const AgendaItem = ({ event, invitation }: { event: CalendarEvent; invitation: b
   const { start, end, allDay } = eventTimes(event);
   const where = locationName(event);
   return (
-    <Link
-      to="/calendar"
-      search={(prev) => ({ ...prev, ...eventSearch(event) })}
+    <EventLink
+      event={event}
       className="flex items-start gap-3 rounded-lg px-2 py-1.5 text-fg no-underline hover:bg-hover"
     >
       <span className="w-[92px] shrink-0 font-mono text-[12px] text-muted">
@@ -120,6 +118,6 @@ const AgendaItem = ({ event, invitation }: { event: CalendarEvent; invitation: b
         </span>
         {where ? <span className="truncate text-[12px] text-muted">{where}</span> : null}
       </span>
-    </Link>
+    </EventLink>
   );
 };

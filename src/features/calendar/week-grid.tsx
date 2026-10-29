@@ -18,6 +18,7 @@ import {
 import { LOCALE } from "@/lib/locale";
 import { type DayTask, dueMinutes, tasksOnDay } from "@/lib/task-context";
 import { m } from "@/paraglide/messages";
+import { EventLink } from "./event-link";
 import { calendarColor, eventClass } from "./event-style";
 import { eventSearch } from "./queries";
 import { TaskChip } from "./task-chip";
@@ -325,9 +326,8 @@ const EventBlock = ({
 };
 
 const EventChip = ({ event, invitation }: { event: CalendarEvent; invitation: boolean }) => (
-  <Link
-    to="/calendar"
-    search={(prev) => ({ ...prev, ...eventSearch(event) })}
+  <EventLink
+    event={event}
     style={calendarColor(event)}
     className={cn(
       "truncate rounded-md px-2 py-0.5 text-[12px] font-medium text-fg no-underline",
@@ -335,5 +335,5 @@ const EventChip = ({ event, invitation }: { event: CalendarEvent; invitation: bo
     )}
   >
     {event.title || "—"}
-  </Link>
+  </EventLink>
 );

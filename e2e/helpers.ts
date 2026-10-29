@@ -1,6 +1,7 @@
 import { type Cookie, expect, type Locator, type Page } from "@playwright/test";
 import { DEV_DOMAIN, DEV_PASSWORD } from "../dev/config";
 import { assertSetOk, createJmapClient } from "../src/jmap/client";
+import { createContact, deleteContact, listAddressBooks } from "../src/jmap/contacts";
 import { applyDeputyPatches, loadDeputyObjects } from "../src/jmap/deputy";
 import { listPrincipals } from "../src/jmap/principals";
 import { revokePatches } from "../src/lib/deputy";
@@ -245,3 +246,48 @@ export const externalHintOn = (
     const real = (await (await route.fetch()).json()) as { partners: string[]; domains: string[] };
     await route.fulfill({ json: { ...real, ...change, enabled: true } });
   });
+
+/** A day (Berlin) some days from today. */
+export const dayFromToday = (days: number) =>
+  new Intl.DateTimeFormat("sv-SE", { timeZone: "Europe/Berlin" }).format(
+    new Date(Date.now() + days * 86_400_000),
+  );
+
+/**
+ * A card with a birthday on `day` in Jonas' address book, behind the UI's back; `age` is what the
+ * person turns this year, without it the card knows only the day (calendar-birthdays.spec.ts, the
+ * screenshot). Gives back the name and how to remove the card.
+ */
+export const addBirthday = async (
+  given: string,
+  day: string,
+  age?: number,
+  surname = `Geburtstag ${Date.now().toString(36)}`,
+) => {
+  const client = jmapAs("jonas");
+  const accountId = await personalAccountId("jonas");
+  const book = (await listAddressBooks(client, accountId)).find((b) => b.isDefault)!;
+  const [year, month, date] = day.split("-").map(Number);
+  const id = await createContact(client, accountId, book.id, {
+    name: {
+      components: [
+        { kind: "given", value: given },
+        { kind: "surname", value: surname },
+      ],
+      isOrdered: true,
+    },
+    anniversaries: {
+      b: {
+        "@type": "Anniversary",
+        kind: "birth",
+        date: {
+          "@type": "PartialDate",
+          ...(age ? { year: year! - age } : {}),
+          month,
+          day: date,
+        },
+      },
+    },
+  });
+  return { name: `${given} ${surname}`, remove: () => deleteContact(client, accountId, id) };
+};
