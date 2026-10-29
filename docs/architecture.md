@@ -231,7 +231,8 @@ mit einem eigenen API-Schlüssel an und erlaubt nur, was die Firmenverwaltung br
   `signature_detail`; Stalwarts `x:Account` hat dafür keine Felder). Speichern schreibt die
   Firmen-Signatur sofort neu in die eigenen Absenderadressen. Eine Zeile mit einem Platzhalter
   ohne Wert fällt weg (`server/company/signature.ts`): im Text die Zeile, im HTML ihr Text samt
-  `<br>` und was sie leer zurücklässt (Fett, ein ganzer Absatz); absichtliche Leerzeilen der
+  `<br>` und was sie leer zurücklässt (Fett, ein ganzer Absatz), in einer Tabelle die ganze Zeile
+  samt Beschriftung (und die Tabelle, wenn keine Zeile bleibt); absichtliche Leerzeilen der
   Vorlage bleiben.
 - **Austritt:** Zugang sperren, das Postfach einer Kollegin übergeben (alle Ordner per
   `shareWith` mit allen Rechten außer Teilen), neue Mails weiterleiten und einmal am Tag

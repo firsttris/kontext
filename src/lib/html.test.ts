@@ -229,6 +229,13 @@ describe("text and HTML", () => {
   });
   it("turns HTML back into text", () => {
     expect(htmlToText("<p>Hallo</p><p>Welt<br>zwei</p>").trim()).toBe("Hallo\nWelt\nzwei");
+    // A table as the editor writes it: a row per line, its cells apart by tabs.
+    expect(
+      htmlToText(
+        "<p>Preise:</p><table><tbody><tr><th><p>Teil</p></th><th><p>Preis</p></th></tr>" +
+          "<tr><td><p>Pumpe</p></td><td><p>240 €</p></td></tr></tbody></table><p>Gruß</p>",
+      ),
+    ).toBe("Preise:\nTeil\tPreis\nPumpe\t240 €\nGruß");
     // Parsed apart from the page: what it holds is only read.
     const created = vi.spyOn(document, "createElement");
     expect(htmlToText('<img src="x" onerror="alert(1)">Text')).toBe("Text");

@@ -176,6 +176,18 @@
   color: var(--accent);
   text-decoration: underline;
 }
+/* Tables bring their lines inline (rich-text.ts); here only what editing needs: room to scroll a
+   wide one, a cell's paragraph without the gap below, the picked cells marked. */
+.editor-content .ProseMirror .tableWrapper {
+  overflow-x: auto;
+}
+.editor-content .ProseMirror td p,
+.editor-content .ProseMirror th p {
+  margin: 0;
+}
+.editor-content .ProseMirror .selectedCell {
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
+}
 .editor-content .ProseMirror p.is-editor-empty:first-child::before {
   content: attr(data-placeholder);
   color: var(--muted);
