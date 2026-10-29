@@ -1364,6 +1364,19 @@ App wählt, die schon einen Platz hat, tauscht die beiden. Zur Wahl stehen nur A
 nicht mehr gibt, fällt heraus, und die Plätze füllen sich mit der Grundeinstellung
 (`src/lib/tab-bar.ts`). „Zurücksetzen“ stellt sie wieder her.
 
+Die Einführung beim ersten Start (`src/features/tour/`) ist ein eigener Dialog ohne Bibliothek:
+Radix Dialog (schon im Projekt) hält den Fokus in der Karte und beendet sie mit Esc; ein
+abgedunkelter Rahmen mit Aussparung hebt die Stelle hervor. Die Schritte je Bildschirm (Leiste am
+PC, Tab-Leiste am Handy mit „Mehr“ als Ersatz, gemeinsame Postfächer nur für wen es sie gibt, „Neue Mail“ und gemeinsame Postfächer am PC nur
+mit Seitenleiste ab `lg`), das
+Blättern und wo die Karte neben ihrem Ziel steht, sind reine Funktionen in `src/lib/tour.ts`. Die
+Ziele tragen `data-tour` (Leiste, Tab-Leiste, „Neue Mail“, das erste gemeinsame Postfach); ist
+keins sichtbar oder passt die Karte nirgends daneben, steht sie in der Mitte. „Gesehen“ steht im
+Browser (`kontext.tour.seen`, die Adressen derer, die sie gesehen haben), also pro Person und
+Gerät: der Server hat keinen Speicher für persönliche Einstellungen, eine Tabelle samt Migration
+für ein Flag lohnt nicht, und am Handy zeigt die Einführung auf andere Stellen als am PC. Die
+e2e-Tests markieren sie in `login()` als gesehen (`e2e/helpers.ts`), außer mit `{ tour: true }`.
+
 Tastaturkürzel sind einzelne Tasten wie in Gmail und stehen als Liste in `src/lib/shortcuts.ts`;
 die Hilfe (`?` oder das Tastatur-Symbol unten in der Leiste) und die Einstellungen zeigen dieselbe
 Liste. Solange ein Eingabefeld oder ein Dialog den Fokus hat, greift keine Taste.
