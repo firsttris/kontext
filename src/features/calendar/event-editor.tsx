@@ -162,7 +162,8 @@ export const EventEditor = ({ event, series, start, copyOf, onDone, onCancel }: 
         ? []
         : newExternalAttendees(
             attendeeEmails(form.attendees),
-            attendeeEmails(initial.attendees),
+            // A copy invites everyone on it afresh, so none of them was invited before.
+            event ? attendeeEmails(initial.attendees) : [],
             external.inside,
           );
     if (outside.length) {
