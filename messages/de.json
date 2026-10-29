@@ -302,6 +302,8 @@
   "calendar_week": "Woche",
   "calendar_day": "Tag",
   "calendar_new": "Neuer Termin",
+  "calendar_duplicate": "Duplizieren",
+  "calendar_duplicate_title": "Termin duplizieren",
   "calendar_week_number": "KW {week}",
   "calendar_event_title": "Titel",
   "calendar_event_date": "Datum",
