@@ -51,6 +51,12 @@ IMAP und SMTP.
 
 - **Formatierter Text**, Antworten mit Zitat, Anhänge, Empfänger-Vorschläge aus der Firma und den Kontakten,
   Signatur je Absenderadresse.
+- **„Anhang vergessen?“** Steht im eigenen Text oder im Betreff „Anhang“, „anbei“, „angehängt“,
+  „beigefügt“, „attached“ …, aber nichts ist angehängt, fragt Kontext vor dem Senden nach: „Datei
+  anhängen“ oder „Ohne Anhang senden“. Das Zitat der beantworteten Mail zählt nicht mit.
+
+  ![Rückfrage „Anhang vergessen?“ beim Senden einer Mail mit „anbei“ ohne Anhang](screenshots/forgotten-attachment.png)
+
 - **Senden rückgängig** (5 bis 30 Sekunden) und **später senden** („morgen 8 Uhr“) – der Server
   sendet, auch wenn der Rechner aus ist.
 - **Lesebestätigung** anfordern; eine erbetene beantwortet man mit einem Klick, nie von selbst.

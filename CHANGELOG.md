@@ -7,6 +7,9 @@ Steps that an update needs beyond raising the version are marked **Upgrade**.
 
 ## Unreleased
 
+- Mail: "Anhang vergessen?" – when the own text or the subject speaks of an attachment ("Anhang",
+  "anbei", "angehängt", "attached" …) and nothing is attached, Kontext asks before sending: attach
+  a file or send without. The quoted mail below a reply does not count.
 - Calendar: "Feiertage eintragen" under *Kalender verwalten* puts the public holidays of a German
   state (all 16) into a calendar of their own, this year and next, all-day and shown as free;
   running it again adds only what is missing. The phone's opening hours take the state too

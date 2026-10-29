@@ -15,7 +15,9 @@ import { externalIdOf, replyingExternal, sendThroughExternal } from "@/features/
 import { displayBody, type OutgoingAttachment, saveDraft, sendEmail } from "@/jmap/mail";
 import type { EmailAddress, Identity } from "@/jmap/types";
 import { parseAddresses } from "@/lib/addresses";
+import { attachmentMention } from "@/lib/attachment-reminder";
 import { type ComposeMode, sharedSenderName, startCompose } from "@/lib/compose";
+import { splitQuote } from "@/lib/conversation";
 import { htmlToText, sanitizeMailHtml, textToHtml } from "@/lib/html";
 import { findRole } from "@/lib/mailboxes";
 import { pgpKind } from "@/lib/pgp-mail";
@@ -28,6 +30,7 @@ import { useEncryptedSend } from "../pgp/use-encrypted-send";
 import { SnippetMenu } from "../snippets/snippet-menu";
 import { AttachmentList, ComposerActions, ComposerFields } from "./composer-fields";
 import { EditorToolbar } from "./editor-toolbar";
+import { ForgottenAttachment } from "./forgotten-attachment";
 import { type OpenedMail, openedMail, shownSubject } from "./opened-mails";
 import { useEmail } from "./queries";
 import { useUndoSeconds } from "./send-settings";
@@ -76,6 +79,8 @@ export const Composer = ({ accountId, mode, sourceEmailId, prefill }: Props) => 
   const [attachments, setAttachments] = useState<OutgoingAttachment[]>([]);
   const [uploading, setUploading] = useState(0);
   const [sending, setSending] = useState(false);
+  // "Anhang vergessen?": the word that asked, and when the mail was to go (now or later).
+  const [forgotten, setForgotten] = useState<{ word: string; later?: Date } | null>(null);
   const undoSeconds = useUndoSeconds();
   const takeBack = useTakeBack();
   // A ref, not state: a send that waited for a running autosave must replace the draft that
@@ -351,10 +356,21 @@ export const Composer = ({ accountId, mode, sourceEmailId, prefill }: Props) => 
     return (await sendThroughExternal(externalId, { emailId, ...folders })).refused;
   };
 
-  /** Now (held for the seconds of "Rückgängig"), or `later` at that time. */
-  const send = async (later?: Date) => {
+  /**
+   * Now (held for the seconds of "Rückgängig"), or `later` at that time. Asks first when the own
+   * text speaks of an attachment and none is there, unless `withoutAttachment`.
+   */
+  const send = async (later?: Date, withoutAttachment = false) => {
     if (to.length + cc.length + bcc.length === 0) {
       toast.show(m.mail_recipients_missing(), "error");
+      return;
+    }
+    const word =
+      withoutAttachment || attachments.length
+        ? undefined
+        : attachmentMention(subject, htmlToText(splitQuote(editor?.getHTML() ?? "").main));
+    if (word) {
+      setForgotten({ word, later });
       return;
     }
     if (!identity || !drafts || !sent) return;
@@ -578,6 +594,16 @@ export const Composer = ({ accountId, mode, sourceEmailId, prefill }: Props) => 
         onDiscard={() => void discard()}
       />
       {pgp.dialog}
+      <ForgottenAttachment
+        word={forgotten?.word ?? null}
+        onAttach={(files) => void upload(files)}
+        onSendAnyway={() => {
+          const later = forgotten?.later;
+          setForgotten(null);
+          void send(later, true);
+        }}
+        onClose={() => setForgotten(null)}
+      />
     </form>
   );
 };
