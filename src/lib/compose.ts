@@ -56,7 +56,9 @@ const UNSAFE_IN_NAME = /[\u0000-\u001f\u007f/\\:*?"<>|]+/g;
 /** "<Betreff>.eml", safe as a file name on the receiver's disk. */
 export const emlName = (subject: string | null): string => {
   const name = (subject ?? "").replace(UNSAFE_IN_NAME, " ").replace(/\s+/g, " ").trim();
-  return `${name.slice(0, 100).trim() || m.mail_eml_unnamed()}.eml`;
+  // By code points: a cut inside a UTF-16 pair leaves a lone surrogate, which Stalwart refuses.
+  const short = Array.from(name).slice(0, 100).join("").trim();
+  return `${short || m.mail_eml_unnamed()}.eml`;
 };
 
 /**
