@@ -1,8 +1,9 @@
 /**
- * Prints a mail: the page from lib/print.ts in a hidden frame, inline images loaded first, the
- * browser's print dialog on it. Remote images stay out, as on screen until they are allowed.
+ * Prints a mail: the page from lib/print.ts in a hidden frame (print-frame.ts), inline images
+ * loaded first. Remote images stay out, as on screen until they are allowed.
  */
 import { useClient } from "@/auth/auth";
+import { printPage } from "@/components/print-frame";
 import { displayBody } from "@/jmap/mail";
 import type { EmailDetail } from "@/jmap/types";
 import { formatSize, readingDate } from "@/lib/format";
@@ -10,39 +11,6 @@ import { sanitizeMailHtml, textToHtml } from "@/lib/html";
 import { printDocument } from "@/lib/print";
 import { imageUrl, releaseImageUrl } from "@/lib/safe-blob";
 import { useMailAccounts } from "./queries";
-
-const loaded = (image: HTMLImageElement) =>
-  image.complete
-    ? Promise.resolve()
-    : new Promise<void>((resolve) => {
-        image.addEventListener("load", () => resolve(), { once: true });
-        image.addEventListener("error", () => resolve(), { once: true });
-      });
-
-/** Shows the print dialog for `html`; the frame goes when printing is done. */
-const printPage = async (html: string, cleanup: () => void) => {
-  const frame = document.createElement("iframe");
-  // No scripts in the mail; printing is started from here.
-  frame.setAttribute("sandbox", "allow-same-origin allow-modals");
-  frame.setAttribute("aria-hidden", "true");
-  frame.style.cssText = "position:fixed;right:0;bottom:0;width:0;height:0;border:0;";
-  frame.srcdoc = html;
-  const ready = new Promise<void>((resolve) =>
-    frame.addEventListener("load", () => resolve(), { once: true }),
-  );
-  document.body.append(frame);
-  await ready;
-  const view = frame.contentWindow!;
-  await Promise.all([...frame.contentDocument!.images].map(loaded));
-  const done = () => {
-    frame.remove();
-    cleanup();
-  };
-  // Some browsers return from print() at once and print later: removed only afterwards.
-  view.addEventListener("afterprint", () => setTimeout(done, 0), { once: true });
-  view.focus();
-  view.print();
-};
 
 export const usePrintMail = () => {
   const client = useClient();

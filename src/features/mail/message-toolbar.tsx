@@ -19,7 +19,7 @@ import {
   Star,
   Trash2,
 } from "lucide-react";
-import { Fragment, useEffect, useRef, useState } from "react";
+import { Fragment, useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
   MenuContent,
@@ -30,6 +30,7 @@ import {
   MenuTrigger,
 } from "@/components/ui/menu";
 import { useToast } from "@/components/ui/toast";
+import { usePrintKey } from "@/components/use-print-key";
 import { useShortcuts } from "@/components/use-shortcuts";
 import { isFlagged } from "@/jmap/mail";
 import type { EmailDetail, EmailSummary, Mailbox } from "@/jmap/types";
@@ -137,19 +138,7 @@ export const Toolbar = ({
     esc: () => void close(),
   });
 
-  // Ctrl+P (Cmd+P) prints the mail, not the whole app around it.
-  const printRef = useRef(print);
-  printRef.current = print;
-  useEffect(() => {
-    const onKeyDown = (event: KeyboardEvent) => {
-      if ((event.ctrlKey || event.metaKey) && !event.altKey && event.key.toLowerCase() === "p") {
-        event.preventDefault();
-        printRef.current();
-      }
-    };
-    document.addEventListener("keydown", onKeyDown);
-    return () => document.removeEventListener("keydown", onKeyDown);
-  }, []);
+  usePrintKey(print);
 
   return (
     <div className="flex h-12 shrink-0 items-center gap-1 border-b border-border px-2 md:px-3">

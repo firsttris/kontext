@@ -85,6 +85,7 @@ export const SHORTCUTS: { group: ShortcutGroup; keys: string[]; action: Shortcut
   { group: "calendar", keys: ["t"], action: "today" },
   { group: "calendar", keys: ["←", "→"], action: "prevNext" },
   { group: "calendar", keys: ["d", "w", "m", "l"], action: "views" },
+  { group: "calendar", keys: ["p"], action: "print" },
   { group: "contacts", keys: ["c"], action: "newContact" },
   { group: "contacts", keys: ["/"], action: "search" },
 ];

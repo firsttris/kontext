@@ -392,6 +392,8 @@
   "calendar_month": "Monat",
   "calendar_agenda": "Liste",
   "calendar_more": "+{count} weitere",
+  "calendar_print": "Drucken",
+  "calendar_print_printed": "Gedruckt am {date}",
   "calendar_agenda_empty": "Keine Termine in den nächsten 30 Tagen.",
   "calendar_moved": "Termin verschoben.",
   "calendar_repeat": "Wiederholen",
