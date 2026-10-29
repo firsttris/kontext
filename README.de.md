@@ -31,6 +31,8 @@ Ohne Kosten pro Benutzer. Made in Europe.
 
 ▶️ **[Den ganzen Film ansehen (2 Minuten)](https://firsttris.github.io/kontext/)** – jedes Modul, aus der echten App
 
+🖱️ **[Demo ausprobieren](https://firsttris.github.io/kontext/demo/)** – Mail mit den Testdaten, im Browser, ohne Installation
+
 </div>
 
 ## 💡 Warum Kontext?

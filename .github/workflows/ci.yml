@@ -42,6 +42,8 @@ jobs:
       - run: bunx biome ci .
       - run: bun run test
       - run: bun run build
+      # The demo on GitHub Pages (src/demo); published by the docs workflow after the merge.
+      - run: bun run build:demo
       # Known vulnerabilities in dependencies (high and critical fail the build).
       # GHSA-86w9-cpqp-85rv (node-forge <= 1.4.0, no fixed release yet) is in forge's RSA
       # signature check, which Kontext does not use: S/MIME signatures are checked by WebCrypto

@@ -31,6 +31,8 @@ No per-seat pricing. Made in Europe.
 
 ▶️ **[Watch the whole film (2 minutes)](https://firsttris.github.io/kontext/en/)** – every module, made from the real app
 
+🖱️ **[Try the demo](https://firsttris.github.io/kontext/demo/)** – mail with the test data, in your browser, nothing to install
+
 </div>
 
 ## 💡 Why Kontext?

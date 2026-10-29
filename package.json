@@ -12,6 +12,7 @@
     "seed": "bun dev/seed.ts",
     "icons": "bun dev/icons.ts",
     "build": "vite build && bun dev/precompress.ts dist",
+    "build:demo": "vite build --mode demo",
     "preview": "vite preview",
     "typecheck": "tsc --noEmit && tsc -p tsconfig.sw.json",
     "lint": "biome check .",
