@@ -375,7 +375,8 @@ nacheinander ab (`server/migration/runner.ts`), auch nach einem Neustart:
    Request, größere Mails einzeln über den Upload.
 3. **Kontakte** (`.vcf`, auch Googles Export mit vielen Karten) und **Termine** (`.ics`, eine
    Datei mit vielen Terminen) liest Stalwart selbst (`ContactCard/parse`, `CalendarEvent/parse`);
-   sie kommen ins Standard-Adressbuch bzw. den Standardkalender. readpst nummeriert Termine nur
+   sie kommen ins Standard-Adressbuch bzw. den Standardkalender, Termine vorbereitet wie beim
+   [Übernehmen aus einer Datei](#termine-aus-einer-datei). readpst nummeriert Termine nur
    („0x1268“); dann bildet Kontext die UID aus dem Inhalt.
 
 Der Fortschritt steht in SQLite (`migration_job`); die Datei liegt bis zum Ende neben der
@@ -1513,6 +1514,25 @@ Das Abo selbst (Adresse, Kalender, Stand) steht in der Tabelle `calendar_subscri
   Termine doppelt). Fehler stehen am Abo, ein fehlerhaftes Abo hält die anderen nicht auf. Löscht jemand den Kalender wie
   jeden anderen, endet das Abo beim nächsten Lauf; „Abo beenden“ löscht den Kalender mit.
   Höchstens 20 Abos je Person; ohne `STALWART_ADMIN_KEY` gibt es keine.
+
+## Termine aus einer Datei
+
+„Aus Datei übernehmen“ (`src/features/calendar/ics-import.tsx`) läuft ganz im Browser mit dem
+Token der Person, ohne Schlüssel des Servers:
+
+- **Lesen:** Die Datei geht per Upload als Blob ins eigene Konto, `CalendarEvent/parse` macht
+  daraus JSCalendar (`src/jmap/ics-import.ts`) – derselbe Parser wie beim Umzug und beim Abo,
+  kein eigener. Geänderte Termine einer Serie stehen danach schon in ihren `recurrenceOverrides`;
+  einer ohne seine Serie wird ein Termin für sich (`src/lib/ics-import.ts`). Ein Termin ohne UID
+  bekommt eine aus seinem Inhalt, damit ein zweites Übernehmen ihn wiedererkennt.
+- **Vergleichen:** Stalwart erlaubt eine UID nur einmal je Konto, nicht je Kalender
+  (`crates/jmap/src/calendar_event/mod.rs`, `assert_is_unique_uid`). Darum zählt als „schon
+  vorhanden“, was im Zielkonto irgendwo dieselbe UID hat; steht sie in einem Kalender, den die
+  Person nicht sieht, lehnt Stalwart das Anlegen ab, und auch das zählt als vorhanden.
+- **Schreiben:** `CalendarEvent/set` im Konto des Zielkalenders, je 100 Termine, mit
+  `sendSchedulingMessages: false`. `method` (Googles Export trägt `METHOD:PUBLISH`) fällt weg:
+  Stalwart lehnt es beim Anlegen als unveränderlich ab (`crates/jmap/src/calendar_event/set.rs`).
+  Dieselbe Vorbereitung (`prepareEvent`) nutzt der Umzug.
 
 ## Orte im Termin
 
