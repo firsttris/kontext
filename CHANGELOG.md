@@ -14,6 +14,10 @@ Steps that an update needs beyond raising the version are marked **Upgrade**.
   "Anhang vergessen?" when both come. Inside are the company's own domains (Stalwart's
   `x:Domain`) and the partner domains entered there, each with its subdomains. The database gets
   the table `partner_domain` (migration `0038_partner_domains`) at start.
+- Mail: pictures in the text – by the "Bild einfügen" button, pasted (a screenshot) or dropped
+  in, and resized by their corners. They go out as inline images (`cid:` in multipart/related),
+  so Outlook, Gmail and Apple Mail show them in the text; drafts keep them. Files of a reopened
+  draft now stay with it when it is saved more than once.
 - Calendar: a default reminder per calendar – in *Kalender verwalten* the bell next to a calendar
   sets the reminder new appointments in it get, one for appointments with a time and one for
   all-day ones. Kept per person in Stalwart (`defaultAlertsWithTime`,

@@ -4,6 +4,7 @@
  * <style> block or ignore classes (Outlook, Gmail); a table brings its lines and spacing along.
  */
 import type { Extensions } from "@tiptap/core";
+import { Image } from "@tiptap/extension-image";
 import { Table, TableCell, TableHeader, TableRow } from "@tiptap/extension-table";
 import { BackgroundColor, Color, FontSize, TextStyle } from "@tiptap/extension-text-style";
 import StarterKit from "@tiptap/starter-kit";
@@ -53,7 +54,31 @@ export const HIGHLIGHTS: { label: () => string; color: string | null }[] = [
   { label: m.fmt_highlight_gray, color: "#e5e7eb" },
 ];
 
-export const richText = ({ autolink = false } = {}): Extensions => [
+/**
+ * An image in the text of a mail, resized by dragging its corners; it keeps its Content-ID
+ * (`data-cid`, lib/inline-images.ts) and never grows past the width of the text.
+ */
+const MailImage = Image.extend({
+  addAttributes() {
+    return {
+      ...this.parent?.(),
+      cid: {
+        default: null,
+        parseHTML: (element: HTMLElement) => element.getAttribute("data-cid"),
+        renderHTML: (attributes: { cid?: string | null }) =>
+          attributes.cid ? { "data-cid": attributes.cid } : {},
+      },
+    };
+  },
+}).configure({
+  inline: true,
+  HTMLAttributes: { style: "max-width:100%;height:auto" },
+  resize: { enabled: true, minWidth: 40, minHeight: 20, alwaysPreserveAspectRatio: true },
+});
+
+/** `images`: pictures in the text (the composer; a signature's would need a home of their own). */
+export const richText = ({ autolink = false, images = false } = {}): Extensions => [
+  ...(images ? [MailImage] : []),
   StarterKit.configure({ link: { openOnClick: false, autolink } }),
   TextStyle,
   FontSize,
