@@ -1,6 +1,6 @@
 import { expect, type Page, test } from "@playwright/test";
 import { fillDemo } from "./demo-data";
-import { addAttendees, addMail, address, login } from "./helpers";
+import { addAttendees, addMail, address, addSnippet, login, removeSnippet } from "./helpers";
 import { calendarOnTheWeb } from "./ics-server";
 import { deliverInvitation } from "./invitation-mail";
 import { pairBox } from "./paired-box";
@@ -152,6 +152,33 @@ test.describe("Screenshots @screenshots", () => {
     await page.getByRole("button", { name: "Senden", exact: true }).click();
     await expect(page.getByRole("dialog", { name: "Anhang vergessen?" })).toBeVisible();
     await shot(page, "forgotten-attachment");
+  });
+
+  test("Textbaustein mit eigenen Feldern", async ({ page }) => {
+    const title = "Auftragsbestätigung";
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await login(page);
+    await removeSnippet(page, title);
+    await addSnippet(
+      page,
+      title,
+      "Guten Tag {Name},\n\nvielen Dank für Ihren Auftrag {Auftragsnummer} vom {Datum}. Unser Monteur kommt am {Termin} zu Ihnen.\n\nViele Grüße\n{Absender}",
+    );
+    try {
+      await page.goto("/mail");
+      await page.getByRole("link", { name: "Neue Mail" }).first().click();
+      await page.getByRole("combobox", { name: "An" }).fill("petra");
+      await page.getByRole("option", { name: /Petra Keller/ }).click();
+      await page.getByLabel("Betreff").fill("Ihr Auftrag bei Weber Haustechnik");
+      await page.getByRole("button", { name: "Textbaustein einfügen" }).click();
+      await page.getByRole("menuitem", { name: title }).click();
+      const dialog = page.getByRole("dialog", { name: "Textbaustein ausfüllen" });
+      await dialog.getByLabel("Auftragsnummer").fill("A-2027-0815");
+      await dialog.getByLabel("Termin").fill("Dienstag, 8 Uhr");
+      await shot(page, "snippet-fields");
+    } finally {
+      await removeSnippet(page, title);
+    }
   });
 
   test("Erinnerung je Kalender", async ({ page }) => {

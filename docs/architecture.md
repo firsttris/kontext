@@ -1126,7 +1126,15 @@ eigenen nur für einen selbst, die eines gemeinsamen Postfachs für alle, die da
 anlegen und ändern darf, wer das Postfach nicht nur lesen darf. Verwaltet werden sie unter
 Einstellungen → Textbausteine; im Schreibfenster bietet „Textbaustein einfügen“ (am Ende der
 Formatierungsleiste) die eigenen und die des Absender-Postfachs an. Der Text kommt an die
-Cursorstelle, `{Vorname}` und `{Name}` werden durch den Namen des ersten Empfängers ersetzt.
+Cursorstelle. Die Platzhalter füllt `src/lib/snippet-fill.ts` (rein, mit Tests): `{Vorname}` und
+`{Name}` aus dem ersten Empfänger, `{Datum}` (heute, `dateStyle: "medium"` in `LOCALE`) und
+`{Absender}` (der eigene Name, wie er im Von steht) – bei diesen vier ist die Schreibweise egal.
+Jedes andere `{Wort}` (ein Buchstabe vorne, bis 40 Zeichen, auch mit Leerzeichen) ist ein eigenes
+Feld: `snippetFields` listet sie, „Textbaustein ausfüllen“ fragt nach allen auf einmal. Gefüllt
+wird erst das HTML des Bausteins (`textToHtml`), die Werte werden dabei escaped – so bleiben
+Absätze und Links, und ein `<` in einer Antwort ist Text. Unbeantwortete Felder bleiben stehen.
+Das Fenster öffnet sich erst, wenn das Menü geschlossen ist: dessen Fokusfalle holte den Fokus
+sonst aus dem ersten Feld zurück.
 
 ## Wiedervorlage
 

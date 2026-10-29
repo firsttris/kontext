@@ -551,7 +551,14 @@ export const Composer = ({ accountId, mode, sourceEmailId, prefill }: Props) => 
         {editor ? (
           <EditorToolbar
             editor={editor}
-            extra={<SnippetMenu editor={editor} accountId={sendAccountId} recipient={to[0]} />}
+            extra={
+              <SnippetMenu
+                editor={editor}
+                accountId={sendAccountId}
+                recipient={to[0]}
+                sender={myName}
+              />
+            }
           />
         ) : null}
         <EditorContent

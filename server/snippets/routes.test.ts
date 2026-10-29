@@ -2,7 +2,7 @@
 import { describe, expect, it } from "vitest";
 import type { SessionAccount } from "../categories/routes";
 import { createSnippetRoutes } from "./routes";
-import { fillSnippet, type Snippet } from "./snippets";
+import type { Snippet } from "./snippets";
 import type { SnippetStore } from "./store";
 
 const memoryStore = (): SnippetStore => {
@@ -68,14 +68,5 @@ describe("/api/snippets", () => {
 
     who = jonas;
     expect((await send("DELETE", `/${snippet.id}`)).status).toBe(200);
-  });
-});
-
-describe("fillSnippet", () => {
-  it("puts in the recipient's name, or nothing", () => {
-    expect(fillSnippet("Hallo {Vorname}, Herr {Name}", { name: "Markus Hoffmann" })).toBe(
-      "Hallo Markus, Herr Markus Hoffmann",
-    );
-    expect(fillSnippet("Guten Tag {Name},", undefined)).toBe("Guten Tag ,");
   });
 });

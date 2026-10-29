@@ -7,6 +7,10 @@ Steps that an update needs beyond raising the version are marked **Upgrade**.
 
 ## Unreleased
 
+- Mail: snippets know more placeholders – `{Datum}` (today's date), `{Absender}` (one's own name)
+  and own fields: any other `{Wort}`, such as `{Auftragsnummer}`, is asked for in one small
+  dialog when the snippet is inserted and filled in; a field left empty stays visible.
+  `{Vorname}` and `{Name}` work as before.
 - Calendar: a default reminder per calendar – in *Kalender verwalten* the bell next to a calendar
   sets the reminder new appointments in it get, one for appointments with a time and one for
   all-day ones. Kept per person in Stalwart (`defaultAlertsWithTime`,
