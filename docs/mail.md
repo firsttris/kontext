@@ -44,6 +44,8 @@ IMAP und SMTP.
 - **Regeln** („wenn Absender, Empfänger, Betreff oder Text … dann in Ordner, markieren, Kategorie
   setzen, weiterleiten, Aufgabe anlegen“) laufen auf dem Server beim Eingang, auch wenn Kontext zu
   ist; aus einer Mail heraus angelegt, auf Wunsch auch auf vorhandene Mails.
+
+  ![Einstellungen, Regeln: Mails einer Kanzlei nach „Steuerberater“, Lieferscheine nach „Lieferanten“ und gelesen, Newsletter gelesen](screenshots/rules.png)
 - **Mailliste sortieren:** das Symbol mit den zwei Pfeilen oben in der Liste (auch am Handy) –
   neueste oder älteste zuerst, ungelesene, markierte oder Mails mit Kategorie zuerst (in der
   Reihenfolge der Kategorien), nach Absender oder Betreff (A–Z) oder die größten zuerst. Innerhalb

@@ -7,6 +7,12 @@ Steps that an update needs beyond raising the version are marked **Upgrade**.
 
 ## Unreleased
 
+- Development: `bun run dev` fills tasks and chat of the demo too (`dev/demo-data.ts`, once per
+  server database, recognised by #baustelle-hoffmann): the people sign in through
+  `POST /api/auth/sign-in/stalwart` like the login form and use Kontext's API. The pictures and the
+  film use the same code (`e2e/demo-data.ts` is a thin wrapper); the e2e seed is unchanged. Fixed
+  on the way: Max's task on the info@ board was never made (he is no member there), now Anna's.
+- README: a picture of the rules (`docs/screenshots/rules.png`, from `e2e/screenshots.spec.ts`).
 - Mail: printing includes the pictures from the internet when the reading pane shows them – the
   sender is trusted (and confirmed), or "Laden" was clicked for that mail. The choice is kept per
   mail for the session (`src/features/mail/remote-images.ts`). The printed page keeps its sandbox

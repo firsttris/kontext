@@ -124,6 +124,9 @@ VPS mit 2 vCPU und 4 GB RAM. Alles Weitere – DNS, Podman, Backups, Updates –
     <td><img src="docs/screenshots/tasks-board.png" alt="Kanban-Board des gemeinsamen Postfachs info@ mit Offen, In Arbeit, Wartet und Erledigt"><br><sub><b>Aufgaben</b> – ein Kanban-Board pro Postfach · <a href="https://firsttris.github.io/kontext/tasks.html">Doku →</a></sub></td>
     <td><img src="docs/screenshots/chat.png" alt="Team-Chat-Kanal mit Baustellenbericht, einer geteilten Kundenmail als Karte und einer Aufgabe aus einer Nachricht"><br><sub><b>Team-Chat</b> – Mails als Karten, Aufgaben aus Nachrichten · <a href="https://firsttris.github.io/kontext/chat.html">Doku →</a></sub></td>
   </tr>
+  <tr>
+    <td><img src="docs/screenshots/rules.png" alt="Einstellungen, Regeln: Mails der Kanzlei in einen Ordner, Lieferscheine nach Lieferanten und gelesen, Newsletter als gelesen markiert"><br><sub><b>Regeln</b> – sortieren auf dem Server, auch wenn Kontext zu ist · <a href="https://firsttris.github.io/kontext/mail.html#ordnen-und-finden">Doku →</a></sub></td>
+  </tr>
 </table>
 
 <p align="center">

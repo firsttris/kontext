@@ -734,8 +734,52 @@ test.describe("Screenshots @screenshots", () => {
     await context.close();
   });
 
+  test("Regeln", async ({ page }) => {
+    type Rule = { field: string; value: string; folder?: string; read?: boolean };
+    const rules: Rule[] = [
+      { field: "from", value: "kanzlei-brandt.test", folder: "Steuerberater" },
+      { field: "subject", value: "Lieferschein", folder: "Lieferanten", read: true },
+      { field: "from", value: "newsletter@", read: true },
+    ];
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await login(page);
+    await page.goto("/settings?section=rules");
+    const list = page.getByRole("list", { name: "Regeln" });
+    try {
+      for (const rule of rules) {
+        await page.getByRole("button", { name: "Neue Regel" }).click();
+        const dialog = page.getByRole("dialog", { name: "Neue Regel" });
+        await dialog.getByLabel("Feld").selectOption(rule.field);
+        await dialog.getByLabel("Wert").fill(rule.value);
+        if (rule.folder) {
+          await dialog.getByLabel("In Ordner verschieben").check();
+          await dialog.getByLabel("Ordner wählen").selectOption({ label: rule.folder });
+        }
+        if (rule.read) await dialog.getByLabel("Als gelesen markieren").check();
+        await dialog.getByRole("button", { name: "Regel speichern" }).click();
+        await expect(dialog).toBeHidden();
+      }
+      // Loaded afresh, without the notices of saving.
+      await page.reload();
+      await expect(list.getByRole("listitem")).toHaveCount(rules.length);
+      await shot(page, "rules");
+    } finally {
+      // The rules are Jonas's own Sieve script: gone again for the pictures after this one.
+      for (const rule of rules) {
+        const row = page.getByRole("button", { name: new RegExp(rule.value) });
+        if (!(await row.count())) continue;
+        await row.first().click();
+        const dialog = page.getByRole("dialog", { name: "Regel bearbeiten" });
+        await dialog.getByRole("button", { name: "Regel löschen" }).click();
+        await dialog.getByRole("button", { name: "Wirklich löschen?" }).click();
+        await expect(dialog).toBeHidden();
+      }
+      await expect(page.getByText("Noch keine Regeln.")).toBeVisible();
+    }
+  });
+
   test("Aufgaben und Chat", async ({ browser }) => {
-    const { channelId, infoBoard } = await fillDemo(browser);
+    const { channelId, infoBoard } = await fillDemo();
     const context = await browser.newContext({
       viewport: { width: 1440, height: 900 },
       locale: "de-DE",

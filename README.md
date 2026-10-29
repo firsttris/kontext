@@ -124,6 +124,9 @@ Calls and documents (Schreibzeug, no install of its own needed) are switched on 
     <td><img src="docs/screenshots/tasks-board.png" alt="Kanban board of the shared mailbox info@ with Open, In progress, Waiting and Done"><br><sub><b>Tasks</b> – a Kanban board per mailbox · <a href="https://firsttris.github.io/kontext/tasks.html">docs →</a></sub></td>
     <td><img src="docs/screenshots/chat.png" alt="Team chat channel with a site report, a shared customer mail as a card and a task made from a message"><br><sub><b>Team chat</b> – mails as cards, tasks from messages · <a href="https://firsttris.github.io/kontext/chat.html">docs →</a></sub></td>
   </tr>
+  <tr>
+    <td><img src="docs/screenshots/rules.png" alt="Settings, Rules: mails from the tax adviser into a folder, delivery notes to Suppliers and read, newsletters marked read"><br><sub><b>Rules</b> – sorted on the server, even with Kontext closed · <a href="https://firsttris.github.io/kontext/mail.html#ordnen-und-finden">docs →</a></sub></td>
+  </tr>
 </table>
 
 <p align="center">
