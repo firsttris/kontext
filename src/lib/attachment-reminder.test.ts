@@ -30,3 +30,11 @@ describe("attachmentMention: the forms people write", () => {
     expect(attachmentMention("", "I'm attaching the invoice.")).toBe("attaching");
   });
 });
+
+describe("attachmentMention: a subject taken over from the answered mail", () => {
+  it("does not ask for every reply or forward to a mail whose subject named an attachment", () => {
+    expect(attachmentMention("AW: Rechnung im Anhang", "Danke, ist angekommen.")).toBeUndefined();
+    expect(attachmentMention("Re: Angebot anbei", "Passt so.")).toBeUndefined();
+    expect(attachmentMention("Fwd: Pläne anbei", "Zur Info.")).toBeUndefined();
+  });
+});
