@@ -30,6 +30,7 @@ import { useStatusLabel, useTasks } from "../tasks/queries";
 import { useEmailActions } from "./actions";
 import { Attachments } from "./attachments";
 import { EarlierMails, LaterMails } from "./conversation";
+import { ExternalMark } from "./external-mark";
 import { InvitationBar } from "./invitation-bar";
 import { MailBody } from "./mail-body";
 import { MessageDetails, SenderWarnings } from "./message-details";
@@ -147,7 +148,10 @@ export const MessageView = ({ accountId, mailbox, emailId }: Props) => {
                   size={38}
                 />
                 <div className="flex min-w-0 flex-1 flex-col">
-                  <span className="truncate font-medium">{displayName(email.from?.[0])}</span>
+                  <span className="flex min-w-0 items-center gap-2">
+                    <span className="truncate font-medium">{displayName(email.from?.[0])}</span>
+                    <ExternalMark address={email.from?.[0]?.email} />
+                  </span>
                   <span className="truncate text-[13px] text-muted">
                     {email.from?.[0]?.email} → {formatAddressList(email.to)}
                     {email.cc?.length ? `, Cc: ${formatAddressList(email.cc)}` : ""}

@@ -17,6 +17,7 @@ import {
 } from "./accounts";
 import type { BackupControl } from "./backup";
 import type { Calendars } from "./calendars";
+import type { ExternalHintStore } from "./external-hint";
 import type { Mailstore } from "./mailstore";
 import type { Management } from "./management";
 import type { CompanySettings } from "./settings";
@@ -29,6 +30,8 @@ export type CompanyDeps = {
   /** Free and busy times of the company's calendars. */
   calendars: Calendars;
   settings: CompanySettings;
+  /** Hinweis „Extern“: the switch and the partner domains (external-hint.ts). */
+  externalHint: ExternalHintStore;
   /** What each person entered for the signature ([Telefon], [Mobil] …). */
   signatureDetails: SignatureDetailsStore;
   /** Categories of the shared mailboxes, for the rules that set them. */
