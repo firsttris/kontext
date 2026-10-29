@@ -45,6 +45,7 @@ import { useEncryptedSend } from "../pgp/use-encrypted-send";
 import { SnippetMenu } from "../snippets/snippet-menu";
 import { AttachmentList, ComposerActions, ComposerFields } from "./composer-fields";
 import { InsertImageButton, pictures, useComposerImages } from "./composer-images";
+import { registerDraftFlush } from "./draft-flush";
 import { EditorToolbar } from "./editor-toolbar";
 import { useExternalQuestion } from "./external-question";
 import { ForgottenAttachment } from "./forgotten-attachment";
@@ -443,12 +444,25 @@ export const Composer = ({ accountId, mode, sourceEmailId, forwardIds, prefill }
     return () => clearTimeout(timer);
   });
 
-  /** Closing keeps the work: unsaved changes are saved as a draft first. */
-  const close = async () => {
+  /** Saves what changed since the last save now, without waiting for the autosave. */
+  const saveNow = async () => {
     if (initialized.current && changeKey !== lastSaved.current && !isEmpty()) {
       lastSaved.current = changeKey;
       await autosave().catch(() => undefined);
     }
+  };
+  // Abmelden nach Inaktivität saves the mail before it signs out (draft-flush.ts), and waits for
+  // an autosave still running; the ref keeps the registered save on this render's state.
+  const flushRef = useRef(saveNow);
+  flushRef.current = async () => {
+    await saveNow();
+    await saving.current?.catch(() => undefined);
+  };
+  useEffect(() => registerDraftFlush(() => flushRef.current()), []);
+
+  /** Closing keeps the work: unsaved changes are saved as a draft first. */
+  const close = async () => {
+    await saveNow();
     await leave();
   };
 

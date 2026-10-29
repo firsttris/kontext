@@ -2,6 +2,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, Outlet, redirect } from "@tanstack/react-router";
 import { useEffect } from "react";
 import { useClient } from "@/auth/auth";
+import { IdleGuard } from "@/auth/idle-guard";
 import { AppShell, railButton } from "@/components/shell/app-shell";
 import { CallHost } from "@/features/calls/call-host";
 import { useChannels } from "@/features/chat/queries";
@@ -65,6 +66,7 @@ function AppLayout() {
       <CallHost />
       <SecureCodesDialog />
       <PhoneHost />
+      <IdleGuard />
     </AppShell>
   );
 }

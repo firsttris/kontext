@@ -26,6 +26,7 @@ import {
   ShieldCheck,
   Signature,
   TextQuote,
+  Timer,
   Truck,
   User,
   Users,
@@ -37,6 +38,7 @@ import { BackupSection } from "@/features/company/backup-section";
 import { ChatSection } from "@/features/company/chat-section";
 import { EmployeesSection } from "@/features/company/employees-section";
 import { ExternalHintSection } from "@/features/company/external-hint-section";
+import { IdleLogoutSection } from "@/features/company/idle-logout-section";
 import { LegalFooterSection } from "@/features/company/legal-footer-section";
 import { MailboxesSection } from "@/features/company/mailboxes-section";
 import { MigrationSection } from "@/features/company/migration-section";
@@ -104,6 +106,7 @@ const COMPANY: Entry[] = [
   { id: "company-legal", label: m.company_legal, icon: Scale },
   { id: "company-chat", label: m.company_chat, icon: MessagesSquare },
   { id: "company-security", label: m.company_security, icon: ShieldCheck },
+  { id: "company-idle", label: m.company_idle, icon: Timer },
   { id: "company-external", label: m.company_external, icon: Globe },
   { id: "company-backup", label: m.company_backup, icon: DatabaseBackup },
   { id: "phone", label: m.phone_settings, icon: Phone },
@@ -134,6 +137,7 @@ const CONTENT: Record<Section, () => ReactNode> = {
   "company-legal": () => <LegalFooterSection />,
   "company-chat": () => <ChatSection />,
   "company-security": () => <CompanySecuritySection />,
+  "company-idle": () => <IdleLogoutSection />,
   "company-external": () => <ExternalHintSection />,
   "company-backup": () => <BackupSection />,
   phone: () => <PhoneSettingsSection />,

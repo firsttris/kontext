@@ -393,6 +393,27 @@ test.describe("Screenshots @screenshots", () => {
     await shot(page, "external-hint");
   });
 
+  test("Abmelden nach Inaktivität", async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    // Set for this page only, and its clock runs the 15 minutes at once (e2e/idle-logout.spec.ts).
+    await page.route("**/api/company/idle-logout", (route) =>
+      route.request().method() === "GET"
+        ? route.fulfill({ json: { minutes: 15 } })
+        : route.fallback(),
+    );
+    await page.clock.install();
+    const read = page.waitForResponse("**/api/company/idle-logout");
+    await login(page);
+    await read;
+    await page.evaluate(() => new Promise((resolve) => setTimeout(resolve, 200)));
+    await page.clock.fastForward("14:15");
+    const question = page.getByRole("dialog", { name: "Angemeldet bleiben?" });
+    await expect(question).toBeVisible();
+    await shot(page, "idle-logout");
+    // Kept signed in: the worker's next test reuses this session.
+    await question.getByRole("button", { name: "Angemeldet bleiben" }).click();
+  });
+
   test("Erinnerung je Kalender", async ({ page }) => {
     await page.setViewportSize({ width: 1440, height: 900 });
     await login(page);

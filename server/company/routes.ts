@@ -11,6 +11,7 @@ import { backupRoutes } from "./backup-routes";
 import { bad, bodyOf, type CompanyDeps, createLoader, type Env } from "./context";
 import { employeeRoutes } from "./employees";
 import { externalHintRoutes, readExternalHint } from "./external-hint";
+import { idleLogoutRoutes, readIdleLogout } from "./idle-logout";
 import { legalFooterRoutes, readLegalFooter } from "./legal-footer";
 import { mailboxRoutes } from "./mailboxes";
 import { checkDomain, httpsCheck } from "./security";
@@ -23,6 +24,7 @@ export const createCompanyRoutes = (deps: CompanyDeps) => {
   const app = new Hono<Env>();
   const externalHint = readExternalHint(deps);
   const legalFooter = readLegalFooter(deps);
+  const idleLogout = readIdleLogout(deps);
 
   /** Whether to show the Firmenverwaltung at all; asked by every signed-in user. */
   app.get("/me", async (c) =>
@@ -41,6 +43,12 @@ export const createCompanyRoutes = (deps: CompanyDeps) => {
     return footer ? c.json(footer) : c.json({ error: "Nicht angemeldet" }, 401);
   });
 
+  /** Abmelden nach Inaktivität: every signed-in user's app counts the time without input. */
+  app.get("/idle-logout", async (c) => {
+    const setting = await idleLogout(c.req.raw);
+    return setting ? c.json(setting) : c.json({ error: "Nicht angemeldet" }, 401);
+  });
+
   app.use("*", async (c, next) => {
     const loaded = await load(c.req.raw);
     if (!loaded) return c.json({ error: "Keine Berechtigung" }, 403);
@@ -57,6 +65,7 @@ export const createCompanyRoutes = (deps: CompanyDeps) => {
   app.route("/signature", signatureRoutes(deps));
   app.route("/external-hint", externalHintRoutes(deps));
   app.route("/legal-footer", legalFooterRoutes(deps));
+  app.route("/idle-logout", idleLogoutRoutes(deps));
   app.get("/chat-retention", async (c) =>
     c.json({ days: (await deps.chatRetention?.days()) ?? 0 }),
   );
