@@ -131,6 +131,18 @@ export const switchReplyTo = (
   sameAddresses(current, previous?.replyTo ?? []) ? (next?.replyTo ?? []) : current;
 
 /**
+ * The identities of a shared mailbox with the default „Antwort an“ set in the settings: those
+ * edit the identities in the personal account (Einstellungen → Signatur), while Stalwart gives
+ * the shared account identities of its own for the same addresses.
+ */
+export const withOwnReplyTo = (identities: Identity[], own: Identity[]): Identity[] =>
+  identities.map((identity) => {
+    if (identity.replyTo?.length) return identity;
+    const mine = own.find((o) => sameAddress(o.email, identity.email));
+    return mine?.replyTo?.length ? { ...identity, replyTo: mine.replyTo } : identity;
+  });
+
+/**
  * The sender name for a mail from a shared mailbox: the person and the mailbox's name, so the
  * customer and the colleagues (in the shared Sent folder) see who answered:
  * "Jonas Weber (Weber Haustechnik)".

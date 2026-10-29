@@ -88,7 +88,8 @@ IMAP und SMTP.
   gilt für jeden Versand, auch verschlüsselt oder unterschrieben (dort steht es außen und in den
   geschützten Kopfzeilen), und bleibt im Entwurf erhalten. Eine Vorgabe je Absenderadresse steht
   unter *Einstellungen → Signatur* („Antwort an“, mehrere Adressen mit Komma); sie füllt das Feld
-  bei jeder neuen Mail, Antwort und Weiterleitung von dieser Adresse, und wer den Absender
+  bei jeder neuen Mail, Antwort und Weiterleitung von dieser Adresse (auch aus dem gemeinsamen
+  Postfach heraus), und wer den Absender
   wechselt, bekommt dessen Vorgabe – außer, man hat das Feld selbst geändert.
 
   Umgekehrt antwortet Kontext auf eine Mail mit „Antwort an“ an diese Adresse, nicht an den

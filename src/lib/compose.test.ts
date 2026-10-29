@@ -2,7 +2,13 @@ import { describe, expect, it } from "vitest";
 import type { JmapClient } from "@/jmap/client";
 import { saveDraft } from "@/jmap/mail";
 import type { EmailDetail } from "@/jmap/types";
-import { sharedSenderName, startCompose, startReplyTo, switchReplyTo } from "./compose";
+import {
+  sharedSenderName,
+  startCompose,
+  startReplyTo,
+  switchReplyTo,
+  withOwnReplyTo,
+} from "./compose";
 
 const original: EmailDetail = {
   id: "e1",
@@ -203,5 +209,21 @@ describe("sharedSenderName", () => {
     );
     expect(sharedSenderName("", "Weber Haustechnik")).toBe("Weber Haustechnik");
     expect(sharedSenderName("Jonas Weber", "")).toBe("Jonas Weber");
+  });
+});
+
+describe("withOwnReplyTo", () => {
+  const shared = { ...jonas, id: "b", email: "info@weber.test" };
+  it("gives a shared mailbox's identity the default set for its address in the settings", () => {
+    const own = [jonas, { ...jonas, id: "d", email: "INFO@weber.test", replyTo: [office] }];
+    expect(withOwnReplyTo([shared], own)).toEqual([{ ...shared, replyTo: [office] }]);
+  });
+  it("keeps a default the shared identity has itself", () => {
+    const desk = { name: null, email: "desk@weber.test" };
+    const own = [{ ...jonas, email: "info@weber.test", replyTo: [office] }];
+    expect(withOwnReplyTo([{ ...shared, replyTo: [desk] }], own)[0]!.replyTo).toEqual([desk]);
+  });
+  it("leaves it alone without a default", () => {
+    expect(withOwnReplyTo([shared], [jonas])).toEqual([shared]);
   });
 });
