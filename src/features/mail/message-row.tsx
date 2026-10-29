@@ -93,9 +93,13 @@ export const MessageRow = ({
       : displayName(email.from?.[0]);
   const boxShown = selecting || selected;
   const phone = !useMediaQuery("(min-width: 768px)");
-  const pickByPress = useLongPress(() => onPick(false));
   const swipes = useSwipeSettings();
   const swipe = useSwipe(swipes, onSwipe);
+  // A long press picks the mail; the finger sliding on afterwards is no swipe any more.
+  const pickByPress = useLongPress(() => {
+    swipe.handlers.onPointerCancel();
+    onPick(false);
+  });
   const onClick = (event: MouseEvent) => {
     // Both are asked, so neither keeps a stale "swallow the next click".
     const pressed = pickByPress.consumeClick();
