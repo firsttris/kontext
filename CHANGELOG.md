@@ -7,6 +7,12 @@ Steps that an update needs beyond raising the version are marked **Upgrade**.
 
 ## Unreleased
 
+- Mail: sort the mail list from its header (the arrows, on the phone too) – newest or oldest
+  first, unread, flagged or with a category first (in the account's order of categories), by
+  sender or subject, or the largest first; the newest first within each group. One choice for
+  every folder, "Alle Posteingänge" and the search, kept on the device. The server sorts
+  (`Email/query`, RFC 8621 §4.4.2), so loading more keeps the order; in the conversation view the
+  whole conversation counts (`someInThreadHaveKeyword`, `allInThreadHaveKeyword`).
 - Settings: "Vertretung" – give a colleague your mailbox (every folder), calendars and contacts at
   once, to view or to edit, see who has access to what (also from the share dialogs) and take it
   all back with "Alles entziehen"; only seeing your free and busy times stays when every

@@ -44,7 +44,6 @@ Kleinere und mittlere Funktionen, sortiert nach Nutzen: oben, was fast jedem Bet
 | 23 | **„Antwort an“ beim Schreiben** | Antworten an eine andere Adresse als den Absender lenken. |
 | 24 | **Zustellbestätigung** | Beim Senden den Bericht des empfangenden Servers anfordern (DSN): ein Nachweis, dass die Mail angenommen wurde. |
 | 25 | **Geburtstage im Kalender** | Ein Kalender aus den Geburtstagen der Kontakte, abschaltbar. |
-| 26 | **Mailliste sortieren** | Ungelesene, markierte oder Mails mit Kategorie zuerst. |
 | 27 | **.eml-Dateien importieren** | Einzelne Mails als Datei in einen Ordner holen. |
 | 28 | **Einführung beim ersten Start** | Ein kurzer Rundgang durch Mail, Kalender und Chat für Leute ohne IT-Kenntnisse. |
 | 29 | **Gelöschte Mails zurückholen** | Endgültig gelöschte Mails eine Zeit lang wiederherstellen; Stalwart bietet das nur in der Enterprise-Edition, Kontext bräuchte einen eigenen Weg. |

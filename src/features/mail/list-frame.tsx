@@ -20,6 +20,7 @@ import { MessageRow } from "./message-row";
 import { useMailAccounts } from "./queries";
 import { SearchBox, type SearchBoxHandle } from "./search-box";
 import { SelectionBar } from "./selection-bar";
+import { SortMenu } from "./sort-menu";
 import { useSwipeAction } from "./swipe-action";
 import { useThreadView } from "./thread-view";
 import { useThreadInfo } from "./use-thread-info";
@@ -67,6 +68,8 @@ type Props = {
   /** The open folder, for actions on picked mails; none in combined lists. */
   folderId?: string;
   inJunk?: boolean;
+  /** Whether the list follows the sort choice; Wiedervorlage and "Geplant" keep their own order. */
+  sortable?: boolean;
 };
 
 /** "Alle / Ungelesen" and the like: each chip sets part of the search. */
@@ -111,6 +114,7 @@ export const ListFrame = ({
   dragMail,
   folderId,
   inJunk = false,
+  sortable = true,
 }: Props) => {
   // Combined lists name each row's account; a folder's list is the route's account.
   const routeAccount = useParams({ strict: false }).accountId ?? "";
@@ -238,19 +242,22 @@ export const ListFrame = ({
                 </span>
               ) : null}
             </h1>
-            <span className="shrink-0 text-[12px] text-muted">
-              {unread > 0 ? m.mail_unread_count({ count: unread }) : ""}
-            </span>
-            {/* Phones have no hover: picking starts with this. */}
-            {rows.length ? (
-              <button
-                type="button"
-                onClick={() => setSelecting(true)}
-                className="shrink-0 self-center text-[14px] font-medium text-accent md:hidden"
-              >
-                {m.mail_select_mode()}
-              </button>
-            ) : null}
+            <div className="flex shrink-0 items-baseline gap-2">
+              <span className="text-[12px] text-muted">
+                {unread > 0 ? m.mail_unread_count({ count: unread }) : ""}
+              </span>
+              {sortable ? <SortMenu /> : null}
+              {/* Phones have no hover: picking starts with this. */}
+              {rows.length ? (
+                <button
+                  type="button"
+                  onClick={() => setSelecting(true)}
+                  className="self-center text-[14px] font-medium text-accent md:hidden"
+                >
+                  {m.mail_select_mode()}
+                </button>
+              ) : null}
+            </div>
           </div>
         )}
         <SearchBox ref={searchRef} key={search.q ?? ""} initial={search.q} />
