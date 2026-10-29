@@ -62,4 +62,11 @@ describe("ownText: what the composer counts as the user's own words", () => {
     expect(ownText(html)).not.toMatch(/Anhang/);
     expect(ownText(html)).toMatch(/bitte buchen/);
   });
+
+  it("leaves out the sender's signature, e.g. a disclaimer about attachments", () => {
+    const signature = "<p>Jonas Weber<br>Diese E-Mail und etwaige Anhänge sind vertraulich.</p>";
+    const html = `<p>Passt mir am Freitag.</p><p></p>${signature}`;
+    expect(ownText(html, signature)).not.toMatch(/Anhänge/);
+    expect(ownText(html, signature)).toMatch(/Passt mir am Freitag/);
+  });
 });
