@@ -19,13 +19,61 @@ ein Plan, kein Versprechen; Wünsche und Hinweise gern als
 | **Telefonie: mehr** | Anschluss direkt beim Anbieter oder per SIP-Trunk statt über die Fritzbox, SIP über TLS, Warteschleife mit Position, weitere Tischtelefone (Yealink, Grandstream). |
 | **Module für Kunden** | Was nur manche Betriebe brauchen, kommt als eigenes Projekt wie [Schreibzeug](https://github.com/firsttris/schreibzeug) (Dokumente): eigener Dienst mit eigenen Daten und Releases, im Rahmen in Kontext eingebunden, Anmelden mit Kontext (OpenID Connect), je Kunde zuschaltbar. Ideen: **Arbeitsberichte** (etwa fürs Handwerk, mit Fotos von der Baustelle), **Belege**, **Team-Wissen** (Seiten pro Postfach: Abläufe, Zugänge, Preise), **Tickets**. |
 
+## Für den Alltag
+
+Kleinere und mittlere Funktionen, sortiert nach Nutzen: oben, was fast jedem Betrieb täglich hilft.
+
+**Großer Nutzen**
+
+| # | Funktion | Worum es geht |
+| --- | --- | --- |
+| 1 | **Erinnerungen je Termin** | Pro Termin „30 Minuten vorher“, „1 Tag vorher“ …, als Hinweis oder als Mail. Die Mail verschickt Stalwart, also auch bei geschlossener App (heute fest 15 Minuten vorher und nur, solange Kontext offen ist). |
+| 2 | **Einladungen in der Mail beantworten** | Eine Einladung von außen (Outlook, Google) zeigt oben in der Mail Zusagen, Vielleicht, Absagen und „In den Kalender“. |
+| 3 | **Serien ab einem Termin ändern** | Neben „Nur dieser Termin“ und „Alle Termine der Serie“ auch „Dieser und alle folgenden“. |
+| 4 | **Firmen-Signatur mit mehr Angaben** | Telefon, Position, Abteilung als Platzhalter; jede Person trägt ihre Angaben einmal ein, leere Zeilen fallen weg (heute `[Name]` und `[E-Mail]`). |
+| 5 | **„Anhang vergessen?“** | Steht im Text „Anhang“, „anbei“, „attached“ …, aber nichts ist angehängt, fragt Kontext vor dem Senden nach. |
+| 6 | **Mails zuweisen** | In info@ eine Mail einer Person zuweisen und als erledigt markieren, Filter „Mir zugewiesen“ und „Offen“. |
+| 7 | **Kalender abonnieren** | Kalender über eine Adresse (iCal, webcal) einbinden: Feiertage, Schulferien, Müllabfuhr, Kalender von Lieferanten; aktualisiert sich von selbst. |
+| 8 | **Mehr Formatierung beim Schreiben** | Tabellen, Schriftgröße, Text- und Hintergrundfarbe, eingefügte Bilder in der Größe ändern. |
+| 9 | **Wischen am Handy** | In der Mailliste nach links oder rechts wischen zum Archivieren, Löschen, Gelesen …, je Richtung einstellbar. |
+
+**Spürbarer Nutzen**
+
+| # | Funktion | Worum es geht |
+| --- | --- | --- |
+| 10 | **Standard-Erinnerungen je Kalender** | Erinnerungen, die jeder neue Termin des Kalenders bekommt, getrennt für Termine mit Uhrzeit und ganztägige (baut auf Nr. 1 auf). |
+| 11 | **Termine aus .ics-Dateien übernehmen** | Mit Vorschau; schon vorhandene Termine werden übersprungen (heute nur beim Umzug). |
+| 12 | **winmail.dat entpacken** | Anhänge und Text aus Mails alter Outlook-Versionen zeigen. |
+| 13 | **Hinweis „Extern“** | Mails von außerhalb der Firma tragen ein Kennzeichen; vor dem Senden oder Einladen an Externe fragt Kontext nach. Partnerdomains zählen als intern; je Firma einschaltbar. |
+| 14 | **Vertretung in einem Schritt** | Einer Kollegin Postfach, Kalender und Kontakte auf einmal freigeben (lesen oder bearbeiten), sehen, wer worauf Zugriff hat, und alles auf einmal wieder entziehen. |
+| 15 | **Spam und Papierkorb leeren** | Mit einem Klick und einer Rückfrage. |
+| 16 | **Textbausteine mit mehr Platzhaltern** | `{Datum}` und eigene Felder, nach denen Kontext beim Einfügen fragt („Auftragsnummer?“); heute nur `{Name}`. |
+| 17 | **Pflichtangaben unter jeder Mail** | Ein Zusatz der Firmenverwaltung (etwa Handelsregister, Geschäftsführer), beim Senden angehängt, nie in Entwürfen; beim Schreiben zu sehen, aber nicht änderbar. |
+| 18 | **Als Anhang weiterleiten** | Eine Mail als .eml-Datei weiterleiten, etwa an den Steuerberater oder die IT. |
+| 19 | **Mehrere Kontakte auf einmal** | Auswählen, dann löschen, zu einer Gruppe hinzufügen oder als vCard exportieren. |
+| 20 | **Termin duplizieren** | Eine Kopie mit denselben Teilnehmern und Angaben, etwa für den zweiten Termin auf der Baustelle. |
+
+**Kleinerer Nutzen**
+
+| # | Funktion | Worum es geht |
+| --- | --- | --- |
+| 21 | **Kalender drucken** | Woche oder Monat auf A4, etwa für die Pinnwand in der Werkstatt. |
+| 22 | **Abmelden nach Inaktivität** | Für Rechner, die mehrere nutzen (Empfang, Anmeldung): die Firmenverwaltung legt eine Zeit fest; vorher fragt Kontext „Angemeldet bleiben?“, angefangene Mails werden Entwürfe. |
+| 23 | **„Antwort an“ beim Schreiben** | Antworten an eine andere Adresse als den Absender lenken. |
+| 24 | **Zustellbestätigung** | Beim Senden den Bericht des empfangenden Servers anfordern (DSN): ein Nachweis, dass die Mail angenommen wurde. |
+| 25 | **Geburtstage im Kalender** | Ein Kalender aus den Geburtstagen der Kontakte, abschaltbar. |
+| 26 | **Mailliste sortieren** | Ungelesene, markierte oder Mails mit Kategorie zuerst. |
+| 27 | **.eml-Dateien importieren** | Einzelne Mails als Datei in einen Ordner holen. |
+| 28 | **Einführung beim ersten Start** | Ein kurzer Rundgang durch Mail, Kalender und Chat für Leute ohne IT-Kenntnisse. |
+| 29 | **Gelöschte Mails zurückholen** | Endgültig gelöschte Mails eine Zeit lang wiederherstellen; Stalwart bietet das nur in der Enterprise-Edition, Kontext bräuchte einen eigenen Weg. |
+
 ## Offene Punkte
 
 Lücken und Befunde, die beim Bauen offen geblieben sind und noch angegangen werden.
 
 **Funktionen**
 
-- [ ] Erinnerungen an Termine auch bei geschlossener App (heute nur, solange Kontext offen ist): der Server müsste die Kalender beobachten wie die Posteingänge.
+- [ ] Erinnerungen an Termine auch bei geschlossener App (heute nur, solange Kontext offen ist): der Server müsste die Kalender beobachten wie die Posteingänge; Erinnerungen per Mail (siehe [Für den Alltag](#für-den-alltag), Nr. 1) wären ein erster Schritt.
 - [ ] Chat: Vorschaubilder für Fotos von vor diesem Stand fehlen (sie laden weiter in voller Größe); neue bekommen eins beim Hochladen.
 - [ ] Chat: Reaktionen mit beliebigen Emojis (heute die sieben Schnellwahlen), und im Thread „auch im Kanal zeigen“.
 - [ ] Aufgaben am Kontakt finden Mails nur über die letzten fünf Mails mit der Person im eigenen Postfach; ältere oder solche in info@ zählen nur, wenn die Aufgabe mit der Karte verknüpft ist (geschieht beim Anlegen aus der Mail). Die Verknüpfung „Termin“ wird noch nirgends angelegt.
