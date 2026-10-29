@@ -22,6 +22,8 @@ export type ItemRef = {
   accountId: string;
   /** The item; for chat the message. */
   ref: string;
+  /** An appointment's day (YYYY-MM-DD), where the calendar opens; a mail's conversation. */
+  threadId?: string | null;
 };
 
 const ICONS = {
@@ -48,7 +50,7 @@ export const ItemLink = ({
   className?: string;
   children: ReactNode;
 }) => {
-  const { kind, accountId, ref } = item;
+  const { kind, accountId, ref, threadId } = item;
   if (kind === "mail") {
     return (
       <Link
@@ -70,7 +72,15 @@ export const ItemLink = ({
   }
   if (kind === "event") {
     return (
-      <Link to="/calendar" search={{ event: ref, account: accountId }} className={className}>
+      <Link
+        to="/calendar"
+        search={{
+          event: ref,
+          account: accountId,
+          ...(threadId && /^\d{4}-\d{2}-\d{2}$/.test(threadId) ? { date: threadId } : {}),
+        }}
+        className={className}
+      >
         {children}
       </Link>
     );

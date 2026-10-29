@@ -28,6 +28,9 @@ rechnung@, das alle sehen, die dort arbeiten.
   und archiviert die Mail auf Wunsch; die Mail zeigt danach ihre Aufgabe. „Aufgaben erstellen“
   macht eine je ausgewählter Mail.
 - **Aus einer Chat-Nachricht**, verknüpft in beide Richtungen.
+- **Aus einem Termin:** „Aufgabe zum Termin“ im geöffneten Termin, am Computer wie am Handy – etwa
+  „Material für die Abnahme bestellen“. Die Aufgabe zeigt den Termin und öffnet ihn mit einem
+  Klick.
 - **Per Regel:** Eine Mail-Regel legt für jede passende Mail eine Aufgabe an, auch bei
   geschlossener App.
 - **Aus einem verpassten Anruf:** „Zurückrufen“, das sich selbst abhakt, sobald jemand mit der
@@ -39,7 +42,8 @@ rechnung@, das alle sehen, die dort arbeiten.
 
 ## Überall im Kontext
 
-- **Am Kontakt** stehen seine offenen Aufgaben, **im Kalender** das Fällige am jeweiligen Tag,
+- **Am Kontakt** stehen seine offenen Aufgaben – die mit der Karte verknüpften und die zu jeder
+  Mail mit ihm, auch zu älteren und zu Mails in gemeinsamen Postfächern wie info@ –, **im Kalender** das Fällige am jeweiligen Tag,
   **in der Glocke** neu Zugewiesenes und heute Fälliges.
 - **Erinnerungen und Zuweisungen** kommen als Benachrichtigung aufs Gerät, auch wenn Kontext zu
   ist.

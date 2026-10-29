@@ -742,8 +742,19 @@ oder Reihenfolge.
 - **Aus mehreren Mails:** „Aufgaben erstellen“ in der Leiste der Auswahl macht eine Aufgabe pro
   Mail, mit gemeinsamem Tag, Zuständigem und Board. Hat die andere Seite der Mail eine
   Kontaktkarte, wird sie mitverknüpft (auch bei einer einzelnen Mail).
-- **Am Kontakt:** die Aufgaben, die mit der Karte verknüpft sind oder mit einer Unterhaltung der
-  letzten Mails mit der Person (`src/lib/task-context.ts`); „Aufgabe“ legt eine verknüpfte an.
+- **Am Kontakt:** die Aufgaben, die mit der Karte verknüpft sind oder mit einer Mail, die die
+  Person geschickt oder bekommen hat (Von, An, Cc, jede Adresse der Karte), egal wie alt und in
+  welchem Postfach – dem eigenen oder einem gemeinsamen, das man öffnen kann
+  (`src/lib/task-context.ts`). Statt die Mails mit der Person zu suchen, schaut die App umgekehrt
+  bei den Mails nach, auf die Aufgaben zeigen: ein `Email/get` mit `from`, `to`, `cc` je Konto
+  (`participants` in `src/jmap/correspondence.ts`), höchstens 500 je Konto, die der zuletzt
+  geänderten Aufgaben zuerst; das Ergebnis teilen sich alle Kontakte. Eine Mail ist dabei an Konto
+  und Id erkannt, nicht nur an der Unterhaltung. „Aufgabe“ legt eine verknüpfte an.
+- **Am Termin:** „Aufgabe zum Termin“ im Termin (Desktop wie Handy) öffnet den Dialog mit dem
+  Titel des Termins und verknüpft ihn (`kind: "event"`, `eventLink`); die Aufgabe zeigt den Termin
+  mit Tag und Uhrzeit, ein Klick öffnet ihn im Kalender. Weil der Kalender nur findet, was er
+  gerade zeigt, trägt die Verknüpfung den Tag des Termins in `threadId` (bei Mails die
+  Unterhaltung); bei einer Serie ist es der eine Termin.
 - **Im Kalender:** meine offenen Aufgaben am Tag ihrer Fälligkeit, Überfälliges auf heute, in Rot;
   in Woche und Tag zu ihrer Uhrzeit im Raster neben den Terminen, ohne Uhrzeit (und überfällig)
   bei den ganztägigen. Abhaken mit „Rückgängig“ (der Kreis ist klein, die Fläche zum Treffen um ihn

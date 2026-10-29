@@ -7,6 +7,11 @@ Steps that an update needs beyond raising the version are marked **Upgrade**.
 
 ## Unreleased
 
+- Tasks: the contact page lists the tasks about any mail the person sent or got – older ones and
+  mails in shared mailboxes too – by looking up the mails tasks link to (`Email/get` of `from`,
+  `to`, `cc`, at most 500 per account) instead of only the last five own mails; mails are matched
+  by account and id. New "Aufgabe zum Termin" in the appointment (desktop and phone) creates a task
+  linked to it (`kind: "event"`, the day in `threadId`), which opens the appointment again.
 - Mail: read receipts are matched by the report's `Original-Message-ID` too (RFC 8098), so
   receipts from programs that set no `In-Reply-To` count; the sent mail looks for them by sender
   (its recipients) or subject, paging like the delivery reports (`src/jmap/search-pages.ts`).

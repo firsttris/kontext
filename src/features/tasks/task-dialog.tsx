@@ -1,6 +1,6 @@
 /**
- * A new task, from the "Neue Aufgabe" button, a mail ("Aufgabe", key t), a chat message or a
- * contact: title, due day with quick choices, a reminder, who, which board. From a mail it is linked to it
+ * A new task, from the "Neue Aufgabe" button, a mail ("Aufgabe", key t), a chat message, a
+ * contact or an appointment: title, due day with quick choices, a reminder, who, which board. From a mail it is linked to it
  * and to the sender's contact card, if there is one, and may archive it after. Several mails
  * picked in the list make one task each, with the same day, person and board.
  */
@@ -78,6 +78,12 @@ const headings = (starts: TaskStart[], contact: Contact | undefined) => {
     return {
       title: m.tasks_from_contact_title({ name: start!.link!.label }),
       description: m.tasks_from_contact_link(),
+    };
+  }
+  if (kind === "event") {
+    return {
+      title: m.tasks_from_event_title(),
+      description: m.tasks_from_event_link({ title: start!.link!.label }),
     };
   }
   if (kind === "mail") {

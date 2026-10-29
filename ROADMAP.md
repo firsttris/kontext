@@ -44,7 +44,6 @@ Lücken und Befunde, die beim Bauen offen geblieben sind und noch angegangen wer
 
 - [ ] Chat: Vorschaubilder für Fotos von vor diesem Stand fehlen (sie laden weiter in voller Größe); neue bekommen eins beim Hochladen.
 - [ ] Chat: Reaktionen mit beliebigen Emojis (heute die sieben Schnellwahlen), und im Thread „auch im Kanal zeigen“.
-- [ ] Aufgaben am Kontakt finden Mails nur über die letzten fünf Mails mit der Person im eigenen Postfach; ältere oder solche in info@ zählen nur, wenn die Aufgabe mit der Karte verknüpft ist (geschieht beim Anlegen aus der Mail). Die Verknüpfung „Termin“ wird noch nirgends angelegt.
 - [ ] S/MIME: eigene anerkannte Stellen in der Firmenverwaltung pflegen (heute `SMIME_ROOTS`); Sperrlisten (CRL), wo eine Stelle kein OCSP anbietet; LDAP-Verzeichnisse einzelner Stellen; Unterschriften mit EC-Schlüsseln prüfen (heute „nicht prüfbar“).
 - [ ] Anhänge verschlüsselter Mails ohne Umweg über Stalwart: heute liegen sie bis zum Senden unverschlüsselt in dessen Zwischenspeicher (siehe [Verschlüsselung](https://firsttris.github.io/kontext/encryption.html#grenzen-und-offene-punkte)).
 - [ ] CalDAV für Aufgaben mit Bestätigung in zwei Schritten: App-Passwörter anlegen können (Thunderbird und Handy fragen keinen Code ab); dazu `sync-collection` für schnelleren Abgleich auf dem iPhone.
