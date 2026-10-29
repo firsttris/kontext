@@ -173,6 +173,11 @@ IMAP und SMTP.
   [Architektur → Zustellbestätigung](architecture.md#zustellbestatigung).
 - **Vertraulich senden** und **PGP/S/MIME**: siehe [Verschlüsselung](encryption.md).
 - **Aus Dokumente anhängen**, Anhänge **in Dokumente ablegen**: siehe [Dokumente](documents.md).
+- **Am Handy** stehen unter „Neue Mail“ nur Senden, später senden, Anhängen und Verwerfen in
+  der Leiste; Lese- und Zustellbestätigung, Vertraulich senden, Unterschreiben und „Als Entwurf
+  speichern“ liegen unter „Weitere Aktionen“ (die drei Punkte, farbig, sobald etwas davon an ist;
+  in Warnfarbe, wenn „Vertraulich senden“ an ist, aber nicht geht – der Grund steht dann unter der
+  Leiste).
 
 ## Abwesenheit und Signaturen
 

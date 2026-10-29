@@ -7,6 +7,9 @@ Steps that an update needs beyond raising the version are marked **Upgrade**.
 
 ## Unreleased
 
+- Fixed: on phones the composer's action row ran off the screen, so "Als Entwurf speichern" and
+  "Verwerfen" could not be reached. Below `md` the receipt, delivery-report, confidential and
+  sign switches and "Als Entwurf speichern" now sit under "Weitere Aktionen"; desktop is unchanged.
 - Company admin: "Abmelden nach Inaktivität" for computers several people share – off by default,
   or 15 / 30 minutes, 1 / 4 / 8 hours (a `company_setting`, `GET`/`PUT /api/company/idle-logout`).
   Before the time runs out Kontext asks "Angemeldet bleiben?" with a one-minute countdown; without
