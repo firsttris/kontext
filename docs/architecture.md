@@ -793,7 +793,7 @@ Principal-ID), die Namen holt die App wie bei den Aufgaben über die Principals.
   (`notifyWho`). Antworten auf Antworten gibt es nicht.
 - **Auch im Kanal zeigen:** Unter dem Feld im Thread steht ein Häkchen „Auch im Kanal zeigen“
   (wie Slacks „Also send to channel“), es gilt für eine Antwort. So eine Antwort trägt
-  `also_in_channel` (Migration `0039_chat_also_in_channel`) und steht zusätzlich im Verlauf des
+  `also_in_channel` (Migration `0041_chat_also_in_channel`) und steht zusätzlich im Verlauf des
   Kanals, mit der Zeile „Antwort im Thread zu: …“ darüber, die in den Thread führt
   (`thread-note.tsx`); im Thread steht „Auch im Kanal gezeigt“ darunter. Sie zählt im Kanal als
   ungelesen, rückt ihn in der Liste nach oben und ist seine letzte Nachricht, die Benachrichtigung

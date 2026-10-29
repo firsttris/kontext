@@ -12,7 +12,7 @@ Steps that an update needs beyond raising the version are marked **Upgrade**.
   it. Only current CA certificates, at most 100; they count beside Mozilla's list and
   `SMIME_ROOTS`, and earlier trust answers are dropped on a change
   (`/api/company/smime-authorities`, `server/smime/authorities.ts`). **Upgrade:** migration
-  `0040_smime_authorities` adds the table `smime_authorities`; the server applies it at start.
+  `0042_smime_authorities` adds the table `smime_authorities`; the server applies it at start.
 - S/MIME: revocation by CRL where a certificate names no OCSP responder or it gives no usable
   answer: the http(s) CRL Distribution Points (RFC 5280 §4.2.1.13), at most 10 MB and 15 s, public
   hosts only; a list counts only when signed by the issuer under its name, current, and neither
@@ -31,7 +31,7 @@ Steps that an update needs beyond raising the version are marked **Upgrade**.
 - Chat: "Auch im Kanal zeigen" under the thread's reply field (like Slack's "Also send to
   channel"): the reply also stands in the channel, under "Antwort im Thread zu: …", which opens
   the thread; it counts as unread there and moves the channel up. Works in confidential channels.
-  **Upgrade:** migration `0039_chat_also_in_channel` adds `chat_messages.also_in_channel`; the
+  **Upgrade:** migration `0041_chat_also_in_channel` adds `chat_messages.also_in_channel`; the
   server applies it at start.
 - Development: `bun run dev` fills tasks and chat of the demo too (`dev/demo-data.ts`, once per
   server database, recognised by #baustelle-hoffmann): the people sign in through

@@ -276,17 +276,17 @@
       "breakpoints": true
     },
     {
-      "idx": 39,
+      "idx": 41,
       "version": "6",
       "when": 1793301030464,
-      "tag": "0039_chat_also_in_channel",
+      "tag": "0041_chat_also_in_channel",
       "breakpoints": true
     },
     {
-      "idx": 40,
+      "idx": 42,
       "version": "6",
       "when": 1793301940796,
-      "tag": "0040_smime_authorities",
+      "tag": "0042_smime_authorities",
       "breakpoints": true
     }
   ]
