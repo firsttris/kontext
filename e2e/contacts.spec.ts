@@ -1,6 +1,14 @@
 import { readFile } from "node:fs/promises";
 import { expect, type Page, test } from "@playwright/test";
-import { createContact, deleteContact, listAddressBooks, listContacts } from "../src/jmap/contacts";
+import {
+  createAddressBook,
+  createContact,
+  deleteAddressBook,
+  deleteContact,
+  listAddressBooks,
+  listContacts,
+  shareAddressBook,
+} from "../src/jmap/contacts";
 import { addMail, jmapAs, login, personalAccountId, unique } from "./helpers";
 
 test.describe("Kontakte", () => {
@@ -542,6 +550,30 @@ test.describe("Mehrere Kontakte", () => {
       await expect(page.getByRole("link", { name: new RegExp(surname) })).toHaveCount(0);
     } finally {
       await removeCards(id);
+    }
+  });
+
+  test("löscht nichts aus einem Adressbuch, das nur zum Lesen geteilt ist", async ({ page }) => {
+    const id = Date.now().toString(36);
+    const surname = `Lesend${id}`;
+    const jonas = jmapAs("jonas");
+    const jonasId = await personalAccountId("jonas");
+    const annaId = await personalAccountId("anna");
+    const book = await createAddressBook(jonas, jonasId, `Nur lesen ${id}`);
+    try {
+      await createContact(jonas, jonasId, book, named("Udo", surname));
+      await shareAddressBook(jonas, jonasId, book, {
+        [annaId]: { mayRead: true, mayWrite: false, mayDelete: false, mayShare: false },
+      });
+      await login(page, "anna");
+      await page.goto("/contacts");
+      await page.getByRole("searchbox", { name: "Kontakte suchen" }).fill(surname);
+      await page.getByRole("checkbox", { name: `Udo ${surname} auswählen` }).click();
+      await expect(page.getByText("1 ausgewählt")).toBeVisible();
+      // As in the contact's own pane: no deleting where Anna may only read.
+      await expect(page.getByRole("button", { name: "Löschen", exact: true })).toBeDisabled();
+    } finally {
+      await deleteAddressBook(jonas, jonasId, book);
     }
   });
 });
