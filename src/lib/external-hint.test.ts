@@ -24,6 +24,14 @@ describe("isExternal", () => {
     expect(isExternal("info@nicht-partner-bau.de", inside)).toBe(true);
   });
 
+  it("compares a domain with umlauts in either spelling (Unicode or punycode)", () => {
+    // Mail arrives with the ASCII form (RFC 5890), people type the Unicode form, or vice versa.
+    expect(isExternal("chef@xn--mller-bau-q9a.de", ["müller-bau.de"])).toBe(false);
+    expect(isExternal("chef@müller-bau.de", ["xn--mller-bau-q9a.de"])).toBe(false);
+    expect(isExternal("info@mail.xn--mller-bau-q9a.de", ["Müller-Bau.de"])).toBe(false);
+    expect(isExternal("chef@xn--mller-bau-q9a.de", ["muller-bau.de"])).toBe(true);
+  });
+
   it("marks nothing without a domain", () => {
     expect(isExternal("undisclosed-recipients", inside)).toBe(false);
     expect(isExternal("", inside)).toBe(false);
