@@ -198,7 +198,10 @@ Testdaten von Weber Haustechnik bleiben deutsch. Die Aufnahmen finden die Bedien
 Texte der App selbst (`ui("mail_inbox")` aus `messages/*.json`), damit beide Sprachen dieselben
 Schritte gehen. Jede Sprache hat ihre Dateien: `docs/assets/kontext-film.de.mp4` und `.en.mp4`, die
 Vorschaubilder `.jpg` und die Teaser `kontext-teaser.de.webp` (`README.de.md`) und `.en.webp`
-(`README.md`); `docs/index.md` zeigt den deutschen, `docs/index.en.md` den englischen Film. Zwei
+(`README.md`); `docs/index.md` zeigt den deutschen, `docs/index.en.md` den englischen Film. Beide
+verweisen auf `assets/kontext-film.mp4` ohne Sprache: mkdocs-static-i18n veröffentlicht
+`kontext-film.de.mp4` unter `assets/kontext-film.mp4` und `kontext-film.en.mp4` unter
+`en/assets/kontext-film.mp4`; `assets/kontext-film.de.mp4` gibt es auf der Seite nicht. Zwei
 Schritte je Sprache:
 
 1. **Aufnehmen** (`bun run video:record`, das Playwright-Projekt `video`): `e2e/video.spec.ts` ruft
