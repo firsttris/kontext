@@ -51,9 +51,10 @@ const signedInWithKept = async (page: Page, user: string) => {
 /**
  * The tour of the first start counts as seen on this browser (src/features/tour/seen.ts), for every
  * page of the test: it would cover the app in every test not about it. Added to what is there, so
- * two people signed in side by side both have it.
+ * two people signed in side by side both have it. Also for sign-ins past `login()` (a new
+ * employee, an agent's OAuth sign-in): the modal tour hides the rest of the page from the roles.
  */
-const skipTour = (page: Page, user: string) =>
+export const skipTour = (page: Page, email: string) =>
   page.context().addInitScript((who) => {
     const key = "kontext.tour.seen";
     try {
@@ -63,7 +64,7 @@ const skipTour = (page: Page, user: string) =>
     } catch {
       window.localStorage.setItem(key, JSON.stringify([who]));
     }
-  }, address(user));
+  }, email);
 
 /**
  * The cards above the mail list that offer installing and notifications stay away unless a test
@@ -71,7 +72,7 @@ const skipTour = (page: Page, user: string) =>
  * of the first start, unless a test is about it (`tour`).
  */
 export const login = async (page: Page, user = "jonas", { offers = false, tour = false } = {}) => {
-  if (!tour) await skipTour(page, user);
+  if (!tour) await skipTour(page, address(user));
   if (!offers) {
     await page.addInitScript(() => {
       for (const kind of ["install", "push"]) {
