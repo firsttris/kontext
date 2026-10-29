@@ -479,7 +479,10 @@ test.describe("Feiertage", () => {
     await expect(
       page.getByRole("status").filter({ hasText: "24 Feiertage eingetragen." }),
     ).toBeVisible();
-    await expect(manage.getByText("Feiertage Saarland")).toBeVisible();
+    // The calendar's line, not its entry in "Aus Datei übernehmen"'s list of calendars.
+    await expect(
+      manage.getByRole("listitem").filter({ hasText: "Feiertage Saarland" }),
+    ).toBeVisible();
     await manage.getByRole("button", { name: "Feiertage eintragen" }).click();
     await expect(
       page.getByRole("status").filter({ hasText: "Die Feiertage stehen schon im Kalender." }),
