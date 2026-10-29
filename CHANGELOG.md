@@ -13,6 +13,10 @@ Steps that an update needs beyond raising the version are marked **Upgrade**.
   every folder, "Alle Posteingänge" and the search, kept on the device. The server sorts
   (`Email/query`, RFC 8621 §4.4.2), so loading more keeps the order; in the conversation view the
   whole conversation counts (`someInThreadHaveKeyword`, `allInThreadHaveKeyword`).
+- Mail: "Als Anhang weiterleiten" – in a mail's "Weitere Aktionen" menu, and for several picked
+  mails in the selection bar: the original goes whole as `<subject>.eml` (message/rfc822) in a
+  new mail, by the blob Stalwart already holds (JMAP `blobId`), so nothing is downloaded or
+  uploaded. An encrypted mail goes as it came, still encrypted.
 - Settings: "Vertretung" – give a colleague your mailbox (every folder), calendars and contacts at
   once, to view or to edit, see who has access to what (also from the share dialogs) and take it
   all back with "Alles entziehen"; only seeing your free and busy times stays when every

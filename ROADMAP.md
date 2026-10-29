@@ -34,7 +34,6 @@ Kleinere und mittlere Funktionen, sortiert nach Nutzen: oben, was fast jedem Bet
 | # | Funktion | Worum es geht |
 | --- | --- | --- |
 | 13 | **Hinweis „Extern“** | Mails von außerhalb der Firma tragen ein Kennzeichen; vor dem Senden oder Einladen an Externe fragt Kontext nach. Partnerdomains zählen als intern; je Firma einschaltbar. |
-| 18 | **Als Anhang weiterleiten** | Eine Mail als .eml-Datei weiterleiten, etwa an den Steuerberater oder die IT. |
 
 **Kleinerer Nutzen**
 

@@ -7,8 +7,13 @@ export const mailSearchSchema = z.object({
   email: z.string().optional(),
   /** "Alle Posteingänge" (`/mail/all/inbox`): the account of the open mail. */
   account: z.string().optional(),
-  /** Composer: a new mail, an answer to / forward of the open mail, or the open draft. */
-  compose: z.enum(["new", "reply", "replyAll", "forward", "draft"]).optional(),
+  /**
+   * Composer: a new mail, an answer to / forward of the open mail (also as an .eml file), or the
+   * open draft.
+   */
+  compose: z.enum(["new", "reply", "replyAll", "forward", "forwardEml", "draft"]).optional(),
+  /** "Als Anhang weiterleiten" of several picked mails: their ids, comma-separated. */
+  emails: z.string().optional(),
   /** Prefilled recipient for a new mail, e.g. from the contacts or a mailto: link. */
   to: z.string().optional(),
   /** More of a mailto: link (src/routes/_app/compose.tsx). */

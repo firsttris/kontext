@@ -21,7 +21,7 @@ import {
 import type { EmailAddress, Identity } from "@/jmap/types";
 import { parseAddresses } from "@/lib/addresses";
 import { attachmentMention, ownText } from "@/lib/attachment-reminder";
-import { type ComposeMode, sharedSenderName, startCompose } from "@/lib/compose";
+import { type ComposeMode, sharedSenderName, startCompose, startEmlForward } from "@/lib/compose";
 import { savedBlobs, withSavedBlob } from "@/lib/draft-blobs";
 import { htmlToText, sanitizeMailHtml, textToHtml } from "@/lib/html";
 import { markCids } from "@/lib/inline-images";
@@ -48,6 +48,7 @@ import { useEmail } from "./queries";
 import { richText } from "./rich-text";
 import { useUndoSeconds } from "./send-settings";
 import { useTakeBack } from "./take-back";
+import { useEmlForward } from "./use-eml-forward";
 import { useSendAccount } from "./use-send-account";
 
 /** What a new mail starts with from outside: a contact, a mailto: link, a share. */
@@ -63,6 +64,8 @@ type Props = {
   accountId: string;
   mode: ComposeMode;
   sourceEmailId?: string;
+  /** "Als Anhang weiterleiten" of several picked mails; else the source mail alone. */
+  forwardIds?: string[];
   prefill?: ComposePrefill;
 };
 
@@ -75,7 +78,7 @@ const defaultIdentity = (identities: Identity[], preferred: string): Identity | 
 const signatureOf = (identity: Identity | undefined): string =>
   identity?.htmlSignature || (identity?.textSignature ? textToHtml(identity.textSignature) : "");
 
-export const Composer = ({ accountId, mode, sourceEmailId, prefill }: Props) => {
+export const Composer = ({ accountId, mode, sourceEmailId, forwardIds, prefill }: Props) => {
   const prefillTo = prefill?.to;
   const client = useClient();
   const queryClient = useQueryClient();
@@ -84,7 +87,13 @@ export const Composer = ({ accountId, mode, sourceEmailId, prefill }: Props) => 
   const { data: session } = useSession();
   const { account, own, sendAccountId, identities, mailboxes, myName, sendersReady } =
     useSendAccount(accountId, true);
-  const source = useEmail(accountId, sourceEmailId);
+  // A mail forwarded as a file needs only its blob, not its content.
+  const asEml = mode === "forwardEml";
+  const source = useEmail(accountId, asEml ? undefined : sourceEmailId);
+  const eml = useEmlForward(
+    accountId,
+    asEml ? (forwardIds ?? (sourceEmailId ? [sourceEmailId] : [])) : [],
+  );
   const suggestions = useAddressSuggestions();
 
   const [identityId, setIdentityId] = useState<string>("");
@@ -177,7 +186,7 @@ export const Composer = ({ accountId, mode, sourceEmailId, prefill }: Props) => 
   useEffect(() => {
     if (initialized.current || !editor || editor.isDestroyed || identities.length === 0) return;
     if (!sendersReady) return;
-    if (sourceEmailId && !source.data) return;
+    if (asEml ? !eml.data : sourceEmailId && !source.data) return;
     if (!draftImages.done) return;
     let originalHtml = "";
     // An encrypted original, opened here before: its real content (opened-mails.ts).
@@ -233,7 +242,10 @@ export const Composer = ({ accountId, mode, sourceEmailId, prefill }: Props) => 
     const original = source.data
       ? { ...source.data, subject: shownSubject(source.data) }
       : source.data;
-    const start = startCompose(mode, original, originalHtml, myAddresses);
+    const start =
+      mode === "forwardEml"
+        ? startEmlForward(eml.data ?? [])
+        : startCompose(mode, original, originalHtml, myAddresses);
     const answering = (mode === "reply" || mode === "replyAll") && source.data;
     const identity =
       (answering ? replyingExternal(identities, source.data!) : null) ??
@@ -281,6 +293,8 @@ export const Composer = ({ accountId, mode, sourceEmailId, prefill }: Props) => 
     sendersReady,
     source.data,
     sourceEmailId,
+    asEml,
+    eml.data,
     mode,
     myAddresses,
     prefillTo,
@@ -311,6 +325,7 @@ export const Composer = ({ accountId, mode, sourceEmailId, prefill }: Props) => 
         subject: undefined,
         body: undefined,
         shared: undefined,
+        emails: undefined,
         email: mode === "new" || mode === "draft" ? undefined : prev.email,
       }),
     });
@@ -638,7 +653,7 @@ export const Composer = ({ accountId, mode, sourceEmailId, prefill }: Props) => 
           subject={subject}
           onSubject={setSubject}
           suggestions={suggestions}
-          autoFocusTo={mode === "new" || mode === "forward"}
+          autoFocusTo={mode === "new" || mode === "forward" || asEml}
         />
         {editor ? (
           <EditorToolbar

@@ -10,6 +10,7 @@ import {
   MailOpen,
   MessagesSquare,
   MoreHorizontal,
+  Paperclip,
   Printer,
   Reply,
   ReplyAll,
@@ -322,6 +323,13 @@ export const Toolbar = ({
             }
           >
             <Forward size={15} /> {m.mail_forward()}
+          </MenuItem>
+          <MenuItem
+            onSelect={() =>
+              navigate({ to: ".", search: (prev) => ({ ...prev, compose: "forwardEml" }) })
+            }
+          >
+            <Paperclip size={15} /> {m.mail_forward_eml()}
           </MenuItem>
           <MenuItem onSelect={print}>
             <Printer size={15} /> {m.mail_print()}

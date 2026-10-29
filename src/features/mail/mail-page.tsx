@@ -100,10 +100,11 @@ const FolderPage = ({ accountId, mailboxParam, search }: Props) => {
           />
         ) : mailbox && search.compose && !waiting ? (
           <Composer
-            key={`${search.compose}-${search.email ?? ""}-${search.shared ?? ""}`}
+            key={`${search.compose}-${search.email ?? search.emails ?? ""}-${search.shared ?? ""}`}
             accountId={accountId}
             mode={search.compose}
             sourceEmailId={search.compose === "new" ? undefined : search.email}
+            forwardIds={search.emails?.split(",")}
             prefill={{
               to: search.to,
               cc: search.cc,
