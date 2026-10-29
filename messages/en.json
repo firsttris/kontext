@@ -458,7 +458,7 @@
   "deputy_mailbox": "Mailbox",
   "deputy_calendar": "Calendars",
   "deputy_contacts": "Contacts",
-  "deputy_levels_hint": "View: see mails, events and contacts. Edit: also file, flag and delete mails, change events and contacts. Sending in your name and creating folders stay with you; folders created later are not included.",
+  "deputy_levels_hint": "View: see mails, events and contacts, also mark mails as read and flag them. Edit: also file and delete mails, change events and contacts. Sending in your name and creating folders stay with you; folders created later are not included.",
   "deputy_grant": "Share",
   "deputy_granted": "Shared with {name}.",
   "deputy_list_title": "Who has access",

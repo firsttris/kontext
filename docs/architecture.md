@@ -1371,8 +1371,8 @@ lädt die App die Objekte neu, damit auch inzwischen angelegte Ordner dabei sind
 
 | Stufe          | Ordner (RFC 8621 §2)                                                          | Kalender, Adressbücher              |
 | -------------- | ------------------------------------------------------------------------------ | ----------------------------------- |
-| **Lesen**      | `mayReadItems`, `maySetSeen` (wie „Nur lesen“ der gemeinsamen Postfächer)      | „Lesen“ wie oben                    |
-| **Bearbeiten** | dazu `mayAddItems`, `mayRemoveItems`, `maySetKeywords`                        | „Bearbeiten“ wie oben               |
+| **Lesen**      | `mayReadItems`, `maySetSeen`, `maySetKeywords` (wie „Nur lesen“; ein ACL)      | „Lesen“ wie oben                    |
+| **Bearbeiten** | dazu `mayAddItems`, `mayRemoveItems`                                          | „Bearbeiten“ wie oben               |
 
 Ordner anlegen, umbenennen, löschen, weiterteilen und `maySubmit` bleiben aus: Stalwart gibt
 Absenderadressen (`Identity/get`) ohnehin nur Besitzern des Kontos („You are not an owner of

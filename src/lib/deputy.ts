@@ -30,7 +30,9 @@ export type DeputyPatches = Record<DeputyKind, Record<string, Record<string, Rig
 
 /**
  * Mailbox rights per level. "Lesen" as the Firmenverwaltung's "Nur lesen" (server/company/
- * sharing.ts): read and mark as read. "Bearbeiten" also files, flags and deletes mails; folders
+ * sharing.ts): read and mark as read, which in Stalwart is one ACL with setting keywords
+ * (`ModifyItems` for both, `MailboxRight::to_acl`), so flagging comes with it and is asked for
+ * too: the folder then reads back as granted. "Bearbeiten" also files and deletes mails; folders
  * stay the owner's (no creating, renaming or deleting them) and sending stays with members of
  * the account, Stalwart gives identities only to them (crates/jmap-proto/src/object/mailbox.rs,
  * `MailboxRight::to_acl`).
@@ -41,7 +43,7 @@ const MAILBOX_RIGHTS: Record<DeputyLevel, Rights> = {
     mayAddItems: false,
     mayRemoveItems: false,
     maySetSeen: true,
-    maySetKeywords: false,
+    maySetKeywords: true,
     mayCreateChild: false,
     mayRename: false,
     maySubmit: false,

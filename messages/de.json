@@ -458,7 +458,7 @@
   "deputy_mailbox": "Postfach",
   "deputy_calendar": "Kalender",
   "deputy_contacts": "Kontakte",
-  "deputy_levels_hint": "Lesen: Mails, Termine und Kontakte ansehen. Bearbeiten: auch Mails ablegen, markieren und löschen, Termine und Kontakte ändern. Senden in Ihrem Namen und Ordner anlegen bleibt bei Ihnen; später angelegte Ordner sind nicht dabei.",
+  "deputy_levels_hint": "Lesen: Mails, Termine und Kontakte ansehen, Mails auch als gelesen markieren und kennzeichnen. Bearbeiten: auch Mails ablegen und löschen, Termine und Kontakte ändern. Senden in Ihrem Namen und Ordner anlegen bleibt bei Ihnen; später angelegte Ordner sind nicht dabei.",
   "deputy_grant": "Freigeben",
   "deputy_granted": "Freigegeben für {name}.",
   "deputy_list_title": "Wer hat Zugriff",

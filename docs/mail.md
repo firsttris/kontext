@@ -91,9 +91,10 @@ IMAP und SMTP.
 - **Vertretung in einem Schritt** unter *Einstellungen → Vertretung*: eine Kollegin wählen,
   „Lesen“ oder „Bearbeiten“, Postfach, Kalender und Kontakte ankreuzen, „Freigeben“. Sie findet
   das Postfach unter „Postfächer“ („Postfach von …“), Kalender und Kontakte unter „Geteilt mit
-  mir“. „Lesen“ zeigt Mails, Termine und Kontakte; „Bearbeiten“ legt Mails auch ab, markiert und
-  löscht sie und ändert Termine und Kontakte. In Ihrem Namen senden und Ordner anlegen kann die
-  Vertretung nicht; später angelegte Ordner sind nicht dabei (einfach noch einmal freigeben).
+  mir“. „Lesen“ zeigt Mails, Termine und Kontakte und lässt Mails als gelesen markieren und
+  kennzeichnen (Stalwart trennt das nicht); „Bearbeiten“ legt Mails auch ab, löscht sie und ändert
+  Termine und Kontakte. In Ihrem Namen senden und Ordner anlegen kann die Vertretung nicht; später
+  angelegte Ordner sind nicht dabei (einfach noch einmal freigeben).
   „Wer hat Zugriff“ zeigt jede Kollegin, die etwas davon lesen oder ändern darf, auch was einzeln
   über „Teilen“ freigegeben wurde. „Alles entziehen“ nimmt ihr all das auf einmal; nur dass sie
   wie alle sieht, wann man belegt ist, bleibt. [Mehr](architecture.md#vertretung)
