@@ -1,4 +1,6 @@
 /** Mail operations on top of the JMAP client (RFC 8621). Each function is one round-trip. */
+
+import { bodyStructureOf } from "@/lib/mail-structure";
 import { replyReferences } from "@/lib/references";
 import { assertSetOk, CAPABILITIES, type JmapClient } from "./client";
 import type { BodyPart, EmailAddress, EmailDetail, EmailSummary, Identity, Mailbox } from "./types";
@@ -326,6 +328,8 @@ export const getQuota = async (client: JmapClient, accountId: string): Promise<Q
 };
 
 export type OutgoingAttachment = { blobId: string; name: string; type: string; size: number };
+/** An image in the text, which the HTML shows as `cid:` (lib/inline-images.ts). */
+export type OutgoingImage = OutgoingAttachment & { cid: string };
 
 export type OutgoingEmail = {
   accountId: string;
@@ -337,6 +341,8 @@ export type OutgoingEmail = {
   html: string;
   text: string;
   attachments: OutgoingAttachment[];
+  /** The images in the text. */
+  images?: OutgoingImage[];
   inReplyTo?: string[] | null;
   references?: string[] | null;
   /** A saved draft this mail replaces; it is removed after sending. */
@@ -372,14 +378,7 @@ const emailCreate = (mail: OutgoingEmail, mailboxIds: Record<string, boolean>, d
     ? { references: replyReferences(mail.references, mail.inReplyTo) }
     : {}),
   bodyValues: { text: { value: mail.text }, html: { value: mail.html } },
-  textBody: [{ partId: "text", type: "text/plain" }],
-  htmlBody: [{ partId: "html", type: "text/html" }],
-  attachments: mail.attachments.map(({ blobId, name, type }) => ({
-    blobId,
-    name,
-    type,
-    disposition: "attachment",
-  })),
+  bodyStructure: bodyStructureOf(mail.attachments, mail.images),
 });
 
 /** Creates the mail in Drafts, submits it, and on success moves it to Sent (RFC 8621 §7.5). */
@@ -462,6 +461,21 @@ export const saveDraft = async (
   });
   assertSetOk(result, "Entwurf");
   return result.created!.draft!.id;
+};
+
+/** The files and pictures of a saved draft, with the blobs they have there (lib/draft-blobs.ts). */
+export const draftParts = async (
+  client: JmapClient,
+  accountId: string,
+  id: string,
+): Promise<BodyPart[]> => {
+  const { list } = await client.call<{ list: { attachments?: BodyPart[] }[] }>("Email/get", {
+    accountId,
+    ids: [id],
+    properties: ["attachments"],
+    bodyProperties: ["partId", "blobId", "type", "name", "size", "cid", "disposition"],
+  });
+  return list[0]?.attachments ?? [];
 };
 
 /** The part to display: the HTML body if there is one, else the text body as HTML. */

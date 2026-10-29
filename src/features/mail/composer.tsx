@@ -11,12 +11,20 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/toast";
 import { AttachFromDocuments } from "@/features/documents/document-actions";
 import { externalIdOf, replyingExternal, sendThroughExternal } from "@/features/external/api";
-import { displayBody, type OutgoingAttachment, saveDraft, sendEmail } from "@/jmap/mail";
+import {
+  displayBody,
+  draftParts,
+  type OutgoingAttachment,
+  saveDraft,
+  sendEmail,
+} from "@/jmap/mail";
 import type { EmailAddress, Identity } from "@/jmap/types";
 import { parseAddresses } from "@/lib/addresses";
 import { attachmentMention, ownText } from "@/lib/attachment-reminder";
 import { type ComposeMode, sharedSenderName, startCompose } from "@/lib/compose";
+import { savedBlobs, withSavedBlob } from "@/lib/draft-blobs";
 import { htmlToText, sanitizeMailHtml, textToHtml } from "@/lib/html";
+import { markCids } from "@/lib/inline-images";
 import { findRole } from "@/lib/mailboxes";
 import { pgpKind } from "@/lib/pgp-mail";
 import { holdUntil, sendTimeLabel } from "@/lib/schedule";
@@ -27,8 +35,10 @@ import { useAutocryptHeader } from "../pgp/autocrypt";
 import { useEncryptedSend } from "../pgp/use-encrypted-send";
 import { SnippetMenu } from "../snippets/snippet-menu";
 import { AttachmentList, ComposerActions, ComposerFields } from "./composer-fields";
+import { InsertImageButton, pictures, useComposerImages } from "./composer-images";
 import { EditorToolbar } from "./editor-toolbar";
 import { ForgottenAttachment } from "./forgotten-attachment";
+import { inlineParts, useInlineImageUrls } from "./inline-image-urls";
 import { type OpenedMail, openedMail, shownSubject } from "./opened-mails";
 import { useEmail } from "./queries";
 import { richText } from "./rich-text";
@@ -101,16 +111,31 @@ export const Composer = ({ accountId, mode, sourceEmailId, prefill }: Props) => 
   const [savedAt, setSavedAt] = useState<Date | null>(null);
   const saving = useRef<Promise<void> | null>(null);
   const initialized = useRef(false);
+  // Pictures pasted or dropped into the text; set once the hook below has the editor.
+  const insertPictures = useRef<(files: File[]) => void>(() => {});
 
   const editor = useEditor({
     extensions: [
-      ...richText({ autolink: true }),
+      ...richText({ autolink: true, images: true }),
       Placeholder.configure({ placeholder: m.mail_body_placeholder() }),
     ],
     onUpdate: () => {
       if (initialized.current) setChanges((n) => n + 1);
     },
     editorProps: {
+      handlePaste: (_view, event) => {
+        const files = pictures(event.clipboardData?.files);
+        if (!files.length) return false;
+        insertPictures.current(files);
+        return true;
+      },
+      handleDrop: (_view, event, _slice, moved) => {
+        const files = moved ? [] : pictures(event.dataTransfer?.files);
+        if (!files.length) return false;
+        event.preventDefault();
+        insertPictures.current(files);
+        return true;
+      },
       attributes: {
         "aria-label": m.mail_body_placeholder(),
         role: "textbox",
@@ -118,6 +143,20 @@ export const Composer = ({ accountId, mode, sourceEmailId, prefill }: Props) => 
       },
     },
   });
+
+  const pics = useComposerImages({
+    client,
+    accountId: sendAccountId,
+    editor,
+    onError: (error) => toast.show(m.common_error({ message: error.message }), "error"),
+    onBusy: (by) => setUploading((n) => n + by),
+  });
+  insertPictures.current = (files) => void pics.insert(files);
+  // A draft's pictures, to show them again before its text goes into the editor.
+  const draftImages = useInlineImageUrls(
+    accountId,
+    mode === "draft" ? (source.data ?? undefined) : undefined,
+  );
 
   const myAddresses = useMemo(
     () =>
@@ -133,6 +172,7 @@ export const Composer = ({ accountId, mode, sourceEmailId, prefill }: Props) => 
     if (initialized.current || !editor || editor.isDestroyed || identities.length === 0) return;
     if (!sendersReady) return;
     if (sourceEmailId && !source.data) return;
+    if (!draftImages.done) return;
     let originalHtml = "";
     // An encrypted original, opened here before: its real content (opened-mails.ts).
     let opened: OpenedMail | undefined;
@@ -157,6 +197,21 @@ export const Composer = ({ accountId, mode, sourceEmailId, prefill }: Props) => 
         } else if (mode === "forward") {
           toast.show(m.mail_forward_encrypted_closed());
         }
+      } else if (mode === "draft" && body.kind === "html") {
+        // A draft keeps its pictures: shown from local URLs, marked with their Content-ID.
+        originalHtml = sanitizeMailHtml(markCids(body.value), {
+          allowRemote: false,
+          cidUrls: draftImages.urls,
+        }).html;
+        pics.setImages(
+          inlineParts(source.data).map((part) => ({
+            blobId: part.blobId!,
+            name: part.name ?? "bild",
+            type: part.type,
+            size: part.size,
+            cid: part.cid!.replace(/^<|>$/g, ""),
+          })),
+        );
       } else {
         originalHtml = sanitizeMailHtml(
           body.kind === "html" ? body.value : textToHtml(body.value),
@@ -229,14 +284,17 @@ export const Composer = ({ accountId, mode, sourceEmailId, prefill }: Props) => 
     session?.username,
     sendAccountId,
     accountId,
+    draftImages,
   ]);
 
   const identity = identities.find((i) => i.id === identityId);
   const drafts = findRole(mailboxes, "drafts");
   const sent = findRole(mailboxes, "sent");
 
-  const leave = () =>
-    navigate({
+  const left = useRef(false);
+  const leave = () => {
+    left.current = true;
+    return navigate({
       to: ".",
       search: (prev) => ({
         ...prev,
@@ -249,6 +307,7 @@ export const Composer = ({ accountId, mode, sourceEmailId, prefill }: Props) => 
         email: mode === "new" || mode === "draft" ? undefined : prev.email,
       }),
     });
+  };
 
   const [receipt, setReceipt] = useState(false);
   const autocrypt = useAutocryptHeader(identity?.email);
@@ -259,8 +318,8 @@ export const Composer = ({ accountId, mode, sourceEmailId, prefill }: Props) => 
     identity?.email,
     [...to, ...cc, ...bcc].map((address) => address.email),
   );
-  const outgoing = () => {
-    const html = editor?.getHTML() ?? "";
+  const outgoing = ({ draft = false } = {}) => {
+    const { html, images } = pics.outgoing(editor?.getHTML() ?? "", { draft });
     return {
       accountId: sendAccountId,
       identity:
@@ -274,6 +333,7 @@ export const Composer = ({ accountId, mode, sourceEmailId, prefill }: Props) => 
       html,
       text: htmlToText(html),
       attachments,
+      images,
       inReplyTo: threading.inReplyTo,
       references: threading.references,
       draftId: draftId.current,
@@ -286,16 +346,32 @@ export const Composer = ({ accountId, mode, sourceEmailId, prefill }: Props) => 
     to.length + cc.length + bcc.length === 0 &&
     !subject.trim() &&
     attachments.length === 0 &&
+    pics.images.length === 0 &&
     !(editor?.getText().trim() ?? "");
 
   /** Saves the current state as the draft (replacing the previous one); one save at a time. */
   const autosave = async (): Promise<void> => {
     if (saving.current) await saving.current;
+    // Once the form is left, what is still in the editor is no longer the mail: taking the editor
+    // off the page drops its pictures (@tiptap/react resets the node views), and a save still
+    // waiting would overwrite the draft just written.
+    if (left.current) return;
     // An encrypted mail is not kept on the server unencrypted, not even as a draft.
     if (!identity || !drafts || isEmpty() || encrypt) return;
     const run = (async () => {
-      draftId.current = await saveDraft(client, outgoing(), drafts.id);
+      const mail = outgoing({ draft: true });
+      draftId.current = await saveDraft(client, mail, drafts.id);
       setSavedAt(new Date());
+      // Files and pictures now live in the draft just written; the one replaced took its own.
+      if (mail.attachments.length || mail.images.length) {
+        const saved = savedBlobs(
+          mail.attachments,
+          mail.images,
+          await draftParts(client, mail.accountId, draftId.current),
+        );
+        setAttachments((current) => current.map(withSavedBlob(saved)));
+        pics.setImages((current) => current.map(withSavedBlob(saved)));
+      }
       void queryClient.invalidateQueries({ queryKey: [sendAccountId, "emails"] });
     })();
     saving.current = run;
@@ -551,7 +627,12 @@ export const Composer = ({ accountId, mode, sourceEmailId, prefill }: Props) => 
         {editor ? (
           <EditorToolbar
             editor={editor}
-            extra={<SnippetMenu editor={editor} accountId={sendAccountId} recipient={to[0]} />}
+            extra={
+              <>
+                <InsertImageButton onFiles={(files) => void pics.insert(files)} />
+                <SnippetMenu editor={editor} accountId={sendAccountId} recipient={to[0]} />
+              </>
+            }
           />
         ) : null}
         <EditorContent

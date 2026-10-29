@@ -11,11 +11,12 @@ import { useClient } from "@/auth/auth";
 import { Button } from "@/components/ui/button";
 import { Dialog } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { type Hold, type OutgoingEmail, sendEmail } from "@/jmap/mail";
+import { type Hold, type OutgoingAttachment, type OutgoingEmail, sendEmail } from "@/jmap/mail";
 import { sendRaw } from "@/jmap/send-raw";
 import type { EmailAddress } from "@/jmap/types";
 import { escapeHtml } from "@/lib/html";
 import { LOCALE } from "@/lib/locale";
+import type { MimeAttachment } from "@/lib/mime";
 import { unlockKey } from "@/lib/pgp";
 import { encryptMail, signMail } from "@/lib/pgp-mail";
 import {
@@ -112,17 +113,21 @@ export const useEncryptedSend = (from: string | undefined, recipients: string[])
         );
 
   /** The mail's attachments, fetched to go inside what is signed or encrypted. */
+  /** The attachments and the images in the text (by their Content-ID), as bytes. */
   const filesOf = (mail: OutgoingEmail) =>
     Promise.all(
-      mail.attachments.map(async (file) => ({
-        name: file.name,
-        type: file.type,
-        bytes: new Uint8Array(
-          await (
-            await client.download(mail.accountId, file.blobId, file.name, file.type)
-          ).arrayBuffer(),
-        ),
-      })),
+      [...mail.attachments, ...(mail.images ?? [])].map(
+        async (file: OutgoingAttachment & { cid?: string }): Promise<MimeAttachment> => ({
+          name: file.name,
+          type: file.type,
+          bytes: new Uint8Array(
+            await (
+              await client.download(mail.accountId, file.blobId, file.name, file.type)
+            ).arrayBuffer(),
+          ),
+          ...(file.cid ? { cid: file.cid } : {}),
+        }),
+      ),
     );
 
   /**

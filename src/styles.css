@@ -188,6 +188,36 @@
 .editor-content .ProseMirror .selectedCell {
   background: color-mix(in srgb, var(--accent) 12%, transparent);
 }
+/* A picture in the text (rich-text.ts): corner handles to resize it, shown on hover and while
+   it is selected; Tiptap places them, their look is ours. */
+.editor-content .ProseMirror [data-resize-container] {
+  max-width: 100%;
+}
+.editor-content .ProseMirror [data-resize-handle] {
+  width: 10px;
+  height: 10px;
+  border: 1.5px solid var(--accent);
+  border-radius: 3px;
+  background: var(--bg);
+  opacity: 0;
+}
+.editor-content .ProseMirror [data-resize-container]:hover [data-resize-handle],
+.editor-content .ProseMirror .ProseMirror-selectednode [data-resize-handle],
+.editor-content .ProseMirror [data-resize-container].ProseMirror-selectednode [data-resize-handle] {
+  opacity: 1;
+}
+.editor-content .ProseMirror .ProseMirror-selectednode img,
+.editor-content .ProseMirror [data-resize-container].ProseMirror-selectednode img {
+  outline: 2px solid var(--accent);
+}
+.editor-content .ProseMirror [data-resize-handle="top-left"],
+.editor-content .ProseMirror [data-resize-handle="bottom-right"] {
+  cursor: nwse-resize;
+}
+.editor-content .ProseMirror [data-resize-handle="top-right"],
+.editor-content .ProseMirror [data-resize-handle="bottom-left"] {
+  cursor: nesw-resize;
+}
 .editor-content .ProseMirror p.is-editor-empty:first-child::before {
   content: attr(data-placeholder);
   color: var(--muted);

@@ -1967,6 +1967,7 @@
   "settings_swipe_read": "Read / unread",
   "settings_swipe_flag": "Flag",
   "settings_swipe_none": "Nothing",
+  "mail_insert_image": "Insert picture",
   "calendar_default_reminder": "Reminder",
   "calendar_default_reminder_title": "Reminder for “{name}”",
   "calendar_default_reminder_hint": "The reminder a new appointment in this calendar gets; it can be changed on the appointment. It applies to you. In a shared calendar, the owner's applies otherwise.",
