@@ -24,6 +24,7 @@ import { createChatRoutes, viewerOf } from "./chat/routes";
 import { createChatStore } from "./chat/store";
 import { createBackupControl } from "./company/backup";
 import { createCalendars } from "./company/calendars";
+import { createExternalHintStore } from "./company/external-hint";
 import { createMailstore } from "./company/mailstore";
 import {
   createDownload,
@@ -362,6 +363,7 @@ export const createApp = async (env: Env) => {
           .catch((error: Error) => console.warn(`Dokumente: ${error.message}`));
       },
       settings,
+      externalHint: createExternalHintStore(db),
       signatureDetails,
       migrations: { jobs, runner, workDir },
       syncs: { syncs, runner: syncRunner, sealer: syncSealer, allowPlain, microsoft },

@@ -1993,5 +1993,19 @@
   "calendar_default_reminder_timed": "Appointments with a time",
   "calendar_default_reminder_all_day": "All-day appointments",
   "calendar_default_reminder_usual": "As usual (15 minutes before)",
-  "calendar_default_reminder_saved": "Reminder saved."
+  "calendar_default_reminder_saved": "Reminder saved.",
+  "mail_external": "External",
+  "mail_external_title": "From outside the company",
+  "mail_external_ask": "Send to external recipients?",
+  "mail_external_ask_hint": "This mail also goes to recipients outside the company:",
+  "mail_external_ask_invitation": "The invitation also goes to attendees outside the company:",
+  "mail_external_send": "Send anyway",
+  "mail_external_back": "Go back",
+  "company_external": "External recipients",
+  "company_external_intro": "Mail from outside the company carries the mark “External” in the list and when reading. Before a mail or an invitation goes to external recipients, Kontext asks once.",
+  "company_external_enabled": "Turn on the “External” hint",
+  "company_external_own": "The own domains count as internal: {domains}",
+  "company_external_partners": "Partner domains",
+  "company_external_partners_hint": "One domain per line, e.g. tax-office-smith.com. Addresses of these domains (and their subdomains) count as internal.",
+  "company_external_invalid": "Not a valid domain: {domains}"
 }
