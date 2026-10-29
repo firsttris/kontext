@@ -93,6 +93,13 @@ describe("birthdaysBetween", () => {
     const copy = { ...petra, id: "p2", accountId: "info" };
     expect(birthdaysBetween([petra, copy, group], "2026-11-01", "2026-11-30")).toHaveLength(1);
   });
+
+  it("shows a person once when the copies differ only in case and spaces", () => {
+    const copy = card("p2", "petra", " keller ", { month: 11, day: 3 }, { accountId: "info" });
+    const days = birthdaysBetween([petra, copy], "2026-11-01", "2026-11-30");
+    expect(days).toHaveLength(1);
+    expect(days[0]?.name).toBe("Petra Keller");
+  });
 });
 
 describe("birthdayEvent", () => {
