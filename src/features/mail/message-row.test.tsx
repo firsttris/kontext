@@ -2,12 +2,22 @@ import { act, cleanup, fireEvent, render, screen } from "@testing-library/react"
 import type { ReactNode } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { EmailSummary } from "@/jmap/types";
+import type { SwipeAction } from "@/lib/swipe";
 import { MessageRow } from "./message-row";
 import { useSwipeAction } from "./swipe-action";
 import type { Group } from "./use-thread-info";
 
 vi.mock("@tanstack/react-router", () => ({
-  Link: ({ children, to: _to, search: _search, ...props }: { children: ReactNode }) => (
+  Link: ({
+    children,
+    to: _to,
+    search: _search,
+    ...props
+  }: {
+    children: ReactNode;
+    to?: unknown;
+    search?: unknown;
+  }) => (
     <a href="/mail" {...props}>
       {children}
     </a>
@@ -77,7 +87,7 @@ const Row = ({
   email: EmailSummary;
   group?: Group;
   onPick?: () => void;
-  onSwipe?: (action: never) => void;
+  onSwipe?: (action: SwipeAction) => void;
 }) => {
   // Wired as list-frame.tsx wires it.
   const swipe = useSwipeAction("inbox");
