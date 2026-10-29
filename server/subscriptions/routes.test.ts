@@ -221,4 +221,23 @@ describe("the runner", () => {
     await runner.tick().catch(() => {});
     expect((await store.get("b", "b"))?.lastSyncAt).not.toBeNull();
   });
+
+  it("does not write a subscription twice at the same time (refresh during a run)", async () => {
+    const store = memoryStore();
+    await store.add(subscription("a"));
+    const events: { id: string; uid: string }[] = [];
+    const calendars = {
+      exists: async () => true,
+      events: async () => [...events],
+      parse: async () => [{ uid: "u1", title: "Gelber Sack" }],
+      apply: async (_account: string, _calendar: string, plan: SyncPlan) => {
+        for (const { uid } of plan.create) events.push({ id: `e-${events.length}`, uid });
+      },
+    } as unknown as SubscribedCalendars;
+    const runner = createSubscriptionRunner({ store, calendars, fetchDeps });
+    const row = (await store.get("a", "a"))!;
+    await Promise.all([runner.sync(row), runner.sync(row)]);
+    expect(events.filter((event) => event.uid === "u1")).toHaveLength(1);
+  });
 });
+
