@@ -59,6 +59,10 @@ Kontext steht, steht auch am iPhone, unter Android (DAVx⁵) und in Thunderbird.
 
   ![Termin „Baubesprechung Hoffmann“ als Kopie im Editor](screenshots/event-duplicate.png)
 
+- **Aufgabe zum Termin:** im Termin legt „Aufgabe zum Termin“ eine Aufgabe an, die mit ihm
+  verknüpft ist – von der Aufgabe kommt man mit einem Klick zurück zum Termin
+  ([Aufgaben](tasks.md)).
+
 - **Beginn verschieben:** Wer Datum oder Uhrzeit des Beginns ändert, nimmt das Ende mit; die
   Dauer bleibt, wie bei Google und Apple.
 - **Einladungen im Kontext-Look:** Kontext verschickt sie selbst, im Namen des Organisators, mit
@@ -138,7 +142,8 @@ Kontext steht, steht auch am iPhone, unter Android (DAVx⁵) und in Thunderbird.
 ## Kontakte
 
 - **Der Kunde auf einen Blick:** die letzten Mails mit ihm (auch aus info@), die nächsten
-  Termine, offene Aufgaben, verknüpfte Dokumente, „Anrufen“ über die [Telefonie](telephony.md).
+  Termine, offene Aufgaben (verknüpft mit ihm oder mit einer Mail mit ihm, aus jedem Postfach),
+  verknüpfte Dokumente, „Anrufen“ über die [Telefonie](telephony.md).
 - **Anlegen und bearbeiten**, auch „Als Kontakt speichern“ direkt neben einer Mail.
 - **Fotos** an Kontakten: zu sehen in der Liste, neben ihren Mails und wenn sie anrufen; über
   CardDAV auch am Handy. Jeder legt außerdem unter *Einstellungen → Profil* ein eigenes Foto für

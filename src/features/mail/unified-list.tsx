@@ -3,10 +3,11 @@
  * newest first.
  */
 import { useCallback, useMemo } from "react";
-import type { Inbox } from "@/lib/inboxes";
+import { type Inbox, resurfacedFilter } from "@/lib/inboxes";
 import { mailboxRights } from "@/lib/mailboxes";
 import { m } from "@/paraglide/messages";
 import type { MailSearch } from "@/routes/_app/mail.$accountId.$mailboxId";
+import { RESURFACED } from "../snooze/queries";
 import type { Row } from "./list-frame";
 import { MergedList } from "./merged-list";
 
@@ -18,6 +19,17 @@ export const UnifiedList = ({ inboxes, search }: { inboxes: Inbox[]; search: Mai
         filter: { mailboxId: mailbox.id, unreadOnly: search.unread },
       })),
     [inboxes, search.unread],
+  );
+  // What came back from Wiedervorlage in any of the inboxes: on top, as in one inbox.
+  const pinned = useMemo(
+    () => ({
+      sources: inboxes.map(({ account, mailbox }) => ({
+        account,
+        filter: resurfacedFilter(mailbox.id, RESURFACED),
+      })),
+      headings: { back: m.mail_resurfaced(), rest: m.mail_resurfaced_rest() },
+    }),
+    [inboxes],
   );
   /** A mail is dragged out of its account's inbox, if that inbox lets one move mails. */
   const dragMail = useCallback(
@@ -36,6 +48,7 @@ export const UnifiedList = ({ inboxes, search }: { inboxes: Inbox[]; search: Mai
       title={m.mail_all_inboxes()}
       unread={inboxes.reduce((sum, { mailbox }) => sum + mailbox.unreadEmails, 0)}
       dragMail={dragMail}
+      pinned={pinned}
     />
   );
 };

@@ -12,6 +12,7 @@ import {
 } from "@/lib/dsn";
 import { requestedReportId } from "@/lib/envelope";
 import { CAPABILITIES, type JmapClient } from "./client";
+import { searchPages } from "./search-pages";
 import type { BodyStructure } from "./types";
 
 /** A report as it is shown: what it says, and when it came. */
@@ -71,64 +72,11 @@ type Candidate = {
   bodyStructure: BodyStructure | null;
 };
 
-/** Mails per search page. */
-const PAGE = 50;
 /**
  * How many pages a search by subject reads at most (1000 mails that mention it); without a
  * subject only the first, since every mail after the send would match.
  */
 const MAX_PAGES = 20;
-
-/** One page of the mails found: when each came, its Content-Type and its parts. */
-const candidatePage = async (
-  client: JmapClient,
-  accountId: string,
-  filter: Record<string, unknown>,
-  position: number,
-): Promise<Candidate[]> => {
-  const [, got] = await client.request([
-    [
-      "Email/query",
-      {
-        accountId,
-        filter,
-        sort: [{ property: "receivedAt", isAscending: true }],
-        position,
-        limit: PAGE,
-      },
-      "q",
-    ],
-    [
-      "Email/get",
-      {
-        accountId,
-        "#ids": { resultOf: "q", name: "Email/query", path: "/ids" },
-        properties: ["receivedAt", "header:Content-Type", "bodyStructure"],
-        bodyProperties: ["partId", "blobId", "type", "subParts"],
-      },
-      "g",
-    ],
-  ]);
-  return (got![1] as { list?: Candidate[] }).list ?? [];
-};
-
-/** The reports among the mails the search finds, page by page, up to `pages` pages. */
-const reportCandidates = async (
-  client: JmapClient,
-  accountId: string,
-  filter: Record<string, unknown>,
-  pages: number,
-  position = 0,
-): Promise<Candidate[]> => {
-  const page = await candidatePage(client, accountId, filter, position);
-  const reports = page.filter((mail) => isDeliveryReport(mail["header:Content-Type"]));
-  return page.length < PAGE || pages <= 1
-    ? reports
-    : [
-        ...reports,
-        ...(await reportCandidates(client, accountId, filter, pages - 1, position + PAGE)),
-      ];
-};
 
 /**
  * The reports on a sent mail: mails after it that carry its subject (Stalwart indexes the
@@ -146,7 +94,17 @@ export const reportsFor = async (
   const filter = subject
     ? { operator: "AND", conditions: [{ after }, { text: subject }] }
     : { after };
-  const candidates = await reportCandidates(client, accountId, filter, subject ? MAX_PAGES : 1);
+  const candidates = await searchPages<Candidate>(
+    client,
+    accountId,
+    {
+      filter,
+      properties: ["receivedAt", "header:Content-Type", "bodyStructure"],
+      bodyProperties: ["partId", "blobId", "type", "subParts"],
+    },
+    (mail) => isDeliveryReport(mail["header:Content-Type"]),
+    subject ? MAX_PAGES : 1,
+  );
   const read = await Promise.all(
     candidates.map(async (mail) => {
       const report = await readDeliveryReport(client, accountId, mail.bodyStructure);

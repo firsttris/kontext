@@ -3,6 +3,7 @@ import { Users } from "lucide-react";
 import { useCallback, useMemo } from "react";
 import type { Mailbox } from "@/jmap/types";
 import { acceptsImport } from "@/lib/eml-import";
+import { pinResurfaced, resurfacedFilter } from "@/lib/inboxes";
 import { mailboxNotice } from "@/lib/mail-accounts";
 import { mailboxName, mailboxRights } from "@/lib/mailboxes";
 import { m } from "@/paraglide/messages";
@@ -27,19 +28,7 @@ export const MessageList = ({ accountId, mailbox, search }: Props) => {
   const list = useEmailList(accountId, filter, { collapse: useThreadView(), sort: useMailSort() });
   // In the inbox, what came back from Wiedervorlage and is not read yet: on top, by itself.
   const isInbox = mailbox.role === "inbox";
-  const backFilter = useMemo(
-    () => ({
-      search: {
-        operator: "AND",
-        conditions: [
-          { inMailbox: mailbox.id },
-          { hasKeyword: RESURFACED },
-          { notKeyword: "$seen" },
-        ],
-      },
-    }),
-    [mailbox.id],
-  );
+  const backFilter = useMemo(() => resurfacedFilter(mailbox.id, RESURFACED), [mailbox.id]);
   const back = useEmailList(isInbox ? accountId : "", backFilter);
   // On Wiedervorlage: when each comes back, the next first.
   const isSnoozed = mailbox.role === "snoozed";
@@ -65,19 +54,13 @@ export const MessageList = ({ accountId, mailbox, search }: Props) => {
         .map((row) => ({ ...row, snoozedUntil: snoozes.get(row.email.id) }))
         .sort((a, b) => until(a).localeCompare(until(b)));
     }
-    const backRows = isInbox ? (back.data?.pages.flatMap((page) => page.emails) ?? []) : [];
-    if (!backRows.length) return listed;
-    const ids = new Set(backRows.map((email) => email.id));
-    const rest = listed.filter((row) => !ids.has(row.email.id));
-    return [
-      ...backRows.map((email, index) => ({
-        email,
-        section: index === 0 ? m.mail_resurfaced() : undefined,
-      })),
-      ...rest.map((row, index) =>
-        index === 0 ? { ...row, section: m.mail_resurfaced_rest() } : row,
-      ),
-    ];
+    const backRows: Row[] = isInbox
+      ? (back.data?.pages.flatMap((page) => page.emails.map((email) => ({ email }))) ?? [])
+      : [];
+    return pinResurfaced(backRows, listed, {
+      back: m.mail_resurfaced(),
+      rest: m.mail_resurfaced_rest(),
+    });
   }, [list.data, held, scheduled, isSnoozed, snoozes, isInbox, back.data]);
   const { hasNextPage, isFetchingNextPage, fetchNextPage } = list;
   const onNearEnd = useCallback(() => {

@@ -1,7 +1,17 @@
 // @vitest-environment node
 import PostalMime from "postal-mime";
 import { describe, expect, it } from "vitest";
-import { isReceipt, receiptAnswered, receiptMessage } from "./mdn";
+import type { BodyStructure } from "@/jmap/types";
+import {
+  bareMessageId,
+  dispositionPart,
+  isReceipt,
+  parseDisposition,
+  receiptAnswered,
+  receiptMessage,
+  receiptsForSent,
+  receiptTargets,
+} from "./mdn";
 
 describe("read receipts", () => {
   const raw = receiptMessage({
@@ -76,5 +86,67 @@ describe("read receipts", () => {
     expect(receiptAnswered({ $mdnsent: true })).toBe(true);
     expect(receiptAnswered({ $MDNSent: true })).toBe(true);
     expect(receiptAnswered({ $seen: true })).toBe(false);
+  });
+});
+
+describe("reading a receipt", () => {
+  it("finds the disposition part in the report", () => {
+    const report = {
+      type: "multipart/report",
+      subParts: [
+        { type: "text/plain", subParts: null },
+        { type: "message/disposition-notification", blobId: "d", subParts: null },
+      ],
+    } as unknown as BodyStructure;
+    expect(dispositionPart(report)?.blobId).toBe("d");
+    expect(dispositionPart({ type: "text/plain", subParts: null } as BodyStructure)).toBeNull();
+  });
+
+  it("reads Original-Message-ID and Final-Recipient, folded lines too", () => {
+    const text = [
+      "Reporting-UA: mail.example; Outlook",
+      "Final-Recipient: rfc822;",
+      " petra@keller-elektro.test",
+      "Original-Message-ID: <abc.123@weber-haustechnik.test>",
+      "Disposition: manual-action/MDN-sent-manually; displayed",
+      "",
+    ].join("\r\n");
+    expect(parseDisposition(text)).toEqual({
+      originalMessageId: "abc.123@weber-haustechnik.test",
+      finalRecipient: "petra@keller-elektro.test",
+    });
+    expect(parseDisposition("Disposition: displayed\r\n").originalMessageId).toBeNull();
+  });
+
+  it("takes Message-IDs with or without brackets", () => {
+    expect(bareMessageId(" <a@b> ")).toBe("a@b");
+    expect(bareMessageId("a@b")).toBe("a@b");
+    expect(bareMessageId("two words")).toBeNull();
+  });
+
+  it("names the mail by its headers and by the report", () => {
+    expect(receiptTargets({ inReplyTo: ["x@y"], references: ["w@y", "x@y"] }, "z@y")).toEqual([
+      "x@y",
+      "w@y",
+      "z@y",
+    ]);
+    expect(receiptTargets({ inReplyTo: null, references: null }, null)).toEqual([]);
+  });
+});
+
+describe("receipts filed away", () => {
+  const sent = [
+    { messageId: ["asked@w"], receiptTo: [{ email: "jonas@w" }] },
+    { messageId: ["plain@w"], receiptTo: null },
+  ];
+
+  it("keeps only receipts for a sent mail that asked for one", () => {
+    const receipts = [
+      { id: "1", targets: ["asked@w"] },
+      { id: "2", targets: ["plain@w"] },
+      { id: "3", targets: ["elsewhere@x"] },
+      { id: "4", targets: [] },
+    ];
+    expect(receiptsForSent(receipts, sent).map((receipt) => receipt.id)).toEqual(["1"]);
   });
 });

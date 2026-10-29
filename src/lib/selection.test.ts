@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import type { EmailSummary } from "@/jmap/types";
+import type { EmailSummary, Mailbox } from "@/jmap/types";
 import {
   addRange,
   categoryState,
@@ -11,6 +11,7 @@ import {
   pickKey,
   rowClick,
   singleAccount,
+  snoozeTargets,
   toggleKey,
 } from "./selection";
 
@@ -79,5 +80,37 @@ describe("selection", () => {
     expect(rowClick({ ...click, picking: true })).toBe("open");
     expect(rowClick({ ...click, phone: true })).toBe("open");
     expect(rowClick({ ...click, picking: true, phone: true })).toBe("toggle");
+  });
+});
+
+describe("snoozeTargets", () => {
+  const box = (id: string, role: string | null, mayRemoveItems = true) =>
+    ({ id, role, myRights: { mayRemoveItems } }) as unknown as Mailbox;
+  const mailboxes = {
+    own: [box("in", "inbox"), box("sent", "sent")],
+    info: [box("in2", "inbox"), box("ro", null, false)],
+  };
+
+  it("puts the mails of each account and folder away together", () => {
+    const groups = groupsOf([
+      { accountId: "own", email: email("a", ["in"]) },
+      { accountId: "info", email: email("b", ["in2"]) },
+      { accountId: "own", email: email("c", ["in"]) },
+    ]);
+    expect(snoozeTargets(groups, mailboxes)).toEqual([
+      { accountId: "own", from: "in", ids: ["a", "c"] },
+      { accountId: "info", from: "in2", ids: ["b"] },
+    ]);
+  });
+
+  it("offers nothing when a folder does not allow it", () => {
+    const sent = groupsOf([
+      { accountId: "own", email: email("a", ["in"]) },
+      { accountId: "own", email: email("b", ["sent"]) },
+    ]);
+    expect(snoozeTargets(sent, mailboxes)).toBeNull();
+    const readOnly = groupsOf([{ accountId: "info", email: email("b", ["ro"]) }]);
+    expect(snoozeTargets(readOnly, mailboxes)).toBeNull();
+    expect(snoozeTargets([], mailboxes)).toBeNull();
   });
 });

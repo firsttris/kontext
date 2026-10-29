@@ -4,6 +4,8 @@
  * is recognised. Stalwart has no JMAP MDN (RFC 9007), so the app builds it. Pure.
  */
 
+import type { BodyStructure } from "@/jmap/types";
+import { fieldGroups, findPart, withoutType } from "./dsn";
 import { LOCALE } from "./locale";
 import { mailbox } from "./mime";
 
@@ -84,3 +86,66 @@ export const receiptAnswered = (keywords: Record<string, boolean>): boolean =>
 export const isReceipt = (contentType: string | null | undefined): boolean =>
   /multipart\/report/i.test(contentType ?? "") &&
   /report-type\s*=\s*"?disposition-notification/i.test(contentType ?? "");
+
+const DISPOSITION_TYPES = [
+  "message/disposition-notification",
+  "message/global-disposition-notification",
+];
+
+/** The machine-readable part of a receipt (RFC 8098 §3.1, RFC 6533 for the global one). */
+export const dispositionPart = (structure: BodyStructure | null): BodyStructure | null =>
+  findPart(structure, (part) => DISPOSITION_TYPES.includes(part.type.toLowerCase()));
+
+export type Disposition = {
+  /** The Message-ID of the mail the receipt is for, without brackets. */
+  originalMessageId: string | null;
+  /** Who displayed it (Final-Recipient without its type). */
+  finalRecipient: string | null;
+};
+
+/** "<a@b>" → "a@b"; JMAP gives Message-IDs without the brackets (RFC 8621 §4.1.2.5). */
+export const bareMessageId = (value: string): string | null =>
+  /<([^<>\s]+)>/.exec(value)?.[1] ?? (/^[^<>\s]+$/.test(value.trim()) ? value.trim() : null);
+
+/** The message/disposition-notification part read (RFC 8098 §3.2). */
+export const parseDisposition = (text: string): Disposition => {
+  const fields = new Map(fieldGroups(text).flatMap((group) => [...group]));
+  const original = fields.get("original-message-id");
+  return {
+    originalMessageId: original ? bareMessageId(original) : null,
+    finalRecipient: withoutType(fields.get("final-recipient")),
+  };
+};
+
+/**
+ * The Message-IDs a receipt names as the mail it confirms: In-Reply-To and References as the
+ * receipt's own headers carry them, and the report's Original-Message-ID (some programs set only
+ * that one).
+ */
+export const receiptTargets = (
+  mail: { inReplyTo: string[] | null; references: string[] | null },
+  originalMessageId: string | null,
+): string[] => [
+  ...new Set([
+    ...(mail.inReplyTo ?? []),
+    ...(mail.references ?? []),
+    ...(originalMessageId ? [originalMessageId] : []),
+  ]),
+];
+
+/** A sent mail as far as receipts care: its Message-ID and whether it asked for one. */
+export type SentMail = { messageId: string[] | null; receiptTo: unknown[] | null };
+
+/**
+ * The receipts that confirm one of these sent mails, which asked for a receipt; only those are
+ * filed away. A receipt for anything else – or a mail that only looks like one – stays.
+ */
+export const receiptsForSent = <R extends { targets: string[] }>(
+  receipts: R[],
+  sent: SentMail[],
+): R[] => {
+  const asked = new Set(
+    sent.filter((mail) => mail.receiptTo?.length).flatMap((mail) => mail.messageId ?? []),
+  );
+  return receipts.filter((receipt) => receipt.targets.some((id) => asked.has(id)));
+};

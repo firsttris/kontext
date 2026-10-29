@@ -67,6 +67,7 @@ export const taskLinkSchema = z.object({
   kind: z.enum(["mail", "contact", "event", "chat", "call", "document"]),
   accountId: z.string().min(1).max(64),
   ref: z.string().min(1).max(200),
+  /** mail: its conversation; event: its day (YYYY-MM-DD), so the calendar opens on it. */
   threadId: z.string().max(200).nullable().default(null),
   label: z.string().max(300),
   detail: z.string().max(300).default(""),
