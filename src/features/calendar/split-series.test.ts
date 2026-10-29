@@ -91,4 +91,19 @@ describe("useSplitSeries.changeFollowing", () => {
       }),
     );
   });
+
+  it("leaves the series whole when the new series cannot be created", async () => {
+    queryEvents.mockResolvedValue([]);
+    create.mockRejectedValue(new Error("forbidden"));
+    const { result } = renderHook(() => useSplitSeries());
+    await expect(
+      result.current.changeFollowing(instance("2026-11-23T10:00:00"), series, {
+        start: "2026-11-23T10:00:00",
+        recurrenceRule: { ...rule, count: undefined },
+      }),
+    ).rejects.toThrow("forbidden");
+    // Either the series was never cut, or it was put back as it was.
+    const last = update.mock.calls.at(-1)?.[0] as { patch: Record<string, unknown> } | undefined;
+    if (last) expect(last.patch.recurrenceRule).toEqual(rule);
+  });
 });
