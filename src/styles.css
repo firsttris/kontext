@@ -98,6 +98,25 @@
     scrollbar-width: thin;
     scrollbar-color: var(--border) transparent;
   }
+  /* Chromium before 121 (and apps built on it) ignores the two above and still draws its own bar;
+     there only the -webkit- pseudo-elements reach it. Newer browsers skip this block. */
+  @supports not (scrollbar-color: auto) {
+    ::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+    ::-webkit-scrollbar-track,
+    ::-webkit-scrollbar-corner {
+      background: transparent;
+    }
+    ::-webkit-scrollbar-thumb {
+      border-radius: 4px;
+      background: var(--border);
+    }
+    ::-webkit-scrollbar-button {
+      display: none;
+    }
+  }
   button {
     cursor: pointer;
   }
