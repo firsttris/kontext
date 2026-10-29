@@ -41,19 +41,30 @@ const STATUS_TYPES = ["message/delivery-status", "message/global-delivery-status
 export const isStatusPart = (part: { type: string }): boolean =>
   STATUS_TYPES.includes(part.type.toLowerCase());
 
-/** The machine-readable part of a report, wherever it sits in the tree. */
-export const deliveryStatusPart = (part: BodyStructure | null): BodyStructure | null => {
+/** The first part of the tree that `test` accepts, depth first. */
+export const findPart = (
+  part: BodyStructure | null,
+  test: (part: BodyStructure) => boolean,
+): BodyStructure | null => {
   if (!part) return null;
-  if (isStatusPart(part)) return part;
+  if (test(part)) return part;
   for (const child of part.subParts ?? []) {
-    const found = deliveryStatusPart(child);
+    const found = findPart(child, test);
     if (found) return found;
   }
   return null;
 };
 
-/** The groups of fields: lines folded back (RFC 5322 §2.2.3), split at the blank lines. */
-const fieldGroups = (text: string): Map<string, string>[] =>
+/** The machine-readable part of a report, wherever it sits in the tree. */
+export const deliveryStatusPart = (part: BodyStructure | null): BodyStructure | null =>
+  findPart(part, isStatusPart);
+
+/**
+ * The groups of fields of a report's machine-readable part (delivery status, RFC 3464, or
+ * disposition, RFC 8098): lines folded back (RFC 5322 §2.2.3), split at the blank lines, names
+ * in lower case.
+ */
+export const fieldGroups = (text: string): Map<string, string>[] =>
   text
     .replace(/\r\n/g, "\n")
     .replace(/\n[ \t]+/g, " ")
@@ -71,7 +82,7 @@ const fieldGroups = (text: string): Map<string, string>[] =>
     .filter((group) => group.size > 0);
 
 /** "rfc822;anna@x.test" → "anna@x.test": the address without its type. */
-const withoutType = (value: string | undefined) =>
+export const withoutType = (value: string | undefined) =>
   value ? value.slice(value.indexOf(";") + 1).trim() || null : null;
 
 const outcomeOf = (action: string): DeliveryOutcome | null => {

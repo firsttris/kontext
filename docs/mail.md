@@ -162,6 +162,11 @@ IMAP und SMTP.
 - **Senden rückgängig** (5 bis 30 Sekunden) und **später senden** („morgen 8 Uhr“) – der Server
   sendet, auch wenn der Rechner aus ist.
 - **Lesebestätigung** anfordern; eine erbetene beantwortet man mit einem Klick, nie von selbst.
+  Die gesendete Mail zeigt „Gelesen von …“, auch wenn das Programm des Empfängers die
+  Bestätigung anders betitelt oder nur im Bericht auf die Mail verweist. Die Bestätigungen selbst
+  legt Kontext still ab: gelesen ins **Archiv**, statt den Posteingang zu füllen – aber nur
+  solche, die wirklich zu einer eigenen gesendeten Mail mit der Bitte gehören; alles andere
+  bleibt im Posteingang.
 - **Zustellbestätigung** anfordern (das Paket mit Häkchen in „Neue Mail“): Die empfangenden
   Server schicken einen Zustellbericht (DSN, RFC 3461) – der Nachweis, dass die Mail angenommen
   wurde, oder warum nicht. Anders als die Lesebestätigung hängt sie nicht vom Empfänger ab,

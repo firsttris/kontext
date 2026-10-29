@@ -7,6 +7,11 @@ Steps that an update needs beyond raising the version are marked **Upgrade**.
 
 ## Unreleased
 
+- Mail: read receipts are matched by the report's `Original-Message-ID` too (RFC 8098), so
+  receipts from programs that set no `In-Reply-To` count; the sent mail looks for them by sender
+  (its recipients) or subject, paging like the delivery reports (`src/jmap/search-pages.ts`).
+  Incoming receipts for one's own sent mails are filed quietly: marked read and moved to the
+  archive – only when they name a mail in Sent that asked for a receipt; anything else stays.
 - Company admin: "Regeln" at an employee's entry – the admin sees and edits the person's mail
   rules (`GET`/`PUT /api/company/employees/:id/rules`, `POST …/rules/apply`, admin only). They are
   the person's own Sieve script, so the employee sees and changes them in Settings like their own;

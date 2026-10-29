@@ -160,6 +160,15 @@ export const useMailActions = () => {
       moveTo.mutateAsync({ accountId, emails, from, target }),
     archive: async (accountId: string, ids: string[], from: string) =>
       move.mutateAsync({ accountId, ids, from, to: await archiveMailboxId(accountId) }),
+    /** Into the archive and read, in one step (read receipts filed away). */
+    archiveRead: async (accountId: string, ids: string[], from: string) =>
+      move.mutateAsync({
+        accountId,
+        ids,
+        from,
+        to: await archiveMailboxId(accountId),
+        keywords: { $seen: true },
+      }),
     /** Into Spam, and out of it into the inbox; the spam filter learns from both. */
     markSpam: (accountId: string, ids: string[], from: string, spam: boolean) => {
       const to = findRole(mailboxesOf(accountId), spam ? "junk" : "inbox");

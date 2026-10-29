@@ -165,7 +165,7 @@ Ein Zustellbericht (DSN) kommt vom Mailserver, nicht vom Empfänger (`src/lib/en
 ## Lesebestätigung
 
 Stalwart kennt JMAP-MDN (RFC 9007) nicht; Kontext baut Lesebestätigungen nach RFC 8098 selbst
-(`src/lib/mdn.ts`, `src/features/mail/receipts.tsx`):
+(`src/lib/mdn.ts`, `src/jmap/receipts.ts`, `src/features/mail/receipts.tsx`):
 
 - **Anfordern:** Der Schalter mit dem Häkchen-Brief im Fenster „Neue Mail“ setzt
   `Disposition-Notification-To` auf die eigene Adresse.
@@ -175,9 +175,25 @@ Stalwart kennt JMAP-MDN (RFC 9007) nicht; Kontext baut Lesebestätigungen nach R
   `In-Reply-To` auf die Mail), legt sie per `Email/import` in „Gesendet“ und verschickt sie von der
   Adresse, an die die Mail ging. Beides setzt `$MDNSent` (RFC 3503), danach fragt keiner mehr –
   Stalwart gibt Schlagworte klein zurück, verglichen wird ohne Groß und Klein.
-- **Sehen:** Eine gesendete Mail mit der Bitte zeigt „Gelesen von … · Zeit“. Stalwart durchsucht
-  `In-Reply-To` nicht; gesucht wird nach dem Betreff, behalten wird, was eine Bestätigung ist
-  und auf genau diese Mail zeigt. Die Bestätigungen selbst liegen als Mails im Posteingang.
+- **Sehen:** Eine gesendete Mail mit der Bitte zeigt „Gelesen von … · Zeit“. Eine Bestätigung
+  nennt die Mail in `In-Reply-To`/`References` – oder, bei manchen Programmen, nur im Feld
+  `Original-Message-ID` ihres Berichtsteils (RFC 8098 §3.2.5), oft unter anderem Betreff
+  („Read: …“, „Gelesen: …“, „Zur Kenntnis genommen“). Stalwart indiziert weder diese Header noch
+  den Berichtsteil (`crates/email/src/message/index/search.rs`: `Headers` nur, wenn eigens
+  eingeschaltet). Gesucht wird darum ab der Sendezeit nach Mails **von einem der Empfänger oder
+  mit dem Betreff** (bis 20 Empfänger, seitenweise bis 500 Treffer, wie die Zustellberichte über
+  `src/jmap/search-pages.ts`); behalten wird, was eine Bestätigung ist (`Content-Type`) und diese
+  Mail nennt. Den Berichtsteil lädt die App nur, wenn die Header sie nicht schon nennen.
+- **Still ablegen:** Eingehende Bestätigungen für eigene gesendete Mails gehören an die gesendete
+  Mail, nicht in den Posteingang. Für jedes Postfach, aus dem man Mails nehmen darf (das eigene
+  und gemeinsame), schaut die App bei jeder Änderung nach ungelesenen Bestätigungen der letzten
+  14 Tage im Posteingang (`QuietReceipts`, `receiptsToFile`), liest ihren Berichtsteil und
+  vergleicht mit den neuesten 200 gesendeten Mails an ihre Absender. Nur eine Bestätigung, die
+  eine Mail in „Gesendet“ nennt, die selbst um eine Bestätigung gebeten hat, wandert gelesen ins
+  Archiv (angelegt wie beim Archivieren, falls noch keins da ist). Alles andere – eine Mail, die
+  nur aussieht wie eine Bestätigung, eine für eine unbekannte Mail – bleibt, wo es ist. Das
+  geschieht in der offenen App, nicht auf dem Server: Sieve könnte nur nach dem Aussehen gehen
+  und keine gesendete Mail prüfen.
 
 ## Newsletter abbestellen
 

@@ -49,7 +49,6 @@ Lücken und Befunde, die beim Bauen offen geblieben sind und noch angegangen wer
 - [ ] Anhänge verschlüsselter Mails ohne Umweg über Stalwart: heute liegen sie bis zum Senden unverschlüsselt in dessen Zwischenspeicher (siehe [Verschlüsselung](https://firsttris.github.io/kontext/encryption.html#grenzen-und-offene-punkte)).
 - [ ] CalDAV für Aufgaben mit Bestätigung in zwei Schritten: App-Passwörter anlegen können (Thunderbird und Handy fragen keinen Code ab); dazu `sync-collection` für schnelleren Abgleich auf dem iPhone.
 - [ ] **Weitere Sprachen** neben Deutsch und Englisch (Texte in `messages/*.json`).
-- [ ] Lesebestätigungen von Programmen, die kein `In-Reply-To` setzen, erkennt die gesendete Mail noch nicht (dazu müsste Kontext `Original-Message-ID` im Bericht lesen); eingegangene Bestätigungen könnten von selbst gelesen und still abgelegt werden.
 - [ ] **Drucken mit Bildern aus dem Internet**, wenn sie in der Mail freigegeben wurden.
 
 **Technik**
