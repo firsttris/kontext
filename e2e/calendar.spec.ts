@@ -710,7 +710,10 @@ test.describe("Kalender am Handy @phone", () => {
     await login(page);
     await page.getByRole("link", { name: "Kalender" }).click();
     await page.getByRole("button", { name: "Kalender verwalten" }).click();
-    await expect(page.getByRole("dialog").getByText("Mein Kalender")).toBeVisible();
+    // The calendar's line, not its entry in "Aus Datei übernehmen"'s list of calendars.
+    await expect(
+      page.getByRole("dialog").getByRole("listitem").filter({ hasText: "Mein Kalender" }),
+    ).toBeVisible();
     await expect(page.getByRole("dialog").getByLabel("Mein Kalender anzeigen")).toBeChecked();
   });
 
