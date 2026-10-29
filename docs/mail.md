@@ -44,6 +44,18 @@ IMAP und SMTP.
 - **Regeln** („wenn Absender, Empfänger, Betreff oder Text … dann in Ordner, markieren, Kategorie
   setzen, weiterleiten, Aufgabe anlegen“) laufen auf dem Server beim Eingang, auch wenn Kontext zu
   ist; aus einer Mail heraus angelegt, auf Wunsch auch auf vorhandene Mails.
+- **Mailliste sortieren:** das Symbol mit den zwei Pfeilen oben in der Liste (auch am Handy) –
+  neueste oder älteste zuerst, ungelesene, markierte oder Mails mit Kategorie zuerst (in der
+  Reihenfolge der Kategorien), nach Absender oder Betreff (A–Z) oder die größten zuerst. Innerhalb
+  einer Gruppe stehen die neuesten oben. Die Wahl gilt für alle Ordner, „Alle Posteingänge“ und
+  die Suche und bleibt auf dem Gerät gespeichert. In der Gesprächsansicht zählt das ganze
+  Gespräch: hat eine seiner Mails eine Markierung oder ist ungelesen, steht es oben, gezeigt mit
+  seiner neuesten Mail. Wiedervorlage (nach dem Zeitpunkt der Rückkehr) und „Geplant“ behalten
+  ihre eigene Reihenfolge. Sortiert wird auf dem Server (JMAP `Email/query`, RFC 8621), auch
+  beim Nachladen.
+
+  ![Posteingang mit dem geöffneten Menü „Sortieren nach“, gewählt „Ungelesene zuerst“](screenshots/mail-sort.png)
+
 - **Ordner und Unterordner**, verschieben per Menü oder Ziehen, auch zwischen info@ und den
   eigenen Ordnern.
 - **.eml-Dateien importieren:** einzelne Mails, die als Datei gesichert wurden (aus Thunderbird,
