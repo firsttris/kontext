@@ -1,4 +1,4 @@
-/** Sender name and signature per address the user sends from (own address, info@, …). */
+/** Sender name, default „Antwort an“ and signature per address the user sends from (own address, info@, …). */
 import { EditorContent, useEditor } from "@tiptap/react";
 import { type FormEvent, useState } from "react";
 import { useClient } from "@/auth/auth";
@@ -7,7 +7,8 @@ import { Button } from "@/components/ui/button";
 import { Input, Label } from "@/components/ui/input";
 import { useToast } from "@/components/ui/toast";
 import { updateIdentity } from "@/jmap/settings";
-import type { Identity } from "@/jmap/types";
+import type { EmailAddress, Identity } from "@/jmap/types";
+import { formatAddressInput, parseAddresses } from "@/lib/addresses";
 import { htmlToText, textToHtml } from "@/lib/html";
 import { m } from "@/paraglide/messages";
 import { EditorToolbar } from "../mail/editor-toolbar";
@@ -39,6 +40,7 @@ const IdentityCard = ({ identity }: { identity: Identity }) => {
   const toast = useToast();
   const accountId = usePersonalAccountId();
   const [name, setName] = useState(identity.name);
+  const [replyTo, setReplyTo] = useState(formatAddressInput(identity.replyTo ?? []));
   const editor = useEditor({
     extensions: richText(),
     content:
@@ -53,19 +55,29 @@ const IdentityCard = ({ identity }: { identity: Identity }) => {
   });
 
   const save = useSave(
-    (patch: { name: string; htmlSignature: string; textSignature: string }) =>
-      updateIdentity(client, accountId!, identity.id, patch),
+    (patch: {
+      name: string;
+      htmlSignature: string;
+      textSignature: string;
+      replyTo: EmailAddress[] | null;
+    }) => updateIdentity(client, accountId!, identity.id, patch),
     [[accountId, "identities"]],
   );
 
   const submit = async (event: FormEvent) => {
     event.preventDefault();
     const html = editor?.isEmpty ? "" : (editor?.getHTML() ?? "");
+    const answers = parseAddresses(replyTo);
+    if (answers.invalid.length) {
+      toast.show(m.settings_reply_to_invalid({ addresses: answers.invalid.join(", ") }), "error");
+      return;
+    }
     try {
       await save.mutateAsync({
         name: name.trim(),
         htmlSignature: html,
         textSignature: htmlToText(html),
+        replyTo: answers.addresses.length ? answers.addresses : null,
       });
       toast.show(m.settings_saved());
     } catch (error) {
@@ -80,6 +92,19 @@ const IdentityCard = ({ identity }: { identity: Identity }) => {
           {m.settings_sender_name()}
           <Input value={name} onChange={(e) => setName(e.target.value)} />
         </Label>
+        <div className="flex flex-col gap-1">
+          <Label>
+            {m.settings_reply_to()}
+            <Input
+              type="text"
+              inputMode="email"
+              value={replyTo}
+              onChange={(e) => setReplyTo(e.target.value)}
+              placeholder={identity.email}
+            />
+          </Label>
+          <p className="m-0 text-[12px] text-muted">{m.settings_reply_to_hint()}</p>
+        </div>
         <div className="flex flex-col gap-1.5">
           <span className="text-[13px] text-muted">{m.settings_signature()}</span>
           <div className="overflow-hidden rounded-lg border border-border">

@@ -1,5 +1,5 @@
 /**
- * Addresses as chips, with suggestions while typing: To/Cc/Bcc in the composer (label in the
+ * Addresses as chips, with suggestions while typing: To/Cc/Bcc/Reply-To in the composer (label in the
  * line) and the attendees of an appointment (a boxed field under its label, like the others).
  */
 import { X } from "lucide-react";
@@ -105,7 +105,9 @@ export const RecipientField = ({
           : "min-h-9 py-1",
       )}
     >
-      {boxed ? null : <span className="w-9 shrink-0 text-[13px] text-muted">{label}</span>}
+      {boxed ? null : (
+        <span className="min-w-9 shrink-0 whitespace-nowrap text-[13px] text-muted">{label}</span>
+      )}
       {value.map((address) => (
         <span
           key={address.email}
