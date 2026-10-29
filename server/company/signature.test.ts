@@ -61,3 +61,14 @@ describe("signature details", () => {
     });
   });
 });
+
+describe("signature details, review", () => {
+  const anna = [{ id: "a", name: "Anna Weber", email: "anna@weber.test" }];
+
+  it("keeps a heading before a line that goes", () => {
+    const html = "<h3>Weber Haustechnik</h3><p>Mobil [Mobil]<br>[Name]</p>";
+    expect(signaturePatches({ html, text: "" }, anna).a?.htmlSignature).toBe(
+      "<h3>Weber Haustechnik</h3><p>Anna Weber</p>",
+    );
+  });
+});
