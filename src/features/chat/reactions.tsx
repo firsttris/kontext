@@ -1,14 +1,16 @@
 /**
  * Emojis on a message: the chips under it (count, mine marked, who in the tooltip; a click adds or
- * takes away one's own) and the button with the quick choices.
+ * takes away one's own) and the button with the quick choices, and "+" for any other emoji
+ * (emoji-picker.tsx).
  */
 import * as Popover from "@radix-ui/react-popover";
-import { SmilePlus } from "lucide-react";
+import { Plus, SmilePlus } from "lucide-react";
 import { useState } from "react";
 import type { Message } from "@/lib/chat";
 import { QUICK_REACTIONS, reactionNames } from "@/lib/chat-threads";
 import { cn } from "@/lib/cn";
 import { m } from "@/paraglide/messages";
+import { EmojiPicker } from "./emoji-picker";
 
 export const ReactionPicker = ({
   onPick,
@@ -18,8 +20,19 @@ export const ReactionPicker = ({
   className?: string;
 }) => {
   const [open, setOpen] = useState(false);
+  const [all, setAll] = useState(false);
+  const pick = (emoji: string) => {
+    onPick(emoji);
+    setOpen(false);
+  };
   return (
-    <Popover.Root open={open} onOpenChange={setOpen}>
+    <Popover.Root
+      open={open}
+      onOpenChange={(next) => {
+        setOpen(next);
+        setAll(false);
+      }}
+    >
       <Popover.Trigger aria-label={m.chat_react()} title={m.chat_react()} className={className}>
         <SmilePlus size={15} />
       </Popover.Trigger>
@@ -29,22 +42,38 @@ export const ReactionPicker = ({
           align="end"
           sideOffset={6}
           aria-label={m.chat_react()}
-          className="z-50 flex gap-0.5 rounded-full border border-border bg-bg p-1 shadow-lg"
+          collisionPadding={8}
+          className={cn(
+            "z-50 border border-border bg-bg shadow-lg",
+            all ? "h-[360px] w-[340px] rounded-xl p-2" : "flex gap-0.5 rounded-full p-1",
+          )}
         >
-          {QUICK_REACTIONS.map((emoji) => (
-            <button
-              key={emoji}
-              type="button"
-              aria-label={m.chat_react_with({ emoji })}
-              onClick={() => {
-                onPick(emoji);
-                setOpen(false);
-              }}
-              className="flex size-9 items-center justify-center rounded-full text-[20px] transition-transform hover:scale-125 hover:bg-hover"
-            >
-              {emoji}
-            </button>
-          ))}
+          {all ? (
+            <EmojiPicker onPick={pick} className="h-full" />
+          ) : (
+            <>
+              {QUICK_REACTIONS.map((emoji) => (
+                <button
+                  key={emoji}
+                  type="button"
+                  aria-label={m.chat_react_with({ emoji })}
+                  onClick={() => pick(emoji)}
+                  className="flex size-9 items-center justify-center rounded-full text-[20px] transition-transform hover:scale-125 hover:bg-hover"
+                >
+                  {emoji}
+                </button>
+              ))}
+              <button
+                type="button"
+                aria-label={m.emoji_more()}
+                title={m.emoji_more()}
+                onClick={() => setAll(true)}
+                className="flex size-9 items-center justify-center rounded-full text-muted hover:bg-hover hover:text-fg"
+              >
+                <Plus size={18} />
+              </button>
+            </>
+          )}
         </Popover.Content>
       </Popover.Portal>
     </Popover.Root>

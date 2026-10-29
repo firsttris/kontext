@@ -791,6 +791,15 @@ Principal-ID), die Namen holt die App wie bei den Aufgaben über die Principals.
   zuletzt 10:42“ mit den Köpfen, „Neu“, wenn seit dem letzten Lesen welche kamen. Wer im Thread
   geschrieben hat (auch die erste Nachricht), bekommt neue Antworten aufs Gerät
   (`notifyWho`). Antworten auf Antworten gibt es nicht.
+- **Auch im Kanal zeigen:** Unter dem Feld im Thread steht ein Häkchen „Auch im Kanal zeigen“
+  (wie Slacks „Also send to channel“), es gilt für eine Antwort. So eine Antwort trägt
+  `also_in_channel` (Migration `0039_chat_also_in_channel`) und steht zusätzlich im Verlauf des
+  Kanals, mit der Zeile „Antwort im Thread zu: …“ darüber, die in den Thread führt
+  (`thread-note.tsx`); im Thread steht „Auch im Kanal gezeigt“ darunter. Sie zählt im Kanal als
+  ungelesen, rückt ihn in der Liste nach oben und ist seine letzte Nachricht, die Benachrichtigung
+  bleibt die einer Antwort. In vertraulichen Kanälen ist sie wie jede Nachricht verschlüsselt; das
+  Kennzeichen selbst ist offen, und die Zeile entschlüsselt die erste Nachricht des Threads im
+  Browser, um ihren Text zu zeigen.
 - **Aktionen an einer Nachricht** (`src/features/chat/message-actions.tsx`): am PC schwebt beim
   Darüberfahren eine kleine Leiste über der rechten oberen Ecke (Reagieren, Antworten, „…“ mit
   Aufgabe, Bearbeiten, Löschen); sie nimmt keinen Platz weg, nichts verschiebt sich. Am Handy
@@ -802,6 +811,16 @@ Principal-ID), die Namen holt die App wie bei den Aufgaben über die Principals.
 - **Reaktionen:** 👍 ❤️ 😂 🎉 👀 ✅ 🙏 über den Smiley an jeder Nachricht (am Handy im Blatt), jedes
   Emoji einmal pro Person (`chat_reactions`); ein Klick auf eine Reaktion setzt oder nimmt die eigene, im Tooltip
   steht, wer. Kommt bei allen sofort an, ohne Benachrichtigung.
+- **Jedes Emoji:** „+“ hinter den sieben (am Handy im Blatt) öffnet `emoji-picker.tsx`: eine Suche
+  nach deutschen und englischen Wörtern („daumen“, „thumbs“, Umlaute auch als ae/oe/ue/ss), eine
+  Reihe Kategorien und gut 430 Emojis in einem Raster. Die Liste ist Text in
+  `src/lib/emoji-faces.ts` und `emoji-things.ts`, eine Zeile je Emoji mit seinen Wörtern, ohne
+  Bibliothek: eine vollständige Unicode-Liste mit Namen in zwei Sprachen wäre ein Vielfaches
+  größer, und was fehlt, gibt die Tastatur des Geräts. Der Server nimmt jedes einzelne Emoji
+  (`isOneEmoji` in `server/chat/chat.ts`): genau ein Graphem-Cluster (`Intl.Segmenter`, UAX #29)
+  aus Emoji-Zeichen, mit Hautfarbe, ZWJ-Verbindungen, Flaggen (zwei Regional Indicators oder die
+  Tag-Folge Englands) und Tastenkappen („1️⃣“); Wörter, Ziffern und mehrere Emojis hintereinander
+  nicht, höchstens 32 Zeichen.
 - **Aufbewahrung:** Die Firmenverwaltung stellt unter „Team-Chat“ ein, wie lange Nachrichten
   bleiben (unbegrenzt, 30 Tage bis 5 Jahre; `company_setting` `chat_retention_days`). Der Server
   löscht Älteres beim Speichern, beim Start und stündlich (`server/chat/retention.ts`) mit

@@ -26,6 +26,13 @@ info@ – wer das Postfach öffnen darf, öffnet die Mail, kopiert wird nichts.
   „ok“. Am PC über die kleine Leiste, die beim Darüberfahren über der Nachricht erscheint; am
   Handy hält man die Nachricht gedrückt, dann kommen von unten die Reaktionen und Antworten,
   Text kopieren, Aufgabe, Bearbeiten und Löschen.
+- **Jedes Emoji:** „+“ neben den sieben schnellen Reaktionen zeigt alle, nach Kategorien, mit
+  Suche auf Deutsch oder Englisch („daumen“, „werkzeug“, „thumbs“).
+
+  ![Die Emoji-Auswahl an einer Nachricht im Kanal #baustelle-hoffmann: Suche, Kategorien, Smileys](screenshots/chat-emoji.png)
+- **Auch im Kanal zeigen:** Ein Häkchen unter dem Antwortfeld im Thread stellt die Antwort
+  zusätzlich in den Kanal, mit „Antwort im Thread zu: …“ darüber; ein Klick darauf öffnet den
+  Thread. Gut für das Ergebnis einer längeren Abstimmung.
 - **Fotos und Dateien** von der Kamera, per Ziehen oder Einfügen; Fotos werden vorher verkleinert.
 - **Sprachnachrichten** wie bei WhatsApp: das Mikrofon (am Handy anstelle von „Senden“, solange
   nichts geschrieben ist) nimmt auf, bis man „Senden“ drückt oder verwirft; nach einer

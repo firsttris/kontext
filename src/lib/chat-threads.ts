@@ -4,7 +4,7 @@
 import { m } from "@/paraglide/messages";
 import type { Message, Reaction } from "../../server/chat/chat";
 
-/** The emojis offered at once; any other comes from the keyboard's own picker. */
+/** The emojis offered at once; any other from the picker behind "+" (emoji-picker.tsx). */
 export const QUICK_REACTIONS = ["👍", "❤️", "😂", "🎉", "👀", "✅", "🙏"] as const;
 
 /**

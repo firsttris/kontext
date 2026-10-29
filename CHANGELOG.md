@@ -7,6 +7,16 @@ Steps that an update needs beyond raising the version are marked **Upgrade**.
 
 ## Unreleased
 
+- Chat: react with any emoji – "+" beside the seven quick reactions (in the long-press sheet on
+  phones) opens a picker with about 430 emojis in nine categories and a search by English or
+  German words (`src/lib/emoji.ts`, no library). The server now takes exactly one emoji per
+  reaction: one grapheme cluster of emoji code points, flags and keycaps included
+  (`isOneEmoji`); before, several in a row passed and flags did not.
+- Chat: "Auch im Kanal zeigen" under the thread's reply field (like Slack's "Also send to
+  channel"): the reply also stands in the channel, under "Antwort im Thread zu: …", which opens
+  the thread; it counts as unread there and moves the channel up. Works in confidential channels.
+  **Upgrade:** migration `0039_chat_also_in_channel` adds `chat_messages.also_in_channel`; the
+  server applies it at start.
 - Development: `bun run dev` fills tasks and chat of the demo too (`dev/demo-data.ts`, once per
   server database, recognised by #baustelle-hoffmann): the people sign in through
   `POST /api/auth/sign-in/stalwart` like the login form and use Kontext's API. The pictures and the

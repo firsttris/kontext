@@ -798,6 +798,17 @@ test.describe("Screenshots @screenshots", () => {
       page.getByRole("list", { name: "Nachrichten" }).getByText("Passt, ich messe morgen früh"),
     ).toBeVisible();
     await shot(page, "chat");
+
+    // Any emoji: the picker behind "+" beside the newest message.
+    const newest = page
+      .getByRole("list", { name: "Nachrichten" })
+      .locator("[data-message]")
+      .filter({ hasText: "Passt, ich messe morgen früh" });
+    await newest.hover();
+    await newest.getByRole("button", { name: "Reagieren" }).click();
+    await page.getByRole("button", { name: "Weitere Emojis" }).click();
+    await expect(page.getByRole("searchbox", { name: "Emoji suchen" })).toBeVisible();
+    await shot(page, "chat-emoji");
     await context.close();
 
     const phone = await browser.newContext({

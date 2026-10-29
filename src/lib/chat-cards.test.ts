@@ -28,6 +28,7 @@ const email: EmailSummary = {
 const message = (text: string): Message => ({
   id: "m1",
   channelId: "c1",
+  alsoInChannel: false,
   authorId: "max",
   text,
   mentions: [],

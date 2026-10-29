@@ -291,6 +291,8 @@ export const chatMessages = sqliteTable(
     call: text("call"),
     /** An answer in the thread of this message (never an answer to an answer). */
     parentId: text("parent_id"),
+    /** An answer that also stands in the channel ("Auch im Kanal zeigen"); false otherwise. */
+    alsoInChannel: integer("also_in_channel", { mode: "boolean" }).notNull().default(false),
     /**
      * Text and card titles in lower case as German writes it ("Ö" → "ö"), for the search:
      * SQLite's own LIKE ignores case only for ASCII. Null until filled in at start.

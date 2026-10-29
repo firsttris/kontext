@@ -139,7 +139,9 @@ const memoryMessages = () => {
   };
   const store: MessageStore = {
     page: async (channelId) =>
-      messages.filter((m) => m.channelId === channelId && !m.parentId).reverse(),
+      messages
+        .filter((m) => m.channelId === channelId && (!m.parentId || m.alsoInChannel))
+        .reverse(),
     replies: async (parentId) => messages.filter((m) => m.parentId === parentId),
     threadPeople: async (parentId) => [
       ...new Set(
@@ -163,6 +165,7 @@ const memoryMessages = () => {
         editedAt: null,
         deleted: false,
         parentId: post.parentId ?? null,
+        alsoInChannel: Boolean(post.parentId && post.alsoInChannel),
         reactions: [] as Message["reactions"],
         replies: null,
         call: null,
@@ -492,6 +495,38 @@ describe("/api/chat", () => {
     expect((await send("GET", `/messages/${first.id}/replies`)).status).toBe(404);
   });
 
+  it("shows an answer in the channel too when asked, marked as one, in its thread as well", async () => {
+    const { send, as } = setup();
+    const channel = (await send("POST", "/channels", { name: "lager", members: ["max"] })).body
+      .channel;
+    const path = `/channels/${channel.id}/messages`;
+    const first = (await send("POST", path, { text: "Wer holt das Rohr?" })).body.message;
+    as(person("max"));
+    const quiet = (await send("POST", path, { text: "Vielleicht", parentId: first.id })).body
+      .message;
+    const loud = await send("POST", path, {
+      text: "Ich, um 14 Uhr",
+      parentId: first.id,
+      alsoInChannel: true,
+    });
+    expect(loud.status).toBe(201);
+    expect(loud.body.message).toMatchObject({ parentId: first.id, alsoInChannel: true });
+    expect(quiet.alsoInChannel).toBe(false);
+    // In the channel: the first message and the loud answer, not the quiet one.
+    expect((await send("GET", path)).body.messages.map((m) => m.text)).toEqual([
+      "Ich, um 14 Uhr",
+      "Wer holt das Rohr?",
+    ]);
+    const thread = await send("GET", `/messages/${first.id}/replies`);
+    expect((thread.body as unknown as { replies: Message[] }).replies.map((m) => m.text)).toEqual([
+      "Vielleicht",
+      "Ich, um 14 Uhr",
+    ]);
+    // Without a thread the flag means nothing.
+    const plain = (await send("POST", path, { text: "Danke", alsoInChannel: true })).body.message;
+    expect(plain.alsoInChannel).toBe(false);
+  });
+
   it("puts reactions on and off, live for the others", async () => {
     const { send, as, listen } = setup();
     const channel = (await send("POST", "/channels", { name: "lager", members: ["max"] })).body
@@ -548,6 +583,12 @@ describe("/api/chat", () => {
     expect(
       (await send("PATCH", `/messages/${posted.body.message.id}`, { text: "jetzt lesbar" })).status,
     ).toBe(400);
+    // An answer shown in the channel too: still only encrypted text.
+    const answer = { parentId: posted.body.message.id, alsoInChannel: true };
+    expect((await send("POST", path, { ...answer, text: "Danke" })).status).toBe(400);
+    const sealedAnswer = await send("POST", path, { ...answer, text: armored });
+    expect(sealedAnswer.status).toBe(201);
+    expect(sealedAnswer.body.message.alsoInChannel).toBe(true);
   });
 
   it("takes only encrypted files in a confidential channel, without their names", async () => {

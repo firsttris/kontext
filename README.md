@@ -99,7 +99,7 @@ Calls and documents (Schreibzeug, no install of its own needed) are switched on 
 | 📅 **Calendar** | Day, week, month, recurring events (also changed from one date on), **invitations answered with one click**, also **invitations from Outlook and Google right in the mail**, **who is free?**, a **video meeting per event**, **reminders as a notification or by email**, preset per calendar, **duplicate an event**, shared calendars, **calendar subscriptions** (iCal), **appointments from an .ics file** with a preview, **printing the week or month** on A4, public holidays per German state, **the contacts' birthdays** · [more →](https://firsttris.github.io/kontext/calendar-contacts.html) |
 | 👥 **Contacts** | **The customer at a glance**: latest mails, next appointments, open tasks and calls; groups, vCard, merging duplicates, several contacts at once (delete, add to a group, export) · [more →](https://firsttris.github.io/kontext/calendar-contacts.html#kontakte) |
 | ✅ **Tasks** | **List or Kanban board** per mailbox, **from a mail, a chat message or a missed call**, reminders, in Thunderbird and on the phone via CalDAV · [more →](https://firsttris.github.io/kontext/tasks.html) |
-| 💬 **Team chat & video** | Channels and direct messages, **mails and tasks as cards**, voice messages, **video calls and screen sharing** on your own server, end-to-end encrypted conversations · [more →](https://firsttris.github.io/kontext/chat.html) |
+| 💬 **Team chat & video** | Channels and direct messages, **mails and tasks as cards**, threads with **"also send to channel"**, **reactions with any emoji**, voice messages, **video calls and screen sharing** on your own server, end-to-end encrypted conversations · [more →](https://firsttris.github.io/kontext/chat.html) |
 | 📞 **Telephony (CTI)** | **Your Fritzbox and numbers stay**: calls ring in Kontext with the caller's contact and last mail, **click to call**, **voicemail as mail**, missed calls become tasks · [more →](https://firsttris.github.io/kontext/telephony.html) |
 | 🔐 **Encryption** | **OpenPGP** and **S/MIME**, **send confidentially to anyone** through a link to your own server, encrypted backups · [more →](https://firsttris.github.io/kontext/encryption.html) |
 | 📄 **Documents** | **Word, Excel, PowerPoint and PDF** in Kontext with [Schreibzeug](https://github.com/firsttris/schreibzeug), a folder per shared mailbox · [more →](https://firsttris.github.io/kontext/documents.html) |
@@ -126,6 +126,7 @@ Calls and documents (Schreibzeug, no install of its own needed) are switched on 
   </tr>
   <tr>
     <td><img src="docs/screenshots/rules.png" alt="Settings, Rules: mails from the tax adviser into a folder, delivery notes to Suppliers and read, newsletters marked read"><br><sub><b>Rules</b> – sorted on the server, even with Kontext closed · <a href="https://firsttris.github.io/kontext/mail.html#ordnen-und-finden">docs →</a></sub></td>
+    <td><img src="docs/screenshots/chat-emoji.png" alt="Team chat: the emoji picker beside a message, with search, categories and smileys"><br><sub><b>Any emoji</b> – search in English or German · <a href="https://firsttris.github.io/kontext/chat.html">docs →</a></sub></td>
   </tr>
 </table>
 

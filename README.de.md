@@ -99,7 +99,7 @@ VPS mit 2 vCPU und 4 GB RAM. Alles Weitere – DNS, Podman, Backups, Updates –
 | 📅 **Kalender** | Tag, Woche, Monat, Serien (auch ab einem Termin ändern), **Einladungen mit einem Klick beantworten**, auch **Einladungen aus Outlook und Google direkt in der Mail**, **Wer hat Zeit?**, **Videobesprechung pro Termin**, **Erinnerung als Hinweis oder Mail**, je Kalender voreingestellt, **Termine duplizieren**, geteilte Kalender, **Kalender abonnieren** (iCal), **Termine aus .ics-Dateien übernehmen** mit Vorschau, **Woche oder Monat drucken** auf A4, Feiertage je Bundesland, **Geburtstage der Kontakte** · [mehr →](https://firsttris.github.io/kontext/calendar-contacts.html) |
 | 👥 **Kontakte** | **Der Kunde auf einen Blick**: letzte Mails, nächste Termine, offene Aufgaben und Anrufe; Gruppen, vCard, Doppelte zusammenführen, mehrere Kontakte auf einmal (löschen, in eine Gruppe, exportieren) · [mehr →](https://firsttris.github.io/kontext/calendar-contacts.html#kontakte) |
 | ✅ **Aufgaben** | **Liste oder Kanban-Board** pro Postfach, **aus einer Mail, einer Chat-Nachricht oder einem verpassten Anruf**, Erinnerungen, per CalDAV in Thunderbird und am Handy · [mehr →](https://firsttris.github.io/kontext/tasks.html) |
-| 💬 **Team-Chat & Video** | Kanäle und Direktnachrichten, **Mails und Aufgaben als Karten**, Sprachnachrichten, **Videocalls und Bildschirm teilen** auf dem eigenen Server, Ende-zu-Ende verschlüsselte Unterhaltungen · [mehr →](https://firsttris.github.io/kontext/chat.html) |
+| 💬 **Team-Chat & Video** | Kanäle und Direktnachrichten, **Mails und Aufgaben als Karten**, Threads mit **„Auch im Kanal zeigen“**, **Reaktionen mit jedem Emoji**, Sprachnachrichten, **Videocalls und Bildschirm teilen** auf dem eigenen Server, Ende-zu-Ende verschlüsselte Unterhaltungen · [mehr →](https://firsttris.github.io/kontext/chat.html) |
 | 📞 **Telefonie (CTI)** | **Fritzbox und Nummern bleiben**: Anrufe klingeln in Kontext mit Kontakt und letzter Mail des Anrufers, **Anrufen per Klick**, **Mailbox als Mail**, verpasste Anrufe werden Aufgaben · [mehr →](https://firsttris.github.io/kontext/telephony.html) |
 | 🔐 **Verschlüsselung** | **OpenPGP** und **S/MIME**, **vertraulich senden an jeden** über einen Link auf den eigenen Server, verschlüsselte Backups · [mehr →](https://firsttris.github.io/kontext/encryption.html) |
 | 📄 **Dokumente** | **Word, Excel, PowerPoint und PDF** in Kontext mit [Schreibzeug](https://github.com/firsttris/schreibzeug), ein Ordner pro gemeinsamem Postfach · [mehr →](https://firsttris.github.io/kontext/documents.html) |
@@ -126,6 +126,7 @@ VPS mit 2 vCPU und 4 GB RAM. Alles Weitere – DNS, Podman, Backups, Updates –
   </tr>
   <tr>
     <td><img src="docs/screenshots/rules.png" alt="Einstellungen, Regeln: Mails der Kanzlei in einen Ordner, Lieferscheine nach Lieferanten und gelesen, Newsletter als gelesen markiert"><br><sub><b>Regeln</b> – sortieren auf dem Server, auch wenn Kontext zu ist · <a href="https://firsttris.github.io/kontext/mail.html#ordnen-und-finden">Doku →</a></sub></td>
+    <td><img src="docs/screenshots/chat-emoji.png" alt="Team-Chat: die Emoji-Auswahl neben einer Nachricht, mit Suche, Kategorien und Smileys"><br><sub><b>Jedes Emoji</b> – Suche auf Deutsch oder Englisch · <a href="https://firsttris.github.io/kontext/chat.html">Doku →</a></sub></td>
   </tr>
 </table>
 
