@@ -24,10 +24,16 @@ export const useSplitSeries = () => {
       fromLocal(series.start.slice(0, 19), zone),
       fromLocal(recurrenceId.slice(0, 19), zone),
     );
-    return events.filter(
-      (event) =>
-        event.baseEventId === series.id && (event.recurrenceId ?? "") < recurrenceId.slice(0, 19),
-    ).length;
+    const split = recurrenceId.slice(0, 19);
+    // `count` counts the dates of the rule; left-out ones and those moved past the split are not
+    // in the query but count too (RFC 8984 §4.3.3, RFC 5545 §3.8.5.3; so does Stalwart 0.16.27).
+    const dates = new Set([
+      ...events
+        .filter((event) => event.baseEventId === series.id)
+        .map((event) => (event.recurrenceId ?? "").slice(0, 19)),
+      ...Object.keys(series.recurrenceOverrides ?? {}).map((date) => date.slice(0, 19)),
+    ]);
+    return [...dates].filter((date) => date && date < split).length;
   };
 
   /** Ends the series before the instance's date. */
