@@ -9,7 +9,8 @@ const HOUR = 3_600_000;
 
 /**
  * A folder with three mails: Anton the oldest and unread, Berta flagged, Clara the newest and
- * the largest; with `reply`, a read answer to Anton, newer than all, in the same conversation.
+ * the largest; Anton's body is longer than Berta's, so their sizes do not hang on the generated
+ * headers (Message-ID, Date) that differ from run to run; with `reply`, a read answer to Anton, newer than all, in the same conversation.
  * Returns the folder's address in the app and a cleanup.
  */
 const folderWithMails = async (name: string, { reply = false } = {}) => {
@@ -35,7 +36,10 @@ const folderWithMails = async (name: string, { reply = false } = {}) => {
   const mails = await client.call("Email/set", {
     accountId,
     create: {
-      a: { ...mail("Anton fragt nach", 3, {}, "Kurz."), messageId: [anton.slice(1, -1)] },
+      a: {
+        ...mail("Anton fragt nach", 3, {}, "Mittel. ".repeat(100)),
+        messageId: [anton.slice(1, -1)],
+      },
       b: mail("Berta wartet", 2, { $seen: true, $flagged: true }, "Kurz."),
       c: mail("Clara schickt Pläne", 1, { $seen: true }, "Lang. ".repeat(2000)),
       ...(reply
