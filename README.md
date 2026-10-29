@@ -96,7 +96,7 @@ Calls and documents (Schreibzeug, no install of its own needed) are switched on 
 | | |
 |---|---|
 | ✉️ **Mail** | **Shared mailboxes** like info@ with rights per person, **categories** and **rules on the server**, search like Gmail, send later, emptying spam and trash in one click, **other mailboxes** (Gmail, GMX), **warnings about forged senders** · [more →](https://firsttris.github.io/kontext/mail.html) |
-| 📅 **Calendar** | Day, week, month, recurring events, **invitations answered with one click**, **who is free?**, a **video meeting per event**, shared calendars, public holidays per German state · [more →](https://firsttris.github.io/kontext/calendar-contacts.html) |
+| 📅 **Calendar** | Day, week, month, recurring events, **invitations answered with one click**, **who is free?**, a **video meeting per event**, **reminders as a notification or by email**, shared calendars, public holidays per German state · [more →](https://firsttris.github.io/kontext/calendar-contacts.html) |
 | 👥 **Contacts** | **The customer at a glance**: latest mails, next appointments, open tasks and calls; groups, vCard, merging duplicates · [more →](https://firsttris.github.io/kontext/calendar-contacts.html#kontakte) |
 | ✅ **Tasks** | **List or Kanban board** per mailbox, **from a mail, a chat message or a missed call**, reminders, in Thunderbird and on the phone via CalDAV · [more →](https://firsttris.github.io/kontext/tasks.html) |
 | 💬 **Team chat & video** | Channels and direct messages, **mails and tasks as cards**, voice messages, **video calls and screen sharing** on your own server, end-to-end encrypted conversations · [more →](https://firsttris.github.io/kontext/chat.html) |

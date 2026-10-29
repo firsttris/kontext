@@ -7,8 +7,6 @@ import type { EmailSummary } from "@/jmap/types";
 
 /** Unread mail of the last days counts as new; older unread mail is not news any more. */
 export const NEW_MAIL_DAYS = 3;
-/** Minutes before an appointment the device reminds of it. */
-export const REMINDER_MINUTES = 15;
 
 export type InboxMail = { accountId: string; label: string; email: EmailSummary };
 
@@ -48,9 +46,3 @@ export const mailsToAnnounce = (
         Date.parse(email.receivedAt) > since && !announced.has(`${accountId}/${email.id}`),
     )
     .reverse();
-
-/** Milliseconds until the reminder of an appointment is due; none if that moment has passed. */
-export const reminderDelay = (start: Date, now: Date): number | undefined => {
-  const delay = start.getTime() - REMINDER_MINUTES * 60_000 - now.getTime();
-  return delay >= 0 && delay <= 86_400_000 ? delay : undefined;
-};
