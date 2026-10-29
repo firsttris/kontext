@@ -1,12 +1,13 @@
 import { type Browser, expect, type Page } from "@playwright/test";
 import { login } from "../e2e/helpers";
+import { BROWSER_LOCALE, ui } from "./language";
 
 /**
  * The browsers of a take: sharp pictures (twice the pixels on a desktop, three times on a phone),
- * so the camera can come close without blur.
+ * so the camera can come close without blur; in the film's language, which the app follows.
  */
 
-const common = { locale: "de-DE", timezoneId: "Europe/Berlin" } as const;
+export const common = { locale: BROWSER_LOCALE, timezoneId: "Europe/Berlin" } as const;
 
 export const ADDRESS = "kontext.weber-haustechnik.de";
 
@@ -47,7 +48,7 @@ export const closeAll = (...pages: Page[]) =>
 /** The open mail is drawn: its text, and the thumbnails of its attachments (pdf.js takes a moment). */
 export const mailShown = async (page: Page, end = "Viele Grüße") => {
   await expect(page.frameLocator("iframe").getByText(end).first()).toBeVisible();
-  const attachments = page.getByRole("list", { name: "Anhänge" });
+  const attachments = page.getByRole("list", { name: ui("mail_attachments") });
   if (await attachments.count()) await expect(attachments.locator("img").first()).toBeVisible();
 };
 

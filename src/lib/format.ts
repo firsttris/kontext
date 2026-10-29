@@ -35,6 +35,18 @@ const longDateTime = new Intl.DateTimeFormat(LOCALE, {
   minute: "2-digit",
 });
 
+/** The heads of a week's columns, Monday first, in two letters: "Mo Di Mi …", "Mo Tu We …". */
+export const weekdayHeads = (locale: string): string[] => {
+  const format = new Intl.DateTimeFormat(locale, { weekday: "short", timeZone: "UTC" });
+  // 1 January 2024 was a Monday.
+  return Array.from({ length: 7 }, (_, index) =>
+    format
+      .format(new Date(Date.UTC(2024, 0, 1 + index)))
+      .replace(".", "")
+      .slice(0, 2),
+  );
+};
+
 /** For the message list: "09:41" today, "Gestern", "Mo" this week, "14.10." this year, else "14.10.2025". */
 export const listDate = (iso: string, now: Date): string => {
   const date = new Date(iso);

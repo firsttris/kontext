@@ -4,6 +4,7 @@
  */
 import { Link } from "@tanstack/react-router";
 import { cn } from "@/lib/cn";
+import { weekdayHeads } from "@/lib/format";
 import {
   addDays,
   type CalendarEvent,
@@ -13,13 +14,14 @@ import {
   toLocal,
   weekStart,
 } from "@/lib/jscalendar";
+import { LOCALE } from "@/lib/locale";
 import { type DayTask, tasksOnDay } from "@/lib/task-context";
 import { m } from "@/paraglide/messages";
 import { calendarColor } from "./event-style";
 import { eventSearch } from "./queries";
 import { TaskChip } from "./task-chip";
 
-const WEEKDAYS = ["Mo", "Di", "Mi", "Do", "Fr", "Sa", "So"];
+const WEEKDAYS = weekdayHeads(LOCALE);
 const SHOWN = 3;
 
 /** The 42 days of the month grid around a day (Monday before the 1st onwards). */

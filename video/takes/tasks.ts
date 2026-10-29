@@ -1,4 +1,5 @@
 import { type Browser, expect } from "@playwright/test";
+import { say, ui } from "../language";
 import { ADDRESS, closeAll, desktopOf, mailShown } from "../screens";
 import { startTake } from "../take";
 
@@ -8,29 +9,30 @@ export const recordTasks = async (browser: Browser, infoBoard: string) => {
   const take = await startTake("tasks", { app: { page, kind: "desktop", label: ADDRESS } });
   await page.getByRole("link", { name: "info@" }).click();
   await page
-    .getByRole("list", { name: "Posteingang" })
+    .getByRole("list", { name: ui("mail_inbox") })
     .getByText("Wasserhahn tropft wieder")
     .click();
   await mailShown(page, "Claudia Sommer");
-  await take.hold("app", 0.8, { note: "Aus der Mail wird eine Aufgabe" });
-  const dialog = page.getByRole("dialog", { name: "Aufgabe aus dieser Mail" });
+  const note = say("Aus der Mail wird eine Aufgabe", "The email becomes a task");
+  await take.hold("app", 0.8, { note });
+  const dialog = page.getByRole("dialog", { name: ui("tasks_from_mail_title") });
   await take.after(
     "app",
     async () => {
       await page.keyboard.press("t");
-      await expect(dialog.getByLabel("Titel")).toHaveValue(/Wasserhahn/);
+      await expect(dialog.getByLabel(ui("tasks_title_field"))).toHaveValue(/Wasserhahn/);
     },
     1.2,
-    { focus: dialog, pad: 0, note: "Aus der Mail wird eine Aufgabe" },
+    { focus: dialog, pad: 0, note },
   );
-  await take.click("app", dialog.getByRole("button", { name: "Morgen" }), 0.8, {
-    note: "Aus der Mail wird eine Aufgabe",
+  await take.click("app", dialog.getByRole("button", { name: ui("tasks_quick_tomorrow") }), 0.8, {
+    note,
   });
-  await take.click("app", dialog.getByRole("button", { name: "Aufgabe erstellen" }), 1.0, {
+  await take.click("app", dialog.getByRole("button", { name: ui("tasks_create") }), 1.0, {
     until: () =>
-      expect(page.getByRole("status").filter({ hasText: "Aufgabe angelegt." })).toBeVisible(),
+      expect(page.getByRole("status").filter({ hasText: ui("tasks_created") })).toBeVisible(),
     focus: null,
-    note: "Aus der Mail wird eine Aufgabe",
+    note,
   });
 
   await take.after(
@@ -40,13 +42,13 @@ export const recordTasks = async (browser: Browser, infoBoard: string) => {
       await expect(page.getByText("Wasserhahn tropft wieder").first()).toBeVisible();
     },
     1.2,
-    { note: "Das Board von info@ für alle" },
+    { note: say("Das Board von info@ für alle", "info@’s board, for everyone") },
   );
   const card = page
-    .getByRole("region", { name: "Offen" })
+    .getByRole("region", { name: ui("tasks_status_open") })
     .getByRole("link", { name: /Wasserhahn tropft wieder/ });
-  await take.drag("app", card, page.getByRole("region", { name: "In Arbeit" }), 2.0, {
-    note: "Ziehen – und alle sehen, wer dran ist",
+  await take.drag("app", card, page.getByRole("region", { name: ui("tasks_status_doing") }), 2.0, {
+    note: say("Ziehen – und alle sehen, wer dran ist", "Drag it – and everyone sees who’s on it"),
   });
   await take.save();
   await closeAll(page);

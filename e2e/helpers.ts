@@ -13,11 +13,12 @@ export const address = (user: string) => `${user}@${DEV_DOMAIN}`;
  */
 const sessions = new Map<string, Cookie[]>();
 
+// In German or English: the film signs in with an English browser too (video/language.ts).
 const signInWithForm = async (page: Page, user: string) => {
   await page.goto("/login");
-  await page.getByLabel("E-Mail-Adresse").fill(address(user));
-  await page.getByLabel("Passwort").fill(DEV_PASSWORD);
-  await page.getByRole("button", { name: "Anmelden" }).click();
+  await page.getByLabel(/^(E-Mail-Adresse|Email address)$/).fill(address(user));
+  await page.getByLabel(/^(Passwort|Password)$/).fill(DEV_PASSWORD);
+  await page.getByRole("button", { name: /^(Anmelden|Sign in)$/ }).click();
   await expect(page).toHaveURL(/\/mail\//);
   sessions.set(user, await page.context().cookies());
 };

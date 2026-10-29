@@ -1,19 +1,20 @@
 /**
- * Renders the film from the takes (bun run video:record makes them):
+ * Renders the film from the takes (bun run video:record makes them), in FILM_LANG (de or en):
  *
- *   bun video/render.ts                      # docs/assets/kontext-film.mp4, its poster, the teaser
+ *   bun video/render.ts                      # docs/assets/kontext-film.de.mp4, its poster, the teaser
  *   bun video/render.ts --stills 3,12.5,40   # single frames as PNG into .dev/video/stills
  *   bun video/render.ts --teaser             # only the teaser, cut again from the rendered film
  *   bun video/render.ts --from 20 --to 35 --out .dev/video/part.mp4   # a part, to look at
  *
  * The stage (video/stage/) is bundled, served, opened in Chromium and stepped frame by frame;
- * ffmpeg takes the pictures from a pipe.
+ * ffmpeg takes the pictures from a pipe. The teaser needs img2webp from libwebp (package webp).
  */
 import { spawn } from "node:child_process";
 import { cp, mkdir, readdir, readFile, rm, writeFile } from "node:fs/promises";
 import { join, resolve } from "node:path";
 import { parseArgs } from "node:util";
 import { chromium } from "@playwright/test";
+import { assetsOf, LANGUAGE } from "./language";
 import { schedule } from "./stage/timeline";
 import { scenes, teaser } from "./storyboard";
 import { TAKES_DIR } from "./take";
@@ -110,12 +111,25 @@ const teaserParts = (takes: Take[]) => {
   });
 };
 
+const run = (command: string, args: string[]) =>
+  new Promise<void>((ok, fail) =>
+    spawn(command, args, { stdio: "inherit" }).on("exit", (code) =>
+      code === 0 ? ok() : fail(new Error(`${command} exited ${code}`)),
+    ),
+  );
+
 /**
  * The teaser for the READMEs, cut from the film: GitHub plays no video from the repository, but
  * it shows an animated WebP. Narrower than the film to stay at a few MB, but as fluid: at fewer
- * frames per second the camera and the pointer stutter.
+ * frames per second the camera and the pointer stutter. ffmpeg cuts the parts into pictures,
+ * img2webp makes the animation: ffmpeg's WebP has one key frame only, and its frames keep what
+ * changed by less than the quality allows, so slow fades and camera moves left stale blocks
+ * behind; a key frame every eight frames (about four a second) clears them.
  */
 const cutTeaser = async (film: string, parts: { start: number; end: number }[], out: string) => {
+  const frames = join(root, ".dev", "video", "teaser");
+  await rm(frames, { recursive: true, force: true });
+  await mkdir(frames, { recursive: true });
   const cuts = parts
     .map(
       ({ start, end }, index) =>
@@ -123,23 +137,26 @@ const cutTeaser = async (film: string, parts: { start: number; end: number }[], 
     )
     .join(";");
   const joined = `${parts.map((_, index) => `[p${index}]`).join("")}concat=n=${parts.length}:v=1[out]`;
-  await new Promise<void>((ok, fail) =>
-    spawn(
-      "ffmpeg",
-      ["-y", "-loglevel", "error", "-i", film, "-filter_complex", `${cuts};${joined}`].concat([
-        "-map",
-        "[out]",
-        "-c:v",
-        "libwebp_anim",
-        "-quality",
-        "60",
-        "-loop",
-        "0",
-        out,
-      ]),
-      { stdio: "inherit" },
-    ).on("exit", (code) => (code === 0 ? ok() : fail(new Error(`ffmpeg exited ${code}`)))),
+  await run("ffmpeg", [
+    "-y",
+    "-loglevel",
+    "error",
+    "-i",
+    film,
+    "-filter_complex",
+    `${cuts};${joined}`,
+    "-map",
+    "[out]",
+    join(frames, "%04d.png"),
+  ]);
+  const pictures = (await readdir(frames)).sort().map((name) => join(frames, name));
+  await run(
+    "img2webp",
+    ["-loop", "0", "-kmin", "7", "-kmax", "8", "-lossy", "-q", "70", "-m", "4", "-d", "33"]
+      .concat(pictures)
+      .concat(["-o", out]),
   );
+  await rm(frames, { recursive: true, force: true });
 };
 
 const ffmpeg = (fps: number, out: string) => {
@@ -178,14 +195,15 @@ const frame = { x: 0, y: 0, width: 1920, height: 1080 };
 const picture = (options: { path?: string; type?: "jpeg" | "png"; quality?: number }) =>
   page.screenshot({ ...options, clip: frame });
 
-const film = join(root, "docs", "assets", "kontext-film.mp4");
-const teaserPath = join(root, "docs", "assets", "kontext-teaser.webp");
+const assets = assetsOf(LANGUAGE);
+const film = join(root, "docs", "assets", assets.film);
+const teaserPath = join(root, "docs", "assets", assets.teaser);
 
 if (args.teaser) {
   await cutTeaser(film, teaserParts(takes), teaserPath);
   console.log(teaserPath);
 } else if (args.stills) {
-  const dir = join(root, ".dev", "video", "stills");
+  const dir = join(root, ".dev", "video", "stills", LANGUAGE);
   await mkdir(dir, { recursive: true });
   for (const at of args.stills.split(",").map(Number)) {
     await renderAt(at);
@@ -211,7 +229,7 @@ if (args.teaser) {
   if (!args.out) {
     // The poster: a moment that shows the app, for before the film plays.
     await renderAt(Number(process.env.POSTER_AT ?? 8));
-    await picture({ path: out.replace(/\.mp4$/, ".jpg"), type: "jpeg", quality: 85 });
+    await picture({ path: join(root, "docs", "assets", assets.poster), type: "jpeg", quality: 85 });
     await cutTeaser(out, teaserParts(takes), teaserPath);
   }
   console.log(`${out}: ${(to - from).toFixed(1)} s`);

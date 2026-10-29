@@ -1,6 +1,7 @@
 import { type Browser, expect, type Page } from "@playwright/test";
 import { DEV_PASSWORD } from "../../dev/config";
 import { jmapAs } from "../../e2e/helpers";
+import { say, ui } from "../language";
 import { type AgentChat, agentPanel, type ToolCall } from "../panels";
 import { ADDRESS, closeAll, desktopOf, panelOf, READING } from "../screens";
 import { startTake } from "../take";
@@ -8,10 +9,10 @@ import { startTake } from "../take";
 /** A key for the agent, made in the settings as a person does it (e2e/agents.spec.ts). */
 const createKey = async (page: Page) => {
   await page.goto("/settings?section=agents");
-  await page.getByLabel("Name des Agenten").fill("Assistent");
-  await page.getByLabel("Dein Passwort").fill(DEV_PASSWORD);
-  await page.getByLabel("Darf anlegen und ändern").check();
-  await page.getByRole("button", { name: "Schlüssel anlegen" }).click();
+  await page.getByLabel(ui("agents_name")).fill(say("Assistent", "Assistant"));
+  await page.getByLabel(ui("agents_password")).fill(DEV_PASSWORD);
+  await page.getByLabel(ui("agents_write")).check();
+  await page.getByRole("button", { name: ui("agents_create") }).click();
   return (await page.getByTestId("mcp-key").textContent()) ?? "";
 };
 
@@ -47,6 +48,16 @@ const overviewLines = ({ contacts, latestMails, upcomingAppointments }: Overview
     .filter(Boolean)
     .join("\n");
 
+/** Kontext's MCP server answers in German (server/mcp/writer.ts); the English film says it in English. */
+const draftAnswer = (message: string) =>
+  say(
+    message,
+    message.replace(
+      /^Entwurf an (.+) liegt in „Entwürfe“ von (.+)\. Er wird erst gesendet, wenn ihn jemand in Kontext abschickt\.$/,
+      "Draft to $1 is in “Drafts” of $2. It is only sent once someone sends it in Kontext.",
+    ),
+  );
+
 const petrasOffer = async () => {
   const client = jmapAs("jonas");
   const { primaryAccounts } = await client.getSession();
@@ -58,7 +69,17 @@ const petrasOffer = async () => {
   return { accountId, id: ids[0]! };
 };
 
-const PROMPT = "Was war zuletzt mit Petra Keller? Schreib ihr, dass Halle 2 mit rein soll.";
+const PROMPT = say(
+  "Was war zuletzt mit Petra Keller? Schreib ihr, dass Halle 2 mit rein soll.",
+  "What’s the latest with Petra Keller? Tell her hall 2 should be included.",
+);
+
+/** The reply the agent leaves in Drafts, and what of it shows that it is there. */
+const HALL = say("Halle 2", "hall 2");
+const REPLY = say(
+  `Hallo Petra,\n\nvielen Dank für das Angebot. Bitte nehmt die Heizungsanlagen in ${HALL} mit auf.\n\nViele Grüße\nJonas`,
+  `Hi Petra,\n\nthanks for the offer. Please include the heating systems in ${HALL} as well.\n\nBest regards\nJonas`,
+);
 
 /**
  * AI agents: an assistant asks Kontext about a customer and leaves a reply in Drafts; Jonas
@@ -69,9 +90,13 @@ export const recordAgents = async (browser: Browser) => {
   const key = await createKey(page);
   const panel = await panelOf(browser, 500, 820);
   await page.goto("/mail");
-  await expect(page.getByRole("list", { name: "Posteingang" })).toBeVisible();
+  await expect(page.getByRole("list", { name: ui("mail_inbox") })).toBeVisible();
   const take = await startTake("agents", {
-    agent: { page: panel, kind: "panel", label: "KI-Assistent · verbunden mit Kontext" },
+    agent: {
+      page: panel,
+      kind: "panel",
+      label: say("KI-Assistent · verbunden mit Kontext", "AI assistant · connected to Kontext"),
+    },
     app: { page, kind: "desktop", label: ADDRESS },
   });
   // The upper part of the chat, where the answer grows; close enough to read it.
@@ -81,60 +106,71 @@ export const recordAgents = async (browser: Browser) => {
     await take.hold("agent", seconds, { note, cut, ...(state.prompt ? { focus: answer } : {}) });
   };
   await take.hold("app", 0);
-  await chat({ typing: "" }, 0.6, "Claude & Co. arbeiten mit deinen Daten");
+  const yourData = say(
+    "Claude & Co. arbeiten mit deinen Daten",
+    "Claude & co. work with your data",
+  );
+  const rights = say("Über MCP – mit genau deinen Rechten", "Over MCP – with exactly your rights");
+  const nothingSent = say(
+    "Gesendet wird nichts, bis du es tust",
+    "Nothing is sent until you send it",
+  );
+  await chat({ typing: "" }, 0.6, yourData);
   for (let at = 6; at < PROMPT.length + 6; at += 6) {
-    await chat(
-      { typing: PROMPT.slice(0, at) },
-      0.07,
-      "Claude & Co. arbeiten mit deinen Daten",
-      true,
-    );
+    await chat({ typing: PROMPT.slice(0, at) }, 0.07, yourData, true);
   }
-  const lookup: ToolCall = { name: "customer_overview", title: "Kunde nachschlagen" };
-  await chat({ prompt: PROMPT, tools: [lookup] }, 0.6, "Über MCP – mit genau deinen Rechten");
+  const lookup: ToolCall = {
+    name: "customer_overview",
+    title: say("Kunde nachschlagen", "Look up customer"),
+  };
+  await chat({ prompt: PROMPT, tools: [lookup] }, 0.6, rights);
   lookup.result = overviewLines(
     await callTool(page, key, "customer_overview", { query: "Keller" }),
   );
-  await chat({ prompt: PROMPT, tools: [lookup] }, 1.6, "Über MCP – mit genau deinen Rechten");
-  const draft: ToolCall = { name: "create_draft", title: "Entwurf anlegen" };
-  await chat(
-    { prompt: PROMPT, tools: [lookup, draft] },
-    0.5,
-    "Über MCP – mit genau deinen Rechten",
-  );
+  await chat({ prompt: PROMPT, tools: [lookup] }, 1.6, rights);
+  const draft: ToolCall = {
+    name: "create_draft",
+    title: say("Entwurf anlegen", "Create draft"),
+  };
+  await chat({ prompt: PROMPT, tools: [lookup, draft] }, 0.5, rights);
   const offer = await petrasOffer();
   const created = await callTool(page, key, "create_draft", {
     accountId: offer.accountId,
     replyToEmailId: offer.id,
-    text: "Hallo Petra,\n\nvielen Dank für das Angebot. Bitte nehmt die Heizungsanlagen in Halle 2 mit auf.\n\nViele Grüße\nJonas",
+    text: REPLY,
   });
-  draft.result = created.message as string;
+  draft.result = draftAnswer(created.message as string);
   await chat(
     {
       prompt: PROMPT,
       tools: [lookup, draft],
-      answer: "Fertig: Die Antwort an Petra liegt in deinen Entwürfen. Senden tust du.",
+      answer: say(
+        "Fertig: Die Antwort an Petra liegt in deinen Entwürfen. Senden tust du.",
+        "Done: the reply to Petra is in your Drafts. Sending is up to you.",
+      ),
     },
     1.4,
-    "Über MCP – mit genau deinen Rechten",
+    rights,
   );
-  await take.click("app", page.getByRole("link", { name: /Entwürfe/ }), 1.0, {
-    until: () => expect(page.getByRole("list", { name: "Entwürfe" })).toBeVisible(),
+  await take.click("app", page.getByRole("link", { name: new RegExp(ui("mail_drafts")) }), 1.0, {
+    until: () => expect(page.getByRole("list", { name: ui("mail_drafts") })).toBeVisible(),
     focus: null,
-    note: "Gesendet wird nichts, bis du es tust",
+    note: nothingSent,
   });
   await take.click(
     "app",
     page
-      .getByRole("list", { name: "Entwürfe" })
+      .getByRole("list", { name: ui("mail_drafts") })
       .getByText("Re: Angebot Wartungsvertrag 2027")
       .first(),
     2.4,
     {
       until: () =>
-        expect(page.getByRole("textbox", { name: "Ihre Nachricht …" })).toContainText("Halle 2"),
+        expect(page.getByRole("textbox", { name: ui("mail_body_placeholder") })).toContainText(
+          HALL,
+        ),
       focus: READING,
-      note: "Gesendet wird nichts, bis du es tust",
+      note: nothingSent,
     },
   );
   await take.save();

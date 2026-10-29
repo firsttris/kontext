@@ -7,6 +7,7 @@ import { Link } from "@tanstack/react-router";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { type KeyboardEvent, useEffect, useRef, useState } from "react";
 import { cn } from "@/lib/cn";
+import { weekdayHeads } from "@/lib/format";
 import { addDays, addMonths, weekDays, weekStart } from "@/lib/jscalendar";
 import { LOCALE } from "@/lib/locale";
 
@@ -15,7 +16,7 @@ const monthTitle = new Intl.DateTimeFormat(LOCALE, {
   year: "numeric",
   timeZone: "UTC",
 });
-const WEEKDAYS = ["Mo", "Di", "Mi", "Do", "Fr", "Sa", "So"];
+const WEEKDAYS = weekdayHeads(LOCALE);
 const dayName = new Intl.DateTimeFormat(LOCALE, {
   weekday: "long",
   day: "numeric",

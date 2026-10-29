@@ -1,7 +1,22 @@
 import { describe, expect, it } from "vitest";
-import { displayName, firstName, formatSize, fullAddress, initials, listDate } from "./format";
+import {
+  displayName,
+  firstName,
+  formatSize,
+  fullAddress,
+  initials,
+  listDate,
+  weekdayHeads,
+} from "./format";
 
 const now = new Date("2026-10-23T12:00:00+02:00");
+
+describe("weekdayHeads", () => {
+  it("names the week from Monday in two letters, in the app's language", () => {
+    expect(weekdayHeads("de-DE")).toEqual(["Mo", "Di", "Mi", "Do", "Fr", "Sa", "So"]);
+    expect(weekdayHeads("en-GB")).toEqual(["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"]);
+  });
+});
 
 describe("listDate", () => {
   it("shows the time for today", () => {
