@@ -25,6 +25,14 @@ describe("printDocument", () => {
   it("fetches nothing from outside", () => {
     expect(printDocument(mail)).toContain("img-src data: blob:;");
   });
+
+  it("lets in images from the web, and nothing else, once they were allowed", () => {
+    const page = printDocument({ ...mail, remoteImages: true });
+    expect(page).toContain("img-src data: blob: https: http:;");
+    expect(page).toContain("default-src 'none'; style-src 'unsafe-inline';");
+    expect(page).toContain('font-src data:"');
+    expect(page).toContain("media-src data: blob:;");
+  });
   it("leaves out what is not there: Cc, mailbox, attachments", () => {
     const page = printDocument({ ...mail, attachments: [] });
     expect(page).not.toContain("<th>Cc</th>");

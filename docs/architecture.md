@@ -1119,7 +1119,14 @@ geänderte Aufgaben-Boards, Anrufe und Telefonate. Mails meldet Stalwart weiter 
 darum: `src/lib/print.ts` baut eine eigene Seite (Betreff, Von, An, Cc, Datum, bei gemeinsamen
 Postfächern das Postfach, der Text, die Namen der Anhänge; hell, A4), `print-mail.ts` lädt sie in
 ein unsichtbares Frame ohne Skripte und öffnet den Druckdialog des Browsers. Der Text ist derselbe
-bereinigte wie im Lesebereich, eingebettete Bilder kommen mit, Bilder aus dem Internet nicht.
+bereinigte wie im Lesebereich, eingebettete Bilder kommen mit. Bilder aus dem Internet kommen
+genau dann mit, wenn der Lesebereich sie zeigt: der Absender ist vertrauenswürdig und bestätigt,
+oder man hat bei dieser Mail auf „Laden“ geklickt. Diese Wahl merkt sich
+`src/features/mail/remote-images.ts` je Mail für die Sitzung, Lesebereich und Drucken lesen sie
+von dort. Auch dann bleibt das Frame ohne Skripte, und die Seite hat eine eigene
+Content-Security-Policy (`printPolicy` in `print.ts`): von außen dürfen nur Bilder kommen, keine
+Stylesheets, Schriften oder Medien. Ein langsames Bild hält den Druckdialog höchstens acht
+Sekunden auf (`print-frame.ts`).
 
 Der Kalender druckt genauso (`src/features/calendar/print-calendar.ts`): der Drucker im Kopf des
 Kalenders, `p` oder Strg+P. Was auf das Blatt kommt, rechnet `src/lib/calendar-print.ts` aus –

@@ -7,6 +7,11 @@ Steps that an update needs beyond raising the version are marked **Upgrade**.
 
 ## Unreleased
 
+- Mail: printing includes the pictures from the internet when the reading pane shows them – the
+  sender is trusted (and confirmed), or "Laden" was clicked for that mail. The choice is kept per
+  mail for the session (`src/features/mail/remote-images.ts`). The printed page keeps its sandbox
+  and gets a CSP of its own (`printPolicy`) that lets in images from outside and nothing else (no
+  remote styles, fonts or media); a slow picture holds the print dialog back for at most 8 s.
 - Fixed: on phones the composer's action row ran off the screen, so "Als Entwurf speichern" and
   "Verwerfen" could not be reached. Below `md` the receipt, delivery-report, confidential and
   sign switches and "Als Entwurf speichern" now sit under "Weitere Aktionen"; desktop is unchanged.

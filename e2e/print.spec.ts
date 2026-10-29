@@ -1,6 +1,7 @@
 import { expect, test } from "@playwright/test";
-import { login } from "./helpers";
+import { login, unique } from "./helpers";
 import { printed, recordPrints } from "./printed";
+import { newsletter, pictureServer, removeNewsletter } from "./remote-pictures";
 
 test.describe("Drucken", () => {
   test("druckt die offene Mail ohne die App drumherum", async ({ page, browser }) => {
@@ -34,6 +35,41 @@ test.describe("Drucken", () => {
     await expect.poll(async () => (await printed(page)).length).toBe(2);
     await page.keyboard.press("p");
     await expect.poll(async () => (await printed(page)).length).toBe(3);
+  });
+
+  test("druckt Bilder aus dem Internet nur, wenn sie in der Mail geladen wurden", async ({
+    page,
+  }) => {
+    const pictures = await pictureServer();
+    const subject = unique("Frühjahrsaktion");
+    const id = await newsletter(subject, pictures.url);
+    try {
+      await login(page, "max");
+      await page.goto("/mail");
+      await page.getByRole("list", { name: "Posteingang" }).getByText(subject).click();
+      await expect(page.getByText("Bilder aus dem Internet sind blockiert.")).toBeVisible();
+      await recordPrints(page);
+
+      // Blocked on screen: blocked on paper, by the page's CSP as well.
+      await page.keyboard.press("p");
+      await expect.poll(async () => (await printed(page)).length).toBe(1);
+      const blocked = (await printed(page))[0]!;
+      expect(blocked).not.toContain(pictures.url);
+      expect(blocked).toContain("img-src data: blob:;");
+
+      // Loaded for this mail: on paper too, and still nothing but images from outside.
+      await page.getByRole("button", { name: "Laden", exact: true }).click();
+      await expect.poll(pictures.hits).toBeGreaterThan(0);
+      await page.keyboard.press("p");
+      await expect.poll(async () => (await printed(page)).length).toBe(2);
+      const allowed = (await printed(page))[1]!;
+      expect(allowed).toContain(`src="${pictures.url}"`);
+      expect(allowed).toContain("img-src data: blob: https: http:;");
+      expect(allowed).toContain("default-src 'none'; style-src 'unsafe-inline';");
+    } finally {
+      await removeNewsletter(id);
+      pictures.close();
+    }
   });
 
   test("druckt die Woche und den Monat des Kalenders", async ({ page, browser }) => {

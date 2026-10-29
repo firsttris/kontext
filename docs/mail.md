@@ -235,7 +235,8 @@ kommt alle zwei Minuten in Kontext, gesendet wird als diese Adresse über den Se
   Lesen), bleibt die winmail.dat selbst stehen.
 
   ![Eine Mail mit winmail.dat: darunter Lieferschein-48211.pdf mit Vorschau und eine Textdatei](screenshots/winmail.png)
-- **Drucken** nur der Mail, sauber auf A4 (auch mit Strg+P).
+- **Drucken** nur der Mail, sauber auf A4 (auch mit Strg+P); Bilder aus dem Internet kommen mit,
+  wenn sie in der Mail geladen sind.
 - **Tastaturkürzel wie in Gmail**; `?` zeigt alle.
 - **Neben der Mail** (auf breiten Bildschirmen): wer schreibt, mit Firma, nächsten Terminen,
   letzten Mails und „Anrufen“.

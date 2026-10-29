@@ -50,6 +50,7 @@ import { useEmailActions } from "./actions";
 import { useThread } from "./conversation";
 import { usePrintMail } from "./print-mail";
 import { useAllMailboxes, useMailAccounts } from "./queries";
+import { useRemoteImages } from "./remote-images";
 import { useThreadView } from "./thread-view";
 
 export const Toolbar = ({
@@ -118,7 +119,8 @@ export const Toolbar = ({
   const compose = (mode: "reply" | "replyAll" | "forward") =>
     void navigate({ to: ".", search: (prev) => ({ ...prev, compose: mode }) });
   const printMail = usePrintMail();
-  const print = () => void run(() => printMail(accountId, email), false);
+  const { allowRemote } = useRemoteImages(email);
+  const print = () => void run(() => printMail(accountId, email, allowRemote), false);
 
   useShortcuts({
     r: () => compose("reply"),

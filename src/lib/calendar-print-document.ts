@@ -7,7 +7,8 @@
 import { m } from "@/paraglide/messages";
 import { getLocale } from "@/paraglide/runtime";
 import { type PrintDay, type PrintEntry, safeColor } from "./calendar-print";
-import { escapeHtml, mailPolicy } from "./html";
+import { escapeHtml } from "./html";
+import { printPolicy } from "./print";
 
 export type CalendarSheet = {
   kind: "week" | "month";
@@ -97,7 +98,7 @@ const STYLE = `
 
 export const calendarPrintDocument = (sheet: CalendarSheet): string => `<!doctype html>
 <html lang="${getLocale()}"><head><meta charset="utf-8">
-<meta http-equiv="Content-Security-Policy" content="${mailPolicy(false)}"><title>${escapeHtml(sheet.title)}</title>
+<meta http-equiv="Content-Security-Policy" content="${printPolicy(false)}"><title>${escapeHtml(sheet.title)}</title>
 <style>${STYLE}</style></head><body><div class="sheet">
 <header><h1>${escapeHtml(sheet.title)}</h1>${sheet.subtitle ? `<span class="sub">${escapeHtml(sheet.subtitle)}</span>` : ""}<div class="calendars">${legend(sheet.calendars)}</div></header>
 ${grid(sheet)}

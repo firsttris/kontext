@@ -11,7 +11,12 @@ const loaded = (image: HTMLImageElement) =>
         image.addEventListener("error", () => resolve(), { once: true });
       });
 
-/** Prints `html` once its images are loaded; the frame goes when printing is done. */
+/** How long a slow picture from the internet may hold up the print dialog. */
+const IMAGE_WAIT_MS = 8000;
+
+const wait = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
+
+/** Prints `html` once its images are loaded (or after a while); the frame goes when printing is done. */
 export const printPage = async (html: string, cleanup: () => void = () => {}) => {
   const frame = document.createElement("iframe");
   frame.setAttribute("sandbox", "allow-same-origin allow-modals");
@@ -24,7 +29,10 @@ export const printPage = async (html: string, cleanup: () => void = () => {}) =>
   document.body.append(frame);
   await ready;
   const view = frame.contentWindow!;
-  await Promise.all([...frame.contentDocument!.images].map(loaded));
+  await Promise.race([
+    Promise.all([...frame.contentDocument!.images].map(loaded)),
+    wait(IMAGE_WAIT_MS),
+  ]);
   const done = () => {
     frame.remove();
     cleanup();

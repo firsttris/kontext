@@ -53,7 +53,6 @@ Lücken und Befunde, die beim Bauen offen geblieben sind und noch angegangen wer
 - [ ] **Weitere Sprachen** neben Deutsch und Englisch (Texte in `messages/*.json`).
 - [ ] Wiedervorlage für mehrere ausgewählte Mails auf einmal (heute aus der geöffneten Mail) und „Wieder vorgelegt“ auch in „Alle Posteingänge“ (heute im Posteingang des Postfachs).
 - [ ] Lesebestätigungen von Programmen, die kein `In-Reply-To` setzen, erkennt die gesendete Mail noch nicht (dazu müsste Kontext `Original-Message-ID` im Bericht lesen); eingegangene Bestätigungen könnten von selbst gelesen und still abgelegt werden.
-- [ ] **Drucken mit Bildern aus dem Internet**, wenn sie in der Mail freigegeben wurden.
 
 **Technik**
 
@@ -68,7 +67,7 @@ Lücken und Befunde, die beim Bauen offen geblieben sind und noch angegangen wer
 - **Regeln auf vorhandene Mails:** wirken auf die neuesten 1.000 Mails im Posteingang.
 - **Regeln und Umlaute:** Stalwart vergleicht Groß- und Kleinschreibung nur bei ASCII; „MÜLLER“
   trifft dort nicht „Müller“.
-- **Drucken:** Bilder aus dem Internet und die Anhänge selbst werden nicht mitgedruckt, nur ihre
-  Namen.
+- **Drucken:** Bilder aus dem Internet kommen nur mit, wenn sie in der Mail geladen sind; die
+  Anhänge selbst werden nicht mitgedruckt, nur ihre Namen.
 - **Kategorien in Handy-Apps:** Apple Mail und die Gmail-App zeigen eigene Schlagworte nicht;
   sichtbar sind sie in Kontext und Thunderbird.
