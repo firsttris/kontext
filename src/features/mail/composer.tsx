@@ -356,6 +356,7 @@ export const Composer = ({ accountId, mode, sourceEmailId, forwardIds, prefill }
   };
 
   const [receipt, setReceipt] = useState(false);
+  const [delivery, setDelivery] = useState(false);
   const autocrypt = useAutocryptHeader(identity?.email);
   const [encrypt, setEncrypt] = useState(false);
   // Signed, not encrypted (an encrypted mail is signed anyway).
@@ -386,6 +387,7 @@ export const Composer = ({ accountId, mode, sourceEmailId, forwardIds, prefill }
       references: threading.references,
       draftId: draftId.current,
       requestReceipt: receipt,
+      requestDelivery: delivery,
       autocrypt,
     };
   };
@@ -741,6 +743,8 @@ export const Composer = ({ accountId, mode, sourceEmailId, forwardIds, prefill }
         onSaveDraft={() => void storeDraft()}
         receipt={receipt}
         onReceipt={setReceipt}
+        delivery={delivery}
+        onDelivery={setDelivery}
         encrypt={encrypt}
         onEncrypt={setEncrypt}
         encryptBlocked={pgp.reason}

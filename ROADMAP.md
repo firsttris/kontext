@@ -39,7 +39,6 @@ Kleinere und mittlere Funktionen, sortiert nach Nutzen: oben, was fast jedem Bet
 
 | # | Funktion | Worum es geht |
 | --- | --- | --- |
-| 24 | **Zustellbestätigung** | Beim Senden den Bericht des empfangenden Servers anfordern (DSN): ein Nachweis, dass die Mail angenommen wurde. |
 | 28 | **Einführung beim ersten Start** | Ein kurzer Rundgang durch Mail, Kalender und Chat für Leute ohne IT-Kenntnisse. |
 | 29 | **Gelöschte Mails zurückholen** | Endgültig gelöschte Mails eine Zeit lang wiederherstellen; Stalwart bietet das nur in der Enterprise-Edition, Kontext bräuchte einen eigenen Weg. |
 

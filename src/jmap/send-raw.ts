@@ -3,8 +3,8 @@
  * (Email/import), submitted, and moved to Sent on success – like sendEmail, also held for
  * "Rückgängig" or "Später senden". The recipients go in the envelope, Bcc included.
  */
+import { type Hold, holdParameters } from "@/lib/envelope";
 import { assertSetOk, CAPABILITIES, type JmapClient } from "./client";
-import type { Hold } from "./mail";
 
 export const sendRaw = async (
   client: JmapClient,
@@ -32,11 +32,7 @@ export const sendRaw = async (
   },
 ): Promise<{ emailId: string; submissionId: string }> => {
   const { blobId } = await client.upload(accountId, raw, "message/rfc822");
-  const parameters = hold
-    ? "until" in hold
-      ? { HOLDUNTIL: hold.until }
-      : { HOLDFOR: String(hold.seconds) }
-    : undefined;
+  const parameters = hold ? holdParameters(hold) : undefined;
   const responses = await client.request(
     [
       [

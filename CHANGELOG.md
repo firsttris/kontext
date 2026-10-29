@@ -14,6 +14,14 @@ Steps that an update needs beyond raising the version are marked **Upgrade**.
   input, the tab coming into view and a running call count; the last input is shared by every
   tab through localStorage, so a browser closed past the time signs out when opened again.
   Enforced in the browser only (see docs/architecture.md for why not on the server).
+- Mail: "Zustellbestätigung anfordern" when writing – the receiving servers send back a delivery
+  report (DSN, RFC 3461) as proof the mail was accepted, or why not. The submission's envelope
+  carries `NOTIFY=SUCCESS,FAILURE` for each recipient and `RET=HDRS` and `ENVID` on `mailFrom`
+  (RFC 8621 §7); the envelope id is the local part of the mail's Message-ID. The sent mail shows
+  "Zugestellt an … · time" (or "Nicht zugestellt", "Verzögert") once the report is in; the report
+  itself shows who it is about, delivered or not, when, and the server's reason. Stalwart accepts
+  the parameters and reports local deliveries too; it leaves `EmailSubmission.dsnBlobIds` empty,
+  so Kontext finds the reports among the mails. Not for encrypted or signed mails.
 - Mail: import .eml files into a folder – with the button beside the "Alle / Ungelesen" filter
   (several files at once), or by dropping them onto the list or onto a folder in the sidebar. Each
   file is uploaded as a blob and imported with JMAP `Email/import` into that folder, marked read,

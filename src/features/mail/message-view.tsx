@@ -8,6 +8,7 @@ import { useMediaQuery } from "@/components/use-media-query";
 import { displayBody, isUnread } from "@/jmap/mail";
 import type { Mailbox } from "@/jmap/types";
 import { categoriesOn } from "@/lib/categories";
+import { isStatusPart } from "@/lib/dsn";
 import { displayName, firstName, formatAddressList, readingDate } from "@/lib/format";
 import { mailboxNotice } from "@/lib/mail-accounts";
 import { isInlineInvitation } from "@/lib/mail-invitation";
@@ -30,6 +31,7 @@ import { useStatusLabel, useTasks } from "../tasks/queries";
 import { useEmailActions } from "./actions";
 import { Attachments } from "./attachments";
 import { EarlierMails, LaterMails } from "./conversation";
+import { DeliveryReportCard, DeliveryReportsReceived } from "./delivery-reports";
 import { ExternalMark } from "./external-mark";
 import { InvitationBar } from "./invitation-bar";
 import { MailBody } from "./mail-body";
@@ -92,7 +94,11 @@ export const MessageView = ({ accountId, mailbox, emailId }: Props) => {
   const categories = categoriesOn(email.keywords, accountCategories);
   const mailTasks = tasksOfMail(tasks, email.id, email.threadId);
   const attachments = email.attachments.filter(
-    (part) => (!part.cid || part.disposition === "attachment") && !isInlineInvitation(part),
+    (part) =>
+      (!part.cid || part.disposition === "attachment") &&
+      !isInlineInvitation(part) &&
+      // A delivery report's status is shown as the report (DeliveryReportCard).
+      !isStatusPart(part),
   );
 
   return (
@@ -191,10 +197,14 @@ export const MessageView = ({ accountId, mailbox, emailId }: Props) => {
             <InvitationBar accountId={accountId} email={email} />
             <AutocryptCollector email={email} />
             {mailbox.role === "sent" ? (
-              <ReceiptsReceived accountId={accountId} email={email} />
+              <>
+                <ReceiptsReceived accountId={accountId} email={email} />
+                <DeliveryReportsReceived accountId={accountId} email={email} />
+              </>
             ) : (
               <ReceiptRequest accountId={accountId} email={email} />
             )}
+            <DeliveryReportCard accountId={accountId} email={email} />
             {showDetails ? <MessageDetails email={email} attachments={attachments} /> : null}
             {pgp === "encrypted" ? (
               <EncryptedMail accountId={accountId} email={email} />
