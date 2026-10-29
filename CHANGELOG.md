@@ -12,6 +12,12 @@ Steps that an update needs beyond raising the version are marked **Upgrade**.
   all back with "Alles entziehen"; only seeing your free and busy times stays when every
   colleague sees them. Folders, sending in your name and further sharing stay with you. A mailbox
   shared this way (or handed over) is now labelled "Postfach von …".
+- Calendar: print the week or the month on landscape A4, e.g. for the pin board in the workshop –
+  the printer in the calendar's header, `p` or Ctrl+P. The week as seven columns with every
+  appointment's time, title and place, all-day ones first; the month as its grid with start and
+  title, "+2 weitere" for what does not fit; the list prints its next seven days. Only the
+  calendars shown, with their colours as a legend. Like a printed mail, the sheet is a page of its
+  own in a hidden frame without scripts that loads nothing.
 - Calendar: "Duplizieren" on an appointment opens the editor with a copy – same title, place,
   video meeting, attendees, notes, reminder, show-as, calendar, documents and length, on the
   original's date until changed. Saved as a new appointment (new uid), so the attendees get
