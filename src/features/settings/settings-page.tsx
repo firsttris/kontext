@@ -9,6 +9,7 @@ import {
   ChevronLeft,
   ChevronRight,
   DatabaseBackup,
+  Globe,
   Handshake,
   Inbox,
   KeyRound,
@@ -34,6 +35,7 @@ import { AgentsSection } from "@/features/agents/agents-section";
 import { BackupSection } from "@/features/company/backup-section";
 import { ChatSection } from "@/features/company/chat-section";
 import { EmployeesSection } from "@/features/company/employees-section";
+import { ExternalHintSection } from "@/features/company/external-hint-section";
 import { MailboxesSection } from "@/features/company/mailboxes-section";
 import { MigrationSection } from "@/features/company/migration-section";
 import { useIsCompanyAdmin } from "@/features/company/queries";
@@ -99,6 +101,7 @@ const COMPANY: Entry[] = [
   { id: "company-signature", label: m.company_signature, icon: Signature },
   { id: "company-chat", label: m.company_chat, icon: MessagesSquare },
   { id: "company-security", label: m.company_security, icon: ShieldCheck },
+  { id: "company-external", label: m.company_external, icon: Globe },
   { id: "company-backup", label: m.company_backup, icon: DatabaseBackup },
   { id: "phone", label: m.phone_settings, icon: Phone },
   { id: "migration", label: m.company_migration, icon: Truck },
@@ -127,6 +130,7 @@ const CONTENT: Record<Section, () => ReactNode> = {
   "company-signature": () => <CompanySignatureSection />,
   "company-chat": () => <ChatSection />,
   "company-security": () => <CompanySecuritySection />,
+  "company-external": () => <ExternalHintSection />,
   "company-backup": () => <BackupSection />,
   phone: () => <PhoneSettingsSection />,
   migration: () => <MigrationSection />,

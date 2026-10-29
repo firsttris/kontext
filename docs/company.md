@@ -29,6 +29,10 @@ Stalwarts Admin-Oberfläche und ohne IT-Kenntnisse.
 - **Verfügbarkeit im Kalender** für alle einschalten.
 - **Team-Chat:** Aufbewahrungsfrist; **Telefonie:** Fritzbox, wer klingelt, Mailbox,
   Öffnungszeiten ([Telefonie](telephony.md)).
+- **Externe Empfänger** (Hinweis „Extern“, aus bis zum Einschalten): Mails von außerhalb tragen
+  die Marke „Extern“, und vor dem Senden oder Einladen nach außen fragt Kontext einmal nach
+  ([Mail](mail.md#schreiben)). Als intern gelten die eigenen Domains und die **Partner-Domains**,
+  die hier eingetragen werden (eine je Zeile, etwa das Steuerbüro).
 - **Sicherheit prüfen:** SPF, DMARC, MTA-STS, TLS-RPT, DANE und HTTPS der eigenen Domain
   ([Verschlüsselung](encryption.md#baustein-1-grundschutz-unsichtbar-fur-alles)).
 - **Datensicherung:** wohin gesichert wird, wie der letzte Lauf ausging, wie voll der Speicher
