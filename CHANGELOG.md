@@ -7,6 +7,11 @@ Steps that an update needs beyond raising the version are marked **Upgrade**.
 
 ## Unreleased
 
+- Calendar: "Geburtstage" – the contacts' birthdays (JSContact `anniversaries` of kind "birth")
+  from every address book you can see, as all-day entries in day, week, month and list, with the
+  age when the year is known ("Petra Keller (52)"). A click opens the contact. Worked out in the
+  browser, so it is always current and read-only; 29 February falls on the 28th in other years.
+  Switched off like a calendar under "Meine Kalender".
 - Mail: sort the mail list from its header (the arrows, on the phone too) – newest or oldest
   first, unread, flagged or with a category first (in the account's order of categories), by
   sender or subject, or the largest first; the newest first within each group. One choice for

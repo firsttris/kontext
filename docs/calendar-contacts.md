@@ -121,6 +121,16 @@ Kontext steht, steht auch am iPhone, unter Android (DAVx⁵) und in Thunderbird.
 - **Aufgaben im Kalender:** die eigenen offenen Aufgaben am Tag ihrer Fälligkeit. In Woche und
   Tag stehen Aufgaben mit Uhrzeit zu dieser Zeit im Raster; Aufgaben ohne Uhrzeit und
   überfällige (auf heute) stehen bei den ganztägigen Terminen.
+- **Geburtstage:** Die Geburtstage aus den Kontakten (aus allen Adressbüchern, die man sieht)
+  stehen als ganztägige Termine im Kalender, mit dem Alter, wenn das Geburtsjahr bekannt ist
+  („Petra Keller (52)“), sonst nur mit dem Namen. Ein Klick öffnet den Kontakt. Wer am 29. Februar
+  geboren ist, steht in anderen Jahren am 28. Februar. Unter *Meine Kalender* blendet das Häkchen
+  bei „Geburtstage“ sie aus (je Gerät). Der Kalender wird in Kontext aus den Kontakten berechnet:
+  Er ist immer aktuell, lässt sich aber nicht bearbeiten und steht nicht über CalDAV am Handy.
+  [Mehr](architecture.md#geburtstage)
+
+  ![Der Monat mit vier Geburtstagen aus den Kontakten, „Geburtstage“ unter Meine Kalender](screenshots/birthdays.png)
+
 - **Dokumente am Termin:** eine Datei aus [Dokumente](documents.md) anhängen, die Eingeladenen
   dürfen sie öffnen.
 - **Am Handy:** Tagesansicht mit Wochenleiste, Monat und Liste.

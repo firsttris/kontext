@@ -1556,6 +1556,27 @@ und ohne Einladungen (`sendSchedulingMessages: false`). Ein Abonnement, das sich
 aktualisiert, ist das nicht; dafür steht der Kalender wie jeder andere in Stalwart und über
 CalDAV am Handy.
 
+## Geburtstage
+
+Der Kalender „Geburtstage“ entsteht im Browser, nicht in Stalwart: `src/lib/birthdays.ts` liest
+aus den Kontakten aller Adressbücher, die man sieht (eigene, geteilte, die von info@ & Co.), den
+Jahrestag der Art `birth` (JSContact `anniversaries`, RFC 9553 §2.8.1) und macht daraus für die
+Tage der offenen Ansicht ganztägige, „freie“ Termine. Das Datum ist ein `PartialDate` mit oder
+ohne Jahr (aus einer vCard mit `BDAY:--0504` kommt keins) oder ein `Timestamp`, dessen Datum in
+UTC zählt. Ist das Jahr bekannt, steht das Alter, das die Person an dem Tag wird, hinter dem
+Namen („Petra Keller (52)“), und vor dem Geburtsjahr erscheint nichts; ohne Jahr nur der Name.
+Wer am 29. Februar Geburtstag hat, steht in Jahren ohne diesen Tag am 28. Februar. Steht dieselbe
+Person in zwei Adressbüchern, erscheint sie einmal (gleicher Name am gleichen Tag, Groß- und
+Kleinschreibung und Leerzeichen zählen nicht).
+
+Warum kein Kalender auf dem Server: Ein angelegter Kalender müsste jedes Mal nachgezogen werden,
+wenn sich ein Kontakt ändert, und wäre je Konto ein Stapel Termine mehr. Im Browser ist er immer
+so aktuell wie die Kontakte, braucht keinen Speicher und kann nichts verfälschen; dafür steht er
+nicht über CalDAV am Handy und zählt nicht für die Verfügbarkeit. Die Termine tragen den Kontakt
+mit (`contact`), ein Klick öffnet ihn (`src/features/calendar/event-link.tsx`) statt eines
+Termins. Ein- und ausblenden geht wie bei den Aufgaben über die ausgeblendeten Kalender im Browser
+(Schlüssel `birthdays`, `src/features/calendar/hidden-calendars.ts`).
+
 ## Kalender abonnieren
 
 Stalwart kennt keine abonnierten Kalender (JMAP Calendars hat keine), darum holt der

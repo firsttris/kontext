@@ -2,6 +2,7 @@ import { expect, type Page, test } from "@playwright/test";
 import { fillDemo } from "./demo-data";
 import {
   addAttendees,
+  addBirthday,
   addMail,
   address,
   addSnippet,
@@ -352,6 +353,31 @@ test.describe("Screenshots @screenshots", () => {
     await defaults.getByLabel("Erinnern per").last().selectOption({ label: "Mail" });
     await page.mouse.move(1, 1);
     await shot(page, "calendar-default-reminder");
+  });
+
+  test("Geburtstage im Kalender", async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    const month = today().slice(0, 7);
+    const people: [string, string, string, number?][] = [
+      ["Helga", "Brandt", "04", 61],
+      ["Jens", "Krüger", "12"],
+      ["Lea", "Hofmann", "19", 29],
+      ["Uwe", "Schmid", "26", 45],
+    ];
+    const birthdays = await Promise.all(
+      people.map(([given, surname, day, age]) =>
+        addBirthday(given, `${month}-${day}`, age, surname),
+      ),
+    );
+    try {
+      await login(page);
+      await page.goto(`/calendar?view=month&date=${today()}`);
+      await expect(page.getByRole("link", { name: "Helga Brandt (61)" })).toBeVisible();
+      await expect(page.getByRole("checkbox", { name: "Geburtstage anzeigen" })).toBeChecked();
+      await shot(page, "birthdays");
+    } finally {
+      await Promise.all(birthdays.map((birthday) => birthday.remove()));
+    }
   });
 
   test("winmail.dat ausgepackt", async ({ page }) => {

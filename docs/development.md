@@ -120,7 +120,7 @@ spielt die Migrationen beim Start ein.
 `bun run seed` (oder `--seed`) legt die Firma „Weber Haustechnik“ an: vier Mitarbeiter, die
 gemeinsamen Postfächer info@ und rechnung@, Ordner, Mails mit Anhang, einen HTML-Newsletter mit
 Bildern aus dem Internet, eine Testmail voller XSS-Tricks, Kontakte mit den Gruppen „Lieferanten“
-und „Team“, Termine der laufenden Woche, eine wöchentliche Teambesprechung und offene Einladungen. Anna hat
+und „Team“ (drei mit Geburtstag in den nächsten Wochen), Termine der laufenden Woche, eine wöchentliche Teambesprechung und offene Einladungen. Anna hat
 heute von 13:30 bis 15 Uhr einen eigenen Termin, damit Film und Screenshot zu jeder Tageszeit einen
 belegten Kollegen zeigen: Für einen Termin, der beim Seed schon vorbei ist, verschickt Stalwart keine
 Einladung. Das Skript ist idempotent – es ergänzt nur, was fehlt.

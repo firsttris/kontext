@@ -29,6 +29,7 @@ import { calendarTasks } from "@/lib/task-context";
 import { m } from "@/paraglide/messages";
 import { useMe, useTasks } from "../tasks/queries";
 import { AGENDA_DAYS, AgendaView } from "./agenda-view";
+import { useBirthdayEvents } from "./birthdays";
 import { CalendarList, CalendarsDialog } from "./calendar-list";
 import { EventDialog } from "./event-dialog";
 import { MiniMonth } from "./mini-month";
@@ -113,7 +114,9 @@ export const CalendarPage = ({ search }: { search: Search }) => {
   const week = weekDays(selected);
   const days = view === "day" ? [selected] : week;
   const { from, to } = range(view, selected);
-  const { data: events, calendars, isPending } = useEvents(from, to);
+  const { data: stored, calendars, isPending } = useEvents(from, to);
+  const birthdays = useBirthdayEvents(from, to);
+  const events = birthdays.length ? [...stored, ...birthdays] : stored;
   const [managing, setManaging] = useState(false);
   const me = useMe();
   const { tasks: allTasks } = useTasks();
