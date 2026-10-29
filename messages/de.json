@@ -1914,5 +1914,14 @@
   "rsvp_not_invited": "Du bist zu diesem Termin nicht mehr eingeladen.",
   "rsvp_too_many": "Zu viele Versuche. Bitte warte eine Minute.",
   "rsvp_failed": "Die Antwort ließ sich nicht eintragen: {message}",
-  "rsvp_footer": "Verschickt mit Kontext"
+  "rsvp_footer": "Verschickt mit Kontext",
+  "settings_swipe": "Wischen in der Mail-Liste",
+  "settings_swipe_hint": "Auf dem Handy: eine Mail zur Seite wischen. Gilt für dieses Gerät.",
+  "settings_swipe_left": "Nach links wischen",
+  "settings_swipe_right": "Nach rechts wischen",
+  "settings_swipe_archive": "Archivieren",
+  "settings_swipe_delete": "Löschen",
+  "settings_swipe_read": "Gelesen / ungelesen",
+  "settings_swipe_flag": "Markieren",
+  "settings_swipe_none": "Nichts"
 }
