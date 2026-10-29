@@ -7,6 +7,22 @@ Steps that an update needs beyond raising the version are marked **Upgrade**.
 
 ## Unreleased
 
+- S/MIME: the company admin keeps the trusted authorities ("S/MIME-Stellen"): upload a root or
+  intermediate certificate (PEM or DER), see its name, issuer, validity and fingerprint, remove
+  it. Only current CA certificates, at most 100; they count beside Mozilla's list and
+  `SMIME_ROOTS`, and earlier trust answers are dropped on a change
+  (`/api/company/smime-authorities`, `server/smime/authorities.ts`). **Upgrade:** migration
+  `0040_smime_authorities` adds the table `smime_authorities`; the server applies it at start.
+- S/MIME: revocation by CRL where a certificate names no OCSP responder or it gives no usable
+  answer: the http(s) CRL Distribution Points (RFC 5280 §4.2.1.13), at most 10 MB and 15 s, public
+  hosts only; a list counts only when signed by the issuer under its name, current, and neither
+  delta nor indirect nor with an unknown critical extension. Lists are cached until their
+  nextUpdate (at most a day, 100 lists; a failed one is retried after ten minutes).
+- S/MIME: signatures with EC keys (ECDSA on P-256, P-384, P-521) are checked in the browser with
+  WebCrypto instead of showing "nicht prüfbar"; certificates with EC keys can be imported and
+  remembered. Checked against signatures made with OpenSSL.
+- S/MIME: looking up certificates in an authority's LDAP directory is left out on purpose (own
+  TCP connections, a new dependency, a directory per authority); see docs/encryption.md.
 - Chat: react with any emoji – "+" beside the seven quick reactions (in the long-press sheet on
   phones) opens a picker with about 430 emojis in nine categories and a search by English or
   German words (`src/lib/emoji.ts`, no library). The server now takes exactly one emoji per

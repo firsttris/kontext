@@ -778,6 +778,30 @@ test.describe("Screenshots @screenshots", () => {
     }
   });
 
+  test("S/MIME-Stellen", async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await login(page);
+    await page.goto("/settings?section=company-smime");
+    const remove = page.getByRole("button", { name: "Kontext Test-CA entfernen" });
+    try {
+      await page
+        .getByLabel("Zertifikat einer Stelle hinzufügen")
+        .setInputFiles("e2e/smime-ca/root.pem");
+      await expect(remove).toBeVisible();
+      // Loaded afresh, without the notice of adding.
+      await page.reload();
+      await expect(remove).toBeVisible();
+      await shot(page, "smime-authorities");
+    } finally {
+      // The test authority stays in SMIME_ROOTS only, not in the company's list.
+      if (await remove.count()) {
+        page.once("dialog", (dialog) => void dialog.accept());
+        await remove.click();
+        await expect(remove).toHaveCount(0);
+      }
+    }
+  });
+
   test("Aufgaben und Chat", async ({ browser }) => {
     const { channelId, infoBoard } = await fillDemo();
     const context = await browser.newContext({

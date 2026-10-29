@@ -2114,5 +2114,17 @@
   "chat_reply_from_thread": "Antwort im Thread zu: {summary}",
   "chat_open_thread_of": "Thread öffnen",
   "chat_reply_in_a_thread": "Antwort in einem Thread",
-  "chat_also_in_channel_note": "Auch im Kanal gezeigt"
+  "chat_also_in_channel_note": "Auch im Kanal gezeigt",
+  "company_smime": "S/MIME-Stellen",
+  "company_smime_hint": "Zertifikate von Stellen, denen die Firma bei S/MIME vertraut, zusätzlich zu den bekannten (Mozillas Liste): etwa die einer Landesverwaltung, einer Kammer oder die eigene. Mails mit Zertifikaten dieser Stellen gelten dann als vertrauenswürdig. Eine Wurzel oder Zwischenstelle als .cer, .crt oder .pem.",
+  "company_smime_add": "Zertifikat einer Stelle hinzufügen",
+  "company_smime_empty": "Noch keine eigenen Stellen. Es gelten die bekannten.",
+  "company_smime_list": "Anerkannte Stellen",
+  "company_smime_valid": "gültig {from} bis {to}",
+  "company_smime_issued_by": "ausgestellt von {issuer}",
+  "company_smime_root": "Wurzel",
+  "company_smime_added": "Stelle hinzugefügt.",
+  "company_smime_removed": "Stelle entfernt.",
+  "company_smime_remove": "{name} entfernen",
+  "company_smime_remove_confirm": "{name} nicht mehr vertrauen? Zertifikate dieser Stelle gelten dann nicht mehr als vertrauenswürdig."
 }

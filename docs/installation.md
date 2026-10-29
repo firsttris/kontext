@@ -683,7 +683,7 @@ Image setzt `PORT=3000`, `STATIC_DIR=/app/dist`, `DATABASE_PATH=/data/kontext.db
 | `SIGN_IN_PER_MINUTE` | `10` | Anmeldungen je Minute und IP-Adresse |
 | `STALWART_ADMIN_KEY` | leer | API-Schlüssel (`API_…`) oder `name:passwort` für die Firmenverwaltung |
 | `DOH_URL` | `https://cloudflare-dns.com/dns-query` | DNS-over-HTTPS (JSON-API) für „Sicherheit der Mails“ und die Suche nach S/MIME-Zertifikaten |
-| `SMIME_ROOTS` | leer | Pfad zu einer PEM-Datei mit weiteren anerkannten S/MIME-Stellen, etwa der Verwaltungs-PKI |
+| `SMIME_ROOTS` | leer | Pfad zu einer PEM-Datei mit weiteren anerkannten S/MIME-Stellen, etwa der Verwaltungs-PKI; einfacher in der Firmenverwaltung unter „S/MIME-Stellen“ |
 | `LIVEKIT_URL` | leer | LiveKits API, wie der Server sie erreicht (in Compose `http://livekit:7880`) |
 | `LIVEKIT_API_KEY` | leer | LiveKit-Schlüssel (in Compose `kontext`) |
 | `LIVEKIT_API_SECRET` | leer | LiveKit-Geheimnis, mindestens 32 Zeichen; ohne die drei keine Anrufe |

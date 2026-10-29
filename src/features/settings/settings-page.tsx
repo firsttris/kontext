@@ -5,6 +5,7 @@
 import { Link } from "@tanstack/react-router";
 import {
   AtSign,
+  BadgeCheck,
   Bot,
   ChevronLeft,
   ChevronRight,
@@ -44,6 +45,7 @@ import { MailboxesSection } from "@/features/company/mailboxes-section";
 import { MigrationSection } from "@/features/company/migration-section";
 import { useIsCompanyAdmin } from "@/features/company/queries";
 import { SecuritySection as CompanySecuritySection } from "@/features/company/security-section";
+import { SmimeAuthoritiesSection } from "@/features/company/smime-authorities-section";
 import { ExternalSection } from "@/features/external/external-section";
 import { useExternalAccounts } from "@/features/external/queries";
 import { usePhone } from "@/features/phone/queries";
@@ -108,6 +110,7 @@ const COMPANY: Entry[] = [
   { id: "company-security", label: m.company_security, icon: ShieldCheck },
   { id: "company-idle", label: m.company_idle, icon: Timer },
   { id: "company-external", label: m.company_external, icon: Globe },
+  { id: "company-smime", label: m.company_smime, icon: BadgeCheck },
   { id: "company-backup", label: m.company_backup, icon: DatabaseBackup },
   { id: "phone", label: m.phone_settings, icon: Phone },
   { id: "migration", label: m.company_migration, icon: Truck },
@@ -139,6 +142,7 @@ const CONTENT: Record<Section, () => ReactNode> = {
   "company-security": () => <CompanySecuritySection />,
   "company-idle": () => <IdleLogoutSection />,
   "company-external": () => <ExternalHintSection />,
+  "company-smime": () => <SmimeAuthoritiesSection />,
   "company-backup": () => <BackupSection />,
   phone: () => <PhoneSettingsSection />,
   migration: () => <MigrationSection />,

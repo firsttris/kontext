@@ -545,6 +545,20 @@ export const smimeCerts = sqliteTable(
 );
 
 /**
+ * Authorities the company trusts for S/MIME beyond Mozilla's list and `SMIME_ROOTS`: root or
+ * intermediate certificates the Firmenverwaltung added (server/smime/authorities.ts).
+ */
+export const smimeAuthorities = sqliteTable("smime_authorities", {
+  /** SHA-256 of the certificate, as node:crypto writes it ("AB:CD:…"). */
+  fingerprint: text("fingerprint").primaryKey(),
+  certificate: text("certificate").notNull(),
+  subject: text("subject").notNull(),
+  notAfter: integer("not_after", { mode: "timestamp_ms" }).notNull(),
+  addedBy: text("added_by").notNull(),
+  createdAt: integer("created_at", { mode: "timestamp_ms" }).notNull(),
+});
+
+/**
  * "Vertraulich senden" (server/secure/): a message for a recipient without a key, read on a page
  * with a code. The content lies encrypted next to the database (`secure/<id>`); its key is only in
  * the link (after "#") and, for the sender, locked with their own OpenPGP key (`senderKey`).

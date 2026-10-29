@@ -3,8 +3,8 @@
  * building block 4): one's certificate from a .p12 file, others' certificates, reading encrypted
  * and signed mails, sending encrypted and signed. node-forge does RSA encryption with PKCS#1 v1.5,
  * which the browser's own crypto lacks; signatures are checked here, as forge does not, and their
- * RSA part by the browser's WebCrypto: forge's own check takes forged signatures up to 1.4.0
- * (GHSA-86w9-cpqp-85rv). Loaded only when needed.
+ * RSA or ECDSA part by the browser's WebCrypto (smime-cert.ts for EC): forge's own check takes
+ * forged signatures up to 1.4.0 (GHSA-86w9-cpqp-85rv). Loaded only when needed.
  */
 import type { asn1 as forgeAsn1, pkcs7, pki, util } from "node-forge";
 import {
@@ -15,19 +15,14 @@ import {
   protectHeaders,
   withHeaders,
 } from "./mime";
+import { type CertInfo, describeAsn1, ecdsaVerifies, ecKeyOf, serialOf } from "./smime-cert";
 
 type Asn1 = forgeAsn1.Asn1;
 
+export type { CertInfo };
+
 const loadForge = async () => (await import("node-forge")).default;
 const postal = async () => (await import("postal-mime")).default;
-
-export type CertInfo = {
-  emails: string[];
-  fingerprint: string;
-  issuer: string;
-  notAfter: string;
-  selfSigned: boolean;
-};
 
 export type SmimeKind = "encrypted" | "signed" | null;
 
@@ -76,28 +71,7 @@ const binaryToBytes = (binary: string) => Uint8Array.from(binary, (c) => c.charC
 
 const describeCert = async (cert: pki.Certificate): Promise<CertInfo> => {
   const forge = await loadForge();
-  const subjectEmail = cert.subject.getField("E")?.value as string | undefined;
-  const san = cert.getExtension("subjectAltName") as
-    | { altNames?: { type: number; value: string }[] }
-    | undefined;
-  const emails = [
-    ...(san?.altNames ?? []).filter((name) => name.type === 1).map((name) => name.value),
-    ...(subjectEmail ? [subjectEmail] : []),
-  ].map((email) => email.toLowerCase());
-  const der = forge.asn1.toDer(forge.pki.certificateToAsn1(cert)).getBytes();
-  const md = forge.md.sha256.create();
-  md.update(der);
-  const issuer =
-    (cert.issuer.getField("O")?.value as string | undefined) ??
-    (cert.issuer.getField("CN")?.value as string | undefined) ??
-    "";
-  return {
-    emails: [...new Set(emails)],
-    fingerprint: md.digest().toHex().toUpperCase(),
-    issuer,
-    notAfter: cert.validity.notAfter.toISOString(),
-    selfSigned: cert.isIssuer(cert),
-  };
+  return describeAsn1(forge, forge.pki.certificateToAsn1(cert));
 };
 
 export const certToPem = async (cert: pki.Certificate) =>
@@ -105,19 +79,32 @@ export const certToPem = async (cert: pki.Certificate) =>
 
 export const certFromPem = async (pem: string) => (await loadForge()).pki.certificateFromPem(pem);
 
-/** A certificate file someone gives (.cer, .crt, .pem; DER or PEM). */
+/** A certificate's DER from PEM; the first one in the text. */
+const pemToDer = (forge: typeof import("node-forge"), pem: string) => {
+  const block = forge.pem.decode(pem).find((entry) => entry.type === "CERTIFICATE");
+  if (!block) throw new Error("Kein Zertifikat");
+  return block.body;
+};
+
+/** A certificate file someone gives (.cer, .crt, .pem; DER or PEM), with any kind of key. */
 export const readCertificate = async (
   data: Uint8Array,
 ): Promise<{ pem: string; info: CertInfo }> => {
   const forge = await loadForge();
   const text = new TextDecoder().decode(data);
-  const cert = text.includes("-----BEGIN CERTIFICATE-----")
-    ? forge.pki.certificateFromPem(text)
-    : forge.pki.certificateFromAsn1(forge.asn1.fromDer(bytesToBinary(data)));
-  return { pem: forge.pki.certificateToPem(cert), info: await describeCert(cert) };
+  const der = text.includes("-----BEGIN CERTIFICATE-----")
+    ? pemToDer(forge, text)
+    : bytesToBinary(data);
+  return {
+    pem: forge.pem.encode({ type: "CERTIFICATE", body: der }),
+    info: describeAsn1(forge, forge.asn1.fromDer(der)),
+  };
 };
 
-export const certInfo = async (pem: string) => describeCert(await certFromPem(pem));
+export const certInfo = async (pem: string) => {
+  const forge = await loadForge();
+  return describeAsn1(forge, forge.asn1.fromDer(pemToDer(forge, pem)));
+};
 
 const OIDS = {
   data: "1.2.840.113549.1.7.1",
@@ -191,7 +178,7 @@ export type SmimeSignature =
       chain: string[];
     }
   | { state: "invalid" }
-  /** Signed with a key forge cannot check (EC): neither good nor forged. */
+  /** Signed with a key that cannot be checked here (a curve WebCrypto lacks): neither good nor forged. */
   | { state: "unsupported" }
   | { state: "none" };
 
@@ -225,26 +212,25 @@ export const checkSignedData = async (
     const certsNode = parts.find(
       (part) => part.tagClass === asn1.Class.CONTEXT_SPECIFIC && part.type === 0,
     );
-    // Every certificate as PEM; forge reads only those with RSA keys (an authority's may be EC).
+    // Every certificate as PEM; forge reads only those with RSA keys, EC ones go by their DER.
     const brought = ((certsNode?.value as Asn1[]) ?? []).map((node) => {
       const pemText = forge.pem.encode({ type: "CERTIFICATE", body: asn1.toDer(node).getBytes() });
       try {
-        return { pem: pemText, cert: forge.pki.certificateFromAsn1(node) };
+        return { pem: pemText, node, cert: forge.pki.certificateFromAsn1(node) };
       } catch {
-        return { pem: pemText, cert: null };
+        return { pem: pemText, node, cert: null };
       }
     });
-    const certs = brought.flatMap((entry) => (entry.cert ? [entry.cert] : []));
     const signerInfo = (parts.at(-1)!.value as Asn1[])[0]!.value as Asn1[];
     const sid = signerInfo[1]!;
-    const serial = forge.util.createBuffer((sid.value as Asn1[])[1]!.value as string).toHex();
-    const sameSerial = (cert: pki.Certificate) =>
-      cert.serialNumber.replace(/^0+/, "") === serial.replace(/^0+/, "");
-    // The signer's certificate not readable here (an EC key): say so, not "forged".
-    if (!certs.some(sameSerial) && brought.some((entry) => !entry.cert)) {
-      return { signature: { state: "unsupported" }, content };
-    }
-    const signer = certs.find(sameSerial) ?? certs[0];
+    const serial = forge.util
+      .createBuffer((sid.value as Asn1[])[1]!.value as string)
+      .toHex()
+      .replace(/^0+/, "");
+    const signer = brought.find((entry) => serialOf(forge, entry.node) === serial) ?? brought[0];
+    const ecKey = signer && !signer.cert ? ecKeyOf(forge, signer.node) : null;
+    // Neither RSA nor a curve WebCrypto knows: say so, not "forged".
+    if (signer && !signer.cert && !ecKey) return { signature: { state: "unsupported" }, content };
     const digestOid = asn1.derToOid((signerInfo[2]!.value as Asn1[])[0]!.value as string);
     const md = () =>
       digestOid === OIDS.sha1
@@ -272,21 +258,25 @@ export const checkSignedData = async (
     }
     // The signature is over the attributes, encoded as a SET.
     const set = asn1.create(asn1.Class.UNIVERSAL, asn1.Type.SET, true, attrs.value as Asn1[]);
-    const ok = await rsaVerifies(
-      binaryToBytes(asn1.toDer(forge.pki.publicKeyToAsn1(signer.publicKey)).getBytes()),
-      WEB_HASHES[digestOid] ?? "SHA-256",
-      binaryToBytes(signature),
-      binaryToBytes(asn1.toDer(set).getBytes()),
-    );
+    const hash = WEB_HASHES[digestOid] ?? "SHA-256";
+    const signed = binaryToBytes(asn1.toDer(set).getBytes());
+    const ok = signer.cert
+      ? await rsaVerifies(
+          binaryToBytes(asn1.toDer(forge.pki.publicKeyToAsn1(signer.cert.publicKey)).getBytes()),
+          hash,
+          binaryToBytes(signature),
+          signed,
+        )
+      : await ecdsaVerifies(forge, ecKey!, hash, binaryToBytes(signature), signed);
     if (!ok) return { signature: { state: "invalid" }, content };
-    const described = await describeCert(signer);
+    const described = describeAsn1(forge, signer.node);
     return {
       signature: {
         state: "valid",
         email: described.emails[0] ?? "",
         info: described,
-        pem: forge.pki.certificateToPem(signer),
-        chain: brought.filter((entry) => entry.cert !== signer).map((entry) => entry.pem),
+        pem: signer.pem,
+        chain: brought.filter((entry) => entry !== signer).map((entry) => entry.pem),
       },
       content,
     };
