@@ -697,7 +697,7 @@ Image setzt `PORT=3000`, `STATIC_DIR=/app/dist`, `DATABASE_PATH=/data/kontext.db
 | `STATIC_DIR` | leer | die gebaute App; gesetzt, liefert der Server sie mit aus |
 | `NODE_ENV` | – | `production` im Image; sonst nimmt der Server Entwicklungswerte (ein festes Geheimnis, Admin und LiveKit aus `dev/config.ts`) |
 
-Nur für Tests: `MAIL_SYNC_ALLOW_PLAIN`, `UNSUBSCRIBE_ANY_TARGET`, `PUSH_ANY_ENDPOINT`,
+Nur für Tests: `MAIL_SYNC_ALLOW_PLAIN`, `UNSUBSCRIBE_ANY_TARGET`, `CALENDAR_SUBSCRIBE_ANY_TARGET`, `PUSH_ANY_ENDPOINT`,
 `SNOOZE_TICK_MS`, `REMINDER_TICK_MS`, `RULE_TASK_TICK_MS`, `M365_LOGIN_URL` und `GRAPH_URL`
 (siehe [Entwicklung](development.md)).
 

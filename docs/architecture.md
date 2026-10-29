@@ -1476,6 +1476,36 @@ und ohne Einladungen (`sendSchedulingMessages: false`). Ein Abonnement, das sich
 aktualisiert, ist das nicht; dafür steht der Kalender wie jeder andere in Stalwart und über
 CalDAV am Handy.
 
+## Kalender abonnieren
+
+Stalwart kennt keine abonnierten Kalender (JMAP Calendars hat keine), darum holt der
+Kontext-Server die Datei (`server/subscriptions/`) und schreibt sie mit seinem Schlüssel
+(`impersonate`) in einen eigenen Kalender im Konto der Person, mit `includeInAvailability: "none"`.
+Das Abo selbst (Adresse, Kalender, Stand) steht in der Tabelle `calendar_subscription`.
+
+- **Abrufen** (`fetch-calendar.ts`): `webcal://` gilt als `https://`; nur https im Internet
+  (`internet-host.ts`), verbunden wird mit genau der geprüften Adresse (`pinned-get.ts`, kein
+  DNS-Rebinding), Weiterleitungen von Hand und jede geprüft, höchstens 5 MB und 15 Sekunden,
+  und die Antwort muss mit `BEGIN:VCALENDAR` beginnen. So lässt sich der Server nicht auf Stalwart,
+  die Metadaten der Cloud oder andere Rechner im Netz lenken. Beim Anlegen holt der Server die
+  Datei zuerst: Eine falsche Adresse meldet er sofort, und es entsteht nichts.
+- **Lesen:** `CalendarEvent/parse` (wie beim Umzug). Geänderte Termine einer Serie sortiert
+  Stalwart selbst in `recurrenceOverrides` der Serie ein. Als eigener Eintrag (das Datum nur unter
+  `iCalendar.properties`, `recurrence-id`) kommt einer nur, wenn seine Serie nicht in der Datei
+  steht; dann übernimmt Kontext ihn als einzelnen Termin (`sync-plan.ts`).
+- **Abgleichen:** je `uid` ein Termin. Neu angelegt, was dazukam; gelöscht, was die Datei nicht
+  mehr hat; geändert, was sich seit dem letzten Schreiben geändert hat. Verglichen wird mit dem
+  Fingerabdruck dessen, was Kontext zuletzt geschrieben hat (`written` je Abo), nicht mit dem, was
+  Stalwart zurückgibt – Stalwart ergänzt Standardwerte, sonst sähe jeder Termin bei jedem Lauf
+  geändert aus. Eine Änderung setzt alles, was die Datei nicht mehr hat (Beschreibung, Ort, …),
+  auf `null`, denn Stalwart behält, was ein Patch auslässt. Ohne Einladungen
+  (`sendSchedulingMessages: false`).
+- **Wann:** beim Anlegen, auf „Jetzt aktualisieren“ und alle sechs Stunden (geprüft alle
+  15 Minuten, ein Abo nach dem anderen; je Abo läuft nur ein Lauf zur Zeit, sonst entstünden
+  Termine doppelt). Fehler stehen am Abo, ein fehlerhaftes Abo hält die anderen nicht auf. Löscht jemand den Kalender wie
+  jeden anderen, endet das Abo beim nächsten Lauf; „Abo beenden“ löscht den Kalender mit.
+  Höchstens 20 Abos je Person; ohne `STALWART_ADMIN_KEY` gibt es keine.
+
 ## Orte im Termin
 
 Das Feld „Ort“ (`src/features/calendar/place-field.tsx`) schlägt beim Tippen Orte vor, wie das

@@ -7,6 +7,11 @@ Steps that an update needs beyond raising the version are marked **Upgrade**.
 
 ## Unreleased
 
+- Calendar: "Kalender abonnieren" under *Kalender verwalten* – a calendar by its address (iCal,
+  webcal) such as school holidays or the waste collection, as a calendar of its own that the
+  server keeps up to date every six hours (or on "Jetzt aktualisieren"). Only https on the
+  internet; it does not count for availability. The database gets the table
+  `calendar_subscription` at start.
 - Mail on the phone: swipe a mail in the list to the left to archive it, to the right to mark it
   read or unread. What each direction does (archive, delete, read/unread, flag or nothing) is set
   per device under *Einstellungen → Darstellung → Wischen in der Mail-Liste*.

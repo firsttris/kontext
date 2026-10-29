@@ -84,6 +84,22 @@ export const signatureDetail = sqliteTable("signature_detail", {
   updatedAt: integer("updated_at", { mode: "timestamp_ms" }).notNull(),
 });
 
+/** A calendar a person subscribed to by its address (server/subscriptions/). */
+export const calendarSubscription = sqliteTable("calendar_subscription", {
+  id: text("id").primaryKey(),
+  memberId: text("member_id").notNull(),
+  /** The person's account and the calendar the events go into. */
+  accountId: text("account_id").notNull(),
+  calendarId: text("calendar_id").notNull(),
+  name: text("name").notNull(),
+  url: text("url").notNull(),
+  /** What was written per UID last time (JSON), to see what changed. */
+  written: text("written").notNull().default("{}"),
+  lastSyncAt: integer("last_sync_at", { mode: "timestamp_ms" }),
+  lastError: text("last_error"),
+  createdAt: integer("created_at", { mode: "timestamp_ms" }).notNull(),
+});
+
 /** A move from an uploaded file into one account (Outlook PST, vCard, iCalendar), with progress. */
 export const migrationJob = sqliteTable("migration_job", {
   id: text("id").primaryKey(),
