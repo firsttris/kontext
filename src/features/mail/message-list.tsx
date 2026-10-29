@@ -2,11 +2,13 @@
 import { Users } from "lucide-react";
 import { useCallback, useMemo } from "react";
 import type { Mailbox } from "@/jmap/types";
+import { acceptsImport } from "@/lib/eml-import";
 import { mailboxNotice } from "@/lib/mail-accounts";
 import { mailboxName, mailboxRights } from "@/lib/mailboxes";
 import { m } from "@/paraglide/messages";
 import type { MailSearch } from "@/routes/_app/mail.$accountId.$mailboxId";
 import { RESURFACED, useSnoozes } from "../snooze/queries";
+import { EmlImportButton, useEmlImport } from "./eml-import";
 import { canEmpty, EmptyFolder } from "./empty-folder";
 import { FilterChips, ListFrame, type Row } from "./list-frame";
 import { useEmailList, useHeldMails, useMailAccounts } from "./queries";
@@ -85,6 +87,10 @@ export const MessageList = ({ accountId, mailbox, search }: Props) => {
     (row: Row) => (canRemove ? { accountId, from: mailbox.id, email: row.email } : undefined),
     [canRemove, accountId, mailbox.id],
   );
+  const importEml = useEmlImport();
+  const onDropFiles = acceptsImport(mailbox)
+    ? (files: File[]) => void importEml({ accountId, mailboxId: mailbox.id }, files)
+    : undefined;
 
   return (
     <ListFrame
@@ -115,6 +121,8 @@ export const MessageList = ({ accountId, mailbox, search }: Props) => {
       dragMail={dragMail}
       folderId={mailbox.id}
       inJunk={mailbox.role === "junk"}
+      titleAction={<EmlImportButton accountId={accountId} mailbox={mailbox} />}
+      onDropFiles={onDropFiles}
       folderAction={
         canEmpty(mailbox) ? <EmptyFolder accountId={accountId} mailbox={mailbox} /> : undefined
       }

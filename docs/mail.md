@@ -46,6 +46,18 @@ IMAP und SMTP.
   ist; aus einer Mail heraus angelegt, auf Wunsch auch auf vorhandene Mails.
 - **Ordner und Unterordner**, verschieben per Menü oder Ziehen, auch zwischen info@ und den
   eigenen Ordnern.
+- **.eml-Dateien importieren:** einzelne Mails, die als Datei gesichert wurden (aus Thunderbird,
+  Apple Mail oder Kontexts „Als Anhang weiterleiten“), mit dem Knopf neben dem Ordnernamen in den
+  geöffneten Ordner holen – auch mehrere auf einmal – oder auf die Liste oder einen Ordner in der
+  Seitenleiste ziehen. Sie kommen gelesen an; als Eingangszeit gilt das Datum der Mail, sonst die
+  Zeit des letzten Empfangs-Servers. Kontext sagt danach, wie viele angekommen sind und welche
+  Dateien nicht, mit Grund. Nicht unterstützt sind Outlooks `.msg` (ein eigenes Binärformat, das
+  Stalwart nicht als Mail liest) und `.mbox` (ein ganzes Postfach): ganze Postfächer kommen über
+  den [Umzug](architecture.md#umzug) (Outlook als .pst) oder „Postfach verbinden“. In Entwürfe,
+  Markiert und Wiedervorlage wird nicht importiert, in gemeinsame Postfächer nur mit dem Recht,
+  Mails hinzuzufügen.
+
+  ![Ordner „Altablage 2024“ mit drei importierten Mails; unten die Meldung „3 Mails importiert.“ und „Nicht importiert: Rechnung Dezember.msg (Outlook-Format .msg wird nicht unterstützt)“](screenshots/eml-import.png)
 - **Mehrere Mails auf einmal** (Kästchen links an jeder Zeile, Strg-/Shift-Klick, `x`; am Handy
   lange drücken): archivieren, löschen, gelesen, Kategorie, verschieben, Aufgaben erstellen, als
   Anhang weiterleiten.

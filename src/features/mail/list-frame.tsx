@@ -15,6 +15,7 @@ import { cn } from "@/lib/cn";
 import { addRange, keepListed, type Picked, pickKey, toggleKey } from "@/lib/selection";
 import { m } from "@/paraglide/messages";
 import type { MailSearch } from "@/routes/_app/mail.$accountId.$mailboxId";
+import { useFileDrop } from "./eml-import";
 import type { DraggedMail } from "./mail-drag";
 import { MessageRow } from "./message-row";
 import { useMailAccounts } from "./queries";
@@ -62,6 +63,10 @@ type Props = {
   empty?: string;
   /** An action for the whole folder below the filters, e.g. "Papierkorb leeren". */
   folderAction?: ReactNode;
+  /** A small button next to the title, e.g. "E-Mails importieren". */
+  titleAction?: ReactNode;
+  /** Files dropped onto the list (.eml to import); without it the list takes no files. */
+  onDropFiles?: (files: File[]) => void;
   /** What dragging a row carries onto a folder; rows without it cannot be dragged. */
   dragMail?: (row: Row) => DraggedMail | undefined;
   /** The open folder, for actions on picked mails; none in combined lists. */
@@ -108,10 +113,13 @@ export const ListFrame = ({
   filters,
   empty,
   folderAction,
+  titleAction,
+  onDropFiles,
   dragMail,
   folderId,
   inJunk = false,
 }: Props) => {
+  const fileDrop = useFileDrop(onDropFiles);
   // Combined lists name each row's account; a folder's list is the route's account.
   const routeAccount = useParams({ strict: false }).accountId ?? "";
   const accountOf = (row: Row) => row.account?.id ?? routeAccount;
@@ -241,6 +249,7 @@ export const ListFrame = ({
             <span className="shrink-0 text-[12px] text-muted">
               {unread > 0 ? m.mail_unread_count({ count: unread }) : ""}
             </span>
+            {titleAction}
             {/* Phones have no hover: picking starts with this. */}
             {rows.length ? (
               <button
@@ -266,7 +275,11 @@ export const ListFrame = ({
       </header>
       <DeviceOffer />
 
-      <div ref={scrollRef} className="min-h-0 flex-1 overflow-y-auto px-2 pb-3">
+      <div
+        ref={scrollRef}
+        {...fileDrop}
+        className="min-h-0 flex-1 overflow-y-auto rounded-lg px-2 pb-3 data-[drop-over]:bg-hover data-[drop-over]:ring-1 data-[drop-over]:ring-accent data-[drop-over]:ring-inset"
+      >
         {isPending ? (
           <p className="px-3 py-6 text-[14px] text-muted">{m.common_loading()}</p>
         ) : rows.length === 0 ? (

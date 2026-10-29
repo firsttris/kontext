@@ -152,6 +152,60 @@ test.describe("Screenshots @screenshots", () => {
     }
   });
 
+  test(".eml-Dateien importieren", async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    const accountId = await personalAccountId("jonas");
+    const client = jmapAs("jonas");
+    const made = await client.call<{ created: Record<string, { id: string }> }>("Mailbox/set", {
+      accountId,
+      create: { f: { name: "Altablage 2024", parentId: null } },
+    });
+    const folderId = made.created.f!.id;
+    const mail = (subject: string, date: string) => ({
+      name: `${subject}.eml`,
+      mimeType: "message/rfc822",
+      buffer: Buffer.from(
+        [
+          "From: Petra Keller <petra@keller-elektro.test>",
+          `To: ${address("jonas")}`,
+          `Subject: ${subject}`,
+          `Date: ${date}`,
+          "Content-Type: text/plain; charset=utf-8",
+          "",
+          "Das Angebot im Anhang, wie besprochen.",
+          "",
+        ].join("\r\n"),
+      ),
+    });
+    try {
+      await login(page);
+      await page.goto(`/mail/${accountId}/${folderId}`);
+      await page
+        .locator('input[type="file"][aria-label="E-Mails importieren (.eml)"]')
+        .setInputFiles([
+          mail("Angebot Wärmepumpe Haus Krämer", "Tue, 4 Mar 2025 09:15:00 +0100"),
+          mail("Nachtrag Elektroarbeiten Bauabschnitt 2", "Fri, 14 Feb 2025 16:40:00 +0100"),
+          mail("Abnahmeprotokoll Heizungsanlage", "Mon, 20 Jan 2025 11:05:00 +0100"),
+          {
+            name: "Rechnung Dezember.msg",
+            mimeType: "application/vnd.ms-outlook",
+            buffer: Buffer.from([0xd0, 0xcf, 0x11, 0xe0]),
+          },
+        ]);
+      await expect(page.getByText("3 Mails importiert.")).toBeVisible();
+      await expect(
+        page.getByRole("list", { name: "Altablage 2024" }).getByText("Abnahmeprotokoll"),
+      ).toBeVisible();
+      await shot(page, "eml-import");
+    } finally {
+      await client.call("Mailbox/set", {
+        accountId,
+        destroy: [folderId],
+        onDestroyRemoveEmails: true,
+      });
+    }
+  });
+
   test("Papierkorb leeren", async ({ page }) => {
     await page.setViewportSize({ width: 1440, height: 900 });
     // Something in the Papierkorb: a mail of its own, so the other pictures keep the seed's.
