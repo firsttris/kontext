@@ -318,8 +318,8 @@ export const Composer = ({ accountId, mode, sourceEmailId, prefill }: Props) => 
     identity?.email,
     [...to, ...cc, ...bcc].map((address) => address.email),
   );
-  const outgoing = () => {
-    const { html, images } = pics.outgoing(editor?.getHTML() ?? "");
+  const outgoing = ({ draft = false } = {}) => {
+    const { html, images } = pics.outgoing(editor?.getHTML() ?? "", { draft });
     return {
       accountId: sendAccountId,
       identity:
@@ -359,7 +359,7 @@ export const Composer = ({ accountId, mode, sourceEmailId, prefill }: Props) => 
     // An encrypted mail is not kept on the server unencrypted, not even as a draft.
     if (!identity || !drafts || isEmpty() || encrypt) return;
     const run = (async () => {
-      const mail = outgoing();
+      const mail = outgoing({ draft: true });
       draftId.current = await saveDraft(client, mail, drafts.id);
       setSavedAt(new Date());
       // Files and pictures now live in the draft just written; the one replaced took its own.

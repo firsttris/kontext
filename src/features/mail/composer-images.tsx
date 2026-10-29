@@ -62,10 +62,17 @@ export const useComposerImages = ({
     }
   };
 
-  /** The HTML to send and the images it still shows (one taken out of the text stays home). */
-  const outgoing = (html: string) => {
+  /**
+   * The HTML to send and the images it still shows (one taken out of the text stays home). A
+   * draft keeps them all: a picture taken out may come back (undo, cut and paste), and its blob
+   * lives only in the draft, which the next save replaces.
+   */
+  const outgoing = (html: string, { draft = false } = {}) => {
     const sendable = sendableHtml(html);
-    return { html: sendable.html, images: images.filter(({ cid }) => sendable.cids.includes(cid)) };
+    return {
+      html: sendable.html,
+      images: draft ? images : images.filter(({ cid }) => sendable.cids.includes(cid)),
+    };
   };
 
   return { images, setImages, insert, outgoing };
