@@ -18,3 +18,15 @@ describe("attachmentMention", () => {
     expect(attachmentMention("Termin am Freitag", "Bis dann!")).toBeUndefined();
   });
 });
+
+describe("attachmentMention: the forms people write", () => {
+  it("finds the inflected and other common forms", () => {
+    expect(attachmentMention("", "Ein angehängtes PDF zeigt den Plan.")).toBe("angehängtes");
+    expect(attachmentMention("", "Im beigefügten Schreiben und beigefügtes Foto.")).toBe(
+      "beigefügten",
+    );
+    expect(attachmentMention("", "Ein beigefügtes Foto zeigt den Schaden.")).toBe("beigefügtes");
+    expect(attachmentMention("", "Anliegend erhalten Sie die Rechnung.")).toBe("Anliegend");
+    expect(attachmentMention("", "I'm attaching the invoice.")).toBe("attaching");
+  });
+});
