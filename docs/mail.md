@@ -58,6 +58,13 @@ IMAP und SMTP.
 
 - **Formatierter Text**, Antworten mit Zitat, Anhänge, Empfänger-Vorschläge aus der Firma und den Kontakten,
   Signatur je Absenderadresse.
+- **Mehr Formatierung** rechts in der Leiste: Schriftgröße (Klein, Normal, Groß, Sehr groß),
+  Textfarbe, Hintergrundfarbe und **Tabellen** – einfügen, dann im Menü Zeilen und Spalten
+  hinzufügen oder löschen, Kopfzeile an/aus. Alles geht als Inline-Stil hinaus, so sehen es
+  Outlook, Gmail und Apple Mail wie geschrieben; im Textteil steht eine Tabellenzeile je Zeile,
+  die Zellen mit Tabulator getrennt. Dieselbe Leiste haben die Signaturen.
+
+  ![Neue Mail mit Tabelle, blauem Text und dem Menü „Hintergrundfarbe“](screenshots/compose-formatting.png)
 - **„Anhang vergessen?“** Steht im eigenen Text oder im Betreff „Anhang“, „anbei“, „angehängt“,
   „beigefügt“, „attached“ …, aber nichts ist angehängt, fragt Kontext vor dem Senden nach: „Datei
   anhängen“ oder „Ohne Anhang senden“. Nur der eigene Text zählt: nicht das Zitat, nicht die

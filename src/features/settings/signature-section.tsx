@@ -1,6 +1,5 @@
 /** Sender name and signature per address the user sends from (own address, info@, …). */
 import { EditorContent, useEditor } from "@tiptap/react";
-import StarterKit from "@tiptap/starter-kit";
 import { type FormEvent, useState } from "react";
 import { useClient } from "@/auth/auth";
 import { useSession } from "@/components/shell/app-shell";
@@ -12,6 +11,7 @@ import type { Identity } from "@/jmap/types";
 import { htmlToText, textToHtml } from "@/lib/html";
 import { m } from "@/paraglide/messages";
 import { EditorToolbar } from "../mail/editor-toolbar";
+import { richText } from "../mail/rich-text";
 import { usePersonalAccountId, usePersonalIdentities, useSave } from "./queries";
 import { SettingsCard } from "./settings-page";
 
@@ -40,7 +40,7 @@ const IdentityCard = ({ identity }: { identity: Identity }) => {
   const accountId = usePersonalAccountId();
   const [name, setName] = useState(identity.name);
   const editor = useEditor({
-    extensions: [StarterKit.configure({ link: { openOnClick: false } })],
+    extensions: richText(),
     content:
       identity.htmlSignature || (identity.textSignature ? textToHtml(identity.textSignature) : ""),
     editorProps: {

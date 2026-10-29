@@ -95,7 +95,7 @@ VPS mit 2 vCPU und 4 GB RAM. Alles Weitere – DNS, Podman, Backups, Updates –
 
 | | |
 |---|---|
-| ✉️ **Mail** | **Gemeinsame Postfächer** wie info@ mit Rechten pro Person, **Kategorien** und **Regeln auf dem Server**, Suche wie in Gmail, später senden, Spam und Papierkorb mit einem Klick leeren, **„Anhang vergessen?“**, **weitere Postfächer** (Gmail, GMX), **Warnungen vor gefälschten Absendern** · [mehr →](https://firsttris.github.io/kontext/mail.html) |
+| ✉️ **Mail** | **Gemeinsame Postfächer** wie info@ mit Rechten pro Person, **Kategorien** und **Regeln auf dem Server**, Suche wie in Gmail, später senden, Spam und Papierkorb mit einem Klick leeren, Tabellen und Farben beim Schreiben, **„Anhang vergessen?“**, **weitere Postfächer** (Gmail, GMX), **Warnungen vor gefälschten Absendern** · [mehr →](https://firsttris.github.io/kontext/mail.html) |
 | 📅 **Kalender** | Tag, Woche, Monat, Serien (auch ab einem Termin ändern), **Einladungen mit einem Klick beantworten**, **Wer hat Zeit?**, **Videobesprechung pro Termin**, **Erinnerung als Hinweis oder Mail**, geteilte Kalender, Feiertage je Bundesland · [mehr →](https://firsttris.github.io/kontext/calendar-contacts.html) |
 | 👥 **Kontakte** | **Der Kunde auf einen Blick**: letzte Mails, nächste Termine, offene Aufgaben und Anrufe; Gruppen, vCard, Doppelte zusammenführen · [mehr →](https://firsttris.github.io/kontext/calendar-contacts.html#kontakte) |
 | ✅ **Aufgaben** | **Liste oder Kanban-Board** pro Postfach, **aus einer Mail, einer Chat-Nachricht oder einem verpassten Anruf**, Erinnerungen, per CalDAV in Thunderbird und am Handy · [mehr →](https://firsttris.github.io/kontext/tasks.html) |

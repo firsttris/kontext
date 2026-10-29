@@ -3,7 +3,6 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import Placeholder from "@tiptap/extension-placeholder";
 import { EditorContent, useEditor } from "@tiptap/react";
-import StarterKit from "@tiptap/starter-kit";
 import { ChevronLeft, X } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useClient } from "@/auth/auth";
@@ -32,6 +31,7 @@ import { EditorToolbar } from "./editor-toolbar";
 import { ForgottenAttachment } from "./forgotten-attachment";
 import { type OpenedMail, openedMail, shownSubject } from "./opened-mails";
 import { useEmail } from "./queries";
+import { richText } from "./rich-text";
 import { useUndoSeconds } from "./send-settings";
 import { useTakeBack } from "./take-back";
 import { useSendAccount } from "./use-send-account";
@@ -104,7 +104,7 @@ export const Composer = ({ accountId, mode, sourceEmailId, prefill }: Props) => 
 
   const editor = useEditor({
     extensions: [
-      StarterKit.configure({ link: { openOnClick: false, autolink: true } }),
+      ...richText({ autolink: true }),
       Placeholder.configure({ placeholder: m.mail_body_placeholder() }),
     ],
     onUpdate: () => {

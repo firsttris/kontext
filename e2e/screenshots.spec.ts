@@ -133,6 +133,46 @@ test.describe("Screenshots @screenshots", () => {
     await shot(page, "forgotten-attachment");
   });
 
+  test("Formatierung beim Schreiben", async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await login(page);
+    await page.getByRole("link", { name: "Neue Mail" }).first().click();
+    await page.getByRole("combobox", { name: "An" }).fill("petra");
+    await page.getByRole("option", { name: /Petra Keller/ }).click();
+    await page.getByLabel("Betreff").fill("Preise Wartung 2027");
+    await page.getByRole("textbox", { name: "Ihre Nachricht …" }).click();
+    await page.keyboard.type("Hallo Frau Keller,");
+    await page.keyboard.press("Enter");
+    await page.keyboard.type("hier die Preise für ");
+    await page.getByRole("button", { name: "Textfarbe" }).click();
+    await page.getByRole("menuitemradio", { name: "Blau" }).click();
+    await page.getByRole("button", { name: "Fett" }).click();
+    await page.keyboard.type("2027");
+    await page.getByRole("button", { name: "Fett" }).click();
+    await page.getByRole("button", { name: "Textfarbe" }).click();
+    await page.getByRole("menuitemradio", { name: "Automatisch" }).click();
+    await page.keyboard.type(":");
+    await page.keyboard.press("Enter");
+    await page.getByRole("button", { name: "Tabelle", exact: true }).click();
+    await page.getByRole("menuitem", { name: "Tabelle einfügen (3 × 3)" }).click();
+    await page.getByRole("button", { name: "Tabelle", exact: true }).click();
+    await page.getByRole("menuitem", { name: "Kopfzeile an/aus" }).click();
+    for (const cell of ["Leistung", "2026", "2027", "Wartung Heizung", "189 €", "199 €"]) {
+      await page.keyboard.type(cell);
+      await page.keyboard.press("Tab");
+    }
+    await page.keyboard.type("Notdienst");
+    await page.keyboard.press("Tab");
+    await page.keyboard.type("95 €");
+    await page.keyboard.press("Tab");
+    await page.getByRole("button", { name: "Hintergrundfarbe" }).click();
+    await page.getByRole("menuitemradio", { name: "Gelb" }).click();
+    await page.keyboard.type("95 €");
+    await page.getByRole("button", { name: "Hintergrundfarbe" }).click();
+    await page.mouse.move(1, 1);
+    await shot(page, "compose-formatting");
+  });
+
   test("Erinnerung am Termin", async ({ page }) => {
     await page.setViewportSize({ width: 1440, height: 900 });
     await login(page);

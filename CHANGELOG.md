@@ -7,6 +7,10 @@ Steps that an update needs beyond raising the version are marked **Upgrade**.
 
 ## Unreleased
 
+- Mail: more formatting when writing – font size, text and background color, and tables (rows
+  and columns added or removed from the menu, a header row on or off). Sent as inline styles, so
+  Outlook and Gmail show it as written; the plain-text part has a table row per line. The
+  signature editors have the same bar.
 - Calendar: "Dieser und alle folgenden" beside "Nur dieser Termin" and "Alle Termine der Serie",
   for changing and for deleting. The series so far ends before the date; when changing, a new
   series with the changes starts there (a series of so many dates keeps its number in all).
