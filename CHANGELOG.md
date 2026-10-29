@@ -7,6 +7,14 @@ Steps that an update needs beyond raising the version are marked **Upgrade**.
 
 ## Unreleased
 
+- A short tour on the first start: five or six cards through Mail, "Neue Mail", a shared mailbox
+  like info@ (for whoever has one), Calendar and Chat, each lighting up the real place – the rail
+  on a desktop, the tab bar on a phone ("Mehr" where Chat is not in it), a centred card where the
+  place is not shown. "Weiter", "Zurück", "Überspringen"; the focus stays in the card and Escape
+  skips. Shown once per person and device (`kontext.tour.seen` in the browser: the server has no
+  per-person settings store, and the phone's tour points elsewhere); "Einführung" in the user
+  menu, or under "Mehr" on a phone, starts it again. Built on the Radix dialog already in the
+  project, no new dependency.
 - Mail: import .eml files into a folder – with the button beside the "Alle / Ungelesen" filter
   (several files at once), or by dropping them onto the list or onto a folder in the sidebar. Each
   file is uploaded as a blob and imported with JMAP `Email/import` into that folder, marked read,

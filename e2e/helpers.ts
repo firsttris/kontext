@@ -49,10 +49,29 @@ const signedInWithKept = async (page: Page, user: string) => {
 };
 
 /**
- * The cards above the mail list that offer installing and notifications stay away unless a test
- * is about them (`offers`): they would push the list down in every other test.
+ * The tour of the first start counts as seen on this browser (src/features/tour/seen.ts), for every
+ * page of the test: it would cover the app in every test not about it. Added to what is there, so
+ * two people signed in side by side both have it.
  */
-export const login = async (page: Page, user = "jonas", { offers = false } = {}) => {
+const skipTour = (page: Page, user: string) =>
+  page.context().addInitScript((who) => {
+    const key = "kontext.tour.seen";
+    try {
+      const seen = JSON.parse(window.localStorage.getItem(key) ?? "[]");
+      const list = Array.isArray(seen) ? seen : [];
+      if (!list.includes(who)) window.localStorage.setItem(key, JSON.stringify([...list, who]));
+    } catch {
+      window.localStorage.setItem(key, JSON.stringify([who]));
+    }
+  }, address(user));
+
+/**
+ * The cards above the mail list that offer installing and notifications stay away unless a test
+ * is about them (`offers`): they would push the list down in every other test. So does the tour
+ * of the first start, unless a test is about it (`tour`).
+ */
+export const login = async (page: Page, user = "jonas", { offers = false, tour = false } = {}) => {
+  if (!tour) await skipTour(page, user);
   if (!offers) {
     await page.addInitScript(() => {
       for (const kind of ["install", "push"]) {

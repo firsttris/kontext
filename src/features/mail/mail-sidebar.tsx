@@ -144,6 +144,7 @@ export const MailSidebar = ({ accountId, mailbox, view, query }: Props) => {
         </Link>
         <Button asChild variant="primary" className="h-[38px] flex-1">
           <Link
+            data-tour="compose"
             to="/mail/$accountId/$mailboxId"
             params={{ accountId, mailboxId: mailbox?.id ?? "inbox" }}
             search={{ compose: "new" }}
@@ -213,6 +214,7 @@ export const MailSidebar = ({ accountId, mailbox, view, query }: Props) => {
                 key={entry.id}
                 to="/mail/$accountId/$mailboxId"
                 params={{ accountId: entry.id, mailboxId: "inbox" }}
+                data-tour={entry.kind === "shared" ? "shared" : undefined}
                 {...(inbox ? dropTarget({ accountId: entry.id, mailboxId: inbox.id }, label) : {})}
                 title={mailboxNotice(entry)}
                 className={navClass(!unified && entry.id === accountId)}
