@@ -686,7 +686,8 @@ test.describe("Entwürfe", () => {
 
   test("ein Bild, das nach dem Speichern zurück in den Text kommt, geht mit", async ({ page }) => {
     const subject = unique("Foto Heizraum");
-    // How many pictures the draft on the server holds: shows when an autosave went through.
+    // How many pictures the text of the draft on the server shows: tells when an autosave went
+    // through.
     const draftPictures = async () => {
       const client = jmapAs("jonas");
       const accountId = await personalAccountId("jonas");
@@ -697,15 +698,19 @@ test.describe("Entwürfe", () => {
           {
             accountId,
             "#ids": { resultOf: "q", name: "Email/query", path: "/ids" },
-            properties: ["attachments"],
+            properties: ["htmlBody", "bodyValues"],
+            fetchHTMLBodyValues: true,
           },
           "g",
         ],
       ]);
-      const list = get![1].list as { attachments: { type: string }[] }[];
-      return list.length === 1
-        ? list[0]!.attachments.filter((part) => part.type === "image/png").length
-        : -1;
+      const list = get![1].list as {
+        htmlBody: { partId: string }[];
+        bodyValues: Record<string, { value: string }>;
+      }[];
+      if (list.length !== 1) return -1;
+      const html = list[0]!.bodyValues[list[0]!.htmlBody[0]!.partId]?.value ?? "";
+      return html.match(/src="cid:/g)?.length ?? 0;
     };
     await page.getByRole("link", { name: "Neue Mail" }).first().click();
     await page.getByRole("combobox", { name: "An" }).fill("anna@weber-haustechnik.test");
