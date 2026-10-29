@@ -101,9 +101,12 @@ export const MessageRow = ({
     onPick(false);
   });
   const onClick = (event: MouseEvent) => {
-    // Both are asked, so neither keeps a stale "swallow the next click".
+    // Both are asked, so neither keeps a stale "swallow the next click". Only a finger's click
+    // ends a press or a swipe: after a drag the browser sends none, and Enter (detail 0) must
+    // still open the line.
     const pressed = pickByPress.consumeClick();
-    if (swipe.consumeClick() || pressed) return event.preventDefault();
+    const swiped = swipe.consumeClick();
+    if ((swiped || pressed) && event.detail > 0) return event.preventDefault();
     const does = rowClick({
       shift: event.shiftKey,
       ctrl: event.ctrlKey || event.metaKey,
