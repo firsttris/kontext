@@ -56,3 +56,30 @@ describe("sessionOf", () => {
     expect(session.apiUrl).toBe("https://demo.test/jmap/");
   });
 });
+
+describe("moving a mail out of a subfolder", () => {
+  it("leaves it only in the target folder, with the patch the app sends (moveEmails)", () => {
+    const store = signedIn("jonas");
+    const mailboxes = handleRequest(store, {
+      methodCalls: [["Mailbox/get", { accountId: "jonas", properties: ["name"] }, "m"]],
+    }).methodResponses[0]![1].list as { id: string; name: string }[];
+    const hoffmann = mailboxes.find((mailbox) => mailbox.name === "Hoffmann")!.id;
+    const mail = [...store.emails.values()].find((email) => email.mailboxIds[hoffmann])!;
+
+    handleRequest(store, {
+      methodCalls: [
+        [
+          "Email/set",
+          {
+            accountId: "jonas",
+            update: {
+              [mail.id]: { [`mailboxIds/${hoffmann}`]: null, "mailboxIds/jonas-inbox": true },
+            },
+          },
+          "0",
+        ],
+      ],
+    });
+    expect(store.emails.get(mail.id)!.mailboxIds).toEqual({ "jonas-inbox": true });
+  });
+});

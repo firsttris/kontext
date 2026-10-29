@@ -30,6 +30,7 @@ const send = (seconds: number) => {
               mailboxIds: { "jonas-drafts": true },
               keywords: { $draft: true, $seen: true },
               to: [{ name: "Anna Weber", email: "anna@weber-haustechnik.test" }],
+              bcc: [{ name: "Max Weber", email: "max@weber-haustechnik.test" }],
               subject: "Urlaub",
               bodyValues: { text: { value: "Passt." } },
             },
@@ -94,5 +95,11 @@ describe("EmailSubmission/set", () => {
     expect(cancel.methodResponses[0]![1].updated).toEqual({ [submissionId]: null });
     expect(releaseDue(store, new Date(Date.now() + 11_000))).toBe(false);
     expect(annasInbox(store)).toHaveLength(1);
+  });
+
+  it("delivers no Bcc line: Anna does not see that Max got the mail too", () => {
+    const { store } = send(0);
+    const delivered = annasInbox(store).find((email) => email.subject === "Urlaub");
+    expect(delivered?.bcc).toBeNull();
   });
 });
