@@ -90,6 +90,9 @@ IMAP und SMTP.
   Posteingänge“ über eigene und gemeinsame Postfächer hinweg; dort stehen die wieder vorgelegten
   Mails aller Posteingänge ebenfalls oben.
 
+  ![Zwei ausgewählte Mails aus dem eigenen Postfach und info@, darüber die Wiedervorlage mit Morgen, Montag und in einer Woche](screenshots/snooze-many.png)
+
+
 ## Schreiben
 
 - **Formatierter Text**, Antworten mit Zitat, Anhänge, Empfänger-Vorschläge aus der Firma und den Kontakten,

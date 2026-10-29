@@ -23,6 +23,9 @@ Stalwarts Admin-Oberfläche und ohne IT-Kenntnisse.
   und kann sie ändern oder löschen; umgekehrt sieht der Chef ihre eigenen. „Auch auf die Mails
   anwenden“ wirkt auf ihren Posteingang. Nur wer die Firmenverwaltung öffnen darf, kommt an
   die Regeln anderer.
+
+  ![Regeln von Anna Weber in der Firmenverwaltung: Mails vom Großhandel als gelesen, Notdienst markiert](screenshots/employee-rules.png)
+
 - **Firmen-Signatur** für alle auf einmal, mit `[Name]` und `[E-Mail]` je Absender und
   `[Telefon]`, `[Mobil]`, `[Position]`, `[Abteilung]`: die trägt jede Person einmal unter
   *Einstellungen → Profil* ein („Angaben für die Signatur“), und ihre Signatur ist sofort
