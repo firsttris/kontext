@@ -821,6 +821,12 @@ Server läuft; Kontext baut nur die Oberfläche und entscheidet, wer hinein darf
   bleibt offen, während man zwischen Mail, Chat und Kalender wechselt. Mikrofon, Kamera,
   Bildschirm teilen (am Rechner) und Auflegen; wer spricht, hat einen grünen Rand. LiveKits Code
   (`livekit-client`, `@livekit/components-react`) lädt erst beim ersten Gespräch.
+- **Anordnung der Bilder** (`src/lib/call-layout.ts`): Zu zweit füllt das Gegenüber die Fläche,
+  das eigene Bild steht klein in der Ecke (am Handy hochkant). Ab drei Personen ein Raster, das
+  die Fläche ausfüllt; die Spaltenzahl richtet sich nach der gemessenen Größe, sodass die Bilder
+  am größten werden – am hochkant gehaltenen Handy übereinander, am Rechner nebeneinander, bei
+  sehr vielen scrollbar. Ein geteilter Bildschirm bekommt die Fläche, die Kameras einen Streifen
+  darunter.
 - **Verbindung:** Die Signalisierung geht über Caddy (`/rtc`, WebSocket auf Kontexts Adresse),
   Ton und Bild direkt zum Server: UDP 7882 für alle Gespräche, TCP 7881, wenn UDP gesperrt ist.
   Verschlüsselt ist beides (WebRTC, DTLS-SRTP); LiveKit selbst kann mitschneiden, Kontext tut es

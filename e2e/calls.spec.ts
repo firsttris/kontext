@@ -54,6 +54,13 @@ test.describe("Anrufe", () => {
     await expect(annasPanel.getByRole("listitem", { name: /^Jonas Weber/ })).toBeVisible();
     // Jonas' camera is on (he called with video), so his own tile shows it.
     await expect(panel.getByRole("listitem", { name: /^Du/ }).locator("video")).toBeVisible();
+    // Two people: Anna fills the space, Jonas' own camera sits small in her corner.
+    const annasTile = await panel.getByRole("listitem", { name: /^Anna Weber/ }).boundingBox();
+    const ownTile = await panel.getByRole("listitem", { name: /^Du/ }).boundingBox();
+    expect(ownTile && annasTile && ownTile.width < annasTile.width / 2).toBe(true);
+    expect(ownTile && annasTile && ownTile.x + ownTile.width <= annasTile.x + annasTile.width).toBe(
+      true,
+    );
 
     await panel.getByRole("button", { name: "Mikrofon aus" }).click();
     await expect(panel.getByRole("button", { name: "Mikrofon an" })).toBeVisible();
@@ -171,6 +178,10 @@ test.describe("Anrufe am Handy @phone", () => {
     const viewport = page.viewportSize();
     expect(box?.width).toBe(viewport?.width);
     expect(box?.height).toBe(viewport?.height);
+    // Alone in it, one's own picture takes the width and most of the height, not a small strip.
+    const ownTile = await panel.getByRole("listitem", { name: /^Du/ }).boundingBox();
+    expect(ownTile?.width ?? 0).toBeGreaterThan((box?.width ?? 0) - 40);
+    expect(ownTile?.height ?? 0).toBeGreaterThan((box?.height ?? 0) / 2);
     // No screen sharing on the phone.
     await expect(panel.getByRole("button", { name: "Bildschirm teilen" })).toBeHidden();
     await panel.getByRole("button", { name: "Auflegen" }).click();

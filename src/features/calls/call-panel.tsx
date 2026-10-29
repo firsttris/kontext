@@ -49,7 +49,7 @@ const useNow = () => {
   return now;
 };
 
-const CallView = ({ active, expanded }: { active: ActiveCall; expanded: boolean }) => {
+const CallView = ({ active }: { active: ActiveCall }) => {
   const { channels } = useChannels();
   const { me, nameOf } = useChatNames();
   const photoOf = useColleaguePhotoOf();
@@ -118,7 +118,6 @@ const CallView = ({ active, expanded }: { active: ActiveCall; expanded: boolean 
       </p>
       <CallTiles
         tracks={tracks}
-        expanded={expanded}
         nameOf={(participant) => nameOf(participant.identity)}
         photoOf={(participant) => photoOf({ id: participant.identity })}
       />
@@ -220,7 +219,7 @@ export const CallPanel = ({ active, title }: { active: ActiveCall; title: string
           {expanded ? <Minimize2 size={15} /> : <Maximize2 size={15} />}
         </button>
       </header>
-      <CallView active={active} expanded={expanded} />
+      <CallView active={active} />
     </LiveKitRoom>
   );
 };
