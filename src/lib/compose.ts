@@ -5,6 +5,9 @@ import { prefixSubject, replyRecipients } from "./addresses";
 import { displayName, readingDate } from "./format";
 import { escapeHtml, quoteHtml } from "./html";
 
+/** The line a forward starts with, below what the user writes above it. */
+export const FORWARD_MARKER = "---------- Weitergeleitete Nachricht ----------";
+
 export type ComposeMode = "new" | "reply" | "replyAll" | "forward" | "draft";
 
 export type ComposeStart = {
@@ -82,7 +85,7 @@ export const startCompose = (
     return {
       ...empty,
       subject: prefixSubject("Fwd", original.subject),
-      html: `<p></p><p>---------- Weitergeleitete Nachricht ----------<br>${lines.join("<br>")}</p>${originalHtml}`,
+      html: `<p></p><p>${FORWARD_MARKER}<br>${lines.join("<br>")}</p>${originalHtml}`,
       attachments: fileAttachments(original),
     };
   }
