@@ -71,4 +71,17 @@ describe("signature details, review", () => {
       "<h3>Weber Haustechnik</h3><p>Anna Weber</p>",
     );
   });
+
+  it("puts in what people entered literally, $ and placeholders included", () => {
+    const details = { phone: "", mobile: "", position: "Kasse $& [Abteilung]", department: "Büro" };
+    const patches = signaturePatches(
+      { html: "<p>[Position]</p>", text: "[Position]" },
+      anna,
+      details,
+    );
+    expect(patches.a).toEqual({
+      htmlSignature: "<p>Kasse $&#38; [Abteilung]</p>",
+      textSignature: "Kasse $& [Abteilung]",
+    });
+  });
 });
