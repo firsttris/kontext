@@ -26,6 +26,10 @@ Steps that an update needs beyond raising the version are marked **Upgrade**.
   link. Switching encryption on after adding files pulls them into the browser and deletes the
   draft that held them unencrypted; switching it off uploads them as before. Files and pictures
   of an encrypted mail may be 25 MB together.
+- e2e: the tests that opened the seed's mails from Jonas' inbox list use copies of them made for
+  the test (`e2e/own-mails.ts`) and remove them afterwards, so a full inbox no longer pushes them
+  out of the rendered rows.
+
 - A short tour on the first start: five or six cards through Mail, "Neue Mail", a shared mailbox
   like info@ (for whoever has one), Calendar and Chat, each lighting up the real place – the rail
   on a desktop, the tab bar on a phone ("Mehr" where Chat is not in it), a centred card where the
