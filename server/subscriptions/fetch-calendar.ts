@@ -74,11 +74,15 @@ export const fetchCalendar = async (input: string, deps: FetchDeps = {}): Promis
     }
     const next = response.headers.get("location");
     if (response.status >= 300 && response.status < 400 && next) {
-      url = new URL(next, url);
+      const target = URL.parse(next, url);
+      if (!target) return { ok: false, error: "Der Kalender leitet auf keine gültige Adresse." };
+      url = target;
       continue;
     }
     if (!response.ok) return { ok: false, error: `Der Kalender antwortet mit ${response.status}.` };
-    const text = await readLimited(response);
+    // The body can break off too, also when the time is up while it arrives.
+    const text = await readLimited(response).catch(() => undefined);
+    if (text === undefined) return { ok: false, error: "Der Kalender ist nicht erreichbar." };
     if (text === null) return { ok: false, error: "Der Kalender ist größer als 5 MB." };
     if (!/^\s*BEGIN:VCALENDAR/i.test(text)) {
       return { ok: false, error: "Unter dieser Adresse liegt kein Kalender (iCal)." };
