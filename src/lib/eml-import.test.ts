@@ -53,6 +53,22 @@ describe("parseMailDate", () => {
     expect(parseMailDate("3 Mar 05 09:00:00 EST")?.toISOString()).toBe("2005-03-03T09:00:00.000Z");
   });
 
+  it("reads the US zone names RFC 5322 §4.3 defines, and three-digit years", () => {
+    expect(parseMailDate("3 Mar 05 09:00:00 EST")?.toISOString()).toBe("2005-03-03T14:00:00.000Z");
+    expect(parseMailDate("Fri, 4 Jul 2025 08:00:00 PDT")?.toISOString()).toBe(
+      "2025-07-04T15:00:00.000Z",
+    );
+    expect(parseMailDate("Mon, 6 Jan 2025 10:00:00 cst")?.toISOString()).toBe(
+      "2025-01-06T16:00:00.000Z",
+    );
+    expect(parseMailDate("Mon, 6 Jan 2025 10:00:00 UT")?.toISOString()).toBe(
+      "2025-01-06T10:00:00.000Z",
+    );
+    expect(parseMailDate("1 Jan 100 12:00:00 +0000")?.toISOString()).toBe(
+      "2000-01-01T12:00:00.000Z",
+    );
+  });
+
   it("gives nothing for what is no date", () => {
     expect(parseMailDate("gestern")).toBeUndefined();
     expect(parseMailDate("3 Foo 2025 09:00:00 +0000")).toBeUndefined();
