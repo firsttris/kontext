@@ -302,6 +302,8 @@
   "calendar_week": "Week",
   "calendar_day": "Day",
   "calendar_new": "New event",
+  "calendar_duplicate": "Duplicate",
+  "calendar_duplicate_title": "Duplicate event",
   "calendar_week_number": "Week {week}",
   "calendar_event_title": "Title",
   "calendar_event_date": "Date",

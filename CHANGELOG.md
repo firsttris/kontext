@@ -12,6 +12,11 @@ Steps that an update needs beyond raising the version are marked **Upgrade**.
   all back with "Alles entziehen"; only seeing your free and busy times stays when every
   colleague sees them. Folders, sending in your name and further sharing stay with you. A mailbox
   shared this way (or handed over) is now labelled "Postfach von …".
+- Calendar: "Duplizieren" on an appointment opens the editor with a copy – same title, place,
+  video meeting, attendees, notes, reminder, show-as, calendar, documents and length, on the
+  original's date until changed. Saved as a new appointment (new uid), so the attendees get
+  invitations as for any new one. A date of a series is copied as that date alone, without the
+  repetition.
 - Contacts: several at once – pick contacts by their box (Shift for a range, Ctrl/⌘ for one more;
   on phones "Auswählen" or a long press), then add them to a group, export them as one vCard file
   or delete them after one question with the count. Groups are offered within the account the
