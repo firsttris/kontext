@@ -1,31 +1,36 @@
+import { say } from "./language";
 import type { Scene } from "./types";
 
 /**
  * The film, scene by scene. A take scene shows a recording of e2e/video.spec.ts; its texts say in
- * a few words what the pictures show, for those who watch without sound.
+ * a few words what the pictures show, for those who watch without sound; in the film's language
+ * (video/language.ts).
  */
 export const scenes: Scene[] = [
   {
     kind: "title",
-    lines: ["Alles, was dein Team von Google kennt.", "Ohne dass Google dein Team kennt.~"],
+    lines: [
+      say("Alles, was dein Team von Google kennt.", "Everything your team knows from Google."),
+      say("Ohne dass Google dein Team kennt.~", "Without Google knowing your team.~"),
+    ],
     seconds: 3.6,
   },
   {
     kind: "chips",
-    title: "Eine App. Dein Server.",
+    title: say("Eine App. Dein Server.", "One app. Your server."),
     chips: [
-      "Mail",
-      "Kalender",
-      "Kontakte",
-      "Aufgaben",
-      "Chat",
-      "Videocalls",
-      "Telefon",
-      "Dokumente",
-      "Verschlüsselung",
-      "KI-Agenten",
-      "Firmenverwaltung",
-      "Handy",
+      { icon: "mail", label: say("Mail", "Mail") },
+      { icon: "calendar", label: say("Kalender", "Calendar") },
+      { icon: "contacts", label: say("Kontakte", "Contacts") },
+      { icon: "tasks", label: say("Aufgaben", "Tasks") },
+      { icon: "chat", label: say("Chat", "Chat") },
+      { icon: "video", label: say("Videocalls", "Video calls") },
+      { icon: "phone", label: say("Telefon", "Phone") },
+      { icon: "documents", label: say("Dokumente", "Documents") },
+      { icon: "encryption", label: say("Verschlüsselung", "Encryption") },
+      { icon: "agents", label: say("KI-Agenten", "AI agents") },
+      { icon: "company", label: say("Firmenverwaltung", "Company admin") },
+      { icon: "mobile", label: say("Handy", "Mobile") },
     ],
     seconds: 3.4,
   },
@@ -33,97 +38,103 @@ export const scenes: Scene[] = [
     kind: "take",
     take: "mail",
     layout: "window",
-    kicker: "Mail",
-    title: "Ein Posteingang, der mitdenkt",
+    kicker: say("Mail", "Mail"),
+    title: say("Ein Posteingang, der mitdenkt", "An inbox that thinks along"),
   },
   {
     kind: "take",
     take: "calendar",
     layout: "window",
-    kicker: "Kalender",
-    title: "Nie wieder „Passt dir Dienstag?“",
+    kicker: say("Kalender", "Calendar"),
+    title: say("Nie wieder „Passt dir Dienstag?“", "No more “Does Tuesday work?”"),
   },
   {
     kind: "take",
     take: "contacts",
     layout: "window",
-    kicker: "Kontakte",
-    title: "Der Kunde auf einen Blick",
+    kicker: say("Kontakte", "Contacts"),
+    title: say("Der Kunde auf einen Blick", "The customer at a glance"),
   },
   {
     kind: "take",
     take: "phone",
     layout: "window",
-    kicker: "Telefon",
-    title: "Du weißt, wer anruft – und worum es geht",
+    kicker: say("Telefon", "Phone"),
+    title: say("Du weißt, wer anruft – und worum es geht", "You know who’s calling – and why"),
   },
   {
     kind: "take",
     take: "tasks",
     layout: "window",
-    kicker: "Aufgaben",
-    title: "Aus der Mail wird eine Aufgabe",
+    kicker: say("Aufgaben", "Tasks"),
+    title: say("Aus der Mail wird eine Aufgabe", "The email becomes a task"),
   },
   {
     kind: "take",
     take: "chat",
     layout: "duo",
-    kicker: "Chat und Video",
-    title: "Die WhatsApp-Gruppe fürs Büro – nur deine",
+    kicker: say("Chat und Video", "Chat and video"),
+    title: say(
+      "Die WhatsApp-Gruppe fürs Büro – nur deine",
+      "The office WhatsApp group – but yours",
+    ),
   },
   {
     kind: "take",
     take: "documents",
     layout: "window",
-    kicker: "Dokumente",
-    title: "Word, Excel und PDF – gleich daneben",
+    kicker: say("Dokumente", "Documents"),
+    title: say("Word, Excel und PDF – gleich daneben", "Word, Excel and PDF – right alongside"),
   },
   {
     kind: "take",
     take: "secure-mail",
     layout: "window",
-    kicker: "Verschlüsselung",
-    title: "Vertraulich senden – an jeden",
+    kicker: say("Verschlüsselung", "Encryption"),
+    title: say("Vertraulich senden – an jeden", "Send confidentially – to anyone"),
   },
   {
     kind: "take",
     take: "secure-chat",
     layout: "panel",
-    kicker: "Verschlüsselung",
-    title: "Ende-zu-Ende, auch im Chat",
+    kicker: say("Verschlüsselung", "Encryption"),
+    title: say("Ende-zu-Ende, auch im Chat", "End-to-end, in chat too"),
   },
   {
     kind: "take",
     take: "agents",
     layout: "panel",
-    kicker: "KI-Agenten (MCP)",
-    title: "Dein Assistent kennt deine Kunden",
+    kicker: say("KI-Agenten (MCP)", "AI agents (MCP)"),
+    title: say("Dein Assistent kennt deine Kunden", "Your assistant knows your customers"),
   },
   {
     kind: "take",
     take: "company",
     layout: "window",
-    kicker: "Firmenverwaltung",
-    title: "Chefsache in zwei Minuten",
+    kicker: say("Firmenverwaltung", "Company admin"),
+    title: say("Chefsache in zwei Minuten", "The boss’s job in two minutes"),
   },
   {
     kind: "take",
     take: "phones",
     layout: "phones",
-    kicker: "Am Handy",
-    title: "Wie eine App. Ohne App Store.",
+    kicker: say("Am Handy", "On mobile"),
+    title: say("Wie eine App. Ohne App Store.", "Like an app. No app store."),
   },
   {
     kind: "end",
     title: "Kontext",
-    claim: "Open Source · Deine Daten · Kein Preis pro Kopf",
+    claim: say(
+      "Open Source · Deine Daten · Kein Preis pro Kopf",
+      "Open source · Your data · No per-seat pricing",
+    ),
     link: "firsttris.github.io/kontext",
     seconds: 3.6,
   },
 ];
 
 /**
- * The short loop in the READMEs (docs/assets/kontext-teaser.webp): parts of scenes, each from a
+ * The short loop in the READMEs (docs/assets/kontext-teaser.*.webp): parts of scenes, each from a
  * time after the scene's start, cut from the rendered film.
  */
 export const teaser: { scene: string; from: number; seconds: number }[] = [

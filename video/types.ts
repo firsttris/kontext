@@ -39,11 +39,14 @@ export type Step = {
 
 export type Take = { name: string; screens: Screen[]; steps: Step[] };
 
+/** A module in the list of what's inside: its icon (video/stage/icons.ts) and its name. */
+export type Chip = { icon: string; label: string };
+
 /** How the screens of a scene sit on the stage. */
 export type Layout = "window" | "duo" | "panel" | "phones";
 
 export type Scene =
   | { kind: "title"; lines: string[]; small?: string; seconds: number }
-  | { kind: "chips"; title: string; chips: string[]; seconds: number }
+  | { kind: "chips"; title: string; chips: Chip[]; seconds: number }
   | { kind: "take"; take: string; layout: Layout; kicker: string; title: string }
   | { kind: "end"; title: string; claim: string; link: string; seconds: number };

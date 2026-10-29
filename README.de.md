@@ -27,7 +27,7 @@ Gemeinsame Postfächer, ein Kalender fürs Team und zu jedem Kunden alle Mails, 
 [FAQ](#-faq) •
 [Dokumentation](https://firsttris.github.io/kontext/)
 
-<a href="https://firsttris.github.io/kontext/"><img src="docs/assets/kontext-teaser.webp" alt="Kontext in Bewegung: alle Module auf einen Blick, der Posteingang mit PDF-Vorschau, ein Videoanruf vom Laptop aufs Handy, Word im Browser mit Kommentaren und ein KI-Agent, der einen Kunden nachschlägt und einen Entwurf hinterlegt" width="900"></a>
+<a href="https://firsttris.github.io/kontext/"><img src="docs/assets/kontext-teaser.de.webp" alt="Kontext in Bewegung: alle Module auf einen Blick, der Posteingang mit PDF-Vorschau, ein Videoanruf vom Laptop aufs Handy, Word im Browser mit Kommentaren und ein KI-Agent, der einen Kunden nachschlägt und einen Entwurf hinterlegt" width="900"></a>
 
 ▶️ **[Den ganzen Film ansehen (2 Minuten)](https://firsttris.github.io/kontext/)** – jedes Modul, aus der echten App
 

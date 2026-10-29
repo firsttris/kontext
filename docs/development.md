@@ -144,7 +144,7 @@ und „Team“, Termine der laufenden Woche, eine wöchentliche Teambesprechung 
 | App (PWA)       | `bun run e2e`         | `e2e/pwa.spec.ts` gegen die gebaute App wie in Produktion (Server auf 28090 liefert `dist/`): Updates, Offline-Start, Cache-Header, Brotli, was vorab gecacht wird, Teilen |
 | Abhängigkeiten  | `bun audit`           | bekannte Lücken; in CI bei jedem Push und nachts                                                            |
 | Screenshots     | `bun run screenshots` | die Bilder in `docs/screenshots/` und für den Installationsdialog in `public/screenshots/`                  |
-| Film            | `bun run video`       | der Film oben auf der Startseite der Doku, `docs/assets/kontext-film.*` (siehe [Film](#film))                |
+| Film            | `bun run video`       | der Film oben auf der Startseite der Doku, deutsch und englisch, `docs/assets/kontext-film.*` (siehe [Film](#film)) |
 
 Vor dem ersten `bun run e2e` (oder `bun run screenshots`) einmal Playwrights Chromium laden:
 `bunx playwright install chromium`. Wer schon ein Chromium hat, zeigt stattdessen mit
@@ -190,13 +190,23 @@ Integrationstests sich verbinden können.
 ## Film
 
 Der Film oben auf der Startseite entsteht wie die Screenshots aus der echten App mit den
-Testdaten, nicht aus einer Bildschirmaufnahme. Zwei Schritte:
+Testdaten, nicht aus einer Bildschirmaufnahme, einmal auf Deutsch und einmal auf Englisch
+(`FILM_LANG=de` oder `en`, `video/language.ts`): `bun run video` macht beide nacheinander,
+`bun run video:de` oder `video:en` nur einen. Im englischen Film läuft der Browser auf `en-GB`, die
+App ist englisch, und Titel, Untertitel und getippte Texte kommen aus `say("…", "…")`; die
+Testdaten von Weber Haustechnik bleiben deutsch. Die Aufnahmen finden die Bedienelemente über die
+Texte der App selbst (`ui("mail_inbox")` aus `messages/*.json`), damit beide Sprachen dieselben
+Schritte gehen. Jede Sprache hat ihre Dateien: `docs/assets/kontext-film.de.mp4` und `.en.mp4`, die
+Vorschaubilder `.jpg` und die Teaser `kontext-teaser.de.webp` (`README.de.md`) und `.en.webp`
+(`README.md`); `docs/index.md` zeigt den deutschen, `docs/index.en.md` den englischen Film. Zwei
+Schritte je Sprache:
 
 1. **Aufnehmen** (`bun run video:record`, das Playwright-Projekt `video`): `e2e/video.spec.ts` ruft
    für jede Szene eine Aufnahme aus `video/takes/` auf. Sie bedient die App Schritt für Schritt und
    macht nach jedem Schritt ein scharfes Bild (doppelte Pixel am Desktop, dreifache am Handy), dazu,
    wohin der Zeiger klickt und wohin die Kamera schaut (`video/take.ts`). Alles landet in
-   `.dev/video/takes/<Szene>/`. `TAKE=chat bun run video:record` nimmt nur eine Szene neu auf.
+   `.dev/video/takes/<Sprache>/<Szene>/`. `TAKE=chat FILM_LANG=en bun run video:record` nimmt nur
+   eine Szene neu auf.
    Der Videoanruf läuft wirklich über LiveKit, mit gezeichneten Personen als Kamera
    (`video/camera.ts`); die KI-Szene ruft Kontexts MCP-Server wirklich auf, nur das Chatfenster des
    Assistenten daneben ist gezeichnet (`video/panels.ts`), ebenso die Karte mit dem, was der Server
@@ -205,14 +215,14 @@ Testdaten, nicht aus einer Bildschirmaufnahme. Zwei Schritte:
    in Browserfenster und Handys, bewegt Zeiger und Kamera, blendet über und setzt Titel und
    Untertitel. Sie ist eine Seite in Chromium, die zu jeder Zeit ein festes Bild zeigt
    (`window.film.render(t)`, die Zeitrechnung in `video/stage/timeline.ts`); gerendert wird Bild für
-   Bild, ffmpeg macht daraus ein MP4 (H.264, spielt überall), ein Vorschaubild und einen kurzen Zusammenschnitt als animiertes WebP für die READMEs (`docs/assets/kontext-teaser.webp`; GitHub spielt kein Video aus dem Repository ab, zeigt aber animierte Bilder). Welche Stellen in den Zusammenschnitt kommen, steht in `teaser` in `video/storyboard.ts`. Er läuft mit 30 Bildern pro Sekunde wie der Film – mit weniger ruckeln Kamera und Zeiger; `--teaser` schneidet ihn neu, ohne den Film neu zu rendern. Mit
-   `--stills 12,40.5` entstehen einzelne Bilder in `.dev/video/stills/`, mit `--from 20 --to 35
+   Bild, ffmpeg macht daraus ein MP4 (H.264, spielt überall), ein Vorschaubild und einen kurzen Zusammenschnitt als animiertes WebP für die READMEs (`docs/assets/kontext-teaser.<Sprache>.webp`; GitHub spielt kein Video aus dem Repository ab, zeigt aber animierte Bilder). Welche Stellen in den Zusammenschnitt kommen, steht in `teaser` in `video/storyboard.ts`. Er läuft mit 30 Bildern pro Sekunde wie der Film – mit weniger ruckeln Kamera und Zeiger; `--teaser` schneidet ihn neu, ohne den Film neu zu rendern. Das WebP macht `img2webp` aus libwebp mit einem Schlüsselbild alle acht Bilder: ffmpegs eigenes animiertes WebP hat nur eines am Anfang und übernimmt danach kleine Änderungen nicht, so blieben bei langsamen Überblendungen und Kamerafahrten alte Blöcke stehen. Mit
+   `--stills 12,40.5` entstehen einzelne Bilder in `.dev/video/stills/<Sprache>/`, mit `--from 20 --to 35
    --out .dev/video/teil.mp4` ein Ausschnitt.
 
 Reihenfolge, Titel und Untertitel stehen in `video/storyboard.ts` und bei den Schritten der
 Aufnahmen: kurz, weil die meisten den Film ohne Ton sehen. Nach einer Änderung am Aussehen der App:
-Actions → _Update video_ → Run workflow (oder `bun run video`, braucht ffmpeg), dann den Film
-ansehen.
+Actions → _Update video_ → Run workflow (oder `bun run video`, braucht ffmpeg und img2webp, Paket
+`webp`), dann beide Filme ansehen.
 
 ## CI und Releases
 

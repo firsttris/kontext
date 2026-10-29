@@ -7,9 +7,10 @@ jobs:
   video:
     uses: firsttris/workflows/.github/workflows/screenshots.yml@v1
     with:
-      # ffmpeg encodes the film; in a container without sudo apt-get runs as root.
+      # ffmpeg encodes the film, img2webp (webp) the teaser; in a container without sudo apt-get
+      # runs as root. bun run video records and renders the German film, then the English one.
       command: >-
-        (command -v ffmpeg || (sudo -n true 2>/dev/null && sudo apt-get update -qq && sudo apt-get install -y -qq ffmpeg) || (apt-get update -qq && apt-get install -y -qq ffmpeg))
+        ((command -v ffmpeg && command -v img2webp) || (sudo -n true 2>/dev/null && sudo apt-get update -qq && sudo apt-get install -y -qq ffmpeg webp) || (apt-get update -qq && apt-get install -y -qq ffmpeg webp))
         && bun run video
       install: bun install --frozen-lockfile
       bun: true

@@ -72,16 +72,28 @@ export default defineConfig({
       use: {
         ...devices["Desktop Chrome"],
         // Chromium on Linux takes the language of its fields from LANG, not from --lang.
-        launchOptions: { ...launchOptions, env: { ...process.env, LANG: "de_DE.UTF-8" } },
+        launchOptions: {
+          ...launchOptions,
+          env: {
+            ...process.env,
+            LANG: process.env.FILM_LANG === "en" ? "en_GB.UTF-8" : "de_DE.UTF-8",
+          },
+        },
       },
       grep: /@screenshots/,
     },
-    // The takes of the film: `bun run video` (video/README in docs/development.md).
+    // The takes of the film, in FILM_LANG: `bun run video` (Film in docs/development.md).
     {
       name: "video",
       use: {
         ...devices["Desktop Chrome"],
-        launchOptions: { ...launchOptions, env: { ...process.env, LANG: "de_DE.UTF-8" } },
+        launchOptions: {
+          ...launchOptions,
+          env: {
+            ...process.env,
+            LANG: process.env.FILM_LANG === "en" ? "en_GB.UTF-8" : "de_DE.UTF-8",
+          },
+        },
       },
       grep: /@video/,
       timeout: 180_000,

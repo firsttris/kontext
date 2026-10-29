@@ -1,6 +1,7 @@
 import { mkdir, rm, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import type { Locator, Page } from "@playwright/test";
+import { LANGUAGE } from "./language";
 import type { Point, Rect, Screen, ScreenKind, Step, Take } from "./types";
 
 /**
@@ -10,7 +11,8 @@ import type { Point, Rect, Screen, ScreenKind, Step, Take } from "./types";
  * same on a slow machine.
  */
 
-export const TAKES_DIR = ".dev/video/takes";
+/** The takes of the film in its language: German and English are recorded apart. */
+export const TAKES_DIR = `.dev/video/takes/${LANGUAGE}`;
 
 export type ScreenOf = { page: Page; kind: ScreenKind; label: string };
 

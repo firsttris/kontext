@@ -36,9 +36,9 @@ export const buildChips = (scene: Extract<Scene, { kind: "chips" }>, root: HTMLE
   const box = element("div", "title", root);
   const title = wordsOf(element("div", "line", box), scene.title);
   const row = element("div", "chips", box);
-  const chips = scene.chips.map((label) => {
+  const chips = scene.chips.map(({ icon, label }) => {
     const chip = element("div", "chip", row);
-    chip.innerHTML = icons[label] ?? "";
+    chip.innerHTML = icons[icon] ?? "";
     chip.append(label);
     return chip;
   });

@@ -1,4 +1,5 @@
 import { type Browser, expect } from "@playwright/test";
+import { say, ui } from "../language";
 import { closeAll, mailShown, phoneOf } from "../screens";
 import { startTake } from "../take";
 
@@ -16,7 +17,10 @@ export const recordPhones = async (browser: Browser) => {
     calendar: { page: calendar, kind: "phone", label: "" },
     chat: { page: chat, kind: "phone", label: "" },
   });
-  const note = "Am Handy wie eine App – ohne App Store";
+  const note = say(
+    "Am Handy wie eine App – ohne App Store",
+    "Like an app on your phone – no app store",
+  );
   await take.hold("mail", 0, { note });
   await take.hold("calendar", 0, { note });
   await take.hold("chat", 0.8, { note });
@@ -36,9 +40,12 @@ export const recordPhones = async (browser: Browser) => {
   await take.click("chat", chat.getByRole("link", { name: /baustelle-hoffmann/ }).first(), 2.2, {
     until: () =>
       expect(
-        chat.getByRole("list", { name: "Nachrichten" }).getByText("Passt, ich messe"),
+        chat.getByRole("list", { name: ui("chat_messages") }).getByText("Passt, ich messe"),
       ).toBeVisible(),
-    note: "Mit Benachrichtigungen – auf iPhone und Android",
+    note: say(
+      "Mit Benachrichtigungen – auf iPhone und Android",
+      "With notifications – on iPhone and Android",
+    ),
   });
   await take.save();
   await closeAll(mail, calendar, chat);

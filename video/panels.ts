@@ -1,17 +1,21 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
+import { LANGUAGE, say } from "./language";
 
 /**
  * The cards beside the app in the film, as HTML for a panel screen (video/screens.ts panelOf):
  * a chat with an AI assistant that works with Kontext over MCP, and what the server holds of a
  * confidential message. Only the look is made up; the tool calls and the cipher text are real.
+ * In the film's language (video/language.ts).
  */
 
 // Playwright runs the takes under Node, from the repository's root.
 const font = (file: string) =>
   readFileSync(join("node_modules", "@fontsource-variable", file)).toString("base64");
 
-const page = (body: string) => `<!doctype html><html lang="de"><head><meta charset="utf-8"><style>
+const page = (
+  body: string,
+) => `<!doctype html><html lang="${LANGUAGE}"><head><meta charset="utf-8"><style>
 @font-face { font-family: Geist; src: url(data:font/woff2;base64,${font("geist/files/geist-latin-wght-normal.woff2")}); font-weight: 100 900; }
 @font-face { font-family: "Geist Mono"; src: url(data:font/woff2;base64,${font("geist-mono/files/geist-mono-latin-wght-normal.woff2")}); font-weight: 100 900; }
 * { box-sizing: border-box; }
@@ -28,7 +32,7 @@ body { margin: 0; height: 100vh; font: 15px/1.5 Geist, sans-serif; color: #18181
 .tool pre { margin: 0; padding: 8px 12px 10px; border-top: 1px solid #f4f4f5; font: 12px/1.55 "Geist Mono"; color: #52525b; white-space: pre-wrap; }
 .answer { padding: 2px 0; }
 .input { margin: 16px 22px 22px; padding: 12px 16px; border: 1px solid #d4d4d8; border-radius: 14px; background: white; color: #18181b; min-height: 48px; }
-.input:empty::before { content: "Frag deinen Assistenten …"; color: #a1a1aa; }
+.input:empty::before { content: "${say("Frag deinen Assistenten …", "Ask your assistant …")}"; color: #a1a1aa; }
 .caret::after { content: ""; display: inline-block; width: 2px; height: 1.1em; margin-left: 1px; vertical-align: -3px; background: #2563eb; }
 .server { padding: 24px; font: 13px/1.6 "Geist Mono"; color: #3f3f46; background: #0c0c0f; height: 100vh; }
 .server h2 { margin: 0 0 4px; font: 600 14px Geist; color: #e4e4e7; }
@@ -74,8 +78,8 @@ export const agentPanel = ({ typing, prompt, tools = [], answer }: AgentChat) =>
 
 export const serverPanel = (fields: [string, string][], cipher: string) =>
   page(`<div class="server">
-  <h2>Gespeichert auf dem Server</h2>
-  <p>Ende-zu-Ende verschlüsselt – lesbar nur für Jonas und Anna.</p>
+  <h2>${say("Gespeichert auf dem Server", "Stored on the server")}</h2>
+  <p>${say("Ende-zu-Ende verschlüsselt – lesbar nur für Jonas und Anna.", "End-to-end encrypted – readable only by Jonas and Anna.")}</p>
   ${fields.map(([name, value]) => `<div><span class="field">${name}:</span> <span class="value">${escapeHtml(value)}</span></div>`).join("")}
   <div><span class="field">text:</span></div>
   <div class="cipher">${escapeHtml(cipher)}</div>

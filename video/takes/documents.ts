@@ -1,5 +1,6 @@
 import { readFileSync } from "node:fs";
 import { type Browser, expect, type Page } from "@playwright/test";
+import { say, ui } from "../language";
 import { ADDRESS, closeAll, desktopOf, mailShown, READING } from "../screens";
 import { startTake } from "../take";
 
@@ -38,53 +39,59 @@ export const recordDocuments = async (browser: Browser) => {
   await page.route(/:28097\//, (route) => route.fulfill({ contentType: "text/html", body }));
   const take = await startTake("documents", { app: { page, kind: "desktop", label: ADDRESS } });
   await page
-    .getByRole("list", { name: "Posteingang" })
+    .getByRole("list", { name: ui("mail_inbox") })
     .getByText("Angebot Wartungsvertrag 2027")
     .click();
   await mailShown(page);
-  await take.hold("app", 0.8, { focus: READING, note: "Den Anhang mit einem Klick ablegen" });
-  const file = page.getByRole("dialog", { name: "In Dokumente ablegen" });
-  await take.click(
-    "app",
-    page.getByRole("button", { name: "„Angebot-Wartung-2027.pdf“ in Dokumente ablegen" }),
-    1.0,
-    {
-      until: () => expect(file).toBeVisible(),
-      focus: null,
-      note: "Den Anhang mit einem Klick ablegen",
-    },
-  );
-  await take.click("app", file.getByRole("button", { name: "Hier ablegen" }), 1.0, {
-    until: () =>
-      expect(page.getByText("„Angebot-Wartung-2027.pdf“ liegt jetzt in Dokumente.")).toBeVisible(),
-    note: "Den Anhang mit einem Klick ablegen",
+  const fileIt = say("Den Anhang mit einem Klick ablegen", "File the attachment with one click");
+  const name = "Angebot-Wartung-2027.pdf";
+  const saved = page.getByText(ui("documents_saved", { name }));
+  await take.hold("app", 0.8, { focus: READING, note: fileIt });
+  const file = page.getByRole("dialog", { name: ui("documents_save_title") });
+  await take.click("app", page.getByRole("button", { name: ui("documents_save", { name }) }), 1.0, {
+    until: () => expect(file).toBeVisible(),
+    focus: null,
+    note: fileIt,
+  });
+  await take.click("app", file.getByRole("button", { name: ui("documents_save_here") }), 1.0, {
+    until: () => expect(saved).toBeVisible(),
+    note: fileIt,
   });
 
   // The notice goes before Schreibzeug comes, so it does not lie over its pictures.
-  await expect(page.getByText("„Angebot-Wartung-2027.pdf“ liegt jetzt in Dokumente.")).toHaveCount(
-    0,
-    {
-      timeout: 15_000,
-    },
-  );
+  await expect(saved).toHaveCount(0, { timeout: 15_000 });
   const show = showSchreibzeug(page);
   const rail = page.getByRole("navigation", { name: "Apps" }).first();
-  await take.click("app", rail.getByRole("link", { name: "Dokumente" }), 1.3, {
+  await take.click("app", rail.getByRole("link", { name: ui("nav_documents") }), 1.3, {
     until: async () => {
       await expect(page).toHaveURL(/\/documents/);
       await page.waitForTimeout(800);
     },
-    note: "Dokumente mit Schreibzeug, gleich daneben",
+    note: say(
+      "Dokumente mit Schreibzeug, gleich daneben",
+      "Documents with Schreibzeug, right alongside",
+    ),
   });
   await show("comments");
   await take.hold("app", 2.0, {
     focus: { x: 640, y: 0, width: 800, height: 520 },
-    note: "Word im Browser – mit Kommentaren der Kollegen",
+    note: say(
+      "Word im Browser – mit Kommentaren der Kollegen",
+      "Word in the browser – with colleagues’ comments",
+    ),
   });
   await show("spreadsheet");
-  await take.hold("app", 1.4, { focus: null, note: "Excel mit Formeln" });
+  await take.hold("app", 1.4, {
+    focus: null,
+    note: say("Excel mit Formeln", "Excel with formulas"),
+  });
   await show("presentation");
-  await take.hold("app", 1.6, { note: "PowerPoint – alles ohne Microsoft-Konto" });
+  await take.hold("app", 1.6, {
+    note: say(
+      "PowerPoint – alles ohne Microsoft-Konto",
+      "PowerPoint – all without a Microsoft account",
+    ),
+  });
   await take.save();
   await closeAll(page);
 };

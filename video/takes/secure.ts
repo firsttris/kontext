@@ -1,5 +1,6 @@
 import { type Browser, expect } from "@playwright/test";
 import { giveKey, PASSPHRASE } from "../../e2e/pgp-key";
+import { say, ui, uiPattern } from "../language";
 import { serverPanel } from "../panels";
 import { ADDRESS, closeAll, desktopOf, panelOf } from "../screens";
 import { startTake } from "../take";
@@ -11,20 +12,41 @@ export const recordSecureMail = async (browser: Browser) => {
   await page.goto("/mail");
   await page.getByRole("link", { name: "Hoffmann", exact: true }).click();
   await expect(page.getByText("Re: Badsanierung Obergeschoss").first()).toBeVisible();
-  await page.getByRole("link", { name: "Neue Mail" }).first().click();
-  await page.getByRole("combobox", { name: "An" }).fill("markus.hoffmann@example.test");
+  await page
+    .getByRole("link", { name: ui("mail_compose") })
+    .first()
+    .click();
+  await page.getByRole("combobox", { name: ui("mail_to") }).fill("markus.hoffmann@example.test");
   await page.keyboard.press(",");
-  await page.getByLabel("Betreff").fill("Ihre Rechnung Badsanierung");
+  await page
+    .getByLabel(ui("mail_subject"))
+    .fill(say("Ihre Rechnung Badsanierung", "Your invoice for the bathroom renovation"));
   const take = await startTake("secure-mail", { app: { page, kind: "desktop", label: ADDRESS } });
-  const body = page.getByRole("textbox", { name: "Ihre Nachricht …" });
+  const body = page.getByRole("textbox", { name: ui("mail_body_placeholder") });
   await body.click();
-  await take.type("app", body, "Guten Tag Herr Hoffmann, anbei Ihre Rechnung.", {
-    note: "Die Rechnung gehört nicht ins offene Netz",
-  });
-  await take.click("app", page.getByRole("button", { name: "Vertraulich senden" }), 2.4, {
+  await take.type(
+    "app",
+    body,
+    say(
+      "Guten Tag Herr Hoffmann, anbei Ihre Rechnung.",
+      "Dear Mr Hoffmann, please find your invoice attached.",
+    ),
+    {
+      note: say(
+        "Die Rechnung gehört nicht ins offene Netz",
+        "An invoice doesn’t belong on the open web",
+      ),
+    },
+  );
+  await take.click("app", page.getByRole("button", { name: ui("pgp_send_toggle") }), 2.4, {
     until: () =>
-      expect(page.getByRole("status").filter({ hasText: "per Link mit Code" })).toBeVisible(),
-    note: "Verschlüsselt an jeden – er öffnet sie mit Link und Code",
+      expect(
+        page.getByRole("status").filter({ hasText: uiPattern("secure_part_link") }),
+      ).toBeVisible(),
+    note: say(
+      "Verschlüsselt an jeden – er öffnet sie mit Link und Code",
+      "Encrypted to anyone – they open it with a link and a code",
+    ),
   });
   await take.save();
   await closeAll(page);
@@ -40,40 +62,44 @@ export const recordSecureChat = async (browser: Browser) => {
   const panel = await panelOf(browser, 520, 820);
   const take = await startTake("secure-chat", {
     app: { page, kind: "desktop", label: ADDRESS },
-    server: { page: panel, kind: "panel", label: "Was der Server sieht" },
+    server: {
+      page: panel,
+      kind: "panel",
+      label: say("Was der Server sieht", "What the server sees"),
+    },
   });
-  await panel.setContent(serverPanel([], "Noch nichts gespeichert."));
+  await panel.setContent(serverPanel([], say("Noch nichts gespeichert.", "Nothing stored yet.")));
   await take.hold("server", 0);
-  await take.click("app", page.getByRole("button", { name: "Neue Nachricht" }), 0.6);
-  const dialog = page.getByRole("dialog", { name: "Neue Nachricht" });
+  await take.click("app", page.getByRole("button", { name: ui("chat_new") }), 0.6);
+  const dialog = page.getByRole("dialog", { name: ui("chat_new") });
   await take.click("app", dialog.getByText("Anna Weber"), 0.5);
-  await take.click("app", dialog.getByLabel(/Vertraulich – Ende-zu-Ende verschlüsselt/), 1.0, {
+  const note = say("Vertraulich: Ende-zu-Ende verschlüsselt", "Confidential: end-to-end encrypted");
+  await take.click("app", dialog.getByLabel(ui("chat_confidential_toggle")), 1.0, {
     focus: dialog,
     pad: 20,
-    note: "Vertraulich: Ende-zu-Ende verschlüsselt",
+    note,
   });
-  await take.click("app", dialog.getByRole("button", { name: "Chat beginnen" }), 0.6, {
+  await take.click("app", dialog.getByRole("button", { name: ui("chat_start") }), 0.6, {
     until: () => expect(page.getByRole("heading", { name: "Anna Weber" })).toBeVisible(),
     focus: null,
-    note: "Vertraulich: Ende-zu-Ende verschlüsselt",
+    note,
   });
-  await page.getByLabel("Passphrase deines Schlüssels").fill(PASSPHRASE);
-  await page.getByRole("button", { name: "Entsperren" }).click();
-  const field = page.getByRole("textbox", { name: "Nachricht" });
+  await page.getByLabel(ui("pgp_unlock_passphrase")).fill(PASSPHRASE);
+  await page.getByRole("button", { name: ui("pgp_unlock") }).click();
+  const field = page.getByRole("textbox", { name: ui("chat_message") });
   await field.click();
-  await take.type("app", field, "Gehaltsgespräch am Freitag, 10 Uhr?", {
-    note: "Vertraulich: Ende-zu-Ende verschlüsselt",
+  const salary = say("Gehaltsgespräch", "Salary review");
+  await take.type("app", field, `${salary} ${say("am Freitag, 10 Uhr?", "on Friday at 10?")}`, {
+    note,
   });
   await take.after(
     "app",
     async () => {
       await page.keyboard.press("Enter");
-      await expect(page.getByRole("list", { name: "Nachrichten" })).toContainText(
-        "Gehaltsgespräch",
-      );
+      await expect(page.getByRole("list", { name: ui("chat_messages") })).toContainText(salary);
     },
     0.5,
-    { note: "Vertraulich: Ende-zu-Ende verschlüsselt" },
+    { note },
   );
   const { channels } = (await (await page.request.get("/api/chat/channels")).json()) as {
     channels: { id: string; confidential: boolean }[];
@@ -98,7 +124,9 @@ export const recordSecureChat = async (browser: Browser) => {
       stored,
     ),
   );
-  await take.hold("server", 3.0, { note: "Der Server sieht nur Zeichensalat" });
+  await take.hold("server", 3.0, {
+    note: say("Der Server sieht nur Zeichensalat", "The server sees only gibberish"),
+  });
   await take.save();
   await closeAll(page, anna, panel);
 };
