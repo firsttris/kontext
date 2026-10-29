@@ -1,6 +1,9 @@
 import { type Cookie, expect, type Locator, type Page } from "@playwright/test";
 import { DEV_DOMAIN, DEV_PASSWORD } from "../dev/config";
 import { assertSetOk, createJmapClient } from "../src/jmap/client";
+import { applyDeputyPatches, loadDeputyObjects } from "../src/jmap/deputy";
+import { listPrincipals } from "../src/jmap/principals";
+import { revokePatches } from "../src/lib/deputy";
 
 export const STALWART = "http://127.0.0.1:28080";
 
@@ -212,6 +215,20 @@ export const removeSnippet = async (page: Page, title: string) => {
   };
   for (const snippet of snippets.filter((one) => one.title === title))
     await page.request.delete(`/api/snippets/${encodeURIComponent(snippet.id)}`);
+};
+
+/**
+ * Takes back all of `deputy`'s access to `owner`'s mailbox, calendars and contacts the way
+ * "Alles entziehen" does, for clean-up after a test that shares them.
+ */
+export const revokeDeputy = async (owner: string, deputy: string) => {
+  const client = jmapAs(owner);
+  const accountId = await personalAccountId(owner);
+  const people = (await listPrincipals(client, accountId)).filter((p) => p.type === "individual");
+  const deputyId = people.find((p) => p.email === address(deputy))!.id;
+  const objects = await loadDeputyObjects(client, accountId);
+  const others = people.filter((p) => p.email !== address(owner)).map((p) => p.id);
+  await applyDeputyPatches(client, accountId, revokePatches(objects, deputyId, others));
 };
 
 /**
