@@ -1,6 +1,6 @@
 import { expect, type Page, test } from "@playwright/test";
 import { DEV_PASSWORD } from "../dev/config";
-import { addMail, address, jmapAs, login, personalAccountId, unique } from "./helpers";
+import { addMail, address, jmapAs, login, personalAccountId, skipTour, unique } from "./helpers";
 
 /** One MCP request with the key, as an agent makes it (server/mcp/). */
 const mcp = (page: Page, key: string, method: string, params: Record<string, unknown> = {}) =>
@@ -234,6 +234,7 @@ test.describe("KI-Agenten mit Anmeldung (OAuth)", () => {
       authorize.searchParams.set(key, value);
     }
     await page.route(`${callback}*`, (route) => route.fulfill({ body: "zurück beim Agenten" }));
+    await skipTour(page, address("jonas"));
     await page.goto(authorize.toString());
     await page.getByLabel("E-Mail-Adresse").fill("jonas@weber-haustechnik.test");
     await page.getByLabel("Passwort").fill(DEV_PASSWORD);

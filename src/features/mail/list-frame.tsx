@@ -228,13 +228,14 @@ export const ListFrame = ({
           <Link
             to="."
             search={(prev) => ({ ...prev, folders: true })}
+            data-tour="shared"
             className="flex h-8 items-center gap-2 rounded-full border border-border px-3 text-[13px] text-fg no-underline"
           >
             <Menu size={14} />
             <span className="max-w-[200px] truncate">{accountLabel}</span>
           </Link>
           <Button asChild variant="primary" size="iconSm" aria-label={m.mail_compose()}>
-            <Link to="." search={{ compose: "new" }}>
+            <Link to="." search={{ compose: "new" }} data-tour="compose">
               <SquarePen size={16} />
             </Link>
           </Button>

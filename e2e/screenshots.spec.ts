@@ -243,6 +243,15 @@ test.describe("Screenshots @screenshots", () => {
     await shot(page, "mail-sort");
   });
 
+  test("Einführung", async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await login(page, "jonas", { tour: true });
+    const tour = page.getByRole("dialog").filter({ hasText: /Schritt \d+ von \d+/ });
+    for (let step = 1; step < 5; step++) await tour.getByRole("button", { name: "Weiter" }).click();
+    await expect(tour.getByRole("heading", { name: "Kalender" })).toBeVisible();
+    await shot(page, "tour");
+  });
+
   test("Bild in der Mail", async ({ page }) => {
     await page.setViewportSize({ width: 1440, height: 900 });
     await login(page);
