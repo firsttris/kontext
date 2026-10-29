@@ -63,15 +63,19 @@ const withoutEmpty = (html: string) => {
 };
 
 /**
- * HTML lines end with <br> or a closing paragraph (as the editor writes them). A line without a
- * value loses its text and its <br>; what it leaves empty goes too: its bold or link, the <br>
- * before it at a paragraph's end, a paragraph of nothing but such lines.
+ * HTML lines end with <br> or a closing block such as a paragraph (as the editor writes them). A
+ * line without a value loses its text and its <br>; what it leaves empty goes too: its bold or
+ * link, the <br> before it at a paragraph's end, a paragraph of nothing but such lines.
  */
 export const fillHtml = (template: string, values: Values): string => {
   const escaped = Object.fromEntries(
     Object.entries(values).map(([key, value]) => [key, escapeHtml(value)]),
   ) as Values;
-  const lines = template.split(/(?<=<br\s*\/?>|<\/p>|<\/div>|<\/li>)/i);
+  // Every block the editor writes (StarterKit: headings, quotes, lists, code, rules) ends a line,
+  // or a heading before a line that goes would go with it.
+  const lines = template.split(
+    /(?<=<br\s*\/?>|<hr\s*\/?>|<\/(?:p|div|li|h[1-6]|blockquote|pre|ul|ol|table|tr|td|th)>)/i,
+  );
   const kept = lines.map((line) =>
     lacksValue(line, values)
       ? `${GONE}${withoutEmpty((line.match(/<(?!br\b)[^>]*>/gi) ?? []).join(""))}${GONE}`
