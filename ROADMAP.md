@@ -29,12 +29,6 @@ Kleinere und mittlere Funktionen, sortiert nach Nutzen: oben, was fast jedem Bet
 | --- | --- | --- |
 | 6 | **Mails zuweisen** | In info@ eine Mail einer Person zuweisen und als erledigt markieren, Filter „Mir zugewiesen“ und „Offen“. |
 
-**Spürbarer Nutzen**
-
-| # | Funktion | Worum es geht |
-| --- | --- | --- |
-| 13 | **Hinweis „Extern“** | Mails von außerhalb der Firma tragen ein Kennzeichen; vor dem Senden oder Einladen an Externe fragt Kontext nach. Partnerdomains zählen als intern; je Firma einschaltbar. |
-
 **Kleinerer Nutzen**
 
 | # | Funktion | Worum es geht |
