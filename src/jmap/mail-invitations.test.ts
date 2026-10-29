@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import type { CalendarEvent } from "@/lib/jscalendar";
 import type { ParsedEvent } from "@/lib/mail-invitation";
 import type { JmapClient } from "./client";
-import { removeCancelled } from "./mail-invitations";
+import { answerInvitation, removeCancelled } from "./mail-invitations";
 
 /** A Stalwart that records CalendarEvent/set calls and the raw mails uploaded. */
 const fakeStalwart = () => {
@@ -63,6 +63,10 @@ const series: CalendarEvent = {
   participants,
 } as CalendarEvent;
 
+const identities = [
+  { id: "id1", name: "Jonas Weber", email: "jonas@weber-haustechnik.test" },
+] as Parameters<typeof answerInvitation>[1]["identities"];
+
 describe("removeCancelled", () => {
   it("takes out only the called-off date of a series, not the whole series", async () => {
     // Stalwart's CalendarEvent/parse of a CANCEL with RECURRENCE-ID (checked on 0.16.27).
@@ -93,5 +97,37 @@ describe("removeCancelled", () => {
     const { client, sets } = fakeStalwart();
     await removeCancelled(client, "a", series, { ...series, method: "cancel" });
     expect(sets[0]!.destroy).toEqual(["series"]);
+  });
+});
+
+describe("answerInvitation", () => {
+  it("takes over the new time of an updated invitation and replies to its SEQUENCE", async () => {
+    const update: ParsedEvent = {
+      ...series,
+      id: "",
+      sequence: 2,
+      start: "2026-11-05T14:00:00",
+      method: "request",
+    };
+    const { client, sets, uploads } = fakeStalwart();
+    await answerInvitation(client, {
+      accountId: "a",
+      calendarId: "c",
+      parsed: update,
+      stored: series,
+      status: "accepted",
+      identities,
+      now: new Date("2026-10-29T10:00:00Z"),
+    });
+    const patch = (sets[0]!.update as Record<string, Record<string, unknown>>).series!;
+    expect(patch.start).toBe("2026-11-05T14:00:00");
+    expect(patch.sequence).toBe(2);
+    const ics = atob(
+      uploads[0]!.split("text/calendar; method=REPLY")[1]!
+        .split("\r\n\r\n")[1]!
+        .split("\r\n--")[0]!
+        .replace(/\r\n/g, ""),
+    );
+    expect(ics).toContain("SEQUENCE:2");
   });
 });
