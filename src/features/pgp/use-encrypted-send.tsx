@@ -15,6 +15,7 @@ import { type Hold, type OutgoingAttachment, type OutgoingEmail, sendEmail } fro
 import { sendRaw } from "@/jmap/send-raw";
 import type { EmailAddress } from "@/jmap/types";
 import { escapeHtml } from "@/lib/html";
+import { withLegalFooter } from "@/lib/legal-footer";
 import { LOCALE } from "@/lib/locale";
 import type { MimeAttachment } from "@/lib/mime";
 import { unlockKey } from "@/lib/pgp";
@@ -31,6 +32,7 @@ import {
 } from "@/lib/secure";
 import { type OwnSmime, openP12, smimeMail, smimeSignedMail } from "@/lib/smime";
 import { m } from "@/paraglide/messages";
+import { useLegalFooter } from "../company/legal-footer";
 import { send as api, type SentCode, showCodes } from "../secure/queries";
 import { keepSmimeOpen, useKnownCerts, useOpenSmime, useOwnCert } from "../smime/queries";
 import { keepUnlocked, useKnownKeys, useOwnKey, useUnlockedKey } from "./queries";
@@ -56,6 +58,9 @@ export const useEncryptedSend = (from: string | undefined, recipients: string[])
   const openCert = useOpenSmime();
   const [asking, setAsking] = useState<Asking | null>(null);
   const [linkDays, setLinkDays] = useState<number>(LINK_DAYS);
+  // The mail with the link is a business mail of its own: it carries the Pflichtangaben too (the
+  // encrypted content has them already, from the composer).
+  const legalFooter = useLegalFooter();
 
   const lower = recipients.map((address) => address.toLowerCase());
   const ownAddress = own?.email;
@@ -203,11 +208,16 @@ export const useEncryptedSend = (from: string | undefined, recipients: string[])
         cc: [],
         bcc: [],
         subject: m.secure_mail_subject({ name }),
-        text,
-        html: `<p>${escapeHtml(text)
-          .replace(link, `<a href="${link}">${m.secure_mail_open()}</a>`)
-          .replace(/\n\n/g, "</p><p>")
-          .replace(/\n/g, "<br>")}</p>`,
+        ...withLegalFooter(
+          {
+            text,
+            html: `<p>${escapeHtml(text)
+              .replace(link, `<a href="${link}">${m.secure_mail_open()}</a>`)
+              .replace(/\n\n/g, "</p><p>")
+              .replace(/\n/g, "<br>")}</p>`,
+          },
+          legalFooter,
+        ),
         attachments: [],
         draftId: null,
         requestReceipt: false,
