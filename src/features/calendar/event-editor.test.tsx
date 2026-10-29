@@ -75,3 +75,23 @@ describe("EventEditor times", () => {
     expect((screen.getByLabelText("Ende Datum") as HTMLInputElement).value).toBe("2026-11-02");
   });
 });
+
+describe("EventEditor reminder", () => {
+  it("offers how long before and how, and keeps a reminder when it becomes all-day", () => {
+    render(<EventEditor start="2026-10-31T09:00" onDone={vi.fn()} onCancel={vi.fn()} />);
+    const when = screen.getByLabelText("Erinnerung") as HTMLSelectElement;
+    expect(when.selectedOptions[0]?.textContent).toBe("15 Minuten vorher");
+    fireEvent.change(when, { target: { value: "1440" } });
+    fireEvent.change(screen.getByLabelText("Erinnern per"), { target: { value: "email" } });
+    expect(when.selectedOptions[0]?.textContent).toBe("1 Tag vorher");
+    fireEvent.click(screen.getByLabelText("Ganztägig"));
+    expect(
+      [...(screen.getByLabelText("Erinnerung") as HTMLSelectElement).options].map(
+        (option) => option.textContent,
+      ),
+    ).toEqual(["Keine", "Am Tag", "1 Tag vorher", "2 Tage vorher", "1 Woche vorher"]);
+    expect((screen.getByLabelText("Erinnern per") as HTMLSelectElement).value).toBe("email");
+    fireEvent.change(screen.getByLabelText("Erinnerung"), { target: { value: "none" } });
+    expect(screen.queryByLabelText("Erinnern per")).toBeNull();
+  });
+});
