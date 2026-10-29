@@ -25,6 +25,7 @@ const EVENT_PROPERTIES = [
   "freeBusyStatus",
   "recurrenceRule",
   "recurrenceOverrides",
+  "alerts",
   "recurrenceId",
   "baseEventId",
   "utcStart",

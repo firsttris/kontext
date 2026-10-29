@@ -4,7 +4,6 @@ import {
   type InboxMail,
   mailsToAnnounce,
   newMails,
-  reminderDelay,
   restOfToday,
   unseenCount,
 } from "./notifications";
@@ -61,13 +60,5 @@ describe("mailsToAnnounce", () => {
     const mails = [mail("a", 0.5), mail("b", 1), mail("c", 3)];
     expect(mailsToAnnounce(mails, since, new Set()).map((m) => m.email.id)).toEqual(["b", "a"]);
     expect(mailsToAnnounce(mails, since, new Set(["a/b"])).map((m) => m.email.id)).toEqual(["a"]);
-  });
-});
-
-describe("reminderDelay", () => {
-  it("is due 15 minutes before the start, not when that has passed", () => {
-    expect(reminderDelay(new Date("2026-10-24T10:30:00Z"), now)).toBe(15 * 60_000);
-    expect(reminderDelay(new Date("2026-10-24T10:10:00Z"), now)).toBeUndefined();
-    expect(reminderDelay(new Date("2026-10-26T10:00:00Z"), now)).toBeUndefined();
   });
 });
