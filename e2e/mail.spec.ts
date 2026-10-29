@@ -12,6 +12,19 @@ import {
 } from "./helpers";
 import { deliverMail } from "./protocols";
 
+/** Takes test mails out of a user's account again, so they don't push the seed's down the list. */
+const removeMails = async (user: string, subjects: string[]) => {
+  const client = jmapAs(user);
+  const accountId = await personalAccountId(user);
+  for (const subject of subjects) {
+    const { ids } = await client.call<{ ids: string[] }>("Email/query", {
+      accountId,
+      filter: { subject },
+    });
+    if (ids.length) await client.call("Email/set", { accountId, destroy: ids });
+  }
+};
+
 /** The subjects of the mails attached (message/rfc822) to a user's mail with this subject. */
 const attachedMails = async (user: string, subject: string): Promise<string[]> => {
   const client = jmapAs(user);
@@ -317,20 +330,26 @@ test.describe("Mail", () => {
   test("leitet mehrere gewählte Mails als Anhänge in einer Mail weiter", async ({ page }) => {
     const subjects = [unique("Beleg A"), unique("Beleg B")];
     for (const subject of subjects) await addMail("jonas", "jonas", subject);
-    await page.reload();
-    for (const subject of subjects)
-      await page.getByRole("checkbox", { name: `„${subject}“ auswählen` }).click();
-    await page.getByRole("button", { name: "Als Anhang weiterleiten" }).click();
-    for (const subject of subjects) await expect(page.getByText(`${subject}.eml`)).toBeVisible();
-    await page.getByRole("combobox", { name: "An" }).fill("anna");
-    await page.getByRole("option", { name: /Anna Weber/ }).click();
-    const subject = unique("Belege");
-    await page.getByLabel("Betreff").fill(subject);
-    await page.getByRole("button", { name: "Senden", exact: true }).click();
-    await expect(page.getByRole("status")).toHaveText("Mail gesendet.");
-    await expect
-      .poll(async () => (await attachedMails("anna", subject)).sort())
-      .toEqual([...subjects].sort());
+    // Jonas' inbox is shared with the tests after this one ("Prüfung des Absenders" opens a
+    // seeded mail from the list): two more mails on top push it out of the rendered rows.
+    try {
+      await page.reload();
+      for (const subject of subjects)
+        await page.getByRole("checkbox", { name: `„${subject}“ auswählen` }).click();
+      await page.getByRole("button", { name: "Als Anhang weiterleiten" }).click();
+      for (const subject of subjects) await expect(page.getByText(`${subject}.eml`)).toBeVisible();
+      await page.getByRole("combobox", { name: "An" }).fill("anna");
+      await page.getByRole("option", { name: /Anna Weber/ }).click();
+      const subject = unique("Belege");
+      await page.getByLabel("Betreff").fill(subject);
+      await page.getByRole("button", { name: "Senden", exact: true }).click();
+      await expect(page.getByRole("status")).toHaveText("Mail gesendet.");
+      await expect
+        .poll(async () => (await attachedMails("anna", subject)).sort())
+        .toEqual([...subjects].sort());
+    } finally {
+      await removeMails("jonas", subjects);
+    }
   });
 
   test("legt einen Ordner an und verschiebt eine Mail hinein", async ({ page }) => {
