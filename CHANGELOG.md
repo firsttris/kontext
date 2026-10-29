@@ -7,6 +7,10 @@ Steps that an update needs beyond raising the version are marked **Upgrade**.
 
 ## Unreleased
 
+- Contacts: several at once – pick contacts by their box (Shift for a range, Ctrl/⌘ for one more;
+  on phones "Auswählen" or a long press), then add them to a group, export them as one vCard file
+  or delete them after one question with the count. Groups are offered within the account the
+  contacts are in, as members are named by uid there.
 - Mail: pictures in the text – by the "Bild einfügen" button, pasted (a screenshot) or dropped
   in, and resized by their corners. They go out as inline images (`cid:` in multipart/related),
   so Outlook, Gmail and Apple Mail show them in the text; drafts keep them. Files of a reopened

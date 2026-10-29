@@ -12,6 +12,7 @@ import {
   createContact,
   deleteAddressBook,
   deleteContact,
+  destroyContacts,
   listAddressBooks,
   listContacts,
   setContacts,
@@ -20,6 +21,7 @@ import {
 } from "@/jmap/contacts";
 import { principalName } from "@/jmap/principals";
 import { mergePlan } from "@/lib/contact-duplicates";
+import { idsByAccount } from "@/lib/contact-selection";
 import type { ContactCard } from "@/lib/jscontact";
 import type { ShareWith } from "@/lib/sharing";
 import { m } from "@/paraglide/messages";
@@ -170,7 +172,16 @@ export const useContactMutations = () => {
       setContacts(client, sets[0]![0]!.accountId, mergePlan(sets, groups)),
     onSettled: (_data, _error, { sets }) => refresh(sets[0]![0]!.accountId),
   });
-  return { create, update, remove, merge };
+  /** Several cards at once, one call per account; every account is refreshed, also on failure. */
+  const removeMany = useMutation({
+    mutationFn: (cards: Contact[]) =>
+      Promise.all(
+        idsByAccount(cards).map(({ accountId, ids }) => destroyContacts(client, accountId, ids)),
+      ),
+    onSettled: (_data, _error, cards) =>
+      Promise.all(idsByAccount(cards).map(({ accountId }) => refresh(accountId))),
+  });
+  return { create, update, remove, merge, removeMany };
 };
 
 export const useBookMutations = () => {

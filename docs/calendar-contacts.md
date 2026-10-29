@@ -115,8 +115,17 @@ Kontext steht, steht auch am iPhone, unter Android (DAVx⁵) und in Thunderbird.
   darf. Namen ganz in Groß- oder Kleinbuchstaben („MAX MUSTERMANN“) bietet Kontext in üblicher
   Schreibweise an. „Ignorieren“ merkt sich der Browser.
 - **Adressbücher teilen** mit Kollegen – lesen oder bearbeiten.
+- **Mehrere Kontakte auf einmal:** Das Kästchen vor einem Kontakt wählt ihn aus, mit Umschalt
+  alle bis dorthin, mit Strg/⌘ einzelne dazu; am Handy beginnt „Auswählen“ oder langes Drücken
+  die Auswahl, dann wählt ein Tipp. Über der Liste stehen dann „Zu Gruppe hinzufügen“, „Als vCard
+  exportieren“ (eine Datei `Kontakte.vcf`) und „Löschen“ (eine Frage mit der Anzahl). Gruppen
+  bietet Kontext an, wenn alle ausgewählten Kontakte im selben Konto liegen wie die Gruppe und
+  man sie ändern darf: Mitglieder nennt eine Gruppe über die `uid` der Karte, und die gilt nur
+  innerhalb eines Kontos (RFC 9553).
 
 ![Kontakt Markus Hoffmann mit nächsten Terminen und letzten Mails](screenshots/contacts.png)
+
+![Drei Kontakte ausgewählt, darüber Gruppe, vCard und Löschen](screenshots/contacts-bulk.png)
 
 ## Mit anderen Programmen
 

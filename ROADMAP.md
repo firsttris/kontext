@@ -39,7 +39,6 @@ Kleinere und mittlere Funktionen, sortiert nach Nutzen: oben, was fast jedem Bet
 | 16 | **Textbausteine mit mehr Platzhaltern** | `{Datum}` und eigene Felder, nach denen Kontext beim Einfügen fragt („Auftragsnummer?“); heute nur `{Name}`. |
 | 17 | **Pflichtangaben unter jeder Mail** | Ein Zusatz der Firmenverwaltung (etwa Handelsregister, Geschäftsführer), beim Senden angehängt, nie in Entwürfen; beim Schreiben zu sehen, aber nicht änderbar. |
 | 18 | **Als Anhang weiterleiten** | Eine Mail als .eml-Datei weiterleiten, etwa an den Steuerberater oder die IT. |
-| 19 | **Mehrere Kontakte auf einmal** | Auswählen, dann löschen, zu einer Gruppe hinzufügen oder als vCard exportieren. |
 | 20 | **Termin duplizieren** | Eine Kopie mit denselben Teilnehmern und Angaben, etwa für den zweiten Termin auf der Baustelle. |
 
 **Kleinerer Nutzen**

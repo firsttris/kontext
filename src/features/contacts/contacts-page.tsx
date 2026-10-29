@@ -1,20 +1,23 @@
 /** Contacts: the list on the left, the selected contact with mails and appointments on the right. */
 import { Link, useNavigate } from "@tanstack/react-router";
 import { BookUser, Plus, Search } from "lucide-react";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { TabBar } from "@/components/shell/app-shell";
 import { Button } from "@/components/ui/button";
 import { Select } from "@/components/ui/input";
 import { useShortcuts } from "@/components/use-shortcuts";
 import { cn } from "@/lib/cn";
+import { byLetter } from "@/lib/contact-selection";
 import { isGroup } from "@/lib/groups";
 import { matchesSearch } from "@/lib/jscontact";
+import { addRange, keepListed, toggleKey } from "@/lib/selection";
 import { m } from "@/paraglide/messages";
 import { BooksDialog } from "./books-dialog";
 import { Cleanup } from "./cleanup";
 import { ContactDetail } from "./contact-detail";
 import { ContactEditor } from "./contact-editor";
 import { ContactList } from "./contact-list";
+import { ContactSelectionBar } from "./contact-selection-bar";
 import { ContactViews } from "./contact-views";
 import { GroupDetail } from "./group-detail";
 import { GroupEditor } from "./group-editor";
@@ -50,6 +53,11 @@ export const ContactsPage = ({ search }: { search: ContactsSearch }) => {
   const shown = contacts.filter((card) => matchesSearch(card, text));
   const groups = shown.filter(isGroup);
   const people = shown.filter((card) => !isGroup(card));
+  const picking = usePicking(
+    byLetter(people).flatMap(([, cards]) => cards.map(contactKey)),
+    `${search.book ?? ""}/${text}`,
+  );
+  const picked = people.filter((card) => picking.selected.has(contactKey(card)));
 
   return (
     <>
@@ -62,33 +70,58 @@ export const ContactsPage = ({ search }: { search: ContactsSearch }) => {
         )}
       >
         <header className="flex flex-col gap-3 px-4 pt-3 pb-3 md:pt-4">
-          <div className="flex items-center justify-between">
-            <h1 className="m-0 text-[30px] leading-tight font-semibold tracking-tight md:text-[18px]">
-              {m.contacts_title()}
-            </h1>
-            <div className="flex gap-1.5">
-              <Button
-                variant="outline"
-                size="iconSm"
-                aria-label={m.contacts_books()}
-                title={m.contacts_books()}
-                onClick={() => setManaging(true)}
-              >
-                <BookUser size={16} />
-              </Button>
-              <Button
-                asChild
-                variant="outline"
-                size="iconSm"
-                aria-label={m.contacts_new()}
-                title={m.contacts_new()}
-              >
-                <Link to="/contacts" search={{ id: "new", edit: true, book: search.book }}>
-                  <Plus size={16} />
-                </Link>
-              </Button>
+          {picking.showBar ? (
+            <ContactSelectionBar
+              picked={picked}
+              allPicked={picked.length === people.length && people.length > 0}
+              onPickAll={picking.pickAll}
+              onClear={picking.clear}
+              cards={contacts}
+              books={books}
+              onDeleted={(keys) => {
+                if (selected && keys.has(contactKey(selected)))
+                  void navigate({ to: "/contacts", search: { book: search.book } });
+              }}
+            />
+          ) : (
+            <div className="flex items-center justify-between">
+              <h1 className="m-0 text-[30px] leading-tight font-semibold tracking-tight md:text-[18px]">
+                {m.contacts_title()}
+              </h1>
+              <div className="flex gap-1.5">
+                {/* Phones have no hover: picking starts with this (or a long press). */}
+                {people.length ? (
+                  <button
+                    type="button"
+                    onClick={picking.start}
+                    className="mr-1 self-center text-[14px] font-medium text-accent md:hidden"
+                  >
+                    {m.mail_select_mode()}
+                  </button>
+                ) : null}
+                <Button
+                  variant="outline"
+                  size="iconSm"
+                  aria-label={m.contacts_books()}
+                  title={m.contacts_books()}
+                  onClick={() => setManaging(true)}
+                >
+                  <BookUser size={16} />
+                </Button>
+                <Button
+                  asChild
+                  variant="outline"
+                  size="iconSm"
+                  aria-label={m.contacts_new()}
+                  title={m.contacts_new()}
+                >
+                  <Link to="/contacts" search={{ id: "new", edit: true, book: search.book }}>
+                    <Plus size={16} />
+                  </Link>
+                </Button>
+              </div>
             </div>
-          </div>
+          )}
           <label className="flex h-[42px] items-center gap-2 rounded-xl bg-subtle px-3 text-muted md:h-9 md:rounded-[9px] md:border md:border-border md:bg-bg">
             <Search size={15} />
             <input
@@ -118,6 +151,9 @@ export const ContactsPage = ({ search }: { search: ContactsSearch }) => {
                 ownAccount={ownAccount}
                 book={search.book}
                 searching={Boolean(text.trim())}
+                picked={picking.selected}
+                picking={picking.showBar}
+                onPick={picking.pick}
               />
             </>
           )}
@@ -166,6 +202,36 @@ export const ContactsPage = ({ search }: { search: ContactsSearch }) => {
       <BooksDialog open={managing} onOpenChange={setManaging} />
     </>
   );
+};
+
+/**
+ * Which people are picked, in list order (`order`), as the mail list does it. Another book or
+ * search (`scope`) starts without a selection.
+ */
+const usePicking = (order: string[], scope: string) => {
+  const [picks, setPicks] = useState<{ keys: Set<string>; anchor?: string }>({ keys: new Set() });
+  const [selecting, setSelecting] = useState(false);
+  const clear = () => {
+    setPicks({ keys: new Set() });
+    setSelecting(false);
+  };
+  // biome-ignore lint/correctness/useExhaustiveDependencies: only the scope's identity matters
+  useEffect(clear, [scope]);
+  const selected = keepListed(picks.keys, order);
+  return {
+    selected,
+    showBar: selecting || selected.size > 0,
+    start: () => setSelecting(true),
+    clear,
+    pickAll: () => setPicks({ keys: new Set(order) }),
+    pick: (key: string, shift: boolean) =>
+      setPicks((current) => ({
+        keys: shift
+          ? addRange(keepListed(current.keys, order), order, current.anchor, key)
+          : toggleKey(keepListed(current.keys, order), key),
+        anchor: key,
+      })),
+  };
 };
 
 /** All contacts, or one address book: own ones first, then what colleagues shared. */
