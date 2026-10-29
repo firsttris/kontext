@@ -16,11 +16,13 @@ Schalter unter *Einstellungen → Darstellung* und gelten für das eine Gerät.
 
 ## Einführung beim ersten Start
 
-Beim ersten Start zeigt Kontext eine kurze Einführung in fünf bis sechs Schritten: wo Mail,
+Beim ersten Start zeigt Kontext eine kurze Einführung in vier bis sechs Schritten: wo Mail,
 Kalender und Chat sind, der Knopf „Neue Mail“ und – wer eines hat – ein gemeinsames Postfach wie
 info@. Jeder Schritt hebt die Stelle hervor, um die es geht: am PC in der Leiste links, am Handy
 in der Tab-Leiste unten. „Weiter“ und „Zurück“ blättern, „Überspringen“ oder Esc beenden sie.
 
+- In einem schmalen Fenster ohne Seitenleiste (zwischen Tablet- und PC-Breite) fehlen die
+  Schritte zu „Neue Mail“ und den gemeinsamen Postfächern, denn dort ist nichts zu zeigen.
 - Sie kommt einmal pro Person und Gerät; am Handy also noch einmal, denn dort sieht Kontext anders
   aus.
 - Wieder starten: am PC im Menü hinter dem Profilbild unten links, am Handy unter „Mehr“, jeweils

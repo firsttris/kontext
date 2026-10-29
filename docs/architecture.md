@@ -1341,7 +1341,8 @@ nicht mehr gibt, fällt heraus, und die Plätze füllen sich mit der Grundeinste
 Die Einführung beim ersten Start (`src/features/tour/`) ist ein eigener Dialog ohne Bibliothek:
 Radix Dialog (schon im Projekt) hält den Fokus in der Karte und beendet sie mit Esc; ein
 abgedunkelter Rahmen mit Aussparung hebt die Stelle hervor. Die Schritte je Bildschirm (Leiste am
-PC, Tab-Leiste am Handy mit „Mehr“ als Ersatz, gemeinsame Postfächer nur für wen es sie gibt), das
+PC, Tab-Leiste am Handy mit „Mehr“ als Ersatz, gemeinsame Postfächer nur für wen es sie gibt, „Neue Mail“ und gemeinsame Postfächer am PC nur
+mit Seitenleiste ab `lg`), das
 Blättern und wo die Karte neben ihrem Ziel steht, sind reine Funktionen in `src/lib/tour.ts`. Die
 Ziele tragen `data-tour` (Leiste, Tab-Leiste, „Neue Mail“, das erste gemeinsame Postfach); ist
 keins sichtbar oder passt die Karte nirgends daneben, steht sie in der Mitte. „Gesehen“ steht im
