@@ -1475,7 +1475,8 @@ Kontext-Server die Datei (`server/subscriptions/`) und schreibt sie mit seinem S
 Das Abo selbst (Adresse, Kalender, Stand) steht in der Tabelle `calendar_subscription`.
 
 - **Abrufen** (`fetch-calendar.ts`): `webcal://` gilt als `https://`; nur https im Internet
-  (`internet-host.ts`), Weiterleitungen von Hand und jede geprüft, höchstens 5 MB und 15 Sekunden,
+  (`internet-host.ts`), verbunden wird mit genau der geprüften Adresse (`pinned-get.ts`, kein
+  DNS-Rebinding), Weiterleitungen von Hand und jede geprüft, höchstens 5 MB und 15 Sekunden,
   und die Antwort muss mit `BEGIN:VCALENDAR` beginnen. So lässt sich der Server nicht auf Stalwart,
   die Metadaten der Cloud oder andere Rechner im Netz lenken. Beim Anlegen holt der Server die
   Datei zuerst: Eine falsche Adresse meldet er sofort, und es entsteht nichts.
@@ -1486,9 +1487,12 @@ Das Abo selbst (Adresse, Kalender, Stand) steht in der Tabelle `calendar_subscri
   mehr hat; geändert, was sich seit dem letzten Schreiben geändert hat. Verglichen wird mit dem
   Fingerabdruck dessen, was Kontext zuletzt geschrieben hat (`written` je Abo), nicht mit dem, was
   Stalwart zurückgibt – Stalwart ergänzt Standardwerte, sonst sähe jeder Termin bei jedem Lauf
-  geändert aus. Ohne Einladungen (`sendSchedulingMessages: false`).
+  geändert aus. Eine Änderung setzt alles, was die Datei nicht mehr hat (Beschreibung, Ort, …),
+  auf `null`, denn Stalwart behält, was ein Patch auslässt. Ohne Einladungen
+  (`sendSchedulingMessages: false`).
 - **Wann:** beim Anlegen, auf „Jetzt aktualisieren“ und alle sechs Stunden (geprüft alle
-  15 Minuten, ein Abo nach dem anderen). Fehler stehen am Abo. Löscht jemand den Kalender wie
+  15 Minuten, ein Abo nach dem anderen; je Abo läuft nur ein Lauf zur Zeit, sonst entstünden
+  Termine doppelt). Fehler stehen am Abo, ein fehlerhaftes Abo hält die anderen nicht auf. Löscht jemand den Kalender wie
   jeden anderen, endet das Abo beim nächsten Lauf; „Abo beenden“ löscht den Kalender mit.
   Höchstens 20 Abos je Person; ohne `STALWART_ADMIN_KEY` gibt es keine.
 
