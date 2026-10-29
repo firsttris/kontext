@@ -1,5 +1,41 @@
 import { expect, test } from "@playwright/test";
-import { addAttendees, login, showKeyboard, unique } from "./helpers";
+import {
+  addAttendees,
+  inboxSubjects,
+  jmapAs,
+  login,
+  personalAccountId,
+  showKeyboard,
+  unique,
+} from "./helpers";
+
+const CALENDARS = ["urn:ietf:params:jmap:core", "urn:ietf:params:jmap:calendars"];
+
+/** The alerts of a person's events with a title, read behind the UI's back. */
+const alertsOf = async (user: string, title: string) => {
+  const client = jmapAs(user);
+  const accountId = await personalAccountId(user);
+  const { list } = await client.call<{
+    list: {
+      title: string;
+      alerts: Record<string, { trigger: { offset: string }; action: string }> | null;
+    }[];
+  }>("CalendarEvent/get", { accountId, properties: ["title", "alerts"] }, CALENDARS);
+  return Object.values(list.find((event) => event.title === title)?.alerts ?? {}).map(
+    ({ trigger, action }) => ({ offset: trigger.offset, action }),
+  );
+};
+
+/** Day and time (Berlin) some minutes from now, on a whole minute. */
+const minutesAhead = (minutes: number) => {
+  const at = new Date(Math.ceil((Date.now() + minutes * 60_000) / 60_000) * 60_000);
+  const local = new Intl.DateTimeFormat("sv-SE", {
+    timeZone: "Europe/Berlin",
+    dateStyle: "short",
+    timeStyle: "short",
+  }).format(at);
+  return { date: local.slice(0, 10), time: local.slice(11, 16) };
+};
 
 const day = (offset: number) =>
   new Intl.DateTimeFormat("sv-SE", { timeZone: "Europe/Berlin" }).format(
@@ -93,6 +129,39 @@ test.describe("Kalender", () => {
       .getByRole("button", { name: "Termin löschen", exact: true })
       .click();
     await expect(day.getByText(`${title} verschoben`)).toHaveCount(0);
+  });
+
+  test("Erinnerung per Mail: Stalwart schickt sie zur gewählten Zeit, auch ohne offene App", async ({
+    page,
+  }) => {
+    test.setTimeout(240_000);
+    const title = unique("Rückruf Hoffmann");
+    // Five minutes before a start in six to seven minutes: the mail is due in one to two.
+    const { date, time } = minutesAhead(6);
+    await login(page);
+    await page.goto(`/calendar?date=${date}&event=new&start=${date}T${time}`);
+    const dialog = page.getByRole("dialog");
+    await dialog.getByLabel("Titel").fill(title);
+    await expect(dialog.getByLabel("Erinnerung")).toHaveValue("15");
+    await dialog.getByLabel("Erinnerung").selectOption({ label: "5 Minuten vorher" });
+    await dialog.getByLabel("Erinnern per").selectOption({ label: "Mail" });
+    await dialog.getByRole("button", { name: "Speichern" }).click();
+    await expect(dialog).toHaveCount(0);
+    expect(await alertsOf("jonas", title)).toEqual([{ offset: "-PT5M", action: "email" }]);
+
+    // Opened again, the editor shows what was chosen.
+    await page.locator(`[data-day="${date}"]`).getByText(title).click();
+    await page.getByRole("dialog").getByRole("button", { name: "Bearbeiten" }).click();
+    await expect(page.getByRole("dialog").getByLabel("Erinnerung")).toHaveValue("5");
+    await expect(page.getByRole("dialog").getByLabel("Erinnern per")).toHaveValue("email");
+    await page.close();
+
+    await expect
+      .poll(async () => (await inboxSubjects("jonas")).some((subject) => subject.includes(title)), {
+        timeout: 200_000,
+        intervals: [5000],
+      })
+      .toBe(true);
   });
 
   test("legt eine Terminserie an, ändert und löscht einzelne Termine", async ({ page }) => {
@@ -398,6 +467,18 @@ test.describe("Kalender am Handy @phone", () => {
         );
       })
       .toBe(true);
+  });
+
+  test("Termin mit Erinnerung eine Stunde vorher", async ({ page }) => {
+    const title = unique("Ablesung Zähler");
+    await login(page);
+    await page.goto(`/calendar?event=new&start=${tomorrow()}T10:00`);
+    const sheet = page.getByRole("dialog");
+    await sheet.getByLabel("Titel").fill(title);
+    await sheet.getByLabel("Erinnerung").selectOption({ label: "1 Stunde vorher" });
+    await sheet.getByRole("button", { name: "Speichern" }).click();
+    await expect(sheet).toHaveCount(0);
+    expect(await alertsOf("jonas", title)).toEqual([{ offset: "-PT1H", action: "display" }]);
   });
 
   test("Kalender verwalten", async ({ page }) => {

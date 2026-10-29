@@ -119,8 +119,8 @@ const TaskEntry = ({
 
 export const NotificationBell = ({ className }: { className: string }) => {
   const now = useNow();
-  const { mails, invitations, appointments, assigned, due } = useNotificationFeed(now);
-  useAnnouncements(mails, appointments);
+  const { mails, invitations, appointments, coming, assigned, due } = useNotificationFeed(now);
+  useAnnouncements(mails, coming);
   const seen = useSeen();
   const people = usePeople();
   const today = dateKey(now);
