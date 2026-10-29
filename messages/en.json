@@ -611,6 +611,7 @@
   "mail_body_title": "Message content",
   "mail_all_inboxes": "All inboxes",
   "mail_attachment_remove": "Remove {name}",
+  "mail_encrypted_no_draft": "An encrypted mail is not saved as a draft – send it, or switch off “Send confidentially”.",
   "mail_encrypted_too_large": "An encrypted mail takes attachments and pictures up to {size} together.",
   "nav_skip_to_content": "Skip to content",
   "shortcuts_title": "Keyboard shortcuts",

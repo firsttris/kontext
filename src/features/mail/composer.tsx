@@ -660,6 +660,12 @@ export const Composer = ({ accountId, mode, sourceEmailId, forwardIds, prefill }
   };
 
   const storeDraft = async () => {
+    // An encrypted mail is kept nowhere on the server, not even as a draft (autosave): saying
+    // "saved" and closing would lose it, as switching on deleted the plain draft.
+    if (encrypt) {
+      toast.show(m.mail_encrypted_no_draft(), "error");
+      return;
+    }
     try {
       lastSaved.current = changeKey;
       await autosave();

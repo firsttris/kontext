@@ -611,6 +611,7 @@
   "mail_body_title": "Inhalt der Mail",
   "mail_all_inboxes": "Alle Posteingänge",
   "mail_attachment_remove": "{name} entfernen",
+  "mail_encrypted_no_draft": "Eine verschlüsselte Mail wird nicht als Entwurf gespeichert – senden Sie sie, oder schalten Sie „Vertraulich senden“ aus.",
   "mail_encrypted_too_large": "Eine verschlüsselte Mail nimmt Anhänge und Bilder bis zusammen {size} mit.",
   "nav_skip_to_content": "Zum Inhalt springen",
   "shortcuts_title": "Tastaturkürzel",
