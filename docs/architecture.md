@@ -103,7 +103,7 @@ Seitenleiste ziehen (`src/features/mail/mail-drag.ts`, HTML-Drag-and-Drop). Zieh
 nur Mails aus Ordnern mit `mayRemoveItems`; auf dem Handy bleibt das Menü.
 
 Damit man sieht, wo eine Mail liegt, steht über dem Betreff „Gemeinsames Postfach info@…“ (bei
-übergebenen Postfächern „Übergebenes Postfach …“), das Etikett in „Alle Posteingänge“ trägt das
+übergebenen und per [Vertretung](#vertretung) freigegebenen Postfächern „Postfach von …“), das Etikett in „Alle Posteingänge“ trägt das
 Gruppen-Symbol, und die Seitenleiste nennt die Ordner eines gemeinsamen Postfachs „Ordner von
 info@“.
 
@@ -1360,6 +1360,36 @@ Verschieben und Löschen gehen an dieses Konto.
 
 Einen Termin in einem fremden Kalender darf man mit „Bearbeiten“ ändern, wenn man selbst oder der
 Besitzer des Kalenders ihn organisiert. Zusagen und Absagen gibt es nur im eigenen Kalender.
+
+### Vertretung
+
+*Einstellungen → Vertretung* teilt alle Ordner des eigenen Postfachs, alle eigenen Kalender und
+Adressbücher in einem Schritt mit einer Kollegin (`src/lib/deputy.ts` rechnet, `src/jmap/deputy.ts`
+schickt je Art ein `…/set` in einem Request). Geschrieben wird nur der Pfad
+`shareWith/<Principal-ID>`, so bleiben die Freigaben für andere unberührt; vor jedem Schreiben
+lädt die App die Objekte neu, damit auch inzwischen angelegte Ordner dabei sind.
+
+| Stufe          | Ordner (RFC 8621 §2)                                                          | Kalender, Adressbücher              |
+| -------------- | ------------------------------------------------------------------------------ | ----------------------------------- |
+| **Lesen**      | `mayReadItems`, `maySetSeen` (wie „Nur lesen“ der gemeinsamen Postfächer)      | „Lesen“ wie oben                    |
+| **Bearbeiten** | dazu `mayAddItems`, `mayRemoveItems`, `maySetKeywords`                        | „Bearbeiten“ wie oben               |
+
+Ordner anlegen, umbenennen, löschen, weiterteilen und `maySubmit` bleiben aus: Stalwart gibt
+Absenderadressen (`Identity/get`) ohnehin nur Besitzern des Kontos („You are not an owner of
+account“), die Vertretung antwortet also vom eigenen Konto. Die Kollegin sieht danach das Konto
+in ihrer Session (`isPersonal: false`), die Mail zeigt es unter „Postfächer“, weil es Ordner hat.
+Wer nur Kalender bekommt, sieht kein Postfach; `AddressBook/get` lehnt Stalwart dann für das
+Konto ganz ab (geprüft gegen 0.16.27).
+
+„Freigeben“ setzt genau die gewählte Stufe; wer schon mehr hatte, bekommt die gewählte.
+„Wer hat Zugriff“ listet jede Kollegin mit Lese- oder Schreibrecht auf einem der Objekte, auch aus
+den Teilen-Dialogen, mit der höchsten Stufe je Art und „2 von 3“, wenn nicht alles geteilt ist.
+„Alles entziehen“ nimmt ihr **alle** diese Rechte, nicht nur die aus der Vertretung: Eine Liste,
+nach deren Leeren noch etwas offen bliebe, wäre irreführend, und Kontext merkt sich nirgends,
+woher eine Freigabe kam. Ausnahme ist die Verfügbarkeit: Sehen alle anderen Kollegen die freien
+und belegten Zeiten eines Kalenders (die Firmenvorgabe), behält sie die; sonst fällt der Eintrag
+ganz weg. Freigaben für Gruppen (gemeinsame Postfächer) zeigt die Liste nicht und lässt sie
+stehen.
 Welche Kalender eingeblendet sind, merkt sich die App pro Gerät im Browser: Stalwart 0.16 lässt
 das per Benutzer gespeicherte `isVisible` bei fremden Kalendern nur mit Schreibrecht ändern.
 

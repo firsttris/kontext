@@ -1,6 +1,6 @@
 /**
- * Settings of the own account: name, signatures, out-of-office reply, mail rules, password and
- * 2FA, AI agents, look.
+ * Settings of the own account: name, signatures, out-of-office reply, deputy, mail rules,
+ * password and 2FA, AI agents, look.
  */
 import { Link } from "@tanstack/react-router";
 import {
@@ -9,6 +9,7 @@ import {
   ChevronLeft,
   ChevronRight,
   DatabaseBackup,
+  Handshake,
   Inbox,
   KeyRound,
   ListFilter,
@@ -46,6 +47,7 @@ import { cn } from "@/lib/cn";
 import { m } from "@/paraglide/messages";
 import type { settingsSections } from "@/routes/_app/settings";
 import { AppearanceSection } from "./appearance-section";
+import { DeputySection } from "./deputy-section";
 import { ProfileSection } from "./profile-section";
 import { SecuritySection } from "./security-section";
 import { SignatureDetailsCard } from "./signature-details-card";
@@ -80,6 +82,7 @@ const OWN: Entry[] = [
   { id: "signature", label: m.settings_signature, icon: PenLine },
   { id: "accounts", label: m.settings_external, icon: AtSign },
   { id: "vacation", label: m.settings_vacation, icon: Palmtree },
+  { id: "deputy", label: m.settings_deputy, icon: Handshake },
   { id: "rules", label: m.settings_rules, icon: ListFilter },
   { id: "snippets", label: m.settings_snippets, icon: TextQuote },
   { id: "sync", label: m.settings_sync, icon: RefreshCw },
@@ -111,6 +114,7 @@ const CONTENT: Record<Section, () => ReactNode> = {
   signature: () => <SignatureSection />,
   accounts: () => <ExternalSection />,
   vacation: () => <VacationSection />,
+  deputy: () => <DeputySection />,
   rules: () => <RulesSection />,
   snippets: () => <SnippetsSection />,
   sync: () => <SyncSection />,

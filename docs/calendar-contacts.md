@@ -73,7 +73,8 @@ Kontext steht, steht auch am iPhone, unter Android (DAVx⁵) und in Thunderbird.
 
   ![Kalender verwalten mit einem abonnierten Kalender und der Adresse eines zweiten](screenshots/calendar-subscriptions.png)
 
-- **Kalender teilen** mit Kollegen: nur Verfügbarkeit, lesen oder bearbeiten.
+- **Kalender teilen** mit Kollegen: nur Verfügbarkeit, lesen oder bearbeiten. Alle Kalender
+  samt Postfach und Kontakten auf einmal: [Vertretung](mail.md#abwesenheit-und-signaturen).
 - **Orte vorschlagen:** Im Feld „Ort“ schlägt Kontext ab drei Buchstaben Adressen und Firmen vor
   (aus OpenStreetMap), etwa „Bäckerei Müller, Hauptstraße 5, 79098 Freiburg“; freier Text wie
   „Besprechungsraum 2“ geht weiter. Was man dort tippt, schickt der Kontext-Server an den
@@ -114,7 +115,8 @@ Kontext steht, steht auch am iPhone, unter Android (DAVx⁵) und in Thunderbird.
   zeigen auf ihn. Zusammengeführt wird nur innerhalb eines Kontos und nur, wo man schreiben
   darf. Namen ganz in Groß- oder Kleinbuchstaben („MAX MUSTERMANN“) bietet Kontext in üblicher
   Schreibweise an. „Ignorieren“ merkt sich der Browser.
-- **Adressbücher teilen** mit Kollegen – lesen oder bearbeiten.
+- **Adressbücher teilen** mit Kollegen – lesen oder bearbeiten, alle auf einmal mit der
+  [Vertretung](mail.md#abwesenheit-und-signaturen).
 
 ![Kontakt Markus Hoffmann mit nächsten Terminen und letzten Mails](screenshots/contacts.png)
 

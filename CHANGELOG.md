@@ -7,6 +7,11 @@ Steps that an update needs beyond raising the version are marked **Upgrade**.
 
 ## Unreleased
 
+- Settings: "Vertretung" – give a colleague your mailbox (every folder), calendars and contacts at
+  once, to view or to edit, see who has access to what (also from the share dialogs) and take it
+  all back with "Alles entziehen"; only seeing your free and busy times stays when every
+  colleague sees them. Folders, sending in your name and further sharing stay with you. A mailbox
+  shared this way (or handed over) is now labelled "Postfach von …".
 - Calendar: a default reminder per calendar – in *Kalender verwalten* the bell next to a calendar
   sets the reminder new appointments in it get, one for appointments with a time and one for
   all-day ones. Kept per person in Stalwart (`defaultAlertsWithTime`,

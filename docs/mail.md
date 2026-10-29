@@ -88,6 +88,17 @@ IMAP und SMTP.
   sie verträgt sich mit eigenen [Regeln](#ordnen-und-finden).
 - **Für Kollegen** (etwa bei Krankheit) trägt die Firmenverwaltung die Abwesenheit ein, mit einer
   Vertretung in der Antwort ([Firmenverwaltung](company.md)).
+- **Vertretung in einem Schritt** unter *Einstellungen → Vertretung*: eine Kollegin wählen,
+  „Lesen“ oder „Bearbeiten“, Postfach, Kalender und Kontakte ankreuzen, „Freigeben“. Sie findet
+  das Postfach unter „Postfächer“ („Postfach von …“), Kalender und Kontakte unter „Geteilt mit
+  mir“. „Lesen“ zeigt Mails, Termine und Kontakte; „Bearbeiten“ legt Mails auch ab, markiert und
+  löscht sie und ändert Termine und Kontakte. In Ihrem Namen senden und Ordner anlegen kann die
+  Vertretung nicht; später angelegte Ordner sind nicht dabei (einfach noch einmal freigeben).
+  „Wer hat Zugriff“ zeigt jede Kollegin, die etwas davon lesen oder ändern darf, auch was einzeln
+  über „Teilen“ freigegeben wurde. „Alles entziehen“ nimmt ihr all das auf einmal; nur dass sie
+  wie alle sieht, wann man belegt ist, bleibt. [Mehr](architecture.md#vertretung)
+
+  ![Einstellungen, Vertretung: Max Becker darf Postfach, Kalender und Kontakte bearbeiten](screenshots/deputy.png)
 - **Signatur** unter *Einstellungen → Signatur*: für jede Adresse, von der man sendet (die eigene,
   info@ …), Absendername und Signatur mit Formatierung. Eine neue Mail bekommt die Signatur der
   Absenderadresse, eine Antwort über dem Zitat.
