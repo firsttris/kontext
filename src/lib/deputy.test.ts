@@ -62,6 +62,18 @@ describe("deputy", () => {
     expect(Object.keys(patches.mailbox)).toEqual(["sent"]);
   });
 
+  it("changes nothing when the mailbox already has what Stalwart stores for the level", () => {
+    // Stalwart maps maySetSeen and maySetKeywords to the same ACL (ModifyItems,
+    // crates/jmap-proto/src/object/mailbox.rs), so a folder shared for reading reads back with both.
+    const current = objects();
+    for (const mailbox of current.mailbox) {
+      mailbox.shareWith = {
+        max: { ...deputyRights("mailbox", "read"), maySetSeen: true, maySetKeywords: true },
+      };
+    }
+    expect(grantPatches(current, "max", "read", ["mailbox"]).mailbox).toEqual({});
+  });
+
   it("revokes everything above free and busy times, also from the share dialogs", () => {
     const current = objects();
     current.mailbox[0]!.shareWith = { max: deputyRights("mailbox", "edit") };
