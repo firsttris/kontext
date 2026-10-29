@@ -80,4 +80,27 @@ describe("fetchCalendar", () => {
       error: "Der Kalender antwortet mit 404.",
     });
   });
+
+  it("answers with an error, not a throw, for a broken redirect or a body that breaks off", async () => {
+    const { fetch } = web({
+      "https://kal.example/kaputt.ics": () =>
+        new Response(null, { status: 302, headers: { location: "https://[kaputt/x.ics" } }),
+      "https://kal.example/abbruch.ics": () =>
+        new Response(
+          new ReadableStream({
+            start: (controller) => {
+              controller.enqueue(new TextEncoder().encode("BEGIN:VCALENDAR\r\n"));
+              controller.error(new Error("The operation timed out."));
+            },
+          }),
+        ),
+    });
+    const deps = { fetch, resolve: publicDns };
+    await expect(fetchCalendar("https://kal.example/kaputt.ics", deps)).resolves.toMatchObject({
+      ok: false,
+    });
+    await expect(fetchCalendar("https://kal.example/abbruch.ics", deps)).resolves.toMatchObject({
+      ok: false,
+    });
+  });
 });
