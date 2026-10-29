@@ -14,6 +14,7 @@ const ATT_ATTACH_REND_DATA = 0x00069002;
 const ATT_ATTACH_TITLE = 0x00018010;
 const ATT_ATTACH_DATA = 0x0006800f;
 const ATT_ATTACHMENT = 0x00069005;
+const ATT_OEM_CODEPAGE = 0x00069007;
 
 /** MAPI property ids ([MS-OXPROPS]) and types ([MS-OXCDATA] 2.11.1). */
 const PR_ATTACH_LONG_FILENAME = 0x3707;
@@ -81,12 +82,33 @@ const reader = (bytes: Uint8Array) => {
   };
 };
 
-const latin1 = new TextDecoder("windows-1252");
+const WINDOWS_1252 = 1252;
+/** Code pages the Encoding Standard knows under another name than windows-<number>. */
+const ENCODINGS: Record<number, string> = {
+  866: "ibm866",
+  932: "shift_jis",
+  936: "gbk",
+  949: "euc-kr",
+  950: "big5",
+  20866: "koi8-r",
+  28591: "iso-8859-1",
+  65001: "utf-8",
+};
+
+/** The decoder for the code page of attOemCodepage; windows-1252 for one a browser lacks. */
+const decoderFor = (codepage: number): TextDecoder => {
+  try {
+    return new TextDecoder(ENCODINGS[codepage] ?? `windows-${codepage}`);
+  } catch {
+    return new TextDecoder(`windows-${WINDOWS_1252}`);
+  }
+};
+
 const utf16 = new TextDecoder("utf-16le");
 
-/** A string without the zero bytes it ends with. */
-const text = (data: Uint8Array, type: number) =>
-  (type === PT_UNICODE ? utf16 : latin1).decode(data).replace(/\0+$/, "");
+/** A string without the zero bytes it ends with; 8-bit strings in the stream's code page. */
+const text = (data: Uint8Array, type: number, ansi: TextDecoder) =>
+  (type === PT_UNICODE ? utf16 : ansi).decode(data).replace(/\0+$/, "");
 
 type Property = { id: number; type: number; values: (Uint8Array | number)[] };
 
@@ -154,25 +176,27 @@ export const tnefFiles = (bytes: Uint8Array): TnefFile[] | null => {
     if (read.u32() !== SIGNATURE) return null;
     read.u16(); // the legacy key
     const attachments: Found[] = [];
+    let ansi = decoderFor(WINDOWS_1252);
     while (!read.done()) {
       const level = read.u8();
       const attribute = read.u32();
       const data = read.bytes(read.u32());
       read.u16(); // the checksum
+      if (attribute === ATT_OEM_CODEPAGE) ansi = decoderFor(reader(data).u32());
       if (level !== LEVEL_ATTACHMENT) continue;
       if (attribute === ATT_ATTACH_REND_DATA) attachments.push({});
       const current = attachments.at(-1);
       if (!current) continue;
-      if (attribute === ATT_ATTACH_TITLE) current.title = text(data, PT_STRING8);
+      if (attribute === ATT_ATTACH_TITLE) current.title = text(data, PT_STRING8, ansi);
       if (attribute === ATT_ATTACH_DATA) current.data = data;
       if (attribute === ATT_ATTACHMENT) {
         for (const { id, type, values } of mapiProperties(data)) {
           const [value] = values;
           if (id === PR_ATTACH_LONG_FILENAME && value instanceof Uint8Array) {
-            current.longName = text(value, type);
+            current.longName = text(value, type, ansi);
           }
           if (id === PR_ATTACH_MIME_TAG && value instanceof Uint8Array) {
-            current.mime = text(value, type);
+            current.mime = text(value, type, ansi);
           }
           if (id === PR_ATTACH_METHOD) current.embedded = value === ATTACH_EMBEDDED_MSG;
           if (id === PR_ATTACH_DATA_BIN && type === PT_BINARY && value instanceof Uint8Array) {
