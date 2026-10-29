@@ -14,8 +14,13 @@ Kontext steht, steht auch am iPhone, unter Android (DAVx⁵) und in Thunderbird.
 
 ## Kalender
 
-- **Tag, Woche, Monat und Liste**; Termine per Ziehen verschieben, wiederkehrende Termine mit
-  Ausnahmen („nur dieser“ oder „ganze Serie“).
+- **Tag, Woche, Monat und Liste**; Termine per Ziehen verschieben, wiederkehrende Termine ändern
+  oder löschen: „Nur dieser Termin“, **„Dieser und alle folgenden“** oder „Alle Termine der
+  Serie“. Ab einem Termin endet die bisherige Serie davor, und ab dort beginnt eine neue mit den
+  Änderungen – wie bei Google und Outlook. [Mehr](architecture.md#wiederkehrende-termine)
+
+  ![Termin einer Serie bearbeiten mit „Dieser und alle folgenden“](screenshots/series-following.png)
+
 - **Einladungen** mit Zusage und Absage; die Glocke zeigt, was noch auf Antwort wartet, und die
   Termine des Tages.
 - **Erinnerung je Termin:** von „Zu Beginn“ bis „1 Woche vorher“, ganztägige Termine morgens am
