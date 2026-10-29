@@ -1,6 +1,7 @@
 /**
  * Einstellungen → Textbausteine: the standard answers of one's own mailbox and of each shared one
- * one writes in (there for the whole team). {Vorname} and {Name} become the recipient's.
+ * one writes in (there for the whole team). The placeholders are filled on inserting
+ * (src/lib/snippet-fill.ts); the hints name them.
  */
 import { Pencil, Plus, Trash2 } from "lucide-react";
 import { type FormEvent, useState } from "react";
@@ -9,13 +10,14 @@ import { Input, Label, Textarea } from "@/components/ui/input";
 import { useToast } from "@/components/ui/toast";
 import { useMailAccounts } from "@/features/mail/queries";
 import { SettingsCard } from "@/features/settings/settings-page";
+import { KNOWN_PLACEHOLDERS } from "@/lib/snippet-fill";
 import { m } from "@/paraglide/messages";
 import { type Snippet, useSnippetActions, useSnippets } from "./queries";
 
 type Draft = { title: string; body: string };
 
-/** The placeholders, shown as they are typed. */
-const PLACEHOLDERS = { first: "{Vorname}", full: "{Name}" };
+/** The placeholders, shown as they are typed, with an own field as the example. */
+const placeholders = () => ({ ...KNOWN_PLACEHOLDERS, own: `{${m.snippets_own_example()}}` });
 
 const SnippetForm = ({
   start,
@@ -53,7 +55,7 @@ const SnippetForm = ({
         <Textarea
           value={draft.body}
           rows={6}
-          placeholder={m.snippets_body_example(PLACEHOLDERS)}
+          placeholder={m.snippets_body_example(KNOWN_PLACEHOLDERS)}
           onChange={(event) => setDraft({ ...draft, body: event.target.value })}
         />
       </Label>
@@ -182,8 +184,8 @@ export const SnippetsSection = () => {
           title={account.isPersonal ? m.snippets_mine() : account.name}
           hint={
             account.isPersonal
-              ? m.snippets_mine_hint(PLACEHOLDERS)
-              : m.snippets_shared_hint(PLACEHOLDERS)
+              ? m.snippets_mine_hint(placeholders())
+              : m.snippets_shared_hint(placeholders())
           }
         />
       ))}

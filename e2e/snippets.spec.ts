@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { login, unique } from "./helpers";
+import { addSnippet, login, removeSnippet, unique } from "./helpers";
 
 test.describe("Textbausteine", () => {
   test("legt einen für info@ an, das Team setzt ihn mit dem Namen ein", async ({
@@ -43,5 +43,43 @@ test.describe("Textbausteine", () => {
     await expect(max.getByRole("heading", { name: "Meine Textbausteine" })).toBeVisible();
     await expect(max.getByRole("heading", { name: "info@" })).toHaveCount(0);
     await max.context().close();
+  });
+
+  test("fragt beim Einfügen nach eigenen Feldern und setzt das Datum ein", async ({ page }) => {
+    const title = unique("Auftragsbestätigung");
+    await login(page);
+    await addSnippet(
+      page,
+      title,
+      "Guten Tag {Name},\n\nIhr Auftrag {Auftragsnummer} vom {Datum} ist bei uns. Termin: {Termin}\n\n{Absender}",
+    );
+    try {
+      await page.goto("/mail");
+      await page.getByRole("link", { name: "Neue Mail" }).first().click();
+      await page
+        .getByRole("combobox", { name: "An" })
+        .fill("Markus Hoffmann <m.hoffmann@schreinerei-hoffmann.test>");
+      await page.keyboard.press("Enter");
+      await page.getByRole("button", { name: "Textbaustein einfügen" }).click();
+      await page.getByRole("menuitem", { name: title }).click();
+
+      const dialog = page.getByRole("dialog", { name: "Textbaustein ausfüllen" });
+      await expect(dialog.getByLabel("Auftragsnummer")).toBeFocused();
+      await dialog.getByLabel("Auftragsnummer").fill("A-4711 <eilig>");
+      // {Termin} stays empty: it is left in the text, to be seen.
+      await dialog.getByRole("button", { name: "Einfügen" }).click();
+      await expect(dialog).toBeHidden();
+
+      const today = new Intl.DateTimeFormat("de-DE", { dateStyle: "medium" }).format(new Date());
+      const body = page.getByRole("textbox", { name: "Ihre Nachricht …" });
+      await expect(body).toContainText("Guten Tag Markus Hoffmann,");
+      await expect(body).toContainText(
+        `Ihr Auftrag A-4711 <eilig> vom ${today} ist bei uns. Termin: {Termin}`,
+      );
+      await expect(body).toContainText("Jonas Weber");
+      await expect(body).toBeFocused();
+    } finally {
+      await removeSnippet(page, title);
+    }
   });
 });
