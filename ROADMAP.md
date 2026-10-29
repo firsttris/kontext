@@ -28,7 +28,6 @@ Kleinere und mittlere Funktionen, sortiert nach Nutzen: oben, was fast jedem Bet
 | # | Funktion | Worum es geht |
 | --- | --- | --- |
 | 2 | **Einladungen in der Mail beantworten** | Eine Einladung von außen (Outlook, Google) zeigt oben in der Mail Zusagen, Vielleicht, Absagen und „In den Kalender“. |
-| 3 | **Serien ab einem Termin ändern** | Neben „Nur dieser Termin“ und „Alle Termine der Serie“ auch „Dieser und alle folgenden“. |
 | 6 | **Mails zuweisen** | In info@ eine Mail einer Person zuweisen und als erledigt markieren, Filter „Mir zugewiesen“ und „Offen“. |
 | 7 | **Kalender abonnieren** | Kalender über eine Adresse (iCal, webcal) einbinden: Feiertage, Schulferien, Müllabfuhr, Kalender von Lieferanten; aktualisiert sich von selbst. |
 | 8 | **Mehr Formatierung beim Schreiben** | Tabellen, Schriftgröße, Text- und Hintergrundfarbe, eingefügte Bilder in der Größe ändern. |
