@@ -3,8 +3,9 @@
  * iCalendar, Microsoft Graph): into the default address book or calendar, skipping what is already
  * there (same name and first address; same UID), in batches of 500.
  */
+import { prepareEvent } from "../../src/lib/ics-import";
 import type { Importer } from "./importer";
-import { cardKey, prepareCard, prepareEvent } from "./items";
+import { cardKey, prepareCard } from "./items";
 import type { Count } from "./jobs";
 
 const CREATE_BATCH = 500;

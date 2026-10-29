@@ -15,6 +15,12 @@ Steps that an update needs beyond raising the version are marked **Upgrade**.
   and own fields: any other `{Wort}`, such as `{Auftragsnummer}`, is asked for in one small
   dialog when the snippet is inserted and filled in; a field left empty stays visible.
   `{Vorname}` and `{Name}` work as before.
+- Calendar: "Aus Datei übernehmen" under *Kalender verwalten* – appointments from an .ics file
+  (an export from Google, Outlook or Apple) into a calendar the user may write to, with a preview
+  of what is new and what is already there (same UID in the account), which is skipped. Stalwart
+  reads the file (`CalendarEvent/parse`); series keep their changed dates; attendees get no
+  message. The move now also leaves out the iTIP `method` (Google's `METHOD:PUBLISH`), which
+  Stalwart refuses on create.
 - Calendar: a default reminder per calendar – in *Kalender verwalten* the bell next to a calendar
   sets the reminder new appointments in it get, one for appointments with a time and one for
   all-day ones. Kept per person in Stalwart (`defaultAlertsWithTime`,
