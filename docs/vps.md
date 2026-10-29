@@ -558,6 +558,20 @@ echo QUIT | openssl s_client -starttls smtp -connect mail.firma.de:25 -verify_re
     Senden dorthin eine Absage mit `S3140`, die IP unter *sender.office.com* freischalten lassen.
     Alle öffentlichen Listen auf einmal: *mxtoolbox.com/blacklists.aspx*.
 
+**Ordner für Berichte.** An `postmaster@` kommen ab jetzt täglich DMARC- und TLS-Berichte (Google,
+Microsoft …), an `noreply-dmarc@` die Rückläufer auf Stalwarts eigene DMARC-Berichte an fremde
+Domains. Beide Adressen landen über die `catchAllAddress` im Posteingang des Chefs. In Kontext
+in seinem Postfach einen Ordner *Berichte* anlegen und eine Regel: *Empfänger enthält*
+`postmaster@firma.de` **oder** `noreply-dmarc@firma.de` → in *Berichte*, auch auf vorhandene
+Mails. Echte Rückläufer auf eigene Mails gehen an die eigene Adresse und bleiben im Posteingang.
+Ob Gmail die eigenen Mails annimmt, steht im Anhang der Google-Berichte (ZIP mit XML): pro
+Absender-IP `dkim`, `spf` und `result` – alles `pass` heißt, an der Einrichtung liegt ein
+Spam-Ordner beim Empfänger nicht, sondern am noch fehlenden Ruf der neuen IP.
+
+Zum Prüfen taugt keine Testmail, die man auf dem Server selbst an Port 25 einwirft: ohne DKIM
+stuft Stalwarts Spamfilter sie als Spam ein, und Spam geht vor den Regeln in den Spam-Ordner
+(`server/rules/script.ts`). Die nächsten echten Berichte zeigen, ob die Regel greift.
+
 ## 13. Zugangsdaten sichern
 
 Was außerhalb des Servers in einen Passwortmanager gehört – nicht in eine Textdatei:
