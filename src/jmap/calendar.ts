@@ -2,6 +2,7 @@
 
 import { chunk } from "@/lib/chunk";
 import { type CalendarEvent, withAllDayOf, ZONE } from "@/lib/jscalendar";
+import type { DefaultAlerts } from "@/lib/reminders";
 import type { Rights, ShareWith } from "@/lib/sharing";
 import { assertSetOk, CAPABILITIES, type JmapClient } from "./client";
 
@@ -47,7 +48,7 @@ export type Calendar = {
   /** Only the owner sees whom it is shared with. */
   shareWith?: ShareWith | null;
   myRights?: Rights;
-};
+} & DefaultAlerts;
 
 export const listCalendars = async (client: JmapClient, accountId: string): Promise<Calendar[]> =>
   (await client.call<{ list: Calendar[] }>("Calendar/get", { accountId }, USING)).list;
@@ -66,12 +67,22 @@ export const createCalendar = async (
   return result.created!.c!.id;
 };
 
-/** Name, colour, `shareWith` or whether it counts for free and busy times. */
+/** Name, colour, `shareWith`, whether it counts for free and busy times, or its default alerts. */
 export const updateCalendar = async (
   client: JmapClient,
   accountId: string,
   id: string,
-  patch: Partial<Pick<Calendar, "name" | "color" | "shareWith" | "includeInAvailability">>,
+  patch: Partial<
+    Pick<
+      Calendar,
+      | "name"
+      | "color"
+      | "shareWith"
+      | "includeInAvailability"
+      | "defaultAlertsWithTime"
+      | "defaultAlertsWithoutTime"
+    >
+  >,
 ): Promise<void> => {
   assertSetOk(
     await client.call("Calendar/set", { accountId, update: { [id]: patch } }, USING),

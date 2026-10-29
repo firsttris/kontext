@@ -16,6 +16,7 @@ import { everyoneAccess, sharedWith } from "@/lib/sharing";
 import { m } from "@/paraglide/messages";
 import { useColleagues, usePrincipals } from "../sharing/queries";
 import { ShareDialog } from "../sharing/share-dialog";
+import { DefaultReminderButton } from "./default-reminder";
 import { setCalendarHidden } from "./hidden-calendars";
 import { useAddHolidays } from "./holiday-queries";
 import { IcsImport } from "./ics-import";
@@ -91,6 +92,7 @@ const Row = ({ calendar, manage }: { calendar: CalendarRef; manage: boolean }) =
           ) : null}
         </span>
       </label>
+      {manage && calendar.mayWrite ? <DefaultReminderButton calendar={calendar} /> : null}
       {manage && calendar.isPersonal ? <OwnActions calendar={calendar} /> : null}
     </li>
   );

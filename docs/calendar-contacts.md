@@ -38,6 +38,15 @@ Kontext steht, steht auch am iPhone, unter Android (DAVx⁵) und in Thunderbird.
   Hinweis. [Mehr](architecture.md#erinnerungen-an-termine)
 
   ![Neuer Termin mit Erinnerung einen Tag vorher per Mail](screenshots/event-reminder.png)
+- **Erinnerung je Kalender:** In *Kalender verwalten* öffnet die Glocke neben einem Kalender die
+  Erinnerung, die neue Termine in ihm bekommen, getrennt für Termine mit Uhrzeit und ganztägige.
+  Etwa „Baustellen“: einen Tag vorher per Mail. Der neue Termin übernimmt sie ins Formular, man
+  kann sie dort noch ändern. Die Einstellung gilt für einen selbst und liegt in Stalwart am
+  Kalender (`defaultAlertsWithTime`, `defaultAlertsWithoutTime`); in einem geteilten Kalender
+  gilt, solange man keine eigene setzt, die der Person, der er gehört. Ohne Einstellung bleibt es bei 15 Minuten vorher, ganztägig bei
+  keiner.
+
+  ![Erinnerung für „Mein Kalender“: 30 Minuten vorher, ganztägig einen Tag vorher per Mail](screenshots/calendar-default-reminder.png)
 
 - **Beginn verschieben:** Wer Datum oder Uhrzeit des Beginns ändert, nimmt das Ende mit; die
   Dauer bleibt, wie bei Google und Apple.

@@ -1981,5 +1981,12 @@
   "settings_swipe_delete": "Delete",
   "settings_swipe_read": "Read / unread",
   "settings_swipe_flag": "Flag",
-  "settings_swipe_none": "Nothing"
+  "settings_swipe_none": "Nothing",
+  "calendar_default_reminder": "Reminder",
+  "calendar_default_reminder_title": "Reminder for “{name}”",
+  "calendar_default_reminder_hint": "The reminder a new appointment in this calendar gets; it can be changed on the appointment. It applies to you. In a shared calendar, the owner's applies otherwise.",
+  "calendar_default_reminder_timed": "Appointments with a time",
+  "calendar_default_reminder_all_day": "All-day appointments",
+  "calendar_default_reminder_usual": "As usual (15 minutes before)",
+  "calendar_default_reminder_saved": "Reminder saved."
 }
