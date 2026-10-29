@@ -48,6 +48,17 @@ Kontext steht, steht auch am iPhone, unter Android (DAVx⁵) und in Thunderbird.
 
   ![Erinnerung für „Mein Kalender“: 30 Minuten vorher, ganztägig einen Tag vorher per Mail](screenshots/calendar-default-reminder.png)
 
+- **Termin duplizieren:** Am Termin öffnet „Duplizieren“ den Editor mit einer Kopie: gleicher
+  Titel, Ort, Videobesprechung, Teilnehmer, Notizen, Erinnerung, „Anzeigen als“, Kalender,
+  Dokumente und Dauer – etwa für den zweiten Termin auf der Baustelle. Das Datum ist zunächst das
+  des Originals; wer den Beginn ändert, nimmt das Ende mit. Gespeichert wird ein neuer Termin, die
+  Teilnehmer bekommen also eine Einladung wie bei jedem neuen. Von einer Serie kopiert Kontext
+  nur den einen Termin, ohne Wiederholung (sie lässt sich im Editor neu wählen); die Kopie hat
+  nichts mehr mit der Serie zu tun. Duplizieren geht auch bei Terminen, die man nur lesen darf
+  (etwa eine Einladung), dann landet die Kopie im eigenen Kalender.
+
+  ![Termin „Baubesprechung Hoffmann“ als Kopie im Editor](screenshots/event-duplicate.png)
+
 - **Beginn verschieben:** Wer Datum oder Uhrzeit des Beginns ändert, nimmt das Ende mit; die
   Dauer bleibt, wie bei Google und Apple.
 - **Einladungen im Kontext-Look:** Kontext verschickt sie selbst, im Namen des Organisators, mit
@@ -126,8 +137,18 @@ Kontext steht, steht auch am iPhone, unter Android (DAVx⁵) und in Thunderbird.
   darf. Namen ganz in Groß- oder Kleinbuchstaben („MAX MUSTERMANN“) bietet Kontext in üblicher
   Schreibweise an. „Ignorieren“ merkt sich der Browser.
 - **Adressbücher teilen** mit Kollegen – lesen oder bearbeiten.
+- **Mehrere Kontakte auf einmal:** Das Kästchen vor einem Kontakt wählt ihn aus, mit Umschalt
+  alle bis dorthin, mit Strg/⌘ einzelne dazu; am Handy beginnt „Auswählen“ oder langes Drücken
+  die Auswahl, dann wählt ein Tipp (nicht, während ein Kontakt oder eine Gruppe bearbeitet wird). Über der Liste stehen dann „Zu Gruppe hinzufügen“, „Als vCard
+  exportieren“ (eine Datei `Kontakte.vcf`) und „Löschen“ (eine Frage mit der Anzahl; nicht, wenn
+  ein Kontakt aus einem nur zum Lesen geteilten Adressbuch dabei ist). Gruppen
+  bietet Kontext an, wenn alle ausgewählten Kontakte im selben Konto liegen wie die Gruppe und
+  man sie ändern darf: Mitglieder nennt eine Gruppe über die `uid` der Karte, und die gilt nur
+  innerhalb eines Kontos (RFC 9553).
 
 ![Kontakt Markus Hoffmann mit nächsten Terminen und letzten Mails](screenshots/contacts.png)
+
+![Drei Kontakte ausgewählt, darüber Gruppe, vCard und Löschen](screenshots/contacts-bulk.png)
 
 ## Mit anderen Programmen
 

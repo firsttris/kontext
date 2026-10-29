@@ -2,7 +2,7 @@
  * An appointment as the dialog shows it: when, where, who, its documents, the answer buttons,
  * delete.
  */
-import { CalendarDays, MapPin, Repeat, Users, Video } from "lucide-react";
+import { CalendarDays, Copy, MapPin, Repeat, Users, Video } from "lucide-react";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { useToast } from "@/components/ui/toast";
 import { ItemLink, LinkIcon } from "@/features/links/item-link";
@@ -53,10 +53,12 @@ type Props = {
   event: CalendarEvent;
   series: CalendarEvent | undefined;
   onEdit: () => void;
+  /** Opens the editor with a copy; also for appointments the user may only read. */
+  onDuplicate: () => void;
   onDone: () => void;
 };
 
-export const EventDetails = ({ event, series, onEdit, onDone }: Props) => {
+export const EventDetails = ({ event, series, onEdit, onDuplicate, onDone }: Props) => {
   const documents = documentsOfLinks(event.links);
   const mine = useMyAddresses();
   const { respond, remove } = useEventMutations();
@@ -217,6 +219,12 @@ export const EventDetails = ({ event, series, onEdit, onDone }: Props) => {
         {editable ? (
           <Button variant="primary" onClick={onEdit}>
             {m.contacts_edit()}
+          </Button>
+        ) : null}
+        {calendars.some((ref) => ref.mayWrite) ? (
+          <Button variant="outline" onClick={onDuplicate}>
+            <Copy size={14} />
+            {m.calendar_duplicate()}
           </Button>
         ) : null}
         <div className="flex-1" />

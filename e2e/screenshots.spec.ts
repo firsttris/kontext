@@ -319,6 +319,17 @@ test.describe("Screenshots @screenshots", () => {
     await shot(page, "event-reminder");
   });
 
+  test("Termin duplizieren", async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await login(page);
+    await page.goto(`/calendar?date=${today()}`);
+    await page.locator(`[data-day="${today()}"]`).getByText("Baubesprechung Hoffmann").click();
+    const dialog = page.getByRole("dialog");
+    await dialog.getByRole("button", { name: "Duplizieren" }).click();
+    await expect(dialog.getByLabel("Titel")).toHaveValue("Baubesprechung Hoffmann");
+    await shot(page, "event-duplicate");
+  });
+
   test("Kalender abonnieren", async ({ page }) => {
     const web = await calendarOnTheWeb();
     web.serve(["Pädagogischer Tag", "Bewegliche Ferientage"]);
@@ -539,6 +550,20 @@ test.describe("Screenshots @screenshots", () => {
     ).toBeVisible();
     await shot(handy, "phone-chat");
     await phone.close();
+  });
+
+  test("Mehrere Kontakte", async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await login(page);
+    await page.goto("/contacts");
+    await page.getByRole("link", { name: /Petra Keller/ }).click();
+    await expect(page.getByRole("heading", { name: "Petra Keller" })).toBeVisible();
+    // Only picked, nothing changed: the seed's contacts stay for the other pictures.
+    for (const name of ["Sabine Braun", "Markus Hoffmann", "Petra Keller"])
+      await page.getByRole("checkbox", { name: `${name} auswählen` }).click();
+    await expect(page.getByText("3 ausgewählt")).toBeVisible();
+    await page.getByRole("list", { name: "Gruppen" }).scrollIntoViewIfNeeded();
+    await shot(page, "contacts-bulk");
   });
 
   test("Telefonie", async ({ page }) => {
