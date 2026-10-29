@@ -83,6 +83,13 @@ IMAP und SMTP.
 
   ![Rückfrage „Anhang vergessen?“ beim Senden einer Mail mit „anbei“ ohne Anhang](screenshots/forgotten-attachment.png)
 
+- **Pflichtangaben:** Hat die Firmenverwaltung sie eingetragen ([Firmenverwaltung](company.md)),
+  stehen sie beim Schreiben grau unter dem Text – zu sehen, aber nicht änderbar. Kontext hängt
+  sie erst beim Senden an, ganz unten (auch unter dem Zitat), im HTML- und im Textteil; Entwürfe
+  enthalten sie nie, so stehen sie auch nach dem Öffnen eines Entwurfs nicht doppelt da.
+
+  ![Neue Mail, darunter grau die Pflichtangaben der Firma](screenshots/legal-footer.png)
+
 - **Senden rückgängig** (5 bis 30 Sekunden) und **später senden** („morgen 8 Uhr“) – der Server
   sendet, auch wenn der Rechner aus ist.
 - **Lesebestätigung** anfordern; eine erbetene beantwortet man mit einem Klick, nie von selbst.

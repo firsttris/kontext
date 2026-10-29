@@ -12,10 +12,14 @@ export type CompanySettings = {
   /** The company's Microsoft 365 app for the move; the secret is sealed at rest. */
   m365: () => Promise<M365Credentials | null>;
   saveM365: (credentials: M365Credentials) => Promise<void>;
+  /** The Pflichtangaben under every mail sent (legal-footer.ts); empty while there are none. */
+  legalFooter: () => Promise<string>;
+  saveLegalFooter: (text: string) => Promise<void>;
 };
 
 const SIGNATURE = "signature";
 const M365 = "m365";
+const LEGAL_FOOTER = "legalFooter";
 
 export const createCompanySettings = (db: Db, sealer: Sealer): CompanySettings => {
   const read = async (key: string): Promise<string | null> => {
@@ -44,5 +48,7 @@ export const createCompanySettings = (db: Db, sealer: Sealer): CompanySettings =
       return value ? (JSON.parse(await sealer.open(value)) as M365Credentials) : null;
     },
     saveM365: async (credentials) => write(M365, await sealer.seal(JSON.stringify(credentials))),
+    legalFooter: async () => (await read(LEGAL_FOOTER)) ?? "",
+    saveLegalFooter: (text) => write(LEGAL_FOOTER, text),
   };
 };

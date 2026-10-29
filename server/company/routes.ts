@@ -10,6 +10,7 @@ import { syncRoutes } from "../migration/sync-routes";
 import { backupRoutes } from "./backup-routes";
 import { bad, bodyOf, type CompanyDeps, createLoader, type Env } from "./context";
 import { employeeRoutes } from "./employees";
+import { legalFooterRoutes, readLegalFooter } from "./legal-footer";
 import { mailboxRoutes } from "./mailboxes";
 import { checkDomain, httpsCheck } from "./security";
 import { signatureRoutes } from "./signature-routes";
@@ -19,11 +20,18 @@ export type { CompanyDeps };
 export const createCompanyRoutes = (deps: CompanyDeps) => {
   const load = createLoader(deps);
   const app = new Hono<Env>();
+  const legalFooter = readLegalFooter(deps);
 
   /** Whether to show the Firmenverwaltung at all; asked by every signed-in user. */
   app.get("/me", async (c) =>
     c.json({ admin: Boolean(await load(c.req.raw, { folders: false })) }),
   );
+
+  /** Pflichtangaben: every signed-in user's composer puts them under the mail it sends. */
+  app.get("/legal-footer", async (c) => {
+    const footer = await legalFooter(c.req.raw);
+    return footer ? c.json(footer) : c.json({ error: "Nicht angemeldet" }, 401);
+  });
 
   app.use("*", async (c, next) => {
     const loaded = await load(c.req.raw);
@@ -39,6 +47,7 @@ export const createCompanyRoutes = (deps: CompanyDeps) => {
   app.route("/employees", employeeRoutes(deps));
   app.route("/mailboxes", mailboxRoutes(deps));
   app.route("/signature", signatureRoutes(deps));
+  app.route("/legal-footer", legalFooterRoutes(deps));
   app.get("/chat-retention", async (c) =>
     c.json({ days: (await deps.chatRetention?.days()) ?? 0 }),
   );

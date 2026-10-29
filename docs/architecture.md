@@ -234,6 +234,13 @@ mit einem eigenen API-Schlüssel an und erlaubt nur, was die Firmenverwaltung br
   `<br>` und was sie leer zurücklässt (Fett, ein ganzer Absatz), in einer Tabelle die ganze Zeile
   samt Beschriftung (und die Tabelle, wenn keine Zeile bleibt); absichtliche Leerzeilen der
   Vorlage bleiben.
+- **Pflichtangaben:** reiner Text in `company_setting` (Schlüssel `legalFooter`), gelesen von
+  jedem Angemeldeten (`GET /api/company/legal-footer`), geändert nur von der Firmenverwaltung
+  (`PUT`). Die App hängt ihn erst beim Senden an (`src/lib/legal-footer.ts`: HTML maskiert,
+  Textteil mit Leerzeile) – an die normale, die verschlüsselte und signierte Mail und an die Mail
+  mit dem Link von „Vertraulich senden“; das Autosave und „Als Entwurf speichern“ nehmen den Text
+  ohne ihn, so steht er nach dem erneuten Öffnen eines Entwurfs nicht doppelt da. Angehängt wird
+  er von der App, nicht vom Mailserver; darum gilt er nur für Mails aus Kontext.
 - **Austritt:** Zugang sperren, das Postfach einer Kollegin übergeben (alle Ordner per
   `shareWith` mit allen Rechten außer Teilen), neue Mails weiterleiten und einmal am Tag
   automatisch antworten. Weiterleitung und Antwort sind ein Sieve-Skript
