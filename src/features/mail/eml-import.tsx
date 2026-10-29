@@ -124,7 +124,7 @@ export const EmlImportButton = ({
         aria-label={m.mail_import_eml()}
         title={m.mail_import_eml()}
         onClick={() => input.current?.click()}
-        className="flex size-7 shrink-0 items-center justify-center self-center rounded-md text-muted hover:bg-hover hover:text-fg"
+        className="flex size-8 shrink-0 items-center justify-center rounded-md text-muted hover:bg-hover hover:text-fg"
       >
         <FileUp size={15} aria-hidden="true" />
       </button>

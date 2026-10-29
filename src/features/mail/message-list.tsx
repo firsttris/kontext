@@ -122,7 +122,7 @@ export const MessageList = ({ accountId, mailbox, search }: Props) => {
       dragMail={dragMail}
       folderId={mailbox.id}
       inJunk={mailbox.role === "junk"}
-      titleAction={<EmlImportButton accountId={accountId} mailbox={mailbox} />}
+      listAction={<EmlImportButton accountId={accountId} mailbox={mailbox} />}
       onDropFiles={onDropFiles}
       sortable={!scheduled && !isSnoozed}
       folderAction={
