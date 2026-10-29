@@ -33,7 +33,7 @@ export const deliverInvitation = (
     `METHOD:${method}`,
     "BEGIN:VEVENT",
     `ORGANIZER;CN=Petra Keller:mailto:${PETRA}`,
-    `ATTENDEE;ROLE=REQ-PARTICIPANT;PARTSTAT=NEEDS-ACTION;RSVP=TRUE;CN=Jonas Weber:mailto:${to}`,
+    `ATTENDEE;ROLE=REQ-PARTICIPANT;PARTSTAT=NEEDS-ACTION;RSVP=TRUE:mailto:${to}`,
     `UID:${uid}`,
     `SUMMARY:${title}`,
     `DTSTART;TZID=W. Europe Standard Time:${day}T100000`,
