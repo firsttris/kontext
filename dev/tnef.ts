@@ -12,7 +12,15 @@ export type TnefInput = {
   data: Uint8Array;
   /** An Outlook item inside (attach method 5) rather than a file. */
   embedded?: boolean;
+  /**
+   * The bytes as PidTagAttachDataBinary among the MAPI properties instead of in attAttachData,
+   * as some writers do (tnefparse's example MAPI_ATTACH_DATA_OBJ.tnef).
+   */
+  dataInProperties?: boolean;
 };
+
+/** attOemCodepage ([MS-OXTNEF]): the code page of the 8-bit strings. */
+export type TnefOptions = { oemCodepage?: number };
 
 const u16 = (value: number) => [value & 0xff, (value >> 8) & 0xff];
 const u32 = (value: number) => [...u16(value & 0xffff), ...u16(value >>> 16)];
@@ -47,20 +55,24 @@ const fileAttributes = (file: TnefInput) => {
     ...(file.longName ? [stringProperty(0x3707, 0x001f, unicode(file.longName))] : []),
     ...(file.type ? [stringProperty(0x370e, 0x001e, ansi(file.type))] : []),
     longProperty(0x3705, file.embedded ? 5 : 1),
+    ...(file.dataInProperties ? [stringProperty(0x3701, 0x0102, [...file.data])] : []),
   ];
   return [
     attribute(ATTACHMENT, 0x00069002, new Array(14).fill(0)),
     attribute(ATTACHMENT, 0x00018010, ansi(file.shortName)),
-    attribute(ATTACHMENT, 0x0006800f, [...file.data]),
+    ...(file.dataInProperties ? [] : [attribute(ATTACHMENT, 0x0006800f, [...file.data])]),
     attribute(ATTACHMENT, 0x00069005, [...u32(properties.length), ...properties.flat()]),
   ].flat();
 };
 
-export const winmailDat = (files: TnefInput[]): Uint8Array =>
+export const winmailDat = (files: TnefInput[], options: TnefOptions = {}): Uint8Array =>
   new Uint8Array([
     ...u32(0x223e9f78),
     ...u16(0x0001),
-    // attTnefVersion, as Outlook writes it first.
+    // attTnefVersion, as Outlook writes it first, then attOemCodepage.
     ...attribute(MESSAGE, 0x00089006, u32(0x00010000)),
+    ...(options.oemCodepage
+      ? attribute(MESSAGE, 0x00069007, [...u32(options.oemCodepage), ...u32(0)])
+      : []),
     ...files.flatMap(fileAttributes),
   ]);

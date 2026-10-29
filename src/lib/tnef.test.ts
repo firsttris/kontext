@@ -26,6 +26,31 @@ describe("tnefFiles", () => {
     expect(read(files![1]!.data)).toBe("Notiz");
   });
 
+  it("takes the bytes from PidTagAttachDataBinary when there is no attAttachData", () => {
+    // As in tnefparse's example MAPI_ATTACH_DATA_OBJ.tnef (VIA_Nytt_1402.doc and two more).
+    const files = tnefFiles(
+      winmailDat([
+        {
+          shortName: "VIA_Nytt_1402.pdf",
+          type: "application/pdf",
+          data: bytes("%PDF-1.4 Nytt"),
+          dataInProperties: true,
+        },
+      ]),
+    );
+    expect(files?.map(({ name, type }) => ({ name, type }))).toEqual([
+      { name: "VIA_Nytt_1402.pdf", type: "application/pdf" },
+    ]);
+    expect(read(files![0]!.data)).toBe("%PDF-1.4 Nytt");
+  });
+
+  it("reads 8-bit names in the code page attOemCodepage gives", () => {
+    // "Łódź.txt" in windows-1250, as a Polish Outlook writes it.
+    const shortName = String.fromCharCode(0xa3, 0xf3, 0x64, 0x9f, ...bytes(".txt"));
+    const files = tnefFiles(winmailDat([{ shortName, data: bytes("x") }], { oemCodepage: 1250 }));
+    expect(files?.map((file) => file.name)).toEqual(["Łódź.txt"]);
+  });
+
   it("leaves out an embedded Outlook item", () => {
     const dat = winmailDat([
       { shortName: "Weitergeleitet", data: new Uint8Array([1, 2, 3]), embedded: true },
