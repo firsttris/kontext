@@ -44,10 +44,12 @@ export const safeColor = (color: string | undefined): string =>
 const timeOnDay = (start: Date, end: Date, day: string): string | null => {
   const dayStart = fromLocal(`${day}T00:00:00`);
   const dayEnd = fromLocal(`${addDays(day, 1)}T00:00:00`);
+  // A day the event fills from midnight to midnight while going on beyond it (the middle of a
+  // longer event, or its first or last day when it starts or ends at midnight) is spent on it as
+  // a whole.
+  if (start <= dayStart && end >= dayEnd && (start < dayStart || end > dayEnd)) return null;
   const from = start >= dayStart ? timeLabel(minutesInDay(start, day)) : "";
   const to = end <= dayEnd ? timeLabel(end >= dayEnd ? 1440 : minutesInDay(end, day)) : "";
-  // A day in the middle of a longer event is spent on it as a whole.
-  if (!from && !to) return null;
   return from === to ? from : `${from}–${to}`;
 };
 
