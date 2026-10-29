@@ -3,12 +3,15 @@
  * several mailboxes ("Alle Posteingänge", search) are handled per mailbox; categories and moving
  * are offered when all are in one mailbox, as they belong to it.
  */
+
+import { useNavigate } from "@tanstack/react-router";
 import {
   Archive,
   FolderInput,
   ListChecks,
   Mail,
   MailOpen,
+  Paperclip,
   ShieldAlert,
   ShieldCheck,
   Star,
@@ -87,6 +90,7 @@ export const SelectionBar = ({
   inJunk: boolean;
 }) => {
   const actions = useMailActions();
+  const navigate = useNavigate();
   const toast = useToast();
   const accounts = useMailAccounts();
   const mailboxes = useAllMailboxes();
@@ -126,6 +130,16 @@ export const SelectionBar = ({
         g.from,
       ),
     );
+
+  /** All picked mails as .eml files in one new mail; the composer sends from their account. */
+  const forwardAsFiles = (account: string) => {
+    const emails = picked.map((entry) => entry.email.id).join(",");
+    onClear();
+    void navigate({
+      to: ".",
+      search: (prev) => ({ ...prev, compose: "forwardEml", emails, email: undefined, account }),
+    });
+  };
 
   /** One task per picked mail, linked to it and to its sender's card. */
   const makeTasks = () =>
@@ -235,6 +249,15 @@ export const SelectionBar = ({
         <IconButton label={m.mail_tasks_action()} disabled={none} onClick={makeTasks}>
           <ListChecks size={15} strokeWidth={1.75} />
         </IconButton>
+        {accountId ? (
+          <IconButton
+            label={m.mail_forward_eml()}
+            disabled={none}
+            onClick={() => forwardAsFiles(accountId)}
+          >
+            <Paperclip size={15} strokeWidth={1.75} />
+          </IconButton>
+        ) : null}
         {accountId && categories.length ? (
           <MenuRoot>
             <MenuTrigger asChild>

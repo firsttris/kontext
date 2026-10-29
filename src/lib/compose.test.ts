@@ -2,7 +2,14 @@ import { describe, expect, it } from "vitest";
 import type { JmapClient } from "@/jmap/client";
 import { saveDraft } from "@/jmap/mail";
 import type { EmailDetail } from "@/jmap/types";
-import { sharedSenderName, startCompose, startReplyTo, switchReplyTo } from "./compose";
+import {
+  emlName,
+  sharedSenderName,
+  startCompose,
+  startEmlForward,
+  startReplyTo,
+  switchReplyTo,
+} from "./compose";
 
 const original: EmailDetail = {
   id: "e1",
@@ -193,6 +200,44 @@ describe("Reply-To defaults", () => {
     expect(switchReplyTo([office], info, jonas)).toEqual([]);
     const own = [{ name: null, email: "anna@weber.test" }];
     expect(switchReplyTo(own, jonas, info)).toEqual(own);
+  });
+});
+
+describe("startEmlForward", () => {
+  it("forwards one mail as its raw message, named after its subject", () => {
+    const start = startEmlForward([{ blobId: "raw1", subject: "Angebot 2027", size: 3172 }]);
+    expect(start).toMatchObject({ to: [], subject: "Fwd: Angebot 2027", html: "" });
+    expect(start.attachments).toEqual([
+      { blobId: "raw1", name: "Angebot 2027.eml", type: "message/rfc822", size: 3172 },
+    ]);
+  });
+  it("puts several mails into one, without a subject", () => {
+    const start = startEmlForward([
+      { blobId: "raw1", subject: "Rechnung 1", size: 10 },
+      { blobId: "raw2", subject: "Rechnung 2", size: 20 },
+    ]);
+    expect(start.subject).toBe("");
+    expect(start.attachments.map((file) => file.name)).toEqual([
+      "Rechnung 1.eml",
+      "Rechnung 2.eml",
+    ]);
+  });
+});
+
+describe("emlName", () => {
+  it("takes out what a file name may not hold", () => {
+    expect(emlName('AW: Angebot <2027> / "Bad"?\tneu')).toBe("AW Angebot 2027 Bad neu.eml");
+  });
+  it("names a mail without subject", () => {
+    expect(emlName(null)).toBe("Nachricht.eml");
+    expect(emlName(" :: ")).toBe("Nachricht.eml");
+  });
+  it("keeps a long subject short", () => {
+    expect(emlName("x".repeat(300))).toBe(`${"x".repeat(100)}.eml`);
+  });
+  it("does not cut a character in two when it shortens", () => {
+    // "😀" is two UTF-16 code units; a cut between them leaves a lone surrogate in the name.
+    expect(emlName(`${"x".repeat(99)}😀 Angebot`)).toBe(`${"x".repeat(99)}😀.eml`);
   });
 });
 

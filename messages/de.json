@@ -109,6 +109,8 @@
   "mail_reply_to": "Antworten an {name} …",
   "mail_reply_all": "Allen antworten",
   "mail_forward": "Weiterleiten",
+  "mail_forward_eml": "Als Anhang weiterleiten",
+  "mail_eml_unnamed": "Nachricht",
   "mail_back": "Zurück",
   "mail_more": "Weitere Aktionen",
   "mail_from": "Von",

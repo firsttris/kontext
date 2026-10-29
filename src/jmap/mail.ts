@@ -455,6 +455,20 @@ export const sendEmail = async (
   };
 };
 
+/** What "Als Anhang weiterleiten" needs of each mail, in the order asked for. */
+export const getEmlOriginals = async (
+  client: JmapClient,
+  accountId: string,
+  ids: string[],
+): Promise<(EmailSummary & { blobId: string })[]> => {
+  const { list } = await client.call<{ list: (EmailSummary & { blobId: string })[] }>("Email/get", {
+    accountId,
+    ids,
+    properties: ["id", "blobId", "subject", "size"],
+  });
+  return ids.flatMap((id) => list.find((email) => email.id === id) ?? []);
+};
+
 export const saveDraft = async (
   client: JmapClient,
   mail: OutgoingEmail,

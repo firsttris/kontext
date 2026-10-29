@@ -8,7 +8,7 @@ import { escapeHtml, quoteHtml } from "./html";
 /** The line a forward starts with, below what the user writes above it. */
 export const FORWARD_MARKER = "---------- Weitergeleitete Nachricht ----------";
 
-export type ComposeMode = "new" | "reply" | "replyAll" | "forward" | "draft";
+export type ComposeMode = "new" | "reply" | "replyAll" | "forward" | "forwardEml" | "draft";
 
 export type ComposeStart = {
   to: EmailAddress[];
@@ -49,12 +49,43 @@ const fileAttachments = (email: EmailDetail): ComposeStart["attachments"] =>
       size: part.size,
     }));
 
+/** A mail forwarded whole: its raw message is its `blobId` (RFC 8621 §4.1.1). */
+export type EmlOriginal = { blobId: string; subject: string | null; size: number };
+
+/** Characters a file name may not hold on Windows or macOS, and control characters. */
+// biome-ignore lint/suspicious/noControlCharactersInRegex: control characters are what is removed
+const UNSAFE_IN_NAME = /[\u0000-\u001f\u007f/\\:*?"<>|]+/g;
+
+/** "<Betreff>.eml", safe as a file name on the receiver's disk. */
+export const emlName = (subject: string | null): string => {
+  const name = (subject ?? "").replace(UNSAFE_IN_NAME, " ").replace(/\s+/g, " ").trim();
+  // By code points: a cut inside a UTF-16 pair leaves a lone surrogate, which Stalwart refuses.
+  const short = Array.from(name).slice(0, 100).join("").trim();
+  return `${short || m.mail_eml_unnamed()}.eml`;
+};
+
+/**
+ * "Als Anhang weiterleiten": each mail as a message/rfc822 file, by the blob it already has, so
+ * nothing is downloaded or uploaded. An encrypted mail goes as it is, still encrypted. Several
+ * mails get no subject: none of theirs speaks for all.
+ */
+export const startEmlForward = (originals: EmlOriginal[]): ComposeStart => ({
+  ...empty,
+  subject: originals.length === 1 ? prefixSubject("Fwd", originals[0]!.subject) : "",
+  attachments: originals.map((original) => ({
+    blobId: original.blobId,
+    name: emlName(original.subject),
+    type: "message/rfc822",
+    size: original.size,
+  })),
+});
+
 /**
  * `originalHtml` is the cleaned body of the original (already sanitized for display), so the
  * quote shows what the user saw.
  */
 export const startCompose = (
-  mode: ComposeMode,
+  mode: Exclude<ComposeMode, "forwardEml">,
   original: EmailDetail | null | undefined,
   originalHtml: string,
   myAddresses: string[],
