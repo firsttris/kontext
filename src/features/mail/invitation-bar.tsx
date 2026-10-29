@@ -133,7 +133,7 @@ const Bar = ({ accountId, blobId }: { accountId: string; blobId: string }) => {
           {view.inCalendar ? (
             <Link
               to="/calendar"
-              search={{ date: day }}
+              search={{ date: day, event: stored?.id, account: accountId }}
               className="self-start text-[13px] text-accent underline-offset-2 hover:underline"
             >
               {m.mail_invitation_in_calendar()}

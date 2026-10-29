@@ -92,6 +92,10 @@ test.describe("Einladung in der Mail", () => {
     await expect(bar).toContainText("Du hast abgesagt.");
     expect(await storedAnswers(INVITEE, uid)).toEqual(["declined"]);
     await expect.poll(() => sentToPetra(INVITEE)).toContain(`Abgelehnt: ${title}`);
+
+    // The link opens the event itself in the calendar.
+    await bar.getByRole("link", { name: "Steht in deinem Kalender" }).click();
+    await expect(page.getByRole("dialog").getByRole("heading", { name: title })).toBeVisible();
   });
 
   test("eine Absage nimmt den Termin aus dem Kalender", async ({ page }) => {
