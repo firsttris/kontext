@@ -7,6 +7,9 @@ Steps that an update needs beyond raising the version are marked **Upgrade**.
 
 ## Unreleased
 
+- Mail: "Papierkorb leeren" and "Spam leeren" at the top of those folders, after a question with
+  the number of mails. A mail that is also in another folder only leaves Spam or Papierkorb; in a
+  shared mailbox only for those who may delete there.
 - Mail: "Anhang vergessen?" – when the own text or the subject speaks of an attachment ("Anhang",
   "anbei", "angehängt", "attached" …) and nothing is attached, Kontext asks before sending: attach
   a file or send without. The quoted mail below a reply does not count.
