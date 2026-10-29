@@ -29,11 +29,12 @@ type Props = {
   active: boolean;
   ownAccount: string | undefined;
   book: string | undefined;
+  group: boolean;
+  /** Absent for groups and while an editor is open. */
   picking?: Picking;
 };
 
-export const ContactRow = ({ card, active, ownAccount, book, picking }: Props) => {
-  const group = !picking;
+export const ContactRow = ({ card, active, ownAccount, book, group, picking }: Props) => {
   const phone = !useMediaQuery("(min-width: 768px)");
   const press = useLongPress(() => picking?.onPick(false));
   const boxShown = Boolean(picking && (picking.on || picking.selected));

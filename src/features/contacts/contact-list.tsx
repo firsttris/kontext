@@ -19,6 +19,8 @@ type Props = {
   picked: Set<string>;
   picking: boolean;
   onPick: (key: string, shift: boolean) => void;
+  /** No boxes while a contact or group is edited: the editor's member boxes carry the names too. */
+  pickable: boolean;
 };
 
 export const ContactList = ({
@@ -31,6 +33,7 @@ export const ContactList = ({
   picked,
   picking,
   onPick,
+  pickable,
 }: Props) => {
   const row = (card: Contact, group: boolean) => (
     <ContactRow
@@ -39,8 +42,9 @@ export const ContactList = ({
       active={card === selected}
       ownAccount={ownAccount}
       book={book}
+      group={group}
       picking={
-        group
+        group || !pickable
           ? undefined
           : {
               on: picking,

@@ -53,9 +53,11 @@ export const ContactsPage = ({ search }: { search: ContactsSearch }) => {
   const shown = contacts.filter((card) => matchesSearch(card, text));
   const groups = shown.filter(isGroup);
   const people = shown.filter((card) => !isGroup(card));
+  // Editing a contact or group (the pane's own boxes) starts without a selection and offers none.
+  const pickable = !search.edit;
   const picking = usePicking(
     byLetter(people).flatMap(([, cards]) => cards.map(contactKey)),
-    `${search.book ?? ""}/${text}`,
+    `${search.book ?? ""}/${text}/${pickable}`,
   );
   const picked = people.filter((card) => picking.selected.has(contactKey(card)));
 
@@ -90,7 +92,7 @@ export const ContactsPage = ({ search }: { search: ContactsSearch }) => {
               </h1>
               <div className="flex gap-1.5">
                 {/* Phones have no hover: picking starts with this (or a long press). */}
-                {people.length ? (
+                {people.length && pickable ? (
                   <button
                     type="button"
                     onClick={picking.start}
@@ -154,6 +156,7 @@ export const ContactsPage = ({ search }: { search: ContactsSearch }) => {
                 picked={picking.selected}
                 picking={picking.showBar}
                 onPick={picking.pick}
+                pickable={pickable}
               />
             </>
           )}

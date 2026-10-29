@@ -128,7 +128,7 @@ Kontext steht, steht auch am iPhone, unter Android (DAVx⁵) und in Thunderbird.
 - **Adressbücher teilen** mit Kollegen – lesen oder bearbeiten.
 - **Mehrere Kontakte auf einmal:** Das Kästchen vor einem Kontakt wählt ihn aus, mit Umschalt
   alle bis dorthin, mit Strg/⌘ einzelne dazu; am Handy beginnt „Auswählen“ oder langes Drücken
-  die Auswahl, dann wählt ein Tipp. Über der Liste stehen dann „Zu Gruppe hinzufügen“, „Als vCard
+  die Auswahl, dann wählt ein Tipp (nicht, während ein Kontakt oder eine Gruppe bearbeitet wird). Über der Liste stehen dann „Zu Gruppe hinzufügen“, „Als vCard
   exportieren“ (eine Datei `Kontakte.vcf`) und „Löschen“ (eine Frage mit der Anzahl; nicht, wenn
   ein Kontakt aus einem nur zum Lesen geteilten Adressbuch dabei ist). Gruppen
   bietet Kontext an, wenn alle ausgewählten Kontakte im selben Konto liegen wie die Gruppe und
