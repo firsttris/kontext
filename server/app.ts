@@ -39,6 +39,8 @@ import { createSignatureDetails } from "./company/signature-details";
 import { createSignatureDetailRoutes } from "./company/signature-details-routes";
 import { createSealer } from "./crypto";
 import { fromOwnPage } from "./csrf";
+import { createAppPasswordRoutes } from "./dav/app-password-routes";
+import { createAppPasswords } from "./dav/app-passwords";
 import { createDavAuth } from "./dav/auth";
 import { createDavRoutes } from "./dav/routes";
 import { type Db, openDatabase, schema } from "./db";
@@ -724,12 +726,27 @@ export const createApp = async (env: Env) => {
   const pruneSecure = () => void secure.pruneExpired(new Date()).catch(() => undefined);
   pruneSecure();
   setInterval(pruneSecure, 3_600_000).unref();
-  // The task boards for Thunderbird and phone apps (CalDAV), signed in with the mail password.
+  // The task boards for Thunderbird and phone apps (CalDAV), signed in with the mail password or,
+  // with two-step sign-in, an app password made in the settings.
+  const appPasswords = createAppPasswords(db);
+  app.route(
+    "/api/app-passwords",
+    createAppPasswordRoutes({
+      appPasswords,
+      grants,
+      userOf: mcp.userOf,
+      login: mcp.login,
+      mayTryPassword: passwordAttempts,
+    }),
+  );
   app.all("/.well-known/caldav", (c) => c.redirect("/dav/", 301));
   app.route(
     "/dav",
     createDavRoutes({
-      auth: createDavAuth(env),
+      auth: createDavAuth(env, undefined, undefined, {
+        resolve: appPasswords.resolve,
+        tokenOf: (sessionId) => tokenOrUnavailable(grants, sessionId),
+      }),
       store: tasks,
       changed: tasksChanged,
     }),

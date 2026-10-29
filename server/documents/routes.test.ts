@@ -123,6 +123,18 @@ describe("/api/documents", () => {
     ]);
   });
 
+  it("hands a document to the browser for an encrypted mail, not to Stalwart", async () => {
+    const { deps, uploaded } = fakes();
+    const app = createDocumentsRoutes(deps);
+    const reply = await app.request(post("/download", { fileId: "n1" }));
+    expect(reply.status).toBe(200);
+    expect(reply.headers.get("content-type")).toBe("application/x-docx");
+    expect(decodeURIComponent(reply.headers.get("x-file-name") ?? "")).toBe("Angebot.docx");
+    expect(await reply.text()).toBe("Angebot");
+    expect(uploaded).toEqual([]);
+    expect((await app.request(post("/download", {}))).status).toBe(400);
+  });
+
   it("lets colleagues view a file, not the one who shares it", async () => {
     const { deps, shared } = fakes();
     const app = createDocumentsRoutes(deps);

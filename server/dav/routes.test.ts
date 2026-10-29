@@ -182,6 +182,73 @@ describe("CalDAV", () => {
     expect(tasks.find((task) => task.title === "Anruf")).toMatchObject({ dueDate: null });
   });
 
+  it("tells a client what changed since its sync token (sync-collection)", async () => {
+    const { store, call } = setup();
+    const sync = (token: string, data = false) =>
+      call(
+        "REPORT",
+        "/dav/tasks/jonas/",
+        `<D:sync-collection xmlns:D="DAV:" xmlns:C="urn:ietf:params:xml:ns:caldav"><D:sync-token>${token}</D:sync-token><D:sync-level>1</D:sync-level><D:prop><D:getetag/>${data ? "<C:calendar-data/>" : ""}</D:prop></D:sync-collection>`,
+        { depth: "0" },
+      );
+    const tokenOf = (text: string) => text.match(/<D:sync-token>([^<]+)<\/D:sync-token>/)![1]!;
+    await call("PUT", "/dav/tasks/jonas/a.ics", vtodo("Fliesen bestellen"));
+    await call("PUT", "/dav/tasks/jonas/b.ics", vtodo("Angebot schreiben"));
+
+    // The board names its token and that it can sync.
+    const listing = await (await call("PROPFIND", "/dav/tasks/jonas/", "", { depth: "0" })).text();
+    expect(listing).toContain("<D:sync-collection/>");
+    const first = await sync("", true);
+    expect(first.status).toBe(207);
+    const all = await first.text();
+    expect(all).toContain("/dav/tasks/jonas/a.ics");
+    expect(all).toContain("SUMMARY:Angebot schreiben");
+    expect(tokenOf(all)).toBe(tokenOf(listing));
+
+    // Nothing changed: nothing listed, the same token.
+    const quiet = await (await sync(tokenOf(all))).text();
+    expect(quiet).not.toContain("<D:response>");
+    expect(tokenOf(quiet)).toBe(tokenOf(all));
+
+    // One changed, one deleted, one new: exactly these, the deleted one as 404.
+    await call("PUT", "/dav/tasks/jonas/a.ics", vtodo("Fliesen bestellt", ["STATUS:COMPLETED"]));
+    await store.create(
+      {
+        accountId: "jonas",
+        title: "Neu in Kontext",
+        notes: "",
+        status: "open",
+        assigneeId: null,
+        dueDate: null,
+        dueTime: null,
+        checklist: [],
+        links: [],
+        remindAt: null,
+        repeat: null,
+      },
+      "jonas",
+    );
+    await call("DELETE", "/dav/tasks/jonas/b.ics");
+    const delta = await (await sync(tokenOf(all))).text();
+    const hrefs = [...delta.matchAll(/<D:href>([^<]+)<\/D:href>/g)].map((match) => match[1]);
+    const made = (await store.davList("jonas", new Date(0))).find(
+      ({ task }) => task.title === "Neu in Kontext",
+    )!;
+    expect(hrefs.sort()).toEqual([
+      "/dav/tasks/jonas/a.ics",
+      "/dav/tasks/jonas/b.ics",
+      `/dav/tasks/jonas/${made.name}.ics`,
+    ]);
+    expect(delta).toMatch(/b\.ics<\/D:href><D:status>HTTP\/1\.1 404/);
+    expect(delta).not.toContain("BEGIN:VTODO");
+    expect(tokenOf(delta)).not.toBe(tokenOf(all));
+
+    // A token it does not know (another server's, or forgotten after a restart): start anew.
+    const unknown = await sync("urn:kontext:sync:0000");
+    expect(unknown.status).toBe(403);
+    expect(await unknown.text()).toContain("<D:valid-sync-token/>");
+  });
+
   it("a board one may only read stays as it is", async () => {
     const { call } = setup();
     expect((await call("PUT", "/dav/tasks/chef/x.ics", vtodo("Nein"))).status).toBe(403);

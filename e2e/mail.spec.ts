@@ -10,7 +10,11 @@ import {
   personalAccountId,
   unique,
 } from "./helpers";
+import { copySeedMail } from "./own-mails";
 import { deliverMail } from "./protocols";
+
+/** The seed's offer with a PDF, copied for the tests that open it (own-mails.ts). */
+const OFFER = "angebot-wartung@keller-elektro.test";
 
 /** Takes test mails out of a user's account again, so they don't push the seed's down the list. */
 const removeMails = async (user: string, subjects: string[]) => {
@@ -96,58 +100,75 @@ test.describe("Anmeldung", () => {
 test.describe("Mail", () => {
   test.beforeEach(async ({ page }) => login(page));
 
+  // The mails these tests open are copies of the seed's, newest in the inbox (own-mails.ts):
+  // the seed's own slide out of the list's rendered rows once other tests filled the inbox.
   test("zeigt den Posteingang und öffnet eine Mail", async ({ page }) => {
-    const list = page.getByRole("list", { name: "Posteingang" });
-    await expect(list.getByText("Angebot Wartungsvertrag 2027")).toBeVisible();
-    const counter = page.getByText(/\d+ ungelesen/);
-    const before = Number(((await counter.textContent()) ?? "").split(" ")[0]);
-    await list.getByText("Heizung macht Geräusche").click();
-    await expect(
-      page.getByRole("heading", { name: "Heizung macht Geräusche – Termin möglich?" }),
-    ).toBeVisible();
-    await expect(
-      page.frameLocator("iframe[title='Inhalt der Mail']").getByText("klopft seit gestern"),
-    ).toBeVisible();
-    // opening marks it read: the unread counter drops
-    await expect(counter).toHaveText(`${before - 1} ungelesen`);
+    const offer = await copySeedMail("jonas", OFFER);
+    const heating = await copySeedMail("jonas", "termin-heizung@example-privat.test");
+    try {
+      await page.reload();
+      const list = page.getByRole("list", { name: "Posteingang" });
+      await expect(list.getByText(offer.subject)).toBeVisible();
+      await expect(list.getByText(heating.subject)).toBeVisible();
+      const counter = page.getByText(/\d+ ungelesen/);
+      const before = Number(((await counter.textContent()) ?? "").split(" ")[0]);
+      await list.getByText(heating.subject).click();
+      await expect(page.getByRole("heading", { name: heating.subject })).toBeVisible();
+      await expect(
+        page.frameLocator("iframe[title='Inhalt der Mail']").getByText("klopft seit gestern"),
+      ).toBeVisible();
+      // opening marks it read: the unread counter drops
+      await expect(counter).toHaveText(`${before - 1} ungelesen`);
+    } finally {
+      await offer.remove();
+      await heating.remove();
+    }
   });
 
   test("passt die Höhe der Mail an, ohne eigene Scrollbar", async ({ page }) => {
-    await page
-      .getByRole("list", { name: "Posteingang" })
-      .getByText("Angebot Wartungsvertrag 2027")
-      .click();
-    const frame = page.locator("iframe[title='Inhalt der Mail']");
-    await expect(frame.contentFrame().getByText("Keller Elektro GmbH")).toBeVisible();
-    // The last paragraph's margin used to stick out of the body and made the frame scroll.
-    await expect
-      .poll(() =>
-        frame.evaluate((element: HTMLIFrameElement) => {
-          const root = element.contentDocument!.documentElement;
-          return root.scrollHeight - root.clientHeight;
-        }),
-      )
-      .toBe(0);
+    const offer = await copySeedMail("jonas", OFFER);
+    try {
+      await page.reload();
+      await page.getByRole("list", { name: "Posteingang" }).getByText(offer.subject).click();
+      const frame = page.locator("iframe[title='Inhalt der Mail']");
+      await expect(frame.contentFrame().getByText("Keller Elektro GmbH")).toBeVisible();
+      // The last paragraph's margin used to stick out of the body and made the frame scroll.
+      await expect
+        .poll(() =>
+          frame.evaluate((element: HTMLIFrameElement) => {
+            const root = element.contentDocument!.documentElement;
+            return root.scrollHeight - root.clientHeight;
+          }),
+        )
+        .toBe(0);
+    } finally {
+      await offer.remove();
+    }
   });
 
   test("zeigt Anhänge", async ({ page }) => {
-    await page
-      .getByRole("list", { name: "Posteingang" })
-      .getByText("Angebot Wartungsvertrag 2027")
-      .click();
-    const attachments = page.getByRole("list", { name: "Anhänge" });
-    await expect(attachments.getByText("Angebot-Wartung-2027.pdf")).toBeVisible();
-    // The first page of the PDF as a thumbnail (pdf.js), not just a tile.
-    const preview = attachments.getByRole("button", { name: "Angebot-Wartung-2027.pdf ansehen" });
-    await expect(preview.locator("img")).toBeVisible();
-    await expect
-      .poll(() => preview.locator("img").evaluate((img: HTMLImageElement) => img.naturalWidth))
-      .toBeGreaterThan(100);
-    const download = page.waitForEvent("download");
-    await attachments
-      .getByRole("button", { name: "Angebot-Wartung-2027.pdf herunterladen" })
-      .click();
-    expect((await download).suggestedFilename()).toBe("Angebot-Wartung-2027.pdf");
+    const offer = await copySeedMail("jonas", OFFER);
+    try {
+      await page.reload();
+      await page.getByRole("list", { name: "Posteingang" }).getByText(offer.subject).click();
+      const attachments = page.getByRole("list", { name: "Anhänge" });
+      await expect(attachments.getByText("Angebot-Wartung-2027.pdf")).toBeVisible();
+      // The first page of the PDF as a thumbnail (pdf.js), not just a tile.
+      const preview = attachments.getByRole("button", {
+        name: "Angebot-Wartung-2027.pdf ansehen",
+      });
+      await expect(preview.locator("img")).toBeVisible();
+      await expect
+        .poll(() => preview.locator("img").evaluate((img: HTMLImageElement) => img.naturalWidth))
+        .toBeGreaterThan(100);
+      const download = page.waitForEvent("download");
+      await attachments
+        .getByRole("button", { name: "Angebot-Wartung-2027.pdf herunterladen" })
+        .click();
+      expect((await download).suggestedFilename()).toBe("Angebot-Wartung-2027.pdf");
+    } finally {
+      await offer.remove();
+    }
   });
 
   test("packt eine winmail.dat aus alten Outlook-Versionen aus", async ({ page }) => {
@@ -296,35 +317,45 @@ test.describe("Mail", () => {
   });
 
   test("antwortet mit Zitat und Betreff Re:", async ({ page }) => {
-    await page.getByRole("list", { name: "Posteingang" }).getByText("Weihnachtsessen").click();
-    await page.getByRole("link", { name: /Antworten an Anna/ }).click();
-    await expect(page.getByLabel("Betreff")).toHaveValue("Re: Weihnachtsessen – wer ist dabei?");
-    await expect(page.getByRole("textbox", { name: "Ihre Nachricht …" })).toContainText(
-      "schrieb Anna Weber:",
-    );
-    await page.keyboard.type("Ich bin dabei.");
-    await page.getByRole("button", { name: "Senden", exact: true }).click();
-    await expect(page.getByRole("status")).toHaveText("Mail gesendet.");
-    await expect
-      .poll(() => inboxSubjects("anna"))
-      .toContain("Re: Weihnachtsessen – wer ist dabei?");
+    const dinner = await copySeedMail("jonas", "teamessen@weber-haustechnik.test");
+    try {
+      await page.reload();
+      await page.getByRole("list", { name: "Posteingang" }).getByText(dinner.subject).click();
+      await page.getByRole("link", { name: /Antworten an Anna/ }).click();
+      await expect(page.getByLabel("Betreff")).toHaveValue(`Re: ${dinner.subject}`);
+      await expect(page.getByRole("textbox", { name: "Ihre Nachricht …" })).toContainText(
+        "schrieb Anna Weber:",
+      );
+      await page.keyboard.type("Ich bin dabei.");
+      await page.getByRole("button", { name: "Senden", exact: true }).click();
+      await expect(page.getByRole("status")).toHaveText("Mail gesendet.");
+      await expect.poll(() => inboxSubjects("anna")).toContain(`Re: ${dinner.subject}`);
+    } finally {
+      await dinner.remove();
+    }
   });
 
   test("leitet eine Mail als Anhang (.eml) an Anna weiter", async ({ page }) => {
-    const original = "Angebot Wartungsvertrag 2027";
-    await page.getByRole("list", { name: "Posteingang" }).getByText(original).click();
-    await page.getByRole("button", { name: "Weitere Aktionen" }).click();
-    await page.getByRole("menuitem", { name: "Als Anhang weiterleiten" }).click();
-    await expect(page.getByLabel("Betreff")).toHaveValue(`Fwd: ${original}`);
-    await expect(page.getByText(`${original}.eml`)).toBeVisible();
-    await page.getByRole("combobox", { name: "An" }).fill("anna");
-    await page.getByRole("option", { name: /Anna Weber/ }).click();
-    const subject = unique("Zur Ablage");
-    await page.getByLabel("Betreff").fill(subject);
-    await page.getByRole("button", { name: "Senden", exact: true }).click();
-    await expect(page.getByRole("status")).toHaveText("Mail gesendet.");
-    // Anna gets the original whole, as a mail in the mail.
-    await expect.poll(() => attachedMails("anna", subject)).toEqual([original]);
+    const offer = await copySeedMail("jonas", OFFER);
+    const original = offer.subject;
+    try {
+      await page.reload();
+      await page.getByRole("list", { name: "Posteingang" }).getByText(original).click();
+      await page.getByRole("button", { name: "Weitere Aktionen" }).click();
+      await page.getByRole("menuitem", { name: "Als Anhang weiterleiten" }).click();
+      await expect(page.getByLabel("Betreff")).toHaveValue(`Fwd: ${original}`);
+      await expect(page.getByText(`${original}.eml`)).toBeVisible();
+      await page.getByRole("combobox", { name: "An" }).fill("anna");
+      await page.getByRole("option", { name: /Anna Weber/ }).click();
+      const subject = unique("Zur Ablage");
+      await page.getByLabel("Betreff").fill(subject);
+      await page.getByRole("button", { name: "Senden", exact: true }).click();
+      await expect(page.getByRole("status")).toHaveText("Mail gesendet.");
+      // Anna gets the original whole, as a mail in the mail.
+      await expect.poll(() => attachedMails("anna", subject)).toEqual([original]);
+    } finally {
+      await offer.remove();
+    }
   });
 
   test("leitet mehrere gewählte Mails als Anhänge in einer Mail weiter", async ({ page }) => {
@@ -439,25 +470,29 @@ test.describe("Gemeinsames Postfach erkennen und verschieben", () => {
   test.beforeEach(async ({ page }) => login(page));
 
   test("sagt in der Mail und in der Seitenleiste, dass sie in info@ liegt", async ({ page }) => {
-    await page.getByRole("link", { name: "info@" }).click();
-    await page
-      .getByRole("list", { name: "Posteingang" })
-      .getByText("Anfrage Wärmepumpe Neubau")
-      .click();
-    await expect(
-      page.getByText("Gemeinsames Postfach info@weber-haustechnik.test", { exact: true }),
-    ).toBeVisible();
-    await expect(page.getByRole("navigation", { name: "Eigene Ordner" })).toContainText(
-      "Ordner von info@weber-haustechnik.test",
-    );
-    // The own mailbox has no such note.
-    await page.getByRole("link", { name: /^jonas@/ }).click();
-    await page
-      .getByRole("list", { name: "Posteingang" })
-      .getByText("Angebot Wartungsvertrag 2027")
-      .click();
-    await expect(page.getByRole("heading", { name: "Angebot Wartungsvertrag 2027" })).toBeVisible();
-    await expect(page.getByText(/^Gemeinsames Postfach/)).toHaveCount(0);
+    const request = await copySeedMail("jonas", "anfrage-neubau@example-privat.test", {
+      mailbox: "info",
+    });
+    const offer = await copySeedMail("jonas", OFFER);
+    try {
+      await page.reload();
+      await page.getByRole("link", { name: "info@" }).click();
+      await page.getByRole("list", { name: "Posteingang" }).getByText(request.subject).click();
+      await expect(
+        page.getByText("Gemeinsames Postfach info@weber-haustechnik.test", { exact: true }),
+      ).toBeVisible();
+      await expect(page.getByRole("navigation", { name: "Eigene Ordner" })).toContainText(
+        "Ordner von info@weber-haustechnik.test",
+      );
+      // The own mailbox has no such note.
+      await page.getByRole("link", { name: /^jonas@/ }).click();
+      await page.getByRole("list", { name: "Posteingang" }).getByText(offer.subject).click();
+      await expect(page.getByRole("heading", { name: offer.subject })).toBeVisible();
+      await expect(page.getByText(/^Gemeinsames Postfach/)).toHaveCount(0);
+    } finally {
+      await request.remove();
+      await offer.remove();
+    }
   });
 
   test("verschiebt eine Mail aus info@ in einen eigenen Ordner", async ({ page }) => {
@@ -550,12 +585,18 @@ test.describe("Prüfung des Absenders", () => {
   });
 
   test("zeigt bei einer internen Mail Details, aber keine Warnung", async ({ page }) => {
-    await open(page, "Weihnachtsessen – wer ist dabei?");
-    await expect(page.getByRole("alert")).toHaveCount(0);
-    await page.getByRole("button", { name: "Details anzeigen" }).click();
-    const details = page.getByRole("region", { name: "Details der Mail" });
-    await expect(details).toContainText("Anna Weber <anna@weber-haustechnik.test>");
-    await expect(details).toContainText("Nicht geprüft");
+    const dinner = await copySeedMail("jonas", "teamessen@weber-haustechnik.test");
+    try {
+      await page.reload();
+      await open(page, dinner.subject);
+      await expect(page.getByRole("alert")).toHaveCount(0);
+      await page.getByRole("button", { name: "Details anzeigen" }).click();
+      const details = page.getByRole("region", { name: "Details der Mail" });
+      await expect(details).toContainText("Anna Weber <anna@weber-haustechnik.test>");
+      await expect(details).toContainText("Nicht geprüft");
+    } finally {
+      await dinner.remove();
+    }
   });
 });
 
@@ -958,32 +999,43 @@ test.describe("Sicherheit", () => {
       dialogs.push(dialog.message());
       void dialog.dismiss();
     });
-    await login(page);
-    await page.getByText("Offene Rechnung – bitte prüfen (XSS-Test)").click();
-    const body = page.frameLocator('iframe[title="Inhalt der Mail"]');
-    await expect(body.getByText("Betrag: 1.234,56 €")).toBeVisible();
-    await expect(body.getByText("Rechnung öffnen")).toBeVisible();
-    await expect(body.locator('[href^="javascript:" i], [src^="javascript:" i]')).toHaveCount(0);
-    // The mail's own content lives in <body>; the <head> is Kontext's, with its CSP.
-    await expect(
-      body.locator("body").locator("script, iframe, object, embed, base[href], meta[http-equiv]"),
-    ).toHaveCount(0);
-    await expect(body.locator('head meta[http-equiv="Content-Security-Policy"]')).toHaveCount(1);
-    await expect(body.locator("[onload], [onerror], [onclick]")).toHaveCount(0);
-    await page.waitForTimeout(500);
-    expect(await page.evaluate(() => (window as { __xss?: string }).__xss)).toBeUndefined();
-    expect(dialogs).toEqual([]);
+    // The seed's mail with the usual tricks, as a copy on top of the inbox (own-mails.ts).
+    const tricks = await copySeedMail("jonas", "xss-test@phish.test");
+    try {
+      await login(page);
+      await page.getByText(tricks.subject).click();
+      const body = page.frameLocator('iframe[title="Inhalt der Mail"]');
+      await expect(body.getByText("Betrag: 1.234,56 €")).toBeVisible();
+      await expect(body.getByText("Rechnung öffnen")).toBeVisible();
+      await expect(body.locator('[href^="javascript:" i], [src^="javascript:" i]')).toHaveCount(0);
+      // The mail's own content lives in <body>; the <head> is Kontext's, with its CSP.
+      await expect(
+        body.locator("body").locator("script, iframe, object, embed, base[href], meta[http-equiv]"),
+      ).toHaveCount(0);
+      await expect(body.locator('head meta[http-equiv="Content-Security-Policy"]')).toHaveCount(1);
+      await expect(body.locator("[onload], [onerror], [onclick]")).toHaveCount(0);
+      await page.waitForTimeout(500);
+      expect(await page.evaluate(() => (window as { __xss?: string }).__xss)).toBeUndefined();
+      expect(dialogs).toEqual([]);
+    } finally {
+      await tricks.remove();
+    }
   });
 
   test("blockiert Bilder aus dem Internet, bis man sie lädt", async ({ page }) => {
-    await login(page);
-    await page.getByText("Newsletter: Herbstaktion Wärmepumpen").click();
-    const body = page.frameLocator('iframe[title="Inhalt der Mail"]');
-    await expect(body.getByRole("heading", { name: "Herbstaktion Wärmepumpen" })).toBeVisible();
-    await expect(body.locator('img[src^="https:"]')).toHaveCount(0);
-    await expect(page.getByText("Bilder aus dem Internet sind blockiert.")).toBeVisible();
-    await page.getByRole("button", { name: "Laden", exact: true }).click();
-    await expect(body.locator('img[src^="https:"]')).not.toHaveCount(0);
+    const newsletter = await copySeedMail("jonas", "newsletter-november@richter-sanitaer.test");
+    try {
+      await login(page);
+      await page.getByText(newsletter.subject).click();
+      const body = page.frameLocator('iframe[title="Inhalt der Mail"]');
+      await expect(body.getByRole("heading", { name: "Herbstaktion Wärmepumpen" })).toBeVisible();
+      await expect(body.locator('img[src^="https:"]')).toHaveCount(0);
+      await expect(page.getByText("Bilder aus dem Internet sind blockiert.")).toBeVisible();
+      await page.getByRole("button", { name: "Laden", exact: true }).click();
+      await expect(body.locator('img[src^="https:"]')).not.toHaveCount(0);
+    } finally {
+      await newsletter.remove();
+    }
   });
 });
 
@@ -991,16 +1043,21 @@ test.describe("Outlook-Mail im dunklen Design", () => {
   test.use({ colorScheme: "dark" });
 
   test("hält die Zeilen zusammen und dreht Schwarz auf Weiß um", async ({ page }) => {
-    await login(page);
-    await page.getByText("Zählerwechsel Gewerbehalle Industriestraße").click();
-    const body = page.frameLocator('iframe[title="Inhalt der Mail"]');
-    const line = body.getByText("Dafür bräuchten wir bitte bis Freitag:");
-    await expect(line).toBeVisible();
-    // Every line its own MsoNormal paragraph: no gap between them, as in Outlook.
-    await expect(line.locator("xpath=ancestor::p")).toHaveCSS("margin-bottom", "0px");
-    const signature = body.getByText("Netzservice Gewerbekunden");
-    await expect(signature).toHaveCSS("color", "rgb(255, 255, 255)");
-    await expect(signature).toHaveCSS("background-color", "rgb(0, 0, 0)");
+    const outlook = await copySeedMail("jonas", "outlook-zaehler@stadtwerke-buehl.test");
+    try {
+      await login(page);
+      await page.getByText(outlook.subject).click();
+      const body = page.frameLocator('iframe[title="Inhalt der Mail"]');
+      const line = body.getByText("Dafür bräuchten wir bitte bis Freitag:");
+      await expect(line).toBeVisible();
+      // Every line its own MsoNormal paragraph: no gap between them, as in Outlook.
+      await expect(line.locator("xpath=ancestor::p")).toHaveCSS("margin-bottom", "0px");
+      const signature = body.getByText("Netzservice Gewerbekunden");
+      await expect(signature).toHaveCSS("color", "rgb(255, 255, 255)");
+      await expect(signature).toHaveCSS("background-color", "rgb(0, 0, 0)");
+    } finally {
+      await outlook.remove();
+    }
   });
 });
 
@@ -1008,17 +1065,26 @@ test.describe("Alle Posteingänge", () => {
   test("zeigt eigene und gemeinsame Mails in einer Liste und antwortet als info@", async ({
     page,
   }) => {
-    await login(page);
-    await page.getByRole("link", { name: /Alle Posteingänge/ }).click();
-    const list = page.getByRole("list", { name: "Alle Posteingänge" });
-    // Own mail and info@ mail side by side, the shared one marked.
-    await expect(list.getByText("Angebot Wartungsvertrag 2027")).toBeVisible();
-    const shared = list.getByRole("link", { name: /Anfrage Wärmepumpe Neubau/ });
-    await expect(shared).toContainText("info@");
-    await shared.click();
-    await expect(page.getByRole("heading", { name: "Anfrage Wärmepumpe Neubau" })).toBeVisible();
-    await page.getByRole("link", { name: "Antworten" }).first().click();
-    await expect(page.getByLabel("Von").locator("option:checked")).toContainText("info@");
+    const offer = await copySeedMail("jonas", OFFER);
+    const request = await copySeedMail("jonas", "anfrage-neubau@example-privat.test", {
+      mailbox: "info",
+    });
+    try {
+      await login(page);
+      await page.getByRole("link", { name: /Alle Posteingänge/ }).click();
+      const list = page.getByRole("list", { name: "Alle Posteingänge" });
+      // Own mail and info@ mail side by side, the shared one marked.
+      await expect(list.getByText(offer.subject)).toBeVisible();
+      const shared = list.getByRole("link", { name: new RegExp(request.subject) });
+      await expect(shared).toContainText("info@");
+      await shared.click();
+      await expect(page.getByRole("heading", { name: request.subject })).toBeVisible();
+      await page.getByRole("link", { name: "Antworten" }).first().click();
+      await expect(page.getByLabel("Von").locator("option:checked")).toContainText("info@");
+    } finally {
+      await offer.remove();
+      await request.remove();
+    }
   });
 });
 
@@ -1087,16 +1153,19 @@ test.describe("Breiter Bildschirm", () => {
   });
 
   test("zeigt neben der Mail, mit wem sie ist", async ({ page }) => {
-    await page
-      .getByRole("list", { name: "Posteingang" })
-      .getByText("Angebot Wartungsvertrag 2027")
-      .click();
-    const panel = page.getByRole("complementary", { name: "Zu Petra Keller" });
-    await expect(panel).toContainText("Keller Elektro GmbH");
-    await expect(panel.getByRole("link", { name: "Kontakt öffnen" })).toBeVisible();
-    await panel.getByRole("link", { name: "Mail" }).click();
-    await expect(page.getByRole("combobox", { name: "An" })).toBeVisible();
-    await expect(page.getByRole("form", { name: "Neue Mail" })).toContainText("Petra Keller");
+    const offer = await copySeedMail("jonas", OFFER);
+    try {
+      await page.reload();
+      await page.getByRole("list", { name: "Posteingang" }).getByText(offer.subject).click();
+      const panel = page.getByRole("complementary", { name: "Zu Petra Keller" });
+      await expect(panel).toContainText("Keller Elektro GmbH");
+      await expect(panel.getByRole("link", { name: "Kontakt öffnen" })).toBeVisible();
+      await panel.getByRole("link", { name: "Mail" }).click();
+      await expect(page.getByRole("combobox", { name: "An" })).toBeVisible();
+      await expect(page.getByRole("form", { name: "Neue Mail" })).toContainText("Petra Keller");
+    } finally {
+      await offer.remove();
+    }
   });
 
   test("speichert einen Absender mit einem Klick als Kontakt", async ({ page }) => {

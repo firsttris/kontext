@@ -1,5 +1,6 @@
 import { expect, type Page, test } from "@playwright/test";
 import { address, login } from "./helpers";
+import { copySeedMail } from "./own-mails";
 
 /**
  * The module "Dokumente": Schreibzeug in Kontext's frame, signed in through Kontext's own provider
@@ -46,29 +47,32 @@ test.describe("Dokumente", () => {
   });
 
   test("legt einen Anhang in Dokumente ab und hängt ihn an eine neue Mail", async ({ page }) => {
-    await login(page);
-    await page
-      .getByRole("list", { name: "Posteingang" })
-      .getByText("Angebot Wartungsvertrag 2027")
-      .click();
-    await page
-      .getByRole("button", { name: "„Angebot-Wartung-2027.pdf“ in Dokumente ablegen" })
-      .click();
-    const dialog = page.getByRole("dialog", { name: "In Dokumente ablegen" });
-    await dialog.getByRole("button", { name: "Hier ablegen" }).click();
-    await expect(
-      page.getByText("„Angebot-Wartung-2027.pdf“ liegt jetzt in Dokumente."),
-    ).toBeVisible();
+    // A copy of the seed's offer, on top of the inbox (own-mails.ts).
+    const offer = await copySeedMail("jonas", "angebot-wartung@keller-elektro.test");
+    try {
+      await login(page);
+      await page.getByRole("list", { name: "Posteingang" }).getByText(offer.subject).click();
+      await page
+        .getByRole("button", { name: "„Angebot-Wartung-2027.pdf“ in Dokumente ablegen" })
+        .click();
+      const dialog = page.getByRole("dialog", { name: "In Dokumente ablegen" });
+      await dialog.getByRole("button", { name: "Hier ablegen" }).click();
+      await expect(
+        page.getByText("„Angebot-Wartung-2027.pdf“ liegt jetzt in Dokumente."),
+      ).toBeVisible();
 
-    await page.keyboard.press("c");
-    await page.getByRole("button", { name: "Aus Dokumente anhängen" }).click();
-    await page
-      .getByRole("dialog", { name: "Aus Dokumente anhängen" })
-      .getByRole("button", { name: "Angebot-Wartung-2027.pdf" })
-      .click();
-    await expect(
-      page.getByRole("list", { name: "Anhänge" }).getByText("Angebot-Wartung-2027.pdf"),
-    ).toBeVisible();
+      await page.keyboard.press("c");
+      await page.getByRole("button", { name: "Aus Dokumente anhängen" }).click();
+      await page
+        .getByRole("dialog", { name: "Aus Dokumente anhängen" })
+        .getByRole("button", { name: "Angebot-Wartung-2027.pdf" })
+        .click();
+      await expect(
+        page.getByRole("list", { name: "Anhänge" }).getByText("Angebot-Wartung-2027.pdf"),
+      ).toBeVisible();
+    } finally {
+      await offer.remove();
+    }
   });
 
   test("meldet Schreibzeug mit Kontext ab", async ({ page }) => {

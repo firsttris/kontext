@@ -7,6 +7,29 @@ Steps that an update needs beyond raising the version are marked **Upgrade**.
 
 ## Unreleased
 
+- Tasks over CalDAV: app passwords for people with two-step sign-in, whose Thunderbird or phone
+  cannot enter a code. Under *Einstellungen → Aufgaben in anderen Apps → App-Passwörter* one makes
+  a password per app (name, e.g. "Thunderbird Büro"; asks for the password and code again), sees
+  it once, and finds it listed with when it was last used, revocable on its own. Like an agent's
+  access key it has its own sign-in session and Stalwart grant; only its SHA-256 is kept, and it
+  works for `/dav` only, never for signing in to Kontext (`/api/app-passwords`,
+  `server/dav/app-passwords.ts`). A revoked one stops at once. **Upgrade:** the database gets the
+  table `app_password` (migration `0039_app_passwords`) at start; nothing else to do.
+- Tasks over CalDAV: `sync-collection` (RFC 6578), so clients fetch only what changed. The sync
+  token is the board's ctag; the server remembers, in memory, the tasks and ETags behind its last
+  50 tokens per board and answers with what is new, changed or gone (404). An unknown token (after
+  a restart) gets `DAV:valid-sync-token`, and the client syncs once from the start.
+- Encryption: attachments of a mail to be encrypted no longer reach Stalwart unencrypted. While
+  "Vertraulich senden" is on, files, pictures in the text, files "Aus Dokumente" (fetched by the
+  browser through the new `POST /api/documents/download`) and the files of a forwarded encrypted
+  mail stay in the browser until they are encrypted with the mail; this covers PGP, S/MIME and the
+  link. Switching encryption on after adding files pulls them into the browser and deletes the
+  draft that held them unencrypted; switching it off uploads them as before. Files and pictures
+  of an encrypted mail may be 25 MB together.
+- e2e: the tests that opened the seed's mails from Jonas' inbox list use copies of them made for
+  the test (`e2e/own-mails.ts`) and remove them afterwards, so a full inbox no longer pushes them
+  out of the rendered rows.
+
 - Tasks: the contact page lists the tasks about any mail the person sent or got – older ones and
   mails in shared mailboxes too – by looking up the mails tasks link to (`Email/get` of `from`,
   `to`, `cc`, at most 500 per account) instead of only the last five own mails; mails are matched

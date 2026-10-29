@@ -10,7 +10,7 @@ ein Plan, kein Versprechen; Wünsche und Hinweise gern als
 | Funktion | Worum es geht |
 | --- | --- |
 | **Pilot** | Vier Wochen bei einem Kunden parallel zum alten System, mit der [Telefonie](https://firsttris.github.io/kontext/telephony.html) im Test. |
-| **Offene Punkte** | die Lücken unten, etwa App-Passwörter für CalDAV. |
+| **Offene Punkte** | die Lücken unten, etwa beliebige Emojis im Chat. |
 
 ## Danach
 
@@ -41,19 +41,16 @@ Lücken und Befunde, die beim Bauen offen geblieben sind und noch angegangen wer
 
 **Funktionen**
 
-- [ ] Chat: Vorschaubilder für Fotos von vor diesem Stand fehlen (sie laden weiter in voller Größe); neue bekommen eins beim Hochladen.
-- [ ] Chat: Reaktionen mit beliebigen Emojis (heute die sieben Schnellwahlen), und im Thread „auch im Kanal zeigen“.
-- [ ] S/MIME: eigene anerkannte Stellen in der Firmenverwaltung pflegen (heute `SMIME_ROOTS`); Sperrlisten (CRL), wo eine Stelle kein OCSP anbietet; LDAP-Verzeichnisse einzelner Stellen; Unterschriften mit EC-Schlüsseln prüfen (heute „nicht prüfbar“).
-- [ ] Anhänge verschlüsselter Mails ohne Umweg über Stalwart: heute liegen sie bis zum Senden unverschlüsselt in dessen Zwischenspeicher (siehe [Verschlüsselung](https://firsttris.github.io/kontext/encryption.html#grenzen-und-offene-punkte)).
-- [ ] CalDAV für Aufgaben mit Bestätigung in zwei Schritten: App-Passwörter anlegen können (Thunderbird und Handy fragen keinen Code ab); dazu `sync-collection` für schnelleren Abgleich auf dem iPhone.
-- [ ] **Weitere Sprachen** neben Deutsch und Englisch (Texte in `messages/*.json`).
-- [ ] **Drucken mit Bildern aus dem Internet**, wenn sie in der Mail freigegeben wurden.
-
-**Technik**
-
-- [ ] e2e: einige lesende Tests öffnen Mails aus den Testdaten. Legen andere Tests viele Mails in Jonas' Posteingang, rutschen diese aus dem sichtbaren Bereich der Liste (sie zeigt nur, was auf dem Bildschirm ist); nach und nach auf eigene Mails umstellen (der Handy-Test ist umgestellt).
-- [ ] Lokal fehlt `readpst` für den Outlook-Test (`sudo apt install pst-utils`).
-- [ ] README: ein Bild der Regeln; Aufgaben und Chat sind drin (Beispieldaten über die API, `e2e/demo-data.ts`). In der lokalen Entwicklung sind Aufgaben und Chat weiterhin leer.
+- [ ] **Drucken mit freigegebenen Bildern:** Bilder aus dem Internet, die in der Mail geladen
+  wurden, auch mitdrucken.
+- [ ] **Chat:** Reaktionen mit beliebigen Emojis (heute die sieben Schnellwahlen), und im Thread
+  „auch im Kanal zeigen“.
+- [ ] **README und lokale Entwicklung:** ein Bild der Regeln im README; Aufgaben und Chat mit
+  Beispieldaten auch in der lokalen Entwicklung (heute nur über die API für die Bilder,
+  `e2e/demo-data.ts`).
+- [ ] **S/MIME:** eigene anerkannte Stellen in der Firmenverwaltung pflegen (heute
+  `SMIME_ROOTS`); Sperrlisten (CRL), wo eine Stelle kein OCSP anbietet; LDAP-Verzeichnisse
+  einzelner Stellen; Unterschriften mit EC-Schlüsseln prüfen (heute „nicht prüfbar“).
 
 ## Bekannte Einschränkungen
 
@@ -62,7 +59,9 @@ Lücken und Befunde, die beim Bauen offen geblieben sind und noch angegangen wer
 - **Regeln auf vorhandene Mails:** wirken auf die neuesten 1.000 Mails im Posteingang.
 - **Regeln und Umlaute:** Stalwart vergleicht Groß- und Kleinschreibung nur bei ASCII; „MÜLLER“
   trifft dort nicht „Müller“.
-- **Drucken:** Bilder aus dem Internet und die Anhänge selbst werden nicht mitgedruckt, nur ihre
-  Namen.
+- **Drucken:** Eingebettete Bilder werden mitgedruckt, Bilder aus dem Internet nicht; Anhänge
+  erscheinen nur mit Name und Größe.
+- **Fotos im vertraulichen Chat** bekommen kein Vorschaubild: Der Server kann sie nicht lesen, sie
+  laden in voller Größe.
 - **Kategorien in Handy-Apps:** Apple Mail und die Gmail-App zeigen eigene Schlagworte nicht;
   sichtbar sind sie in Kontext und Thunderbird.

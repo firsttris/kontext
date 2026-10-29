@@ -5,6 +5,8 @@
  *
  * - `POST /save`: a mail's attachment into a folder of Dokumente (the mail stays as it is);
  * - `POST /attach`: a file of Dokumente as a blob for a mail being written;
+ * - `POST /download`: a file of Dokumente to the browser, for a mail to be encrypted there (its
+ *   bytes must not reach Stalwart unencrypted, docs/encryption.md);
  * - `GET /folders`: what a folder holds, for choosing where to put something or what to attach;
  * - `POST /share`: lets colleagues open a file that went into a chat, a task, an appointment or a
  *   contact; for a shared mailbox's channel, board or address book, everyone who works in it;
@@ -50,6 +52,8 @@ const attachSchema = z.object({
   accountId: z.string().min(1).max(128),
   fileId: z.string().min(1).max(64),
 });
+
+const downloadSchema = attachSchema.pick({ fileId: true });
 
 const shareSchema = z.object({
   fileId: z.string().min(1).max(64),
@@ -139,6 +143,21 @@ export const createDocumentsRoutes = ({
       const file = await c.get("schreibzeug").download(person, fileId);
       const blobId = await blobs.upload(stalwartToken, accountId, file);
       return c.json({ blobId, name: file.name, type: file.type, size: file.size });
+    } catch (error) {
+      return c.json({ error: message(error) }, 502);
+    }
+  });
+
+  app.post("/download", async (c) => {
+    const parsed = downloadSchema.safeParse(await c.req.json().catch(() => null));
+    if (!parsed.success) return c.json({ error: "Angaben unvollständig." }, 400);
+    try {
+      const file = await c.get("schreibzeug").download(c.get("asker").person, parsed.data.fileId);
+      return c.body(await file.arrayBuffer(), 200, {
+        "content-type": file.type || "application/octet-stream",
+        "x-file-name": encodeURIComponent(file.name),
+        "cache-control": "no-store",
+      });
     } catch (error) {
       return c.json({ error: message(error) }, 502);
     }

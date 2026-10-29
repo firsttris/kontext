@@ -30,6 +30,8 @@ import {
   switchReplyTo,
 } from "@/lib/compose";
 import { savedBlobs, withSavedBlob } from "@/lib/draft-blobs";
+import { formatSize } from "@/lib/format";
+import { fitsEncrypted, HELD_LIMIT } from "@/lib/held-files";
 import { htmlToText, sanitizeMailHtml, textToHtml } from "@/lib/html";
 import { markCids } from "@/lib/inline-images";
 import { withLegalFooter, withoutLegalFooter } from "@/lib/legal-footer";
@@ -58,6 +60,7 @@ import { richText } from "./rich-text";
 import { useUndoSeconds } from "./send-settings";
 import { useTakeBack } from "./take-back";
 import { useEmlForward } from "./use-eml-forward";
+import { useHeldFiles } from "./use-held-files";
 import { useSendAccount } from "./use-send-account";
 
 /** What a new mail starts with from outside: a contact, a mailto: link, a share. */
@@ -115,6 +118,9 @@ export const Composer = ({ accountId, mode, sourceEmailId, forwardIds, prefill }
   const [subject, setSubject] = useState("");
   const [attachments, setAttachments] = useState<OutgoingAttachment[]>([]);
   const [uploading, setUploading] = useState(0);
+  // "Vertraulich senden": the files then stay in the browser until they are encrypted.
+  const [encrypt, setEncrypt] = useState(false);
+  const held = useHeldFiles(client, sendAccountId);
   const [sending, setSending] = useState(false);
   // "Anhang vergessen?": the word that asked, and when the mail was to go (now or later).
   const [forgotten, setForgotten] = useState<{ word: string; later?: Date } | null>(null);
@@ -171,8 +177,7 @@ export const Composer = ({ accountId, mode, sourceEmailId, forwardIds, prefill }
   });
 
   const pics = useComposerImages({
-    client,
-    accountId: sendAccountId,
+    place: (file, alongside) => placeFile(file, alongside),
     editor,
     onError: (error) => toast.show(m.common_error({ message: error.message }), "error"),
     onBusy: (by) => setUploading((n) => n + by),
@@ -281,16 +286,19 @@ export const Composer = ({ accountId, mode, sourceEmailId, forwardIds, prefill }
     setReplyTo(startingReplyTo);
     if (startingReplyTo.length) setShowReplyTo(true);
     setSubject((current) => current || prefill?.subject || start.subject);
-    // The parts of an encrypted original are cipher text; its real files go along instead.
-    setAttachments(encryptedOriginal ? [] : start.attachments);
-    if (opened && mode === "forward") {
-      void upload(
-        opened.attachments.map(
-          (file) =>
-            new File([file.bytes as Uint8Array<ArrayBuffer>], file.name, { type: file.type }),
-        ),
-      );
-    }
+    // The parts of an encrypted original are cipher text; its real files go along instead,
+    // kept in the browser like every file of a mail to be encrypted.
+    setAttachments(
+      !encryptedOriginal
+        ? start.attachments
+        : opened && mode === "forward"
+          ? opened.attachments.map((file) =>
+              held.hold(
+                new File([file.bytes as Uint8Array<ArrayBuffer>], file.name, { type: file.type }),
+              ),
+            )
+          : [],
+    );
     setThreading({ inReplyTo: start.inReplyTo, references: start.references });
     // A draft already has its signature; a new mail gets the one of the sender.
     const signature = mode === "draft" ? "" : signatureOf(identity);
@@ -359,12 +367,12 @@ export const Composer = ({ accountId, mode, sourceEmailId, forwardIds, prefill }
   const [receipt, setReceipt] = useState(false);
   const [delivery, setDelivery] = useState(false);
   const autocrypt = useAutocryptHeader(identity?.email);
-  const [encrypt, setEncrypt] = useState(false);
   // Signed, not encrypted (an encrypted mail is signed anyway).
   const [sign, setSign] = useState(false);
   const pgp = useEncryptedSend(
     identity?.email,
     [...to, ...cc, ...bcc].map((address) => address.email),
+    held.blobOf,
   );
   const legalFooter = useLegalFooter();
   const outgoing = ({ draft = false } = {}) => {
@@ -393,6 +401,64 @@ export const Composer = ({ accountId, mode, sourceEmailId, forwardIds, prefill }
     };
   };
 
+  /**
+   * A new file: uploaded, or kept in the browser for an encrypted mail (within its limit).
+   * `alongside`: the sizes of the files placed before it from the same choice, which this
+   * render's attachments do not show yet.
+   */
+  const placeFile = (file: File, alongside: number[] = []) => {
+    const sizes = [
+      ...[...attachments, ...pics.images, file].map((each) => each.size),
+      ...alongside,
+    ];
+    if (encrypt && !fitsEncrypted(sizes)) {
+      throw new Error(m.mail_encrypted_too_large({ size: formatSize(HELD_LIMIT) }));
+    }
+    return held.place(file, encrypt);
+  };
+
+  /** The mail with the files kept in the browser uploaded, and the form told their blobs. */
+  const released = async <T extends ReturnType<typeof outgoing>>(mail: T): Promise<T> => {
+    const { map, mail: done } = await held.release(mail);
+    if (map.size) {
+      setAttachments((current) => current.map(withSavedBlob(map)));
+      pics.setImages((current) => current.map(withSavedBlob(map)));
+    }
+    return done;
+  };
+
+  /**
+   * "Vertraulich senden" on: files that went to Stalwart already come into the browser, and the
+   * draft that held them (and the text) unencrypted goes; an encrypted mail is no draft.
+   */
+  const switchEncrypt = async (on: boolean) => {
+    if (!on) return setEncrypt(false);
+    const files = [...attachments, ...pics.images];
+    if (!fitsEncrypted(files.map((file) => file.size))) {
+      toast.show(m.mail_encrypted_too_large({ size: formatSize(HELD_LIMIT) }), "error");
+      return;
+    }
+    setEncrypt(true);
+    setUploading((n) => n + 1);
+    try {
+      if (saving.current) await saving.current;
+      const map = await held.pull(files);
+      setAttachments((current) => current.map(withSavedBlob(map)));
+      pics.setImages((current) => current.map(withSavedBlob(map)));
+      if (draftId.current) {
+        await client.call("Email/set", { accountId: sendAccountId, destroy: [draftId.current] });
+        draftId.current = null;
+        setSavedAt(null);
+        void queryClient.invalidateQueries({ queryKey: [sendAccountId, "emails"] });
+      }
+    } catch (error) {
+      setEncrypt(false);
+      toast.show(m.common_error({ message: (error as Error).message }), "error");
+    } finally {
+      setUploading((n) => n - 1);
+    }
+  };
+
   const isEmpty = () =>
     to.length + cc.length + bcc.length === 0 &&
     !subject.trim() &&
@@ -410,7 +476,7 @@ export const Composer = ({ accountId, mode, sourceEmailId, forwardIds, prefill }
     // An encrypted mail is not kept on the server unencrypted, not even as a draft.
     if (!identity || !drafts || isEmpty() || encrypt) return;
     const run = (async () => {
-      const mail = outgoing({ draft: true });
+      const mail = await released(outgoing({ draft: true }));
       draftId.current = await saveDraft(client, mail, drafts.id);
       setSavedAt(new Date());
       // Files and pictures now live in the draft just written; the one replaced took its own.
@@ -538,7 +604,9 @@ export const Composer = ({ accountId, mode, sourceEmailId, forwardIds, prefill }
             : undefined;
       const folders = { draftsId: drafts.id, sentId: sent.id };
       // The Pflichtangaben go with the mail sent, never into a draft (autosave uses `outgoing`).
-      const mail = withLegalFooter(outgoing(), legalFooter);
+      // Signed or encrypted, the mail is built here, with the files kept in the browser.
+      const built = withLegalFooter(outgoing(), legalFooter);
+      const mail = encrypt || sign ? built : await released(built);
       const refused = externalId ? await sendExternal(externalId, mail, folders) : [];
       const held = externalId
         ? null
@@ -592,6 +660,12 @@ export const Composer = ({ accountId, mode, sourceEmailId, forwardIds, prefill }
   };
 
   const storeDraft = async () => {
+    // An encrypted mail is kept nowhere on the server, not even as a draft (autosave): saying
+    // "saved" and closing would lose it, as switching on deleted the plain draft.
+    if (encrypt) {
+      toast.show(m.mail_encrypted_no_draft(), "error");
+      return;
+    }
     try {
       lastSaved.current = changeKey;
       await autosave();
@@ -604,18 +678,13 @@ export const Composer = ({ accountId, mode, sourceEmailId, forwardIds, prefill }
 
   const upload = async (files: FileList | File[] | null) => {
     if (!files) return;
+    const placed: number[] = [];
     for (const file of Array.from(files)) {
       setUploading((n) => n + 1);
       try {
-        const { blobId, size } = await client.upload(
-          sendAccountId,
-          file,
-          file.type || "application/octet-stream",
-        );
-        setAttachments((current) => [
-          ...current,
-          { blobId, name: file.name, type: file.type || "application/octet-stream", size },
-        ]);
+        const attachment = await placeFile(file, placed);
+        placed.push(attachment.size);
+        setAttachments((current) => [...current, attachment]);
       } catch (error) {
         toast.show(m.common_error({ message: (error as Error).message }), "error");
       } finally {
@@ -737,6 +806,8 @@ export const Composer = ({ accountId, mode, sourceEmailId, forwardIds, prefill }
         attachMore={
           <AttachFromDocuments
             accountId={sendAccountId}
+            inBrowser={encrypt}
+            onFile={(file) => void upload([file])}
             onAttached={(attachment) => setAttachments((current) => [...current, attachment])}
             onBusy={(change) => setUploading((n) => n + change)}
           />
@@ -747,7 +818,7 @@ export const Composer = ({ accountId, mode, sourceEmailId, forwardIds, prefill }
         delivery={delivery}
         onDelivery={setDelivery}
         encrypt={encrypt}
-        onEncrypt={setEncrypt}
+        onEncrypt={(on) => void switchEncrypt(on)}
         encryptBlocked={pgp.reason}
         encryptNote={pgp.note}
         sign={sign}
