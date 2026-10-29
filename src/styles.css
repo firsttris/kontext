@@ -92,6 +92,12 @@
     line-height: 1.45;
     -webkit-font-smoothing: antialiased;
   }
+  /* Thin scrollbars in the zinc tokens instead of the browser's (wide, with arrows on Linux and
+     Windows). The standard properties are enough: Chrome 121+, Firefox, Safari 18.2+. */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: var(--border) transparent;
+  }
   button {
     cursor: pointer;
   }

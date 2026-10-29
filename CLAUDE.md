@@ -37,9 +37,10 @@ Green before every push, then check CI:
 
 ```sh
 bun run typecheck && bun run lint && bun run test && bun run build
-bun run e2e              # own Stalwart 28080, server 28090, Vite 5174, seeded fresh
 mkdocs build --strict    # when docs/ or mkdocs.yml changed
 ```
+
+The e2e tests (`bun run e2e`) run in CI; don't run them locally before a push.
 
 ## Commits
 
