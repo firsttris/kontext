@@ -1,10 +1,10 @@
 <div align="center">
 
-<h1>Everything your team knows from Google. Without Google knowing your team.</h1>
+<h1>Feels familiar. Belongs to you.</h1>
 
-**Kontext: mail, calendar, chat and telephony (CTI) for your team – self-hosted and open source**
+**Kontext: mail, calendar, chat, documents and phone for your team – on your own server, open source**
 
-Shared mailboxes, a team calendar, and every customer's mails, appointments and calls at a glance. No per-seat pricing. Made in Europe.
+No per-seat pricing. Made in Europe.
 
 **English** · [Deutsch](README.de.md)
 
