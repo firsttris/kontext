@@ -35,11 +35,15 @@ const escapeHtml = (value: string) => value.replace(/[&<>"']/g, (c) => `&#${c.ch
 const lacksValue = (line: string, values: Values) =>
   PLACEHOLDERS.some(([placeholder, key]) => line.includes(placeholder) && !values[key].trim());
 
+const KEYS = new Map(PLACEHOLDERS);
+const ANY_PLACEHOLDER = new RegExp(
+  PLACEHOLDERS.map(([placeholder]) => placeholder.replace(/[[\]]/g, "\\$&")).join("|"),
+  "g",
+);
+
+/** In one pass and through a function, so a value goes in as it is: no "$&", no placeholder. */
 const fill = (line: string, values: Values) =>
-  PLACEHOLDERS.reduce(
-    (text, [placeholder, key]) => text.replaceAll(placeholder, values[key]),
-    line,
-  );
+  line.replace(ANY_PLACEHOLDER, (placeholder) => values[KEYS.get(placeholder) as keyof Values]);
 
 export const fillText = (template: string, values: Values): string =>
   template
