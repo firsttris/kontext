@@ -62,6 +62,20 @@ export const shiftedReminder = (
   return at.getTime() > now.getTime() ? at.toISOString() : null;
 };
 
+/**
+ * The reminder of a task being made, after its due day changed: moved along like an existing
+ * one's, otherwise kept as it was (none, or a time picked by hand without a due day).
+ */
+export const reminderOnDueChange = (
+  remindAt: string | null,
+  from: { dueDate: string | null; dueTime: string | null },
+  to: { dueDate: string | null; dueTime: string | null },
+  now: Date,
+): string | null => {
+  const shifted = shiftedReminder({ ...from, remindAt }, to, now);
+  return shifted === undefined ? remindAt : shifted;
+};
+
 /** "Mo., 26. Okt., 08:00". */
 export const reminderLabel = (remindAt: string): string =>
   new Date(remindAt).toLocaleString(LOCALE, {

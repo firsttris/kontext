@@ -1,5 +1,6 @@
 /**
- * The company's people: create, change, password and second factor, lock, out-of-office reply.
+ * The company's people: create, change, password and second factor, lock, out-of-office reply,
+ * mail rules.
  * Only users with the plain user role (see `isCompanyUser`); the caller cannot lock themselves out.
  */
 import { Hono } from "hono";
@@ -26,6 +27,7 @@ import {
   userOf,
 } from "./context";
 import { OFFBOARDING_SCRIPT, offboardingScript } from "./offboarding";
+import { addRulesRoutes } from "./rules-routes";
 import { FULL_ACCESS, sharePatches } from "./sharing";
 import { applySignature } from "./signature-routes";
 
@@ -83,6 +85,7 @@ export const employeeRoutes = ({
   endSessions,
   random,
   mailboxChanged,
+  categories,
 }: CompanyDeps) => {
   // Who works in a shared mailbox decides who opens its folder in Dokumente (documents/mailboxes.ts).
   const changed = (ids: string[]) => {
@@ -263,6 +266,9 @@ export const employeeRoutes = ({
     }
     return c.json({ ok: true });
   });
+
+  /** The person's own rules, as they see them in their settings. */
+  addRulesRoutes(app, { mailstore, categories }, (loaded, id) => Boolean(userOf(loaded, id)));
 
   return app;
 };

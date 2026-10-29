@@ -10,7 +10,7 @@ ein Plan, kein Versprechen; Wünsche und Hinweise gern als
 | Funktion | Worum es geht |
 | --- | --- |
 | **Pilot** | Vier Wochen bei einem Kunden parallel zum alten System, mit der [Telefonie](https://firsttris.github.io/kontext/telephony.html) im Test. |
-| **Offene Punkte** | die Lücken unten, etwa die Wiedervorlage für mehrere Mails. |
+| **Offene Punkte** | die Lücken unten, etwa beliebige Emojis im Chat. |
 
 ## Danach
 
@@ -41,19 +41,6 @@ Lücken und Befunde, die beim Bauen offen geblieben sind und noch angegangen wer
 
 **Funktionen**
 
-- [ ] **Wiedervorlage** für mehrere ausgewählte Mails auf einmal (heute nur aus der geöffneten
-  Mail), und „Wieder vorgelegt“ auch in „Alle Posteingänge“ (heute nur im Posteingang des
-  jeweiligen Postfachs).
-- [ ] **Erinnerung in „Neue Aufgabe“:** die Erinnerung gleich beim Anlegen setzen (heute erst in
-  der geöffneten Aufgabe).
-- [ ] **Regeln für Mitarbeiter** in der Firmenverwaltung pflegen (heute nur für gemeinsame
-  Postfächer und die eigenen).
-- [ ] **Lesebestätigungen:** Bestätigungen ohne `In-Reply-To` oder mit anderem Betreff der
-  gesendeten Mail zuordnen (über `Original-Message-ID` im Bericht), und eingegangene
-  Bestätigungen von selbst lesen und still ablegen.
-- [ ] **Aufgaben am Kontakt:** Mails über die letzten fünf mit der Person hinaus finden, auch in
-  info@ (heute zählen ältere nur, wenn die Aufgabe beim Anlegen aus der Mail mit der Karte
-  verknüpft wurde), und die Verknüpfung „Termin“ auch wirklich anlegen.
 - [ ] **Drucken mit freigegebenen Bildern:** Bilder aus dem Internet, die in der Mail geladen
   wurden, auch mitdrucken.
 - [ ] **Chat:** Reaktionen mit beliebigen Emojis (heute die sieben Schnellwahlen), und im Thread

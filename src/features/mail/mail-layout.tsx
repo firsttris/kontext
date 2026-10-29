@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { cn } from "@/lib/cn";
 import type { MailSearch } from "@/routes/_app/mail.$accountId.$mailboxId";
+import { QuietReceipts } from "./quiet-receipts";
 
 /** The three columns, and on a phone the one screen the URL asks for. */
 export const MailLayout = ({
@@ -23,6 +24,7 @@ export const MailLayout = ({
         : "list";
   return (
     <>
+      <QuietReceipts />
       <div
         className={cn(
           "h-full shrink-0 flex-col border-r border-border bg-side",

@@ -1,7 +1,17 @@
 import { expect, type Page, test } from "@playwright/test";
 import { browserKeys, decryptPayload } from "../server/push/receive";
+import { createContact, deleteContact, listAddressBooks } from "../src/jmap/contacts";
 import { fakePushService } from "./fake-push";
-import { addMail, login, unique } from "./helpers";
+import {
+  addMail,
+  findMails,
+  jmapAs,
+  login,
+  mailboxAccountId,
+  personalAccountId,
+  removeMails,
+  unique,
+} from "./helpers";
 
 type ApiTask = {
   id: string;
@@ -31,6 +41,17 @@ const day = (offset = 0) =>
     new Date(Date.now() + offset * 86_400_000),
   );
 
+/** "+01:00" or "+02:00": Berlin's offset on that day, at noon. */
+const berlinOffset = (date: string) => {
+  const noon = new Date(`${date}T12:00:00Z`);
+  const local = new Intl.DateTimeFormat("en-GB", {
+    timeZone: "Europe/Berlin",
+    hour: "2-digit",
+    hourCycle: "h23",
+  }).format(noon);
+  return `+0${Number(local) - 12}:00`;
+};
+
 const createTask = async (page: Page, task: Record<string, unknown>) => {
   const response = await page.request.post("/api/tasks", {
     data: { accountId: await personalId(page), ...task },
@@ -39,7 +60,127 @@ const createTask = async (page: Page, task: Record<string, unknown>) => {
   return ((await response.json()) as { task: ApiTask }).task;
 };
 
+const CALENDARS = ["urn:ietf:params:jmap:core", "urn:ietf:params:jmap:calendars"];
+
+/** An appointment in Jonas' calendar next week at 10:00, behind the UI's back. */
+const addEvent = async (title: string) => {
+  const client = jmapAs("jonas");
+  const accountId = await personalAccountId("jonas");
+  const { list } = await client.call<{ list: { id: string; isDefault: boolean }[] }>(
+    "Calendar/get",
+    { accountId },
+    CALENDARS,
+  );
+  const calendar = list.find((c) => c.isDefault) ?? list[0]!;
+  const date = day(8);
+  const { created } = await client.call<{ created: Record<string, { id: string }> }>(
+    "CalendarEvent/set",
+    {
+      accountId,
+      create: {
+        e: {
+          calendarIds: { [calendar.id]: true },
+          title,
+          start: `${date}T10:00:00`,
+          timeZone: "Europe/Berlin",
+          duration: "PT1H",
+        },
+      },
+    },
+    CALENDARS,
+  );
+  const id = created.e!.id;
+  return {
+    accountId,
+    id,
+    date,
+    remove: () => client.call("CalendarEvent/set", { accountId, destroy: [id] }, CALENDARS),
+  };
+};
+
+/** "Aufgabe zum Termin" from the open appointment, and back from the task to it. */
+const taskForEvent = async (page: Page) => {
+  const title = unique("Abnahme Kellerheizung");
+  const event = await addEvent(title);
+  try {
+    await login(page);
+    await page.goto(`/calendar?date=${event.date}&event=${event.id}&account=${event.accountId}`);
+    await page.getByRole("button", { name: "Aufgabe zum Termin" }).click();
+    const dialog = page.getByRole("dialog", { name: "Aufgabe zum Termin" });
+    await expect(dialog).toContainText(`Verknüpft mit dem Termin „${title}“`);
+    await expect(dialog.getByLabel("Titel")).toHaveValue(title);
+    await dialog.getByRole("button", { name: "Aufgabe erstellen" }).click();
+    await expect(dialog).toHaveCount(0);
+    await expect
+      .poll(async () => (await taskOf(page, title))?.links.map((link) => [link.kind, link.label]))
+      .toEqual([["event", title]]);
+
+    const task = (await taskOf(page, title))!;
+    await page.goto(`/tasks?task=${task.id}`);
+    await page
+      .getByRole("article", { name: title })
+      .getByRole("link", { name: new RegExp(title) })
+      .click();
+    await expect(page).toHaveURL(/\/calendar\?/);
+    await expect(page.getByRole("dialog", { name: title })).toBeVisible();
+  } finally {
+    const task = await taskOf(page, title);
+    if (task) await page.request.delete(`/api/tasks/${task.id}`);
+    await event.remove();
+  }
+};
+
 test.describe("Aufgaben im Kontext", () => {
+  test("Aufgabe zum Termin, mit dem Weg zurück zum Termin", async ({ page }) => {
+    await taskForEvent(page);
+  });
+
+  test("Aufgabe zum Termin am Handy @phone", async ({ page }) => {
+    await taskForEvent(page);
+  });
+
+  test("am Kontakt: auch die Aufgabe zu einer Mail mit ihm in info@", async ({ page }) => {
+    const stamp = Date.now().toString(36);
+    const email = `kunde.${stamp}@beispiel.test`;
+    const name = `Kunde ${stamp}`;
+    const subject = unique("Wartungsvertrag Kunde");
+    const title = unique("Wartungsvertrag schicken");
+    const client = jmapAs("jonas");
+    const accountId = await personalAccountId("jonas");
+    const book = (await listAddressBooks(client, accountId)).find((b) => b.isDefault)!;
+    const cardId = await createContact(client, accountId, book.id, {
+      name: {
+        components: [
+          { kind: "given", value: "Kunde" },
+          { kind: "surname", value: stamp },
+        ],
+        isOrdered: true,
+      },
+      emails: { e: { address: email } },
+    });
+    await addMail("jonas", "info", subject, { name, email });
+    try {
+      await login(page);
+      // A task on the info@ board about his mail there, not linked to his card.
+      const [mail] = await findMails("jonas", "info", [subject]);
+      const info = await mailboxAccountId("jonas", "info");
+      await page.request.post("/api/tasks", {
+        data: {
+          accountId: info,
+          title,
+          links: [{ kind: "mail", accountId: info, ref: mail!.id, label: subject, detail: name }],
+        },
+      });
+      await page.goto(`/contacts?id=${cardId}&account=${accountId}`);
+      await expect(page.getByRole("region", { name: "Aufgaben" })).toContainText(title);
+    } finally {
+      const task = await taskOf(page, title);
+      if (task) await page.request.delete(`/api/tasks/${task.id}`);
+      await removeMails("jonas", "info", [subject]);
+      await deleteContact(client, accountId, cardId);
+    }
+  });
+
   test("am Kontakt: aus der Mail des Kontakts und direkt am Kontakt", async ({ page }) => {
     const fromMail = unique("Angebot Bad nachfassen");
     const atContact = unique("Fliesen bestellen");
@@ -160,6 +301,33 @@ test.describe("Aufgaben im Kontext", () => {
       .poll(async () => new Date((await taskOf(page, title))!.remindAt!).getTime())
       .toBe(first + 2 * 3_600_000);
     await expect(remind).toHaveValue("15");
+  });
+
+  test("Erinnern schon im Dialog „Neue Aufgabe“, zieht mit dem Tag mit", async ({ page }) => {
+    const title = unique("Prüfbericht schicken");
+    await login(page);
+    try {
+      await page.goto("/tasks");
+      await page.getByRole("button", { name: "Neue Aufgabe" }).click();
+      const dialog = page.getByRole("dialog", { name: "Neue Aufgabe" });
+      await dialog.getByLabel("Titel").fill(title);
+      const remind = dialog.getByRole("combobox", { name: /^Erinnern/ });
+      // Without a due day: none, or a time by hand.
+      await expect(remind.getByRole("option")).toHaveCount(2);
+      await dialog.getByRole("button", { name: "Morgen" }).click();
+      await remind.selectOption({ label: "Am Morgen um 08:00" });
+      // Another day: the reminder goes along.
+      await dialog.locator('input[type="date"]').fill(day(3));
+      await expect(dialog.getByRole("combobox", { name: /^Erinnern/ })).toHaveValue("morning");
+      await dialog.getByRole("button", { name: "Aufgabe erstellen" }).click();
+      await expect(dialog).toHaveCount(0);
+      await expect
+        .poll(async () => (await taskOf(page, title))?.remindAt)
+        .toBe(new Date(`${day(3)}T08:00:00${berlinOffset(day(3))}`).toISOString());
+    } finally {
+      const task = await taskOf(page, title);
+      if (task) await page.request.delete(`/api/tasks/${task.id}`);
+    }
   });
 
   test("Glocke und Push: neu zugewiesen und Erinnerung", async ({ page, browser }) => {

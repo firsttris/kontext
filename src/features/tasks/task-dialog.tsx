@@ -1,6 +1,6 @@
 /**
- * A new task, from the "Neue Aufgabe" button, a mail ("Aufgabe", key t), a chat message or a
- * contact: title, due day with quick choices, who, which board. From a mail it is linked to it
+ * A new task, from the "Neue Aufgabe" button, a mail ("Aufgabe", key t), a chat message, a
+ * contact or an appointment: title, due day with quick choices, a reminder, who, which board. From a mail it is linked to it
  * and to the sender's contact card, if there is one, and may archive it after. Several mails
  * picked in the list make one task each, with the same day, person and board.
  */
@@ -14,10 +14,12 @@ import { findContact } from "@/lib/correspondent";
 import { addDays, dateKey } from "@/lib/jscalendar";
 import { fullName } from "@/lib/jscontact";
 import { contactLink } from "@/lib/task-context";
+import { reminderOnDueChange } from "@/lib/task-reminders";
 import type { TaskLink } from "@/lib/tasks";
 import { m } from "@/paraglide/messages";
 import { type Contact, useContacts } from "../contacts/queries";
 import { useBoards, useMe, usePeople, useTaskActions } from "./queries";
+import { TaskReminder } from "./task-reminder";
 
 const ARCHIVE_KEY = "kontext.tasks.archiveMail";
 
@@ -78,6 +80,12 @@ const headings = (starts: TaskStart[], contact: Contact | undefined) => {
       description: m.tasks_from_contact_link(),
     };
   }
+  if (kind === "event") {
+    return {
+      title: m.tasks_from_event_title(),
+      description: m.tasks_from_event_link({ title: start!.link!.label }),
+    };
+  }
   if (kind === "mail") {
     return {
       title: m.tasks_from_mail_title(),
@@ -112,7 +120,20 @@ export const TaskDialog = ({
   const many = starts.length > 1;
   const first = starts[0]!;
   const [title, setTitle] = useState(first.title);
-  const [dueDate, setDueDate] = useState<string>("");
+  const [dueDate, setDueDateOnly] = useState<string>("");
+  const [remindAt, setRemindAt] = useState<string | null>(null);
+  /** A new due day moves a reminder already chosen from it along. */
+  const setDueDate = (day: string) => {
+    setRemindAt((current) =>
+      reminderOnDueChange(
+        current,
+        { dueDate: dueDate || null, dueTime: null },
+        { dueDate: day || null, dueTime: null },
+        new Date(),
+      ),
+    );
+    setDueDateOnly(day);
+  };
   const [assigneeId, setAssigneeId] = useState(me);
   // Several from one shared mailbox go on its board; from several, on one's own.
   const startBoard = starts.every((start) => start.accountId === first.accountId)
@@ -143,6 +164,7 @@ export const TaskDialog = ({
           title: many ? start.title || m.mail_no_subject() : title.trim(),
           dueDate: dueDate || null,
           assigneeId: assigneeId || null,
+          remindAt,
           links: linksOf(start, contacts),
         });
       }
@@ -225,6 +247,11 @@ export const TaskDialog = ({
             />
           </div>
         </fieldset>
+        <TaskReminder
+          key={dueDate}
+          task={{ dueDate: dueDate || null, dueTime: null, remindAt }}
+          onChange={setRemindAt}
+        />
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <Label>
             {m.tasks_assignee()}

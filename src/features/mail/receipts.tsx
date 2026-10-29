@@ -1,6 +1,6 @@
 /**
  * Read receipts: the line at a mail whose sender asks for one ("Senden" / "Nicht senden"), and at
- * a mail one sent with the request, who has confirmed it (src/lib/mdn.ts).
+ * a mail one sent with the request, who has confirmed it (src/lib/mdn.ts, src/jmap/receipts.ts).
  */
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { MailCheck } from "lucide-react";
@@ -9,10 +9,11 @@ import { useClient } from "@/auth/auth";
 import { useToast } from "@/components/ui/toast";
 import { CAPABILITIES, type JmapClient } from "@/jmap/client";
 import { setKeyword } from "@/jmap/mail";
-import type { EmailAddress, EmailDetail } from "@/jmap/types";
+import { receiptsFor } from "@/jmap/receipts";
+import type { EmailDetail } from "@/jmap/types";
 import { displayName, noteDate } from "@/lib/format";
 import { findRole } from "@/lib/mailboxes";
-import { isReceipt, MDN_SENT, receiptAnswered, receiptMessage } from "@/lib/mdn";
+import { MDN_SENT, receiptAnswered, receiptMessage } from "@/lib/mdn";
 import { m } from "@/paraglide/messages";
 import { useSendAccount } from "./use-send-account";
 
@@ -139,44 +140,6 @@ export const ReceiptRequest = ({ accountId, email }: { accountId: string; email:
   );
 };
 
-type Confirmation = {
-  from: EmailAddress[] | null;
-  receivedAt: string;
-  inReplyTo: string[] | null;
-  references: string[] | null;
-  "header:Content-Type": string | null;
-};
-
-/**
- * The receipts for a mail: Stalwart does not search In-Reply-To, so mails with its subject are
- * asked for ("Gelesen: …" carries it) and those kept that are receipts and point at this mail.
- */
-const confirmations = async (
-  client: JmapClient,
-  accountId: string,
-  messageId: string,
-  subject: string,
-) => {
-  const [, got] = await client.request([
-    ["Email/query", { accountId, filter: { subject }, limit: 50 }, "q"],
-    [
-      "Email/get",
-      {
-        accountId,
-        "#ids": { resultOf: "q", name: "Email/query", path: "/ids" },
-        // Raw is the default form; Stalwart answers under this name either way.
-        properties: ["from", "receivedAt", "inReplyTo", "references", "header:Content-Type"],
-      },
-      "g",
-    ],
-  ]);
-  return ((got![1] as { list?: Confirmation[] }).list ?? []).filter(
-    (mail) =>
-      isReceipt(mail["header:Content-Type"]) &&
-      [...(mail.inReplyTo ?? []), ...(mail.references ?? [])].includes(messageId),
-  );
-};
-
 /** At a mail one sent asking for receipts: who confirmed it, and when. */
 export const ReceiptsReceived = ({
   accountId,
@@ -191,7 +154,15 @@ export const ReceiptsReceived = ({
   const { data = [] } = useQuery({
     // Under the account: a receipt arriving refreshes it.
     queryKey: [accountId, "emails", "receipts", messageId],
-    queryFn: () => confirmations(client, accountId, messageId!, email.subject ?? ""),
+    queryFn: () =>
+      receiptsFor(client, accountId, {
+        messageId: messageId!,
+        subject: email.subject ?? "",
+        sentAt: email.sentAt ?? email.receivedAt,
+        recipients: [...(email.to ?? []), ...(email.cc ?? []), ...(email.bcc ?? [])].map(
+          (address) => address.email,
+        ),
+      }),
     enabled: asked,
   });
   if (!asked) return null;

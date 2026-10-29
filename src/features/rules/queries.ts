@@ -1,6 +1,7 @@
 /**
  * Where a rules list comes from and goes to: the own mailbox through JMAP, or a shared mailbox
- * (info@ & co.) through the Firmenverwaltung on the server. The list and the dialog only see this.
+ * (info@ & co.) or an employee's mailbox through the Firmenverwaltung on the server. The list and
+ * the dialog only see this.
  */
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useClient } from "@/auth/auth";
@@ -10,7 +11,12 @@ import type { Category } from "@/lib/categories";
 import { type Rule, type RuleFolder, ruleFolders } from "@/lib/rules";
 import { applyToInbox } from "../../../server/rules/apply";
 import { useCategories } from "../categories/queries";
-import { applyMailboxRule, getMailboxRules, setMailboxRules } from "../company/api";
+import {
+  applyAccountRule,
+  getAccountRules,
+  type RulesOwner,
+  setAccountRules,
+} from "../company/api";
 import { useAllMailboxes } from "../mail/queries";
 import { useFilters, usePersonalAccountId } from "../settings/queries";
 
@@ -55,12 +61,13 @@ export const usePersonalRules = (): RulesStore => {
   };
 };
 
-export const useMailboxRules = (mailboxId: string): RulesStore => {
+/** The rules of a shared mailbox or an employee, kept by the admin through the server. */
+export const useCompanyRules = (owner: RulesOwner): RulesStore => {
   const queryClient = useQueryClient();
-  const queryKey = ["company", "rules", mailboxId];
-  const { data } = useQuery({ queryKey, queryFn: () => getMailboxRules(mailboxId) });
+  const queryKey = ["company", "rules", owner.kind, owner.id];
+  const { data } = useQuery({ queryKey, queryFn: () => getAccountRules(owner) });
   const save = useMutation({
-    mutationFn: (rules: Rule[]) => setMailboxRules(mailboxId, rules),
+    mutationFn: (rules: Rule[]) => setAccountRules(owner, rules),
     onSettled: () => queryClient.invalidateQueries({ queryKey }),
   });
   return {
@@ -69,7 +76,7 @@ export const useMailboxRules = (mailboxId: string): RulesStore => {
     folders: ruleFolders((data?.folders ?? []) as Mailbox[]),
     categories: data?.categories ?? [],
     save: async (rules) => void (await save.mutateAsync(rules)),
-    apply: async (rule) => (await applyMailboxRule(mailboxId, rule)).changed,
+    apply: async (rule) => (await applyAccountRule(owner, rule)).changed,
     saving: save.isPending,
   };
 };

@@ -165,7 +165,7 @@ Ein Zustellbericht (DSN) kommt vom Mailserver, nicht vom Empfänger (`src/lib/en
 ## Lesebestätigung
 
 Stalwart kennt JMAP-MDN (RFC 9007) nicht; Kontext baut Lesebestätigungen nach RFC 8098 selbst
-(`src/lib/mdn.ts`, `src/features/mail/receipts.tsx`):
+(`src/lib/mdn.ts`, `src/jmap/receipts.ts`, `src/features/mail/receipts.tsx`):
 
 - **Anfordern:** Der Schalter mit dem Häkchen-Brief im Fenster „Neue Mail“ setzt
   `Disposition-Notification-To` auf die eigene Adresse.
@@ -175,9 +175,26 @@ Stalwart kennt JMAP-MDN (RFC 9007) nicht; Kontext baut Lesebestätigungen nach R
   `In-Reply-To` auf die Mail), legt sie per `Email/import` in „Gesendet“ und verschickt sie von der
   Adresse, an die die Mail ging. Beides setzt `$MDNSent` (RFC 3503), danach fragt keiner mehr –
   Stalwart gibt Schlagworte klein zurück, verglichen wird ohne Groß und Klein.
-- **Sehen:** Eine gesendete Mail mit der Bitte zeigt „Gelesen von … · Zeit“. Stalwart durchsucht
-  `In-Reply-To` nicht; gesucht wird nach dem Betreff, behalten wird, was eine Bestätigung ist
-  und auf genau diese Mail zeigt. Die Bestätigungen selbst liegen als Mails im Posteingang.
+- **Sehen:** Eine gesendete Mail mit der Bitte zeigt „Gelesen von … · Zeit“. Eine Bestätigung
+  nennt die Mail in `In-Reply-To`/`References` – oder, bei manchen Programmen, nur im Feld
+  `Original-Message-ID` ihres Berichtsteils (RFC 8098 §3.2.5), oft unter anderem Betreff
+  („Read: …“, „Gelesen: …“, „Zur Kenntnis genommen“). Stalwart indiziert weder diese Header noch
+  den Berichtsteil (`crates/email/src/message/index/search.rs`: `Headers` nur, wenn eigens
+  eingeschaltet). Gesucht wird darum ab der Sendezeit nach Mails **von einem der Empfänger oder
+  mit dem Betreff** (bis 20 Empfänger, seitenweise bis 500 Treffer, wie die Zustellberichte über
+  `src/jmap/search-pages.ts`); behalten wird, was eine Bestätigung ist (`Content-Type`) und diese
+  Mail nennt. Den Berichtsteil lädt die App nur, wenn die Header sie nicht schon nennen.
+- **Still ablegen:** Eingehende Bestätigungen für eigene gesendete Mails gehören an die gesendete
+  Mail, nicht in den Posteingang. Für jedes Postfach, aus dem man Mails nehmen darf (das eigene
+  und gemeinsame), schaut die App bei jeder Änderung nach ungelesenen Bestätigungen der letzten
+  14 Tage im Posteingang (`QuietReceipts`, `receiptsToFile`; die neuesten 100 zuerst, damit
+  ungelesene andere Mails neue Bestätigungen nicht verdecken), liest ihren Berichtsteil und
+  vergleicht mit den neuesten 200 gesendeten Mails an ihre Absender. Nur eine Bestätigung, die
+  eine Mail in „Gesendet“ nennt, die selbst um eine Bestätigung gebeten hat, wandert gelesen ins
+  Archiv (angelegt wie beim Archivieren, falls noch keins da ist). Alles andere – eine Mail, die
+  nur aussieht wie eine Bestätigung, eine für eine unbekannte Mail – bleibt, wo es ist. Das
+  geschieht in der offenen App, nicht auf dem Server: Sieve könnte nur nach dem Aussehen gehen
+  und keine gesendete Mail prüfen.
 
 ## Newsletter abbestellen
 
@@ -546,6 +563,12 @@ ins eigene Konto. So wirken sie auch, wenn niemand angemeldet ist, und gleich au
   delivery.rs`). Der Chef pflegt die Regeln in der Firmenverwaltung („Regeln“ am Postfach); der
   Server schreibt sie mit seinem Schlüssel ins Gruppenkonto (`/api/company/mailboxes/:id/rules`),
   mit demselben Code wie die App.
+- **Mitarbeiter:** genauso am Eintrag der Person (`/api/company/employees/:id/rules`, beide über
+  `server/company/rules-routes.ts`): der Server schreibt das Skript ins persönliche Konto, also
+  dasselbe, das die Person in ihren Einstellungen per JMAP liest und schreibt – es gibt keine
+  „Regeln des Chefs“ getrennt von ihren eigenen, und ihre Abwesenheitsnotiz bleibt dabei, wie sie
+  ist. Die Routen liegen hinter der Prüfung der Firmenverwaltung (nur Admins, sonst 403) und
+  nehmen nur Konten, die als Mitarbeiter der Firma gelten (`userOf`), sonst 404.
 - **Auf vorhandene Mails anwenden** (Häkchen im Dialog): Die gespeicherte Regel läuft einmal
   über die neuesten 1.000 Mails im Posteingang, mit derselben Logik wie das Skript
   (`server/rules/match.ts`: Teiltext ohne Groß/Klein, erster Ordner gewinnt, „keine weiteren
@@ -720,8 +743,19 @@ oder Reihenfolge.
 - **Aus mehreren Mails:** „Aufgaben erstellen“ in der Leiste der Auswahl macht eine Aufgabe pro
   Mail, mit gemeinsamem Tag, Zuständigem und Board. Hat die andere Seite der Mail eine
   Kontaktkarte, wird sie mitverknüpft (auch bei einer einzelnen Mail).
-- **Am Kontakt:** die Aufgaben, die mit der Karte verknüpft sind oder mit einer Unterhaltung der
-  letzten Mails mit der Person (`src/lib/task-context.ts`); „Aufgabe“ legt eine verknüpfte an.
+- **Am Kontakt:** die Aufgaben, die mit der Karte verknüpft sind oder mit einer Mail, die die
+  Person geschickt oder bekommen hat (Von, An, Cc, jede Adresse der Karte), egal wie alt und in
+  welchem Postfach – dem eigenen oder einem gemeinsamen, das man öffnen kann
+  (`src/lib/task-context.ts`). Statt die Mails mit der Person zu suchen, schaut die App umgekehrt
+  bei den Mails nach, auf die Aufgaben zeigen: ein `Email/get` mit `from`, `to`, `cc` je Konto
+  (`participants` in `src/jmap/correspondence.ts`), höchstens 500 je Konto, die der zuletzt
+  geänderten Aufgaben zuerst; das Ergebnis teilen sich alle Kontakte. Eine Mail ist dabei an Konto
+  und Id erkannt, nicht nur an der Unterhaltung. „Aufgabe“ legt eine verknüpfte an.
+- **Am Termin:** „Aufgabe zum Termin“ im Termin (Desktop wie Handy) öffnet den Dialog mit dem
+  Titel des Termins und verknüpft ihn (`kind: "event"`, `eventLink`); die Aufgabe zeigt den Termin
+  mit Tag und Uhrzeit, ein Klick öffnet ihn im Kalender. Weil der Kalender nur findet, was er
+  gerade zeigt, trägt die Verknüpfung den Tag des Termins in `threadId` (bei Mails die
+  Unterhaltung); bei einer Serie ist es der eine Termin.
 - **Im Kalender:** meine offenen Aufgaben am Tag ihrer Fälligkeit, Überfälliges auf heute, in Rot;
   in Woche und Tag zu ihrer Uhrzeit im Raster neben den Terminen, ohne Uhrzeit (und überfällig)
   bei den ganztägigen. Abhaken mit „Rückgängig“ (der Kreis ist klein, die Fläche zum Treffen um ihn
@@ -731,7 +765,8 @@ oder Reihenfolge.
   (`assigned_by`, `assigned_at`; ungesehene zählen zum Punkt an der Glocke) – und „Fällige
   Aufgaben“ von heute und davor.
 - **Push:** Wer eine Aufgabe jemand anderem zuweist, schickt ihr eine Benachrichtigung. Eine
-  Erinnerung (`remind_at`, „Erinnern“ in der Aufgabe: zur Fälligkeit, 15 Minuten oder eine Stunde
+  Erinnerung (`remind_at`, „Erinnern“ in der Aufgabe und schon im Dialog „Neue Aufgabe“, der sie
+  beim Anlegen mitschickt: zur Fälligkeit, 15 Minuten oder eine Stunde
   vorher, am Morgen, am Vortag, oder frei) verschickt der Server jede Minute
   (`server/tasks/notices.ts`, `REMINDER_TICK_MS`) an die zuständige Person, ohne Zuständige an
   die, die sie angelegt hat – auch bei geschlossener App, einmal (`reminded_at`). Wird der Tag
@@ -1275,9 +1310,18 @@ Eine Mail „aus dem Weg bis …“: Knopf mit dem Wecker über der Mail oder `w
   sie über die Sitzung einer Kollegin, ohne Absender und Betreff (er könnte das Postfach inzwischen
   verloren haben). Abgelaufene Sitzungen nimmt kein Hintergrundjob.
   Hat jemand die Mail inzwischen anderswohin verschoben, bleibt sie, wo sie ist.
+- **Mehrere auf einmal:** die Leiste über ausgewählten Mails bietet den Wecker, wenn jede Mail in
+  einem Ordner liegt, aus dem sie weg darf (nicht Entwürfe, Gesendet oder ein Ordner nur zum
+  Lesen; `snoozeTargets` in `src/lib/selection.ts`) – sonst gar nicht, statt nur einen Teil
+  zurückzulegen. Je Konto und Ordner ein Aufruf, jede Mail in den Wiedervorlage-Ordner ihres
+  Kontos; ein „Rückgängig“ holt alle zurück. Scheitert ein Konto, kommen die Mails der anderen
+  gleich zurück (alles oder nichts), und die Meldung nennt den Fehler. In „Alle Posteingänge“
+  sind Mails nach Konto und ID verschieden: Stalwart zählt IDs je Konto.
 - **Wieder vorgelegt:** der Posteingang zeigt solche Mails, solange sie ungelesen sind, oben in
   einer eigenen Gruppe – nach Datum lägen sie weit unten. Gelesen nimmt Kontext das Schlagwort
-  wieder ab, und die Mail steht an ihrem Platz.
+  wieder ab, und die Mail steht an ihrem Platz. „Alle Posteingänge“ fragt dafür jeden Posteingang
+  einzeln (`resurfacedFilter`, `pinResurfaced` in `src/lib/inboxes.ts`) und zeigt die Mails aller
+  Konten oben gemeinsam.
 
 ## Alle Posteingänge
 

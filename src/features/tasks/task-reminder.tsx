@@ -13,7 +13,8 @@ export const TaskReminder = ({
   task,
   onChange,
 }: {
-  task: Task;
+  /** The task, or the one being made in "Neue Aufgabe". */
+  task: Pick<Task, "dueDate" | "dueTime" | "remindAt">;
   onChange: (remindAt: string | null) => void;
 }) => {
   const choices = reminderChoices(task, new Date());

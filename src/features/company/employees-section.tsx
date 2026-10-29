@@ -2,12 +2,15 @@
 import { CalendarClock, UserPlus } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import { Dialog } from "@/components/ui/dialog";
 import { useToast } from "@/components/ui/toast";
 import { ColleagueAvatar } from "@/features/photos/colleague-avatar";
 import { formatSize } from "@/lib/format";
 import { m } from "@/paraglide/messages";
-import { type Company, showAvailabilityToAll } from "./api";
-import { EmployeeDialog, NewEmployeeDialog } from "./employee-dialogs";
+import { useCompanyRules } from "../rules/queries";
+import { RulesList } from "../rules/rules-section";
+import { type Company, type Employee, showAvailabilityToAll } from "./api";
+import { EmployeeDialog, type EmployeeSubDialog, NewEmployeeDialog } from "./employee-dialogs";
 import { Badge } from "./fields";
 import { CompanyGate } from "./gate";
 import { OffboardingDialog } from "./offboarding-dialog";
@@ -20,7 +23,7 @@ export const EmployeesSection = () => (
 
 const Employees = ({ company }: { company: Company }) => {
   const [open, setOpen] = useState<string | "new" | null>(null);
-  const [next, setNext] = useState<{ id: string; dialog: "vacation" | "offboarding" } | null>(null);
+  const [next, setNext] = useState<{ id: string; dialog: EmployeeSubDialog } | null>(null);
   const employee = company.employees.find((e) => e.id === open);
   const other = company.employees.find((e) => e.id === next?.id);
 
@@ -78,12 +81,40 @@ const Employees = ({ company }: { company: Company }) => {
       {other && next?.dialog === "vacation" ? (
         <VacationDialog company={company} employee={other} onClose={() => setNext(null)} />
       ) : null}
+      {other && next?.dialog === "rules" ? (
+        <EmployeeRulesDialog employee={other} onClose={() => setNext(null)} />
+      ) : null}
       {other && next?.dialog === "offboarding" ? (
         <OffboardingDialog company={company} employee={other} onClose={() => setNext(null)} />
       ) : null}
     </>
   );
 };
+
+/**
+ * A person's own rules, kept by the admin: the same Sieve script as in their settings, so they
+ * see and change these as their own.
+ */
+const EmployeeRulesDialog = ({
+  employee,
+  onClose,
+}: {
+  employee: Employee;
+  onClose: () => void;
+}) => (
+  <Dialog
+    open
+    onOpenChange={(open) => !open && onClose()}
+    title={m.rules_employee_title({ name: employee.fullName })}
+    description={m.rules_employee_hint({
+      name: employee.email,
+      first: employee.fullName.split(" ")[0] ?? "",
+    })}
+    className="md:w-[min(640px,calc(100vw-32px))]"
+  >
+    <RulesList store={useCompanyRules({ kind: "employees", id: employee.id })} />
+  </Dialog>
+);
 
 /**
  * New people see their colleagues' free and busy times on their own (server: calendars.welcome);

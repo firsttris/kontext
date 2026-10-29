@@ -87,6 +87,9 @@ export const fullName = (card: ContactCard): string => {
 };
 
 export const primaryEmail = (card: ContactCard): string => first(card.emails)?.address ?? "";
+/** Every address of the card, the first one first. */
+export const allEmails = (card: ContactCard): string[] =>
+  Object.values(card.emails ?? {}).flatMap((email) => (email.address ? [email.address] : []));
 export const primaryPhone = (card: ContactCard): string => first(card.phones)?.number ?? "";
 export const note = (card: ContactCard): string => first(card.notes)?.note ?? "";
 

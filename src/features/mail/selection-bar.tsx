@@ -42,10 +42,12 @@ import {
   marksRead,
   type Picked,
   singleAccount,
+  snoozeTargets,
 } from "@/lib/selection";
 import { mailLink, plainSubject } from "@/lib/tasks";
 import { m } from "@/paraglide/messages";
 import { useCategories } from "../categories/queries";
+import { SnoozeMenu } from "../snooze/snooze-menu";
 import { TaskDialog, type TaskStart } from "../tasks/task-dialog";
 import { useMailActions } from "./actions";
 import { useAllMailboxes, useMailAccounts } from "./queries";
@@ -105,6 +107,7 @@ export const SelectionBar = ({
     id,
     ids: picked.filter((entry) => entry.accountId === id).map((entry) => entry.email.id),
   }));
+  const toSnooze = snoozeTargets(groups, mailboxes);
   const targets =
     accountId && groups.length === 1
       ? moveTargets(accounts, mailboxes, { accountId, mailboxId: groups[0]!.from })
@@ -204,6 +207,7 @@ export const SelectionBar = ({
         >
           <Trash2 size={15} strokeWidth={1.75} />
         </IconButton>
+        {toSnooze ? <SnoozeMenu targets={toSnooze} onLeave={onClear} small /> : null}
         <IconButton
           label={inJunk ? m.mail_spam_unmark() : m.mail_spam_mark()}
           disabled={none}

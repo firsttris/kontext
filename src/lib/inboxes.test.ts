@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { EmailSummary, Mailbox } from "@/jmap/types";
-import { type Feed, type Inbox, mergeFeeds } from "./inboxes";
+import { type Feed, type Inbox, mergeFeeds, pinResurfaced, resurfacedFilter } from "./inboxes";
 import type { MailAccount } from "./mail-accounts";
 
 const account = (id: string, name: string, isPersonal: boolean): MailAccount => ({
@@ -98,5 +98,50 @@ describe("mergeFeeds in another order", () => {
       () => ["eilig", "privat"],
     );
     expect(rows.map((r) => r.email.id)).toEqual(["both", "first", "other"]);
+  });
+});
+
+describe("pinResurfaced", () => {
+  const headings = { back: "Wieder vorgelegt", rest: "Weitere" };
+  const row = (id: string): { email: EmailSummary; section?: string } => ({ email: mail(id, 9) });
+
+  it("puts what came back on top, each part under its heading, without doubles", () => {
+    const rows = pinResurfaced([row("a")], [row("b"), row("a"), row("c")], headings);
+    expect(rows.map((r) => [r.email.id, r.section])).toEqual([
+      ["a", "Wieder vorgelegt"],
+      ["b", "Weitere"],
+      ["c", undefined],
+    ]);
+  });
+
+  it("leaves the list alone when nothing came back", () => {
+    const listed = [row("b")];
+    expect(pinResurfaced([], listed, headings)).toBe(listed);
+  });
+});
+
+describe("resurfacedFilter", () => {
+  it("asks for the unread mails of the inbox that carry the keyword", () => {
+    expect(resurfacedFilter("i", "kontext.resurfaced").search.conditions).toEqual([
+      { inMailbox: "i" },
+      { hasKeyword: "kontext.resurfaced" },
+      { notKeyword: "$seen" },
+    ]);
+  });
+});
+
+describe("pinResurfaced over several accounts", () => {
+  it("keeps another account's mail that has the same id as one that came back", () => {
+    // Stalwart counts ids per account: info@'s mail "a" is not jonas's mail "a".
+    const back = mergeFeeds([inbox(info)], { b: feed([mail("a", 9)]) });
+    const listed = mergeFeeds([inbox(own), inbox(info)], {
+      d: feed([mail("a", 12)]),
+      b: feed([mail("a", 9)]),
+    });
+    const rows = pinResurfaced(back, listed, { back: "Wieder vorgelegt", rest: "Weitere" });
+    expect(rows.map((r) => [r.account.id, r.email.id])).toEqual([
+      ["b", "a"],
+      ["d", "a"],
+    ]);
   });
 });

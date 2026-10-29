@@ -1,14 +1,22 @@
 /**
- * A contact's tasks: those linked to the card and those about mails with them, to tick off in
- * place; "Aufgabe" makes a new one linked to the card.
+ * A contact's tasks: those linked to the card and those about mails with them – any mail a task
+ * links to, in the own or a shared mailbox, that they sent or got – to tick off in place;
+ * "Aufgabe" makes a new one linked to the card.
  */
+
+import { useQuery } from "@tanstack/react-query";
 import { Plus } from "lucide-react";
-import { useState } from "react";
+import { useMemo, useState } from "react";
+import { useClient } from "@/auth/auth";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/toast";
+import { participants } from "@/jmap/correspondence";
 import { dateKey } from "@/lib/jscalendar";
-import { contactLink, tasksOfContact } from "@/lib/task-context";
+import { allEmails } from "@/lib/jscontact";
+import { contactLink, linkedMails, mailsWith, tasksOfContact } from "@/lib/task-context";
+import type { Task } from "@/lib/tasks";
 import { m } from "@/paraglide/messages";
+import { useMailAccounts } from "../mail/queries";
 import { usePeople, useTaskActions, useTasks } from "../tasks/queries";
 import { TaskDialog, type TaskStart } from "../tasks/task-dialog";
 import { TaskRow } from "../tasks/task-row";
@@ -16,26 +24,46 @@ import type { Contact } from "./queries";
 
 const SHOWN = 6;
 
+/** The mails tasks link to that were with these addresses, by `mailKey`. */
+const useMailsWith = (tasks: Task[], addresses: string[]): ReadonlySet<string> => {
+  const client = useClient();
+  const accountIds = useMailAccounts().map((account) => account.id);
+  const ids = linkedMails(tasks, accountIds);
+  const { data = [] } = useQuery({
+    // Sorted: the same mails, whatever order the tasks came in, ask once.
+    queryKey: [
+      "tasks",
+      "linked-mails",
+      Object.entries(ids)
+        .map(([accountId, list]) => [accountId, [...list].sort()])
+        .sort(),
+    ],
+    queryFn: () => participants(client, ids),
+    enabled: Object.keys(ids).length > 0,
+    staleTime: 5 * 60_000,
+  });
+  const key = addresses.join(",");
+  return useMemo(() => mailsWith(data, key ? key.split(",") : []), [data, key]);
+};
+
 export const ContactTasks = ({
   card,
   name,
   email,
-  threadIds,
 }: {
   card: Contact;
   name: string;
   email: string;
-  /** The conversations of the mails with them that are loaded. */
-  threadIds: ReadonlySet<string>;
 }) => {
   const { tasks } = useTasks();
+  const mailKeys = useMailsWith(tasks, allEmails(card));
   const people = usePeople();
   const actions = useTaskActions();
   const toast = useToast();
   const [start, setStart] = useState<TaskStart | null>(null);
   const today = dateKey(new Date());
   // Finished ones only from today: what was just ticked off stays to be seen.
-  const list = tasksOfContact(tasks, card, threadIds).filter(
+  const list = tasksOfContact(tasks, card, mailKeys).filter(
     (task) =>
       task.status !== "done" ||
       (task.completedAt !== null && dateKey(new Date(task.completedAt)) === today),
