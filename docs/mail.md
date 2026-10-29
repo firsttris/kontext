@@ -27,8 +27,14 @@ IMAP und SMTP.
   dazu, per Regel gesetzt. In info@ sieht sie das ganze Team: eine kleine Aufgabenliste.
 - **Besprechen statt weiterleiten:** „Besprechen“ (`b`) bringt eine Mail als Karte in den
   [Team-Chat](chat.md); „Aufgabe“ (`t`) macht eine [Aufgabe](tasks.md) daraus.
-- **Textbausteine** für Standardantworten, eigene und gemeinsame für info@; `{Name}` wird zum
-  Empfänger.
+- **Textbausteine** für Standardantworten, eigene und gemeinsame für info@. Beim Einfügen wird
+  `{Name}` zum Namen des Empfängers (`{Vorname}` zu seinem Vornamen), `{Datum}` zum heutigen
+  Datum und `{Absender}` zum eigenen Namen. Jedes andere Wort in geschweiften Klammern ist ein
+  eigenes Feld, etwa `{Auftragsnummer}`: Kontext fragt in einem kleinen Fenster nach allen
+  Feldern des Bausteins und setzt die Antworten ein; ein leer gelassenes Feld bleibt als
+  `{Feld}` im Text stehen, damit es nicht vergessen wird.
+
+  ![Fenster „Textbaustein ausfüllen“ mit den Feldern Auftragsnummer und Termin über einer neuen Mail](screenshots/snippet-fields.png)
 
 ## Ordnen und finden
 

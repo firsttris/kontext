@@ -192,6 +192,28 @@ export const longPress = async (target: Locator) => {
   await element.dispose();
 };
 
+/** Saves a snippet in Einstellungen → Meine Textbausteine, as one would. */
+export const addSnippet = async (page: Page, title: string, body: string) => {
+  await page.goto("/settings?section=snippets");
+  const mine = page
+    .getByRole("region")
+    .filter({ has: page.getByRole("heading", { name: "Meine Textbausteine" }) });
+  await mine.getByRole("button", { name: "Neuer Textbaustein" }).click();
+  await mine.getByLabel("Titel").fill(title);
+  await mine.getByLabel("Text").fill(body);
+  await mine.getByRole("button", { name: "Speichern" }).click();
+  await expect(mine.getByRole("list")).toContainText(title);
+};
+
+/** Deletes the snippets with this title through the server, so no run leaves one behind. */
+export const removeSnippet = async (page: Page, title: string) => {
+  const { snippets } = (await (await page.request.get("/api/snippets")).json()) as {
+    snippets: { id: string; title: string }[];
+  };
+  for (const snippet of snippets.filter((one) => one.title === title))
+    await page.request.delete(`/api/snippets/${encodeURIComponent(snippet.id)}`);
+};
+
 /**
  * Hinweis „Extern“ switched on for this page only: the app's read of the setting is answered here
  * (the server's own domains and partners kept unless `change` names others). Switching it on at

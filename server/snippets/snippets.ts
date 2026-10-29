@@ -8,7 +8,7 @@ export type Snippet = {
   id: string;
   accountId: string;
   title: string;
-  /** Plain text; {Vorname} and {Name} become the recipient's when inserted. */
+  /** Plain text with placeholders, filled when inserted (src/lib/snippet-fill.ts). */
   body: string;
   createdBy: string;
   updatedAt: string;
@@ -21,10 +21,3 @@ export const snippetSchema = z.object({
 });
 
 export const snippetPatchSchema = snippetSchema.omit({ accountId: true }).partial();
-
-/** "Guten Tag {Name}," → "Guten Tag Markus Hoffmann,": the first recipient's name. */
-export const fillSnippet = (body: string, recipient: { name?: string | null } | undefined) => {
-  const name = recipient?.name?.trim() ?? "";
-  const first = name.split(/\s+/)[0] ?? "";
-  return body.replace(/\{Vorname\}/g, first).replace(/\{Name\}/g, name);
-};
