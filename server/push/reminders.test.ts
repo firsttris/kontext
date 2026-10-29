@@ -42,3 +42,45 @@ describe("reminderNotice", () => {
     expect(notice.url).toBe("/calendar?date=2026-12-24&event=i&account=d");
   });
 });
+
+describe("reminderNotice for a changed date of a series", () => {
+  // A date changed on its own (in Kontext: "only this date") carries its own alerts, and Stalwart
+  // names it by its own start, not by its recurrence id (`recurrence_id: start_date_naive` in
+  // crates/groupware/src/calendar/alarm.rs); the open app has the recurrence id.
+  const alert = {
+    accountId: "d",
+    calendarEventId: "i",
+    recurrenceId: "2026-11-10T08:00:00",
+    alertId: "a1",
+  };
+  const series = {
+    title: "Teambesprechung",
+    start: "2026-11-02T10:00:00",
+    timeZone: "Europe/Berlin",
+    locations: { l: { name: "Büro" } },
+    recurrenceOverrides: {
+      "2026-11-09T10:00:00": {
+        start: "2026-11-10T08:00:00",
+        title: "Teambesprechung (verschoben)",
+        "locations/l/name": "Baustelle Kirchstraße",
+        alerts: {
+          a1: {
+            "@type": "Alert",
+            trigger: { "@type": "OffsetTrigger", offset: "-PT15M", relativeTo: "start" },
+            action: "display",
+          },
+        },
+      },
+    },
+  };
+
+  it("names the changed date with its own title and place", () => {
+    const notice = reminderNotice(alert, series);
+    expect(notice.title).toBe("Erinnerung: Teambesprechung (verschoben)");
+    expect(notice.body).toBe("Di., 10.11., 08:00 · Baustelle Kirchstraße");
+  });
+
+  it("tags a moved date by its recurrence id, as the open app does", () => {
+    expect(reminderNotice(alert, series).tag).toBe("reminder-d/i/2026-11-09T10:00:00");
+  });
+});
