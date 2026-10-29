@@ -100,6 +100,12 @@ const accountsOfSeed = (): DemoAccount[] => [
   })),
 ];
 
+/**
+ * A seed folder's id: its path without "/", as Stalwart's ids have none – the app writes patches
+ * as `mailboxIds/<id>` (src/jmap/mail.ts) without escaping a "/" (RFC 6901).
+ */
+const seedFolderId = (owner: string, path: string) => `${owner}-${path.replaceAll("/", "-")}`;
+
 /** Every account's standard folders, then the seed's own ("Kunden/Hoffmann" under "Kunden"). */
 const mailboxesOfSeed = (accounts: DemoAccount[]): StoredMailbox[] =>
   accounts.flatMap((account) => {
@@ -115,10 +121,10 @@ const mailboxesOfSeed = (accounts: DemoAccount[]): StoredMailbox[] =>
       const parts = path.split("/");
       const parent = parts.slice(0, -1).join("/");
       return {
-        id: `${account.id}-${path}`,
+        id: seedFolderId(account.id, path),
         accountId: account.id,
         name: parts.at(-1)!,
-        parentId: parent ? `${account.id}-${parent}` : null,
+        parentId: parent ? seedFolderId(account.id, parent) : null,
         role: ROLE_BY_FOLDER[path] ?? null,
         sortOrder: 10,
       };
@@ -127,7 +133,7 @@ const mailboxesOfSeed = (accounts: DemoAccount[]): StoredMailbox[] =>
   });
 
 const folderId = (owner: string, folder: string) =>
-  folder === "Posteingang" ? `${owner}-inbox` : `${owner}-${folder}`;
+  folder === "Posteingang" ? `${owner}-inbox` : seedFolderId(owner, folder);
 
 const address = ([name, email]: [string, string]) => ({ name, email });
 
