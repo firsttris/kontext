@@ -5,6 +5,7 @@ import { calendarOnTheWeb } from "./ics-server";
 import { deliverInvitation } from "./invitation-mail";
 import { pairBox } from "./paired-box";
 import { giveKey } from "./pgp-key";
+import { buildingSitePng } from "./picture";
 
 /**
  * The pictures in the README and the docs. Run with `bun run screenshots`. The pointer goes to
@@ -137,6 +138,32 @@ test.describe("Screenshots @screenshots", () => {
     await page.getByRole("button", { name: "Papierkorb leeren" }).click();
     await expect(page.getByRole("dialog", { name: "Papierkorb leeren?" })).toBeVisible();
     await shot(page, "empty-trash");
+  });
+
+  test("Bild in der Mail", async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await login(page);
+    await page.getByRole("link", { name: "Neue Mail" }).first().click();
+    await page.getByRole("combobox", { name: "An" }).fill("m.hoffmann@schreinerei-hoffmann.test");
+    await page.keyboard.press("Enter");
+    await page.getByLabel("Betreff").fill("Baustelle Rheinstraße – Stand heute");
+    const body = page.getByRole("textbox", { name: "Ihre Nachricht …" });
+    await body.click();
+    await page.keyboard.type("Hallo Herr Hoffmann,");
+    await page.keyboard.press("Enter");
+    await page.keyboard.type("so sieht der Rohbau heute aus:");
+    await page.keyboard.press("Enter");
+    await page.locator('input[type="file"][accept^="image/png"]').setInputFiles({
+      name: "rohbau.png",
+      mimeType: "image/png",
+      buffer: buildingSitePng(),
+    });
+    const image = body.locator('img[alt="rohbau.png"]');
+    await expect.poll(() => image.evaluate((img: HTMLImageElement) => img.naturalWidth)).toBe(480);
+    // Selected, so its corners for resizing show.
+    await image.click();
+    await page.mouse.move(1, 1);
+    await shot(page, "compose-image");
   });
 
   test("Anhang vergessen", async ({ page }) => {
@@ -388,7 +415,7 @@ test.describe("Screenshots @screenshots", () => {
     const page = await context.newPage();
     await login(page);
 
-    await page.goto(`/calendar?date=${today()}&event=new&start=${today()}T10:00`);
+    await page.goto(`/calendar?date=${today()}&event=new&start=${today()}T14:00`);
     const meeting = page.getByRole("dialog");
     await meeting.getByLabel("Titel").fill("Abnahme Badsanierung Hoffmann");
     await addAttendees(meeting, "anna@weber-haustechnik.test, sandra@weber-haustechnik.test");

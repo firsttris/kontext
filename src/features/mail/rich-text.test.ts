@@ -65,3 +65,21 @@ describe("richText", () => {
     expect(reopened.match(/<th [^>]*>/)?.[0]).toMatch(/font-weight: ?600/);
   });
 });
+
+describe("richText with images", () => {
+  it("keeps a picture's Content-ID and the size it was given", () => {
+    editor = new Editor({
+      extensions: richText({ images: true }),
+      content: '<p>Foto: <img src="blob:http://x/1" data-cid="bild-1@kontext" width="240"></p>',
+    });
+    const img = editor.getHTML().match(/<img [^>]*>/)?.[0] ?? "";
+    expect(img).toContain('data-cid="bild-1@kontext"');
+    expect(img).toContain('width="240"');
+    expect(img).toContain("max-width");
+  });
+
+  it("has no pictures where they are not offered (signatures)", () => {
+    editor = new Editor({ extensions: richText(), content: '<p><img src="blob:http://x/1"></p>' });
+    expect(editor.getHTML()).not.toContain("<img");
+  });
+});

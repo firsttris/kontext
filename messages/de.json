@@ -1982,6 +1982,7 @@
   "settings_swipe_read": "Gelesen / ungelesen",
   "settings_swipe_flag": "Markieren",
   "settings_swipe_none": "Nichts",
+  "mail_insert_image": "Bild einfügen",
   "calendar_default_reminder": "Erinnerung",
   "calendar_default_reminder_title": "Erinnerung für „{name}“",
   "calendar_default_reminder_hint": "Die Erinnerung, die ein neuer Termin in diesem Kalender bekommt; am Termin lässt sie sich ändern. Sie gilt für dich. In einem geteilten Kalender gilt sonst die der Person, der er gehört.",

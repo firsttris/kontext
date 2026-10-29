@@ -28,7 +28,7 @@ test.describe("Verschlüsselung: PGP in Mails", () => {
     await page
       .getByRole("textbox", { name: "Ihre Nachricht …" })
       .fill("Messwerte: 42 Grad, alles vertraulich.");
-    await page.locator('form input[type="file"][multiple]').setInputFiles({
+    await page.locator('form input[type="file"][multiple]:not([accept])').setInputFiles({
       name: "messung.csv",
       mimeType: "text/csv",
       buffer: Buffer.from("Grad;42\n"),

@@ -7,6 +7,10 @@ Steps that an update needs beyond raising the version are marked **Upgrade**.
 
 ## Unreleased
 
+- Mail: pictures in the text – by the "Bild einfügen" button, pasted (a screenshot) or dropped
+  in, and resized by their corners. They go out as inline images (`cid:` in multipart/related),
+  so Outlook, Gmail and Apple Mail show them in the text; drafts keep them. Files of a reopened
+  draft now stay with it when it is saved more than once.
 - Calendar: "Aus Datei übernehmen" under *Kalender verwalten* – appointments from an .ics file
   (an export from Google, Outlook or Apple) into a calendar the user may write to, with a preview
   of what is new and what is already there (same UID in the account), which is skipped. Stalwart
