@@ -230,7 +230,8 @@ Was Kontext bewusst nicht schützt, oder (noch) nicht kann:
   fertige verschlüsselte Mail (`src/lib/held-files.ts`, `use-held-files.ts`). Das gilt auch für
   Dateien aus „Aus Dokumente“ (der Kontext-Server reicht sie dann an den Browser statt an
   Stalwart, `POST /api/documents/download`), für den Link von „Vertraulich senden“ und für die
-  Anhänge, die beim Weiterleiten einer geöffneten verschlüsselten Mail mitgehen.
+  Anhänge, die beim Weiterleiten einer geöffneten verschlüsselten Mail mitgehen. Die Mail mit dem
+  Link selbst nimmt keine Anhänge und keine Bilder mit.
   - **Erst später eingeschaltet:** Waren Anhänge schon hochgeladen, holt Kontext sie beim
     Einschalten in den Browser und löscht den bisherigen Entwurf, der sie (und den Text)
     unverschlüsselt hielt; die nicht mehr verwendeten Dateien räumt Stalwart selbst weg. Was bis
@@ -243,7 +244,8 @@ Was Kontext bewusst nicht schützt, oder (noch) nicht kann:
   - **Größe:** Anhänge und Bilder zusammen bis 25 MB. Die verschlüsselte Mail ist etwa 1,8-mal so
     groß (zweimal Base64) und geht als ein Upload an Stalwart; der Browser hält sie im Speicher.
 - **Entwürfe:** Solange „Vertraulich senden“ an ist, speichert Kontext keinen Entwurf auf dem
-  Server; ein Fenster, das man schließt, ist weg.
+  Server; ein Fenster, das man schließt, ist weg. „Als Entwurf speichern“ sagt das und lässt die
+  Mail offen.
 - **Was der Server im vertraulichen Chat sieht:** wer Mitglied ist, wer wann schreibt, wer erwähnt
   wird, wer reagiert und wie groß Dateien sind – nur nicht, was drinsteht. Benachrichtigungen sagen
   deshalb nur „Vertrauliche Nachricht“.
