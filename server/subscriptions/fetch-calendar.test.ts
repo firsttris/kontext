@@ -1,3 +1,4 @@
+import { createServer } from "node:net";
 import { describe, expect, it } from "vitest";
 import { calendarUrl, fetchCalendar, MAX_BYTES } from "./fetch-calendar";
 
@@ -102,5 +103,28 @@ describe("fetchCalendar", () => {
     await expect(fetchCalendar("https://kal.example/abbruch.ics", deps)).resolves.toMatchObject({
       ok: false,
     });
+  });
+
+  it("connects to the address it checked, not to the name again (DNS rebinding)", async () => {
+    // The name was public when checked; when connecting it points inside (here: localhost).
+    let connections = 0;
+    const inside = createServer((socket) => {
+      connections++;
+      socket.destroy();
+    });
+    await new Promise<void>((done) => inside.listen(0, "127.0.0.1", done));
+    const { port } = inside.address() as { port: number };
+    try {
+      // Not awaited to its end: the checked (public) address may not answer in a test.
+      await Promise.race([
+        fetchCalendar(`https://localhost:${port}/a.ics`, {
+          resolve: async () => ["93.184.216.34"],
+        }),
+        new Promise((done) => setTimeout(done, 500)),
+      ]);
+    } finally {
+      inside.close();
+    }
+    expect(connections).toBe(0);
   });
 });
