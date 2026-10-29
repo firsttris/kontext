@@ -10,7 +10,7 @@ export type ParsedEntry = Record<string, unknown> & {
 };
 
 /** What a subscribed event keeps of the file; the rest (method, iCalendar leftovers) goes. */
-const KEPT = [
+export const KEPT = [
   "title",
   "description",
   "start",

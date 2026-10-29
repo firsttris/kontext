@@ -5,7 +5,7 @@
  * nobody is invited to a subscribed event.
  */
 import type { StalwartRequest } from "../company/management";
-import type { ParsedEntry, StoredEvent, SyncPlan } from "./sync-plan";
+import { KEPT, type ParsedEntry, type StoredEvent, type SyncPlan } from "./sync-plan";
 
 const CORE = "urn:ietf:params:jmap:core";
 const CALENDARS = [
@@ -15,6 +15,9 @@ const CALENDARS = [
   "urn:ietf:params:jmap:blob",
 ];
 const PAGE = 250;
+
+/** What the file no longer has goes on an update: Stalwart keeps what a patch leaves out. */
+const CLEARED = Object.fromEntries(KEPT.map((key) => [key, null]));
 
 type Result = Record<string, unknown>;
 
@@ -120,12 +123,7 @@ export const createSubscribedCalendars = (request: StalwartRequest) => {
     for (let at = 0; at < plan.update.length; at += PAGE) {
       const page = plan.update.slice(at, at + PAGE);
       await set({
-        update: Object.fromEntries(
-          page.map(({ id, event }) => [
-            id,
-            { recurrenceRule: null, recurrenceOverrides: null, ...event },
-          ]),
-        ),
+        update: Object.fromEntries(page.map(({ id, event }) => [id, { ...CLEARED, ...event }])),
       });
     }
     for (let at = 0; at < plan.destroy.length; at += PAGE) {

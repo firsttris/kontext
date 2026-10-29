@@ -240,4 +240,3 @@ describe("the runner", () => {
     expect(events.filter((event) => event.uid === "u1")).toHaveLength(1);
   });
 });
-
