@@ -73,6 +73,26 @@ test.describe("Einführung", () => {
     await expect(tour).toBeHidden();
   });
 
+  test("zeigt zwischen md und lg nur auf, was da ist", async ({ page }) => {
+    // From md the rail, the mail sidebar only from lg: no "Neue E-Mail" and no info@ to point at.
+    await page.setViewportSize({ width: 900, height: 800 });
+    const tour = await firstStart(page);
+    const headings: string[] = [];
+    for (;;) {
+      const heading = (await tour.getByRole("heading").textContent()) ?? "";
+      headings.push(heading);
+      if (heading !== "Willkommen bei Kontext") {
+        // Each card after the welcome lights up its place on the screen.
+        await expect(page.locator("div.fixed.ring-2.ring-primary")).toBeVisible();
+      }
+      const next = tour.getByRole("button", { name: /^(Weiter|Fertig)$/ });
+      if ((await next.textContent()) === "Fertig") break;
+      await next.click();
+      await expect(tour.getByRole("heading")).not.toHaveText(heading);
+    }
+    expect(headings).toEqual(["Willkommen bei Kontext", "E-Mail", "Kalender", "Chat"]);
+  });
+
   test("zeigt am Handy auf die Leiste unten @phone", async ({ page }) => {
     const tour = await firstStart(page);
     await tour.getByRole("button", { name: "Weiter" }).click();
