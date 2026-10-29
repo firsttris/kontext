@@ -7,6 +7,14 @@ Steps that an update needs beyond raising the version are marked **Upgrade**.
 
 ## Unreleased
 
+- Mail: "Zustellbestätigung anfordern" when writing – the receiving servers send back a delivery
+  report (DSN, RFC 3461) as proof the mail was accepted, or why not. The submission's envelope
+  carries `NOTIFY=SUCCESS,FAILURE` for each recipient and `RET=HDRS` and `ENVID` on `mailFrom`
+  (RFC 8621 §7); the envelope id is the local part of the mail's Message-ID. The sent mail shows
+  "Zugestellt an … · time" (or "Nicht zugestellt", "Verzögert") once the report is in; the report
+  itself shows who it is about, delivered or not, when, and the server's reason. Stalwart accepts
+  the parameters and reports local deliveries too; it leaves `EmailSubmission.dsnBlobIds` empty,
+  so Kontext finds the reports among the mails. Not for encrypted or signed mails.
 - Calendar: "Geburtstage" – the contacts' birthdays (JSContact `anniversaries` of kind "birth")
   from every address book you can see, as all-day entries in day, week, month and list, with the
   age when the year is known ("Petra Keller (52)"). A click opens the contact. Worked out in the

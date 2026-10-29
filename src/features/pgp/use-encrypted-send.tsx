@@ -228,6 +228,7 @@ export const useEncryptedSend = (from: string | undefined, recipients: string[])
         attachments: [],
         draftId: null,
         requestReceipt: false,
+        requestDelivery: false,
       },
       folders,
     );

@@ -1,4 +1,5 @@
 import { expect, type Page, test } from "@playwright/test";
+import { deliverReport } from "./delivery-report";
 import { fillDemo } from "./demo-data";
 import {
   addAttendees,
@@ -733,5 +734,30 @@ test.describe("Screenshots @screenshots", () => {
     } finally {
       box.stop();
     }
+  });
+
+  test("Zustellbericht", async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await deliverReport("jonas", {
+      subject: "Angebot Wartungsvertrag 2027",
+      recipients: [
+        { address: "petra@keller-elektro.test", action: "delivered" },
+        {
+          address: "p.keller@keller-elektro.test",
+          action: "failed",
+          diagnostic: "550 5.1.1 <p.keller@keller-elektro.test>: Recipient address rejected",
+        },
+      ],
+    });
+    await login(page);
+    await page
+      .getByRole("list", { name: "Posteingang" })
+      .getByText("Delivery Status Notification")
+      .first()
+      .click();
+    await expect(page.getByRole("region", { name: "Zustellbericht" })).toContainText(
+      "Nicht zugestellt an p.keller@keller-elektro.test",
+    );
+    await shot(page, "dsn");
   });
 });

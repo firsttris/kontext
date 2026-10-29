@@ -35,6 +35,14 @@ const longDateTime = new Intl.DateTimeFormat(LOCALE, {
   minute: "2-digit",
 });
 
+const noteDateTime = new Intl.DateTimeFormat(LOCALE, {
+  timeZone: TIME_ZONE,
+  day: "numeric",
+  month: "short",
+  hour: "2-digit",
+  minute: "2-digit",
+});
+
 /** The heads of a week's columns, Monday first, in two letters: "Mo Di Mi …", "Mo Tu We …". */
 export const weekdayHeads = (locale: string): string[] => {
   const format = new Intl.DateTimeFormat(locale, { weekday: "short", timeZone: "UTC" });
@@ -60,6 +68,9 @@ export const listDate = (iso: string, now: Date): string => {
 
 /** For the reading pane: "Fr., 23. Oktober 2026, 09:41". */
 export const readingDate = (iso: string): string => longDateTime.format(new Date(iso));
+
+/** For a note at a mail (a receipt, a delivery report): "29. Okt., 17:24". */
+export const noteDate = (iso: string): string => noteDateTime.format(new Date(iso));
 
 export const displayName = (address: EmailAddress | undefined | null): string =>
   address ? address.name?.trim() || address.email : "";
