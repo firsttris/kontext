@@ -92,7 +92,7 @@ const Row = ({
       selected={false}
       onPick={onPick}
       group={group}
-      onSwipe={onSwipe ?? ((action) => swipe("a1", email, action))}
+      onSwipe={onSwipe ?? ((action) => swipe("a1", email, action, group))}
     />
   );
 };
@@ -126,12 +126,17 @@ describe("MessageRow swiped on the phone", () => {
 
   it("marks a conversation shown as unread read, as the sign under the line says", async () => {
     const email = mail({ $seen: true });
-    render(<Row email={email} group={{ count: 2, names: ["Anna", "Jonas"], unread: true }} />);
+    render(
+      <Row
+        email={email}
+        group={{ count: 2, names: ["Anna", "Jonas"], unread: true, unreadIds: ["e0"] }}
+      />,
+    );
     drag(250);
     expect(screen.getByText("Als gelesen markieren")).toBeTruthy();
     lift(250);
     await act(async () => undefined);
     expect(actions.setSeen).toHaveBeenCalledOnce();
-    expect(actions.setSeen.mock.calls[0]).toEqual(["a1", expect.any(Array), true]);
+    expect(actions.setSeen.mock.calls[0]).toEqual(["a1", ["e0"], true]);
   });
 });

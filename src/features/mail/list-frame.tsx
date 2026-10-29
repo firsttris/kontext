@@ -307,7 +307,14 @@ export const ListFrame = ({
                     answer={answers.get(pickKey(accountOf(row), row.email.id))}
                     group={groups.get(pickKey(accountOf(row), row.email.id))}
                     shared={!personal.has(accountOf(row))}
-                    onSwipe={(action) => swipe(accountOf(row), row.email, action)}
+                    onSwipe={(action) =>
+                      swipe(
+                        accountOf(row),
+                        row.email,
+                        action,
+                        groups.get(pickKey(accountOf(row), row.email.id)),
+                      )
+                    }
                   />
                 </li>
               );

@@ -56,7 +56,9 @@ eingehende Anrufe, **auch wenn Kontext ganz geschlossen ist**.
   wird sie gelesen bzw. ungelesen. Was jede Richtung tut (Archivieren, Löschen, Gelesen /
   ungelesen, Markieren oder Nichts), steht unter *Einstellungen → Darstellung → Wischen in der
   Mail-Liste*, je Gerät. Erst ab etwa einem Drittel der Breite zählt es; kürzer schnappt die
-  Zeile zurück.
+  Zeile zurück. Eine als Unterhaltung gezeigte, ungelesene Zeile wird mit allen ihren
+  ungelesenen Mails gelesen. Hat ein langes Drücken die Mail ausgewählt, wischt der Finger danach
+  nicht mehr.
 
   ![Eine Mail am Handy nach links wischen: darunter „Archivieren“](screenshots/phone-swipe.png){ width="260" }
 - **Teilen in Kontext:** Im Teilen-Menü anderer Apps steht Kontext. Geteilte Fotos, Dateien,
