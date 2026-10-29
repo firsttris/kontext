@@ -7,6 +7,9 @@ Steps that an update needs beyond raising the version are marked **Upgrade**.
 
 ## Unreleased
 
+- Mail: "Anhang vergessen?" – when the own text or the subject speaks of an attachment ("Anhang",
+  "anbei", "angehängt", "attached" …) and nothing is attached, Kontext asks before sending: attach
+  a file or send without. The quoted mail below a reply does not count.
 - Calendar: a reminder per appointment, from "Zu Beginn" to "1 Woche vorher" (all-day: on the day
   or days before, in the morning), as a notification or by mail. Stalwart sends the mail and tells
   the server when a notification is due, so both come with Kontext closed too (the notification as
