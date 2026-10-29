@@ -1,4 +1,7 @@
-/** The always visible formatting bar of the composer (as in the mockup: B I U S, lists, indent, link). */
+/**
+ * The always visible formatting bar of the composer (as in the mockup: B I U S, lists, indent,
+ * link), then size, colours and tables (format-menus.tsx).
+ */
 import type { Editor } from "@tiptap/react";
 import { useEditorState } from "@tiptap/react";
 import {
@@ -18,6 +21,7 @@ import {
 import type { ReactNode } from "react";
 import { cn } from "@/lib/cn";
 import { m } from "@/paraglide/messages";
+import { FormatMenus } from "./format-menus";
 
 type Tool = {
   label: string;
@@ -142,6 +146,10 @@ export const EditorToolbar = ({ editor, extra }: { editor: Editor; extra?: React
           })}
         </div>
       ))}
+      <div className="flex items-center gap-0.5">
+        <span aria-hidden="true" className="mx-1 h-5 w-px bg-border" />
+        <FormatMenus editor={editor} />
+      </div>
       {extra ? (
         <div className="flex items-center gap-0.5">
           <span aria-hidden="true" className="mx-1 h-5 w-px bg-border" />

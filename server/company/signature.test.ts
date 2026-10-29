@@ -84,4 +84,21 @@ describe("signature details, review", () => {
       textSignature: "Kasse $& [Abteilung]",
     });
   });
+
+  it("drops a table row whose placeholder stays empty, its label cell too", () => {
+    const html =
+      "<table><colgroup><col><col></colgroup><tbody>" +
+      "<tr><td><p>Telefon</p></td><td><p>[Telefon]</p></td></tr>" +
+      "<tr><td><p>E-Mail</p></td><td><p>[E-Mail]</p></td></tr></tbody></table>";
+    expect(signaturePatches({ html, text: "" }, anna).a?.htmlSignature).toBe(
+      "<table><colgroup><col><col></colgroup><tbody>" +
+        "<tr><td><p>E-Mail</p></td><td><p>anna@weber.test</p></td></tr></tbody></table>",
+    );
+  });
+
+  it("drops a table that loses all its rows", () => {
+    const html =
+      "<table><tbody><tr><td><p>Mobil [Mobil]</p></td></tr></tbody></table><p>[Name]</p>";
+    expect(signaturePatches({ html, text: "" }, anna).a?.htmlSignature).toBe("<p>Anna Weber</p>");
+  });
 });
