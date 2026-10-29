@@ -99,6 +99,19 @@ test.describe("Screenshots @screenshots", () => {
     await shot(page, "signature-details");
   });
 
+  test("Erinnerung am Termin", async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await login(page);
+    await page.goto(`/calendar?event=new&start=${today()}T14:00`);
+    const dialog = page.getByRole("dialog");
+    await dialog.getByLabel("Titel").fill("Wartung Heizung Becker");
+    await dialog.getByLabel("Ort").fill("Lindenweg 12, Bühl");
+    await dialog.getByLabel("Erinnerung").selectOption({ label: "1 Tag vorher" });
+    await dialog.getByLabel("Erinnern per").selectOption({ label: "Mail" });
+    await dialog.getByLabel("Erinnerung").scrollIntoViewIfNeeded();
+    await shot(page, "event-reminder");
+  });
+
   test("Handy", async ({ browser }) => {
     const context = await browser.newContext({
       viewport: { width: 390, height: 844 },

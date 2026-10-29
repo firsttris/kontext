@@ -11,6 +11,12 @@ Steps that an update needs beyond raising the version are marked **Upgrade**.
   `[Position]` and `[Abteilung]`. Each person enters them once under *Einstellungen → Profil*
   ("Angaben für die Signatur"); saving updates their signature at once. A line whose placeholder
   has no value is left out. The database gets the table `signature_detail` at start.
+- Calendar: a reminder per appointment, from "Zu Beginn" to "1 Woche vorher" (all-day: on the day
+  or days before, in the morning), as a notification or by mail. Stalwart sends the mail and tells
+  the server when a notification is due, so both come with Kontext closed too (the notification as
+  a push, where notifications are on). New appointments start with a notification 15 minutes
+  ahead as before; appointments without a reminder no longer remind (before, every appointment
+  reminded 15 minutes ahead while Kontext was open).
 - Calendar: "Feiertage eintragen" under *Kalender verwalten* puts the public holidays of a German
   state (all 16) into a calendar of their own, this year and next, all-day and shown as free;
   running it again adds only what is missing. The phone's opening hours take the state too

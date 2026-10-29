@@ -373,3 +373,30 @@ describe("withStart", () => {
     expect([moved.startTime, moved.endTime]).toEqual(["", "10:30"]);
   });
 });
+
+describe("reminder", () => {
+  const me = { email: "jonas@weber.test" };
+  const form = { ...newEventForm("2026-10-23T10:00:00"), title: "Wartung Heizung" };
+
+  it("gives a new appointment a notice 15 minutes ahead, as before", () => {
+    expect(form.reminder).toEqual({ minutes: 15, action: "display" });
+    expect(formToEvent(form, me).alerts).toEqual({
+      reminder: {
+        "@type": "Alert",
+        trigger: { "@type": "OffsetTrigger", offset: "-PT15M", relativeTo: "start" },
+        action: "display",
+      },
+    });
+  });
+
+  it("writes a reminder by mail a day ahead and reads it back", () => {
+    const written = formToEvent({ ...form, reminder: { minutes: 1440, action: "email" } }, me);
+    const event = { id: "e", calendarIds: {}, ...written } as unknown as CalendarEvent;
+    expect(eventToForm(event, []).reminder).toEqual({ minutes: 1440, action: "email" });
+  });
+
+  it("removes it for none and leaves alerts it cannot show alone", () => {
+    expect(formToEvent({ ...form, reminder: null }, me).alerts).toBeNull();
+    expect("alerts" in formToEvent({ ...form, reminder: "kept" }, me)).toBe(false);
+  });
+});

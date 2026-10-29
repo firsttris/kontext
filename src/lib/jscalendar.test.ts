@@ -5,6 +5,7 @@ import {
   durationMinutes,
   eventSpan,
   eventTimes,
+  findLinkedEvent,
   fromLocal,
   isMeetingLink,
   isoWeek,
@@ -177,5 +178,35 @@ describe("isMeetingLink", () => {
     expect(isMeetingLink("http://localhost:5173/meet/AbCdEfGhIjKlMnOp")).toBe(true);
     expect(isMeetingLink("javascript:alert(1)//x/meet/AAAAAAAAAAAAAAAA")).toBe(false);
     expect(isMeetingLink("data:text/html,x/meet/AAAAAAAAAAAAAAAA")).toBe(false);
+  });
+});
+
+describe("findLinkedEvent", () => {
+  const single = event("h1a", "2026-10-29T10:00:00", "PT1H", { baseEventId: "b", accountId: "d" });
+  const monday = event("h1m", "2026-11-02T10:00:00", "PT1H", {
+    baseEventId: "s",
+    recurrenceId: "2026-11-02T10:00:00",
+    accountId: "d",
+  });
+  const nextMonday = event("h1n", "2026-11-09T10:00:00", "PT1H", {
+    baseEventId: "s",
+    recurrenceId: "2026-11-09T10:00:00",
+    accountId: "d",
+  });
+  const events = [single, monday, nextMonday];
+
+  it("finds the event by its own id", () => {
+    expect(findLinkedEvent(events, "h1n", "d", "2026-10-29")).toBe(nextMonday);
+  });
+
+  it("finds it by the stored event's id on the day, as a pushed reminder links it", () => {
+    expect(findLinkedEvent(events, "b", "d", "2026-10-29")).toBe(single);
+    expect(findLinkedEvent(events, "s", "d", "2026-11-09")).toBe(nextMonday);
+    expect(findLinkedEvent(events, "s", "d", "2026-11-03")).toBeUndefined();
+  });
+
+  it("only in the account asked for", () => {
+    expect(findLinkedEvent(events, "h1a", "e", "2026-10-29")).toBeUndefined();
+    expect(findLinkedEvent(events, "h1a", undefined, "2026-10-29")).toBe(single);
   });
 });

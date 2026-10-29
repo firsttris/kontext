@@ -1279,8 +1279,8 @@ Mal („Nein, danke“). Gemerkt wird das im Browser, je Gerät.
 - **Vorne:** Ist Kontext offen und vorn, zeigt der Service Worker nichts; die App zeigt es selbst.
   Mail und Chat tragen dasselbe `tag` wie die Meldungen der offenen App, so erscheint nichts doppelt.
 - **iPhone und iPad:** Web Push gibt es dort nur für die installierte App („Zum Home-Bildschirm“).
-- **Erinnerungen an Termine** (15 Minuten vorher, `src/lib/notifications.ts`) kommen weiterhin nur,
-  solange Kontext offen ist.
+- **Erinnerungen an Termine** kommen bei geschlossener App ebenfalls als Push, wenn der Termin per
+  Hinweis erinnert; siehe [Erinnerungen an Termine](#erinnerungen-an-termine).
 
 ## Speicherplatz
 
@@ -1413,6 +1413,39 @@ jeden einzelnen Termin mit eigener ID, `baseEventId` und `recurrenceId`.
   Programm), bleiben beim Speichern unverändert.
 
 Ziehen im Wochenraster ändert immer nur den einen Termin.
+
+## Erinnerungen an Termine
+
+Jeder Termin hat höchstens eine Erinnerung, gespeichert als JSCalendar-Alert (RFC 8984 §4.5.2,
+in iCalendar ein `VALARM`): ein Abstand vor dem Beginn (`OffsetTrigger`, `relativeTo: "start"`)
+und `action` „display“ (Hinweis) oder „email“ (Mail). Mehr als eine bietet das Formular nicht an,
+weil Stalwart nur die erste Erinnerung eines Termins auslöst (`next_alarm` in
+`crates/groupware/src/calendar/alarm.rs`). Zur Wahl stehen „Zu Beginn“ bis „1 Woche vorher“; bei
+ganztägigen Terminen „Am Tag“ bis „1 Woche vorher“, jeweils um 9 Uhr (`src/lib/reminders.ts`).
+Erinnerungen aus anderen Programmen, die das Formular nicht abbildet (mehrere, nach dem Ende, zu
+einer festen Zeit), zeigt es als „Eigene“ und lässt sie beim Speichern unverändert. Neue Termine
+mit Uhrzeit erinnern 15 Minuten vorher per Hinweis, wie es Kontext früher für jeden Termin tat;
+Termine ohne Erinnerung erinnern nicht.
+
+Beides löst Stalwart aus, auch wenn Kontext zu ist (`crates/services/src/task_manager/alarm.rs`):
+
+- **Mail:** Stalwart schickt sie an die eigene Adresse, Absender „Stalwart Calendar“ (einstellbar
+  unter `x:CalendarAlarm`, `fromName`), mit seinem eigenen, englischen Text. Dafür braucht das
+  Konto die Berechtigung `calendarAlarmsSend`, die Benutzer in Stalwart von Haus aus haben.
+- **Hinweis:** Stalwart legt ein `calendarAlert` in den JMAP-Event-Stream
+  (`crates/jmap/src/api/event_source.rs`). Der Kontext-Server hört dort für jeden mit
+  Push-Anmeldung ohnehin auf neue Mails mit (`server/push/mail-watch.ts`, Typen
+  `Email,CalendarAlert`), holt den Termin und schickt den Push „Erinnerung: <Titel>“ mit Tag,
+  Uhrzeit und Ort (`server/push/reminders.ts`). Die offene App zeigt dieselbe Erinnerung selbst
+  (`src/features/notifications/announcements.ts`) unter demselben `tag`
+  (`reminder-<Konto>/<Termin>[/<Datum der Serie>]`), so erscheint sie nur einmal. Ein Klick öffnet
+  den Termin; weil die Ansichten einzelne Termine einer Serie mit eigener ID laden, sucht die
+  Kalenderseite auch über die ID des gespeicherten Termins und den Tag (`findLinkedEvent`).
+
+Ganztägige Termine haben keine Zeitzone; Stalwart rechnet ihre Erinnerung in UTC aus
+(`next_alarm(now, Tz::Floating)`), Mail und Push kommen also um 10 Uhr (Sommerzeit 11 Uhr) statt
+um 9 Uhr. Erinnerungen an Termine in Kalendern gemeinsamer Postfächer bekommen alle, die das
+Postfach sehen.
 
 ## Feiertage
 
