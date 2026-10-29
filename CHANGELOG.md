@@ -12,6 +12,13 @@ Steps that an update needs beyond raising the version are marked **Upgrade**.
   original's date until changed. Saved as a new appointment (new uid), so the attendees get
   invitations as for any new one. A date of a series is copied as that date alone, without the
   repetition.
+- Mail: the "External" hint, switched on per company under *Einstellungen → Externe
+  Empfänger* (off until then). Mail from outside the company carries the mark "Extern" in the
+  list and when reading; before a mail goes to recipients outside, or an appointment invites new
+  attendees outside, Kontext asks once ("An externe Empfänger senden?", naming them), after
+  "Anhang vergessen?" when both come. Inside are the company's own domains (Stalwart's
+  `x:Domain`) and the partner domains entered there, each with its subdomains. The database gets
+  the table `partner_domain` (migration `0038_partner_domains`) at start.
 - Mail: pictures in the text – by the "Bild einfügen" button, pasted (a screenshot) or dropped
   in, and resized by their corners. They go out as inline images (`cid:` in multipart/related),
   so Outlook, Gmail and Apple Mail show them in the text; drafts keep them. Files of a reopened

@@ -12,6 +12,7 @@ import { MeetingField } from "@/features/calls/meeting-field";
 import { useAddressSuggestions } from "@/features/contacts/use-suggestions";
 import { EventDocuments } from "@/features/documents/document-actions";
 import { useShareWith } from "@/features/documents/use-share-with";
+import { useExternalQuestion } from "@/features/mail/external-question";
 import { RecipientField } from "@/features/mail/recipient-field";
 import { formatAddressInput } from "@/lib/addresses";
 import { copyForm, copyToEvent } from "@/lib/event-copy";
@@ -29,6 +30,7 @@ import {
   validateEventForm,
   withStart,
 } from "@/lib/event-form";
+import { newExternalAttendees } from "@/lib/external-hint";
 import { type CalendarEvent, isInstance, toLocal } from "@/lib/jscalendar";
 import { formAt, formSlot } from "@/lib/planning";
 import { defaultReminder, reminderForKind } from "@/lib/reminders";
@@ -114,6 +116,8 @@ export const EventEditor = ({ event, series, start, copyOf, onDone, onCancel }: 
         }
       : null;
   });
+  // "An externe Empfänger senden?" for attendees outside the company not invited before.
+  const external = useExternalQuestion("invitation");
   const [scope, setScope] = useState<Scope>("this");
   const [problem, setProblem] = useState<string | null>(null);
   // The last whole start, for when a date or time field was empty while being retyped.
@@ -145,12 +149,24 @@ export const EventEditor = ({ event, series, start, copyOf, onDone, onCancel }: 
     });
   };
 
-  const submit = async (e: FormEvent) => {
-    e.preventDefault();
+  const submit = async (e?: FormEvent, toOutside = false) => {
+    e?.preventDefault();
     const invalid = validateEventForm(form);
     const filled = { ...form, reminder };
     if (invalid) {
       setProblem(PROBLEMS[invalid]());
+      return;
+    }
+    const outside =
+      toOutside || !external.inside
+        ? []
+        : newExternalAttendees(
+            attendeeEmails(form.attendees),
+            attendeeEmails(initial.attendees),
+            external.inside,
+          );
+    if (outside.length) {
+      external.ask(outside, () => void submit(undefined, true));
       return;
     }
     const forSeries = !instance || scope !== "this";
@@ -174,7 +190,7 @@ export const EventEditor = ({ event, series, start, copyOf, onDone, onCancel }: 
   };
 
   return (
-    <form onSubmit={submit} className="flex flex-col gap-4">
+    <form onSubmit={(e) => void submit(e)} className="flex flex-col gap-4">
       {instance ? (
         <fieldset className="m-0 flex flex-col gap-2 border-0 p-0">
           <legend className="mb-1.5 p-0 text-[13px] text-muted">{m.calendar_scope()}</legend>
@@ -326,6 +342,7 @@ export const EventEditor = ({ event, series, start, copyOf, onDone, onCancel }: 
           {m.calendar_event_cancel()}
         </Button>
       </div>
+      {external.dialog}
     </form>
   );
 };
