@@ -7,6 +7,10 @@ Steps that an update needs beyond raising the version are marked **Upgrade**.
 
 ## Unreleased
 
+- Company signature: besides `[Name]` and `[E-Mail]` the placeholders `[Telefon]`, `[Mobil]`,
+  `[Position]` and `[Abteilung]`. Each person enters them once under *Einstellungen → Profil*
+  ("Angaben für die Signatur"); saving updates their signature at once. A line whose placeholder
+  has no value is left out. The database gets the table `signature_detail` at start.
 - Mail: "Papierkorb leeren" and "Spam leeren" at the top of those folders, after a question with
   the number of mails. A mail that is also in another folder only leaves Spam or Papierkorb; in a
   shared mailbox only for those who may delete there.

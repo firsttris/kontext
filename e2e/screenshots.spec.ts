@@ -86,6 +86,19 @@ test.describe("Screenshots @screenshots", () => {
     await context.close();
   });
 
+  test("Angaben für die Signatur", async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await login(page);
+    await page.goto("/settings?section=profile");
+    const card = page.getByRole("region", { name: "Angaben für die Signatur" });
+    await card.getByLabel("Position").fill("Geschäftsführer");
+    await card.getByLabel("Abteilung").fill("Kundendienst");
+    await card.getByLabel("Telefon").fill("07223 4711-10");
+    await card.getByLabel("Mobil").fill("0170 1234567");
+    await card.scrollIntoViewIfNeeded();
+    await shot(page, "signature-details");
+  });
+
   test("Papierkorb leeren", async ({ page }) => {
     await page.setViewportSize({ width: 1440, height: 900 });
     // Something in the Papierkorb: a mail of its own, so the other pictures keep the seed's.

@@ -21,6 +21,7 @@ import type { Mailstore } from "./mailstore";
 import type { Management } from "./management";
 import type { CompanySettings } from "./settings";
 import type { Folder } from "./sharing";
+import type { SignatureDetailsStore } from "./signature-details";
 
 export type CompanyDeps = {
   management: Management;
@@ -28,6 +29,8 @@ export type CompanyDeps = {
   /** Free and busy times of the company's calendars. */
   calendars: Calendars;
   settings: CompanySettings;
+  /** What each person entered for the signature ([Telefon], [Mobil] …). */
+  signatureDetails: SignatureDetailsStore;
   /** Categories of the shared mailboxes, for the rules that set them. */
   categories: CategoryStore;
   migrations: MigrationDeps;

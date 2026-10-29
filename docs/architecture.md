@@ -226,7 +226,13 @@ mit einem eigenen API-Schlüssel an und erlaubt nur, was die Firmenverwaltung br
 - **Firmen-Signatur:** eine Vorlage mit `[Name]` und `[E-Mail]`, gespeichert in der
   SQLite-Datenbank von Kontext (`company_setting`). „Für alle übernehmen“ schreibt sie in jede Absenderadresse
   (`Identity`) aller aktiven Mitarbeiter, ausgefüllt mit Name und Adresse der Identität; neue
-  Mitarbeiter bekommen sie beim Anlegen.
+  Mitarbeiter bekommen sie beim Anlegen. `[Telefon]`, `[Mobil]`, `[Position]` und `[Abteilung]`
+  trägt jede Person selbst ein (*Einstellungen → Profil*, `/api/signature-details`, Tabelle
+  `signature_detail`; Stalwarts `x:Account` hat dafür keine Felder). Speichern schreibt die
+  Firmen-Signatur sofort neu in die eigenen Absenderadressen. Eine Zeile mit einem Platzhalter
+  ohne Wert fällt weg (`server/company/signature.ts`): im Text die Zeile, im HTML ihr Text samt
+  `<br>` und was sie leer zurücklässt (Fett, ein ganzer Absatz); absichtliche Leerzeilen der
+  Vorlage bleiben.
 - **Austritt:** Zugang sperren, das Postfach einer Kollegin übergeben (alle Ordner per
   `shareWith` mit allen Rechten außer Teilen), neue Mails weiterleiten und einmal am Tag
   automatisch antworten. Weiterleitung und Antwort sind ein Sieve-Skript

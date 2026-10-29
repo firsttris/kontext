@@ -111,6 +111,10 @@ const setup = (
       m365: async () => null,
       saveM365: async () => {},
     },
+    signatureDetails: {
+      of: async () => ({ phone: "", mobile: "", position: "", department: "" }),
+      save: async () => {},
+    },
     migrations: {} as never,
     syncs: {} as never,
     currentEmail: async () => email,

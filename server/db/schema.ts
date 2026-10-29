@@ -74,6 +74,16 @@ export const companySetting = sqliteTable("company_setting", {
   updatedAt: integer("updated_at", { mode: "timestamp_ms" }).notNull(),
 });
 
+/** What a person entered for the company signature: [Telefon], [Mobil] … (server/company/signature.ts). */
+export const signatureDetail = sqliteTable("signature_detail", {
+  memberId: text("member_id").primaryKey(),
+  phone: text("phone").notNull().default(""),
+  mobile: text("mobile").notNull().default(""),
+  position: text("position").notNull().default(""),
+  department: text("department").notNull().default(""),
+  updatedAt: integer("updated_at", { mode: "timestamp_ms" }).notNull(),
+});
+
 /** A move from an uploaded file into one account (Outlook PST, vCard, iCalendar), with progress. */
 export const migrationJob = sqliteTable("migration_job", {
   id: text("id").primaryKey(),
