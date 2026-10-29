@@ -7,6 +7,9 @@ Steps that an update needs beyond raising the version are marked **Upgrade**.
 
 ## Unreleased
 
+- Mail: "Papierkorb leeren" and "Spam leeren" at the top of those folders, after a question with
+  the number of mails. A mail that is also in another folder only leaves Spam or Papierkorb; in a
+  shared mailbox only for those who may delete there.
 - Calendar: "Feiertage eintragen" under *Kalender verwalten* puts the public holidays of a German
   state (all 16) into a calendar of their own, this year and next, all-day and shown as free;
   running it again adds only what is missing. The phone's opening hours take the state too

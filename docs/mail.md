@@ -42,6 +42,13 @@ IMAP und SMTP.
   eigenen Ordnern.
 - **Mehrere Mails auf einmal** (Kästchen links an jeder Zeile, Strg-/Shift-Klick, `x`; am Handy
   lange drücken): archivieren, löschen, gelesen, Kategorie, verschieben, Aufgaben erstellen.
+- **Spam und Papierkorb leeren:** oben in der Liste der beiden Ordner, nach einer Rückfrage mit
+  der Zahl der Mails. Gelöscht ist dann gelöscht – Stalwarts Community-Edition hebt nichts auf.
+  Eine Mail, die zugleich in einem anderen Ordner liegt, verlässt nur Spam bzw. Papierkorb. In
+  gemeinsamen Postfächern nur, wer dort löschen darf.
+
+  ![Papierkorb mit „Papierkorb leeren“ und der Rückfrage](screenshots/empty-trash.png)
+
 - **Unterhaltungen beim Lesen:** frühere Mails und die Antworten seitdem, Zitate eingeklappt;
   gruppiert wie Gmail auf Wunsch.
 - **Wiedervorlage:** eine Mail aus dem Weg bis morgen, Montag oder einem Zeitpunkt – dann ist sie

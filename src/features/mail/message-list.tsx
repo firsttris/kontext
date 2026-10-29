@@ -7,6 +7,7 @@ import { mailboxName, mailboxRights } from "@/lib/mailboxes";
 import { m } from "@/paraglide/messages";
 import type { MailSearch } from "@/routes/_app/mail.$accountId.$mailboxId";
 import { RESURFACED, useSnoozes } from "../snooze/queries";
+import { canEmpty, EmptyFolder } from "./empty-folder";
 import { FilterChips, ListFrame, type Row } from "./list-frame";
 import { useEmailList, useHeldMails, useMailAccounts } from "./queries";
 import { useThreadView } from "./thread-view";
@@ -114,6 +115,9 @@ export const MessageList = ({ accountId, mailbox, search }: Props) => {
       dragMail={dragMail}
       folderId={mailbox.id}
       inJunk={mailbox.role === "junk"}
+      folderAction={
+        canEmpty(mailbox) ? <EmptyFolder accountId={accountId} mailbox={mailbox} /> : undefined
+      }
       filters={
         isSent ? (
           <FilterChips

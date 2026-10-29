@@ -1,6 +1,6 @@
 import { expect, type Page, test } from "@playwright/test";
 import { fillDemo } from "./demo-data";
-import { addAttendees, login } from "./helpers";
+import { addAttendees, addMail, login } from "./helpers";
 import { pairBox } from "./paired-box";
 import { giveKey } from "./pgp-key";
 
@@ -84,6 +84,25 @@ test.describe("Screenshots @screenshots", () => {
     ).toBeVisible();
     await shot(page, "calendar-dark");
     await context.close();
+  });
+
+  test("Papierkorb leeren", async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    // Something in the Papierkorb: a mail of its own, so the other pictures keep the seed's.
+    await addMail("jonas", "jonas", "Newsletter: Frühjahrsaktion Solarthermie", {
+      name: "Großhandel Richter",
+      email: "newsletter@richter-sanitaer.test",
+    });
+    await login(page);
+    await page
+      .getByRole("list", { name: "Posteingang" })
+      .getByText("Newsletter: Frühjahrsaktion Solarthermie")
+      .click();
+    await page.getByRole("button", { name: "Löschen" }).first().click();
+    await page.getByRole("link", { name: "Papierkorb" }).click();
+    await page.getByRole("button", { name: "Papierkorb leeren" }).click();
+    await expect(page.getByRole("dialog", { name: "Papierkorb leeren?" })).toBeVisible();
+    await shot(page, "empty-trash");
   });
 
   test("Handy", async ({ browser }) => {
