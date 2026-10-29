@@ -166,6 +166,16 @@ test.describe("Screenshots @screenshots", () => {
     web.close();
   });
 
+  test("Serie ab einem Termin ändern", async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await login(page);
+    await page.goto(`/calendar?date=${today()}&view=agenda`);
+    await page.getByRole("list", { name: "Liste" }).getByText("Teambesprechung").nth(1).click();
+    await page.getByRole("dialog").getByRole("button", { name: "Bearbeiten" }).click();
+    await page.getByRole("dialog").getByLabel("Dieser und alle folgenden").check();
+    await shot(page, "series-following");
+  });
+
   test("Handy", async ({ browser }) => {
     const context = await browser.newContext({
       viewport: { width: 390, height: 844 },
