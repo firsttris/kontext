@@ -701,6 +701,30 @@ test.describe("Mail am Handy @phone", () => {
     await expect(form).toHaveCount(0);
   });
 
+  test("zeigt am Handy, warum nicht verschlüsselt werden kann @phone", async ({ page }) => {
+    await login(page);
+    await page.getByRole("link", { name: "Neue Mail" }).first().click();
+    const form = page.getByRole("form", { name: "Neue Mail" });
+    // From info@ there is never an own key for the sender, so encrypting is blocked.
+    const from = form.getByLabel("Von");
+    const shared = await from.locator("option", { hasText: "info@" }).first().getAttribute("value");
+    await from.selectOption(shared!);
+    await form.getByLabel("Betreff").fill(unique("Vertraulich am Handy"));
+    await form.getByRole("button", { name: "Weitere Aktionen" }).click();
+    const menu = page.getByRole("menu");
+    await menu.getByRole("menuitemcheckbox", { name: "Lesebestätigung anfordern" }).click();
+    await menu.getByRole("menuitemcheckbox", { name: "Vertraulich senden" }).click();
+    await page.keyboard.press("Escape");
+    await expect(menu).toHaveCount(0);
+    // With the menu closed the warning stays in sight, and the trigger takes its colour.
+    await expect(
+      form.getByRole("status").filter({ hasText: /Verschlüsseln geht nur|eigenen Schlüssel/ }),
+    ).toBeVisible();
+    await expect(form.getByRole("button", { name: "Weitere Aktionen" })).toHaveClass(/text-warn/);
+    await expect(form.getByRole("button", { name: "Weitere Aktionen" })).toBeFocused();
+    await form.getByRole("button", { name: "Verwerfen" }).click();
+  });
+
   test("lädt für Liste und Mail keine Verschlüsselung nach @phone", async ({ page }) => {
     // OpenPGP.js and node-forge (some 200 kB with gzip) only for a mail that needs them.
     const subject = unique("Rückruf Heizung Handy");
