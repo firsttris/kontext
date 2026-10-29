@@ -9,7 +9,21 @@ import { BackgroundColor, Color, FontSize, TextStyle } from "@tiptap/extension-t
 import StarterKit from "@tiptap/starter-kit";
 import { m } from "@/paraglide/messages";
 
+const TABLE = "border-collapse:collapse;margin:8px 0";
 const CELL = "border:1px solid #d4d4d8;padding:4px 8px;vertical-align:top;text-align:left";
+
+/**
+ * A table's or cell's own inline style: the one it came with (a quoted mail's layout table, a
+ * draft) stays as it was, without lines of ours; one made here starts with `made`.
+ */
+const ownStyle = (made: string) => ({
+  style: {
+    default: made,
+    // "" rather than null, which would fall back to the default and add our lines.
+    parseHTML: (element: HTMLElement) => element.getAttribute("style") ?? "",
+    renderHTML: ({ style }: { style?: string }) => (style ? { style } : {}),
+  },
+});
 
 /** "Normal" is no size at all: the text keeps the reader's own. */
 export const FONT_SIZES: { label: () => string; size: string | null }[] = [
@@ -45,11 +59,20 @@ export const richText = ({ autolink = false } = {}): Extensions => [
   FontSize,
   Color,
   BackgroundColor,
-  Table.configure({
-    resizable: false,
-    HTMLAttributes: { style: "border-collapse:collapse;margin:8px 0" },
-  }),
+  Table.extend({
+    addAttributes() {
+      return { ...this.parent?.(), ...ownStyle(TABLE) };
+    },
+  }).configure({ resizable: false }),
   TableRow,
-  TableHeader.configure({ HTMLAttributes: { style: `${CELL};font-weight:600` } }),
-  TableCell.configure({ HTMLAttributes: { style: CELL } }),
+  TableHeader.extend({
+    addAttributes() {
+      return { ...this.parent?.(), ...ownStyle(`${CELL};font-weight:600`) };
+    },
+  }),
+  TableCell.extend({
+    addAttributes() {
+      return { ...this.parent?.(), ...ownStyle(CELL) };
+    },
+  }),
 ];
