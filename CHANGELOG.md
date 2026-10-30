@@ -7,6 +7,12 @@ Steps that an update needs beyond raising the version are marked **Upgrade**.
 
 ## Unreleased
 
+- Documents: `deploy/.env.example` and the Quadlet use Schreibzeug 0.1.14 (was 0.1.8). **Upgrade:**
+  raise `SCHREIBZEUG_VERSION` in `deploy/.env` (or the image in `schreibzeug.container`) and start
+  again. Schreibzeug now thins out a file's older versions; to keep all of them, set
+  `SCHREIBZEUG_VERSIONS=all` before starting it (Schreibzeug's
+  [changelog](https://github.com/firsttris/schreibzeug/blob/main/CHANGELOG.md)).
+
 - S/MIME: the company admin keeps the trusted authorities ("S/MIME-Stellen"): upload a root or
   intermediate certificate (PEM or DER), see its name, issuer, validity and fingerprint, remove
   it. Only current CA certificates, at most 100; they count beside Mozilla's list and
