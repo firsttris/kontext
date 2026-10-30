@@ -111,8 +111,8 @@ gibt das nicht, darum fehlt dort das Menü.
 Das Menü bietet nur die Mitglieder des Postfachs an, dazu wer die Mail gerade hat. JMAP nennt
 die Mitglieder einer Gruppe nicht (der Principal hat keine, `crates/jmap-proto/src/object/principal.rs`),
 darum liest der Kontext-Server sie mit seinem Stalwart-Schlüssel: `GET /api/company/mailbox-members`
-gibt jedem Angemeldeten die Mitglieder der Postfächer, in denen er selbst Mitglied ist
-(`server/company/mailbox-members.ts`). Fehlt die Antwort, etwa ohne Firmenverwaltung, bietet das
+gibt jedem Angemeldeten die Mitglieder der Postfächer, in denen er selbst Mitglied ist, ohne
+gesperrte Konten (`server/company/mailbox-members.ts`). Fehlt die Antwort, etwa ohne Firmenverwaltung, bietet das
 Menü alle Personen der Firma an.
 
 ### Verschieben zwischen Postfächern

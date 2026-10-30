@@ -1,7 +1,8 @@
 /**
  * Who belongs to the caller's shared mailboxes, for "Zuweisen": JMAP's Principal has no members
  * (crates/jmap-proto/src/object/principal.rs in stalwartlabs/stalwart v1.0.1), so the server reads
- * them with its own key. Everyone signed in sees only the mailboxes they are a member of.
+ * them with its own key. Everyone signed in sees only the mailboxes they are a member of, and of
+ * those only the members who can still sign in.
  */
 import { type Company, type Roles, toCompany } from "./accounts";
 import type { CompanyDeps } from "./context";
@@ -13,10 +14,12 @@ export const membersOfOwnMailboxes = (
 ): Record<string, string[]> => {
   const self = company.employees.find((e) => e.email.toLowerCase() === email.toLowerCase());
   if (!self?.active) return {};
+  // A locked account stays in the group (Austritt deletes nothing) but can no longer work a mail.
+  const active = new Set(company.employees.filter((e) => e.active).map((e) => e.id));
   return Object.fromEntries(
     company.mailboxes
       .filter((mailbox) => mailbox.memberIds.includes(self.id))
-      .map((mailbox) => [mailbox.id, mailbox.memberIds]),
+      .map((mailbox) => [mailbox.id, mailbox.memberIds.filter((id) => active.has(id))]),
   );
 };
 

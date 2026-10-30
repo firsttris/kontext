@@ -12,7 +12,7 @@ describe("membersOfOwnMailboxes", () => {
   };
 
   it("lists the members of the mailboxes the caller belongs to, whatever the case", () => {
-    expect(membersOfOwnMailboxes(company, "Anna@Firma.de")).toEqual({ info: ["a", "j"] });
+    expect(membersOfOwnMailboxes(company, "Anna@Firma.de")).toEqual({ info: ["a"] });
   });
 
   it("lists nothing for a deactivated or unknown caller", () => {
