@@ -63,7 +63,7 @@ export const CHECK_HEADERS = {
   /** The sender's public key, if they send it along (src/lib/pgp.ts). */
   autocrypt: "header:Autocrypt:asText",
   /** How it came to the own server, topmost first (src/lib/transport.ts). */
-  received: "header:Received:asText:all",
+  received: "header:Received:all",
   /** Who asks for a read receipt (RFC 8098). */
   receiptTo: "header:Disposition-Notification-To:asAddresses",
   /** How to unsubscribe from a newsletter (RFC 2369, RFC 8058). */

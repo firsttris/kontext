@@ -21,6 +21,13 @@ describe("how a mail came", () => {
         "from mail.example.test (s.local [127.0.0.1]) by localhost (Stalwart SMTP) with ESMTP id 4AC; Sun, 25 Oct 2026 05:50:15 +0000",
       ]),
     ).toBe("unencrypted");
+    // Raw and folded, as Stalwart 1.0.1 returns header:Received:all.
+    expect(
+      transportOf([
+        " from x (localhost [127.0.0.1])\r\n\tby localhost (Stalwart SMTP) with ESMTP id 4B0;\r\n\tFri, 30 Oct 2026 09:34:37 +0000",
+      ]),
+    ).toBe("unencrypted");
+    expect(transportOf([" from x\r\n\tby y with ESMTPS id 1"])).toBe("encrypted");
     expect(transportOf([])).toBeNull();
     expect(transportOf(null)).toBeNull();
     expect(transportOf(["from x by y with HTTP"])).toBeNull();
