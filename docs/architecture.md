@@ -1683,7 +1683,11 @@ hielt die App die Wahl bis dahin pro Gerät im Browser). Was ein Gerät früher 
 setzt die App beim ersten Laden einmal auf dem Server und vergisst es im Browser
 (`src/lib/calendar-visibility.ts`); was dabei scheitert, bleibt im Browser und kommt beim nächsten
 Laden wieder dran. Geburtstage und Fällige Aufgaben sind keine Kalender und
-bleiben pro Gerät.
+bleiben pro Gerät. Bei den Kalendern gemeinsamer Postfächer übernimmt Stalwart 1.0.1 die
+Einstellungen eines Mitglieds beim nächsten `Calendar/set` eines anderen
+(`inherit_owner_preferences`): Ändert Anna Farbe, Freigabe oder Erinnerung von info@s Kalender,
+den Jonas ausgeblendet hat, wäre er auch für sie aus. Darum schickt jede Änderung das eigene
+`isVisible` mit (`withOwnVisibility`).
 
 ## Verfügbarkeit
 

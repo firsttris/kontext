@@ -17,3 +17,17 @@ export const hiddenToMove = (
     forget: known.map((calendar) => calendar.key),
   };
 };
+
+/**
+ * A calendar change with the person's own `isVisible` in it. Stalwart 1.0.1 copies one member's
+ * settings of a shared mailbox's calendar to another on that member's next Calendar/set
+ * (`inherit_owner_preferences`, crates/jmap/src/calendar/set.rs): without it, a colleague's hidden
+ * calendar would turn hidden for whoever changes its colour or sharing next.
+ */
+export const withOwnVisibility = <T extends object>(
+  patch: T,
+  visible: boolean,
+): T & { isVisible: boolean } =>
+  ((patch as { isVisible?: boolean }).isVisible === undefined
+    ? { ...patch, isVisible: visible }
+    : patch) as T & { isVisible: boolean };

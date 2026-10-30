@@ -25,7 +25,7 @@ import {
 import { CAPABILITIES } from "@/jmap/client";
 import { type AnswerLinksOf, type EventChange, saveEvent } from "@/jmap/invitations";
 import { principalName } from "@/jmap/principals";
-import { hiddenToMove } from "@/lib/calendar-visibility";
+import { hiddenToMove, withOwnVisibility } from "@/lib/calendar-visibility";
 import {
   addDays,
   type CalendarEvent,
@@ -414,12 +414,24 @@ export const useCalendarMutations = () => {
       shareWith: ShareWith;
       includeInAvailability?: boolean;
     }) =>
-      updateCalendar(client, calendar.accountId, calendar.calendar.id, {
-        shareWith,
-        ...(includeInAvailability === undefined
-          ? {}
-          : { includeInAvailability: includeInAvailability ? "all" : "none" }),
-      }),
+      updateCalendar(
+        client,
+        calendar.accountId,
+        calendar.calendar.id,
+        withOwnVisibility(
+          {
+            shareWith,
+            ...(includeInAvailability === undefined
+              ? {}
+              : {
+                  includeInAvailability: includeInAvailability
+                    ? ("all" as const)
+                    : ("none" as const),
+                }),
+          },
+          calendar.visible,
+        ),
+      ),
     onSettled: (_data, _error, { calendar }) => refresh(calendar.accountId),
   });
   return { createOne, deleteOne, share };

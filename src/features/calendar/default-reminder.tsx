@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Dialog } from "@/components/ui/dialog";
 import { useToast } from "@/components/ui/toast";
 import { updateCalendar } from "@/jmap/calendar";
+import { withOwnVisibility } from "@/lib/calendar-visibility";
 import { defaultAlertsOf, type Reminder, type ReminderChoice, reminderOf } from "@/lib/reminders";
 import { m } from "@/paraglide/messages";
 import { type CalendarRef, listKey } from "./queries";
@@ -57,10 +58,18 @@ const DefaultReminderDialog = ({
   const [allDay, setAllDay] = useState(() => choiceOf(calendar.calendar.defaultAlertsWithoutTime));
   const save = useMutation({
     mutationFn: () =>
-      updateCalendar(client, calendar.accountId, calendar.calendar.id, {
-        defaultAlertsWithTime: defaultAlertsOf(timed),
-        defaultAlertsWithoutTime: defaultAlertsOf(allDay),
-      }),
+      updateCalendar(
+        client,
+        calendar.accountId,
+        calendar.calendar.id,
+        withOwnVisibility(
+          {
+            defaultAlertsWithTime: defaultAlertsOf(timed),
+            defaultAlertsWithoutTime: defaultAlertsOf(allDay),
+          },
+          calendar.visible,
+        ),
+      ),
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: listKey(calendar.accountId) });
       toast.show(m.calendar_default_reminder_saved());
