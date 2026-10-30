@@ -19,4 +19,8 @@ describe("membersOfOwnMailboxes", () => {
     expect(membersOfOwnMailboxes(company, "jonas@firma.de")).toEqual({});
     expect(membersOfOwnMailboxes(company, "fremd@firma.de")).toEqual({});
   });
+
+  it("leaves out members whose access is locked: nobody can work a mail given to them", () => {
+    expect(membersOfOwnMailboxes(company, "anna@firma.de").info).toEqual(["a"]);
+  });
 });
