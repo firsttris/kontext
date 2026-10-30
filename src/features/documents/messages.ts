@@ -4,7 +4,7 @@
  * Schreibzeug keeps the same shapes on its side (apps/web/src/embed/messages.ts in
  * firsttris/schreibzeug).
  */
-import { z } from "zod";
+import { z } from "@/lib/zod";
 
 /** Where the module lives in Kontext; the rest of the path is Schreibzeug's own. */
 export const DOCUMENTS_PATH = "/documents";

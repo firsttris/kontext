@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { z } from "zod";
 import { ChatPage } from "@/features/chat/chat-page";
+import { z } from "@/lib/zod";
 
 export const chatSearchSchema = z.object({
   /** The open channel or direct conversation. */

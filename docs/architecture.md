@@ -1417,8 +1417,10 @@ Bildtyp, an ihren ersten Bytes erkannt) oder SVG als
 schickt Downloads über `/jmap/download/…` mit `Content-Security-Policy: sandbox` und `nosniff`,
 und was kein Bild und kein PDF ist, als `application/octet-stream` – so lädt auch kein
 `<script src>` einen Anhang als Skript (`server/headers.ts`). Die Content-Security-Policy der App
-setzt der Server selbst; Caddy ergänzt sie nur, wo eine Antwort keine eigene hat. Die Testdaten
-haben echte PDFs (`dev/pdf.ts`) und einen Grundriss als SVG.
+setzt der Server selbst; Caddy ergänzt sie nur, wo eine Antwort keine eigene hat. Sie erlaubt kein
+`'unsafe-eval'`; deshalb läuft Zod ohne JIT (`z.config({ jitless: true })` in `src/lib/zod.ts`,
+die App nimmt `z` nur von dort), sonst meldet der Browser bei Zods Probe mit `new Function` einen
+Verstoß in der Konsole. Die Testdaten haben echte PDFs (`dev/pdf.ts`) und einen Grundriss als SVG.
 
 ## Darstellung und Tastaturkürzel
 

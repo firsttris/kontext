@@ -1,6 +1,6 @@
 import { createFileRoute, redirect } from "@tanstack/react-router";
-import { z } from "zod";
 import { CAPABILITIES } from "@/jmap/client";
+import { z } from "@/lib/zod";
 
 /** /mail opens the inbox of the user's own mailbox; /mail?compose=new (app shortcut) a new mail. */
 export const Route = createFileRoute("/_app/mail/")({

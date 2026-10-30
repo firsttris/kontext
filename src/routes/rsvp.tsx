@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { z } from "zod";
 import { RsvpPage } from "@/features/calendar/rsvp-page";
+import { z } from "@/lib/zod";
 
 /** Answering an invitation from Kontext: for attendees outside, without signing in, by token. */
 export const Route = createFileRoute("/rsvp")({

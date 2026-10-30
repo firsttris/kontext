@@ -2,7 +2,7 @@
  * A small JMAP client (RFC 8620) built from functions. It is used by the app in the browser and
  * by the dev scripts under Bun, so it only relies on `fetch`.
  */
-import { z } from "zod";
+import { z } from "@/lib/zod";
 import { fillTemplate } from "../../server/jmap";
 
 export const CAPABILITIES = {
