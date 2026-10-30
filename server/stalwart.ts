@@ -1,13 +1,20 @@
 /**
  * Signing in at Stalwart with its OAuth endpoints, without a browser redirect: the server sends
- * the credentials to /api/auth (authorization code with PKCE) and swaps the code at /auth/token.
- * Source: crates/http/src/auth/oauth/auth.rs (LoginRequest) and token.rs in stalwartlabs/stalwart.
+ * the credentials with the authorization request to /api/auth (authorization code with PKCE) and
+ * swaps the code from the redirect it gets back at /auth/token. Source:
+ * crates/http/src/auth/oauth/auth.rs (LoginRequest, LoginResponse), authorize.rs
+ * (validate_authorization) and token.rs in stalwartlabs/stalwart v1.0.1.
+ *
+ * Stalwart 1.0 only takes clients it knows (crates/common/src/auth/oauth/client.rs,
+ * resolve_oauth_client): Kontext is registered there as the first-party OAuth client `kontext`
+ * with this redirect URI (docs/installation.md, dev/stalwart.ts). The person signs in in Kontext,
+ * so the consent Stalwart asks every registered client for is given with the request.
  */
 import { z } from "zod";
 
-/** Stalwart only needs the redirect URI to match between the two calls; nothing is opened. */
-const CLIENT_ID = "kontext";
-const REDIRECT_URI = "https://kontext.invalid/oauth";
+/** Stalwart only needs the redirect URI to be registered and to match; nothing is opened. */
+export const CLIENT_ID = "kontext";
+export const REDIRECT_URI = "https://kontext.invalid/oauth";
 
 export type StalwartTokens = { accessToken: string; refreshToken: string; accessExpiresAt: Date };
 
@@ -19,10 +26,13 @@ export type LoginResult =
   | { status: "unavailable" };
 
 const loginResponse = z.discriminatedUnion("type", [
-  z.object({ type: z.literal("authenticated"), client_code: z.string() }),
+  z.object({ type: z.literal("authenticated"), location: z.string() }),
   z.object({ type: z.literal("mfaRequired") }),
   z.object({ type: z.literal("failure") }),
-  z.object({ type: z.literal("verified") }),
+  /** The password has expired (Stalwart refuses it to clients that are not first-party). */
+  z.object({ type: z.literal("expired") }),
+  /** The authorization request itself was refused, e.g. Kontext is not registered as a client. */
+  z.object({ type: z.literal("invalid"), description: z.string() }),
 ]);
 
 const tokenResponse = z.object({
@@ -80,11 +90,30 @@ const postToken = async (
     : { status: "unavailable" };
 };
 
+/** The authorization request (RFC 6749 4.1.1, RFC 7636) Stalwart checks the sign-in against. */
+const authorizationQuery = (challenge: string, state: string): string =>
+  new URLSearchParams({
+    response_type: "code",
+    client_id: CLIENT_ID,
+    redirect_uri: REDIRECT_URI,
+    state,
+    code_challenge: challenge,
+    code_challenge_method: "S256",
+  }).toString();
+
+/** The code from the redirect Stalwart answers with, if it is the one for this request. */
+export const codeFromRedirect = (location: string, state: string): string | null => {
+  const url = URL.parse(location);
+  if (!url || `${url.origin}${url.pathname}` !== REDIRECT_URI) return null;
+  return url.searchParams.get("state") === state ? url.searchParams.get("code") : null;
+};
+
 export const loginAtStalwart = async (
   stalwartUrl: string,
   credentials: { email: string; password: string; code?: string },
 ): Promise<LoginResult> => {
   const { verifier, challenge } = await pkce();
+  const state = base64url(crypto.getRandomValues(new Uint8Array(16)));
   const response = await fetch(`${stalwartUrl}/api/auth`, {
     method: "POST",
     headers: { "content-type": "application/json" },
@@ -93,22 +122,29 @@ export const loginAtStalwart = async (
       accountName: credentials.email,
       accountSecret: credentials.password,
       ...(credentials.code ? { mfaToken: credentials.code } : {}),
-      clientId: CLIENT_ID,
-      redirectUri: REDIRECT_URI,
-      codeChallenge: challenge,
-      codeChallengeMethod: "S256",
+      query: authorizationQuery(challenge, state),
+      consent: true,
     }),
   }).catch(() => null);
   // A wrong password is a 200 with type "failure" (LoginResponse in
   // crates/http/src/auth/oauth/auth.rs); an HTTP error is Stalwart not answering as it should.
   if (!response?.ok) return { status: "unavailable" };
-  const login = loginResponse.parse(await response.json());
-  if (login.type === "mfaRequired") return { status: "mfa" };
-  if (login.type !== "authenticated") return { status: "failed" };
+  const login = loginResponse.safeParse(await response.json().catch(() => null));
+  if (!login.success) return { status: "unavailable" };
+  if (login.data.type === "mfaRequired") return { status: "mfa" };
+  if (login.data.type === "failure" || login.data.type === "expired") return { status: "failed" };
+  if (login.data.type === "invalid") {
+    console.warn(
+      `Stalwart lehnt die Anmeldung für Kontext ab (${login.data.description}); ist der OAuth-Client "${CLIENT_ID}" angelegt? Siehe docs/installation.md.`,
+    );
+    return { status: "unavailable" };
+  }
+  const code = codeFromRedirect(login.data.location, state);
+  if (!code) return { status: "unavailable" };
 
   const token = await postToken(stalwartUrl, {
     grant_type: "authorization_code",
-    code: login.client_code,
+    code,
     client_id: CLIENT_ID,
     redirect_uri: REDIRECT_URI,
     code_verifier: verifier,

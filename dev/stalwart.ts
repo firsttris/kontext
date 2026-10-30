@@ -10,7 +10,7 @@
  * Started by another process with IPC (dev/dev.ts), it sends "ready" once the server answers and
  * the seed is in.
  *
- * Stalwart 0.16 keeps all settings in its database, only the datastore is in config.json
+ * Stalwart (since 0.16) keeps all settings in its database, only the datastore is in config.json
  * (see UPGRADING/v0_16.md in stalwartlabs/stalwart). On the first start the script boots the
  * server in recovery mode, creates the listeners on unprivileged localhost ports, and then starts
  * it normally. The admin login comes from STALWART_RECOVERY_ADMIN (see crates/store/src/registry/local.rs).
@@ -20,6 +20,7 @@ import { existsSync, mkdirSync, openSync } from "node:fs";
 import { chmod, mkdir, rm, writeFile } from "node:fs/promises";
 import { dirname, join, resolve } from "node:path";
 import { parseArgs } from "node:util";
+import { CLIENT_ID, REDIRECT_URI } from "../server/stalwart";
 import { STALWART_ADMIN, STALWART_VERSION } from "./config";
 import { download } from "./download";
 
@@ -232,6 +233,33 @@ const withoutStalwartRsvp = (port: number) =>
     ["x:CalendarScheduling/set", { update: { singleton: { httpRsvpEnable: false } } }, "0"],
   ]);
 
+/**
+ * Kontext signs in as the first-party OAuth client `kontext` (server/stalwart.ts); Stalwart 1.0
+ * refuses clients it does not know. As on a customer's server (docs/installation.md), once.
+ */
+const registerKontext = async (port: number): Promise<void> => {
+  const [[, { list }]] = (await adminRequest(port, [
+    ["x:OAuthClient/get", { ids: null, properties: ["clientId"] }, "0"],
+  ])) as [[string, { list: { clientId: string }[] }, string]];
+  if (list.some((client) => client.clientId === CLIENT_ID)) return;
+  await adminRequest(port, [
+    [
+      "x:OAuthClient/set",
+      {
+        create: {
+          kontext: {
+            clientId: CLIENT_ID,
+            description: "Kontext",
+            redirectUris: { [REDIRECT_URI]: true },
+            firstParty: true,
+          },
+        },
+      },
+      "0",
+    ],
+  ]);
+};
+
 const stop = (child: ReturnType<typeof spawn>): Promise<void> =>
   new Promise((ok) => {
     child.on("exit", () => ok());
@@ -262,6 +290,7 @@ const main = async (): Promise<void> => {
   await waitForHttp(httpPort);
   await treatSmtpAsInbound(httpPort, args.smtp);
   await withoutStalwartRsvp(httpPort);
+  await registerKontext(httpPort);
   console.log(
     `Stalwart ${STALWART_VERSION} läuft: http://127.0.0.1:${httpPort} (SMTP ${args.smtp}, IMAP ${args.imap}), Admin ${STALWART_ADMIN.user}`,
   );

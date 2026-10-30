@@ -3,7 +3,7 @@
 Description=Stalwart mail server (Kontext)
 
 [Container]
-Image=docker.io/stalwartlabs/stalwart:v0.16.27
+Image=docker.io/stalwartlabs/stalwart:v1.0.1
 ContainerName=stalwart
 Network=kontext.network
 PublishPort=25:25

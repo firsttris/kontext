@@ -364,7 +364,7 @@ describe("Firmenverwaltung", () => {
     await send("DELETE", "/employees/2/two-factor");
     expect(updates).toEqual([
       { "2": { "credentials/0/secret": "aaaa-aaaa-aaaa-aaaa" } },
-      { "2": { "credentials/0/otpAuth": null } },
+      { "2": { "credentials/0/otpUrl": null } },
     ]);
   });
 

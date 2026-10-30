@@ -337,7 +337,7 @@ DKIM-Schlüssel erzeugt Stalwart, das Log geht nach `podman logs`:
 curl -s -u 'admin:<vorläufiges-passwort>' http://127.0.0.1:8080/jmap/ -H 'content-type: application/json' -d '{
   "using":["urn:ietf:params:jmap:core","urn:stalwart:jmap"],
   "methodCalls":[["x:Bootstrap/set",{"update":{"singleton":{
-    "serverHostname":"mail.firma.de","defaultDomain":"firma.de",
+    "defaultHostname":"mail.firma.de","defaultDomain":"firma.de",
     "requestTlsCertificate":false,"generateDkimKeys":true,"dnsServer":{"@type":"Manual"},
     "tracer":{"@type":"Stdout","ansi":false,"multiline":false,"enable":true,"level":"info",
               "lossy":false,"buffered":true,"events":{},"eventsPolicy":"exclude"}}}},"0"]]}'
@@ -369,16 +369,16 @@ Mailprogramme nehmen:
 
 ```bash
 /root/stalwart-api.sh '[["x:NetworkListener/set",{"create":{"sub":{"name":"submission","protocol":"smtp",
-  "bind":{"[::]:587":true},"useTls":true,"tlsImplicit":false}}},"0"]]'
+  "bind":{"[::]:587":true},"useTls":true,"implicitTls":false}}},"0"]]'
 ```
 
 **Einstellungen aus der Installation** (X-Forwarded-For, Kontexts Netz als erlaubte IP,
 Sperrdauer ein Tag, deutsche Suche, 16 gleichzeitige JMAP-Anfragen, Stalwarts RSVP-Seite aus,
-Anmeldung auf 587 nur nach STARTTLS):
+Anmeldung auf 587 nur nach STARTTLS, Kontext als OAuth-Client):
 
 ```bash
 /root/stalwart-api.sh '[
- ["x:Http/set",{"update":{"singleton":{"useXForwarded":true}}},"0"],
+ ["x:Http/set",{"update":{"singleton":{"clientIpSource":"xForwardedFor","forwardedHops":1}}},"0"],
  ["x:AllowedIp/set",{"create":{"k":{"address":"10.89.250.0/24","reason":"Kontext"}}},"1"],
  ["x:Security/set",{"update":{"singleton":{"authBanPeriod":86400000,"scanBanPeriod":86400000,
    "abuseBanPeriod":86400000,"loiterBanPeriod":86400000}}},"2"],
@@ -388,7 +388,9 @@ Anmeldung auf 587 nur nach STARTTLS):
  ["x:MtaStageAuth/set",{"update":{"singleton":{"saslMechanisms":{"match":{"0":{
    "if":"local_port != 25 && is_tls","then":"[plain, login, oauthbearer, xoauth2]"}},
    "else":"false"}}}},"6"],
- ["x:Action/set",{"create":{"r":{"@type":"ReloadSettings"}}},"7"]]'
+ ["x:OAuthClient/set",{"create":{"k":{"clientId":"kontext","description":"Kontext",
+   "redirectUris":{"https://kontext.invalid/oauth":true},"firstParty":true}}},"7"],
+ ["x:Action/set",{"create":{"r":{"@type":"ReloadSettings"}}},"8"]]'
 ```
 
 - `httpRsvpEnable`: Stalwarts Einladungsmails haben sonst Knöpfe *Yes/No/Maybe* auf
@@ -402,7 +404,8 @@ Anmeldung auf 587 nur nach STARTTLS):
   `printf 'EHLO test\r\nQUIT\r\n' | nc mail.firma.de 587 | grep -i auth` gibt nichts aus.
   `ReloadSettings` lädt das ohne Neustart.
 
-Mit `useXForwarded` erwartet Stalwart den Header bei jeder HTTP-Anfrage; Kontext spricht es
+Mit `clientIpSource` erwartet Stalwart den Header bei jeder HTTP-Anfrage, die nicht von
+`127.0.0.1` kommt; Kontext spricht es
 direkt an, ohne ihn, und jede Anfrage schreibt `X-Forwarded-For header is missing` ins Log
 (Stalwart nimmt dann die Adresse der Verbindung, `crates/http/src/request.rs`). Die Meldung aus
 dem Log nehmen (Id aus `x:Tracer/get`) – wirkt erst nach einem Neustart:

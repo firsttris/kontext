@@ -3,7 +3,7 @@
  * into what the Firmenverwaltung shows, and back into patches. Pure functions; the calls are in
  * management.ts. Source of the object shapes: crates/registry/src/schema/structs.rs
  * (UserAccount, GroupAccount, EmailAlias, PasswordCredential, Permissions, UserRoles) in
- * stalwartlabs/stalwart v0.16.27.
+ * stalwartlabs/stalwart v1.0.1.
  */
 import { type Folder, readersOf } from "./sharing";
 
@@ -15,7 +15,7 @@ type PermissionsRef = {
   enabledPermissions?: Record<string, true>;
   disabledPermissions?: Record<string, true>;
 };
-type AliasRef = { name: string; domainId: string; enabled?: boolean; description?: string | null };
+type AliasRef = { name: string; domainId: string; enable?: boolean; description?: string | null };
 
 /** One account as `x:Account/get` returns it (the properties used here). */
 export type StalwartAccount = {
@@ -27,7 +27,7 @@ export type StalwartAccount = {
   emailAddress?: string;
   roles?: RoleRef;
   permissions?: PermissionsRef;
-  credentials?: Record<string, { "@type": string; otpAuth?: string | null }>;
+  credentials?: Record<string, { "@type": string; otpUrl?: string | null }>;
   memberGroupIds?: Record<string, true>;
   aliases?: Record<string, AliasRef>;
   usedDiskQuota?: number;
@@ -110,7 +110,7 @@ const isActive = (account: StalwartAccount): boolean =>
 
 const hasTwoFactor = (account: StalwartAccount): boolean =>
   Object.values(account.credentials ?? {}).some(
-    (credential) => credential["@type"] === "Password" && Boolean(credential.otpAuth),
+    (credential) => credential["@type"] === "Password" && Boolean(credential.otpUrl),
   );
 
 export const toEmployee = (
@@ -199,7 +199,7 @@ export const aliasesValue = (
   for (const [index, address] of unique.entries()) {
     const parsed = parseAddress(address, domains);
     if (!parsed.ok) return fail(parsed.error);
-    value[String(index)] = { ...parsed.value, enabled: true };
+    value[String(index)] = { ...parsed.value, enable: true };
   }
   return ok(value);
 };
