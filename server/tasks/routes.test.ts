@@ -209,6 +209,29 @@ describe("columns and repeating tasks", () => {
     expect(tasks[0]).toMatchObject({ accountId: "jonas", projectId: null });
   });
 
+  it("moves no task onto another account while naming the project it lies on", async () => {
+    const { tasks, call, as } = setup();
+    const { project } = (await (
+      await call("POST", "/projects", { accountId: "info", name: "Baustelle" })
+    ).json()) as { project: { id: string } };
+    await call("POST", "/", {
+      accountId: "info",
+      projectId: project.id,
+      title: "Rohre",
+      assigneeId: "lea",
+    });
+    // Jonas may not write lea's own account; the same project id does not make it no move.
+    expect((await call("PATCH", "/t1", { accountId: "lea", projectId: project.id })).status).toBe(
+      403,
+    );
+    // Lea, given the task but no member of info@, cannot take it into her own account either.
+    as(lea.filter((account) => account.id !== "info"));
+    expect((await call("PATCH", "/t1", { accountId: "lea", projectId: project.id })).status).toBe(
+      403,
+    );
+    expect(tasks[0]).toMatchObject({ accountId: "info", projectId: project.id });
+  });
+
   it("renames a project and, removed, puts its tasks on the account's board", async () => {
     const { tasks, call } = setup();
     const { project } = (await (
