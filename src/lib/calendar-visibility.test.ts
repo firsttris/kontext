@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { hiddenToMove } from "./calendar-visibility";
+import { hiddenToMove, withOwnVisibility } from "./calendar-visibility";
 
 const calendars = [
   { key: "a:1", visible: true },
@@ -16,5 +16,19 @@ describe("hiddenToMove", () => {
 
   it("does nothing when the device hid no calendar", () => {
     expect(hiddenToMove(new Set(["birthdays"]), calendars)).toEqual({ hide: [], forget: [] });
+  });
+});
+
+describe("withOwnVisibility", () => {
+  it("sends the person's own isVisible with every change, so Stalwart cannot hand them another member's", () => {
+    expect(withOwnVisibility({ color: "#16a34a" }, true)).toEqual({
+      color: "#16a34a",
+      isVisible: true,
+    });
+    expect(withOwnVisibility({ shareWith: {} }, false)).toEqual({
+      shareWith: {},
+      isVisible: false,
+    });
+    expect(withOwnVisibility({ isVisible: false }, true)).toEqual({ isVisible: false });
   });
 });
