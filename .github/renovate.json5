@@ -1,0 +1,61 @@
+// Renovate (GitHub App, https://github.com/apps/renovate): a pull request for each new release of
+// the images Kontext runs with, plus the "Dependency Dashboard" issue listing what is open.
+// Only the images: the Bun packages are checked by `bun audit` in CI, the actions come pinned to
+// majors. Check with `bunx --package renovate renovate-config-validator .github/renovate.json5`.
+{
+  $schema: "https://docs.renovatebot.com/renovate-schema.json",
+  extends: ["config:recommended"],
+  enabledManagers: ["docker-compose", "quadlet", "dockerfile", "custom.regex"],
+  timezone: "Europe/Berlin",
+  labels: ["dependencies"],
+  customManagers: [
+    {
+      // The local Stalwart and LiveKit of dev and CI (dev/stalwart.ts, dev/livekit.ts) are the
+      // same releases as the images in deploy/, so a new one is tested by the e2e run of its PR.
+      // The images' tags carry a "v", these constants do not.
+      customType: "regex",
+      managerFilePatterns: ["/^dev/config\\.ts$/"],
+      matchStrings: [
+        'STALWART_VERSION = "(?<currentValue>[^"]+)"',
+      ],
+      depNameTemplate: "docker.io/stalwartlabs/stalwart",
+      datasourceTemplate: "docker",
+      extractVersionTemplate: "^v?(?<version>.+)$",
+    },
+    {
+      customType: "regex",
+      managerFilePatterns: ["/^dev/config\\.ts$/"],
+      matchStrings: [
+        'LIVEKIT_VERSION = "(?<currentValue>[^"]+)"',
+      ],
+      depNameTemplate: "docker.io/livekit/livekit-server",
+      datasourceTemplate: "docker",
+      extractVersionTemplate: "^v?(?<version>.+)$",
+    },
+  ],
+  packageRules: [
+    {
+      // Kontext's own images move with its releases (release.yml), Schreibzeug with its own
+      matchPackageNames: ["docker.io/tristanteu/**"],
+      enabled: false,
+    },
+    {
+      // One PR for dev/config.ts, compose.yaml and the Quadlet unit, so they cannot drift apart
+      matchPackageNames: ["docker.io/stalwartlabs/stalwart"],
+      groupName: "Stalwart",
+      sourceUrl: "https://github.com/stalwartlabs/stalwart",
+      prBodyNotes: [
+        "Before merging: read Stalwart's `CHANGELOG.md` and, for a new minor or major, `UPGRADING/`. The workarounds and probes marked \"Stalwart 0.16.x\" in the code (`git grep -n 'Stalwart 0\\.'`) may no longer be needed or may have changed. The e2e run of this PR uses the new release.",
+      ],
+    },
+    {
+      matchPackageNames: ["docker.io/livekit/livekit-server"],
+      groupName: "LiveKit",
+      sourceUrl: "https://github.com/livekit/livekit",
+    },
+    {
+      matchPackageNames: ["docker.io/livekit/sip"],
+      sourceUrl: "https://github.com/livekit/sip",
+    },
+  ],
+}
