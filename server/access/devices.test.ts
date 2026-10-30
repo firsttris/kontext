@@ -37,6 +37,7 @@ describe("devicesOf", () => {
     ipAddress: "203.0.113.7",
     createdAt: at("2026-10-01T08:00:00Z"),
     updatedAt: at(updated),
+    expiresAt: at("2099-01-01T00:00:00Z"),
     grantUpdatedAt: grant ? at(grant) : null,
   });
 

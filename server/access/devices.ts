@@ -10,6 +10,8 @@ export type SessionRow = {
   ipAddress: string | null;
   createdAt: Date;
   updatedAt: Date;
+  /** Past it, the session is over, even while its row is still there. */
+  expiresAt: Date;
   /** The grant's last renewal: the session was in use then (about every hour while open). */
   grantUpdatedAt: Date | null;
 };
@@ -57,10 +59,17 @@ const lastActiveOf = (row: SessionRow) =>
 /**
  * The browser sessions among `rows`, this one first, then the most recently used. `heldIds` are
  * the sessions behind app passwords and agents: they have their own place in the overview.
+ * Sessions past `expiresAt` are left out: Better Auth deletes one only when its cookie comes again,
+ * which a cookie that ran out with it never does.
  */
-export const devicesOf = (rows: SessionRow[], heldIds: Set<string>, currentId: string): Device[] =>
+export const devicesOf = (
+  rows: SessionRow[],
+  heldIds: Set<string>,
+  currentId: string,
+  now = new Date(),
+): Device[] =>
   rows
-    .filter((row) => !heldIds.has(row.id))
+    .filter((row) => !heldIds.has(row.id) && row.expiresAt > now)
     .map((row) => ({ row, lastActive: lastActiveOf(row) }))
     .sort(
       (a, b) =>

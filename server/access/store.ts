@@ -20,6 +20,7 @@ export const createSessionStore = (db: Db, grants: Pick<Grants, "end">) => ({
           ipAddress: schema.session.ipAddress,
           createdAt: schema.session.createdAt,
           updatedAt: schema.session.updatedAt,
+          expiresAt: schema.session.expiresAt,
           grantUpdatedAt: schema.stalwartGrant.updatedAt,
         })
         .from(schema.session)

@@ -9,6 +9,7 @@ const row = (id: string, day: number): SessionRow => ({
   ipAddress: null,
   createdAt: new Date(`2026-10-0${day}T08:00:00Z`),
   updatedAt: new Date(`2026-10-0${day}T08:00:00Z`),
+  expiresAt: new Date("2099-01-01T00:00:00Z"),
   grantUpdatedAt: null,
 });
 

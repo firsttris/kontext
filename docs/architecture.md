@@ -2032,7 +2032,9 @@ der Liste der Freigaben stehen, bis der Refresh-Token abläuft, obwohl ihn niema
 - **Angemeldete Browser** aus Better Auths Sitzungstabelle (`/api/access/sessions`,
   `server/access/`): Browser und System aus dem User-Agent, IP-Adresse, angemeldet seit und
   zuletzt aktiv (die letzte Erneuerung des Stalwart-Tokens, etwa stündlich bei Nutzung). Die
-  Sitzungen hinter App-Passwörtern und Agenten zählen nicht dazu, sie haben eigene Abschnitte.
+  Sitzungen hinter App-Passwörtern und Agenten zählen nicht dazu, sie haben eigene Abschnitte,
+  abgelaufene auch nicht: Better Auth löscht eine Sitzung erst, wenn ihr Cookie noch einmal kommt,
+  und ein mit ihr abgelaufenes Cookie kommt nie wieder.
   Abmelden geht für jede andere Sitzung der Person oder für alle anderen auf einmal; die eigene
   endet mit „Abmelden“ im Menü.
 - **Andere Programme:** Stalwarts Freigaben (`x:OAuthGrant`, neu in 1.0) für Programme, die sich
