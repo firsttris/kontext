@@ -72,7 +72,7 @@ services:
       - schreibzeug-data:/data
 
   livekit:
-    image: docker.io/livekit/livekit-server:v1.13.10
+    image: docker.io/livekit/livekit-server:v1.13.11
     profiles: [calls]
     restart: unless-stopped
     command: ["--config", "/etc/livekit.yaml", "--udp-port", "7882"]
