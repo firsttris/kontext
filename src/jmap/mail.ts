@@ -7,6 +7,7 @@ import {
   assignmentConditions,
   assignmentPatch,
 } from "@/lib/assignment";
+import type { Snippet } from "@/lib/attachment-hit";
 import { envelopeIdOf, type Hold, submissionEnvelope } from "@/lib/envelope";
 import type { Comparator } from "@/lib/mail-sort";
 import { bodyStructureOf } from "@/lib/mail-structure";
@@ -133,12 +134,13 @@ export const queryEmails = async (
     sort?: Comparator[];
   } = {},
 ): Promise<EmailPage> => {
-  const [query, get] = await client.request([
+  const queryFilter = emailQueryFilter(filter);
+  const [query, get, snippets] = await client.request([
     [
       "Email/query",
       {
         accountId,
-        filter: emailQueryFilter(filter),
+        filter: queryFilter,
         sort,
         collapseThreads,
         position,
@@ -156,9 +158,34 @@ export const queryEmails = async (
       },
       "g",
     ],
+    // A search also asks what it marks, to tell hits in an attachment (lib/attachment-hit.ts).
+    ...("search" in filter
+      ? [
+          [
+            "SearchSnippet/get",
+            {
+              accountId,
+              filter: queryFilter,
+              "#emailIds": { resultOf: "q", name: "Email/query", path: "/ids" },
+            },
+            "s",
+          ] as [string, Record<string, unknown>, string],
+        ]
+      : []),
   ]);
+  const marked = new Map(
+    ((snippets?.[1].list ?? []) as (Snippet & { emailId: string })[]).map(
+      ({ emailId, subject, preview }) => [emailId, { subject, preview }],
+    ),
+  );
+  const emails = (get![1].list as EmailSummary[]) ?? [];
   return {
-    emails: (get![1].list as EmailSummary[]) ?? [],
+    emails: marked.size
+      ? emails.map((email) => {
+          const snippet = marked.get(email.id);
+          return snippet ? { ...email, snippet } : email;
+        })
+      : emails,
     total: Number(query![1].total ?? 0),
     position,
   };

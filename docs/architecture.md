@@ -1285,7 +1285,20 @@ Operatoren (deutsch und englisch: `von:`/`from:`, `an:`, `betreff:`, `hat:anhang
 Stalwart sucht mit Wortstämmen, findet ein Wort, das schon sein eigener Stamm ist („Angebot“),
 aber nur genau so. Deshalb fragt die App für jedes Wort auch seine Grundform ab („Angebote“ →
 „Angebot“, „Rechnungen“ → „Rechnung“). Zusammengesetzte Wörter („Wartungsvertrag“ für „Wartung“)
-und Text in PDF-Anhängen findet Stalwart nicht; Text- und HTML-Anhänge schon.
+findet Stalwart nicht.
+
+**Anhänge:** Seit Stalwart 1.0 durchsucht der `text`-Filter auch den Text in PDF-, Word-, Excel-,
+PowerPoint-, OpenDocument-, EPUB- und RTF-Anhängen (`crates/jmap/src/email/query/text.rs`, Feld
+`Attachment`), also auch in Mails, die Kontext aus weiteren Postfächern ablegt. Mit jeder
+Suchseite fragt die App `SearchSnippet/get` ab (RFC 8621 §5, in derselben Anfrage per
+Rückverweis auf die Ids). Stalwart markiert dort nur Betreff und Text; ein Treffer für ein freies
+Wort ohne Markierung, dessen Wort auch in keiner Adresse steht, lag im Anhang und bekommt
+„im Anhang“ (`src/lib/attachment-hit.ts`). Operatoren wie `von:` suchen nicht in Anhängen.
+
+**Suchindex:** Nach dem Umstieg auf 1.0 baut Stalwart den Index neu auf (`stalwart-migrate`
+kopiert ihn nicht); bis dahin findet die Suche nicht alles. Die Firmenverwaltung zeigt dann
+„Die Suche wird noch aufgebaut“ mit der Zahl der wartenden Einträge, aus `x:IndexQueueStatus`
+(`server/company/search-index.ts`, Recht `sysIndexQueueStatusGet` der Rolle `Kontext-Server`).
 
 Vorschläge beim Tippen kommen aus den Kontakten (für `von:`/`an:`), den Ordnern (für `in:`), den
 Operatoren und den letzten Suchen (pro Gerät im Browser).

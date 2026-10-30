@@ -4,6 +4,7 @@
  * Methods: crates/jmap-proto/src/request/method.rs; objects: crates/registry/src/schema/structs.rs.
  */
 import type { Domain, Result, Roles, StalwartAccount } from "./accounts";
+import type { IndexQueueEntry } from "./search-index";
 
 const USING = ["urn:ietf:params:jmap:core", "urn:stalwart:jmap"];
 
@@ -136,7 +137,16 @@ export const createManagement = (request: StalwartRequest) => {
     return error ? { ok: false, error } : { ok: true, value: null };
   };
 
-  return { listAccounts, listDomains, loadRoles, createAccount, updateAccounts };
+  /**
+   * What waits for the search index (search-index.ts); null when the key may not read it
+   * (`sysIndexQueueStatusGet`, docs/installation.md) or Stalwart is older than 1.0.
+   */
+  const indexQueue = async (): Promise<IndexQueueEntry[] | null> =>
+    call<{ list: IndexQueueEntry[] }>("x:IndexQueueStatus/get", { ids: null })
+      .then((result) => result.list ?? [])
+      .catch(() => null);
+
+  return { listAccounts, listDomains, loadRoles, createAccount, updateAccounts, indexQueue };
 };
 
 export type Management = ReturnType<typeof createManagement>;

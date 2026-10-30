@@ -2198,5 +2198,8 @@
   "mail_assigned_done": "Erledigt",
   "mail_assigned_done_by": "Erledigt · {name}",
   "mail_mine_empty": "Keine offenen Mails für dich.",
-  "mail_open_empty": "Alles erledigt."
+  "mail_open_empty": "Alles erledigt.",
+  "search_in_attachment": "im Anhang",
+  "company_search_index_pending": "Die Suche wird noch aufgebaut: {count} Einträge warten. Bis dahin findet sie nicht alle Mails.",
+  "company_search_index_failed": "Der Suchindex meldet einen Fehler; die Suche findet nicht alle Mails. Stalwarts Verwaltung zeigt ihn unter Index Queue."
 }

@@ -40,6 +40,8 @@ export type EmailSummary = {
   size: number;
   /** The raw Content-Type, where loaded: an encrypted mail in the list. */
   "header:Content-Type"?: string | null;
+  /** In search results: the marked subject and text (SearchSnippet, lib/attachment-hit.ts). */
+  snippet?: { subject: string | null; preview: string | null };
   /** Shared metadata by namespace (draft-ietf-jmap-metadata); Kontext's: lib/assignment.ts. */
   metadata?: Record<string, Record<string, unknown>>;
 };

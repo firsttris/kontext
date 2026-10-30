@@ -2198,5 +2198,8 @@
   "mail_assigned_done": "Done",
   "mail_assigned_done_by": "Done · {name}",
   "mail_mine_empty": "No open mails for you.",
-  "mail_open_empty": "All done."
+  "mail_open_empty": "All done.",
+  "search_in_attachment": "in attachment",
+  "company_search_index_pending": "Search is still being built: {count} entries are waiting. Until then it does not find every mail.",
+  "company_search_index_failed": "The search index reports an error; search does not find every mail. Stalwart's admin shows it under Index Queue."
 }

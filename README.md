@@ -100,7 +100,7 @@ Calls and documents (Schreibzeug, no install of its own needed) are switched on 
 
 | | |
 |---|---|
-| ✉️ **Mail** | **Shared mailboxes** like info@ with rights per person, **assign mails** with “Assigned to me” and “Open”, **a deputy in one step**, **categories** and **rules on the server**, search like Gmail, send later and snooze, **other mailboxes** (Gmail, GMX), **warnings about forged senders** · [more →](https://firsttris.github.io/kontext/mail.html) |
+| ✉️ **Mail** | **Shared mailboxes** like info@ with rights per person, **assign mails** with “Assigned to me” and “Open”, **a deputy in one step**, **categories** and **rules on the server**, search like Gmail (also inside PDF and Office attachments), send later and snooze, **other mailboxes** (Gmail, GMX), **warnings about forged senders** · [more →](https://firsttris.github.io/kontext/mail.html) |
 | 📅 **Calendar** | Day, week, month and recurring events, **invitations answered with one click** (also from Outlook and Google), **who is free?**, a **video meeting per event**, shared calendars and **subscriptions** (iCal), public holidays and the contacts' birthdays · [more →](https://firsttris.github.io/kontext/calendar-contacts.html) |
 | 👥 **Contacts** | **The customer at a glance**: latest mails, next appointments, open tasks and calls; groups, vCard, merging duplicates, several contacts at once (delete, add to a group, export) · [more →](https://firsttris.github.io/kontext/calendar-contacts.html#kontakte) |
 | ✅ **Tasks** | **List or Kanban board** per mailbox and per project, **from a mail, a chat message, an appointment or a missed call**, reminders, in Thunderbird and on the phone via CalDAV · [more →](https://firsttris.github.io/kontext/tasks.html) |

@@ -11,6 +11,7 @@ import type {
 } from "../../../server/company/accounts";
 import type { BackupSettings, BackupView } from "../../../server/company/backup-schema";
 import type { FolderName } from "../../../server/company/mailstore";
+import type { SearchIndexStatus } from "../../../server/company/search-index";
 import type { Check } from "../../../server/company/security";
 import type { Job } from "../../../server/migration/jobs";
 import type { ProviderId } from "../../../server/migration/providers";
@@ -116,6 +117,10 @@ export type SecurityReport = {
   https: Check | null;
   domains: { domain: string; checks: Check[] }[];
 };
+
+/** What the search index still has to take in (server/company/search-index.ts). */
+export const getSearchIndex = () =>
+  send<SearchIndexStatus & { known: boolean }>("GET", "/search-index");
 
 /** How safe the company's mail travels (server/company/security.ts). */
 export const getSecurity = () => send<SecurityReport>("GET", "/security");

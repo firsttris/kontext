@@ -44,7 +44,8 @@ IMAP und SMTP.
 
 - **Suche wie in Gmail** über alle Ordner und Postfächer, mit Operatoren wie `von:`, `an:`,
   `betreff:`, `hat:anhang`, `ist:ungelesen`, `kategorie:`, `in:info@`, `nach:`/`vor:` (auch
-  englisch: `from:`, `has:attachment` …) und Vorschlägen beim Tippen.
+  englisch: `from:`, `has:attachment` …) und Vorschlägen beim Tippen. Sie findet auch Wörter,
+  die nur in einem PDF-, Word- oder Excel-Anhang stehen; solche Treffer tragen „im Anhang“.
 - **Regeln** („wenn Absender, Empfänger, Betreff oder Text … dann in Ordner, markieren, Kategorie
   setzen, weiterleiten, Aufgabe anlegen“) laufen auf dem Server beim Eingang, auch wenn Kontext zu
   ist; aus einer Mail heraus angelegt, auf Wunsch auch auf vorhandene Mails.
