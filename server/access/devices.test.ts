@@ -64,4 +64,15 @@ describe("devicesOf", () => {
     );
     expect(device?.lastActive).toBe("2026-10-29T17:30:00.000Z");
   });
+
+  it("leaves out sessions that have run out: those browsers are signed out", () => {
+    // Better Auth deletes an expired session only when its cookie comes again, which a cookie
+    // that ran out with it never does: the row stays in the table.
+    const now = at("2026-10-30T12:00:00Z");
+    const rows = [
+      { ...row("me", "2026-10-30T08:00:00Z"), expiresAt: at("2027-01-28T08:00:00Z") },
+      { ...row("gone", "2026-07-01T08:00:00Z"), expiresAt: at("2026-09-29T08:00:00Z") },
+    ];
+    expect(devicesOf(rows, new Set(), "me", now).map((d) => d.id)).toEqual(["me"]);
+  });
 });
