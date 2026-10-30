@@ -58,9 +58,6 @@ const setAt = (object: unknown, path: string[], value: unknown): Record<string, 
 /** A patch (RFC 8620 §5.3): whole properties, or a path down to one value ("keywords/$seen"). */
 export const applyPatch = <T extends Record<string, unknown>>(object: T, patch: Args): T =>
   Object.entries(patch).reduce(
-    (next, [path, value]) =>
-      path.includes("/")
-        ? (setAt(next, path.split("/").map(segment), value) as T)
-        : ({ ...next, [path]: value } as T),
+    (next, [path, value]) => setAt(next, path.split("/").map(segment), value) as T,
     object,
   );
