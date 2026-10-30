@@ -171,6 +171,8 @@ export const tasks = sqliteTable(
   {
     id: text("id").primaryKey(),
     accountId: text("account_id").notNull(),
+    /** One of the account's projects (task_projects), or null for the account's own board. */
+    projectId: text("project_id"),
     title: text("title").notNull(),
     notes: text("notes").notNull(),
     status: text("status").notNull(),
@@ -201,12 +203,31 @@ export const tasks = sqliteTable(
   },
   (table) => [
     index("tasks_account").on(table.accountId),
+    index("tasks_project").on(table.projectId),
     index("tasks_remind_at").on(table.remindAt),
     index("tasks_dav_name").on(table.accountId, table.davName),
   ],
 );
 
-/** A board's own columns, as JSON; a board without a row has the four built-in ones. */
+/**
+ * An account's further boards ("Baustelle Hoffmann"), so the tasks of one job stay apart; whoever
+ * can open the account sees them. `columns` as in task_boards, null for the built-in ones.
+ */
+export const taskProjects = sqliteTable(
+  "task_projects",
+  {
+    id: text("id").primaryKey(),
+    accountId: text("account_id").notNull(),
+    name: text("name").notNull(),
+    columns: text("columns"),
+    ...timestamps,
+  },
+  (table) => [index("task_projects_account").on(table.accountId)],
+);
+
+/**
+ * An account's own board's columns, as JSON; a board without a row has the four built-in ones.
+ */
 export const taskBoards = sqliteTable("task_boards", {
   accountId: text("account_id").primaryKey(),
   columns: text("columns").notNull(),

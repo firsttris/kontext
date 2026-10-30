@@ -54,6 +54,7 @@ const summary: EmailSummary = {
 const task = (patch: Partial<Task> = {}): Task => ({
   id: "t1",
   accountId: "a1",
+  projectId: null,
   title: "Angebot schreiben",
   notes: "",
   status: "open",

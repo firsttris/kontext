@@ -5,6 +5,7 @@ import { deliverMail } from "./protocols";
 type ApiTask = {
   id: string;
   title: string;
+  projectId: string | null;
   status: string;
   dueDate: string | null;
   repeat: string | null;
@@ -58,6 +59,70 @@ test.describe("Aufgaben: eigene Spalten und Wiederholung", () => {
     await dialog.getByRole("button", { name: "Speichern" }).click();
     await expect(page.getByRole("region", { name: "Bestellt" })).toHaveCount(0);
     await expect(page.getByRole("region", { name: "Offen" })).toContainText(title);
+  });
+
+  test("ein Board für ein Projekt: Aufgaben bleiben für sich, gelöscht kommen sie zurück", async ({
+    page,
+  }) => {
+    const board = unique("Baustelle Hoffmann");
+    const renamed = `${board} Bad`;
+    const title = unique("Rohre bestellen");
+    await login(page);
+    await page.goto("/tasks");
+    await page.getByRole("button", { name: "Neues Board" }).click();
+    const dialog = page.getByRole("dialog", { name: "Neues Board" });
+    await dialog.getByLabel("Name").fill(board);
+    await dialog.getByRole("button", { name: "Anlegen" }).click();
+    await expect(page.getByRole("heading", { name: board, level: 1 })).toBeVisible();
+
+    const open = page.getByRole("region", { name: "Offen" });
+    await open.getByRole("button", { name: "Aufgabe in „Offen“" }).click();
+    await open.getByRole("textbox", { name: "Aufgabe in „Offen“" }).fill(title);
+    await page.keyboard.press("Enter");
+    await expect(open).toContainText(title);
+    await expect
+      .poll(async () => (await serverTasks(page)).find((t) => t.title === title)?.projectId)
+      .toMatch(/^p-/);
+
+    // Not on the mailbox's own board.
+    const me = await personalId(page);
+    await page.goto(`/tasks?board=${me}&mode=board`);
+    await expect(page.getByRole("heading", { name: "Mein Board", level: 1 })).toBeVisible();
+    await expect(page.getByRole("region", { name: "Offen" })).not.toContainText(title);
+
+    // Renamed, then deleted: its task comes onto "Mein Board".
+    await page.getByRole("link", { name: new RegExp(board) }).click();
+    await page.getByRole("button", { name: "Board bearbeiten" }).click();
+    const edit = page.getByRole("dialog", { name: "Board bearbeiten" });
+    await edit.getByLabel("Name").fill(renamed);
+    await edit.getByRole("button", { name: "Speichern" }).click();
+    await expect(page.getByRole("heading", { name: renamed, level: 1 })).toBeVisible();
+    await page.getByRole("button", { name: "Board bearbeiten" }).click();
+    await edit.getByRole("button", { name: "Board löschen" }).click();
+    await expect(edit).toContainText("Die Aufgaben darauf kommen auf „Mein Board“.");
+    await edit.getByRole("button", { name: "Wirklich löschen?" }).click();
+    await expect(page.getByRole("heading", { name: "Mein Board", level: 1 })).toBeVisible();
+    await expect(page.getByRole("region", { name: "Offen" })).toContainText(title);
+    await expect(page.getByRole("link", { name: new RegExp(renamed) })).toHaveCount(0);
+  });
+
+  test("ein neues Board am Handy, über die Chips @phone", async ({ page }) => {
+    const board = unique("Wartung Schule");
+    const title = unique("Filter tauschen");
+    await login(page, "max");
+    await page.getByRole("link", { name: "Aufgaben" }).click();
+    await page.getByRole("button", { name: "Neues Board" }).click();
+    const dialog = page.getByRole("dialog", { name: "Neues Board" });
+    await dialog.getByLabel("Name").fill(board);
+    await dialog.getByRole("button", { name: "Anlegen" }).click();
+    await expect(page.getByRole("heading", { name: board, level: 1 })).toBeVisible();
+    await page.getByRole("link", { name: "Liste" }).click();
+    await page.getByRole("textbox", { name: "Neue Aufgabe" }).fill(title);
+    await page.keyboard.press("Enter");
+    await expect(page.getByRole("link", { name: new RegExp(title) })).toBeVisible();
+    await page.getByRole("link", { name: "Meine Aufgaben", exact: true }).click();
+    await page.getByRole("link", { name: board, exact: true }).click();
+    await expect(page.getByRole("heading", { name: board, level: 1 })).toBeVisible();
   });
 
   test("eine wiederkehrende Aufgabe kommt erledigt wieder", async ({ page }) => {

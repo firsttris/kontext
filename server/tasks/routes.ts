@@ -3,18 +3,22 @@
  * shared ones), and changing them. Who may open which account is Stalwart's JMAP session of that
  * person; every member of a shared mailbox may create, change and delete its tasks, someone who
  * may only read it may only look. Whom a task is given to sees and changes it too, also on a
- * colleague's own board.
+ * colleague's own board. Besides its own board, an account has projects: further boards, made,
+ * renamed and removed by whoever may write the account.
  */
 import { Hono } from "hono";
 import type { SessionAccount } from "../categories/routes";
 import type { Notice } from "../push/pusher";
 import { assignedNotice } from "./notices";
-import type { TaskStore } from "./store";
+import type { Board, TaskStore } from "./store";
 import {
+  boardKey,
   columnsSchema,
   companyDay,
+  newProjectSchema,
   newTaskSchema,
   nextOccurrence,
+  projectNameSchema,
   type Task,
   taskPatchSchema,
 } from "./tasks";
@@ -32,6 +36,8 @@ export type TaskDeps = {
 
 /** Finished tasks stay in the lists this long. */
 const DONE_DAYS = 30;
+/** Projects per account; more is a list nobody finds their way through. */
+const MAX_PROJECTS = 50;
 
 export const createTaskRoutes = ({
   store,
@@ -61,8 +67,23 @@ export const createTaskRoutes = ({
   };
 
   /** Whether a board has this column. */
-  const hasColumn = async (accountId: string, status: string) =>
-    ((await store.columns([accountId]))[accountId] ?? []).some((column) => column.id === status);
+  const hasColumn = async (board: Board, status: string) => {
+    const key = boardKey(board);
+    return ((await store.columns([key]))[key] ?? []).some((column) => column.id === status);
+  };
+
+  /** A project by its id, and only if it belongs to this account. */
+  const projectOf = async (accountId: string, id: string) =>
+    (await store.projects([], [id])).find((project) => project.accountId === accountId);
+
+  /** A board given by its key: an account one may write, or a project of one. */
+  const writableBoard = async (accounts: SessionAccount[], key: string) => {
+    if (writable(accounts, key)) return { accountId: key, projectId: null };
+    const [project] = await store.projects([], [key]);
+    return project && writable(accounts, project.accountId)
+      ? { accountId: project.accountId, projectId: project.id }
+      : null;
+  };
 
   app.get("/", async (c) => {
     const accounts = await accountsOf(c.req.raw);
@@ -73,26 +94,76 @@ export const createTaskRoutes = ({
       since,
       personal(accounts),
     );
-    // The columns of every board one sees a task of.
-    const boardIds = [
-      ...new Set([...accounts.map((account) => account.id), ...tasks.map((t) => t.accountId)]),
+    // The projects of one's accounts, and those a task given to one lies on.
+    const projects = await store.projects(
+      accounts.map((account) => account.id),
+      tasks.flatMap((task) => (task.projectId ? [task.projectId] : [])),
+    );
+    // The columns of every board one has or sees a task of.
+    const keys = [
+      ...new Set([
+        ...accounts.map((account) => account.id),
+        ...projects.map((project) => project.id),
+        ...tasks.map(boardKey),
+      ]),
     ];
-    return c.json({ tasks, boards: await store.columns(boardIds) });
+    return c.json({ tasks, projects, boards: await store.columns(keys) });
   });
 
   /** A board's own columns: renamed, added, removed, in another order. */
-  app.put("/boards/:accountId", async (c) => {
+  app.put("/boards/:key", async (c) => {
     const accounts = await accountsOf(c.req.raw);
     if (!accounts) return c.json({ error: "Nicht angemeldet" }, 401);
-    const accountId = c.req.param("accountId");
+    const board = await writableBoard(accounts, c.req.param("key"));
+    if (!board) return c.json({ error: "Dieses Postfach ist nur zum Lesen." }, 403);
+    const parsed = columnsSchema.safeParse((await c.req.json().catch(() => null))?.columns);
+    if (!parsed.success) return c.json({ error: "Die Spalten passen nicht." }, 400);
+    await store.setColumns(board, parsed.data);
+    changed(board.accountId, []);
+    return c.json({ columns: parsed.data });
+  });
+
+  app.post("/projects", async (c) => {
+    const accounts = await accountsOf(c.req.raw);
+    if (!accounts) return c.json({ error: "Nicht angemeldet" }, 401);
+    const parsed = newProjectSchema.safeParse(await c.req.json().catch(() => null));
+    if (!parsed.success) return c.json({ error: "Das Board braucht einen Namen." }, 400);
+    const { accountId, name } = parsed.data;
     if (!writable(accounts, accountId)) {
       return c.json({ error: "Dieses Postfach ist nur zum Lesen." }, 403);
     }
-    const parsed = columnsSchema.safeParse((await c.req.json().catch(() => null))?.columns);
-    if (!parsed.success) return c.json({ error: "Die Spalten passen nicht." }, 400);
-    await store.setColumns(accountId, parsed.data);
+    if ((await store.projects([accountId])).length >= MAX_PROJECTS) {
+      return c.json({ error: `Höchstens ${MAX_PROJECTS} Boards je Postfach.` }, 400);
+    }
+    const project = await store.createProject(accountId, name);
     changed(accountId, []);
-    return c.json({ columns: parsed.data });
+    return c.json({ project }, 201);
+  });
+
+  app.patch("/projects/:id", async (c) => {
+    const accounts = await accountsOf(c.req.raw);
+    if (!accounts) return c.json({ error: "Nicht angemeldet" }, 401);
+    const board = await writableBoard(accounts, c.req.param("id"));
+    if (!board?.projectId) return c.json({ error: "Unbekanntes Board" }, 404);
+    const name = projectNameSchema.safeParse((await c.req.json().catch(() => null))?.name);
+    if (!name.success) return c.json({ error: "Das Board braucht einen Namen." }, 400);
+    await store.renameProject(board.projectId, name.data);
+    changed(board.accountId, []);
+    return c.json({ ok: true });
+  });
+
+  /** The project goes; its tasks stay, on the account's own board. */
+  app.delete("/projects/:id", async (c) => {
+    const accounts = await accountsOf(c.req.raw);
+    if (!accounts) return c.json({ error: "Nicht angemeldet" }, 401);
+    const board = await writableBoard(accounts, c.req.param("id"));
+    if (!board?.projectId) return c.json({ error: "Unbekanntes Board" }, 404);
+    const assignees = (await store.list([board.accountId], new Date(0)))
+      .filter((task) => task.projectId === board.projectId)
+      .flatMap((task) => told(task));
+    await store.removeProject(board.projectId);
+    changed(board.accountId, [...new Set(assignees)]);
+    return c.json({ ok: true });
   });
 
   app.post("/", async (c) => {
@@ -103,7 +174,11 @@ export const createTaskRoutes = ({
     if (!writable(accounts, parsed.data.accountId)) {
       return c.json({ error: "Dieses Postfach ist nur zum Lesen." }, 403);
     }
-    if (!(await hasColumn(parsed.data.accountId, parsed.data.status))) {
+    const { projectId } = parsed.data;
+    if (projectId && !(await projectOf(parsed.data.accountId, projectId))) {
+      return c.json({ error: "Dieses Board gibt es nicht." }, 400);
+    }
+    if (!(await hasColumn(parsed.data, parsed.data.status))) {
       return c.json({ error: "Diese Spalte gibt es nicht." }, 400);
     }
     const me = personal(accounts) ?? parsed.data.accountId;
@@ -123,20 +198,31 @@ export const createTaskRoutes = ({
     const parsed = taskPatchSchema.safeParse(await c.req.json().catch(() => null));
     if (!parsed.success) return c.json({ error: "Angaben unvollständig." }, 400);
     const target = parsed.data.accountId ?? task.accountId;
+    // Onto another account without a project named: onto that account's own board.
+    const projectId =
+      parsed.data.projectId !== undefined
+        ? parsed.data.projectId
+        : target === task.accountId
+          ? task.projectId
+          : null;
+    const board = { accountId: target, projectId };
+    const moved = boardKey(board) !== boardKey(task);
     // Whom it is given to may change it where it is; onto another board only who may write both.
-    const mayChange =
-      target === task.accountId
-        ? writable(accounts, task.accountId) || assignedToMe(accounts, task)
-        : writable(accounts, task.accountId) && writable(accounts, target);
+    const mayChange = moved
+      ? writable(accounts, task.accountId) && writable(accounts, target)
+      : writable(accounts, task.accountId) || assignedToMe(accounts, task);
     if (!mayChange) {
       return c.json({ error: "Dieses Postfach ist nur zum Lesen." }, 403);
     }
-    const patch = { ...parsed.data };
-    if (patch.status && !(await hasColumn(target, patch.status))) {
+    if (projectId && moved && !(await projectOf(target, projectId))) {
+      return c.json({ error: "Dieses Board gibt es nicht." }, 400);
+    }
+    const patch = { ...parsed.data, ...(moved ? { projectId } : {}) };
+    if (patch.status && !(await hasColumn(board, patch.status))) {
       return c.json({ error: "Diese Spalte gibt es nicht." }, 400);
     }
     // Onto a board without its column: into "open" there.
-    if (!patch.status && target !== task.accountId && !(await hasColumn(target, task.status))) {
+    if (!patch.status && moved && !(await hasColumn(board, task.status))) {
       patch.status = "open";
     }
     const me = personal(accounts) ?? task.accountId;

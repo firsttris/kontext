@@ -1,17 +1,19 @@
 /**
  * The tasks app: views and boards | the list (or a board) | the open task. On a phone one screen
- * at a time, chosen by the URL; views and boards are chips above the list.
+ * at a time, chosen by the URL; views and boards are chips above the list. A board is a mailbox's
+ * own or one of its projects.
  */
 import { Link, useNavigate } from "@tanstack/react-router";
-import { Columns3, EyeOff, List, SquareKanban } from "lucide-react";
+import { Columns3, EyeOff, List, Pencil, Plus, SquareKanban } from "lucide-react";
 import { useState } from "react";
 import { TabBar } from "@/components/shell/app-shell";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/cn";
 import { dateKey } from "@/lib/jscalendar";
-import { inView, type TaskView } from "@/lib/tasks";
+import { boardKey, inView, type TaskView } from "@/lib/tasks";
 import { m } from "@/paraglide/messages";
 import type { TasksSearch } from "@/routes/_app/tasks";
+import { BoardDialog } from "./board-dialog";
 import { ColumnsDialog } from "./columns-dialog";
 import { setHideDone, useHideDone } from "./hide-done";
 import { useBoards, useMe, useTasks } from "./queries";
@@ -78,6 +80,8 @@ export const TasksPage = ({ search }: { search: TasksSearch }) => {
   const [creating, setCreating] = useState(false);
   const [editingColumns, setEditingColumns] = useState(false);
   const hideDone = useHideDone();
+  /** The board dialog: a new board, or the open project to rename or delete. */
+  const [boardDialog, setBoardDialog] = useState<"new" | "edit" | null>(null);
 
   const board = search.board
     ? allBoards.find((candidate) => candidate.id === search.board)
@@ -86,7 +90,7 @@ export const TasksPage = ({ search }: { search: TasksSearch }) => {
   const view: TaskView = search.show ?? "mine";
   const open = tasks.find((task) => task.id === search.task);
   const inList = board
-    ? tasks.filter((task) => task.accountId === board.id)
+    ? tasks.filter((task) => boardKey(task) === board.id)
     : tasks.filter((task) => inView(task, view, me, today));
   // The view "Erledigt" is nothing else; there the switch is not offered.
   const canHide = board !== undefined || view !== "done";
@@ -95,8 +99,8 @@ export const TasksPage = ({ search }: { search: TasksSearch }) => {
       ? inList.filter((task) => task.status !== "done")
       : inList;
   const title = board
-    ? board.isPersonal
-      ? m.tasks_my_board()
+    ? board.projectId || board.isPersonal
+      ? board.name
       : m.tasks_board_of({ mailbox: board.name })
     : VIEWS.find((entry) => entry.view === view)!.label();
   const counts = Object.fromEntries(
@@ -107,11 +111,11 @@ export const TasksPage = ({ search }: { search: TasksSearch }) => {
   ) as Record<TaskView, number>;
   const boards = allBoards.map((entry) => ({
     ...entry,
-    open: tasks.filter((task) => task.accountId === entry.id && task.status !== "done").length,
+    open: tasks.filter((task) => boardKey(task) === entry.id && task.status !== "done").length,
   }));
   // A quick entry in "Heute" is due today, otherwise it would not show where it was typed.
   const addTo = board
-    ? { accountId: board.id, assigneeId: null }
+    ? { accountId: board.accountId, projectId: board.projectId, assigneeId: null }
     : view === "done"
       ? null
       : { accountId: me, assigneeId: null, ...(view === "today" ? { dueDate: today } : {}) };
@@ -130,9 +134,17 @@ export const TasksPage = ({ search }: { search: TasksSearch }) => {
           search={{ board: entry.id }}
           className={chip(board?.id === entry.id)}
         >
-          {entry.isPersonal ? m.tasks_my_board() : entry.name}
+          {entry.name}
         </Link>
       ))}
+      <button
+        type="button"
+        onClick={() => setBoardDialog("new")}
+        aria-label={m.tasks_board_new()}
+        className={cn(chip(false), "px-2.5")}
+      >
+        <Plus size={15} />
+      </button>
     </nav>
   );
 
@@ -151,6 +163,7 @@ export const TasksPage = ({ search }: { search: TasksSearch }) => {
           counts={counts}
           boards={boards}
           onNew={() => setCreating(true)}
+          onNewBoard={() => setBoardDialog("new")}
         />
       </div>
       {mode === "board" && board ? (
@@ -164,6 +177,17 @@ export const TasksPage = ({ search }: { search: TasksSearch }) => {
                 <h1 className="m-0 flex-1 truncate text-[30px] leading-tight font-semibold tracking-tight md:text-[18px]">
                   {title}
                 </h1>
+                {board.projectId ? (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => setBoardDialog("edit")}
+                    aria-label={m.tasks_board_edit()}
+                    title={m.tasks_board_edit()}
+                  >
+                    <Pencil size={15} />
+                  </Button>
+                ) : null}
                 <Button
                   variant="ghost"
                   size="sm"
@@ -178,7 +202,7 @@ export const TasksPage = ({ search }: { search: TasksSearch }) => {
               </div>
               {phoneChips}
             </header>
-            <TaskBoard accountId={board.id} tasks={shown} openId={open?.id} hideDone={hideDone} />
+            <TaskBoard board={board} tasks={shown} openId={open?.id} hideDone={hideDone} />
             <TabBar />
           </section>
           {open ? (
@@ -226,16 +250,22 @@ export const TasksPage = ({ search }: { search: TasksSearch }) => {
         </>
       )}
       {editingColumns && board ? (
-        <ColumnsDialog
-          accountId={board.id}
-          title={title}
-          onClose={() => setEditingColumns(false)}
-        />
+        <ColumnsDialog boardId={board.id} title={title} onClose={() => setEditingColumns(false)} />
       ) : null}
       {creating ? (
         <TaskDialog
-          starts={[{ title: "", accountId: board?.id ?? me }]}
+          starts={[
+            { title: "", accountId: board?.accountId ?? me, projectId: board?.projectId ?? null },
+          ]}
           onClose={() => setCreating(false)}
+        />
+      ) : null}
+      {boardDialog ? (
+        <BoardDialog
+          board={boardDialog === "edit" ? board : undefined}
+          accountId={board?.accountId}
+          onClose={() => setBoardDialog(null)}
+          onDone={(key) => void navigate({ to: "/tasks", search: { board: key } })}
         />
       ) : null}
     </>

@@ -1,12 +1,16 @@
-/** The tasks' sidebar: the own views with their counts, the boards, and "Neue Aufgabe". */
+/**
+ * The tasks' sidebar: the own views with their counts, the boards – each mailbox's own with its
+ * projects under it – and "Neue Aufgabe".
+ */
 import { Link } from "@tanstack/react-router";
-import { CalendarDays, CheckCircle2, Plus, Sun, User, Users } from "lucide-react";
+import { CalendarDays, CheckCircle2, Plus, SquareKanban, Sun, User, Users } from "lucide-react";
 import type { ReactNode } from "react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/cn";
 import type { TaskView } from "@/lib/tasks";
 import { m } from "@/paraglide/messages";
 import type { TasksSearch } from "@/routes/_app/tasks";
+import type { Board } from "./queries";
 
 export const VIEWS: { view: TaskView; label: () => string; icon: typeof User }[] = [
   { view: "mine", label: m.tasks_view_mine, icon: User },
@@ -29,12 +33,14 @@ export const TaskSidebar = ({
   counts,
   boards,
   onNew,
+  onNewBoard,
   footer,
 }: {
   search: TasksSearch;
   counts: Record<TaskView, number>;
-  boards: { id: string; name: string; isPersonal: boolean; open: number }[];
+  boards: (Board & { open: number })[];
   onNew: () => void;
+  onNewBoard: () => void;
   footer?: ReactNode;
 }) => (
   <div className="flex h-full flex-col gap-5 overflow-y-auto px-3 py-4">
@@ -60,7 +66,18 @@ export const TaskSidebar = ({
       })}
     </nav>
     <nav aria-label={m.tasks_boards()} className="flex flex-col gap-px">
-      <div className="px-2.5 pb-1.5 text-[12px] font-medium text-muted">{m.tasks_boards()}</div>
+      <div className="flex items-center justify-between pb-1.5 pl-2.5">
+        <span className="text-[12px] font-medium text-muted">{m.tasks_boards()}</span>
+        <button
+          type="button"
+          onClick={onNewBoard}
+          aria-label={m.tasks_board_new()}
+          title={m.tasks_board_new()}
+          className="flex size-6 items-center justify-center rounded-md text-muted hover:bg-hover hover:text-fg"
+        >
+          <Plus size={14} />
+        </button>
+      </div>
       {boards.map((board) => {
         const active = search.board === board.id;
         return (
@@ -69,14 +86,16 @@ export const TaskSidebar = ({
             to="/tasks"
             search={{ board: board.id }}
             aria-current={active ? "page" : undefined}
-            className={item(active)}
+            className={cn(item(active), board.projectId && "pl-7")}
           >
-            {board.isPersonal ? (
+            {board.projectId ? (
+              <SquareKanban size={15} strokeWidth={1.75} />
+            ) : board.isPersonal ? (
               <span aria-hidden="true" className="mx-[3px] size-2.5 rounded-full bg-accent" />
             ) : (
               <Users size={15} strokeWidth={1.75} />
             )}
-            <span className="truncate">{board.isPersonal ? m.tasks_my_board() : board.name}</span>
+            <span className="truncate">{board.name}</span>
             <Count value={board.open} />
           </Link>
         );

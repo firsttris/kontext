@@ -155,6 +155,92 @@ describe("columns and repeating tasks", () => {
     expect(listed.boards.jonas!.map((c) => c.id)).toEqual(["open", "doing", "waiting", "done"]);
   });
 
+  it("keeps a project's tasks on their own board, with its own columns", async () => {
+    const { tasks, call, changes, as } = setup();
+    const made = await call("POST", "/projects", { accountId: "info", name: " Baustelle " });
+    expect(made.status).toBe(201);
+    const { project } = (await made.json()) as { project: { id: string; name: string } };
+    expect(project.name).toBe("Baustelle");
+    expect(changes.at(-1)).toEqual(["info", []]);
+    await call("POST", "/", { accountId: "info", projectId: project.id, title: "Rohre bestellen" });
+    await call("POST", "/", { accountId: "info", title: "Rückruf" });
+    expect(tasks.map((task) => task.projectId)).toEqual([project.id, null]);
+    // Columns per board: the project's do not touch info@'s own.
+    await call("PUT", `/boards/${project.id}`, {
+      columns: [
+        { id: "open", name: "" },
+        { id: "c-bestellt", name: "Bestellt" },
+        { id: "done", name: "" },
+      ],
+    });
+    const listed = (await (await call("GET", "/")).json()) as {
+      projects: { id: string }[];
+      boards: Record<string, { id: string }[]>;
+    };
+    expect(listed.projects.map((p) => p.id)).toEqual([project.id]);
+    expect(listed.boards[project.id]!.map((c) => c.id)).toEqual(["open", "c-bestellt", "done"]);
+    expect(listed.boards.info!.map((c) => c.id)).toEqual(["open", "doing", "waiting", "done"]);
+    // A column only the project has is unknown on info@'s own board.
+    expect((await call("PATCH", "/t2", { status: "c-bestellt" })).status).toBe(400);
+    expect((await call("PATCH", "/t1", { status: "c-bestellt" })).status).toBe(200);
+    // Who cannot write info@ makes no project there.
+    as(lea.filter((account) => account.id !== "info"));
+    expect((await call("POST", "/projects", { accountId: "info", name: "X" })).status).toBe(403);
+    expect((await call("PUT", `/boards/${project.id}`, { columns: [] })).status).toBe(403);
+  });
+
+  it("moves a task between a project and its account's board, never into another's project", async () => {
+    const { tasks, call } = setup();
+    const { project } = (await (
+      await call("POST", "/projects", { accountId: "info", name: "Baustelle" })
+    ).json()) as { project: { id: string } };
+    await call("POST", "/", { accountId: "jonas", title: "Angebot" });
+    // A project of info@ is no board of jonas.
+    expect((await call("PATCH", "/t1", { projectId: project.id })).status).toBe(400);
+    expect(
+      (await call("POST", "/", { accountId: "jonas", projectId: project.id, title: "X" })).status,
+    ).toBe(400);
+    expect((await call("PATCH", "/t1", { accountId: "info", projectId: project.id })).status).toBe(
+      200,
+    );
+    expect(tasks[0]).toMatchObject({ accountId: "info", projectId: project.id });
+    // Onto another account without a project: onto its own board.
+    await call("PATCH", "/t1", { accountId: "jonas" });
+    expect(tasks[0]).toMatchObject({ accountId: "jonas", projectId: null });
+  });
+
+  it("renames a project and, removed, puts its tasks on the account's board", async () => {
+    const { tasks, call } = setup();
+    const { project } = (await (
+      await call("POST", "/projects", { accountId: "info", name: "Baustelle" })
+    ).json()) as { project: { id: string } };
+    await call("PUT", `/boards/${project.id}`, {
+      columns: [
+        { id: "open", name: "" },
+        { id: "c-bestellt", name: "Bestellt" },
+        { id: "doing", name: "" },
+        { id: "done", name: "" },
+      ],
+    });
+    await call("POST", "/", { accountId: "info", projectId: project.id, title: "Rohre" });
+    await call("POST", "/", { accountId: "info", projectId: project.id, title: "Kessel" });
+    await call("PATCH", "/t1", { status: "c-bestellt" });
+    await call("PATCH", "/t2", { status: "doing" });
+    expect((await call("PATCH", `/projects/${project.id}`, { name: "" })).status).toBe(400);
+    await call("PATCH", `/projects/${project.id}`, { name: "Baustelle Hoffmann" });
+    let listed = (await (await call("GET", "/")).json()) as { projects: { name: string }[] };
+    expect(listed.projects.map((p) => p.name)).toEqual(["Baustelle Hoffmann"]);
+    expect((await call("DELETE", `/projects/${project.id}`)).status).toBe(200);
+    listed = (await (await call("GET", "/")).json()) as { projects: { name: string }[] };
+    expect(listed.projects).toEqual([]);
+    // The column info@ lacks: into "open"; the one it has: kept.
+    expect(tasks.map(({ projectId, status }) => [projectId, status])).toEqual([
+      [null, "open"],
+      [null, "doing"],
+    ]);
+    expect((await call("DELETE", `/projects/${project.id}`)).status).toBe(404);
+  });
+
   it("moved onto a board without its column, a task goes into open", async () => {
     const { tasks, call } = setup();
     await call("PUT", "/boards/info", {

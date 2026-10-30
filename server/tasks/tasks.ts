@@ -1,6 +1,8 @@
 /**
  * Tasks: what they are, as the app and the server exchange them. A task belongs to one account
- * (own mailbox or a shared one like info@); its status is its column on the board. A board has
+ * (own mailbox or a shared one like info@) and lies on its board, or on one of the account's
+ * projects – further boards, so the tasks of one job stay apart from the rest. Its status is its
+ * column on that board. A board has
  * the columns Offen … Erledigt, renamed, removed or added in between as the team likes; "open"
  * and "done" stay, first and last, and only "done" counts as finished. Pure.
  */
@@ -28,6 +30,21 @@ export const columnsSchema = z
       // An added column needs a name; the built-in ones have theirs.
       columns.every((column) => column.name || !column.id.startsWith("c-")),
   );
+
+/** A further board of an account ("Baustelle Hoffmann"); its id starts with "p-". */
+export type TaskProject = { id: string; accountId: string; name: string };
+export const projectNameSchema = z.string().trim().min(1).max(60);
+export const newProjectSchema = z.object({
+  accountId: z.string().min(1).max(64),
+  name: projectNameSchema,
+});
+
+/**
+ * The board a task lies on: its project, else its account's own board. Columns are kept per
+ * board, under this key.
+ */
+export const boardKey = (task: { accountId: string; projectId: string | null }): string =>
+  task.projectId ?? task.accountId;
 
 /** How a task comes again once it is done. */
 export const REPEATS = ["daily", "weekdays", "weekly", "monthly", "yearly"] as const;
@@ -89,8 +106,12 @@ const fields = {
   remindAt: z.iso.datetime().nullable(),
 };
 
+const projectId = z.string().min(1).max(64).nullable();
+
 export const newTaskSchema = z.object({
   accountId: z.string().min(1).max(64),
+  /** One of the account's projects; null: the account's own board. */
+  projectId: projectId.default(null),
   title: fields.title,
   notes: fields.notes.default(""),
   status: fields.status.default("open"),
@@ -107,15 +128,19 @@ export const newTaskSchema = z.object({
 export type NewTask = z.input<typeof newTaskSchema>;
 export type NewTaskData = z.infer<typeof newTaskSchema>;
 
-/** A change; `accountId` moves the task to another board. */
+/**
+ * A change; `accountId` and `projectId` move the task to another board. Onto another account
+ * without a project, it lies on that account's own board.
+ */
 export const taskPatchSchema = z
-  .object({ accountId: z.string().min(1).max(64), ...fields })
+  .object({ accountId: z.string().min(1).max(64), projectId, ...fields })
   .partial();
 export type TaskPatch = z.infer<typeof taskPatchSchema>;
 
 export type Task = {
   id: string;
   accountId: string;
+  projectId: string | null;
   title: string;
   notes: string;
   status: TaskStatus;
@@ -218,6 +243,7 @@ export const nextOccurrence = (task: Task, today: string): NewTaskData | null =>
     : Number.NaN;
   return {
     accountId: task.accountId,
+    projectId: task.projectId,
     title: task.title,
     notes: task.notes,
     status: "open",

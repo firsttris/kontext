@@ -30,7 +30,7 @@ Einen Rundgang in Bildern, gemacht zum Weiterschicken an Kunden und Kollegen, is
 | --- | --- |
 | [**Mail**](mail.md) | gemeinsame Postfächer, alle Posteingänge in einer Liste, Kategorien und Regeln fürs Team, Suche wie in Gmail, Wiedervorlage, später senden, Textbausteine, Gmail und GMX abrufen und als diese Adresse senden, Warnung vor gefälschten Absendern |
 | [**Kalender und Kontakte**](calendar-contacts.md) | Tag, Woche, Monat, Serien, Einladungen, Verfügbarkeit der Kollegen wie in Outlook, Videobesprechung am Termin; Kunden-Ansicht mit letzten Mails und Terminen, Gruppen, vCard, geteilte Adressbücher |
-| [**Aufgaben**](tasks.md) | Liste und Kanban-Board pro Postfach, aus Mails, Chat und Regeln, wiederkehrend, Erinnerungen als Push, CalDAV für Thunderbird und Handy |
+| [**Aufgaben**](tasks.md) | Liste und Kanban-Board pro Postfach und Projekt, aus Mails, Chat und Regeln, wiederkehrend, Erinnerungen als Push, CalDAV für Thunderbird und Handy |
 | [**Team-Chat und Videocalls**](chat.md) | Kanäle pro gemeinsamem Postfach, Direktnachrichten, Threads, Mails als Karten, Anrufe, Videocalls und Bildschirm teilen über LiveKit |
 | [**Telefonie (CTI)**](telephony.md) | Fritzbox-Anrufe klingeln in Kontext mit Kontakt, letzter Mail und nächstem Termin; Softphone im Browser, Mailbox als Mail, Öffnungszeiten, Weitervermitteln, Snom-Tischtelefone, Fax als PDF |
 | [**Dokumente**](documents.md) | Word, Excel, PowerPoint und PDF im Browser (Schreibzeug), ein Ordner pro gemeinsamem Postfach, Anhänge ablegen und anhängen |

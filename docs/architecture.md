@@ -725,10 +725,19 @@ oder Reihenfolge.
   Kollegin; verschieben und löschen darf dort nur sie. Erledigtes bleibt 30 Tage in den Listen.
 - **Ansichten:** „Meine Aufgaben“ sind mir zugewiesene und die im eigenen Postfach ohne
   Zuständigen; „Heute“ nimmt Überfälliges mit, heute Erledigtes bleibt durchgestrichen stehen. Ein
-  Board pro Postfach mit den Spalten Offen, In Arbeit, Wartet, Erledigt (`status`); die
-  Reihenfolge ist `position`, beim Ziehen wird zwischen die Nachbarn gesetzt.
+  Board pro Postfach (und Projekt) mit den Spalten Offen, In Arbeit, Wartet, Erledigt (`status`);
+  die Reihenfolge ist `position`, beim Ziehen wird zwischen die Nachbarn gesetzt.
+- **Boards für Projekte:** Ein Konto hat neben seinem Board weitere (`task_projects`, Id `p-…`,
+  höchstens 50 je Konto); eine Aufgabe liegt auf einem davon (`project_id`) oder ohne auf dem
+  Board des Kontos. Wer das Postfach sieht, sieht seine Projekte; anlegen, umbenennen und löschen
+  darf, wer es schreiben darf (`/api/tasks/projects`). Ein Board heißt überall mit seinem
+  Schlüssel (`boardKey`: Projekt-Id, sonst Konto-Id) – in der URL (`?board=`), bei den Spalten
+  und unter `/dav/`. Ein Projekt gehört zu genau einem Konto: Auf ein anderes Konto verschoben,
+  landet eine Aufgabe auf dessen Board, außer es ist ein Projekt dort genannt. Gelöscht gehen die
+  Aufgaben eines Projekts auf das Board des Kontos, in dieselbe Spalte, wenn es sie dort gibt,
+  sonst nach „Offen“.
 - **Eigene Spalten:** „Spalten“ am Board benennt um, ergänzt (bis zehn), verschiebt und löscht
-  (`task_boards`, JSON). „Offen“ bleibt vorn, „Erledigt“ hinten, nur „Erledigt“ zählt als fertig;
+  (`task_boards` für das Board eines Kontos, `task_projects.columns` für ein Projekt; JSON). „Offen“ bleibt vorn, „Erledigt“ hinten, nur „Erledigt“ zählt als fertig;
   eigene Spalten heißen `c-…`. Aufgaben einer gelöschten Spalte und Aufgaben, die auf ein Board
   ohne ihre Spalte wandern, landen in „Offen“.
 - **Wiederholen:** täglich, an Werktagen, wöchentlich, monatlich, jährlich (`repeat`). Erledigt,
@@ -773,7 +782,8 @@ oder Reihenfolge.
   verschoben, zieht die Erinnerung mit.
 - **In anderen Apps (CalDAV):** Kontext stellt die Boards unter `/dav/` als Aufgabenlisten
   bereit (RFC 4791, nur VTODO; `server/dav/`), unter der Adresse aus den Einstellungen: eine Liste
-  je Board, das man hat, „Meine Aufgaben (Kontext)“ und „Aufgaben info@“. Angemeldet wird mit
+  je Board, das man hat, „Meine Aufgaben (Kontext)“ und „Aufgaben info@“, ein Projekt als
+  „Baustelle Hoffmann (Kontext)“ oder „… (info@)“. Angemeldet wird mit
   Mail-Adresse und Passwort; Kontext fragt Stalwarts JMAP-Session damit und merkt sich die
   Antwort eine Minute (ein gesperrtes Konto zählt also spätestens eine Minute später). Clients
   lesen per PROPFIND (mit `getctag` und `sync-token`) und REPORT

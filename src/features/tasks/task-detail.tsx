@@ -16,7 +16,15 @@ import { cn } from "@/lib/cn";
 import { documentLink } from "@/lib/document-links";
 import { LOCALE } from "@/lib/locale";
 import { shiftedReminder } from "@/lib/task-reminders";
-import { columnLabel, dueLabel, REPEAT_LABELS, REPEATS, type Repeat, type Task } from "@/lib/tasks";
+import {
+  boardKey,
+  columnLabel,
+  dueLabel,
+  REPEAT_LABELS,
+  REPEATS,
+  type Repeat,
+  type Task,
+} from "@/lib/tasks";
 import { m } from "@/paraglide/messages";
 import type { TaskPatch } from "../../../server/tasks/tasks";
 import { companyDay, nextDue } from "../../../server/tasks/tasks";
@@ -43,7 +51,7 @@ export const TaskDetail = ({ task, onClose }: { task: Task; onClose?: () => void
   const people = usePeople();
   const boards = useBoards();
   const me = useMe();
-  const columns = useColumns(task.accountId);
+  const columns = useColumns(boardKey(task));
   const [title, setTitle] = useState(task.title);
   const [notes, setNotes] = useState(task.notes);
   const done = task.status === "done";
@@ -77,6 +85,10 @@ export const TaskDetail = ({ task, onClose }: { task: Task; onClose?: () => void
 
   const creator = people.find((person) => person.id === task.createdBy)?.name ?? "";
   const onMyBoards = useOnMyBoards()(task);
+  const moveTo = (key: string) => {
+    const board = boards.find((candidate) => candidate.id === key);
+    if (board) void save({ accountId: board.accountId, projectId: board.projectId });
+  };
   const owner = people.find((person) => person.id === task.accountId)?.name ?? "";
 
   return (
@@ -165,20 +177,20 @@ export const TaskDetail = ({ task, onClose }: { task: Task; onClose?: () => void
               </Select>
             </Label>
             <Label>
-              {m.tasks_mailbox()}
+              {m.tasks_board()}
               <Select
-                value={task.accountId}
+                value={boardKey(task)}
                 disabled={!onMyBoards}
-                onChange={(e) => void save({ accountId: e.target.value })}
+                onChange={(e) => moveTo(e.target.value)}
               >
                 {onMyBoards ? null : (
-                  <option value={task.accountId}>
+                  <option value={boardKey(task)}>
                     {m.tasks_board_of({ mailbox: owner || "—" })}
                   </option>
                 )}
                 {boards.map((board) => (
                   <option key={board.id} value={board.id}>
-                    {board.isPersonal ? m.tasks_my_board() : board.name}
+                    {board.label}
                   </option>
                 ))}
               </Select>

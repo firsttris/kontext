@@ -48,6 +48,8 @@ const nextWeek = (today: string) => {
 export type TaskStart = {
   title: string;
   accountId: string;
+  /** A project of that account, when made on its board. */
+  projectId?: string | null;
   link?: TaskLink;
   /** From a mail: the other side's address, linked as a contact when it has a card. */
   person?: string;
@@ -137,11 +139,12 @@ export const TaskDialog = ({
   const [assigneeId, setAssigneeId] = useState(me);
   // Several from one shared mailbox go on its board; from several, on one's own.
   const startBoard = starts.every((start) => start.accountId === first.accountId)
-    ? first.accountId
+    ? (first.projectId ?? first.accountId)
     : me;
-  const [accountId, setAccountId] = useState(
+  const [boardId, setBoardId] = useState(
     boards.some((board) => board.id === startBoard) ? startBoard : me,
   );
+  const board = boards.find((candidate) => candidate.id === boardId);
   const contact = !many && first.person ? findContact(contacts, first.person) : undefined;
   const { title: heading, description } = headings(starts, contact);
   const [archive, setArchive] = useState(remembered);
@@ -160,7 +163,8 @@ export const TaskDialog = ({
     try {
       for (const start of starts) {
         await actions.create({
-          accountId,
+          accountId: board?.accountId ?? me,
+          projectId: board?.projectId ?? null,
           title: many ? start.title || m.mail_no_subject() : title.trim(),
           dueDate: dueDate || null,
           assigneeId: assigneeId || null,
@@ -265,11 +269,11 @@ export const TaskDialog = ({
             </Select>
           </Label>
           <Label>
-            {m.tasks_mailbox()}
-            <Select value={accountId} onChange={(e) => setAccountId(e.target.value)}>
-              {boards.map((board) => (
-                <option key={board.id} value={board.id}>
-                  {board.isPersonal ? m.tasks_my_board() : board.name}
+            {m.tasks_board()}
+            <Select value={boardId} onChange={(e) => setBoardId(e.target.value)}>
+              {boards.map((option) => (
+                <option key={option.id} value={option.id}>
+                  {option.label}
                 </option>
               ))}
             </Select>

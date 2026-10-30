@@ -1,5 +1,18 @@
 /** Tasks in Kontext's SQLite: one row per task, its links to mails, contacts and appointments. */
-import { and, asc, eq, gte, inArray, isNull, lte, max, ne, notInArray, or } from "drizzle-orm";
+import {
+  and,
+  asc,
+  eq,
+  gte,
+  inArray,
+  isNull,
+  lte,
+  max,
+  ne,
+  notInArray,
+  or,
+  type SQL,
+} from "drizzle-orm";
 import type { Db } from "../db";
 import * as schema from "../db/schema";
 import {
@@ -11,7 +24,11 @@ import {
   type Task,
   type TaskLink,
   type TaskPatch,
+  type TaskProject,
 } from "./tasks";
+
+/** A board: an account's own (`projectId` null) or one of its projects. */
+export type Board = { accountId: string; projectId: string | null };
 
 export type TaskStore = {
   /**
@@ -27,14 +44,23 @@ export type TaskStore = {
   /** Open tasks whose reminder is due and not yet sent, the oldest first. */
   dueReminders: (now: Date) => Promise<Task[]>;
   markReminded: (id: string, at: Date) => Promise<void>;
-  /** The columns of these boards; built-in ones where a board has none of its own. */
-  columns: (accountIds: string[]) => Promise<Record<string, BoardColumn[]>>;
+  /**
+   * The columns of these boards, by board key (an account id or a project id, `boardKey`);
+   * built-in ones where a board has none of its own.
+   */
+  columns: (keys: string[]) => Promise<Record<string, BoardColumn[]>>;
   /** New columns; tasks in a column that went move to the end of "open". */
-  setColumns: (accountId: string, columns: BoardColumn[]) => Promise<void>;
+  setColumns: (board: Board, columns: BoardColumn[]) => Promise<void>;
+  /** The projects of these accounts and those with these ids, the oldest first. */
+  projects: (accountIds: string[], ids?: string[]) => Promise<TaskProject[]>;
+  createProject: (accountId: string, name: string) => Promise<TaskProject>;
+  renameProject: (id: string, name: string) => Promise<void>;
+  /** Gone; its tasks move to the end of "open" on the account's own board. */
+  removeProject: (id: string) => Promise<void>;
   /** A board's tasks for CalDAV, with their file name and UID there. */
-  davList: (accountId: string, doneSince: Date) => Promise<DavTask[]>;
+  davList: (board: Board, doneSince: Date) => Promise<DavTask[]>;
   /** The task a CalDAV client means by this file name. */
-  davGet: (accountId: string, name: string) => Promise<DavTask | null>;
+  davGet: (board: Board, name: string) => Promise<DavTask | null>;
   /** A task a CalDAV client made, under its file name and UID. */
   davCreate: (task: NewTaskData, createdBy: string, name: string, uid: string) => Promise<Task>;
 };
@@ -47,6 +73,7 @@ type LinkRow = typeof schema.taskLinks.$inferSelect;
 const toTask = (row: Row, links: LinkRow[]): Task => ({
   id: row.id,
   accountId: row.accountId,
+  projectId: row.projectId,
   title: row.title,
   notes: row.notes,
   status: row.status,
@@ -75,6 +102,19 @@ const toTask = (row: Row, links: LinkRow[]): Task => ({
 
 const instant = (value: string | null) => (value ? new Date(value) : null);
 
+/** The tasks on a board: its project's, or the account's without a project. */
+const onBoard = ({ accountId, projectId }: Board): SQL =>
+  and(
+    eq(schema.tasks.accountId, accountId),
+    projectId ? eq(schema.tasks.projectId, projectId) : isNull(schema.tasks.projectId),
+  )!;
+
+const toProject = (row: typeof schema.taskProjects.$inferSelect): TaskProject => ({
+  id: row.id,
+  accountId: row.accountId,
+  name: row.name,
+});
+
 const davOf = (row: Row, task: Task): DavTask => ({
   task,
   name: row.davName ?? row.id,
@@ -99,12 +139,27 @@ export const createTaskStore = (db: Db): TaskStore => {
   };
 
   /** After the last task of the column, so a new one goes to the end. */
-  const nextPosition = async (accountId: string, status: string) => {
+  const nextPosition = async (board: Board, status: string) => {
     const [row] = await db
       .select({ last: max(schema.tasks.position) })
       .from(schema.tasks)
-      .where(and(eq(schema.tasks.accountId, accountId), eq(schema.tasks.status, status)));
+      .where(and(onBoard(board), eq(schema.tasks.status, status)));
     return (row?.last ?? 0) + 1;
+  };
+
+  /** Tasks on a board outside these columns: to the end of "open". */
+  const reopenOutside = async (board: Board, kept: string[]) => {
+    const orphans = await db
+      .select({ id: schema.tasks.id })
+      .from(schema.tasks)
+      .where(and(onBoard(board), notInArray(schema.tasks.status, kept)));
+    let position = await nextPosition(board, "open");
+    for (const { id } of orphans) {
+      await db
+        .update(schema.tasks)
+        .set({ status: "open", position: position++, updatedAt: new Date() })
+        .where(eq(schema.tasks.id, id));
+    }
   };
 
   const writeLinks = async (taskId: string, links: TaskLink[]) => {
@@ -123,10 +178,11 @@ export const createTaskStore = (db: Db): TaskStore => {
     await db.insert(schema.tasks).values({
       id,
       accountId: task.accountId,
+      projectId: task.projectId,
       title: task.title,
       notes: task.notes,
       status: task.status,
-      position: task.position ?? (await nextPosition(task.accountId, task.status)),
+      position: task.position ?? (await nextPosition(task, task.status)),
       assigneeId: task.assigneeId,
       dueDate: task.dueDate,
       dueTime: task.dueTime,
@@ -144,7 +200,7 @@ export const createTaskStore = (db: Db): TaskStore => {
     return (await get(id))!;
   };
 
-  return {
+  const store: TaskStore = {
     list: async (accountIds, doneSince, me) => {
       if (!accountIds.length && !me) return [];
       const rows = await db
@@ -174,9 +230,14 @@ export const createTaskStore = (db: Db): TaskStore => {
       const { links, checklist, remindAt, ...rest } = patch;
       const reassigned = patch.assigneeId !== undefined && patch.assigneeId !== current.assigneeId;
       const status = patch.status ?? current.status;
+      const board = {
+        accountId: patch.accountId ?? current.accountId,
+        projectId: patch.projectId !== undefined ? patch.projectId : current.projectId,
+      };
       const moved =
         (patch.status && patch.status !== current.status) ||
-        (patch.accountId && patch.accountId !== current.accountId);
+        board.accountId !== current.accountId ||
+        board.projectId !== current.projectId;
       await db
         .update(schema.tasks)
         .set({
@@ -194,7 +255,7 @@ export const createTaskStore = (db: Db): TaskStore => {
             : {}),
           // Into another column without a place of its own: at its end.
           ...(moved && patch.position === undefined
-            ? { position: await nextPosition(patch.accountId ?? current.accountId, status) }
+            ? { position: await nextPosition(board, status) }
             : {}),
           ...(patch.status
             ? {
@@ -233,13 +294,13 @@ export const createTaskStore = (db: Db): TaskStore => {
     markReminded: async (id, at) => {
       await db.update(schema.tasks).set({ remindedAt: at }).where(eq(schema.tasks.id, id));
     },
-    davList: async (accountId, doneSince) => {
+    davList: async (board, doneSince) => {
       const rows = await db
         .select()
         .from(schema.tasks)
         .where(
           and(
-            eq(schema.tasks.accountId, accountId),
+            onBoard(board),
             or(
               ne(schema.tasks.status, "done"),
               isNull(schema.tasks.completedAt),
@@ -250,13 +311,13 @@ export const createTaskStore = (db: Db): TaskStore => {
       const links = await linksOf(rows.map((row) => row.id));
       return rows.map((row) => davOf(row, toTask(row, links.get(row.id) ?? [])));
     },
-    davGet: async (accountId, name) => {
+    davGet: async (board, name) => {
       const [row] = await db
         .select()
         .from(schema.tasks)
         .where(
           and(
-            eq(schema.tasks.accountId, accountId),
+            onBoard(board),
             or(
               eq(schema.tasks.davName, name),
               and(isNull(schema.tasks.davName), eq(schema.tasks.id, name)),
@@ -273,38 +334,106 @@ export const createTaskStore = (db: Db): TaskStore => {
         .where(eq(schema.tasks.id, created.id));
       return created;
     },
-    columns: async (accountIds) => {
-      const rows = accountIds.length
-        ? await db
-            .select()
-            .from(schema.taskBoards)
-            .where(inArray(schema.taskBoards.accountId, accountIds))
-        : [];
+    columns: async (keys) => {
+      const [boards, projects] = keys.length
+        ? await Promise.all([
+            db.select().from(schema.taskBoards).where(inArray(schema.taskBoards.accountId, keys)),
+            db.select().from(schema.taskProjects).where(inArray(schema.taskProjects.id, keys)),
+          ])
+        : [[], []];
+      const own = new Map<string, string | null>([
+        ...boards.map((row) => [row.accountId, row.columns] as const),
+        ...projects.map((row) => [row.id, row.columns] as const),
+      ]);
       return Object.fromEntries(
-        accountIds.map((id) => {
-          const row = rows.find((candidate) => candidate.accountId === id);
-          return [id, row ? (JSON.parse(row.columns) as BoardColumn[]) : DEFAULT_COLUMNS];
+        keys.map((key) => {
+          const columns = own.get(key);
+          return [key, columns ? (JSON.parse(columns) as BoardColumn[]) : DEFAULT_COLUMNS];
         }),
       );
     },
-    setColumns: async (accountId, columns) => {
-      const row = { accountId, columns: JSON.stringify(columns), updatedAt: new Date() };
+    setColumns: async (board, columns) => {
+      const json = JSON.stringify(columns);
+      const updatedAt = new Date();
+      if (board.projectId) {
+        await db
+          .update(schema.taskProjects)
+          .set({ columns: json, updatedAt })
+          .where(eq(schema.taskProjects.id, board.projectId));
+      } else {
+        const row = { accountId: board.accountId, columns: json, updatedAt };
+        await db
+          .insert(schema.taskBoards)
+          .values(row)
+          .onConflictDoUpdate({ target: schema.taskBoards.accountId, set: row });
+      }
+      await reopenOutside(
+        board,
+        columns.map((column) => column.id),
+      );
+    },
+    projects: async (accountIds, ids = []) => {
+      if (!accountIds.length && !ids.length) return [];
+      const rows = await db
+        .select()
+        .from(schema.taskProjects)
+        .where(
+          or(
+            inArray(schema.taskProjects.accountId, accountIds),
+            inArray(schema.taskProjects.id, ids),
+          ),
+        )
+        .orderBy(asc(schema.taskProjects.createdAt));
+      return rows.map(toProject);
+    },
+    createProject: async (accountId, name) => {
+      const now = new Date();
+      const row = {
+        id: `p-${crypto.randomUUID()}`,
+        accountId,
+        name,
+        createdAt: now,
+        updatedAt: now,
+      };
+      await db.insert(schema.taskProjects).values(row);
+      return toProject({ ...row, columns: null });
+    },
+    renameProject: async (id, name) => {
       await db
-        .insert(schema.taskBoards)
-        .values(row)
-        .onConflictDoUpdate({ target: schema.taskBoards.accountId, set: row });
-      const kept = columns.map((column) => column.id);
-      const orphans = await db
-        .select({ id: schema.tasks.id })
+        .update(schema.taskProjects)
+        .set({ name, updatedAt: new Date() })
+        .where(eq(schema.taskProjects.id, id));
+    },
+    removeProject: async (id) => {
+      const [project] = await db
+        .select()
+        .from(schema.taskProjects)
+        .where(eq(schema.taskProjects.id, id));
+      if (!project) return;
+      const to = { accountId: project.accountId, projectId: null };
+      // In the same column there, else in "open"; at its end either way.
+      const kept = ((await store.columns([project.accountId]))[project.accountId] ?? []).map(
+        (column) => column.id,
+      );
+      const moving = await db
+        .select()
         .from(schema.tasks)
-        .where(and(eq(schema.tasks.accountId, accountId), notInArray(schema.tasks.status, kept)));
-      let position = await nextPosition(accountId, "open");
-      for (const { id } of orphans) {
+        .where(onBoard({ accountId: project.accountId, projectId: id }))
+        .orderBy(asc(schema.tasks.position));
+      for (const task of moving) {
+        const status = kept.includes(task.status) ? task.status : "open";
         await db
           .update(schema.tasks)
-          .set({ status: "open", position: position++, updatedAt: new Date() })
-          .where(eq(schema.tasks.id, id));
+          .set({
+            projectId: null,
+            status,
+            position: await nextPosition(to, status),
+            updatedAt: new Date(),
+          })
+          .where(eq(schema.tasks.id, task.id));
       }
+      await db.delete(schema.taskProjects).where(eq(schema.taskProjects.id, id));
     },
   };
+  return store;
 };

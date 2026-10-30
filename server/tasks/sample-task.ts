@@ -4,6 +4,7 @@ import type { Task } from "./tasks";
 export const sampleTask = (patch: Partial<Task> = {}): Task => ({
   id: "t1",
   accountId: "info",
+  projectId: null,
   title: "Rückruf Hoffmann",
   notes: "",
   status: "open",

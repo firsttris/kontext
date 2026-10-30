@@ -68,11 +68,32 @@ describe("CalDAV", () => {
     expect(text).toContain('<C:comp name="VTODO"/>');
   });
 
+  it("gives each project its own list, and a task put there lands on the project", async () => {
+    const { tasks, store, call } = setup();
+    const project = await store.createProject("info", "Baustelle Hoffmann");
+    await store.createProject("elsewhere", "Fremd");
+    const home = await (await call("PROPFIND", "/dav/tasks/", "", { depth: "1" })).text();
+    expect(home).toContain(`<D:href>/dav/tasks/${project.id}/</D:href>`);
+    expect(home).toContain("Baustelle Hoffmann (info@)");
+    expect(home).not.toContain("Fremd");
+    const put = await call("PUT", `/dav/tasks/${project.id}/neu.ics`, vtodo("Rohre bestellen"));
+    expect(put.status).toBe(201);
+    expect(tasks[0]).toMatchObject({ accountId: "info", projectId: project.id });
+    // Only on the project's list, not on info@'s own.
+    const own = await (await call("PROPFIND", "/dav/tasks/info/", "", { depth: "1" })).text();
+    expect(own).not.toContain("neu.ics");
+    const listed = await (
+      await call("PROPFIND", `/dav/tasks/${project.id}/`, "", { depth: "1" })
+    ).text();
+    expect(listed).toContain("neu.ics");
+  });
+
   it("a task made in Kontext can be read, changed and done from a client", async () => {
     const { tasks, store, call, changed } = setup();
     await store.create(
       {
         accountId: "info",
+        projectId: null,
         title: "Rückruf Hoffmann",
         notes: "",
         status: "open",
@@ -143,7 +164,9 @@ describe("CalDAV", () => {
     // The client's files "50%.ics" and "a%41.ics", percent-encoded in the URL (RFC 3986).
     expect((await call("PUT", "/dav/tasks/jonas/50%25.ics", vtodo("Halb"))).status).toBe(201);
     expect((await call("PUT", "/dav/tasks/jonas/a%2541.ics", vtodo("Eins"))).status).toBe(201);
-    const names = (await store.davList("jonas", new Date(0))).map(({ name }) => name);
+    const names = (await store.davList({ accountId: "jonas", projectId: null }, new Date(0))).map(
+      ({ name }) => name,
+    );
     expect(names.sort()).toEqual(["50%", "a%41"]);
 
     // The hrefs written back are the ones the client used.
@@ -215,6 +238,7 @@ describe("CalDAV", () => {
     await store.create(
       {
         accountId: "jonas",
+        projectId: null,
         title: "Neu in Kontext",
         notes: "",
         status: "open",
@@ -231,7 +255,7 @@ describe("CalDAV", () => {
     await call("DELETE", "/dav/tasks/jonas/b.ics");
     const delta = await (await sync(tokenOf(all))).text();
     const hrefs = [...delta.matchAll(/<D:href>([^<]+)<\/D:href>/g)].map((match) => match[1]);
-    const made = (await store.davList("jonas", new Date(0))).find(
+    const made = (await store.davList({ accountId: "jonas", projectId: null }, new Date(0))).find(
       ({ task }) => task.title === "Neu in Kontext",
     )!;
     expect(hrefs.sort()).toEqual([
