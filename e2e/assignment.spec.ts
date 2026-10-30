@@ -1,5 +1,5 @@
 import { expect, type Page, test } from "@playwright/test";
-import { addMail, address, jmapAs, login, personalAccountId, unique } from "./helpers";
+import { addMail, address, findMails, jmapAs, login, personalAccountId, unique } from "./helpers";
 
 const NAMESPACE = "kontext.firsttris.github.io";
 
@@ -92,6 +92,50 @@ test.describe("Mails zuweisen", () => {
     await page.getByRole("menuitemradio", { name: "Niemandem" }).click();
     await expect.poll(() => assignmentOn("jonas", "info", subject)).toBeNull();
     await expect(page.getByRole("article")).not.toContainText("Zugewiesen");
+  });
+
+  test("„Mir zugewiesen“ zeigt keine wieder vorgelegte Mail, die niemandem gehört", async ({
+    page,
+  }) => {
+    // Wiedervorlage in info@: the mail is back in the inbox, unread, with Kontext's keyword.
+    const subject = unique("Wieder vorgelegt, niemandem");
+    await addMail("jonas", "info", subject);
+    const { accountId } = await sharedInbox("jonas", "info");
+    const id = (await findMails("jonas", "info", [subject]))[0]!.id;
+    await jmapAs("jonas").call("Email/set", {
+      accountId,
+      update: { [id]: { "keywords/$seen": null, "keywords/kontext.resurfaced": true } },
+    });
+    await login(page, "jonas");
+    await page.getByRole("link", { name: "info@" }).click();
+    await expect(inbox(page).getByText(subject)).toBeVisible();
+    await filters(page).getByRole("link", { name: "Mir zugewiesen" }).click();
+    await expect(page).toHaveURL(/assigned=mine/);
+    await expect(inbox(page).getByText(subject)).toBeHidden();
+  });
+
+  test("wer ein gemeinsames Postfach nur liest, bekommt kein „Zuweisen“", async ({ page }) => {
+    // rechnung@ shared with Max "Nur lesen" (server/company/sharing.ts READ_ONLY): Stalwart gives
+    // maySetKeywords but not maySetMetadata, and refuses the assignment ("forbidden").
+    const subject = unique("Nur gelesen");
+    await addMail("jonas", "rechnung", subject);
+    const { accountId, inboxId } = await sharedInbox("jonas", "rechnung");
+    const max = await personalAccountId("max");
+    const share = (rights: Record<string, boolean> | null) =>
+      jmapAs("jonas").call("Mailbox/set", {
+        accountId,
+        update: { [inboxId]: { [`shareWith/${max}`]: rights } },
+      });
+    await share({ mayReadItems: true, maySetSeen: true });
+    try {
+      await login(page, "max");
+      await page.goto(`/mail/${accountId}/${inboxId}`);
+      await inbox(page).getByText(subject).click();
+      await expect(page.getByRole("heading", { name: subject })).toBeVisible();
+      await expect(page.getByRole("button", { name: "Zuweisen", exact: true })).toHaveCount(0);
+    } finally {
+      await share(null);
+    }
   });
 
   test("im eigenen Postfach gibt es nichts zuzuweisen", async ({ page }) => {
