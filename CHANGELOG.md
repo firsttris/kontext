@@ -7,6 +7,11 @@ Steps that an update needs beyond raising the version are marked **Upgrade**.
 
 ## Unreleased
 
+- Documents: `deploy/.env.example` and the Quadlet use Schreibzeug 0.1.14 (was 0.1.8). **Upgrade:**
+  raise `SCHREIBZEUG_VERSION` in `deploy/.env` (or the image in `schreibzeug.container`) and start
+  again. Schreibzeug now thins out a file's older versions; to keep all of them, set
+  `SCHREIBZEUG_VERSIONS=all` before starting it (Schreibzeug's
+  [changelog](https://github.com/firsttris/schreibzeug/blob/main/CHANGELOG.md)).
 - Calendar: a hidden calendar stays hidden on every device, also a colleague's calendar shared to
   read: the choice is the calendar's per-person `isVisible` on the server (Stalwart 1.0), no
   longer per browser. What a device hid before is moved to the server once. Birthdays and due
