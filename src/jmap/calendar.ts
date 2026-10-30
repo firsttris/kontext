@@ -85,7 +85,10 @@ export const createCalendar = async (
   return result.created!.c!.id;
 };
 
-/** Name, colour, `shareWith`, whether it counts for free and busy times, or its default alerts. */
+/**
+ * Name, colour, whether it is shown (per person, also on a colleague's calendar shared to read;
+ * Stalwart 1.0), `shareWith`, whether it counts for free and busy times, or its default alerts.
+ */
 export const updateCalendar = async (
   client: JmapClient,
   accountId: string,
@@ -95,6 +98,7 @@ export const updateCalendar = async (
       Calendar,
       | "name"
       | "color"
+      | "isVisible"
       | "shareWith"
       | "includeInAvailability"
       | "defaultAlertsWithTime"

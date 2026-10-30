@@ -112,6 +112,8 @@ Kontext steht, steht auch am iPhone, unter Android (DAVx⁵) und in Thunderbird.
 
 - **Kalender teilen** mit Kollegen: nur Verfügbarkeit, lesen oder bearbeiten. Alle Kalender
   samt Postfach und Kontakten auf einmal: [Vertretung](mail.md#abwesenheit-und-signaturen).
+- **Kalender ein- und ausblenden** mit dem Haken in der Seitenleiste: gilt auf allen Geräten, auch
+  für die Kalender von Kollegen; bei den anderen bleibt der Kalender, wie er ist.
 - **Orte vorschlagen:** Im Feld „Ort“ schlägt Kontext ab drei Buchstaben Adressen und Firmen vor
   (aus OpenStreetMap), etwa „Bäckerei Müller, Hauptstraße 5, 79098 Freiburg“; freier Text wie
   „Besprechungsraum 2“ geht weiter. Was man dort tippt, schickt der Kontext-Server an den

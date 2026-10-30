@@ -9,6 +9,7 @@ import {
   useQuery,
   useQueryClient,
 } from "@tanstack/react-query";
+import { useEffect, useRef } from "react";
 import { useClient } from "@/auth/auth";
 import { useSession } from "@/components/shell/app-shell";
 import {
@@ -24,6 +25,7 @@ import {
 import { CAPABILITIES } from "@/jmap/client";
 import { type AnswerLinksOf, type EventChange, saveEvent } from "@/jmap/invitations";
 import { principalName } from "@/jmap/principals";
+import { hiddenToMove } from "@/lib/calendar-visibility";
 import {
   addDays,
   type CalendarEvent,
@@ -36,7 +38,7 @@ import {
 import type { ShareWith } from "@/lib/sharing";
 import { m } from "@/paraglide/messages";
 import { usePrincipals } from "../sharing/queries";
-import { useHiddenCalendars } from "./hidden-calendars";
+import { forgetHiddenCalendar, useHiddenCalendars } from "./hidden-calendars";
 
 /** A calendar together with the account it lives in. */
 export type CalendarRef = {
@@ -52,7 +54,7 @@ export type CalendarRef = {
   color: string;
   calendar: Calendar;
   mayWrite: boolean;
-  /** Shown in the views; the user hides calendars per device. */
+  /** Shown in the views: the calendar's own `isVisible`, per person on every device. */
   visible: boolean;
 };
 
@@ -115,11 +117,59 @@ export const useCalendarRefs = (): { calendars: CalendarRef[]; isPending: boolea
           color: calendar.color ?? PALETTE[index++ % PALETTE.length]!,
           calendar,
           mayWrite: account.isPersonal || Boolean(calendar.myRights?.mayWriteAll),
-          visible: !hidden.has(`${account.id}:${calendar.id}`),
+          visible: calendar.isVisible !== false,
         }),
       );
   });
-  return { calendars, isPending: results.some((result) => result.isPending) };
+  const isPending = results.some((result) => result.isPending);
+  useMoveHiddenCalendars(isPending ? [] : calendars, hidden);
+  return { calendars, isPending };
+};
+
+/**
+ * Before Stalwart 1.0 the app kept hidden calendars per device (hidden-calendars.ts); what this
+ * device hid is set on the server once (lib/calendar-visibility.ts) and then forgotten here.
+ */
+const useMoveHiddenCalendars = (calendars: CalendarRef[], local: ReadonlySet<string>) => {
+  const setVisible = useSetCalendarVisible();
+  const moving = useRef(false);
+  useEffect(() => {
+    const { hide, forget } = hiddenToMove(local, calendars);
+    if (moving.current || !forget.length) return;
+    moving.current = true;
+    const byKey = new Map(calendars.map((calendar) => [calendar.key, calendar]));
+    void Promise.all(
+      hide.map((key) => setVisible.mutateAsync({ calendar: byKey.get(key)!, visible: false })),
+    )
+      .then(() => {
+        for (const key of forget) forgetHiddenCalendar(key);
+      })
+      .catch(() => undefined)
+      .finally(() => {
+        moving.current = false;
+      });
+  }, [calendars, local, setVisible]);
+};
+
+/** Shows or hides a calendar for the user, on every device; the list follows at once. */
+export const useSetCalendarVisible = () => {
+  const client = useClient();
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ calendar, visible }: { calendar: CalendarRef; visible: boolean }) =>
+      updateCalendar(client, calendar.accountId, calendar.calendar.id, { isVisible: visible }),
+    onMutate: async ({ calendar, visible }) => {
+      // A list still loading (e.g. after saving an event) would bring the old value back.
+      await queryClient.cancelQueries({ queryKey: listKey(calendar.accountId) });
+      queryClient.setQueryData<Calendar[]>(listKey(calendar.accountId), (list) =>
+        list?.map((item) =>
+          item.id === calendar.calendar.id ? { ...item, isVisible: visible } : item,
+        ),
+      );
+    },
+    onSettled: (_data, _error, { calendar }) =>
+      queryClient.invalidateQueries({ queryKey: listKey(calendar.accountId) }),
+  });
 };
 
 /** "Baustellen · Jonas Weber"; own calendars and colleagues' default ones by their name alone. */
