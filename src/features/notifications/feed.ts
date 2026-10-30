@@ -5,6 +5,7 @@
  * mail on the phone clears it here too.
  */
 import { useQueries } from "@tanstack/react-query";
+import { useEffect, useState } from "react";
 import { useClient } from "@/auth/auth";
 import { queryEmails } from "@/jmap/mail";
 import { addDays, type CalendarEvent, dateKey, eventKey, eventTimes } from "@/lib/jscalendar";
@@ -25,6 +26,16 @@ export type FeedEvent = {
 const asFeedEvent = (event: CalendarEvent): FeedEvent => {
   const { start, end } = eventTimes(event);
   return { key: eventKey(event), title: event.title ?? "", start, end, event };
+};
+
+/** A minute is fine enough for "today" and for reminders. */
+export const useNow = (): Date => {
+  const [now, setNow] = useState(() => new Date());
+  useEffect(() => {
+    const timer = window.setInterval(() => setNow(new Date()), 60_000);
+    return () => window.clearInterval(timer);
+  }, []);
+  return now;
 };
 
 export const useNotificationFeed = (now: Date) => {

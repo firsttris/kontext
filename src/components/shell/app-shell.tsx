@@ -14,12 +14,12 @@ import {
 } from "@/components/ui/menu";
 import { useShortcuts } from "@/components/use-shortcuts";
 import { useVisibleHeight } from "@/components/use-visible-height";
-import { useChannels } from "@/features/chat/queries";
 import { useFrameState } from "@/features/documents/frame-store";
+import { useAppBadges } from "@/features/notifications/app-badges";
 import { restartTour } from "@/features/tour/seen";
 import { Tour } from "@/features/tour/tour";
-import { totalUnread } from "@/lib/chat";
 import { cn } from "@/lib/cn";
+import { type AppBadges, badgeSum } from "@/lib/notifications";
 import { appTarget, MORE_TARGET } from "@/lib/tour";
 import { m } from "@/paraglide/messages";
 import { AccountAvatar, StorageSummary, storageText, useOwnQuota } from "./account-avatar";
@@ -81,9 +81,6 @@ export const railButton = (active: boolean) =>
     active ? "bg-subtle text-fg" : "text-muted hover:text-fg",
   );
 
-/** Unread chat messages, for the badge on "Chat". */
-const useChatUnread = (): number => totalUnread(useChannels().channels);
-
 const UnreadBadge = ({ count, className }: { count: number; className?: string }) =>
   count > 0 ? (
     <span
@@ -96,18 +93,23 @@ const UnreadBadge = ({ count, className }: { count: number; className?: string }
     </span>
   ) : null;
 
-const unreadLabel = (label: string, count: number) =>
-  count > 0 ? m.nav_unread({ label, count }) : label;
+/** An app's name with what waits there: unread mail and messages, new invitations and tasks. */
+const badgeLabel = (to: string, label: string, count: number) => {
+  if (count === 0) return label;
+  return to === "/mail" || to === "/chat"
+    ? m.nav_unread({ label, count })
+    : m.nav_new({ label, count });
+};
 
 /** The rail's name of an app, with what waits there. */
-const railLabel = (to: string, label: string, chatUnread: number, unsavedDocuments: boolean) => {
-  if (to === "/chat") return unreadLabel(label, chatUnread);
-  return to === "/documents" && unsavedDocuments ? m.nav_documents_unsaved() : label;
-};
+const railLabel = (to: string, label: string, badges: AppBadges, unsavedDocuments: boolean) =>
+  to === "/documents" && unsavedDocuments
+    ? m.nav_documents_unsaved()
+    : badgeLabel(to, label, badges[to] ?? 0);
 
 const Rail = ({ onHelp, bell }: { onHelp: () => void; bell: ReactNode }) => {
   const pathname = useRouterState({ select: (state) => state.location.pathname });
-  const chatUnread = useChatUnread();
+  const badges = useAppBadges();
   const phone = usePhoneNav();
   const { unsaved } = useFrameState();
   return (
@@ -123,13 +125,12 @@ const Rail = ({ onHelp, bell }: { onHelp: () => void; bell: ReactNode }) => {
       </div>
       {useNavItems().map(({ to, label, icon: Icon }) => {
         const active = pathname.startsWith(to);
-        const unread = to === "/chat" ? chatUnread : 0;
         return (
           <Link
             key={to}
             to={to}
             data-tour={appTarget(to)}
-            aria-label={railLabel(to, label(), chatUnread, unsaved)}
+            aria-label={railLabel(to, label(), badges, unsaved)}
             title={label()}
             aria-current={active ? "page" : undefined}
             className={cn(
@@ -138,7 +139,7 @@ const Rail = ({ onHelp, bell }: { onHelp: () => void; bell: ReactNode }) => {
             )}
           >
             <Icon size={18} strokeWidth={1.75} />
-            <UnreadBadge count={unread} className="top-0.5 right-0.5" />
+            <UnreadBadge count={badges[to] ?? 0} className="top-0.5 right-0.5" />
             {to === "/documents" && unsaved ? (
               <span
                 aria-hidden="true"
@@ -234,8 +235,11 @@ export const AppShell = ({ children, bell }: { children: ReactNode; bell?: React
   );
 };
 
+/** Not an app: what waits under "Mehr" is mixed, so it is "neu". */
+const MORE = "more";
+
 /** "Mehr" in the tab bar: the apps not in it, the account and signing out. */
-const MoreMenu = ({ chatUnread }: { chatUnread: number }) => {
+const MoreMenu = ({ badges }: { badges: AppBadges }) => {
   const { logout } = useAuth();
   const { data: session } = useSession();
   const pathname = useRouterState({ select: (state) => state.location.pathname });
@@ -243,14 +247,17 @@ const MoreMenu = ({ chatUnread }: { chatUnread: number }) => {
   const active = [...moreItems.map((entry) => entry.to), "/settings"].some((to) =>
     pathname.startsWith(to),
   );
-  // Chat moved under "Mehr" keeps its unread count on the phone: on "Mehr" and on its entry.
-  const unreadOf = (to: string) => (to === "/chat" ? chatUnread : 0);
-  const unread = moreItems.reduce((sum, { to }) => sum + unreadOf(to), 0);
+  // An app moved under "Mehr" keeps its badge on the phone: on "Mehr" and on its entry.
+  const countOf = (to: string) => badges[to] ?? 0;
+  const count = badgeSum(
+    badges,
+    moreItems.map(({ to }) => to),
+  );
   return (
     <MenuRoot>
       <MenuTrigger
         data-tour={MORE_TARGET}
-        aria-label={unreadLabel(m.nav_more(), unread)}
+        aria-label={badgeLabel(MORE, m.nav_more(), count)}
         className={cn(
           "relative flex w-16 flex-col items-center gap-1 text-[11px]",
           active ? "font-medium text-fg" : "text-muted",
@@ -258,7 +265,7 @@ const MoreMenu = ({ chatUnread }: { chatUnread: number }) => {
       >
         <Ellipsis size={22} strokeWidth={1.75} />
         {m.nav_more()}
-        <UnreadBadge count={unread} className="-top-1 left-[calc(50%+4px)]" />
+        <UnreadBadge count={count} className="-top-1 left-[calc(50%+4px)]" />
       </MenuTrigger>
       <MenuContent side="top" align="end">
         <MenuLabel>{session?.username ?? ""}</MenuLabel>
@@ -268,12 +275,12 @@ const MoreMenu = ({ chatUnread }: { chatUnread: number }) => {
           <MenuItem key={to} asChild>
             <Link
               to={to}
-              aria-label={unreadLabel(label(), unreadOf(to))}
+              aria-label={badgeLabel(to, label(), countOf(to))}
               className="text-fg no-underline"
             >
               <Icon size={15} /> {label()}
-              {unreadOf(to) > 0 ? (
-                <span className="ml-auto font-mono text-[11px] text-muted">{unreadOf(to)}</span>
+              {countOf(to) > 0 ? (
+                <span className="ml-auto font-mono text-[11px] text-muted">{countOf(to)}</span>
               ) : null}
             </Link>
           </MenuItem>
@@ -299,7 +306,7 @@ const MoreMenu = ({ chatUnread }: { chatUnread: number }) => {
  */
 export const TabBar = () => {
   const pathname = useRouterState({ select: (state) => state.location.pathname });
-  const chatUnread = useChatUnread();
+  const badges = useAppBadges();
   const items = useTabItems();
   return (
     <nav
@@ -308,13 +315,13 @@ export const TabBar = () => {
     >
       {items.map(({ to, label, icon: Icon }) => {
         const active = pathname.startsWith(to);
-        const unread = to === "/chat" ? chatUnread : 0;
+        const count = badges[to] ?? 0;
         return (
           <Link
             key={to}
             to={to}
             data-tour={appTarget(to)}
-            aria-label={unreadLabel(label(), unread)}
+            aria-label={badgeLabel(to, label(), count)}
             aria-current={active ? "page" : undefined}
             className={cn(
               "relative flex w-16 flex-col items-center gap-1 text-[11px] no-underline",
@@ -323,11 +330,11 @@ export const TabBar = () => {
           >
             <Icon size={22} strokeWidth={1.75} />
             {label()}
-            <UnreadBadge count={unread} className="-top-1 left-[calc(50%+4px)]" />
+            <UnreadBadge count={count} className="-top-1 left-[calc(50%+4px)]" />
           </Link>
         );
       })}
-      <MoreMenu chatUnread={chatUnread} />
+      <MoreMenu badges={badges} />
     </nav>
   );
 };

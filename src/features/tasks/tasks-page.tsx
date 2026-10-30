@@ -8,6 +8,7 @@ import { Columns3, EyeOff, List, Pencil, Plus, SquareKanban } from "lucide-react
 import { useState } from "react";
 import { TabBar } from "@/components/shell/app-shell";
 import { Button } from "@/components/ui/button";
+import { useAssignedTasksSeen } from "@/features/notifications/app-badges";
 import { cn } from "@/lib/cn";
 import { dateKey } from "@/lib/jscalendar";
 import { boardKey, inView, type TaskView } from "@/lib/tasks";
@@ -82,6 +83,7 @@ export const TasksPage = ({ search }: { search: TasksSearch }) => {
   const hideDone = useHideDone();
   /** The board dialog: a new board, or the open project to rename or delete. */
   const [boardDialog, setBoardDialog] = useState<"new" | "edit" | null>(null);
+  useAssignedTasksSeen();
 
   const board = search.board
     ? allBoards.find((candidate) => candidate.id === search.board)

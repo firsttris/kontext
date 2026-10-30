@@ -57,6 +57,13 @@ export const useSeen = (): Seen => parseSeen(useSyncExternalStore(subscribe, () 
 export const markSeen = (at: number, invitations: string[], tasks: string[]) =>
   write(SEEN, JSON.stringify({ at, invitations, tasks }));
 
+/** Opening the tasks app has shown these tasks given to me: no badge on "Aufgaben" for them. */
+export const markTasksSeen = (tasks: string[]) => {
+  const seen = parseSeen(read(SEEN));
+  if (tasks.every((id) => seen.tasks.includes(id))) return;
+  write(SEEN, JSON.stringify({ ...seen, tasks: [...new Set([...seen.tasks, ...tasks])] }));
+};
+
 export const notificationsSupported = (): boolean => typeof Notification !== "undefined";
 
 /**

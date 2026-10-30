@@ -6,7 +6,7 @@
 import * as Popover from "@radix-ui/react-popover";
 import { Link } from "@tanstack/react-router";
 import { Bell, CalendarCheck, CalendarDays, CheckCheck, ListChecks } from "lucide-react";
-import { type ReactNode, useEffect, useState } from "react";
+import { type ReactNode, useState } from "react";
 import { Avatar } from "@/components/ui/avatar";
 import { cn } from "@/lib/cn";
 import { displayName, listDate } from "@/lib/format";
@@ -19,17 +19,7 @@ import { usePeople } from "../tasks/queries";
 import { useAnnouncements } from "./announcements";
 import { markSeen, notificationsSupported, useSeen } from "./device-settings";
 import { DeviceSwitch } from "./device-switch";
-import { type FeedEvent, useNotificationFeed } from "./feed";
-
-/** A minute is fine enough for "today" and for reminders. */
-const useNow = (): Date => {
-  const [now, setNow] = useState(() => new Date());
-  useEffect(() => {
-    const timer = window.setInterval(() => setNow(new Date()), 60_000);
-    return () => window.clearInterval(timer);
-  }, []);
-  return now;
-};
+import { type FeedEvent, useNotificationFeed, useNow } from "./feed";
 
 const dayFormat = new Intl.DateTimeFormat(LOCALE, {
   timeZone: "Europe/Berlin",

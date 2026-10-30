@@ -1466,6 +1466,15 @@ Ansicht; wer eine Mail am Handy liest, sieht sie hier verschwinden. Auf dem Serv
 gespeichert: Den Punkt an der Glocke gibt es für Mails, die nach dem letzten Öffnen kamen, und für
 Einladungen, die damals noch nicht da waren – beides merkt sich der Browser.
 
+Am Handy gibt es keine Glocke; damit man nach einer Push-Benachrichtigung weiß, wo das Neue
+liegt, tragen die Apps in der Tab-Leiste (und am PC in der Leiste) aus demselben Stand eine Zahl
+(`app-badges.ts`, `appBadges` in `src/lib/notifications.ts`): Mail die neuen ungelesenen Mails
+aller Posteingänge, Kalender die Einladungen ohne Antwort, Aufgaben die mir zugewiesenen, die ich
+noch nicht gesehen habe, Chat die ungelesenen Nachrichten. Lesen, Antworten oder Öffnen der
+Aufgaben lässt die Zahl verschwinden; Aufgaben gelten als gesehen, sobald man die App öffnet oder
+die Glocke (`kontext.notifications.seen` im Browser). Steht eine App unter „Mehr“, zählt „Mehr“
+ihre Zahlen zusammen.
+
 „Auf diesem Gerät benachrichtigen“ (in der Glocke und unter Einstellungen → Darstellung) fragt den
 Browser um Erlaubnis und meldet das Gerät für **Web Push** an. Ob die Erlaubnis noch besteht, fragt
 die App über die Permissions-API ab; nimmt man sie im Browser zurück, schaltet sich der Schalter aus.

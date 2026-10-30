@@ -46,3 +46,26 @@ export const mailsToAnnounce = (
         Date.parse(email.receivedAt) > since && !announced.has(`${accountId}/${email.id}`),
     )
     .reverse();
+
+/** How many entries wait in each app (keyed by its path), for the badges in the tab bar and rail. */
+export type AppBadges = Readonly<Record<string, number>>;
+
+/**
+ * Where something new waits, so a push notification can be found again from the tab bar: new
+ * mail, invitations to answer, tasks given to me and not yet looked at, unread chat messages.
+ */
+export const appBadges = ({
+  mails,
+  invitations,
+  newTasks,
+  chat,
+}: {
+  mails: number;
+  invitations: number;
+  newTasks: number;
+  chat: number;
+}): AppBadges => ({ "/mail": mails, "/calendar": invitations, "/tasks": newTasks, "/chat": chat });
+
+/** "Mehr" adds up the badges of the apps under it. */
+export const badgeSum = (badges: AppBadges, paths: readonly string[]): number =>
+  paths.reduce((sum, path) => sum + (badges[path] ?? 0), 0);

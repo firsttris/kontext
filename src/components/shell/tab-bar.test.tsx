@@ -28,8 +28,8 @@ vi.mock("@/features/documents/frame-store", () => ({ useFrameState: () => ({ uns
 vi.mock("@/features/phone/queries", () => ({
   usePhone: () => ({ enabled: false, allowed: false }),
 }));
-vi.mock("@/features/chat/queries", () => ({
-  useChannels: () => ({ channels: [{ unread: 3, muted: false }] }),
+vi.mock("@/features/notifications/app-badges", () => ({
+  useAppBadges: () => ({ "/mail": 0, "/calendar": 2, "/tasks": 1, "/chat": 3 }),
 }));
 
 afterEach(() => {
@@ -46,15 +46,22 @@ const told = () => {
   return `${nav.textContent} ${labels.join(" | ")}`;
 };
 
-describe("TabBar: unread chat messages", () => {
-  it("shows them with the default tabs (as on main)", () => {
+describe("TabBar: what waits in each app", () => {
+  it("shows unread chat, invitations and new tasks with the default tabs", () => {
     render(<TabBar />);
-    expect(told()).toMatch(/3 ungelesen/);
+    expect(told()).toMatch(/Chat, 3 ungelesen/);
+    expect(told()).toMatch(/Kalender, 2 neu/);
+    expect(told()).toMatch(/Aufgaben, 1 neu/);
   });
 
-  it("still shows them when Chat was moved under Mehr", () => {
-    setTabChoice(["/mail", "/calendar", "/tasks", "/contacts"]);
+  it("names an app without news plainly", () => {
     render(<TabBar />);
-    expect(told()).toMatch(/Mehr, 3 ungelesen/);
+    expect(told()).toMatch(/Mehr Mail \| Kalender/);
+  });
+
+  it("keeps the badge of an app moved under Mehr", () => {
+    setTabChoice(["/mail", "/contacts", "/chat", "/tasks"]);
+    render(<TabBar />);
+    expect(told()).toMatch(/Mehr, 2 neu/);
   });
 });

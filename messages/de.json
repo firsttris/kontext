@@ -1017,6 +1017,7 @@
   "nav_chat": "Chat",
   "nav_more": "Mehr",
   "nav_unread": "{label}, {count} ungelesen",
+  "nav_new": "{label}, {count} neu",
   "chat_title": "Chat",
   "chat_new": "Neue Nachricht",
   "chat_new_direct": "Direktnachricht",
