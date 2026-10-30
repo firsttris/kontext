@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   ASSIGNMENT_NAMESPACE,
+  assignablePeople,
   assignmentConditions,
   assignmentOf,
   assignmentPatch,
@@ -59,5 +60,18 @@ describe("assignmentConditions", () => {
       notDone,
     ]);
     expect(assignmentConditions("open", "g")).toEqual([notDone]);
+  });
+});
+
+describe("assignablePeople", () => {
+  const people = [{ id: "a" }, { id: "j" }, { id: "m" }];
+
+  it("offers the mailbox's members and keeps whoever has the mail now", () => {
+    expect(assignablePeople(people, ["a", "j"], null)).toEqual([{ id: "a" }, { id: "j" }]);
+    expect(assignablePeople(people, ["a"], "m")).toEqual([{ id: "a" }, { id: "m" }]);
+  });
+
+  it("offers everyone while the members are not known", () => {
+    expect(assignablePeople(people, undefined, null)).toEqual(people);
   });
 });

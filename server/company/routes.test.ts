@@ -408,6 +408,18 @@ describe("Firmenverwaltung", () => {
     expect((await setup(null).send("GET", "/external-hint")).status).toBe(401);
   });
 
+  it("tells a member who else belongs to their shared mailboxes, nobody else", async () => {
+    const anna = setup("anna@firma.de", { annaInInfo: true });
+    expect(await (await anna.send("GET", "/mailbox-members")).json()).toEqual({
+      members: { g: ["2"] },
+    });
+    // The admin is no member of info@: no list, even with the Firmenverwaltung.
+    expect(await (await setup("chef@firma.de").send("GET", "/mailbox-members")).json()).toEqual({
+      members: {},
+    });
+    expect((await setup(null).send("GET", "/mailbox-members")).status).toBe(401);
+  });
+
   it("lets only the Firmenverwaltung switch the hint „Extern“ and name partners", async () => {
     const change = { enabled: true, partners: ["@Partner-Bau.de", "steuer.de", "partner-bau.de"] };
     const anna = setup("anna@firma.de");
