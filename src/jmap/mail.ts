@@ -55,7 +55,7 @@ const BODY_PROPERTIES = [
  * Headers for the sender check, every instance (`:all`, topmost first, RFC 8621 §4.1.3): without
  * it JMAP returns the bottommost one, which the sender may have written themselves.
  */
-const CHECK_HEADERS = {
+export const CHECK_HEADERS = {
   authenticationResults: "header:Authentication-Results:asText:all",
   spamScore: "header:X-Spam-Score:asText:all",
   /** Its type, raw (Stalwart names raw headers without ":asRaw"): an encrypted or signed mail. */

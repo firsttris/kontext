@@ -11,6 +11,8 @@ import type { EmailAddress } from "./types";
 /** Raw headers, as Stalwart names them (RFC 8621 §4.1.3); null when the mail has none. */
 const LIST_ID = "header:List-Id:asText";
 const LIST_UNSUBSCRIBE = "header:List-Unsubscribe:asText";
+/** The headers Email/get asks for; only whether a mail has them counts. */
+export const CORRESPONDENCE_HEADERS = [LIST_ID, LIST_UNSUBSCRIBE];
 
 type Row = {
   from: EmailAddress[] | null;
@@ -50,7 +52,7 @@ export const recentCorrespondence = async (
       {
         accountId,
         "#ids": { resultOf: "q", name: "Email/query", path: "/ids" },
-        properties: ["from", "to", "cc", "receivedAt", LIST_ID, LIST_UNSUBSCRIBE],
+        properties: ["from", "to", "cc", "receivedAt", ...CORRESPONDENCE_HEADERS],
       },
       "g",
     ],
