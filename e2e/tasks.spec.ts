@@ -59,7 +59,7 @@ test.describe("Aufgaben", () => {
     await page.keyboard.press("t");
     const dialog = page.getByRole("dialog", { name: "Aufgabe aus dieser Mail" });
     await expect(dialog.getByLabel("Titel")).toHaveValue(subject);
-    await expect(dialog.getByLabel("Postfach")).toHaveValue(/.+/);
+    await expect(dialog.getByLabel("Board", { exact: true })).toHaveValue(/.+/);
     await dialog.getByRole("button", { name: "Morgen" }).click();
     await dialog.getByLabel("Zuständig").selectOption({ label: "Niemand" });
     await dialog.getByRole("button", { name: "Aufgabe erstellen" }).click();
