@@ -160,6 +160,10 @@ mit einem Klick als Jonas, Anna, Sandra oder Max an.
   die Geburtstage. Ein Termin steht – wie bei Stalwart über iTIP – im Kalender jedes Kollegen, den
   er betrifft; was einer ändert, sehen die anderen. Die Einladungsmails verschickt die App selbst
   (`Email/import`, gelesen mit postal-mime).
+- **Dokumente:** Der Rahmen zeigt die [Demo von Schreibzeug](https://firsttris.github.io/schreibzeug/demo/),
+  ebenso statisch und mit eigenen Beispieldateien. Ihre Seiten stehen hinter `#`; Kontext setzt die
+  Seite dorthin und `?embedded=kontext` davor (`frameSrcOf`, `src/features/documents/messages.ts`).
+  Dateien zwischen Mail und Dokumenten hin und her geht nur mit beiden Servern (`connected: false`).
 - **Was noch fehlt:** Aufgaben, Chat und die übrigen Module öffnen leer.
   Methoden, die die Demo nicht kennt, beantwortet sie wie ein leerer Server (`src/demo/jmap.ts`);
   Module, die einen eigenen Dienst brauchen (Anrufe, Telefon, Dokumente mit Schreibzeug), sind

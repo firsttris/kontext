@@ -31,7 +31,7 @@ Ohne Kosten pro Benutzer. Made in Europe.
 
 ▶️ **[Den ganzen Film ansehen (2 Minuten)](https://firsttris.github.io/kontext/)** – jedes Modul, aus der echten App
 
-🖱️ **[Demo ausprobieren](https://firsttris.github.io/kontext/demo/)** – Mail, Kalender und Kontakte mit den Testdaten, im Browser, ohne Installation
+🖱️ **[Demo ausprobieren](https://firsttris.github.io/kontext/demo/)** – Mail, Kalender, Kontakte und Dokumente mit den Testdaten, im Browser, ohne Installation
 
 </div>
 

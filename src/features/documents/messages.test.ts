@@ -53,4 +53,10 @@ describe("paths", () => {
   it("opens the frame embedded", () => {
     expect(frameSrcOf(origin, "/edit/1")).toBe(`${origin}/edit/1?embedded=kontext`);
   });
+
+  it("keeps the path of a Schreibzeug whose pages live after the #, and puts the page there", () => {
+    expect(frameSrcOf("https://firsttris.github.io/schreibzeug/demo/#/", "/edit/1")).toBe(
+      "https://firsttris.github.io/schreibzeug/demo/?embedded=kontext#/edit/1",
+    );
+  });
 });

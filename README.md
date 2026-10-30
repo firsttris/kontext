@@ -31,7 +31,7 @@ No per-seat pricing. Made in Europe.
 
 ▶️ **[Watch the whole film (2 minutes)](https://firsttris.github.io/kontext/en/)** – every module, made from the real app
 
-🖱️ **[Try the demo](https://firsttris.github.io/kontext/demo/)** – mail, calendar and contacts with the test data, in your browser, nothing to install
+🖱️ **[Try the demo](https://firsttris.github.io/kontext/demo/)** – mail, calendar, contacts and documents with the test data, in your browser, nothing to install
 
 </div>
 
