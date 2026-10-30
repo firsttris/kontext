@@ -36,6 +36,8 @@ export type Row = {
   account?: { id: string; label: string; title?: string };
   folder?: string;
   highlight?: string[];
+  /** A search hit found only in an attachment (lib/attachment-hit.ts). */
+  inAttachment?: boolean;
   /** Still held by the server, to go out then (ISO). */
   sendAt?: string;
   /** On Wiedervorlage, back in the inbox then (ISO). */

@@ -7,6 +7,13 @@ Steps that an update needs beyond raising the version are marked **Upgrade**.
 
 ## Unreleased
 
+- Mail: search finds words that stand only in a PDF, Word, Excel, PowerPoint or OpenDocument
+  attachment (Stalwart 1.0 indexes them), and such hits say "im Anhang" (SearchSnippet/get with
+  every search page, `src/lib/attachment-hit.ts`). The company admin shows "Die Suche wird noch
+  aufgebaut" while Stalwart builds its index, e.g. after the move to 1.0
+  (`/api/company/search-index`, `x:IndexQueueStatus`). **Upgrade:** give the role
+  `Kontext-Server` the right `sysIndexQueueStatusGet` (installation guide, Firmenverwaltung);
+  without it the notice stays away.
 - Mail: assign mails in a shared mailbox. "Zuweisen" gives a mail to a person ("Mir zuweisen", a
   colleague, nobody) and marks it done; everyone in the mailbox sees it on the mail and in the
   list, and the filters "Mir zugewiesen" and "Offen" show what still waits. Stored on the mail

@@ -324,8 +324,9 @@ braucht der Kontext-Server einen API-Schlüssel von Stalwart, der nur Konten ver
 
 1. In Stalwarts Verwaltung eine **Rolle** `Kontext-Server` anlegen: sie erbt die Rolle *User*
    und bekommt dazu die Rechte `sysAccountGet`, `sysAccountQuery`, `sysAccountCreate`,
-   `sysAccountUpdate`, `sysRoleGet`, `sysRoleCreate`, `sysDomainGet`, `sysAuthenticationGet`
-   und `impersonate`. Mit `impersonate` arbeitet der Server in den Postfächern der Mitarbeiter
+   `sysAccountUpdate`, `sysRoleGet`, `sysRoleCreate`, `sysDomainGet`, `sysAuthenticationGet`,
+   `sysIndexQueueStatusGet` und `impersonate`. Mit `sysIndexQueueStatusGet` zeigt die
+   Firmenverwaltung, solange Stalwart den Suchindex aufbaut. Mit `impersonate` arbeitet der Server in den Postfächern der Mitarbeiter
    (Abwesenheit, Leserechte für gemeinsame Postfächer) und trägt Antworten auf Einladungen ein;
    die App zeigt dem Chef dabei nie fremde Mails.
 2. Ein **Konto** `kontext-server@firma.de` mit dieser Rolle (statt *User*) und einem langen

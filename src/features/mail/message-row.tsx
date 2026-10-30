@@ -42,7 +42,7 @@ import { useSwipeSettings } from "./swipe-settings";
 import type { Answer, Group } from "./use-thread-info";
 
 export const MessageRow = ({
-  row: { email, account, folder, highlight, sendAt, snoozedUntil },
+  row: { email, account, folder, highlight, inAttachment, sendAt, snoozedUntil },
   active,
   showRecipient,
   isDraft,
@@ -289,6 +289,12 @@ export const MessageRow = ({
                 <span className="inline-flex h-[18px] shrink-0 items-center gap-1 rounded-full bg-accent/10 px-1.5 text-[11px] font-medium text-accent-ink">
                   <ListChecks size={11} strokeWidth={2.25} aria-hidden="true" />
                   {m.tasks_from_mail()}
+                </span>
+              ) : null}
+              {inAttachment ? (
+                <span className="inline-flex h-[18px] shrink-0 items-center gap-1 rounded-full bg-accent/10 px-1.5 text-[11px] font-medium text-accent-ink">
+                  <Paperclip size={11} strokeWidth={2.25} aria-hidden="true" />
+                  {m.search_in_attachment()}
                 </span>
               ) : null}
               {shared ? <AssignmentChip email={email} compact /> : null}

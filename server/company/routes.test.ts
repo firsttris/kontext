@@ -38,6 +38,9 @@ const fakeManagement = ({ annaInInfo = false } = {}) => {
       updates.push(patches);
       return { ok: true, value: null };
     },
+    indexQueue: async () => [
+      { index: "email", queuedUpdates: 40, queuedDeletions: 2, status: { "@type": "Running" } },
+    ],
   };
   const shared: Record<string, Record<string, unknown>>[] = [];
   const rules: { accountId: string; rules: unknown[] }[] = [];
@@ -188,6 +191,15 @@ describe("Firmenverwaltung", () => {
     });
     expect(await (await setup("chef@firma.de").send("GET", "/me")).json()).toEqual({
       admin: true,
+    });
+  });
+
+  it("tells the company admin how much the search index still has to take in", async () => {
+    expect((await setup("anna@firma.de").send("GET", "/search-index")).status).toBe(403);
+    expect(await (await setup("chef@firma.de").send("GET", "/search-index")).json()).toEqual({
+      pending: 42,
+      failed: false,
+      known: true,
     });
   });
 

@@ -15,6 +15,7 @@ import { externalHintRoutes, readExternalHint } from "./external-hint";
 import { idleLogoutRoutes, readIdleLogout } from "./idle-logout";
 import { legalFooterRoutes, readLegalFooter } from "./legal-footer";
 import { mailboxRoutes } from "./mailboxes";
+import { searchIndexStatus } from "./search-index";
 import { checkDomain, httpsCheck } from "./security";
 import { signatureRoutes } from "./signature-routes";
 
@@ -75,6 +76,15 @@ export const createCompanyRoutes = (deps: CompanyDeps) => {
     if (!body || !deps.chatRetention) return bad("Angaben unvollständig.");
     await deps.chatRetention.setDays(body.days);
     return c.json({ days: body.days, removed: (await deps.pruneChat?.()) ?? 0 });
+  });
+  /** How much the search index still has to take in, e.g. after the move to Stalwart 1.0. */
+  app.get("/search-index", async (c) => {
+    const entries = await deps.management.indexQueue();
+    return c.json(
+      entries
+        ? { ...searchIndexStatus(entries), known: true }
+        : { pending: 0, failed: false, known: false },
+    );
   });
   /** How safe the company's mail travels: DNS of every domain, and https for Kontext. */
   app.get("/security", async (c) => {

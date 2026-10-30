@@ -7,11 +7,12 @@ import {
   assignmentConditions,
   assignmentPatch,
 } from "@/lib/assignment";
+import type { Snippet } from "@/lib/attachment-hit";
 import { envelopeIdOf, type Hold, submissionEnvelope } from "@/lib/envelope";
 import type { Comparator } from "@/lib/mail-sort";
 import { bodyStructureOf } from "@/lib/mail-structure";
 import { replyReferences } from "@/lib/references";
-import { assertSetOk, CAPABILITIES, type JmapClient } from "./client";
+import { assertSetOk, CAPABILITIES, type Invocation, type JmapClient } from "./client";
 import type { BodyPart, EmailAddress, EmailDetail, EmailSummary, Identity, Mailbox } from "./types";
 
 export const SUMMARY_PROPERTIES = [
@@ -133,12 +134,14 @@ export const queryEmails = async (
     sort?: Comparator[];
   } = {},
 ): Promise<EmailPage> => {
-  const [query, get] = await client.request([
+  const queryFilter = emailQueryFilter(filter);
+  const search = "search" in filter;
+  const calls = (withSnippets: boolean): Invocation[] => [
     [
       "Email/query",
       {
         accountId,
-        filter: emailQueryFilter(filter),
+        filter: queryFilter,
         sort,
         collapseThreads,
         position,
@@ -152,13 +155,43 @@ export const queryEmails = async (
       {
         accountId,
         "#ids": { resultOf: "q", name: "Email/query", path: "/ids" },
-        properties: SUMMARY_PROPERTIES,
+        // A search also finds a word in Cc and Bcc (lib/attachment-hit.ts).
+        properties: search ? [...SUMMARY_PROPERTIES, "cc", "bcc"] : SUMMARY_PROPERTIES,
       },
       "g",
     ],
-  ]);
+    // A search also asks what it marks, to tell hits in an attachment (lib/attachment-hit.ts).
+    ...(withSnippets
+      ? [
+          [
+            "SearchSnippet/get",
+            {
+              accountId,
+              filter: queryFilter,
+              "#emailIds": { resultOf: "q", name: "Email/query", path: "/ids" },
+            },
+            "s",
+          ] as Invocation,
+        ]
+      : []),
+  ];
+  // The snippets only add the chip: when Stalwart refuses them, the search still shows its hits.
+  const [query, get, snippets] = search
+    ? await client.request(calls(true)).catch(() => client.request(calls(false)))
+    : await client.request(calls(false));
+  const marked = new Map(
+    ((snippets?.[1].list ?? []) as (Snippet & { emailId: string })[]).map(
+      ({ emailId, subject, preview }) => [emailId, { subject, preview }],
+    ),
+  );
+  const emails = (get![1].list as EmailSummary[]) ?? [];
   return {
-    emails: (get![1].list as EmailSummary[]) ?? [],
+    emails: marked.size
+      ? emails.map((email) => {
+          const snippet = marked.get(email.id);
+          return snippet ? { ...email, snippet } : email;
+        })
+      : emails,
     total: Number(query![1].total ?? 0),
     position,
   };
