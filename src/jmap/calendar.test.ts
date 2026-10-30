@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { eventTimes, toLocal } from "@/lib/jscalendar";
-import { queryEvents } from "./calendar";
+import { getEvent, getStoredEvent, queryEvents } from "./calendar";
 import type { JmapClient } from "./client";
 
 /**
@@ -54,5 +54,68 @@ describe("queryEvents", () => {
       ["2028-05-01T00:00:00", "2028-05-02T00:00:00", true],
       ["2028-05-08T00:00:00", "2028-05-08T01:00:00", false],
     ]);
+  });
+});
+
+/**
+ * Stalwart 1.0.1's checks (crates/jmap/src/calendar_event/get.rs and query.rs): no
+ * recurrenceOverrides with utcStart/utcEnd, no expanded query over maxExpandedQueryDuration.
+ */
+const MAX_EXPAND_MS = 365 * 86_400_000;
+const strictStalwart = (onQuery: (after: string, before: string) => string[] = () => ["e"]) => {
+  const queries: [string, string][] = [];
+  const client = {
+    call: async (method: string, args: Record<string, unknown>) => {
+      if (method === "CalendarEvent/query") {
+        const { after, before } = args.filter as { after: string; before: string };
+        if (Date.parse(before) - Date.parse(after) > MAX_EXPAND_MS)
+          throw new Error(
+            "The time span between 'after' and 'before' exceeds maxExpandedQueryDuration",
+          );
+        queries.push([after, before]);
+        return { ids: onQuery(after, before) };
+      }
+      const properties = (args.properties as string[] | undefined) ?? [];
+      if (
+        properties.includes("recurrenceOverrides") &&
+        (properties.includes("utcStart") || properties.includes("utcEnd"))
+      )
+        throw new Error("recurrenceOverrides cannot be requested together with utcStart or utcEnd");
+      return {
+        list: (args.ids as string[]).map((id) => ({
+          id,
+          start: "2026-11-02T09:00:00",
+          duration: "PT1H",
+        })),
+      };
+    },
+  } as unknown as JmapClient;
+  return { client, queries };
+};
+
+describe("queryEvents against Stalwart 1.0", () => {
+  it("asks for the instances without recurrenceOverrides", async () => {
+    const { client } = strictStalwart();
+    const events = await queryEvents(client, "a", new Date("2026-11-01"), new Date("2026-11-08"));
+    expect(events.map((event) => event.id)).toEqual(["e"]);
+  });
+
+  it("splits a span longer than maxExpandedQueryDuration and keeps each event once", async () => {
+    const { client, queries } = strictStalwart((after) =>
+      after.startsWith("2026") ? ["a", "both"] : ["both", "b"],
+    );
+    const events = await queryEvents(client, "a", new Date("2026-01-01"), new Date("2028-01-01"));
+    expect(events.map((event) => event.id)).toEqual(["a", "both", "b"]);
+    expect(queries.length).toBeGreaterThan(1);
+    expect(queries[0]![0]).toBe("2026-01-01T00:00:00Z");
+    expect(queries.at(-1)![1]).toBe("2028-01-01T00:00:00Z");
+  });
+});
+
+describe("getEvent and getStoredEvent against Stalwart 1.0", () => {
+  it("ask for the series with its recurrenceOverrides, without utcStart and utcEnd", async () => {
+    const { client } = strictStalwart();
+    expect((await getEvent(client, "a", "s"))?.id).toBe("s");
+    expect((await getStoredEvent(client, "a", "s"))?.id).toBe("s");
   });
 });
