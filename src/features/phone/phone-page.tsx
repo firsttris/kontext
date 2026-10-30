@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/components/ui/toast";
 import { useChatNames } from "@/features/chat/use-chat-names";
+import { VoiceMessage } from "@/features/chat/voice-message";
 import { useMe } from "@/features/tasks/queries";
 import { cn } from "@/lib/cn";
 import { listDate } from "@/lib/format";
@@ -55,19 +56,46 @@ const Note = ({ call }: { call: PhoneCall }) => {
     toast.show(m.phone_note_saved());
   };
   return (
-    <input
+    // A textarea, not an input: a longer note wraps instead of being cut off on a phone. The
+    // negative margin lines its text up with the lines above, past its padding and border.
+    <textarea
       aria-label={m.phone_note()}
       placeholder={m.phone_note_placeholder()}
       value={note}
+      rows={1}
       onChange={(event) => setNote(event.target.value)}
       onBlur={() => void save()}
       onKeyDown={(event) => {
-        if (event.key === "Enter") event.currentTarget.blur();
+        if (event.key === "Enter") {
+          event.preventDefault();
+          event.currentTarget.blur();
+        }
       }}
-      className="w-full rounded-md border border-transparent bg-transparent px-1 py-0.5 text-[13px] text-muted outline-none hover:border-border focus:border-muted focus:text-fg"
+      className="-mx-[5px] field-sizing-content resize-none rounded-md border border-transparent bg-transparent px-1 py-0.5 text-[13px] text-muted outline-none hover:border-border focus:border-muted focus:text-fg"
     />
   );
 };
+
+/** A caller's message or a recorded conversation, in the chat's player: the browser's own
+ * controls lay themselves out differently from load to load on Android. */
+const Sound = ({
+  call,
+  kind,
+  label,
+}: {
+  call: PhoneCall;
+  kind: "voicemail" | "recording";
+  label: string;
+}) => (
+  <div className="flex flex-col gap-1 text-[13px]">
+    <span className="font-medium">{label}</span>
+    <VoiceMessage
+      id={`phone-${call.id}-${kind}`}
+      url={`/api/phone/calls/${encodeURIComponent(call.id)}/${kind}`}
+      label={label}
+    />
+  </div>
+);
 
 /** "Sperren": the box turns the number away from now on (Firmenverwaltung lists and lifts it). */
 const BlockButton = ({ number }: { number: string }) => {
@@ -149,34 +177,18 @@ const Row = ({
             .join(" · ")}
         </span>
         {call.voicemailSeconds ? (
-          <div className="flex flex-wrap items-center gap-2 text-[13px]">
-            <span className="font-medium">
-              {m.phone_voicemail({ length: soundLength(call.voicemailSeconds) })}
-            </span>
-            {/* biome-ignore lint/a11y/useMediaCaption: a caller's spoken message, no captions exist */}
-            <audio
-              controls
-              preload="none"
-              src={`/api/phone/calls/${encodeURIComponent(call.id)}/voicemail`}
-              aria-label={m.phone_voicemail({ length: soundLength(call.voicemailSeconds) })}
-              className="h-8 max-w-full"
-            />
-          </div>
+          <Sound
+            call={call}
+            kind="voicemail"
+            label={m.phone_voicemail({ length: soundLength(call.voicemailSeconds) })}
+          />
         ) : null}
         {call.recordingSeconds ? (
-          <div className="flex flex-wrap items-center gap-2 text-[13px]">
-            <span className="font-medium">
-              {m.phone_recording({ length: soundLength(call.recordingSeconds) })}
-            </span>
-            {/* biome-ignore lint/a11y/useMediaCaption: a recorded conversation, no captions exist */}
-            <audio
-              controls
-              preload="none"
-              src={`/api/phone/calls/${encodeURIComponent(call.id)}/recording`}
-              aria-label={m.phone_recording({ length: soundLength(call.recordingSeconds) })}
-              className="h-8 max-w-full"
-            />
-          </div>
+          <Sound
+            call={call}
+            kind="recording"
+            label={m.phone_recording({ length: soundLength(call.recordingSeconds) })}
+          />
         ) : null}
         {call.fax === "received" ? (
           <a
