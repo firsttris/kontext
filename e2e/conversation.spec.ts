@@ -85,7 +85,10 @@ test.describe("Unterhaltungen", () => {
     await login(page);
     await page.goto("/settings?section=appearance");
     await page.getByText("Mails als Unterhaltungen gruppieren").click();
-    await page.getByRole("link", { name: "Mail", exact: true }).first().click();
+    await page
+      .getByRole("link", { name: /^Mail($|, )/ })
+      .first()
+      .click();
     await page.getByRole("link", { name: "info@" }).click();
     const list = page.getByRole("list", { name: "Posteingang" });
     const line = list.getByRole("link", { name: new RegExp(subject) });
@@ -97,7 +100,10 @@ test.describe("Unterhaltungen", () => {
     // Back to single mails: both are in the archive.
     await page.goto("/settings?section=appearance");
     await page.getByText("Mails als Unterhaltungen gruppieren").click();
-    await page.getByRole("link", { name: "Mail", exact: true }).first().click();
+    await page
+      .getByRole("link", { name: /^Mail($|, )/ })
+      .first()
+      .click();
     await page.getByRole("link", { name: "info@" }).click();
     await page.getByRole("link", { name: "Archiv" }).click();
     await expect(page.getByRole("list", { name: "Archiv" }).getByText(subject)).toHaveCount(2);

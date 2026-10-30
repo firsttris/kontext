@@ -89,7 +89,10 @@ test.describe("Regeln", () => {
     await page.getByRole("button", { name: "Speichern" }).click();
     await expect(page.getByRole("status").filter({ hasText: "eingeschaltet" })).toBeVisible();
 
-    await page.getByRole("link", { name: "Mail", exact: true }).first().click();
+    await page
+      .getByRole("link", { name: /^Mail($|, )/ })
+      .first()
+      .click();
     await page.getByRole("list", { name: "Posteingang" }).getByText(subject).click();
     await page.getByRole("button", { name: "Weitere Aktionen" }).click();
     await page.getByRole("menuitem", { name: "Regel erstellen …" }).click();

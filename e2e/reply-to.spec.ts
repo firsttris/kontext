@@ -97,7 +97,10 @@ test.describe("Antwort an", () => {
       await page.getByRole("button", { name: "Speichern" }).first().click();
       await expect(page.getByRole("status").filter({ hasText: "Gespeichert." })).toBeVisible();
 
-      await page.getByRole("link", { name: "Mail", exact: true }).first().click();
+      await page
+        .getByRole("link", { name: /^Mail($|, )/ })
+        .first()
+        .click();
       await page.getByRole("link", { name: "Neue Mail" }).first().click();
       await expect(chips(page, "Antwort an").getByTitle(INFO)).toBeVisible();
     } finally {
@@ -123,7 +126,10 @@ test.describe("Antwort an", () => {
       await card.getByRole("button", { name: "Speichern" }).click();
       await expect(page.getByRole("status").filter({ hasText: "Gespeichert." })).toBeVisible();
 
-      await page.getByRole("link", { name: "Mail", exact: true }).first().click();
+      await page
+        .getByRole("link", { name: /^Mail($|, )/ })
+        .first()
+        .click();
       await page.getByRole("link", { name: "info@" }).click();
       await page.getByRole("link", { name: "Neue Mail" }).first().click();
       await expect(page.getByLabel("Von").locator("option:checked")).toHaveText(/info@/);

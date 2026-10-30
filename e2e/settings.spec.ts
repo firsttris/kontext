@@ -14,7 +14,10 @@ test.describe("Einstellungen", () => {
     await page.getByRole("button", { name: "Speichern" }).first().click();
     await expect(page.getByRole("status").filter({ hasText: "Gespeichert." })).toBeVisible();
 
-    await page.getByRole("link", { name: "Mail", exact: true }).first().click();
+    await page
+      .getByRole("link", { name: /^Mail($|, )/ })
+      .first()
+      .click();
     await page.getByRole("link", { name: "Neue Mail" }).first().click();
     await expect(page.getByRole("textbox", { name: "Ihre Nachricht …" })).toContainText(
       "Sandra Klein · Weber Haustechnik",

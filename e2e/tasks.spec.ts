@@ -20,7 +20,10 @@ test.describe("Aufgaben", () => {
   test("Schnelleingabe mit Datum, Details und abhaken", async ({ page }) => {
     const name = unique("Heizlast Lang rechnen");
     await login(page);
-    await page.getByRole("link", { name: "Aufgaben", exact: true }).first().click();
+    await page
+      .getByRole("link", { name: /^Aufgaben($|, )/ })
+      .first()
+      .click();
     await expect(page.getByRole("heading", { name: "Meine Aufgaben" })).toBeVisible();
     await page.getByRole("textbox", { name: "Neue Aufgabe" }).fill(`${name} morgen`);
     await page.keyboard.press("Enter");
