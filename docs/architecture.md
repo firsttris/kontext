@@ -1669,7 +1669,11 @@ einschalten, ohne dass Kalender unter „Geteilt mit mir“ auftauchen.
 
 Eine Serie ist in Stalwart **ein** Termin mit `recurrenceRule` (JSCalendar, RFC 8984; Stalwart
 0.16 und 1.0 nehmen die Einzahl). Die Kalenderansichten fragen mit `expandRecurrences` ab und bekommen
-jeden einzelnen Termin mit eigener ID, `baseEventId` und `recurrenceId`.
+jeden einzelnen Termin mit eigener ID, `baseEventId` und `recurrenceId`. Seit Stalwart 1.0 darf
+eine solche Abfrage höchstens 365 Tage umfassen (`maxExpandedQueryDuration`); längere Zeiträume
+(Feiertage zweier Jahre, eine lange Serie teilen, Agenten) fragt `queryEvents` in Abschnitten ab.
+Die einzelnen Termine kommen mit `utcStart`/`utcEnd`, eine Serie mit `recurrenceOverrides`: beides
+zusammen lehnt Stalwart 1.0 ab (`src/jmap/calendar.ts`).
 
 - **Nur dieser Termin**: Ändern oder Löschen über die ID des einzelnen Termins; Stalwart trägt das
   in `recurrenceOverrides` der Serie ein (beim Löschen als `excluded`).
