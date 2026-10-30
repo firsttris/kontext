@@ -33,6 +33,8 @@ const loginResponse = z.discriminatedUnion("type", [
   z.object({ type: z.literal("expired") }),
   /** The authorization request itself was refused, e.g. Kontext is not registered as a client. */
   z.object({ type: z.literal("invalid"), description: z.string() }),
+  /** Refused after the client was known, as an error on the redirect (authorize.rs). */
+  z.object({ type: z.literal("redirect"), location: z.string() }),
 ]);
 
 const tokenResponse = z.object({
@@ -133,9 +135,13 @@ export const loginAtStalwart = async (
   if (!login.success) return { status: "unavailable" };
   if (login.data.type === "mfaRequired") return { status: "mfa" };
   if (login.data.type === "failure" || login.data.type === "expired") return { status: "failed" };
-  if (login.data.type === "invalid") {
+  if (login.data.type === "invalid" || login.data.type === "redirect") {
+    const reason =
+      login.data.type === "invalid"
+        ? login.data.description
+        : (URL.parse(login.data.location)?.searchParams.get("error") ?? login.data.location);
     console.warn(
-      `Stalwart lehnt die Anmeldung für Kontext ab (${login.data.description}); ist der OAuth-Client "${CLIENT_ID}" angelegt? Siehe docs/installation.md.`,
+      `Stalwart lehnt die Anmeldung für Kontext ab (${reason}); ist der OAuth-Client "${CLIENT_ID}" angelegt? Siehe docs/installation.md.`,
     );
     return { status: "unavailable" };
   }
