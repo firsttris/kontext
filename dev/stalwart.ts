@@ -234,6 +234,22 @@ const withoutStalwartRsvp = (port: number) =>
   ]);
 
 /**
+ * The colleagues for sharing, the chat and their free times come from Principal/query, which
+ * Stalwart 1.0 answers only with `allowDirectoryQueries` (x:Sharing; crates/jmap/src/principal/
+ * query.rs). As on a customer's server (docs/installation.md); the setting needs a reload.
+ */
+const allowDirectoryQueries = async (port: number): Promise<void> => {
+  const [[, { list }]] = (await adminRequest(port, [
+    ["x:Sharing/get", { ids: ["singleton"], properties: ["allowDirectoryQueries"] }, "0"],
+  ])) as [[string, { list: { allowDirectoryQueries: boolean }[] }, string]];
+  if (list[0]?.allowDirectoryQueries) return;
+  await adminRequest(port, [
+    ["x:Sharing/set", { update: { singleton: { allowDirectoryQueries: true } } }, "0"],
+    ["x:Action/set", { create: { r: { "@type": "ReloadSettings" } } }, "1"],
+  ]);
+};
+
+/**
  * Kontext signs in as the first-party OAuth client `kontext` (server/stalwart.ts); Stalwart 1.0
  * refuses clients it does not know. As on a customer's server (docs/installation.md), once.
  */
@@ -291,6 +307,7 @@ const main = async (): Promise<void> => {
   await treatSmtpAsInbound(httpPort, args.smtp);
   await withoutStalwartRsvp(httpPort);
   await registerKontext(httpPort);
+  await allowDirectoryQueries(httpPort);
   console.log(
     `Stalwart ${STALWART_VERSION} läuft: http://127.0.0.1:${httpPort} (SMTP ${args.smtp}, IMAP ${args.imap}), Admin ${STALWART_ADMIN.user}`,
   );

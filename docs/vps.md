@@ -374,7 +374,7 @@ Mailprogramme nehmen:
 
 **Einstellungen aus der Installation** (X-Forwarded-For, Kontexts Netz als erlaubte IP,
 Sperrdauer ein Tag, deutsche Suche, 16 gleichzeitige JMAP-Anfragen, Stalwarts RSVP-Seite aus,
-Anmeldung auf 587 nur nach STARTTLS, Kontext als OAuth-Client):
+Anmeldung auf 587 nur nach STARTTLS, Kontext als OAuth-Client, Verzeichnisabfragen):
 
 ```bash
 /root/stalwart-api.sh '[
@@ -390,7 +390,8 @@ Anmeldung auf 587 nur nach STARTTLS, Kontext als OAuth-Client):
    "else":"false"}}}},"6"],
  ["x:OAuthClient/set",{"create":{"k":{"clientId":"kontext","description":"Kontext",
    "redirectUris":{"https://kontext.invalid/oauth":true},"firstParty":true}}},"7"],
- ["x:Action/set",{"create":{"r":{"@type":"ReloadSettings"}}},"8"]]'
+ ["x:Sharing/set",{"update":{"singleton":{"allowDirectoryQueries":true}}},"8"],
+ ["x:Action/set",{"create":{"r":{"@type":"ReloadSettings"}}},"9"]]'
 ```
 
 - `httpRsvpEnable`: Stalwarts Einladungsmails haben sonst Knöpfe *Yes/No/Maybe* auf

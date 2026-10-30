@@ -128,6 +128,10 @@ jedem Neustart vor der Einrichtung gibt es ein neues.
     Einstellungen und die Firmenverwaltung brauchen (siehe [Anmeldung](architecture.md#anmeldung)).
     Fehlt der Eintrag, schreibt Kontext beim Anmelden `Stalwart lehnt die Anmeldung für Kontext
     ab (Unknown client id)` ins Log.
+13. Unter *Settings → Sharing* **Verzeichnisabfragen erlauben** (`x:Sharing`,
+    `allowDirectoryQueries: true`), danach die Einstellungen neu laden (*Reload*) – nötig: Ohne
+    findet Kontext keine Kollegen (Teilen, neuer Chat, freie Zeiten beim Einladen); Stalwart 1.0
+    lehnt `Principal/query` sonst ab (`The administrator has disabled directory queries`).
 
 Danach unter `https://kontext.firma.de` anmelden. Am Handy im Browser „Zum Startbildschirm
 hinzufügen“ wählen: Kontext startet dann wie eine App und bleibt angemeldet.
@@ -664,7 +668,8 @@ eine neue, leere Datenbank; die alte liest es nur. Ausführlich:
 3. Stalwart anhalten, `run --final` ausführen und den Bericht lesen.
 4. Das neue Daten-Volume an Stalwarts Stelle setzen, `git pull` (Kontext und Stalwart 1.0.1),
    starten.
-5. In Stalwart 1.0 Kontext als OAuth-Client eintragen ([Schritt 12](#3-stalwart-einrichten)).
+5. In Stalwart 1.0 Kontext als OAuth-Client eintragen und Verzeichnisabfragen erlauben
+   ([Schritte 12 und 13](#3-stalwart-einrichten)).
 6. Alle melden sich einmal neu an: Stalwarts Tokens wandern nicht mit, Kontext nimmt die
    abgelehnten Sitzungen zurück. Mailprogramme mit Passwort laufen weiter; CalDAV und CardDAV
    laden Kalender und Kontakte einmal neu, die Volltextsuche baut Stalwart im Hintergrund neu auf.

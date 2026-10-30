@@ -77,8 +77,8 @@ Rest neu startet. Einzeln gehen auch `bun run dev:server` und `bun run dev:app`.
 `dev/stalwart.ts` legt die Daten unter `.dev/stalwart/` ab. Beim ersten Start bootet es Stalwart
 im Wiederherstellungsmodus, legt die Listener auf Ports über 1024 an (HTTP 18080, SMTP 10025,
 IMAP 10143) und startet dann normal. Der Admin ist `admin` / `kontext-admin-dev`. Bei jedem Start
-trägt es Kontext als OAuth-Client `kontext` ein, falls er fehlt (wie
-[Schritt 12 der Installation](installation.md#3-stalwart-einrichten)).
+trägt es Kontext als OAuth-Client `kontext` ein, falls er fehlt, und erlaubt
+Verzeichnisabfragen (wie [Schritte 12 und 13 der Installation](installation.md#3-stalwart-einrichten)).
 
 Daten einer älteren Stalwart-Hauptversion öffnet ein neuer Stalwart nicht (seit 1.0: `The data
 store was created by a Stalwart version prior to 1.0`, in `.dev/stalwart.log`). Nach so einem
