@@ -1,7 +1,8 @@
 /**
- * Messages of one person close together: on a desktop under one name with the avatar, on a phone
- * as bubbles (the own on the right). Each message shows its text, photos, files and cards, the
- * tasks made from it, its reactions and answers, and its actions.
+ * Messages of one person close together, as bubbles: one's own on the right in the accent tint,
+ * the others' on the left under their name (on a desktop with the avatar). Each message shows its
+ * text, photos, files and cards, the tasks made from it, its reactions and answers, and its
+ * actions.
  */
 import { ListChecks } from "lucide-react";
 import { type KeyboardEvent, useState } from "react";
@@ -74,7 +75,7 @@ const RepliesLine = ({
     <button
       type="button"
       onClick={onOpen}
-      className="flex max-w-full items-center gap-2 rounded-lg py-1 pr-2 text-left text-[13px] hover:bg-hover md:-ml-1 md:pl-1"
+      className="flex max-w-full items-center gap-2 rounded-lg px-1 py-1 text-left text-[13px] hover:bg-hover"
     >
       <span className="flex shrink-0 gap-0.5">
         {replies.people.slice(0, 3).map((id) => (
@@ -149,7 +150,7 @@ const EditField = ({
   );
 };
 
-/** The message itself: its text as a bubble (phone) or a line (desktop), or what stands for it. */
+/** The message itself: its text as a bubble, or what stands for it. */
 const Body = ({
   message,
   own,
@@ -164,7 +165,7 @@ const Body = ({
   if (message.call) return <CallLine call={message.call} channelId={message.channelId} own={own} />;
   if (message.deleted)
     return (
-      <p className="m-0 rounded-2xl border border-dashed border-border px-3 py-1.5 text-[14px] text-muted italic md:border-0 md:p-0">
+      <p className="m-0 rounded-2xl border border-dashed border-border px-3 py-1.5 text-[14px] text-muted italic">
         {m.chat_message_deleted()}
       </p>
     );
@@ -174,11 +175,11 @@ const Body = ({
   return (
     <div
       className={cn(
-        "max-w-[85vw] rounded-2xl px-3 py-2 md:max-w-none md:rounded-none md:bg-transparent md:p-0 md:text-fg",
-        own ? "rounded-br-md bg-primary text-onprimary" : "rounded-bl-md bg-subtle",
+        "max-w-full rounded-2xl px-3 py-2 text-fg",
+        own ? "rounded-br-md bg-bubble-own" : "rounded-bl-md bg-bubble",
       )}
     >
-      <MessageText message={message} people={people} me={me} own={own} />
+      <MessageText message={message} people={people} me={me} />
     </div>
   );
 };
@@ -256,10 +257,12 @@ const Item = ({
           event.stopPropagation();
         }}
         className={cn(
-          "group relative flex max-w-full flex-col gap-1.5 rounded-xl transition-colors duration-700 hover:duration-100 md:-mx-2 md:px-2 md:py-0.5 md:hover:bg-hover/60",
+          // Not wider than a comfortable line: a long text wraps instead of spanning the screen.
+          "group relative flex max-w-[85%] flex-col gap-1.5 rounded-xl transition-colors duration-700 hover:duration-100 md:max-w-[min(42rem,80%)]",
           // A long press picks the message, not a word of it (copying is in the sheet).
           "max-md:select-none max-md:[-webkit-touch-callout:none]",
-          own ? "items-end md:items-stretch" : "items-start md:items-stretch",
+          own ? "items-end" : "items-start",
+          editing && "w-full",
           highlight === message.id && "bg-accent/10",
           sheet && "bg-hover",
           isPending(message) && "opacity-60",
@@ -315,7 +318,7 @@ const Item = ({
         ))}
         {editing || !hasActions ? null : (
           <>
-            <HoverBar actions={actions} />
+            <HoverBar actions={actions} side={own ? "end" : "start"} />
             {/* A screen reader on a phone reaches the sheet without the long press. */}
             <button
               type="button"
@@ -338,19 +341,23 @@ export const Run = ({ run, ...rest }: Props) => {
   const own = run.authorId === rest.me;
   const name = nameOf(run.authorId);
   return (
-    <li className={cn("flex gap-3", own && "justify-end md:justify-start")}>
-      <ColleagueAvatar id={run.authorId} name={name} size={34} className="hidden md:inline-flex" />
-      <div
-        className={cn(
-          "flex min-w-0 flex-1 flex-col gap-1 md:items-stretch",
-          own ? "items-end" : "items-start",
-        )}
-      >
-        <span className="text-[12px] text-muted md:text-[14px]">
-          <span className={cn("font-semibold text-fg", own && "hidden md:inline")}>
-            {firstName(name)}
-          </span>
-          <span className={cn(own && "hidden md:inline")}> · </span>
+    <li className={cn("flex gap-3", own && "justify-end")}>
+      {own ? null : (
+        <ColleagueAvatar
+          id={run.authorId}
+          name={name}
+          size={34}
+          className="hidden md:inline-flex"
+        />
+      )}
+      <div className={cn("flex min-w-0 flex-1 flex-col gap-1", own ? "items-end" : "items-start")}>
+        <span className="text-[12px] text-muted md:text-[13px]">
+          {own ? null : (
+            <>
+              <span className="font-semibold text-fg">{firstName(name)}</span>
+              {" · "}
+            </>
+          )}
           <time dateTime={run.createdAt} className="md:font-mono md:text-[12px]">
             {time(run.createdAt)}
           </time>

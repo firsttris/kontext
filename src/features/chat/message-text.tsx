@@ -1,6 +1,6 @@
 /**
  * A message's text: line breaks kept, links clickable, mentions highlighted (the own one more).
- * `own`: in the dark bubble of one's own message on a phone.
+ * Reads the same in both bubbles (`--bubble`, `--bubble-own`): the ink keeps 4.5:1 on either.
  */
 
 import { type Message, type Person, segments } from "@/lib/chat";
@@ -11,12 +11,10 @@ export const MessageText = ({
   message,
   people,
   me,
-  own = false,
 }: {
   message: Message;
   people: Person[];
   me: string;
-  own?: boolean;
 }) => {
   const mentioned = people.filter((person) => message.mentions.includes(person.id));
   return (
@@ -30,10 +28,7 @@ export const MessageText = ({
               href={part.href}
               target="_blank"
               rel="noreferrer noopener"
-              className={cn(
-                "hover:underline",
-                own ? "text-onprimary underline md:text-accent md:no-underline" : "text-accent",
-              )}
+              className="text-accent-ink hover:underline"
             >
               {part.text}
             </a>
@@ -44,13 +39,8 @@ export const MessageText = ({
             <span
               key={key}
               className={cn(
-                "rounded font-medium",
-                !(own && part.id !== me) && "px-0.5",
-                part.id === me
-                  ? "bg-accent-fill text-white"
-                  : own
-                    ? "font-semibold md:bg-accent/10 md:font-medium md:text-accent-ink"
-                    : "bg-accent/10 text-accent-ink",
+                "rounded px-0.5 font-medium",
+                part.id === me ? "bg-accent-fill text-white" : "bg-accent/10 text-accent-ink",
               )}
             >
               {part.text}
@@ -59,12 +49,7 @@ export const MessageText = ({
         }
         return <span key={key}>{part.text}</span>;
       })}
-      {message.editedAt ? (
-        <span className="text-[11px] opacity-70 md:text-muted md:opacity-100">
-          {" "}
-          {m.chat_edited()}
-        </span>
-      ) : null}
+      {message.editedAt ? <span className="text-[11px] text-muted"> {m.chat_edited()}</span> : null}
     </p>
   );
 };
