@@ -7,6 +7,17 @@ Steps that an update needs beyond raising the version are marked **Upgrade**.
 
 ## Unreleased
 
+- Mail: assign mails in a shared mailbox. "Zuweisen" gives a mail to a person ("Mir zuweisen", a
+  colleague, nobody) and marks it done; everyone in the mailbox sees it on the mail and in the
+  list, and the filters "Mir zugewiesen" and "Offen" show what still waits. Stored on the mail
+  as shared JMAP Object Metadata in Kontext's namespace `kontext.firsttris.github.io`, filtered
+  by Stalwart (`src/lib/assignment.ts`); needs Stalwart 1.0.
+- Stalwart 1.0.1 instead of 0.16.27: sign-in as a registered OAuth client, stricter JMAP (header
+  forms, calendar queries), contact photos as blobs, renamed management fields.
+  **Upgrade:** Stalwart 1.0 does not open a 0.16 data store: migrate it with `stalwart-migrate`
+  before pulling this version, then register Kontext as the first-party OAuth client `kontext`
+  and allow directory queries (installation guide, "Stalwart 0.16 auf 1.0 heben", steps 12 and
+  13). Everyone signs in once more.
 - S/MIME: the company admin keeps the trusted authorities ("S/MIME-Stellen"): upload a root or
   intermediate certificate (PEM or DER), see its name, issuer, validity and fingerprint, remove
   it. Only current CA certificates, at most 100; they count beside Mozilla's list and

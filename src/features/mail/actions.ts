@@ -11,9 +11,11 @@ import {
   JUNK_KEYWORDS,
   listMailboxes,
   moveEmails,
+  setAssignment,
   setKeyword,
 } from "@/jmap/mail";
 import type { EmailDetail, EmailSummary, Mailbox } from "@/jmap/types";
+import { type Assignment, withAssignment } from "@/lib/assignment";
 import { findRole } from "@/lib/mailboxes";
 import { adjustUnreadCounts, mailboxesKey, patchCachedEmails } from "./queries";
 
@@ -106,6 +108,18 @@ export const useMailActions = () => {
     onSettled: (_data, _error, { accountId }) => refresh(accountId),
   });
 
+  const assign = useMutation({
+    mutationFn: ({ accountId, id, next }: { accountId: string; id: string; next: Assignment }) =>
+      setAssignment(client, accountId, id, next),
+    onMutate: ({ accountId, id, next }) => {
+      patchCachedEmails(queryClient, accountId, [id], (email) => withAssignment(email, next));
+      queryClient.setQueryData<EmailDetail>([accountId, "email", id], (email) =>
+        email ? withAssignment(email, next) : email,
+      );
+    },
+    onSettled: (_data, _error, { accountId }) => refresh(accountId),
+  });
+
   const move = useMutation({
     mutationFn: async ({
       accountId,
@@ -152,6 +166,9 @@ export const useMailActions = () => {
       keyword.mutateAsync({ accountId, ids, keyword: "$seen", on: seen }),
     setFlagged: (accountId: string, ids: string[], flagged: boolean) =>
       keyword.mutateAsync({ accountId, ids, keyword: "$flagged", on: flagged }),
+    /** Who takes care of the mail in a shared mailbox, and whether it is done. */
+    assign: (accountId: string, id: string, next: Assignment) =>
+      assign.mutateAsync({ accountId, id, next }),
     /** A category (its keyword) on or off. */
     setCategory: (accountId: string, ids: string[], category: string, on: boolean) =>
       keyword.mutateAsync({ accountId, ids, keyword: category, on }),
@@ -200,6 +217,7 @@ export const useEmailActions = (accountId: string) => {
     setFlagged: (ids: string[], flagged: boolean) => actions.setFlagged(accountId, ids, flagged),
     setCategory: (ids: string[], category: string, on: boolean) =>
       actions.setCategory(accountId, ids, category, on),
+    assign: (id: string, next: Assignment) => actions.assign(accountId, id, next),
     moveTo: (emails: EmailSummary[], from: string, target: MoveTarget) =>
       actions.moveTo(accountId, emails, from, target),
     archive: (ids: string[], from: string) => actions.archive(accountId, ids, from),

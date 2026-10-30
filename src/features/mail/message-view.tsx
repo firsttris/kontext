@@ -29,6 +29,7 @@ import { RESURFACED } from "../snooze/queries";
 import { SnoozeNotice } from "../snooze/snooze-notice";
 import { useStatusLabel, useTasks } from "../tasks/queries";
 import { useEmailActions } from "./actions";
+import { AssignmentChip } from "./assignment";
 import { Attachments } from "./attachments";
 import { EarlierMails, LaterMails } from "./conversation";
 import { DeliveryReportCard, DeliveryReportsReceived } from "./delivery-reports";
@@ -124,6 +125,7 @@ export const MessageView = ({ accountId, mailbox, emailId }: Props) => {
               <h2 className="m-0 text-[21px] leading-snug font-semibold tracking-tight">
                 {subject || m.mail_no_subject()}
               </h2>
+              {account && !account.isPersonal ? <AssignmentChip email={email} /> : null}
               {mailTasks.map((task) => (
                 <Link
                   key={task.id}

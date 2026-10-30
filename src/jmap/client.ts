@@ -16,6 +16,7 @@ export const CAPABILITIES = {
   blob: "urn:ietf:params:jmap:blob",
   contactsParse: "urn:ietf:params:jmap:contacts:parse",
   calendarsParse: "urn:ietf:params:jmap:calendars:parse",
+  metadata: "urn:ietf:params:jmap:metadata",
   stalwart: "urn:stalwart:jmap",
 } as const;
 
@@ -25,6 +26,7 @@ export const DEFAULT_USING = [
   CAPABILITIES.submission,
   CAPABILITIES.contacts,
   CAPABILITIES.calendars,
+  CAPABILITIES.metadata,
 ];
 
 const sessionSchema = z.object({

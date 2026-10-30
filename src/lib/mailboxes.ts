@@ -95,3 +95,10 @@ export const mailboxRights = (mailbox: Mailbox) => ({
   canMarkSeen: mailbox.myRights?.maySetSeen !== false,
   canFlag: mailbox.myRights?.maySetKeywords !== false,
 });
+
+/**
+ * Whether mails here can be assigned (src/lib/assignment.ts). Stalwart writes shared metadata
+ * only with `maySetMetadata` (Acl::ModifyMetadata, crates/jmap-proto/src/object/mailbox.rs);
+ * "Nur lesen" grants `maySetKeywords` but not this.
+ */
+export const canAssignIn = (mailbox: Mailbox) => mailbox.myRights?.maySetMetadata !== false;

@@ -158,7 +158,7 @@ export const ListFrame = ({
   useEffect(() => {
     setPicks({ keys: new Set() });
     setSelecting(false);
-  }, [title, search.q, search.unread]);
+  }, [title, search.q, search.unread, search.assigned]);
   const showBar = selecting || picked.length > 0;
   const chips = filters ?? (
     <FilterChips

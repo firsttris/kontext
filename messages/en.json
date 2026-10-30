@@ -2187,5 +2187,16 @@
   "tour_chat_title": "Chat",
   "tour_chat_text": "For quick questions to colleagues, without email: this takes you to the chat.",
   "tour_again_desktop": "You can start this tour again any time from the menu behind your picture at the bottom left.",
-  "tour_again_phone": "You can start this tour again any time under “More”."
+  "tour_again_phone": "You can start this tour again any time under “More”.",
+  "mail_filter_mine": "Assigned to me",
+  "mail_filter_open": "Open",
+  "mail_assign": "Assign",
+  "mail_assign_me": "Assign to me",
+  "mail_assign_nobody": "Nobody",
+  "mail_assign_done": "Done",
+  "mail_assigned_to": "Assigned to {name}",
+  "mail_assigned_done": "Done",
+  "mail_assigned_done_by": "Done · {name}",
+  "mail_mine_empty": "No open mails for you.",
+  "mail_open_empty": "All done."
 }

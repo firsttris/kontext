@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { Mailbox } from "@/jmap/types";
 import {
+  canAssignIn,
   flattenTree,
   folderTree,
   mailboxName,
@@ -95,5 +96,17 @@ describe("mailboxRights", () => {
         },
       } as Mailbox),
     ).toEqual({ canRemove: false, canMarkSeen: true, canFlag: false });
+  });
+});
+
+describe("canAssignIn", () => {
+  it("needs maySetMetadata, which reading with keywords does not give", () => {
+    expect(canAssignIn({ id: "a" } as Mailbox)).toBe(true);
+    expect(
+      canAssignIn({
+        id: "a",
+        myRights: { mayReadItems: true, maySetKeywords: true, maySetMetadata: false },
+      } as Mailbox),
+    ).toBe(false);
   });
 });
