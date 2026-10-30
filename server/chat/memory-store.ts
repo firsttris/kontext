@@ -30,9 +30,18 @@ const createFiles = () => {
   const blobs = new Map<string, Blob>();
   /** The channels whose files went with them. */
   const removedChannels: string[] = [];
+  // A counter, not the number kept: removed files would give their ids out again.
+  let count = 0;
+  const removeWhere = (gone: (file: StoredFile) => boolean) => {
+    for (const file of stored.filter(gone)) {
+      blobs.delete(file.path);
+      if (file.thumbPath) blobs.delete(file.thumbPath);
+      stored.splice(stored.indexOf(file), 1);
+    }
+  };
   const files: ChatFiles = {
     save: async (channelId, _by, file, thumb, type = file.type) => {
-      const id = `f${stored.length + 1}`;
+      const id = `f${++count}`;
       const thumbPath = thumb ? `memory:${id}.thumb` : null;
       blobs.set(`memory:${id}`, file);
       if (thumb && thumbPath) blobs.set(thumbPath, thumb);
@@ -61,14 +70,11 @@ const createFiles = () => {
     },
     ofMessages: async () => new Map(),
     pruneUnsent: async () => 0,
-    removeOfMessage: async () => undefined,
-    removeOfMessages: async () => undefined,
+    removeOfMessage: async (messageId) => removeWhere((file) => file.messageId === messageId),
+    removeOfMessages: async (messageIds) =>
+      removeWhere((file) => Boolean(file.messageId && messageIds.includes(file.messageId))),
     removeOfChannel: async (channelId) => {
-      for (const file of stored.filter((f) => f.channelId === channelId)) {
-        blobs.delete(file.path);
-        if (file.thumbPath) blobs.delete(file.thumbPath);
-        stored.splice(stored.indexOf(file), 1);
-      }
+      removeWhere((file) => file.channelId === channelId);
       removedChannels.push(channelId);
     },
   };
@@ -93,6 +99,12 @@ const createMessages = (files: ChatFiles, now: Clock) => {
       : message;
   };
   const find = (id: string) => messages.find((m) => m.id === id);
+  // Messages never share a millisecond, so "before" pages cleanly (messages.ts).
+  let lastStamp = 0;
+  const stamp = () => {
+    lastStamp = Math.max(now().getTime(), lastStamp + 1);
+    return new Date(lastStamp);
+  };
   const store: MessageStore = {
     page: async (channelId, before, limit) =>
       messages
@@ -124,7 +136,7 @@ const createMessages = (files: ChatFiles, now: Clock) => {
         ...post,
         id,
         files: attached,
-        createdAt: now().toISOString(),
+        createdAt: stamp().toISOString(),
         editedAt: null,
         deleted: false,
         parentId: post.parentId ?? null,
@@ -154,8 +166,17 @@ const createMessages = (files: ChatFiles, now: Clock) => {
     },
     remove: async (id) => {
       const message = find(id)!;
-      Object.assign(message, { text: "", cards: [], files: [], deleted: true });
-      return message;
+      Object.assign(message, {
+        text: "",
+        mentions: [],
+        cards: [],
+        files: [],
+        reactions: [],
+        call: null,
+        deleted: true,
+      });
+      await files.removeOfMessage(id);
+      return withReplies(message);
     },
     search: async (channelIds, words, limit) =>
       messages
@@ -169,7 +190,13 @@ const createMessages = (files: ChatFiles, now: Clock) => {
         .slice(0, limit),
     discussed: async (ref, threadId) =>
       messages
-        .filter((m) => m.cards.some((card) => card.ref === ref || card.threadId === threadId))
+        .filter((m) =>
+          m.cards.some(
+            (card) =>
+              card.kind === "mail" &&
+              (card.ref === ref || (threadId !== null && card.threadId === threadId)),
+          ),
+        )
         .reverse()
         .map((m) => ({
           channelId: m.channelId,
@@ -182,7 +209,10 @@ const createMessages = (files: ChatFiles, now: Clock) => {
     channelsOfParty: async (party) => [
       ...new Set(
         messages
-          .filter((m) => m.cards.some((card) => card.party === party))
+          .filter(
+            (m) =>
+              party && m.cards.some((card) => card.party.toLowerCase() === party.toLowerCase()),
+          )
           .reverse()
           .map((m) => m.channelId),
       ),
@@ -260,7 +290,10 @@ const createChannels = (messages: Message[], now: Clock): ChatStore => {
         .map((channel) => ({
           ...channel,
           lastMessageAt:
-            messages.filter((m) => m.channelId === channel.id).at(-1)?.createdAt ?? null,
+            // An answer leaves the channel's order as it is, unless it stands there too.
+            messages
+              .filter((m) => m.channelId === channel.id && (!m.parentId || m.alsoInChannel))
+              .at(-1)?.createdAt ?? null,
           ...unreadOf(channel, viewer.me),
           readAt: reads[channel.id]?.[viewer.me] ?? null,
           last: lastOf(channel.id),

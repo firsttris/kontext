@@ -54,7 +54,10 @@ const card = (fields: Partial<Card> & Pick<Card, "kind" | "ref">): Card => ({
 /** A clock that moves on by a second at each look. */
 const ticking = () => {
   let now = Date.parse("2026-10-30T08:00:00Z");
-  return () => new Date((now += 1000));
+  return () => {
+    now += 1000;
+    return new Date(now);
+  };
 };
 
 describe("createMemoryChat, as the SQLite stores (store.ts, messages.ts, files.ts)", () => {
