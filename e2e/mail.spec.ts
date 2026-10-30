@@ -110,7 +110,7 @@ test.describe("Mail", () => {
       const list = page.getByRole("list", { name: "Posteingang" });
       await expect(list.getByText(offer.subject)).toBeVisible();
       await expect(list.getByText(heating.subject)).toBeVisible();
-      const counter = page.getByText(/\d+ ungelesen/);
+      const counter = page.getByText(/^\d+ ungelesen$/);
       const before = Number(((await counter.textContent()) ?? "").split(" ")[0]);
       await list.getByText(heating.subject).click();
       await expect(page.getByRole("heading", { name: heating.subject })).toBeVisible();
