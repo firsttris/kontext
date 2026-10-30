@@ -1,5 +1,12 @@
 /** Mail operations on top of the JMAP client (RFC 8621). Each function is one round-trip. */
 
+import {
+  ASSIGNMENT_NAMESPACE,
+  type Assignment,
+  type AssignmentView,
+  assignmentConditions,
+  assignmentPatch,
+} from "@/lib/assignment";
 import { envelopeIdOf, type Hold, submissionEnvelope } from "@/lib/envelope";
 import type { Comparator } from "@/lib/mail-sort";
 import { bodyStructureOf } from "@/lib/mail-structure";
@@ -20,6 +27,8 @@ export const SUMMARY_PROPERTIES = [
   "size",
   // Raw, as Stalwart names it: shows an encrypted mail in the list (src/lib/pgp-mail.ts).
   "header:Content-Type",
+  // Who takes care of it in a shared mailbox (src/lib/assignment.ts); Kontext's namespace only.
+  `metadata/${ASSIGNMENT_NAMESPACE}`,
 ];
 
 const DETAIL_PROPERTIES = [
@@ -89,13 +98,20 @@ export const listMailboxes = async (client: JmapClient, accountId: string): Prom
 
 /** One folder (optionally only unread), or a prepared search filter (src/lib/mail-search.ts). */
 export type EmailFilter =
-  | { mailboxId: string; unreadOnly?: boolean }
+  | {
+      mailboxId: string;
+      unreadOnly?: boolean;
+      /** In a shared mailbox: the open mails of `me`, or all open ones (lib/assignment.ts). */
+      assignment?: { view: AssignmentView; me: string };
+    }
   | { search: Record<string, unknown> };
 
 export const emailQueryFilter = (filter: EmailFilter): Record<string, unknown> => {
   if ("search" in filter) return filter.search;
   const conditions: Record<string, unknown>[] = [{ inMailbox: filter.mailboxId }];
   if (filter.unreadOnly) conditions.push({ notKeyword: "$seen" });
+  if (filter.assignment)
+    conditions.push(...assignmentConditions(filter.assignment.view, filter.assignment.me));
   return conditions.length === 1 ? conditions[0]! : { operator: "AND", conditions };
 };
 
@@ -224,6 +240,14 @@ export const setKeyword = (
   keyword: string,
   on: boolean,
 ) => updateEmails(client, accountId, ids, { [`keywords/${keyword}`]: on ? true : null });
+
+/** Who takes care of a mail and whether it is done (src/lib/assignment.ts). */
+export const setAssignment = (
+  client: JmapClient,
+  accountId: string,
+  id: string,
+  assignment: Assignment,
+) => updateEmails(client, accountId, [id], assignmentPatch(assignment));
 
 /** Moves mails to another folder; `keywords` are set (true) or removed (null) in the same call. */
 export const moveEmails = (

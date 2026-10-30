@@ -38,6 +38,8 @@ export type EmailSummary = {
   size: number;
   /** The raw Content-Type, where loaded: an encrypted mail in the list. */
   "header:Content-Type"?: string | null;
+  /** Shared metadata by namespace (draft-ietf-jmap-metadata); Kontext's: lib/assignment.ts. */
+  metadata?: Record<string, Record<string, unknown>>;
 };
 
 export type BodyPart = {

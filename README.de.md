@@ -100,7 +100,7 @@ VPS mit 2 vCPU und 4 GB RAM. Alles Weitere – DNS, Podman, Backups, Updates –
 
 | | |
 |---|---|
-| ✉️ **Mail** | **Gemeinsame Postfächer** wie info@ mit Rechten pro Person, **Vertretung in einem Schritt**, **Kategorien** und **Regeln auf dem Server**, Suche wie in Gmail, später senden und Wiedervorlage, **weitere Postfächer** (Gmail, GMX), **Warnungen vor gefälschten Absendern** · [mehr →](https://firsttris.github.io/kontext/mail.html) |
+| ✉️ **Mail** | **Gemeinsame Postfächer** wie info@ mit Rechten pro Person, **Mails zuweisen** mit „Mir zugewiesen“ und „Offen“, **Vertretung in einem Schritt**, **Kategorien** und **Regeln auf dem Server**, Suche wie in Gmail, später senden und Wiedervorlage, **weitere Postfächer** (Gmail, GMX), **Warnungen vor gefälschten Absendern** · [mehr →](https://firsttris.github.io/kontext/mail.html) |
 | 📅 **Kalender** | Tag, Woche, Monat und Serien, **Einladungen mit einem Klick beantworten** (auch aus Outlook und Google), **Wer hat Zeit?**, **Videobesprechung pro Termin**, geteilte Kalender und **Abos** (iCal), Feiertage und Geburtstage der Kontakte · [mehr →](https://firsttris.github.io/kontext/calendar-contacts.html) |
 | 👥 **Kontakte** | **Der Kunde auf einen Blick**: letzte Mails, nächste Termine, offene Aufgaben und Anrufe; Gruppen, vCard, Doppelte zusammenführen, mehrere Kontakte auf einmal (löschen, in eine Gruppe, exportieren) · [mehr →](https://firsttris.github.io/kontext/calendar-contacts.html#kontakte) |
 | ✅ **Aufgaben** | **Liste oder Kanban-Board** pro Postfach und pro Projekt, **aus einer Mail, einer Chat-Nachricht, einem Termin oder einem verpassten Anruf**, Erinnerungen, per CalDAV in Thunderbird und am Handy · [mehr →](https://firsttris.github.io/kontext/tasks.html) |

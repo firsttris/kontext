@@ -32,6 +32,7 @@ import { m } from "@/paraglide/messages";
 import { CategoryChips } from "../categories/category-chips";
 import { useCategoryMap } from "../categories/queries";
 import { useTasks } from "../tasks/queries";
+import { AssignmentChip } from "./assignment";
 import { ExternalMark } from "./external-mark";
 import type { Row } from "./list-frame";
 import { type DraggedMail, startMailDrag } from "./mail-drag";
@@ -290,6 +291,7 @@ export const MessageRow = ({
                   {m.tasks_from_mail()}
                 </span>
               ) : null}
+              {shared ? <AssignmentChip email={email} compact /> : null}
               <CategoryChips categories={categories} max={2} />
               {encryptedPreview(email.preview, email["header:Content-Type"]) ? (
                 <>

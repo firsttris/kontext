@@ -88,6 +88,23 @@ wessen Konto Stalwart `mayCreateCalendar` (bzw. `mayCreateAddressBook`) setzt; f
 fragt `server/account-rights.ts` per `Mailbox/get` die Ordner ab: ohne Ordner kein Postfach,
 schreiben darf, wem der Posteingang `mayAddItems` gibt.
 
+### Mails zuweisen
+
+In einem gemeinsamen Postfach gibt „Zuweisen“ eine Mail einer Person und hakt sie als erledigt
+ab. Gespeichert wird das an der Mail selbst, als gemeinsame **JMAP Object Metadata**
+(draft-ietf-jmap-metadata, neu in Stalwart 1.0): unter Kontexts Namensraum
+`kontext.firsttris.github.io` stehen `assignee` (die Principal-Id der Person, in Stalwart zugleich
+ihre Konto-Id) und `state: "done"`. Ein Herstellername in Domain-Form braucht Stalwart für eigene
+Namensräume (`crates/types/src/metadata/registry.rs`); in einen Namensraum hinein patcht es erst,
+wenn er besteht, darum schreibt Kontext immer den ganzen (`src/lib/assignment.ts`).
+
+Alle Mitglieder sehen den Wert (Email/get mit `metadata/kontext.firsttris.github.io`), und
+`Email/changes` meldet ihn wie jede Änderung, also kommt er per Push in die anderen Fenster. Die
+Filter fragt Stalwart selbst ab (`crates/jmap/src/email/query.rs`): „Mir zugewiesen“ ist
+`metadataTextEquals` auf `assignee` mit der eigenen Id und nicht erledigt, „Offen“ alles nicht
+Erledigte. Die Zuweisung liegt bei der Mail, also auch im Backup und beim Umzug des Postfachs;
+Kontext braucht keine eigene Tabelle dafür. Im eigenen Postfach gibt es weder Menü noch Filter.
+
 ### Verschieben zwischen Postfächern
 
 „Verschieben nach …“ zeigt die Ordner aller Postfächer, nach Postfach gruppiert, das der Mail

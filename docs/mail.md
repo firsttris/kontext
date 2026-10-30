@@ -22,6 +22,10 @@ IMAP und SMTP.
   Antworten gehen als info@ hinaus, mit dem Namen der Person, die geantwortet hat; die Liste
   zeigt, wer schon geantwortet hat („Jonas · 14:02“). Rechte je Person: kein Zugriff, nur lesen,
   lesen und senden. [Mehr](architecture.md#gemeinsame-postfacher)
+- **Mails zuweisen:** In info@ gibt „Zuweisen“ eine Mail einer Person („Mir zuweisen“, eine
+  Kollegin, niemandem) und hakt sie als „Erledigt“ ab. Alle im Postfach sehen es an der Mail und
+  in der Liste („Anna“, „Erledigt · Anna“); die Filter „Mir zugewiesen“ und „Offen“ zeigen, was
+  noch auf einen selbst oder aufs Team wartet. [Mehr](architecture.md#mails-zuweisen)
 - **Alle Posteingänge** in einer Liste: das eigene Postfach und die gemeinsamen zusammen.
 - **Kategorien** wie „In Bearbeitung“, „Wartet auf Antwort“, „Erledigt“ – mehrere je Mail, eigene
   dazu, per Regel gesetzt. In info@ sieht sie das ganze Team: eine kleine Aufgabenliste.

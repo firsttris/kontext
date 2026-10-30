@@ -17,6 +17,15 @@ const text = (value: unknown) => JSON.stringify(value ?? "").toLowerCase();
 const addressMatch = (email: StoredEmail, field: string, needle: unknown) =>
   text(email[field]).includes(String(needle).toLowerCase());
 
+/** A shared metadata value of a mail by its "namespace/key" path. */
+const metadataAt = (email: StoredEmail, path: string): unknown => {
+  const [namespace = "", ...keys] = path.split("/");
+  return keys.reduce<unknown>(
+    (value, key) => (value as Record<string, unknown> | undefined)?.[key],
+    (email.metadata as Record<string, unknown> | undefined)?.[namespace],
+  );
+};
+
 /** One filter condition or operator (RFC 8621 §4.4.1), as far as the app uses them. */
 export const matches = (email: StoredEmail, filter: Args | null | undefined): boolean => {
   if (!filter) return true;
@@ -54,6 +63,13 @@ export const matches = (email: StoredEmail, filter: Args | null | undefined): bo
     text: (value) =>
       ["from", "to", "cc", "subject"].some((field) => addressMatch(email, field, value)) ||
       body().includes(String(value).toLowerCase()),
+    // JMAP Object Metadata (draft-ietf-jmap-metadata): "namespace/key" paths, shared values.
+    metadataExists: (path) => metadataAt(email, String(path)) != null,
+    metadataTextEquals: (match) => {
+      const { path, value } = match as { path: string; value: string };
+      const stored = metadataAt(email, path);
+      return stored != null && String(stored) === value;
+    },
     header: (value) => {
       const [name, contains] = value as string[];
       const raw = email[`header:${name}`] ?? email[`header:${name}:asText`];
@@ -128,11 +144,38 @@ const withoutBodyValues = (email: StoredEmail, args: Args): Record<string, unkno
   return wanted ? email : { ...email, bodyValues: {} };
 };
 
+/** "metadata/<namespace>" asked for: that namespace under `metadata`, as Stalwart answers. */
+const withMetadata = (email: Record<string, unknown>, args: Args): Record<string, unknown> => {
+  const asked = ((args.properties ?? []) as string[]).filter((p) => p.startsWith("metadata/"));
+  if (!asked.length) return email;
+  const stored = (email.metadata ?? {}) as Record<string, unknown>;
+  const metadata = Object.fromEntries(
+    asked.flatMap((property) => {
+      const namespace = property.slice("metadata/".length);
+      return stored[namespace] ? [[namespace, stored[namespace]]] : [];
+    }),
+  );
+  return { ...email, metadata };
+};
+
+const withoutMetadataPaths = (args: Args): Args =>
+  Array.isArray(args.properties)
+    ? {
+        ...args,
+        properties: [
+          ...(args.properties as string[]).filter((p) => !p.startsWith("metadata/")),
+          ...((args.properties as string[]).some((p) => p.startsWith("metadata/"))
+            ? ["metadata"]
+            : []),
+        ],
+      }
+    : args;
+
 export const emailGet = (store: Store, args: Args): Result => ({
   accountId: args.accountId,
   state: state(store),
-  ...getList(emailsOf(store, String(args.accountId)), args, (email) =>
-    withoutBodyValues(email, args),
+  ...getList(emailsOf(store, String(args.accountId)), withoutMetadataPaths(args), (email) =>
+    withMetadata(withoutBodyValues(email, args), args),
   ),
 });
 

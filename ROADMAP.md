@@ -21,17 +21,16 @@ ein Plan, kein Versprechen; Wünsche und Hinweise gern als
 
 ## Mit Stalwart 1.0
 
-Was Stalwart 1.0 neu mitbringt und Kontext nutzen kann, sobald es auf 1.0 läuft
-([#140](https://github.com/firsttris/kontext/pull/140)). Sortiert nach Mehrwert: oben, was am
-meisten bringt.
+Was Stalwart 1.0 neu mitbringt und Kontext nutzen kann; Kontext läuft seit
+[#140](https://github.com/firsttris/kontext/pull/140) auf 1.0. Sortiert nach Mehrwert: oben, was
+am meisten bringt. Fertig ist schon „Mails zuweisen“ (im [Changelog](CHANGELOG.md)).
 
 | # | Funktion | Mehrwert | Umsetzung |
 | --- | --- | --- | --- |
-| 1 | **Mails zuweisen** (ersetzt Nr. 6 unten) | In info@ sieht jeder, wer sich um welche Mail kümmert und was noch offen ist – der häufigste Grund, warum ein gemeinsames Postfach unübersichtlich wird. | Neu in Stalwart sind Metadaten an Mails (JMAP Object Metadata): Kontext schreibt die Zuweisung als gemeinsamen Wert an die Mail (`metadata`, z. B. zugewiesen an, erledigt), alle Mitglieder sehen ihn, und `Email/query` filtert danach – „Mir zugewiesen“ und „Offen“ fragt Stalwart selbst ab, ohne eigene Tabelle in Kontext. Die Zuweisung liegt bei der Mail und kommt mit Backup und Umzug mit. Für Mitglieder, die über Freigaben statt über die Gruppe zugreifen, braucht der Ordner das neue Recht `maySetMetadata`. |
-| 2 | **Suche in Anhängen sichtbar machen** | Stalwart durchsucht jetzt den Text in PDF, Word, Excel, PowerPoint und OpenDocument – auch in Mails aus weiteren Postfächern (Gmail …), weil Kontext sie in Stalwart ablegt. Ein Angebot findet man über ein Wort, das nur im PDF steht. | Die Suche selbst kommt ohne Arbeit mit. Kontext zeigt bei einem Treffer, dass er im Anhang liegt (am Anhang markieren statt nur an der Mail), und die Firmenverwaltung zeigt nach dem Umstieg, solange Stalwart den Suchindex neu aufbaut (`x:IndexQueueStatus`, Recht `sysIndexQueueStatusGet` für die Rolle `Kontext-Server`): „Die Suche ist noch nicht vollständig.“ |
-| 3 | **Ausgeblendete Kalender auf allen Geräten** | Wer Kalender von Kollegen ausblendet, muss das heute auf jedem Gerät neu tun. | Die Wahl als privater Wert am Kalender (`privateMetadata`) statt im Browser (`hidden-calendars.ts`); die bisherige Wahl im Browser wird beim ersten Start einmal übernommen. Ersetzt die Krücke, die nötig war, weil Stalwart 0.16 `isVisible` bei fremden Kalendern ohne Schreibrecht nicht zuließ. |
-| 4 | **Übersicht der Zugänge** | Ein Ort in den Einstellungen, der zeigt, wer und was auf das eigene Konto zugreift – und wo man es abschaltet. | Vor allem aus dem, was Kontext schon kennt: App-Passwörter für Handy und Mailprogramme, Schreibzeug, angemeldete KI-Agenten, angebundene Postfächer (Gmail …). Dazu Stalwarts neue Liste der „verbundenen Anwendungen“ (`x:OAuthGrant`) für Programme, die sich per OAuth direkt bei Stalwart anmelden; die ist heute meist leer, weil Mailprogramme Passwörter nutzen. |
-| 5 | **Mailprogramme ohne App-Passwort** | Mit Zwei-Faktor-Anmeldung bräuchten Apple Mail und Thunderbird kein App-Passwort mehr. | Stalwart 1.0 setzt das OAuth-Profil für Mailprogramme vollständig um. Dafür müsste die OAuth-Erkennung unter `/.well-known` zu Stalwart statt zu Kontext (Caddy) und Stalwarts Anmeldeseite öffentlich erreichbar sein – eine Frage der Architektur, erst nach dem Pilot. |
+| 1 | **Suche in Anhängen sichtbar machen** | Stalwart durchsucht jetzt den Text in PDF, Word, Excel, PowerPoint und OpenDocument – auch in Mails aus weiteren Postfächern (Gmail …), weil Kontext sie in Stalwart ablegt. Ein Angebot findet man über ein Wort, das nur im PDF steht. | Die Suche selbst kommt ohne Arbeit mit. Kontext zeigt bei einem Treffer, dass er im Anhang liegt (am Anhang markieren statt nur an der Mail), und die Firmenverwaltung zeigt nach dem Umstieg, solange Stalwart den Suchindex neu aufbaut (`x:IndexQueueStatus`, Recht `sysIndexQueueStatusGet` für die Rolle `Kontext-Server`): „Die Suche ist noch nicht vollständig.“ |
+| 2 | **Ausgeblendete Kalender auf allen Geräten** | Wer Kalender von Kollegen ausblendet, muss das heute auf jedem Gerät neu tun. | Die Wahl als privater Wert am Kalender (`privateMetadata`) statt im Browser (`hidden-calendars.ts`); die bisherige Wahl im Browser wird beim ersten Start einmal übernommen. Ersetzt die Krücke, die nötig war, weil Stalwart 0.16 `isVisible` bei fremden Kalendern ohne Schreibrecht nicht zuließ. |
+| 3 | **Übersicht der Zugänge** | Ein Ort in den Einstellungen, der zeigt, wer und was auf das eigene Konto zugreift – und wo man es abschaltet. | Vor allem aus dem, was Kontext schon kennt: App-Passwörter für Handy und Mailprogramme, Schreibzeug, angemeldete KI-Agenten, angebundene Postfächer (Gmail …). Dazu Stalwarts neue Liste der „verbundenen Anwendungen“ (`x:OAuthGrant`) für Programme, die sich per OAuth direkt bei Stalwart anmelden; die ist heute meist leer, weil Mailprogramme Passwörter nutzen. |
+| 4 | **Mailprogramme ohne App-Passwort** | Mit Zwei-Faktor-Anmeldung bräuchten Apple Mail und Thunderbird kein App-Passwort mehr. | Stalwart 1.0 setzt das OAuth-Profil für Mailprogramme vollständig um. Dafür müsste die OAuth-Erkennung unter `/.well-known` zu Stalwart statt zu Kontext (Caddy) und Stalwarts Anmeldeseite öffentlich erreichbar sein – eine Frage der Architektur, erst nach dem Pilot. |
 
 Nicht für Kontext: Volltextsuche in Dateien (betrifft Stalwarts eigenen Dateispeicher; Kontexts
 Dokumente liegen in Schreibzeug), der KI-Spamfilter und das Wiederherstellen gelöschter Mails
@@ -40,12 +39,6 @@ Dokumente liegen in Schreibzeug), der KI-Spamfilter und das Wiederherstellen gel
 ## Für den Alltag
 
 Kleinere und mittlere Funktionen, sortiert nach Nutzen: oben, was fast jedem Betrieb täglich hilft.
-
-**Großer Nutzen**
-
-| # | Funktion | Worum es geht |
-| --- | --- | --- |
-| 6 | **Mails zuweisen** | In info@ eine Mail einer Person zuweisen und als erledigt markieren, Filter „Mir zugewiesen“ und „Offen“. Umsetzung mit Stalwart 1.0: siehe [oben](#mit-stalwart-10), Nr. 1. |
 
 **Kleinerer Nutzen**
 
