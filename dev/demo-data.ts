@@ -4,8 +4,9 @@
  * (each signs in with POST /api/auth/sign-in/stalwart, as the login form does).
  *
  * Used by `bun run dev` (dev/dev.ts, once per database: it stops when #baustelle-hoffmann is
- * there) and by the pictures and the film (e2e/demo-data.ts). Not by the e2e tests: they count on
- * an empty chat and task list.
+ * there), by the pictures and the film (e2e/demo-data.ts), and by the demo against the routes in
+ * the page (`fillWith`, src/demo/team.ts). Not by the e2e tests: they count on an empty chat and
+ * task list.
  */
 import { createJmapClient } from "../src/jmap/client";
 import { DEV_DOMAIN, DEV_PASSWORD } from "./config";
@@ -23,13 +24,15 @@ export type DemoTarget = {
   stalwart: string;
 };
 
-type Api = <T = unknown>(
+export type Api = <T = unknown>(
   person: Person,
   method: string,
   path: string,
   data?: unknown,
 ) => Promise<T>;
-type Upload = <T>(person: Person, path: string, file: File) => Promise<T>;
+export type Upload = <T>(person: Person, path: string, file: File) => Promise<T>;
+export type { Person };
+
 type Channel = { id: string; kind: string; name: string | null; accountId?: string };
 type Posted = { message: { id: string } };
 
@@ -83,8 +86,22 @@ const client = async (target: DemoTarget) => {
   return { api, upload };
 };
 
-/** A mail of the seed, as a task link or chat card points to it. */
-const mailRef = async (stalwart: string, user: string, mailbox: string, subject: string) => {
+/** A mail of the seed, as a task link or chat card points to it: its account and the mail. */
+export type MailRef = {
+  accountId: string;
+  email: { id: string; threadId: string; from: { name: string; email: string }[] };
+};
+
+/** Finds a mail of the seed by subject: in Stalwart here, in the browser in the demo. */
+export type FindMail = (user: string, mailbox: string, subject: string) => Promise<MailRef>;
+
+/** A mail of the seed, found in Stalwart. */
+const mailRef = async (
+  stalwart: string,
+  user: string,
+  mailbox: string,
+  subject: string,
+): Promise<MailRef> => {
   const jmap = createJmapClient({
     origin: stalwart,
     credentials: { username: address(user), password: DEV_PASSWORD },
@@ -189,7 +206,7 @@ const fillTasks = async (
   });
 };
 
-type Hoffmann = Awaited<ReturnType<typeof mailRef>>;
+type Hoffmann = MailRef;
 
 /** The site channel: Max from the building site, Sandra with the customer's mail, Jonas. */
 const fillSiteChannel = async (api: Api, upload: Upload, id: Ids, hoffmann: Hoffmann) => {
@@ -273,12 +290,18 @@ const filled = async (api: Api) => {
 };
 
 /**
- * Fills tasks and chat. With `once`, nothing happens when they are in already (local
- * development); the pictures fill a fresh database each time.
+ * Fills tasks and chat through Kontext's API as the people themselves: `api` and `upload` reach
+ * the server (or, in the demo, the server in the page, src/demo/chat.ts), `findMail` the seed.
  */
-export const fillDemo = async (target: DemoTarget, { once = false } = {}) => {
-  const { api, upload } = await client(target);
-  if (once && (await filled(api))) return null;
+export const fillWith = async ({
+  api,
+  upload,
+  findMail,
+}: {
+  api: Api;
+  upload: Upload;
+  findMail: FindMail;
+}) => {
   const id = {} as Ids;
   for (const person of PEOPLE) {
     const session = await api<{ primaryAccounts: Record<string, string> }>(
@@ -288,16 +311,25 @@ export const fillDemo = async (target: DemoTarget, { once = false } = {}) => {
     );
     id[person] = session.primaryAccounts["urn:ietf:params:jmap:mail"]!;
   }
-  const lang = await mailRef(target.stalwart, "jonas", "info", "Anfrage Wärmepumpe Neubau");
+  const lang = await findMail("jonas", "info", "Anfrage Wärmepumpe Neubau");
   const info = lang.accountId;
   await fillTasks(api, id, info, lang.email);
-  const hoffmann = await mailRef(
-    target.stalwart,
-    "jonas",
-    "jonas",
-    "Re: Badsanierung Obergeschoss",
-  );
+  const hoffmann = await findMail("jonas", "jonas", "Re: Badsanierung Obergeschoss");
   const channelId = await fillSiteChannel(api, upload, id, hoffmann);
   await fillOtherChats(api, id, info);
   return { channelId, infoBoard: info };
+};
+
+/**
+ * Fills tasks and chat. With `once`, nothing happens when they are in already (local
+ * development); the pictures fill a fresh database each time.
+ */
+export const fillDemo = async (target: DemoTarget, { once = false } = {}) => {
+  const { api, upload } = await client(target);
+  if (once && (await filled(api))) return null;
+  return fillWith({
+    api,
+    upload,
+    findMail: (user, mailbox, subject) => mailRef(target.stalwart, user, mailbox, subject),
+  });
 };

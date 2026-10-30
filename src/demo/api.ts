@@ -1,11 +1,11 @@
 /**
  * The demo's answers for the Kontext server's own API (/api): the sign-in, the mail categories,
- * and for every other module what a company without it set up gets (server/app.ts). Unknown paths
+ * and for every other module what a company without it set up gets (server/app.ts). Chat and
+ * tasks are the server's own routes (./team.ts). Unknown paths
  * answer 404, as the server does.
  */
 import { DEV_DOMAIN } from "../../dev/config";
 import { type Category, DEFAULT_CATEGORIES } from "../../server/categories/categories";
-import { DEFAULT_COLUMNS } from "../../server/tasks/tasks";
 import { json } from "./respond";
 import { accountOf, type Store, visibleAccounts } from "./store";
 
@@ -49,15 +49,9 @@ const saveCategories = async (store: Store, request: Request, accountId: string)
 /** What the server answers when a module is not set up, or has nothing yet. */
 const FIXED: Record<string, (store: Store) => unknown> = {
   "GET /api/calls": () => ({ enabled: false, calls: [] }),
-  "GET /api/phone": () => ({ enabled: false, allowed: false, online: false, calls: [] }),
   // Schreibzeug's own demo (firsttris/schreibzeug, src/demo), static like this one; not connected:
   // files cannot go between mail and documents without both servers.
   "GET /api/documents": () => ({ url: SCHREIBZEUG_DEMO, connected: false }),
-  "GET /api/tasks": (store) => ({
-    tasks: [],
-    boards: Object.fromEntries(visibleAccounts(store).map((a) => [a.id, DEFAULT_COLUMNS])),
-  }),
-  "GET /api/chat/channels": () => ({ channels: [], online: [], retentionDays: null }),
   "GET /api/photos": () => ({ photos: [] }),
   "GET /api/secure": () => ({ messages: [] }),
   "GET /api/company/idle-logout": () => ({ minutes: 0 }),
@@ -69,7 +63,6 @@ const FIXED: Record<string, (store: Store) => unknown> = {
   "GET /api/pgp/keys": () => ({ keys: [] }),
   "GET /api/smime/me": () => ({ cert: null }),
   "GET /api/smime/certs": () => ({ certs: [] }),
-  "GET /api/chat/discussed": () => ({ discussions: [] }),
   // Answer pages for attendees outside need the server (server/invitations).
   "POST /api/invitations/links": () => ({ links: {} }),
   "GET /api/image-senders": (store) => ({ senders: store.imageSenders }),

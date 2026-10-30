@@ -53,6 +53,8 @@ export type ChatDeps = {
   retentionDays?: () => Promise<number>;
   /** A person's own OpenPGP key (server/pgp/): public part, address, fingerprint. */
   publicKeyOf?: (memberId: string) => Promise<MemberKey | null>;
+  /** The bytes of a stored file (files.ts writes them to disk); the demo keeps them in memory. */
+  openFile?: (path: string) => Blob;
 };
 
 const NOT_SEALED =
@@ -78,6 +80,7 @@ export const createChatRoutes = ({
   nameOf,
   retentionDays = async () => 0,
   publicKeyOf = async () => null,
+  openFile = (path) => Bun.file(path),
 }: ChatDeps) => {
   const app = new Hono<{ Variables: { viewer: Viewer; accounts: SessionAccount[] } }>();
 
@@ -399,7 +402,7 @@ export const createChatRoutes = ({
     if (!file || !channel) return c.json({ error: "Unbekannte Datei" }, 404);
     // The small picture of a photo, where there is one.
     if (c.req.query("thumb") && file.thumbPath) {
-      return new Response(Bun.file(file.thumbPath), {
+      return new Response(openFile(file.thumbPath), {
         headers: {
           "content-type": "image/jpeg",
           "content-security-policy": "sandbox",
@@ -427,11 +430,11 @@ export const createChatRoutes = ({
       });
     }
     if (!range) {
-      return new Response(Bun.file(file.path), {
+      return new Response(openFile(file.path), {
         headers: { ...headers, "content-length": String(file.size) },
       });
     }
-    return new Response(Bun.file(file.path).slice(range.start, range.end + 1), {
+    return new Response(openFile(file.path).slice(range.start, range.end + 1), {
       status: 206,
       headers: {
         ...headers,

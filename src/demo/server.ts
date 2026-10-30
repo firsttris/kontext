@@ -4,9 +4,11 @@
  */
 import { handleApi } from "./api";
 import { handleRequest, sessionOf } from "./jmap";
+import { createPhone, handlePhone } from "./phone";
 import { json } from "./respond";
 import { releaseDue } from "./sending";
 import { newId, type Store } from "./store";
+import { createTeamRoutes, isTeamPath } from "./team";
 
 /** Whom to tell of a change: the open push streams (RFC 8620 §7.3). */
 type Listeners = Set<(state: string) => void>;
@@ -57,6 +59,8 @@ const download = (store: Store, path: string) => {
 const RELEASE_MS = 1000;
 
 export const createDemoServer = (store: Store, origin: string) => {
+  const team = createTeamRoutes(store);
+  const phone = createPhone();
   const listeners: Listeners = new Set();
   const notify = (before: number) => {
     if (store.state === before) return;
@@ -85,6 +89,11 @@ export const createDemoServer = (store: Store, origin: string) => {
     const url = new URL(request.url);
     if (url.origin !== origin) return null;
     if (url.pathname.startsWith("/jmap")) return jmap(request, url.pathname);
+    if (isTeamPath(url.pathname)) return team.fetch(request);
+    if (url.pathname.startsWith("/api/phone")) {
+      const answer = await handlePhone(store, phone, request, url.pathname);
+      if (answer) return answer;
+    }
     if (url.pathname.startsWith("/api/")) return handleApi(store, request, url);
     return null;
   };

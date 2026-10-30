@@ -2,220 +2,24 @@
 import { describe, expect, it } from "vitest";
 import type { SessionAccount } from "../categories/routes";
 import { createHub, type LiveEvent } from "../live/hub";
-import {
-  type Channel,
-  type ChatFile,
-  canSee,
-  directKey,
-  type Message,
-  toggleReaction,
-} from "./chat";
-import type { ChatFiles, StoredFile } from "./files";
-import type { MessageStore } from "./messages";
+import type { Channel, ChatFile, Message } from "./chat";
+import { createMemoryChat } from "./memory-store";
 import { createChatRoutes } from "./routes";
-import type { ChatStore } from "./store";
-
-/** The store in memory, enough for the routes. */
-const memoryStore = (): ChatStore => {
-  const channels: Channel[] = [];
-  const reads: Record<string, Record<string, string>> = {};
-  const add = (channel: Omit<Channel, "id" | "createdAt" | "lastMessageAt">) => {
-    const created = {
-      ...channel,
-      id: `c${channels.length + 1}`,
-      createdAt: new Date().toISOString(),
-      lastMessageAt: null,
-    };
-    channels.push(created);
-    return created;
-  };
-  return {
-    list: async (viewer) =>
-      channels
-        .filter((channel) => canSee(channel, viewer))
-        .map((channel) => ({
-          ...channel,
-          unread: 0,
-          mentions: 0,
-          readAt: null,
-          last: null,
-          muted: false,
-        })),
-    get: async (id) => channels.find((channel) => channel.id === id) ?? null,
-    createChannel: async (name, members, createdBy, confidential = false) =>
-      add({
-        kind: "channel",
-        name,
-        accountId: null,
-        members: [createdBy, ...members],
-        createdBy,
-        confidential,
-      }),
-    direct: async (members, createdBy, confidential = false) => {
-      const everyone = [...new Set([createdBy, ...members])];
-      return (
-        channels.find(
-          (c) =>
-            c.kind === "direct" &&
-            c.confidential === confidential &&
-            directKey(c.members) === directKey(everyone),
-        ) ??
-        add({
-          kind: "direct",
-          name: null,
-          accountId: null,
-          members: everyone,
-          createdBy,
-          confidential,
-        })
-      );
-    },
-    update: async (id, patch) => {
-      const channel = channels.find((c) => c.id === id);
-      if (channel) Object.assign(channel, patch);
-      return channel ?? null;
-    },
-    markRead: async (channelId, memberId, at) => {
-      reads[channelId] = { ...reads[channelId], [memberId]: at.toISOString() };
-      return at;
-    },
-    reads: async (channelId) => reads[channelId] ?? {},
-    mute: async () => undefined,
-    leave: async (channelId, memberId) => {
-      const channel = channels.find((c) => c.id === channelId);
-      if (channel) channel.members = channel.members.filter((m) => m !== memberId);
-      return channel?.members.length === 0;
-    },
-    audience: async () => ({ readers: [], muted: [] }),
-    remove: async (channelId) => {
-      channels.splice(
-        channels.findIndex((c) => c.id === channelId),
-        1,
-      );
-    },
-  };
-};
 
 const person = (id: string, shared: string[] = []): SessionAccount[] => [
   { id, isReadOnly: false, isPersonal: true },
   ...shared.map((account) => ({ id: account, isReadOnly: false, isPersonal: false })),
 ];
 
-/** Messages and files in memory; a mail is "discussed" where a card with its ref or thread is. */
-const memoryMessages = () => {
-  const messages: Message[] = [];
-  const stored: StoredFile[] = [];
-  const removedChannels: string[] = [];
-  const files: ChatFiles = {
-    save: async (channelId, _by, file, _thumb, type = file.type) => {
-      const saved = {
-        id: `f${stored.length + 1}`,
-        name: file.name,
-        type,
-        size: file.size,
-      };
-      stored.push({ ...saved, channelId, messageId: null, path: "", thumbPath: null });
-      return saved;
-    },
-    get: async (id) => stored.find((file) => file.id === id) ?? null,
-    attach: async (ids, message) => {
-      const attached: ChatFile[] = [];
-      for (const file of stored) {
-        if (!ids.includes(file.id) || file.channelId !== message.channelId || file.messageId) {
-          continue;
-        }
-        file.messageId = message.id;
-        attached.push({ id: file.id, name: file.name, type: file.type, size: file.size });
-      }
-      return attached;
-    },
-    ofMessages: async () => new Map(),
-    pruneUnsent: async () => 0,
-    removeOfMessage: async () => undefined,
-    removeOfMessages: async () => undefined,
-    removeOfChannel: async (channelId) => {
-      removedChannels.push(channelId);
-    },
-  };
-  const store: MessageStore = {
-    page: async (channelId) =>
-      messages
-        .filter((m) => m.channelId === channelId && (!m.parentId || m.alsoInChannel))
-        .reverse(),
-    replies: async (parentId) => messages.filter((m) => m.parentId === parentId),
-    threadPeople: async (parentId) => [
-      ...new Set(
-        messages.filter((m) => m.id === parentId || m.parentId === parentId).map((m) => m.authorId),
-      ),
-    ],
-    react: async (id, memberId, emoji, on) => {
-      const message = messages.find((m) => m.id === id)!;
-      message.reactions = toggleReaction(message.reactions, emoji, memberId, on);
-      return message;
-    },
-    prune: async () => 0,
-    post: async ({ fileIds, ...post }) => {
-      const id = `m${messages.length + 1}`;
-      const attached = await files.attach(fileIds, { id, ...post });
-      const message = {
-        ...post,
-        id,
-        files: attached,
-        createdAt: new Date().toISOString(),
-        editedAt: null,
-        deleted: false,
-        parentId: post.parentId ?? null,
-        alsoInChannel: Boolean(post.parentId && post.alsoInChannel),
-        reactions: [] as Message["reactions"],
-        replies: null,
-        call: null,
-      };
-      messages.push(message);
-      return message;
-    },
-    last: async () => new Map(),
-    get: async (id) => messages.find((m) => m.id === id) ?? null,
-    edit: async (id, text) => {
-      const message = messages.find((m) => m.id === id)!;
-      Object.assign(message, { text, editedAt: new Date().toISOString() });
-      return message;
-    },
-    remove: async (id) => {
-      const message = messages.find((m) => m.id === id)!;
-      Object.assign(message, { text: "", cards: [], files: [], deleted: true });
-      return message;
-    },
-    search: async (channelIds, words) =>
-      messages.filter((m) => channelIds.includes(m.channelId) && m.text.includes(words)),
-    discussed: async (ref, threadId) =>
-      messages
-        .filter((m) => m.cards.some((card) => card.ref === ref || card.threadId === threadId))
-        .map((m) => ({
-          channelId: m.channelId,
-          messageId: m.id,
-          createdAt: m.createdAt,
-          replies: 0,
-        })),
-    channelsOfParty: async (party) => [
-      ...new Set(
-        messages
-          .filter((m) => m.cards.some((card) => card.party === party))
-          .map((m) => m.channelId),
-      ),
-    ],
-  };
-  return { store, files, removedChannels };
-};
-
 const setup = () => {
   const hub = createHub();
   let signedIn: SessionAccount[] | null = person("jonas", ["info"]);
-  const memory = memoryMessages();
+  const memory = createMemoryChat();
   const told: { who: string[]; title: string }[] = [];
   const bodies: string[] = [];
   const app = createChatRoutes({
-    store: memoryStore(),
-    messages: memory.store,
+    store: memory.store,
+    messages: memory.messages,
     files: memory.files,
     hub,
     accountsOf: async () => signedIn,
