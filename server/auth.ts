@@ -18,7 +18,13 @@ import { type Db, schema } from "./db";
 import type { Env } from "./env";
 import { attemptOf, createLoginFailures, type FailureLimit, loginKey } from "./failures";
 import { providerPlugins } from "./oidc/provider";
-import { loginAtStalwart, refreshAtStalwart, type StalwartTokens, whoAmI } from "./stalwart";
+import {
+  loginAtStalwart,
+  refreshAtStalwart,
+  revokeAtStalwart,
+  type StalwartTokens,
+  whoAmI,
+} from "./stalwart";
 import { stalwartUnavailable } from "./stalwart-away";
 
 const DAY = 24 * 60 * 60;
@@ -39,6 +45,7 @@ export const createGrants = (
   sealer: Sealer,
   stalwartUrl: string,
   refresh = refreshAtStalwart,
+  revoke = revokeAtStalwart,
 ) => {
   const save = async (sessionId: string, tokens: StalwartTokens) => {
     const row = {
@@ -77,7 +84,21 @@ export const createGrants = (
     return renewed.tokens.accessToken;
   };
 
-  return { save, accessToken };
+  /**
+   * Before a session ends: its grant at Stalwart ends too. Otherwise it stays in the person's list
+   * of grants until the refresh token runs out, although no one holds the token any more.
+   */
+  const end = async (sessionId: string): Promise<void> => {
+    const [row] = await db
+      .select({ refreshToken: schema.stalwartGrant.refreshToken })
+      .from(schema.stalwartGrant)
+      .where(eq(schema.stalwartGrant.sessionId, sessionId));
+    if (!row) return;
+    await revoke(stalwartUrl, await sealer.open(row.refreshToken));
+    await db.delete(schema.stalwartGrant).where(eq(schema.stalwartGrant.sessionId, sessionId));
+  };
+
+  return { save, accessToken, end };
 };
 
 export type Grants = ReturnType<typeof createGrants>;

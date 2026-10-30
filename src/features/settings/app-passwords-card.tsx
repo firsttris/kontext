@@ -22,7 +22,7 @@ import {
 import { useTwoFactor } from "./queries";
 import { SettingsCard } from "./settings-page";
 
-const AppPasswordRow = ({ entry }: { entry: AppPasswordInfo }) => {
+export const AppPasswordRow = ({ entry }: { entry: AppPasswordInfo }) => {
   const revoke = useRevokeAppPassword();
   const toast = useToast();
   return (

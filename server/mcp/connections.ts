@@ -71,7 +71,12 @@ const toInfo = (row: Row, recent: LogLine[]): ConnectionInfo => ({
   recent,
 });
 
-export const createConnections = (db: Db, now: () => Date = () => new Date()) => {
+export const createConnections = (
+  db: Db,
+  now: () => Date = () => new Date(),
+  /** Ends the session's grant at Stalwart before the session goes (Grants.end). */
+  endGrant: (sessionId: string) => Promise<void> = async () => {},
+) => {
   const insert = async (row: Omit<Row, "id" | "createdAt" | "lastUsedAt">) => {
     const full = { ...row, id: crypto.randomUUID(), createdAt: now(), lastUsedAt: null };
     await db.insert(schema.mcpKey).values(full);
@@ -101,6 +106,7 @@ export const createConnections = (db: Db, now: () => Date = () => new Date()) =>
   };
 
   const removeRow = async (row: Row) => {
+    await endGrant(row.sessionId);
     await db.delete(schema.session).where(eq(schema.session.id, row.sessionId));
   };
 

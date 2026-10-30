@@ -12,6 +12,7 @@ export const settingsSections = [
   "snippets",
   "sync",
   "security",
+  "access",
   "encryption",
   "agents",
   "appearance",

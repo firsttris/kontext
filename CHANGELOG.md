@@ -7,6 +7,12 @@ Steps that an update needs beyond raising the version are marked **Upgrade**.
 
 ## Unreleased
 
+- Settings: "Zugänge" shows who and what has access to the account: the signed-in browsers (sign
+  out one or all others), other programs signed in at Stalwart with OAuth (`x:OAuthGrant`,
+  revocable), app passwords, AI agents and other mailboxes. Ending a Kontext session (signing out,
+  revoking an app password or an agent) now also revokes its grant at Stalwart (RFC 7009), so no
+  stale grants stay behind.
+
 - Calendar: a hidden calendar stays hidden on every device, also a colleague's calendar shared to
   read: the choice is the calendar's per-person `isVisible` on the server (Stalwart 1.0), no
   longer per browser. What a device hid before is moved to the server once. Birthdays and due

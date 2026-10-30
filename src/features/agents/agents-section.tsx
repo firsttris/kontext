@@ -151,7 +151,7 @@ const NewKeyCard = () => {
   );
 };
 
-const Connection = ({ connection }: { connection: ConnectionInfo }) => {
+export const AgentConnection = ({ connection }: { connection: ConnectionInfo }) => {
   const revoke = useRevoke();
   const toast = useToast();
   const writes = connection.scopes.includes("write");
@@ -204,7 +204,7 @@ const ConnectionsCard = () => {
       {connections.length ? (
         <ul aria-label={m.agents_keys()} className="m-0 flex list-none flex-col gap-3 p-0">
           {connections.map((connection) => (
-            <Connection key={connection.id} connection={connection} />
+            <AgentConnection key={connection.id} connection={connection} />
           ))}
         </ul>
       ) : (

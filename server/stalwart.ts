@@ -181,6 +181,20 @@ export const refreshAtStalwart = async (
     : token;
 };
 
+/**
+ * Ends the grant behind a token at Stalwart (RFC 7009, `/auth/revoke`), so it leaves the list of
+ * the person's grants and no copy of the token works any more (handle_token_revocation in
+ * crates/http/src/auth/oauth/token.rs). Best effort: whether it worked, never throws.
+ */
+export const revokeAtStalwart = async (stalwartUrl: string, token: string): Promise<boolean> => {
+  const response = await fetch(`${stalwartUrl}/auth/revoke`, {
+    method: "POST",
+    headers: { "content-type": "application/x-www-form-urlencoded" },
+    body: new URLSearchParams({ token, client_id: CLIENT_ID }),
+  }).catch(() => null);
+  return Boolean(response?.ok);
+};
+
 /** Name and address of the account, from the JMAP session. */
 export const whoAmI = async (
   stalwartUrl: string,

@@ -1,6 +1,6 @@
 /**
  * Settings of the own account: name, signatures, out-of-office reply, deputy, mail rules,
- * password and 2FA, AI agents, look.
+ * password and 2FA, who has access, AI agents, look.
  */
 import { Link } from "@tanstack/react-router";
 import {
@@ -18,6 +18,7 @@ import {
   LockKeyhole,
   type LucideIcon,
   MessagesSquare,
+  MonitorSmartphone,
   Palette,
   Palmtree,
   PenLine,
@@ -54,6 +55,7 @@ import { SnippetsSection } from "@/features/snippets/snippets-section";
 import { cn } from "@/lib/cn";
 import { m } from "@/paraglide/messages";
 import type { settingsSections } from "@/routes/_app/settings";
+import { AccessSection } from "./access-section";
 import { AppPasswordsCard } from "./app-passwords-card";
 import { AppearanceSection } from "./appearance-section";
 import { DeputySection } from "./deputy-section";
@@ -96,6 +98,7 @@ const OWN: Entry[] = [
   { id: "snippets", label: m.settings_snippets, icon: TextQuote },
   { id: "sync", label: m.settings_sync, icon: RefreshCw },
   { id: "security", label: m.settings_security, icon: KeyRound },
+  { id: "access", label: m.settings_access, icon: MonitorSmartphone },
   { id: "encryption", label: m.settings_encryption, icon: LockKeyhole },
   { id: "agents", label: m.settings_agents, icon: Bot },
   { id: "appearance", label: m.settings_appearance, icon: Palette },
@@ -137,6 +140,7 @@ const CONTENT: Record<Section, () => ReactNode> = {
     </>
   ),
   security: () => <SecuritySection />,
+  access: () => <AccessSection />,
   encryption: () => <EncryptionSection />,
   agents: () => <AgentsSection />,
   appearance: () => <AppearanceSection />,
