@@ -1,6 +1,6 @@
 /** Contacts over JMAP (draft-ietf-jmap-contacts): address books and JSContact cards. */
 import { chunk } from "@/lib/chunk";
-import type { ContactCard } from "@/lib/jscontact";
+import type { ContactCard, Media } from "@/lib/jscontact";
 import type { Rights, ShareWith } from "@/lib/sharing";
 import { assertSetOk, CAPABILITIES, type JmapClient } from "./client";
 
@@ -47,7 +47,70 @@ export const listContacts = async (
     );
     cards.push(...list);
   }
-  return cards;
+  return withInlinePhotos(client, accountId, cards);
+};
+
+/** Blob/get calls per request, within Stalwart's `maxCallsInRequest` (16). */
+const CALLS_PER_REQUEST = 16;
+
+type StoredPhoto = { card: number; key: string; blobId: string; mediaType: string };
+
+/** The photos Stalwart gives as a blob only, not as a `data:` URI. Pure. */
+const storedPhotos = (cards: ContactCard[]): StoredPhoto[] =>
+  cards.flatMap((card, index) =>
+    Object.entries(card.media ?? {}).flatMap(([key, media]) =>
+      media.kind === "photo" && !media.uri && media.blobId
+        ? [{ card: index, key, blobId: media.blobId, mediaType: media.mediaType ?? "" }]
+        : [],
+    ),
+  );
+
+/**
+ * Stalwart 1.0 keeps a photo stored in a card (`data:` URI) but gives it back as a `blobId`
+ * (crates/jmap/src/contact/get.rs, EmbeddedBlobIds). The app shows only photos carried in the
+ * card (lib/photo.ts), so their bytes come back with Blob/get (RFC 9404) as `data:` URIs: one call
+ * per photo, matched by call id, since Blob/get names the blob with another id.
+ */
+const withInlinePhotos = async (
+  client: JmapClient,
+  accountId: string,
+  cards: ContactCard[],
+): Promise<ContactCard[]> => {
+  const photos = storedPhotos(cards);
+  if (!photos.length) return cards;
+  const data = new Map<StoredPhoto, string>();
+  for (const page of chunk(photos, CALLS_PER_REQUEST)) {
+    const answers = await client
+      .request(
+        page.map((photo, index) => [
+          "Blob/get",
+          { accountId, ids: [photo.blobId], properties: ["data:asBase64"] },
+          String(index),
+        ]),
+        [...USING, CAPABILITIES.blob],
+      )
+      .catch(() => null);
+    // Blob/get in an account a colleague shares is refused (accountNotSupportedByMethod, Stalwart
+    // 1.0.1): the cards still count, only without those photos.
+    if (!answers) break;
+    for (const [name, args, index] of answers) {
+      const base64 = (args.list as { "data:asBase64"?: string }[] | undefined)?.[0]?.[
+        "data:asBase64"
+      ];
+      const photo = page[Number(index)];
+      if (name === "Blob/get" && photo && base64) data.set(photo, base64);
+    }
+  }
+  return cards.map((card, index) => {
+    const own = photos.filter((photo) => photo.card === index && data.has(photo));
+    if (!own.length) return card;
+    const media: Record<string, Media> = { ...card.media };
+    for (const photo of own) {
+      const { blobId: _, ...stored } = media[photo.key]!;
+      media[photo.key] = { ...stored, uri: `data:${photo.mediaType};base64,${data.get(photo)}` };
+    }
+    return { ...card, media };
+  });
 };
 
 /**

@@ -1,5 +1,5 @@
 import { expect, type Page, test } from "@playwright/test";
-import { addMail, address, jmapAs, login, unique } from "./helpers";
+import { addMail, address, givenKeywords, jmapAs, login, unique } from "./helpers";
 import { deliverMail } from "./protocols";
 
 /** The keywords of a mail with this subject, in a user's own or shared mailbox. */
@@ -22,7 +22,7 @@ const keywordsOf = async (user: string, mailbox: string, subject: string) => {
     ],
   ]);
   const email = (get![1].list as { keywords: Record<string, boolean> }[])[0];
-  return email ? Object.keys(email.keywords).sort() : null;
+  return email ? givenKeywords(email.keywords) : null;
 };
 
 const openInInfo = async (page: Page, subject: string) => {

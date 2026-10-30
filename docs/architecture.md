@@ -30,9 +30,9 @@ flowchart LR
 
 ## Die Teile
 
-- **Stalwart** (Community Edition, AGPL) ist Mail-, Kalender- und Kontaktserver in einem. Seit
-  0.16 liegt die ganze Konfiguration in seiner Datenbank; auf der Platte steht nur `config.json`
-  mit dem Speicherort.
+- **Stalwart** (Community Edition, AGPL, Version 1.0) ist Mail-, Kalender- und Kontaktserver in
+  einem. Seit 0.16 liegt die ganze Konfiguration in seiner Datenbank; auf der Platte steht nur
+  `config.json` mit dem Speicherort.
 - **Kontext** ist eine Single-Page-App. Sie spricht [JMAP](https://jmap.io): Mail (RFC 8621),
   Kalender (JSCalendar) und Kontakte (JSContact) über dieselbe Schnittstelle, Push über den
   Event-Stream.
@@ -82,7 +82,7 @@ Antwort liegt dann im eigenen Gesendet-Ordner. Beide Stufen setzt die Firmenverw
 lesen“ teilt dabei alle vorhandenen Ordner des Postfachs (später angelegte Ordner nicht).
 
 Der Server (Aufgaben, Kategorien, Textbausteine, Chat, DAV) liest die Stufe nicht aus `isReadOnly`
-der Session: Stalwart 0.16 schickt jedes weitere Konto mit `isReadOnly: false` und `isPersonal:
+der Session: Stalwart (0.16 wie 1.0) schickt jedes weitere Konto mit `isReadOnly: false` und `isPersonal:
 false`, auch das einer Kollegin, die nur ein Adressbuch teilt. Mitglied einer Gruppe ist, bei
 wessen Konto Stalwart `mayCreateCalendar` (bzw. `mayCreateAddressBook`) setzt; für alle anderen
 fragt `server/account-rights.ts` per `Mailbox/get` die Ordner ab: ohne Ordner kein Postfach,
@@ -1287,8 +1287,8 @@ eines Kontos – auch die Antworten im Gesendet-Ordner.
   Unterhaltung im Ordner, Markieren für die eine. Die Suche zeigt weiter einzelne Mails.
 - **Sortieren:** eine Wahl je Gerät für alle Listen (`src/features/mail/sort-setting.ts`, wie die
   Gruppierung im `localStorage`). `src/lib/mail-sort.ts` macht daraus das `sort` von `Email/query`
-  (RFC 8621 §4.4.2) mit „neueste zuerst“ als zweitem Kriterium; Stalwart 0.16.27 kann `receivedAt`,
-  `size`, `from`, `subject` und die Schlagwort-Kriterien (`crates/jmap/src/email/query.rs`).
+  (RFC 8621 §4.4.2) mit „neueste zuerst“ als zweitem Kriterium; Stalwart (0.16.27 wie 1.0.1) kann
+  `receivedAt`, `size`, `from`, `subject` und die Schlagwort-Kriterien (`crates/jmap/src/email/query.rs`).
   Ungelesen ist `hasKeyword $seen` aufsteigend (ohne zuerst), „mit Kategorie“ ein Kriterium je
   Kategorie des Kontos in ihrer Reihenfolge. Gruppiert gelten `someInThreadHaveKeyword` bzw.
   `allInThreadHaveKeyword`, damit das ganze Gespräch zählt. Der Server sortiert, also stimmt die
@@ -1549,7 +1549,11 @@ die Initialen. Zwei Quellen:
   Server verraten, wann man den Kontakt ansieht. Vom iPhone oder Mac (vCard 3.0,
   `PHOTO;ENCODING=b;TYPE=JPEG`) kommt das Foto von Stalwart ohne Bildtyp als `data:;base64,…`
   (calcard 0.3.14, `src/vcard/utils.rs`); die App erkennt dann JPEG, PNG, GIF und WebP an den
-  ersten Bytes, SVG nie. Logos und Töne in `media` bleiben beim Speichern erhalten.
+  ersten Bytes, SVG nie. Logos und Töne in `media` bleiben beim Speichern erhalten. Stalwart 1.0
+  gibt ein gespeichertes Foto nur noch als `blobId` heraus; `listContacts` holt die Bytes mit
+  `Blob/get` (RFC 9404, `data:asBase64`) und setzt sie wieder als `data:`-URI ein
+  (`src/jmap/contacts.ts`). In einem Adressbuch, das ein Kollege teilt, lehnt Stalwart 1.0.1
+  `Blob/get` ab (`accountNotSupportedByMethod`); die Kontakte erscheinen dann ohne diese Fotos.
 
 Eine Mail selbst bringt kein Foto mit: Gmail zeigt Profilbilder aus Googles eigenen Konten, nicht
 aus der Mail. Kontext zeigt neben einer Mail das Foto des Kollegen oder Kontakts mit der Adresse
@@ -1670,8 +1674,12 @@ einschalten, ohne dass Kalender unter „Geteilt mit mir“ auftauchen.
 ## Wiederkehrende Termine
 
 Eine Serie ist in Stalwart **ein** Termin mit `recurrenceRule` (JSCalendar, RFC 8984; Stalwart
-0.16 nimmt die Einzahl). Die Kalenderansichten fragen mit `expandRecurrences` ab und bekommen
-jeden einzelnen Termin mit eigener ID, `baseEventId` und `recurrenceId`.
+0.16 und 1.0 nehmen die Einzahl). Die Kalenderansichten fragen mit `expandRecurrences` ab und bekommen
+jeden einzelnen Termin mit eigener ID, `baseEventId` und `recurrenceId`. Seit Stalwart 1.0 darf
+eine solche Abfrage höchstens 365 Tage umfassen (`maxExpandedQueryDuration`); längere Zeiträume
+(Feiertage zweier Jahre, eine lange Serie teilen, Agenten) fragt `queryEvents` in Abschnitten ab.
+Die einzelnen Termine kommen mit `utcStart`/`utcEnd`, eine Serie mit `recurrenceOverrides`: beides
+zusammen lehnt Stalwart 1.0 ab (`src/jmap/calendar.ts`).
 
 - **Nur dieser Termin**: Ändern oder Löschen über die ID des einzelnen Termins; Stalwart trägt das
   in `recurrenceOverrides` der Serie ein (beim Löschen als `excluded`).
@@ -1943,7 +1951,15 @@ dann nicht noch eine zweite Antwort.
 Benutzer und Passwörter bleiben in Stalwart. Bei der Anmeldung schickt die App E-Mail, Passwort
 und – wenn eingerichtet – den Code der Authenticator-App an den Server
 (`POST /api/auth/sign-in/stalwart`). Der meldet sich über Stalwarts OAuth an (Autorisierungscode
-mit PKCE, ohne Umleitung), legt eine Better-Auth-Sitzung an und setzt ein httpOnly-Cookie. Die
+mit PKCE, ohne Umleitung), legt eine Better-Auth-Sitzung an und setzt ein httpOnly-Cookie. Dafür
+schickt er die Zugangsdaten zusammen mit der Autorisierungsanfrage an Stalwarts `/api/auth` und
+liest den Code aus der Umleitung, die Stalwart zurückgibt (`server/stalwart.ts`). Stalwart 1.0
+nimmt nur Clients an, die es kennt: Kontext ist dort als OAuth-Client `kontext` eingetragen,
+*First-party* und mit der Redirect-URI `https://kontext.invalid/oauth`, die nie geöffnet wird
+([Installation](installation.md#3-stalwart-einrichten), Schritt 12). Als First-party bekommt der
+Token alle Rechte des Kontos (auch für `x:AccountSettings` und die Firmenverwaltung), nicht nur
+die Scopes `mail`, `calendars` …; die Zustimmung, die Stalwart jeden Client einholen lässt, gibt
+Kontext mit, denn angemeldet wird in Kontext selbst. Die
 Stalwart-Tokens liegen verschlüsselt (AES-GCM) in SQLite, je Sitzung. Der Zugriffstoken wird bei
 Bedarf mit dem Refresh-Token erneuert; Stalwart verlängert diesen, solange er benutzt wird. So
 bleibt die App am Handy angemeldet, bis man sich abmeldet (Sitzung 90 Tage, bei Nutzung erneuert).

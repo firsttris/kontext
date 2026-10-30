@@ -229,9 +229,18 @@ export const findMails = async (user: string, mailbox: string, subjects: string[
     id: email.id,
     subject: email.subject,
     folder: roles.get(Object.keys(email.mailboxIds)[0] ?? "") ?? null,
-    keywords: Object.keys(email.keywords).sort(),
+    keywords: givenKeywords(email.keywords),
   }));
 };
+
+/**
+ * The keywords a mail was given, without the ones Stalwart 1.0 sets itself on arrival
+ * (`$hasattachment` / `$hasnoattachment`, crates/types/src/keyword.rs), sorted.
+ */
+export const givenKeywords = (keywords: object): string[] =>
+  Object.keys(keywords)
+    .filter((keyword) => keyword !== "$hasattachment" && keyword !== "$hasnoattachment")
+    .sort();
 
 /** Deletes a test's own mails again, wherever they went (moved, snoozed). */
 export const removeMails = async (user: string, mailbox: string, subjects: string[]) => {

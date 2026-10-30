@@ -67,7 +67,7 @@ describe("toCompany", () => {
           roles: rolesValue(true, roles),
           memberGroupIds: { g: true },
           aliases: { "0": { name: "chef", domainId: "b" } },
-          credentials: { "0": { "@type": "Password", otpAuth: "****" } },
+          credentials: { "0": { "@type": "Password", otpUrl: "****" } },
         }),
         user({
           id: "u2",
@@ -114,7 +114,7 @@ describe("parseAddress and aliasesValue", () => {
   it("builds Stalwart's alias list without duplicates", () => {
     expect(aliasesValue(["chef@firma.de", "Chef@firma.de ", ""], domains)).toEqual({
       ok: true,
-      value: { "0": { name: "chef", domainId: "b", enabled: true } },
+      value: { "0": { name: "chef", domainId: "b", enable: true } },
     });
     expect(aliasesValue(["chef@andere.de"], domains).ok).toBe(false);
   });

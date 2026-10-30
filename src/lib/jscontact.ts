@@ -20,7 +20,10 @@ export type ContactCard = {
   notes?: Record<string, { note: string }>;
   /** Links (RFC 9553 §2.6.3); Kontext keeps documents of Dokumente here (lib/document-links.ts). */
   links?: Record<string, { "@type"?: "Link"; uri: string; label?: string }>;
-  /** Photos, logos and sounds (RFC 9553 §2.6.4); Stalwart takes only `uri`, no `blobId`. */
+  /**
+   * Photos, logos and sounds (RFC 9553 §2.6.4). Stalwart takes only `uri`; 1.0 gives a stored one
+   * back as `blobId`, which jmap/contacts.ts turns into a `data:` URI again.
+   */
   media?: Record<string, Media>;
   /** Birthdays and other days (RFC 9553 §2.8.1); read for the birthday calendar (birthdays.ts). */
   anniversaries?: Record<string, Anniversary>;
@@ -42,6 +45,7 @@ export type Media = {
   "@type"?: "Media";
   kind: "photo" | "logo" | "sound" | string;
   uri?: string;
+  blobId?: string;
   mediaType?: string;
   pref?: number;
 };
