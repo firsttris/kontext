@@ -57,11 +57,15 @@ const instanceOf = (base: StoredObject, recurrenceId: string): StoredObject => {
   });
 };
 
-/** The dates of a series up to `last` (local), without the deleted ones. */
+/**
+ * The dates of a series up to `last` (local), without the deleted ones. A changed date may have
+ * moved before `last` from later on, so the dates go on to the latest changed one.
+ */
 const instancesOf = (base: StoredObject, last: string): StoredObject[] => {
   const overrides = overridesOf(base);
   const rule = base.recurrenceRule as RecurrenceRule;
-  return occurrences(String(base.start), rule, last)
+  const until = [last, ...Object.keys(overrides)].reduce((a, b) => (b > a ? b : a));
+  return occurrences(String(base.start), rule, until)
     .filter((recurrenceId) => !overrides[recurrenceId]?.excluded)
     .map((recurrenceId) => instanceOf(base, recurrenceId));
 };
