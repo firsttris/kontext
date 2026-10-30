@@ -12,7 +12,7 @@ import { envelopeIdOf, type Hold, submissionEnvelope } from "@/lib/envelope";
 import type { Comparator } from "@/lib/mail-sort";
 import { bodyStructureOf } from "@/lib/mail-structure";
 import { replyReferences } from "@/lib/references";
-import { assertSetOk, CAPABILITIES, type JmapClient } from "./client";
+import { assertSetOk, CAPABILITIES, type Invocation, type JmapClient } from "./client";
 import type { BodyPart, EmailAddress, EmailDetail, EmailSummary, Identity, Mailbox } from "./types";
 
 export const SUMMARY_PROPERTIES = [
@@ -135,7 +135,8 @@ export const queryEmails = async (
   } = {},
 ): Promise<EmailPage> => {
   const queryFilter = emailQueryFilter(filter);
-  const [query, get, snippets] = await client.request([
+  const search = "search" in filter;
+  const calls = (withSnippets: boolean): Invocation[] => [
     [
       "Email/query",
       {
@@ -154,12 +155,13 @@ export const queryEmails = async (
       {
         accountId,
         "#ids": { resultOf: "q", name: "Email/query", path: "/ids" },
-        properties: SUMMARY_PROPERTIES,
+        // A search also finds a word in Cc and Bcc (lib/attachment-hit.ts).
+        properties: search ? [...SUMMARY_PROPERTIES, "cc", "bcc"] : SUMMARY_PROPERTIES,
       },
       "g",
     ],
     // A search also asks what it marks, to tell hits in an attachment (lib/attachment-hit.ts).
-    ...("search" in filter
+    ...(withSnippets
       ? [
           [
             "SearchSnippet/get",
@@ -169,10 +171,14 @@ export const queryEmails = async (
               "#emailIds": { resultOf: "q", name: "Email/query", path: "/ids" },
             },
             "s",
-          ] as [string, Record<string, unknown>, string],
+          ] as Invocation,
         ]
       : []),
-  ]);
+  ];
+  // The snippets only add the chip: when Stalwart refuses them, the search still shows its hits.
+  const [query, get, snippets] = search
+    ? await client.request(calls(true)).catch(() => client.request(calls(false)))
+    : await client.request(calls(false));
   const marked = new Map(
     ((snippets?.[1].list ?? []) as (Snippet & { emailId: string })[]).map(
       ({ emailId, subject, preview }) => [emailId, { subject, preview }],

@@ -1292,8 +1292,12 @@ PowerPoint-, OpenDocument-, EPUB- und RTF-Anhängen (`crates/jmap/src/email/quer
 `Attachment`), also auch in Mails, die Kontext aus weiteren Postfächern ablegt. Mit jeder
 Suchseite fragt die App `SearchSnippet/get` ab (RFC 8621 §5, in derselben Anfrage per
 Rückverweis auf die Ids). Stalwart markiert dort nur Betreff und Text; ein Treffer für ein freies
-Wort ohne Markierung, dessen Wort auch in keiner Adresse steht, lag im Anhang und bekommt
-„im Anhang“ (`src/lib/attachment-hit.ts`). Operatoren wie `von:` suchen nicht in Anhängen.
+Wort ohne Markierung in einer Mail mit Anhang, dessen Wort auch in keiner Adresse steht (auch
+nicht in Cc oder Bcc, die der Filter mit durchsucht), lag im Anhang und bekommt „im Anhang“
+(`src/lib/attachment-hit.ts`). Eine Mail ohne Anhang bekommt es nie: Stalwart findet auch
+Wortformen, die das Snippet nicht markiert („Haus“ in „Häuser“). Lehnt Stalwart
+`SearchSnippet/get` ab, fragt die App die Seite ohne ab und zeigt die Treffer ohne den Hinweis.
+Operatoren wie `von:` suchen nicht in Anhängen.
 
 **Suchindex:** Nach dem Umstieg auf 1.0 baut Stalwart den Index neu auf (`stalwart-migrate`
 kopiert ihn nicht); bis dahin findet die Suche nicht alles. Die Firmenverwaltung zeigt dann
