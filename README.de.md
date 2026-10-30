@@ -1,23 +1,14 @@
 <div align="center">
 
-<h1>Fühlt sich vertraut an. Gehört dir.</h1>
+<h1>Kontext – deine eigene Alternative zu Google Workspace und Microsoft 365</h1>
 
-**Kontext: Mail, Kalender, Chat, Dokumente und Telefon für dein Team – auf deinem eigenen Server, Open Source**
+*Fühlt sich vertraut an. Gehört dir.*
+
+**Mail, Kalender, Chat, Dokumente und Telefon für dein Team – auf deinem eigenen Server, Open Source**
 
 Ohne Kosten pro Benutzer. Made in Europe.
 
 [English](README.md) · **Deutsch**
-
-[![CI](https://github.com/firsttris/kontext/actions/workflows/ci.yml/badge.svg)](https://github.com/firsttris/kontext/actions/workflows/ci.yml)
-[![Release](https://img.shields.io/github/v/release/firsttris/kontext?logo=github&label=release)](https://github.com/firsttris/kontext/releases/latest)
-[![Docker Pulls](https://img.shields.io/docker/pulls/tristanteu/kontext?logo=docker&logoColor=white)](https://hub.docker.com/r/tristanteu/kontext)
-[![Platforms](https://img.shields.io/badge/platform-amd64%20%7C%20arm64-lightgrey)](https://hub.docker.com/r/tristanteu/kontext/tags)
-[![Docs](https://img.shields.io/badge/docs-firsttris.github.io%2Fkontext-4f46e5?logo=materialformkdocs&logoColor=white)](https://firsttris.github.io/kontext/)
-[![License: AGPL-3.0](https://img.shields.io/badge/license-AGPL--3.0-blue)](LICENSE)
-[![Stalwart 1.0](https://img.shields.io/badge/Stalwart-1.0-18181b)](https://stalw.art)
-[![JMAP](https://img.shields.io/badge/JMAP-mail%20%7C%20calendar%20%7C%20contacts-0f766e)](https://jmap.io)
-[![DSGVO](https://img.shields.io/badge/DSGVO-Daten%20auf%20deinem%20Server-15803d)](#-warum-kontext)
-[![Made in Europe](https://img.shields.io/badge/made%20in-Europe-003399)](#-warum-kontext)
 
 [Warum](#-warum-kontext) •
 [Installation](#-installation) •
@@ -33,6 +24,27 @@ Ohne Kosten pro Benutzer. Made in Europe.
 
 🖱️ **[Demo ausprobieren](https://firsttris.github.io/kontext/demo/)** – Mail, Kalender, Kontakte, Dokumente, Chat, Aufgaben und Telefon mit den Testdaten, im Browser, ohne Installation
 
+[![CI](https://github.com/firsttris/kontext/actions/workflows/ci.yml/badge.svg)](https://github.com/firsttris/kontext/actions/workflows/ci.yml)
+[![Release](https://img.shields.io/github/v/release/firsttris/kontext?logo=github&label=release)](https://github.com/firsttris/kontext/releases/latest)
+[![Docker Pulls](https://img.shields.io/docker/pulls/tristanteu/kontext?logo=docker&logoColor=white)](https://hub.docker.com/r/tristanteu/kontext)
+[![Platforms](https://img.shields.io/badge/platform-amd64%20%7C%20arm64-lightgrey)](https://hub.docker.com/r/tristanteu/kontext/tags)
+[![Docs](https://img.shields.io/badge/docs-firsttris.github.io%2Fkontext-4f46e5?logo=materialformkdocs&logoColor=white)](https://firsttris.github.io/kontext/)
+[![License: AGPL-3.0](https://img.shields.io/badge/license-AGPL--3.0-blue)](LICENSE)
+[![Stalwart 1.0](https://img.shields.io/badge/Stalwart-1.0-18181b)](https://stalw.art)
+[![JMAP](https://img.shields.io/badge/JMAP-mail%20%7C%20calendar%20%7C%20contacts-0f766e)](https://jmap.io)
+[![DSGVO](https://img.shields.io/badge/DSGVO-Daten%20auf%20deinem%20Server-15803d)](#-warum-kontext)
+[![Made in Europe](https://img.shields.io/badge/made%20in-Europe-003399)](#-warum-kontext)
+
+[![TypeScript](https://img.shields.io/badge/TypeScript-3178c6?logo=typescript&logoColor=white)](https://www.typescriptlang.org)
+[![Bun](https://img.shields.io/badge/Bun-000000?logo=bun&logoColor=white)](https://bun.sh)
+[![React](https://img.shields.io/badge/React-149eca?logo=react&logoColor=white)](https://react.dev)
+[![TanStack](https://img.shields.io/badge/TanStack-Router%20%7C%20Query-ff4154?logo=reactquery&logoColor=white)](https://tanstack.com)
+[![Tailwind CSS](https://img.shields.io/badge/Tailwind%20CSS-06b6d4?logo=tailwindcss&logoColor=white)](https://tailwindcss.com)
+[![Vite](https://img.shields.io/badge/Vite-646cff?logo=vite&logoColor=white)](https://vite.dev)
+[![Hono](https://img.shields.io/badge/Hono-e36002?logo=hono&logoColor=white)](https://hono.dev)
+[![SQLite](https://img.shields.io/badge/SQLite-Drizzle-003b57?logo=sqlite&logoColor=white)](https://orm.drizzle.team)
+[![MCP server](https://img.shields.io/badge/MCP-Claude-d97757)](https://firsttris.github.io/kontext/agents.html)
+
 </div>
 
 ## 💡 Warum Kontext?
@@ -42,6 +54,8 @@ Daten liegen bei einem US-Konzern. Kontext fühlt sich im Browser und am Handy g
 aber auf **deinem** Server: einem kleinen VPS ab etwa 5 € im Monat (z. B. bei IONOS oder Hetzner)
 oder einem eigenen Rechner.
 
+- **Aus Europa, für Europa**: in Europa entwickelt, Open Source, auf deinem Server. Kein
+  US-Anbieter dazwischen, also auch kein Zugriff auf deine Daten über den US CLOUD Act.
 - **Deine Daten bleiben bei dir (DSGVO)**: Mails, Termine, Kontakte, Chat und Anrufe liegen auf
   deinem Server, in Europa oder im eigenen Büro. Kein US-Anbieter, keine Tracker.
 - **Keine Kosten pro Kopf**: Zehn Mitarbeiter kosten dasselbe wie einer; bezahlt wird der Server.
@@ -51,6 +65,8 @@ oder einem eigenen Rechner.
   und Dokumente, mit einer Anmeldung.
 - **Auch fürs Handy gebaut**: Jede Ansicht funktioniert am Handy, eine Mail wischt man zur Seite
   ins Archiv, und Kontext lässt sich ohne App Store als App installieren.
+- **Mit der Tastatur bedienbar**: Jede Ansicht geht ohne Maus, mit sichtbarem Fokus und
+  „Zum Inhalt springen“, hell und dunkel – [mehr zur Barrierefreiheit](https://firsttris.github.io/kontext/accessibility.html).
 - **KI, wenn du willst**: Claude und andere Assistenten finden Kunden, Mails und Termine für dich
   und schreiben Entwürfe – sie senden und löschen nie etwas.
 - **Offen, kein Lock-in**: Open Source (AGPL) und Standardprotokolle, damit Outlook, Thunderbird,
@@ -111,6 +127,7 @@ VPS mit 2 vCPU und 4 GB RAM. Alles Weitere – DNS, Podman, Backups, Updates –
 | 🤖 **KI-Agenten (MCP)** | Claude und andere Agenten schlagen Kunden, Mails und Termine mit deinen Rechten nach, **schreiben Entwürfe** und **laden Kollegen zu Terminen ein** – nichts geht nach draußen, kein Löschen, jede Änderung protokolliert · [mehr →](https://firsttris.github.io/kontext/agents.html) |
 | 🏢 **Firmenverwaltung** | **Mitarbeiter, gemeinsame Postfächer und Rechte** ohne IT-Kenntnisse, **Mail-Regeln für jeden Mitarbeiter**, Firmen-Signatur mit Telefon und Position je Person, **Pflichtangaben unter jeder Mail**, Abmelden nach Inaktivität an gemeinsamen Rechnern, **Austritt ohne Löschen**, Datensicherung im Blick, **Umzug von Microsoft 365, Gmail und Outlook** · [mehr →](https://firsttris.github.io/kontext/company.html) |
 | 📱 **Auf jedem Gerät** | **Eine App am PC, unter Android und am iPhone** ohne App Store, **eine kurze Einführung beim ersten Start**, Benachrichtigungen mit **Zahlen in der Tab-Leiste, die zeigen, in welcher App es Neues gibt**, hell und dunkel, Anmeldung mit zweitem Faktor, **eine Übersicht der Zugänge** (andere Geräte abmelden), **für Tastatur und Screenreader gebaut**, bei jedem Push automatisch gegen WCAG 2.2 AA geprüft ([Barrierefreiheit](https://firsttris.github.io/kontext/accessibility.html)) · [mehr →](https://firsttris.github.io/kontext/app.html) |
+| ♿ **Barrierefreiheit** | **Alles per Tastatur** mit „Zum Inhalt springen“ und sichtbarem Fokus, Kontraste hell und dunkel, **weniger Bewegung** · [mehr →](https://firsttris.github.io/kontext/accessibility.html) |
 
 <img src="docs/screenshots/phone-call.png" alt="CTI in Kontext: ein Anruf über die Fritzbox klingelt im Browser mit Kontakt, Firma, Nummer und letzter Mail des Anrufers, neben dem Posteingang" width="900">
 
