@@ -8,7 +8,7 @@ After=redis.service
 Wants=redis.service
 
 [Container]
-Image=docker.io/livekit/livekit-server:v1.13.10
+Image=docker.io/livekit/livekit-server:v1.13.11
 ContainerName=livekit
 Network=kontext.network
 PublishPort=7881:7881
