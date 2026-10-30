@@ -1,5 +1,5 @@
 /** Shared settings of the local development and test setup. Never used in production. */
-export const STALWART_VERSION = "0.16.27";
+export const STALWART_VERSION = "1.0.1";
 
 export const STALWART_ADMIN = { user: "admin", password: "kontext-admin-dev" } as const;
 

@@ -10,7 +10,7 @@ name: kontext
 
 services:
   stalwart:
-    image: docker.io/stalwartlabs/stalwart:v0.16.27
+    image: docker.io/stalwartlabs/stalwart:v1.0.1
     restart: unless-stopped
     ports:
       - "25:25"
