@@ -6,7 +6,7 @@ import { createStore } from "./store";
 const NOW = new Date("2026-10-29T12:00:00Z");
 
 describe("sendAtOf", () => {
-  it("holds for seconds or until a time", () => {
+  it("holds for seconds or until a time", async () => {
     const hold = (parameters: Record<string, string>) => ({ mailFrom: { parameters } });
     expect(sendAtOf(hold({ HOLDFOR: "10" }), NOW).toISOString()).toBe("2026-10-29T12:00:10.000Z");
     expect(sendAtOf(hold({ HOLDUNTIL: "2026-11-02T08:00:00Z" }), NOW).toISOString()).toBe(
@@ -17,9 +17,9 @@ describe("sendAtOf", () => {
 });
 
 /** Jonas writes to Anna, held for `seconds` ("Rückgängig"). */
-const send = (seconds: number) => {
+const send = async (seconds: number) => {
   const store = { ...createStore(), user: "jonas" };
-  const { methodResponses } = handleRequest(store, {
+  const { methodResponses } = await handleRequest(store, {
     methodCalls: [
       [
         "Email/set",
@@ -63,8 +63,8 @@ const annasInbox = (store: ReturnType<typeof createStore>) =>
   [...store.emails.values()].filter((email) => email.mailboxIds["anna-inbox"]);
 
 describe("EmailSubmission/set", () => {
-  it("files the mail under Sent and delivers it to a colleague when the hold is over", () => {
-    const { store, methodResponses } = send(10);
+  it("files the mail under Sent and delivers it to a colleague when the hold is over", async () => {
+    const { store, methodResponses } = await send(10);
     expect(methodResponses.map(([name]) => name)).toEqual([
       "Email/set",
       "EmailSubmission/set",
@@ -79,11 +79,11 @@ describe("EmailSubmission/set", () => {
     expect(delivered?.keywords).toEqual({});
   });
 
-  it("takes back a mail while it is held", () => {
-    const { store, methodResponses } = send(10);
+  it("takes back a mail while it is held", async () => {
+    const { store, methodResponses } = await send(10);
     const submissionId = (methodResponses[1]![1].created as Record<string, { id: string }>).send!
       .id;
-    const cancel = handleRequest(store, {
+    const cancel = await handleRequest(store, {
       methodCalls: [
         [
           "EmailSubmission/set",
@@ -97,8 +97,8 @@ describe("EmailSubmission/set", () => {
     expect(annasInbox(store)).toHaveLength(1);
   });
 
-  it("delivers no Bcc line: Anna does not see that Max got the mail too", () => {
-    const { store } = send(0);
+  it("delivers no Bcc line: Anna does not see that Max got the mail too", async () => {
+    const { store } = await send(0);
     const delivered = annasInbox(store).find((email) => email.subject === "Urlaub");
     expect(delivered?.bcc).toBeNull();
   });

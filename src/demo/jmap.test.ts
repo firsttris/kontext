@@ -5,7 +5,7 @@ import { createStore } from "./store";
 const signedIn = (user: string) => ({ ...createStore(), user });
 
 describe("evaluatePointer", () => {
-  it("collects through arrays with *", () => {
+  it("collects through arrays with *", async () => {
     const result = { list: [{ emailIds: ["a", "b"] }, { emailIds: ["c"] }] };
     expect(evaluatePointer(result, "/list/*/emailIds")).toEqual(["a", "b", "c"]);
     expect(evaluatePointer({ ids: ["x"] }, "/ids")).toEqual(["x"]);
@@ -13,9 +13,9 @@ describe("evaluatePointer", () => {
 });
 
 describe("handleRequest", () => {
-  it("passes a query's ids to the next call", () => {
+  it("passes a query's ids to the next call", async () => {
     const store = signedIn("jonas");
-    const { methodResponses } = handleRequest(store, {
+    const { methodResponses } = await handleRequest(store, {
       methodCalls: [
         ["Email/query", { accountId: "info", filter: { inMailbox: "info-inbox" } }, "q"],
         [
@@ -33,15 +33,15 @@ describe("handleRequest", () => {
     expect(subjects).toEqual(["Anfrage Wärmepumpe Neubau", "Wasserhahn tropft wieder"]);
   });
 
-  it("keeps out accounts not in the session", () => {
-    const { methodResponses } = handleRequest(signedIn("max"), {
+  it("keeps out accounts not in the session", async () => {
+    const { methodResponses } = await handleRequest(signedIn("max"), {
       methodCalls: [["Mailbox/get", { accountId: "info" }, "0"]],
     });
     expect(methodResponses[0]).toEqual(["error", { type: "accountNotFound" }, "0"]);
   });
 
-  it("answers what it does not hold as an empty server", () => {
-    const { methodResponses } = handleRequest(signedIn("jonas"), {
+  it("answers what it does not hold as an empty server", async () => {
+    const { methodResponses } = await handleRequest(signedIn("jonas"), {
       methodCalls: [["CalendarEvent/query", { accountId: "jonas" }, "0"]],
     });
     expect(methodResponses[0]![1]).toMatchObject({ ids: [], total: 0 });
@@ -49,7 +49,7 @@ describe("handleRequest", () => {
 });
 
 describe("sessionOf", () => {
-  it("shows a person their own account and their groups'", () => {
+  it("shows a person their own account and their groups'", async () => {
     const session = sessionOf(signedIn("sandra"), "https://demo.test");
     expect(Object.keys(session.accounts)).toEqual(["sandra", "info"]);
     expect(session.accounts.info!.isPersonal).toBe(false);
@@ -58,15 +58,17 @@ describe("sessionOf", () => {
 });
 
 describe("moving a mail out of a subfolder", () => {
-  it("leaves it only in the target folder, with the patch the app sends (moveEmails)", () => {
+  it("leaves it only in the target folder, with the patch the app sends (moveEmails)", async () => {
     const store = signedIn("jonas");
-    const mailboxes = handleRequest(store, {
-      methodCalls: [["Mailbox/get", { accountId: "jonas", properties: ["name"] }, "m"]],
-    }).methodResponses[0]![1].list as { id: string; name: string }[];
+    const mailboxes = (
+      await handleRequest(store, {
+        methodCalls: [["Mailbox/get", { accountId: "jonas", properties: ["name"] }, "m"]],
+      })
+    ).methodResponses[0]![1].list as { id: string; name: string }[];
     const hoffmann = mailboxes.find((mailbox) => mailbox.name === "Hoffmann")!.id;
     const mail = [...store.emails.values()].find((email) => email.mailboxIds[hoffmann])!;
 
-    handleRequest(store, {
+    await handleRequest(store, {
       methodCalls: [
         [
           "Email/set",
@@ -81,5 +83,35 @@ describe("moving a mail out of a subfolder", () => {
       ],
     });
     expect(store.emails.get(mail.id)!.mailboxIds).toEqual({ "jonas-inbox": true });
+  });
+});
+
+describe("Email/get", () => {
+  it("keeps the order of the ids it is given, so a query's sort holds", async () => {
+    const store = signedIn("jonas");
+    const { methodResponses } = await handleRequest(store, {
+      methodCalls: [
+        [
+          "Email/query",
+          {
+            accountId: "jonas",
+            filter: { inMailbox: "jonas-inbox" },
+            sort: [{ property: "subject", isAscending: true }],
+          },
+          "q",
+        ],
+        [
+          "Email/get",
+          {
+            accountId: "jonas",
+            "#ids": { resultOf: "q", name: "Email/query", path: "/ids" },
+            properties: ["subject"],
+          },
+          "g",
+        ],
+      ],
+    });
+    const ids = methodResponses[0]![1].ids as string[];
+    expect((methodResponses[1]![1].list as { id: string }[]).map((e) => e.id)).toEqual(ids);
   });
 });

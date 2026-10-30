@@ -154,7 +154,13 @@ mit einem Klick als Jonas, Anna, Sandra oder Max an.
   Suchen, Markieren, Kategorien, Verschieben (auch zwischen Postfächern), Entwürfe und Senden mit
   „Rückgängig“ und „Später senden“. Eine Mail an Kollegen oder info@/rechnung@ kommt dort an;
   alles andere geht nirgendwohin.
-- **Was noch fehlt:** Kalender, Kontakte, Aufgaben, Chat und die übrigen Module öffnen leer.
+- **Kalender und Kontakte:** die Termine und Kontakte der Testdaten (dieselben Karten und Termine
+  wie im Seed, `dev/seed-objects.ts`), Wiederholungen mit einzeln geänderten oder gelöschten
+  Terminen, Einladungen unter Kollegen mit Zusage und Absage, die Verfügbarkeit beim Planen und
+  die Geburtstage. Ein Termin steht – wie bei Stalwart über iTIP – im Kalender jedes Kollegen, den
+  er betrifft; was einer ändert, sehen die anderen. Die Einladungsmails verschickt die App selbst
+  (`Email/import`, gelesen mit postal-mime).
+- **Was noch fehlt:** Aufgaben, Chat und die übrigen Module öffnen leer.
   Methoden, die die Demo nicht kennt, beantwortet sie wie ein leerer Server (`src/demo/jmap.ts`);
   Module, die einen eigenen Dienst brauchen (Anrufe, Telefon, Dokumente mit Schreibzeug), sind
   wie auf einem Server ohne sie abgeschaltet (`src/demo/api.ts`).

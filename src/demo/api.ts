@@ -65,6 +65,8 @@ const FIXED: Record<string, (store: Store) => unknown> = {
   "GET /api/smime/me": () => ({ cert: null }),
   "GET /api/smime/certs": () => ({ certs: [] }),
   "GET /api/chat/discussed": () => ({ discussions: [] }),
+  // Answer pages for attendees outside need the server (server/invitations).
+  "POST /api/invitations/links": () => ({ links: {} }),
   "GET /api/image-senders": (store) => ({ senders: store.imageSenders }),
   "GET /api/company/me": (store) => ({
     admin: visibleAccounts(store)[0]?.companyAdmin ?? false,

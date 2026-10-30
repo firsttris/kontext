@@ -28,10 +28,12 @@ export const getList = <T extends { id: string }>(
   toObject: (item: T) => Record<string, unknown>,
 ) => {
   const ids = args.ids as string[] | null | undefined;
-  const found = ids ? all.filter((item) => ids.includes(item.id)) : all;
+  const byId = new Map(all.map((item) => [item.id, item]));
+  // In the order asked for, as Stalwart answers: the app shows a query's ids as they come.
+  const found = ids ? ids.flatMap((id) => byId.get(id) ?? []) : all;
   return {
     list: found.map((item) => pick(toObject(item), args.properties)),
-    notFound: ids ? ids.filter((id) => !all.some((item) => item.id === id)) : [],
+    notFound: ids ? ids.filter((id) => !byId.has(id)) : [],
   };
 };
 
@@ -41,3 +43,24 @@ export const resolveId = (id: string | null | undefined, created: Created) =>
 
 export const emailsOf = (store: Store, accountId: string) =>
   [...store.emails.values()].filter((email) => email.accountId === accountId);
+
+/** A JSON pointer's segment as written in a patch: "~1" is "/", "~0" is "~" (RFC 6901). */
+const segment = (raw: string) => raw.replaceAll("~1", "/").replaceAll("~0", "~");
+
+const setAt = (object: unknown, path: string[], value: unknown): Record<string, unknown> => {
+  const [head, ...rest] = path as [string, ...string[]];
+  const current = (object && typeof object === "object" ? object : {}) as Record<string, unknown>;
+  const { [head]: inner, ...others } = current;
+  if (rest.length) return { ...others, [head]: setAt(inner, rest, value) };
+  return value === null ? others : { ...others, [head]: value };
+};
+
+/** A patch (RFC 8620 §5.3): whole properties, or a path down to one value ("keywords/$seen"). */
+export const applyPatch = <T extends Record<string, unknown>>(object: T, patch: Args): T =>
+  Object.entries(patch).reduce(
+    (next, [path, value]) =>
+      path.includes("/")
+        ? (setAt(next, path.split("/").map(segment), value) as T)
+        : ({ ...next, [path]: value } as T),
+    object,
+  );
