@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { contactPhoto } from "@/lib/jscontact";
-import type { JmapClient } from "./client";
+import { type JmapClient, jmapError } from "./client";
 import { listContacts } from "./contacts";
 
 /**
@@ -37,5 +37,19 @@ describe("listContacts", () => {
     expect(withLogo!.media).toEqual({
       l1: { kind: "logo", uri: "https://example.test/logo.png" },
     });
+  });
+
+  it("still lists the cards of a shared book whose photos Blob/get refuses", async () => {
+    // Stalwart 1.0.1, as checked against a running server: Blob/get in an account shared by a
+    // colleague answers accountNotSupportedByMethod; the client throws on a method-level error.
+    const shared = {
+      ...stalwart,
+      request: async () => {
+        throw jmapError("The account does not support this method", "accountNotSupportedByMethod");
+      },
+    } as unknown as JmapClient;
+    const cards = await listContacts(shared, "a", "book");
+    expect(cards.map((card) => card.id)).toEqual(["c1", "c2"]);
+    expect(contactPhoto(cards[0]!)).toBeUndefined();
   });
 });
