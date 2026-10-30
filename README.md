@@ -2,8 +2,6 @@
 
 <h1>Kontext – your own alternative to Google Workspace and Microsoft 365</h1>
 
-*Feels familiar. Belongs to you.*
-
 <a href="https://firsttris.github.io/kontext/en/"><img src="docs/assets/kontext-teaser.en.webp" alt="Kontext in motion: every module at a glance, the inbox with a PDF preview, a video call from the laptop to a phone, Word in the browser with comments, and an AI agent that looks up a customer and leaves a draft" width="900"></a>
 
 **Mail, calendar, chat, documents and phone for your team – on your own server, open source**<br>
