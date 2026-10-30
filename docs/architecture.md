@@ -104,6 +104,9 @@ Filter fragt Stalwart selbst ab (`crates/jmap/src/email/query.rs`): „Mir zugew
 `metadataTextEquals` auf `assignee` mit der eigenen Id und nicht erledigt, „Offen“ alles nicht
 Erledigte. Die Zuweisung liegt bei der Mail, also auch im Backup und beim Umzug des Postfachs;
 Kontext braucht keine eigene Tabelle dafür. Im eigenen Postfach gibt es weder Menü noch Filter.
+Wieder vorgelegte Mails stehen in diesen beiden Filtern nicht oben angeheftet, sie gehören ja
+irgendwem. Schreiben darf die Zuweisung nur, wem der Ordner `maySetMetadata` gibt; „Nur lesen“
+gibt das nicht, darum fehlt dort das Menü.
 
 ### Verschieben zwischen Postfächern
 

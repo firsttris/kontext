@@ -35,7 +35,7 @@ import { useShortcuts } from "@/components/use-shortcuts";
 import { isFlagged } from "@/jmap/mail";
 import type { EmailDetail, EmailSummary, Mailbox } from "@/jmap/types";
 import { correspondent } from "@/lib/correspondent";
-import { mailboxRights } from "@/lib/mailboxes";
+import { canAssignIn, mailboxRights } from "@/lib/mailboxes";
 import { moveTargets } from "@/lib/move-targets";
 import { type Rule, ruleFromSender } from "@/lib/rules";
 import { mailLink, plainSubject } from "@/lib/tasks";
@@ -232,7 +232,7 @@ export const Toolbar = ({
         {canFlag ? (
           <CategoryMenu accountId={accountId} mailbox={mailboxLabel} email={email} />
         ) : null}
-        {canFlag && account && !account.isPersonal ? (
+        {canAssignIn(mailbox) && account && !account.isPersonal ? (
           <AssignMenu accountId={accountId} email={email} />
         ) : null}
         <Button

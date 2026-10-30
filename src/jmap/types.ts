@@ -21,6 +21,8 @@ export type Mailbox = {
     mayRename?: boolean;
     mayDelete?: boolean;
     maySubmit?: boolean;
+    /** draft-ietf-jmap-metadata: may write shared metadata (Kontext's assignment). */
+    maySetMetadata?: boolean;
   };
 };
 
