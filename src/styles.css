@@ -50,7 +50,8 @@
   --note: #1c1a10;
   --noteborder: #3f3a1d;
   --bubble: #1f1f23;
-  --bubble-own: #172a49;
+  /* Dark enough that a mention (accent-ink on accent/10) keeps 4.5:1 in it. */
+  --bubble-own: #111e36;
   color-scheme: dark;
 }
 
