@@ -85,7 +85,11 @@ export const FilterChips = ({
 }: {
   options: { label: string; on: boolean; set: Partial<MailSearch> }[];
 }) => (
-  <nav aria-label="Filter" className="flex gap-1 self-start rounded-[9px] bg-subtle p-[3px]">
+  // One line each ("Mir zugewiesen" broke in two); a narrow list scrolls the chips instead.
+  <nav
+    aria-label="Filter"
+    className="flex min-w-0 max-w-full gap-1 self-start overflow-x-auto rounded-[9px] bg-subtle p-[3px] [scrollbar-width:none]"
+  >
     {options.map((option) => (
       <Link
         key={option.label}
@@ -93,7 +97,7 @@ export const FilterChips = ({
         search={(prev) => ({ ...prev, ...option.set })}
         aria-current={option.on ? "page" : undefined}
         className={cn(
-          "flex h-7 items-center rounded-[7px] px-3 text-[13px] no-underline",
+          "flex h-7 shrink-0 items-center whitespace-nowrap rounded-[7px] px-3 text-[13px] no-underline",
           option.on ? "bg-bg text-fg shadow-sm" : "text-muted",
         )}
       >

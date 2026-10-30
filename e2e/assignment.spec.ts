@@ -42,6 +42,13 @@ const assignmentOn = async (user: string, mailbox: string, subject: string) => {
 const inbox = (page: Page) => page.getByRole("list", { name: "Posteingang" });
 const filters = (page: Page) => page.getByRole("navigation", { name: "Filter" });
 
+/** How many lines an element's text takes. */
+const lines = (element: Element) => {
+  const range = document.createRange();
+  range.selectNodeContents(element);
+  return new Set([...range.getClientRects()].map((rect) => Math.round(rect.top))).size;
+};
+
 test.describe("Mails zuweisen", () => {
   test("in info@ an Anna zuweisen; sie findet sie unter „Mir zugewiesen“ und erledigt sie", async ({
     page,
@@ -51,6 +58,10 @@ test.describe("Mails zuweisen", () => {
     await addMail("jonas", "info", subject);
     await login(page, "jonas");
     await page.getByRole("link", { name: "info@" }).click();
+    // Every filter on one line ("Mir zugewiesen" broke in two in the list's width).
+    for (const chip of await filters(page).getByRole("link").all()) {
+      expect(await chip.evaluate(lines)).toBe(1);
+    }
     await inbox(page).getByText(subject).click();
     await expect(page.getByRole("heading", { name: subject })).toBeVisible();
 
