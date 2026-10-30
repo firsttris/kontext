@@ -14,6 +14,7 @@ import { employeeRoutes } from "./employees";
 import { externalHintRoutes, readExternalHint } from "./external-hint";
 import { idleLogoutRoutes, readIdleLogout } from "./idle-logout";
 import { legalFooterRoutes, readLegalFooter } from "./legal-footer";
+import { readMailboxMembers } from "./mailbox-members";
 import { mailboxRoutes } from "./mailboxes";
 import { searchIndexStatus } from "./search-index";
 import { checkDomain, httpsCheck } from "./security";
@@ -27,6 +28,7 @@ export const createCompanyRoutes = (deps: CompanyDeps) => {
   const externalHint = readExternalHint(deps);
   const legalFooter = readLegalFooter(deps);
   const idleLogout = readIdleLogout(deps);
+  const mailboxMembers = readMailboxMembers(deps);
 
   /** Whether to show the Firmenverwaltung at all; asked by every signed-in user. */
   app.get("/me", async (c) =>
@@ -49,6 +51,12 @@ export const createCompanyRoutes = (deps: CompanyDeps) => {
   app.get("/idle-logout", async (c) => {
     const setting = await idleLogout(c.req.raw);
     return setting ? c.json(setting) : c.json({ error: "Nicht angemeldet" }, 401);
+  });
+
+  /** „Zuweisen“: every member of a shared mailbox offers only its members. */
+  app.get("/mailbox-members", async (c) => {
+    const members = await mailboxMembers(c.req.raw);
+    return members ? c.json({ members }) : c.json({ error: "Nicht angemeldet" }, 401);
   });
 
   app.use("*", async (c, next) => {

@@ -48,6 +48,19 @@ export const withAssignment = <T extends Pick<EmailSummary, "metadata">>(
   };
 };
 
+/**
+ * Whom a mail in a shared mailbox can be given to: its members, as far as they are known (the
+ * server reads them, JMAP has no members), and whoever has it now; otherwise everyone.
+ */
+export const assignablePeople = <P extends { id: string }>(
+  people: P[],
+  memberIds: string[] | undefined,
+  assignee: string | null,
+): P[] =>
+  memberIds
+    ? people.filter((person) => memberIds.includes(person.id) || person.id === assignee)
+    : people;
+
 /** "Mir zugewiesen": the open ones of `me`; "Offen": everything not done. */
 export type AssignmentView = "mine" | "open";
 

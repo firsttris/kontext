@@ -17,9 +17,10 @@ import {
 import { useToast } from "@/components/ui/toast";
 import { principalName } from "@/jmap/principals";
 import type { EmailSummary } from "@/jmap/types";
-import { type Assignment, assignmentOf } from "@/lib/assignment";
+import { type Assignment, assignablePeople, assignmentOf } from "@/lib/assignment";
 import { cn } from "@/lib/cn";
 import { m } from "@/paraglide/messages";
+import { useMailboxMembers } from "../company/mailbox-members";
 import { usePersonalAccountId } from "../settings/queries";
 import { usePrincipals } from "../sharing/queries";
 import { useEmailActions } from "./actions";
@@ -44,6 +45,7 @@ export const AssignMenu = ({ accountId, email }: { accountId: string; email: Ema
   const toast = useToast();
   const { me, people } = usePeople();
   const current = assignmentOf(email);
+  const offered = assignablePeople(people, useMailboxMembers(accountId), current.assignee);
 
   const save = async (next: Assignment) => {
     try {
@@ -66,7 +68,7 @@ export const AssignMenu = ({ accountId, email }: { accountId: string; email: Ema
           value={current.assignee ?? NOBODY}
           onValueChange={(id) => void save({ ...current, assignee: id === NOBODY ? null : id })}
         >
-          {people.map((person) => (
+          {offered.map((person) => (
             <MenuRadioItem key={person.id} value={person.id}>
               {person.id === me ? m.mail_assign_me() : person.name}
             </MenuRadioItem>

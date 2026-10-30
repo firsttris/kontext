@@ -23,7 +23,7 @@ IMAP und SMTP.
   zeigt, wer schon geantwortet hat („Jonas · 14:02“). Rechte je Person: kein Zugriff, nur lesen,
   lesen und senden. [Mehr](architecture.md#gemeinsame-postfacher)
 - **Mails zuweisen:** In info@ gibt „Zuweisen“ eine Mail einer Person („Mir zuweisen“, eine
-  Kollegin, niemandem) und hakt sie als „Erledigt“ ab. Alle im Postfach sehen es an der Mail und
+  Kollegin aus dem Postfach, niemandem) und hakt sie als „Erledigt“ ab. Alle im Postfach sehen es an der Mail und
   in der Liste („Anna“, „Erledigt · Anna“); die Filter „Mir zugewiesen“ und „Offen“ zeigen, was
   noch auf einen selbst oder aufs Team wartet. [Mehr](architecture.md#mails-zuweisen)
 - **Alle Posteingänge** in einer Liste: das eigene Postfach und die gemeinsamen zusammen.

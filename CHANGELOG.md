@@ -22,7 +22,8 @@ Steps that an update needs beyond raising the version are marked **Upgrade**.
   colleague, nobody) and marks it done; everyone in the mailbox sees it on the mail and in the
   list, and the filters "Mir zugewiesen" and "Offen" show what still waits. Stored on the mail
   as shared JMAP Object Metadata in Kontext's namespace `kontext.firsttris.github.io`, filtered
-  by Stalwart (`src/lib/assignment.ts`); needs Stalwart 1.0.
+  by Stalwart (`src/lib/assignment.ts`); needs Stalwart 1.0. The menu offers only the
+  mailbox's members (`/api/company/mailbox-members`; everyone when the server cannot tell).
 - Stalwart 1.0.1 instead of 0.16.27: sign-in as a registered OAuth client, stricter JMAP (header
   forms, calendar queries), contact photos as blobs, renamed management fields.
   **Upgrade:** Stalwart 1.0 does not open a 0.16 data store: migrate it with `stalwart-migrate`
