@@ -23,13 +23,13 @@ ein Plan, kein Versprechen; Wünsche und Hinweise gern als
 
 Was Stalwart 1.0 neu mitbringt und Kontext nutzen kann; Kontext läuft seit
 [#140](https://github.com/firsttris/kontext/pull/140) auf 1.0. Sortiert nach Mehrwert: oben, was
-am meisten bringt. Fertig sind schon „Mails zuweisen“ und „Suche in Anhängen“ (im [Changelog](CHANGELOG.md)).
+am meisten bringt. Fertig sind schon „Mails zuweisen“, „Suche in Anhängen“ und „Ausgeblendete Kalender auf allen
+Geräten“ (im [Changelog](CHANGELOG.md)).
 
 | # | Funktion | Mehrwert | Umsetzung |
 | --- | --- | --- | --- |
-| 1 | **Ausgeblendete Kalender auf allen Geräten** | Wer Kalender von Kollegen ausblendet, muss das heute auf jedem Gerät neu tun. | Die Wahl als privater Wert am Kalender (`privateMetadata`) statt im Browser (`hidden-calendars.ts`); die bisherige Wahl im Browser wird beim ersten Start einmal übernommen. Ersetzt die Krücke, die nötig war, weil Stalwart 0.16 `isVisible` bei fremden Kalendern ohne Schreibrecht nicht zuließ. |
-| 2 | **Übersicht der Zugänge** | Ein Ort in den Einstellungen, der zeigt, wer und was auf das eigene Konto zugreift – und wo man es abschaltet. | Vor allem aus dem, was Kontext schon kennt: App-Passwörter für Handy und Mailprogramme, Schreibzeug, angemeldete KI-Agenten, angebundene Postfächer (Gmail …). Dazu Stalwarts neue Liste der „verbundenen Anwendungen“ (`x:OAuthGrant`) für Programme, die sich per OAuth direkt bei Stalwart anmelden; die ist heute meist leer, weil Mailprogramme Passwörter nutzen. |
-| 3 | **Mailprogramme ohne App-Passwort** | Mit Zwei-Faktor-Anmeldung bräuchten Apple Mail und Thunderbird kein App-Passwort mehr. | Stalwart 1.0 setzt das OAuth-Profil für Mailprogramme vollständig um. Dafür müsste die OAuth-Erkennung unter `/.well-known` zu Stalwart statt zu Kontext (Caddy) und Stalwarts Anmeldeseite öffentlich erreichbar sein – eine Frage der Architektur, erst nach dem Pilot. |
+| 1 | **Übersicht der Zugänge** | Ein Ort in den Einstellungen, der zeigt, wer und was auf das eigene Konto zugreift – und wo man es abschaltet. | Vor allem aus dem, was Kontext schon kennt: App-Passwörter für Handy und Mailprogramme, Schreibzeug, angemeldete KI-Agenten, angebundene Postfächer (Gmail …). Dazu Stalwarts neue Liste der „verbundenen Anwendungen“ (`x:OAuthGrant`) für Programme, die sich per OAuth direkt bei Stalwart anmelden; die ist heute meist leer, weil Mailprogramme Passwörter nutzen. |
+| 2 | **Mailprogramme ohne App-Passwort** | Mit Zwei-Faktor-Anmeldung bräuchten Apple Mail und Thunderbird kein App-Passwort mehr. | Stalwart 1.0 setzt das OAuth-Profil für Mailprogramme vollständig um. Dafür müsste die OAuth-Erkennung unter `/.well-known` zu Stalwart statt zu Kontext (Caddy) und Stalwarts Anmeldeseite öffentlich erreichbar sein – eine Frage der Architektur, erst nach dem Pilot. |
 
 Nicht für Kontext: Volltextsuche in Dateien (betrifft Stalwarts eigenen Dateispeicher; Kontexts
 Dokumente liegen in Schreibzeug), der KI-Spamfilter und das Wiederherstellen gelöschter Mails

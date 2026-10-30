@@ -1676,8 +1676,18 @@ woher eine Freigabe kam. Ausnahme ist die Verfügbarkeit: Sehen alle anderen Kol
 und belegten Zeiten eines Kalenders (die Firmenvorgabe), behält sie die; sonst fällt der Eintrag
 ganz weg. Freigaben für Gruppen (gemeinsame Postfächer) zeigt die Liste nicht und lässt sie
 stehen.
-Welche Kalender eingeblendet sind, merkt sich die App pro Gerät im Browser: Stalwart 0.16 lässt
-das per Benutzer gespeicherte `isVisible` bei fremden Kalendern nur mit Schreibrecht ändern.
+Welche Kalender eingeblendet sind, steht in ihrem `isVisible` (draft-ietf-jmap-calendars), das
+Stalwart pro Person speichert: ausgeblendet ist ein Kalender damit auf jedem Gerät, auch der einer
+Kollegin, den man nur lesen darf (seit Stalwart 1.0; 0.16 ließ das nur mit Schreibrecht zu, darum
+hielt die App die Wahl bis dahin pro Gerät im Browser). Was ein Gerät früher so ausgeblendet hatte,
+setzt die App beim ersten Laden einmal auf dem Server und vergisst es im Browser
+(`src/lib/calendar-visibility.ts`); was dabei scheitert, bleibt im Browser und kommt beim nächsten
+Laden wieder dran. Geburtstage und Fällige Aufgaben sind keine Kalender und
+bleiben pro Gerät. Bei den Kalendern gemeinsamer Postfächer übernimmt Stalwart 1.0.1 die
+Einstellungen eines Mitglieds beim nächsten `Calendar/set` eines anderen
+(`inherit_owner_preferences`): Ändert Anna Farbe, Freigabe oder Erinnerung von info@s Kalender,
+den Jonas ausgeblendet hat, wäre er auch für sie aus. Darum schickt jede Änderung das eigene
+`isVisible` mit (`withOwnVisibility`).
 
 ## Verfügbarkeit
 

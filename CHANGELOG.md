@@ -7,6 +7,10 @@ Steps that an update needs beyond raising the version are marked **Upgrade**.
 
 ## Unreleased
 
+- Calendar: a hidden calendar stays hidden on every device, also a colleague's calendar shared to
+  read: the choice is the calendar's per-person `isVisible` on the server (Stalwart 1.0), no
+  longer per browser. What a device hid before is moved to the server once. Birthdays and due
+  tasks stay per device.
 - Mail: search finds words that stand only in a PDF, Word, Excel, PowerPoint or OpenDocument
   attachment (Stalwart 1.0 indexes them), and such hits say "im Anhang" (SearchSnippet/get with
   every search page, `src/lib/attachment-hit.ts`). The company admin shows "Die Suche wird noch
