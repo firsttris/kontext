@@ -80,6 +80,15 @@ export const useBoards = () =>
     .filter((account) => !account.isReadOnly)
     .map((account) => ({ id: account.id, name: account.name, isPersonal: account.isPersonal }));
 
+/**
+ * Whether a task's board is one of mine to write to. One given to me on a colleague's own board
+ * is changed there, but not moved or deleted.
+ */
+export const useOnMyBoards = () => {
+  const boards = useBoards();
+  return (task: Pick<Task, "accountId">) => boards.some((board) => board.id === task.accountId);
+};
+
 export const useTaskActions = () => {
   const queryClient = useQueryClient();
   const settle = () => queryClient.invalidateQueries({ queryKey: KEY });

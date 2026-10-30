@@ -102,6 +102,40 @@ test.describe("Aufgaben", () => {
       .click();
     await expect(anna.getByRole("heading", { name: subject })).toBeVisible();
   });
+
+  test("Erledigte ausblenden und eine Aufgabe in der Liste löschen", async ({ page }) => {
+    const done = unique("Bohrmaschine zurückgeben");
+    const gone = unique("Prospekt wegwerfen");
+    await login(page);
+    await page.goto("/tasks");
+    for (const name of [done, gone]) {
+      await page.getByRole("textbox", { name: "Neue Aufgabe" }).fill(name);
+      await page.keyboard.press("Enter");
+      await expect(page.getByRole("link", { name: new RegExp(name) })).toBeVisible();
+    }
+    await page.getByRole("checkbox", { name: `„${done}“ erledigt` }).click();
+    await expect(page.getByRole("list", { name: "Erledigt" })).toContainText(done);
+
+    const hide = page.getByRole("button", { name: "Erledigte ausblenden" });
+    await hide.click();
+    await expect(hide).toHaveAttribute("aria-pressed", "true");
+    await expect(page.getByRole("link", { name: new RegExp(done) })).toBeHidden();
+    // Kept on this device.
+    await page.reload();
+    await expect(page.getByRole("link", { name: new RegExp(gone) })).toBeVisible();
+    await expect(page.getByRole("link", { name: new RegExp(done) })).toBeHidden();
+    await page.getByRole("button", { name: /erledigt – einblenden/ }).click();
+    await expect(page.getByRole("list", { name: "Erledigt" })).toContainText(done);
+
+    // The bin shows on the row; one click alone deletes nothing.
+    const row = page.getByRole("listitem").filter({ hasText: gone });
+    await row.hover();
+    await row.getByRole("button", { name: `„${gone}“ löschen` }).click();
+    await row.getByRole("button", { name: "Wirklich löschen?" }).click();
+    await expect(page.getByRole("status").filter({ hasText: "Aufgabe gelöscht." })).toBeVisible();
+    await expect(page.getByRole("link", { name: new RegExp(gone) })).toBeHidden();
+    await expect.poll(() => taskOf(page, gone)).toBeUndefined();
+  });
 });
 
 test.describe("Aufgaben am Handy @phone", () => {
@@ -120,5 +154,20 @@ test.describe("Aufgaben am Handy @phone", () => {
     await expect(page.getByRole("article", { name })).toBeVisible();
     await page.getByRole("button", { name: "Zurück" }).click();
     await expect(page.getByRole("heading", { name: "Heute", level: 1 })).toBeVisible();
+  });
+
+  test("löscht die geöffnete Aufgabe @phone", async ({ page }) => {
+    const name = unique("Leiter abholen");
+    await login(page, "max");
+    await page.getByRole("link", { name: "Aufgaben" }).click();
+    await page.getByRole("textbox", { name: "Neue Aufgabe" }).fill(name);
+    await page.keyboard.press("Enter");
+    await page.getByRole("link", { name: new RegExp(name) }).click();
+    const detail = page.getByRole("article", { name });
+    await detail.getByRole("button", { name: "Aufgabe löschen" }).click();
+    await detail.getByRole("button", { name: "Wirklich löschen?" }).click();
+    await expect(page.getByRole("status").filter({ hasText: "Aufgabe gelöscht." })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Meine Aufgaben", level: 1 })).toBeVisible();
+    await expect(page.getByRole("link", { name: new RegExp(name) })).toBeHidden();
   });
 });

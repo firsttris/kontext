@@ -5,6 +5,7 @@ import { ColleagueAvatar } from "@/features/photos/colleague-avatar";
 import { cn } from "@/lib/cn";
 import { dueGroup, dueLabel, type Task } from "@/lib/tasks";
 import { m } from "@/paraglide/messages";
+import { DeleteTaskButton } from "./delete-task";
 
 export const dueTone = (task: Task, today: string): string => {
   if (task.status === "done" || !task.dueDate) return "text-muted";
@@ -19,6 +20,7 @@ export const TaskRow = ({
   board,
   assignee,
   onToggle,
+  onDelete,
   inTasks = true,
 }: {
   task: Task;
@@ -28,6 +30,8 @@ export const TaskRow = ({
   board: string | null;
   assignee: string | null;
   onToggle: () => void;
+  /** Where the task may be deleted: a bin when the row is pointed at (the phone has it in the task). */
+  onDelete?: () => void;
   /** Within the tasks app the view stays as it is; elsewhere (a contact) it opens the task. */
   inTasks?: boolean;
 }) => {
@@ -37,7 +41,7 @@ export const TaskRow = ({
   return (
     <div
       className={cn(
-        "flex items-start gap-3 rounded-[10px] px-3 py-2.5 hover:bg-hover",
+        "group relative flex items-start gap-3 rounded-[10px] px-3 py-2.5 hover:bg-hover",
         active && "bg-subtle",
       )}
     >
@@ -90,6 +94,13 @@ export const TaskRow = ({
         </span>
       </Link>
       {assignee ? <ColleagueAvatar id={task.assigneeId} name={assignee} size={24} /> : null}
+      {onDelete ? (
+        <DeleteTaskButton
+          label={m.tasks_delete_named({ title: task.title })}
+          onDelete={onDelete}
+          className="absolute top-2 right-2 hidden bg-bg md:flex md:opacity-0 md:group-hover:opacity-100 md:focus-visible:opacity-100"
+        />
+      ) : null}
     </div>
   );
 };

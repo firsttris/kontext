@@ -8,7 +8,9 @@ import { useToast } from "@/components/ui/toast";
 import { dateKey } from "@/lib/jscalendar";
 import { groupByDue, parseQuickAdd, type Task } from "@/lib/tasks";
 import { m } from "@/paraglide/messages";
-import { useBoards, usePeople, useTaskActions } from "./queries";
+import { useDeleteTask } from "./delete-task";
+import { setHideDone } from "./hide-done";
+import { useBoards, useOnMyBoards, usePeople, useTaskActions } from "./queries";
 import { TaskRow } from "./task-row";
 
 export const TaskList = ({
@@ -17,6 +19,7 @@ export const TaskList = ({
   openId,
   addTo,
   showBoards,
+  hiddenDone = 0,
   header,
   below,
 }: {
@@ -26,6 +29,8 @@ export const TaskList = ({
   /** Where a quick entry goes: the account, to whom, and the day when none is typed. */
   addTo: { accountId: string; assigneeId: string | null; dueDate?: string } | null;
   showBoards: boolean;
+  /** How many done tasks "Erledigte ausblenden" keeps out of the list. */
+  hiddenDone?: number;
   /** Next to the title, e.g. the list/board switch. */
   header?: ReactNode;
   /** Under the title, e.g. the phone's views and boards. */
@@ -36,6 +41,8 @@ export const TaskList = ({
   const toast = useToast();
   const people = usePeople();
   const boards = useBoards();
+  const onMyBoards = useOnMyBoards();
+  const deleteTask = useDeleteTask();
   const [entry, setEntry] = useState("");
   const nameOf = (id: string | null) => people.find((person) => person.id === id)?.name ?? null;
   const boardOf = (task: Task) =>
@@ -106,6 +113,7 @@ export const TaskList = ({
                           status: task.status === "done" ? "open" : "done",
                         })
                       }
+                      onDelete={onMyBoards(task) ? () => void deleteTask(task.id) : undefined}
                     />
                   </li>
                 ))}
@@ -113,7 +121,19 @@ export const TaskList = ({
             </div>
           ))
         )}
+        {hiddenDone > 0 ? <ShowDone count={hiddenDone} /> : null}
       </div>
     </section>
   );
 };
+
+/** Under a list or in the board's last column, while done tasks are hidden: they come back. */
+export const ShowDone = ({ count }: { count: number }) => (
+  <button
+    type="button"
+    onClick={() => setHideDone(false)}
+    className="flex h-8 items-center rounded-lg px-3 text-[13px] text-muted hover:bg-hover hover:text-fg"
+  >
+    {m.tasks_done_hidden({ count })}
+  </button>
+);
