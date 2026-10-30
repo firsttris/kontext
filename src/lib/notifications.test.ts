@@ -4,6 +4,7 @@ import {
   appBadges,
   badgeSum,
   type InboxMail,
+  invitationsSoon,
   mailsToAnnounce,
   newMails,
   restOfToday,
@@ -75,5 +76,17 @@ describe("appBadges", () => {
   it("adds up the apps under Mehr, apps without a badge count nothing", () => {
     expect(badgeSum(badges, ["/chat", "/contacts", "/calendar"])).toBe(4);
     expect(badgeSum(badges, [])).toBe(0);
+  });
+});
+
+describe("invitationsSoon", () => {
+  const inDays = (days: number) => ({ start: new Date(now.getTime() + days * 86_400_000) });
+
+  it("counts invitations of the next two weeks and those already running", () => {
+    expect(invitationsSoon([inDays(-0.1), inDays(1), inDays(14), inDays(15)], now)).toEqual([
+      inDays(-0.1),
+      inDays(1),
+      inDays(14),
+    ]);
   });
 });

@@ -1468,8 +1468,11 @@ Einladungen, die damals noch nicht da waren – beides merkt sich der Browser.
 
 Am Handy gibt es keine Glocke; damit man nach einer Push-Benachrichtigung weiß, wo das Neue
 liegt, tragen die Apps in der Tab-Leiste (und am PC in der Leiste) aus demselben Stand eine Zahl
-(`app-badges.ts`, `appBadges` in `src/lib/notifications.ts`): Mail die neuen ungelesenen Mails
-aller Posteingänge, Kalender die Einladungen ohne Antwort, Aufgaben die mir zugewiesenen, die ich
+(`app-badges.ts`, `appBadges` in `src/lib/notifications.ts`): Mail alle ungelesenen Mails der
+Posteingänge (eigene und gemeinsame), dieselbe Zahl wie „Alle Posteingänge“ in der Seitenleiste
+und am App-Symbol – so führt die Seitenleiste zu dem Postfach, in dem sie liegen; Kalender die
+Einladungen ohne Antwort, deren Termin in den nächsten 14 Tagen liegt (weiter entfernte sammelten
+sich sonst zu einer Zahl, die niemand mehr beachtet); Aufgaben die mir zugewiesenen, die ich
 noch nicht gesehen habe, Chat die ungelesenen Nachrichten. Lesen, Antworten oder Öffnen der
 Aufgaben lässt die Zahl verschwinden; Aufgaben gelten als gesehen, sobald man die App öffnet oder
 die Glocke (`kontext.notifications.seen` im Browser). Steht eine App unter „Mehr“, zählt „Mehr“

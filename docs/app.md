@@ -67,8 +67,8 @@ eingehende Anrufe, **auch wenn Kontext ganz geschlossen ist**.
   Tab-Leiste am Handy* wählt man pro Platz eine App; alle anderen stehen unter „Mehr“.
   „Zurücksetzen“ stellt die Leiste wie anfangs.
 - Eine Zahl an der App in der Tab-Leiste zeigt, wo eine Benachrichtigung hingehört: ungelesene
-  Mails der letzten Tage (alle Posteingänge), Einladungen, die auf Antwort warten, neu
-  zugewiesene Aufgaben und ungelesene Chat-Nachrichten. Steht die App unter „Mehr“, trägt „Mehr“
+  Mails (dieselbe Zahl wie „Alle Posteingänge“ und am App-Symbol), Einladungen der nächsten zwei
+  Wochen, die auf Antwort warten, neu zugewiesene Aufgaben und ungelesene Chat-Nachrichten. Steht die App unter „Mehr“, trägt „Mehr“
   die Zahl. Am PC stehen dieselben Zahlen an der Leiste links.
 - „Zurück“ und das Wischen vom Rand gehen dorthin zurück, woher man kam, etwa vom Gespräch in die
   Liste.
