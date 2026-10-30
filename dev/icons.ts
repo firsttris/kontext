@@ -32,7 +32,9 @@ const badge = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
 
 const rounded = appIcon({ radius: 112, scale: 1 });
 const square = appIcon({ radius: 0, scale: 1 });
-const maskable = appIcon({ radius: 0, scale: 0.78 });
+// Android shows the middle 72 of 108 dp (a circle of radius 171 here) and some launchers add a
+// ring inside that; the tip, 212 from the centre at scale 1, keeps a fifth of the radius clear.
+const maskable = appIcon({ radius: 0, scale: 0.64 });
 
 const pngs: [name: string, svg: string, size: number][] = [
   ["icon-192.png", rounded, 192],
