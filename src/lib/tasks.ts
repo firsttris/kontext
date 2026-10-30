@@ -13,13 +13,20 @@ import type {
   TaskLink,
   TaskStatus,
 } from "../../server/tasks/tasks";
-import { DEFAULT_COLUMNS, isCalendarDay, REPEATS, TASK_STATUSES } from "../../server/tasks/tasks";
+import {
+  boardKey,
+  DEFAULT_COLUMNS,
+  isCalendarDay,
+  REPEATS,
+  TASK_STATUSES,
+} from "../../server/tasks/tasks";
 import { displayName } from "./format";
 import { addDays, dateKey } from "./jscalendar";
 import { LOCALE } from "./locale";
 
 export {
   type BoardColumn,
+  boardKey,
   DEFAULT_COLUMNS,
   type NewTask,
   REPEATS,

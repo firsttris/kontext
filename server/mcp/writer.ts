@@ -305,6 +305,7 @@ export const createWriter = ({ client, reader, taskApi }: WriterDeps) => {
 
   const createTask = async (input: {
     accountId?: string;
+    projectId?: string;
     title: string;
     notes?: string;
     dueDate?: string;
@@ -317,6 +318,7 @@ export const createWriter = ({ client, reader, taskApi }: WriterDeps) => {
     const board = input.accountId ?? accounts.find((account) => account.personal)?.id;
     const { status, body } = await taskApi("POST", "/", {
       accountId: board,
+      projectId: input.projectId ?? null,
       title: input.title,
       notes: input.notes ?? "",
       dueDate: input.dueDate ?? null,

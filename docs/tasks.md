@@ -1,7 +1,7 @@
 ---
 description: >-
   Aufgaben und Kanban-Board im Team: aus Mails und Chat-Nachrichten, ein Board pro gemeinsamem
-  Postfach, eigene Spalten, wiederkehrende Aufgaben, Erinnerungen als Push, Abgleich mit
+  Postfach und weitere für Projekte, eigene Spalten, wiederkehrende Aufgaben, Erinnerungen als Push, Abgleich mit
   Thunderbird, tasks.org und Apple Erinnerungen über CalDAV.
 ---
 
@@ -9,7 +9,8 @@ description: >-
 
 Aufgaben gehören in Kontext dorthin, wo die Arbeit herkommt: zur Mail, zum Kunden, zum
 gemeinsamen Postfach. Jedes Postfach hat sein Board – das eigene und eins für info@ und
-rechnung@, das alle sehen, die dort arbeiten.
+rechnung@, das alle sehen, die dort arbeiten. Dazu kommen Boards für Projekte („Baustelle
+Hoffmann“), damit deren Aufgaben nicht zwischen den übrigen liegen.
 
 ![Kanban-Board des gemeinsamen Postfachs info@ mit Offen, In Arbeit, Wartet und Erledigt](screenshots/tasks-board.png)
 
@@ -19,6 +20,11 @@ rechnung@, das alle sehen, die dort arbeiten.
 - **Liste oder Kanban:** nach Fälligkeit gruppiert oder als Board mit Offen, In Arbeit, Wartet,
   Erledigt – Karten zwischen den Spalten ziehen.
 - **Eigene Spalten** je Board („Material bestellt“ …), bis zu zehn.
+- **Boards für Projekte:** „+“ neben „Boards“ (am Handy der Chip „+“) legt ein Board in einem
+  Postfach an – im eigenen nur für sich, in info@ für alle dort. Es steht unter dem Board des
+  Postfachs, hat eigene Spalten und lässt sich mit dem Stift umbenennen oder löschen; die
+  Aufgaben eines gelöschten Boards kommen auf das Board des Postfachs. Eine Aufgabe wechselt im
+  Feld „Board“ dorthin.
 - **Erledigte ausblenden:** Der Schalter mit dem durchgestrichenen Auge über Liste und Board
   blendet abgehakte Aufgaben aus; am Ende der Liste bzw. in der Spalte „Erledigt“ holt
   „… erledigt – einblenden“ sie zurück. Die Wahl gilt je Gerät; die Ansicht „Erledigt“ zeigt
@@ -63,8 +69,8 @@ ihrem eigenen Board zugewiesen hat, bearbeitet man, löscht sie aber nicht.
 
 ## In Thunderbird und am Handy
 
-Kontext stellt die Boards als **CalDAV-Aufgabenlisten** bereit – in beide Richtungen, mit Titel,
-Notiz, Fälligkeit, Erledigt, Wiederholung und Erinnerung:
+Kontext stellt die Boards, auch die der Projekte, als **CalDAV-Aufgabenlisten** bereit – in beide
+Richtungen, mit Titel, Notiz, Fälligkeit, Erledigt, Wiederholung und Erinnerung:
 
 - **Thunderbird:** im Kalender „Neuer Kalender …“ → „Im Netzwerk“, die Server-Adresse aus
   *Einstellungen → Aufgaben in anderen Apps* eintragen, die Aufgabenlisten anhaken.

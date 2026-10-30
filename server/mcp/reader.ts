@@ -15,7 +15,7 @@ import type { EmailSummary } from "@/jmap/types";
 import { dateKey } from "@/lib/jscalendar";
 import { parseSearch, toEmailFilter } from "@/lib/mail-search";
 import { mailboxPath } from "@/lib/mailboxes";
-import type { Task } from "../tasks/tasks";
+import type { Task, TaskProject } from "../tasks/tasks";
 import {
   type AccountNames,
   contactMatches,
@@ -206,7 +206,12 @@ export const createReader = ({ client, taskApi, now = () => new Date() }: Reader
     ]);
     if (status !== 200) throw new Error(String(body.error ?? "Aufgaben nicht lesbar"));
     // Whom a task is given to is a person's own account: named by the company's people.
-    const names = { ...Object.fromEntries(team.map((p) => [p.id, p.name])), ...namesOf(list) };
+    // A project board by its own name.
+    const projects = ((body.projects ?? []) as TaskProject[]).map((p) => [p.id, p.name]);
+    const names = {
+      ...Object.fromEntries([...team.map((p) => [p.id, p.name]), ...projects]),
+      ...namesOf(list),
+    };
     return { all: body.tasks as Task[], summarize: (task: Task) => taskSummary(task, names) };
   };
 

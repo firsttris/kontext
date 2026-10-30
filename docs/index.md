@@ -141,7 +141,7 @@ wird zur Aufgabe.
 
 ## Aus der Mail wird eine Aufgabe
 
-Als Liste oder Kanban-Board, für jedes Postfach. Aus einer Mail, einer Chat-Nachricht oder einem
+Als Liste oder Kanban-Board, für jedes Postfach und jedes Projekt. Aus einer Mail, einer Chat-Nachricht oder einem
 verpassten Anruf mit einem Klick, mit Erinnerung aufs Handy.
 </div>
 <div class="showcase-shot" markdown>

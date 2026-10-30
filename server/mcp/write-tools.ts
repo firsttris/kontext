@@ -117,7 +117,8 @@ export const WRITE_TOOLS = [
     name: "create_task",
     title: "Aufgabe anlegen",
     description:
-      "Create a task on a board (the own one, or a shared mailbox's), optionally due on a day, " +
+      "Create a task on a board (the own one, a shared mailbox's, or a project board of " +
+      "either), optionally due on a day, " +
       "given to a colleague (list_colleagues) and linked to a mail and/or a contact.",
     scope: "write",
     input: {
@@ -130,6 +131,10 @@ export const WRITE_TOOLS = [
         .string()
         .optional()
         .describe("The board (an account id); the own one when left out."),
+      projectId: z
+        .string()
+        .optional()
+        .describe("A project board of that account (projectId from list_tasks)."),
       email: ref("A mail to link: its accountId and id."),
       contact: ref("A contact to link: its accountId and id."),
     },

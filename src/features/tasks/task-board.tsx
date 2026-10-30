@@ -1,5 +1,5 @@
 /**
- * The board of one account: its columns (built-in or its own), cards in their order. Cards are
+ * One board – an account's own or a project: its columns (built-in or its own), cards in their order. Cards are
  * dragged between and within columns (the new place is set between its neighbours); on a phone the
  * columns scroll sideways and the status is changed in the task.
  */
@@ -20,7 +20,7 @@ import {
   type TaskStatus,
 } from "@/lib/tasks";
 import { m } from "@/paraglide/messages";
-import { useColumns, usePeople, useTaskActions } from "./queries";
+import { type Board, useColumns, usePeople, useTaskActions } from "./queries";
 import { ShowDone } from "./task-list";
 import { dueTone } from "./task-row";
 
@@ -36,12 +36,12 @@ const OWN_DOTS = ["bg-violet-500", "bg-sky-500", "bg-rose-500", "bg-teal-500", "
 type Drop = { status: TaskStatus; index: number };
 
 export const TaskBoard = ({
-  accountId,
+  board,
   tasks,
   openId,
   hideDone = false,
 }: {
-  accountId: string;
+  board: Board;
   tasks: Task[];
   openId: string | undefined;
   /** The cards of "Erledigt" stay away; the column takes drops all the same. */
@@ -51,7 +51,7 @@ export const TaskBoard = ({
   const actions = useTaskActions();
   const toast = useToast();
   const people = usePeople();
-  const columns = useColumns(accountId);
+  const columns = useColumns(board.id);
   const [dragged, setDragged] = useState<string | null>(null);
   const [drop, setDrop] = useState<Drop | null>(null);
   const [adding, setAdding] = useState<TaskStatus | null>(null);
@@ -89,7 +89,15 @@ export const TaskBoard = ({
     if (!entry.trim()) return;
     const { title, dueDate } = parseQuickAdd(entry, today);
     setEntry("");
-    void run(() => actions.create({ accountId, title, dueDate, status }));
+    void run(() =>
+      actions.create({
+        accountId: board.accountId,
+        projectId: board.projectId,
+        title,
+        dueDate,
+        status,
+      }),
+    );
   };
 
   return (

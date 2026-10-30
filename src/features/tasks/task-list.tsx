@@ -6,7 +6,7 @@ import { Plus } from "lucide-react";
 import { type FormEvent, type ReactNode, useState } from "react";
 import { useToast } from "@/components/ui/toast";
 import { dateKey } from "@/lib/jscalendar";
-import { groupByDue, parseQuickAdd, type Task } from "@/lib/tasks";
+import { boardKey, groupByDue, parseQuickAdd, type Task } from "@/lib/tasks";
 import { m } from "@/paraglide/messages";
 import { useDeleteTask } from "./delete-task";
 import { setHideDone } from "./hide-done";
@@ -26,8 +26,13 @@ export const TaskList = ({
   title: string;
   tasks: Task[];
   openId: string | undefined;
-  /** Where a quick entry goes: the account, to whom, and the day when none is typed. */
-  addTo: { accountId: string; assigneeId: string | null; dueDate?: string } | null;
+  /** Where a quick entry goes: the board, to whom, and the day when none is typed. */
+  addTo: {
+    accountId: string;
+    projectId?: string | null;
+    assigneeId: string | null;
+    dueDate?: string;
+  } | null;
   showBoards: boolean;
   /** How many done tasks "Erledigte ausblenden" keeps out of the list. */
   hiddenDone?: number;
@@ -45,10 +50,12 @@ export const TaskList = ({
   const deleteTask = useDeleteTask();
   const [entry, setEntry] = useState("");
   const nameOf = (id: string | null) => people.find((person) => person.id === id)?.name ?? null;
-  const boardOf = (task: Task) =>
-    showBoards
-      ? (boards.find((board) => board.id === task.accountId && !board.isPersonal)?.name ?? null)
-      : null;
+  // Named unless on one's own board: a shared mailbox's, or a project.
+  const boardOf = (task: Task) => {
+    if (!showBoards) return null;
+    const board = boards.find((candidate) => candidate.id === boardKey(task));
+    return board && (board.projectId || !board.isPersonal) ? board.name : null;
+  };
 
   const add = async (event: FormEvent) => {
     event.preventDefault();

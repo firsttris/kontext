@@ -1,5 +1,6 @@
 /**
- * Tasks from Kontext's server (/api/tasks): all of them in one list, refreshed when the live
+ * Tasks from Kontext's server (/api/tasks): all of them in one list with the boards' columns and
+ * the projects (further boards of an account), refreshed when the live
  * connection says a board changed (features/live) and when the window comes back. Changes are
  * shown at once and corrected if the server says otherwise.
  */
@@ -8,12 +9,14 @@ import { useSession } from "@/components/shell/app-shell";
 import { CAPABILITIES } from "@/jmap/client";
 import {
   type BoardColumn,
+  boardKey,
   columnLabel,
   DEFAULT_COLUMNS,
   type NewTask,
   type Task,
 } from "@/lib/tasks";
-import type { TaskPatch } from "../../../server/tasks/tasks";
+import { m } from "@/paraglide/messages";
+import type { TaskPatch, TaskProject } from "../../../server/tasks/tasks";
 import { useMailAccounts } from "../mail/queries";
 import { usePrincipals } from "../sharing/queries";
 
@@ -31,7 +34,12 @@ const send = async <T>(method: string, path: string, body?: unknown): Promise<T>
   return result;
 };
 
-type TasksData = { tasks: Task[]; boards: Record<string, BoardColumn[]> };
+type TasksData = {
+  tasks: Task[];
+  projects: TaskProject[];
+  /** Columns by board key: an account id, or a project id. */
+  boards: Record<string, BoardColumn[]>;
+};
 
 const useTasksData = () => useQuery({ queryKey: KEY, queryFn: () => send<TasksData>("GET", "") });
 
@@ -40,15 +48,15 @@ export const useTasks = () => {
   return { tasks: data?.tasks ?? [], isPending };
 };
 
-/** A board's columns, the built-in ones until it has its own. */
-export const useColumns = (accountId: string): BoardColumn[] =>
-  useTasksData().data?.boards[accountId] ?? DEFAULT_COLUMNS;
+/** A board's columns (by its key), the built-in ones until it has its own. */
+export const useColumns = (key: string): BoardColumn[] =>
+  useTasksData().data?.boards[key] ?? DEFAULT_COLUMNS;
 
 /** The name of a task's column on its board ("In Arbeit", "Bestellt"). */
 export const useStatusLabel = () => {
   const boards = useTasksData().data?.boards ?? {};
-  return (task: Pick<Task, "accountId" | "status">) => {
-    const column = (boards[task.accountId] ?? DEFAULT_COLUMNS).find((c) => c.id === task.status);
+  return (task: Pick<Task, "accountId" | "projectId" | "status">) => {
+    const column = (boards[boardKey(task)] ?? DEFAULT_COLUMNS).find((c) => c.id === task.status);
     return column ? columnLabel(column) : columnLabel({ id: "open", name: "" });
   };
 };
@@ -74,11 +82,43 @@ export const usePeople = (): { id: string; name: string }[] => {
   );
 };
 
-/** Where tasks can live: the own mailbox and the shared ones one may write to. */
-export const useBoards = () =>
-  useMailAccounts()
+/**
+ * A board tasks can be put on: a mailbox's own, or one of its projects. `id` is its key
+ * (`boardKey`), `name` what it is called, `label` that with the mailbox for a project.
+ */
+export type Board = {
+  id: string;
+  accountId: string;
+  projectId: string | null;
+  name: string;
+  /** The mailbox's board: "Mein Board", or the shared mailbox's name. */
+  mailbox: string;
+  label: string;
+  isPersonal: boolean;
+};
+
+/** Where tasks can live: the own mailbox and the shared ones one may write to, each with its projects. */
+export const useBoards = (): Board[] => {
+  const projects = useTasksData().data?.projects ?? [];
+  return useMailAccounts()
     .filter((account) => !account.isReadOnly)
-    .map((account) => ({ id: account.id, name: account.name, isPersonal: account.isPersonal }));
+    .flatMap((account) => {
+      const mailbox = account.isPersonal ? m.tasks_my_board() : account.name;
+      const own = { accountId: account.id, mailbox, isPersonal: account.isPersonal };
+      return [
+        { ...own, id: account.id, projectId: null, name: mailbox, label: mailbox },
+        ...projects
+          .filter((project) => project.accountId === account.id)
+          .map((project) => ({
+            ...own,
+            id: project.id,
+            projectId: project.id,
+            name: project.name,
+            label: m.tasks_board_in({ mailbox, board: project.name }),
+          })),
+      ];
+    });
+};
 
 /**
  * Whether a task's board is one of mine to write to. One given to me on a colleague's own board
@@ -86,7 +126,8 @@ export const useBoards = () =>
  */
 export const useOnMyBoards = () => {
   const boards = useBoards();
-  return (task: Pick<Task, "accountId">) => boards.some((board) => board.id === task.accountId);
+  return (task: Pick<Task, "accountId">) =>
+    boards.some((board) => board.accountId === task.accountId);
 };
 
 export const useTaskActions = () => {
@@ -135,20 +176,50 @@ export const useTaskActions = () => {
   });
 
   const columns = useMutation({
-    mutationFn: ({ accountId, columns }: { accountId: string; columns: BoardColumn[] }) =>
-      send<{ columns: BoardColumn[] }>("PUT", `/boards/${encodeURIComponent(accountId)}`, {
+    mutationFn: ({ key, columns }: { key: string; columns: BoardColumn[] }) =>
+      send<{ columns: BoardColumn[] }>("PUT", `/boards/${encodeURIComponent(key)}`, {
         columns,
       }),
-    onMutate: ({ accountId, columns }) =>
+    onMutate: ({ key, columns }) =>
       queryClient.setQueryData<TasksData>(KEY, (data) =>
-        data ? { ...data, boards: { ...data.boards, [accountId]: columns } } : data,
+        data ? { ...data, boards: { ...data.boards, [key]: columns } } : data,
       ),
     onSettled: settle,
   });
 
+  const createProject = useMutation({
+    mutationFn: async (project: { accountId: string; name: string }) =>
+      (await send<{ project: TaskProject }>("POST", "/projects", project)).project,
+    onSuccess: (project) =>
+      queryClient.setQueryData<TasksData>(KEY, (data) =>
+        data ? { ...data, projects: [...data.projects, project] } : data,
+      ),
+    onSettled: settle,
+  });
+
+  const renameProject = useMutation({
+    mutationFn: ({ id, name }: { id: string; name: string }) =>
+      send<{ ok: true }>("PATCH", `/projects/${encodeURIComponent(id)}`, { name }),
+    onMutate: ({ id, name }) =>
+      queryClient.setQueryData<TasksData>(KEY, (data) =>
+        data
+          ? { ...data, projects: data.projects.map((p) => (p.id === id ? { ...p, name } : p)) }
+          : data,
+      ),
+    onSettled: settle,
+  });
+
+  const removeProject = useMutation({
+    mutationFn: (id: string) => send<{ ok: true }>("DELETE", `/projects/${encodeURIComponent(id)}`),
+    onSettled: settle,
+  });
+
   return {
-    setColumns: (accountId: string, value: BoardColumn[]) =>
-      columns.mutateAsync({ accountId, columns: value }),
+    setColumns: (key: string, value: BoardColumn[]) => columns.mutateAsync({ key, columns: value }),
+    createProject: (accountId: string, name: string) =>
+      createProject.mutateAsync({ accountId, name }),
+    renameProject: (id: string, name: string) => renameProject.mutateAsync({ id, name }),
+    removeProject: (id: string) => removeProject.mutateAsync(id),
     create: (task: NewTask) => create.mutateAsync(task),
     update: (id: string, patch: TaskPatch) => update.mutateAsync({ id, patch }),
     remove: (id: string) => remove.mutateAsync(id),

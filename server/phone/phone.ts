@@ -391,6 +391,7 @@ export const callbackTask = (
   const number = readableNumber(call.remote);
   return {
     accountId: board,
+    projectId: null,
     title: `Zurückrufen: ${number}`,
     notes: "",
     status: "open",

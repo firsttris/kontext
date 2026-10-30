@@ -6,7 +6,7 @@
 import type { EmailAddress, EmailDetail, EmailSummary } from "@/jmap/types";
 import { type CalendarEvent, eventTimes, locationName, participantEmail } from "@/lib/jscalendar";
 import { type ContactCard, company, fullName, note } from "@/lib/jscontact";
-import type { Task } from "../tasks/tasks";
+import { boardKey, type Task } from "../tasks/tasks";
 
 const ZONE = "Europe/Berlin";
 
@@ -183,7 +183,8 @@ export const eventConcerns = (event: CalendarEvent, emails: string[], terms: str
 export const taskSummary = (task: Task, names: AccountNames) => ({
   id: task.id,
   accountId: task.accountId,
-  board: names[task.accountId] ?? task.accountId,
+  projectId: task.projectId,
+  board: names[boardKey(task)] ?? boardKey(task),
   title: task.title,
   status: task.status,
   due: task.dueDate ? `${task.dueDate}${task.dueTime ? ` ${task.dueTime}` : ""}` : null,

@@ -15,17 +15,18 @@ import { useColumns, useTaskActions } from "./queries";
 const MAX_COLUMNS = 10;
 
 export const ColumnsDialog = ({
-  accountId,
+  boardId,
   title,
   onClose,
 }: {
-  accountId: string;
+  /** The board's key: an account id, or a project id. */
+  boardId: string;
   title: string;
   onClose: () => void;
 }) => {
   const toast = useToast();
   const actions = useTaskActions();
-  const current = useColumns(accountId);
+  const current = useColumns(boardId);
   const [columns, setColumns] = useState<BoardColumn[]>(current);
   const [busy, setBusy] = useState(false);
   const fixed = (column: BoardColumn) => column.id === "open" || column.id === "done";
@@ -66,7 +67,7 @@ export const ColumnsDialog = ({
     });
     setBusy(true);
     try {
-      await actions.setColumns(accountId, named);
+      await actions.setColumns(boardId, named);
       toast.show(m.tasks_columns_saved());
       onClose();
     } catch (error) {

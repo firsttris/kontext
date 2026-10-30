@@ -54,6 +54,7 @@ export const taskOfMail = (mail: MarkedMail, accountId: string, personal: boolea
   };
   return {
     accountId,
+    projectId: null,
     title: plainSubject(mail.subject ?? "").slice(0, 300) || "Mail ohne Betreff",
     notes: "",
     status: "open",
