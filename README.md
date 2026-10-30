@@ -2,27 +2,10 @@
 
 <h1>Kontext – your own alternative to Google Workspace and Microsoft 365</h1>
 
-*Feels familiar. Belongs to you.*
-
-**Mail, calendar, chat, documents and phone for your team – on your own server, open source**
-
-No per-seat pricing. Made in Europe.
-
-**English** · [Deutsch](README.de.md)
-
-[Why](#-why-kontext) •
-[Install](#-install) •
-[Features](#-features) •
-[Screenshots](#-screenshots) •
-[Alternatives](#-kontext-and-the-alternatives) •
-[FAQ](#-faq) •
-[Documentation](https://firsttris.github.io/kontext/)
-
 <a href="https://firsttris.github.io/kontext/en/"><img src="docs/assets/kontext-teaser.en.webp" alt="Kontext in motion: every module at a glance, the inbox with a PDF preview, a video call from the laptop to a phone, Word in the browser with comments, and an AI agent that looks up a customer and leaves a draft" width="900"></a>
 
-▶️ **[Watch the whole film (2 minutes)](https://firsttris.github.io/kontext/en/)** – every module, made from the real app
-
-🖱️ **[Try the demo](https://firsttris.github.io/kontext/demo/)** – mail, calendar, contacts, documents, chat, tasks and the phone with the test data, in your browser, nothing to install
+**Mail, calendar, chat, documents and phone for your team – on your own server, open source**<br>
+No per-seat pricing. Made in Europe.
 
 [![CI](https://github.com/firsttris/kontext/actions/workflows/ci.yml/badge.svg)](https://github.com/firsttris/kontext/actions/workflows/ci.yml)
 [![Release](https://img.shields.io/github/v/release/firsttris/kontext?logo=github&label=release)](https://github.com/firsttris/kontext/releases/latest)
@@ -34,7 +17,6 @@ No per-seat pricing. Made in Europe.
 [![JMAP](https://img.shields.io/badge/JMAP-mail%20%7C%20calendar%20%7C%20contacts-0f766e)](https://jmap.io)
 [![GDPR](https://img.shields.io/badge/GDPR-data%20on%20your%20server-15803d)](#-why-kontext)
 [![Made in Europe](https://img.shields.io/badge/made%20in-Europe-003399)](#-why-kontext)
-
 [![TypeScript](https://img.shields.io/badge/TypeScript-3178c6?logo=typescript&logoColor=white)](https://www.typescriptlang.org)
 [![Bun](https://img.shields.io/badge/Bun-000000?logo=bun&logoColor=white)](https://bun.sh)
 [![React](https://img.shields.io/badge/React-149eca?logo=react&logoColor=white)](https://react.dev)
@@ -44,6 +26,17 @@ No per-seat pricing. Made in Europe.
 [![Hono](https://img.shields.io/badge/Hono-e36002?logo=hono&logoColor=white)](https://hono.dev)
 [![SQLite](https://img.shields.io/badge/SQLite-Drizzle-003b57?logo=sqlite&logoColor=white)](https://orm.drizzle.team)
 [![MCP server](https://img.shields.io/badge/MCP-Claude-d97757)](https://firsttris.github.io/kontext/agents.html)
+
+[Why](#-why-kontext) •
+[Install](#-install) •
+[Features](#-features) •
+[Screenshots](#-screenshots) •
+[Alternatives](#-kontext-and-the-alternatives) •
+[FAQ](#-faq) •
+[Documentation](https://firsttris.github.io/kontext/) •
+[Deutsch](README.de.md)
+
+▶️ **[Watch the film (2 min)](https://firsttris.github.io/kontext/en/)** · 🖱️ **[Try the demo](https://firsttris.github.io/kontext/demo/)** – in your browser, nothing to install
 
 </div>
 
