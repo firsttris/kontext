@@ -1,3 +1,5 @@
+// @vitest-environment node
+// Node's own FormData and File: jsdom's are not what Node's Request reads in every Node version.
 import { describe, expect, it } from "vitest";
 import { createPhone, handlePhone } from "./phone";
 import { createDemoServer } from "./server";
