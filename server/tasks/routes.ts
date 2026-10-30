@@ -206,7 +206,8 @@ export const createTaskRoutes = ({
           ? task.projectId
           : null;
     const board = { accountId: target, projectId };
-    const moved = boardKey(board) !== boardKey(task);
+    // Account and project both: a project's key alone would hide a change of account.
+    const moved = target !== task.accountId || projectId !== task.projectId;
     // Whom it is given to may change it where it is; onto another board only who may write both.
     const mayChange = moved
       ? writable(accounts, task.accountId) && writable(accounts, target)
