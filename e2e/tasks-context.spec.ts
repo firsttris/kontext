@@ -385,7 +385,7 @@ test.describe("Aufgaben im Kontext", () => {
     await fresh.getByRole("link", { name: new RegExp(given) }).click();
     // On Jonas' own board, yet Max may do it.
     const article = max.getByRole("article", { name: given });
-    await expect(article.getByRole("combobox", { name: /^Postfach/ })).toBeDisabled();
+    await expect(article.getByRole("combobox", { name: /^Board/ })).toBeDisabled();
     await article.getByRole("button", { name: "Erledigt", exact: true }).first().click();
     await expect.poll(async () => (await taskOf(max, given))?.status).toBe("done");
     service.close();
