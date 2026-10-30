@@ -425,7 +425,10 @@ test.describe("Chat", () => {
   test("Aufgaben kommen live, ohne Neuladen", async ({ page, browser }) => {
     const title = unique("Rückruf Herr Lang");
     const anna = await colleague(browser, "anna");
-    await anna.getByRole("link", { name: "Aufgaben", exact: true }).first().click();
+    await anna
+      .getByRole("link", { name: /^Aufgaben($|, )/ })
+      .first()
+      .click();
     await anna.getByRole("link", { name: /info@/ }).first().click();
     await login(page);
     await page.evaluate(async (task) => {

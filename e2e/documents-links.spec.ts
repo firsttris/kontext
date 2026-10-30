@@ -80,7 +80,10 @@ test.describe("Dokumente in Chat, Aufgaben, Terminen und Kontakten", () => {
     const name = `${unique("Angebot Lang")}.docx`;
     await login(page);
     const id = await fileOf(page, "jonas", name);
-    await page.getByRole("link", { name: "Aufgaben", exact: true }).first().click();
+    await page
+      .getByRole("link", { name: /^Aufgaben($|, )/ })
+      .first()
+      .click();
     await page.getByRole("textbox", { name: "Neue Aufgabe" }).fill(title);
     await page.keyboard.press("Enter");
     await page

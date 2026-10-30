@@ -1,7 +1,10 @@
 import { describe, expect, it } from "vitest";
 import type { EmailSummary } from "@/jmap/types";
 import {
+  appBadges,
+  badgeSum,
   type InboxMail,
+  invitationsSoon,
   mailsToAnnounce,
   newMails,
   restOfToday,
@@ -60,5 +63,30 @@ describe("mailsToAnnounce", () => {
     const mails = [mail("a", 0.5), mail("b", 1), mail("c", 3)];
     expect(mailsToAnnounce(mails, since, new Set()).map((m) => m.email.id)).toEqual(["b", "a"]);
     expect(mailsToAnnounce(mails, since, new Set(["a/b"])).map((m) => m.email.id)).toEqual(["a"]);
+  });
+});
+
+describe("appBadges", () => {
+  const badges = appBadges({ mails: 2, invitations: 1, newTasks: 0, chat: 3 });
+
+  it("puts each count on its app", () => {
+    expect(badges).toEqual({ "/mail": 2, "/calendar": 1, "/tasks": 0, "/chat": 3 });
+  });
+
+  it("adds up the apps under Mehr, apps without a badge count nothing", () => {
+    expect(badgeSum(badges, ["/chat", "/contacts", "/calendar"])).toBe(4);
+    expect(badgeSum(badges, [])).toBe(0);
+  });
+});
+
+describe("invitationsSoon", () => {
+  const inDays = (days: number) => ({ start: new Date(now.getTime() + days * 86_400_000) });
+
+  it("counts invitations of the next two weeks and those already running", () => {
+    expect(invitationsSoon([inDays(-0.1), inDays(1), inDays(14), inDays(15)], now)).toEqual([
+      inDays(-0.1),
+      inDays(1),
+      inDays(14),
+    ]);
   });
 });

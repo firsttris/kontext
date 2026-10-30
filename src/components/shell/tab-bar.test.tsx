@@ -1,4 +1,4 @@
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, render, screen, within } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { TabBar } from "./app-shell";
@@ -28,8 +28,8 @@ vi.mock("@/features/documents/frame-store", () => ({ useFrameState: () => ({ uns
 vi.mock("@/features/phone/queries", () => ({
   usePhone: () => ({ enabled: false, allowed: false }),
 }));
-vi.mock("@/features/chat/queries", () => ({
-  useChannels: () => ({ channels: [{ unread: 3, muted: false }] }),
+vi.mock("@/features/notifications/app-badges", () => ({
+  useAppBadges: () => ({ "/mail": 0, "/calendar": 2, "/tasks": 1, "/chat": 3 }),
 }));
 
 afterEach(() => {
@@ -37,24 +37,32 @@ afterEach(() => {
   setTabChoice(null);
 });
 
-/** Everything the tab bar tells a sighted or screen-reader user without opening a menu. */
-const told = () => {
-  const nav = screen.getByRole("navigation", { name: "Apps" });
-  const labels = [...nav.querySelectorAll("[aria-label]")].map((el) =>
-    el.getAttribute("aria-label"),
-  );
-  return `${nav.textContent} ${labels.join(" | ")}`;
-};
+const tabBar = () => screen.getByRole("navigation", { name: "Apps" });
 
-describe("TabBar: unread chat messages", () => {
-  it("shows them with the default tabs (as on main)", () => {
+describe("TabBar: what waits in each app", () => {
+  it("names unread chat, invitations and new tasks with the default tabs", () => {
     render(<TabBar />);
-    expect(told()).toMatch(/3 ungelesen/);
+    within(tabBar()).getByRole("link", { name: "Chat, 3 ungelesen" });
+    within(tabBar()).getByRole("link", { name: "Kalender, 2 neu" });
+    within(tabBar()).getByRole("link", { name: "Aufgaben, 1 neu" });
   });
 
-  it("still shows them when Chat was moved under Mehr", () => {
-    setTabChoice(["/mail", "/calendar", "/tasks", "/contacts"]);
+  it("names an app without news plainly", () => {
     render(<TabBar />);
-    expect(told()).toMatch(/Mehr, 3 ungelesen/);
+    within(tabBar()).getByRole("link", { name: "Mail" });
+  });
+
+  it("keeps the badge of an app moved under Mehr", () => {
+    setTabChoice(["/mail", "/contacts", "/chat", "/tasks"]);
+    render(<TabBar />);
+    within(tabBar()).getByRole("button", { name: "Mehr, 2 neu" });
+  });
+
+  it("names the apps by their content, not an aria-label (label in name, WCAG 2.5.3)", () => {
+    render(<TabBar />);
+    // An aria-label "Kalender, 2 neu" beside the visible "Kalender" and badge "2" reads "Kalender2"
+    // to axe, which the label does not contain.
+    expect(tabBar().querySelectorAll("a[aria-label], button[aria-label]")).toHaveLength(0);
+    expect(screen.getByText("2").getAttribute("aria-hidden")).toBe("true");
   });
 });
