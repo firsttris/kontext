@@ -80,14 +80,16 @@ const withInlinePhotos = async (
   if (!photos.length) return cards;
   const data = new Map<StoredPhoto, string>();
   for (const page of chunk(photos, CALLS_PER_REQUEST)) {
-    const answers = await client.request(
-      page.map((photo, index) => [
-        "Blob/get",
-        { accountId, ids: [photo.blobId], properties: ["data:asBase64"] },
-        String(index),
-      ]),
-      [...USING, CAPABILITIES.blob],
-    ).catch(() => null);
+    const answers = await client
+      .request(
+        page.map((photo, index) => [
+          "Blob/get",
+          { accountId, ids: [photo.blobId], properties: ["data:asBase64"] },
+          String(index),
+        ]),
+        [...USING, CAPABILITIES.blob],
+      )
+      .catch(() => null);
     // Blob/get in an account a colleague shares is refused (accountNotSupportedByMethod, Stalwart
     // 1.0.1): the cards still count, only without those photos.
     if (!answers) break;
