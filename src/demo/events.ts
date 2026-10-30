@@ -64,7 +64,7 @@ const instanceOf = (base: StoredObject, recurrenceId: string): StoredObject => {
 const instancesOf = (base: StoredObject, last: string): StoredObject[] => {
   const overrides = overridesOf(base);
   const rule = base.recurrenceRule as RecurrenceRule;
-  const until = [last, ...Object.keys(overrides)].reduce((a, b) => (b > a ? b : a));
+  const until = [last, ...Object.keys(overrides)].sort().at(-1)!;
   return occurrences(String(base.start), rule, until)
     .filter((recurrenceId) => !overrides[recurrenceId]?.excluded)
     .map((recurrenceId) => instanceOf(base, recurrenceId));
