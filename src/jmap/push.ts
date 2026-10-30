@@ -16,6 +16,12 @@ export type StateChange = Record<string, Record<string, string>>;
 /** When the second catch-up after connecting runs. */
 export const CATCH_UP_AGAIN_MS = 2000;
 
+/**
+ * Seconds between Stalwart's pings on a quiet stream. Below a minute: since 2.11.6 Caddy closes a
+ * connection that wrote nothing for a minute (`write_idle`, caddyserver/caddy release notes).
+ */
+export const PING_SECONDS = 50;
+
 export const subscribeToChanges = (
   client: JmapClient,
   onChange: (changed: StateChange) => void,
@@ -26,7 +32,11 @@ export const subscribeToChanges = (
 
   const connect = async (): Promise<void> => {
     const { eventSourceUrl } = await client.getSession();
-    const url = fillTemplate(eventSourceUrl, { types: "*", closeafter: "no", ping: "60" });
+    const url = fillTemplate(eventSourceUrl, {
+      types: "*",
+      closeafter: "no",
+      ping: String(PING_SECONDS),
+    });
     const response = await fetch(url, {
       headers: { ...client.authHeaders, accept: "text/event-stream" },
       credentials: "same-origin",
