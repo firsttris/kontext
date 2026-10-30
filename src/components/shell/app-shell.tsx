@@ -81,9 +81,14 @@ export const railButton = (active: boolean) =>
     active ? "bg-subtle text-fg" : "text-muted hover:text-fg",
   );
 
+/**
+ * Hidden from screen readers: the app's label already says the count. Read as text, "Mail" and
+ * "7" ran together to "Mail7", which is not in "Mail, 7 ungelesen" (WCAG 2.5.3, label in name).
+ */
 const UnreadBadge = ({ count, className }: { count: number; className?: string }) =>
   count > 0 ? (
     <span
+      aria-hidden="true"
       className={cn(
         "absolute rounded-full bg-accent-fill px-1 font-mono text-[10px] leading-[15px] font-medium text-white",
         className,

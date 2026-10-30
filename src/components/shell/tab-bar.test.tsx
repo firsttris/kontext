@@ -54,6 +54,11 @@ describe("TabBar: what waits in each app", () => {
     expect(told()).toMatch(/Aufgaben, 1 neu/);
   });
 
+  it("hides the number from screen readers, the label says it (label in name, WCAG 2.5.3)", () => {
+    render(<TabBar />);
+    expect(screen.getByText("2").getAttribute("aria-hidden")).toBe("true");
+  });
+
   it("names an app without news plainly", () => {
     render(<TabBar />);
     expect(told()).toMatch(/Mehr Mail \| Kalender/);
