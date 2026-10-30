@@ -1,4 +1,4 @@
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, render, screen, within } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { TabBar } from "./app-shell";
@@ -37,36 +37,32 @@ afterEach(() => {
   setTabChoice(null);
 });
 
-/** Everything the tab bar tells a sighted or screen-reader user without opening a menu. */
-const told = () => {
-  const nav = screen.getByRole("navigation", { name: "Apps" });
-  const labels = [...nav.querySelectorAll("[aria-label]")].map((el) =>
-    el.getAttribute("aria-label"),
-  );
-  return `${nav.textContent} ${labels.join(" | ")}`;
-};
+const tabBar = () => screen.getByRole("navigation", { name: "Apps" });
 
 describe("TabBar: what waits in each app", () => {
-  it("shows unread chat, invitations and new tasks with the default tabs", () => {
+  it("names unread chat, invitations and new tasks with the default tabs", () => {
     render(<TabBar />);
-    expect(told()).toMatch(/Chat, 3 ungelesen/);
-    expect(told()).toMatch(/Kalender, 2 neu/);
-    expect(told()).toMatch(/Aufgaben, 1 neu/);
-  });
-
-  it("hides the number from screen readers, the label says it (label in name, WCAG 2.5.3)", () => {
-    render(<TabBar />);
-    expect(screen.getByText("2").getAttribute("aria-hidden")).toBe("true");
+    within(tabBar()).getByRole("link", { name: "Chat, 3 ungelesen" });
+    within(tabBar()).getByRole("link", { name: "Kalender, 2 neu" });
+    within(tabBar()).getByRole("link", { name: "Aufgaben, 1 neu" });
   });
 
   it("names an app without news plainly", () => {
     render(<TabBar />);
-    expect(told()).toMatch(/Mehr Mail \| Kalender/);
+    within(tabBar()).getByRole("link", { name: "Mail" });
   });
 
   it("keeps the badge of an app moved under Mehr", () => {
     setTabChoice(["/mail", "/contacts", "/chat", "/tasks"]);
     render(<TabBar />);
-    expect(told()).toMatch(/Mehr, 2 neu/);
+    within(tabBar()).getByRole("button", { name: "Mehr, 2 neu" });
+  });
+
+  it("names the apps by their content, not an aria-label (label in name, WCAG 2.5.3)", () => {
+    render(<TabBar />);
+    // An aria-label "Kalender, 2 neu" beside the visible "Kalender" and badge "2" reads "Kalender2"
+    // to axe, which the label does not contain.
+    expect(tabBar().querySelectorAll("a[aria-label], button[aria-label]")).toHaveLength(0);
+    expect(screen.getByText("2").getAttribute("aria-hidden")).toBe("true");
   });
 });

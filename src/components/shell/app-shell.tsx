@@ -81,10 +81,7 @@ export const railButton = (active: boolean) =>
     active ? "bg-subtle text-fg" : "text-muted hover:text-fg",
   );
 
-/**
- * Hidden from screen readers: the app's label already says the count. Read as text, "Mail" and
- * "7" ran together to "Mail7", which is not in "Mail, 7 ungelesen" (WCAG 2.5.3, label in name).
- */
+/** Hidden from screen readers: the app's name already says the count (`AppName`). */
 const UnreadBadge = ({ count, className }: { count: number; className?: string }) =>
   count > 0 ? (
     <span
@@ -105,6 +102,18 @@ const badgeLabel = (to: string, label: string, count: number) => {
     ? m.nav_unread({ label, count })
     : m.nav_new({ label, count });
 };
+
+/**
+ * An app's name under its icon, with what waits there for screen readers. Not an aria-label: the
+ * name seen with its badge reads "Mail7" to axe, which an aria-label "Mail, 7 ungelesen" does not
+ * contain (WCAG 2.5.3, label in name); built from the content, the name is the spoken text.
+ */
+const AppName = ({ label, spoken }: { label: string; spoken: string }) => (
+  <>
+    <span aria-hidden="true">{label}</span>
+    <span className="sr-only">{spoken}</span>
+  </>
+);
 
 /** The rail's name of an app, with what waits there. */
 const railLabel = (to: string, label: string, badges: AppBadges, unsavedDocuments: boolean) =>
@@ -262,14 +271,13 @@ const MoreMenu = ({ badges }: { badges: AppBadges }) => {
     <MenuRoot>
       <MenuTrigger
         data-tour={MORE_TARGET}
-        aria-label={badgeLabel(MORE, m.nav_more(), count)}
         className={cn(
           "relative flex w-16 flex-col items-center gap-1 text-[11px]",
           active ? "font-medium text-fg" : "text-muted",
         )}
       >
         <Ellipsis size={22} strokeWidth={1.75} />
-        {m.nav_more()}
+        <AppName label={m.nav_more()} spoken={badgeLabel(MORE, m.nav_more(), count)} />
         <UnreadBadge count={count} className="-top-1 left-[calc(50%+4px)]" />
       </MenuTrigger>
       <MenuContent side="top" align="end">
@@ -278,14 +286,13 @@ const MoreMenu = ({ badges }: { badges: AppBadges }) => {
         <MenuSeparator />
         {moreItems.map(({ to, label, icon: Icon }) => (
           <MenuItem key={to} asChild>
-            <Link
-              to={to}
-              aria-label={badgeLabel(to, label(), countOf(to))}
-              className="text-fg no-underline"
-            >
-              <Icon size={15} /> {label()}
+            <Link to={to} className="text-fg no-underline">
+              <Icon size={15} />{" "}
+              <AppName label={label()} spoken={badgeLabel(to, label(), countOf(to))} />
               {countOf(to) > 0 ? (
-                <span className="ml-auto font-mono text-[11px] text-muted">{countOf(to)}</span>
+                <span aria-hidden="true" className="ml-auto font-mono text-[11px] text-muted">
+                  {countOf(to)}
+                </span>
               ) : null}
             </Link>
           </MenuItem>
@@ -326,7 +333,6 @@ export const TabBar = () => {
             key={to}
             to={to}
             data-tour={appTarget(to)}
-            aria-label={badgeLabel(to, label(), count)}
             aria-current={active ? "page" : undefined}
             className={cn(
               "relative flex w-16 flex-col items-center gap-1 text-[11px] no-underline",
@@ -334,7 +340,7 @@ export const TabBar = () => {
             )}
           >
             <Icon size={22} strokeWidth={1.75} />
-            {label()}
+            <AppName label={label()} spoken={badgeLabel(to, label(), count)} />
             <UnreadBadge count={count} className="-top-1 left-[calc(50%+4px)]" />
           </Link>
         );
