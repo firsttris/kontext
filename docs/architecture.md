@@ -1681,7 +1681,8 @@ Stalwart pro Person speichert: ausgeblendet ist ein Kalender damit auf jedem Ger
 Kollegin, den man nur lesen darf (seit Stalwart 1.0; 0.16 ließ das nur mit Schreibrecht zu, darum
 hielt die App die Wahl bis dahin pro Gerät im Browser). Was ein Gerät früher so ausgeblendet hatte,
 setzt die App beim ersten Laden einmal auf dem Server und vergisst es im Browser
-(`src/lib/calendar-visibility.ts`). Geburtstage und Fällige Aufgaben sind keine Kalender und
+(`src/lib/calendar-visibility.ts`); was dabei scheitert, bleibt im Browser und kommt beim nächsten
+Laden wieder dran. Geburtstage und Fällige Aufgaben sind keine Kalender und
 bleiben pro Gerät.
 
 ## Verfügbarkeit

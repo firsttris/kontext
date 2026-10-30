@@ -9,7 +9,7 @@ import {
   useQuery,
   useQueryClient,
 } from "@tanstack/react-query";
-import { useEffect, useRef } from "react";
+import { useEffect } from "react";
 import { useClient } from "@/auth/auth";
 import { useSession } from "@/components/shell/app-shell";
 import {
@@ -126,28 +126,33 @@ export const useCalendarRefs = (): { calendars: CalendarRef[]; isPending: boolea
   return { calendars, isPending };
 };
 
+/** The move runs once per page load, shared by every calendar list on the page. */
+let moveStarted = false;
+
 /**
  * Before Stalwart 1.0 the app kept hidden calendars per device (hidden-calendars.ts); what this
- * device hid is set on the server once (lib/calendar-visibility.ts) and then forgotten here.
+ * device hid is set on the server once (lib/calendar-visibility.ts) and then forgotten here; a key
+ * whose write failed stays for the next load.
  */
 const useMoveHiddenCalendars = (calendars: CalendarRef[], local: ReadonlySet<string>) => {
   const setVisible = useSetCalendarVisible();
-  const moving = useRef(false);
   useEffect(() => {
+    if (moveStarted) return;
     const { hide, forget } = hiddenToMove(local, calendars);
-    if (moving.current || !forget.length) return;
-    moving.current = true;
+    if (!forget.length) return;
+    moveStarted = true;
     const byKey = new Map(calendars.map((calendar) => [calendar.key, calendar]));
-    void Promise.all(
-      hide.map((key) => setVisible.mutateAsync({ calendar: byKey.get(key)!, visible: false })),
-    )
-      .then(() => {
-        for (const key of forget) forgetHiddenCalendar(key);
-      })
-      .catch(() => undefined)
-      .finally(() => {
-        moving.current = false;
-      });
+    const alreadyHidden = forget.filter((key) => !hide.includes(key));
+    void Promise.allSettled(
+      hide.map((key) =>
+        setVisible.mutateAsync({ calendar: byKey.get(key)!, visible: false }).then(() => key),
+      ),
+    ).then((results) => {
+      const moved = results.flatMap((result) =>
+        result.status === "fulfilled" ? [result.value] : [],
+      );
+      for (const key of [...alreadyHidden, ...moved]) forgetHiddenCalendar(key);
+    });
   }, [calendars, local, setVisible]);
 };
 
@@ -155,18 +160,20 @@ const useMoveHiddenCalendars = (calendars: CalendarRef[], local: ReadonlySet<str
 export const useSetCalendarVisible = () => {
   const client = useClient();
   const queryClient = useQueryClient();
+  const setShown = (calendar: CalendarRef, isVisible: boolean) =>
+    queryClient.setQueryData<Calendar[]>(listKey(calendar.accountId), (list) =>
+      list?.map((item) => (item.id === calendar.calendar.id ? { ...item, isVisible } : item)),
+    );
   return useMutation({
     mutationFn: ({ calendar, visible }: { calendar: CalendarRef; visible: boolean }) =>
       updateCalendar(client, calendar.accountId, calendar.calendar.id, { isVisible: visible }),
     onMutate: async ({ calendar, visible }) => {
       // A list still loading (e.g. after saving an event) would bring the old value back.
       await queryClient.cancelQueries({ queryKey: listKey(calendar.accountId) });
-      queryClient.setQueryData<Calendar[]>(listKey(calendar.accountId), (list) =>
-        list?.map((item) =>
-          item.id === calendar.calendar.id ? { ...item, isVisible: visible } : item,
-        ),
-      );
+      setShown(calendar, visible);
     },
+    // Back to before the click, also when the list cannot be reloaded right now.
+    onError: (_error, { calendar, visible }) => setShown(calendar, !visible),
     onSettled: (_data, _error, { calendar }) =>
       queryClient.invalidateQueries({ queryKey: listKey(calendar.accountId) }),
   });
