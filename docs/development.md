@@ -164,7 +164,19 @@ mit einem Klick als Jonas, Anna, Sandra oder Max an.
   ebenso statisch und mit eigenen Beispieldateien. Ihre Seiten stehen hinter `#`; Kontext setzt die
   Seite dorthin und `?embedded=kontext` davor (`frameSrcOf`, `src/features/documents/messages.ts`).
   Dateien zwischen Mail und Dokumenten hin und her geht nur mit beiden Servern (`connected: false`).
-- **Was noch fehlt:** Aufgaben, Chat und die übrigen Module öffnen leer.
+- **Chat und Aufgaben:** die Routen des Kontext-Servers selbst (`server/chat/routes.ts`,
+  `server/tasks/routes.ts`), im Browser auf Speichern im Arbeitsspeicher
+  (`server/chat/memory-store.ts`, `server/tasks/memory-store.ts`, dieselben wie in ihren Tests).
+  Gefüllt werden sie wie auf dem Entwicklungsserver von den Leuten selbst über diese Routen
+  (`fillWith` in `dev/demo-data.ts`): #baustelle-hoffmann mit Aufmaß und Mail-Karte, info@,
+  #allgemein, eine Direktnachricht von Sandra, die Aufgaben der Boards. Schreiben, Reaktionen,
+  Threads, Dateien und neue Aufgaben gehen; was andere gerade tun, kommt nicht an – die Demo hat
+  keine Live-Verbindung, und angemeldet ist immer nur eine Person.
+- **Telefon:** das Modul wie mit einer Telefonbox im Büro, mit den Anrufen der letzten Tage
+  (angenommen, verpasst mit Nachricht auf der Mailbox, gewählt, die Tür), Status, Notizen und
+  Auswertung (`src/demo/phone.ts`). Es klingelt nichts, und wählen geht ohne Telefonbox nicht;
+  die Nachrichten auf der Mailbox haben keinen Ton.
+- **Was noch fehlt:** Videoanrufe und die Firmenverwaltung.
   Methoden, die die Demo nicht kennt, beantwortet sie wie ein leerer Server (`src/demo/jmap.ts`);
   Module, die einen eigenen Dienst brauchen (Anrufe, Telefon, Dokumente mit Schreibzeug), sind
   wie auf einem Server ohne sie abgeschaltet (`src/demo/api.ts`).
