@@ -22,7 +22,7 @@
     "e2e": "bun run build && E2E_BUILT=1 playwright test --project=desktop --project=phone --project=pwa",
     "check": "bun run typecheck && bun run lint && bun run test && bun run build",
     "postinstall": "paraglide-js compile --project ./project.inlang --outdir ./src/paraglide --strategy custom-choice preferredLanguage baseLocale",
-    "screenshots": "playwright test --project=screenshots",
+    "screenshots": "bun run build && E2E_BUILT=1 playwright test --project=screenshots",
     "video": "bun run video:de && bun run video:en",
     "video:de": "FILM_LANG=de bun run video:film",
     "video:en": "FILM_LANG=en bun run video:film",
