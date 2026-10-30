@@ -7,6 +7,11 @@ Steps that an update needs beyond raising the version are marked **Upgrade**.
 
 ## Unreleased
 
+- Installation guide, "Stalwart 0.16 auf 1.0 heben": `stalwart-migrate` 1.0.4 or newer (1.0.0 to
+  1.0.3 fail `run --final` on contact cards), the tested commands for Quadlet (`prepare
+  --non-interactive` with `answers.toml`, a live run with `verify --full`, the final run, swapping
+  the volumes), and what to do when Stalwart has banned a person's address after the move
+  (delete the ban, then `ReloadBlockedIps`).
 - Settings: "Zugänge" shows who and what has access to the account: the signed-in browsers (sign
   out one or all others), other programs signed in at Stalwart with OAuth (`x:OAuthGrant`,
   revocable), app passwords, AI agents and other mailboxes. Ending a Kontext session (signing out,
