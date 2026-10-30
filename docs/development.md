@@ -305,6 +305,16 @@ Actions → _Update video_ → Run workflow (oder `bun run video`, braucht ffmpe
   mkdocs-static-i18n && mkdocs serve`. Deutsch steht unter `/`, Englisch unter `/en/`: Übersetzt wird
   eine Seite mit einer Datei daneben (`index.en.md` zu `index.md`); ohne sie zeigt die englische
   Seite den deutschen Text. Die Startseite ist der Rundgang in Bildern, `ueberblick.md` die Übersicht.
+- **Neue Versionen von Stalwart, LiveKit & Co.** (`.github/renovate.json5`): Die
+  [Renovate-App](https://github.com/apps/renovate) öffnet für jedes neue Release der Images in
+  `deploy/` (Stalwart, LiveKit, LiveKit SIP, Redis, Caddy) und der Bun-Basis-Images in den
+  Dockerfiles einen Pull Request; offene stehen im Issue „Dependency Dashboard“. Stalwart und
+  LiveKit hebt der Pull Request zusammen in `deploy/compose.yaml`, `deploy/quadlet/` und
+  `dev/config.ts`, sodass seine E2E-Tests schon gegen das neue Release laufen. Vor dem Mergen eines
+  Stalwart-Updates dessen Changelog und `UPGRADING/` lesen und die Workarounds prüfen, die im Code
+  mit „Stalwart 0.16.x“ markiert sind. Die eigenen Images (`tristanteu/*`) und die Bun-Pakete
+  fasst Renovate nicht an. Prüfen: `bunx --package renovate renovate-config-validator
+  .github/renovate.json5`.
 - **Screenshots**: Actions → _Update screenshots_ → Run workflow (oder `bun run screenshots`, lokal mit
   `PW_CHROMIUM_PATH`, wenn Playwrights eigener Browser fehlt).
 - **Film**: Actions → _Update video_ → Run workflow (oder `bun run video`, siehe [Film](#film)).
