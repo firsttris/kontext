@@ -31,3 +31,24 @@ describe("foundInAttachment", () => {
     expect(foundInAttachment(["zebrafink"], email)).toBe(false);
   });
 });
+
+describe("foundInAttachment, where Stalwart finds the word elsewhere", () => {
+  const none = { subject: null, preview: null };
+
+  it("is not for a mail without attachments (a stemmed hit in the text that the snippet does not mark)", () => {
+    // Stalwart 1.0.1 finds "Haus" in "Wir bauen drei Häuser" and marks nothing (checked live).
+    expect(foundInAttachment(["dach"], { ...email, hasAttachment: false, snippet: none })).toBe(
+      false,
+    );
+  });
+
+  it("is not when Cc or Bcc has the word (Stalwart's text filter searches them)", () => {
+    const cc = [{ name: "Kranich Vogel", email: "vogel@example.test" }];
+    expect(
+      foundInAttachment(["kranich"], { ...email, hasAttachment: true, cc, snippet: none }),
+    ).toBe(false);
+    expect(
+      foundInAttachment(["kranich"], { ...email, hasAttachment: true, bcc: cc, snippet: none }),
+    ).toBe(false);
+  });
+});
