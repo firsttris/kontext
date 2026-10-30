@@ -8,8 +8,11 @@ import type { SeedContact, SeedContactGroup, SeedEvent } from "./seed-data";
 
 /** Local date-time in Europe/Berlin for "today + days" at "HH:MM", as JSCalendar LocalDateTime. */
 export const localStart = (days: number, time: string, now = Date.now()): string => {
-  const date = new Date(now + days * 86_400_000);
-  const ymd = new Intl.DateTimeFormat("sv-SE", { timeZone: "Europe/Berlin" }).format(date);
+  const today = new Intl.DateTimeFormat("sv-SE", { timeZone: "Europe/Berlin" }).format(now);
+  const [year, month, day] = today.split("-").map(Number);
+  // Days on the calendar, not 24 hours each: around a change of the clocks a day in Berlin has
+  // 23 or 25 hours.
+  const ymd = new Date(Date.UTC(year!, month! - 1, day! + days)).toISOString().slice(0, 10);
   return `${ymd}T${time}:00`;
 };
 
