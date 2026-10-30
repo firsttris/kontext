@@ -98,7 +98,15 @@ export const createGrants = (
     await db.delete(schema.stalwartGrant).where(eq(schema.stalwartGrant.sessionId, sessionId));
   };
 
-  return { save, accessToken, end };
+  /**
+   * Stalwart refused the access token although it has not run out: it no longer knows the grant
+   * (a move to a new Stalwart, a restore). Nothing to revoke there; the session signs in again.
+   */
+  const forget = async (sessionId: string): Promise<void> => {
+    await db.delete(schema.stalwartGrant).where(eq(schema.stalwartGrant.sessionId, sessionId));
+  };
+
+  return { save, accessToken, end, forget };
 };
 
 export type Grants = ReturnType<typeof createGrants>;

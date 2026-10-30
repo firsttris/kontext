@@ -1,5 +1,8 @@
-import { describe, expect, it } from "vitest";
-import { mailNotices, type NewMail } from "./mail-watch";
+// @vitest-environment node
+import { afterEach, describe, expect, it, vi } from "vitest";
+import type { Grants } from "../auth";
+import { readEnv } from "../env";
+import { createMailWatch, mailNotices, type NewMail } from "./mail-watch";
 
 const mail = (id: string, receivedAt: string, seen = false): NewMail => ({
   id,
@@ -39,5 +42,56 @@ describe("mailNotices", () => {
     expect(mailNotices(many, "info", since)).toEqual([
       { title: "4 neue Mails", body: "", url: "/mail/info/inbox", tag: "mail-info" },
     ]);
+  });
+});
+
+describe("createMailWatch", () => {
+  const env = readEnv({
+    BETTER_AUTH_SECRET: "x".repeat(48),
+    BETTER_AUTH_URL: "https://kontext.test",
+    STALWART_URL: "http://stalwart:8080",
+  });
+  const watchFor = (token: string | null) => {
+    const grants = { accessToken: vi.fn(async () => token), forget: vi.fn(async () => undefined) };
+    const watch = createMailWatch({
+      env,
+      grants: grants as unknown as Grants,
+      store: {
+        subscribers: async () => [{ memberId: "jonas", sessionId: "s1" }],
+        mailboxesOff: async () => [],
+      },
+      pusher: { notify: async () => undefined },
+    });
+    return { grants, watch };
+  };
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    vi.restoreAllMocks();
+  });
+
+  it("stops for a token Stalwart refuses, forgets the grant and does not ask again", async () => {
+    const fetch = vi.fn(async () => new Response("Unauthorized", { status: 401 }));
+    vi.stubGlobal("fetch", fetch);
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => undefined);
+    const { grants, watch } = watchFor("refused");
+    await watch.refresh();
+    await vi.waitFor(() => expect(grants.forget).toHaveBeenCalledWith("s1"));
+    await new Promise((resolve) => setTimeout(resolve, 20));
+    expect(fetch).toHaveBeenCalledOnce();
+    expect(warn).toHaveBeenCalledOnce();
+    watch.stop();
+  });
+
+  it("does not ask Stalwart without a grant", async () => {
+    const fetch = vi.fn(async () => new Response("{}"));
+    vi.stubGlobal("fetch", fetch);
+    vi.spyOn(console, "warn").mockImplementation(() => undefined);
+    const { grants, watch } = watchFor(null);
+    await watch.refresh();
+    await vi.waitFor(() => expect(grants.accessToken).toHaveBeenCalledOnce());
+    await new Promise((resolve) => setTimeout(resolve, 20));
+    expect(fetch).not.toHaveBeenCalled();
+    watch.stop();
   });
 });

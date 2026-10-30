@@ -54,6 +54,11 @@ const sleep = (ms: number, signal: AbortSignal) =>
     });
   });
 
+/** Said once when a watch ends for want of a sign-in, instead of a warning every 30 s. */
+const signedOut = (memberId: string) => {
+  console.warn(`Mail-Push für ${memberId}: Anmeldung abgelaufen, aus bis zur nächsten Anmeldung`);
+};
+
 const USING = [
   "urn:ietf:params:jmap:core",
   "urn:ietf:params:jmap:mail",
@@ -90,11 +95,18 @@ export const createMailWatch = ({
     while (!signal.aborted) {
       try {
         const token = await grants.accessToken(sessionId);
-        if (!token) throw new Error("no token");
+        // The session has to sign in again; its next one starts a new watch (refresh).
+        if (!token) return signedOut(memberId);
         const auth = { authorization: `Bearer ${token}` };
-        const session = (await (
-          await fetch(`${env.STALWART_URL}/jmap/session`, { headers: auth, signal })
-        ).json()) as {
+        const answer = await fetch(`${env.STALWART_URL}/jmap/session`, { headers: auth, signal });
+        // A refused token stays refused (Stalwart no longer knows the grant); asking again every
+        // 30 s only adds failed sign-ins.
+        if (answer.status === 401) {
+          await grants.forget(sessionId);
+          return signedOut(memberId);
+        }
+        if (!answer.ok) throw new Error(`session ${answer.status}`);
+        const session = (await answer.json()) as {
           apiUrl: string;
           eventSourceUrl: string;
           accounts: Record<string, { accountCapabilities: Record<string, unknown> }>;
