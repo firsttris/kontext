@@ -119,7 +119,7 @@ services:
     command: ["redis-server", "--save", "", "--appendonly", "no"]
 
   caddy:
-    image: docker.io/library/caddy:2.10.2-alpine
+    image: docker.io/library/caddy:2.11.7-alpine
     restart: unless-stopped
     depends_on: [kontext]
     ports:
