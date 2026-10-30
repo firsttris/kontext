@@ -694,6 +694,9 @@ das Manifest steht in `vite.config.ts`, der Service Worker in `src/sw/service-wo
   beide Dateien gleich (`dev/messages.test.ts`); die Unit-Tests laufen auf Deutsch.
 - **App-Symbol:** ein gefalteter Papierflieger, einmal in `dev/icons.ts` gezeichnet und mit
   `bun run icons` in alle Größen in `public/` geschrieben (Favicon, Manifest, Apple, maskierbar).
+  Im maskierbaren Symbol ist der Flieger kleiner: Android zeigt davon nur den inneren Kreis
+  (72 von 108 dp), manche Startbildschirme legen noch einen Ring darüber, und die Spitze soll
+  dort nicht an den Rand stoßen.
   Das kleine Symbol der Benachrichtigungen (`badge-96.png`) ist ein weißer Flieger auf
   Transparenz: Android zeichnet es in Statusleiste und Benachrichtigung nur aus dem Alphakanal,
   ein deckendes Bild würde dort zum weißen Quadrat.
