@@ -4,7 +4,7 @@
 Description=Redis (LiveKit)
 
 [Container]
-Image=docker.io/library/redis:7.4.5-alpine
+Image=docker.io/library/redis:8.10.3-alpine
 ContainerName=redis
 Network=kontext.network
 Exec=redis-server --save "" --appendonly no
