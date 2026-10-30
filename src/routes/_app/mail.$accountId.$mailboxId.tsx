@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { z } from "zod";
 import { MailPage } from "@/features/mail/mail-page";
+import { z } from "@/lib/zod";
 
 export const mailSearchSchema = z.object({
   /** The open mail. */

@@ -1,10 +1,10 @@
 import { createFileRoute, redirect, useNavigate } from "@tanstack/react-router";
 import { type FormEvent, lazy, Suspense, useState } from "react";
-import { z } from "zod";
 import { useAuth } from "@/auth/auth";
 import { signedOAuthQuery } from "@/auth/oauth-query";
 import { Button } from "@/components/ui/button";
 import { Input, Label } from "@/components/ui/input";
+import { z } from "@/lib/zod";
 import { m } from "@/paraglide/messages";
 
 export const Route = createFileRoute("/login")({

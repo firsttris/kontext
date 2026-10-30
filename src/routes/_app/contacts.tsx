@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { z } from "zod";
 import { ContactsPage } from "@/features/contacts/contacts-page";
+import { z } from "@/lib/zod";
 
 export const Route = createFileRoute("/_app/contacts")({
   validateSearch: z.object({
