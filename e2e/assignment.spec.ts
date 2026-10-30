@@ -114,6 +114,21 @@ test.describe("Mails zuweisen", () => {
     await expect(inbox(page).getByText(subject)).toBeHidden();
   });
 
+  test("bietet nur die Mitglieder des Postfachs an", async ({ page }) => {
+    // rechnung@: Jonas and Anna; Sandra is only in info@, Max in neither.
+    const subject = unique("Rechnung offen");
+    await addMail("jonas", "rechnung", subject);
+    await login(page, "jonas");
+    await page.getByRole("link", { name: "rechnung@" }).click();
+    await inbox(page).getByText(subject).click();
+    await expect(page.getByRole("heading", { name: subject })).toBeVisible();
+    await page.getByRole("button", { name: "Zuweisen", exact: true }).click();
+    await expect(page.getByRole("menuitemradio", { name: "Anna Weber" })).toBeVisible();
+    await expect(page.getByRole("menuitemradio", { name: "Mir zuweisen" })).toBeVisible();
+    await expect(page.getByRole("menuitemradio", { name: "Sandra Klein" })).toHaveCount(0);
+    await expect(page.getByRole("menuitemradio", { name: "Max Becker" })).toHaveCount(0);
+  });
+
   test("wer ein gemeinsames Postfach nur liest, bekommt kein „Zuweisen“", async ({ page }) => {
     // rechnung@ shared with Max "Nur lesen" (server/company/sharing.ts READ_ONLY): Stalwart gives
     // maySetKeywords but not maySetMetadata, and refuses the assignment ("forbidden").

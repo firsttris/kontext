@@ -9,7 +9,7 @@ After=kontext.service
 Wants=kontext.service
 
 [Container]
-Image=docker.io/tristanteu/schreibzeug:0.1.8
+Image=docker.io/tristanteu/schreibzeug:0.1.14
 ContainerName=schreibzeug
 Network=kontext.network
 Volume=schreibzeug-data:/data

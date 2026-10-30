@@ -85,6 +85,17 @@ const FIXED: Record<string, (store: Store) => unknown> = {
       ],
     };
   },
+  // Members of the signed-in person's shared mailboxes, from the seed's groups.
+  "GET /api/company/mailbox-members": (store) => ({
+    members: Object.fromEntries(
+      visibleAccounts(store)
+        .slice(1)
+        .map((group) => [
+          group.id,
+          store.accounts.filter((a) => a.groups.includes(group.id)).map((a) => a.id),
+        ]),
+    ),
+  }),
   "GET /api/company/me": (store) => ({
     admin: visibleAccounts(store)[0]?.companyAdmin ?? false,
   }),

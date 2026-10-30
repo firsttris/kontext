@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import type { JmapClient } from "./client";
-import { CATCH_UP_AGAIN_MS, parseEvents, subscribeToChanges } from "./push";
+import { CATCH_UP_AGAIN_MS, PING_SECONDS, parseEvents, subscribeToChanges } from "./push";
 
 describe("parseEvents", () => {
   it("returns complete events and keeps the rest", () => {
@@ -30,5 +30,23 @@ describe("subscribeToChanges", () => {
     stop();
     vi.unstubAllGlobals();
     vi.useRealTimers();
+  });
+
+  it("asks for pings more often than Caddy's one-minute idle timeout", async () => {
+    const fetchMock = vi.fn(
+      async (_url: string) =>
+        new Response(new ReadableStream<Uint8Array>({ start: () => undefined }), { status: 200 }),
+    );
+    vi.stubGlobal("fetch", fetchMock);
+    const client = {
+      getSession: async () => ({ eventSourceUrl: "/jmap/eventsource/?ping={ping}" }),
+      authHeaders: {},
+    } as unknown as JmapClient;
+    const stop = subscribeToChanges(client, () => undefined);
+    await vi.waitFor(() => expect(fetchMock).toHaveBeenCalled());
+    expect(fetchMock.mock.calls[0]?.[0]).toBe(`/jmap/eventsource/?ping=${PING_SECONDS}`);
+    expect(PING_SECONDS).toBeLessThan(60);
+    stop();
+    vi.unstubAllGlobals();
   });
 });

@@ -5,7 +5,7 @@ After=kontext.service
 Wants=kontext.service
 
 [Container]
-Image=docker.io/library/caddy:2.10.2-alpine
+Image=docker.io/library/caddy:2.11.7-alpine
 ContainerName=caddy
 Network=kontext.network
 PublishPort=80:80
