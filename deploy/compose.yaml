@@ -112,7 +112,7 @@ services:
           level: warn
 
   redis:
-    image: docker.io/library/redis:7.4.5-alpine
+    image: docker.io/library/redis:7.4.12-alpine
     profiles: [calls]
     restart: unless-stopped
     # Only rooms and calls in flight; nothing to keep across a restart.
