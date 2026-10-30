@@ -1,5 +1,5 @@
 import { expect, type Page, test } from "@playwright/test";
-import { addMail, address, jmapAs, login, unique } from "./helpers";
+import { addMail, address, givenKeywords, jmapAs, login, unique } from "./helpers";
 
 /** Folder role and keywords of each mail with these subjects, in a user's own or shared mailbox. */
 const stateOf = async (user: string, mailbox: string, subjects: string[]) => {
@@ -36,7 +36,7 @@ const stateOf = async (user: string, mailbox: string, subjects: string[]) => {
       email.subject,
       {
         folder: Object.keys(email.mailboxIds).map((id) => roles[id])[0],
-        keywords: Object.keys(email.keywords).sort(),
+        keywords: givenKeywords(email.keywords),
       },
     ]),
   );

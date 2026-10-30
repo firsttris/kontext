@@ -3,7 +3,7 @@ import { DEV_PASSWORD, STALWART_ADMIN } from "../dev/config";
 import { CAPABILITIES, createJmapClient } from "../src/jmap/client";
 import { newEmployee, signInWith, stamp } from "./company-helpers";
 import { pstFixture } from "./fixtures";
-import { address, jmapAs, login, personalAccountId, STALWART } from "./helpers";
+import { address, givenKeywords, jmapAs, login, personalAccountId, STALWART } from "./helpers";
 
 test.describe("Umzug", () => {
   test("Umzug aus Outlook: PST hochladen, zweimal ohne Doppelte", async ({ page }) => {
@@ -179,12 +179,7 @@ test.describe("Umzug", () => {
         .sort(),
     ).toEqual([`Label A ${stamp_}`, `Label B ${stamp_}`]);
     // Tags became categories of the new mailbox: Thunderbird's under its German name.
-    expect(twoLabels!.keywords).toEqual({
-      $seen: true,
-      $flagged: true,
-      wichtig: true,
-      angebot: true,
-    });
+    expect(givenKeywords(twoLabels!.keywords)).toEqual(["$flagged", "$seen", "angebot", "wichtig"]);
 
     // A second run brings nothing twice; then the move is finished.
     await row.getByRole("button", { name: "Jetzt abgleichen" }).click();
@@ -294,11 +289,9 @@ test.describe("Umzug", () => {
         "g",
       ],
     ]);
-    expect(Object.keys((got![1].list as { keywords: object }[])[0]!.keywords).sort()).toEqual([
-      "$flagged",
-      "grosskunde",
-      "rechnung",
-    ]);
+    expect(
+      givenKeywords((got![1].list as { keywords: Record<string, boolean> }[])[0]!.keywords),
+    ).toEqual(["$flagged", "grosskunde", "rechnung"]);
     const asPetra = await (await page.context().browser()!.newContext()).newPage();
     await signInWith(asPetra, address(local), password);
     await expect(asPetra).toHaveURL(/\/mail\//);

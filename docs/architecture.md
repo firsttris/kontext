@@ -1547,7 +1547,10 @@ die Initialen. Zwei Quellen:
   Server verraten, wann man den Kontakt ansieht. Vom iPhone oder Mac (vCard 3.0,
   `PHOTO;ENCODING=b;TYPE=JPEG`) kommt das Foto von Stalwart ohne Bildtyp als `data:;base64,…`
   (calcard 0.3.14, `src/vcard/utils.rs`); die App erkennt dann JPEG, PNG, GIF und WebP an den
-  ersten Bytes, SVG nie. Logos und Töne in `media` bleiben beim Speichern erhalten.
+  ersten Bytes, SVG nie. Logos und Töne in `media` bleiben beim Speichern erhalten. Stalwart 1.0
+  gibt ein gespeichertes Foto nur noch als `blobId` heraus; `listContacts` holt die Bytes mit
+  `Blob/get` (RFC 9404, `data:asBase64`) und setzt sie wieder als `data:`-URI ein
+  (`src/jmap/contacts.ts`).
 
 Eine Mail selbst bringt kein Foto mit: Gmail zeigt Profilbilder aus Googles eigenen Konten, nicht
 aus der Mail. Kontext zeigt neben einer Mail das Foto des Kollegen oder Kontakts mit der Adresse
