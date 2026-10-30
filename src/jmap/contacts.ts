@@ -87,7 +87,10 @@ const withInlinePhotos = async (
         String(index),
       ]),
       [...USING, CAPABILITIES.blob],
-    );
+    ).catch(() => null);
+    // Blob/get in an account a colleague shares is refused (accountNotSupportedByMethod, Stalwart
+    // 1.0.1): the cards still count, only without those photos.
+    if (!answers) break;
     for (const [name, args, index] of answers) {
       const base64 = (args.list as { "data:asBase64"?: string }[] | undefined)?.[0]?.[
         "data:asBase64"

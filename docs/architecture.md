@@ -1550,7 +1550,8 @@ die Initialen. Zwei Quellen:
   ersten Bytes, SVG nie. Logos und Töne in `media` bleiben beim Speichern erhalten. Stalwart 1.0
   gibt ein gespeichertes Foto nur noch als `blobId` heraus; `listContacts` holt die Bytes mit
   `Blob/get` (RFC 9404, `data:asBase64`) und setzt sie wieder als `data:`-URI ein
-  (`src/jmap/contacts.ts`).
+  (`src/jmap/contacts.ts`). In einem Adressbuch, das ein Kollege teilt, lehnt Stalwart 1.0.1
+  `Blob/get` ab (`accountNotSupportedByMethod`); die Kontakte erscheinen dann ohne diese Fotos.
 
 Eine Mail selbst bringt kein Foto mit: Gmail zeigt Profilbilder aus Googles eigenen Konten, nicht
 aus der Mail. Kontext zeigt neben einer Mail das Foto des Kollegen oder Kontakts mit der Adresse
