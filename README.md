@@ -35,15 +35,27 @@ No per-seat pricing. Made in Europe.
 [![GDPR](https://img.shields.io/badge/GDPR-data%20on%20your%20server-15803d)](#-why-kontext)
 [![Made in Europe](https://img.shields.io/badge/made%20in-Europe-003399)](#-why-kontext)
 
+[![TypeScript](https://img.shields.io/badge/TypeScript-3178c6?logo=typescript&logoColor=white)](https://www.typescriptlang.org)
+[![Bun](https://img.shields.io/badge/Bun-000000?logo=bun&logoColor=white)](https://bun.sh)
+[![React](https://img.shields.io/badge/React-149eca?logo=react&logoColor=white)](https://react.dev)
+[![TanStack](https://img.shields.io/badge/TanStack-Router%20%7C%20Query-ff4154?logo=reactquery&logoColor=white)](https://tanstack.com)
+[![Tailwind CSS](https://img.shields.io/badge/Tailwind%20CSS-06b6d4?logo=tailwindcss&logoColor=white)](https://tailwindcss.com)
+[![Vite](https://img.shields.io/badge/Vite-646cff?logo=vite&logoColor=white)](https://vite.dev)
+[![Hono](https://img.shields.io/badge/Hono-e36002?logo=hono&logoColor=white)](https://hono.dev)
+[![SQLite](https://img.shields.io/badge/SQLite-Drizzle-003b57?logo=sqlite&logoColor=white)](https://orm.drizzle.team)
+[![MCP server](https://img.shields.io/badge/MCP-Claude-d97757)](https://firsttris.github.io/kontext/agents.html)
+
 </div>
 
 ## 💡 Why Kontext?
 
 Google Workspace and Microsoft 365 are convenient, but every user costs money every month and the
-data sits with a US corporation. Kontext works just as well in the browser and on the phone, and
+data sits with a US corporation. Kontext is just as convenient in the browser and on the phone, but
 runs on **your** server: a small VPS from about €5 a month (e.g. at IONOS or Hetzner) or a machine
 of your own.
 
+- **Made in Europe, for Europe**: developed in Europe, open source, on your server. No US
+  provider in between, so no access to your data under the US CLOUD Act.
 - **Your data stays with you (GDPR)**: mails, appointments, contacts, chat and calls live on your
   server, in Europe or in your own office. No US provider, no trackers.
 - **No per-seat pricing**: ten people cost the same as one; you pay for the server.
@@ -53,6 +65,8 @@ of your own.
   and documents, with one sign-in.
 - **Built for the phone too**: every view works on the phone, swipe a mail to archive it, and it
   installs as an app without an app store.
+- **Accessible by keyboard**: every view works without a mouse, with visible focus and a skip
+  link, in light and dark – [more on accessibility](https://firsttris.github.io/kontext/accessibility.html).
 - **AI if you want it**: Claude and other assistants find customers, mails and appointments for you
   and write drafts – they never send or delete anything.
 - **Open, no lock-in**: open source (AGPL) and standard protocols, so Outlook, Thunderbird, iPhone
@@ -113,6 +127,7 @@ Calls and documents (Schreibzeug, no install of its own needed) are switched on 
 | 🤖 **AI agents (MCP)** | Claude and other agents look up customers, mails and appointments with your rights, **write drafts** and **invite colleagues to appointments** – nothing goes outside the company, no deleting, every change logged · [more →](https://firsttris.github.io/kontext/agents.html) |
 | 🏢 **Company admin** | **People, shared mailboxes and rights** without IT skills, **mail rules for each employee**, company signature with each person's phone and position, **legal footer under every mail**, sign-out after inactivity for shared computers, **offboarding without deleting**, backups at a glance, **moving in from Microsoft 365, Gmail and Outlook** · [more →](https://firsttris.github.io/kontext/company.html) |
 | 📱 **On every device** | **An app on desktop, Android and iPhone** without an app store, **a short tour on the first start**, push notifications with **badges in the tab bar that show which app has news**, light and dark, two-factor sign-in, **one overview of who has access** (sign out other devices), **built for keyboard and screen reader**, checked automatically against WCAG 2.2 AA on every push ([accessibility](https://firsttris.github.io/kontext/accessibility.html)) · [more →](https://firsttris.github.io/kontext/app.html) |
+| ♿ **Accessibility** | **Everything by keyboard** with a skip link and visible focus, contrast in light and dark, **reduced motion** · [more →](https://firsttris.github.io/kontext/accessibility.html) |
 
 <img src="docs/screenshots/phone-call.png" alt="CTI in Kontext: an incoming call from the Fritzbox rings in the browser with the caller's contact, company, number and last mail, next to the inbox" width="900">
 
