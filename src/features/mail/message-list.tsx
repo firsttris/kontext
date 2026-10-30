@@ -37,7 +37,8 @@ export const MessageList = ({ accountId, mailbox, search }: Props) => {
   // In the inbox, what came back from Wiedervorlage and is not read yet: on top, by itself.
   const isInbox = mailbox.role === "inbox";
   const backFilter = useMemo(() => resurfacedFilter(mailbox.id, RESURFACED), [mailbox.id]);
-  const back = useEmailList(isInbox ? accountId : "", backFilter);
+  // Not in an assignment view: what came back belongs to anyone (or is done).
+  const back = useEmailList(isInbox && !assigned ? accountId : "", backFilter);
   // On Wiedervorlage: when each comes back, the next first.
   const isSnoozed = mailbox.role === "snoozed";
   const snoozes = useSnoozes(isSnoozed ? accountId : "");
