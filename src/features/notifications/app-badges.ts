@@ -1,8 +1,8 @@
 /**
  * The badges on the apps in the tab bar and the rail: where a push notification's news waits.
  * Mail counts like "Alle Posteingänge" and the app icon; invitations and tasks come from the
- * bell's feed. Reading the mail, answering the invitation or opening the tasks clears them on
- * every device.
+ * bell's feed. Reading the mail or answering the invitation clears them on every device; tasks
+ * count as seen per device (in the browser, like the bell).
  */
 import { useEffect } from "react";
 import { useChannels } from "@/features/chat/queries";
