@@ -454,7 +454,7 @@ Wer Konten an Kontext vorbei per API anlegt, holt das unter *Einstellungen → F
 /root/stalwart-api.sh '[["x:Role/set",{"create":{"r":{"description":"Firmenverwaltung (Kontext)"}}},"0"]]'
 /root/stalwart-api.sh '[["x:Account/set",{"create":{"c":{"@type":"User","name":"chef","domainId":"<domain-id>",
   "roles":{"@type":"Custom","roleIds":{"b":true,"<firmenrollen-id>":true}},
-  "aliases":{"0":{"enabled":true,"name":"vorname.nachname","domainId":"<domain-id>"}},
+  "aliases":{"0":{"enable":true,"name":"vorname.nachname","domainId":"<domain-id>"}},
   "credentials":{"0":{"@type":"Password","secret":"<startpasswort>"}}}}},"0"]]'
 ```
 
@@ -492,7 +492,7 @@ und ein Catch-all). Einzelne Adressen werden Aliase eines Kontos, ein Catch-all 
 
 ```bash
 /root/stalwart-api.sh '[
- ["x:Account/set",{"update":{"<konto-id>":{"aliases":{"0":{"enabled":true,"name":"info","domainId":"<domain-id>"}}}}},"0"],
+ ["x:Account/set",{"update":{"<konto-id>":{"aliases":{"0":{"enable":true,"name":"info","domainId":"<domain-id>"}}}}},"0"],
  ["x:Domain/set",{"update":{"<domain-id>":{"catchAllAddress":"chef@firma.de"}}},"1"]]'
 ```
 
