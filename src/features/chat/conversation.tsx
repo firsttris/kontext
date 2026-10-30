@@ -269,8 +269,12 @@ export const Conversation = ({
         <div
           ref={scroller}
           {...scrollProps}
-          className="min-h-0 flex-1 overflow-y-auto px-3.5 py-4 md:px-6"
+          className="flex min-h-0 flex-1 flex-col overflow-y-auto px-3.5 py-4 md:px-6"
         >
+          {/* Takes the free height while the conversation is short, so its messages sit at the
+              input as in a messenger instead of at the top with a gap below. Not justify-end:
+              with that, what overflows the top could not be scrolled to. */}
+          <div aria-hidden="true" className="grow" />
           {!hasOlder && !loading && retentionDays ? (
             <p className="m-0 flex items-center justify-center gap-1.5 pb-4 text-center text-[12px] text-muted">
               <Clock size={13} aria-hidden="true" />

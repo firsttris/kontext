@@ -459,6 +459,24 @@ test.describe("Chat", () => {
   });
 });
 
+test("ein kurzes Gespräch steht unten am Feld, nicht oben mit Lücke", async ({ page }) => {
+  await login(page);
+  await openChat(page);
+  await openDirectWithMax(page);
+  const text = unique("Kurz gefragt");
+  await write(page, text);
+  const message = page
+    .getByRole("list", { name: "Nachrichten" })
+    .locator("[data-message]")
+    .filter({ hasText: text });
+  await expect(message).toBeVisible();
+  const [bubble, field] = await Promise.all([
+    message.boundingBox(),
+    page.getByRole("textbox", { name: "Nachricht" }).boundingBox(),
+  ]);
+  expect(field!.y - (bubble!.y + bubble!.height)).toBeLessThan(90);
+});
+
 test.describe("Chat am Handy @phone", () => {
   test("Liste, Kanal und zurück, Kontakte unter „Mehr“", async ({ page }) => {
     await login(page);
