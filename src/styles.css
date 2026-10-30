@@ -25,6 +25,9 @@
   --ok: #15803d;
   --note: #fefce8;
   --noteborder: #fde68a;
+  /* Chat bubbles: the others' grey, one's own a light accent tint, both with the normal text. */
+  --bubble: #f4f4f5;
+  --bubble-own: #e3ecfd;
   color-scheme: light;
 }
 
@@ -46,6 +49,8 @@
   --ok: #22c55e;
   --note: #1c1a10;
   --noteborder: #3f3a1d;
+  --bubble: #1f1f23;
+  --bubble-own: #172a49;
   color-scheme: dark;
 }
 
@@ -67,6 +72,8 @@
   --color-ok: var(--ok);
   --color-note: var(--note);
   --color-noteborder: var(--noteborder);
+  --color-bubble: var(--bubble);
+  --color-bubble-own: var(--bubble-own);
   --font-sans: "Geist Variable", system-ui, sans-serif;
   --font-mono: "Geist Mono Variable", ui-monospace, monospace;
   /* One width for every module sidebar, so switching modules doesn't shift the columns. */

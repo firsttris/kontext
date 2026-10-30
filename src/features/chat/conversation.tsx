@@ -345,7 +345,7 @@ export const Conversation = ({
             })}
           </ol>
           {seenBy.length ? (
-            <p className="m-0 mt-1 text-right text-[11px] text-muted md:text-left md:pl-[46px]">
+            <p className="m-0 mt-1 text-right text-[11px] text-muted">
               {others.length === 1
                 ? m.chat_seen()
                 : m.chat_seen_by({ names: seenBy.map((id) => firstName(nameOf(id))).join(", ") })}

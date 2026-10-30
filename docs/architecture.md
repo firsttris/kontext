@@ -850,6 +850,10 @@ Principal-ID), die Namen holt die App wie bei den Aufgaben über die Principals.
   dort eingeschaltet ist und Kontext im Hintergrund liegt.
 - **Verlauf:** 50 Nachrichten je Seite, ältere auf Knopfdruck; Nachrichten einer Person kurz
   hintereinander stehen unter einem Namen, eine Linie „Neu“ zeigt, wo das Ungelesene beginnt.
+- **Blasen** (`message-run.tsx`): auf jeder Bildschirmgröße stehen die eigenen Nachrichten rechts
+  in `--bubble-own` (ein heller Akzentton), die der anderen links in `--bubble` unter Name und
+  (ab `md`) Foto; eine Blase wird höchstens 42rem bzw. 80 % breit. Beide Töne halten mit Text,
+  Links (`accent-ink`) und „bearbeitet“ (`muted`) 4,5:1 in hell und dunkel.
 - **Antworten im Thread:** „Antworten“ an einer Nachricht öffnet ihren Thread – auf breiten
   Bildschirmen neben dem Gespräch, am Handy statt seiner (dort ohne Tastatur, die kommt erst mit
   einem Tipp ins Feld). Antworten tragen `parent_id`, stehen
@@ -867,7 +871,8 @@ Principal-ID), die Namen holt die App wie bei den Aufgaben über die Principals.
   Kennzeichen selbst ist offen, und die Zeile entschlüsselt die erste Nachricht des Threads im
   Browser, um ihren Text zu zeigen.
 - **Aktionen an einer Nachricht** (`src/features/chat/message-actions.tsx`): am PC schwebt beim
-  Darüberfahren eine kleine Leiste über der rechten oberen Ecke (Reagieren, Antworten, „…“ mit
+  Darüberfahren eine kleine Leiste über der äußeren oberen Ecke der Blase (rechts bei eigenen,
+  links bei fremden) (Reagieren, Antworten, „…“ mit
   Aufgabe, Bearbeiten, Löschen); sie nimmt keinen Platz weg, nichts verschiebt sich. Am Handy
   steht neben den Blasen nichts: Langes Drücken (`use-long-press.ts`) öffnet ein Blatt von unten
   mit den Reaktionen in einer Reihe und darunter Im Thread antworten, Text kopieren, Aufgabe,

@@ -97,6 +97,18 @@ test.describe("Chat", () => {
       "@Jonas mache ich gleich",
     );
     await expect(page.getByText("Sandra schreibt …")).toHaveCount(0);
+    // Bubbles as in a messenger, on a desktop too: one's own on the right, the others' on the left.
+    const list = page.getByRole("list", { name: "Nachrichten" });
+    const bubble = (words: string) =>
+      list.locator("[data-message]").filter({ hasText: words }).last().boundingBox();
+    const [own, theirs, frame] = await Promise.all([
+      bubble(text),
+      bubble("mache ich gleich"),
+      list.boundingBox(),
+    ]);
+    expect(frame!.x + frame!.width - (own!.x + own!.width)).toBeLessThan(8);
+    expect(theirs!.x - frame!.x).toBeLessThan(60);
+    expect(own!.x).toBeGreaterThan(theirs!.x + theirs!.width);
     const sent = await page.evaluate(async () => {
       const { channels } = await (await fetch("/api/chat/channels")).json();
       // The conversation with Sandra (other direct ones may exist, e.g. from the call tests).
