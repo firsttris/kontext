@@ -174,8 +174,11 @@ mit einem Klick als Jonas, Anna, Sandra oder Max an.
   keine Live-Verbindung, und angemeldet ist immer nur eine Person.
 - **Telefon:** das Modul wie mit einer Telefonbox im Büro, mit den Anrufen der letzten Tage
   (angenommen, verpasst mit Nachricht auf der Mailbox, gewählt, die Tür), Status, Notizen und
-  Auswertung (`src/demo/phone.ts`). Es klingelt nichts, und wählen geht ohne Telefonbox nicht;
-  die Nachrichten auf der Mailbox haben keinen Ton.
+  Auswertung (`src/demo/phone.ts`). Es klingelt nichts, und wählen geht ohne Telefonbox nicht.
+  Die Nachricht auf der Mailbox spielt eine Aufnahme ab, die der Demo beiliegt
+  (`src/demo/voicemail.m4a`, gesprochen mit [Piper](https://github.com/rhasspy/piper), Stimme
+  „kerstin“, CC0). Ein `<audio>` lädt seinen Ton selbst, am `fetch` der Demo vorbei; deshalb
+  bekommt jeder Player mit `src="/api/…"` die Antwort der Demo als Blob-URL (`src/demo/media.ts`).
 - **Was noch fehlt:** Videoanrufe und die Firmenverwaltung.
   Methoden, die die Demo nicht kennt, beantwortet sie wie ein leerer Server (`src/demo/jmap.ts`);
   Module, die einen eigenen Dienst brauchen (Anrufe, Telefon, Dokumente mit Schreibzeug), sind
