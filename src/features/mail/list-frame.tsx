@@ -36,6 +36,8 @@ export type Row = {
   account?: { id: string; label: string; title?: string };
   folder?: string;
   highlight?: string[];
+  /** A search hit found only in an attachment (lib/attachment-hit.ts). */
+  inAttachment?: boolean;
   /** Still held by the server, to go out then (ISO). */
   sendAt?: string;
   /** On Wiedervorlage, back in the inbox then (ISO). */
@@ -158,7 +160,7 @@ export const ListFrame = ({
   useEffect(() => {
     setPicks({ keys: new Set() });
     setSelecting(false);
-  }, [title, search.q, search.unread]);
+  }, [title, search.q, search.unread, search.assigned]);
   const showBar = selecting || picked.length > 0;
   const chips = filters ?? (
     <FilterChips

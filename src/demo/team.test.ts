@@ -1,6 +1,6 @@
 // @vitest-environment node
 // Node's own FormData and File: jsdom's are not what Node's Request reads in every Node version.
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { createPhone, handlePhone } from "./phone";
 import { createDemoServer } from "./server";
 import { createStore } from "./store";
@@ -93,5 +93,20 @@ describe("telephony in the demo", () => {
     });
     expect(status).toBe(409);
     expect(body.error).toContain("Telefonbox");
+  });
+
+  it("plays the message a caller left on the mailbox, and only that", async () => {
+    // The recording is a file of the demo's build; here it comes from a stand-in.
+    const recording = vi.fn(async () => new Response(new Blob(["sound"], { type: "audio/mp4" })));
+    vi.stubGlobal("fetch", recording);
+    const { body } = await get("/api/phone");
+    const left = (body.calls as { id: string; voicemailSeconds: number | null }[]).find(
+      (c) => c.voicemailSeconds,
+    )!;
+    const message = await get(`/api/phone/calls/${left.id}/voicemail`);
+    expect(message.status).toBe(200);
+    expect(recording).toHaveBeenCalledOnce();
+    expect((await get("/api/phone/calls/p2/voicemail")).status).toBe(404);
+    vi.unstubAllGlobals();
   });
 });

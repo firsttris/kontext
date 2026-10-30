@@ -2187,5 +2187,19 @@
   "tour_chat_title": "Chat",
   "tour_chat_text": "For quick questions to colleagues, without email: this takes you to the chat.",
   "tour_again_desktop": "You can start this tour again any time from the menu behind your picture at the bottom left.",
-  "tour_again_phone": "You can start this tour again any time under “More”."
+  "tour_again_phone": "You can start this tour again any time under “More”.",
+  "mail_filter_mine": "Assigned to me",
+  "mail_filter_open": "Open",
+  "mail_assign": "Assign",
+  "mail_assign_me": "Assign to me",
+  "mail_assign_nobody": "Nobody",
+  "mail_assign_done": "Done",
+  "mail_assigned_to": "Assigned to {name}",
+  "mail_assigned_done": "Done",
+  "mail_assigned_done_by": "Done · {name}",
+  "mail_mine_empty": "No open mails for you.",
+  "mail_open_empty": "All done.",
+  "search_in_attachment": "in attachment",
+  "company_search_index_pending": "Search is still being built: {count} entries are waiting. Until then it does not find every mail.",
+  "company_search_index_failed": "The search index reports an error; search does not find every mail. Stalwart's admin shows it under Index Queue."
 }

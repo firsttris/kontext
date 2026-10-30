@@ -1,5 +1,14 @@
 import { expect, type Page, test } from "@playwright/test";
-import { addMail, address, inboxMails, jmapAs, login, removeMails, unique } from "./helpers";
+import {
+  addMail,
+  address,
+  givenKeywords,
+  inboxMails,
+  jmapAs,
+  login,
+  removeMails,
+  unique,
+} from "./helpers";
 import { deliverMail } from "./protocols";
 
 /**
@@ -29,7 +38,7 @@ const findMail = async (user: string, subject: string, mailbox = user) => {
   const email = (get![1].list as { mailboxIds: object; keywords: object }[])[0];
   if (!email) return null;
   const box = mailboxes.find((candidate) => Object.keys(email.mailboxIds).includes(candidate.id));
-  return { folder: box?.role ?? box?.name, keywords: Object.keys(email.keywords).sort() };
+  return { folder: box?.role ?? box?.name, keywords: givenKeywords(email.keywords) };
 };
 
 const deleteRule = async (page: Page, title: RegExp) => {

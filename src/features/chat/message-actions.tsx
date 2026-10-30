@@ -37,13 +37,21 @@ export type MessageActions = {
 const barButton =
   "flex size-8 items-center justify-center rounded-md text-muted hover:bg-hover hover:text-fg data-[state=open]:bg-hover data-[state=open]:text-fg";
 
-/** The bar over a message on a desktop: shown on hover, on focus and while its menu is open. */
-export const HoverBar = ({ actions }: { actions: MessageActions }) => {
+/**
+ * The bar over a message on a desktop: shown on hover, on focus and while its menu is open, over
+ * the bubble's outer corner (on the right of one's own, on the left of the others').
+ */
+export const HoverBar = ({ actions, side }: { actions: MessageActions; side: "start" | "end" }) => {
   const { onReact, onReply, onMakeTask, onEdit, onDelete } = actions;
   const more = onMakeTask || onEdit || onDelete;
   if (!onReact && !onReply && !more) return null;
   return (
-    <div className="absolute -top-4 right-1 z-10 hidden items-center gap-0.5 rounded-lg border border-border bg-bg p-0.5 opacity-0 shadow-sm transition-opacity group-hover:opacity-100 focus-within:opacity-100 has-[[data-state=open]]:opacity-100 md:flex">
+    <div
+      className={cn(
+        "absolute -top-4 z-10 hidden items-center gap-0.5 rounded-lg border border-border bg-bg p-0.5 opacity-0 shadow-sm transition-opacity group-hover:opacity-100 focus-within:opacity-100 has-[[data-state=open]]:opacity-100 md:flex",
+        side === "end" ? "right-1" : "left-1",
+      )}
+    >
       {onReact ? <ReactionPicker onPick={onReact} className={barButton} /> : null}
       {onReply ? (
         <button

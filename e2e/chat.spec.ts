@@ -97,6 +97,18 @@ test.describe("Chat", () => {
       "@Jonas mache ich gleich",
     );
     await expect(page.getByText("Sandra schreibt …")).toHaveCount(0);
+    // Bubbles as in a messenger, on a desktop too: one's own on the right, the others' on the left.
+    const list = page.getByRole("list", { name: "Nachrichten" });
+    const bubble = (words: string) =>
+      list.locator("[data-message]").filter({ hasText: words }).last().boundingBox();
+    const [own, theirs, frame] = await Promise.all([
+      bubble(text),
+      bubble("mache ich gleich"),
+      list.boundingBox(),
+    ]);
+    expect(frame!.x + frame!.width - (own!.x + own!.width)).toBeLessThan(8);
+    expect(theirs!.x - frame!.x).toBeLessThan(60);
+    expect(own!.x).toBeGreaterThan(theirs!.x + theirs!.width);
     const sent = await page.evaluate(async () => {
       const { channels } = await (await fetch("/api/chat/channels")).json();
       // The conversation with Sandra (other direct ones may exist, e.g. from the call tests).
@@ -445,6 +457,24 @@ test.describe("Chat", () => {
     // The tasks used to come every 30 seconds; now within moments.
     await expect(anna.getByText(title)).toBeVisible({ timeout: 5000 });
   });
+});
+
+test("ein kurzes Gespräch steht unten am Feld, nicht oben mit Lücke", async ({ page }) => {
+  await login(page);
+  await openChat(page);
+  await openDirectWithMax(page);
+  const text = unique("Kurz gefragt");
+  await write(page, text);
+  const message = page
+    .getByRole("list", { name: "Nachrichten" })
+    .locator("[data-message]")
+    .filter({ hasText: text });
+  await expect(message).toBeVisible();
+  const [bubble, field] = await Promise.all([
+    message.boundingBox(),
+    page.getByRole("textbox", { name: "Nachricht" }).boundingBox(),
+  ]);
+  expect(field!.y - (bubble!.y + bubble!.height)).toBeLessThan(90);
 });
 
 test.describe("Chat am Handy @phone", () => {

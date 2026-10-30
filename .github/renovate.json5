@@ -45,7 +45,7 @@
       groupName: "Stalwart",
       sourceUrl: "https://github.com/stalwartlabs/stalwart",
       prBodyNotes: [
-        "Before merging: read Stalwart's `CHANGELOG.md` and, for a new minor or major, `UPGRADING/`. The workarounds and probes marked \"Stalwart 0.16.x\" in the code (`git grep -n 'Stalwart 0\\.'`) may no longer be needed or may have changed. The e2e run of this PR uses the new release.",
+        "Before merging: read Stalwart's `CHANGELOG.md` and, for a new minor or major, `UPGRADING/`. The workarounds and probes marked with a Stalwart version in the code (`git grep -n 'Stalwart [01]\\.'`) may no longer be needed or may have changed. A new major may need a data migration on the customers' servers (see docs/installation.md, Updates). The e2e run of this PR uses the new release.",
       ],
     },
     {

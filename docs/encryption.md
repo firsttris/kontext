@@ -38,7 +38,9 @@ wer auf dem Server Administrator ist, kann alles außer Ende-zu-Ende-Verschlüss
   [Installation](installation.md) beschreibt es.
 - **Sichtbar:** Eine Mail zeigt neben „Details anzeigen“, ob sie verschlüsselt beim eigenen
   Server ankam – aus der obersten `Received`-Zeile, dem Protokoll nach `with` (RFC 3848: `ESMTPS`,
-  `ESMTPSA`; `src/lib/transport.ts`). Unverschlüsselt Angekommenes ist gelb markiert; was auf dem
+  `ESMTPSA`; `src/lib/transport.ts`). Die Zeile kommt roh (`header:Received:all`): Als Text gibt
+  JMAP `Received` nicht heraus (RFC 8621 §4.1.2), und Stalwart 1.0 lehnt die ganze Abfrage sonst
+  ab (`src/jmap/header-form.ts` prüft alle Header, die Kontext abfragt). Unverschlüsselt Angekommenes ist gelb markiert; was auf dem
   Server selbst entstand (Einladungen, Mails unter Kolleginnen), zeigt nichts.
 - **Geprüft:** Die Firmenverwaltung („Sicherheit der Mails“) zeigt je Domain MX, SPF, DMARC,
   MTA-STS samt Modus der Richtlinie, TLS-RPT und DANE (TLSA mit DNSSEC) und ob Kontext über HTTPS

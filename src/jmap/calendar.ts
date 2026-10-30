@@ -8,7 +8,12 @@ import { assertSetOk, CAPABILITIES, type JmapClient } from "./client";
 
 const USING = [CAPABILITIES.core, CAPABILITIES.calendars];
 
-const EVENT_PROPERTIES = [
+/**
+ * What every event is read with. Stalwart 1.0 refuses recurrenceOverrides together with
+ * utcStart/utcEnd (crates/jmap/src/calendar_event/get.rs): the dates of a view take the UTC times,
+ * a stored event (the series) its changed dates; eventTimes works with either.
+ */
+const BASE_PROPERTIES = [
   "calendarIds",
   "uid",
   "sequence",
@@ -25,13 +30,26 @@ const EVENT_PROPERTIES = [
   "organizerCalendarAddress",
   "freeBusyStatus",
   "recurrenceRule",
-  "recurrenceOverrides",
   "alerts",
   "recurrenceId",
   "baseEventId",
-  "utcStart",
-  "utcEnd",
 ];
+const INSTANCE_PROPERTIES = [...BASE_PROPERTIES, "utcStart", "utcEnd"];
+const EVENT_PROPERTIES = [...BASE_PROPERTIES, "recurrenceOverrides"];
+
+/**
+ * The longest span one expanded query may cover, a day below Stalwart's maxExpandedQueryDuration
+ * (P52W1D, 365 days; crates/jmap/src/calendar_event/query.rs refuses more since 1.0).
+ */
+const MAX_EXPAND_MS = 364 * 86_400_000;
+
+/** `after` … `before` in consecutive spans of at most `max` milliseconds. Pure. */
+export const expandSpans = (after: Date, before: Date, max = MAX_EXPAND_MS): [Date, Date][] => {
+  const spans: [Date, Date][] = [];
+  for (let start = after.getTime(); start < before.getTime(); start += max)
+    spans.push([new Date(start), new Date(Math.min(start + max, before.getTime()))]);
+  return spans;
+};
 
 export type Calendar = {
   id: string;
@@ -67,7 +85,10 @@ export const createCalendar = async (
   return result.created!.c!.id;
 };
 
-/** Name, colour, `shareWith`, whether it counts for free and busy times, or its default alerts. */
+/**
+ * Name, colour, whether it is shown (per person, also on a colleague's calendar shared to read;
+ * Stalwart 1.0), `shareWith`, whether it counts for free and busy times, or its default alerts.
+ */
 export const updateCalendar = async (
   client: JmapClient,
   accountId: string,
@@ -77,6 +98,7 @@ export const updateCalendar = async (
       Calendar,
       | "name"
       | "color"
+      | "isVisible"
       | "shareWith"
       | "includeInAvailability"
       | "defaultAlertsWithTime"
@@ -155,23 +177,27 @@ export const queryEvents = async (
   before: Date,
   { text, calendarId }: { text?: string; calendarId?: string } = {},
 ): Promise<CalendarEvent[]> => {
-  const { ids } = await client.call<{ ids: string[] }>(
-    "CalendarEvent/query",
-    {
-      accountId,
-      filter: {
-        after: after.toISOString().replace(/\.\d+Z$/, "Z"),
-        before: before.toISOString().replace(/\.\d+Z$/, "Z"),
-        ...(text ? { text } : {}),
-        ...(calendarId ? { inCalendar: calendarId } : {}),
+  const ids = new Set<string>();
+  for (const [from, to] of expandSpans(after, before)) {
+    const answer = await client.call<{ ids: string[] }>(
+      "CalendarEvent/query",
+      {
+        accountId,
+        filter: {
+          after: from.toISOString().replace(/\.\d+Z$/, "Z"),
+          before: to.toISOString().replace(/\.\d+Z$/, "Z"),
+          ...(text ? { text } : {}),
+          ...(calendarId ? { inCalendar: calendarId } : {}),
+        },
+        expandRecurrences: true,
+        timeZone: ZONE,
+        limit: 5000,
       },
-      expandRecurrences: true,
-      timeZone: ZONE,
-      limit: 5000,
-    },
-    USING,
-  );
-  const events = await getEvents(client, accountId, ids, EVENT_PROPERTIES);
+      USING,
+    );
+    for (const id of answer.ids) ids.add(id);
+  }
+  const events = await getEvents(client, accountId, [...ids], INSTANCE_PROPERTIES);
   const baseIds = [...new Set(events.flatMap((event) => event.baseEventId ?? []))];
   const bases = await getEvents(
     client,

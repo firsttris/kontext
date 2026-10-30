@@ -35,7 +35,7 @@ import { useShortcuts } from "@/components/use-shortcuts";
 import { isFlagged } from "@/jmap/mail";
 import type { EmailDetail, EmailSummary, Mailbox } from "@/jmap/types";
 import { correspondent } from "@/lib/correspondent";
-import { mailboxRights } from "@/lib/mailboxes";
+import { canAssignIn, mailboxRights } from "@/lib/mailboxes";
 import { moveTargets } from "@/lib/move-targets";
 import { type Rule, ruleFromSender } from "@/lib/rules";
 import { mailLink, plainSubject } from "@/lib/tasks";
@@ -47,6 +47,7 @@ import { usePersonalAccountId } from "../settings/queries";
 import { SnoozeMenu } from "../snooze/snooze-menu";
 import { TaskDialog, type TaskStart } from "../tasks/task-dialog";
 import { useEmailActions } from "./actions";
+import { AssignMenu } from "./assignment";
 import { useThread } from "./conversation";
 import { usePrintMail } from "./print-mail";
 import { useAllMailboxes, useMailAccounts } from "./queries";
@@ -230,6 +231,9 @@ export const Toolbar = ({
         ) : null}
         {canFlag ? (
           <CategoryMenu accountId={accountId} mailbox={mailboxLabel} email={email} />
+        ) : null}
+        {canAssignIn(mailbox) && account && !account.isPersonal ? (
+          <AssignMenu accountId={accountId} email={email} />
         ) : null}
         <Button
           variant="ghost"

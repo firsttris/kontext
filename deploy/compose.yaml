@@ -10,7 +10,7 @@ name: kontext
 
 services:
   stalwart:
-    image: docker.io/stalwartlabs/stalwart:v0.16.27
+    image: docker.io/stalwartlabs/stalwart:v1.0.1
     restart: unless-stopped
     ports:
       - "25:25"
@@ -72,7 +72,7 @@ services:
       - schreibzeug-data:/data
 
   livekit:
-    image: docker.io/livekit/livekit-server:v1.13.10
+    image: docker.io/livekit/livekit-server:v1.13.11
     profiles: [calls]
     restart: unless-stopped
     command: ["--config", "/etc/livekit.yaml", "--udp-port", "7882"]
@@ -87,7 +87,7 @@ services:
   # Telephony: the telephone box at the customer calls in here (SIP over TCP 5060, media on UDP
   # 20000–20100); LiveKit SIP puts the calls into LiveKit rooms. It talks to LiveKit over Redis.
   livekit-sip:
-    image: docker.io/livekit/sip:v1.21.0
+    image: docker.io/livekit/sip:v1.22.0
     profiles: [calls]
     restart: unless-stopped
     depends_on: [redis, livekit]
@@ -112,7 +112,7 @@ services:
           level: warn
 
   redis:
-    image: docker.io/library/redis:7.4.5-alpine
+    image: docker.io/library/redis:8.10.3-alpine
     profiles: [calls]
     restart: unless-stopped
     # Only rooms and calls in flight; nothing to keep across a restart.

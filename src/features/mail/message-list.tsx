@@ -8,6 +8,7 @@ import { mailboxNotice } from "@/lib/mail-accounts";
 import { mailboxName, mailboxRights } from "@/lib/mailboxes";
 import { m } from "@/paraglide/messages";
 import type { MailSearch } from "@/routes/_app/mail.$accountId.$mailboxId";
+import { usePersonalAccountId } from "../settings/queries";
 import { RESURFACED, useSnoozes } from "../snooze/queries";
 import { EmlImportButton, useEmlImport } from "./eml-import";
 import { canEmpty, EmptyFolder } from "./empty-folder";
@@ -21,15 +22,23 @@ type Props = { accountId: string; mailbox: Mailbox; search: MailSearch };
 export const MessageList = ({ accountId, mailbox, search }: Props) => {
   const accounts = useMailAccounts();
   const account = accounts.find((a) => a.id === accountId);
+  const me = usePersonalAccountId();
+  const shared = Boolean(account && !account.isPersonal);
+  const assigned = shared && me ? search.assigned : undefined;
   const filter = useMemo(
-    () => ({ mailboxId: mailbox.id, unreadOnly: search.unread }),
-    [mailbox.id, search.unread],
+    () => ({
+      mailboxId: mailbox.id,
+      unreadOnly: search.unread,
+      assignment: assigned && me ? { view: assigned, me } : undefined,
+    }),
+    [mailbox.id, search.unread, assigned, me],
   );
   const list = useEmailList(accountId, filter, { collapse: useThreadView(), sort: useMailSort() });
   // In the inbox, what came back from Wiedervorlage and is not read yet: on top, by itself.
   const isInbox = mailbox.role === "inbox";
   const backFilter = useMemo(() => resurfacedFilter(mailbox.id, RESURFACED), [mailbox.id]);
-  const back = useEmailList(isInbox ? accountId : "", backFilter);
+  // Not in an assignment view: what came back belongs to anyone (or is done).
+  const back = useEmailList(isInbox && !assigned ? accountId : "", backFilter);
   // On Wiedervorlage: when each comes back, the next first.
   const isSnoozed = mailbox.role === "snoozed";
   const snoozes = useSnoozes(isSnoozed ? accountId : "");
@@ -112,7 +121,32 @@ export const MessageList = ({ accountId, mailbox, search }: Props) => {
         canEmpty(mailbox) ? <EmptyFolder accountId={accountId} mailbox={mailbox} /> : undefined
       }
       filters={
-        isSent ? (
+        shared && !isSent ? (
+          <FilterChips
+            options={[
+              {
+                label: m.mail_filter_all(),
+                on: !search.unread && !assigned,
+                set: { unread: undefined, assigned: undefined },
+              },
+              {
+                label: m.mail_filter_unread(),
+                on: Boolean(search.unread) && !assigned,
+                set: { unread: true, assigned: undefined },
+              },
+              {
+                label: m.mail_filter_mine(),
+                on: assigned === "mine",
+                set: { unread: undefined, assigned: "mine" },
+              },
+              {
+                label: m.mail_filter_open(),
+                on: assigned === "open",
+                set: { unread: undefined, assigned: "open" },
+              },
+            ]}
+          />
+        ) : isSent ? (
           <FilterChips
             options={[
               { label: m.mail_filter_all(), on: !scheduled, set: { scheduled: undefined } },
@@ -127,7 +161,17 @@ export const MessageList = ({ accountId, mailbox, search }: Props) => {
           />
         ) : undefined
       }
-      empty={scheduled ? m.mail_scheduled_empty() : isSnoozed ? m.mail_snoozed_empty() : undefined}
+      empty={
+        scheduled
+          ? m.mail_scheduled_empty()
+          : isSnoozed
+            ? m.mail_snoozed_empty()
+            : assigned === "mine"
+              ? m.mail_mine_empty()
+              : assigned === "open"
+                ? m.mail_open_empty()
+                : undefined
+      }
     />
   );
 };

@@ -30,9 +30,9 @@ flowchart LR
 
 ## Die Teile
 
-- **Stalwart** (Community Edition, AGPL) ist Mail-, Kalender- und Kontaktserver in einem. Seit
-  0.16 liegt die ganze Konfiguration in seiner Datenbank; auf der Platte steht nur `config.json`
-  mit dem Speicherort.
+- **Stalwart** (Community Edition, AGPL, Version 1.0) ist Mail-, Kalender- und Kontaktserver in
+  einem. Seit 0.16 liegt die ganze Konfiguration in seiner Datenbank; auf der Platte steht nur
+  `config.json` mit dem Speicherort.
 - **Kontext** ist eine Single-Page-App. Sie spricht [JMAP](https://jmap.io): Mail (RFC 8621),
   Kalender (JSCalendar) und Kontakte (JSContact) über dieselbe Schnittstelle, Push über den
   Event-Stream.
@@ -82,11 +82,31 @@ Antwort liegt dann im eigenen Gesendet-Ordner. Beide Stufen setzt die Firmenverw
 lesen“ teilt dabei alle vorhandenen Ordner des Postfachs (später angelegte Ordner nicht).
 
 Der Server (Aufgaben, Kategorien, Textbausteine, Chat, DAV) liest die Stufe nicht aus `isReadOnly`
-der Session: Stalwart 0.16 schickt jedes weitere Konto mit `isReadOnly: false` und `isPersonal:
+der Session: Stalwart (0.16 wie 1.0) schickt jedes weitere Konto mit `isReadOnly: false` und `isPersonal:
 false`, auch das einer Kollegin, die nur ein Adressbuch teilt. Mitglied einer Gruppe ist, bei
 wessen Konto Stalwart `mayCreateCalendar` (bzw. `mayCreateAddressBook`) setzt; für alle anderen
 fragt `server/account-rights.ts` per `Mailbox/get` die Ordner ab: ohne Ordner kein Postfach,
 schreiben darf, wem der Posteingang `mayAddItems` gibt.
+
+### Mails zuweisen
+
+In einem gemeinsamen Postfach gibt „Zuweisen“ eine Mail einer Person und hakt sie als erledigt
+ab. Gespeichert wird das an der Mail selbst, als gemeinsame **JMAP Object Metadata**
+(draft-ietf-jmap-metadata, neu in Stalwart 1.0): unter Kontexts Namensraum
+`kontext.firsttris.github.io` stehen `assignee` (die Principal-Id der Person, in Stalwart zugleich
+ihre Konto-Id) und `state: "done"`. Ein Herstellername in Domain-Form braucht Stalwart für eigene
+Namensräume (`crates/types/src/metadata/registry.rs`); in einen Namensraum hinein patcht es erst,
+wenn er besteht, darum schreibt Kontext immer den ganzen (`src/lib/assignment.ts`).
+
+Alle Mitglieder sehen den Wert (Email/get mit `metadata/kontext.firsttris.github.io`), und
+`Email/changes` meldet ihn wie jede Änderung, also kommt er per Push in die anderen Fenster. Die
+Filter fragt Stalwart selbst ab (`crates/jmap/src/email/query.rs`): „Mir zugewiesen“ ist
+`metadataTextEquals` auf `assignee` mit der eigenen Id und nicht erledigt, „Offen“ alles nicht
+Erledigte. Die Zuweisung liegt bei der Mail, also auch im Backup und beim Umzug des Postfachs;
+Kontext braucht keine eigene Tabelle dafür. Im eigenen Postfach gibt es weder Menü noch Filter.
+Wieder vorgelegte Mails stehen in diesen beiden Filtern nicht oben angeheftet, sie gehören ja
+irgendwem. Schreiben darf die Zuweisung nur, wem der Ordner `maySetMetadata` gibt; „Nur lesen“
+gibt das nicht, darum fehlt dort das Menü.
 
 ### Verschieben zwischen Postfächern
 
@@ -692,6 +712,9 @@ das Manifest steht in `vite.config.ts`, der Service Worker in `src/sw/service-wo
   Ebenso rücken Hinweise (`toast.tsx`), das Banner der App (`pwa-status.tsx`) und der Knopf
   „Neuer Termin“ im Kalender um `--keyboard-height` nach oben. Mit zwei Fingern vergrößert
   bleibt die Seite, wie sie ist.
+- **Kurze Gespräche stehen unten:** Ist ein Verlauf kürzer als der Bildschirm, füllt ein leeres
+  Element darüber die Höhe (`grow` in `conversation.tsx`), die Nachrichten stehen am Feld wie im
+  Messenger, nicht oben mit einer Lücke darunter.
 - **Gespräch öffnet unten:** Ein Chat geht bei der neuesten Nachricht auf und bleibt dort, auch
   wenn Bilder, Vorschauen oder entschlüsselte Texte danach noch wachsen. Bis man selbst scrollt
   (Finger, Mausrad, Tasten), zieht jede Scroll-Meldung die Liste wieder nach unten: Safari am
@@ -850,6 +873,10 @@ Principal-ID), die Namen holt die App wie bei den Aufgaben über die Principals.
   dort eingeschaltet ist und Kontext im Hintergrund liegt.
 - **Verlauf:** 50 Nachrichten je Seite, ältere auf Knopfdruck; Nachrichten einer Person kurz
   hintereinander stehen unter einem Namen, eine Linie „Neu“ zeigt, wo das Ungelesene beginnt.
+- **Blasen** (`message-run.tsx`): auf jeder Bildschirmgröße stehen die eigenen Nachrichten rechts
+  in `--bubble-own` (ein heller Akzentton), die der anderen links in `--bubble` unter Name und
+  (ab `md`) Foto; eine Blase wird höchstens 42rem bzw. 80 % breit. Beide Töne halten mit Text,
+  Links (`accent-ink`) und „bearbeitet“ (`muted`) 4,5:1 in hell und dunkel.
 - **Antworten im Thread:** „Antworten“ an einer Nachricht öffnet ihren Thread – auf breiten
   Bildschirmen neben dem Gespräch, am Handy statt seiner (dort ohne Tastatur, die kommt erst mit
   einem Tipp ins Feld). Antworten tragen `parent_id`, stehen
@@ -867,7 +894,8 @@ Principal-ID), die Namen holt die App wie bei den Aufgaben über die Principals.
   Kennzeichen selbst ist offen, und die Zeile entschlüsselt die erste Nachricht des Threads im
   Browser, um ihren Text zu zeigen.
 - **Aktionen an einer Nachricht** (`src/features/chat/message-actions.tsx`): am PC schwebt beim
-  Darüberfahren eine kleine Leiste über der rechten oberen Ecke (Reagieren, Antworten, „…“ mit
+  Darüberfahren eine kleine Leiste über der äußeren oberen Ecke der Blase (rechts bei eigenen,
+  links bei fremden) (Reagieren, Antworten, „…“ mit
   Aufgabe, Bearbeiten, Löschen); sie nimmt keinen Platz weg, nichts verschiebt sich. Am Handy
   steht neben den Blasen nichts: Langes Drücken (`use-long-press.ts`) öffnet ein Blatt von unten
   mit den Reaktionen in einer Reihe und darunter Im Thread antworten, Text kopieren, Aufgabe,
@@ -1257,7 +1285,24 @@ Operatoren (deutsch und englisch: `von:`/`from:`, `an:`, `betreff:`, `hat:anhang
 Stalwart sucht mit Wortstämmen, findet ein Wort, das schon sein eigener Stamm ist („Angebot“),
 aber nur genau so. Deshalb fragt die App für jedes Wort auch seine Grundform ab („Angebote“ →
 „Angebot“, „Rechnungen“ → „Rechnung“). Zusammengesetzte Wörter („Wartungsvertrag“ für „Wartung“)
-und Text in PDF-Anhängen findet Stalwart nicht; Text- und HTML-Anhänge schon.
+findet Stalwart nicht.
+
+**Anhänge:** Seit Stalwart 1.0 durchsucht der `text`-Filter auch den Text in PDF-, Word-, Excel-,
+PowerPoint-, OpenDocument-, EPUB- und RTF-Anhängen (`crates/jmap/src/email/query/text.rs`, Feld
+`Attachment`), also auch in Mails, die Kontext aus weiteren Postfächern ablegt. Mit jeder
+Suchseite fragt die App `SearchSnippet/get` ab (RFC 8621 §5, in derselben Anfrage per
+Rückverweis auf die Ids). Stalwart markiert dort nur Betreff und Text; ein Treffer für ein freies
+Wort ohne Markierung in einer Mail mit Anhang, dessen Wort auch in keiner Adresse steht (auch
+nicht in Cc oder Bcc, die der Filter mit durchsucht), lag im Anhang und bekommt „im Anhang“
+(`src/lib/attachment-hit.ts`). Eine Mail ohne Anhang bekommt es nie: Stalwart findet auch
+Wortformen, die das Snippet nicht markiert („Haus“ in „Häuser“). Lehnt Stalwart
+`SearchSnippet/get` ab, fragt die App die Seite ohne ab und zeigt die Treffer ohne den Hinweis.
+Operatoren wie `von:` suchen nicht in Anhängen.
+
+**Suchindex:** Nach dem Umstieg auf 1.0 baut Stalwart den Index neu auf (`stalwart-migrate`
+kopiert ihn nicht); bis dahin findet die Suche nicht alles. Die Firmenverwaltung zeigt dann
+„Die Suche wird noch aufgebaut“ mit der Zahl der wartenden Einträge, aus `x:IndexQueueStatus`
+(`server/company/search-index.ts`, Recht `sysIndexQueueStatusGet` der Rolle `Kontext-Server`).
 
 Vorschläge beim Tippen kommen aus den Kontakten (für `von:`/`an:`), den Ordnern (für `in:`), den
 Operatoren und den letzten Suchen (pro Gerät im Browser).
@@ -1287,8 +1332,8 @@ eines Kontos – auch die Antworten im Gesendet-Ordner.
   Unterhaltung im Ordner, Markieren für die eine. Die Suche zeigt weiter einzelne Mails.
 - **Sortieren:** eine Wahl je Gerät für alle Listen (`src/features/mail/sort-setting.ts`, wie die
   Gruppierung im `localStorage`). `src/lib/mail-sort.ts` macht daraus das `sort` von `Email/query`
-  (RFC 8621 §4.4.2) mit „neueste zuerst“ als zweitem Kriterium; Stalwart 0.16.27 kann `receivedAt`,
-  `size`, `from`, `subject` und die Schlagwort-Kriterien (`crates/jmap/src/email/query.rs`).
+  (RFC 8621 §4.4.2) mit „neueste zuerst“ als zweitem Kriterium; Stalwart (0.16.27 wie 1.0.1) kann
+  `receivedAt`, `size`, `from`, `subject` und die Schlagwort-Kriterien (`crates/jmap/src/email/query.rs`).
   Ungelesen ist `hasKeyword $seen` aufsteigend (ohne zuerst), „mit Kategorie“ ein Kriterium je
   Kategorie des Kontos in ihrer Reihenfolge. Gruppiert gelten `someInThreadHaveKeyword` bzw.
   `allInThreadHaveKeyword`, damit das ganze Gespräch zählt. Der Server sortiert, also stimmt die
@@ -1417,8 +1462,10 @@ Bildtyp, an ihren ersten Bytes erkannt) oder SVG als
 schickt Downloads über `/jmap/download/…` mit `Content-Security-Policy: sandbox` und `nosniff`,
 und was kein Bild und kein PDF ist, als `application/octet-stream` – so lädt auch kein
 `<script src>` einen Anhang als Skript (`server/headers.ts`). Die Content-Security-Policy der App
-setzt der Server selbst; Caddy ergänzt sie nur, wo eine Antwort keine eigene hat. Die Testdaten
-haben echte PDFs (`dev/pdf.ts`) und einen Grundriss als SVG.
+setzt der Server selbst; Caddy ergänzt sie nur, wo eine Antwort keine eigene hat. Sie erlaubt kein
+`'unsafe-eval'`; deshalb läuft Zod ohne JIT (`z.config({ jitless: true })` in `src/lib/zod.ts`,
+die App nimmt `z` nur von dort), sonst meldet der Browser bei Zods Probe mit `new Function` einen
+Verstoß in der Konsole. Die Testdaten haben echte PDFs (`dev/pdf.ts`) und einen Grundriss als SVG.
 
 ## Darstellung und Tastaturkürzel
 
@@ -1547,7 +1594,11 @@ die Initialen. Zwei Quellen:
   Server verraten, wann man den Kontakt ansieht. Vom iPhone oder Mac (vCard 3.0,
   `PHOTO;ENCODING=b;TYPE=JPEG`) kommt das Foto von Stalwart ohne Bildtyp als `data:;base64,…`
   (calcard 0.3.14, `src/vcard/utils.rs`); die App erkennt dann JPEG, PNG, GIF und WebP an den
-  ersten Bytes, SVG nie. Logos und Töne in `media` bleiben beim Speichern erhalten.
+  ersten Bytes, SVG nie. Logos und Töne in `media` bleiben beim Speichern erhalten. Stalwart 1.0
+  gibt ein gespeichertes Foto nur noch als `blobId` heraus; `listContacts` holt die Bytes mit
+  `Blob/get` (RFC 9404, `data:asBase64`) und setzt sie wieder als `data:`-URI ein
+  (`src/jmap/contacts.ts`). In einem Adressbuch, das ein Kollege teilt, lehnt Stalwart 1.0.1
+  `Blob/get` ab (`accountNotSupportedByMethod`); die Kontakte erscheinen dann ohne diese Fotos.
 
 Eine Mail selbst bringt kein Foto mit: Gmail zeigt Profilbilder aus Googles eigenen Konten, nicht
 aus der Mail. Kontext zeigt neben einer Mail das Foto des Kollegen oder Kontakts mit der Adresse
@@ -1625,8 +1676,18 @@ woher eine Freigabe kam. Ausnahme ist die Verfügbarkeit: Sehen alle anderen Kol
 und belegten Zeiten eines Kalenders (die Firmenvorgabe), behält sie die; sonst fällt der Eintrag
 ganz weg. Freigaben für Gruppen (gemeinsame Postfächer) zeigt die Liste nicht und lässt sie
 stehen.
-Welche Kalender eingeblendet sind, merkt sich die App pro Gerät im Browser: Stalwart 0.16 lässt
-das per Benutzer gespeicherte `isVisible` bei fremden Kalendern nur mit Schreibrecht ändern.
+Welche Kalender eingeblendet sind, steht in ihrem `isVisible` (draft-ietf-jmap-calendars), das
+Stalwart pro Person speichert: ausgeblendet ist ein Kalender damit auf jedem Gerät, auch der einer
+Kollegin, den man nur lesen darf (seit Stalwart 1.0; 0.16 ließ das nur mit Schreibrecht zu, darum
+hielt die App die Wahl bis dahin pro Gerät im Browser). Was ein Gerät früher so ausgeblendet hatte,
+setzt die App beim ersten Laden einmal auf dem Server und vergisst es im Browser
+(`src/lib/calendar-visibility.ts`); was dabei scheitert, bleibt im Browser und kommt beim nächsten
+Laden wieder dran. Geburtstage und Fällige Aufgaben sind keine Kalender und
+bleiben pro Gerät. Bei den Kalendern gemeinsamer Postfächer übernimmt Stalwart 1.0.1 die
+Einstellungen eines Mitglieds beim nächsten `Calendar/set` eines anderen
+(`inherit_owner_preferences`): Ändert Anna Farbe, Freigabe oder Erinnerung von info@s Kalender,
+den Jonas ausgeblendet hat, wäre er auch für sie aus. Darum schickt jede Änderung das eigene
+`isVisible` mit (`withOwnVisibility`).
 
 ## Verfügbarkeit
 
@@ -1668,8 +1729,12 @@ einschalten, ohne dass Kalender unter „Geteilt mit mir“ auftauchen.
 ## Wiederkehrende Termine
 
 Eine Serie ist in Stalwart **ein** Termin mit `recurrenceRule` (JSCalendar, RFC 8984; Stalwart
-0.16 nimmt die Einzahl). Die Kalenderansichten fragen mit `expandRecurrences` ab und bekommen
-jeden einzelnen Termin mit eigener ID, `baseEventId` und `recurrenceId`.
+0.16 und 1.0 nehmen die Einzahl). Die Kalenderansichten fragen mit `expandRecurrences` ab und bekommen
+jeden einzelnen Termin mit eigener ID, `baseEventId` und `recurrenceId`. Seit Stalwart 1.0 darf
+eine solche Abfrage höchstens 365 Tage umfassen (`maxExpandedQueryDuration`); längere Zeiträume
+(Feiertage zweier Jahre, eine lange Serie teilen, Agenten) fragt `queryEvents` in Abschnitten ab.
+Die einzelnen Termine kommen mit `utcStart`/`utcEnd`, eine Serie mit `recurrenceOverrides`: beides
+zusammen lehnt Stalwart 1.0 ab (`src/jmap/calendar.ts`).
 
 - **Nur dieser Termin**: Ändern oder Löschen über die ID des einzelnen Termins; Stalwart trägt das
   in `recurrenceOverrides` der Serie ein (beim Löschen als `excluded`).
@@ -1941,7 +2006,15 @@ dann nicht noch eine zweite Antwort.
 Benutzer und Passwörter bleiben in Stalwart. Bei der Anmeldung schickt die App E-Mail, Passwort
 und – wenn eingerichtet – den Code der Authenticator-App an den Server
 (`POST /api/auth/sign-in/stalwart`). Der meldet sich über Stalwarts OAuth an (Autorisierungscode
-mit PKCE, ohne Umleitung), legt eine Better-Auth-Sitzung an und setzt ein httpOnly-Cookie. Die
+mit PKCE, ohne Umleitung), legt eine Better-Auth-Sitzung an und setzt ein httpOnly-Cookie. Dafür
+schickt er die Zugangsdaten zusammen mit der Autorisierungsanfrage an Stalwarts `/api/auth` und
+liest den Code aus der Umleitung, die Stalwart zurückgibt (`server/stalwart.ts`). Stalwart 1.0
+nimmt nur Clients an, die es kennt: Kontext ist dort als OAuth-Client `kontext` eingetragen,
+*First-party* und mit der Redirect-URI `https://kontext.invalid/oauth`, die nie geöffnet wird
+([Installation](installation.md#3-stalwart-einrichten), Schritt 12). Als First-party bekommt der
+Token alle Rechte des Kontos (auch für `x:AccountSettings` und die Firmenverwaltung), nicht nur
+die Scopes `mail`, `calendars` …; die Zustimmung, die Stalwart jeden Client einholen lässt, gibt
+Kontext mit, denn angemeldet wird in Kontext selbst. Die
 Stalwart-Tokens liegen verschlüsselt (AES-GCM) in SQLite, je Sitzung. Der Zugriffstoken wird bei
 Bedarf mit dem Refresh-Token erneuert; Stalwart verlängert diesen, solange er benutzt wird. So
 bleibt die App am Handy angemeldet, bis man sich abmeldet (Sitzung 90 Tage, bei Nutzung erneuert).

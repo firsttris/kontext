@@ -1,10 +1,18 @@
 /** Mail operations on top of the JMAP client (RFC 8621). Each function is one round-trip. */
 
+import {
+  ASSIGNMENT_NAMESPACE,
+  type Assignment,
+  type AssignmentView,
+  assignmentConditions,
+  assignmentPatch,
+} from "@/lib/assignment";
+import type { Snippet } from "@/lib/attachment-hit";
 import { envelopeIdOf, type Hold, submissionEnvelope } from "@/lib/envelope";
 import type { Comparator } from "@/lib/mail-sort";
 import { bodyStructureOf } from "@/lib/mail-structure";
 import { replyReferences } from "@/lib/references";
-import { assertSetOk, CAPABILITIES, type JmapClient } from "./client";
+import { assertSetOk, CAPABILITIES, type Invocation, type JmapClient } from "./client";
 import type { BodyPart, EmailAddress, EmailDetail, EmailSummary, Identity, Mailbox } from "./types";
 
 export const SUMMARY_PROPERTIES = [
@@ -20,6 +28,8 @@ export const SUMMARY_PROPERTIES = [
   "size",
   // Raw, as Stalwart names it: shows an encrypted mail in the list (src/lib/pgp-mail.ts).
   "header:Content-Type",
+  // Who takes care of it in a shared mailbox (src/lib/assignment.ts); Kontext's namespace only.
+  `metadata/${ASSIGNMENT_NAMESPACE}`,
 ];
 
 const DETAIL_PROPERTIES = [
@@ -55,7 +65,7 @@ const BODY_PROPERTIES = [
  * Headers for the sender check, every instance (`:all`, topmost first, RFC 8621 §4.1.3): without
  * it JMAP returns the bottommost one, which the sender may have written themselves.
  */
-const CHECK_HEADERS = {
+export const CHECK_HEADERS = {
   authenticationResults: "header:Authentication-Results:asText:all",
   spamScore: "header:X-Spam-Score:asText:all",
   /** Its type, raw (Stalwart names raw headers without ":asRaw"): an encrypted or signed mail. */
@@ -63,7 +73,7 @@ const CHECK_HEADERS = {
   /** The sender's public key, if they send it along (src/lib/pgp.ts). */
   autocrypt: "header:Autocrypt:asText",
   /** How it came to the own server, topmost first (src/lib/transport.ts). */
-  received: "header:Received:asText:all",
+  received: "header:Received:all",
   /** Who asks for a read receipt (RFC 8098). */
   receiptTo: "header:Disposition-Notification-To:asAddresses",
   /** How to unsubscribe from a newsletter (RFC 2369, RFC 8058). */
@@ -89,13 +99,20 @@ export const listMailboxes = async (client: JmapClient, accountId: string): Prom
 
 /** One folder (optionally only unread), or a prepared search filter (src/lib/mail-search.ts). */
 export type EmailFilter =
-  | { mailboxId: string; unreadOnly?: boolean }
+  | {
+      mailboxId: string;
+      unreadOnly?: boolean;
+      /** In a shared mailbox: the open mails of `me`, or all open ones (lib/assignment.ts). */
+      assignment?: { view: AssignmentView; me: string };
+    }
   | { search: Record<string, unknown> };
 
 export const emailQueryFilter = (filter: EmailFilter): Record<string, unknown> => {
   if ("search" in filter) return filter.search;
   const conditions: Record<string, unknown>[] = [{ inMailbox: filter.mailboxId }];
   if (filter.unreadOnly) conditions.push({ notKeyword: "$seen" });
+  if (filter.assignment)
+    conditions.push(...assignmentConditions(filter.assignment.view, filter.assignment.me));
   return conditions.length === 1 ? conditions[0]! : { operator: "AND", conditions };
 };
 
@@ -117,12 +134,14 @@ export const queryEmails = async (
     sort?: Comparator[];
   } = {},
 ): Promise<EmailPage> => {
-  const [query, get] = await client.request([
+  const queryFilter = emailQueryFilter(filter);
+  const search = "search" in filter;
+  const calls = (withSnippets: boolean): Invocation[] => [
     [
       "Email/query",
       {
         accountId,
-        filter: emailQueryFilter(filter),
+        filter: queryFilter,
         sort,
         collapseThreads,
         position,
@@ -136,13 +155,43 @@ export const queryEmails = async (
       {
         accountId,
         "#ids": { resultOf: "q", name: "Email/query", path: "/ids" },
-        properties: SUMMARY_PROPERTIES,
+        // A search also finds a word in Cc and Bcc (lib/attachment-hit.ts).
+        properties: search ? [...SUMMARY_PROPERTIES, "cc", "bcc"] : SUMMARY_PROPERTIES,
       },
       "g",
     ],
-  ]);
+    // A search also asks what it marks, to tell hits in an attachment (lib/attachment-hit.ts).
+    ...(withSnippets
+      ? [
+          [
+            "SearchSnippet/get",
+            {
+              accountId,
+              filter: queryFilter,
+              "#emailIds": { resultOf: "q", name: "Email/query", path: "/ids" },
+            },
+            "s",
+          ] as Invocation,
+        ]
+      : []),
+  ];
+  // The snippets only add the chip: when Stalwart refuses them, the search still shows its hits.
+  const [query, get, snippets] = search
+    ? await client.request(calls(true)).catch(() => client.request(calls(false)))
+    : await client.request(calls(false));
+  const marked = new Map(
+    ((snippets?.[1].list ?? []) as (Snippet & { emailId: string })[]).map(
+      ({ emailId, subject, preview }) => [emailId, { subject, preview }],
+    ),
+  );
+  const emails = (get![1].list as EmailSummary[]) ?? [];
   return {
-    emails: (get![1].list as EmailSummary[]) ?? [],
+    emails: marked.size
+      ? emails.map((email) => {
+          const snippet = marked.get(email.id);
+          return snippet ? { ...email, snippet } : email;
+        })
+      : emails,
     total: Number(query![1].total ?? 0),
     position,
   };
@@ -224,6 +273,14 @@ export const setKeyword = (
   keyword: string,
   on: boolean,
 ) => updateEmails(client, accountId, ids, { [`keywords/${keyword}`]: on ? true : null });
+
+/** Who takes care of a mail and whether it is done (src/lib/assignment.ts). */
+export const setAssignment = (
+  client: JmapClient,
+  accountId: string,
+  id: string,
+  assignment: Assignment,
+) => updateEmails(client, accountId, [id], assignmentPatch(assignment));
 
 /** Moves mails to another folder; `keywords` are set (true) or removed (null) in the same call. */
 export const moveEmails = (

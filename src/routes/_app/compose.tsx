@@ -1,7 +1,7 @@
 import { createFileRoute, redirect } from "@tanstack/react-router";
-import { z } from "zod";
 import { CAPABILITIES } from "@/jmap/client";
 import { parseMailto } from "@/lib/mailto";
+import { z } from "@/lib/zod";
 
 /**
  * A new mail from outside the app: a mailto: link (Kontext as the mail program) or a share from

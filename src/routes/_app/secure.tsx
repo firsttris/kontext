@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { z } from "zod";
 import { SecureSentPage } from "@/features/secure/sent-page";
+import { z } from "@/lib/zod";
 
 export const Route = createFileRoute("/_app/secure")({
   validateSearch: z.object({ message: z.string().optional() }),

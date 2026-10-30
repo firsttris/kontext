@@ -92,8 +92,10 @@ jedem Neustart vor der Einrichtung gibt es ein neues.
    `STALWART_ADMIN_KEY` eintragen ([Anleitung unten](#firmenverwaltung-einschalten)), dann das
    Konto des Chefs anlegen. Weitere Mitarbeiter und gemeinsame Postfächer legt der Chef danach
    selbst in Kontext an.
-5. Unter *Netzwerk → HTTP* **X-Forwarded-For verwenden** (`useXForwarded`) einschalten, damit
-   Stalwart bei CalDAV/CardDAV und Autoconfig (über Caddy) die echten IP-Adressen sieht.
+5. Unter *Settings → Network → HTTP → General*, Abschnitt *Proxy*, als **Client IP source**
+   *X-Forwarded-For header* wählen (`clientIpSource: xForwardedFor`) und *Trusted proxy hops*
+   auf 1 lassen (`forwardedHops`), damit Stalwart bei CalDAV/CardDAV und Autoconfig (über Caddy)
+   die echten IP-Adressen sieht. Stalwart nimmt den letzten Eintrag, den Caddy setzt.
 6. Unter *Sicherheit → Erlaubte IPs* das Container-Netz **`10.89.250.0/24`** eintragen
    (`AllowedIp`). Kontext meldet alle Personen von seiner einen Adresse an; ohne den Eintrag
    sperrt Stalwart nach 100 Fehlversuchen am Tag (`authBanRate`) diese Adresse – und damit
@@ -117,6 +119,19 @@ jedem Neustart vor der Einrichtung gibt es ein neues.
     `local_port != 25 && is_tls` → `[plain, login, oauthbearer, xoauth2]` stehen bleibt. Ein
     Token ginge sonst im Klartext, wenn jemand STARTTLS aus der Verbindung streicht. Kontext
     selbst verschickt über JMAP, nicht über SMTP.
+12. **Kontext als OAuth-Client eintragen** – nötig, sonst meldet sich niemand an: unter
+    *Management → Directory → OAuth Clients* einen Client mit der *Client ID* `kontext`, der
+    *Redirect URI* `https://kontext.invalid/oauth` (wird nie aufgerufen) und
+    **First-party application** anlegen, ohne Secret und ohne Scopes
+    ([ohne Oberfläche](vps.md#10-stalwart-ohne-oberflache-einrichten)). Stalwart 1.0 nimmt nur
+    Clients an, die es kennt; First-party gibt Kontexts Token alle Rechte des Kontos, die die
+    Einstellungen und die Firmenverwaltung brauchen (siehe [Anmeldung](architecture.md#anmeldung)).
+    Fehlt der Eintrag, schreibt Kontext beim Anmelden `Stalwart lehnt die Anmeldung für Kontext
+    ab (Unknown client id)` ins Log.
+13. Unter *Settings → Sharing* **Verzeichnisabfragen erlauben** (`x:Sharing`,
+    `allowDirectoryQueries: true`), danach die Einstellungen neu laden (*Reload*) – nötig: Ohne
+    findet Kontext keine Kollegen (Teilen, neuer Chat, freie Zeiten beim Einladen); Stalwart 1.0
+    lehnt `Principal/query` sonst ab (`The administrator has disabled directory queries`).
 
 Danach unter `https://kontext.firma.de` anmelden. Am Handy im Browser „Zum Startbildschirm
 hinzufügen“ wählen: Kontext startet dann wie eine App und bleibt angemeldet.
@@ -309,8 +324,9 @@ braucht der Kontext-Server einen API-Schlüssel von Stalwart, der nur Konten ver
 
 1. In Stalwarts Verwaltung eine **Rolle** `Kontext-Server` anlegen: sie erbt die Rolle *User*
    und bekommt dazu die Rechte `sysAccountGet`, `sysAccountQuery`, `sysAccountCreate`,
-   `sysAccountUpdate`, `sysRoleGet`, `sysRoleCreate`, `sysDomainGet`, `sysAuthenticationGet`
-   und `impersonate`. Mit `impersonate` arbeitet der Server in den Postfächern der Mitarbeiter
+   `sysAccountUpdate`, `sysRoleGet`, `sysRoleCreate`, `sysDomainGet`, `sysAuthenticationGet`,
+   `sysIndexQueueStatusGet` und `impersonate`. Mit `sysIndexQueueStatusGet` zeigt die
+   Firmenverwaltung, solange Stalwart den Suchindex aufbaut. Mit `impersonate` arbeitet der Server in den Postfächern der Mitarbeiter
    (Abwesenheit, Leserechte für gemeinsame Postfächer) und trägt Antworten auf Einladungen ein;
    die App zeigt dem Chef dabei nie fremde Mails.
 2. Ein **Konto** `kontext-server@firma.de` mit dieser Rolle (statt *User*) und einem langen
@@ -634,6 +650,34 @@ docker compose -f deploy/compose.yaml up -d
 Vor einem Stalwart-Update mit neuer Hauptversion die `UPGRADING`-Hinweise von Stalwart lesen und
 vorher ein Backup machen.
 
+### Stalwart 0.16 auf 1.0 heben
+
+Kontext ab dieser Version braucht Stalwart 1.0. Stalwart 1.0 legt seine Daten anders ab und
+öffnet die Datenbank von 0.16 nicht (`The data store was created by a Stalwart version prior to
+1.0 and cannot be opened by this version`): Ein `git pull` mit `up -d` allein lässt Stalwart nicht
+mehr starten, es gehen dabei aber keine Daten verloren. Die Daten kopiert Stalwarts
+Migrationswerkzeug [`stalwart-migrate`](https://github.com/stalwartlabs/stalwart-migrate) in
+eine neue, leere Datenbank; die alte liest es nur. Ausführlich:
+[Stalwarts Anleitung](https://stalw.art/docs/migration/upgrade-0-16/).
+
+1. **Backup** machen ([Backups](#5-backups)) und prüfen, dass Stalwart 0.16.27 läuft (frühere 0.16
+   erst auf 0.16.27 heben). Kontext und Stalwart bleiben vorerst auf der alten Version.
+2. Mit dem Docker-Image `stalwartlabs/stalwart-migrate` (Netz, Volumes und Umgebung von Stalwart,
+   neue Volumes für die 1.0-Daten und den Stand der Migration) zuerst `prepare` ausführen. Es
+   fragt nach, was sich nicht von selbst übersetzen lässt – unter anderem die Client-Adresse hinter
+   Caddy: *X-Forwarded-For* mit einem Proxy, wie in [Schritt 5](#3-stalwart-einrichten).
+3. Stalwart anhalten, `run --final` ausführen und den Bericht lesen.
+4. Das neue Daten-Volume an Stalwarts Stelle setzen, `git pull` (Kontext und Stalwart 1.0.1),
+   starten.
+5. In Stalwart 1.0 Kontext als OAuth-Client eintragen und Verzeichnisabfragen erlauben
+   ([Schritte 12 und 13](#3-stalwart-einrichten)).
+6. Alle melden sich einmal neu an: Stalwarts Tokens wandern nicht mit, Kontext nimmt die
+   abgelehnten Sitzungen zurück. Mailprogramme mit Passwort laufen weiter; CalDAV und CardDAV
+   laden Kalender und Kontakte einmal neu, die Volltextsuche baut Stalwart im Hintergrund neu auf.
+
+Das alte Volume erst löschen, wenn 1.0 eine Weile läuft: `stalwart-migrate rollback` kopiert die
+Daten notfalls zurück nach 0.16.
+
 Kontext und Schreibzeug haben getrennte Images und Versionen (`KONTEXT_VERSION`,
 `SCHREIBZEUG_VERSION`); beim Start prüft Kontext nur, ob Schreibzeug antwortet, und schreibt sonst
 eine Warnung ins Log.
@@ -735,7 +779,8 @@ Die Logs: `docker compose -f deploy/compose.yaml logs <dienst>` (Compose) bzw.
   sie nach 100 Fehlversuchen am Tag. Den Eintrag nachholen und die Sperre löschen: Stalwart führt
   sie als `BlockedIp` (über die API `x:BlockedIp/get`, dann `x:BlockedIp/set` mit `destroy`;
   Helfer in [VPS einrichten, Schritt 10](vps.md#10-stalwart-ohne-oberflache-einrichten)). Mit
-  einer Sperrdauer (Schritt 7) läuft sie von selbst ab.
+  einer Sperrdauer (Schritt 7) läuft sie von selbst ab. Steht im Log von Kontext `Stalwart lehnt
+  die Anmeldung für Kontext ab`, fehlt der OAuth-Client `kontext` (Schritt 12).
 - **Kein Zertifikat, der Browser warnt:** Caddy holt die Zertifikate beim Start
   (`logs caddy`). Die A-Einträge müssen vorher auf den Server zeigen und dürfen bei Cloudflare
   nicht über den Proxy laufen (siehe [Server und DNS](#1-server-und-dns)); Ports 80 und 443 müssen

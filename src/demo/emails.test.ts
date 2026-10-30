@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { emailQuery, emailSet, matches } from "./emails";
+import { ASSIGNMENT_NAMESPACE } from "@/lib/assignment";
+import { emailGet, emailQuery, emailSet, matches } from "./emails";
 import { applyPatch } from "./methods";
 import { createStore, type StoredEmail } from "./store";
 
@@ -24,6 +25,40 @@ describe("matches", () => {
     expect(matches(unread, filter)).toBe(true);
     expect(matches({ ...unread, keywords: { $seen: true } }, filter)).toBe(false);
     expect(matches(unread, { operator: "NOT", conditions: [{ subject: "rechnung" }] })).toBe(false);
+  });
+});
+
+describe("assignments in the demo (JMAP Object Metadata)", () => {
+  const NS = ASSIGNMENT_NAMESPACE;
+  const assigned = mail({ metadata: { [NS]: { assignee: "anna", state: "done" } } });
+
+  it("filters on a value and on its presence", () => {
+    const toAnna = { metadataTextEquals: { path: `${NS}/assignee`, value: "anna" } };
+    expect(matches(assigned, toAnna)).toBe(true);
+    expect(matches(mail({}), toAnna)).toBe(false);
+    expect(matches(assigned, { metadataExists: `${NS}/state` })).toBe(true);
+    expect(matches(mail({}), { metadataExists: `${NS}/state` })).toBe(false);
+  });
+
+  it("gives the namespace asked for under metadata, and stores the whole namespace", () => {
+    const store = { ...createStore(), user: "jonas" };
+    const [id] = [...store.emails.keys()];
+    emailSet(
+      store,
+      {
+        accountId: store.emails.get(id!)!.accountId,
+        update: {
+          [id!]: { [`metadata/${NS}`]: { assignee: "anna" } },
+        },
+      },
+      new Map(),
+    );
+    const { list } = emailGet(store, {
+      accountId: store.emails.get(id!)!.accountId,
+      ids: [id],
+      properties: ["subject", `metadata/${NS}`],
+    }) as { list: Record<string, unknown>[] };
+    expect(list[0]!.metadata).toEqual({ [NS]: { assignee: "anna" } });
   });
 });
 

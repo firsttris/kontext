@@ -4,7 +4,7 @@
  * public holidays and taking appointments over from an .ics file.
  */
 import { Settings2, Share2, Trash2 } from "lucide-react";
-import { type FormEvent, useState } from "react";
+import { type FormEvent, useEffect, useState } from "react";
 import { StateSelect } from "@/components/state-select";
 import { Button } from "@/components/ui/button";
 import { Dialog } from "@/components/ui/dialog";
@@ -18,10 +18,14 @@ import { useColleagues, usePrincipals } from "../sharing/queries";
 import { ShareDialog } from "../sharing/share-dialog";
 import { BirthdaysToggle } from "./birthdays";
 import { DefaultReminderButton } from "./default-reminder";
-import { setCalendarHidden } from "./hidden-calendars";
 import { useAddHolidays } from "./holiday-queries";
 import { IcsImport } from "./ics-import";
-import { type CalendarRef, useCalendarMutations, useCalendarRefs } from "./queries";
+import {
+  type CalendarRef,
+  useCalendarMutations,
+  useCalendarRefs,
+  useSetCalendarVisible,
+} from "./queries";
 import { Subscriptions } from "./subscriptions";
 import { TasksToggle } from "./task-chip";
 
@@ -70,7 +74,10 @@ const Rows = ({ calendars, manage = false }: { calendars: CalendarRef[]; manage?
 );
 
 const Row = ({ calendar, manage }: { calendar: CalendarRef; manage: boolean }) => {
-  const visible = calendar.visible;
+  const setVisible = useSetCalendarVisible();
+  // The box follows the click at once; the server's answer arrives a moment later.
+  const [visible, setShown] = useState(calendar.visible);
+  useEffect(() => setShown(calendar.visible), [calendar.visible]);
   return (
     <li className="flex min-h-8 items-center gap-2.5">
       <label className="flex min-w-0 flex-1 cursor-pointer items-center gap-2.5">
@@ -78,7 +85,10 @@ const Row = ({ calendar, manage }: { calendar: CalendarRef; manage: boolean }) =
           type="checkbox"
           checked={visible}
           aria-label={m.calendar_show({ name: calendar.name })}
-          onChange={(e) => setCalendarHidden(calendar.key, !e.target.checked)}
+          onChange={(e) => {
+            setShown(e.target.checked);
+            setVisible.mutate({ calendar, visible: e.target.checked });
+          }}
           className="size-4 shrink-0"
           style={{ accentColor: calendar.color }}
         />

@@ -2187,5 +2187,19 @@
   "tour_chat_title": "Chat",
   "tour_chat_text": "Für kurze Fragen an Kollegen, ohne E-Mail: Hier geht es zum Chat.",
   "tour_again_desktop": "Diese Einführung finden Sie jederzeit wieder im Menü hinter Ihrem Profilbild unten links.",
-  "tour_again_phone": "Diese Einführung finden Sie jederzeit wieder unter „Mehr“."
+  "tour_again_phone": "Diese Einführung finden Sie jederzeit wieder unter „Mehr“.",
+  "mail_filter_mine": "Mir zugewiesen",
+  "mail_filter_open": "Offen",
+  "mail_assign": "Zuweisen",
+  "mail_assign_me": "Mir zuweisen",
+  "mail_assign_nobody": "Niemandem",
+  "mail_assign_done": "Erledigt",
+  "mail_assigned_to": "Zugewiesen an {name}",
+  "mail_assigned_done": "Erledigt",
+  "mail_assigned_done_by": "Erledigt · {name}",
+  "mail_mine_empty": "Keine offenen Mails für dich.",
+  "mail_open_empty": "Alles erledigt.",
+  "search_in_attachment": "im Anhang",
+  "company_search_index_pending": "Die Suche wird noch aufgebaut: {count} Einträge warten. Bis dahin findet sie nicht alle Mails.",
+  "company_search_index_failed": "Der Suchindex meldet einen Fehler; die Suche findet nicht alle Mails. Stalwarts Verwaltung zeigt ihn unter Index Queue."
 }

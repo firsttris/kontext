@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { z } from "zod";
 import { TasksPage } from "@/features/tasks/tasks-page";
+import { z } from "@/lib/zod";
 
 export const tasksSearchSchema = z.object({
   /** One of the own views; ignored while a board is open. */

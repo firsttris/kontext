@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { z } from "zod";
 import { CalendarPage } from "@/features/calendar/calendar-page";
+import { z } from "@/lib/zod";
 
 export const Route = createFileRoute("/_app/calendar")({
   validateSearch: z.object({

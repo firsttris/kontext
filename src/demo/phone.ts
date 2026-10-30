@@ -2,12 +2,14 @@
  * Telephony in the demo: the module as with a telephone box in the office, with the calls of the
  * last days – answered, missed with a message on the mailbox, dialled, the door. Nothing rings
  * and nobody can be dialled: that needs the box and LiveKit (docs/telephony.md). The statistics
- * are the server's own (server/phone/stats.ts).
+ * are the server's own (server/phone/stats.ts). The message on the mailbox is a recording that
+ * comes with the demo (voicemail.m4a: Piper's voice "kerstin", CC0).
  */
 import type { PhoneCall } from "../../server/phone/phone";
 import { callStats } from "../../server/phone/stats";
 import { json } from "./respond";
 import { type Store, visibleAccounts } from "./store";
+import voicemail from "./voicemail.m4a?url";
 
 const PEOPLE = ["jonas", "anna", "sandra", "max"];
 const OFFICE = "+4972231000";
@@ -60,7 +62,7 @@ export const demoCalls = (now = Date.now()): PhoneCall[] => [
     direction: "in",
     remote: "+491601234567",
     outcome: "missed",
-    voicemailSeconds: 23,
+    voicemailSeconds: 20,
     topic: "Kundendienst",
   }),
   call("p2", 2, now, {
@@ -148,6 +150,12 @@ export const handlePhone = async (
     if (!found) return json({ error: "Unbekannt" }, 404);
     found.note = ((await request.json()) as { note: string }).note;
     return json({ call: found });
+  }
+  const message = route.match(/^GET \/api\/phone\/calls\/([^/]+)\/voicemail$/);
+  if (message) {
+    const found = mine.find((c) => c.id === decodeURIComponent(message[1]!));
+    if (!found?.voicemailSeconds) return json({ error: "Unbekannt" }, 404);
+    return fetch(voicemail);
   }
   if (route === "POST /api/phone/block") return json({ ok: true });
   if (request.method === "POST") return json({ error: NO_BOX }, 409);

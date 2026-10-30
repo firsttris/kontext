@@ -12,7 +12,28 @@ Steps that an update needs beyond raising the version are marked **Upgrade**.
   again. Schreibzeug now thins out a file's older versions; to keep all of them, set
   `SCHREIBZEUG_VERSIONS=all` before starting it (Schreibzeug's
   [changelog](https://github.com/firsttris/schreibzeug/blob/main/CHANGELOG.md)).
-
+- Calendar: a hidden calendar stays hidden on every device, also a colleague's calendar shared to
+  read: the choice is the calendar's per-person `isVisible` on the server (Stalwart 1.0), no
+  longer per browser. What a device hid before is moved to the server once. Birthdays and due
+  tasks stay per device.
+- Mail: search finds words that stand only in a PDF, Word, Excel, PowerPoint or OpenDocument
+  attachment (Stalwart 1.0 indexes them), and such hits say "im Anhang" (SearchSnippet/get with
+  every search page, `src/lib/attachment-hit.ts`). The company admin shows "Die Suche wird noch
+  aufgebaut" while Stalwart builds its index, e.g. after the move to 1.0
+  (`/api/company/search-index`, `x:IndexQueueStatus`). **Upgrade:** give the role
+  `Kontext-Server` the right `sysIndexQueueStatusGet` (installation guide, Firmenverwaltung);
+  without it the notice stays away.
+- Mail: assign mails in a shared mailbox. "Zuweisen" gives a mail to a person ("Mir zuweisen", a
+  colleague, nobody) and marks it done; everyone in the mailbox sees it on the mail and in the
+  list, and the filters "Mir zugewiesen" and "Offen" show what still waits. Stored on the mail
+  as shared JMAP Object Metadata in Kontext's namespace `kontext.firsttris.github.io`, filtered
+  by Stalwart (`src/lib/assignment.ts`); needs Stalwart 1.0.
+- Stalwart 1.0.1 instead of 0.16.27: sign-in as a registered OAuth client, stricter JMAP (header
+  forms, calendar queries), contact photos as blobs, renamed management fields.
+  **Upgrade:** Stalwart 1.0 does not open a 0.16 data store: migrate it with `stalwart-migrate`
+  before pulling this version, then register Kontext as the first-party OAuth client `kontext`
+  and allow directory queries (installation guide, "Stalwart 0.16 auf 1.0 heben", steps 12 and
+  13). Everyone signs in once more.
 - S/MIME: the company admin keeps the trusted authorities ("S/MIME-Stellen"): upload a root or
   intermediate certificate (PEM or DER), see its name, issuer, validity and fingerprint, remove
   it. Only current CA certificates, at most 100; they count beside Mozilla's list and

@@ -41,5 +41,24 @@
     "parser": {
       "tailwindDirectives": true
     }
-  }
+  },
+  "overrides": [
+    {
+      "includes": ["src/**", "!src/lib/zod.ts"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "paths": {
+                  "zod": "Import z from @/lib/zod: it turns off Zod's eval probe, which the CSP reports."
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  ]
 }

@@ -209,7 +209,7 @@ const arrivalHeaders = (from: string) => {
     "header:Authentication-Results:asText:all": [
       `mx.${DEV_DOMAIN}; dkim=pass header.d=${domain}; spf=pass smtp.mailfrom=${from}; dmarc=pass header.from=${domain}`,
     ],
-    "header:Received:asText:all": [`from mail.${domain} by mx.${DEV_DOMAIN} with ESMTPS`],
+    "header:Received:all": [`from mail.${domain} by mx.${DEV_DOMAIN} with ESMTPS`],
   };
 };
 
@@ -222,7 +222,7 @@ export const EMPTY_HEADERS = {
   "header:List-Unsubscribe:asURLs": null,
   "header:List-Unsubscribe-Post:asText": null,
   "header:Authentication-Results:asText:all": null,
-  "header:Received:asText:all": null,
+  "header:Received:all": null,
 };
 
 const emailOfSeed = (mail: SeedMail, index: number, now: number, store: Store): StoredEmail => {

@@ -22,6 +22,10 @@ IMAP und SMTP.
   Antworten gehen als info@ hinaus, mit dem Namen der Person, die geantwortet hat; die Liste
   zeigt, wer schon geantwortet hat („Jonas · 14:02“). Rechte je Person: kein Zugriff, nur lesen,
   lesen und senden. [Mehr](architecture.md#gemeinsame-postfacher)
+- **Mails zuweisen:** In info@ gibt „Zuweisen“ eine Mail einer Person („Mir zuweisen“, eine
+  Kollegin, niemandem) und hakt sie als „Erledigt“ ab. Alle im Postfach sehen es an der Mail und
+  in der Liste („Anna“, „Erledigt · Anna“); die Filter „Mir zugewiesen“ und „Offen“ zeigen, was
+  noch auf einen selbst oder aufs Team wartet. [Mehr](architecture.md#mails-zuweisen)
 - **Alle Posteingänge** in einer Liste: das eigene Postfach und die gemeinsamen zusammen.
 - **Kategorien** wie „In Bearbeitung“, „Wartet auf Antwort“, „Erledigt“ – mehrere je Mail, eigene
   dazu, per Regel gesetzt. In info@ sieht sie das ganze Team: eine kleine Aufgabenliste.
@@ -40,7 +44,8 @@ IMAP und SMTP.
 
 - **Suche wie in Gmail** über alle Ordner und Postfächer, mit Operatoren wie `von:`, `an:`,
   `betreff:`, `hat:anhang`, `ist:ungelesen`, `kategorie:`, `in:info@`, `nach:`/`vor:` (auch
-  englisch: `from:`, `has:attachment` …) und Vorschlägen beim Tippen.
+  englisch: `from:`, `has:attachment` …) und Vorschlägen beim Tippen. Sie findet auch Wörter,
+  die nur in einem PDF-, Word- oder Excel-Anhang stehen; solche Treffer tragen „im Anhang“.
 - **Regeln** („wenn Absender, Empfänger, Betreff oder Text … dann in Ordner, markieren, Kategorie
   setzen, weiterleiten, Aufgabe anlegen“) laufen auf dem Server beim Eingang, auch wenn Kontext zu
   ist; aus einer Mail heraus angelegt, auf Wunsch auch auf vorhandene Mails.

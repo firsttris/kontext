@@ -201,7 +201,7 @@ export const employeeRoutes = ({
     const key = user && passwordKey(user);
     if (!user || !key) return notFound();
     const result = await management.updateAccounts({
-      [user.id]: { [`credentials/${key}/otpAuth`]: null },
+      [user.id]: { [`credentials/${key}/otpUrl`]: null },
     });
     if (!result.ok) return bad(result.error);
     return c.json({ ok: true });

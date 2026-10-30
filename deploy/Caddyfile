@@ -7,9 +7,10 @@
 	email {$ACME_EMAIL}
 }
 
-# Behind every reverse_proxy: only the address Caddy saw counts. Stalwart reads Forwarded before
-# X-Forwarded-For (crates/http/src/request.rs), so no client names another one to dodge or cause
-# a ban.
+# Behind every reverse_proxy: only the address Caddy saw counts, so no client names another one to
+# dodge or cause a ban. Stalwart (clientIpSource "xForwardedFor", one hop) takes the last entry
+# of X-Forwarded-For (crates/common/src/network/forwarded.rs); Forwarded goes too, for any other
+# setting.
 (client_address) {
 	header_up X-Forwarded-For {remote_host}
 	header_up -Forwarded

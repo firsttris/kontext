@@ -18,6 +18,8 @@ info@ – wer das Postfach öffnen darf, öffnet die Mail, kopiert wird nichts.
 - **#allgemein** für alle, **ein Kanal pro gemeinsamem Postfach** (info@, rechnung@) für alle,
   die darin arbeiten, und eigene wie #baustelle-hoffmann mit ausgewählten Mitgliedern.
 - **Direktnachrichten** an eine oder mehrere Personen, mit „Gelesen“.
+- **Sprechblasen wie im Messenger**, am PC wie am Handy: die eigenen rechts in hellem Blau, die der
+  anderen links in Grau mit Name (am PC auch mit Foto).
 - **Live:** Nachrichten, „Sandra schreibt …“ und wer online ist, ohne Neuladen; Ungelesenes am
   Chat und am App-Symbol.
 - **@Erwähnungen** mit Vorschlägen; eine Erwähnung oder Direktnachricht kommt aufs Handy, auch

@@ -76,7 +76,13 @@ Rest neu startet. Einzeln gehen auch `bun run dev:server` und `bun run dev:app`.
 
 `dev/stalwart.ts` legt die Daten unter `.dev/stalwart/` ab. Beim ersten Start bootet es Stalwart
 im Wiederherstellungsmodus, legt die Listener auf Ports über 1024 an (HTTP 18080, SMTP 10025,
-IMAP 10143) und startet dann normal. Der Admin ist `admin` / `kontext-admin-dev`.
+IMAP 10143) und startet dann normal. Der Admin ist `admin` / `kontext-admin-dev`. Bei jedem Start
+trägt es Kontext als OAuth-Client `kontext` ein, falls er fehlt, und erlaubt
+Verzeichnisabfragen (wie [Schritte 12 und 13 der Installation](installation.md#3-stalwart-einrichten)).
+
+Daten einer älteren Stalwart-Hauptversion öffnet ein neuer Stalwart nicht (seit 1.0: `The data
+store was created by a Stalwart version prior to 1.0`, in `.dev/stalwart.log`). Nach so einem
+Update einmal `bun dev/stalwart.ts --fresh --seed` laufen lassen.
 
 | Option                          |                                                     |
 | ------------------------------- | --------------------------------------------------- |
@@ -174,8 +180,11 @@ mit einem Klick als Jonas, Anna, Sandra oder Max an.
   keine Live-Verbindung, und angemeldet ist immer nur eine Person.
 - **Telefon:** das Modul wie mit einer Telefonbox im Büro, mit den Anrufen der letzten Tage
   (angenommen, verpasst mit Nachricht auf der Mailbox, gewählt, die Tür), Status, Notizen und
-  Auswertung (`src/demo/phone.ts`). Es klingelt nichts, und wählen geht ohne Telefonbox nicht;
-  die Nachrichten auf der Mailbox haben keinen Ton.
+  Auswertung (`src/demo/phone.ts`). Es klingelt nichts, und wählen geht ohne Telefonbox nicht.
+  Die Nachricht auf der Mailbox spielt eine Aufnahme ab, die der Demo beiliegt
+  (`src/demo/voicemail.m4a`, gesprochen mit [Piper](https://github.com/rhasspy/piper), Stimme
+  „kerstin“, CC0). Ein `<audio>` lädt seinen Ton selbst, am `fetch` der Demo vorbei; deshalb
+  bekommt jeder Player mit `src="/api/…"` die Antwort der Demo als Blob-URL (`src/demo/media.ts`).
 - **Was noch fehlt:** Videoanrufe und die Firmenverwaltung.
   Methoden, die die Demo nicht kennt, beantwortet sie wie ein leerer Server (`src/demo/jmap.ts`);
   Module, die einen eigenen Dienst brauchen (Anrufe, Telefon, Dokumente mit Schreibzeug), sind
@@ -312,8 +321,10 @@ Actions → _Update video_ → Run workflow (oder `bun run video`, braucht ffmpe
   LiveKit hebt der Pull Request zusammen in `deploy/compose.yaml`, `deploy/quadlet/` und
   `dev/config.ts`, sodass seine E2E-Tests schon gegen das neue Release laufen. Vor dem Mergen eines
   Stalwart-Updates dessen Changelog und `UPGRADING/` lesen und die Workarounds prüfen, die im Code
-  mit „Stalwart 0.16.x“ markiert sind. Die eigenen Images (`tristanteu/*`) und die Bun-Pakete
-  fasst Renovate nicht an. Prüfen: `bunx --package renovate renovate-config-validator
+  mit der Version von Stalwart markiert sind (`git grep -n 'Stalwart [01]\.'`). Eine neue
+  Hauptversion kann bei den Kunden eine Migration der Daten brauchen (wie
+  [0.16 auf 1.0](installation.md#stalwart-016-auf-10-heben)). Die eigenen Images (`tristanteu/*`)
+  und die Bun-Pakete fasst Renovate nicht an. Prüfen: `bunx --package renovate renovate-config-validator
   .github/renovate.json5`.
 - **Screenshots**: Actions → _Update screenshots_ → Run workflow (oder `bun run screenshots`, lokal mit
   `PW_CHROMIUM_PATH`, wenn Playwrights eigener Browser fehlt).

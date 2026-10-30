@@ -14,7 +14,7 @@ Ohne Kosten pro Benutzer. Made in Europe.
 [![Platforms](https://img.shields.io/badge/platform-amd64%20%7C%20arm64-lightgrey)](https://hub.docker.com/r/tristanteu/kontext/tags)
 [![Docs](https://img.shields.io/badge/docs-firsttris.github.io%2Fkontext-4f46e5?logo=materialformkdocs&logoColor=white)](https://firsttris.github.io/kontext/)
 [![License: AGPL-3.0](https://img.shields.io/badge/license-AGPL--3.0-blue)](LICENSE)
-[![Stalwart 0.16](https://img.shields.io/badge/Stalwart-0.16-18181b)](https://stalw.art)
+[![Stalwart 1.0](https://img.shields.io/badge/Stalwart-1.0-18181b)](https://stalw.art)
 [![JMAP](https://img.shields.io/badge/JMAP-mail%20%7C%20calendar%20%7C%20contacts-0f766e)](https://jmap.io)
 [![DSGVO](https://img.shields.io/badge/DSGVO-Daten%20auf%20deinem%20Server-15803d)](#-warum-kontext)
 [![Made in Europe](https://img.shields.io/badge/made%20in-Europe-003399)](#-warum-kontext)
@@ -86,7 +86,10 @@ Tailscale); die [Anleitung](https://firsttris.github.io/kontext/installation.htm
    selbst sperren.
 3. Den API-Schlüssel für die Firmenverwaltung anlegen, in `deploy/.env` als `STALWART_ADMIN_KEY`
    eintragen und Kontext neu starten ([wie](https://firsttris.github.io/kontext/installation.html#firmenverwaltung-einschalten)).
-4. Unter `https://<deine Domain>` anmelden.
+4. Kontext als First-party-OAuth-Client `kontext` eintragen (Redirect-URI
+   `https://kontext.invalid/oauth`) und Verzeichnisabfragen erlauben (*Sharing*); Stalwart 1.0
+   meldet nur Clients an, die es kennt, und zeigt die Kollegen sonst nicht.
+5. Unter `https://<deine Domain>` anmelden.
 
 Anrufe und Dokumente (Schreibzeug, ohne eigene Installation) sind in `.env.example` schon eingeschaltet; wer sie nicht braucht, nimmt sie
 aus `COMPOSE_PROFILES`. Für Telefonie kommt eine kleine Box ins Büro. Für zehn Benutzer reicht ein
@@ -97,11 +100,11 @@ VPS mit 2 vCPU und 4 GB RAM. Alles Weitere – DNS, Podman, Backups, Updates –
 
 | | |
 |---|---|
-| ✉️ **Mail** | **Gemeinsame Postfächer** wie info@ mit Rechten pro Person, **Vertretung in einem Schritt**, **Kategorien** und **Regeln auf dem Server**, Suche wie in Gmail, später senden und Wiedervorlage, **weitere Postfächer** (Gmail, GMX), **Warnungen vor gefälschten Absendern** · [mehr →](https://firsttris.github.io/kontext/mail.html) |
-| 📅 **Kalender** | Tag, Woche, Monat und Serien, **Einladungen mit einem Klick beantworten** (auch aus Outlook und Google), **Wer hat Zeit?**, **Videobesprechung pro Termin**, geteilte Kalender und **Abos** (iCal), Feiertage und Geburtstage der Kontakte · [mehr →](https://firsttris.github.io/kontext/calendar-contacts.html) |
+| ✉️ **Mail** | **Gemeinsame Postfächer** wie info@ mit Rechten pro Person, **Mails zuweisen** mit „Mir zugewiesen“ und „Offen“, **Vertretung in einem Schritt**, **Kategorien** und **Regeln auf dem Server**, Suche wie in Gmail (auch in PDF- und Office-Anhängen), später senden und Wiedervorlage, **weitere Postfächer** (Gmail, GMX), **Warnungen vor gefälschten Absendern** · [mehr →](https://firsttris.github.io/kontext/mail.html) |
+| 📅 **Kalender** | Tag, Woche, Monat und Serien, **Einladungen mit einem Klick beantworten** (auch aus Outlook und Google), **Wer hat Zeit?**, **Videobesprechung pro Termin**, geteilte Kalender (auf allen Geräten ein- und ausgeblendet) und **Abos** (iCal), Feiertage und Geburtstage der Kontakte · [mehr →](https://firsttris.github.io/kontext/calendar-contacts.html) |
 | 👥 **Kontakte** | **Der Kunde auf einen Blick**: letzte Mails, nächste Termine, offene Aufgaben und Anrufe; Gruppen, vCard, Doppelte zusammenführen, mehrere Kontakte auf einmal (löschen, in eine Gruppe, exportieren) · [mehr →](https://firsttris.github.io/kontext/calendar-contacts.html#kontakte) |
 | ✅ **Aufgaben** | **Liste oder Kanban-Board** pro Postfach und pro Projekt, **aus einer Mail, einer Chat-Nachricht, einem Termin oder einem verpassten Anruf**, Erinnerungen, per CalDAV in Thunderbird und am Handy · [mehr →](https://firsttris.github.io/kontext/tasks.html) |
-| 💬 **Team-Chat & Video** | Kanäle und Direktnachrichten, **Mails und Aufgaben als Karten**, Threads mit **„Auch im Kanal zeigen“**, **Reaktionen mit jedem Emoji**, Sprachnachrichten, **Videocalls und Bildschirm teilen** auf dem eigenen Server, Ende-zu-Ende verschlüsselte Unterhaltungen · [mehr →](https://firsttris.github.io/kontext/chat.html) |
+| 💬 **Team-Chat & Video** | Kanäle und Direktnachrichten **als Sprechblasen (die eigenen rechts)**, **Mails und Aufgaben als Karten**, Threads mit **„Auch im Kanal zeigen“**, **Reaktionen mit jedem Emoji**, Sprachnachrichten, **Videocalls und Bildschirm teilen** auf dem eigenen Server, Ende-zu-Ende verschlüsselte Unterhaltungen · [mehr →](https://firsttris.github.io/kontext/chat.html) |
 | 📞 **Telefonie (CTI)** | **Fritzbox und Nummern bleiben**: Anrufe klingeln in Kontext mit Kontakt und letzter Mail des Anrufers, **Anrufen per Klick**, **Mailbox als Mail**, verpasste Anrufe werden Aufgaben · [mehr →](https://firsttris.github.io/kontext/telephony.html) |
 | 🔐 **Verschlüsselung** | **OpenPGP** und **S/MIME**, **vertraulich senden an jeden** über einen Link auf den eigenen Server, verschlüsselte Backups · [mehr →](https://firsttris.github.io/kontext/encryption.html) |
 | 📄 **Dokumente** | **Word, Excel, PowerPoint und PDF** in Kontext mit [Schreibzeug](https://github.com/firsttris/schreibzeug), ein Ordner pro gemeinsamem Postfach · [mehr →](https://firsttris.github.io/kontext/documents.html) |

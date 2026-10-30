@@ -7,6 +7,7 @@
 import { useNavigate } from "@tanstack/react-router";
 import { useCallback, useMemo } from "react";
 import type { Mailbox } from "@/jmap/types";
+import { foundInAttachment } from "@/lib/attachment-hit";
 import { cn } from "@/lib/cn";
 import { dateKey } from "@/lib/jscalendar";
 import {
@@ -60,9 +61,14 @@ export const SearchPage = ({ search }: { search: MailSearch }) => {
     (row: Row): Row => {
       const list = mailboxes[row.account?.id ?? ""] ?? [];
       const folder = list.find((mailbox) => row.email.mailboxIds[mailbox.id]);
-      return { ...row, folder: folder ? mailboxName(folder) : undefined, highlight: terms };
+      return {
+        ...row,
+        folder: folder ? mailboxName(folder) : undefined,
+        highlight: terms,
+        inAttachment: foundInAttachment(query.words, row.email),
+      };
     },
-    [mailboxes, terms],
+    [mailboxes, terms, query.words],
   );
 
   const readerAccount = search.account ?? own?.id;

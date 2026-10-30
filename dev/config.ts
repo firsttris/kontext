@@ -1,5 +1,5 @@
 /** Shared settings of the local development and test setup. Never used in production. */
-export const STALWART_VERSION = "0.16.27";
+export const STALWART_VERSION = "1.0.1";
 
 export const STALWART_ADMIN = { user: "admin", password: "kontext-admin-dev" } as const;
 
@@ -9,7 +9,7 @@ export const DEV_PASSWORD = "kaffee-werkbank-kontext";
 export const DEV_DOMAIN = "weber-haustechnik.test";
 
 /** LiveKit for calls in the chat (dev/livekit.ts): the release and the dev key pair. */
-export const LIVEKIT_VERSION = "1.13.10";
+export const LIVEKIT_VERSION = "1.13.11";
 export const LIVEKIT_DEV_KEY = {
   key: "kontext-dev",
   secret: "kontext-dev-secret-only-for-local-calls-0123",

@@ -14,7 +14,7 @@ No per-seat pricing. Made in Europe.
 [![Platforms](https://img.shields.io/badge/platform-amd64%20%7C%20arm64-lightgrey)](https://hub.docker.com/r/tristanteu/kontext/tags)
 [![Docs](https://img.shields.io/badge/docs-firsttris.github.io%2Fkontext-4f46e5?logo=materialformkdocs&logoColor=white)](https://firsttris.github.io/kontext/)
 [![License: AGPL-3.0](https://img.shields.io/badge/license-AGPL--3.0-blue)](LICENSE)
-[![Stalwart 0.16](https://img.shields.io/badge/Stalwart-0.16-18181b)](https://stalw.art)
+[![Stalwart 1.0](https://img.shields.io/badge/Stalwart-1.0-18181b)](https://stalw.art)
 [![JMAP](https://img.shields.io/badge/JMAP-mail%20%7C%20calendar%20%7C%20contacts-0f766e)](https://jmap.io)
 [![GDPR](https://img.shields.io/badge/GDPR-data%20on%20your%20server-15803d)](#-why-kontext)
 [![Made in Europe](https://img.shields.io/badge/made%20in-Europe-003399)](#-why-kontext)
@@ -86,7 +86,10 @@ Then the main steps in Stalwart's admin (port 8080, only through an SSH tunnel o
    Kontext itself banned.
 3. Create the API key for the company admin, put it into `deploy/.env` as `STALWART_ADMIN_KEY` and
    start Kontext again ([how](https://firsttris.github.io/kontext/installation.html#firmenverwaltung-einschalten)).
-4. Sign in at `https://<your domain>`.
+4. Register Kontext as the first-party OAuth client `kontext` (redirect URI
+   `https://kontext.invalid/oauth`) and allow directory queries (*Sharing*); Stalwart 1.0 signs in
+   only clients it knows and hides the colleagues otherwise.
+5. Sign in at `https://<your domain>`.
 
 Calls and documents (Schreibzeug, no install of its own needed) are switched on in `.env.example`; to leave them out, remove them from
 `COMPOSE_PROFILES`. Telephony adds a small box in the office. Ten users run fine on a VPS with
@@ -97,11 +100,11 @@ Calls and documents (Schreibzeug, no install of its own needed) are switched on 
 
 | | |
 |---|---|
-| ✉️ **Mail** | **Shared mailboxes** like info@ with rights per person, **a deputy in one step**, **categories** and **rules on the server**, search like Gmail, send later and snooze, **other mailboxes** (Gmail, GMX), **warnings about forged senders** · [more →](https://firsttris.github.io/kontext/mail.html) |
-| 📅 **Calendar** | Day, week, month and recurring events, **invitations answered with one click** (also from Outlook and Google), **who is free?**, a **video meeting per event**, shared calendars and **subscriptions** (iCal), public holidays and the contacts' birthdays · [more →](https://firsttris.github.io/kontext/calendar-contacts.html) |
+| ✉️ **Mail** | **Shared mailboxes** like info@ with rights per person, **assign mails** with “Assigned to me” and “Open”, **a deputy in one step**, **categories** and **rules on the server**, search like Gmail (also inside PDF and Office attachments), send later and snooze, **other mailboxes** (Gmail, GMX), **warnings about forged senders** · [more →](https://firsttris.github.io/kontext/mail.html) |
+| 📅 **Calendar** | Day, week, month and recurring events, **invitations answered with one click** (also from Outlook and Google), **who is free?**, a **video meeting per event**, shared calendars (shown or hidden on every device) and **subscriptions** (iCal), public holidays and the contacts' birthdays · [more →](https://firsttris.github.io/kontext/calendar-contacts.html) |
 | 👥 **Contacts** | **The customer at a glance**: latest mails, next appointments, open tasks and calls; groups, vCard, merging duplicates, several contacts at once (delete, add to a group, export) · [more →](https://firsttris.github.io/kontext/calendar-contacts.html#kontakte) |
 | ✅ **Tasks** | **List or Kanban board** per mailbox and per project, **from a mail, a chat message, an appointment or a missed call**, reminders, in Thunderbird and on the phone via CalDAV · [more →](https://firsttris.github.io/kontext/tasks.html) |
-| 💬 **Team chat & video** | Channels and direct messages, **mails and tasks as cards**, threads with **"also send to channel"**, **reactions with any emoji**, voice messages, **video calls and screen sharing** on your own server, end-to-end encrypted conversations · [more →](https://firsttris.github.io/kontext/chat.html) |
+| 💬 **Team chat & video** | Channels and direct messages **as bubbles (your own on the right)**, **mails and tasks as cards**, threads with **"also send to channel"**, **reactions with any emoji**, voice messages, **video calls and screen sharing** on your own server, end-to-end encrypted conversations · [more →](https://firsttris.github.io/kontext/chat.html) |
 | 📞 **Telephony (CTI)** | **Your Fritzbox and numbers stay**: calls ring in Kontext with the caller's contact and last mail, **click to call**, **voicemail as mail**, missed calls become tasks · [more →](https://firsttris.github.io/kontext/telephony.html) |
 | 🔐 **Encryption** | **OpenPGP** and **S/MIME**, **send confidentially to anyone** through a link to your own server, encrypted backups · [more →](https://firsttris.github.io/kontext/encryption.html) |
 | 📄 **Documents** | **Word, Excel, PowerPoint and PDF** in Kontext with [Schreibzeug](https://github.com/firsttris/schreibzeug), a folder per shared mailbox · [more →](https://firsttris.github.io/kontext/documents.html) |
