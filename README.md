@@ -1,23 +1,14 @@
 <div align="center">
 
-<h1>Feels familiar. Belongs to you.</h1>
+<h1>Kontext – your own alternative to Google Workspace and Microsoft 365</h1>
 
-**Kontext: mail, calendar, chat, documents and phone for your team – on your own server, open source**
+*Feels familiar. Belongs to you.*
+
+**Mail, calendar, chat, documents and phone for your team – on your own server, open source**
 
 No per-seat pricing. Made in Europe.
 
 **English** · [Deutsch](README.de.md)
-
-[![CI](https://github.com/firsttris/kontext/actions/workflows/ci.yml/badge.svg)](https://github.com/firsttris/kontext/actions/workflows/ci.yml)
-[![Release](https://img.shields.io/github/v/release/firsttris/kontext?logo=github&label=release)](https://github.com/firsttris/kontext/releases/latest)
-[![Docker Pulls](https://img.shields.io/docker/pulls/tristanteu/kontext?logo=docker&logoColor=white)](https://hub.docker.com/r/tristanteu/kontext)
-[![Platforms](https://img.shields.io/badge/platform-amd64%20%7C%20arm64-lightgrey)](https://hub.docker.com/r/tristanteu/kontext/tags)
-[![Docs](https://img.shields.io/badge/docs-firsttris.github.io%2Fkontext-4f46e5?logo=materialformkdocs&logoColor=white)](https://firsttris.github.io/kontext/)
-[![License: AGPL-3.0](https://img.shields.io/badge/license-AGPL--3.0-blue)](LICENSE)
-[![Stalwart 1.0](https://img.shields.io/badge/Stalwart-1.0-18181b)](https://stalw.art)
-[![JMAP](https://img.shields.io/badge/JMAP-mail%20%7C%20calendar%20%7C%20contacts-0f766e)](https://jmap.io)
-[![GDPR](https://img.shields.io/badge/GDPR-data%20on%20your%20server-15803d)](#-why-kontext)
-[![Made in Europe](https://img.shields.io/badge/made%20in-Europe-003399)](#-why-kontext)
 
 [Why](#-why-kontext) •
 [Install](#-install) •
@@ -32,6 +23,17 @@ No per-seat pricing. Made in Europe.
 ▶️ **[Watch the whole film (2 minutes)](https://firsttris.github.io/kontext/en/)** – every module, made from the real app
 
 🖱️ **[Try the demo](https://firsttris.github.io/kontext/demo/)** – mail, calendar, contacts, documents, chat, tasks and the phone with the test data, in your browser, nothing to install
+
+[![CI](https://github.com/firsttris/kontext/actions/workflows/ci.yml/badge.svg)](https://github.com/firsttris/kontext/actions/workflows/ci.yml)
+[![Release](https://img.shields.io/github/v/release/firsttris/kontext?logo=github&label=release)](https://github.com/firsttris/kontext/releases/latest)
+[![Docker Pulls](https://img.shields.io/docker/pulls/tristanteu/kontext?logo=docker&logoColor=white)](https://hub.docker.com/r/tristanteu/kontext)
+[![Platforms](https://img.shields.io/badge/platform-amd64%20%7C%20arm64-lightgrey)](https://hub.docker.com/r/tristanteu/kontext/tags)
+[![Docs](https://img.shields.io/badge/docs-firsttris.github.io%2Fkontext-4f46e5?logo=materialformkdocs&logoColor=white)](https://firsttris.github.io/kontext/)
+[![License: AGPL-3.0](https://img.shields.io/badge/license-AGPL--3.0-blue)](LICENSE)
+[![Stalwart 1.0](https://img.shields.io/badge/Stalwart-1.0-18181b)](https://stalw.art)
+[![JMAP](https://img.shields.io/badge/JMAP-mail%20%7C%20calendar%20%7C%20contacts-0f766e)](https://jmap.io)
+[![GDPR](https://img.shields.io/badge/GDPR-data%20on%20your%20server-15803d)](#-why-kontext)
+[![Made in Europe](https://img.shields.io/badge/made%20in-Europe-003399)](#-why-kontext)
 
 </div>
 
