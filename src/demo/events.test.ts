@@ -69,6 +69,34 @@ describe("one date of a series", () => {
   });
 });
 
+describe("a date of a series moved to an earlier week", () => {
+  it("shows in the week it was moved to", async () => {
+    const store = demo("jonas");
+    const later = { after: "2026-11-27T00:00:00Z", before: "2026-12-07T00:00:00Z" };
+    const { ids } = await call(store, "CalendarEvent/query", {
+      accountId: "jonas",
+      filter: later,
+      expandRecurrences: true,
+    });
+    const { list } = await call(store, "CalendarEvent/get", {
+      accountId: "jonas",
+      ids,
+      properties: ["title", "start"],
+    });
+    const meeting = (list as { id: string; title: string }[]).find(
+      (event) => event.title === "Teambesprechung",
+    )!;
+    await call(store, "CalendarEvent/set", {
+      accountId: "jonas",
+      update: { [meeting.id]: { start: "2026-11-20T09:00:00" } },
+    });
+    const meetings = (await titlesBetween(store, "jonas")).filter(
+      (event) => event.title === "Teambesprechung",
+    );
+    expect(meetings.map((event) => event.start)).toContain("2026-11-20T09:00:00");
+  });
+});
+
 describe("invitations between colleagues", () => {
   it("puts the seed's meeting into Anna's calendar, and her answer reaches Jonas", async () => {
     const store = demo("anna");
