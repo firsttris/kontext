@@ -660,9 +660,14 @@ Migrationswerkzeug [`stalwart-migrate`](https://github.com/stalwartlabs/stalwart
 eine neue, leere Datenbank; die alte liest es nur. Ausführlich:
 [Stalwarts Anleitung](https://stalw.art/docs/migration/upgrade-0-16/).
 
+`stalwart-migrate` **ab Version 1.0.4** nehmen: 1.0.0 bis 1.0.3 brechen `run --final` bei der
+Prüfung ab, sobald es Kontakte gibt (`contactCard … differs in the target: vcard`, für jede vCard,
+deren `N` leere Felder am Ende hat; so speichert 0.16 sie). Die alte Datenbank bleibt dabei
+unberührt, Stalwart 0.16 wieder starten genügt.
+
 1. **Backup** machen ([Backups](#5-backups)) und prüfen, dass Stalwart 0.16.27 läuft (frühere 0.16
    erst auf 0.16.27 heben). Kontext und Stalwart bleiben vorerst auf der alten Version.
-2. Mit dem Docker-Image `stalwartlabs/stalwart-migrate` (Netz, Volumes und Umgebung von Stalwart,
+2. Mit dem Docker-Image `stalwartlabs/stalwart-migrate:1.0.4` (Netz, Volumes und Umgebung von Stalwart,
    neue Volumes für die 1.0-Daten und den Stand der Migration) zuerst `prepare` ausführen. Es
    fragt nach, was sich nicht von selbst übersetzen lässt – unter anderem die Client-Adresse hinter
    Caddy: *X-Forwarded-For* mit einem Proxy, wie in [Schritt 5](#3-stalwart-einrichten).
@@ -674,6 +679,50 @@ eine neue, leere Datenbank; die alte liest es nur. Ausführlich:
 6. Alle melden sich einmal neu an: Stalwarts Tokens wandern nicht mit, Kontext nimmt die
    abgelehnten Sitzungen zurück. Mailprogramme mit Passwort laufen weiter; CalDAV und CardDAV
    laden Kalender und Kontakte einmal neu, die Volltextsuche baut Stalwart im Hintergrund neu auf.
+   Kontext bis 0.1.16 reicht die Ablehnung nur weiter: Die App versucht es mit dem alten Token
+   immer wieder, bis Stalwart die Adresse der Person für einen Tag sperrt (die App zeigt nur
+   „Something went wrong“, siehe [Fehlersuche](#fehlersuche)). Dann vor dem Start von Kontext die
+   alten Tokens löschen:
+   `… exec kontext bun -e 'import {Database} from "bun:sqlite"; new Database("/data/kontext.db").run("delete from stalwart_grant")'`
+   (`docker compose -f deploy/compose.yaml` oder `podman` für `…`).
+
+**Mit Quadlet** sah das auf einem Server so aus (Volumes `stalwart-config` und `stalwart-data`,
+Netz `kontext`). Die Werte der beiden `Environment=`-Zeilen aus `stalwart.container` übernehmen:
+
+```bash
+mig() { podman run --rm --network kontext \
+  -e STALWART_HOSTNAME=mail.firma.de -e STALWART_PUBLIC_URL=https://kontext.firma.de \
+  -v stalwart-config:/etc/stalwart:ro -v stalwart-data:/var/lib/stalwart \
+  -v stalwart-v1-config:/etc/stalwart-v1 -v stalwart-v1-data:/var/lib/stalwart-v1 \
+  -v stalwart-migrate-state:/var/lib/stalwart-migrate \
+  docker.io/stalwartlabs/stalwart-migrate:1.0.4 "$@" \
+  --source /etc/stalwart/config.json --state /var/lib/stalwart-migrate; }
+V=/var/lib/containers/storage/volumes
+for v in stalwart-v1-config stalwart-v1-data stalwart-migrate-state; do podman volume create $v; done
+# Die neue Datenbank liegt im 1.0-Container später wieder unter /var/lib/stalwart
+echo '{"@type":"RocksDb","path":"/var/lib/stalwart/"}' > $V/stalwart-v1-config/_data/config.json
+chown -R 2000:2000 $V/stalwart-v1-config/_data $V/stalwart-v1-data/_data
+mig prepare --non-interactive      # schreibt answers.toml mit den offenen Fragen
+nano $V/stalwart-migrate-state/_data/answers.toml   # die Tabellen einkommentieren (Empfehlungen)
+T="--target /etc/stalwart-v1/config.json --target-path-map /var/lib/stalwart=/var/lib/stalwart-v1"
+mig prepare --non-interactive      # „Every question has an answer“
+mig run $T && mig verify --full $T # Probelauf am laufenden Server, ohne Ausfall
+systemctl start kontext-backup
+systemctl stop schreibzeug kontext stalwart
+mig run --final --yes $T           # muss mit „verify: … 0 mismatches“ enden
+# Die 0.16-Daten aufheben (Rollback), die 1.0-Daten an ihre Stelle
+for v in config data; do
+  podman volume create stalwart-016-$v
+  cp -a $V/stalwart-$v/_data/. $V/stalwart-016-$v/_data/
+  rm -rf $V/stalwart-$v/_data/*
+  cp -a $V/stalwart-v1-$v/_data/. $V/stalwart-$v/_data/
+done
+```
+
+Danach in `/etc/containers/systemd/` die Images heben wie unter [Updates](#6-updates), `systemctl
+daemon-reload`, `systemctl start stalwart`, die Schritte 5 und 6 oben, dann Kontext und
+Schreibzeug starten. `stalwart-v1-*` werden danach nicht mehr gebraucht; `stalwart-016-*` und
+`stalwart-migrate-state` (für `rollback --forward-state`) bleiben, bis 1.0 eine Weile läuft.
 
 Das alte Volume erst löschen, wenn 1.0 eine Weile läuft: `stalwart-migrate rollback` kopiert die
 Daten notfalls zurück nach 0.16.
@@ -781,6 +830,13 @@ Die Logs: `docker compose -f deploy/compose.yaml logs <dienst>` (Compose) bzw.
   Helfer in [VPS einrichten, Schritt 10](vps.md#10-stalwart-ohne-oberflache-einrichten)). Mit
   einer Sperrdauer (Schritt 7) läuft sie von selbst ab. Steht im Log von Kontext `Stalwart lehnt
   die Anmeldung für Kontext ab`, fehlt der OAuth-Client `kontext` (Schritt 12).
+- **Für eine Person zeigt die App nur „Something went wrong“:** Stalwart hat die Adresse dieser
+  Person gesperrt (`Banned due to authentication errors … remoteIp = <ihre Adresse>` im Log von
+  Stalwart), etwa weil Kontext bis 0.1.16 nach dem Umzug auf Stalwart 1.0 alte Tokens
+  weiterschickte. Die Sperre mit `x:BlockedIp/set` und `destroy` löschen und danach die Aktion
+  `ReloadBlockedIps` auslösen (`x:Action/set` mit `{"@type":"ReloadBlockedIps"}`). Ohne sie hält
+  Stalwart 1.0 die Sperre im Speicher und antwortet weiter mit 403, obwohl sie in der Liste
+  nicht mehr steht.
 - **Kein Zertifikat, der Browser warnt:** Caddy holt die Zertifikate beim Start
   (`logs caddy`). Die A-Einträge müssen vorher auf den Server zeigen und dürfen bei Cloudflare
   nicht über den Proxy laufen (siehe [Server und DNS](#1-server-und-dns)); Ports 80 und 443 müssen
