@@ -3,7 +3,7 @@
  * at a time, chosen by the URL; views and boards are chips above the list.
  */
 import { Link, useNavigate } from "@tanstack/react-router";
-import { Columns3, List, SquareKanban } from "lucide-react";
+import { Columns3, EyeOff, List, SquareKanban } from "lucide-react";
 import { useState } from "react";
 import { TabBar } from "@/components/shell/app-shell";
 import { Button } from "@/components/ui/button";
@@ -13,6 +13,7 @@ import { inView, type TaskView } from "@/lib/tasks";
 import { m } from "@/paraglide/messages";
 import type { TasksSearch } from "@/routes/_app/tasks";
 import { ColumnsDialog } from "./columns-dialog";
+import { setHideDone, useHideDone } from "./hide-done";
 import { useBoards, useMe, useTasks } from "./queries";
 import { TaskBoard } from "./task-board";
 import { TaskDetail } from "./task-detail";
@@ -52,6 +53,22 @@ const ModeSwitch = ({ board, mode }: { board: string; mode: "list" | "board" }) 
   </div>
 );
 
+/** Named in full where there is room (the board), else the icon with its name as a tip. */
+const HideDoneToggle = ({ hidden, labelled }: { hidden: boolean; labelled: boolean }) => (
+  <Button
+    variant="ghost"
+    size={labelled ? "sm" : "iconSm"}
+    aria-pressed={hidden}
+    aria-label={m.tasks_hide_done()}
+    title={m.tasks_hide_done()}
+    onClick={() => setHideDone(!hidden)}
+    className={cn(hidden && "bg-subtle text-fg")}
+  >
+    <EyeOff size={15} />
+    {labelled ? <span className="hidden sm:inline">{m.tasks_hide_done()}</span> : null}
+  </Button>
+);
+
 export const TasksPage = ({ search }: { search: TasksSearch }) => {
   const navigate = useNavigate();
   const me = useMe();
@@ -60,6 +77,7 @@ export const TasksPage = ({ search }: { search: TasksSearch }) => {
   const today = dateKey(new Date());
   const [creating, setCreating] = useState(false);
   const [editingColumns, setEditingColumns] = useState(false);
+  const hideDone = useHideDone();
 
   const board = search.board
     ? allBoards.find((candidate) => candidate.id === search.board)
@@ -67,9 +85,15 @@ export const TasksPage = ({ search }: { search: TasksSearch }) => {
   const mode = board ? (search.mode ?? "board") : "list";
   const view: TaskView = search.show ?? "mine";
   const open = tasks.find((task) => task.id === search.task);
-  const shown = board
+  const inList = board
     ? tasks.filter((task) => task.accountId === board.id)
     : tasks.filter((task) => inView(task, view, me, today));
+  // The view "Erledigt" is nothing else; there the switch is not offered.
+  const canHide = board !== undefined || view !== "done";
+  const shown =
+    canHide && hideDone && mode === "list"
+      ? inList.filter((task) => task.status !== "done")
+      : inList;
   const title = board
     ? board.isPersonal
       ? m.tasks_my_board()
@@ -149,11 +173,12 @@ export const TasksPage = ({ search }: { search: TasksSearch }) => {
                   <Columns3 size={15} />
                   <span className="hidden sm:inline">{m.tasks_columns_edit()}</span>
                 </Button>
+                <HideDoneToggle hidden={hideDone} labelled />
                 <ModeSwitch board={board.id} mode="board" />
               </div>
               {phoneChips}
             </header>
-            <TaskBoard accountId={board.id} tasks={shown} openId={open?.id} />
+            <TaskBoard accountId={board.id} tasks={shown} openId={open?.id} hideDone={hideDone} />
             <TabBar />
           </section>
           {open ? (
@@ -177,7 +202,13 @@ export const TasksPage = ({ search }: { search: TasksSearch }) => {
                 openId={open?.id}
                 addTo={addTo}
                 showBoards={!board}
-                header={board ? <ModeSwitch board={board.id} mode="list" /> : null}
+                hiddenDone={inList.length - shown.length}
+                header={
+                  <>
+                    {canHide ? <HideDoneToggle hidden={hideDone} labelled={false} /> : null}
+                    {board ? <ModeSwitch board={board.id} mode="list" /> : null}
+                  </>
+                }
                 below={phoneChips}
               />
             </div>

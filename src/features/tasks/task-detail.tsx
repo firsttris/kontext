@@ -3,7 +3,7 @@
  * about (mails, contacts). Every change is saved at once; text when leaving the field.
  */
 import { useNavigate } from "@tanstack/react-router";
-import { Check, ChevronLeft, RotateCcw, Trash2 } from "lucide-react";
+import { Check, ChevronLeft, RotateCcw } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input, Label, Select, Textarea } from "@/components/ui/input";
@@ -20,7 +20,8 @@ import { columnLabel, dueLabel, REPEAT_LABELS, REPEATS, type Repeat, type Task }
 import { m } from "@/paraglide/messages";
 import type { TaskPatch } from "../../../server/tasks/tasks";
 import { companyDay, nextDue } from "../../../server/tasks/tasks";
-import { useBoards, useColumns, useMe, usePeople, useTaskActions } from "./queries";
+import { DeleteTaskButton, useDeleteTask } from "./delete-task";
+import { useBoards, useColumns, useMe, useOnMyBoards, usePeople, useTaskActions } from "./queries";
 import { TaskChecklist } from "./task-checklist";
 import { TaskReminder } from "./task-reminder";
 
@@ -34,6 +35,7 @@ const createdFormat = new Intl.DateTimeFormat(LOCALE, {
 
 export const TaskDetail = ({ task, onClose }: { task: Task; onClose?: () => void }) => {
   const actions = useTaskActions();
+  const deleteTask = useDeleteTask();
   const documentsConnected = useDocumentsConnected();
   const shareWith = useShareWith();
   const toast = useToast();
@@ -44,7 +46,6 @@ export const TaskDetail = ({ task, onClose }: { task: Task; onClose?: () => void
   const columns = useColumns(task.accountId);
   const [title, setTitle] = useState(task.title);
   const [notes, setNotes] = useState(task.notes);
-  const [confirm, setConfirm] = useState(false);
   const done = task.status === "done";
 
   /** A new due day or time; the reminder moves along, the same distance before. */
@@ -71,18 +72,11 @@ export const TaskDetail = ({ task, onClose }: { task: Task; onClose?: () => void
         });
 
   const remove = async () => {
-    try {
-      await actions.remove(task.id);
-      toast.show(m.tasks_deleted());
-      close();
-    } catch (error) {
-      toast.show(m.common_error({ message: (error as Error).message }), "error");
-    }
+    if (await deleteTask(task.id)) close();
   };
 
   const creator = people.find((person) => person.id === task.createdBy)?.name ?? "";
-  // Given to me on a colleague's own board: changed there, not moved or deleted.
-  const onMyBoards = boards.some((board) => board.id === task.accountId);
+  const onMyBoards = useOnMyBoards()(task);
   const owner = people.find((person) => person.id === task.accountId)?.name ?? "";
 
   return (
@@ -106,17 +100,7 @@ export const TaskDetail = ({ task, onClose }: { task: Task; onClose?: () => void
         </Button>
         <div className="flex-1" />
         {onMyBoards ? (
-          <Button
-            variant="ghost"
-            size={confirm ? "sm" : "icon"}
-            aria-label={m.tasks_delete()}
-            title={m.tasks_delete()}
-            onClick={() => (confirm ? void remove() : setConfirm(true))}
-            className={confirm ? "text-danger" : undefined}
-          >
-            <Trash2 size={15} />
-            {confirm ? m.tasks_delete_really() : null}
-          </Button>
+          <DeleteTaskButton label={m.tasks_delete()} onDelete={() => void remove()} />
         ) : null}
       </div>
       <div className="min-h-0 flex-1 overflow-y-auto">

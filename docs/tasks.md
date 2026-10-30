@@ -19,6 +19,18 @@ rechnung@, das alle sehen, die dort arbeiten.
 - **Liste oder Kanban:** nach Fälligkeit gruppiert oder als Board mit Offen, In Arbeit, Wartet,
   Erledigt – Karten zwischen den Spalten ziehen.
 - **Eigene Spalten** je Board („Material bestellt“ …), bis zu zehn.
+- **Erledigte ausblenden:** Der Schalter mit dem durchgestrichenen Auge über Liste und Board
+  blendet abgehakte Aufgaben aus; am Ende der Liste bzw. in der Spalte „Erledigt“ holt
+  „… erledigt – einblenden“ sie zurück. Die Wahl gilt je Gerät; die Ansicht „Erledigt“ zeigt
+  sie immer.
+
+## Aufgaben löschen
+
+Am Computer erscheint beim Darüberfahren über eine Zeile der Liste ein Papierkorb, in der
+geöffneten Aufgabe steht er oben rechts (auch am Handy). Der erste Klick fragt „Wirklich
+löschen?“, erst der zweite löscht. Löschen kann, wer auf dem Board schreiben darf: das eigene und
+die gemeinsamen Postfächer, in denen man Mitglied ist. Eine Aufgabe, die einem eine Kollegin auf
+ihrem eigenen Board zugewiesen hat, bearbeitet man, löscht sie aber nicht.
 
 ## Aufgaben anlegen
 

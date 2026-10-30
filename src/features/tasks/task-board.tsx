@@ -21,6 +21,7 @@ import {
 } from "@/lib/tasks";
 import { m } from "@/paraglide/messages";
 import { useColumns, usePeople, useTaskActions } from "./queries";
+import { ShowDone } from "./task-list";
 import { dueTone } from "./task-row";
 
 const DOTS: Record<string, string> = {
@@ -38,10 +39,13 @@ export const TaskBoard = ({
   accountId,
   tasks,
   openId,
+  hideDone = false,
 }: {
   accountId: string;
   tasks: Task[];
   openId: string | undefined;
+  /** The cards of "Erledigt" stay away; the column takes drops all the same. */
+  hideDone?: boolean;
 }) => {
   const today = dateKey(new Date());
   const actions = useTaskActions();
@@ -95,7 +99,10 @@ export const TaskBoard = ({
     >
       {columns.map((boardColumn, columnIndex) => {
         const status = boardColumn.id;
-        const cards = column(tasks, status).filter((task) => task.id !== dragged || drop === null);
+        const hidden = hideDone && status === "done";
+        const cards = hidden
+          ? []
+          : column(tasks, status).filter((task) => task.id !== dragged || drop === null);
         const label = columnLabel(boardColumn);
         const own = columns.slice(0, columnIndex).filter((c) => !(c.id in DOTS)).length;
         const dot = DOTS[status] ?? OWN_DOTS[own % OWN_DOTS.length]!;
@@ -200,6 +207,9 @@ export const TaskBoard = ({
               })}
             </ul>
             {drop?.status === status && drop.index >= cards.length ? <DropMark /> : null}
+            {hidden && column(tasks, status).length > 0 ? (
+              <ShowDone count={column(tasks, status).length} />
+            ) : null}
             {adding === status ? (
               <form onSubmit={(event) => add(event, status)}>
                 <input
