@@ -244,7 +244,8 @@ test.describe("Telefonie über die Telefonbox", () => {
     await page.getByRole("link", { name: "Telefon", exact: true }).click();
     const item = page.getByRole("list", { name: "Letzte Anrufe" }).getByRole("listitem").first();
     await expect(item).toContainText("Nachricht 0:05");
-    await expect(item.getByLabel("Nachricht 0:05")).toBeVisible();
+    const player = item.getByRole("group", { name: "Nachricht 0:05" });
+    await expect(player.getByRole("button", { name: "Abspielen" })).toBeEnabled();
 
     const subject = "Nachricht von 07223 5550123 (0:05)";
     // The mail comes through Stalwart; the inbox is opened again until it is there.

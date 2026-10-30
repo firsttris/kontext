@@ -1173,7 +1173,9 @@ flowchart LR
   Start an) und wählt sie zurück in den Raum. „Aufnahme beenden“ schickt `record-stop`
   (`StopMixMonitor`). Am Ende des Anrufs meldet `kontext-ended` die Datei als `Talk`, der Agent
   lädt sie hoch (`PUT /api/phone/box/files/recording/<anruf>`), Kontext legt sie beim Anruf ab
-  (`phone/recordings/`); in der Liste steht „Aufnahme m:ss“ mit Player. Gemailt wird sie nicht.
+  (`phone/recordings/`); in der Liste steht „Aufnahme m:ss“ mit dem Player der Sprachnachrichten
+  aus dem Chat (`VoiceMessage`; der eingebaute des Browsers ordnet sich auf Android bei jedem
+  Laden anders an). Gemailt wird sie nicht.
 - **Präsenz:** Wer in einem Telefon-Raum ist oder am Tischtelefon spricht, „telefoniert“ – das
   geht als `phone-people` an alle (der Chat zeigt es an der Person). Bitte nicht stören und
   Abwesend (bis zu einer Zeit) liegen in `phone_status`; wer nicht erreichbar ist, fällt aus dem

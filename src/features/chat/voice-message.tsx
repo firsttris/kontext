@@ -7,7 +7,6 @@ import { useQuery } from "@tanstack/react-query";
 import { Pause, Play } from "lucide-react";
 import { type CSSProperties, useEffect, useRef, useState } from "react";
 import { setAudioSession, setPlaybackSession } from "@/lib/audio-session";
-import type { ChatFile } from "@/lib/chat-cards";
 import { cn } from "@/lib/cn";
 import { formatDuration, waveform } from "@/lib/voice";
 import { m } from "@/paraglide/messages";
@@ -70,13 +69,22 @@ const Bars = ({
   </div>
 );
 
-export const VoiceMessage = ({ file, url }: { file: ChatFile; url: string | undefined }) => {
+/** `id` keys the waveform; `label` names it where it is not a chat's voice message (a voicemail). */
+export const VoiceMessage = ({
+  id,
+  url,
+  label,
+}: {
+  id: string;
+  url: string | undefined;
+  label?: string;
+}) => {
   const audio = useRef<HTMLAudioElement>(null);
   const [paused, setPaused] = useState(true);
   const [position, setPosition] = useState(0);
   const [speed, setSpeed] = useState(1);
   const [mediaDuration, setMediaDuration] = useState(0);
-  const shape = useVoiceShape(file.id, url);
+  const shape = useVoiceShape(id, url);
   const duration = shape.data?.duration ?? mediaDuration;
   const bars = shape.data?.bars ?? flat;
   const progress = duration > 0 ? Math.min(1, position / duration) : 0;
@@ -138,8 +146,8 @@ export const VoiceMessage = ({ file, url }: { file: ChatFile; url: string | unde
 
   return (
     <fieldset
-      aria-label={m.chat_voice_message({ duration: formatDuration(duration) })}
-      data-voice={file.id}
+      aria-label={label ?? m.chat_voice_message({ duration: formatDuration(duration) })}
+      data-voice={id}
       className="m-0 flex w-72 max-w-full min-w-0 items-center gap-2.5 rounded-xl border border-border bg-bg py-2 pr-2.5 pl-2"
     >
       <button

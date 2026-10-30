@@ -141,7 +141,7 @@ export const MessageFiles = ({ files, urls }: { files: ChatFile[]; urls?: Urls }
         </ul>
       ) : null}
       {voices.map((file) => (
-        <VoiceMessage key={file.id} file={file} url={full(file, urls)} />
+        <VoiceMessage key={file.id} id={file.id} url={full(file, urls)} />
       ))}
       {others.map((file) => (
         <a
