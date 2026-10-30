@@ -1,5 +1,5 @@
 import { expect, type Page, test } from "@playwright/test";
-import { address, jmapAs, login, personalAccountId, unique } from "./helpers";
+import { address, givenKeywords, jmapAs, login, personalAccountId, unique } from "./helpers";
 
 /** Max's own folders: made for each test and removed with what is in them. */
 const USER = "max";
@@ -60,7 +60,9 @@ const stored = async (accountId: string, folderId: string) => {
       "g",
     ],
   ]);
-  return got![1].list as { subject: string; keywords: Record<string, true>; receivedAt: string }[];
+  return (
+    got![1].list as { subject: string; keywords: Record<string, true>; receivedAt: string }[]
+  ).map((email) => ({ ...email, keywords: givenKeywords(email.keywords) }));
 };
 
 /** Drops files onto an element the way a file manager does. */
@@ -97,7 +99,7 @@ test.describe(".eml-Dateien importieren", () => {
       expect(await stored(accountId, folderId)).toEqual([
         {
           subject,
-          keywords: { $seen: true },
+          keywords: ["$seen"],
           receivedAt: "2025-03-04T08:15:00Z",
           id: expect.any(String),
         },
