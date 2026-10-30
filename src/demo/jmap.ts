@@ -4,9 +4,14 @@
  * there, every change accepted – so every screen opens.
  */
 import { CAPABILITIES } from "@/jmap/client";
+import { collectionGet, collectionSet } from "./collections";
+import { cardGet, cardQuery, cardSet } from "./contacts";
 import { emailCopy, emailGet, emailQuery, emailSet, threadGet } from "./emails";
+import { eventGet, eventParse, eventQuery, eventSet } from "./events";
+import { emailImport } from "./import";
 import { mailboxGet, mailboxSet } from "./mailboxes";
 import type { Created, Result } from "./methods";
+import { principalAvailability, principalGet, principalQuery } from "./principals";
 import { identityGet, quotaGet, submissionGet, submissionQuery, submissionSet } from "./sending";
 import { type Store, visibleAccounts } from "./store";
 
@@ -130,60 +135,71 @@ const reachable = (store: Store, args: Args) =>
     .filter((id) => id !== undefined)
     .every((id) => visibleAccounts(store).some((account) => account.id === id));
 
-const call = (store: Store, name: string, args: Args, created: Created): [string, Result][] => {
+type Method = (store: Store, args: Args, created: Created) => Result | Promise<Result>;
+
+/** The methods with one response each. */
+const METHODS: Record<string, Method> = {
+  "Mailbox/get": mailboxGet,
+  "Mailbox/set": mailboxSet,
+  "Email/query": emailQuery,
+  "Email/get": emailGet,
+  "Email/set": emailSet,
+  "Email/import": emailImport,
+  "Thread/get": threadGet,
+  "Identity/get": identityGet,
+  "EmailSubmission/get": submissionGet,
+  "EmailSubmission/query": submissionQuery,
+  "Quota/get": quotaGet,
+  "Calendar/get": (store, args) => collectionGet(store, "calendar", args),
+  "Calendar/set": (store, args, created) => collectionSet(store, "calendar", args, created),
+  "CalendarEvent/query": eventQuery,
+  "CalendarEvent/get": eventGet,
+  "CalendarEvent/set": eventSet,
+  "CalendarEvent/parse": eventParse,
+  "AddressBook/get": (store, args) => collectionGet(store, "addressBook", args),
+  "AddressBook/set": (store, args, created) => collectionSet(store, "addressBook", args, created),
+  "ContactCard/query": cardQuery,
+  "ContactCard/get": cardGet,
+  "ContactCard/set": cardSet,
+  "Principal/query": principalQuery,
+  "Principal/get": principalGet,
+  "Principal/getAvailability": principalAvailability,
+};
+
+/** The methods that answer twice: the second response is the implicit Email/set. */
+const withFollowUp = (
+  name: string,
+  [first, second]: (Result | null | undefined)[],
+): [string, Result][] =>
+  second
+    ? [
+        [name, first!],
+        ["Email/set", second],
+      ]
+    : [[name, first!]];
+
+const call = async (
+  store: Store,
+  name: string,
+  args: Args,
+  created: Created,
+): Promise<[string, Result][]> => {
   if (!reachable(store, args)) return [["error", { type: "accountNotFound" }]];
-  switch (name) {
-    case "Mailbox/get":
-      return [[name, mailboxGet(store, args)]];
-    case "Mailbox/set":
-      return [[name, mailboxSet(store, args, created)]];
-    case "Email/query":
-      return [[name, emailQuery(store, args)]];
-    case "Email/get":
-      return [[name, emailGet(store, args)]];
-    case "Email/set":
-      return [[name, emailSet(store, args, created)]];
-    case "Email/copy": {
-      const [copy, destroy] = emailCopy(store, args);
-      return destroy
-        ? [
-            [name, copy],
-            ["Email/set", destroy],
-          ]
-        : [[name, copy]];
-    }
-    case "Thread/get":
-      return [[name, threadGet(store, args)]];
-    case "Identity/get":
-      return [[name, identityGet(store, args)]];
-    case "EmailSubmission/set": {
-      const [submission, update] = submissionSet(store, args, created);
-      return update
-        ? [
-            [name, submission!],
-            ["Email/set", update],
-          ]
-        : [[name, submission!]];
-    }
-    case "EmailSubmission/get":
-      return [[name, submissionGet(store, args)]];
-    case "EmailSubmission/query":
-      return [[name, submissionQuery(store, args)]];
-    case "Quota/get":
-      return [[name, quotaGet(store, args)]];
-    default: {
-      const empty = emptyMethod(store, name.split("/")[1] ?? "", args);
-      return [empty ? [name, empty] : ["error", { type: "unknownMethod" }]];
-    }
-  }
+  const method = METHODS[name];
+  if (method) return [[name, await method(store, args, created)]];
+  if (name === "Email/copy") return withFollowUp(name, emailCopy(store, args));
+  if (name === "EmailSubmission/set")
+    return withFollowUp(name, submissionSet(store, args, created));
+  const empty = emptyMethod(store, name.split("/")[1] ?? "", args);
+  return [empty ? [name, empty] : ["error", { type: "unknownMethod" }]];
 };
 
 /** One JMAP request: the calls in order, each seeing the responses before it. */
-export const handleRequest = (store: Store, body: { methodCalls: Invocation[] }) => {
+export const handleRequest = async (store: Store, body: { methodCalls: Invocation[] }) => {
   const created: Created = new Map();
   const responses: Invocation[] = [];
   for (const [name, args, callId] of body.methodCalls) {
-    for (const [responseName, result] of call(
+    for (const [responseName, result] of await call(
       store,
       name,
       resolveReferences(args, responses),

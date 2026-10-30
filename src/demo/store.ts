@@ -50,6 +50,17 @@ export type StoredEmail = Record<string, unknown> & {
   messageId: string[] | null;
 };
 
+/** A calendar or an address book (draft-ietf-jmap-calendars, draft-ietf-jmap-contacts). */
+export type StoredCollection = Record<string, unknown> & {
+  id: string;
+  accountId: string;
+  name: string;
+  isDefault: boolean;
+};
+
+/** A JSCalendar event or a JSContact card, as stored. */
+export type StoredObject = Record<string, unknown> & { id: string; accountId: string };
+
 export type Store = {
   /** The account of whoever is signed in; nobody at the start. */
   user: string | null;
@@ -57,6 +68,11 @@ export type Store = {
   mailboxes: Map<string, StoredMailbox>;
   emails: Map<string, StoredEmail>;
   blobs: Map<string, Blob>;
+  calendars: Map<string, StoredCollection>;
+  addressBooks: Map<string, StoredCollection>;
+  /** Series as stored: their dates are expanded when asked for (src/demo/events.ts). */
+  events: Map<string, StoredObject>;
+  cards: Map<string, StoredObject>;
   /** Mails sent or held (EmailSubmission). */
   submissions: Map<string, Submission>;
   /** Mail categories an account changed; the others have the defaults. */
@@ -264,6 +280,10 @@ export const createStore = (now = Date.now()): Store => {
     mailboxes: new Map(mailboxesOfSeed(accounts).map((mailbox) => [mailbox.id, mailbox])),
     emails: new Map(),
     blobs: new Map(),
+    calendars: new Map(),
+    addressBooks: new Map(),
+    events: new Map(),
+    cards: new Map(),
     submissions: new Map(),
     categories: new Map(),
     imageSenders: [],

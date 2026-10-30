@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { applyPatch, emailQuery, emailSet, matches } from "./emails";
+import { emailQuery, emailSet, matches } from "./emails";
+import { applyPatch } from "./methods";
 import { createStore, type StoredEmail } from "./store";
 
 const mail = (fields: Partial<StoredEmail>): StoredEmail => ({

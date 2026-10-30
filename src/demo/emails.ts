@@ -1,6 +1,7 @@
 /** Mails and threads (RFC 8621 §3, §4): query, get, set and copy on the store. */
 import {
   type Args,
+  applyPatch,
   type Created,
   changed,
   emailsOf,
@@ -155,21 +156,6 @@ export const threadGet = (store: Store, args: Args): Result => {
 };
 
 // Email/set
-
-/** A patch (RFC 8620 §5.3): whole properties, or "keywords/$seen" one level down. */
-export const applyPatch = (email: StoredEmail, patch: Args): StoredEmail => {
-  const next: StoredEmail = { ...email };
-  for (const [path, value] of Object.entries(patch)) {
-    const [property, key] = path.split("/") as [string, string | undefined];
-    if (key === undefined) {
-      next[property] = value;
-      continue;
-    }
-    const { [key]: _, ...rest } = (next[property] ?? {}) as Record<string, unknown>;
-    next[property] = value === null ? rest : { ...rest, [key]: value };
-  }
-  return next;
-};
 
 /** The parts of a mail as the composer sends it (src/lib/mail-structure.ts), with part ids. */
 const partsOf = (store: Store, structure: Args, values: Record<string, { value: string }>) => {

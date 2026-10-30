@@ -23,6 +23,7 @@ import {
   type SeedMail,
   users,
 } from "./seed-data";
+import { calendarEvent, contactCard, groupCard } from "./seed-objects";
 
 const ADMIN_USING = [CAPABILITIES.core, CAPABILITIES.stalwart];
 
@@ -274,21 +275,6 @@ const defaultCollectionId = async (
   return found.id;
 };
 
-/** A PartialDate (RFC 9553 §2.8.1) `days` from today, with the year when the age is given. */
-const birthAnniversary = ({ day, age }: { day: number; age?: number }) => {
-  const [year, month, date] = localStart(day, "00:00").slice(0, 10).split("-").map(Number);
-  return {
-    "@type": "Anniversary",
-    kind: "birth",
-    date: {
-      "@type": "PartialDate",
-      ...(age === undefined ? {} : { year: year! - age }),
-      month,
-      day: date,
-    },
-  };
-};
-
 const ensureContacts = async (): Promise<number> => {
   let created = 0;
   for (const owner of new Set(contacts.map((c) => c.owner))) {
@@ -300,67 +286,19 @@ const ensureContacts = async (): Promise<number> => {
       properties: ["uid"],
     });
     const known = new Set(list.map((card) => card.uid));
-    const create: Record<string, Record<string, unknown>> = Object.fromEntries(
-      contacts
+    const create: Record<string, Record<string, unknown>> = Object.fromEntries([
+      ...contacts
         .filter((c) => c.owner === owner && !known.has(c.uid))
-        .map((c) => [
-          c.uid,
-          {
-            "@type": "Card",
-            version: "1.0",
-            uid: c.uid,
-            kind: "individual",
-            addressBookIds: { [addressBookId]: true },
-            name: {
-              components: [
-                { kind: "given", value: c.given },
-                { kind: "surname", value: c.surname },
-              ],
-              isOrdered: true,
-            },
-            ...(c.company ? { organizations: { o: { name: c.company } } } : {}),
-            ...(c.email ? { emails: { e: { address: c.email, contexts: { work: true } } } } : {}),
-            ...(c.phone ? { phones: { p: { number: c.phone, features: { voice: true } } } } : {}),
-            ...(c.street || c.city
-              ? {
-                  addresses: {
-                    a: {
-                      components: [
-                        ...(c.street ? [{ kind: "name", value: c.street }] : []),
-                        ...(c.city ? [{ kind: "locality", value: c.city }] : []),
-                      ],
-                    },
-                  },
-                }
-              : {}),
-            ...(c.note ? { notes: { n: { note: c.note } } } : {}),
-            ...(c.birthday ? { anniversaries: { b: birthAnniversary(c.birthday) } } : {}),
-          },
-        ]),
-    );
-    for (const group of contactGroups.filter((g) => g.owner === owner && !known.has(g.uid))) {
-      create[group.uid] = {
-        "@type": "Card",
-        version: "1.0",
-        uid: group.uid,
-        kind: "group",
-        addressBookIds: { [addressBookId]: true },
-        name: { full: group.name },
-        members: Object.fromEntries(group.members.map((uid) => [uid, true])),
-      };
-    }
+        .map((c) => [c.uid, contactCard(c, addressBookId)]),
+      ...contactGroups
+        .filter((g) => g.owner === owner && !known.has(g.uid))
+        .map((g) => [g.uid, groupCard(g, addressBookId)]),
+    ]);
     if (Object.keys(create).length === 0) continue;
     assertSetOk(await client.call("ContactCard/set", { accountId, create }), "Kontakte");
     created += Object.keys(create).length;
   }
   return created;
-};
-
-/** Local date-time in Europe/Berlin for "today + days" at "HH:MM", as JSCalendar LocalDateTime. */
-const localStart = (days: number, time: string): string => {
-  const date = new Date(Date.now() + days * 86_400_000);
-  const ymd = new Intl.DateTimeFormat("sv-SE", { timeZone: "Europe/Berlin" }).format(date);
-  return `${ymd}T${time}:00`;
 };
 
 const ensureEvents = async (): Promise<number> => {
@@ -374,56 +312,10 @@ const ensureEvents = async (): Promise<number> => {
       properties: ["uid"],
     });
     const known = new Set(list.map((event) => event.uid));
-    const ownerEmail = `${owner}@${DEV_DOMAIN}`;
     const create = Object.fromEntries(
       events
         .filter((e) => e.owner === owner && !known.has(e.uid))
-        .map((e) => [
-          e.uid,
-          {
-            "@type": "Event",
-            uid: e.uid,
-            calendarIds: { [calendarId]: true },
-            title: e.title,
-            start: localStart(e.day, e.time),
-            timeZone: "Europe/Berlin",
-            duration: `PT${Math.floor(e.minutes / 60) ? `${Math.floor(e.minutes / 60)}H` : ""}${e.minutes % 60 ? `${e.minutes % 60}M` : ""}`,
-            ...(e.description ? { description: e.description } : {}),
-            ...(e.recurrence
-              ? { recurrenceRule: { "@type": "RecurrenceRule", ...e.recurrence } }
-              : {}),
-            ...(e.location ? { locations: { l: { "@type": "Location", name: e.location } } } : {}),
-            ...(e.attendees?.length
-              ? {
-                  organizerCalendarAddress: `mailto:${ownerEmail}`,
-                  participants: {
-                    owner: {
-                      "@type": "Participant",
-                      calendarAddress: `mailto:${ownerEmail}`,
-                      roles: { owner: true, attendee: true },
-                      participationStatus: "accepted",
-                    },
-                    ...Object.fromEntries(
-                      e.attendees.map((address, index) => [
-                        `a${index}`,
-                        {
-                          "@type": "Participant",
-                          calendarAddress: `mailto:${address}`,
-                          roles: { attendee: true },
-                          participationStatus: "needs-action",
-                          // Colleagues get their invitation; a customer's (a .test domain
-                          // without MX) would only bounce into the organizer's inbox. Stalwart
-                          // invites only who is expected to reply (RSVP, `send_invite_messages`
-                          // in crates/groupware/src/scheduling/mod.rs).
-                          expectReply: address.endsWith(`@${DEV_DOMAIN}`),
-                        },
-                      ]),
-                    ),
-                  },
-                }
-              : {}),
-          },
-        ]),
+        .map((e) => [e.uid, calendarEvent(e, calendarId)]),
     );
     if (Object.keys(create).length === 0) continue;
     assertSetOk(

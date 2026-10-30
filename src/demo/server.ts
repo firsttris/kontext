@@ -75,7 +75,7 @@ export const createDemoServer = (store: Store, origin: string) => {
     if (path.startsWith("/jmap/download/")) return download(store, path);
     if (path.startsWith("/jmap/upload/")) return upload(store, request);
     const before = store.state;
-    const response = json(handleRequest(store, await request.json()));
+    const response = json(await handleRequest(store, await request.json()));
     notify(before);
     return response;
   };

@@ -3,10 +3,13 @@
  * server in the page (./server.ts) instead of the network. The live connection (EventSource on
  * /api/live: chat, calls, tasks) and notifications are left out; the app does without them.
  */
+import { seedPim } from "./pim-seed";
 import { createDemoServer } from "./server";
 import { createStore } from "./store";
 
-const handle = createDemoServer(createStore(), window.location.origin);
+const store = createStore();
+seedPim(store, Date.now());
+const handle = createDemoServer(store, window.location.origin);
 const networkFetch = window.fetch.bind(window);
 
 const demoFetch = async (input: RequestInfo | URL, init?: RequestInit) =>

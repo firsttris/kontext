@@ -9,6 +9,9 @@ import { DEFAULT_COLUMNS } from "../../server/tasks/tasks";
 import { json } from "./respond";
 import { accountOf, type Store, visibleAccounts } from "./store";
 
+/** Schreibzeug's demo on GitHub Pages; its pages live after the "#". */
+const SCHREIBZEUG_DEMO = "https://firsttris.github.io/schreibzeug/demo/#/";
+
 /** Better Auth's session, or null before anyone is signed in. */
 const signedIn = (store: Store) => {
   const me = store.user ? accountOf(store, store.user) : undefined;
@@ -47,7 +50,9 @@ const saveCategories = async (store: Store, request: Request, accountId: string)
 const FIXED: Record<string, (store: Store) => unknown> = {
   "GET /api/calls": () => ({ enabled: false, calls: [] }),
   "GET /api/phone": () => ({ enabled: false, allowed: false, online: false, calls: [] }),
-  "GET /api/documents": () => ({ url: null, connected: false }),
+  // Schreibzeug's own demo (firsttris/schreibzeug, src/demo), static like this one; not connected:
+  // files cannot go between mail and documents without both servers.
+  "GET /api/documents": () => ({ url: SCHREIBZEUG_DEMO, connected: false }),
   "GET /api/tasks": (store) => ({
     tasks: [],
     boards: Object.fromEntries(visibleAccounts(store).map((a) => [a.id, DEFAULT_COLUMNS])),
@@ -65,6 +70,8 @@ const FIXED: Record<string, (store: Store) => unknown> = {
   "GET /api/smime/me": () => ({ cert: null }),
   "GET /api/smime/certs": () => ({ certs: [] }),
   "GET /api/chat/discussed": () => ({ discussions: [] }),
+  // Answer pages for attendees outside need the server (server/invitations).
+  "POST /api/invitations/links": () => ({ links: {} }),
   "GET /api/image-senders": (store) => ({ senders: store.imageSenders }),
   "GET /api/company/me": (store) => ({
     admin: visibleAccounts(store)[0]?.companyAdmin ?? false,

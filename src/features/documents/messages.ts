@@ -65,9 +65,15 @@ export const kontextPathOf = (framePath: string): string => {
   return splat ? `${DOCUMENTS_PATH}/${splat}` : DOCUMENTS_PATH;
 };
 
-/** The frame's first address: the page, with the parameter that makes Schreibzeug embedded. */
+/**
+ * The frame's first address: the page, with the parameter that makes Schreibzeug embedded. A
+ * Schreibzeug whose pages live after the "#" – its demo, static files under a path of GitHub
+ * Pages, `…/schreibzeug/demo/#/` – gets the page there, the parameter before it.
+ */
 export const frameSrcOf = (schreibzeugUrl: string, framePath: string): string => {
-  const url = new URL(framePath, schreibzeugUrl);
+  const hashRouted = schreibzeugUrl.includes("#");
+  const url = new URL(hashRouted ? schreibzeugUrl.split("#")[0]! : framePath, schreibzeugUrl);
   url.searchParams.set("embedded", "kontext");
+  if (hashRouted) url.hash = framePath;
   return url.toString();
 };
