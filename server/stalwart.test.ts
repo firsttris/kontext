@@ -109,6 +109,22 @@ describe("signing in at Stalwart", () => {
     warn.mockRestore();
   });
 
+  it("logs why when Stalwart answers with an error redirect", async () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    vi.stubGlobal(
+      "fetch",
+      answer(200, {
+        type: "redirect",
+        location: `${REDIRECT_URI}?error=unauthorized_client&error_description=Not+allowed`,
+      }),
+    );
+    expect(await loginAtStalwart("http://stalwart", credentials)).toEqual({
+      status: "unavailable",
+    });
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining("unauthorized_client"));
+    warn.mockRestore();
+  });
+
   it("calls a wrong password failed", async () => {
     vi.stubGlobal("fetch", answer(200, { type: "failure" }));
     expect(await loginAtStalwart("http://stalwart", credentials)).toEqual({ status: "failed" });
