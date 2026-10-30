@@ -7,6 +7,11 @@ Steps that an update needs beyond raising the version are marked **Upgrade**.
 
 ## Unreleased
 
+- Settings: "Zugänge" shows who and what has access to the account: the signed-in browsers (sign
+  out one or all others), other programs signed in at Stalwart with OAuth (`x:OAuthGrant`,
+  revocable), app passwords, AI agents and other mailboxes. Ending a Kontext session (signing out,
+  revoking an app password or an agent) now also revokes its grant at Stalwart (RFC 7009), so no
+  stale grants stay behind.
 - Documents: `deploy/.env.example` and the Quadlet use Schreibzeug 0.1.14 (was 0.1.8). **Upgrade:**
   raise `SCHREIBZEUG_VERSION` in `deploy/.env` (or the image in `schreibzeug.container`) and start
   again. Schreibzeug now thins out a file's older versions; to keep all of them, set

@@ -5,6 +5,7 @@
  * answer 404, as the server does.
  */
 import { DEV_DOMAIN } from "../../dev/config";
+import { deviceOf } from "../../server/access/devices";
 import { type Category, DEFAULT_CATEGORIES } from "../../server/categories/categories";
 import { json } from "./respond";
 import { accountOf, type Store, visibleAccounts } from "./store";
@@ -68,6 +69,22 @@ const FIXED: Record<string, (store: Store) => unknown> = {
   // Answer pages for attendees outside need the server (server/invitations).
   "POST /api/invitations/links": () => ({ links: {} }),
   "GET /api/image-senders": (store) => ({ senders: store.imageSenders }),
+  // Only this browser is signed in to the demo (server/access).
+  "GET /api/access/sessions": () => {
+    const now = new Date().toISOString();
+    return {
+      devices: [
+        {
+          id: "demo",
+          ...deviceOf(navigator.userAgent),
+          ip: null,
+          since: now,
+          lastActive: now,
+          current: true,
+        },
+      ],
+    };
+  },
   // Members of the signed-in person's shared mailboxes, from the seed's groups.
   "GET /api/company/mailbox-members": (store) => ({
     members: Object.fromEntries(

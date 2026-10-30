@@ -3,7 +3,7 @@ description: >-
   Kontext als App auf PC, Android und iPhone (PWA, ohne App Store): installieren,
   Benachrichtigungen auch bei geschlossener App, Tab-Leiste am Handy, hell und dunkel, als
   Mailprogramm für mailto-Links, Teilen in Kontext, Version und Updates, Passwort und Anmeldung
-  mit Code.
+  mit Code, Übersicht der Zugänge.
 ---
 
 # App, Handy und Konto
@@ -124,6 +124,13 @@ ohnehin die neue. Updates des Servers spielt der Betreiber ein
   1Password). „Einrichten“, den QR-Code mit der App scannen (oder den Schlüssel von Hand
   eingeben), den angezeigten Code und das Passwort eingeben, „Einschalten“. Zum Ausschalten
   braucht es Passwort und aktuellen Code. Ob sie an ist, zeigt die Seite auf einen Blick.
+- **Zugänge** (*Einstellungen → Zugänge*): wer und was auf das eigene Konto zugreift, an einem
+  Ort. Die angemeldeten Browser („Firefox auf Windows“, „Safari auf iPhone“) mit „angemeldet“,
+  „zuletzt aktiv“ und IP-Adresse; das eigene ist als „Dieses Gerät“ markiert. Jedes andere lässt
+  sich einzeln abmelden, oder alle anderen auf einmal – etwa nach einem verlorenen Handy. Dazu
+  andere Programme, die sich per OAuth direkt beim Mailserver angemeldet haben („Zugriff
+  entziehen“), die App-Passwörter, die KI-Agenten und die weiteren Postfächer, jeweils mit einem
+  Weg dorthin, wo man sie verwaltet. [Mehr](architecture.md#zugange)
 - **Handy mit der Authenticator-App verloren:** Die Firmenverwaltung setzt die Anmeldung mit Code
   zurück (*Einstellungen → Firma → Mitarbeiter*); danach meldet man sich wieder nur mit Passwort
   an und richtet den Code neu ein ([Firmenverwaltung](company.md)).

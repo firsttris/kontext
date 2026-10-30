@@ -70,7 +70,12 @@ const toInfo = (row: Row): AppPasswordInfo => ({
   lastUsedAt: row.lastUsedAt?.toISOString() ?? null,
 });
 
-export const createAppPasswords = (db: Db, now: () => Date = () => new Date()) => ({
+export const createAppPasswords = (
+  db: Db,
+  now: () => Date = () => new Date(),
+  /** Ends the session's grant at Stalwart before the session goes (Grants.end). */
+  endGrant: (sessionId: string) => Promise<void> = async () => {},
+) => ({
   /**
    * A session for a new app password; the caller stores the Stalwart grant for it, then creates
    * the password. The session's token is random and never sent anywhere: no cookie can use it.
@@ -129,6 +134,7 @@ export const createAppPasswords = (db: Db, now: () => Date = () => new Date()) =
       .from(schema.appPassword)
       .where(and(eq(schema.appPassword.id, id), eq(schema.appPassword.userId, userId)));
     if (!row) return false;
+    await endGrant(row.sessionId);
     await db.delete(schema.session).where(eq(schema.session.id, row.sessionId));
     return true;
   },

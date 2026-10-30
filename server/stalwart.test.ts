@@ -1,6 +1,12 @@
 // @vitest-environment node
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { codeFromRedirect, loginAtStalwart, REDIRECT_URI, refreshAtStalwart } from "./stalwart";
+import {
+  codeFromRedirect,
+  loginAtStalwart,
+  REDIRECT_URI,
+  refreshAtStalwart,
+  revokeAtStalwart,
+} from "./stalwart";
 
 const answer = (status: number, body: unknown = {}) =>
   vi.fn(async () => new Response(JSON.stringify(body), { status }));
@@ -32,6 +38,25 @@ describe("refreshing at Stalwart", () => {
       vi.fn(async () => Promise.reject(new Error("down"))),
     );
     expect(await refreshAtStalwart("http://stalwart", "r1")).toEqual({ status: "unavailable" });
+  });
+});
+
+describe("revoking at Stalwart", () => {
+  it("sends the token as Kontext's client and says whether it worked", async () => {
+    const fetch = answer(200);
+    vi.stubGlobal("fetch", fetch);
+    expect(await revokeAtStalwart("http://stalwart", "r1")).toBe(true);
+    const [url, init] = fetch.mock.calls[0] as unknown as [string, RequestInit];
+    expect(url).toBe("http://stalwart/auth/revoke");
+    expect(String(init.body)).toBe("token=r1&client_id=kontext");
+  });
+
+  it("does not throw while Stalwart is away", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => Promise.reject(new Error("down"))),
+    );
+    expect(await revokeAtStalwart("http://stalwart", "r1")).toBe(false);
   });
 });
 

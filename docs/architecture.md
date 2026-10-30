@@ -2026,6 +2026,34 @@ Stalwart-Tokens liegen verschlüsselt (AES-GCM) in SQLite, je Sitzung. Der Zugri
 Bedarf mit dem Refresh-Token erneuert; Stalwart verlängert diesen, solange er benutzt wird. So
 bleibt die App am Handy angemeldet, bis man sich abmeldet (Sitzung 90 Tage, bei Nutzung erneuert).
 
+Endet eine Sitzung (Abmelden, „Abmelden“ in den Zugängen, ein widerrufenes App-Passwort oder ein
+getrennter Agent, die Firmenverwaltung beendet alle Sitzungen einer Person), widerruft der Server
+zuerst ihren Refresh-Token bei Stalwart (RFC 7009, `/auth/revoke`, `Grants.end` in
+`server/auth.ts`). Damit endet die Freigabe in Stalwart samt aller Tokens; ohne das bliebe sie in
+der Liste der Freigaben stehen, bis der Refresh-Token abläuft, obwohl ihn niemand mehr hat.
+
+### Zugänge
+
+*Einstellungen → Zugänge* zeigt an einem Ort, wer und was auf das Konto zugreift:
+
+- **Angemeldete Browser** aus Better Auths Sitzungstabelle (`/api/access/sessions`,
+  `server/access/`): Browser und System aus dem User-Agent, IP-Adresse, angemeldet seit und
+  zuletzt aktiv (die letzte Erneuerung des Stalwart-Tokens, etwa stündlich bei Nutzung). Die
+  Sitzungen hinter App-Passwörtern und Agenten zählen nicht dazu, sie haben eigene Abschnitte,
+  abgelaufene auch nicht: Better Auth löscht eine Sitzung erst, wenn ihr Cookie noch einmal kommt,
+  und ein mit ihr abgelaufenes Cookie kommt nie wieder.
+  Abmelden geht für jede andere Sitzung der Person oder für alle anderen auf einmal; die eigene
+  endet mit „Abmelden“ im Menü.
+- **Andere Programme:** Stalwarts Freigaben (`x:OAuthGrant`, neu in 1.0) für Programme, die sich
+  per OAuth direkt bei Stalwart anmelden. Jeder Nutzer darf seine eigenen lesen und löschen
+  (`sysOAuthGrant*` gehört zu den Standardrechten, `crates/common/src/auth/permissions.rs`), also
+  fragt die App Stalwart selbst (`src/jmap/oauth-grants.ts`). Löschen beendet Zugriffs- und
+  Refresh-Token sofort. Kontexts eigene Freigaben (Client `kontext`) fehlen hier: das sind die
+  Browser oben, deren Freigabe Kontext nicht zuordnen kann, weil Stalwarts Tokens verschlüsselt
+  sind.
+- **App-Passwörter, KI-Agenten, weitere Postfächer:** die vorhandenen Listen, mit „Verwalten“ zum
+  jeweiligen Abschnitt.
+
 **Passkeys später:** Better Auth bringt ein Passkey-Plugin mit. Beim Einrichten eines Passkeys legt
 der Server in Stalwart ein App-Passwort für das Gerät an und speichert es verschlüsselt; eine
 Passkey-Anmeldung holt damit den Stalwart-Token. Am Rest ändert sich nichts.
