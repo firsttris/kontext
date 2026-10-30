@@ -11,7 +11,7 @@ After=livekit.service redis.service
 Wants=livekit.service redis.service
 
 [Container]
-Image=docker.io/livekit/sip:v1.21.0
+Image=docker.io/livekit/sip:v1.22.0
 ContainerName=livekit-sip
 Network=kontext.network
 PublishPort=5060:5060/tcp

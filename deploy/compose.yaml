@@ -87,7 +87,7 @@ services:
   # Telephony: the telephone box at the customer calls in here (SIP over TCP 5060, media on UDP
   # 20000–20100); LiveKit SIP puts the calls into LiveKit rooms. It talks to LiveKit over Redis.
   livekit-sip:
-    image: docker.io/livekit/sip:v1.21.0
+    image: docker.io/livekit/sip:v1.22.0
     profiles: [calls]
     restart: unless-stopped
     depends_on: [redis, livekit]
