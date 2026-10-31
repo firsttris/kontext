@@ -69,7 +69,7 @@
     "jose": "^6.2.13",
     "livekit-client": "^2.23.0",
     "lucide-react": "^1.61.0",
-    "node-forge": "1.4.0",
+    "node-forge": "1.4.2",
     "nodemailer": "^10.2.1",
     "openpgp": "6.3.2",
     "postal-mime": "2.7.6",

@@ -181,9 +181,11 @@ test.describe("Kalender", () => {
     await expect(page.getByRole("status")).toHaveText("Einladungen werden verschickt.");
     await expect(dialog).toHaveCount(0);
 
-    await page.goto(`/calendar?date=${day(2)}`);
-    await expect(page.locator(`[data-day="${day(2)}"]`).getByText(title)).toBeVisible();
-    await expect(page.locator(`[data-day="${tomorrow()}"]`).getByText(title)).toBeVisible();
+    // Each day in its own week: on a Saturday, day 2 is a Monday and the week shown starts there.
+    for (const date of [day(2), tomorrow()]) {
+      await page.goto(`/calendar?date=${date}`);
+      await expect(page.locator(`[data-day="${date}"]`).getByText(title)).toBeVisible();
+    }
     const [original, copy] = await eventsTitled("jonas", title);
     try {
       expect(original!.start).toBe(`${tomorrow()}T14:00:00`);
