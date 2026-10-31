@@ -146,7 +146,7 @@ jobs:
           bun run e2e --shard=${{ matrix.shard }}/4
           ${{ github.event_name == 'schedule' && '--repeat-each=3 --retries=0' || '' }}
       - if: failure()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: playwright-report-${{ matrix.shard }}
           path: |
