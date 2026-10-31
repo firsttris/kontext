@@ -29,11 +29,11 @@ jobs:
     if: ${{ !github.event.pull_request.draft }}
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: oven-sh/setup-bun@v2
         with:
           bun-version: 1.4.x
-      - uses: actions/cache@v4
+      - uses: actions/cache@v6
         with:
           path: ~/.bun/install/cache
           key: bun-${{ hashFiles('bun.lock') }}
@@ -56,7 +56,7 @@ jobs:
     if: ${{ !github.event.pull_request.draft }}
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - run: docker build -f box/Dockerfile -t kontext-box .
       # Asterisk starts with PJSIP and the manager, the agent serves its status page.
       - run: docker run -d --name box --network host kontext-box
@@ -117,12 +117,12 @@ jobs:
       image: ${{ needs.image.outputs.image }}
       options: --ipc=host
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       # The npm package brings the binary without curl or unzip, which the image lacks
       - run: npm install --global bun@1.4.x
       # readpst for the Outlook move (server/migration/pst.ts); its packages are kept, so only the
       # first run after a new image asks the package index (apt-get update takes the time).
-      - uses: actions/cache@v4
+      - uses: actions/cache@v6
         with:
           path: .dev/apt
           key: pst-utils-${{ needs.image.outputs.image }}
@@ -135,7 +135,7 @@ jobs:
           fi
           dpkg -i .dev/apt/*.deb
           command -v readpst
-      - uses: actions/cache@v4
+      - uses: actions/cache@v6
         with:
           path: .dev/bin
           key: stalwart-${{ hashFiles('dev/config.ts') }}
@@ -146,7 +146,7 @@ jobs:
           bun run e2e --shard=${{ matrix.shard }}/4
           ${{ github.event_name == 'schedule' && '--repeat-each=3 --retries=0' || '' }}
       - if: failure()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: playwright-report-${{ matrix.shard }}
           path: |
