@@ -72,7 +72,7 @@
     "node-forge": "1.4.2",
     "nodemailer": "^10.2.1",
     "openpgp": "6.3.2",
-    "postal-mime": "4.1.4",
+    "postal-mime": "4.2.0",
     "react": "^19.3.1",
     "react-dom": "^19.3.1",
     "tailwind-merge": "^3.7.0",
