@@ -7,6 +7,8 @@ Steps that an update needs beyond raising the version are marked **Upgrade**.
 
 ## Unreleased
 
+- S/MIME: node-forge 1.4.2 (was 1.4.0), which fixes five advisories (GHSA-8hrf-8g6f-7xwp,
+  GHSA-hqq3-7jhf-c5jx, GHSA-5x38-2vff-x55p, GHSA-7wch-p9px-956x, GHSA-jc66-7q78-782g).
 - Installation guide, "Stalwart 0.16 auf 1.0 heben": `stalwart-migrate` 1.0.4 or newer (1.0.0 to
   1.0.3 fail `run --final` on contact cards), the tested commands for Quadlet (`prepare
   --non-interactive` with `answers.toml`, a live run with `verify --full`, the final run, swapping
