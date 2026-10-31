@@ -324,7 +324,12 @@ Actions → _Update video_ → Run workflow (oder `bun run video`, braucht ffmpe
   mit der Version von Stalwart markiert sind (`git grep -n 'Stalwart [01]\.'`). Eine neue
   Hauptversion kann bei den Kunden eine Migration der Daten brauchen (wie
   [0.16 auf 1.0](installation.md#stalwart-016-auf-10-heben)). Die eigenen Images (`tristanteu/*`)
-  und die Bun-Pakete fasst Renovate nicht an. Prüfen: `bunx --package renovate renovate-config-validator
+  fasst Renovate nicht an. Alle übrigen Pakete, die Actions und die Images kommen mit den
+  gemeinsamen Einstellungen aus
+  [firsttris/workflows](https://github.com/firsttris/workflows#renovate-in-every-project):
+  Minor- und Patch-Updates am 1. des Monats in einem Pull Request, den Renovate bei grüner CI selbst
+  merged; Majors nur, wenn sie im Dependency Dashboard angehakt werden; Sicherheitsupdates sofort.
+  Prüfen: `bunx --package renovate renovate-config-validator
   .github/renovate.json5`.
 - **Screenshots**: Actions → _Update screenshots_ → Run workflow (oder `bun run screenshots`, lokal mit
   `PW_CHROMIUM_PATH`, wenn Playwrights eigener Browser fehlt).

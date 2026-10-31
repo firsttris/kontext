@@ -1,13 +1,13 @@
 // Renovate (GitHub App, https://github.com/apps/renovate): a pull request for each new release of
 // the images Kontext runs with and the Bun it is built with, plus the "Dependency Dashboard" issue
-// listing what is open. Only those: the other Bun packages are checked by `bun audit` in CI, the
-// actions come pinned to majors. Check with `bunx --package renovate renovate-config-validator .github/renovate.json5`.
+// listing what is open. CI also checks the packages with `bun audit`.
+// Everything else (the other packages, the actions, the images) comes with the shared settings of
+// firsttris/workflows (renovate/default.json5): minor and patch updates once a month in one pull
+// request that merges itself when CI is green, majors on request in the dashboard.
+// Check with `bunx --package renovate renovate-config-validator .github/renovate.json5`.
 {
   $schema: "https://docs.renovatebot.com/renovate-schema.json",
-  extends: ["config:recommended"],
-  enabledManagers: ["docker-compose", "quadlet", "dockerfile", "bun", "custom.regex"],
-  timezone: "Europe/Berlin",
-  labels: ["dependencies"],
+  extends: ["github>firsttris/workflows//renovate/default.json5"],
   customManagers: [
     {
       // The local Stalwart and LiveKit of dev and CI (dev/stalwart.ts, dev/livekit.ts) are the
@@ -72,6 +72,9 @@
       prBodyNotes: [
         "The image of Kontext (docker/Dockerfile) and of the box (box/Dockerfile, also run in ci.yml), `bun-version` of CI, docs, screenshots and video, and `@types/bun` move together. Before merging: read the Bun release notes; CI runs `bun audit`, the tests, the e2e suite and the image check with the new Bun.",
       ],
+      schedule: ["at any time"],
+      automerge: false,
+      dependencyDashboardApproval: false,
     },
     {
       // Kontext's own images move with its releases (release.yml), Schreibzeug with its own
@@ -86,11 +89,17 @@
       prBodyNotes: [
         "Before merging: read Stalwart's `CHANGELOG.md` and, for a new minor or major, `UPGRADING/`. The workarounds and probes marked with a Stalwart version in the code (`git grep -n 'Stalwart [01]\\.'`) may no longer be needed or may have changed. A new major may need a data migration on the customers' servers (see docs/installation.md, Updates). The e2e run of this PR uses the new release.",
       ],
+      schedule: ["at any time"],
+      automerge: false,
+      dependencyDashboardApproval: false,
     },
     {
       matchPackageNames: ["docker.io/livekit/livekit-server"],
       groupName: "LiveKit",
       sourceUrl: "https://github.com/livekit/livekit",
+      schedule: ["at any time"],
+      automerge: false,
+      dependencyDashboardApproval: false,
     },
     {
       matchPackageNames: ["docker.io/livekit/sip"],
