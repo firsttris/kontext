@@ -58,12 +58,6 @@
   ],
   packageRules: [
     {
-      // From the Bun packages only @types/bun (with Bun below)
-      matchManagers: ["bun"],
-      matchPackageNames: ["!@types/bun"],
-      enabled: false,
-    },
-    {
       // The images of docker/ and box/, ci.yml, the bun-version of the workflows and the types in
       // one PR, so the Bun Kontext is built, tested and shipped with cannot drift apart
       matchPackageNames: ["docker.io/oven/bun", "oven-sh/bun", "@types/bun"],
