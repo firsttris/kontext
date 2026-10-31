@@ -43,7 +43,7 @@ jobs:
       - if: github.event_name != 'pull_request'
         run: bun install --frozen-lockfile && bun run build:demo && cp -r dist-demo site/demo
       - if: github.event_name != 'pull_request'
-        uses: actions/configure-pages@v5
+        uses: actions/configure-pages@v6
         with:
           enablement: true
       - if: github.event_name != 'pull_request'
