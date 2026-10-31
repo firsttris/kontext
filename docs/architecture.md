@@ -2031,6 +2031,14 @@ Stalwart-Tokens liegen verschlüsselt (AES-GCM) in SQLite, je Sitzung. Der Zugri
 Bedarf mit dem Refresh-Token erneuert; Stalwart verlängert diesen, solange er benutzt wird. So
 bleibt die App am Handy angemeldet, bis man sich abmeldet (Sitzung 90 Tage, bei Nutzung erneuert).
 
+Lehnt Stalwart einen Zugriffstoken ab, der noch nicht abgelaufen ist (401), kennt es die Freigabe
+nicht mehr – etwa nach dem Umzug auf einen neuen Stalwart (0.16 auf 1.0) oder einer
+Wiederherstellung. Dann vergisst Kontext die Freigabe (`Grants.forget`) und beendet die Sitzung:
+der Proxy antwortet „Anmeldung abgelaufen“, der Mail-Push hört für diese Sitzung auf
+(`server/push/mail-watch.ts`). Würde der Proxy die 401 nur weiterreichen, versuchte die App es
+mit demselben Token immer wieder, und Stalwart sperrte nach einigen Fehlversuchen die Adresse der
+Person (sie kommt über `X-Forwarded-For` mit).
+
 Endet eine Sitzung (Abmelden, „Abmelden“ in den Zugängen, ein widerrufenes App-Passwort oder ein
 getrennter Agent, die Firmenverwaltung beendet alle Sitzungen einer Person), widerruft der Server
 zuerst ihren Refresh-Token bei Stalwart (RFC 7009, `/auth/revoke`, `Grants.end` in

@@ -14,6 +14,13 @@ Steps that an update needs beyond raising the version are marked **Upgrade**.
   --non-interactive` with `answers.toml`, a live run with `verify --full`, the final run, swapping
   the volumes), and what to do when Stalwart has banned a person's address after the move
   (delete the ban, then `ReloadBlockedIps`).
+- Sign-in: a token Stalwart refuses before it runs out (it no longer knows the grant, e.g. after
+  the move to Stalwart 1.0 or a restore) ends the Kontext session: the JMAP proxy answers
+  "Anmeldung abgelaufen" and the app shows the sign-in. Before, the proxy passed every refusal on
+  and the app kept trying with the same token, until Stalwart banned the person's address for a
+  day (`Banned due to authentication errors`). The mail push stops for such a session too, instead
+  of asking Stalwart every 30 s and logging `Object.entries requires that input parameter not be
+  null or undefined` (`server/push/mail-watch.ts`).
 - Settings: "Zugänge" shows who and what has access to the account: the signed-in browsers (sign
   out one or all others), other programs signed in at Stalwart with OAuth (`x:OAuthGrant`,
   revocable), app passwords, AI agents and other mailboxes. Ending a Kontext session (signing out,
