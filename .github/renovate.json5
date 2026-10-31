@@ -1,11 +1,11 @@
 // Renovate (GitHub App, https://github.com/apps/renovate): a pull request for each new release of
-// the images Kontext runs with, plus the "Dependency Dashboard" issue listing what is open.
-// Only the images: the Bun packages are checked by `bun audit` in CI, the actions come pinned to
-// majors. Check with `bunx --package renovate renovate-config-validator .github/renovate.json5`.
+// the images Kontext runs with and the Bun it is built with, plus the "Dependency Dashboard" issue
+// listing what is open. Only those: the other Bun packages are checked by `bun audit` in CI, the
+// actions come pinned to majors. Check with `bunx --package renovate renovate-config-validator .github/renovate.json5`.
 {
   $schema: "https://docs.renovatebot.com/renovate-schema.json",
   extends: ["config:recommended"],
-  enabledManagers: ["docker-compose", "quadlet", "dockerfile", "custom.regex"],
+  enabledManagers: ["docker-compose", "quadlet", "dockerfile", "bun", "custom.regex"],
   timezone: "Europe/Berlin",
   labels: ["dependencies"],
   customManagers: [
@@ -32,8 +32,47 @@
       datasourceTemplate: "docker",
       extractVersionTemplate: "^v?(?<version>.+)$",
     },
+    {
+      // The Bun of the workflows (setup-bun and the screenshots' npm install, newest patch of a
+      // minor), the same minor as the images in docker/ and box/
+      customType: "regex",
+      managerFilePatterns: ["/^\\.github/workflows/[^/]+\\.ya?ml$/"],
+      matchStrings: [
+        "bun-version: (?<currentValue>\\d+\\.\\d+)\\.x",
+        "bun@(?<currentValue>\\d+\\.\\d+)\\.x",
+      ],
+      depNameTemplate: "oven-sh/bun",
+      datasourceTemplate: "github-releases",
+      extractVersionTemplate: "^bun-v(?<version>\\d+\\.\\d+)\\.\\d+$",
+      versioningTemplate: "regex:^(?<major>\\d+)\\.(?<minor>\\d+)$",
+    },
+    {
+      // The Bun image ci.yml runs the box agent's build in (docker run, not seen by the
+      // dockerfile manager)
+      customType: "regex",
+      managerFilePatterns: ["/^\\.github/workflows/ci\\.yml$/"],
+      matchStrings: ["docker\\.io/oven/bun:(?<currentValue>\\d+\\.\\d+-alpine)"],
+      depNameTemplate: "docker.io/oven/bun",
+      datasourceTemplate: "docker",
+    },
   ],
   packageRules: [
+    {
+      // From the Bun packages only @types/bun (with Bun below)
+      matchManagers: ["bun"],
+      matchPackageNames: ["!@types/bun"],
+      enabled: false,
+    },
+    {
+      // The images of docker/ and box/, ci.yml, the bun-version of the workflows and the types in
+      // one PR, so the Bun Kontext is built, tested and shipped with cannot drift apart
+      matchPackageNames: ["docker.io/oven/bun", "oven-sh/bun", "@types/bun"],
+      groupName: "Bun",
+      sourceUrl: "https://github.com/oven-sh/bun",
+      prBodyNotes: [
+        "The image of Kontext (docker/Dockerfile) and of the box (box/Dockerfile, also run in ci.yml), `bun-version` of CI, docs, screenshots and video, and `@types/bun` move together. Before merging: read the Bun release notes; CI runs `bun audit`, the tests, the e2e suite and the image check with the new Bun.",
+      ],
+    },
     {
       // Kontext's own images move with its releases (release.yml), Schreibzeug with its own
       matchPackageNames: ["docker.io/tristanteu/**"],
