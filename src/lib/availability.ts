@@ -134,10 +134,22 @@ export const dayBars = (
     return part ? [{ ...part, status: b.status }] : [];
   });
 
+/** A period with the slot cut out of it: the parts before and after, none when it is inside. */
+const cutOut = (busy: Busy, slot: Slot): Busy[] =>
+  busy.start <= slot.start && busy.end >= slot.end
+    ? [
+        { ...busy, end: slot.start },
+        { ...busy, start: slot.end },
+      ].filter((part) => part.end > part.start)
+    : [busy];
+
 /**
  * Leaves out the appointment being edited: it sits with its old times in the calendar of
  * everyone it was sent to, and would otherwise clash with itself. Someone added just now has no
- * copy of it, so a period with the same times there is a real appointment.
+ * copy of it, so a period at that time there is a real appointment.
+ * Stalwart joins touching and overlapping periods into one (BusyTimeline::merge_into,
+ * crates/jmap/src/principal/availability.rs), so the old times are cut out of the period that
+ * covers them, keeping an appointment right before or after.
  */
 export const withoutEvent = (
   schedules: Schedule[],
@@ -146,10 +158,7 @@ export const withoutEvent = (
   event
     ? schedules.map((s) =>
         event.invited.has(s.email)
-          ? {
-              ...s,
-              busy: s.busy?.filter((b) => b.start !== event.start || b.end !== event.end) ?? null,
-            }
+          ? { ...s, busy: s.busy?.flatMap((b) => cutOut(b, event)) ?? null }
           : s,
       )
     : schedules;

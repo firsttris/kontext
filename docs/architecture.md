@@ -1714,9 +1714,11 @@ nächsten Zeiten, in denen alle frei sind (wie Outlooks Terminplanungs-Assistent
 mit `busyStatus` (bestätigt, vorläufig, nicht verfügbar). Kontext fragt alle Teilnehmer in einer
 Anfrage (bis 16 Aufrufe, Stalwarts `maxCallsInRequest`), für den gezeigten Tag und die zwei
 Wochen, in denen die Vorschläge suchen (ab dem gezeigten Tag, bei einem vergangenen ab heute).
-Es fragt dabei die IDs der Termine mit ab (`eventProperties`): Ohne sie fasst Stalwart
-aneinandergrenzende Zeiträume zusammen, und der gerade bearbeitete Termin ließe sich nicht vom
-nächsten unterscheiden.
+Stalwart fasst aneinandergrenzende und überlappende Zeiträume zu einem zusammen (die IDs der
+Termine gibt es nur mit `showDetails` und Leserecht auf die Termine). Beim Ändern eines Termins
+schneidet der Editor darum dessen alte Zeit aus dem Zeitraum heraus, der sie enthält, bei allen,
+an die er ging; ein Termin direkt davor oder danach bleibt so belegt (`withoutEvent` in
+`src/lib/availability.ts`).
 
 Stalwart antwortet nur aus Kalendern, deren Verfügbarkeit man lesen darf (`mayReadFreeBusy` oder
 `mayReadItems` im `shareWith`), und lässt Termine weg, die auf „Frei“ stehen
