@@ -409,6 +409,14 @@ test.describe("Kalender", () => {
     );
   });
 
+  test("öffnet einen Link mit einer Termin-ID aus Ziffern", async ({ page }) => {
+    // As the reminder push writes it (server/push/reminders.ts); JMAP ids may be all digits.
+    await login(page);
+    await page.goto(`/calendar?date=${today()}&event=0`);
+    // The calendar, not the router's error page.
+    await expect(page.getByText(/KW \d+/)).toBeVisible();
+  });
+
   test("zeigt den Monat", async ({ page }) => {
     await login(page);
     await page.goto("/calendar");

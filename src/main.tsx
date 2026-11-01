@@ -7,6 +7,7 @@ import { createRoot } from "react-dom/client";
 import { AuthProvider, createAppClient, hasSession } from "@/auth/auth";
 import { ToastProvider } from "@/components/ui/toast";
 import type { JmapClient } from "@/jmap/client";
+import { parseSearch, stringifySearch } from "@/lib/search-params";
 import { getLocale } from "@/paraglide/runtime";
 import { routeTree } from "./routeTree.gen";
 import "./styles.css";
@@ -34,6 +35,9 @@ const router = createRouter({
   routeTree,
   context: routerContext,
   defaultPreload: "intent",
+  // Ids in the URL stay text, also when they look like numbers (src/lib/search-params.ts).
+  parseSearch,
+  stringifySearch,
   // The demo is static files under a path of GitHub Pages: the route lives after the "#".
   ...(import.meta.env.MODE === "demo" ? { history: createHashHistory() } : {}),
 });
