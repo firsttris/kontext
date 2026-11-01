@@ -54,6 +54,13 @@ import { useAllMailboxes, useMailAccounts } from "./queries";
 import { useRemoteImages } from "./remote-images";
 import { useThreadView } from "./thread-view";
 
+/** Closes the open mail (and its composer): back to the list. */
+export const useCloseMail = () => {
+  const navigate = useNavigate();
+  return () =>
+    navigate({ to: ".", search: (prev) => ({ ...prev, email: undefined, compose: undefined }) });
+};
+
 export const Toolbar = ({
   accountId,
   mailbox,
@@ -90,8 +97,7 @@ export const Toolbar = ({
         accounts.map((account) => account.name),
       )?.email,
     });
-  const close = () =>
-    navigate({ to: ".", search: (prev) => ({ ...prev, email: undefined, compose: undefined }) });
+  const close = useCloseMail();
 
   const run = async (action: () => Promise<unknown>, leave: boolean) => {
     try {
@@ -138,7 +144,6 @@ export const Toolbar = ({
     p: print,
     t: newTask,
     b: () => setDiscussing(true),
-    esc: () => void close(),
   });
 
   usePrintKey(print);
