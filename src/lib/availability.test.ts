@@ -90,6 +90,15 @@ describe("availability", () => {
     expect(withoutEvent([anna], null)[0]).toBe(anna);
   });
 
+  it("cuts the appointment being edited out of a period Stalwart joined with its neighbours", () => {
+    // The weekly meeting 07:30–08:00, her copy 08:00–09:00 and her own 09:00–10:00, as one period.
+    const editing = { start: at("08:00"), end: at("09:00"), invited: new Set([anna.email]) };
+    const [a] = withoutEvent([{ email: anna.email, busy: [busy("07:30", "10:00")] }], editing);
+    expect(a!.busy).toEqual([busy("07:30", "08:00"), busy("09:00", "10:00")]);
+    expect(statusDuring(a!.busy, editing.start, editing.end)).toEqual({ kind: "free" });
+    expect(statusDuring(a!.busy, at("09:00"), at("10:00")).kind).toBe("busy");
+  });
+
   it("places times by the clock, also on the day the clocks go back", () => {
     // 25 October 2026 has 25 hours; 10:00 is still 9/17 of the way from 01:00 to 18:00.
     const hours = { startHour: 1, endHour: 18 };
