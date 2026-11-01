@@ -140,8 +140,11 @@ test.describe("Wiedervorlage für mehrere Mails", () => {
 
       // Both come back: on top of the combined list, own and shared alike.
       await dueNow(page, await put());
-      const back = list.getByRole("listitem").filter({ hasText: "Wieder vorgelegt" });
-      await expect(back).toContainText(own, { timeout: 15_000 });
+      // By the subject: other tests leave mails of their own "Wieder vorgelegt" in info@.
+      await expect(list.getByRole("listitem").filter({ hasText: own })).toContainText(
+        "Wieder vorgelegt",
+        { timeout: 15_000 },
+      );
       await expect(list.getByRole("heading", { name: "Wieder vorgelegt" })).toHaveCount(1);
       await expect(list.getByRole("heading", { name: "Weitere Mails" })).toBeVisible();
       // Both above the rest, whichever account they came back to.
