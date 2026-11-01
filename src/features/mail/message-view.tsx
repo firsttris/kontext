@@ -5,6 +5,7 @@ import { useEffect, useRef, useState } from "react";
 import { Avatar } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { useMediaQuery } from "@/components/use-media-query";
+import { useShortcuts } from "@/components/use-shortcuts";
 import { displayBody, isUnread } from "@/jmap/mail";
 import type { Mailbox } from "@/jmap/types";
 import { categoriesOn } from "@/lib/categories";
@@ -37,7 +38,7 @@ import { ExternalMark } from "./external-mark";
 import { InvitationBar } from "./invitation-bar";
 import { MailBody } from "./mail-body";
 import { MessageDetails, SenderWarnings } from "./message-details";
-import { Toolbar } from "./message-toolbar";
+import { Toolbar, useCloseMail } from "./message-toolbar";
 import { useShownSubject } from "./opened-mails";
 import { useEmail, useMailAccounts } from "./queries";
 import { ReceiptRequest, ReceiptsReceived } from "./receipts";
@@ -62,6 +63,9 @@ export const MessageView = ({ accountId, mailbox, emailId }: Props) => {
   const statusLabel = useStatusLabel();
   const photoOf = usePhotoOf();
   const subject = useShownSubject({ id: email?.id ?? "", subject: email?.subject ?? null });
+  const close = useCloseMail();
+  // Here, not in the toolbar: Esc also closes a mail that is still loading (j, k, Esc in a row).
+  useShortcuts({ esc: emailId ? () => void close() : undefined });
 
   // Opening a mail marks it read, once per mail (if the mailbox allows it).
   const { canMarkSeen } = mailboxRights(mailbox);

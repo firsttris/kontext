@@ -97,7 +97,8 @@ test.describe("Firmenverwaltung", () => {
     await newEmployee(page, local, "Lisa Aushilfe");
     await page.goto("/settings");
     await page.getByRole("link", { name: "Mitarbeiter" }).click();
-    await page.getByRole("button", { name: /Lisa Aushilfe/ }).click();
+    // By the address: every run (and --repeat-each) adds another "Lisa Aushilfe".
+    await page.getByRole("button", { name: new RegExp(address(local)) }).click();
     const dialog = page.getByRole("dialog", { name: "Mitarbeiter bearbeiten" });
     await dialog.getByRole("button", { name: "Passwort zurücksetzen" }).click();
     await dialog.getByRole("button", { name: "Ja, weiter" }).click();
