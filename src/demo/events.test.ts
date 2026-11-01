@@ -135,7 +135,6 @@ describe("Principal/getAvailability", () => {
       id: "anna",
       utcStart: "2026-10-29T00:00:00Z",
       utcEnd: "2026-10-30T00:00:00Z",
-      eventProperties: ["id"],
     });
     const periods = (list as { utcStart: string; utcEnd: string }[]).map(
       ({ utcStart, utcEnd }) => `${utcStart}–${utcEnd}`,

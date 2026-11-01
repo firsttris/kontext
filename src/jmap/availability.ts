@@ -3,10 +3,8 @@
  * Availability"). Stalwart answers only from calendars the asking user may read the free/busy of
  * (`mayReadFreeBusy`), without titles, and leaves out events marked free, secret or cancelled
  * (crates/jmap/src/principal/availability.rs). A colleague who shares nothing looks free.
- *
- * Asking for the events' ids (`eventProperties`) gets one period per appointment: without them
- * Stalwart joins touching periods, and an appointment being edited could not be told apart from
- * the one right after it. The ids themselves are not used.
+ * Stalwart joins touching and overlapping periods into one; `withoutEvent` (lib/availability.ts)
+ * allows for that.
  */
 
 import type { Busy, BusyStatus } from "@/lib/availability";
@@ -35,7 +33,7 @@ export const getAvailability = async (
     const responses = await client.request(
       ids.map((id) => [
         "Principal/getAvailability",
-        { accountId, id, utcStart: utc(from), utcEnd: utc(to), eventProperties: ["id"] },
+        { accountId, id, utcStart: utc(from), utcEnd: utc(to) },
         id,
       ]),
       USING,
