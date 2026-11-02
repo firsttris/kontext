@@ -1,5 +1,14 @@
 import { type Browser, expect, type Page, test } from "@playwright/test";
-import { addAttendees, address, jmapAs, login, personalAccountId, unique } from "./helpers";
+import {
+  addAttendees,
+  address,
+  jmapAs,
+  login,
+  mailboxWithRole,
+  mailsWithSubject,
+  personalAccountId,
+  unique,
+} from "./helpers";
 
 /** Invitations go out only for events to come. */
 const tomorrow = () =>
@@ -18,30 +27,15 @@ const partsOf = (part: Part): Part[] => [part, ...(part.subParts ?? []).flatMap(
 const sentMails = async (user: string, text: string): Promise<Sent[]> => {
   const client = jmapAs(user);
   const accountId = await personalAccountId(user);
-  const { list: boxes } = await client.call<{ list: { id: string; role: string | null }[] }>(
-    "Mailbox/get",
-    { accountId, properties: ["role"] },
-  );
-  const sent = boxes.find((box) => box.role === "sent")!.id;
-  const [, get] = await client.request([
-    ["Email/query", { accountId, filter: { inMailbox: sent, subject: text } }, "q"],
-    [
-      "Email/get",
-      {
-        accountId,
-        "#ids": { resultOf: "q", name: "Email/query", path: "/ids" },
-        properties: ["subject", "to", "bodyStructure", "bodyValues"],
-        fetchAllBodyValues: true,
-      },
-      "g",
-    ],
-  ]);
-  const list = get![1].list as {
-    subject: string;
+  const sent = await mailboxWithRole(client, accountId, "sent");
+  const list = await mailsWithSubject<{
     to: { email: string }[];
     bodyStructure: Part;
     bodyValues: Record<string, { value: string }>;
-  }[];
+  }>(client, accountId, [text], ["to", "bodyStructure", "bodyValues"], {
+    inMailbox: sent,
+    get: { fetchAllBodyValues: true },
+  });
   return list.map((mail) => {
     const parts = partsOf(mail.bodyStructure);
     const value = (type: string) =>

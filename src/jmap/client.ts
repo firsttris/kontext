@@ -77,6 +77,24 @@ export { fillTemplate };
 export const basicAuth = ({ username, password }: Credentials): string =>
   `Basic ${btoa(String.fromCharCode(...new TextEncoder().encode(`${username}:${password}`)))}`;
 
+/**
+ * More requests of the account at once than the server takes (`maxConcurrentRequests` in the
+ * session): a request error "limit" with status 400 (RFC 8620 §3.6.1; Stalwart's
+ * crates/jmap-proto/src/error/request.rs `RequestLimitError::ConcurrentRequest`). Nothing was
+ * done, so asking again a moment later is safe - also for a method that changes something.
+ */
+export const isConcurrencyLimit = async (response: Response): Promise<boolean> => {
+  if (response.status !== 400) return false;
+  const body = (await response
+    .clone()
+    .json()
+    .catch(() => null)) as { limit?: unknown } | null;
+  return body?.limit === "maxConcurrentRequests";
+};
+
+/** Pauses before asking again while the server is busy with the account's other requests. */
+const BUSY_RETRY_MS = [100, 300, 1_000, 2_000];
+
 type ClientOptions = {
   /** Origin of the server, e.g. "http://127.0.0.1:18080"; in the browser the page's own origin. */
   origin: string;
@@ -88,6 +106,7 @@ type ClientOptions = {
   /** Called when the server answers 401, e.g. because the session ended. */
   onUnauthorized?: () => void;
   fetch?: typeof fetch;
+  wait?: (ms: number) => Promise<unknown>;
 };
 
 export const createJmapClient = ({
@@ -95,6 +114,7 @@ export const createJmapClient = ({
   credentials,
   onUnauthorized,
   fetch: baseFetch = fetch,
+  wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms)),
 }: ClientOptions) => {
   const authHeaders: Record<string, string> = credentials
     ? { authorization: basicAuth(credentials) }
@@ -102,7 +122,12 @@ export const createJmapClient = ({
   let session: Session | undefined;
 
   const doFetch = async (input: string, init: RequestInit = {}): Promise<Response> => {
-    const response = await baseFetch(input, { credentials: "same-origin", ...init });
+    let response = await baseFetch(input, { credentials: "same-origin", ...init });
+    for (const delay of BUSY_RETRY_MS) {
+      if (!(await isConcurrencyLimit(response))) break;
+      await wait(delay);
+      response = await baseFetch(input, { credentials: "same-origin", ...init });
+    }
     if (response.status === 401) onUnauthorized?.();
     return response;
   };

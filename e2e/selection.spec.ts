@@ -1,5 +1,13 @@
 import { expect, type Page, test } from "@playwright/test";
-import { addMail, address, givenKeywords, jmapAs, login, unique } from "./helpers";
+import {
+  addMail,
+  address,
+  givenKeywords,
+  jmapAs,
+  login,
+  mailsWithSubject,
+  unique,
+} from "./helpers";
 
 /** Folder role and keywords of each mail with these subjects, in a user's own or shared mailbox. */
 const stateOf = async (user: string, mailbox: string, subjects: string[]) => {
@@ -8,31 +16,19 @@ const stateOf = async (user: string, mailbox: string, subjects: string[]) => {
   const accountId = Object.entries(session.accounts).find(
     ([, a]) => a.name === address(mailbox),
   )![0];
-  const [boxes, , got] = await client.request([
-    ["Mailbox/get", { accountId, properties: ["role"] }, "m"],
-    [
-      "Email/query",
-      {
-        accountId,
-        filter: { operator: "OR", conditions: subjects.map((subject) => ({ subject })) },
-      },
-      "q",
-    ],
-    [
-      "Email/get",
-      {
-        accountId,
-        "#ids": { resultOf: "q", name: "Email/query", path: "/ids" },
-        properties: ["subject", "mailboxIds", "keywords"],
-      },
-      "g",
-    ],
-  ]);
-  const roles = Object.fromEntries(
-    (boxes![1].list as { id: string; role: string | null }[]).map((box) => [box.id, box.role]),
+  const { list: boxes } = await client.call<{ list: { id: string; role: string | null }[] }>(
+    "Mailbox/get",
+    { accountId, properties: ["role"] },
+  );
+  const roles = Object.fromEntries(boxes.map((box) => [box.id, box.role]));
+  const mails = await mailsWithSubject<{ mailboxIds: object; keywords: object }>(
+    client,
+    accountId,
+    subjects,
+    ["mailboxIds", "keywords"],
   );
   return Object.fromEntries(
-    (got![1].list as { subject: string; mailboxIds: object; keywords: object }[]).map((email) => [
+    mails.map((email) => [
       email.subject,
       {
         folder: Object.keys(email.mailboxIds).map((id) => roles[id])[0],

@@ -1,6 +1,6 @@
 import { expect, type Page, test } from "@playwright/test";
 import { decryptKey, encryptKey, generateKey, readPrivateKey } from "openpgp";
-import { address, jmapAs, login, unique } from "./helpers";
+import { address, jmapAs, login, recentMails, unique } from "./helpers";
 
 const PASSPHRASE = "Im Keller steht die Pumpe";
 
@@ -25,35 +25,25 @@ const giveKey = async (page: Page, user: string) => {
   expect(response.ok()).toBe(true);
 };
 
-/** The link in the mail that went out, from the sender's Sent folder. */
-const sentLink = async (user: string, to: string) => {
+/** The newest mail of the user's to that address (its id), if there is one yet. */
+const newestTo = async (user: string, to: string) => {
   const client = jmapAs(user);
   const session = await client.getSession();
   const accountId = session.primaryAccounts["urn:ietf:params:jmap:mail"]!;
-  const [, got] = await client.request([
-    [
-      "Email/query",
-      {
-        accountId,
-        filter: { to },
-        sort: [{ property: "receivedAt", isAscending: false }],
-        limit: 1,
-      },
-      "q",
-    ],
-    [
-      "Email/get",
-      {
-        accountId,
-        "#ids": { resultOf: "q", name: "Email/query", path: "/ids" },
-        properties: ["textBody", "bodyValues"],
-        fetchTextBodyValues: true,
-      },
-      "g",
-    ],
-  ]);
-  const mail = (got![1] as { list: { bodyValues: Record<string, { value: string }> }[] }).list[0];
-  return Object.values(mail?.bodyValues ?? {})
+  const mails = await recentMails<{ to: { email: string }[] | null }>(client, accountId, ["to"]);
+  const id = mails.find((mail) => mail.to?.some((one) => one.email === to))?.id;
+  return { client, accountId, id };
+};
+
+/** The link in the mail that went out, from the sender's Sent folder. */
+const sentLink = async (user: string, to: string) => {
+  const { client, accountId, id } = await newestTo(user, to);
+  if (!id) return undefined;
+  const { list } = await client.call<{ list: { bodyValues: Record<string, { value: string }> }[] }>(
+    "Email/get",
+    { accountId, ids: [id], properties: ["textBody", "bodyValues"], fetchTextBodyValues: true },
+  );
+  return Object.values(list[0]?.bodyValues ?? {})
     .map((part) => part.value)
     .join("\n")
     .match(/https?:\/\/\S+\/s\/\S+#\S+/)?.[0];
@@ -169,23 +159,14 @@ test.describe("Vertraulich senden mit Bild", () => {
     await expect(codes.getByRole("status", { name: `Code für ${customer}` })).toBeVisible();
     await codes.getByRole("button", { name: "Weitergegeben" }).click();
     await expect.poll(() => sentLink("jonas", customer)).toBeTruthy();
-    const client = jmapAs("jonas");
-    const session = await client.getSession();
-    const accountId = session.primaryAccounts["urn:ietf:params:jmap:mail"]!;
-    const [, got] = await client.request([
-      ["Email/query", { accountId, filter: { to: customer }, limit: 1 }, "q"],
-      [
-        "Email/get",
-        {
-          accountId,
-          "#ids": { resultOf: "q", name: "Email/query", path: "/ids" },
-          properties: ["attachments", "hasAttachment"],
-        },
-        "g",
-      ],
-    ]);
-    const mail = (got![1] as { list: { attachments: unknown[] }[] }).list[0];
-    expect(mail?.attachments ?? []).toEqual([]);
+    const { client, accountId, id } = await newestTo("jonas", customer);
+    const { list } = await client.call<{ list: { attachments: unknown[] }[] }>("Email/get", {
+      accountId,
+      ids: [id!],
+      properties: ["attachments", "hasAttachment"],
+    });
+    // No mail at all would pass "no attachments" too: undefined is not [].
+    expect(list[0]?.attachments).toEqual([]);
   });
 });
 

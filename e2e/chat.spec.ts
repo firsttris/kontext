@@ -465,16 +465,21 @@ test("ein kurzes Gespräch steht unten am Feld, nicht oben mit Lücke", async ({
   await openDirectWithMax(page);
   const text = unique("Kurz gefragt");
   await write(page, text);
+  // The server's message, not the one shown at once: that one goes when the server's comes, and
+  // its boundingBox() is then null.
   const message = page
     .getByRole("list", { name: "Nachrichten" })
-    .locator("[data-message]")
+    .locator('[data-message]:not([data-message^="pending-"])')
     .filter({ hasText: text });
   await expect(message).toBeVisible();
-  const [bubble, field] = await Promise.all([
-    message.boundingBox(),
-    page.getByRole("textbox", { name: "Nachricht" }).boundingBox(),
-  ]);
-  expect(field!.y - (bubble!.y + bubble!.height)).toBeLessThan(90);
+  // Asked again until it holds: the list may still scroll to the new message.
+  const field = page.getByRole("textbox", { name: "Nachricht" });
+  await expect
+    .poll(async () => {
+      const [bubble, box] = await Promise.all([message.boundingBox(), field.boundingBox()]);
+      return bubble && box ? box.y - (bubble.y + bubble.height) : Number.POSITIVE_INFINITY;
+    })
+    .toBeLessThan(90);
 });
 
 test.describe("Chat am Handy @phone", () => {

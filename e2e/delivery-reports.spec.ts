@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test";
 import { deliverReport } from "./delivery-report";
-import { address, jmapAs, login, personalAccountId, unique } from "./helpers";
+import { address, jmapAs, login, mailsWithSubject, personalAccountId, unique } from "./helpers";
 
 type Submission = {
   emailId: string;
@@ -14,10 +14,7 @@ type Submission = {
 const submissionOf = async (subject: string): Promise<Submission | undefined> => {
   const client = jmapAs("jonas");
   const accountId = await personalAccountId("jonas");
-  const { ids } = await client.call<{ ids: string[] }>("Email/query", {
-    accountId,
-    filter: { subject },
-  });
+  const ids = (await mailsWithSubject(client, accountId, [subject], [])).map((mail) => mail.id);
   if (!ids.length) return undefined;
   const [, got] = await client.request(
     [

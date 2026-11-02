@@ -1,6 +1,6 @@
 import { type Cookie, expect, type Locator, type Page } from "@playwright/test";
 import { DEV_DOMAIN, DEV_PASSWORD } from "../dev/config";
-import { assertSetOk, createJmapClient } from "../src/jmap/client";
+import { assertSetOk, createJmapClient, type JmapClient } from "../src/jmap/client";
 import { createContact, deleteContact, listAddressBooks } from "../src/jmap/contacts";
 import { applyDeputyPatches, loadDeputyObjects } from "../src/jmap/deputy";
 import { listPrincipals } from "../src/jmap/principals";
@@ -98,6 +98,101 @@ export const personalAccountId = async (user: string) => {
   return Object.entries(session.accounts).find(([, a]) => a.name === address(user))![0];
 };
 
+/**
+ * The newest mails of an account (of one folder, if given), with the properties asked for; the
+ * test picks its mails from them itself. Not with Email/query's text filters (text, from, to,
+ * subject, body): Stalwart answers those from its full-text index, which it fills in the
+ * background (crates/jmap/src/email/query/filter.rs `is_text`, queued in
+ * crates/email/src/message/ingest.rs), so a mail that just arrived is not found there for a while
+ * on a busy runner - and a check that a word is in no mail passes for the wrong reason. At most
+ * 500, what Stalwart gives out in one Email/get (`max_get_results`).
+ */
+export const recentMails = async <T extends object>(
+  client: JmapClient,
+  accountId: string,
+  properties: string[],
+  { inMailbox, using }: { inMailbox?: string; using?: string[] } = {},
+): Promise<(T & { id: string })[]> => {
+  const [, got] = await client.request(
+    [
+      [
+        "Email/query",
+        {
+          accountId,
+          ...(inMailbox ? { filter: { inMailbox } } : {}),
+          sort: [{ property: "receivedAt", isAscending: false }],
+          limit: 500,
+        },
+        "q",
+      ],
+      [
+        "Email/get",
+        {
+          accountId,
+          "#ids": { resultOf: "q", name: "Email/query", path: "/ids" },
+          properties: ["id", ...properties],
+        },
+        "g",
+      ],
+    ],
+    using,
+  );
+  return got![1].list as (T & { id: string })[];
+};
+
+/**
+ * The newest mails whose subject has one of the texts (what `filter: { subject }` meant), with
+ * the properties asked for: first the subjects of the newest mails, then the rest of only those
+ * that match (`get` takes further Email/get arguments, e.g. `fetchHTMLBodyValues`).
+ */
+export const mailsWithSubject = async <T extends object>(
+  client: JmapClient,
+  accountId: string,
+  subjects: string[],
+  properties: string[],
+  {
+    get = {},
+    ...options
+  }: { inMailbox?: string; using?: string[]; get?: Record<string, unknown> } = {},
+): Promise<(T & { id: string; subject: string })[]> => {
+  const ids = (
+    await recentMails<{ subject: string | null }>(client, accountId, ["subject"], options)
+  )
+    .filter((mail) => subjects.some((subject) => mail.subject?.includes(subject)))
+    .map((mail) => mail.id);
+  if (!ids.length) return [];
+  const { list } = await client.call<{ list: (T & { id: string; subject: string })[] }>(
+    "Email/get",
+    { accountId, ids, properties: ["id", "subject", ...properties], ...get },
+    options.using,
+  );
+  return list;
+};
+
+/** The id of the folder with that role (inbox, sent, ...) in the account. */
+export const mailboxWithRole = async (client: JmapClient, accountId: string, role: string) => {
+  const { list } = await client.call<{ list: { id: string; role: string | null }[] }>(
+    "Mailbox/get",
+    { accountId, properties: ["role"] },
+  );
+  return list.find((mailbox) => mailbox.role === role)!.id;
+};
+
+/** The newest mail with that subject in a user's inbox, as it lies on the server (RFC 5322). */
+export const rawInboxMail = async (user: string, subject: string) => {
+  const client = jmapAs(user);
+  const accountId = await personalAccountId(user);
+  const inbox = await mailboxWithRole(client, accountId, "inbox");
+  const mails = await recentMails<{ subject: string; blobId: string }>(
+    client,
+    accountId,
+    ["subject", "blobId"],
+    { inMailbox: inbox },
+  );
+  const mail = mails.find((one) => one.subject === subject)!;
+  return (await client.download(accountId, mail.blobId, "mail.eml", "message/rfc822")).text();
+};
+
 /** Subjects of the mails in a user's inbox. */
 export const inboxSubjects = async (user: string): Promise<string[]> =>
   (await inboxMails(user)).map((email) => email.subject);
@@ -108,28 +203,14 @@ export const inboxMails = async (
 ): Promise<{ subject: string; from: string; fromName: string }[]> => {
   const client = jmapAs(user);
   const accountId = await personalAccountId(user);
-  const { list } = await client.call<{ list: { id: string; role: string | null }[] }>(
-    "Mailbox/get",
-    {
-      accountId,
-      properties: ["role"],
-    },
-  );
-  const inbox = list.find((mailbox) => mailbox.role === "inbox")!;
-  const [, get] = await client.request([
-    ["Email/query", { accountId, filter: { inMailbox: inbox.id } }, "q"],
-    [
-      "Email/get",
-      {
-        accountId,
-        "#ids": { resultOf: "q", name: "Email/query", path: "/ids" },
-        properties: ["subject", "from"],
-      },
-      "g",
-    ],
-  ]);
+  const inbox = await mailboxWithRole(client, accountId, "inbox");
   return (
-    get![1].list as { subject: string; from: { email: string; name: string | null }[] }[]
+    await recentMails<{ subject: string; from: { email: string; name: string | null }[] }>(
+      client,
+      accountId,
+      ["subject", "from"],
+      { inMailbox: inbox },
+    )
   ).map((email) => ({
     subject: email.subject,
     from: email.from[0]?.email ?? "",
@@ -194,37 +275,16 @@ export const mailboxAccountId = async (user: string, mailbox: string) => {
 export const findMails = async (user: string, mailbox: string, subjects: string[]) => {
   const client = jmapAs(user);
   const accountId = await mailboxAccountId(user, mailbox);
-  const [boxes, , got] = await client.request([
-    ["Mailbox/get", { accountId, properties: ["role"] }, "m"],
-    [
-      "Email/query",
-      {
-        accountId,
-        filter: { operator: "OR", conditions: subjects.map((subject) => ({ subject })) },
-      },
-      "q",
-    ],
-    [
-      "Email/get",
-      {
-        accountId,
-        "#ids": { resultOf: "q", name: "Email/query", path: "/ids" },
-        properties: ["subject", "mailboxIds", "keywords"],
-      },
-      "g",
-    ],
-  ]);
-  const roles = new Map(
-    (boxes![1].list as { id: string; role: string | null }[]).map((box) => [box.id, box.role]),
+  const { list: boxes } = await client.call<{ list: { id: string; role: string | null }[] }>(
+    "Mailbox/get",
+    { accountId, properties: ["role"] },
   );
-  return (
-    got![1].list as {
-      id: string;
-      subject: string;
-      mailboxIds: Record<string, boolean>;
-      keywords: Record<string, boolean>;
-    }[]
-  ).map((email) => ({
+  const roles = new Map(boxes.map((box) => [box.id, box.role]));
+  const mails = await mailsWithSubject<{
+    mailboxIds: Record<string, boolean>;
+    keywords: Record<string, boolean>;
+  }>(client, accountId, subjects, ["mailboxIds", "keywords"]);
+  return mails.map((email) => ({
     accountId,
     id: email.id,
     subject: email.subject,

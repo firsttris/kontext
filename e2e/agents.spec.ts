@@ -1,6 +1,15 @@
 import { expect, type Page, test } from "@playwright/test";
 import { DEV_PASSWORD } from "../dev/config";
-import { addMail, address, jmapAs, login, personalAccountId, skipTour, unique } from "./helpers";
+import {
+  addMail,
+  address,
+  jmapAs,
+  login,
+  mailsWithSubject,
+  personalAccountId,
+  skipTour,
+  unique,
+} from "./helpers";
 
 /** One MCP request with the key, as an agent makes it (server/mcp/). */
 const mcp = (page: Page, key: string, method: string, params: Record<string, unknown> = {}) =>
@@ -55,11 +64,8 @@ const mailId = async (subject: string) => {
   const client = jmapAs("jonas");
   const { primaryAccounts } = await client.getSession();
   const accountId = primaryAccounts["urn:ietf:params:jmap:mail"]!;
-  const { ids } = await client.call<{ ids: string[] }>("Email/query", {
-    accountId,
-    filter: { subject },
-  });
-  return { accountId, id: ids[0]! };
+  const [mail] = await mailsWithSubject(client, accountId, [subject], []);
+  return { accountId, id: mail!.id };
 };
 
 test.describe("KI-Agenten (MCP)", () => {

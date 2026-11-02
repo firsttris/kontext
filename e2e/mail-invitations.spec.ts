@@ -1,5 +1,13 @@
 import { expect, type Page, test } from "@playwright/test";
-import { address, jmapAs, login, personalAccountId, unique } from "./helpers";
+import {
+  address,
+  jmapAs,
+  login,
+  mailboxWithRole,
+  personalAccountId,
+  recentMails,
+  unique,
+} from "./helpers";
 import { deliverInvitation, PETRA } from "./invitation-mail";
 
 /**
@@ -36,24 +44,16 @@ const storedAnswers = async (user: string, uid: string) => {
 const sentToPetra = async (user: string) => {
   const client = jmapAs(user);
   const accountId = await personalAccountId(user);
-  const { list } = await client.call<{ list: { id: string; role: string | null }[] }>(
-    "Mailbox/get",
-    { accountId, properties: ["role"] },
+  const sent = await mailboxWithRole(client, accountId, "sent");
+  const mails = await recentMails<{ subject: string; to: { email: string }[] | null }>(
+    client,
+    accountId,
+    ["subject", "to"],
+    { inMailbox: sent },
   );
-  const sent = list.find((mailbox) => mailbox.role === "sent")!;
-  const [, got] = await client.request([
-    ["Email/query", { accountId, filter: { inMailbox: sent.id, to: PETRA } }, "q"],
-    [
-      "Email/get",
-      {
-        accountId,
-        "#ids": { resultOf: "q", name: "Email/query", path: "/ids" },
-        properties: ["subject"],
-      },
-      "g",
-    ],
-  ]);
-  return (got![1].list as { subject: string }[]).map((mail) => mail.subject);
+  return mails
+    .filter((mail) => mail.to?.some((to) => to.email.toLowerCase() === PETRA))
+    .map((mail) => mail.subject);
 };
 
 const open = async (page: Page, subject: string) => {

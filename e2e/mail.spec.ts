@@ -7,6 +7,7 @@ import {
   inboxSubjects,
   jmapAs,
   login,
+  mailsWithSubject,
   personalAccountId,
   unique,
 } from "./helpers";
@@ -20,33 +21,21 @@ const OFFER = "angebot-wartung@keller-elektro.test";
 const removeMails = async (user: string, subjects: string[]) => {
   const client = jmapAs(user);
   const accountId = await personalAccountId(user);
-  for (const subject of subjects) {
-    const { ids } = await client.call<{ ids: string[] }>("Email/query", {
-      accountId,
-      filter: { subject },
-    });
-    if (ids.length) await client.call("Email/set", { accountId, destroy: ids });
-  }
+  const ids = (await mailsWithSubject(client, accountId, subjects, [])).map((mail) => mail.id);
+  if (ids.length) await client.call("Email/set", { accountId, destroy: ids });
 };
 
 /** The subjects of the mails attached (message/rfc822) to a user's mail with this subject. */
 const attachedMails = async (user: string, subject: string): Promise<string[]> => {
   const client = jmapAs(user);
   const accountId = await personalAccountId(user);
-  const [, got] = await client.request([
-    ["Email/query", { accountId, filter: { subject } }, "q"],
-    [
-      "Email/get",
-      {
-        accountId,
-        "#ids": { resultOf: "q", name: "Email/query", path: "/ids" },
-        properties: ["attachments"],
-        bodyProperties: ["blobId", "type"],
-      },
-      "g",
-    ],
-  ]);
-  const mail = (got![1].list as { attachments: { blobId: string; type: string }[] }[])[0];
+  const [mail] = await mailsWithSubject<{ attachments: { blobId: string; type: string }[] }>(
+    client,
+    accountId,
+    [subject],
+    ["attachments"],
+    { get: { bodyProperties: ["blobId", "type"] } },
+  );
   const blobIds = (mail?.attachments ?? [])
     .filter((part) => part.type === "message/rfc822")
     .map((part) => part.blobId);
@@ -243,6 +232,8 @@ test.describe("Mail", () => {
     await page.getByRole("menuitemradio", { name: "Rot" }).click();
     await page.getByRole("button", { name: "Schriftgröße" }).click();
     await page.getByRole("menuitemradio", { name: "Groß", exact: true }).click();
+    // The menu gives the focus back to the text; typed before that, the keys would go nowhere.
+    await expect(body).toBeFocused();
     await page.keyboard.type("Bitte bis Freitag");
     await page.keyboard.press("Enter");
     await page.getByRole("button", { name: "Tabelle", exact: true }).click();
@@ -265,27 +256,13 @@ test.describe("Mail", () => {
     const received = async () => {
       const client = jmapAs("anna");
       const accountId = await personalAccountId("anna");
-      const [, get] = await client.request([
-        ["Email/query", { accountId, filter: { subject } }, "q"],
-        [
-          "Email/get",
-          {
-            accountId,
-            "#ids": { resultOf: "q", name: "Email/query", path: "/ids" },
-            properties: ["htmlBody", "textBody", "bodyValues"],
-            fetchHTMLBodyValues: true,
-            fetchTextBodyValues: true,
-          },
-          "g",
-        ],
-      ]);
-      const mail = (
-        get![1].list as {
-          htmlBody: { partId: string }[];
-          textBody: { partId: string }[];
-          bodyValues: Record<string, { value: string }>;
-        }[]
-      )[0];
+      const [mail] = await mailsWithSubject<{
+        htmlBody: { partId: string }[];
+        textBody: { partId: string }[];
+        bodyValues: Record<string, { value: string }>;
+      }>(client, accountId, [subject], ["htmlBody", "textBody", "bodyValues"], {
+        get: { fetchHTMLBodyValues: true, fetchTextBodyValues: true },
+      });
       if (!mail) return null;
       const value = (parts: { partId: string }[]) => mail.bodyValues[parts[0]!.partId]!.value;
       return { html: value(mail.htmlBody), text: value(mail.textBody) };
@@ -407,19 +384,13 @@ test.describe("Mail", () => {
     const keywords = async () => {
       const client = jmapAs("jonas");
       const accountId = await personalAccountId("jonas");
-      const [, get] = await client.request([
-        ["Email/query", { accountId, filter: { subject } }, "q"],
-        [
-          "Email/get",
-          {
-            accountId,
-            "#ids": { resultOf: "q", name: "Email/query", path: "/ids" },
-            properties: ["keywords"],
-          },
-          "g",
-        ],
-      ]);
-      return Object.keys((get![1].list as { keywords: object }[])[0]?.keywords ?? {});
+      const [mail] = await mailsWithSubject<{ keywords: object }>(
+        client,
+        accountId,
+        [subject],
+        ["keywords"],
+      );
+      return Object.keys(mail?.keywords ?? {});
     };
     const inbox = page.getByRole("list", { name: "Posteingang" });
     await inbox.getByText(subject).click();
@@ -854,28 +825,18 @@ test.describe("Entwürfe", () => {
     const received = async () => {
       const client = jmapAs("anna");
       const accountId = await personalAccountId("anna");
-      const [, get] = await client.request([
-        ["Email/query", { accountId, filter: { subject } }, "q"],
-        [
-          "Email/get",
-          {
-            accountId,
-            "#ids": { resultOf: "q", name: "Email/query", path: "/ids" },
-            properties: ["bodyStructure", "htmlBody", "attachments", "bodyValues"],
-            fetchHTMLBodyValues: true,
-          },
-          "g",
-        ],
-      ]);
-      return (get![1].list as Record<string, unknown>[])[0] ?? null;
+      const [mail] = await mailsWithSubject<{
+        bodyStructure: { subParts?: { type: string; subParts?: { type: string }[] }[] };
+        htmlBody: { partId: string }[];
+        attachments: { cid: string | null; disposition: string | null; type: string }[];
+        bodyValues: Record<string, { value: string }>;
+      }>(client, accountId, [subject], ["bodyStructure", "htmlBody", "attachments", "bodyValues"], {
+        get: { fetchHTMLBodyValues: true },
+      });
+      return mail ?? null;
     };
     await expect.poll(received).not.toBeNull();
-    const mail = (await received()) as {
-      bodyStructure: { subParts?: { type: string; subParts?: { type: string }[] }[] };
-      htmlBody: { partId: string }[];
-      attachments: { cid: string | null; disposition: string | null; type: string }[];
-      bodyValues: Record<string, { value: string }>;
-    };
+    const mail = (await received())!;
     const picture = mail.attachments.find((part) => part.type === "image/png");
     expect(picture?.disposition).toBe("inline");
     expect(picture?.cid).toBeTruthy();
@@ -893,23 +854,12 @@ test.describe("Entwürfe", () => {
     const draftPictures = async () => {
       const client = jmapAs("jonas");
       const accountId = await personalAccountId("jonas");
-      const [, get] = await client.request([
-        ["Email/query", { accountId, filter: { subject } }, "q"],
-        [
-          "Email/get",
-          {
-            accountId,
-            "#ids": { resultOf: "q", name: "Email/query", path: "/ids" },
-            properties: ["htmlBody", "bodyValues"],
-            fetchHTMLBodyValues: true,
-          },
-          "g",
-        ],
-      ]);
-      const list = get![1].list as {
+      const list = await mailsWithSubject<{
         htmlBody: { partId: string }[];
         bodyValues: Record<string, { value: string }>;
-      }[];
+      }>(client, accountId, [subject], ["htmlBody", "bodyValues"], {
+        get: { fetchHTMLBodyValues: true },
+      });
       if (list.length !== 1) return -1;
       const html = list[0]!.bodyValues[list[0]!.htmlBody[0]!.partId]?.value ?? "";
       return html.match(/src="cid:/g)?.length ?? 0;

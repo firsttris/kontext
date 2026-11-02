@@ -2,7 +2,7 @@ import { readFileSync } from "node:fs";
 import { expect, test } from "@playwright/test";
 import forge from "node-forge";
 import { DEV_DOMAIN } from "../dev/config";
-import { address, inboxSubjects, jmapAs, login, unique } from "./helpers";
+import { address, inboxSubjects, login, rawInboxMail, unique } from "./helpers";
 
 const PASSWORD = "p12-passwort";
 
@@ -114,13 +114,9 @@ test.describe("Verschlüsselung: S/MIME", () => {
       .toBe(before + 1);
     expect(await inboxSubjects("max")).not.toContain(subject);
 
-    const client = jmapAs("max");
-    const session = await client.getSession();
-    const accountId = session.primaryAccounts["urn:ietf:params:jmap:mail"]!;
-    const [found] = await client.request([
-      ["Email/query", { accountId, filter: { text: "Bescheid" } }, "q"],
-    ]);
-    expect((found![1] as { ids: string[] }).ids).toHaveLength(0);
+    const raw = await rawInboxMail("max", STAND_IN);
+    expect(raw).not.toContain("Bescheid");
+    expect(raw).not.toContain(subject);
 
     await other.goto("/mail");
     const row = other

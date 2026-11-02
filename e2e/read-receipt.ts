@@ -19,7 +19,7 @@ const importInto = async (
   );
   const folder = list.find((box) => box.role === role)!.id;
   const { blobId } = await client.upload(accountId, raw, "message/rfc822");
-  const result = await client.call<{ created?: Record<string, unknown> }>("Email/import", {
+  const result = await client.call<{ created?: Record<string, { id: string }> }>("Email/import", {
     accountId,
     emails: {
       r: {
@@ -31,11 +31,12 @@ const importInto = async (
     },
   });
   if (!result.created?.r) throw new Error(`Email/import: ${JSON.stringify(result)}`);
+  return { accountId, mailboxId: folder, id: result.created.r.id };
 };
 
 const date = (when: Date) => when.toUTCString().replace("GMT", "+0000");
 
-/** A mail in the user's Sent to `to`, asking for a read receipt. */
+/** A mail in the user's Sent to `to`, asking for a read receipt; where it lies (for its URL). */
 export const sentAskingReceipt = (
   user: string,
   { messageId, subject, to, at }: { messageId: string; subject: string; to: string; at: Date },

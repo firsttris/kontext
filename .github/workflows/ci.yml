@@ -10,6 +10,11 @@ on:
     paths-ignore: ["**.md", "docs/**", "LICENSE"]
   workflow_call: # release.yml runs the same checks before publishing
   workflow_dispatch:
+    inputs:
+      repeat:
+        description: "E2E wie nachts: jeder Test dreimal, ohne Wiederholung"
+        type: boolean
+        default: false
   # Nightly: new advisories for dependencies show up without a push.
   schedule:
     - cron: "17 3 * * *"
@@ -141,10 +146,11 @@ jobs:
           key: stalwart-${{ hashFiles('dev/config.ts') }}
       - run: bun install --frozen-lockfile
       # Nightly each test runs three times and without the retry, so one that passes only now and
-      # then shows up there before it holds up a pull request.
+      # then shows up there before it holds up a pull request. By hand too ("repeat"), to check a
+      # fix for such a test on its branch.
       - run: >-
           bun run e2e --shard=${{ matrix.shard }}/4
-          ${{ github.event_name == 'schedule' && '--repeat-each=3 --retries=0' || '' }}
+          ${{ (github.event_name == 'schedule' || inputs.repeat) && '--repeat-each=3 --retries=0' || '' }}
       - if: failure()
         uses: actions/upload-artifact@v7
         with:

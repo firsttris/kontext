@@ -179,9 +179,15 @@ test.describe("Anrufe am Handy @phone", () => {
     expect(box?.width).toBe(viewport?.width);
     expect(box?.height).toBe(viewport?.height);
     // Alone in it, one's own picture takes the width and most of the height, not a small strip.
-    const ownTile = await panel.getByRole("listitem", { name: /^Du/ }).boundingBox();
-    expect(ownTile?.width ?? 0).toBeGreaterThan((box?.width ?? 0) - 40);
-    expect(ownTile?.height ?? 0).toBeGreaterThan((box?.height ?? 0) / 2);
+    // The tile comes once the call is joined, and then grows into its place: asked until then.
+    const ownTile = panel.getByRole("listitem", { name: /^Du/ });
+    await expect(ownTile).toBeVisible();
+    await expect
+      .poll(async () => (await ownTile.boundingBox())?.width ?? 0)
+      .toBeGreaterThan((box?.width ?? 0) - 40);
+    await expect
+      .poll(async () => (await ownTile.boundingBox())?.height ?? 0)
+      .toBeGreaterThan((box?.height ?? 0) / 2);
     // No screen sharing on the phone.
     await expect(panel.getByRole("button", { name: "Bildschirm teilen" })).toBeHidden();
     await panel.getByRole("button", { name: "Auflegen" }).click();
