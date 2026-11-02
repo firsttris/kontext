@@ -1,6 +1,6 @@
 import { expect, type Page, test } from "@playwright/test";
 import { DEV_DOMAIN } from "../dev/config";
-import { address, inboxSubjects, jmapAs, login, unique } from "./helpers";
+import { address, inboxSubjects, login, rawInboxMail, unique } from "./helpers";
 import { giveKey, PASSPHRASE } from "./pgp-key";
 
 const STAND_IN = "Vertrauliche Nachricht";
@@ -64,13 +64,9 @@ test.describe("Verschlüsselung: PGP in Mails", () => {
     expect(await inboxSubjects("max")).not.toContain(subject);
 
     // On the server only the encrypted text: the words are not in the mail.
-    const client = jmapAs("max");
-    const session = await client.getSession();
-    const accountId = session.primaryAccounts["urn:ietf:params:jmap:mail"]!;
-    const [found] = await client.request([
-      ["Email/query", { accountId, filter: { text: "Messwerte" } }, "q"],
-    ]);
-    expect((found![1] as { ids: string[] }).ids).toHaveLength(0);
+    const raw = await rawInboxMail("max", STAND_IN);
+    expect(raw).not.toContain("Messwerte");
+    expect(raw).not.toContain(subject);
 
     await max.goto("/mail");
     const row = max

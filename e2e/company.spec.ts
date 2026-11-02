@@ -1,7 +1,16 @@
 import { expect, test } from "@playwright/test";
 import { createJmapClient } from "../src/jmap/client";
 import { newEmployee, signInWith, stamp } from "./company-helpers";
-import { address, inboxMails, jmapAs, login, personalAccountId, STALWART, unique } from "./helpers";
+import {
+  address,
+  inboxMails,
+  jmapAs,
+  login,
+  personalAccountId,
+  recentMails,
+  STALWART,
+  unique,
+} from "./helpers";
 import { deliverMail } from "./protocols";
 
 /** The stand-in for Schreibzeug (dev/fake-schreibzeug.ts, playwright.config.ts). */
@@ -299,11 +308,8 @@ test.describe("Firmenverwaltung", () => {
     const karlHas = async () => {
       const session = await karl.getSession();
       const accountId = Object.keys(session.accounts)[0]!;
-      const { ids } = await karl.call<{ ids: string[] }>("Email/query", {
-        accountId,
-        filter: { subject: back },
-      });
-      return ids.length;
+      const mails = await recentMails<{ subject: string }>(karl, accountId, ["subject"]);
+      return mails.filter((mail) => mail.subject === back).length;
     };
     await expect.poll(karlHas, { timeout: 15_000 }).toBe(1);
     await page.waitForTimeout(2_000);

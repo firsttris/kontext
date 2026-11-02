@@ -4,9 +4,9 @@ import {
   address,
   jmapAs,
   login,
-  NEWEST_FIRST,
+  mailboxWithRole,
   personalAccountId,
-  RECENT,
+  recentMails,
   unique,
 } from "./helpers";
 
@@ -23,38 +23,15 @@ type Sent = { subject: string; to: string; html: string; calendar: string };
 
 const partsOf = (part: Part): Part[] => [part, ...(part.subParts ?? []).flatMap(partsOf)];
 
-/**
- * The mails in a user's Sent folder whose subject has the text, with HTML and iCalendar. Filtered
- * here, not with Email/query's `subject`: Stalwart answers that from its full-text index, which
- * it fills in the background (crates/jmap/src/email/query/filter.rs, `is_text`).
- */
+/** The mails in a user's Sent folder whose subject has the text, with HTML and iCalendar. */
 const sentMails = async (user: string, text: string): Promise<Sent[]> => {
   const client = jmapAs(user);
   const accountId = await personalAccountId(user);
-  const { list: boxes } = await client.call<{ list: { id: string; role: string | null }[] }>(
-    "Mailbox/get",
-    { accountId, properties: ["role"] },
-  );
-  const sent = boxes.find((box) => box.role === "sent")!.id;
-  const [, subjects] = await client.request([
-    [
-      "Email/query",
-      { accountId, filter: { inMailbox: sent }, sort: NEWEST_FIRST, limit: RECENT },
-      "q",
-    ],
-    [
-      "Email/get",
-      {
-        accountId,
-        "#ids": { resultOf: "q", name: "Email/query", path: "/ids" },
-        properties: ["subject"],
-      },
-      "g",
-    ],
-  ]);
-  const ids = (subjects![1].list as { id: string; subject: string | null }[])
-    .filter((mail) => mail.subject?.includes(text))
-    .map((mail) => mail.id);
+  const sent = await mailboxWithRole(client, accountId, "sent");
+  const subjects = await recentMails<{ subject: string | null }>(client, accountId, ["subject"], {
+    inMailbox: sent,
+  });
+  const ids = subjects.filter((mail) => mail.subject?.includes(text)).map((mail) => mail.id);
   if (!ids.length) return [];
   const { list } = await client.call<{
     list: {

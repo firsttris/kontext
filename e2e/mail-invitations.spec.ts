@@ -1,5 +1,13 @@
 import { expect, type Page, test } from "@playwright/test";
-import { address, jmapAs, login, NEWEST_FIRST, personalAccountId, RECENT, unique } from "./helpers";
+import {
+  address,
+  jmapAs,
+  login,
+  mailboxWithRole,
+  personalAccountId,
+  recentMails,
+  unique,
+} from "./helpers";
 import { deliverInvitation, PETRA } from "./invitation-mail";
 
 /**
@@ -32,38 +40,19 @@ const storedAnswers = async (user: string, uid: string) => {
   );
 };
 
-/**
- * Subjects of the mails in the person's Sent folder that went to Petra. Filtered here, not with
- * Email/query's `to`: that is a search in Stalwart's full-text index, which it fills in the
- * background (crates/jmap/src/email/query/filter.rs, `is_text`), so a mail just sent is not
- * found there for a while when the server is busy.
- */
+/** Subjects of the mails in the person's Sent folder that went to Petra. */
 const sentToPetra = async (user: string) => {
   const client = jmapAs(user);
   const accountId = await personalAccountId(user);
-  const { list } = await client.call<{ list: { id: string; role: string | null }[] }>(
-    "Mailbox/get",
-    { accountId, properties: ["role"] },
+  const sent = await mailboxWithRole(client, accountId, "sent");
+  const mails = await recentMails<{ subject: string; to: { email: string }[] | null }>(
+    client,
+    accountId,
+    ["subject", "to"],
+    { inMailbox: sent },
   );
-  const sent = list.find((mailbox) => mailbox.role === "sent")!;
-  const [, got] = await client.request([
-    [
-      "Email/query",
-      { accountId, filter: { inMailbox: sent.id }, sort: NEWEST_FIRST, limit: RECENT },
-      "q",
-    ],
-    [
-      "Email/get",
-      {
-        accountId,
-        "#ids": { resultOf: "q", name: "Email/query", path: "/ids" },
-        properties: ["subject", "to"],
-      },
-      "g",
-    ],
-  ]);
-  return (got![1].list as { subject: string; to: { email: string }[] | null }[])
-    .filter((mail) => mail.to?.some((to) => to.email.toLowerCase() === PETRA.toLowerCase()))
+  return mails
+    .filter((mail) => mail.to?.some((to) => to.email.toLowerCase() === PETRA))
     .map((mail) => mail.subject);
 };
 

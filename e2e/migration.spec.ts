@@ -3,7 +3,15 @@ import { DEV_PASSWORD, STALWART_ADMIN } from "../dev/config";
 import { CAPABILITIES, createJmapClient } from "../src/jmap/client";
 import { newEmployee, signInWith, stamp } from "./company-helpers";
 import { pstFixture } from "./fixtures";
-import { address, givenKeywords, jmapAs, login, personalAccountId, STALWART } from "./helpers";
+import {
+  address,
+  givenKeywords,
+  jmapAs,
+  login,
+  personalAccountId,
+  recentMails,
+  STALWART,
+} from "./helpers";
 
 test.describe("Umzug", () => {
   test("Umzug aus Outlook: PST hochladen, zweimal ohne Doppelte", async ({ page }) => {
@@ -150,29 +158,20 @@ test.describe("Umzug", () => {
     const id = (await page.request.get("/api/company").then((r) => r.json())).employees.find(
       (e: { email: string }) => e.email === address(local),
     ).id;
-    const [, get, boxes] = await admin.request(
-      [
-        ["Email/query", { accountId: id, filter: { subject: `Zwei Labels ${stamp_}` } }, "q"],
-        [
-          "Email/get",
-          {
-            accountId: id,
-            "#ids": { resultOf: "q", name: "Email/query", path: "/ids" },
-            properties: ["mailboxIds", "keywords"],
-          },
-          "g",
-        ],
-        ["Mailbox/get", { accountId: id, properties: ["name"] }, "m"],
-      ],
-      [CAPABILITIES.core, CAPABILITIES.mail],
-    );
-    const [twoLabels] = get![1].list as {
+    const mails = await recentMails<{
+      subject: string;
       mailboxIds: Record<string, true>;
       keywords: Record<string, true>;
-    }[];
-    const names = Object.fromEntries(
-      (boxes![1].list as { id: string; name: string }[]).map((box) => [box.id, box.name]),
+    }>(admin, id, ["subject", "mailboxIds", "keywords"]);
+    const withTwoLabels = mails.filter((mail) => mail.subject === `Zwei Labels ${stamp_}`);
+    expect(withTwoLabels).toHaveLength(1);
+    const [twoLabels] = withTwoLabels;
+    const { list: boxes } = await admin.call<{ list: { id: string; name: string }[] }>(
+      "Mailbox/get",
+      { accountId: id, properties: ["name"] },
+      [CAPABILITIES.core, CAPABILITIES.mail],
     );
+    const names = Object.fromEntries(boxes.map((box) => [box.id, box.name]));
     expect(
       Object.keys(twoLabels!.mailboxIds)
         .map((box) => names[box])
@@ -277,21 +276,13 @@ test.describe("Umzug", () => {
       credentials: { username: address(local), password },
     });
     const accountId = Object.keys((await petra.getSession()).accounts)[0]!;
-    const [, got] = await petra.request([
-      ["Email/query", { accountId, filter: { subject: "Rückfrage Angebot Outlook" } }, "q"],
-      [
-        "Email/get",
-        {
-          accountId,
-          "#ids": { resultOf: "q", name: "Email/query", path: "/ids" },
-          properties: ["keywords"],
-        },
-        "g",
-      ],
-    ]);
-    expect(
-      givenKeywords((got![1].list as { keywords: Record<string, boolean> }[])[0]!.keywords),
-    ).toEqual(["$flagged", "grosskunde", "rechnung"]);
+    const mails = await recentMails<{ subject: string; keywords: Record<string, boolean> }>(
+      petra,
+      accountId,
+      ["subject", "keywords"],
+    );
+    const asked = mails.find((mail) => mail.subject === "Rückfrage Angebot Outlook");
+    expect(givenKeywords(asked!.keywords)).toEqual(["$flagged", "grosskunde", "rechnung"]);
     const asPetra = await (await page.context().browser()!.newContext()).newPage();
     await signInWith(asPetra, address(local), password);
     await expect(asPetra).toHaveURL(/\/mail\//);
