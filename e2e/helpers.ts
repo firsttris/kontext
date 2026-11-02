@@ -111,30 +111,62 @@ export const recentMails = async <T extends object>(
   client: JmapClient,
   accountId: string,
   properties: string[],
-  { inMailbox }: { inMailbox?: string } = {},
+  { inMailbox, using }: { inMailbox?: string; using?: string[] } = {},
 ): Promise<(T & { id: string })[]> => {
-  const [, got] = await client.request([
+  const [, got] = await client.request(
     [
-      "Email/query",
-      {
-        accountId,
-        ...(inMailbox ? { filter: { inMailbox } } : {}),
-        sort: [{ property: "receivedAt", isAscending: false }],
-        limit: 500,
-      },
-      "q",
+      [
+        "Email/query",
+        {
+          accountId,
+          ...(inMailbox ? { filter: { inMailbox } } : {}),
+          sort: [{ property: "receivedAt", isAscending: false }],
+          limit: 500,
+        },
+        "q",
+      ],
+      [
+        "Email/get",
+        {
+          accountId,
+          "#ids": { resultOf: "q", name: "Email/query", path: "/ids" },
+          properties: ["id", ...properties],
+        },
+        "g",
+      ],
     ],
-    [
-      "Email/get",
-      {
-        accountId,
-        "#ids": { resultOf: "q", name: "Email/query", path: "/ids" },
-        properties: ["id", ...properties],
-      },
-      "g",
-    ],
-  ]);
+    using,
+  );
   return got![1].list as (T & { id: string })[];
+};
+
+/**
+ * The newest mails whose subject has one of the texts (what `filter: { subject }` meant), with
+ * the properties asked for: first the subjects of the newest mails, then the rest of only those
+ * that match (`get` takes further Email/get arguments, e.g. `fetchHTMLBodyValues`).
+ */
+export const mailsWithSubject = async <T extends object>(
+  client: JmapClient,
+  accountId: string,
+  subjects: string[],
+  properties: string[],
+  {
+    get = {},
+    ...options
+  }: { inMailbox?: string; using?: string[]; get?: Record<string, unknown> } = {},
+): Promise<(T & { id: string; subject: string })[]> => {
+  const ids = (
+    await recentMails<{ subject: string | null }>(client, accountId, ["subject"], options)
+  )
+    .filter((mail) => subjects.some((subject) => mail.subject?.includes(subject)))
+    .map((mail) => mail.id);
+  if (!ids.length) return [];
+  const { list } = await client.call<{ list: (T & { id: string; subject: string })[] }>(
+    "Email/get",
+    { accountId, ids, properties: ["id", "subject", ...properties], ...get },
+    options.using,
+  );
+  return list;
 };
 
 /** The id of the folder with that role (inbox, sent, ...) in the account. */
@@ -243,37 +275,16 @@ export const mailboxAccountId = async (user: string, mailbox: string) => {
 export const findMails = async (user: string, mailbox: string, subjects: string[]) => {
   const client = jmapAs(user);
   const accountId = await mailboxAccountId(user, mailbox);
-  const [boxes, , got] = await client.request([
-    ["Mailbox/get", { accountId, properties: ["role"] }, "m"],
-    [
-      "Email/query",
-      {
-        accountId,
-        filter: { operator: "OR", conditions: subjects.map((subject) => ({ subject })) },
-      },
-      "q",
-    ],
-    [
-      "Email/get",
-      {
-        accountId,
-        "#ids": { resultOf: "q", name: "Email/query", path: "/ids" },
-        properties: ["subject", "mailboxIds", "keywords"],
-      },
-      "g",
-    ],
-  ]);
-  const roles = new Map(
-    (boxes![1].list as { id: string; role: string | null }[]).map((box) => [box.id, box.role]),
+  const { list: boxes } = await client.call<{ list: { id: string; role: string | null }[] }>(
+    "Mailbox/get",
+    { accountId, properties: ["role"] },
   );
-  return (
-    got![1].list as {
-      id: string;
-      subject: string;
-      mailboxIds: Record<string, boolean>;
-      keywords: Record<string, boolean>;
-    }[]
-  ).map((email) => ({
+  const roles = new Map(boxes.map((box) => [box.id, box.role]));
+  const mails = await mailsWithSubject<{
+    mailboxIds: Record<string, boolean>;
+    keywords: Record<string, boolean>;
+  }>(client, accountId, subjects, ["mailboxIds", "keywords"]);
+  return mails.map((email) => ({
     accountId,
     id: email.id,
     subject: email.subject,

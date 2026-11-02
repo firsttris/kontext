@@ -5,8 +5,8 @@ import {
   jmapAs,
   login,
   mailboxWithRole,
+  mailsWithSubject,
   personalAccountId,
-  recentMails,
   unique,
 } from "./helpers";
 
@@ -28,23 +28,13 @@ const sentMails = async (user: string, text: string): Promise<Sent[]> => {
   const client = jmapAs(user);
   const accountId = await personalAccountId(user);
   const sent = await mailboxWithRole(client, accountId, "sent");
-  const subjects = await recentMails<{ subject: string | null }>(client, accountId, ["subject"], {
+  const list = await mailsWithSubject<{
+    to: { email: string }[];
+    bodyStructure: Part;
+    bodyValues: Record<string, { value: string }>;
+  }>(client, accountId, [text], ["to", "bodyStructure", "bodyValues"], {
     inMailbox: sent,
-  });
-  const ids = subjects.filter((mail) => mail.subject?.includes(text)).map((mail) => mail.id);
-  if (!ids.length) return [];
-  const { list } = await client.call<{
-    list: {
-      subject: string;
-      to: { email: string }[];
-      bodyStructure: Part;
-      bodyValues: Record<string, { value: string }>;
-    }[];
-  }>("Email/get", {
-    accountId,
-    ids,
-    properties: ["subject", "to", "bodyStructure", "bodyValues"],
-    fetchAllBodyValues: true,
+    get: { fetchAllBodyValues: true },
   });
   return list.map((mail) => {
     const parts = partsOf(mail.bodyStructure);

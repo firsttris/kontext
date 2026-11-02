@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { address, jmapAs, login, personalAccountId, unique } from "./helpers";
+import { address, jmapAs, login, mailsWithSubject, personalAccountId, unique } from "./helpers";
 
 /** Sandra's folders: no other test uses her Spam or Papierkorb. */
 const USER = "sandra";
@@ -42,26 +42,12 @@ const whereIs = async (subjects: string[]) => {
     "Mailbox/get",
     { accountId, properties: ["role"] },
   );
-  const [, got] = await client.request([
-    [
-      "Email/query",
-      {
-        accountId,
-        filter: { operator: "OR", conditions: subjects.map((subject) => ({ subject })) },
-      },
-      "q",
-    ],
-    [
-      "Email/get",
-      {
-        accountId,
-        "#ids": { resultOf: "q", name: "Email/query", path: "/ids" },
-        properties: ["subject", "mailboxIds"],
-      },
-      "g",
-    ],
-  ]);
-  const mails = got![1].list as { subject: string; mailboxIds: Record<string, boolean> }[];
+  const mails = await mailsWithSubject<{ mailboxIds: Record<string, boolean> }>(
+    client,
+    accountId,
+    subjects,
+    ["mailboxIds"],
+  );
   const roleOf = (boxId: string) => boxes.find((box) => box.id === boxId)?.role ?? "";
   return subjects.map((subject) =>
     Object.keys(mails.find((mail) => mail.subject === subject)?.mailboxIds ?? {})

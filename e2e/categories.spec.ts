@@ -1,5 +1,13 @@
 import { expect, type Page, test } from "@playwright/test";
-import { addMail, address, givenKeywords, jmapAs, login, unique } from "./helpers";
+import {
+  addMail,
+  address,
+  givenKeywords,
+  jmapAs,
+  login,
+  mailsWithSubject,
+  unique,
+} from "./helpers";
 import { deliverMail } from "./protocols";
 
 /** The keywords of a mail with this subject, in a user's own or shared mailbox. */
@@ -9,19 +17,12 @@ const keywordsOf = async (user: string, mailbox: string, subject: string) => {
   const accountId = Object.entries(session.accounts).find(
     ([, a]) => a.name === address(mailbox),
   )![0];
-  const [, get] = await client.request([
-    ["Email/query", { accountId, filter: { subject } }, "q"],
-    [
-      "Email/get",
-      {
-        accountId,
-        "#ids": { resultOf: "q", name: "Email/query", path: "/ids" },
-        properties: ["keywords"],
-      },
-      "g",
-    ],
-  ]);
-  const email = (get![1].list as { keywords: Record<string, boolean> }[])[0];
+  const [email] = await mailsWithSubject<{ keywords: Record<string, boolean> }>(
+    client,
+    accountId,
+    [subject],
+    ["keywords"],
+  );
   return email ? givenKeywords(email.keywords) : null;
 };
 

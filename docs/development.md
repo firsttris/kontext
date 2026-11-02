@@ -251,9 +251,14 @@ hat. Darum:
 - **Mails ohne Textfilter suchen.** Die Textfilter von `Email/query` (`text`, `from`, `to`,
   `subject`, `body`) beantwortet Stalwart aus seinem Volltext-Index, den es im Hintergrund füllt;
   eine gerade angekommene Mail fehlt dort eine Weile, und die Prüfung „das Wort steht in keiner
-  Mail“ wäre aus dem falschen Grund grün. Tests holen die neuesten Mails eines Ordners
-  (`recentMails()`, `mailboxWithRole()` in `e2e/helpers.ts`) und suchen selbst; was auf dem Server
-  liegt, liest `rawInboxMail()`.
+  Mail“ wäre aus dem falschen Grund grün. Tests holen die neuesten Mails (`recentMails()`,
+  nach Betreff `mailsWithSubject()`, Ordner über `mailboxWithRole()` in `e2e/helpers.ts`) und
+  suchen selbst; was auf dem Server liegt, liest `rawInboxMail()`.
+- **Erst tippen, wenn der Fokus da ist.** Nach einem Menü kommt der Fokus einen Moment später in
+  den Text zurück; vorher getippte Tasten gehen ins Leere (`await expect(feld).toBeFocused()`).
+- **Größen erst messen, wenn sie stehen.** Was erst nach dem Laden erscheint oder wächst
+  (Kacheln eines Gesprächs, eine gerade gesendete Nachricht), wird mit `expect.poll` gemessen,
+  nicht mit einem einzelnen `boundingBox()`.
 - **Die Telefonbox-Attrappe lädt erst hoch, wenn Kontext den Anruf kennt.** Sie meldet einen Anruf
   und lädt Fax oder Nachricht im selben Atemzug hoch; käme der Upload zuerst, gäbe es „Unbekannter
   Anruf“ (`dev/fake-box.ts`, `uploadOnceKnown`).

@@ -1,5 +1,5 @@
 import { expect, type Page, test } from "@playwright/test";
-import { jmapAs, login, personalAccountId, unique } from "./helpers";
+import { jmapAs, login, mailsWithSubject, personalAccountId, unique } from "./helpers";
 
 /**
  * Abmelden nach Inaktivität for this page only: the app's read is answered here (after asking the
@@ -28,10 +28,13 @@ const question = (page: Page) => page.getByRole("dialog", { name: "Angemeldet bl
 
 const draftsWith = async (user: string, subject: string) => {
   const accountId = await personalAccountId(user);
-  const [query] = await jmapAs(user).request([
-    ["Email/query", { accountId, filter: { subject, hasKeyword: "$draft" } }, "q"],
-  ]);
-  return (query![1].ids as string[]).length;
+  const mails = await mailsWithSubject<{ keywords: Record<string, boolean> }>(
+    jmapAs(user),
+    accountId,
+    [subject],
+    ["keywords"],
+  );
+  return mails.filter((mail) => mail.keywords.$draft).length;
 };
 
 test.describe("Abmelden nach Inaktivität", () => {

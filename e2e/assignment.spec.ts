@@ -1,5 +1,14 @@
 import { expect, type Page, test } from "@playwright/test";
-import { addMail, address, findMails, jmapAs, login, personalAccountId, unique } from "./helpers";
+import {
+  addMail,
+  address,
+  findMails,
+  jmapAs,
+  login,
+  mailsWithSubject,
+  personalAccountId,
+  unique,
+} from "./helpers";
 
 const NAMESPACE = "kontext.firsttris.github.io";
 
@@ -20,22 +29,19 @@ const sharedInbox = async (user: string, mailbox: string) => {
 /** Kontext's metadata on the mail with this subject, as stored in Stalwart. */
 const assignmentOn = async (user: string, mailbox: string, subject: string) => {
   const { accountId } = await sharedInbox(user, mailbox);
-  const [, got] = await jmapAs(user).request(
-    [
-      ["Email/query", { accountId, filter: { subject } }, "q"],
-      [
-        "Email/get",
-        {
-          accountId,
-          "#ids": { resultOf: "q", name: "Email/query", path: "/ids" },
-          properties: [`metadata/${NAMESPACE}`],
-        },
-        "g",
+  const [email] = await mailsWithSubject<{ metadata?: Record<string, unknown> }>(
+    jmapAs(user),
+    accountId,
+    [subject],
+    [`metadata/${NAMESPACE}`],
+    {
+      using: [
+        "urn:ietf:params:jmap:core",
+        "urn:ietf:params:jmap:mail",
+        "urn:ietf:params:jmap:metadata",
       ],
-    ],
-    ["urn:ietf:params:jmap:core", "urn:ietf:params:jmap:mail", "urn:ietf:params:jmap:metadata"],
+    },
   );
-  const email = (got![1].list as { metadata?: Record<string, unknown> }[])[0];
   return email?.metadata?.[NAMESPACE] ?? null;
 };
 

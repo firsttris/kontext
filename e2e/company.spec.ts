@@ -306,12 +306,16 @@ test.describe("Firmenverwaltung", () => {
       credentials: { username: address(local), password },
     });
     const karlHas = async () => {
-      const session = await karl.getSession();
-      const accountId = Object.keys(session.accounts)[0]!;
+      // His own account by name: a session may list shared mailboxes too, in no set order.
+      const { accounts } = await karl.getSession();
+      const accountId = Object.entries(accounts).find(
+        ([, account]) => account.name === address(local),
+      )![0];
       const mails = await recentMails<{ subject: string }>(karl, accountId, ["subject"]);
       return mails.filter((mail) => mail.subject === back).length;
     };
-    await expect.poll(karlHas, { timeout: 15_000 }).toBe(1);
+    // Through SMTP and Karl's filters, like the mails above: as long as they may take.
+    await expect.poll(karlHas, { timeout: 30_000 }).toBe(1);
     await page.waitForTimeout(2_000);
     expect((await inboxMails("anna")).some((mail) => mail.subject === back)).toBe(false);
   });

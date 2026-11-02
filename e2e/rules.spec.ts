@@ -6,6 +6,7 @@ import {
   inboxMails,
   jmapAs,
   login,
+  mailsWithSubject,
   removeMails,
   unique,
 } from "./helpers";
@@ -21,21 +22,15 @@ const findMail = async (user: string, subject: string, mailbox = user) => {
   const accountId = Object.entries(session.accounts).find(
     ([, account]) => account.name === address(mailbox),
   )![0];
-  const [boxes, , get] = await client.request([
-    ["Mailbox/get", { accountId, properties: ["name", "role"] }, "m"],
-    ["Email/query", { accountId, filter: { subject } }, "q"],
-    [
-      "Email/get",
-      {
-        accountId,
-        "#ids": { resultOf: "q", name: "Email/query", path: "/ids" },
-        properties: ["mailboxIds", "keywords"],
-      },
-      "g",
-    ],
-  ]);
-  const mailboxes = boxes![1].list as { id: string; name: string; role: string | null }[];
-  const email = (get![1].list as { mailboxIds: object; keywords: object }[])[0];
+  const { list: mailboxes } = await client.call<{
+    list: { id: string; name: string; role: string | null }[];
+  }>("Mailbox/get", { accountId, properties: ["name", "role"] });
+  const [email] = await mailsWithSubject<{ mailboxIds: object; keywords: object }>(
+    client,
+    accountId,
+    [subject],
+    ["mailboxIds", "keywords"],
+  );
   if (!email) return null;
   const box = mailboxes.find((candidate) => Object.keys(email.mailboxIds).includes(candidate.id));
   return { folder: box?.role ?? box?.name, keywords: givenKeywords(email.keywords) };

@@ -60,7 +60,7 @@ test.describe("Lesebestätigung", () => {
     const receipt = unique("Read: Ihre Nachricht");
     const lookalike = unique("Read: Unbekannt");
     const petra = `petra.${stamp}@keller-elektro.test`;
-    await sentAskingReceipt("jonas", {
+    const sent = await sentAskingReceipt("jonas", {
       messageId,
       subject,
       to: petra,
@@ -87,11 +87,13 @@ test.describe("Lesebestätigung", () => {
           [receipt, "archive", "$seen"],
           [lookalike, "inbox", ""],
         ]);
-      await page.getByRole("link", { name: "Gesendet", exact: true }).click();
-      await page.getByRole("list", { name: "Gesendet" }).getByText(subject).click();
+      // Opened by its address: dated five minutes back, the mail is below every mail Jonas sent
+      // since, and on a busy run those can be more than the first page of Sent.
+      await page.goto(`/mail/${sent.accountId}/${sent.mailboxId}?email=${sent.id}`);
+      await expect(page.getByRole("heading", { name: subject })).toBeVisible();
       await expect(
         page.getByRole("note").filter({ hasText: "Gelesen von Petra Keller" }),
-      ).toBeVisible();
+      ).toBeVisible({ timeout: 15_000 });
     } finally {
       await removeMails("jonas", "jonas", [subject, receipt, lookalike]);
     }

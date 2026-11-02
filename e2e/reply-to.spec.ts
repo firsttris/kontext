@@ -1,5 +1,5 @@
 import { expect, type Page, test } from "@playwright/test";
-import { address, jmapAs, login, personalAccountId, unique } from "./helpers";
+import { address, jmapAs, login, mailsWithSubject, personalAccountId, unique } from "./helpers";
 
 const INFO = address("info");
 
@@ -7,10 +7,7 @@ const INFO = address("info");
 const removeMails = async (user: string, subject: string) => {
   const client = jmapAs(user);
   const accountId = await personalAccountId(user);
-  const { ids } = await client.call<{ ids: string[] }>("Email/query", {
-    accountId,
-    filter: { subject },
-  });
+  const ids = (await mailsWithSubject(client, accountId, [subject], [])).map((mail) => mail.id);
   if (ids.length) await client.call("Email/set", { accountId, destroy: ids });
 };
 
