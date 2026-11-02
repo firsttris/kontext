@@ -9,10 +9,7 @@ Steps that an update needs beyond raising the version are marked **Upgrade**.
 
 - Documents: `deploy/.env.example` and the Quadlet use Schreibzeug 0.1.18 (was 0.1.14): printing
   on Safari and Android, documents open faster on a phone, Euro-Office engine 9.3.7. No step
-  beyond raising the version. The installation guide restarts Schreibzeug only after Kontext
-  answers: Schreibzeug reads Kontext's OIDC discovery once at start, and started together it
-  finds Kontext still down and leaves the sign-in through Kontext out until its next start
-  (`Provider "oidc": discovery left no usable authorization endpoint`).
+  beyond raising the version.
 - S/MIME: node-forge 1.4.2 (was 1.4.0), which fixes five advisories (GHSA-8hrf-8g6f-7xwp,
   GHSA-hqq3-7jhf-c5jx, GHSA-5x38-2vff-x55p, GHSA-7wch-p9px-956x, GHSA-jc66-7q78-782g).
 - Installation guide, "Stalwart 0.16 auf 1.0 heben": `stalwart-migrate` 1.0.4 or newer (1.0.0 to

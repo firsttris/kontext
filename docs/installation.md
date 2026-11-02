@@ -627,15 +627,8 @@ cd /etc/containers/systemd
 nano kontext.container schreibzeug.container   # Image=…/kontext:<neue Version>, …/schreibzeug:<neue Version>
 systemctl daemon-reload
 for i in $(grep -h '^Image=' *.container | cut -d= -f2); do podman pull $i; done
-systemctl restart kontext                      # und jeder Dienst, dessen Image sich geändert hat
-until curl -fsS -o /dev/null https://kontext.firma.de/api/auth/.well-known/openid-configuration; do sleep 2; done
-systemctl restart schreibzeug
+systemctl restart kontext schreibzeug          # und jeder Dienst, dessen Image sich geändert hat
 ```
-
-Schreibzeug erst starten, wenn Kontext wieder antwortet: Es liest die Anmeldung über Kontext
-(OIDC) nur beim Start. Startet es zugleich mit Kontext, geht die Anmeldung über Kontext bis zum
-nächsten Neustart nicht, und das Log zeigt `Provider "oidc": discovery left no usable authorization
-endpoint`; dann `systemctl restart schreibzeug`.
 
 Hat sich in `deploy/quadlet/` mehr geändert als die Version (etwa eine neue `Environment=`-Zeile),
 das auch in die Kopie übernehmen; `deploy/Caddyfile` wird direkt eingebunden, dann
