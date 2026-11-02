@@ -108,7 +108,8 @@ jedem Neustart vor der Einrichtung gibt es ein neues.
 9. Unter *JMAP* die **gleichzeitigen Anfragen** (`maxConcurrentRequests`) auf 16 stellen.
    Stalwart erlaubt sonst 4 je Person – für alle Tabs und Geräte zusammen; Kontext fragt beim
    Start mehr auf einmal (Ordner jedes Postfachs, Liste, Unterhaltungen), und was darüber liegt,
-   lehnt Stalwart ab.
+   lehnt Stalwart ab. Eine so abgelehnte Anfrage stellt Kontext nach einer kurzen Pause noch ein
+   paar Mal (`src/jmap/client.ts`); erst dann zeigt es einen Fehler.
 10. In den Kalender-Einstellungen (`x:CalendarScheduling`) **HTTP-RSVP ausschalten**
     (`httpRsvpEnable: false`), das Scheduling selbst (`enable`) aber anlassen. Einladungen
     verschickt Kontext mit eigenen Knöpfen; Stalwarts Knöpfe zeigten auf eine Adresse, unter der
