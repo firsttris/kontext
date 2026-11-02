@@ -22,9 +22,10 @@ describe("sendableHtml", () => {
 
 describe("markCids", () => {
   it("marks a draft's cid: images, with or without angle brackets", () => {
+    // Serialising escapes < and > in attribute values (HTML spec since 2025, parse5 8.1).
     expect(markCids('<p><img src="cid:bild-1@kontext"><img src="cid:<b2@x>"></p>')).toBe(
       '<p><img src="cid:bild-1@kontext" data-cid="bild-1@kontext">' +
-        '<img src="cid:<b2@x>" data-cid="b2@x"></p>',
+        '<img src="cid:&lt;b2@x&gt;" data-cid="b2@x"></p>',
     );
     expect(markCids("<p>ohne</p>")).toBe("<p>ohne</p>");
   });
