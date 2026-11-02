@@ -1,5 +1,5 @@
 import { expect, type Page, test } from "@playwright/test";
-import { address, jmapAs, login, personalAccountId, unique } from "./helpers";
+import { address, jmapAs, login, NEWEST_FIRST, personalAccountId, RECENT, unique } from "./helpers";
 import { deliverInvitation, PETRA } from "./invitation-mail";
 
 /**
@@ -32,7 +32,12 @@ const storedAnswers = async (user: string, uid: string) => {
   );
 };
 
-/** Subjects of the mails in the person's Sent folder that went to Petra. */
+/**
+ * Subjects of the mails in the person's Sent folder that went to Petra. Filtered here, not with
+ * Email/query's `to`: that is a search in Stalwart's full-text index, which it fills in the
+ * background (crates/jmap/src/email/query/filter.rs, `is_text`), so a mail just sent is not
+ * found there for a while when the server is busy.
+ */
 const sentToPetra = async (user: string) => {
   const client = jmapAs(user);
   const accountId = await personalAccountId(user);
@@ -42,18 +47,24 @@ const sentToPetra = async (user: string) => {
   );
   const sent = list.find((mailbox) => mailbox.role === "sent")!;
   const [, got] = await client.request([
-    ["Email/query", { accountId, filter: { inMailbox: sent.id, to: PETRA } }, "q"],
+    [
+      "Email/query",
+      { accountId, filter: { inMailbox: sent.id }, sort: NEWEST_FIRST, limit: RECENT },
+      "q",
+    ],
     [
       "Email/get",
       {
         accountId,
         "#ids": { resultOf: "q", name: "Email/query", path: "/ids" },
-        properties: ["subject"],
+        properties: ["subject", "to"],
       },
       "g",
     ],
   ]);
-  return (got![1].list as { subject: string }[]).map((mail) => mail.subject);
+  return (got![1].list as { subject: string; to: { email: string }[] | null }[])
+    .filter((mail) => mail.to?.some((to) => to.email.toLowerCase() === PETRA.toLowerCase()))
+    .map((mail) => mail.subject);
 };
 
 const open = async (page: Page, subject: string) => {

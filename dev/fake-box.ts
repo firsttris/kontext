@@ -39,6 +39,20 @@ let events: PbxEvents | null = null;
 let counter = 0;
 const now = () => new Date().toISOString();
 
+/**
+ * Sends a fax or a message up once Kontext knows the call. The fake box reports the call over the
+ * socket and uploads in the same breath, where Asterisk takes seconds for a fax or a message:
+ * an upload that overtakes the report is refused as an unknown call (404) and never tried again
+ * (box/agent/files.ts). So here it is asked again a few times.
+ */
+const uploadOnceKnown = async (upload: () => Promise<boolean>) => {
+  for (let attempt = 0; attempt < 30; attempt++) {
+    if (await upload()) return true;
+    await new Promise((resolve) => setTimeout(resolve, 100));
+  }
+  return false;
+};
+
 const credentials = await pair(args.url, args.code);
 const box = await runBox({
   credentials,
@@ -197,7 +211,8 @@ Bun.serve({
         at: now(),
       });
       const pdf = new TextEncoder().encode("%PDF-1.4\n% Kontext test fax\n%%EOF\n");
-      const sent = await createBoxFiles({ credentials, soundDir: "/tmp" }).uploadFax(call, pdf);
+      const files = createBoxFiles({ credentials, soundDir: "/tmp" });
+      const sent = await uploadOnceKnown(() => files.uploadFax(call, pdf));
       events?.onCall({
         call,
         state: "ended",
@@ -227,10 +242,9 @@ Bun.serve({
       const call = String(body.call);
       const seconds = Number(body.seconds ?? 5);
       events?.onCall({ call, state: "mailbox", direction: "in", remote: "", local: "", at: now() });
-      const sent = await createBoxFiles({ credentials, soundDir: "/tmp" }).uploadVoicemail(
-        call,
-        encodeWav(new Int16Array(8000 * seconds)),
-      );
+      const files = createBoxFiles({ credentials, soundDir: "/tmp" });
+      const wav = encodeWav(new Int16Array(8000 * seconds));
+      const sent = await uploadOnceKnown(() => files.uploadVoicemail(call, wav));
       events?.onCall({
         call,
         state: "ended",

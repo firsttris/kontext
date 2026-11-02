@@ -379,3 +379,10 @@ export const addBirthday = async (
   });
   return { name: `${given} ${surname}`, remove: () => deleteContact(client, accountId, id) };
 };
+
+/**
+ * For reading a folder without a text filter: newest first, and no more than Stalwart gives out
+ * in one Email/get (500, crates/registry/src/schema/structs_impl.rs `max_get_results`).
+ */
+export const NEWEST_FIRST = [{ property: "receivedAt", isAscending: false }];
+export const RECENT = 200;
