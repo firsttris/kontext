@@ -632,7 +632,8 @@ test.describe("Postfach nur zum Lesen", () => {
 /**
  * Opens a newsletter laid out 600 px wide, without rules for small screens, and checks that it
  * fits its frame: nothing sticks out on the right, the right edge is on the screen. Returns the
- * scale it got (use-fitted-frame.ts).
+ * scale it got (use-fitted-frame.ts). It holds a block of a fixed width, like a banner: a table of
+ * text alone shrinks to the frame by itself (`table { max-width: 100% }` in mailDocument).
  */
 const openWideMail = async (page: Page) => {
   const subject = unique("Newsletter breit");
@@ -642,8 +643,9 @@ const openWideMail = async (page: Page) => {
     subject,
     undefined,
     `<!doctype html><html><body>
-<table width="600" style="width:600px"><tr><td style="font-size:32px">Robust und langlebig</td>
-<td style="text-align:right">Ganz rechts</td></tr></table></body></html>`,
+<table width="600" style="width:600px"><tr><td>
+<div style="width:600px;font-size:32px">Robust und langlebig<span style="float:right">Ganz rechts</span></div>
+</td></tr></table></body></html>`,
   );
   await login(page);
   await page.getByRole("list", { name: "Posteingang" }).getByText(subject).click();
