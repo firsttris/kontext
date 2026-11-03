@@ -18,8 +18,6 @@ const wait = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, 
 
 /** Prints `html` once its images are loaded (or after a while); the frame goes when printing is done. */
 export const printPage = async (html: string, cleanup: () => void = () => {}) => {
-  // Where one was (the mail list, a button): the focus goes back there once the dialog is done.
-  const before = document.activeElement;
   const frame = document.createElement("iframe");
   frame.setAttribute("sandbox", "allow-same-origin allow-modals");
   frame.setAttribute("aria-hidden", "true");
@@ -41,6 +39,9 @@ export const printPage = async (html: string, cleanup: () => void = () => {}) =>
   };
   // Some browsers return from print() at once and print later: removed only afterwards.
   view.addEventListener("afterprint", () => setTimeout(done, 0), { once: true });
+  // Where one is now (the mail list, a button), after the wait for the pictures: the focus goes
+  // back there once the dialog is done.
+  const before = document.activeElement;
   view.focus();
   view.print();
   // Otherwise the frame keeps the focus until it is removed, and the keys pressed meanwhile (the
