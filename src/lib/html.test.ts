@@ -229,6 +229,21 @@ describe("mailDocument", () => {
   it("keeps Outlook's lines together", () => {
     expect(mailDocument("", false)).toContain(".MsoNormal { margin: 0; }");
   });
+
+  it("keeps the body as high as the mail, even when its stylesheet sets it to 100%", () => {
+    // The frame is fitted to the body's height (use-fitted-frame.ts): a body as high as the
+    // frame would grow it by the spare room on every fit, without end.
+    const newsletter = `<html><head><style>html, body { height: 100% !important; min-height: 100% !important; }</style></head><body><p>Hallo</p></body></html>`;
+    const { html } = sanitizeMailHtml(newsletter, {
+      allowRemote: false,
+      cidUrls: {},
+      headStyles: true,
+    });
+    const parsed = new DOMParser().parseFromString(mailDocument(html, false), "text/html");
+    document.documentElement.replaceWith(document.importNode(parsed.documentElement, true));
+    expect(getComputedStyle(document.body).height).toBe("auto");
+    expect(getComputedStyle(document.body).minHeight).not.toBe("100%");
+  });
 });
 
 describe("text and HTML", () => {
