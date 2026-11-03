@@ -9,6 +9,7 @@ import {
   address,
   addSnippet,
   externalHintOn,
+  formatWith,
   jmapAs,
   login,
   personalAccountId,
@@ -530,19 +531,15 @@ test.describe("Screenshots @screenshots", () => {
     await page.keyboard.type("Hallo Frau Keller,");
     await page.keyboard.press("Enter");
     await page.keyboard.type("hier die Preise für ");
-    await page.getByRole("button", { name: "Textfarbe" }).click();
-    await page.getByRole("menuitemradio", { name: "Blau" }).click();
+    await formatWith(page, "Textfarbe", "Blau", "menuitemradio");
     await page.getByRole("button", { name: "Fett" }).click();
     await page.keyboard.type("2027");
     await page.getByRole("button", { name: "Fett" }).click();
-    await page.getByRole("button", { name: "Textfarbe" }).click();
-    await page.getByRole("menuitemradio", { name: "Automatisch" }).click();
+    await formatWith(page, "Textfarbe", "Automatisch", "menuitemradio");
     await page.keyboard.type(":");
     await page.keyboard.press("Enter");
-    await page.getByRole("button", { name: "Tabelle", exact: true }).click();
-    await page.getByRole("menuitem", { name: "Tabelle einfügen (3 × 3)" }).click();
-    await page.getByRole("button", { name: "Tabelle", exact: true }).click();
-    await page.getByRole("menuitem", { name: "Kopfzeile an/aus" }).click();
+    await formatWith(page, "Tabelle", "Tabelle einfügen (3 × 3)");
+    await formatWith(page, "Tabelle", "Kopfzeile an/aus");
     for (const cell of ["Leistung", "2026", "2027", "Wartung Heizung", "189 €", "199 €"]) {
       await page.keyboard.type(cell);
       await page.keyboard.press("Tab");
@@ -551,8 +548,7 @@ test.describe("Screenshots @screenshots", () => {
     await page.keyboard.press("Tab");
     await page.keyboard.type("95 €");
     await page.keyboard.press("Tab");
-    await page.getByRole("button", { name: "Hintergrundfarbe" }).click();
-    await page.getByRole("menuitemradio", { name: "Gelb" }).click();
+    await formatWith(page, "Hintergrundfarbe", "Gelb", "menuitemradio");
     await page.keyboard.type("95 €");
     await page.getByRole("button", { name: "Hintergrundfarbe" }).click();
     await page.mouse.move(1, 1);

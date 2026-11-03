@@ -323,6 +323,23 @@ export const showKeyboard = async (page: Page, height: number) => {
 };
 
 /**
+ * Picks an entry of one of the composer's format menus (size, colours, table) and waits until the
+ * text has the focus again. Tiptap's focus command focuses only in the next animation frame
+ * (@tiptap/core src/commands/focus.ts, `delayedFocus`); keys typed before that go nowhere, and an
+ * arrow key lost that way leaves the cursor in the wrong table row.
+ */
+export const formatWith = async (
+  page: Page,
+  menu: string,
+  item: string,
+  role: "menuitem" | "menuitemradio" = "menuitem",
+) => {
+  await page.getByRole("button", { name: menu, exact: true }).click();
+  await page.getByRole(role, { name: item, exact: true }).click();
+  await expect(page.getByRole("textbox", { name: "Ihre Nachricht …" })).toBeFocused();
+};
+
+/**
  * Holds a finger on an element as long as a long press takes (`use-long-press.ts`), then lifts
  * it. Playwright's touchscreen only taps, so the pointer events are sent as a finger's.
  */
