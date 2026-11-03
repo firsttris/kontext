@@ -29,11 +29,15 @@ test.describe("Drucken", () => {
       await expect(sheet.locator("body")).not.toContainText("Posteingang");
       if (process.env.PRINT_PDF) await sheet.pdf({ path: process.env.PRINT_PDF, format: "A4" });
 
-      // Ctrl+P prints the mail too, not the whole app; so does "p".
+      // Ctrl+P prints the mail too, not the whole app; so does "p", pressed right after. The
+      // focus is back where it was, not in the print frame.
+      const more = page.getByRole("button", { name: "Weitere Aktionen" });
+      await more.focus();
       await page.keyboard.press("Control+p");
       await expect.poll(async () => (await printed(page)).length).toBe(2);
       await page.keyboard.press("p");
       await expect.poll(async () => (await printed(page)).length).toBe(3);
+      await expect(more).toBeFocused();
     } finally {
       await offer.remove();
     }
