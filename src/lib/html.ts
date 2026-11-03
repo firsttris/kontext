@@ -227,7 +227,9 @@ export const mailPolicy = (allowRemote: boolean) => {
 /**
  * The document shown inside the sandboxed iframe of the reading pane. The body is a flow root so
  * the last paragraph's margin stays inside it: mail-body.tsx fits the frame to body.scrollHeight,
- * and a margin sticking out would give the frame its own scrollbar.
+ * and a margin sticking out would give the frame its own scrollbar. Its height is held to the
+ * content inline, which beats the mail's `!important`: newsletters set `html, body { height:
+ * 100% }`, and a body as high as the frame would grow it on every fit, without end.
  */
 export const mailDocument = (
   body: string,
@@ -249,7 +251,7 @@ export const mailDocument = (
   blockquote { margin: 0.5em 0; padding-left: 12px; border-left: 2px solid ${dark ? "#3f3f46" : "#e4e4e7"}; color: ${dark ? "#a1a1aa" : "#52525b"}; }
   table { max-width: 100%; }
   pre { white-space: pre-wrap; }
-</style></head><body>${body}</body></html>`;
+</style></head><body style="height: auto !important; min-height: 0 !important">${body}</body></html>`;
 
 /** Visible text of an HTML fragment, for the text/plain part of a sent mail. */
 export const htmlToText = (html: string): string => {
