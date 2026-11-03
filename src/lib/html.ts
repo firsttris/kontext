@@ -43,6 +43,22 @@ export const textToHtml = (text: string): string =>
 
 export type SanitizedMail = { html: string; blockedImages: number };
 
+/**
+ * A mail written as a whole document keeps its stylesheets in `<head>`: the rules for small
+ * screens (`@media (max-width: 600px)`) that let a newsletter laid out 600 px wide fit a phone.
+ * DOMPurify returns only the body, so they are moved to its start first (and kept there with
+ * `FORCE_BODY`). A leading `<style>` of a fragment also lands in the head when parsed, and comes
+ * along the same way.
+ */
+const withHeadStyles = (html: string): string => {
+  if (typeof DOMParser === "undefined") return html;
+  // Parsed into a document of its own, which loads and runs nothing.
+  const parsed = new DOMParser().parseFromString(html, "text/html");
+  const styles = [...parsed.head.querySelectorAll("style")];
+  if (styles.length === 0) return html;
+  return styles.map((style) => style.outerHTML).join("") + parsed.body.innerHTML;
+};
+
 /** Attributes that make the browser fetch something (`href` only outside links, e.g. SVG `<image>`). */
 const LOADING_ATTRIBUTES = ["src", "background", "poster", "href", "xlink:href"];
 const isLink = (element: Element) => ["a", "area"].includes(element.localName);
@@ -101,7 +117,9 @@ const darkenColors = (element: Element) => {
  * attributes and `<style>`), counted in `blockedImages`. `cidUrls` maps Content-IDs of inline
  * images to local object URLs. `mailDocument` adds a CSP as a second line of defence. `dark`
  * turns colours set for white paper around, for the reading pane in the dark theme; a quote in a
- * reply or a printout keeps them.
+ * reply or a printout keeps them. `headStyles` keeps the stylesheets of the mail's `<head>`, for
+ * a mail shown in a frame of its own; a quote in the composer and a printout go without, as its
+ * rules would hold for the whole page (the printed subject and head too).
  */
 export const sanitizeMailHtml = (
   html: string,
@@ -109,7 +127,13 @@ export const sanitizeMailHtml = (
     allowRemote,
     cidUrls,
     dark = false,
-  }: { allowRemote: boolean; cidUrls: Record<string, string>; dark?: boolean },
+    headStyles = false,
+  }: {
+    allowRemote: boolean;
+    cidUrls: Record<string, string>;
+    dark?: boolean;
+    headStyles?: boolean;
+  },
 ): SanitizedMail => {
   let blockedImages = 0;
   const purify = DOMPurify();
@@ -158,8 +182,10 @@ export const sanitizeMailHtml = (
     }
     if (dark) darkenColors(element);
   });
-  const clean = purify.sanitize(html, {
+  const clean = purify.sanitize(headStyles ? withHeadStyles(html) : html, {
     WHOLE_DOCUMENT: false,
+    // Parsed as a document, a leading `<style>` would go to the head again and be lost.
+    FORCE_BODY: headStyles,
     FORBID_TAGS: [
       "script",
       "form",
@@ -201,7 +227,9 @@ export const mailPolicy = (allowRemote: boolean) => {
 /**
  * The document shown inside the sandboxed iframe of the reading pane. The body is a flow root so
  * the last paragraph's margin stays inside it: mail-body.tsx fits the frame to body.scrollHeight,
- * and a margin sticking out would give the frame its own scrollbar.
+ * and a margin sticking out would give the frame its own scrollbar. Its height is held to the
+ * content inline, which beats the mail's `!important`: newsletters set `html, body { height:
+ * 100% }`, and a body as high as the frame would grow it on every fit, without end.
  */
 export const mailDocument = (
   body: string,
@@ -223,7 +251,7 @@ export const mailDocument = (
   blockquote { margin: 0.5em 0; padding-left: 12px; border-left: 2px solid ${dark ? "#3f3f46" : "#e4e4e7"}; color: ${dark ? "#a1a1aa" : "#52525b"}; }
   table { max-width: 100%; }
   pre { white-space: pre-wrap; }
-</style></head><body>${body}</body></html>`;
+</style></head><body style="height: auto !important; min-height: 0 !important">${body}</body></html>`;
 
 /** Visible text of an HTML fragment, for the text/plain part of a sent mail. */
 export const htmlToText = (html: string): string => {

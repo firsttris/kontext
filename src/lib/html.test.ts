@@ -123,6 +123,38 @@ describe("sanitizeMailHtml", () => {
   });
 });
 
+describe("sanitizeMailHtml with headStyles", () => {
+  const newsletter = `<!doctype html><html><head><meta name="viewport" content="width=device-width">
+<style>@media (max-width:600px){.w{width:100%!important}}</style>
+<style>.h{background:url(https://t.test/bg.png)}</style></head>
+<body><table class="w" width="600"><tbody><tr><td>Hi</td></tr></tbody></table></body></html>`;
+
+  it("keeps the stylesheets of the head, for the rules for small screens", () => {
+    const { html } = sanitizeMailHtml(newsletter, {
+      allowRemote: true,
+      cidUrls: {},
+      headStyles: true,
+    });
+    expect(html).toContain("<style>@media (max-width:600px){.w{width:100%!important}}</style>");
+    expect(html).toContain('<table class="w" width="600">');
+    expect(html).not.toContain("<meta");
+  });
+  it("cleans them like the body's: remote images blocked and counted", () => {
+    const { html, blockedImages } = sanitizeMailHtml(newsletter, {
+      allowRemote: false,
+      cidUrls: {},
+      headStyles: true,
+    });
+    expect(html).not.toContain("t.test");
+    expect(blockedImages).toBe(1);
+  });
+  it("leaves them out without, as for a quote in the composer", () => {
+    expect(sanitizeMailHtml(newsletter, { allowRemote: true, cidUrls: {} }).html).not.toContain(
+      "<style>",
+    );
+  });
+});
+
 describe("sanitizeMailHtml in the dark theme", () => {
   const dark = (html: string) =>
     sanitizeMailHtml(html, { allowRemote: false, cidUrls: {}, dark: true }).html;
@@ -196,6 +228,21 @@ describe("mailDocument", () => {
 
   it("keeps Outlook's lines together", () => {
     expect(mailDocument("", false)).toContain(".MsoNormal { margin: 0; }");
+  });
+
+  it("keeps the body as high as the mail, even when its stylesheet sets it to 100%", () => {
+    // The frame is fitted to the body's height (use-fitted-frame.ts): a body as high as the
+    // frame would grow it by the spare room on every fit, without end.
+    const newsletter = `<html><head><style>html, body { height: 100% !important; min-height: 100% !important; }</style></head><body><p>Hallo</p></body></html>`;
+    const { html } = sanitizeMailHtml(newsletter, {
+      allowRemote: false,
+      cidUrls: {},
+      headStyles: true,
+    });
+    const parsed = new DOMParser().parseFromString(mailDocument(html, false), "text/html");
+    document.documentElement.replaceWith(document.importNode(parsed.documentElement, true));
+    expect(getComputedStyle(document.body).height).toBe("auto");
+    expect(getComputedStyle(document.body).minHeight).not.toBe("100%");
   });
 });
 

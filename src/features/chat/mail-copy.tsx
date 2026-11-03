@@ -71,7 +71,7 @@ export const MailCopyDialog = ({ copyId, onClose }: { copyId: string; onClose: (
     if (!copy) return "";
     const source = copy.kind === "html" ? copy.body : textToHtml(copy.body);
     return mailDocument(
-      sanitizeMailHtml(source, { allowRemote: false, cidUrls: {}, dark }).html,
+      sanitizeMailHtml(source, { allowRemote: false, cidUrls: {}, dark, headStyles: true }).html,
       dark,
     );
   }, [copy, dark]);

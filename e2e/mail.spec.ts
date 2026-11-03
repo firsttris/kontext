@@ -629,6 +629,59 @@ test.describe("Postfach nur zum Lesen", () => {
   });
 });
 
+/**
+ * Opens a newsletter laid out 600 px wide, without rules for small screens, and checks that it
+ * fits its frame: nothing sticks out on the right, the right edge is on the screen. Returns the
+ * scale it got (use-fitted-frame.ts). It holds a block of a fixed width, like a banner: a table of
+ * text alone shrinks to the frame by itself (`table { max-width: 100% }` in mailDocument).
+ */
+const openWideMail = async (page: Page) => {
+  const subject = unique("Newsletter breit");
+  await addMail(
+    "jonas",
+    "jonas",
+    subject,
+    undefined,
+    `<!doctype html><html><body>
+<table width="600" style="width:600px"><tr><td>
+<div style="width:600px;font-size:32px">Robust und langlebig<span style="float:right">Ganz rechts</span></div>
+</td></tr></table></body></html>`,
+  );
+  await login(page);
+  await page.getByRole("list", { name: "Posteingang" }).getByText(subject).click();
+  const frame = page.locator("iframe[title='Inhalt der Mail']");
+  const body = frame.contentFrame();
+  await expect(body.getByText("Ganz rechts")).toBeVisible();
+  await expect
+    .poll(() =>
+      frame.evaluate((element: HTMLIFrameElement) => {
+        const root = element.contentDocument!.documentElement;
+        return root.scrollWidth - root.clientWidth;
+      }),
+    )
+    .toBeLessThanOrEqual(0);
+  await expect(body.getByText("Ganz rechts")).toBeInViewport({ ratio: 1 });
+  return frame.evaluate((element: HTMLIFrameElement) =>
+    Number(element.contentDocument!.body.style.zoom || 1),
+  );
+};
+
+test.describe("Breite HTML-Mail", () => {
+  test("passt am Desktop in den Lesebereich", async ({ page }) => {
+    // Scaled only as far as the pane needs: beside the contact panel it may be under 600 px.
+    expect(await openWideMail(page)).toBeLessThanOrEqual(1);
+  });
+
+  test.describe("am Tablet", () => {
+    // Portrait: list and mail side by side, the mail's pane narrower than the newsletter.
+    test.use({ viewport: { width: 820, height: 1180 } });
+
+    test("verkleinert sie auf die Breite des Lesebereichs", async ({ page }) => {
+      expect(await openWideMail(page)).toBeLessThan(1);
+    });
+  });
+});
+
 test.describe("Mail am Handy @phone", () => {
   test("Liste, Mail, zurück und Ordner", async ({ page }) => {
     // Its own mail, on top: the seed's may be below the screen when other tests added many.
@@ -654,6 +707,10 @@ test.describe("Mail am Handy @phone", () => {
     await expect(page.getByRole("list", { name: "Posteingang" })).toBeVisible();
     await page.getByRole("link", { name: address("jonas") }).click();
     await expect(page.getByRole("link", { name: "Papierkorb" })).toBeVisible();
+  });
+
+  test("verkleinert eine breite HTML-Mail auf die Breite des Handys @phone", async ({ page }) => {
+    expect(await openWideMail(page)).toBeLessThan(1);
   });
 
   test("erreicht im Schreibfenster jede Aktion, ohne dass die Seite breiter wird @phone", async ({
