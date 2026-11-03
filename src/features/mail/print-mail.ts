@@ -30,7 +30,6 @@ export const usePrintMail = () => {
     const body = displayBody(email);
     const { html } = sanitizeMailHtml(body.kind === "html" ? body.value : textToHtml(body.value), {
       allowRemote: remoteImages,
-      headStyles: true,
       cidUrls: Object.fromEntries(urls.filter((entry): entry is [string, string] => !!entry[1])),
     });
     const account = accounts.find((candidate) => candidate.id === accountId);

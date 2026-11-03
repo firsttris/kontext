@@ -1442,8 +1442,9 @@ Diese Dinge gleicht er an fremde Mails an:
 
 - **Breite Mails:** Newsletter sind meist 600 px breit gebaut und bringen im `<head>` Regeln für
   kleine Bildschirme mit (`@media (max-width: 600px)`). `sanitizeMailHtml` behält diese
-  Stylesheets mit `headStyles` (bereinigt wie die im Body); nur das Zitat im Schreibfenster geht
-  ohne sie, ihre Regeln gälten dort für die ganze Seite. Ist die Mail danach noch breiter als der
+  Stylesheets mit `headStyles` (bereinigt wie die im Body); das Zitat im Schreibfenster und der
+  Ausdruck gehen ohne sie, ihre Regeln gälten dort für die ganze Seite (im Ausdruck auch für
+  Betreff und Kopf über der Mail). Ist die Mail danach noch breiter als der
   Rahmen, verkleinert ihn `useFittedFrame` (`src/components/use-fitted-frame.ts`) mit `zoom` auf
   dessen Breite, wie Gmail und Apple Mail; sonst wäre sie am Handy rechts abgeschnitten. Der
   Rahmen ist so hoch wie die Mail und passt sich an, wenn Bilder laden oder er breiter wird.

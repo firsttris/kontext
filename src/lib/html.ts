@@ -118,8 +118,8 @@ const darkenColors = (element: Element) => {
  * images to local object URLs. `mailDocument` adds a CSP as a second line of defence. `dark`
  * turns colours set for white paper around, for the reading pane in the dark theme; a quote in a
  * reply or a printout keeps them. `headStyles` keeps the stylesheets of the mail's `<head>`, for
- * a mail shown in a frame of its own; a quote in the composer goes without, as its rules would
- * hold for the whole page.
+ * a mail shown in a frame of its own; a quote in the composer and a printout go without, as its
+ * rules would hold for the whole page (the printed subject and head too).
  */
 export const sanitizeMailHtml = (
   html: string,
