@@ -1,7 +1,7 @@
 import { expect, test } from "@playwright/test";
 import { login, unique } from "./helpers";
 import { copySeedMail } from "./own-mails";
-import { printed, recordPrints } from "./printed";
+import { printDone, printed, recordPrints } from "./printed";
 import { newsletter, pictureServer, removeNewsletter } from "./remote-pictures";
 
 test.describe("Drucken", () => {
@@ -30,8 +30,10 @@ test.describe("Drucken", () => {
       if (process.env.PRINT_PDF) await sheet.pdf({ path: process.env.PRINT_PDF, format: "A4" });
 
       // Ctrl+P prints the mail too, not the whole app; so does "p".
+      await printDone(page);
       await page.keyboard.press("Control+p");
       await expect.poll(async () => (await printed(page)).length).toBe(2);
+      await printDone(page);
       await page.keyboard.press("p");
       await expect.poll(async () => (await printed(page)).length).toBe(3);
     } finally {
@@ -60,6 +62,7 @@ test.describe("Drucken", () => {
       expect(blocked).toContain("img-src data: blob:;");
 
       // Loaded for this mail: on paper too, and still nothing but images from outside.
+      await printDone(page);
       await page.getByRole("button", { name: "Laden", exact: true }).click();
       await expect.poll(pictures.hits).toBeGreaterThan(0);
       await page.keyboard.press("p");

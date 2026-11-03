@@ -1,4 +1,4 @@
-import type { Page } from "@playwright/test";
+import { expect, type Page } from "@playwright/test";
 
 /**
  * The page handed to the browser's print dialog. Headless Chromium prints at once and the hidden
@@ -18,3 +18,11 @@ export const recordPrints = (page: Page) =>
 
 export const printed = (page: Page) =>
   page.evaluate(() => (window as unknown as { printed: string[] }).printed);
+
+/**
+ * Waits until the print frame is gone again (print-frame.ts removes it after "afterprint"). Until
+ * then the frame has the focus, so a key pressed for the next printout would go into the frame
+ * and not reach the app's shortcuts.
+ */
+export const printDone = (page: Page) =>
+  expect(page.locator('iframe[aria-hidden="true"]')).toHaveCount(0);
