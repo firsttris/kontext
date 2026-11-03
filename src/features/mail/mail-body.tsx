@@ -1,11 +1,12 @@
 /**
- * Shows a mail body in a sandboxed iframe: no scripts, its own styles, height fitted to the
- * content. Inline images (cid:) are loaded as blobs, remote images only on request – or at once
+ * Shows a mail body in a sandboxed iframe: no scripts, its own styles, fitted to the content
+ * (use-fitted-frame.ts). Inline images (cid:) are loaded as blobs, remote images only on request – or at once
  * for a sender one trusts (image-senders.tsx), when the sender check confirms them.
  */
 import { Ellipsis } from "lucide-react";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useMemo, useState } from "react";
 import { useTheme } from "@/components/theme/use-theme";
+import { useFittedFrame } from "@/components/use-fitted-frame";
 import { displayBody } from "@/jmap/mail";
 import type { EmailDetail } from "@/jmap/types";
 import { splitQuote, splitTextQuote } from "@/lib/conversation";
@@ -19,8 +20,7 @@ export const MailBody = ({ accountId, email }: { accountId: string; email: Email
   const dark = useTheme().theme === "dark";
   const { sender, state, loadNow, allowRemote, load } = useRemoteImages(email);
   const cidUrls = useInlineImages(accountId, email);
-  const frame = useRef<HTMLIFrameElement>(null);
-  const [height, setHeight] = useState(120);
+  const [frame, height] = useFittedFrame(120);
 
   // The quoted original below a reply is folded; the earlier mails stand above (conversation.tsx).
   const [showQuote, setShowQuote] = useState(false);
@@ -39,34 +39,12 @@ export const MailBody = ({ accountId, email }: { accountId: string; email: Email
           }))(splitTextQuote(body.value));
     const source = parts.quote && !showQuote ? parts.main : parts.main + (parts.quote ?? "");
     return {
-      ...sanitizeMailHtml(source, { allowRemote, cidUrls, dark }),
+      ...sanitizeMailHtml(source, { allowRemote, cidUrls, dark, headStyles: true }),
       folded: parts.quote !== null,
     };
   }, [email, allowRemote, cidUrls, showQuote, dark]);
 
   const document = useMemo(() => mailDocument(html, dark, allowRemote), [html, dark, allowRemote]);
-
-  useEffect(() => {
-    const element = frame.current;
-    if (!element) return;
-    let observer: ResizeObserver | undefined;
-    const fit = () => {
-      const body = element.contentDocument?.body;
-      if (!body) return;
-      setHeight(body.scrollHeight + 8);
-      observer?.disconnect();
-      // Measured in the next frame, so setting the height does not loop within one frame.
-      observer = new ResizeObserver(() =>
-        requestAnimationFrame(() => setHeight(body.scrollHeight + 8)),
-      );
-      observer.observe(body);
-    };
-    element.addEventListener("load", fit);
-    return () => {
-      element.removeEventListener("load", fit);
-      observer?.disconnect();
-    };
-  }, []);
 
   return (
     <div className="flex flex-col gap-3">

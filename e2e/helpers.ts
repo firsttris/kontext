@@ -236,6 +236,8 @@ export const addMail = async (
   mailbox: string,
   subject: string,
   from = { name: "Erika Test", email: "erika@example.test" },
+  /** An HTML body instead of the plain line. */
+  html?: string,
 ) => {
   const client = jmapAs(user);
   const session = await client.getSession();
@@ -257,8 +259,10 @@ export const addMail = async (
         to: [{ name: null, email: address(mailbox) }],
         subject,
         receivedAt: new Date().toISOString(),
-        bodyValues: { b: { value: "Eine Mail nur für diesen Test." } },
-        textBody: [{ partId: "b", type: "text/plain" }],
+        bodyValues: { b: { value: html ?? "Eine Mail nur für diesen Test." } },
+        ...(html
+          ? { htmlBody: [{ partId: "b", type: "text/html" }] }
+          : { textBody: [{ partId: "b", type: "text/plain" }] }),
       },
     },
   });

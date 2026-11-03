@@ -4,8 +4,9 @@
  * and the answers below.
  */
 import { Download, FileText } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo } from "react";
 import { useTheme } from "@/components/theme/use-theme";
+import { useFittedFrame } from "@/components/use-fitted-frame";
 import { formatSize } from "@/lib/format";
 import { mailDocument, sanitizeMailHtml, textToHtml } from "@/lib/html";
 import { LOCALE } from "@/lib/locale";
@@ -62,23 +63,26 @@ export const SecureFiles = ({ files }: { files: SecureFile[] }) => {
 
 const Text = ({ html, text }: { html: string; text: string }) => {
   const dark = useTheme().theme === "dark";
-  const [height, setHeight] = useState(140);
+  const [frame, height] = useFittedFrame(140);
   const document = useMemo(
     () =>
       mailDocument(
-        sanitizeMailHtml(html || textToHtml(text), { allowRemote: false, cidUrls: {}, dark }).html,
+        sanitizeMailHtml(html || textToHtml(text), {
+          allowRemote: false,
+          cidUrls: {},
+          dark,
+          headStyles: true,
+        }).html,
         dark,
       ),
     [html, text, dark],
   );
   return (
     <iframe
+      ref={frame}
       title={m.mail_body_title()}
       sandbox="allow-same-origin allow-popups allow-popups-to-escape-sandbox"
       srcDoc={document}
-      onLoad={(event) =>
-        setHeight((event.currentTarget.contentDocument?.body.scrollHeight ?? 132) + 8)
-      }
       className="w-full border-0 bg-transparent"
       style={{ height }}
     />

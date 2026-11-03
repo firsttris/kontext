@@ -1438,7 +1438,15 @@ Termin und Anrufen, die nächsten Termine (`useEventsWith`) und die letzten Mail
 Postfach der geöffneten Mail.
 
 Den Inhalt der Mail zeigt ein Rahmen mit eigenem Stil (`mailDocument` in `src/lib/html.ts`).
-Zwei Dinge gleicht er an fremde Mails an:
+Diese Dinge gleicht er an fremde Mails an:
+
+- **Breite Mails:** Newsletter sind meist 600 px breit gebaut und bringen im `<head>` Regeln für
+  kleine Bildschirme mit (`@media (max-width: 600px)`). `sanitizeMailHtml` behält diese
+  Stylesheets mit `headStyles` (bereinigt wie die im Body); nur das Zitat im Schreibfenster geht
+  ohne sie, ihre Regeln gälten dort für die ganze Seite. Ist die Mail danach noch breiter als der
+  Rahmen, verkleinert ihn `useFittedFrame` (`src/components/use-fitted-frame.ts`) mit `zoom` auf
+  dessen Breite, wie Gmail und Apple Mail; sonst wäre sie am Handy rechts abgeschnitten. Der
+  Rahmen ist so hoch wie die Mail und passt sich an, wenn Bilder laden oder er breiter wird.
 
 - **Outlook-Zeilen:** Outlook schreibt jede Zeile als Absatz `MsoNormal` und nimmt dessen Abstand
   in einem `<style>` weg, das beim Weiterleiten (Gmail) verloren geht. Kontext setzt den Abstand

@@ -17,6 +17,7 @@ import { useClient } from "@/auth/auth";
 import { useTheme } from "@/components/theme/use-theme";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { useFittedFrame } from "@/components/use-fitted-frame";
 import type { EmailDetail } from "@/jmap/types";
 import { cn } from "@/lib/cn";
 import { formatSize } from "@/lib/format";
@@ -127,22 +128,20 @@ export const Unlock = ({ hint }: { hint?: string }) => {
 
 export const Body = ({ read }: { read: Pick<ReadMail, "html" | "text"> }) => {
   const dark = useTheme().theme === "dark";
-  const [height, setHeight] = useState(160);
+  const [frame, height] = useFittedFrame(160);
   const document = useMemo(() => {
     const source = read.html ?? textToHtml(read.text);
     return mailDocument(
-      sanitizeMailHtml(source, { allowRemote: false, cidUrls: {}, dark }).html,
+      sanitizeMailHtml(source, { allowRemote: false, cidUrls: {}, dark, headStyles: true }).html,
       dark,
     );
   }, [read, dark]);
   return (
     <iframe
+      ref={frame}
       title={m.mail_body_title()}
       sandbox="allow-same-origin allow-popups allow-popups-to-escape-sandbox"
       srcDoc={document}
-      onLoad={(event) =>
-        setHeight((event.currentTarget.contentDocument?.body.scrollHeight ?? 152) + 8)
-      }
       className="w-full border-0 bg-transparent"
       style={{ height }}
     />

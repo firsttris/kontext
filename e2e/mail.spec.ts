@@ -656,6 +656,35 @@ test.describe("Mail am Handy @phone", () => {
     await expect(page.getByRole("link", { name: "Papierkorb" })).toBeVisible();
   });
 
+  test("verkleinert eine breite HTML-Mail auf die Breite des Handys @phone", async ({ page }) => {
+    // A newsletter laid out 600 px wide, without rules for small screens.
+    const subject = unique("Newsletter breit");
+    await addMail(
+      "jonas",
+      "jonas",
+      subject,
+      undefined,
+      `<!doctype html><html><body>
+<table width="600" style="width:600px"><tr><td style="font-size:32px">Robust und langlebig</td>
+<td style="text-align:right">Ganz rechts</td></tr></table></body></html>`,
+    );
+    await login(page);
+    await page.getByRole("list", { name: "Posteingang" }).getByText(subject).click();
+    const frame = page.locator("iframe[title='Inhalt der Mail']");
+    const body = frame.contentFrame();
+    await expect(body.getByText("Ganz rechts")).toBeVisible();
+    // Scaled to the frame: nothing sticks out on the right, the right edge is on the screen.
+    await expect
+      .poll(() =>
+        frame.evaluate((element: HTMLIFrameElement) => {
+          const root = element.contentDocument!.documentElement;
+          return root.scrollWidth - root.clientWidth;
+        }),
+      )
+      .toBeLessThanOrEqual(0);
+    await expect(body.getByText("Ganz rechts")).toBeInViewport({ ratio: 1 });
+  });
+
   test("erreicht im Schreibfenster jede Aktion, ohne dass die Seite breiter wird @phone", async ({
     page,
   }) => {
