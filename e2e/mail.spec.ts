@@ -3,6 +3,7 @@ import {
   addAttendees,
   addMail,
   address,
+  formatWith,
   inboxMails,
   inboxSubjects,
   jmapAs,
@@ -228,28 +229,23 @@ test.describe("Mail", () => {
     await page.getByLabel("Betreff").fill(subject);
     const body = page.getByRole("textbox", { name: "Ihre Nachricht …" });
     await body.click();
-    await page.getByRole("button", { name: "Textfarbe" }).click();
-    await page.getByRole("menuitemradio", { name: "Rot" }).click();
-    await page.getByRole("button", { name: "Schriftgröße" }).click();
-    await page.getByRole("menuitemradio", { name: "Groß", exact: true }).click();
-    // The menu gives the focus back to the text; typed before that, the keys would go nowhere.
-    await expect(body).toBeFocused();
+    // Each menu gives the focus back to the text a frame later; formatWith waits for it.
+    await formatWith(page, "Textfarbe", "Rot", "menuitemradio");
+    await formatWith(page, "Schriftgröße", "Groß", "menuitemradio");
     await page.keyboard.type("Bitte bis Freitag");
     await page.keyboard.press("Enter");
-    await page.getByRole("button", { name: "Tabelle", exact: true }).click();
-    await page.getByRole("menuitem", { name: "Tabelle einfügen (3 × 3)" }).click();
+    await formatWith(page, "Tabelle", "Tabelle einfügen (3 × 3)");
     await page.keyboard.type("Pumpe");
     await page.keyboard.press("Tab");
     await page.keyboard.type("240 €");
     // In the table the menu offers rows and columns: one more row, then it goes again.
-    await page.getByRole("button", { name: "Tabelle", exact: true }).click();
-    await page.getByRole("menuitem", { name: "Zeile darunter" }).click();
+    await formatWith(page, "Tabelle", "Zeile darunter");
     await expect(body.locator("tr")).toHaveCount(4);
     // Into the empty row below, which goes again.
     await page.keyboard.press("ArrowDown");
-    await page.getByRole("button", { name: "Tabelle", exact: true }).click();
-    await page.getByRole("menuitem", { name: "Zeile löschen" }).click();
+    await formatWith(page, "Tabelle", "Zeile löschen");
     await expect(body.locator("tr")).toHaveCount(3);
+    await expect(body).toContainText("Pumpe");
     await page.getByRole("button", { name: "Senden", exact: true }).click();
     await expect(page.getByRole("status")).toHaveText("Mail gesendet.");
 
