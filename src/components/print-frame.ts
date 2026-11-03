@@ -18,6 +18,8 @@ const wait = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, 
 
 /** Prints `html` once its images are loaded (or after a while); the frame goes when printing is done. */
 export const printPage = async (html: string, cleanup: () => void = () => {}) => {
+  // Where one was (the mail list, a button): the focus goes back there once the dialog is done.
+  const before = document.activeElement;
   const frame = document.createElement("iframe");
   frame.setAttribute("sandbox", "allow-same-origin allow-modals");
   frame.setAttribute("aria-hidden", "true");
@@ -41,4 +43,9 @@ export const printPage = async (html: string, cleanup: () => void = () => {}) =>
   view.addEventListener("afterprint", () => setTimeout(done, 0), { once: true });
   view.focus();
   view.print();
+  // Otherwise the frame keeps the focus until it is removed, and the keys pressed meanwhile (the
+  // next shortcut, the arrows in the list) go into it, not to the app.
+  if (before instanceof HTMLElement && before.isConnected && before !== document.body)
+    before.focus({ preventScroll: true });
+  else frame.blur();
 };
