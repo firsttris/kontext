@@ -1,5 +1,5 @@
 // @vitest-environment node
-import { type ChildProcess, spawn } from "node:child_process";
+import { type ChildProcess, spawn, spawnSync } from "node:child_process";
 import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
@@ -33,13 +33,17 @@ process.exit(await processes.run());
 
 /**
  * Starts a grandchild and writes both pids. "server" exits with 7 once the file `crash` is there,
- * "stalwart" with 1 before it is ready when `stalwart-fails` is there.
+ * "stalwart" with 1 before it is ready (once LiveKit runs) when `stalwart-fails` is there.
  */
 const standIn = `
 const name = process.argv[2];
 const grandchild = Bun.spawn(["sleep", "300"], { stdio: ["ignore", "ignore", "ignore"] });
 await Bun.write(name + ".pids", process.pid + " " + grandchild.pid);
-if (name === "stalwart" && (await Bun.file("stalwart-fails").exists())) process.exit(1);
+if (name === "stalwart" && (await Bun.file("stalwart-fails").exists())) {
+  // only once LiveKit runs, which the test then expects to be stopped
+  while (!(await Bun.file("livekit.pids").exists())) await Bun.sleep(50);
+  process.exit(1);
+}
 process.send?.("ready");
 if (name === "server") {
   while (!(await Bun.file("crash").exists())) await Bun.sleep(50);
@@ -143,5 +147,29 @@ describe("dev/supervise.ts", () => {
 
     expect(await exited).toBe(1);
     await expectAllStopped();
+  }, 20_000);
+
+  /** The state letter `ps` shows for each pid (T: stopped). */
+  const states = (of: number[]) =>
+    of.map((pid) => {
+      const ps = spawnSync("ps", ["-o", "stat=", "-p", String(pid)], { encoding: "utf8" });
+      return ps.stdout.trim()[0];
+    });
+
+  // Ctrl+Z reaches only dev.ts: the processes run in sessions of their own. Left running, Vite
+  // would keep reading the terminal and swallow what is typed into the shell.
+  it("stops every process on SIGTSTP (Ctrl+Z) and lets them go on on SIGCONT (fg)", async () => {
+    await startDev();
+    const all = [dev!.pid!, ...pids];
+
+    dev!.kill("SIGTSTP");
+
+    await waitFor(() => states(all).every((state) => state === "T"), 3_000);
+    expect(states(all)).toEqual(all.map(() => "T"));
+
+    dev!.kill("SIGCONT");
+
+    await waitFor(() => states(all).every((state) => state !== "T"), 3_000);
+    expect(states(all).filter((state) => state === "T")).toEqual([]);
   }, 20_000);
 });

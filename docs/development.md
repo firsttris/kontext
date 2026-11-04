@@ -69,7 +69,7 @@ Manager-Benutzer des Agents `command` darf – ohne das lehnt Asterisk sein `cor
 „Stop“ in der IDE (SIGTERM) und das Schließen des Terminals (SIGHUP) beenden alles, auch was die
 Prozesse selbst gestartet haben (Vite unter `bunx`, die Programme von Stalwart und LiveKit); endet
 einer der Prozesse, stoppt auch der Rest (`dev/supervise.ts`, jeder Prozess in einer eigenen
-Prozessgruppe).
+Prozessgruppe). Strg+Z hält alle an, `fg` lässt sie weiterlaufen.
 
 Läuft schon ein Stalwart auf 18080, nimmt `bun run dev` diesen. So lässt sich Stalwart in einem
 eigenen Terminal laufen lassen (`bun run dev:stalwart`, mit Log in der Konsole), während man den

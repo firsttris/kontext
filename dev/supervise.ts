@@ -6,7 +6,8 @@
  * started stops with it (Vite under bunx, the Stalwart and LiveKit binaries under dev/stalwart.ts
  * and dev/livekit.ts). A process group of their own also keeps Ctrl+C from reaching them directly,
  * so dev.ts passes on SIGINT, SIGTERM (an IDE's stop, `kill`) and SIGHUP (the terminal closed)
- * itself, then waits until all have exited. As in firsttris/ccu-addon-mui scripts/dev.ts.
+ * itself, then waits until all have exited (as in firsttris/ccu-addon-mui scripts/dev.ts), and
+ * Ctrl+Z and `fg` as well.
  */
 
 import { constants } from "node:os";
@@ -21,7 +22,7 @@ type Signal = (typeof SIGNALS)[number];
 /** The exit code of a process ended by a signal, as a shell reports it. */
 const signalCode = (signal: Signal) => 128 + constants.signals[signal];
 
-const stop = ({ subprocess }: Child, signal: Signal) => {
+const signalGroup = ({ subprocess }: Child, signal: Signal | "SIGSTOP" | "SIGCONT") => {
   try {
     process.kill(-subprocess.pid, signal);
   } catch {
@@ -37,9 +38,21 @@ export const supervise = () => {
     for (const signal of SIGNALS)
       process.on(signal, () => {
         received ??= signal;
-        for (const child of children) stop(child, signal);
+        for (const child of children) signalGroup(child, signal);
         done(signal);
       });
+  });
+
+  // Ctrl+Z (SIGTSTP) reaches only dev.ts, the processes' sessions are out of the terminal's reach:
+  // stop them too, or Vite keeps reading the terminal the shell has taken back. SIGSTOP, as the
+  // kernel drops SIGTSTP sent to an orphaned group (a session of its own is one); `fg` (SIGCONT)
+  // lets them go on. As in firsttris/haul scripts/dev.ts.
+  process.on("SIGTSTP", () => {
+    for (const child of children) signalGroup(child, "SIGSTOP");
+    process.kill(process.pid, "SIGSTOP");
+  });
+  process.on("SIGCONT", () => {
+    for (const child of children) signalGroup(child, "SIGCONT");
   });
 
   const spawn =
@@ -48,7 +61,7 @@ export const supervise = () => {
       const child = { subprocess: Bun.spawn(cmd, { ...options, detached: true }), required };
       children.push(child);
       // Started while dev.ts is being stopped (Stalwart after the LiveKit check): stop it too.
-      if (received) stop(child, received);
+      if (received) signalGroup(child, received);
       return child.subprocess;
     };
 
@@ -57,7 +70,7 @@ export const supervise = () => {
    * with 128 + n after signal n.
    */
   const shutdown = async (code: number): Promise<number> => {
-    if (!received) for (const child of children) stop(child, "SIGTERM");
+    if (!received) for (const child of children) signalGroup(child, "SIGTERM");
     await Promise.all(children.map((child) => child.subprocess.exited));
     return received ? signalCode(received) : code;
   };
