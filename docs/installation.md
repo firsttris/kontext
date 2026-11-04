@@ -666,7 +666,9 @@ sonst lehnt Stalwart jede neue Anmeldung ab. Ohne Oberfläche, mit dem Helfer au
 /root/stalwart-api.sh '[["x:OAuthClient/set",{"update":{"<id von kontext>":{"scopes/full":true}}},"0"]]'
 ```
 
-Danach wie gewohnt aktualisieren. Alle melden sich einmal neu an: Freigaben aus der Zeit als
+Danach wie gewohnt aktualisieren; Kontext und Stalwart gehören dabei zusammen: Stalwart 1.0.3
+mit einem Kontext bis 0.1.22 lässt niemanden mehr neu anmelden, weil der alte Kontext den Scope
+nicht anfordert. Alle melden sich einmal neu an: Freigaben aus der Zeit als
 *First-party*-Client verwirft Stalwart, sobald Kontext den Token erneuert (`invalid_grant`,
 `crates/http/src/auth/oauth/token.rs`); Kontext beendet dann die Sitzung und zeigt die
 Anmeldung. Einmal mit der
@@ -854,7 +856,7 @@ Die Logs: `docker compose -f deploy/compose.yaml logs <dienst>` (Compose) bzw.
   Helfer in [VPS einrichten, Schritt 10](vps.md#10-stalwart-ohne-oberflache-einrichten)). Mit
   einer Sperrdauer (Schritt 7) läuft sie von selbst ab. Steht im Log von Kontext `Stalwart lehnt
   die Anmeldung für Kontext ab`, fehlt der OAuth-Client `kontext` oder sein Scope `full`
-  (Schritt 12, [Stalwart 1.0.3](#stalwart-103)).
+  (Schritt 12, [Stalwart 1.0.3](#stalwart-103)); steht `invalid_scope` dabei, ist es der Scope.
 - **Für eine Person zeigt die App nur „Something went wrong“:** Stalwart hat die Adresse dieser
   Person gesperrt (`Banned due to authentication errors … remoteIp = <ihre Adresse>` im Log von
   Stalwart), etwa weil Kontext bis 0.1.16 nach dem Umzug auf Stalwart 1.0 alte Tokens

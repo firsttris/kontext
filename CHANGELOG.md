@@ -7,6 +7,8 @@ Steps that an update needs beyond raising the version are marked **Upgrade**.
 
 ## Unreleased
 
+- Sign-in: when Stalwart refuses it with `invalid_scope`, the log names the missing scope `full`
+  of the OAuth client `kontext` (`server/stalwart.ts`).
 - Stalwart 1.0.3 instead of 1.0.2. Stalwart no longer has first-party clients: a registered client
   gets only the scopes it asks for and allows, so Kontext now asks for
   `urn:stalwart:oauth:scope:full` (all rights of the account, as before). **Upgrade:** before
