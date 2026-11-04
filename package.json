@@ -6,9 +6,12 @@
   "description": "Kontext – self-hosted office suite for small businesses on top of Stalwart",
   "license": "AGPL-3.0-only",
   "scripts": {
-    "dev": "bun dev/dev.ts",
+    "dev": "if [ -t 1 ]; then export FORCE_COLOR=1; fi && bun run --parallel dev:stalwart:seed dev:livekit dev:server dev:app dev:demo",
     "dev:app": "vite",
     "dev:stalwart": "bun dev/stalwart.ts",
+    "dev:stalwart:seed": "bun dev/stalwart.ts --seed --reuse --log .dev/stalwart.log",
+    "dev:livekit": "bun dev/livekit.ts --optional",
+    "dev:demo": "bun dev/fill-demo.ts",
     "seed": "bun dev/seed.ts",
     "icons": "bun dev/icons.ts",
     "build": "vite build && bun dev/precompress.ts dist",

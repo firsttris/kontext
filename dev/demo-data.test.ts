@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { fillDemo } from "./demo-data";
+import { fillDemo, seedIsIn } from "./demo-data";
 
 const target = { app: "http://127.0.0.1:18090", origin: "http://localhost:5173", stalwart: "-" };
 
@@ -38,5 +38,61 @@ describe("fillDemo", () => {
       vi.fn(async () => new Response("", { status: 401 })),
     );
     await expect(fillDemo(target)).rejects.toThrow("Anmeldung jonas: 401");
+  });
+});
+
+describe("seedIsIn", () => {
+  const stalwart = "http://127.0.0.1:18080";
+  /** A Stalwart whose accounts hold the mails with these subjects. */
+  const stalwartWith = (subjects: string[]) =>
+    vi.fn(async (url: string) => {
+      if (url.endsWith("/jmap/session")) {
+        const account = (name: string) => ({
+          name,
+          isPersonal: true,
+          isReadOnly: false,
+          accountCapabilities: {},
+        });
+        return Response.json({
+          username: "jonas@weber-haustechnik.test",
+          apiUrl: `${stalwart}/jmap/`,
+          downloadUrl: `${stalwart}/download`,
+          uploadUrl: `${stalwart}/upload`,
+          eventSourceUrl: `${stalwart}/events`,
+          state: "s",
+          primaryAccounts: {},
+          accounts: {
+            a: account("jonas@weber-haustechnik.test"),
+            b: account("info@weber-haustechnik.test"),
+          },
+        });
+      }
+      const list = subjects.map((subject, i) => ({ id: `m${i}`, threadId: `t${i}`, subject }));
+      return Response.json({
+        methodResponses: [
+          ["Email/query", { ids: list.map((mail) => mail.id) }, "q"],
+          ["Email/get", { list }, "g"],
+        ],
+      });
+    });
+
+  it("waits while Stalwart does not answer yet", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => {
+        throw new TypeError("connection refused");
+      }),
+    );
+    expect(await seedIsIn(stalwart)).toBe(false);
+  });
+
+  it("waits until both mails the demo points to are in", async () => {
+    vi.stubGlobal("fetch", stalwartWith(["Anfrage Wärmepumpe Neubau"]));
+    expect(await seedIsIn(stalwart)).toBe(false);
+    vi.stubGlobal(
+      "fetch",
+      stalwartWith(["Anfrage Wärmepumpe Neubau", "Re: Badsanierung Obergeschoss"]),
+    );
+    expect(await seedIsIn(stalwart)).toBe(true);
   });
 });
