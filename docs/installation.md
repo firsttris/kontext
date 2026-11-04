@@ -666,7 +666,10 @@ sonst lehnt Stalwart jede neue Anmeldung ab. Ohne Oberfläche, mit dem Helfer au
 /root/stalwart-api.sh '[["x:OAuthClient/set",{"update":{"<id von kontext>":{"scopes/full":true}}},"0"]]'
 ```
 
-Wer schon angemeldet ist, bleibt es. Danach wie gewohnt aktualisieren. Einmal mit der
+Danach wie gewohnt aktualisieren. Alle melden sich einmal neu an: Freigaben aus der Zeit als
+*First-party*-Client verwirft Stalwart, sobald Kontext den Token erneuert (`invalid_grant`,
+`crates/http/src/auth/oauth/token.rs`); Kontext beendet dann die Sitzung und zeigt die
+Anmeldung. Einmal mit der
 Umgebungsvariablen `STALWART_UPDATE_ROLE_PERMISSIONS=true` gestartet, ergänzt Stalwart die
 Standardrollen um die Rechte, die seit 1.0.0 dazugekommen sind (etwa die Verschlüsselung in der
 Verwaltung); danach die Variable wieder entfernen. Kontext braucht das nicht.
