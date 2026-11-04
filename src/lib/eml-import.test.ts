@@ -6,17 +6,18 @@ const file = (name: string, type = "", size = 10) => ({ name, type, size });
 
 describe("checkFile", () => {
   it("takes .eml files and message/rfc822 without the ending", () => {
-    expect(checkFile(file("Angebot.EML"))).toEqual({ ok: true });
-    expect(checkFile(file("mail", "message/rfc822"))).toEqual({ ok: true });
+    expect(checkFile(file("Angebot.EML"))).toEqual({ ok: true, kind: "eml" });
+    expect(checkFile(file("mail", "message/rfc822"))).toEqual({ ok: true, kind: "eml" });
   });
 
-  it("names Outlook .msg and .mbox files as not supported", () => {
+  it("takes .mbox files as a whole mailbox and names Outlook .msg as not supported", () => {
     expect(checkFile(file("a.msg"))).toEqual({ ok: false, problem: "msg" });
     expect(checkFile(file("a", "application/vnd.ms-outlook"))).toEqual({
       ok: false,
       problem: "msg",
     });
-    expect(checkFile(file("Posteingang.mbox"))).toEqual({ ok: false, problem: "mbox" });
+    expect(checkFile(file("Posteingang.mbox"))).toEqual({ ok: true, kind: "mbox" });
+    expect(checkFile(file("a", "application/mbox"))).toEqual({ ok: true, kind: "mbox" });
   });
 
   it("refuses other and empty files", () => {

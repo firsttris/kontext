@@ -226,7 +226,7 @@ test.describe("Screenshots @screenshots", () => {
       await login(page);
       await page.goto(`/mail/${accountId}/${folderId}`);
       await page
-        .locator('input[type="file"][aria-label="E-Mails importieren (.eml)"]')
+        .locator('input[type="file"][aria-label="E-Mails importieren (.eml, .mbox)"]')
         .setInputFiles([
           mail("Angebot Wärmepumpe Haus Krämer", "Tue, 4 Mar 2025 09:15:00 +0100"),
           mail("Nachtrag Elektroarbeiten Bauabschnitt 2", "Fri, 14 Feb 2025 16:40:00 +0100"),

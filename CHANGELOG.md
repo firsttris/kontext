@@ -7,6 +7,10 @@ Steps that an update needs beyond raising the version are marked **Upgrade**.
 
 ## Unreleased
 
+- Mail: the import button above a folder's list also takes `.mbox` files (Thunderbird, Apple
+  Mail, Google Takeout), read piece by piece in the browser so files of several GB work; each mail
+  keeps its date, and read, flagged and answered where Gmail's labels, `X-Mozilla-Status` or
+  `Status`/`X-Status` say so (user guide, "Mail", ".mbox-Dateien importieren").
 - Out-of-office templates: the company admin keeps a few texts for the out-of-office reply
   (*Settings → Company → Out-of-office templates*); picking one fills in `{Name}`, `{Bis}` and
   `{Vertretung}`, in one's own settings and under "Set out of office". The own settings can now

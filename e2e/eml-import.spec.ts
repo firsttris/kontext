@@ -40,6 +40,45 @@ const eml = (subject: string) => ({
   ),
 });
 
+/** Two mails as Thunderbird keeps a folder: the second unread and starred, a body line escaped. */
+const mbox = (subjects: [string, string]) => ({
+  name: "Altablage.mbox",
+  mimeType: "application/mbox",
+  buffer: Buffer.from(
+    [
+      "From - Tue Mar 04 09:15:00 2025",
+      "X-Mozilla-Status: 0001",
+      "From: Petra Keller <petra@keller-elektro.test>",
+      `Subject: ${subjects[0]}`,
+      "Date: Tue, 4 Mar 2025 09:15:00 +0100",
+      "",
+      ">From now on, bitte an die neue Adresse.",
+      "",
+      "From - Wed Jun 11 14:30:00 2025",
+      "X-Mozilla-Status: 0004",
+      "From: Lars Brandt <lars@brandt-bau.test>",
+      `Subject: ${subjects[1]}`,
+      "Date: Wed, 11 Jun 2025 14:30:00 +0200",
+      "",
+      "Termin Baustelle.",
+      "",
+    ].join("\n"),
+  ),
+});
+
+/** Picks the .mbox with the button above the list, by the file chooser as on a phone. */
+const importMboxByButton = async (page: Page, folder: string, subjects: [string, string]) => {
+  const button = page.getByRole("button", { name: "E-Mails importieren (.eml, .mbox)" });
+  await expect(button).toBeVisible();
+  const chooser = page.waitForEvent("filechooser");
+  await button.click();
+  await (await chooser).setFiles(mbox(subjects));
+  await expect(page.getByText("2 Mails importiert.")).toBeVisible();
+  for (const subject of subjects) {
+    await expect(page.getByRole("list", { name: folder }).getByText(subject)).toBeVisible();
+  }
+};
+
 const outlookMsg = {
   name: "Rechnung.msg",
   mimeType: "application/vnd.ms-outlook",
@@ -89,7 +128,7 @@ test.describe(".eml-Dateien importieren", () => {
       await login(page, USER);
       await page.goto(`/mail/${accountId}/${folderId}`);
       await page
-        .locator('input[type="file"][aria-label="E-Mails importieren (.eml)"]')
+        .locator('input[type="file"][aria-label="E-Mails importieren (.eml, .mbox)"]')
         .setInputFiles([eml(subject), outlookMsg]);
       await expect(page.getByText("1 Mail importiert.")).toBeVisible();
       await expect(page.getByRole("alert")).toHaveText(
@@ -126,6 +165,49 @@ test.describe(".eml-Dateien importieren", () => {
     }
   });
 
+  test("Max holt eine .mbox aus Thunderbird mit Datum und Markierung in einen Ordner", async ({
+    page,
+  }) => {
+    const folder = unique("Thunderbird");
+    const subjects: [string, string] = [unique("Neue Adresse"), unique("Termin Baustelle")];
+    const { accountId, folderId } = await newFolder(folder);
+    try {
+      await login(page, USER);
+      await page.goto(`/mail/${accountId}/${folderId}`);
+      await importMboxByButton(page, folder, subjects);
+      const mails = await stored(accountId, folderId);
+      expect(mails.sort((a, b) => a.receivedAt.localeCompare(b.receivedAt))).toEqual([
+        {
+          subject: subjects[0],
+          keywords: ["$seen"],
+          receivedAt: "2025-03-04T08:15:00Z",
+          id: expect.any(String),
+        },
+        {
+          subject: subjects[1],
+          keywords: ["$flagged"],
+          receivedAt: "2025-06-11T12:30:00Z",
+          id: expect.any(String),
+        },
+      ]);
+    } finally {
+      await removeFolder(accountId, folderId);
+    }
+  });
+
+  test("eine .mbox am Handy @phone", async ({ page }) => {
+    const folder = unique("Handy-Archiv");
+    const subjects: [string, string] = [unique("Neue Adresse"), unique("Termin Baustelle")];
+    const { accountId, folderId } = await newFolder(folder);
+    try {
+      await login(page, USER);
+      await page.goto(`/mail/${accountId}/${folderId}`);
+      await importMboxByButton(page, folder, subjects);
+    } finally {
+      await removeFolder(accountId, folderId);
+    }
+  });
+
   test("am Handy über den Knopf über der Liste @phone", async ({ page }) => {
     const folder = unique("Handy-Ablage");
     const subject = unique("Lieferschein");
@@ -133,7 +215,7 @@ test.describe(".eml-Dateien importieren", () => {
     try {
       await login(page, USER);
       await page.goto(`/mail/${accountId}/${folderId}`);
-      const button = page.getByRole("button", { name: "E-Mails importieren (.eml)" });
+      const button = page.getByRole("button", { name: "E-Mails importieren (.eml, .mbox)" });
       await expect(button).toBeVisible();
       const chooser = page.waitForEvent("filechooser");
       await button.click();

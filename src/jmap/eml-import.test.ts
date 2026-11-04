@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { JmapClient } from "./client";
-import { importEmlFiles } from "./eml-import";
+import { importEmlFiles, importMbox } from "./eml-import";
 
 /** A Stalwart that takes every upload but "kaputt", and refuses to import the blob "b-leer". */
 const fakeStalwart = () => {
@@ -72,5 +72,43 @@ describe("importEmlFiles", () => {
         { name: "leer.eml", reason: "Kein RFC 5322" },
       ],
     });
+  });
+});
+
+describe("importMbox", () => {
+  const mbox = (text: string) => new File([text], "Alle Mails.mbox", { type: "application/mbox" });
+
+  it("imports each mail with its date and flags, without Thunderbird's deleted ones", async () => {
+    const { client, imports } = fakeStalwart();
+    const pages: number[] = [];
+    const text = [
+      "From a Tue Jul 01 08:52:37 2003",
+      "Date: Tue, 1 Jul 2003 10:52:37 +0200",
+      "X-Gmail-Labels: Unread,Starred",
+      "",
+      "From b Tue Jul 01 08:52:37 2003",
+      "X-Mozilla-Status: 0009",
+      "",
+      "From c Tue Jul 01 08:52:37 2003",
+      "leer",
+    ].join("\n");
+    const outcome = await importMbox(client, "acc", "box", mbox(text), (count) =>
+      pages.push(count),
+    );
+    expect(outcome).toEqual({
+      imported: 1,
+      failed: [{ name: "Alle Mails.mbox #3", reason: "Kein RFC 5322" }],
+      found: 3,
+    });
+    expect(pages).toEqual([1]);
+    expect(Object.values((imports[0] as { emails: object }).emails)).toEqual([
+      {
+        blobId: "b-Date: Tue, 1 Jul 2003 10:52:37 +0200\nX-Gmail-Labels: Unread,Starred\n",
+        mailboxIds: { box: true },
+        keywords: { $flagged: true },
+        receivedAt: "2003-07-01T08:52:37Z",
+      },
+      { blobId: "b-leer", mailboxIds: { box: true }, keywords: { $seen: true } },
+    ]);
   });
 });

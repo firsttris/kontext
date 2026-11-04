@@ -1,12 +1,12 @@
 /**
- * Bringing single mails in as .eml files: which files go (an .eml is one RFC 5322 message; an
- * Outlook .msg is a binary container and an .mbox a whole mailbox, neither of which Stalwart's
- * Email/import reads), and the time a mail counts as received, read from its Date header.
+ * Bringing mails in from files: which files go (an .eml is one RFC 5322 message, an .mbox many in
+ * a row, split in mbox.ts; an Outlook .msg is a binary container that Stalwart's Email/import does
+ * not read), and the time a mail counts as received, read from its Date header.
  */
 import type { Mailbox } from "@/jmap/types";
 
-export type FileProblem = "msg" | "mbox" | "type" | "empty";
-export type FileCheck = { ok: true } | { ok: false; problem: FileProblem };
+export type FileProblem = "msg" | "type" | "empty";
+export type FileCheck = { ok: true; kind: "eml" | "mbox" } | { ok: false; problem: FileProblem };
 
 const extension = (name: string) => {
   const dot = name.lastIndexOf(".");
@@ -18,19 +18,22 @@ export const checkFile = (file: { name: string; type: string; size: number }): F
   const ext = extension(file.name);
   const type = file.type.toLowerCase();
   if (ext === "msg" || type === "application/vnd.ms-outlook") return { ok: false, problem: "msg" };
-  if (ext === "mbox" || type === "application/mbox") return { ok: false, problem: "mbox" };
-  if (ext !== "eml" && type !== "message/rfc822") return { ok: false, problem: "type" };
+  const mbox = ext === "mbox" || type === "application/mbox";
+  if (!mbox && ext !== "eml" && type !== "message/rfc822") return { ok: false, problem: "type" };
   if (file.size === 0) return { ok: false, problem: "empty" };
-  return { ok: true };
+  return { ok: true, kind: mbox ? "mbox" : "eml" };
 };
 
-/** The value of the (first) Date header in a mail's header section, unfolded (RFC 5322 §2.2.3). */
-export const dateHeader = (raw: string): string | undefined => {
+/** The (first) header `name` in a mail's header section, unfolded (RFC 5322 §2.2.3). */
+export const headerValue = (raw: string, name: string): string | undefined => {
   const end = raw.search(/\r?\n\r?\n/);
   const head = (end === -1 ? raw : raw.slice(0, end)).replace(/\r?\n[ \t]+/g, " ");
-  const line = head.split(/\r?\n/).find((entry) => /^date[ \t]*:/i.test(entry));
+  const field = new RegExp(`^${name}[ \\t]*:`, "i");
+  const line = head.split(/\r?\n/).find((entry) => field.test(entry));
   return line?.slice(line.indexOf(":") + 1).trim() || undefined;
 };
+
+export const dateHeader = (raw: string): string | undefined => headerValue(raw, "date");
 
 const MONTHS = ["jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec"];
 
