@@ -3,6 +3,7 @@ import {
   addAttendees,
   addMail,
   address,
+  attachedMails,
   formatWith,
   inboxMails,
   inboxSubjects,
@@ -24,28 +25,6 @@ const removeMails = async (user: string, subjects: string[]) => {
   const accountId = await personalAccountId(user);
   const ids = (await mailsWithSubject(client, accountId, subjects, [])).map((mail) => mail.id);
   if (ids.length) await client.call("Email/set", { accountId, destroy: ids });
-};
-
-/** The subjects of the mails attached (message/rfc822) to a user's mail with this subject. */
-const attachedMails = async (user: string, subject: string): Promise<string[]> => {
-  const client = jmapAs(user);
-  const accountId = await personalAccountId(user);
-  const [mail] = await mailsWithSubject<{ attachments: { blobId: string; type: string }[] }>(
-    client,
-    accountId,
-    [subject],
-    ["attachments"],
-    { get: { bodyProperties: ["blobId", "type"] } },
-  );
-  const blobIds = (mail?.attachments ?? [])
-    .filter((part) => part.type === "message/rfc822")
-    .map((part) => part.blobId);
-  if (!blobIds.length) return [];
-  const { parsed } = await client.call<{ parsed: Record<string, { subject: string }> }>(
-    "Email/parse",
-    { accountId, blobIds, properties: ["subject"] },
-  );
-  return blobIds.map((id) => parsed[id]?.subject ?? "");
 };
 
 test.describe("Anmeldung", () => {
