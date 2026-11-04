@@ -65,8 +65,11 @@ kann; ein anderer Port mit `--control <port>`. Die e2e-Tests nehmen 28096
 Zu hören ist dabei nichts (lokal läuft kein LiveKit SIP). Die echte Box (`box/`, Asterisk und der
 Agent) baut `docker build -f box/Dockerfile -t kontext-box .`; CI baut sie und prüft, ob Asterisk
 mit PJSIP startet, kein Modul beim Laden scheitert (`box/asterisk/modules.conf`) und der
-Manager-Benutzer des Agents `command` darf – ohne das lehnt Asterisk sein `core reload` ab. Stalwarts eigenes Log steht in `.dev/stalwart.log`. Strg+C
-beendet alles, und endet einer der Prozesse, stoppt auch der Rest.
+Manager-Benutzer des Agents `command` darf – ohne das lehnt Asterisk sein `core reload` ab. Stalwarts eigenes Log steht in `.dev/stalwart.log`. Strg+C,
+„Stop“ in der IDE (SIGTERM) und das Schließen des Terminals (SIGHUP) beenden alles, auch was die
+Prozesse selbst gestartet haben (Vite unter `bunx`, die Programme von Stalwart und LiveKit); endet
+einer der Prozesse, stoppt auch der Rest (`dev/supervise.ts`, jeder Prozess in einer eigenen
+Prozessgruppe).
 
 Läuft schon ein Stalwart auf 18080, nimmt `bun run dev` diesen. So lässt sich Stalwart in einem
 eigenen Terminal laufen lassen (`bun run dev:stalwart`, mit Log in der Konsole), während man den

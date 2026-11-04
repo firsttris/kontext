@@ -12,8 +12,9 @@
  * 4. Once the server answers: tasks and chat of the demo (dev/demo-data.ts), the first time only
  *    – they live in the server's database, which the Stalwart seed does not reach.
  *
- * Ctrl+C reaches all of them. When one exits, the others are stopped too, so a crash does not
- * leave a half-working setup behind.
+ * Ctrl+C, an IDE's stop (SIGTERM) and closing the terminal (SIGHUP) reach all of them and what
+ * they started. When one exits, the others are stopped too, so a crash does not leave a
+ * half-working setup behind (dev/supervise.ts).
  */
 import { fillDemo } from "./demo-data";
 import { supervise } from "./supervise";
@@ -62,7 +63,13 @@ const livekit = async (): Promise<void> => {
 };
 
 await livekit();
-await stalwart();
+try {
+  await stalwart();
+} catch (error) {
+  // Stalwart did not come up (or Ctrl+C came first): nothing to start, LiveKit stops as well.
+  console.error(error instanceof Error ? error.message : error);
+  process.exit(await processes.shutdown(1));
+}
 processes.start(["bun", "--watch", "server/main.ts"], { stdio: ["ignore", "inherit", "inherit"] });
 processes.start(["bunx", "vite"], { stdio: ["inherit", "inherit", "inherit"] });
 
