@@ -10,7 +10,8 @@ Steps that an update needs beyond raising the version are marked **Upgrade**.
 - Deploy: Compose takes Stalwart's version from `deploy/.env` (`STALWART_VERSION`), like
   Kontext's, so `git pull` no longer moves the mail server ahead of the Kontext release it goes
   with. **Upgrade:** add `STALWART_VERSION=` with the version the server runs now (`1.0.2` before
-  this release) to `deploy/.env`; Compose refuses to start without it. Raise it to `1.0.3` together
+  this release) to `deploy/.env`; without it Compose refuses to start, and so does the nightly
+  backup (`deploy/backup-host.sh` runs `docker compose` too). Raise it to `1.0.3` together
   with `KONTEXT_VERSION`, after the scope step for Stalwart 1.0.3 (installation guide). Quadlet is
   unchanged: its copy of `stalwart.container` names the version.
 - Sign-in: when Stalwart refuses it with `invalid_scope`, the log names the missing scope `full`
