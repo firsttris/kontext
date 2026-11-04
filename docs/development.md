@@ -38,13 +38,22 @@ bun install
 bun run dev   # Stalwart, Testdaten, Kontext-Server und App: http://localhost:5173
 ```
 
-`bun run dev` (`dev/dev.ts`) startet alles in einem Terminal: zuerst Stalwart auf 18080 (beim
-ersten Mal mit Download) und spielt die Testdaten ein – das ist idempotent, ein zweiter Start legt
-nichts doppelt an. Daneben LiveKit für die Anrufe (`dev/livekit.ts`, 17880, Medien über TCP 17881
-und UDP 17882, nur auf 127.0.0.1); unter Linux lädt das Skript die Release-Datei von GitHub, unter
-macOS nimmt es `livekit-server` aus dem PATH (`brew install livekit`). Vite reicht `/rtc` an
-LiveKit weiter, LiveKits Webhooks gehen an den Server. Danach starten der Kontext-Server auf 18090
-(Anmeldung, JMAP; startet bei Änderungen neu) und Vite auf 5173. Einen Anruf probiert man mit
+`bun run dev` startet mit `bun run --parallel` alles nebeneinander in einem Terminal, jede Zeile
+mit dem Namen ihres Skripts davor:
+
+| Skript              | Was es tut                                                                         |
+| ------------------- | ---------------------------------------------------------------------------------- |
+| `dev:stalwart:seed` | Stalwart auf 18080 (beim ersten Mal mit Download), dann die Testdaten              |
+| `dev:livekit`       | LiveKit für die Anrufe; fehlt es, geht alles außer Anrufen                         |
+| `dev:server`        | der Kontext-Server auf 18090 (Anmeldung, JMAP; startet bei Änderungen neu)         |
+| `dev:app`           | Vite auf 5173                                                                      |
+| `dev:demo`          | wartet auf die Testdaten und den Server, legt Aufgaben und Chat an und endet       |
+
+Die Testdaten einzuspielen ist idempotent, ein zweiter Start legt nichts doppelt an. LiveKit
+(`dev/livekit.ts`) hört auf 17880, Medien über TCP 17881 und UDP 17882, nur auf 127.0.0.1; unter
+Linux lädt das Skript die Release-Datei von GitHub, unter macOS nimmt es `livekit-server` aus dem
+PATH (`brew install livekit`). Lässt es sich nicht laden, startet es nicht oder endet es, meldet
+`dev:livekit` das und endet mit 0, der Rest läuft weiter. Vite reicht `/rtc` an LiveKit weiter, LiveKits Webhooks gehen an den Server. Einen Anruf probiert man mit
 zwei Browserfenstern (eins privat), etwa Jonas und Anna.
 
 Für die Telefonie gibt es eine Telefonbox als Attrappe (`dev/fake-box.ts`): Sie koppelt und
@@ -66,11 +75,16 @@ Zu hören ist dabei nichts (lokal läuft kein LiveKit SIP). Die echte Box (`box/
 Agent) baut `docker build -f box/Dockerfile -t kontext-box .`; CI baut sie und prüft, ob Asterisk
 mit PJSIP startet, kein Modul beim Laden scheitert (`box/asterisk/modules.conf`) und der
 Manager-Benutzer des Agents `command` darf – ohne das lehnt Asterisk sein `core reload` ab. Stalwarts eigenes Log steht in `.dev/stalwart.log`. Strg+C
-beendet alles, und endet einer der Prozesse, stoppt auch der Rest.
+beendet alles, Strg+Z hält alles an (weiter mit `fg`): das Terminal schickt beides an alle Prozesse
+im Vordergrund. Scheitert eines der Skripte, stoppt `bun run --parallel` den Rest; ein Skript, das
+mit 0 endet (`dev:demo`, ein mitbenutztes Stalwart, ein mitbenutztes oder fehlendes LiveKit), lässt die anderen laufen.
 
-Läuft schon ein Stalwart auf 18080, nimmt `bun run dev` diesen. So lässt sich Stalwart in einem
-eigenen Terminal laufen lassen (`bun run dev:stalwart`, mit Log in der Konsole), während man den
-Rest neu startet. Einzeln gehen auch `bun run dev:server` und `bun run dev:app`.
+Läuft schon ein Stalwart auf 18080, nimmt `bun run dev` diesen und spielt nur die Testdaten ein;
+antwortet dort ein anderer Dienst, bricht `bun run dev` mit dem Port und dem Grund ab.
+So lässt sich Stalwart in einem eigenen Terminal laufen lassen (`bun run dev:stalwart`, mit Log in
+der Konsole), während man den Rest neu startet. Einzeln gehen auch `bun run dev:server` und
+`bun run dev:app`. Vites Tastenkürzel (`h`, `r`, `o`, `q`) gibt es nur mit `bun run dev:app` allein:
+unter `bun run --parallel` bekommt kein Skript die Tastatur.
 
 ## Lokaler Stalwart
 
@@ -132,8 +146,8 @@ belegten Kollegen zeigen: Für einen Termin, der beim Seed schon vorbei ist, ver
 Einladung. Das Skript ist idempotent – es ergänzt nur, was fehlt.
 
 Aufgaben und Chat liegen nicht in Stalwart, sondern in der Datenbank des Kontext-Servers; der Seed
-erreicht sie nicht. `bun run dev` legt sie darum nach dem Start an, sobald der Server antwortet
-(`dev/demo-data.ts`): die Aufgaben auf dem Board von info@ und in Jonas' eigenem, den Kanal
+erreicht sie nicht. `bun run dev` legt sie darum nach dem Start an (`dev:demo`, `dev/fill-demo.ts`),
+sobald die Testdaten in Stalwart sind und der Server antwortet (`dev/demo-data.ts`): die Aufgaben auf dem Board von info@ und in Jonas' eigenem, den Kanal
 #baustelle-hoffmann mit Aufmaß, Mail-Karte und einer Aufgabe aus einer Nachricht, ein Wort in info@
 und #allgemein und eine Direktnachricht an Jonas. Dafür melden sich die vier über
 `POST /api/auth/sign-in/stalwart` an, wie das Anmeldeformular. Das geschieht nur einmal je

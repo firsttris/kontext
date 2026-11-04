@@ -3,7 +3,7 @@
  * (dev/seed.ts) does not reach, so they are made through Kontext's API, by the people themselves
  * (each signs in with POST /api/auth/sign-in/stalwart, as the login form does).
  *
- * Used by `bun run dev` (dev/dev.ts, once per database: it stops when #baustelle-hoffmann is
+ * Used by `bun run dev` (dev/fill-demo.ts, once per database: it stops when #baustelle-hoffmann is
  * there), by the pictures and the film (e2e/demo-data.ts), and by the demo against the routes in
  * the page (`fillWith`, src/demo/team.ts). Not by the e2e tests: they count on an empty chat and
  * task list.
@@ -132,6 +132,27 @@ const mailRef = async (
     }[]
   ).find((found) => found.subject === subject)!;
   return { accountId, email };
+};
+
+/** The seed's mails the tasks and the chat point to: the request in info@ and Hoffmann's answer. */
+const OFFER_MAIL = ["jonas", "info", "Anfrage Wärmepumpe Neubau"] as const;
+const SITE_MAIL = ["jonas", "jonas", "Re: Badsanierung Obergeschoss"] as const;
+
+/**
+ * Whether the seed is in Stalwart far enough to fill tasks and chat: its people can sign in and
+ * the mails they point to are there. `bun run dev` waits for this, since Stalwart and the seed
+ * start next to the server, not before it.
+ */
+export const seedIsIn = async (stalwart: string): Promise<boolean> => {
+  try {
+    const found = await Promise.all([
+      mailRef(stalwart, ...OFFER_MAIL),
+      mailRef(stalwart, ...SITE_MAIL),
+    ]);
+    return found.every((ref) => ref.email !== undefined);
+  } catch {
+    return false;
+  }
 };
 
 type Ids = Record<Person, string>;
@@ -311,10 +332,10 @@ export const fillWith = async ({
     );
     id[person] = session.primaryAccounts["urn:ietf:params:jmap:mail"]!;
   }
-  const lang = await findMail("jonas", "info", "Anfrage Wärmepumpe Neubau");
+  const lang = await findMail(...OFFER_MAIL);
   const info = lang.accountId;
   await fillTasks(api, id, info, lang.email);
-  const hoffmann = await findMail("jonas", "jonas", "Re: Badsanierung Obergeschoss");
+  const hoffmann = await findMail(...SITE_MAIL);
   const channelId = await fillSiteChannel(api, upload, id, hoffmann);
   await fillOtherChats(api, id, info);
   return { channelId, infoBoard: info };

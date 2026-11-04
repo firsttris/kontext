@@ -5,10 +5,12 @@
  *   bun dev/stalwart.ts --fresh         # wipe the dev data first
  *   bun dev/stalwart.ts --seed          # and fill it with the test data
  *   bun dev/stalwart.ts --instance e2e --http 28080 --smtp 20025 --imap 20143 --fresh --seed
- *   bun dev/stalwart.ts --seed --log .dev/stalwart.log   # server log into a file (bun run dev)
+ *   bun dev/stalwart.ts --seed --log .dev/stalwart.log   # server log into a file
+ *   bun dev/stalwart.ts --seed --reuse --log .dev/stalwart.log   # bun run dev
  *
- * Started by another process with IPC (dev/dev.ts), it sends "ready" once the server answers and
- * the seed is in.
+ * With --reuse, a Stalwart that already answers on the HTTP port (`bun run dev:stalwart` in another
+ * terminal) is used: it only gets the seed (with --seed), then the script exits with 0, which
+ * `bun run --parallel` takes as done, not as failed.
  *
  * Stalwart (since 0.16) keeps all settings in its database, only the datastore is in config.json
  * (see UPGRADING/v0_16.md in stalwartlabs/stalwart). On the first start the script boots the
@@ -33,6 +35,7 @@ const { values: args } = parseArgs({
     fresh: { type: "boolean", default: false },
     seed: { type: "boolean", default: false },
     log: { type: "string" },
+    reuse: { type: "boolean", default: false },
   },
 });
 
@@ -297,7 +300,31 @@ const firstStart = async (): Promise<void> => {
   await stop(recovery);
 };
 
+const answers = async (port: number): Promise<boolean> => {
+  try {
+    await fetch(`http://127.0.0.1:${port}/`);
+    return true;
+  } catch {
+    return false;
+  }
+};
+
+const seedIfAsked = async (): Promise<void> => {
+  if (!args.seed) return;
+  const { seed } = await import("./seed");
+  console.log(await seed(`http://127.0.0.1:${httpPort}`));
+};
+
 const main = async (): Promise<void> => {
+  if (args.reuse && (await answers(httpPort))) {
+    console.log(`Stalwart läuft schon auf ${httpPort}, wird mitbenutzt.`);
+    // Any HTTP answer counts, so it may be another service: say so instead of a bare parse error.
+    return seedIfAsked().catch((error: Error) => {
+      throw new Error(
+        `Auf ${httpPort} antwortet ein Dienst, in den sich die Testdaten nicht einspielen lassen – ist das ein Stalwart (bun run dev:stalwart)? ${error.message}`,
+      );
+    });
+  }
   await ensureBinary();
   if (args.fresh) await rm(instanceDir, { recursive: true, force: true });
   if (!existsSync(configPath)) await firstStart();
@@ -311,15 +338,13 @@ const main = async (): Promise<void> => {
   console.log(
     `Stalwart ${STALWART_VERSION} läuft: http://127.0.0.1:${httpPort} (SMTP ${args.smtp}, IMAP ${args.imap}), Admin ${STALWART_ADMIN.user}`,
   );
-  if (args.seed) {
-    const { seed } = await import("./seed");
-    console.log(await seed(`http://127.0.0.1:${httpPort}`));
-  }
-  process.send?.("ready");
+  if (args.log) console.log(`Stalwart-Log: ${args.log}`);
+  await seedIfAsked();
   const shutdown = () => server.kill("SIGTERM");
   process.on("SIGINT", shutdown);
   process.on("SIGTERM", shutdown);
-  server.on("exit", (code) => process.exit(code ?? 0));
+  // Killed by a signal (no code), Stalwart failed too: `bun run --parallel` then stops the rest.
+  server.on("exit", (code) => process.exit(code ?? 1));
 };
 
 await main();

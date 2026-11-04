@@ -8,6 +8,11 @@
  * published, livekit/livekit .goreleaser.yaml); elsewhere a `livekit-server` on the PATH is used
  * (macOS: `brew install livekit`). It listens on 127.0.0.1 only: signalling on --port, media over
  * TCP on port+1 and UDP on port+2. The browser reaches the signalling through Vite (/rtc).
+ *
+ * With --optional (`bun run dev`), LiveKit is skipped with exit code 0 when one already answers on
+ * the port or no binary can be had, and the script ends with 0 when LiveKit fails to start or
+ * stops: without it everything works except calls, and `bun run --parallel` stops the others
+ * only when a script fails.
  */
 import { spawn } from "node:child_process";
 import { existsSync } from "node:fs";
@@ -21,6 +26,7 @@ const { values: args } = parseArgs({
   options: {
     port: { type: "string", default: "17880" },
     server: { type: "string", default: "18090" },
+    optional: { type: "boolean", default: false },
   },
 });
 
@@ -68,6 +74,26 @@ const ensureBinary = async (): Promise<string> => {
   return binary;
 };
 
+const answers = async (): Promise<boolean> => {
+  try {
+    await fetch(`http://127.0.0.1:${port}/`);
+    return true;
+  } catch {
+    return false;
+  }
+};
+
+/** The binary, or with --optional null when there is none (the reason is printed). */
+const binaryOrSkip = async (): Promise<string | null> => {
+  if (!args.optional) return ensureBinary();
+  try {
+    return await ensureBinary();
+  } catch (error) {
+    console.error(`LiveKit startet nicht, Anrufe gehen ohne: ${(error as Error).message}`);
+    return null;
+  }
+};
+
 const waitForHttp = async (): Promise<void> => {
   for (let attempt = 0; attempt < 100; attempt++) {
     try {
@@ -80,18 +106,40 @@ const waitForHttp = async (): Promise<void> => {
   throw new Error(`LiveKit did not answer on port ${port}`);
 };
 
-if (import.meta.main) {
-  const binary = await ensureBinary();
+const start = async (): Promise<void> => {
+  if (args.optional && (await answers())) {
+    console.log(`LiveKit läuft schon auf ${port}, wird mitbenutzt.`);
+    return;
+  }
+  const binary = await binaryOrSkip();
+  if (!binary) return;
   // The UDP port as a flag: the config's udp_port is a range type (cmd/server/main.go "udp-port").
   const server = spawn(binary, ["--bind", "127.0.0.1", "--dev", "--udp-port", String(port + 2)], {
     stdio: ["ignore", "inherit", "inherit"],
     env: { ...process.env, LIVEKIT_CONFIG: devConfig(port, Number(args.server)) },
   });
-  await waitForHttp();
-  console.log(`LiveKit ${LIVEKIT_VERSION} bereit: http://127.0.0.1:${port}`);
-  process.send?.("ready");
-  const shutdown = () => server.kill("SIGTERM");
+  let stopping = false;
+  const shutdown = () => {
+    stopping = true;
+    server.kill("SIGTERM");
+  };
   process.on("SIGINT", shutdown);
   process.on("SIGTERM", shutdown);
-  server.on("exit", (code) => process.exit(code ?? 0));
-}
+  server.on("exit", (code) => {
+    // Killed by a signal (no code), LiveKit failed too: `bun run --parallel` then stops the rest,
+    // unless LiveKit is optional (as dev/dev.ts had it): then calls go without it.
+    if (!args.optional || stopping) process.exit(code ?? 1);
+    console.error(`LiveKit beendet (${code ?? "Signal"}), Anrufe gehen ohne.`);
+    process.exit(0);
+  });
+  try {
+    await waitForHttp();
+  } catch (error) {
+    if (!args.optional) throw error;
+    server.kill("SIGTERM");
+    return;
+  }
+  console.log(`LiveKit ${LIVEKIT_VERSION} bereit: http://127.0.0.1:${port}`);
+};
+
+if (import.meta.main) await start();
