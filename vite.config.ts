@@ -34,6 +34,7 @@ export default defineConfig(({ mode }) => ({
     paraglideVitePlugin({
       project: "./project.inlang",
       outdir: "./src/paraglide",
+      outputStructure: "message-modules",
       strategy: ["custom-choice", "preferredLanguage", "baseLocale"],
     }),
     tanstackRouter({ target: "react", autoCodeSplitting: true }),
