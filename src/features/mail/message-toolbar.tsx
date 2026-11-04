@@ -1,34 +1,12 @@
-/** The reading pane's toolbar: archive, delete, spam, read, flag, move, reply and the shortcuts. */
+/**
+ * The reading pane's toolbar: archive and delete with their names, snooze, flag and assign as
+ * icons, reply, and everything else under "Weitere Aktionen" (message-more-menu.tsx); the
+ * shortcuts for all of them.
+ */
 import { Link, useNavigate } from "@tanstack/react-router";
-import {
-  Archive,
-  ChevronLeft,
-  FolderInput,
-  Forward,
-  ListChecks,
-  ListFilter,
-  MailOpen,
-  MessagesSquare,
-  MoreHorizontal,
-  Paperclip,
-  Printer,
-  Reply,
-  ReplyAll,
-  ShieldAlert,
-  ShieldCheck,
-  Star,
-  Trash2,
-} from "lucide-react";
-import { Fragment, useState } from "react";
+import { Archive, ChevronLeft, Reply, Star, Trash2 } from "lucide-react";
+import { type ReactNode, useState } from "react";
 import { Button } from "@/components/ui/button";
-import {
-  MenuContent,
-  MenuItem,
-  MenuLabel,
-  MenuRoot,
-  MenuSeparator,
-  MenuTrigger,
-} from "@/components/ui/menu";
 import { useToast } from "@/components/ui/toast";
 import { usePrintKey } from "@/components/use-print-key";
 import { useShortcuts } from "@/components/use-shortcuts";
@@ -40,7 +18,8 @@ import { moveTargets } from "@/lib/move-targets";
 import { type Rule, ruleFromSender } from "@/lib/rules";
 import { mailLink, plainSubject } from "@/lib/tasks";
 import { m } from "@/paraglide/messages";
-import { CategoryMenu } from "../categories/category-menu";
+import { CategoryDialog } from "../categories/category-dialog";
+import { CategorySubmenu } from "../categories/category-menu";
 import { DiscussDialog } from "../chat/discuss-dialog";
 import { OwnRuleDialog } from "../rules/rule-dialog";
 import { usePersonalAccountId } from "../settings/queries";
@@ -49,6 +28,7 @@ import { TaskDialog, type TaskStart } from "../tasks/task-dialog";
 import { useEmailActions } from "./actions";
 import { AssignMenu } from "./assignment";
 import { useThread } from "./conversation";
+import { type ComposeMode, MoreMenu } from "./message-more-menu";
 import { usePrintMail } from "./print-mail";
 import { useAllMailboxes, useMailAccounts } from "./queries";
 import { useRemoteImages } from "./remote-images";
@@ -60,6 +40,33 @@ export const useCloseMail = () => {
   return () =>
     navigate({ to: ".", search: (prev) => ({ ...prev, email: undefined, compose: undefined }) });
 };
+
+/**
+ * An icon with its name beside it, for the actions used most. The name gives way where the pane
+ * is narrow (a phone, a tablet's split view); the icon keeps it as its label.
+ */
+const LabelledButton = ({
+  label,
+  shortcut,
+  onClick,
+  children,
+}: {
+  label: string;
+  shortcut: string;
+  onClick: () => void;
+  children: ReactNode;
+}) => (
+  <Button
+    variant="ghost"
+    aria-label={label}
+    title={`${label} (${shortcut})`}
+    className="size-9 px-0 @[34rem]:w-auto @[34rem]:gap-1.5 @[34rem]:px-2.5"
+    onClick={onClick}
+  >
+    {children}
+    <span className="hidden @[34rem]:inline">{label}</span>
+  </Button>
+);
 
 export const Toolbar = ({
   accountId,
@@ -81,6 +88,8 @@ export const Toolbar = ({
   const [rule, setRule] = useState<Rule | null>(null);
   const [task, setTask] = useState<TaskStart | null>(null);
   const [discussing, setDiscussing] = useState(false);
+  // Outside the menu: the menu and all in it go away when the dialog opens.
+  const [editingCategories, setEditingCategories] = useState(false);
   // Grouped as conversations: what one does to the line, one does to all of it in this folder.
   const grouped = useThreadView();
   const thread = useThread(accountId, grouped ? email.threadId : undefined);
@@ -113,7 +122,7 @@ export const Toolbar = ({
   const groups = moveTargets(accounts, mailboxes, { accountId, mailboxId: mailbox.id });
   const flagged = isFlagged(email);
   const { canRemove, canMarkSeen, canFlag } = mailboxRights(mailbox);
-  // In Spam the same button takes a mail back out; own sent mail is no spam.
+  // In Spam the same action takes a mail back out; own sent mail is no spam.
   const inJunk = mailbox.role === "junk";
   const toggleSpam =
     canRemove && mailbox.role !== "sent"
@@ -123,23 +132,31 @@ export const Toolbar = ({
             toast.show(inJunk ? m.mail_spam_unmarked() : m.mail_spam_marked());
           }, true)
       : undefined;
-  const compose = (mode: "reply" | "replyAll" | "forward") =>
+  const compose = (mode: ComposeMode) =>
     void navigate({ to: ".", search: (prev) => ({ ...prev, compose: mode }) });
   const printMail = usePrintMail();
   const { allowRemote } = useRemoteImages(email);
   const print = () => void run(() => printMail(accountId, email, allowRemote), false);
+  const archive =
+    canRemove && mailbox.role !== "archive"
+      ? () => run(() => actions.archive(ids, mailbox.id), true)
+      : undefined;
+  const remove = canRemove
+    ? () => void run(() => actions.remove(ids, mailbox.id), true)
+    : undefined;
+  const markUnread = canMarkSeen
+    ? () => void run(() => actions.setSeen(ids, false), true)
+    : undefined;
+  const toggleFlag = () => void run(() => actions.setFlagged([email.id], !flagged), false);
 
   useShortcuts({
     r: () => compose("reply"),
     a: () => compose("replyAll"),
     f: () => compose("forward"),
-    e:
-      canRemove && mailbox.role !== "archive"
-        ? () => void run(() => actions.archive(ids, mailbox.id), true)
-        : undefined,
-    "#": canRemove ? () => void run(() => actions.remove(ids, mailbox.id), true) : undefined,
-    s: canFlag ? () => void run(() => actions.setFlagged([email.id], !flagged), false) : undefined,
-    U: canMarkSeen ? () => void run(() => actions.setSeen(ids, false), true) : undefined,
+    e: archive,
+    "#": remove,
+    s: canFlag ? toggleFlag : undefined,
+    U: markUnread,
     "!": toggleSpam,
     p: print,
     t: newTask,
@@ -149,7 +166,8 @@ export const Toolbar = ({
   usePrintKey(print);
 
   return (
-    <div className="flex h-12 shrink-0 items-center gap-1 border-b border-border px-2 md:px-3">
+    // A container: the names show where the pane is wide enough, whatever the screen's width.
+    <div className="@container flex h-12 shrink-0 items-center gap-1 border-b border-border px-2 md:px-3">
       <Button
         variant="ghost"
         size="icon"
@@ -159,29 +177,16 @@ export const Toolbar = ({
       >
         <ChevronLeft size={20} />
       </Button>
-      {/* On a phone the icons do not all fit: they scroll sideways, "Mehr" stays in reach. */}
-      <div className="flex min-w-0 flex-1 items-center gap-1 overflow-x-auto [scrollbar-width:none]">
-        {canRemove && mailbox.role !== "archive" ? (
-          <Button
-            variant="ghost"
-            size="icon"
-            aria-label={m.mail_archive_action()}
-            title={m.mail_archive_action()}
-            onClick={() => run(() => actions.archive(ids, mailbox.id), true)}
-          >
+      <div className="flex min-w-0 flex-1 items-center gap-1">
+        {archive ? (
+          <LabelledButton label={m.mail_archive_action()} shortcut="e" onClick={archive}>
             <Archive size={16} strokeWidth={1.75} />
-          </Button>
+          </LabelledButton>
         ) : null}
-        {canRemove ? (
-          <Button
-            variant="ghost"
-            size="icon"
-            aria-label={m.mail_delete()}
-            title={m.mail_delete()}
-            onClick={() => run(() => actions.remove(ids, mailbox.id), true)}
-          >
+        {remove ? (
+          <LabelledButton label={m.mail_delete()} shortcut="#" onClick={remove}>
             <Trash2 size={16} strokeWidth={1.75} />
-          </Button>
+          </LabelledButton>
         ) : null}
         {canRemove && mailbox.role !== "drafts" && mailbox.role !== "sent" ? (
           <SnoozeMenu
@@ -190,42 +195,14 @@ export const Toolbar = ({
             shortcut
           />
         ) : null}
-        {toggleSpam ? (
-          <Button
-            variant="ghost"
-            size="icon"
-            aria-label={inJunk ? m.mail_spam_unmark() : m.mail_spam_mark()}
-            title={inJunk ? m.mail_spam_unmark() : m.mail_spam_mark()}
-            onClick={toggleSpam}
-          >
-            {inJunk ? (
-              <ShieldCheck size={16} strokeWidth={1.75} />
-            ) : (
-              <ShieldAlert size={16} strokeWidth={1.75} />
-            )}
-          </Button>
-        ) : null}
-        {canMarkSeen ? (
-          <Button
-            variant="ghost"
-            size="icon"
-            aria-label={m.mail_mark_unread()}
-            title={m.mail_mark_unread()}
-            // On a phone it is in "Mehr" only, one icon fewer to scroll past.
-            className="hidden sm:inline-flex"
-            onClick={() => run(() => actions.setSeen(ids, false), true)}
-          >
-            <MailOpen size={16} strokeWidth={1.75} />
-          </Button>
-        ) : null}
         {canFlag ? (
           <Button
             variant="ghost"
             size="icon"
             aria-label={flagged ? m.mail_unflag() : m.mail_flag()}
             aria-pressed={flagged}
-            title={flagged ? m.mail_unflag() : m.mail_flag()}
-            onClick={() => run(() => actions.setFlagged([email.id], !flagged), false)}
+            title={`${flagged ? m.mail_unflag() : m.mail_flag()} (s)`}
+            onClick={toggleFlag}
           >
             <Star
               size={16}
@@ -234,70 +211,8 @@ export const Toolbar = ({
             />
           </Button>
         ) : null}
-        {canFlag ? (
-          <CategoryMenu accountId={accountId} mailbox={mailboxLabel} email={email} />
-        ) : null}
         {canAssignIn(mailbox) && account && !account.isPersonal ? (
           <AssignMenu accountId={accountId} email={email} />
-        ) : null}
-        <Button
-          variant="ghost"
-          size="icon"
-          aria-label={m.tasks_from_mail_title()}
-          title={`${m.tasks_from_mail_title()} (t)`}
-          onClick={newTask}
-        >
-          <ListChecks size={16} strokeWidth={1.75} />
-        </Button>
-        <Button
-          variant="ghost"
-          size="icon"
-          aria-label={m.chat_discuss()}
-          title={`${m.chat_discuss()} (b)`}
-          onClick={() => setDiscussing(true)}
-        >
-          <MessagesSquare size={16} strokeWidth={1.75} />
-        </Button>
-        {canRemove ? (
-          <MenuRoot>
-            <MenuTrigger asChild>
-              <Button variant="ghost" size="icon" aria-label={m.mail_move()} title={m.mail_move()}>
-                <FolderInput size={16} strokeWidth={1.75} />
-              </Button>
-            </MenuTrigger>
-            <MenuContent align="start">
-              {groups.length === 1 ? <MenuLabel>{m.mail_move()}</MenuLabel> : null}
-              {groups.map((group, index) => (
-                <Fragment key={group.account.id}>
-                  {groups.length > 1 ? (
-                    <>
-                      {index > 0 ? <MenuSeparator /> : null}
-                      <MenuLabel>
-                        {group.account.isPersonal ? m.mail_own_mailbox() : group.account.name}
-                      </MenuLabel>
-                    </>
-                  ) : null}
-                  {group.targets.map((target) => (
-                    <MenuItem
-                      key={target.mailbox.id}
-                      onSelect={() =>
-                        run(
-                          () =>
-                            actions.moveTo(targets, mailbox.id, {
-                              accountId: target.accountId,
-                              mailboxId: target.mailbox.id,
-                            }),
-                          true,
-                        )
-                      }
-                    >
-                      {target.label}
-                    </MenuItem>
-                  ))}
-                </Fragment>
-              ))}
-            </MenuContent>
-          </MenuRoot>
         ) : null}
       </div>
       <Button asChild variant="outline" size="sm" className="hidden shrink-0 sm:inline-flex">
@@ -305,76 +220,57 @@ export const Toolbar = ({
           <Reply size={15} /> {m.mail_reply()}
         </Link>
       </Button>
-      <MenuRoot>
-        <MenuTrigger asChild>
-          <Button variant="ghost" size="icon" aria-label={m.mail_more()} className="shrink-0">
-            <MoreHorizontal size={16} />
-          </Button>
-        </MenuTrigger>
-        <MenuContent>
-          <MenuItem
-            onSelect={() =>
-              navigate({ to: ".", search: (prev) => ({ ...prev, compose: "reply" }) })
-            }
-          >
-            <Reply size={15} /> {m.mail_reply()}
-          </MenuItem>
-          <MenuItem
-            onSelect={() =>
-              navigate({ to: ".", search: (prev) => ({ ...prev, compose: "replyAll" }) })
-            }
-          >
-            <ReplyAll size={15} /> {m.mail_reply_all()}
-          </MenuItem>
-          <MenuItem
-            onSelect={() =>
-              navigate({ to: ".", search: (prev) => ({ ...prev, compose: "forward" }) })
-            }
-          >
-            <Forward size={15} /> {m.mail_forward()}
-          </MenuItem>
-          <MenuItem
-            onSelect={() =>
-              navigate({ to: ".", search: (prev) => ({ ...prev, compose: "forwardEml" }) })
-            }
-          >
-            <Paperclip size={15} /> {m.mail_forward_eml()}
-          </MenuItem>
-          <MenuItem onSelect={print}>
-            <Printer size={15} /> {m.mail_print()}
-          </MenuItem>
-          {canMarkSeen ? (
-            <>
-              <MenuSeparator />
-              <MenuItem onSelect={() => run(() => actions.setSeen(ids, false), true)}>
-                <MailOpen size={15} /> {m.mail_mark_unread()}
-              </MenuItem>
-            </>
-          ) : null}
-          {ownMailbox && sender ? (
-            <>
-              <MenuSeparator />
-              <MenuItem onSelect={() => setRule(ruleFromSender(crypto.randomUUID(), sender))}>
-                <ListFilter size={15} /> {m.rules_from_mail()}
-              </MenuItem>
-            </>
-          ) : null}
-        </MenuContent>
-      </MenuRoot>
+      <MoreMenu
+        compose={compose}
+        print={print}
+        markUnread={markUnread}
+        spam={toggleSpam ? { undo: inJunk, run: toggleSpam } : undefined}
+        move={
+          canRemove
+            ? {
+                groups,
+                onPick: (target) =>
+                  void run(
+                    () =>
+                      actions.moveTo(targets, mailbox.id, {
+                        accountId: target.accountId,
+                        mailboxId: target.mailbox.id,
+                      }),
+                    true,
+                  ),
+              }
+            : undefined
+        }
+        categories={
+          canFlag ? (
+            <CategorySubmenu
+              accountId={accountId}
+              email={email}
+              onEdit={() => setEditingCategories(true)}
+            />
+          ) : undefined
+        }
+        newTask={newTask}
+        discuss={() => setDiscussing(true)}
+        newRule={
+          ownMailbox && sender
+            ? () => setRule(ruleFromSender(crypto.randomUUID(), sender))
+            : undefined
+        }
+      />
       {rule ? <OwnRuleDialog initial={rule} onClose={() => setRule(null)} /> : null}
+      {editingCategories ? (
+        <CategoryDialog
+          accountId={accountId}
+          mailbox={mailboxLabel}
+          onClose={() => setEditingCategories(false)}
+        />
+      ) : null}
       {discussing ? (
         <DiscussDialog accountId={accountId} email={email} onClose={() => setDiscussing(false)} />
       ) : null}
       {task ? (
-        <TaskDialog
-          starts={[task]}
-          onClose={() => setTask(null)}
-          onArchive={
-            canRemove && mailbox.role !== "archive"
-              ? () => run(() => actions.archive(ids, mailbox.id), true)
-              : undefined
-          }
-        />
+        <TaskDialog starts={[task]} onClose={() => setTask(null)} onArchive={archive} />
       ) : null}
     </div>
   );

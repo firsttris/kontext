@@ -74,6 +74,11 @@ SMTP.
   Drafts, Flagged and Snoozed, and into shared mailboxes only with the right to add mails.
 
   ![Folder "Altablage 2024" with three imported mails; below, the message "3 mails imported." and "Not imported: Rechnung Dezember.msg (Outlook's .msg format is not supported)"](screenshots/eml-import.png)
+- **The bar above a mail:** "Archive" (`e`) and "Delete" (`#`) with their names, next to them
+  Snooze (`w`), Flag (`s`) and, in shared mailboxes, "Assign", on the right "Reply". Everything
+  used less often is under "More actions" (the three dots): reply all, forward, print, mark as
+  unread (`U`), spam (`!`), move, category, task (`t`), Discuss (`b`) and rule. Where space is
+  short, on the phone or in a narrow reading pane, Archive and Delete keep only their icons.
 - **Several mails at once** (checkbox on the left of each row, Ctrl/Shift-click, `x`; on the phone
   a long press): archive, delete, mark read, category, move, create tasks, forward as attachment.
 - **Swiping on the phone:** swiping a mail to the left archives it, to the right marks it

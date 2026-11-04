@@ -84,7 +84,8 @@ test.describe("Chat: Fotos, Dateien und Karten", () => {
     await login(page);
     await page.getByRole("link", { name: "info@" }).click();
     await page.getByRole("list", { name: "Posteingang" }).getByText(subject).click();
-    await page.getByRole("button", { name: "Besprechen" }).click();
+    await page.getByRole("button", { name: "Weitere Aktionen" }).click();
+    await page.getByRole("menuitem", { name: "Besprechen" }).click();
     const dialog = page.getByRole("dialog", { name: "Über diese Mail sprechen" });
     // info@ is suggested; where the sender came up before may come first.
     await dialog

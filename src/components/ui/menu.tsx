@@ -1,10 +1,15 @@
 import * as Menu from "@radix-ui/react-dropdown-menu";
-import { Check } from "lucide-react";
+import { Check, ChevronRight } from "lucide-react";
 import type { ComponentProps, ReactNode } from "react";
 import { cn } from "@/lib/cn";
 
 export const MenuRoot = Menu.Root;
 export const MenuTrigger = Menu.Trigger;
+
+const contentClass =
+  "z-50 max-h-[70dvh] min-w-52 overflow-y-auto rounded-xl border border-border bg-bg p-1 text-[14px] shadow-lg";
+const itemClass =
+  "flex h-9 cursor-pointer items-center gap-2.5 rounded-lg px-2.5 outline-none data-[highlighted]:bg-hover";
 
 export const MenuContent = ({
   className,
@@ -12,28 +17,14 @@ export const MenuContent = ({
   ...props
 }: ComponentProps<typeof Menu.Content>) => (
   <Menu.Portal>
-    <Menu.Content
-      sideOffset={6}
-      align="end"
-      className={cn(
-        "z-50 max-h-[70dvh] min-w-52 overflow-y-auto rounded-xl border border-border bg-bg p-1 text-[14px] shadow-lg",
-        className,
-      )}
-      {...props}
-    >
+    <Menu.Content sideOffset={6} align="end" className={cn(contentClass, className)} {...props}>
       {children}
     </Menu.Content>
   </Menu.Portal>
 );
 
 export const MenuItem = ({ className, ...props }: ComponentProps<typeof Menu.Item>) => (
-  <Menu.Item
-    className={cn(
-      "flex h-9 cursor-pointer items-center gap-2.5 rounded-lg px-2.5 outline-none data-[highlighted]:bg-hover data-[disabled]:opacity-50",
-      className,
-    )}
-    {...props}
-  />
+  <Menu.Item className={cn(itemClass, "data-[disabled]:opacity-50", className)} {...props} />
 );
 
 export const MenuLabel = ({ children }: { children: ReactNode }) => (
@@ -52,10 +43,7 @@ export const MenuCheckboxItem = ({
 }: ComponentProps<typeof Menu.CheckboxItem>) => (
   <Menu.CheckboxItem
     onSelect={(event) => event.preventDefault()}
-    className={cn(
-      "flex h-9 cursor-pointer items-center gap-2.5 rounded-lg px-2.5 outline-none data-[highlighted]:bg-hover",
-      className,
-    )}
+    className={cn(itemClass, className)}
     {...props}
   >
     {children}
@@ -73,16 +61,36 @@ export const MenuRadioItem = ({
   children,
   ...props
 }: ComponentProps<typeof Menu.RadioItem>) => (
-  <Menu.RadioItem
-    className={cn(
-      "flex h-9 cursor-pointer items-center gap-2.5 rounded-lg px-2.5 outline-none data-[highlighted]:bg-hover",
-      className,
-    )}
-    {...props}
-  >
+  <Menu.RadioItem className={cn(itemClass, className)} {...props}>
     {children}
     <Menu.ItemIndicator className="ml-auto text-fg">
       <Check size={15} />
     </Menu.ItemIndicator>
   </Menu.RadioItem>
+);
+
+/** A menu inside a menu: the item opens it on hover, click or the arrow key. */
+export const MenuSub = Menu.Sub;
+
+export const MenuSubTrigger = ({
+  className,
+  children,
+  ...props
+}: ComponentProps<typeof Menu.SubTrigger>) => (
+  <Menu.SubTrigger className={cn(itemClass, "data-[state=open]:bg-hover", className)} {...props}>
+    {children}
+    <ChevronRight size={15} className="ml-auto text-muted" />
+  </Menu.SubTrigger>
+);
+
+export const MenuSubContent = ({
+  className,
+  children,
+  ...props
+}: ComponentProps<typeof Menu.SubContent>) => (
+  <Menu.Portal>
+    <Menu.SubContent sideOffset={4} className={cn(contentClass, className)} {...props}>
+      {children}
+    </Menu.SubContent>
+  </Menu.Portal>
 );

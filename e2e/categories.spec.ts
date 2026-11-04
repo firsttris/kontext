@@ -39,7 +39,8 @@ test.describe("Kategorien", () => {
     await login(page, "jonas");
     await openInInfo(page, subject);
 
-    await page.getByRole("button", { name: "Kategorie", exact: true }).click();
+    await page.getByRole("button", { name: "Weitere Aktionen" }).click();
+    await page.getByRole("menuitem", { name: "Kategorie", exact: true }).click();
     await page.getByRole("menuitemcheckbox", { name: "In Bearbeitung" }).click();
     await page.keyboard.press("Escape");
     await expect(page.getByRole("article")).toContainText("In Bearbeitung");
@@ -70,7 +71,8 @@ test.describe("Kategorien", () => {
     await expect(anna.getByText(subject)).toBeVisible();
 
     // Done: switched over in the menu.
-    await page.getByRole("button", { name: "Kategorie", exact: true }).click();
+    await page.getByRole("button", { name: "Weitere Aktionen" }).click();
+    await page.getByRole("menuitem", { name: "Kategorie", exact: true }).click();
     await page.getByRole("menuitemcheckbox", { name: "In Bearbeitung" }).click();
     await page.getByRole("menuitemcheckbox", { name: "Erledigt" }).click();
     await page.keyboard.press("Escape");
@@ -138,7 +140,8 @@ test.describe("Kategorien am Handy @phone", () => {
     await addMail("max", "max", subject);
     await login(page, "max");
     await page.getByRole("list", { name: "Posteingang" }).getByText(subject).click();
-    await page.getByRole("button", { name: "Kategorie", exact: true }).click();
+    await page.getByRole("button", { name: "Weitere Aktionen" }).click();
+    await page.getByRole("menuitem", { name: "Kategorie", exact: true }).click();
     await page.getByRole("menuitemcheckbox", { name: "Wartet auf Antwort" }).click();
     await page.keyboard.press("Escape");
     await expect(page.getByRole("article")).toContainText("Wartet auf Antwort");

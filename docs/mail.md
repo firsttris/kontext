@@ -77,6 +77,12 @@ IMAP und SMTP.
   hinzuzufügen.
 
   ![Ordner „Altablage 2024“ mit drei importierten Mails; unten die Meldung „3 Mails importiert.“ und „Nicht importiert: Rechnung Dezember.msg (Outlook-Format .msg wird nicht unterstützt)“](screenshots/eml-import.png)
+- **Die Leiste über einer Mail:** „Archivieren“ (`e`) und „Löschen“ (`#`) mit Namen, daneben
+  Wiedervorlage (`w`), Markieren (`s`) und in gemeinsamen Postfächern „Zuweisen“, rechts
+  „Antworten“. Alles Seltenere liegt unter „Weitere Aktionen“ (die drei Punkte): antworten an
+  alle, weiterleiten, drucken, als ungelesen markieren (`U`), Spam (`!`), verschieben, Kategorie,
+  Aufgabe (`t`), Besprechen (`b`) und Regel. Wo der Platz knapp ist, am Handy oder im schmalen
+  Lesebereich, bleiben von Archivieren und Löschen nur die Symbole.
 - **Mehrere Mails auf einmal** (Kästchen links an jeder Zeile, Strg-/Shift-Klick, `x`; am Handy
   lange drücken): archivieren, löschen, gelesen, Kategorie, verschieben, Aufgaben erstellen, als
   Anhang weiterleiten.
