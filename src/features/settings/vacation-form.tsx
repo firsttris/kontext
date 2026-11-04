@@ -10,7 +10,7 @@ import { useVacationTemplates } from "@/features/company/vacation-templates";
 import { dateKey } from "@/lib/jscalendar";
 import { LOCALE } from "@/lib/locale";
 import { type VacationForm as Form, withDeputy } from "@/lib/vacation";
-import { fillVacationTemplate, namesDeputy } from "@/lib/vacation-template";
+import { deputyText, fillVacationTemplate, namesDeputy } from "@/lib/vacation-template";
 import { m } from "@/paraglide/messages";
 
 export type Colleague = { id: string; name: string; email: string };
@@ -57,6 +57,12 @@ export const VacationForm = ({
     setForm({ ...form, text: filled });
   };
 
+  /** The deputy a Vorlage wrote into the text is swapped for the new one, or gets the own line. */
+  const renamedDeputy = (text: string, before: Colleague | null, after: Colleague | null) =>
+    before && after && text.includes(deputyText(before))
+      ? text.replaceAll(deputyText(before), deputyText(after))
+      : withDeputy(text, after);
+
   /**
    * A new end date or deputy: a Vorlage not edited since is filled anew; otherwise the deputy
    * gets the own line in the text, as without Vorlagen.
@@ -67,7 +73,7 @@ export const VacationForm = ({
       setPicked({ ...picked, filled });
       setForm({ ...next, text: filled });
     } else if (id !== deputyId) {
-      setForm({ ...next, text: withDeputy(next.text, deputyOf(id)) });
+      setForm({ ...next, text: renamedDeputy(next.text, deputyOf(deputyId), deputyOf(id)) });
     } else {
       setForm(next);
     }
