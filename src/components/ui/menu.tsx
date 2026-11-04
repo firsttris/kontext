@@ -83,13 +83,34 @@ export const MenuSubTrigger = ({
   </Menu.SubTrigger>
 );
 
+/**
+ * Focus on the parent menu itself, not on one of its items, means the pointer left the trigger
+ * without entering another item: Radix then closes the submenu unless the move pointed in the
+ * submenu's direction (react-menu MenuContentImpl, onItemLeave). A menu at the right edge opens
+ * its submenu to the left, so a move straight onto a submenu item would close it.
+ */
+const keepOpenOnMenuFocus = (event: Event) => {
+  if (event.target instanceof Element && event.target.getAttribute("role") === "menu") {
+    event.preventDefault();
+  }
+};
+
 export const MenuSubContent = ({
   className,
   children,
+  onFocusOutside,
   ...props
 }: ComponentProps<typeof Menu.SubContent>) => (
   <Menu.Portal>
-    <Menu.SubContent sideOffset={4} className={cn(contentClass, className)} {...props}>
+    <Menu.SubContent
+      sideOffset={4}
+      className={cn(contentClass, className)}
+      onFocusOutside={(event) => {
+        onFocusOutside?.(event);
+        keepOpenOnMenuFocus(event);
+      }}
+      {...props}
+    >
       {children}
     </Menu.SubContent>
   </Menu.Portal>
