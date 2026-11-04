@@ -88,10 +88,11 @@ every restart before the setup there is a new one.
    ([without the interface](vps.md#10-stalwart-ohne-oberflache-einrichten)).
 3. Create **port 587** (submission with STARTTLS) under *Network → Listeners*: Stalwart's
    default only has 465, and many mail programs use 587.
-4. **Turn on the company admin** – required, not optional: create the API key and enter it as
-   `STALWART_ADMIN_KEY` ([instructions below](#firmenverwaltung-einschalten)), then create the
-   boss's account. The boss then creates further employees and shared mailboxes
-   in Kontext themselves.
+4. **Run the [setup command](#einrichtungsbefehl)** – required, not optional: it registers
+   Kontext as the OAuth client (step 12), allows directory queries (step 13) and creates the role,
+   account and API key for the [company admin](#firmenverwaltung-einschalten); enter the key as
+   `STALWART_ADMIN_KEY`, then create the boss's account. The boss then creates further employees
+   and shared mailboxes in Kontext themselves.
 5. Under *Settings → Network → HTTP → General*, section *Proxy*, choose *X-Forwarded-For header*
    as the **Client IP source** (`clientIpSource: xForwardedFor`) and leave *Trusted proxy hops*
    at 1 (`forwardedHops`), so that Stalwart sees the real IP addresses for CalDAV/CardDAV and
@@ -120,21 +121,55 @@ every restart before the setup there is a new one.
     `local_port != 25 && is_tls` → `[plain, login, oauthbearer, xoauth2]` remains. Otherwise a
     token would travel in plain text if someone strips STARTTLS from the connection. Kontext
     itself sends through JMAP, not through SMTP.
-12. **Register Kontext as an OAuth client** – required, otherwise nobody can sign in: under
-    *Management → Directory → OAuth Clients*, create a client with the *Client ID* `kontext`, the
-    *Redirect URI* `https://kontext.invalid/oauth` (never called) and the scope **Full**
-    (`full`), without a secret ([without the interface](vps.md#10-stalwart-ohne-oberflache-einrichten)).
-    Stalwart 1.0 only accepts clients it knows, and gives a token only the scopes the
+12. **Kontext as an OAuth client** – required, otherwise nobody can sign in; the
+    [setup command](#einrichtungsbefehl) does this. By hand: under *Management → Directory → OAuth
+    Clients*, create a client with the *Client ID* `kontext`, the *Redirect URI*
+    `https://kontext.invalid/oauth` (never called) and the scope **Full** (`full`), without a
+    secret. Stalwart 1.0 only accepts clients it knows, and gives a token only the scopes the
     client allows; `full` gives Kontext's token all the rights of the account that the settings and
     the company admin need (see [Sign-in](architecture.md#anmeldung)). Only a superuser may set
     the scope `full`. If the client is missing, Kontext writes `Stalwart
     lehnt die Anmeldung für Kontext ab (Unknown client id)` ("Stalwart rejects the sign-in for
     Kontext") to the log when someone signs in; if the scope is missing, `… ab
     (invalid_scope)`.
-13. Under *Settings → Sharing*, **allow directory queries** (`x:Sharing`,
-    `allowDirectoryQueries: true`), then reload the settings (*Reload*) – required: without it
-    Kontext finds no colleagues (sharing, new chat, free times when inviting); Stalwart 1.0
+13. **Allow directory queries** – the setup command does this too; by hand under
+    *Settings → Sharing* (`x:Sharing`, `allowDirectoryQueries: true`), then reload the settings
+    (*Reload*). Required: without it Kontext finds no colleagues (sharing, new chat, free times when inviting); Stalwart 1.0
     otherwise rejects `Principal/query` (`The administrator has disabled directory queries`).
+
+### The setup command { #einrichtungsbefehl }
+
+What Kontext needs in Stalwart is set up by one command in the Kontext container. It asks for
+Stalwart's admin login (the name, e.g. `admin@firma.de`, and the password, which is not shown);
+the login stays in memory only, none of it is written or printed:
+
+```bash
+docker compose -f deploy/compose.yaml exec kontext bun server/setup-stalwart.ts
+podman exec -it kontext bun server/setup-stalwart.ts      # with Quadlet
+```
+
+It makes sure that
+
+- the **OAuth client** `kontext` with the redirect URI `https://kontext.invalid/oauth` and the
+  scope `full` exists (step 12); an older client without `full` gets the scope added;
+- **directory queries** are allowed, and then reloads the settings (step 13);
+- the **role** `Kontext-Server` with exactly the permissions from [Turning on the company
+  admin](#firmenverwaltung-einschalten) exists (it inherits *User*), plus the **account**
+  `kontext-server@firma.de` with this role and a random password, and an **API key** for this
+  account.
+
+It prints the new key once, as the line `STALWART_ADMIN_KEY=API_…`: put it into `deploy/.env`
+(with Quadlet into `deploy/kontext.env`) and restart Kontext
+(`docker compose -f deploy/compose.yaml up -d`, with Quadlet `systemctl restart kontext`).
+
+The command only changes what is missing: if the client, role, account or key already exist, it
+says so and at most adds missing permissions or the scope; it never creates a second key. That
+is why it belongs to every update ([Updates](#6-updates)). If the key is lost, delete it in
+Stalwart on the account `kontext-server@` and run the command again. If Stalwart has several
+domains, `--domain firma.de` picks the one for the account the first time; after that it keeps to
+the account's domain. Without a terminal (in a script, say)
+it takes the login from the environment variable `STALWART_ADMIN` (`name:password`). What exactly
+it does is in `server/stalwart-setup.ts`.
 
 Then sign in at `https://kontext.firma.de`. On the phone, choose "Add to Home Screen" in the
 browser: Kontext then starts like an app and stays signed in.
@@ -328,7 +363,10 @@ the Kontext server needs an API key from Stalwart that may only manage accounts
 
     That is why it is part of the setup (step 4 under [Setting up Stalwart](#3-stalwart-einrichten)).
 
-1. In Stalwart's admin interface, create a **role** `Kontext-Server`: it inherits the role *User*
+The [setup command](#einrichtungsbefehl) creates the role, account and key (steps 1–3); by hand
+in Stalwart's admin interface it goes like this:
+
+1. Create a **role** `Kontext-Server`: it inherits the role *User*
    and additionally gets the permissions `sysAccountGet`, `sysAccountQuery`, `sysAccountCreate`,
    `sysAccountUpdate`, `sysRoleGet`, `sysRoleCreate`, `sysDomainGet`, `sysAuthenticationGet`,
    `sysIndexQueueStatusGet` and `impersonate`. With `sysIndexQueueStatusGet` the
@@ -657,15 +695,17 @@ docker compose -f deploy/compose.yaml up -d
 ```
 
 Before a Stalwart update to a new major version, read Stalwart's `UPGRADING` notes and
-make a backup first.
+make a backup first. After every update, run the [setup command](#einrichtungsbefehl) again; it
+only adds what a new version needs and is still missing.
 
 ### Stalwart 1.0.3 { #stalwart-103 }
 
 Stalwart 1.0.3 no longer knows *first-party* clients: a registered client only gets
 the scopes it requests and that it allows. For this, Kontext requests the
-scope `urn:stalwart:oauth:scope:full` from this version on. Before updating Kontext and Stalwart, add
-the scope **Full** to the client `kontext` (*Management → Directory → OAuth Clients*, as a superuser),
-otherwise Stalwart rejects every new sign-in. Without the interface, with the helper from
+scope `urn:stalwart:oauth:scope:full` from this version on. So the client `kontext` needs the scope
+**Full**, otherwise Stalwart rejects every new sign-in. The [setup command](#einrichtungsbefehl)
+adds it: run it once after updating Kontext and Stalwart. By hand it goes under *Management →
+Directory → OAuth Clients* (as a superuser) or with the helper from
 [Setting up a VPS, step 10](vps.md#10-stalwart-ohne-oberflache-einrichten):
 
 ```bash
@@ -673,8 +713,8 @@ otherwise Stalwart rejects every new sign-in. Without the interface, with the he
 /root/stalwart-api.sh '[["x:OAuthClient/set",{"update":{"<id von kontext>":{"scopes/full":true}}},"0"]]'
 ```
 
-Then update as usual, with Compose `KONTEXT_VERSION` and `STALWART_VERSION=1.0.3` in
-`deploy/.env` together; Kontext and Stalwart go together here: Stalwart 1.0.3
+Kontext and Stalwart go together in this update, with Compose `KONTEXT_VERSION` and
+`STALWART_VERSION=1.0.3` in `deploy/.env` raised together: Stalwart 1.0.3
 with a Kontext up to 0.1.22 lets nobody sign in anew, because the old Kontext does not request the scope.
 Everyone signs in once more: Stalwart discards grants from the time as a
 *first-party* client as soon as Kontext renews the token (`invalid_grant`,

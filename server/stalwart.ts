@@ -24,6 +24,10 @@ export const REDIRECT_URI = "https://kontext.invalid/oauth";
  */
 export const SCOPE = "urn:stalwart:oauth:scope:full";
 
+/** Where the admin is pointed when Stalwart refuses Kontext as a client (server/setup-stalwart.ts). */
+const SETUP_HINT =
+  "Der Einrichtungsbefehl `bun server/setup-stalwart.ts` im Kontext-Container ergänzt das (docs/installation.md, Einrichtungsbefehl).";
+
 export type StalwartTokens = { accessToken: string; refreshToken: string; accessExpiresAt: Date };
 
 export type LoginResult =
@@ -152,8 +156,8 @@ export const loginAtStalwart = async (
     // `invalid_scope`: the client is known but does not allow `full` (authorize.rs, Stalwart 1.0.3).
     const hint =
       reason === "invalid_scope"
-        ? `erlaubt der OAuth-Client "${CLIENT_ID}" den Scope "full"? Siehe docs/installation.md, "Stalwart 1.0.3".`
-        : `ist der OAuth-Client "${CLIENT_ID}" angelegt? Siehe docs/installation.md.`;
+        ? `erlaubt der OAuth-Client "${CLIENT_ID}" den Scope "full"? ${SETUP_HINT}`
+        : `ist der OAuth-Client "${CLIENT_ID}" angelegt? ${SETUP_HINT}`;
     console.warn(`Stalwart lehnt die Anmeldung für Kontext ab (${reason}); ${hint}`);
     return { status: "unavailable" };
   }

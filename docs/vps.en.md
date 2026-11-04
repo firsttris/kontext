@@ -376,7 +376,8 @@ programs use:
 
 **Settings from the installation** (X-Forwarded-For, Kontext's network as an allowed IP, a ban
 period of one day, German search, 16 concurrent JMAP requests, Stalwart's RSVP page off, sign-in
-on 587 only after STARTTLS, Kontext as OAuth client, directory queries):
+on 587 only after STARTTLS; Kontext as OAuth client and directory queries are set up by the setup
+command below):
 
 ```bash
 /root/stalwart-api.sh '[
@@ -390,10 +391,7 @@ on 587 only after STARTTLS, Kontext as OAuth client, directory queries):
  ["x:MtaStageAuth/set",{"update":{"singleton":{"saslMechanisms":{"match":{"0":{
    "if":"local_port != 25 && is_tls","then":"[plain, login, oauthbearer, xoauth2]"}},
    "else":"false"}}}},"6"],
- ["x:OAuthClient/set",{"create":{"k":{"clientId":"kontext","description":"Kontext",
-   "redirectUris":{"https://kontext.invalid/oauth":true},"scopes":{"full":true}}}},"7"],
- ["x:Sharing/set",{"update":{"singleton":{"allowDirectoryQueries":true}}},"8"],
- ["x:Action/set",{"create":{"r":{"@type":"ReloadSettings"}}},"9"]]'
+ ["x:Action/set",{"create":{"r":{"@type":"ReloadSettings"}}},"7"]]'
 ```
 
 - `httpRsvpEnable`: otherwise Stalwart's invitation mails have *Yes/No/Maybe* buttons pointing to
@@ -418,9 +416,25 @@ out of the log (id from `x:Tracer/get`) – it only takes effect after a restart
 systemctl restart stalwart
 ```
 
-**Company admin.** A role `Kontext-Server` (inherits *User*, id `b`), the account
-`kontext-server@firma.de` with it and a random password; put the id of the new role from the
-first answer into the account:
+**Kontext as OAuth client, directory queries, company admin.** All of this is set up by the
+[setup command](installation.md#einrichtungsbefehl) in the Kontext container: the OAuth client
+`kontext` with the scope `full`, directory queries, the role `Kontext-Server`, the account
+`kontext-server@firma.de` and its API key. Here it takes the admin login from
+`/root/.stalwart-admin` (`-e STALWART_ADMIN` passes the variable on without writing it into the
+command line); the line `STALWART_ADMIN_KEY=…` it prints goes into `deploy/kontext.env`. Run it
+again after every update; it only adds what is missing:
+
+```bash
+STALWART_ADMIN="$(cat /root/.stalwart-admin)" podman exec -e STALWART_ADMIN kontext bun server/setup-stalwart.ts
+nano /opt/kontext/deploy/kontext.env && systemctl restart kontext
+```
+
+By hand it goes like this: the OAuth client and directory queries as in
+[Setting up Stalwart](installation.md#3-stalwart-einrichten), steps 12–13, as
+`x:OAuthClient/set` (`clientId`, `redirectUris`, `scopes: {"full": true}`) and `x:Sharing/set`
+(`allowDirectoryQueries`, then `ReloadSettings`). Then a role `Kontext-Server` (inherits *User*,
+id `b`), the account `kontext-server@firma.de` with it and a random password; put the id of the
+new role from the first answer into the account:
 
 ```bash
 PW=$(openssl rand -hex 24); echo "kontext-server@firma.de:$PW" > /root/.stalwart-kontext-server

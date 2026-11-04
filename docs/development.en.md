@@ -95,8 +95,8 @@ also work on their own. Vite's keyboard shortcuts (`h`, `r`, `o`, `q`) only exis
 `dev/stalwart.ts` keeps the data under `.dev/stalwart/`. On the first start it boots Stalwart in
 recovery mode, sets up the listeners on ports above 1024 (HTTP 18080, SMTP 10025, IMAP 10143) and
 then starts it normally. The admin is `admin` / `kontext-admin-dev`. On every start it registers
-Kontext as OAuth client `kontext` if it is missing, and allows directory queries (like
-[steps 12 and 13 of the installation](installation.md#3-stalwart-einrichten)).
+Kontext as OAuth client `kontext` if it is missing, and allows directory queries, with
+the same code as the [setup command](installation.md#einrichtungsbefehl) (`server/stalwart-setup.ts`).
 
 A new Stalwart doesn't open the data of an older Stalwart major version (since 1.0: `The data
 store was created by a Stalwart version prior to 1.0`, in `.dev/stalwart.log`). After such an
