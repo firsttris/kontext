@@ -20,6 +20,7 @@ import { phishingReportRoutes, readPhishingReport } from "./phishing-report";
 import { searchIndexStatus } from "./search-index";
 import { checkDomain, httpsCheck } from "./security";
 import { signatureRoutes } from "./signature-routes";
+import { readVacationTemplates, vacationTemplateRoutes } from "./vacation-templates";
 
 export type { CompanyDeps };
 
@@ -29,6 +30,7 @@ export const createCompanyRoutes = (deps: CompanyDeps) => {
   const externalHint = readExternalHint(deps);
   const legalFooter = readLegalFooter(deps);
   const idleLogout = readIdleLogout(deps);
+  const vacationTemplates = readVacationTemplates(deps);
   const phishingReport = readPhishingReport(deps);
   const mailboxMembers = readMailboxMembers(deps);
 
@@ -53,6 +55,12 @@ export const createCompanyRoutes = (deps: CompanyDeps) => {
   app.get("/idle-logout", async (c) => {
     const setting = await idleLogout(c.req.raw);
     return setting ? c.json(setting) : c.json({ error: "Nicht angemeldet" }, 401);
+  });
+
+  /** Vorlagen for the out-of-office reply: everyone picks one for their own. */
+  app.get("/vacation-templates", async (c) => {
+    const templates = await vacationTemplates(c.req.raw);
+    return templates ? c.json(templates) : c.json({ error: "Nicht angemeldet" }, 401);
   });
 
   /** „Als Phishing melden“: every signed-in user's mail app sends the reported mail there. */
@@ -84,6 +92,7 @@ export const createCompanyRoutes = (deps: CompanyDeps) => {
   app.route("/external-hint", externalHintRoutes(deps));
   app.route("/legal-footer", legalFooterRoutes(deps));
   app.route("/idle-logout", idleLogoutRoutes(deps));
+  app.route("/vacation-templates", vacationTemplateRoutes(deps));
   app.route("/phishing-report", phishingReportRoutes(deps));
   app.get("/chat-retention", async (c) =>
     c.json({ days: (await deps.chatRetention?.days()) ?? 0 }),

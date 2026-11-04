@@ -1,5 +1,6 @@
 /** The Firmenverwaltung's own settings in Kontext's SQLite (Stalwart has no place for them). */
 import { eq } from "drizzle-orm";
+import type { VacationTemplate } from "../../src/lib/vacation-template";
 import type { Sealer } from "../crypto";
 import type { Db } from "../db";
 import * as schema from "../db/schema";
@@ -18,6 +19,9 @@ export type CompanySettings = {
   /** Abmelden nach Inaktivität in minutes (idle-logout.ts); 0 while it is off. */
   idleLogout: () => Promise<number>;
   saveIdleLogout: (minutes: number) => Promise<void>;
+  /** The Vorlagen for the out-of-office reply (vacation-templates.ts); none at first. */
+  vacationTemplates: () => Promise<VacationTemplate[]>;
+  saveVacationTemplates: (templates: VacationTemplate[]) => Promise<void>;
   /** Where „Als Phishing melden“ sends a mail (phishing-report.ts); empty while there is none. */
   phishingReport: () => Promise<string>;
   savePhishingReport: (address: string) => Promise<void>;
@@ -27,6 +31,7 @@ const SIGNATURE = "signature";
 const M365 = "m365";
 const LEGAL_FOOTER = "legalFooter";
 const IDLE_LOGOUT = "idleLogout";
+const VACATION_TEMPLATES = "vacationTemplates";
 const PHISHING_REPORT = "phishingReport";
 
 export const createCompanySettings = (db: Db, sealer: Sealer): CompanySettings => {
@@ -60,6 +65,11 @@ export const createCompanySettings = (db: Db, sealer: Sealer): CompanySettings =
     saveLegalFooter: (text) => write(LEGAL_FOOTER, text),
     idleLogout: async () => Number(await read(IDLE_LOGOUT)) || 0,
     saveIdleLogout: (minutes) => write(IDLE_LOGOUT, String(minutes)),
+    vacationTemplates: async () => {
+      const value = await read(VACATION_TEMPLATES);
+      return value ? (JSON.parse(value) as VacationTemplate[]) : [];
+    },
+    saveVacationTemplates: (templates) => write(VACATION_TEMPLATES, JSON.stringify(templates)),
     phishingReport: async () => (await read(PHISHING_REPORT)) ?? "",
     savePhishingReport: (address) => write(PHISHING_REPORT, address),
   };

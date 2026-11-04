@@ -1,10 +1,13 @@
 /** The automatic out-of-office reply (RFC 8621 VacationResponse), optionally limited to dates. */
 import { useClient } from "@/auth/auth";
+import { useSession } from "@/components/shell/app-shell";
 import { useToast } from "@/components/ui/toast";
+import { useColleagues } from "@/features/sharing/queries";
+import { principalName } from "@/jmap/principals";
 import { setFilters } from "@/jmap/rules";
 import { type VacationForm as Form, toVacation, toVacationForm } from "@/lib/vacation";
 import { m } from "@/paraglide/messages";
-import { useFilters, usePersonalAccountId, useSave } from "./queries";
+import { useAccountSettings, useFilters, usePersonalAccountId, useSave } from "./queries";
 import { SettingsCard } from "./settings-page";
 import { VacationForm } from "./vacation-form";
 
@@ -14,6 +17,12 @@ export const VacationSection = () => {
   const accountId = usePersonalAccountId();
   const { data: filters } = useFilters();
   const vacation = filters?.vacation;
+  const { data: session } = useSession();
+  const { data: settings } = useAccountSettings();
+  const { colleagues } = useColleagues();
+  const deputies = colleagues.flatMap((p) =>
+    p.email ? [{ id: p.id, name: principalName(p), email: p.email }] : [],
+  );
   // The rules go along unchanged: with rules, the reply runs inside their script.
   const save = useSave(
     (value: Form) =>
@@ -37,6 +46,8 @@ export const VacationSection = () => {
           initial={toVacationForm(vacation)}
           onSave={(form) => void onSave(form)}
           saving={save.isPending}
+          name={settings?.description || session?.username || ""}
+          colleagues={deputies}
         />
       ) : null}
     </SettingsCard>

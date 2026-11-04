@@ -7,6 +7,10 @@ Steps that an update needs beyond raising the version are marked **Upgrade**.
 
 ## Unreleased
 
+- Out-of-office templates: the company admin keeps a few texts for the out-of-office reply
+  (*Settings → Company → Out-of-office templates*); picking one fills in `{Name}`, `{Bis}` and
+  `{Vertretung}`, in one's own settings and under "Set out of office". The own settings can now
+  name a deputy too.
 - Mail: "Als Phishing melden" in a mail's "Weitere Aktionen" sends it as an attachment (.eml) to
   the report address the Firmenverwaltung sets under "Sicherheit der Mails" (the IT team or the
   IT provider), without a copy in Sent, and moves it to Spam. Without an address the item is not

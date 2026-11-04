@@ -1,10 +1,9 @@
-/** A colleague's out-of-office reply set by the Firmenverwaltung, with a deputy to name. */
+/** A colleague's out-of-office reply set by the Firmenverwaltung. */
 import { useQuery } from "@tanstack/react-query";
 import { Dialog } from "@/components/ui/dialog";
-import { Label, Select } from "@/components/ui/input";
 import { useToast } from "@/components/ui/toast";
 import { VacationForm } from "@/features/settings/vacation-form";
-import { toVacation, toVacationForm, withDeputy } from "@/lib/vacation";
+import { toVacation, toVacationForm } from "@/lib/vacation";
 import { m } from "@/paraglide/messages";
 import { type Company, type Employee, getEmployeeVacation, setEmployeeVacation } from "./api";
 import { useCompanyChange } from "./queries";
@@ -26,7 +25,9 @@ export const VacationDialog = ({
   const save = useCompanyChange((value: Parameters<typeof toVacation>[0]) =>
     setEmployeeVacation(employee.id, toVacation(value)),
   );
-  const colleagues = company.employees.filter((e) => e.active && e.id !== employee.id);
+  const colleagues = company.employees
+    .filter((e) => e.active && e.id !== employee.id)
+    .map((e) => ({ id: e.id, name: e.fullName, email: e.email }));
 
   return (
     <Dialog
@@ -43,6 +44,8 @@ export const VacationDialog = ({
         <VacationForm
           initial={toVacationForm(vacation)}
           saving={save.isPending}
+          name={employee.fullName}
+          colleagues={colleagues}
           onSave={(form) =>
             void save.mutateAsync(form).then(
               () => {
@@ -52,31 +55,6 @@ export const VacationDialog = ({
               (error: Error) => toast.show(m.common_error({ message: error.message }), "error"),
             )
           }
-          extra={(form, setForm) => (
-            <Label>
-              {m.company_deputy()}
-              <Select
-                defaultValue=""
-                onChange={(e) => {
-                  const deputy = colleagues.find((c) => c.id === e.target.value);
-                  setForm({
-                    ...form,
-                    text: withDeputy(
-                      form.text,
-                      deputy ? { name: deputy.fullName, email: deputy.email } : null,
-                    ),
-                  });
-                }}
-              >
-                <option value="">{m.company_deputy_none()}</option>
-                {colleagues.map((colleague) => (
-                  <option key={colleague.id} value={colleague.id}>
-                    {colleague.fullName}
-                  </option>
-                ))}
-              </Select>
-            </Label>
-          )}
         />
       ) : (
         <p className="m-0 text-[14px] text-muted">{m.common_loading()}</p>
