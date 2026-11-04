@@ -1,7 +1,7 @@
 /**
  * The open composers' last save, for a sign-out that does not wait for them (Abmelden nach
- * Inaktivität): each composer registers how it saves what is not saved yet, and the sign-out
- * runs them all first. The composer's own autosave covers the rest.
+ * Inaktivität) and for "Neu laden" after an update: each composer registers how it saves what
+ * is not saved yet, and the sign-out or reload runs them all first. The composer's own autosave covers the rest.
  */
 type Flush = () => Promise<void>;
 
