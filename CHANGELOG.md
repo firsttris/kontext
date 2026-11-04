@@ -11,6 +11,8 @@ Steps that an update needs beyond raising the version are marked **Upgrade**.
   (*Settings → Company → Out-of-office templates*); picking one fills in `{Name}`, `{Bis}` and
   `{Vertretung}`, in one's own settings and under "Set out of office". The own settings can now
   name a deputy too.
+- Spell checking while writing: the mail text, the subject and the chat input switch on the
+  browser's spell checker in the language of the interface, instead of leaving it to the browser.
 - "Neu laden" after an update saves every open mail as a draft before the page loads again (the
   autosave only runs 2 s after the last change), in the other open tabs too.
 - Setup command: `docker compose -f deploy/compose.yaml exec kontext bun server/setup-stalwart.ts`
