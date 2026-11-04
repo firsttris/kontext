@@ -1,5 +1,6 @@
 /**
- * One mail in the list: who, when, subject, categories, preview; and its box to pick it. Picking
+ * One mail in the list: who, when, subject, categories, preview; and its picture, which turns into
+ * the box to pick it on hover, on keyboard focus and while picking (like Gmail). Picking
  * also works with Shift/Ctrl on the line and, on phones, by a long press. On phones the line can
  * be swiped to the left or right (what that does is set per device).
  */
@@ -16,6 +17,7 @@ import {
 } from "lucide-react";
 import type { MouseEvent } from "react";
 import { Highlighted } from "@/components/highlighted";
+import { Avatar } from "@/components/ui/avatar";
 import { useLongPress } from "@/components/use-long-press";
 import { useMediaQuery } from "@/components/use-media-query";
 import { useSwipe } from "@/components/use-swipe";
@@ -24,6 +26,8 @@ import { categoriesOn } from "@/lib/categories";
 import { cn } from "@/lib/cn";
 import { displayName, formatAddressList, listDate } from "@/lib/format";
 import { encryptedPreview } from "@/lib/pgp-mail";
+import type { PhotoKey } from "@/lib/photo";
+import { rowFace } from "@/lib/row-face";
 import { sendTimeLabel } from "@/lib/schedule";
 import { rowClick } from "@/lib/selection";
 import { directionOf, type SwipeAction } from "@/lib/swipe";
@@ -53,6 +57,7 @@ export const MessageRow = ({
   answer,
   shared = false,
   group,
+  photoOf,
   onSwipe,
 }: {
   row: Row;
@@ -73,6 +78,8 @@ export const MessageRow = ({
   shared?: boolean;
   /** Grouped as conversations: the conversation this line stands for. */
   group?: Group;
+  /** The photo of a person (features/photos `usePhotoOf`), found once for the whole list. */
+  photoOf: (person: PhotoKey) => string | undefined;
   /** A swipe on the phone let go far enough. */
   onSwipe: (action: SwipeAction) => void;
 }) => {
@@ -93,6 +100,7 @@ export const MessageRow = ({
     : group && group.count > 1
       ? group.names.map((name) => name.split(" ")[0]).join(", ")
       : displayName(email.from?.[0]);
+  const face = rowFace(email, { showRecipient, latest: group?.latest });
   const boxShown = selecting || selected;
   const phone = !useMediaQuery("(min-width: 768px)");
   const swipes = useSwipeSettings();
@@ -139,27 +147,35 @@ export const MessageRow = ({
         style={swipe.offset ? { transform: `translateX(${swipe.offset}px)` } : undefined}
       >
         {/* Its own column the height of the line, beside the link: a click a bit off the box
-          still picks and never opens the mail. On phones it is there while picking. */}
+          still picks and never opens the mail. It shows the picture until the box is wanted. */}
         {/* A click on the box itself bubbles here too; a label would not hand on a Shift-click
           beside the box to it. */}
         {/* biome-ignore lint/a11y/noStaticElementInteractions: the checkbox inside is the control */}
         {/* biome-ignore lint/a11y/useKeyWithClickEvents: Space on the checkbox clicks it, which bubbles here */}
         <div
           onClick={(event) => onPick(event.shiftKey)}
-          className={cn(
-            "w-9 shrink-0 cursor-pointer justify-end pt-[15px] pl-1",
-            boxShown ? "flex" : "hidden md:flex",
-          )}
+          className="relative w-10 shrink-0 cursor-pointer pt-3 pl-2"
         >
+          {boxShown ? null : (
+            <Avatar
+              name={face.name}
+              photo={photoOf(face.photo)}
+              size={28}
+              // Not in the way of a click: the box below it takes it, the column the rest.
+              className="pointer-events-none absolute top-3 left-2 group-hover:opacity-0 group-has-[:focus-visible]:opacity-0"
+            />
+          )}
           <input
             type="checkbox"
             checked={selected}
             readOnly
             aria-label={m.mail_select({ subject: subject || m.mail_no_subject() })}
             className={cn(
-              "size-4 cursor-pointer accent-[var(--primary)]",
-              // A faint box on every line says that mails can be picked; full on hover.
-              !boxShown && "opacity-35 group-hover:opacity-100 focus-visible:opacity-100",
+              // In the middle of the picture's place.
+              "mt-1.5 ml-1.5 block size-4 cursor-pointer accent-[var(--primary)]",
+              // Under the picture, still there for the keyboard; shown on hover and focus.
+              !boxShown &&
+                "opacity-0 group-hover:opacity-100 group-has-[:focus-visible]:opacity-100",
             )}
           />
         </div>
@@ -196,10 +212,7 @@ export const MessageRow = ({
             pickByPress.handlers.onPointerCancel();
             swipe.handlers.onPointerCancel();
           }}
-          className={cn(
-            "flex min-w-0 flex-1 touch-pan-y py-3 pr-3 text-left text-fg no-underline [-webkit-touch-callout:none]",
-            boxShown ? "pl-2" : "pl-3 md:pl-2",
-          )}
+          className="flex min-w-0 flex-1 touch-pan-y py-3 pr-3 pl-2 text-left text-fg no-underline [-webkit-touch-callout:none]"
         >
           <span className="flex min-w-0 flex-1 flex-col gap-0.5">
             <span className="flex items-baseline gap-2">

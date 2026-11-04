@@ -2,6 +2,7 @@ import { act, cleanup, fireEvent, render, screen } from "@testing-library/react"
 import type { ReactNode } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { EmailSummary } from "@/jmap/types";
+import type { PhotoKey } from "@/lib/photo";
 import type { SwipeAction } from "@/lib/swipe";
 import { MessageRow } from "./message-row";
 import { useSwipeAction } from "./swipe-action";
@@ -85,11 +86,17 @@ const Row = ({
   group,
   onPick = () => undefined,
   onSwipe,
+  showRecipient = false,
+  selected = false,
+  photoOf = () => undefined,
 }: {
   email: EmailSummary;
   group?: Group;
   onPick?: () => void;
   onSwipe?: (action: SwipeAction) => void;
+  showRecipient?: boolean;
+  selected?: boolean;
+  photoOf?: (person: PhotoKey) => string | undefined;
 }) => {
   // Wired as list-frame.tsx wires it.
   const swipe = useSwipeAction("inbox");
@@ -97,13 +104,14 @@ const Row = ({
     <MessageRow
       row={{ email }}
       active={false}
-      showRecipient={false}
+      showRecipient={showRecipient}
       isDraft={false}
       drag={undefined}
-      selecting={false}
-      selected={false}
+      selecting={selected}
+      selected={selected}
       onPick={onPick}
       group={group}
+      photoOf={photoOf}
       onSwipe={onSwipe ?? ((action) => swipe("a1", email, action, group))}
     />
   );
@@ -173,5 +181,69 @@ describe("MessageRow from outside the company", () => {
     hint.inside = null;
     render(<Row email={outside} />);
     expect(screen.queryByText("Extern")).toBeNull();
+  });
+});
+
+describe("MessageRow's picture", () => {
+  const PHOTO = "data:image/png;base64,iVBORw0KGgo=";
+  const photos = (email: string) => (person: PhotoKey) =>
+    person.email === email ? PHOTO : undefined;
+  const picture = (container: HTMLElement) => container.querySelector(`img[src="${PHOTO}"]`);
+
+  it("shows the sender's photo, and the box to pick it stays", () => {
+    const onPick = vi.fn();
+    const { container } = render(
+      <Row email={mail()} onPick={onPick} photoOf={photos("anna@weber-haustechnik.test")} />,
+    );
+    expect(picture(container)).toBeTruthy();
+    fireEvent.click(screen.getByRole("checkbox"));
+    expect(onPick).toHaveBeenCalledOnce();
+  });
+
+  it("shows the initials when there is no photo", () => {
+    const { container } = render(<Row email={mail()} />);
+    expect(container.querySelector("img")).toBeNull();
+    expect(screen.getByText("AW")).toBeTruthy();
+  });
+
+  it("gives a forged sender no colleague's photo", () => {
+    const forged = {
+      ...mail(),
+      "header:Authentication-Results:asText:all": [
+        "mx.weber-haustechnik.test; dmarc=fail header.from=weber-haustechnik.test",
+      ],
+    };
+    const { container } = render(
+      <Row email={forged} photoOf={photos("anna@weber-haustechnik.test")} />,
+    );
+    expect(picture(container)).toBeNull();
+  });
+
+  it("shows the first recipient in a list of sent mails", () => {
+    const sent = { ...mail(), to: [{ name: "Kunde", email: "kunde@example.test" }] };
+    const { container } = render(
+      <Row email={sent} showRecipient photoOf={photos("kunde@example.test")} />,
+    );
+    expect(picture(container)).toBeTruthy();
+  });
+
+  it("shows the latest sender of a conversation", () => {
+    const latest = { ...mail(), id: "e2", from: [{ name: "Kunde", email: "kunde@example.test" }] };
+    const { container } = render(
+      <Row
+        email={mail()}
+        group={{ count: 2, names: ["Anna", "Kunde"], unread: false, unreadIds: [], latest }}
+        photoOf={photos("kunde@example.test")}
+      />,
+    );
+    expect(picture(container)).toBeTruthy();
+  });
+
+  it("shows only the box while picking", () => {
+    const { container } = render(
+      <Row email={mail()} selected photoOf={photos("anna@weber-haustechnik.test")} />,
+    );
+    expect(picture(container)).toBeNull();
+    expect((screen.getByRole("checkbox") as HTMLInputElement).checked).toBe(true);
   });
 });
