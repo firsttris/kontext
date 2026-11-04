@@ -33,7 +33,7 @@ const isEscapedFrom = (line: Uint8Array) => {
 };
 
 const isBlank = (line: Uint8Array) =>
-  line.length === 1 || (line.length === 2 && line[0] === 13 && line[1] === LF);
+  (line.length === 1 && line[0] === LF) || (line.length === 2 && line[0] === 13 && line[1] === LF);
 
 const concat = (parts: Uint8Array[]): Uint8Array<ArrayBuffer> => {
   const all = new Uint8Array(parts.reduce((sum, part) => sum + part.length, 0));
