@@ -36,8 +36,11 @@ const addAndPick = async (page: Page) => {
   await page.goto("/settings?section=vacation");
   await page.getByLabel("Bis (optional)").fill("2030-12-18");
   await page.getByLabel("Vertretung").selectOption({ label: "Anna Weber" });
-  await page.getByLabel("Vorlage", { exact: true }).selectOption({ label: "Urlaub" });
-  const message = page.getByLabel("Nachricht", { exact: true });
+  // By role: a wrapping label's text takes in the options and the text, so no exact getByLabel.
+  await page
+    .getByRole("combobox", { name: "Vorlage", exact: true })
+    .selectOption({ label: "Urlaub" });
+  const message = page.getByRole("textbox", { name: "Nachricht", exact: true });
   await expect(message).toHaveValue(
     "Jonas Weber ist bis 18. Dezember 2030 nicht im Büro.\n" +
       "In dringenden Fällen: Anna Weber (anna@weber-haustechnik.test).",
