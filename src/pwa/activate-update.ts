@@ -9,8 +9,12 @@
  * workbox-window 7.4 Workbox.ts `_onControllerChange`, `messageSkipWaiting`).
  */
 
+import { flushDrafts } from "@/features/mail/draft-flush";
+
 /** What the update needs from the browser, passed in so it can be tested. */
 export type UpdateDeps = {
+  /** Saves the open composers' mails first: their autosave runs only 2 s after the last change. */
+  saveDrafts: () => Promise<void>;
   waiting: () => Promise<{ postMessage: (message: unknown) => void } | null | undefined>;
   onControllerChange: (listener: () => void) => void;
   reload: () => void;
@@ -27,6 +31,8 @@ export const activateUpdate = async (deps: UpdateDeps): Promise<void> => {
     done = true;
     deps.reload();
   };
+  // A failed save must not keep the old version; flushDrafts also stops waiting after 10 s.
+  await deps.saveDrafts().catch(() => undefined);
   const waiting = await deps.waiting();
   // Already taken over in another tab: this page only has to load again.
   if (!waiting) return reloadOnce();
@@ -36,6 +42,7 @@ export const activateUpdate = async (deps: UpdateDeps): Promise<void> => {
 };
 
 export const browserUpdateDeps = (): UpdateDeps => ({
+  saveDrafts: flushDrafts,
   waiting: async () => (await navigator.serviceWorker?.getRegistration())?.waiting,
   onControllerChange: (listener) =>
     navigator.serviceWorker?.addEventListener("controllerchange", listener),
