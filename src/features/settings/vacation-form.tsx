@@ -10,7 +10,7 @@ import { useVacationTemplates } from "@/features/company/vacation-templates";
 import { dateKey } from "@/lib/jscalendar";
 import { LOCALE } from "@/lib/locale";
 import { type VacationForm as Form, withDeputy } from "@/lib/vacation";
-import { fillVacationTemplate } from "@/lib/vacation-template";
+import { fillVacationTemplate, namesDeputy } from "@/lib/vacation-template";
 import { m } from "@/paraglide/messages";
 
 export type Colleague = { id: string; name: string; email: string };
@@ -42,8 +42,12 @@ export const VacationForm = ({
     setForm((current) => ({ ...current, [key]: event.target.value }));
 
   const deputyOf = (id: string) => colleagues.find((colleague) => colleague.id === id) ?? null;
-  const fill = (text: string, next: Form, id: string) =>
-    fillVacationTemplate(text, { name, to: next.to, deputy: deputyOf(id), locale: LOCALE });
+  /** A Vorlage without {Vertretung} still gets the deputy, in the own line. */
+  const fill = (text: string, next: Form, id: string) => {
+    const deputy = deputyOf(id);
+    const filled = fillVacationTemplate(text, { name, to: next.to, deputy, locale: LOCALE });
+    return namesDeputy(text) ? filled : withDeputy(filled, deputy);
+  };
 
   const pick = (index: number) => {
     const template = templates[index];

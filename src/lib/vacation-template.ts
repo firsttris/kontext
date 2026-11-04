@@ -32,6 +32,13 @@ export type VacationValues = {
 
 const PLACEHOLDER = /\{(name|bis|vertretung)\}/giu;
 
+/** Whether the template names the deputy itself; otherwise the form adds the own line. */
+export const namesDeputy = (text: string): boolean => /\{vertretung\}/iu.test(text);
+
+/** How {Vertretung} is written in the text. */
+export const deputyText = (deputy: { name: string; email: string }): string =>
+  `${deputy.name} (${deputy.email})`;
+
 /** A calendar day, written in the language; through UTC, so no time zone moves it. */
 const longDate = (day: string, locale: string) => {
   const [y, m, d] = day.split("-").map(Number);
@@ -43,7 +50,7 @@ const longDate = (day: string, locale: string) => {
 const valuesOf = ({ name, to, deputy, locale }: VacationValues): Record<string, string> => ({
   name: name.trim(),
   bis: to ? longDate(to, locale) : "",
-  vertretung: deputy ? `${deputy.name} (${deputy.email})` : "",
+  vertretung: deputy ? deputyText(deputy) : "",
 });
 
 /** The template's text for this absence. */
