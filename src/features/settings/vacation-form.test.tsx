@@ -46,4 +46,15 @@ describe("VacationForm", () => {
     choose("Vorlage", "0");
     expect(message().value).toContain("Anna Weber (anna@weber-haustechnik.test)");
   });
+
+  it("names only the new deputy after the filled Vorlage was edited", () => {
+    templates.current = [{ title: "Urlaub", text: "{Name} ist weg. Vertretung: {Vertretung}." }];
+    renderForm();
+    choose("Vertretung", "anna");
+    choose("Vorlage", "0");
+    fireEvent.change(message(), { target: { value: `${message().value}\nDanke!` } });
+    choose("Vertretung", "max");
+    expect(message().value).toContain("Max Brandt (max@weber-haustechnik.test)");
+    expect(message().value).not.toContain("Anna Weber");
+  });
 });
