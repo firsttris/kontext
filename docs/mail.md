@@ -81,6 +81,12 @@ IMAP und SMTP.
   Kontakts, sonst die Initialen; in „Gesendet“ der erste Empfänger. Ein Absender, den die
   [Prüfung](#sicherheit) nicht bestätigt, bekommt kein Foto. Fotos kommen nur aus den eigenen
   Kontakten und Profilen, nie aus dem Internet (keine Logos oder Favicons).
+- **Die Leiste über einer Mail:** „Archivieren“ (`e`) und „Löschen“ (`#`) mit Namen, daneben
+  Wiedervorlage (`w`), Markieren (`s`) und in gemeinsamen Postfächern „Zuweisen“, rechts
+  „Antworten“. Alles Seltenere liegt unter „Weitere Aktionen“ (die drei Punkte): antworten an
+  alle, weiterleiten, drucken, als ungelesen markieren (`U`), Spam (`!`), verschieben, Kategorie,
+  Aufgabe (`t`), Besprechen (`b`) und Regel. Wo der Platz knapp ist, am Handy oder im schmalen
+  Lesebereich, bleiben von Archivieren und Löschen nur die Symbole.
 - **Mehrere Mails auf einmal** (Kästchen links an jeder Zeile, Strg-/Shift-Klick, `x`; am Handy
   lange drücken): archivieren, löschen, gelesen, Kategorie, verschieben, Aufgaben erstellen, als
   Anhang weiterleiten. Das Kästchen steht an der Stelle des Bildes und erscheint, sobald die Maus

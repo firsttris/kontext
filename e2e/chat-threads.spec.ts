@@ -146,7 +146,8 @@ test.describe("Chat: Reaktionen und Antworten", () => {
     await addMail("jonas", "jonas", subject);
     await login(page);
     await page.getByRole("list", { name: "Posteingang" }).getByText(subject).click();
-    await page.getByRole("button", { name: "Besprechen" }).click();
+    await page.getByRole("button", { name: "Weitere Aktionen" }).click();
+    await page.getByRole("menuitem", { name: "Besprechen" }).click();
     const dialog = page.getByRole("dialog", { name: "Über diese Mail sprechen" });
     await dialog.getByRole("textbox", { name: "An Kanal oder Person" }).fill("Max");
     await dialog.getByLabel("Als Kopie teilen").check();

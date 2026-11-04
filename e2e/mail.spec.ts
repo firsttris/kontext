@@ -366,7 +366,8 @@ test.describe("Mail", () => {
     await expect(page.getByRole("link", { name: folder })).toBeVisible();
 
     await page.getByRole("list", { name: "Posteingang" }).getByText(subject).click();
-    await page.getByRole("button", { name: "Verschieben nach …" }).click();
+    await page.getByRole("button", { name: "Weitere Aktionen" }).click();
+    await page.getByRole("menuitem", { name: "Verschieben nach …" }).click();
     await page.getByRole("menuitem", { name: folder }).click();
     await expect(page.getByRole("list", { name: "Posteingang" }).getByText(subject)).toHaveCount(0);
     await page.getByRole("link", { name: folder }).click();
@@ -390,14 +391,16 @@ test.describe("Mail", () => {
     };
     const inbox = page.getByRole("list", { name: "Posteingang" });
     await inbox.getByText(subject).click();
-    await page.getByRole("button", { name: "Als Spam markieren" }).click();
+    await page.getByRole("button", { name: "Weitere Aktionen" }).click();
+    await page.getByRole("menuitem", { name: "Als Spam markieren" }).click();
     await expect(page.getByRole("status")).toContainText("Als Spam markiert.");
     await expect(inbox.getByText(subject)).toHaveCount(0);
     await expect.poll(keywords).toContain("$junk");
 
     await page.getByRole("link", { name: "Spam" }).click();
     await page.getByRole("list", { name: "Spam" }).getByText(subject).click();
-    await page.getByRole("button", { name: "Kein Spam" }).click();
+    await page.getByRole("button", { name: "Weitere Aktionen" }).click();
+    await page.getByRole("menuitem", { name: "Kein Spam" }).click();
     await expect(
       page.getByRole("status").filter({ hasText: "In den Posteingang verschoben." }),
     ).toBeVisible();
@@ -412,6 +415,11 @@ test.describe("Mail", () => {
     await addMail("jonas", "jonas", subject);
     const inbox = page.getByRole("list", { name: "Posteingang" });
     await inbox.getByText(subject).click();
+    // The most used actions carry their name; the rest is under "Weitere Aktionen".
+    for (const name of ["Archivieren", "Löschen"]) {
+      await expect(page.getByRole("button", { name, exact: true }).getByText(name)).toBeVisible();
+    }
+    await expect(page.getByRole("button", { name: "Als Spam markieren" })).toHaveCount(0);
     await page.getByRole("button", { name: "Archivieren" }).click();
     await expect(inbox.getByText(subject)).toHaveCount(0);
     await page.getByRole("link", { name: "Archiv" }).click();
@@ -467,9 +475,10 @@ test.describe("Gemeinsames Postfach erkennen und verschieben", () => {
     await addMail("jonas", "info", subject);
     await page.getByRole("link", { name: "info@" }).click();
     await page.getByRole("list", { name: "Posteingang" }).getByText(subject).click();
-    await page.getByRole("button", { name: "Verschieben nach …" }).click();
+    await page.getByRole("button", { name: "Weitere Aktionen" }).click();
+    await page.getByRole("menuitem", { name: "Verschieben nach …" }).click();
     // Grouped by mailbox: info@'s folders first, then the own ones.
-    const menu = page.getByRole("menu");
+    const menu = page.getByRole("menu", { name: "Verschieben nach …" });
     await expect(menu).toContainText("info@weber-haustechnik.test");
     await expect(menu).toContainText("Mein Postfach");
     await menu.getByRole("menuitem", { name: "Steuerberater" }).click();
@@ -694,11 +703,16 @@ test.describe("Mail am Handy @phone", () => {
     await page.getByRole("list", { name: "Posteingang" }).getByText(subject).click();
     await expect(page.getByRole("heading", { name: subject })).toBeVisible();
     await expect(page.getByRole("list", { name: "Posteingang" })).toBeHidden();
-    // The toolbar's icons scroll sideways; "Weitere Aktionen" stays on the screen, the page no
-    // wider than it.
-    await expect(page.getByRole("button", { name: "Weitere Aktionen" })).toBeInViewport({
-      ratio: 1,
-    });
+    // The toolbar fits on one line: Archivieren, Löschen and "Weitere Aktionen" are on the
+    // screen (as icons, their names give way), the page no wider than it.
+    for (const name of ["Archivieren", "Löschen", "Weitere Aktionen"]) {
+      await expect(page.getByRole("button", { name, exact: true })).toBeInViewport({ ratio: 1 });
+    }
+    // The rarer ones are in the menu.
+    await page.getByRole("button", { name: "Weitere Aktionen" }).click();
+    await expect(page.getByRole("menuitem", { name: "Als Spam markieren" })).toBeVisible();
+    await expect(page.getByRole("menuitem", { name: "Verschieben nach …" })).toBeVisible();
+    await page.keyboard.press("Escape");
     const width = page.viewportSize()?.width ?? 0;
     expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(
       width,

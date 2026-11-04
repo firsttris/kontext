@@ -78,6 +78,11 @@ SMTP.
   contact, else the initials; in "Sent" the first recipient. A sender the
   [check](#sicherheit) does not confirm gets no photo. Photos come only from one's own contacts and
   profiles, never from the internet (no logos or favicons).
+- **The bar above a mail:** "Archive" (`e`) and "Delete" (`#`) with their names, next to them
+  Snooze (`w`), Flag (`s`) and, in shared mailboxes, "Assign", on the right "Reply". Everything
+  used less often is under "More actions" (the three dots): reply all, forward, print, mark as
+  unread (`U`), spam (`!`), move, category, task (`t`), Discuss (`b`) and rule. Where space is
+  short, on the phone or in a narrow reading pane, Archive and Delete keep only their icons.
 - **Several mails at once** (checkbox on the left of each row, Ctrl/Shift-click, `x`; on the phone
   a long press): archive, delete, mark read, category, move, create tasks, forward as attachment.
   The checkbox sits where the picture is and shows as soon as the mouse is over it, the keyboard is
