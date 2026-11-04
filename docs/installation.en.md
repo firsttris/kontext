@@ -166,7 +166,8 @@ The command only changes what is missing: if the client, role, account or key al
 says so and at most adds missing permissions or the scope; it never creates a second key. That
 is why it belongs to every update ([Updates](#6-updates)). If the key is lost, delete it in
 Stalwart on the account `kontext-server@` and run the command again. If Stalwart has several
-domains, `--domain firma.de` picks the one for the account. Without a terminal (in a script, say)
+domains, `--domain firma.de` picks the one for the account the first time; after that it keeps to
+the account's domain. Without a terminal (in a script, say)
 it takes the login from the environment variable `STALWART_ADMIN` (`name:password`). What exactly
 it does is in `server/stalwart-setup.ts`.
 

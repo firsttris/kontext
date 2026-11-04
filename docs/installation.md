@@ -165,7 +165,8 @@ Der Befehl ändert nur, was fehlt: Gibt es Client, Rolle, Konto oder Schlüssel 
 und ergänzt höchstens fehlende Rechte oder den Scope; einen zweiten Schlüssel legt er nicht an.
 Darum gehört er nach jedem Update dazu ([Updates](#6-updates)). Ist der Schlüssel verloren, ihn
 in Stalwart beim Konto `kontext-server@` löschen und den Befehl noch einmal ausführen. Hat
-Stalwart mehrere Domains, wählt `--domain firma.de` die für das Konto. Ohne Terminal (etwa in
+Stalwart mehrere Domains, wählt `--domain firma.de` beim ersten Mal die für das Konto; danach
+bleibt er bei der Domain des Kontos. Ohne Terminal (etwa in
 einem Skript) nimmt er den Zugang aus der Umgebungsvariablen `STALWART_ADMIN` (`name:passwort`).
 Was er genau tut, steht in `server/stalwart-setup.ts`.
 

@@ -144,13 +144,21 @@ export const pickDomain = (domains: Domain[], wanted?: string): Result<Domain> =
   return fail(`Stalwart hat mehrere Domains (${names}); eine mit --domain <name> wählen.`);
 };
 
+const isServerAccount = (account: Account): boolean =>
+  account["@type"] === "User" && account.name === ACCOUNT_NAME;
+
 export const findAccount = (accounts: Account[], domain: Domain): Account | undefined =>
-  accounts.find(
-    (account) =>
-      account["@type"] === "User" &&
-      account.name === ACCOUNT_NAME &&
-      account.domainId === domain.id,
-  );
+  accounts.find((account) => isServerAccount(account) && account.domainId === domain.id);
+
+/**
+ * The domain of the one `kontext-server@…` there already is: a re-run after a second domain was
+ * added keeps using it without --domain.
+ */
+export const serverAccountDomain = (accounts: Account[], domains: Domain[]): string | undefined => {
+  const existing = accounts.filter(isServerAccount);
+  if (existing.length !== 1) return undefined;
+  return domains.find((domain) => domain.id === existing[0]!.domainId)?.name;
+};
 
 const passwordCredential = (password: string) => ({
   "0": { "@type": "Password", secret: password },
@@ -308,13 +316,13 @@ export const ensureServerAccount = async (
     { ids: null, properties: ["name"] },
     "0",
   ]);
-  const domain = pickDomain(domains, options.domain);
-  if (!domain.ok) return domain;
   const accounts = await getList<Account>(request, [
     "x:Account/get",
     { ids: null, properties: ["@type", "name", "domainId", "roles", "credentials"] },
     "0",
   ]);
+  const domain = pickDomain(domains, options.domain ?? serverAccountDomain(accounts, domains));
+  if (!domain.ok) return domain;
   const account = findAccount(accounts, domain.value);
   const address = `${ACCOUNT_NAME}@${domain.value.name}`;
   const password = options.newPassword();
