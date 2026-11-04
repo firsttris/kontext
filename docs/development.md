@@ -148,8 +148,8 @@ Einladung. Das Skript ist idempotent – es ergänzt nur, was fehlt.
 Aufgaben und Chat liegen nicht in Stalwart, sondern in der Datenbank des Kontext-Servers; der Seed
 erreicht sie nicht. `bun run dev` legt sie darum nach dem Start an (`dev:demo`, `dev/fill-demo.ts`),
 sobald die Testdaten in Stalwart sind und der Server antwortet (`dev/demo-data.ts`): die Aufgaben auf dem Board von info@ und in Jonas' eigenem, den Kanal
-#baustelle-hoffmann mit Aufmaß, Mail-Karte und einer Aufgabe aus einer Nachricht, ein Wort in info@
-und #allgemein und eine Direktnachricht an Jonas. Dafür melden sich die vier über
+`#baustelle-hoffmann` mit Aufmaß, Mail-Karte und einer Aufgabe aus einer Nachricht, ein Wort in info@
+und `#allgemein` und eine Direktnachricht an Jonas. Dafür melden sich die vier über
 `POST /api/auth/sign-in/stalwart` an, wie das Anmeldeformular. Das geschieht nur einmal je
 Datenbank: steht #baustelle-hoffmann schon da, bleibt alles, wie es ist. Wer neu anfangen will,
 löscht `.dev/server/`. Dieselben Daten nehmen die Screenshots und der Film

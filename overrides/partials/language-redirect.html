@@ -1,0 +1,33 @@
+{#- Opens the docs in the reader's language: on a first visit the page in the browser's language
+    (navigator.languages), after a choice in the language menu that choice. The links are the
+    language menu's own (config.extra.alternate, the same page in the other language, set by
+    mkdocs-static-i18n), so the reader lands on the same page and anchor. Runs in the head,
+    before the page shows; crawlers are left on the page they asked for. -#}
+{% if config.extra.alternate %}
+  <script>
+    (function () {
+      var pages = {
+        {%- for alt in config.extra.alternate %}
+        {{ alt.lang | tojson }}: {{ (alt.link | url) | tojson }}{{ "," if not loop.last }}
+        {%- endfor %}
+      };
+      var key = "docs-language";
+      var read = function () {
+        try { return localStorage.getItem(key); } catch (e) { return null; }
+      };
+      document.addEventListener("click", function (event) {
+        var link = event.target.closest && event.target.closest("a.md-select__link[hreflang]");
+        if (!link) return;
+        try { localStorage.setItem(key, link.getAttribute("hreflang")); } catch (e) {}
+      }, true);
+      if (/bot|crawl|spider|slurp/i.test(navigator.userAgent)) return;
+      var browser = (navigator.languages || [navigator.language || ""])
+        .map(function (tag) { return String(tag).slice(0, 2).toLowerCase(); })
+        .filter(function (code) { return pages[code] !== undefined; })[0];
+      var wanted = read() || browser;
+      var current = document.documentElement.lang.slice(0, 2);
+      if (!wanted || wanted === current || pages[wanted] === undefined) return;
+      location.replace(pages[wanted] + location.search + location.hash);
+    })();
+  </script>
+{% endif %}

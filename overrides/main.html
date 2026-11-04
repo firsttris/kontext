@@ -3,6 +3,7 @@
 {% extends "base.html" %}
 
 {% block extrahead %}
+  {% include "partials/language-redirect.html" %}
   {% if page and page.meta and page.meta.image %}
     <meta property="og:type" content="website">
     <meta property="og:site_name" content="{{ config.site_name }}">

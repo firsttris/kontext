@@ -25,7 +25,8 @@ scratchpad and name the source file in comments and commit messages where it set
 Update what the change affects, in the same commit, and only that:
 - the tests for what changed (Vitest next to the code for pure logic, Playwright in `e2e/` for
   what a user does, desktop and `@phone`);
-- the docs in `docs/` that describe it;
+- the docs in `docs/` that describe it, in both languages: the German page `x.md` and its English
+  translation `x.en.md` (same headings with the same anchor ids, `{ #id }`);
 - both READMEs (`README.md` in English, `README.de.md` in German) when a feature a user sees is
   added, changed or removed;
 - the screenshots after a change to the look: **Actions → Update screenshots → Run workflow**
@@ -54,9 +55,9 @@ The e2e tests (`bun run e2e`) run in CI; don't run them locally before a push.
 - The user's running processes are not stopped; use other ports for tests (dev: Stalwart 18080,
   server 18090, Vite 5173; e2e: 28080, 28090, 5174).
 - Language: code, comments and commits in English; `README.md` in English with `README.de.md` in
-  German; docs in German for now (the first users are German businesses); the app in German and
-  English: texts in `messages/de.json` and `messages/en.json`, used through Paraglide's `m.*`; a
-  new text goes into both, dates and numbers through `LOCALE` (`src/lib/locale.ts`).
+  German; docs in German (`x.md`) and English (`x.en.md`), both kept the same in every change; the
+  app in German and English: texts in `messages/de.json` and `messages/en.json`, used through
+  Paraglide's `m.*`; a new text goes into both, dates and numbers through `LOCALE` (`src/lib/locale.ts`).
 
 ## Code style
 

@@ -1,8 +1,9 @@
 # Documentation as a website: https://firsttris.github.io/kontext/
 # Source is docs/, built with MkDocs Material (.github/workflows/docs.yml publishes it).
 # Locally: pip install mkdocs-material mkdocs-static-i18n && mkdocs serve
-# Languages: German at /, English at /en/. A page is translated by a file next to it with .en.md
-# (index.en.md); a page without one shows the German text in the English site too.
+# Languages: German at /, English at /en/. Every page has its translation next to it with .en.md
+# (index.en.md), headings with the same anchor ids. A first visit opens the browser's language
+# (overrides/partials/language-redirect.html).
 site_name: Kontext
 site_description: >-
   Mail, Kalender, Kontakte, Aufgaben, Team-Chat und Telefonie (CTI) auf dem eigenen Server – die
