@@ -58,6 +58,14 @@
   ],
   packageRules: [
     {
+      // Renovate's github-actions manager reads setup-bun's `bun-version: x.y.x` in ci.yml and
+      // docs.yml itself, as the npm package `bun`, outside the Bun group. The regex manager above
+      // reads the same lines as oven-sh/bun, so leave them to it: one reader per line, in one PR.
+      matchManagers: ["github-actions"],
+      matchPackageNames: ["bun"],
+      enabled: false,
+    },
+    {
       // The images of docker/ and box/, ci.yml, the bun-version of the workflows and the types in
       // one PR, so the Bun Kontext is built, tested and shipped with cannot drift apart
       matchPackageNames: ["docker.io/oven/bun", "oven-sh/bun", "@types/bun"],
