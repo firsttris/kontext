@@ -88,10 +88,11 @@ jedem Neustart vor der Einrichtung gibt es ein neues.
    ([ohne Oberfläche](vps.md#10-stalwart-ohne-oberflache-einrichten)).
 3. **Port 587** (Submission mit STARTTLS) unter *Netzwerk → Listener* anlegen: Stalwarts
    Standard hat nur 465, viele Mailprogramme nehmen 587.
-4. **Firmenverwaltung einschalten** – nötig, nicht optional: den API-Schlüssel anlegen und als
-   `STALWART_ADMIN_KEY` eintragen ([Anleitung unten](#firmenverwaltung-einschalten)), dann das
-   Konto des Chefs anlegen. Weitere Mitarbeiter und gemeinsame Postfächer legt der Chef danach
-   selbst in Kontext an.
+4. **Den [Einrichtungsbefehl](#einrichtungsbefehl) ausführen** – nötig, nicht optional: Er trägt
+   Kontext als OAuth-Client ein (Schritt 12), erlaubt Verzeichnisabfragen (Schritt 13) und legt
+   Rolle, Konto und API-Schlüssel für die [Firmenverwaltung](#firmenverwaltung-einschalten) an;
+   den Schlüssel als `STALWART_ADMIN_KEY` eintragen, dann das Konto des Chefs anlegen. Weitere
+   Mitarbeiter und gemeinsame Postfächer legt der Chef danach selbst in Kontext an.
 5. Unter *Settings → Network → HTTP → General*, Abschnitt *Proxy*, als **Client IP source**
    *X-Forwarded-For header* wählen (`clientIpSource: xForwardedFor`) und *Trusted proxy hops*
    auf 1 lassen (`forwardedHops`), damit Stalwart bei CalDAV/CardDAV und Autoconfig (über Caddy)
@@ -120,20 +121,53 @@ jedem Neustart vor der Einrichtung gibt es ein neues.
     `local_port != 25 && is_tls` → `[plain, login, oauthbearer, xoauth2]` stehen bleibt. Ein
     Token ginge sonst im Klartext, wenn jemand STARTTLS aus der Verbindung streicht. Kontext
     selbst verschickt über JMAP, nicht über SMTP.
-12. **Kontext als OAuth-Client eintragen** – nötig, sonst meldet sich niemand an: unter
-    *Management → Directory → OAuth Clients* einen Client mit der *Client ID* `kontext`, der
-    *Redirect URI* `https://kontext.invalid/oauth` (wird nie aufgerufen) und dem Scope **Full**
-    (`full`) anlegen, ohne Secret ([ohne Oberfläche](vps.md#10-stalwart-ohne-oberflache-einrichten)).
-    Stalwart 1.0 nimmt nur Clients an, die es kennt, und gibt einem Token nur die Scopes, die der
+12. **Kontext als OAuth-Client** – nötig, sonst meldet sich niemand an; das erledigt der
+    [Einrichtungsbefehl](#einrichtungsbefehl). Von Hand: unter *Management → Directory → OAuth
+    Clients* einen Client mit der *Client ID* `kontext`, der *Redirect URI*
+    `https://kontext.invalid/oauth` (wird nie aufgerufen) und dem Scope **Full** (`full`) anlegen,
+    ohne Secret. Stalwart 1.0 nimmt nur Clients an, die es kennt, und gibt einem Token nur die Scopes, die der
     Client erlaubt; `full` gibt Kontexts Token alle Rechte des Kontos, die die Einstellungen und
     die Firmenverwaltung brauchen (siehe [Anmeldung](architecture.md#anmeldung)). Den Scope `full`
     darf nur ein Superuser setzen. Fehlt der Eintrag, schreibt Kontext beim Anmelden `Stalwart
     lehnt die Anmeldung für Kontext ab (Unknown client id)` ins Log, fehlt der Scope, `… ab
     (invalid_scope)`.
-13. Unter *Settings → Sharing* **Verzeichnisabfragen erlauben** (`x:Sharing`,
-    `allowDirectoryQueries: true`), danach die Einstellungen neu laden (*Reload*) – nötig: Ohne
-    findet Kontext keine Kollegen (Teilen, neuer Chat, freie Zeiten beim Einladen); Stalwart 1.0
+13. **Verzeichnisabfragen erlauben** – erledigt ebenfalls der Einrichtungsbefehl; von Hand unter
+    *Settings → Sharing* (`x:Sharing`, `allowDirectoryQueries: true`), danach die Einstellungen
+    neu laden (*Reload*). Nötig: Ohne findet Kontext keine Kollegen (Teilen, neuer Chat, freie Zeiten beim Einladen); Stalwart 1.0
     lehnt `Principal/query` sonst ab (`The administrator has disabled directory queries`).
+
+### Einrichtungsbefehl
+
+Was Kontext in Stalwart braucht, richtet ein Befehl im Kontext-Container ein. Er fragt nach dem
+Admin-Zugang von Stalwart (Name, z. B. `admin@firma.de`, und Passwort, das nicht angezeigt
+wird); der Zugang bleibt nur im Speicher, nichts davon wird geschrieben oder ausgegeben:
+
+```bash
+docker compose -f deploy/compose.yaml exec kontext bun server/setup-stalwart.ts
+podman exec -it kontext bun server/setup-stalwart.ts      # mit Quadlet
+```
+
+Er sorgt dafür, dass
+
+- der **OAuth-Client** `kontext` mit der Redirect-URI `https://kontext.invalid/oauth` und dem
+  Scope `full` da ist (Schritt 12); einem älteren Client ohne `full` ergänzt er den Scope;
+- **Verzeichnisabfragen** erlaubt sind, und lädt dann die Einstellungen neu (Schritt 13);
+- die **Rolle** `Kontext-Server` mit genau den Rechten aus [Firmenverwaltung
+  einschalten](#firmenverwaltung-einschalten) da ist (sie erbt *User*), dazu das **Konto**
+  `kontext-server@firma.de` mit dieser Rolle und einem Zufallspasswort und für dieses Konto ein
+  **API-Schlüssel**.
+
+Den neuen Schlüssel gibt er einmal aus, als Zeile `STALWART_ADMIN_KEY=API_…`: in `deploy/.env`
+eintragen (mit Quadlet in `deploy/kontext.env`) und Kontext neu starten
+(`docker compose -f deploy/compose.yaml up -d`, mit Quadlet `systemctl restart kontext`).
+
+Der Befehl ändert nur, was fehlt: Gibt es Client, Rolle, Konto oder Schlüssel schon, sagt er das
+und ergänzt höchstens fehlende Rechte oder den Scope; einen zweiten Schlüssel legt er nicht an.
+Darum gehört er nach jedem Update dazu ([Updates](#6-updates)). Ist der Schlüssel verloren, ihn
+in Stalwart beim Konto `kontext-server@` löschen und den Befehl noch einmal ausführen. Hat
+Stalwart mehrere Domains, wählt `--domain firma.de` die für das Konto. Ohne Terminal (etwa in
+einem Skript) nimmt er den Zugang aus der Umgebungsvariablen `STALWART_ADMIN` (`name:passwort`).
+Was er genau tut, steht in `server/stalwart-setup.ts`.
 
 Danach unter `https://kontext.firma.de` anmelden. Am Handy im Browser „Zum Startbildschirm
 hinzufügen“ wählen: Kontext startet dann wie eine App und bleibt angemeldet.
@@ -324,7 +358,10 @@ braucht der Kontext-Server einen API-Schlüssel von Stalwart, der nur Konten ver
 
     Darum gehört er zur Einrichtung dazu (Schritt 4 unter [Stalwart einrichten](#3-stalwart-einrichten)).
 
-1. In Stalwarts Verwaltung eine **Rolle** `Kontext-Server` anlegen: sie erbt die Rolle *User*
+Rolle, Konto und Schlüssel (Schritte 1–3) legt der [Einrichtungsbefehl](#einrichtungsbefehl) an;
+von Hand in Stalwarts Verwaltung geht es so:
+
+1. Eine **Rolle** `Kontext-Server` anlegen: sie erbt die Rolle *User*
    und bekommt dazu die Rechte `sysAccountGet`, `sysAccountQuery`, `sysAccountCreate`,
    `sysAccountUpdate`, `sysRoleGet`, `sysRoleCreate`, `sysDomainGet`, `sysAuthenticationGet`,
    `sysIndexQueueStatusGet` und `impersonate`. Mit `sysIndexQueueStatusGet` zeigt die
@@ -650,23 +687,25 @@ docker compose -f deploy/compose.yaml up -d
 ```
 
 Vor einem Stalwart-Update mit neuer Hauptversion die `UPGRADING`-Hinweise von Stalwart lesen und
-vorher ein Backup machen.
+vorher ein Backup machen. Nach jedem Update den [Einrichtungsbefehl](#einrichtungsbefehl) noch
+einmal ausführen; er ergänzt nur, was eine neue Version braucht und noch fehlt.
 
 ### Stalwart 1.0.3
 
 Stalwart 1.0.3 kennt keine *First-party*-Clients mehr: Ein eingetragener Client bekommt nur noch
 die Scopes, die er anfordert und die er erlaubt. Kontext fordert dafür ab dieser Version den
-Scope `urn:stalwart:oauth:scope:full` an. Vor dem Update von Kontext und Stalwart beim Client
-`kontext` den Scope **Full** ergänzen (*Management → Directory → OAuth Clients*, als Superuser),
-sonst lehnt Stalwart jede neue Anmeldung ab. Ohne Oberfläche, mit dem Helfer aus
-[VPS einrichten, Schritt 10](vps.md#10-stalwart-ohne-oberflache-einrichten):
+Scope `urn:stalwart:oauth:scope:full` an. Beim Client `kontext` muss darum der Scope **Full**
+stehen, sonst lehnt Stalwart jede neue Anmeldung ab. Den ergänzt der
+[Einrichtungsbefehl](#einrichtungsbefehl): nach dem Update von Kontext und Stalwart einmal
+ausführen. Von Hand geht es unter *Management → Directory → OAuth Clients* (als Superuser) oder
+mit dem Helfer aus [VPS einrichten, Schritt 10](vps.md#10-stalwart-ohne-oberflache-einrichten):
 
 ```bash
 /root/stalwart-api.sh '[["x:OAuthClient/get",{"ids":null,"properties":["clientId","scopes"]},"0"]]'
 /root/stalwart-api.sh '[["x:OAuthClient/set",{"update":{"<id von kontext>":{"scopes/full":true}}},"0"]]'
 ```
 
-Danach wie gewohnt aktualisieren; Kontext und Stalwart gehören dabei zusammen: Stalwart 1.0.3
+Kontext und Stalwart gehören beim Update zusammen: Stalwart 1.0.3
 mit einem Kontext bis 0.1.22 lässt niemanden mehr neu anmelden, weil der alte Kontext den Scope
 nicht anfordert. Alle melden sich einmal neu an: Freigaben aus der Zeit als
 *First-party*-Client verwirft Stalwart, sobald Kontext den Token erneuert (`invalid_grant`,

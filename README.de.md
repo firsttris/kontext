@@ -93,11 +93,13 @@ Tailscale); die [Anleitung](https://firsttris.github.io/kontext/installation.htm
 1. Domain und DKIM einrichten und das Konto des Chefs anlegen; alle anderen legt der Chef in Kontext an.
 2. Kontexts Netz `10.89.250.0/24` als erlaubte IP eintragen, damit falsche Passwörter nie Kontext
    selbst sperren.
-3. Den API-Schlüssel für die Firmenverwaltung anlegen, in `deploy/.env` als `STALWART_ADMIN_KEY`
-   eintragen und Kontext neu starten ([wie](https://firsttris.github.io/kontext/installation.html#firmenverwaltung-einschalten)).
-4. Kontext als OAuth-Client `kontext` mit dem Scope `full` eintragen (Redirect-URI
-   `https://kontext.invalid/oauth`) und Verzeichnisabfragen erlauben (*Sharing*); Stalwart 1.0
-   meldet nur Clients an, die es kennt, und zeigt die Kollegen sonst nicht.
+3. `docker compose -f deploy/compose.yaml exec kontext bun server/setup-stalwart.ts` ausführen und
+   den Admin-Zugang von Stalwart eingeben: Der Befehl trägt Kontext als OAuth-Client `kontext` mit
+   dem Scope `full` ein, erlaubt Verzeichnisabfragen und legt Rolle, Konto und API-Schlüssel für die
+   Firmenverwaltung an ([was er tut](https://firsttris.github.io/kontext/installation.html#einrichtungsbefehl)).
+   Er ergänzt nur, was fehlt – also nach jedem Update noch einmal ausführen.
+4. Die ausgegebene Zeile `STALWART_ADMIN_KEY=…` in `deploy/.env` eintragen und Kontext neu starten
+   (`docker compose -f deploy/compose.yaml up -d`).
 5. Unter `https://<deine Domain>` anmelden.
 
 Anrufe und Dokumente (Schreibzeug, ohne eigene Installation) sind in `.env.example` schon eingeschaltet; wer sie nicht braucht, nimmt sie

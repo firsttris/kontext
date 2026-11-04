@@ -22,7 +22,7 @@ import { existsSync, mkdirSync, openSync } from "node:fs";
 import { chmod, mkdir, rm, writeFile } from "node:fs/promises";
 import { dirname, join, resolve } from "node:path";
 import { parseArgs } from "node:util";
-import { CLIENT_ID, REDIRECT_URI } from "../server/stalwart";
+import { ensureDirectoryQueries, ensureOAuthClient } from "../server/stalwart-setup";
 import { STALWART_ADMIN, STALWART_VERSION } from "./config";
 import { download } from "./download";
 
@@ -237,53 +237,15 @@ const withoutStalwartRsvp = (port: number) =>
   ]);
 
 /**
- * The colleagues for sharing, the chat and their free times come from Principal/query, which
- * Stalwart 1.0 answers only with `allowDirectoryQueries` (x:Sharing; crates/jmap/src/principal/
- * query.rs). As on a customer's server (docs/installation.md); the setting needs a reload.
+ * As on a customer's server (docs/installation.md, server/setup-stalwart.ts): the OAuth client
+ * `kontext` with the scope `full` and directory queries, from the same module.
  */
-const allowDirectoryQueries = async (port: number): Promise<void> => {
-  const [[, { list }]] = (await adminRequest(port, [
-    ["x:Sharing/get", { ids: ["singleton"], properties: ["allowDirectoryQueries"] }, "0"],
-  ])) as [[string, { list: { allowDirectoryQueries: boolean }[] }, string]];
-  if (list[0]?.allowDirectoryQueries) return;
-  await adminRequest(port, [
-    ["x:Sharing/set", { update: { singleton: { allowDirectoryQueries: true } } }, "0"],
-    ["x:Action/set", { create: { r: { "@type": "ReloadSettings" } } }, "1"],
-  ]);
-};
-
-/**
- * Kontext signs in as the OAuth client `kontext` with the scope `full` (server/stalwart.ts);
- * Stalwart 1.0 refuses clients it does not know and, since 1.0.3, scopes a client does not allow
- * (crates/http/src/auth/oauth/authorize.rs). As on a customer's server (docs/installation.md):
- * created once, and given `full` where it was made before 1.0.3 as first-party.
- */
-type OAuthClient = { id: string; clientId: string; scopes?: Record<string, boolean> };
-
-const registerKontext = async (port: number): Promise<void> => {
-  const [[, { list }]] = (await adminRequest(port, [
-    ["x:OAuthClient/get", { ids: null, properties: ["clientId", "scopes"] }, "0"],
-  ])) as [[string, { list: OAuthClient[] }, string]];
-  const known = list.find((client) => client.clientId === CLIENT_ID);
-  if (known?.scopes?.full) return;
-  await adminRequest(port, [
-    [
-      "x:OAuthClient/set",
-      known
-        ? { update: { [known.id]: { "scopes/full": true } } }
-        : {
-            create: {
-              kontext: {
-                clientId: CLIENT_ID,
-                description: "Kontext",
-                redirectUris: { [REDIRECT_URI]: true },
-                scopes: { full: true },
-              },
-            },
-          },
-      "0",
-    ],
-  ]);
+const setUpForKontext = async (port: number): Promise<void> => {
+  const request = (calls: Invocation[]) => adminRequest(port, calls);
+  for (const step of [ensureOAuthClient, ensureDirectoryQueries]) {
+    const result = await step(request);
+    if (!result.ok) throw new Error(`Stalwart setup failed: ${result.error}`);
+  }
 };
 
 const stop = (child: ReturnType<typeof spawn>): Promise<void> =>
@@ -340,8 +302,7 @@ const main = async (): Promise<void> => {
   await waitForHttp(httpPort);
   await treatSmtpAsInbound(httpPort, args.smtp);
   await withoutStalwartRsvp(httpPort);
-  await registerKontext(httpPort);
-  await allowDirectoryQueries(httpPort);
+  await setUpForKontext(httpPort);
   console.log(
     `Stalwart ${STALWART_VERSION} läuft: http://127.0.0.1:${httpPort} (SMTP ${args.smtp}, IMAP ${args.imap}), Admin ${STALWART_ADMIN.user}`,
   );

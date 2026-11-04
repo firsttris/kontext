@@ -164,6 +164,7 @@ describe("signing in at Stalwart", () => {
       status: "unavailable",
     });
     expect(warn).toHaveBeenCalledWith(expect.stringContaining('den Scope "full"'));
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining("bun server/setup-stalwart.ts"));
     warn.mockRestore();
   });
 

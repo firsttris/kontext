@@ -7,6 +7,13 @@ Steps that an update needs beyond raising the version are marked **Upgrade**.
 
 ## Unreleased
 
+- Setup command: `docker compose -f deploy/compose.yaml exec kontext bun server/setup-stalwart.ts`
+  (Quadlet: `podman exec -it kontext bun server/setup-stalwart.ts`) sets up what Kontext needs in
+  Stalwart with the admin login it asks for: the OAuth client `kontext` with the scope `full`
+  (added to an existing client), directory queries, and the role `Kontext-Server`, the account
+  `kontext-server@<domain>` and its API key, printed once as the line for `deploy/.env`. It only
+  adds what is missing, so it is safe to run after every update (installation guide, "Einrichtungsbefehl").
+  **Upgrade:** for Stalwart 1.0.3, running it once adds the scope `full` to the client.
 - Sign-in: when Stalwart refuses it with `invalid_scope`, the log names the missing scope `full`
   of the OAuth client `kontext` (`server/stalwart.ts`).
 - Stalwart 1.0.3 instead of 1.0.2. Stalwart no longer has first-party clients: a registered client

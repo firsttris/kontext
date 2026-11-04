@@ -374,7 +374,8 @@ Mailprogramme nehmen:
 
 **Einstellungen aus der Installation** (X-Forwarded-For, Kontexts Netz als erlaubte IP,
 Sperrdauer ein Tag, deutsche Suche, 16 gleichzeitige JMAP-Anfragen, Stalwarts RSVP-Seite aus,
-Anmeldung auf 587 nur nach STARTTLS, Kontext als OAuth-Client, Verzeichnisabfragen):
+Anmeldung auf 587 nur nach STARTTLS; Kontext als OAuth-Client und die Verzeichnisabfragen
+richtet der Einrichtungsbefehl unten ein):
 
 ```bash
 /root/stalwart-api.sh '[
@@ -388,10 +389,7 @@ Anmeldung auf 587 nur nach STARTTLS, Kontext als OAuth-Client, Verzeichnisabfrag
  ["x:MtaStageAuth/set",{"update":{"singleton":{"saslMechanisms":{"match":{"0":{
    "if":"local_port != 25 && is_tls","then":"[plain, login, oauthbearer, xoauth2]"}},
    "else":"false"}}}},"6"],
- ["x:OAuthClient/set",{"create":{"k":{"clientId":"kontext","description":"Kontext",
-   "redirectUris":{"https://kontext.invalid/oauth":true},"scopes":{"full":true}}}},"7"],
- ["x:Sharing/set",{"update":{"singleton":{"allowDirectoryQueries":true}}},"8"],
- ["x:Action/set",{"create":{"r":{"@type":"ReloadSettings"}}},"9"]]'
+ ["x:Action/set",{"create":{"r":{"@type":"ReloadSettings"}}},"7"]]'
 ```
 
 - `httpRsvpEnable`: Stalwarts Einladungsmails haben sonst Knöpfe *Yes/No/Maybe* auf
@@ -416,9 +414,25 @@ dem Log nehmen (Id aus `x:Tracer/get`) – wirkt erst nach einem Neustart:
 systemctl restart stalwart
 ```
 
-**Firmenverwaltung.** Rolle `Kontext-Server` (erbt *User*, Id `b`), das Konto
-`kontext-server@firma.de` mit ihr und einem Zufallspasswort; die Id der neuen Rolle aus der
-ersten Antwort beim Konto einsetzen:
+**Kontext als OAuth-Client, Verzeichnisabfragen, Firmenverwaltung.** Das alles richtet der
+[Einrichtungsbefehl](installation.md#einrichtungsbefehl) im Kontext-Container ein: den OAuth-Client
+`kontext` mit dem Scope `full`, die Verzeichnisabfragen, die Rolle `Kontext-Server`, das Konto
+`kontext-server@firma.de` und dessen API-Schlüssel. Den Admin-Zugang nimmt er hier aus
+`/root/.stalwart-admin` (`-e STALWART_ADMIN` reicht die Variable durch, ohne sie in die
+Befehlszeile zu schreiben); die ausgegebene Zeile `STALWART_ADMIN_KEY=…` kommt in
+`deploy/kontext.env`. Nach jedem Update noch einmal ausführen, er ergänzt nur, was fehlt:
+
+```bash
+STALWART_ADMIN="$(cat /root/.stalwart-admin)" podman exec -e STALWART_ADMIN kontext bun server/setup-stalwart.ts
+nano /opt/kontext/deploy/kontext.env && systemctl restart kontext
+```
+
+Von Hand geht es so: OAuth-Client und Verzeichnisabfragen wie in
+[Stalwart einrichten](installation.md#3-stalwart-einrichten), Schritte 12–13, als
+`x:OAuthClient/set` (`clientId`, `redirectUris`, `scopes: {"full": true}`) und `x:Sharing/set`
+(`allowDirectoryQueries`, dann `ReloadSettings`). Dann die Rolle `Kontext-Server` (erbt *User*,
+Id `b`), das Konto `kontext-server@firma.de` mit ihr und einem Zufallspasswort; die Id der neuen
+Rolle aus der ersten Antwort beim Konto einsetzen:
 
 ```bash
 PW=$(openssl rand -hex 24); echo "kontext-server@firma.de:$PW" > /root/.stalwart-kontext-server

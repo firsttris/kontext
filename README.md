@@ -93,11 +93,13 @@ Then the main steps in Stalwart's admin (port 8080, only through an SSH tunnel o
 1. Set up the domain and DKIM and create the boss's account; the boss adds everyone else in Kontext.
 2. Enter Kontext's network `10.89.250.0/24` as an allowed IP, so that wrong passwords never get
    Kontext itself banned.
-3. Create the API key for the company admin, put it into `deploy/.env` as `STALWART_ADMIN_KEY` and
-   start Kontext again ([how](https://firsttris.github.io/kontext/en/installation.html#firmenverwaltung-einschalten)).
-4. Register Kontext as the OAuth client `kontext` with the scope `full` (redirect URI
-   `https://kontext.invalid/oauth`) and allow directory queries (*Sharing*); Stalwart 1.0 signs in
-   only clients it knows and hides the colleagues otherwise.
+3. Run `docker compose -f deploy/compose.yaml exec kontext bun server/setup-stalwart.ts` and give
+   it Stalwart's admin login: it registers Kontext as the OAuth client `kontext` with the scope
+   `full`, allows directory queries and creates the role, account and API key for the company admin
+   ([what it does](https://firsttris.github.io/kontext/en/installation.html#einrichtungsbefehl)). It
+   only adds what is missing, so run it again after every update.
+4. Put the line `STALWART_ADMIN_KEY=…` it prints into `deploy/.env` and start Kontext again
+   (`docker compose -f deploy/compose.yaml up -d`).
 5. Sign in at `https://<your domain>`.
 
 Calls and documents (Schreibzeug, no install of its own needed) are switched on in `.env.example`; to leave them out, remove them from
