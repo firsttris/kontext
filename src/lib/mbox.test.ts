@@ -60,6 +60,11 @@ describe("splitMbox", () => {
     ]);
   });
 
+  it("keeps a last line of one character when the file does not end in a line end", async () => {
+    expect(await mails("From a\nSubject: x\n\nGruss\n-")).toEqual(["Subject: x\n\nGruss\n-"]);
+    expect(await mails("From a\r\nSubject: x\r\n\r\ny")).toEqual(["Subject: x\r\n\r\ny"]);
+  });
+
   it("finds nothing in a file that is no mbox", async () => {
     expect(await mails("Subject: x\n\nFrom-Zeile nicht\n")).toEqual([]);
   });
