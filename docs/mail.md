@@ -115,6 +115,10 @@ IMAP und SMTP.
 
 - **Formatierter Text**, Antworten mit Zitat, Anhänge, Empfänger-Vorschläge aus der Firma und den Kontakten,
   Signatur je Absenderadresse.
+- **Rechtschreibprüfung:** Text und Betreff prüft die Rechtschreibprüfung des Browsers bzw. des
+  Betriebssystems, in der Sprache der Oberfläche (*Einstellungen → Sprache*); falsch geschriebene
+  Wörter werden unterstrichen, Vorschläge gibt es per Rechtsklick. Eine Grammatikprüfung gibt es
+  nicht.
 - **Mehr Formatierung** rechts in der Leiste: Schriftgröße (Klein, Normal, Groß, Sehr groß),
   Textfarbe, Hintergrundfarbe und **Tabellen** – einfügen, dann im Menü Zeilen und Spalten
   hinzufügen oder löschen, Kopfzeile an/aus. Alles geht als Inline-Stil hinaus, so sehen es

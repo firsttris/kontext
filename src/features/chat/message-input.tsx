@@ -19,6 +19,7 @@ import {
 } from "@/lib/chat";
 import { cn } from "@/lib/cn";
 import { m } from "@/paraglide/messages";
+import { getLocale } from "@/paraglide/runtime";
 import { InputTray } from "./input-tray";
 import { LinkPicker, useLinkTitle } from "./link-picker";
 import type { Attachments } from "./use-attachments";
@@ -283,6 +284,8 @@ export const MessageInput = ({
             <textarea
               ref={field}
               rows={1}
+              spellCheck
+              lang={getLocale()}
               value={text}
               placeholder={placeholder}
               onChange={(event) => update(event.target.value, event.target.selectionStart)}

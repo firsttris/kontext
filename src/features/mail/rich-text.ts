@@ -9,6 +9,7 @@ import { Table, TableCell, TableHeader, TableRow } from "@tiptap/extension-table
 import { BackgroundColor, Color, FontSize, TextStyle } from "@tiptap/extension-text-style";
 import StarterKit from "@tiptap/starter-kit";
 import { m } from "@/paraglide/messages";
+import { getLocale } from "@/paraglide/runtime";
 
 const TABLE = "border-collapse:collapse;margin:8px 0";
 const CELL = "border:1px solid #d4d4d8;padding:4px 8px;vertical-align:top;text-align:left";
@@ -75,6 +76,13 @@ const MailImage = Image.extend({
   HTMLAttributes: { style: "max-width:100%;height:auto" },
   resize: { enabled: true, minWidth: 40, minHeight: 20, alwaysPreserveAspectRatio: true },
 });
+
+/**
+ * The mail editor's spell checking: the browser's own, in the app's language (a mail has no
+ * language of its own). Said outright, since otherwise whether and in which language a browser
+ * checks a contenteditable is up to it.
+ */
+export const spellChecked = () => ({ spellcheck: "true", lang: getLocale() });
 
 /** `images`: pictures in the text (the composer; a signature's would need a home of their own). */
 export const richText = ({ autolink = false, images = false } = {}): Extensions => [

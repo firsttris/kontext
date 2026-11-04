@@ -11,6 +11,8 @@ Steps that an update needs beyond raising the version are marked **Upgrade**.
   the report address the Firmenverwaltung sets under "Sicherheit der Mails" (the IT team or the
   IT provider), without a copy in Sent, and moves it to Spam. Without an address the item is not
   shown.
+- Spell checking while writing: the mail text, the subject and the chat input switch on the
+  browser's spell checker in the language of the interface, instead of leaving it to the browser.
 - "Neu laden" after an update saves every open mail as a draft before the page loads again (the
   autosave only runs 2 s after the last change), in the other open tabs too.
 - Setup command: `docker compose -f deploy/compose.yaml exec kontext bun server/setup-stalwart.ts`
