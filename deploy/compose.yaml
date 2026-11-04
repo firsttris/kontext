@@ -10,7 +10,9 @@ name: kontext
 
 services:
   stalwart:
-    image: docker.io/stalwartlabs/stalwart:v1.0.3
+    # The version comes from deploy/.env like Kontext's, so `git pull` never changes the mail server
+    # on its own; raise both together as the changelog says
+    image: docker.io/stalwartlabs/stalwart:v${STALWART_VERSION:?STALWART_VERSION in deploy/.env setzen}
     restart: unless-stopped
     ports:
       - "25:25"

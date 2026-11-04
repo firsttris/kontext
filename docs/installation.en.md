@@ -652,8 +652,12 @@ docker compose -f deploy/compose.yaml pull && docker compose -f deploy/compose.y
   [Releases](https://github.com/firsttris/kontext/releases). `SCHREIBZEUG_VERSION` raises
   Schreibzeug, which has versions of its own ([Schreibzeug's releases](https://github.com/firsttris/schreibzeug/releases));
   if the line is missing, `compose.yaml` takes `latest`.
-- Stalwart, LiveKit, LiveKit SIP, Redis and Caddy have fixed versions in
-  `deploy/compose.yaml`; new ones come with `git pull`, and `pull` fetches them.
+- `STALWART_VERSION` raises Stalwart, also fixed and by hand: `git pull` never changes the mail
+  server on its own. Raise it to the version in `.env.example` together with `KONTEXT_VERSION` of
+  the same Kontext release, after the steps the changelog names for it (like the scope for
+  [Stalwart 1.0.3](#stalwart-103)).
+- LiveKit, LiveKit SIP, Redis and Caddy have fixed versions in `deploy/compose.yaml`; new ones
+  come with `git pull`, and `pull` fetches them.
 - If `deploy/Caddyfile` has changed, reload Caddy:
   `docker compose -f deploy/compose.yaml restart caddy`.
 - If the units in `deploy/systemd/` have changed, run `./backup-control.sh install` in `deploy/`
@@ -709,7 +713,8 @@ Directory → OAuth Clients* (as a superuser) or with the helper from
 /root/stalwart-api.sh '[["x:OAuthClient/set",{"update":{"<id von kontext>":{"scopes/full":true}}},"0"]]'
 ```
 
-Kontext and Stalwart go together in this update: Stalwart 1.0.3
+Kontext and Stalwart go together in this update, with Compose `KONTEXT_VERSION` and
+`STALWART_VERSION=1.0.3` in `deploy/.env` raised together: Stalwart 1.0.3
 with a Kontext up to 0.1.22 lets nobody sign in anew, because the old Kontext does not request the scope.
 Everyone signs in once more: Stalwart discards grants from the time as a
 *first-party* client as soon as Kontext renews the token (`invalid_grant`,
@@ -818,6 +823,7 @@ a warning to the log.
 | `KONTEXT_SECRET` | – | required, at least 32 characters; becomes `BETTER_AUTH_SECRET` |
 | `STALWART_ADMIN_KEY` | empty | API key for the [company admin](#firmenverwaltung-einschalten) |
 | `KONTEXT_VERSION` | – | required: version of the image `tristanteu/kontext` |
+| `STALWART_VERSION` | – | required: version of the image `stalwartlabs/stalwart` (without "v"), raised with `KONTEXT_VERSION` |
 | `COMPOSE_PROFILES` | – | `calls` (LiveKit, LiveKit SIP, Redis) and `documents` (Schreibzeug) |
 | `LIVEKIT_SECRET` | empty | secret for LiveKit and LiveKit SIP; empty: no calls |
 | `SCHREIBZEUG_URL` | empty | address of Documents; empty: no module |

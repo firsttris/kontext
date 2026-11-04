@@ -347,9 +347,9 @@ Actions → _Update video_ → Run workflow (oder `bun run video`, braucht ffmpe
 - **Neue Versionen von Stalwart, LiveKit & Co.** (`.github/renovate.json5`): Die
   [Renovate-App](https://github.com/apps/renovate) öffnet für jedes neue Release der Images in
   `deploy/` (Stalwart, LiveKit, LiveKit SIP, Redis, Caddy) und der Bun-Basis-Images in den
-  Dockerfiles einen Pull Request; offene stehen im Issue „Dependency Dashboard“. Stalwart und
-  LiveKit hebt der Pull Request zusammen in `deploy/compose.yaml`, `deploy/quadlet/` und
-  `dev/config.ts`, sodass seine E2E-Tests schon gegen das neue Release laufen. Vor dem Mergen eines
+  Dockerfiles einen Pull Request; offene stehen im Issue „Dependency Dashboard“. Stalwart hebt der
+  Pull Request zusammen in `deploy/.env.example`, `deploy/quadlet/` und `dev/config.ts`, LiveKit in
+  `deploy/compose.yaml`, `deploy/quadlet/` und `dev/config.ts`, sodass seine E2E-Tests schon gegen das neue Release laufen. Vor dem Mergen eines
   Stalwart-Updates dessen Changelog und `UPGRADING/` lesen und die Workarounds prüfen, die im Code
   mit der Version von Stalwart markiert sind (`git grep -n 'Stalwart [01]\.'`). Eine neue
   Hauptversion kann bei den Kunden eine Migration der Daten brauchen (wie
