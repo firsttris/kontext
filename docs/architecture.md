@@ -650,7 +650,11 @@ das Manifest steht in `vite.config.ts`, der Service Worker in `src/sw/service-wo
   Version (`src/pwa/pwa-status.tsx`).
 - **Neu laden auf Wunsch.** Eine neue Version wartet und meldet sich mit „Eine neue Version von
   Kontext ist da – Neu laden“; sie übernimmt erst nach dem Klick, damit eine angefangene Mail
-  nicht verloren geht. Nach dem Klick lädt die Seite immer neu – auch ein Tab, der mit
+  nicht verloren geht. Vor dem Neuladen speichert der Klick jede offene Mail als Entwurf
+  (`flushDrafts`, wie beim Abmelden nach Inaktivität); schlägt das fehl, lädt die Seite trotzdem.
+  Andere offene Tabs, die der neue Worker ebenfalls neu lädt, speichern ihre offenen Mails vorher
+  genauso (`onNeedReload`).
+  Nach dem Klick lädt die Seite immer neu – auch ein Tab, der mit
   Strg+Umschalt+R am Service Worker vorbei geladen wurde, oder wenn schon ein anderer Tab die
   neue Version übernommen hat (`src/pwa/activate-update.ts`). Sind alle Fenster zu, startet beim nächsten Öffnen ohnehin die
   neue.

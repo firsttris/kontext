@@ -10,6 +10,7 @@ import { useNavigate } from "@tanstack/react-router";
 import { RefreshCw, WifiOff } from "lucide-react";
 import { useEffect, useSyncExternalStore } from "react";
 import { Button } from "@/components/ui/button";
+import { flushDrafts } from "@/features/mail/draft-flush";
 import { m } from "@/paraglide/messages";
 import { activateUpdate, browserUpdateDeps } from "./activate-update";
 
@@ -73,6 +74,9 @@ export const PwaStatus = () => {
     onRegisteredSW: (_url, registration) => {
       if (registration) watchForUpdates(registration);
     },
+    // "Neu laden" in another tab loads this one again too (vite-plugin-pwa 2.0.0
+    // src/client/build/register.ts, showSkipWaitingPrompt): its open mails are saved first.
+    onNeedReload: () => void flushDrafts().finally(() => window.location.reload()),
   });
 
   return (
