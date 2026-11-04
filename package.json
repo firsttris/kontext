@@ -85,7 +85,7 @@
   "devDependencies": {
     "@axe-core/playwright": "^4.14.0",
     "@biomejs/biome": "^2.6.2",
-    "@inlang/paraglide-js": "^2.29.1",
+    "@inlang/paraglide-js": "^3.1.0",
     "@inlang/plugin-message-format": "^4.5.5",
     "@playwright/test": "^1.64.1",
     "@tailwindcss/vite": "^4.3.3",
