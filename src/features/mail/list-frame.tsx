@@ -8,6 +8,7 @@ import { Menu, SquarePen } from "lucide-react";
 import { type ReactNode, useEffect, useRef, useState } from "react";
 import { TabBar } from "@/components/shell/app-shell";
 import { Button } from "@/components/ui/button";
+import { Loading, PlaceholderRows } from "@/components/ui/placeholder";
 import { useShortcuts } from "@/components/use-shortcuts";
 import { DeviceOffer } from "@/features/notifications/device-offer";
 import type { EmailSummary } from "@/jmap/types";
@@ -302,7 +303,9 @@ export const ListFrame = ({
         className="min-h-0 flex-1 overflow-y-auto rounded-lg px-2 pb-3 data-[drop-over]:bg-hover data-[drop-over]:ring-1 data-[drop-over]:ring-accent data-[drop-over]:ring-inset"
       >
         {isPending ? (
-          <p className="px-3 py-6 text-[14px] text-muted">{m.common_loading()}</p>
+          <Loading>
+            <PlaceholderRows />
+          </Loading>
         ) : rows.length === 0 ? (
           <p className="px-3 py-6 text-[14px] text-muted">{empty ?? m.mail_empty()}</p>
         ) : (
