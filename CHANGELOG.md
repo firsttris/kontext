@@ -7,6 +7,12 @@ Steps that an update needs beyond raising the version are marked **Upgrade**.
 
 ## Unreleased
 
+- Sign-in: Kontext checks at start whether Stalwart has the OAuth client `kontext` with the scope
+  `full` and warns in the log and in the Firmenverwaltung (*Mitarbeiter*) when either is missing
+  (`/api/company/oauth-client`, `server/company/oauth-client.ts`). A sign-in Stalwart refuses with
+  `invalid_scope` now names the missing scope in the log. **Upgrade:** give the role
+  `Kontext-Server` the right `sysOAuthClientGet` (installation guide, Firmenverwaltung); without
+  it the check stays quiet.
 - Stalwart 1.0.3 instead of 1.0.2. Stalwart no longer has first-party clients: a registered client
   gets only the scopes it asks for and allows, so Kontext now asks for
   `urn:stalwart:oauth:scope:full` (all rights of the account, as before). **Upgrade:** before

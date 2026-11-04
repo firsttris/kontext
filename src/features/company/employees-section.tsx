@@ -13,6 +13,7 @@ import { type Company, type Employee, showAvailabilityToAll } from "./api";
 import { EmployeeDialog, type EmployeeSubDialog, NewEmployeeDialog } from "./employee-dialogs";
 import { Badge } from "./fields";
 import { CompanyGate } from "./gate";
+import { OAuthClientNotice } from "./oauth-client-notice";
 import { OffboardingDialog } from "./offboarding-dialog";
 import { useCompanyChange } from "./queries";
 import { SearchIndexNotice } from "./search-index-notice";
@@ -30,6 +31,7 @@ const Employees = ({ company }: { company: Company }) => {
 
   return (
     <>
+      <OAuthClientNotice />
       <SearchIndexNotice />
       <div className="flex flex-col items-start gap-3 md:flex-row md:items-center">
         <p className="m-0 flex-1 text-[13px] text-muted">{m.company_employees_hint()}</p>

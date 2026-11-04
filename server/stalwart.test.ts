@@ -151,6 +151,22 @@ describe("signing in at Stalwart", () => {
     warn.mockRestore();
   });
 
+  it("names the missing scope when the client does not allow full", async () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    vi.stubGlobal(
+      "fetch",
+      answer(200, {
+        type: "redirect",
+        location: `${REDIRECT_URI}?error=invalid_scope&error_description=The+requested+scope+is+not+allowed+for+this+client.`,
+      }),
+    );
+    expect(await loginAtStalwart("http://stalwart", credentials)).toEqual({
+      status: "unavailable",
+    });
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining('den Scope "full"'));
+    warn.mockRestore();
+  });
+
   it("calls a wrong password failed", async () => {
     vi.stubGlobal("fetch", answer(200, { type: "failure" }));
     expect(await loginAtStalwart("http://stalwart", credentials)).toEqual({ status: "failed" });

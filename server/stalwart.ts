@@ -149,9 +149,12 @@ export const loginAtStalwart = async (
       login.data.type === "invalid"
         ? login.data.description
         : (URL.parse(login.data.location)?.searchParams.get("error") ?? login.data.location);
-    console.warn(
-      `Stalwart lehnt die Anmeldung für Kontext ab (${reason}); ist der OAuth-Client "${CLIENT_ID}" angelegt? Siehe docs/installation.md.`,
-    );
+    // `invalid_scope`: the client is known but does not allow `full` (authorize.rs, Stalwart 1.0.3).
+    const hint =
+      reason === "invalid_scope"
+        ? `erlaubt der OAuth-Client "${CLIENT_ID}" den Scope "full"? Siehe docs/installation.md, "Stalwart 1.0.3".`
+        : `ist der OAuth-Client "${CLIENT_ID}" angelegt? Siehe docs/installation.md.`;
+    console.warn(`Stalwart lehnt die Anmeldung für Kontext ab (${reason}); ${hint}`);
     return { status: "unavailable" };
   }
   const code = codeFromRedirect(login.data.location, state);

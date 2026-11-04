@@ -327,8 +327,10 @@ braucht der Kontext-Server einen API-Schlüssel von Stalwart, der nur Konten ver
 1. In Stalwarts Verwaltung eine **Rolle** `Kontext-Server` anlegen: sie erbt die Rolle *User*
    und bekommt dazu die Rechte `sysAccountGet`, `sysAccountQuery`, `sysAccountCreate`,
    `sysAccountUpdate`, `sysRoleGet`, `sysRoleCreate`, `sysDomainGet`, `sysAuthenticationGet`,
-   `sysIndexQueueStatusGet` und `impersonate`. Mit `sysIndexQueueStatusGet` zeigt die
-   Firmenverwaltung, solange Stalwart den Suchindex aufbaut. Mit `impersonate` arbeitet der Server in den Postfächern der Mitarbeiter
+   `sysIndexQueueStatusGet`, `sysOAuthClientGet` und `impersonate`. Mit `sysIndexQueueStatusGet`
+   zeigt die Firmenverwaltung, solange Stalwart den Suchindex aufbaut; mit `sysOAuthClientGet`
+   prüft Kontext beim Start, ob der OAuth-Client `kontext` eingerichtet ist (Schritt 12), und
+   warnt im Log und in der Firmenverwaltung, wenn er oder sein Scope `full` fehlt. Mit `impersonate` arbeitet der Server in den Postfächern der Mitarbeiter
    (Abwesenheit, Leserechte für gemeinsame Postfächer) und trägt Antworten auf Einladungen ein;
    die App zeigt dem Chef dabei nie fremde Mails.
 2. Ein **Konto** `kontext-server@firma.de` mit dieser Rolle (statt *User*) und einem langen
@@ -666,7 +668,12 @@ sonst lehnt Stalwart jede neue Anmeldung ab. Ohne Oberfläche, mit dem Helfer au
 /root/stalwart-api.sh '[["x:OAuthClient/set",{"update":{"<id von kontext>":{"scopes/full":true}}},"0"]]'
 ```
 
-Danach wie gewohnt aktualisieren. Alle melden sich einmal neu an: Freigaben aus der Zeit als
+Danach wie gewohnt aktualisieren; Kontext und Stalwart gehören dabei zusammen: Stalwart 1.0.3
+mit einem Kontext bis 0.1.22 lässt niemanden mehr neu anmelden, weil der alte Kontext den Scope
+nicht anfordert. Der Rolle `Kontext-Server` dazu das Recht `sysOAuthClientGet` geben
+([Firmenverwaltung einschalten](#firmenverwaltung-einschalten)), dann meldet Kontext beim Start
+im Log und in der Firmenverwaltung unter *Mitarbeiter*, wenn der Scope noch fehlt. Alle melden
+sich einmal neu an: Freigaben aus der Zeit als
 *First-party*-Client verwirft Stalwart, sobald Kontext den Token erneuert (`invalid_grant`,
 `crates/http/src/auth/oauth/token.rs`); Kontext beendet dann die Sitzung und zeigt die
 Anmeldung. Einmal mit der
@@ -854,7 +861,9 @@ Die Logs: `docker compose -f deploy/compose.yaml logs <dienst>` (Compose) bzw.
   Helfer in [VPS einrichten, Schritt 10](vps.md#10-stalwart-ohne-oberflache-einrichten)). Mit
   einer Sperrdauer (Schritt 7) läuft sie von selbst ab. Steht im Log von Kontext `Stalwart lehnt
   die Anmeldung für Kontext ab`, fehlt der OAuth-Client `kontext` oder sein Scope `full`
-  (Schritt 12, [Stalwart 1.0.3](#stalwart-103)).
+  (Schritt 12, [Stalwart 1.0.3](#stalwart-103)); mit `invalid_scope` ist es der Scope. Mit dem
+  Recht `sysOAuthClientGet` sagt Kontext das schon beim Start (`Dem OAuth-Client "kontext" in
+  Stalwart fehlt der Scope "full"`).
 - **Für eine Person zeigt die App nur „Something went wrong“:** Stalwart hat die Adresse dieser
   Person gesperrt (`Banned due to authentication errors … remoteIp = <ihre Adresse>` im Log von
   Stalwart), etwa weil Kontext bis 0.1.16 nach dem Umzug auf Stalwart 1.0 alte Tokens

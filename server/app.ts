@@ -34,6 +34,7 @@ import {
   createRequest,
   createUpload,
 } from "./company/management";
+import { kontextClientStatus, kontextClientWarning } from "./company/oauth-client";
 import { createCompanyRoutes } from "./company/routes";
 import { dohResolver } from "./company/security";
 import { createCompanySettings } from "./company/settings";
@@ -367,6 +368,11 @@ export const createApp = async (env: Env) => {
         accountsOf,
       });
     const management = createManagement(request);
+    // Best effort, once: says in the log what Stalwart lacks before someone fails to sign in.
+    void management.oauthClients().then((clients) => {
+      const warning = clients && kontextClientWarning(kontextClientStatus(clients));
+      if (warning) console.warn(warning);
+    });
     const mailstore = createMailstore(
       request,
       upload,

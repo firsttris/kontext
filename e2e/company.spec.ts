@@ -320,3 +320,23 @@ test.describe("Firmenverwaltung", () => {
     expect((await inboxMails("anna")).some((mail) => mail.subject === back)).toBe(false);
   });
 });
+
+test.describe("Anmeldung bei Stalwart", () => {
+  test("meldet, wenn dem OAuth-Client der Scope full fehlt", async ({ page }) => {
+    await login(page, "jonas");
+    // The e2e Stalwart is set up as it should be (dev/stalwart.ts): no warning.
+    expect(await (await page.request.get("/api/company/oauth-client")).json()).toEqual({
+      status: "ok",
+    });
+    await page.goto("/settings?section=employees");
+    await expect(page.getByRole("button", { name: "Mitarbeiter anlegen" })).toBeVisible();
+    await expect(page.getByRole("alert").filter({ hasText: "Scope Full" })).toHaveCount(0);
+
+    // As after the update to Stalwart 1.0.3 with a client made as first-party.
+    await page.route("**/api/company/oauth-client", (route) =>
+      route.fulfill({ json: { status: "noFullScope" } }),
+    );
+    await page.reload();
+    await expect(page.getByRole("alert").filter({ hasText: "fehlt der Scope Full" })).toBeVisible();
+  });
+});

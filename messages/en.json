@@ -2224,5 +2224,7 @@
   "mail_open_empty": "All done.",
   "search_in_attachment": "in attachment",
   "company_search_index_pending": "Search is still being built: {count} entries are waiting. Until then it does not find every mail.",
-  "company_search_index_failed": "The search index reports an error; search does not find every mail. Stalwart's admin shows it under Index Queue."
+  "company_search_index_failed": "The search index reports an error; search does not find every mail. Stalwart's admin shows it under Index Queue.",
+  "company_oauth_client_missing": "Stalwart does not know Kontext as an OAuth client: nobody can sign in. In Stalwart's admin, create the client “kontext” with the scope Full (installation guide, step 12).",
+  "company_oauth_client_no_full": "The OAuth client “kontext” in Stalwart lacks the scope Full: nobody can sign in anew. In Stalwart's admin, add the scope Full under OAuth Clients (installation guide, “Stalwart 1.0.3”)."
 }

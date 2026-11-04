@@ -2038,7 +2038,10 @@ mit dem Scope `full` und der Redirect-URI `https://kontext.invalid/oauth`, die n
 `urn:stalwart:oauth:scope:full` an und bekommt so alle Rechte des Kontos (auch für
 `x:AccountSettings`, `x:AccountPassword` und `x:OAuthGrant` in den Einstellungen), nicht nur die
 Scopes `mail`, `calendars` …; seit Stalwart 1.0.3 gibt es dafür kein *First-party* mehr, ein
-Client bekommt nur, was er anfordert und erlaubt (`crates/common/src/auth/oauth/scope.rs`). Die
+Client bekommt nur, was er anfordert und erlaubt (`crates/common/src/auth/oauth/scope.rs`). Ob
+der Client `kontext` da ist und `full` erlaubt, liest der Server beim Start mit seinem Schlüssel
+(`x:OAuthClient`, Recht `sysOAuthClientGet`, `server/company/oauth-client.ts`) und warnt im Log;
+die Firmenverwaltung zeigt es unter *Mitarbeiter* (`/api/company/oauth-client`). Die
 Zustimmung, die Stalwart jeden Client einholen lässt, gibt Kontext mit, denn angemeldet wird in Kontext selbst. Die
 Stalwart-Tokens liegen verschlüsselt (AES-GCM) in SQLite, je Sitzung. Der Zugriffstoken wird bei
 Bedarf mit dem Refresh-Token erneuert; Stalwart verlängert diesen, solange er benutzt wird. So
