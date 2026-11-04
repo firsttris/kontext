@@ -52,8 +52,8 @@ mit dem Namen ihres Skripts davor:
 Die Testdaten einzuspielen ist idempotent, ein zweiter Start legt nichts doppelt an. LiveKit
 (`dev/livekit.ts`) hört auf 17880, Medien über TCP 17881 und UDP 17882, nur auf 127.0.0.1; unter
 Linux lädt das Skript die Release-Datei von GitHub, unter macOS nimmt es `livekit-server` aus dem
-PATH (`brew install livekit`). Lässt es sich nicht laden, meldet `dev:livekit` das und endet, der
-Rest läuft weiter. Vite reicht `/rtc` an LiveKit weiter, LiveKits Webhooks gehen an den Server. Einen Anruf probiert man mit
+PATH (`brew install livekit`). Lässt es sich nicht laden, startet es nicht oder endet es, meldet
+`dev:livekit` das und endet mit 0, der Rest läuft weiter. Vite reicht `/rtc` an LiveKit weiter, LiveKits Webhooks gehen an den Server. Einen Anruf probiert man mit
 zwei Browserfenstern (eins privat), etwa Jonas und Anna.
 
 Für die Telefonie gibt es eine Telefonbox als Attrappe (`dev/fake-box.ts`): Sie koppelt und
@@ -77,9 +77,10 @@ mit PJSIP startet, kein Modul beim Laden scheitert (`box/asterisk/modules.conf`)
 Manager-Benutzer des Agents `command` darf – ohne das lehnt Asterisk sein `core reload` ab. Stalwarts eigenes Log steht in `.dev/stalwart.log`. Strg+C
 beendet alles, Strg+Z hält alles an (weiter mit `fg`): das Terminal schickt beides an alle Prozesse
 im Vordergrund. Scheitert eines der Skripte, stoppt `bun run --parallel` den Rest; ein Skript, das
-mit 0 endet (`dev:demo`, ein mitbenutztes Stalwart oder LiveKit), lässt die anderen laufen.
+mit 0 endet (`dev:demo`, ein mitbenutztes Stalwart, ein mitbenutztes oder fehlendes LiveKit), lässt die anderen laufen.
 
-Läuft schon ein Stalwart auf 18080, nimmt `bun run dev` diesen und spielt nur die Testdaten ein.
+Läuft schon ein Stalwart auf 18080, nimmt `bun run dev` diesen und spielt nur die Testdaten ein;
+antwortet dort ein anderer Dienst, bricht `bun run dev` mit dem Port und dem Grund ab.
 So lässt sich Stalwart in einem eigenen Terminal laufen lassen (`bun run dev:stalwart`, mit Log in
 der Konsole), während man den Rest neu startet. Einzeln gehen auch `bun run dev:server` und
 `bun run dev:app`. Vites Tastenkürzel (`h`, `r`, `o`, `q`) gibt es nur mit `bun run dev:app` allein:
