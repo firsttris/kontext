@@ -1625,7 +1625,12 @@ Eine Mail selbst bringt kein Foto mit: Gmail zeigt Profilbilder aus Googles eige
 aus der Mail. Kontext zeigt neben einer Mail das Foto des Kollegen oder Kontakts mit der Adresse
 des Absenders, aber nur, wenn die Mail als seine gelten darf (`fromSender`, siehe
 [Prüfung des Absenders](#prufung-des-absenders)): ein gefälschter „chef@firma.de“ von außen bekommt
-kein Gesicht. Die Listen zeigen weiter Initialen, weil sie die Prüfung nicht laden.
+kein Gesicht. Die Mailliste zeigt dasselbe Bild an jeder Zeile (`src/lib/row-face.ts`): dafür
+lädt sie `header:Authentication-Results:asText:all` mit jeder Mail (`SUMMARY_PROPERTIES`) und
+prüft wie die Leseansicht. In „Gesendet“ und „Entwürfe“ ist es der erste Empfänger, bei einer
+Unterhaltung als eine Zeile ihr letzter Absender. `usePhotoOf()` läuft einmal für die ganze Liste,
+nicht je Zeile, weil es die Adressbücher lädt. Nichts davon fragt einen fremden Server: keine
+Firmenlogos, Favicons oder BIMI, die verraten würden, wann man welche Mail ansieht.
 
 ## Kontaktgruppen
 

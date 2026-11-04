@@ -74,8 +74,14 @@ SMTP.
   Drafts, Flagged and Snoozed, and into shared mailboxes only with the right to add mails.
 
   ![Folder "Altablage 2024" with three imported mails; below, the message "3 mails imported." and "Not imported: Rechnung Dezember.msg (Outlook's .msg format is not supported)"](screenshots/eml-import.png)
+- **Sender's picture** on every row of the list, as in Gmail: the photo of the colleague or
+  contact, else the initials; in "Sent" the first recipient. A sender the
+  [check](#sicherheit) does not confirm gets no photo. Photos come only from one's own contacts and
+  profiles, never from the internet (no logos or favicons).
 - **Several mails at once** (checkbox on the left of each row, Ctrl/Shift-click, `x`; on the phone
   a long press): archive, delete, mark read, category, move, create tasks, forward as attachment.
+  The checkbox sits where the picture is and shows as soon as the mouse is over it, the keyboard is
+  there or mails are selected.
 - **Swiping on the phone:** swiping a mail to the left archives it, to the right marks it
   read/unread; adjustable per direction ([On the phone](app.md#am-handy)).
 - **Emptying spam and trash:** at the top of the list in those two folders, after a question with

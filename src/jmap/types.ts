@@ -40,6 +40,8 @@ export type EmailSummary = {
   size: number;
   /** The raw Content-Type, where loaded: an encrypted mail in the list. */
   "header:Content-Type"?: string | null;
+  /** The raw Authentication-Results, topmost first, where loaded (jmap/mail.ts). */
+  "header:Authentication-Results:asText:all"?: string[] | null;
   /** In search results, which also find a word there (lib/attachment-hit.ts). */
   cc?: EmailAddress[] | null;
   bcc?: EmailAddress[] | null;
