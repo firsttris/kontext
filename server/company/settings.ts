@@ -18,12 +18,16 @@ export type CompanySettings = {
   /** Abmelden nach Inaktivität in minutes (idle-logout.ts); 0 while it is off. */
   idleLogout: () => Promise<number>;
   saveIdleLogout: (minutes: number) => Promise<void>;
+  /** Where „Als Phishing melden“ sends a mail (phishing-report.ts); empty while there is none. */
+  phishingReport: () => Promise<string>;
+  savePhishingReport: (address: string) => Promise<void>;
 };
 
 const SIGNATURE = "signature";
 const M365 = "m365";
 const LEGAL_FOOTER = "legalFooter";
 const IDLE_LOGOUT = "idleLogout";
+const PHISHING_REPORT = "phishingReport";
 
 export const createCompanySettings = (db: Db, sealer: Sealer): CompanySettings => {
   const read = async (key: string): Promise<string | null> => {
@@ -56,5 +60,7 @@ export const createCompanySettings = (db: Db, sealer: Sealer): CompanySettings =
     saveLegalFooter: (text) => write(LEGAL_FOOTER, text),
     idleLogout: async () => Number(await read(IDLE_LOGOUT)) || 0,
     saveIdleLogout: (minutes) => write(IDLE_LOGOUT, String(minutes)),
+    phishingReport: async () => (await read(PHISHING_REPORT)) ?? "",
+    savePhishingReport: (address) => write(PHISHING_REPORT, address),
   };
 };

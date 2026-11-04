@@ -267,6 +267,12 @@ oft haben; „nicht eingerichtet“ ist bei kleinen Firmen häufig und steht nur
 holt sie in den Posteingang und setzt `$notjunk` (IANA-Stichwörter, RFC 8621 §2). Stalwart lernt
 aus beidem, aus dem Verschieben und aus dem Stichwort (`crates/jmap/src/email/set.rs`).
 
+„Als Phishing melden“ legt eine Mail an die Adresse aus der Firmenverwaltung (`company_setting`
+`phishingReport`, `GET /api/company/phishing-report`) in den Entwürfen an, mit der gemeldeten Mail
+als `message/rfc822`-Anhang über ihren Blob, und sendet sie mit `onSuccessDestroyEmail` (RFC 8621
+§7.5): nach dem Senden ist sie gelöscht, unter „Gesendet“ bleibt nichts. Danach geht die Mail wie
+bei „Als Spam markieren“ in den Spam (`src/jmap/phishing-report.ts`).
+
 „Details anzeigen“ unter dem Absender klappt Absender, Empfänger, Antwort an, Datum, Größe,
 Anhänge und Nachrichten-ID auf, daneben die einzelnen Prüfungen (SPF, DKIM, DMARC, Reverse DNS)
 und die Spam-Bewertung (`src/features/mail/message-details.tsx`).

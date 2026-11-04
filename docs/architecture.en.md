@@ -264,6 +264,12 @@ is common with small companies and only appears in the details.
 to the inbox and sets `$notjunk` (IANA keywords, RFC 8621 §2). Stalwart learns from both, from the
 move and from the keyword (`crates/jmap/src/email/set.rs`).
 
+"Report as phishing" creates a mail to the address from the company administration
+(`company_setting` `phishingReport`, `GET /api/company/phishing-report`) in Drafts, with the
+reported mail as a `message/rfc822` attachment by its blob, and sends it with
+`onSuccessDestroyEmail` (RFC 8621 §7.5): once sent it is deleted, nothing stays in "Sent". Then
+the mail goes to spam as with "Mark as spam" (`src/jmap/phishing-report.ts`).
+
 "Show details" under the sender expands sender, recipients, reply-to, date, size, attachments and
 message ID, next to them the individual checks (SPF, DKIM, DMARC, reverse DNS) and the spam score
 (`src/features/mail/message-details.tsx`).

@@ -232,6 +232,9 @@ SMTP.
   details" shows SPF, DKIM, DMARC and the spam score.
   [More](architecture.md#prufung-des-absenders)
 - **Mark as spam** (`!`) and "Not spam" – the filter learns from both.
+- **Report as phishing** in the "More actions" menu, once the company administration has entered
+  an address for it ([Company](company.md#mitarbeiter-und-postfacher)): the mail goes as an
+  attachment (.eml) to the IT team or the IT provider and lands in spam.
 - **Images from the internet** only load on request, or right away for senders you trust (all
   contacts too) – but only if the mail really comes from them.
 - **Unsubscribe from newsletters** with one click right on the mail.

@@ -50,6 +50,11 @@ Stalwart's admin interface and without IT skills.
   the “External” tag, and before sending or inviting outside, Kontext asks once
   ([Mail](mail.md#schreiben)). Counted as internal are your own domains and the **partner domains**
   entered here (one per line, the tax advisor's office, say).
+- **Report phishing** under *Settings → Company → Email security*: one address, such as your own
+  IT team's or your IT provider's. Once it is entered, every mail has **Report as phishing** under
+  "More actions": Kontext sends the mail as an attachment (.eml, with all its headers) to this
+  address, without a copy in "Sent", and moves it to spam. Empty (as it is at first), the item is
+  not there.
 - **Sign out after inactivity** under *Settings → Company → Sign out after inactivity*: for
   computers several people share (reception, front desk). The company admin picks a time – off
   (as it is at the start), 15 or 30 minutes, 1, 4 or 8 hours. If nobody has moved the mouse,

@@ -7,6 +7,10 @@ Steps that an update needs beyond raising the version are marked **Upgrade**.
 
 ## Unreleased
 
+- Mail: "Als Phishing melden" in a mail's "Weitere Aktionen" sends it as an attachment (.eml) to
+  the report address the Firmenverwaltung sets under "Sicherheit der Mails" (the IT team or the
+  IT provider), without a copy in Sent, and moves it to Spam. Without an address the item is not
+  shown.
 - Setup command: `docker compose -f deploy/compose.yaml exec kontext bun server/setup-stalwart.ts`
   (Quadlet: `podman exec -it kontext bun server/setup-stalwart.ts`) sets up what Kontext needs in
   Stalwart with the admin login it asks for: the OAuth client `kontext` with the scope `full`
