@@ -628,7 +628,10 @@ in `vite.config.ts`, the service worker in `src/sw/service-worker.ts`.
   (`src/pwa/pwa-status.tsx`).
 - **Reload on request.** A new version waits and announces itself with "A new version of Kontext is
   available – Reload"; it only takes over after the click, so that a mail being written is not
-  lost. After the click the page always reloads – also a tab that was loaded past the service worker
+  lost. Before the reload the click saves every open mail as a draft (`flushDrafts`, as for the
+  sign-out after inactivity); if that fails, the page reloads anyway. Other open tabs, which
+  the new worker reloads as well, first save their open mails the same way (`onNeedReload`). After the click the page
+  always reloads – also a tab that was loaded past the service worker
   with Ctrl+Shift+R, or when another tab has already taken over the new version
   (`src/pwa/activate-update.ts`). If all windows are closed, the next opening starts the new one
   anyway.

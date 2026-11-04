@@ -1,11 +1,12 @@
 import { describe, expect, it, vi } from "vitest";
 import { activateUpdate, FALLBACK_MS, type UpdateDeps } from "./activate-update";
 
-const setup = (waiting: boolean) => {
+const setup = (waiting: boolean, saveDrafts: () => Promise<void> = async () => undefined) => {
   const worker = { postMessage: vi.fn() };
   const listeners: (() => void)[] = [];
   const timers: { run: () => void; ms: number }[] = [];
   const deps: UpdateDeps = {
+    saveDrafts,
     waiting: async () => (waiting ? worker : null),
     onControllerChange: (listener) => listeners.push(listener),
     reload: vi.fn(),
@@ -37,5 +38,23 @@ describe("Neu laden", () => {
     for (const timer of timers) timer.run();
     for (const listener of listeners) listener();
     expect(deps.reload).toHaveBeenCalledTimes(1);
+  });
+
+  it("saves the open drafts before the page loads again", async () => {
+    const order: string[] = [];
+    const { deps } = setup(false, async () => {
+      order.push("save");
+    });
+    deps.reload = () => order.push("reload");
+    await activateUpdate(deps);
+    expect(order).toEqual(["save", "reload"]);
+  });
+
+  it("loads the page again even when saving the drafts fails", async () => {
+    const { deps, worker } = setup(true, async () => {
+      throw new Error("offline");
+    });
+    await activateUpdate(deps);
+    expect(worker.postMessage).toHaveBeenCalledWith({ type: "SKIP_WAITING" });
   });
 });
