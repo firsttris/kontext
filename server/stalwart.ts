@@ -6,15 +6,23 @@
  * (validate_authorization) and token.rs in stalwartlabs/stalwart v1.0.1.
  *
  * Stalwart 1.0 only takes clients it knows (crates/common/src/auth/oauth/client.rs,
- * resolve_oauth_client): Kontext is registered there as the first-party OAuth client `kontext`
- * with this redirect URI (docs/installation.md, dev/stalwart.ts). The person signs in in Kontext,
- * so the consent Stalwart asks every registered client for is given with the request.
+ * resolve_oauth_client): Kontext is registered there as the OAuth client `kontext` with this
+ * redirect URI and the scope `full` (docs/installation.md, dev/stalwart.ts). The person signs in
+ * in Kontext, so the consent Stalwart asks every registered client for is given with the request.
  */
 import { z } from "zod";
 
 /** Stalwart only needs the redirect URI to be registered and to match; nothing is opened. */
 export const CLIENT_ID = "kontext";
 export const REDIRECT_URI = "https://kontext.invalid/oauth";
+
+/**
+ * All the rights of the account, as the first-party client of Stalwart 1.0.2 had them: the settings
+ * need `x:AccountSettings`, `x:AccountPassword` and `x:OAuthGrant` beside mail, calendars,
+ * contacts and files. Since Stalwart 1.0.3 a registered client gets only the scopes it asks for
+ * and its OAuthClient allows (crates/common/src/auth/oauth/scope.rs, client.rs `granted_scopes`).
+ */
+export const SCOPE = "urn:stalwart:oauth:scope:full";
 
 export type StalwartTokens = { accessToken: string; refreshToken: string; accessExpiresAt: Date };
 
@@ -29,7 +37,7 @@ const loginResponse = z.discriminatedUnion("type", [
   z.object({ type: z.literal("authenticated"), location: z.string() }),
   z.object({ type: z.literal("mfaRequired") }),
   z.object({ type: z.literal("failure") }),
-  /** The password has expired (Stalwart refuses it to clients that are not first-party). */
+  /** The password has expired (Stalwart refuses it to grants without `full` or `security`). */
   z.object({ type: z.literal("expired") }),
   /** The authorization request itself was refused, e.g. Kontext is not registered as a client. */
   z.object({ type: z.literal("invalid"), description: z.string() }),
@@ -98,6 +106,7 @@ const authorizationQuery = (challenge: string, state: string): string =>
     response_type: "code",
     client_id: CLIENT_ID,
     redirect_uri: REDIRECT_URI,
+    scope: SCOPE,
     state,
     code_challenge: challenge,
     code_challenge_method: "S256",

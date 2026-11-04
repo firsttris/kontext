@@ -7,6 +7,13 @@ Steps that an update needs beyond raising the version are marked **Upgrade**.
 
 ## Unreleased
 
+- Stalwart 1.0.3 instead of 1.0.2. Stalwart no longer has first-party clients: a registered client
+  gets only the scopes it asks for and allows, so Kontext now asks for
+  `urn:stalwart:oauth:scope:full` (all rights of the account, as before). **Upgrade:** before
+  pulling this version, add the scope `full` to the OAuth client `kontext` in Stalwart (as a
+  superuser); without it Stalwart refuses every new sign-in (installation guide, "Stalwart
+  1.0.3"). Everyone signs in once more: Stalwart drops a grant made by the first-party client when
+  its token is renewed (`invalid_grant`), and Kontext then ends the session.
 - Documents: `deploy/.env.example` and the Quadlet use Schreibzeug 0.1.18 (was 0.1.14): printing
   on Safari and Android, documents open faster on a phone, Euro-Office engine 9.3.7. No step
   beyond raising the version.

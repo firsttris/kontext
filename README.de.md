@@ -95,7 +95,7 @@ Tailscale); die [Anleitung](https://firsttris.github.io/kontext/installation.htm
    selbst sperren.
 3. Den API-Schlüssel für die Firmenverwaltung anlegen, in `deploy/.env` als `STALWART_ADMIN_KEY`
    eintragen und Kontext neu starten ([wie](https://firsttris.github.io/kontext/installation.html#firmenverwaltung-einschalten)).
-4. Kontext als First-party-OAuth-Client `kontext` eintragen (Redirect-URI
+4. Kontext als OAuth-Client `kontext` mit dem Scope `full` eintragen (Redirect-URI
    `https://kontext.invalid/oauth`) und Verzeichnisabfragen erlauben (*Sharing*); Stalwart 1.0
    meldet nur Clients an, die es kennt, und zeigt die Kollegen sonst nicht.
 5. Unter `https://<deine Domain>` anmelden.
