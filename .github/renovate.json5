@@ -14,9 +14,11 @@
       // same releases as the images in deploy/, so a new one is tested by the e2e run of its PR.
       // The images' tags carry a "v", these constants do not.
       customType: "regex",
-      managerFilePatterns: ["/^dev/config\\.ts$/"],
+      // deploy/.env.example names the same release for the servers (compose.yaml reads it).
+      managerFilePatterns: ["/^dev/config\\.ts$/", "/^deploy/\\.env\\.example$/"],
       matchStrings: [
         'STALWART_VERSION = "(?<currentValue>[^"]+)"',
+        "STALWART_VERSION=(?<currentValue>\\S+)",
       ],
       depNameTemplate: "docker.io/stalwartlabs/stalwart",
       datasourceTemplate: "docker",
