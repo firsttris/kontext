@@ -15,8 +15,10 @@
  * Ctrl+C reaches all of them. When one exits, the others are stopped too, so a crash does not
  * leave a half-working setup behind.
  */
-import type { Subprocess } from "bun";
 import { fillDemo } from "./demo-data";
+import { supervise } from "./supervise";
+
+const processes = supervise();
 
 const stalwartPort = 18080;
 const stalwartLog = ".dev/stalwart.log";
@@ -31,42 +33,38 @@ const isListening = async (url: string): Promise<boolean> => {
 };
 
 /** Resolves once Stalwart answers and the seed is in (dev/stalwart.ts sends "ready" over IPC). */
-const startStalwart = (): Promise<Subprocess> =>
+const startStalwart = (): Promise<void> =>
   new Promise((ready, fail) => {
-    const child = Bun.spawn(["bun", "dev/stalwart.ts", "--seed", "--log", stalwartLog], {
+    const child = processes.start(["bun", "dev/stalwart.ts", "--seed", "--log", stalwartLog], {
       stdio: ["ignore", "inherit", "inherit"],
       ipc: (message) => {
-        if (message === "ready") ready(child);
+        if (message === "ready") ready();
       },
     });
     child.exited.then((code) => fail(new Error(`Stalwart stopped (${code}), see ${stalwartLog}`)));
   });
 
-const stalwart = async (): Promise<Subprocess[]> => {
+const stalwart = async (): Promise<void> => {
   if (await isListening(`http://127.0.0.1:${stalwartPort}/`)) {
     console.log(`Stalwart läuft schon auf ${stalwartPort}, wird mitbenutzt.`);
-    return [];
+    return;
   }
-  const child = await startStalwart();
+  await startStalwart();
   console.log(`Stalwart-Log: ${stalwartLog}`);
-  return [child];
 };
 
 const livekitPort = 17880;
 
 /** LiveKit is optional: without it everything works except calls. */
-const livekit = async (): Promise<Subprocess[]> => {
-  if (await isListening(`http://127.0.0.1:${livekitPort}/`)) return [];
-  const child = Bun.spawn(["bun", "dev/livekit.ts"], { stdio: ["ignore", "inherit", "inherit"] });
-  return [child];
+const livekit = async (): Promise<void> => {
+  if (await isListening(`http://127.0.0.1:${livekitPort}/`)) return;
+  processes.startOptional(["bun", "dev/livekit.ts"], { stdio: ["ignore", "inherit", "inherit"] });
 };
 
-const optional = await livekit();
-const processes: Subprocess[] = [
-  ...(await stalwart()),
-  Bun.spawn(["bun", "--watch", "server/main.ts"], { stdio: ["ignore", "inherit", "inherit"] }),
-  Bun.spawn(["bunx", "vite"], { stdio: ["inherit", "inherit", "inherit"] }),
-];
+await livekit();
+await stalwart();
+processes.start(["bun", "--watch", "server/main.ts"], { stdio: ["ignore", "inherit", "inherit"] });
+processes.start(["bunx", "vite"], { stdio: ["inherit", "inherit", "inherit"] });
 
 const serverPort = 18090;
 
@@ -92,7 +90,4 @@ const demo = async () => {
 };
 void demo();
 
-const exitCode = await Promise.race(processes.map((child) => child.exited));
-for (const child of [...processes, ...optional]) child.kill();
-await Promise.all([...processes, ...optional].map((child) => child.exited));
-process.exit(exitCode);
+process.exit(await processes.run());
