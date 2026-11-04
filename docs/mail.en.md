@@ -204,7 +204,9 @@ SMTP.
 - **Out-of-office reply** under *Settings → Out of office*: "Turn on out-of-office reply",
   optionally with a period ("From", "To"), subject and message. Whoever writes to you gets this
   reply once. It comes from the mail server, so also when Kontext and the computer are off, and it
-  gets along with your own [rules](#ordnen-und-finden).
+  gets along with your own [rules](#ordnen-und-finden). A "Deputy" is named in a line of its own in
+  the message; if the company admin has added out-of-office templates, "Template" fills the
+  message with name, end date and deputy – it can be changed freely afterwards.
 - **For colleagues** (when someone is ill, for instance), the company admin enters the absence,
   with a stand-in named in the reply ([company admin](company.md)).
 - **A deputy in one step** under *Settings → Deputy*: choose a colleague, "View" or "Edit", tick

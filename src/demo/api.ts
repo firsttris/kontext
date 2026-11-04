@@ -58,6 +58,7 @@ const FIXED: Record<string, (store: Store) => unknown> = {
   "GET /api/company/idle-logout": () => ({ minutes: 0 }),
   "GET /api/company/external-hint": () => ({ enabled: true, partners: [], domains: [DEV_DOMAIN] }),
   "GET /api/company/legal-footer": () => ({ text: "" }),
+  "GET /api/company/vacation-templates": () => ({ templates: [] }),
   // The demo's search has no index to build (server/company/search-index.ts).
   "GET /api/company/search-index": () => ({ pending: 0, failed: false, known: true }),
   "GET /api/snippets": () => ({ snippets: [] }),

@@ -292,6 +292,11 @@ its own and allows only what the company admin needs.
 - **Absence** of an employee (in case of illness, say) is their `VacationResponse`; the stand-in is
   a line of its own in the message. If they have rules, it runs in their script (see
   [Rules](#regeln)); the server uses the same code as the app for this.
+- **Out-of-office templates:** a list of title and text as JSON in `company_setting` (key
+  `vacationTemplates`), read by anyone signed in (`GET /api/company/vacation-templates`), changed
+  as a whole only by the company admin (`PUT`). The app fills one in when it is picked
+  (`src/lib/vacation-template.ts`); as always, only the finished text of the `VacationResponse` is
+  saved.
 
 - **Company signature:** a template with `[Name]` and `[E-Mail]`, stored in Kontext's SQLite
   database (`company_setting`). "Apply to everyone" writes it into every sender address

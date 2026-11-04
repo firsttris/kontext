@@ -213,7 +213,9 @@ IMAP und SMTP.
 - **Abwesenheitsnotiz** unter *Einstellungen → Abwesenheit*: „Abwesenheitsnotiz einschalten“,
   auf Wunsch mit Zeitraum („Ab“, „Bis“), Betreff und Nachricht. Wer einem schreibt, bekommt einmal
   diese Antwort. Sie kommt vom Mailserver, also auch, wenn Kontext und der Rechner aus sind, und
-  sie verträgt sich mit eigenen [Regeln](#ordnen-und-finden).
+  sie verträgt sich mit eigenen [Regeln](#ordnen-und-finden). Eine „Vertretung“ steht als eigene
+  Zeile in der Nachricht; hat die Firmenverwaltung Abwesenheitsvorlagen angelegt, füllt „Vorlage“
+  die Nachricht mit Name, Enddatum und Vertretung – danach lässt sie sich frei ändern.
 - **Für Kollegen** (etwa bei Krankheit) trägt die Firmenverwaltung die Abwesenheit ein, mit einer
   Vertretung in der Antwort ([Firmenverwaltung](company.md)).
 - **Vertretung in einem Schritt** unter *Einstellungen → Vertretung*: eine Kollegin wählen,

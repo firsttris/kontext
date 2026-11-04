@@ -17,6 +17,11 @@ Stalwarts Admin-Oberfläche und ohne IT-Kenntnisse.
 - **Gemeinsame Postfächer** mit Rechten je Person: kein Zugriff, nur lesen, lesen und senden;
   eigene Regeln je Postfach.
 - **Abwesenheit für Kollegen** (etwa bei Krankheit) mit Vertretung in der Antwort.
+- **Abwesenheitsvorlagen** unter *Einstellungen → Firma → Abwesenheitsvorlagen*: ein paar Texte
+  mit Titel („Urlaub“, „Krank“), die jede Person für ihre Abwesenheitsnotiz auswählen kann, und die
+  Firmenverwaltung bei „Abwesenheit eintragen“. `{Name}`, `{Bis}` und `{Vertretung}` setzt Kontext
+  dabei ein; eine Zeile, deren Angabe fehlt (kein Enddatum, keine Vertretung), fällt weg. Zu Beginn
+  gibt es keine.
 - **Regeln für Mitarbeiter:** am Eintrag der Person *Regeln* – etwa „Mails vom Lieferanten in den
   Ordner Bestellungen“ für eine neue Kollegin. Es sind dieselben Regeln wie unter
   *Einstellungen → Regeln* der Person: Sie sieht die vom Chef angelegten dort wie ihre eigenen

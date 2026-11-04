@@ -19,6 +19,7 @@ import { mailboxRoutes } from "./mailboxes";
 import { searchIndexStatus } from "./search-index";
 import { checkDomain, httpsCheck } from "./security";
 import { signatureRoutes } from "./signature-routes";
+import { readVacationTemplates, vacationTemplateRoutes } from "./vacation-templates";
 
 export type { CompanyDeps };
 
@@ -28,6 +29,7 @@ export const createCompanyRoutes = (deps: CompanyDeps) => {
   const externalHint = readExternalHint(deps);
   const legalFooter = readLegalFooter(deps);
   const idleLogout = readIdleLogout(deps);
+  const vacationTemplates = readVacationTemplates(deps);
   const mailboxMembers = readMailboxMembers(deps);
 
   /** Whether to show the Firmenverwaltung at all; asked by every signed-in user. */
@@ -53,6 +55,12 @@ export const createCompanyRoutes = (deps: CompanyDeps) => {
     return setting ? c.json(setting) : c.json({ error: "Nicht angemeldet" }, 401);
   });
 
+  /** Vorlagen for the out-of-office reply: everyone picks one for their own. */
+  app.get("/vacation-templates", async (c) => {
+    const templates = await vacationTemplates(c.req.raw);
+    return templates ? c.json(templates) : c.json({ error: "Nicht angemeldet" }, 401);
+  });
+
   /** „Zuweisen“: every member of a shared mailbox offers only its members. */
   app.get("/mailbox-members", async (c) => {
     const members = await mailboxMembers(c.req.raw);
@@ -76,6 +84,7 @@ export const createCompanyRoutes = (deps: CompanyDeps) => {
   app.route("/external-hint", externalHintRoutes(deps));
   app.route("/legal-footer", legalFooterRoutes(deps));
   app.route("/idle-logout", idleLogoutRoutes(deps));
+  app.route("/vacation-templates", vacationTemplateRoutes(deps));
   app.get("/chat-retention", async (c) =>
     c.json({ days: (await deps.chatRetention?.days()) ?? 0 }),
   );

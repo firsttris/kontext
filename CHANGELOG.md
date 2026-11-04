@@ -7,6 +7,10 @@ Steps that an update needs beyond raising the version are marked **Upgrade**.
 
 ## Unreleased
 
+- Out-of-office templates: the company admin keeps a few texts for the out-of-office reply
+  (*Settings → Company → Out-of-office templates*); picking one fills in `{Name}`, `{Bis}` and
+  `{Vertretung}`, in one's own settings and under "Set out of office". The own settings can now
+  name a deputy too.
 - Setup command: `docker compose -f deploy/compose.yaml exec kontext bun server/setup-stalwart.ts`
   (Quadlet: `podman exec -it kontext bun server/setup-stalwart.ts`) sets up what Kontext needs in
   Stalwart with the admin login it asks for: the OAuth client `kontext` with the scope `full`

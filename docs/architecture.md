@@ -296,6 +296,11 @@ mit einem eigenen API-Schlüssel an und erlaubt nur, was die Firmenverwaltung br
 - **Abwesenheit** eines Mitarbeiters (etwa bei Krankheit) ist dessen `VacationResponse`; die
   Vertretung steht als eigene Zeile in der Nachricht. Hat er Regeln, läuft sie in deren Skript
   (siehe [Regeln](#regeln)); der Server nimmt dafür denselben Code wie die App.
+- **Abwesenheitsvorlagen:** eine Liste aus Titel und Text als JSON in `company_setting`
+  (Schlüssel `vacationTemplates`), gelesen von jedem Angemeldeten
+  (`GET /api/company/vacation-templates`), als Ganzes geändert nur von der Firmenverwaltung
+  (`PUT`). Gefüllt wird in der App beim Auswählen (`src/lib/vacation-template.ts`); gespeichert
+  wird wie immer nur der fertige Text der `VacationResponse`.
 
 - **Firmen-Signatur:** eine Vorlage mit `[Name]` und `[E-Mail]`, gespeichert in der
   SQLite-Datenbank von Kontext (`company_setting`). „Für alle übernehmen“ schreibt sie in jede Absenderadresse
