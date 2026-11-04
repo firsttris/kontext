@@ -5,6 +5,8 @@
  */
 import { spawn } from "node:child_process";
 import { chmod, copyFile, mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
+import { createServer, type Server } from "node:http";
+import type { AddressInfo } from "node:net";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
@@ -21,6 +23,11 @@ const run = (script: string, args: string[], env: Record<string, string> = {}) =
     child.stderr.on("data", (chunk) => (output += chunk));
     child.on("exit", (code) => done({ code, output }));
   });
+
+const listen = (server: Server) =>
+  new Promise<number>((done) =>
+    server.listen(0, "127.0.0.1", () => done((server.address() as AddressInfo).port)),
+  );
 
 const cleanup: (() => Promise<unknown>)[] = [];
 afterEach(async () => {
@@ -55,5 +62,23 @@ describe("dev/livekit.ts --optional", () => {
     );
     expect(code).toBe(0);
     expect(output).toContain("Anrufe gehen ohne");
+  }, 40_000);
+});
+
+describe("dev/stalwart.ts --reuse --seed", () => {
+  it("says what is wrong when the service on the port is no Stalwart", async () => {
+    const foreign = createServer((_, response) => response.end("fakeccu"));
+    const port = await listen(foreign);
+    cleanup.push(() => new Promise((done) => foreign.close(done)));
+    const { code, output } = await run(join(dev, "stalwart.ts"), [
+      "--reuse",
+      "--seed",
+      "--http",
+      String(port),
+    ]);
+    expect(code).toBe(1);
+    expect(output).toContain(
+      `Auf ${port} antwortet ein Dienst, in den sich die Testdaten nicht einspielen lassen`,
+    );
   }, 40_000);
 });
