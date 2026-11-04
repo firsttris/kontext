@@ -256,6 +256,9 @@ IMAP und SMTP.
   Rechnungsbetrug); „Details anzeigen“ zeigt SPF, DKIM, DMARC und die Spam-Bewertung.
   [Mehr](architecture.md#prufung-des-absenders)
 - **Als Spam markieren** (`!`) und „Kein Spam“ – der Filter lernt aus beidem.
+- **Als Phishing melden** im Menü „Weitere Aktionen“, sobald die Firmenverwaltung eine Adresse
+  dafür eingetragen hat ([Firma](company.md#mitarbeiter-und-postfacher)): die Mail geht als
+  Anhang (.eml) an die IT oder den IT-Dienstleister und landet im Spam.
 - **Bilder aus dem Internet** laden erst auf Wunsch, oder sofort für Absender, denen man vertraut
   (auch alle Kontakte) – aber nur, wenn die Mail wirklich von ihnen kommt.
 - **Newsletter abbestellen** mit einem Klick direkt an der Mail.

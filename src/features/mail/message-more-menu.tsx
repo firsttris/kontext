@@ -3,6 +3,7 @@
  * so the toolbar itself keeps few, labelled buttons. Each item names its shortcut.
  */
 import {
+  Fish,
   FolderInput,
   Forward,
   ListChecks,
@@ -94,6 +95,7 @@ export const MoreMenu = ({
   print,
   markUnread,
   spam,
+  reportPhishing,
   move,
   categories,
   newTask,
@@ -105,6 +107,8 @@ export const MoreMenu = ({
   /** Left out where the mailbox does not allow it. */
   markUnread?: () => void;
   spam?: { undo: boolean; run: () => void };
+  /** Only where the Firmenverwaltung set a report address. */
+  reportPhishing?: () => void;
   move?: { groups: MoveGroup[]; onPick: (target: MoveTarget) => void };
   /** The category submenu, where categories may be set. */
   categories?: ReactNode;
@@ -150,6 +154,11 @@ export const MoreMenu = ({
         <Item onSelect={spam.run} shortcut="!">
           {spam.undo ? <ShieldCheck size={15} /> : <ShieldAlert size={15} />}{" "}
           {spam.undo ? m.mail_spam_unmark() : m.mail_spam_mark()}
+        </Item>
+      ) : null}
+      {reportPhishing ? (
+        <Item onSelect={reportPhishing}>
+          <Fish size={15} /> {m.mail_phishing_report()}
         </Item>
       ) : null}
       {move ? <MoveSubmenu groups={move.groups} onPick={move.onPick} /> : null}

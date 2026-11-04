@@ -169,6 +169,28 @@ export const mailsWithSubject = async <T extends object>(
   return list;
 };
 
+/** The subjects of the mails attached (message/rfc822) to a user's mail with this subject. */
+export const attachedMails = async (user: string, subject: string): Promise<string[]> => {
+  const client = jmapAs(user);
+  const accountId = await personalAccountId(user);
+  const [mail] = await mailsWithSubject<{ attachments: { blobId: string; type: string }[] }>(
+    client,
+    accountId,
+    [subject],
+    ["attachments"],
+    { get: { bodyProperties: ["blobId", "type"] } },
+  );
+  const blobIds = (mail?.attachments ?? [])
+    .filter((part) => part.type === "message/rfc822")
+    .map((part) => part.blobId);
+  if (!blobIds.length) return [];
+  const { parsed } = await client.call<{ parsed: Record<string, { subject: string }> }>(
+    "Email/parse",
+    { accountId, blobIds, properties: ["subject"] },
+  );
+  return blobIds.map((id) => parsed[id]?.subject ?? "");
+};
+
 /** The id of the folder with that role (inbox, sent, ...) in the account. */
 export const mailboxWithRole = async (client: JmapClient, accountId: string, role: string) => {
   const { list } = await client.call<{ list: { id: string; role: string | null }[] }>(

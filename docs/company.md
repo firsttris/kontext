@@ -50,6 +50,11 @@ Stalwarts Admin-Oberfläche und ohne IT-Kenntnisse.
   die Marke „Extern“, und vor dem Senden oder Einladen nach außen fragt Kontext einmal nach
   ([Mail](mail.md#schreiben)). Als intern gelten die eigenen Domains und die **Partner-Domains**,
   die hier eingetragen werden (eine je Zeile, etwa das Steuerbüro).
+- **Phishing melden** unter *Einstellungen → Firma → Sicherheit der Mails*: eine Adresse, etwa die
+  der eigenen IT oder des IT-Dienstleisters. Ist sie eingetragen, steht bei jeder Mail unter
+  „Weitere Aktionen“ **Als Phishing melden**: Kontext schickt die Mail als Anhang (.eml, mit allen
+  Kopfzeilen) an diese Adresse, ohne Kopie unter „Gesendet“, und verschiebt sie in den Spam. Leer
+  (so ist es zu Beginn) gibt es den Punkt nicht.
 - **Abmelden nach Inaktivität** unter *Einstellungen → Firma → Abmelden nach Inaktivität*: für
   Rechner, die mehrere nutzen (Empfang, Anmeldung). Die Firmenverwaltung wählt eine Zeit – aus
   (so ist es zu Beginn), 15 oder 30 Minuten, 1, 4 oder 8 Stunden. Hat so lange niemand die Maus

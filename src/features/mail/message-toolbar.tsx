@@ -32,6 +32,7 @@ import { type ComposeMode, MoreMenu } from "./message-more-menu";
 import { usePrintMail } from "./print-mail";
 import { useAllMailboxes, useMailAccounts } from "./queries";
 import { useRemoteImages } from "./remote-images";
+import { useReportPhishing } from "./report-phishing";
 import { useThreadView } from "./thread-view";
 
 /** Closes the open mail (and its composer): back to the list. */
@@ -132,6 +133,8 @@ export const Toolbar = ({
             toast.show(inJunk ? m.mail_spam_unmarked() : m.mail_spam_marked());
           }, true)
       : undefined;
+  const report = useReportPhishing(accountId, email, mailbox.id);
+  const reportPhishing = report && toggleSpam && !inJunk ? () => void run(report, true) : undefined;
   const compose = (mode: ComposeMode) =>
     void navigate({ to: ".", search: (prev) => ({ ...prev, compose: mode }) });
   const printMail = usePrintMail();
@@ -225,6 +228,7 @@ export const Toolbar = ({
         print={print}
         markUnread={markUnread}
         spam={toggleSpam ? { undo: inJunk, run: toggleSpam } : undefined}
+        reportPhishing={reportPhishing}
         move={
           canRemove
             ? {

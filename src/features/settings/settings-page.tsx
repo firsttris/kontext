@@ -44,6 +44,7 @@ import { IdleLogoutSection } from "@/features/company/idle-logout-section";
 import { LegalFooterSection } from "@/features/company/legal-footer-section";
 import { MailboxesSection } from "@/features/company/mailboxes-section";
 import { MigrationSection } from "@/features/company/migration-section";
+import { PhishingReportSection } from "@/features/company/phishing-report-section";
 import { useIsCompanyAdmin } from "@/features/company/queries";
 import { SecuritySection as CompanySecuritySection } from "@/features/company/security-section";
 import { SmimeAuthoritiesSection } from "@/features/company/smime-authorities-section";
@@ -149,7 +150,12 @@ const CONTENT: Record<Section, () => ReactNode> = {
   "company-signature": () => <CompanySignatureSection />,
   "company-legal": () => <LegalFooterSection />,
   "company-chat": () => <ChatSection />,
-  "company-security": () => <CompanySecuritySection />,
+  "company-security": () => (
+    <>
+      <CompanySecuritySection />
+      <PhishingReportSection />
+    </>
+  ),
   "company-idle": () => <IdleLogoutSection />,
   "company-external": () => <ExternalHintSection />,
   "company-smime": () => <SmimeAuthoritiesSection />,
