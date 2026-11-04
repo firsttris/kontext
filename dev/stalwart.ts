@@ -253,27 +253,34 @@ const allowDirectoryQueries = async (port: number): Promise<void> => {
 };
 
 /**
- * Kontext signs in as the first-party OAuth client `kontext` (server/stalwart.ts); Stalwart 1.0
- * refuses clients it does not know. As on a customer's server (docs/installation.md), once.
+ * Kontext signs in as the OAuth client `kontext` with the scope `full` (server/stalwart.ts);
+ * Stalwart 1.0 refuses clients it does not know and, since 1.0.3, scopes a client does not allow
+ * (crates/http/src/auth/oauth/authorize.rs). As on a customer's server (docs/installation.md):
+ * created once, and given `full` where it was made before 1.0.3 as first-party.
  */
+type OAuthClient = { id: string; clientId: string; scopes?: Record<string, boolean> };
+
 const registerKontext = async (port: number): Promise<void> => {
   const [[, { list }]] = (await adminRequest(port, [
-    ["x:OAuthClient/get", { ids: null, properties: ["clientId"] }, "0"],
-  ])) as [[string, { list: { clientId: string }[] }, string]];
-  if (list.some((client) => client.clientId === CLIENT_ID)) return;
+    ["x:OAuthClient/get", { ids: null, properties: ["clientId", "scopes"] }, "0"],
+  ])) as [[string, { list: OAuthClient[] }, string]];
+  const known = list.find((client) => client.clientId === CLIENT_ID);
+  if (known?.scopes?.full) return;
   await adminRequest(port, [
     [
       "x:OAuthClient/set",
-      {
-        create: {
-          kontext: {
-            clientId: CLIENT_ID,
-            description: "Kontext",
-            redirectUris: { [REDIRECT_URI]: true },
-            firstParty: true,
+      known
+        ? { update: { [known.id]: { "scopes/full": true } } }
+        : {
+            create: {
+              kontext: {
+                clientId: CLIENT_ID,
+                description: "Kontext",
+                redirectUris: { [REDIRECT_URI]: true },
+                scopes: { full: true },
+              },
+            },
           },
-        },
-      },
       "0",
     ],
   ]);

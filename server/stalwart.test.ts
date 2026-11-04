@@ -94,6 +94,7 @@ describe("signing in at Stalwart", () => {
       response_type: "code",
       client_id: "kontext",
       redirect_uri: REDIRECT_URI,
+      scope: "urn:stalwart:oauth:scope:full",
       code_challenge_method: "S256",
     });
     const token = new URLSearchParams(String(fetch.mock.calls[1]![1].body));

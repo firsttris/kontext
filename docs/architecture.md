@@ -2033,11 +2033,13 @@ mit PKCE, ohne Umleitung), legt eine Better-Auth-Sitzung an und setzt ein httpOn
 schickt er die Zugangsdaten zusammen mit der Autorisierungsanfrage an Stalwarts `/api/auth` und
 liest den Code aus der Umleitung, die Stalwart zurückgibt (`server/stalwart.ts`). Stalwart 1.0
 nimmt nur Clients an, die es kennt: Kontext ist dort als OAuth-Client `kontext` eingetragen,
-*First-party* und mit der Redirect-URI `https://kontext.invalid/oauth`, die nie geöffnet wird
-([Installation](installation.md#3-stalwart-einrichten), Schritt 12). Als First-party bekommt der
-Token alle Rechte des Kontos (auch für `x:AccountSettings` und die Firmenverwaltung), nicht nur
-die Scopes `mail`, `calendars` …; die Zustimmung, die Stalwart jeden Client einholen lässt, gibt
-Kontext mit, denn angemeldet wird in Kontext selbst. Die
+mit dem Scope `full` und der Redirect-URI `https://kontext.invalid/oauth`, die nie geöffnet wird
+([Installation](installation.md#3-stalwart-einrichten), Schritt 12). Kontext fordert
+`urn:stalwart:oauth:scope:full` an und bekommt so alle Rechte des Kontos (auch für
+`x:AccountSettings`, `x:AccountPassword` und `x:OAuthGrant` in den Einstellungen), nicht nur die
+Scopes `mail`, `calendars` …; seit Stalwart 1.0.3 gibt es dafür kein *First-party* mehr, ein
+Client bekommt nur, was er anfordert und erlaubt (`crates/common/src/auth/oauth/scope.rs`). Die
+Zustimmung, die Stalwart jeden Client einholen lässt, gibt Kontext mit, denn angemeldet wird in Kontext selbst. Die
 Stalwart-Tokens liegen verschlüsselt (AES-GCM) in SQLite, je Sitzung. Der Zugriffstoken wird bei
 Bedarf mit dem Refresh-Token erneuert; Stalwart verlängert diesen, solange er benutzt wird. So
 bleibt die App am Handy angemeldet, bis man sich abmeldet (Sitzung 90 Tage, bei Nutzung erneuert).

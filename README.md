@@ -95,7 +95,7 @@ Then the main steps in Stalwart's admin (port 8080, only through an SSH tunnel o
    Kontext itself banned.
 3. Create the API key for the company admin, put it into `deploy/.env` as `STALWART_ADMIN_KEY` and
    start Kontext again ([how](https://firsttris.github.io/kontext/installation.html#firmenverwaltung-einschalten)).
-4. Register Kontext as the first-party OAuth client `kontext` (redirect URI
+4. Register Kontext as the OAuth client `kontext` with the scope `full` (redirect URI
    `https://kontext.invalid/oauth`) and allow directory queries (*Sharing*); Stalwart 1.0 signs in
    only clients it knows and hides the colleagues otherwise.
 5. Sign in at `https://<your domain>`.

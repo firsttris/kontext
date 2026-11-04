@@ -122,13 +122,14 @@ jedem Neustart vor der Einrichtung gibt es ein neues.
     selbst verschickt über JMAP, nicht über SMTP.
 12. **Kontext als OAuth-Client eintragen** – nötig, sonst meldet sich niemand an: unter
     *Management → Directory → OAuth Clients* einen Client mit der *Client ID* `kontext`, der
-    *Redirect URI* `https://kontext.invalid/oauth` (wird nie aufgerufen) und
-    **First-party application** anlegen, ohne Secret und ohne Scopes
-    ([ohne Oberfläche](vps.md#10-stalwart-ohne-oberflache-einrichten)). Stalwart 1.0 nimmt nur
-    Clients an, die es kennt; First-party gibt Kontexts Token alle Rechte des Kontos, die die
-    Einstellungen und die Firmenverwaltung brauchen (siehe [Anmeldung](architecture.md#anmeldung)).
-    Fehlt der Eintrag, schreibt Kontext beim Anmelden `Stalwart lehnt die Anmeldung für Kontext
-    ab (Unknown client id)` ins Log.
+    *Redirect URI* `https://kontext.invalid/oauth` (wird nie aufgerufen) und dem Scope **Full**
+    (`full`) anlegen, ohne Secret ([ohne Oberfläche](vps.md#10-stalwart-ohne-oberflache-einrichten)).
+    Stalwart 1.0 nimmt nur Clients an, die es kennt, und gibt einem Token nur die Scopes, die der
+    Client erlaubt; `full` gibt Kontexts Token alle Rechte des Kontos, die die Einstellungen und
+    die Firmenverwaltung brauchen (siehe [Anmeldung](architecture.md#anmeldung)). Den Scope `full`
+    darf nur ein Superuser setzen. Fehlt der Eintrag, schreibt Kontext beim Anmelden `Stalwart
+    lehnt die Anmeldung für Kontext ab (Unknown client id)` ins Log, fehlt der Scope, `… ab
+    (invalid_scope)`.
 13. Unter *Settings → Sharing* **Verzeichnisabfragen erlauben** (`x:Sharing`,
     `allowDirectoryQueries: true`), danach die Einstellungen neu laden (*Reload*) – nötig: Ohne
     findet Kontext keine Kollegen (Teilen, neuer Chat, freie Zeiten beim Einladen); Stalwart 1.0
@@ -651,6 +652,25 @@ docker compose -f deploy/compose.yaml up -d
 Vor einem Stalwart-Update mit neuer Hauptversion die `UPGRADING`-Hinweise von Stalwart lesen und
 vorher ein Backup machen.
 
+### Stalwart 1.0.3
+
+Stalwart 1.0.3 kennt keine *First-party*-Clients mehr: Ein eingetragener Client bekommt nur noch
+die Scopes, die er anfordert und die er erlaubt. Kontext fordert dafür ab dieser Version den
+Scope `urn:stalwart:oauth:scope:full` an. Vor dem Update von Kontext und Stalwart beim Client
+`kontext` den Scope **Full** ergänzen (*Management → Directory → OAuth Clients*, als Superuser),
+sonst lehnt Stalwart jede neue Anmeldung ab. Ohne Oberfläche, mit dem Helfer aus
+[VPS einrichten, Schritt 10](vps.md#10-stalwart-ohne-oberflache-einrichten):
+
+```bash
+/root/stalwart-api.sh '[["x:OAuthClient/get",{"ids":null,"properties":["clientId","scopes"]},"0"]]'
+/root/stalwart-api.sh '[["x:OAuthClient/set",{"update":{"<id von kontext>":{"scopes/full":true}}},"0"]]'
+```
+
+Wer schon angemeldet ist, bleibt es. Danach wie gewohnt aktualisieren. Einmal mit der
+Umgebungsvariablen `STALWART_UPDATE_ROLE_PERMISSIONS=true` gestartet, ergänzt Stalwart die
+Standardrollen um die Rechte, die seit 1.0.0 dazugekommen sind (etwa die Verschlüsselung in der
+Verwaltung); danach die Variable wieder entfernen. Kontext braucht das nicht.
+
 ### Stalwart 0.16 auf 1.0 heben
 
 Kontext ab dieser Version braucht Stalwart 1.0. Stalwart 1.0 legt seine Daten anders ab und
@@ -830,7 +850,8 @@ Die Logs: `docker compose -f deploy/compose.yaml logs <dienst>` (Compose) bzw.
   sie als `BlockedIp` (über die API `x:BlockedIp/get`, dann `x:BlockedIp/set` mit `destroy`;
   Helfer in [VPS einrichten, Schritt 10](vps.md#10-stalwart-ohne-oberflache-einrichten)). Mit
   einer Sperrdauer (Schritt 7) läuft sie von selbst ab. Steht im Log von Kontext `Stalwart lehnt
-  die Anmeldung für Kontext ab`, fehlt der OAuth-Client `kontext` (Schritt 12).
+  die Anmeldung für Kontext ab`, fehlt der OAuth-Client `kontext` oder sein Scope `full`
+  (Schritt 12, [Stalwart 1.0.3](#stalwart-103)).
 - **Für eine Person zeigt die App nur „Something went wrong“:** Stalwart hat die Adresse dieser
   Person gesperrt (`Banned due to authentication errors … remoteIp = <ihre Adresse>` im Log von
   Stalwart), etwa weil Kontext bis 0.1.16 nach dem Umzug auf Stalwart 1.0 alte Tokens

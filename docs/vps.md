@@ -389,7 +389,7 @@ Anmeldung auf 587 nur nach STARTTLS, Kontext als OAuth-Client, Verzeichnisabfrag
    "if":"local_port != 25 && is_tls","then":"[plain, login, oauthbearer, xoauth2]"}},
    "else":"false"}}}},"6"],
  ["x:OAuthClient/set",{"create":{"k":{"clientId":"kontext","description":"Kontext",
-   "redirectUris":{"https://kontext.invalid/oauth":true},"firstParty":true}}},"7"],
+   "redirectUris":{"https://kontext.invalid/oauth":true},"scopes":{"full":true}}}},"7"],
  ["x:Sharing/set",{"update":{"singleton":{"allowDirectoryQueries":true}}},"8"],
  ["x:Action/set",{"create":{"r":{"@type":"ReloadSettings"}}},"9"]]'
 ```
