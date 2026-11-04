@@ -5,12 +5,25 @@ import { createHashHistory, createRouter, RouterProvider } from "@tanstack/react
 import { StrictMode, useCallback } from "react";
 import { createRoot } from "react-dom/client";
 import { AuthProvider, createAppClient, hasSession } from "@/auth/auth";
+import { opensApp, StartScreen } from "@/components/shell/start-screen";
 import { ToastProvider } from "@/components/ui/toast";
 import type { JmapClient } from "@/jmap/client";
 import { parseSearch, stringifySearch } from "@/lib/search-params";
 import { getLocale } from "@/paraglide/runtime";
 import { routeTree } from "./routeTree.gen";
 import "./styles.css";
+
+/** The route's path; the demo's lives after the "#" (see the router below). */
+const routePath = () =>
+  import.meta.env.MODE === "demo" ? window.location.hash.slice(1) || "/" : window.location.pathname;
+
+// index.html says German; screen readers and hyphenation follow the language in use.
+document.documentElement.lang = getLocale();
+
+// The app's shape at once, not a blank while the session is checked (start-screen.tsx); the
+// sign-in and the public pages keep the plain background.
+const root = createRoot(document.getElementById("root")!);
+if (opensApp(routePath())) root.render(<StartScreen />);
 
 // The demo answers /jmap and /api in the page (src/demo); before the first request. Written out,
 // not as a shared constant: Vite replaces it, so other builds leave the demo out entirely.
@@ -69,10 +82,7 @@ const App = () => {
   );
 };
 
-// index.html says German; screen readers and hyphenation follow the language in use.
-document.documentElement.lang = getLocale();
-
-createRoot(document.getElementById("root")!).render(
+root.render(
   <StrictMode>
     <App />
   </StrictMode>,

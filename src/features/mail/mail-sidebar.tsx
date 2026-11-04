@@ -24,6 +24,7 @@ import { type FormEvent, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Dialog } from "@/components/ui/dialog";
 import { Input, Label } from "@/components/ui/input";
+import { PlaceholderNav } from "@/components/ui/placeholder";
 import { useToast } from "@/components/ui/toast";
 import type { Mailbox } from "@/jmap/types";
 import { cn } from "@/lib/cn";
@@ -77,7 +78,7 @@ type Props = {
 export const MailSidebar = ({ accountId, mailbox, view, query }: Props) => {
   const secure = useSecureMessages();
   const unified = view !== undefined;
-  const { data: mailboxes = [] } = useMailboxes(accountId);
+  const { data: mailboxes = [], isPending } = useMailboxes(accountId);
   const accounts = useMailAccounts();
   const inboxes = useInboxes();
   const account = accounts.find((candidate) => candidate.id === accountId);
@@ -168,6 +169,8 @@ export const MailSidebar = ({ accountId, mailbox, view, query }: Props) => {
             <Count value={inboxes.reduce((sum, inbox) => sum + inbox.mailbox.unreadEmails, 0)} />
           </Link>
         ) : null}
+        {/* Bars only: the list's placeholder says "Lädt …" once for the page. */}
+        {isPending ? <PlaceholderNav count={7} /> : null}
         {systemMailboxes(mailboxes).map((box) => {
           const Icon = ROLE_ICONS[box.role ?? ""] ?? Folder;
           return (

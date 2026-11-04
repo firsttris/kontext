@@ -5,6 +5,8 @@
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
+import { TabBar } from "@/components/shell/app-shell";
+import { ListPlaceholder } from "@/components/ui/placeholder";
 import type { Mailbox } from "@/jmap/types";
 import { shareStart } from "@/lib/mailto";
 import { takeShared } from "@/pwa/share-cache";
@@ -84,7 +86,11 @@ const FolderPage = ({ accountId, mailboxParam, search }: Props) => {
       search={search}
       sidebar={<MailSidebar accountId={accountId} mailbox={mailbox} />}
       list={
-        mailbox ? <MessageList accountId={accountId} mailbox={mailbox} search={search} /> : null
+        mailbox ? (
+          <MessageList accountId={accountId} mailbox={mailbox} search={search} />
+        ) : mailboxes.isPending ? (
+          <ListPlaceholder footer={<TabBar />} />
+        ) : null
       }
       main={
         mailbox && search.compose && shared && offered ? (

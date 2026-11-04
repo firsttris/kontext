@@ -4,6 +4,7 @@ import { useEffect } from "react";
 import { useClient } from "@/auth/auth";
 import { IdleGuard } from "@/auth/idle-guard";
 import { AppShell, railButton } from "@/components/shell/app-shell";
+import { StartScreen } from "@/components/shell/start-screen";
 import { CallHost } from "@/features/calls/call-host";
 import { useChannels } from "@/features/chat/queries";
 import { useChatAnnouncer } from "@/features/chat/use-chat-announcer";
@@ -24,6 +25,9 @@ export const Route = createFileRoute("/_app")({
     if (!context.client) throw redirect({ to: "/login", search: { redirect: location.href } });
   },
   component: AppLayout,
+  // While the first page's route works (the JMAP session behind /mail): the page's shape, as
+  // main.tsx shows it during the session check, instead of a blank.
+  pendingComponent: StartScreen,
 });
 
 /** Server changes (new mail, another device, a colleague in a shared mailbox) refresh the views. */

@@ -5,6 +5,7 @@ import { useEffect, useRef, useState } from "react";
 import { TabBar } from "@/components/shell/app-shell";
 import { Button } from "@/components/ui/button";
 import { Select } from "@/components/ui/input";
+import { Loading, PlaceholderRows } from "@/components/ui/placeholder";
 import { useShortcuts } from "@/components/use-shortcuts";
 import { cn } from "@/lib/cn";
 import { byLetter } from "@/lib/contact-selection";
@@ -140,7 +141,9 @@ export const ContactsPage = ({ search }: { search: ContactsSearch }) => {
         </header>
         <div className="min-h-0 flex-1 overflow-y-auto px-2 pb-3">
           {isPending ? (
-            <p className="px-3 py-4 text-[14px] text-muted">{m.common_loading()}</p>
+            <Loading>
+              <PlaceholderRows lines={2} />
+            </Loading>
           ) : shown.length === 0 && text ? (
             <p className="px-3 py-4 text-[14px] text-muted">{m.contacts_empty()}</p>
           ) : (
