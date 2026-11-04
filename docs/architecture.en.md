@@ -1574,7 +1574,12 @@ A mail itself brings no photo: Gmail shows profile pictures from Google's own ac
 mail. Next to a mail Kontext shows the photo of the colleague or contact with the sender's address,
 but only if the mail may count as theirs (`fromSender`, see
 [Checking the sender](#prufung-des-absenders)): a forged "chef@firma.de" from outside gets no face.
-The lists still show initials, because they do not load the check.
+The mail list shows the same picture on every row (`src/lib/row-face.ts`): for that it loads
+`header:Authentication-Results:asText:all` with every mail (`SUMMARY_PROPERTIES`) and checks as the
+reading pane does. In "Sent" and "Drafts" it is the first recipient, for a conversation shown as one
+row its latest sender. `usePhotoOf()` runs once for the whole list, not per row, because it loads
+the address books. None of this asks an outside server: no company logos, favicons or BIMI, which
+would tell when one looks at which mail.
 
 ## Contact groups { #kontaktgruppen }
 

@@ -17,9 +17,16 @@ import { useAllMailboxes } from "./queries";
 export type Answer = { name: string; at: string } | null;
 /**
  * A conversation as one line: how many mails, who wrote them (oldest first), anything unread and
- * which of its mails those are (marking the line read marks them).
+ * which of its mails those are (marking the line read marks them), and its latest mail, whose
+ * sender the line's picture shows.
  */
-export type Group = { count: number; names: string[]; unread: boolean; unreadIds: string[] };
+export type Group = {
+  count: number;
+  names: string[];
+  unread: boolean;
+  unreadIds: string[];
+  latest?: EmailSummary;
+};
 
 export const useThreadInfo = (rows: Row[], accountOf: (row: Row) => string, grouped: boolean) => {
   const client = useClient();
@@ -67,6 +74,7 @@ export const useThreadInfo = (rows: Row[], accountOf: (row: Row) => string, grou
         names: [...new Set(all.map((mail) => personOf(displayName(mail.from?.[0]))))],
         unread: unreadIds.length > 0,
         unreadIds,
+        latest: all.at(-1),
       });
     }
   });

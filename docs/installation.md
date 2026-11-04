@@ -611,8 +611,12 @@ docker compose -f deploy/compose.yaml pull && docker compose -f deploy/compose.y
   [Releases](https://github.com/firsttris/kontext/releases). `SCHREIBZEUG_VERSION` hebt
   Schreibzeug, das eigene Versionen hat ([Releases von Schreibzeug](https://github.com/firsttris/schreibzeug/releases));
   fehlt die Zeile, nimmt `compose.yaml` `latest`.
-- Stalwart, LiveKit, LiveKit SIP, Redis und Caddy stehen mit festen Versionen in
-  `deploy/compose.yaml`; neue kommen mit `git pull`, und `pull` holt sie.
+- `STALWART_VERSION` hebt Stalwart, ebenfalls fest und von Hand: `git pull` ändert den
+  Mailserver nie von selbst. Die Version aus `.env.example` mit dem `KONTEXT_VERSION` derselben
+  Kontext-Version heben, und vorher die Schritte machen, die das Changelog dafür nennt (wie den
+  Scope bei [Stalwart 1.0.3](#stalwart-103)).
+- LiveKit, LiveKit SIP, Redis und Caddy stehen mit festen Versionen in `deploy/compose.yaml`;
+  neue kommen mit `git pull`, und `pull` holt sie.
 - Hat sich `deploy/Caddyfile` geändert, Caddy neu laden:
   `docker compose -f deploy/compose.yaml restart caddy`.
 - Haben sich die Units in `deploy/systemd/` geändert, in `deploy/` `./backup-control.sh install`
@@ -666,7 +670,8 @@ sonst lehnt Stalwart jede neue Anmeldung ab. Ohne Oberfläche, mit dem Helfer au
 /root/stalwart-api.sh '[["x:OAuthClient/set",{"update":{"<id von kontext>":{"scopes/full":true}}},"0"]]'
 ```
 
-Danach wie gewohnt aktualisieren; Kontext und Stalwart gehören dabei zusammen: Stalwart 1.0.3
+Danach wie gewohnt aktualisieren, mit Compose `KONTEXT_VERSION` und `STALWART_VERSION=1.0.3` in
+`deploy/.env` zusammen; Kontext und Stalwart gehören dabei zusammen: Stalwart 1.0.3
 mit einem Kontext bis 0.1.22 lässt niemanden mehr neu anmelden, weil der alte Kontext den Scope
 nicht anfordert. Alle melden sich einmal neu an: Freigaben aus der Zeit als
 *First-party*-Client verwirft Stalwart, sobald Kontext den Token erneuert (`invalid_grant`,
@@ -775,6 +780,7 @@ eine Warnung ins Log.
 | `KONTEXT_SECRET` | – | Pflicht, mindestens 32 Zeichen; wird zu `BETTER_AUTH_SECRET` |
 | `STALWART_ADMIN_KEY` | leer | API-Schlüssel für die [Firmenverwaltung](#firmenverwaltung-einschalten) |
 | `KONTEXT_VERSION` | – | Pflicht: Version des Images `tristanteu/kontext` |
+| `STALWART_VERSION` | – | Pflicht: Version des Images `stalwartlabs/stalwart` (ohne „v“), mit `KONTEXT_VERSION` gehoben |
 | `COMPOSE_PROFILES` | – | `calls` (LiveKit, LiveKit SIP, Redis) und `documents` (Schreibzeug) |
 | `LIVEKIT_SECRET` | leer | Geheimnis für LiveKit und LiveKit SIP; leer: keine Anrufe |
 | `SCHREIBZEUG_URL` | leer | Adresse von Dokumente; leer: kein Modul |

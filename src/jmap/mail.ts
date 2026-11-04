@@ -15,6 +15,14 @@ import { replyReferences } from "@/lib/references";
 import { assertSetOk, CAPABILITIES, type Invocation, type JmapClient } from "./client";
 import type { BodyPart, EmailAddress, EmailDetail, EmailSummary, Identity, Mailbox } from "./types";
 
+/**
+ * Every Authentication-Results header (`:all`, topmost first, RFC 8621 §4.1.3): the sender check
+ * of the reading pane, and in the list whether a row may show the sender's photo (lib/photo.ts
+ * `mailSenderKey`). Without `:all` JMAP returns the bottommost one, which the sender may have
+ * written themselves.
+ */
+export const AUTHENTICATION_RESULTS = "header:Authentication-Results:asText:all";
+
 export const SUMMARY_PROPERTIES = [
   "threadId",
   "mailboxIds",
@@ -30,6 +38,8 @@ export const SUMMARY_PROPERTIES = [
   "header:Content-Type",
   // Who takes care of it in a shared mailbox (src/lib/assignment.ts); Kontext's namespace only.
   `metadata/${ASSIGNMENT_NAMESPACE}`,
+  // Raw too: whether the row's picture may show the sender (lib/row-face.ts).
+  AUTHENTICATION_RESULTS,
 ];
 
 const DETAIL_PROPERTIES = [
@@ -61,12 +71,9 @@ const BODY_PROPERTIES = [
   "subParts",
 ];
 
-/**
- * Headers for the sender check, every instance (`:all`, topmost first, RFC 8621 §4.1.3): without
- * it JMAP returns the bottommost one, which the sender may have written themselves.
- */
+/** Headers for the sender check, by the field of EmailDetail they are put under. */
 export const CHECK_HEADERS = {
-  authenticationResults: "header:Authentication-Results:asText:all",
+  authenticationResults: AUTHENTICATION_RESULTS,
   spamScore: "header:X-Spam-Score:asText:all",
   /** Its type, raw (Stalwart names raw headers without ":asRaw"): an encrypted or signed mail. */
   contentType: "header:Content-Type",
@@ -205,7 +212,7 @@ export const getEmail = async (
   const { list } = await client.call<{ list: Record<string, unknown>[] }>("Email/get", {
     accountId,
     ids: [id],
-    properties: [...DETAIL_PROPERTIES, ...Object.values(CHECK_HEADERS)],
+    properties: [...new Set([...DETAIL_PROPERTIES, ...Object.values(CHECK_HEADERS)])],
     bodyProperties: BODY_PROPERTIES,
     fetchHTMLBodyValues: true,
     fetchTextBodyValues: true,

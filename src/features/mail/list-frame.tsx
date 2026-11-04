@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Loading, PlaceholderRows } from "@/components/ui/placeholder";
 import { useShortcuts } from "@/components/use-shortcuts";
 import { DeviceOffer } from "@/features/notifications/device-offer";
+import { usePhotoOf } from "@/features/photos/queries";
 import type { EmailSummary } from "@/jmap/types";
 import { cn } from "@/lib/cn";
 import { addRange, keepListed, type Picked, pickKey, toggleKey } from "@/lib/selection";
@@ -137,6 +138,8 @@ export const ListFrame = ({
   const grouped = useThreadView();
   const swipe = useSwipeAction(folderId);
   const { answers, groups } = useThreadInfo(rows, accountOf, grouped);
+  // Once for the list, not per row: it loads the address books.
+  const photoOf = usePhotoOf();
   const personal = new Set(
     useMailAccounts()
       .filter((account) => account.isPersonal)
@@ -344,6 +347,7 @@ export const ListFrame = ({
                     answer={answers.get(pickKey(accountOf(row), row.email.id))}
                     group={groups.get(pickKey(accountOf(row), row.email.id))}
                     shared={!personal.has(accountOf(row))}
+                    photoOf={photoOf}
                     onSwipe={(action) =>
                       swipe(
                         accountOf(row),
