@@ -56,7 +56,7 @@ import { inlineParts, useInlineImageUrls } from "./inline-image-urls";
 import { LegalFooterPreview } from "./legal-footer-preview";
 import { type OpenedMail, openedMail, shownSubject } from "./opened-mails";
 import { useEmail } from "./queries";
-import { richText } from "./rich-text";
+import { richText, spellChecked } from "./rich-text";
 import { useUndoSeconds } from "./send-settings";
 import { useTakeBack } from "./take-back";
 import { useEmlForward } from "./use-eml-forward";
@@ -172,6 +172,7 @@ export const Composer = ({ accountId, mode, sourceEmailId, forwardIds, prefill }
         "aria-label": m.mail_body_placeholder(),
         role: "textbox",
         "aria-multiline": "true",
+        ...spellChecked(),
       },
     },
   });

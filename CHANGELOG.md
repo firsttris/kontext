@@ -7,6 +7,9 @@ Steps that an update needs beyond raising the version are marked **Upgrade**.
 
 ## Unreleased
 
+- Spell checking while writing: the mail text, the subject and the chat input switch on the
+  browser's spell checker in the language of the interface, instead of leaving it to the browser.
+
 - Setup command: `docker compose -f deploy/compose.yaml exec kontext bun server/setup-stalwart.ts`
   (Quadlet: `podman exec -it kontext bun server/setup-stalwart.ts`) sets up what Kontext needs in
   Stalwart with the admin login it asks for: the OAuth client `kontext` with the scope `full`

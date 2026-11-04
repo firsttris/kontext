@@ -5,6 +5,7 @@ import type { EmailAddress, Identity } from "@/jmap/types";
 import { formatSize } from "@/lib/format";
 import type { Suggestion } from "@/lib/groups";
 import { m } from "@/paraglide/messages";
+import { getLocale } from "@/paraglide/runtime";
 import { RecipientField } from "./recipient-field";
 
 type FieldsProps = {
@@ -113,6 +114,8 @@ export const ComposerFields = ({
         value={subject}
         onChange={(e) => onSubject(e.target.value)}
         aria-label={m.mail_subject()}
+        spellCheck
+        lang={getLocale()}
         className="h-8 min-w-0 flex-1 border-0 bg-transparent text-[14px] text-fg outline-none"
       />
     </label>
