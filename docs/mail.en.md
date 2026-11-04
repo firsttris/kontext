@@ -68,10 +68,21 @@ SMTP.
   right of "All / Unread" – several at once too – or dragged onto the list or onto a folder in the
   sidebar. They arrive as read; the time received is the mail's date, otherwise the time of the
   last receiving server. Afterwards Kontext says how many arrived and which files didn't, with the
-  reason. Not supported are Outlook's `.msg` (a binary format of its own that Stalwart does not
-  read as mail) and `.mbox` (a whole mailbox): whole mailboxes come in through the
-  [move](architecture.md#umzug) (Outlook as .pst) or "Connect mailbox". Nothing is imported into
-  Drafts, Flagged and Snoozed, and into shared mailboxes only with the right to add mails.
+  reason. Not supported is Outlook's `.msg` (a binary format of its own that Stalwart does not
+  read as mail); whole Outlook mailboxes come in through the [move](architecture.md#umzug) (as
+  .pst) or "Connect mailbox". Nothing is imported into Drafts, Flagged and Snoozed, and into
+  shared mailboxes only with the right to add mails.
+- **Importing .mbox files:** a whole folder as one file – from Thunderbird (the folder without an
+  ending in the profile, renamed to `.mbox`, or through ImportExportTools), from Apple Mail
+  ("Export Mailbox") or Google Takeout (all mail including spam and trash in one file) – goes in
+  through the same button or by dragging into the open folder. Every mail keeps its date; read,
+  flagged and answered come along where the program wrote them into the file (Gmail's labels
+  "Unread" and "Starred", Thunderbird's `X-Mozilla-Status`, `Status` and `X-Status`), otherwise
+  the mail counts as read. Mails deleted in Thunderbird but not yet compacted stay out. The
+  browser reads the file piece by piece, several GB too; the tab has to stay open for it, and
+  every 500 mails Kontext says how far it is. Gmail's labels do not become folders, everything
+  lands in the chosen folder, spam and trash too; to move a Gmail mailbox with its folders, use
+  "Connect mailbox".
 
   ![Folder "Altablage 2024" with three imported mails; below, the message "3 mails imported." and "Not imported: Rechnung Dezember.msg (Outlook's .msg format is not supported)"](screenshots/eml-import.png)
 - **Sender's picture** on every row of the list, as in Gmail: the photo of the colleague or

@@ -71,10 +71,21 @@ IMAP und SMTP.
   der Seitenleiste ziehen. Sie kommen gelesen an; als Eingangszeit gilt das Datum der Mail, sonst
   die Zeit des letzten Empfangs-Servers. Kontext sagt danach, wie viele angekommen sind und welche
   Dateien nicht, mit Grund. Nicht unterstützt sind Outlooks `.msg` (ein eigenes Binärformat, das
-  Stalwart nicht als Mail liest) und `.mbox` (ein ganzes Postfach): ganze Postfächer kommen über den
-  [Umzug](architecture.md#umzug) (Outlook als .pst) oder „Postfach verbinden“. In Entwürfe, Markiert
+  Stalwart nicht als Mail liest); ganze Outlook-Postfächer kommen über den
+  [Umzug](architecture.md#umzug) (als .pst) oder „Postfach verbinden“. In Entwürfe, Markiert
   und Wiedervorlage wird nicht importiert, in gemeinsame Postfächer nur mit dem Recht, Mails
   hinzuzufügen.
+- **.mbox-Dateien importieren:** ein ganzer Ordner als eine Datei – aus Thunderbird (der Ordner
+  ohne Endung im Profil, umbenannt in `.mbox`, oder per ImportExportTools), aus Apple Mail
+  („Postfach exportieren“) oder Googles Takeout (alle Mails einschließlich Spam und Papierkorb in
+  einer Datei) – geht über denselben Knopf oder per Ziehen in den geöffneten Ordner. Jede Mail
+  behält ihr Datum; gelesen, markiert und beantwortet kommen mit, wo das Programm es in die Datei
+  geschrieben hat (Gmails Labels „Unread“ und „Starred“, Thunderbirds `X-Mozilla-Status`, `Status`
+  und `X-Status`), sonst gilt die Mail als gelesen. In Thunderbird gelöschte, aber noch nicht
+  komprimierte Mails bleiben draußen. Der Browser liest die Datei Stück für Stück, auch mehrere GB;
+  der Tab muss dafür offen bleiben, alle 500 Mails sagt Kontext, wie weit es ist. Gmails Labels
+  werden dabei keine Ordner, alles landet im gewählten Ordner, auch Spam und Papierkorb; wer ein
+  Gmail-Postfach mit Ordnern umziehen will, nimmt „Postfach verbinden“.
 
   ![Ordner „Altablage 2024“ mit drei importierten Mails; unten die Meldung „3 Mails importiert.“ und „Nicht importiert: Rechnung Dezember.msg (Outlook-Format .msg wird nicht unterstützt)“](screenshots/eml-import.png)
 - **Bild des Absenders** an jeder Zeile der Liste, wie bei Gmail: das Foto des Kollegen oder
