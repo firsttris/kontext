@@ -89,6 +89,7 @@ const setup = (
   const fake = fakeManagement(options);
   const footer = { text: "" };
   const idle = { minutes: 0 };
+  const vacation = { templates: [] as { title: string; text: string }[] };
   const phishing = { address: "" };
   const ended: string[] = [];
   const welcomed: { newcomer: string; people: string[] }[] = [];
@@ -124,6 +125,10 @@ const setup = (
       idleLogout: async () => idle.minutes,
       saveIdleLogout: async (minutes) => {
         idle.minutes = minutes;
+      },
+      vacationTemplates: async () => vacation.templates,
+      saveVacationTemplates: async (templates) => {
+        vacation.templates = templates;
       },
       phishingReport: async () => phishing.address,
       savePhishingReport: async (address) => {
@@ -184,6 +189,7 @@ const setup = (
     changedMailboxes,
     footer,
     idle,
+    vacation,
     phishing,
     send,
     hint,
@@ -463,6 +469,28 @@ describe("Firmenverwaltung", () => {
     expect((await anna.send("PUT", "/legal-footer", { text: "x" })).status).toBe(403);
     expect(anna.footer.text).toBe("Firma GmbH · HRB 1");
     expect((await setup(null).send("GET", "/legal-footer")).status).toBe(401);
+  });
+
+  it("lets everyone signed in read the Vorlagen for the out-of-office reply, only the admin change them", async () => {
+    const anna = setup("anna@firma.de");
+    const urlaub = { title: "Urlaub", text: "{Name} ist bis {Bis} im Urlaub." };
+    anna.vacation.templates = [urlaub];
+    expect(await (await anna.send("GET", "/vacation-templates")).json()).toEqual({
+      templates: [urlaub],
+    });
+    expect((await anna.send("PUT", "/vacation-templates", { templates: [] })).status).toBe(403);
+    expect(anna.vacation.templates).toEqual([urlaub]);
+    expect((await setup(null).send("GET", "/vacation-templates")).status).toBe(401);
+
+    const chef = setup("chef@firma.de");
+    const saved = await chef.send("PUT", "/vacation-templates", {
+      templates: [{ title: " Krank ", text: "Nicht im Büro.\n" }],
+    });
+    expect(await saved.json()).toEqual({ templates: [{ title: "Krank", text: "Nicht im Büro." }] });
+    expect(chef.vacation.templates).toEqual([{ title: "Krank", text: "Nicht im Büro." }]);
+    const untitled = { templates: [{ title: "", text: "x" }] };
+    expect((await chef.send("PUT", "/vacation-templates", untitled)).status).toBe(400);
+    expect(chef.vacation.templates).toHaveLength(1);
   });
 
   it("keeps the Pflichtangaben tidied, and empty switches them off", async () => {

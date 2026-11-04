@@ -48,6 +48,7 @@ import { PhishingReportSection } from "@/features/company/phishing-report-sectio
 import { useIsCompanyAdmin } from "@/features/company/queries";
 import { SecuritySection as CompanySecuritySection } from "@/features/company/security-section";
 import { SmimeAuthoritiesSection } from "@/features/company/smime-authorities-section";
+import { VacationTemplatesSection } from "@/features/company/vacation-templates-section";
 import { ExternalSection } from "@/features/external/external-section";
 import { useExternalAccounts } from "@/features/external/queries";
 import { usePhone } from "@/features/phone/queries";
@@ -111,6 +112,7 @@ const COMPANY: Entry[] = [
   { id: "mailboxes", label: m.company_mailboxes, icon: Inbox },
   { id: "company-signature", label: m.company_signature, icon: Signature },
   { id: "company-legal", label: m.company_legal, icon: Scale },
+  { id: "company-vacation", label: m.company_vacation_templates, icon: Palmtree },
   { id: "company-chat", label: m.company_chat, icon: MessagesSquare },
   { id: "company-security", label: m.company_security, icon: ShieldCheck },
   { id: "company-idle", label: m.company_idle, icon: Timer },
@@ -149,6 +151,7 @@ const CONTENT: Record<Section, () => ReactNode> = {
   mailboxes: () => <MailboxesSection />,
   "company-signature": () => <CompanySignatureSection />,
   "company-legal": () => <LegalFooterSection />,
+  "company-vacation": () => <VacationTemplatesSection />,
   "company-chat": () => <ChatSection />,
   "company-security": () => (
     <>

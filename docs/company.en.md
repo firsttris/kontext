@@ -17,6 +17,11 @@ Stalwart's admin interface and without IT skills.
 - **Shared mailboxes** with rights per person: no access, read only, read and send; rules of
   their own per mailbox.
 - **Out of office for colleagues** (during illness, for example) with a stand-in named in the reply.
+- **Out-of-office templates** under *Settings → Company → Out-of-office templates*: a few texts
+  with a title ("Holiday", "Ill") that everyone can pick for their out-of-office reply, and the
+  company admin under "Set out of office". Kontext fills in `{Name}`, `{Bis}` (the last day) and
+  `{Vertretung}` (the stand-in); a line whose value is missing (no end date, no stand-in) is left
+  out. There are none at first.
 - **Rules for employees:** *Rules* on the person's entry – for example “mail from the supplier into
   the Orders folder” for a new colleague. These are the same rules as under *Settings → Rules* of
   that person: she sees the ones the boss created there like her own and can change or delete
