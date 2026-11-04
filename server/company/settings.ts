@@ -22,6 +22,9 @@ export type CompanySettings = {
   /** The Vorlagen for the out-of-office reply (vacation-templates.ts); none at first. */
   vacationTemplates: () => Promise<VacationTemplate[]>;
   saveVacationTemplates: (templates: VacationTemplate[]) => Promise<void>;
+  /** Where „Als Phishing melden“ sends a mail (phishing-report.ts); empty while there is none. */
+  phishingReport: () => Promise<string>;
+  savePhishingReport: (address: string) => Promise<void>;
 };
 
 const SIGNATURE = "signature";
@@ -29,6 +32,7 @@ const M365 = "m365";
 const LEGAL_FOOTER = "legalFooter";
 const IDLE_LOGOUT = "idleLogout";
 const VACATION_TEMPLATES = "vacationTemplates";
+const PHISHING_REPORT = "phishingReport";
 
 export const createCompanySettings = (db: Db, sealer: Sealer): CompanySettings => {
   const read = async (key: string): Promise<string | null> => {
@@ -66,5 +70,7 @@ export const createCompanySettings = (db: Db, sealer: Sealer): CompanySettings =
       return value ? (JSON.parse(value) as VacationTemplate[]) : [];
     },
     saveVacationTemplates: (templates) => write(VACATION_TEMPLATES, JSON.stringify(templates)),
+    phishingReport: async () => (await read(PHISHING_REPORT)) ?? "",
+    savePhishingReport: (address) => write(PHISHING_REPORT, address),
   };
 };

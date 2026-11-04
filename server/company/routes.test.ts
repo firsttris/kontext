@@ -90,6 +90,7 @@ const setup = (
   const footer = { text: "" };
   const idle = { minutes: 0 };
   const vacation = { templates: [] as { title: string; text: string }[] };
+  const phishing = { address: "" };
   const ended: string[] = [];
   const welcomed: { newcomer: string; people: string[] }[] = [];
   const shownToAll: string[][] = [];
@@ -128,6 +129,10 @@ const setup = (
       vacationTemplates: async () => vacation.templates,
       saveVacationTemplates: async (templates) => {
         vacation.templates = templates;
+      },
+      phishingReport: async () => phishing.address,
+      savePhishingReport: async (address) => {
+        phishing.address = address;
       },
     },
     externalHint: {
@@ -185,6 +190,7 @@ const setup = (
     footer,
     idle,
     vacation,
+    phishing,
     send,
     hint,
   };
@@ -521,5 +527,24 @@ describe("Firmenverwaltung", () => {
     expect(chef.idle.minutes).toBe(60);
     await chef.send("PUT", "/idle-logout", { minutes: 0 });
     expect(chef.idle.minutes).toBe(0);
+  });
+
+  it("lets everyone signed in read the address for Als Phishing melden, only the admin set it", async () => {
+    const anna = setup("anna@firma.de");
+    expect(await (await anna.send("GET", "/phishing-report")).json()).toEqual({ address: "" });
+    anna.phishing.address = "it@firma.de";
+    expect(await (await anna.send("GET", "/phishing-report")).json()).toEqual({
+      address: "it@firma.de",
+    });
+    expect((await anna.send("PUT", "/phishing-report", { address: "x@y.de" })).status).toBe(403);
+    expect((await setup(null).send("GET", "/phishing-report")).status).toBe(401);
+
+    const chef = setup("chef@firma.de");
+    const saved = await chef.send("PUT", "/phishing-report", { address: " IT@Dienstleister.de " });
+    expect(await saved.json()).toEqual({ address: "it@dienstleister.de" });
+    expect((await chef.send("PUT", "/phishing-report", { address: "keine" })).status).toBe(400);
+    expect(chef.phishing.address).toBe("it@dienstleister.de");
+    await chef.send("PUT", "/phishing-report", { address: "" });
+    expect(chef.phishing.address).toBe("");
   });
 });

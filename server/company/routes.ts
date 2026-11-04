@@ -16,6 +16,7 @@ import { idleLogoutRoutes, readIdleLogout } from "./idle-logout";
 import { legalFooterRoutes, readLegalFooter } from "./legal-footer";
 import { readMailboxMembers } from "./mailbox-members";
 import { mailboxRoutes } from "./mailboxes";
+import { phishingReportRoutes, readPhishingReport } from "./phishing-report";
 import { searchIndexStatus } from "./search-index";
 import { checkDomain, httpsCheck } from "./security";
 import { signatureRoutes } from "./signature-routes";
@@ -30,6 +31,7 @@ export const createCompanyRoutes = (deps: CompanyDeps) => {
   const legalFooter = readLegalFooter(deps);
   const idleLogout = readIdleLogout(deps);
   const vacationTemplates = readVacationTemplates(deps);
+  const phishingReport = readPhishingReport(deps);
   const mailboxMembers = readMailboxMembers(deps);
 
   /** Whether to show the Firmenverwaltung at all; asked by every signed-in user. */
@@ -61,6 +63,12 @@ export const createCompanyRoutes = (deps: CompanyDeps) => {
     return templates ? c.json(templates) : c.json({ error: "Nicht angemeldet" }, 401);
   });
 
+  /** „Als Phishing melden“: every signed-in user's mail app sends the reported mail there. */
+  app.get("/phishing-report", async (c) => {
+    const setting = await phishingReport(c.req.raw);
+    return setting ? c.json(setting) : c.json({ error: "Nicht angemeldet" }, 401);
+  });
+
   /** „Zuweisen“: every member of a shared mailbox offers only its members. */
   app.get("/mailbox-members", async (c) => {
     const members = await mailboxMembers(c.req.raw);
@@ -85,6 +93,7 @@ export const createCompanyRoutes = (deps: CompanyDeps) => {
   app.route("/legal-footer", legalFooterRoutes(deps));
   app.route("/idle-logout", idleLogoutRoutes(deps));
   app.route("/vacation-templates", vacationTemplateRoutes(deps));
+  app.route("/phishing-report", phishingReportRoutes(deps));
   app.get("/chat-retention", async (c) =>
     c.json({ days: (await deps.chatRetention?.days()) ?? 0 }),
   );

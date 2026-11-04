@@ -56,6 +56,7 @@ const FIXED: Record<string, (store: Store) => unknown> = {
   "GET /api/photos": () => ({ photos: [] }),
   "GET /api/secure": () => ({ messages: [] }),
   "GET /api/company/idle-logout": () => ({ minutes: 0 }),
+  "GET /api/company/phishing-report": () => ({ address: "" }),
   "GET /api/company/external-hint": () => ({ enabled: true, partners: [], domains: [DEV_DOMAIN] }),
   "GET /api/company/legal-footer": () => ({ text: "" }),
   "GET /api/company/vacation-templates": () => ({ templates: [] }),
