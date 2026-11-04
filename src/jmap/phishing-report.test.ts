@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { phishingReportCalls } from "./phishing-report";
+import type { Invocation, JmapClient } from "./client";
+import { phishingReportCalls, sendPhishingReport } from "./phishing-report";
 
 const report = {
   accountId: "a1",
@@ -43,5 +44,35 @@ describe("phishingReportCalls", () => {
       onSuccessDestroyEmail: ["#send"],
     });
     expect(submit).not.toHaveProperty("onSuccessUpdateEmail");
+  });
+});
+
+describe("sendPhishingReport", () => {
+  it("leaves no report behind in Drafts when the server refuses to send it", async () => {
+    const calls: Invocation[][] = [];
+    const client = {
+      request: async (invocations: Invocation[]) => {
+        calls.push(invocations);
+        return invocations.map(([name, args, id]) =>
+          name === "EmailSubmission/set"
+            ? [name, { notCreated: { send: { type: "forbiddenToSend" } } }, id]
+            : name === "Email/set" && (args as { create?: object }).create
+              ? [name, { created: { report: { id: "e9" } } }, id]
+              : [name, { destroyed: (args as { destroy?: string[] }).destroy ?? [] }, id],
+        );
+      },
+      call: async (name: string, args: Record<string, unknown>) => {
+        calls.push([[name, args, "0"]]);
+        return { destroyed: (args as { destroy?: string[] }).destroy ?? [] };
+      },
+    } as unknown as JmapClient;
+
+    await expect(sendPhishingReport(client, report)).rejects.toThrow("Versand");
+    const destroyed = calls
+      .flat()
+      .flatMap(([name, args]) =>
+        name === "Email/set" ? ((args as { destroy?: string[] }).destroy ?? []) : [],
+      );
+    expect(destroyed).toEqual(["e9"]);
   });
 });
