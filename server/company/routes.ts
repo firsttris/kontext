@@ -16,7 +16,6 @@ import { idleLogoutRoutes, readIdleLogout } from "./idle-logout";
 import { legalFooterRoutes, readLegalFooter } from "./legal-footer";
 import { readMailboxMembers } from "./mailbox-members";
 import { mailboxRoutes } from "./mailboxes";
-import { kontextClientStatus } from "./oauth-client";
 import { searchIndexStatus } from "./search-index";
 import { checkDomain, httpsCheck } from "./security";
 import { signatureRoutes } from "./signature-routes";
@@ -94,11 +93,6 @@ export const createCompanyRoutes = (deps: CompanyDeps) => {
         ? { ...searchIndexStatus(entries), known: true }
         : { pending: 0, failed: false, known: false },
     );
-  });
-  /** Whether Stalwart lets people sign in to Kontext (oauth-client.ts); unknown without the right. */
-  app.get("/oauth-client", async (c) => {
-    const clients = await deps.management.oauthClients();
-    return c.json({ status: clients ? kontextClientStatus(clients) : "unknown" });
   });
   /** How safe the company's mail travels: DNS of every domain, and https for Kontext. */
   app.get("/security", async (c) => {

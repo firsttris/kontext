@@ -1,11 +1,9 @@
 /**
- * Stalwart's management objects (`x:Account`, `x:Role`, `x:Domain`, `x:Authentication`,
- * `x:IndexQueueStatus`, `x:OAuthClient`) with the server's own key. Only this file talks to them;
- * the routes decide what is allowed.
+ * Stalwart's management objects (`x:Account`, `x:Role`, `x:Domain`, `x:Authentication`) with the
+ * server's own key. Only this file talks to them; the routes decide what is allowed.
  * Methods: crates/jmap-proto/src/request/method.rs; objects: crates/registry/src/schema/structs.rs.
  */
 import type { Domain, Result, Roles, StalwartAccount } from "./accounts";
-import type { OAuthClientEntry } from "./oauth-client";
 import type { IndexQueueEntry } from "./search-index";
 
 const USING = ["urn:ietf:params:jmap:core", "urn:stalwart:jmap"];
@@ -148,27 +146,7 @@ export const createManagement = (request: StalwartRequest) => {
       .then((result) => result.list ?? [])
       .catch(() => null);
 
-  /**
-   * Stalwart's OAuth clients, to see whether Kontext's own is set up (oauth-client.ts); null when
-   * the key may not read them (`sysOAuthClientGet`, docs/installation.md) or Stalwart is away.
-   */
-  const oauthClients = async (): Promise<OAuthClientEntry[] | null> =>
-    call<{ list?: OAuthClientEntry[] }>("x:OAuthClient/get", {
-      ids: null,
-      properties: ["clientId", "scopes"],
-    })
-      .then((result) => result.list ?? null)
-      .catch(() => null);
-
-  return {
-    listAccounts,
-    listDomains,
-    loadRoles,
-    createAccount,
-    updateAccounts,
-    indexQueue,
-    oauthClients,
-  };
+  return { listAccounts, listDomains, loadRoles, createAccount, updateAccounts, indexQueue };
 };
 
 export type Management = ReturnType<typeof createManagement>;

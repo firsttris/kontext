@@ -11,7 +11,6 @@ import type {
 } from "../../../server/company/accounts";
 import type { BackupSettings, BackupView } from "../../../server/company/backup-schema";
 import type { FolderName } from "../../../server/company/mailstore";
-import type { KontextClientStatus } from "../../../server/company/oauth-client";
 import type { SearchIndexStatus } from "../../../server/company/search-index";
 import type { Check } from "../../../server/company/security";
 import type { Job } from "../../../server/migration/jobs";
@@ -122,10 +121,6 @@ export type SecurityReport = {
 /** What the search index still has to take in (server/company/search-index.ts). */
 export const getSearchIndex = () =>
   send<SearchIndexStatus & { known: boolean }>("GET", "/search-index");
-
-/** Whether Stalwart lets people sign in to Kontext (server/company/oauth-client.ts). */
-export const getOAuthClient = () =>
-  send<{ status: KontextClientStatus | "unknown" }>("GET", "/oauth-client");
 
 /** How safe the company's mail travels (server/company/security.ts). */
 export const getSecurity = () => send<SecurityReport>("GET", "/security");

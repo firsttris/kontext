@@ -41,7 +41,6 @@ const fakeManagement = ({ annaInInfo = false } = {}) => {
     indexQueue: async () => [
       { index: "email", queuedUpdates: 40, queuedDeletions: 2, status: { "@type": "Running" } },
     ],
-    oauthClients: async () => [{ clientId: "kontext" }],
   };
   const shared: Record<string, Record<string, unknown>>[] = [];
   const rules: { accountId: string; rules: unknown[] }[] = [];
@@ -201,13 +200,6 @@ describe("Firmenverwaltung", () => {
       pending: 42,
       failed: false,
       known: true,
-    });
-  });
-
-  it("tells the company admin when Kontext's OAuth client lacks the scope full", async () => {
-    expect((await setup("anna@firma.de").send("GET", "/oauth-client")).status).toBe(403);
-    expect(await (await setup("chef@firma.de").send("GET", "/oauth-client")).json()).toEqual({
-      status: "noFullScope",
     });
   });
 
