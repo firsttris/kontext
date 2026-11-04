@@ -10,8 +10,9 @@
  * TCP on port+1 and UDP on port+2. The browser reaches the signalling through Vite (/rtc).
  *
  * With --optional (`bun run dev`), LiveKit is skipped with exit code 0 when one already answers on
- * the port or no binary can be had: without it everything works except calls, and
- * `bun run --parallel` stops the others only when a script fails.
+ * the port or no binary can be had, and the script ends with 0 when LiveKit fails to start or
+ * stops: without it everything works except calls, and `bun run --parallel` stops the others
+ * only when a script fails.
  */
 import { spawn } from "node:child_process";
 import { existsSync } from "node:fs";
@@ -117,13 +118,28 @@ const start = async (): Promise<void> => {
     stdio: ["ignore", "inherit", "inherit"],
     env: { ...process.env, LIVEKIT_CONFIG: devConfig(port, Number(args.server)) },
   });
-  await waitForHttp();
-  console.log(`LiveKit ${LIVEKIT_VERSION} bereit: http://127.0.0.1:${port}`);
-  const shutdown = () => server.kill("SIGTERM");
+  let stopping = false;
+  const shutdown = () => {
+    stopping = true;
+    server.kill("SIGTERM");
+  };
   process.on("SIGINT", shutdown);
   process.on("SIGTERM", shutdown);
-  // Killed by a signal (no code), LiveKit failed too: `bun run --parallel` then stops the rest.
-  server.on("exit", (code) => process.exit(code ?? 1));
+  server.on("exit", (code) => {
+    // Killed by a signal (no code), LiveKit failed too: `bun run --parallel` then stops the rest,
+    // unless LiveKit is optional (as dev/dev.ts had it): then calls go without it.
+    if (!args.optional || stopping) process.exit(code ?? 1);
+    console.error(`LiveKit beendet (${code ?? "Signal"}), Anrufe gehen ohne.`);
+    process.exit(0);
+  });
+  try {
+    await waitForHttp();
+  } catch (error) {
+    if (!args.optional) throw error;
+    server.kill("SIGTERM");
+    return;
+  }
+  console.log(`LiveKit ${LIVEKIT_VERSION} bereit: http://127.0.0.1:${port}`);
 };
 
 if (import.meta.main) await start();
