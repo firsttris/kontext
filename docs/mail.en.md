@@ -110,6 +110,9 @@ SMTP.
 
 - **Formatted text**, replies with quotes, attachments, recipient suggestions from the company and
   the contacts, a signature per sender address.
+- **Spell checking:** the text and the subject are checked by the browser's or the operating
+  system's spell checker, in the language of the interface (*Settings → Language*); misspelt words
+  are underlined, suggestions come with a right click. There is no grammar check.
 - **More formatting** on the right of the bar: font size (Small, Normal, Large, Huge), text
   color, background color and **tables** – insert one, then add or delete rows and columns in the
   menu, header row on/off. Everything goes out as inline style, so Outlook, Gmail and Apple Mail
