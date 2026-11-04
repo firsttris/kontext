@@ -318,7 +318,12 @@ const seedIfAsked = async (): Promise<void> => {
 const main = async (): Promise<void> => {
   if (args.reuse && (await answers(httpPort))) {
     console.log(`Stalwart läuft schon auf ${httpPort}, wird mitbenutzt.`);
-    return seedIfAsked();
+    // Any HTTP answer counts, so it may be another service: say so instead of a bare parse error.
+    return seedIfAsked().catch((error: Error) => {
+      throw new Error(
+        `Auf ${httpPort} antwortet ein Dienst, in den sich die Testdaten nicht einspielen lassen – ist das ein Stalwart (bun run dev:stalwart)? ${error.message}`,
+      );
+    });
   }
   await ensureBinary();
   if (args.fresh) await rm(instanceDir, { recursive: true, force: true });
