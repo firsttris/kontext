@@ -25,7 +25,7 @@ const setAddress = (page: Page, value: string) =>
     const response = await fetch("/api/company/phishing-report", {
       method: "PUT",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify(body),
+      body: JSON.stringify({ address: body }),
     });
     if (!response.ok) throw new Error(`phishing-report: ${response.status}`);
   }, value);
