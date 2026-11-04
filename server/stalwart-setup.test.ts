@@ -204,6 +204,18 @@ describe("setting up the account and its key", () => {
     expect(requestAs).not.toHaveBeenCalled();
   });
 
+  it("runs again without --domain once a second domain was added", async () => {
+    const withKey = serverAccount({ credentials: { "1": { "@type": "ApiKey" } } });
+    const admin = stalwart({
+      "x:Domain/get": { list: [domain, { id: "d2", name: "zweit.de" }] },
+      "x:Account/get": { list: [withKey] },
+    });
+    const requestAs = vi.fn(() => stalwart({}));
+    const result = await ensureServerAccount(admin, requestAs, { roleId: "f", newPassword });
+    expect(result.ok).toBe(true);
+    expect(requestAs).not.toHaveBeenCalled();
+  });
+
   it("passes on Stalwart's refusal as a value", async () => {
     const admin = stalwart({
       "x:Domain/get": { list: [domain] },
