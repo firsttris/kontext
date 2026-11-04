@@ -9,6 +9,7 @@ import { type EmlOriginal, startEmlForward } from "@/lib/compose";
 import { textToHtml } from "@/lib/html";
 import { bodyStructureOf } from "@/lib/mail-structure";
 import { assertSetOk, CAPABILITIES, type Invocation, type JmapClient } from "./client";
+import { destroyEmails } from "./mail";
 import type { Identity } from "./types";
 
 export type PhishingReport = {
@@ -64,5 +65,13 @@ export const sendPhishingReport = async (client: JmapClient, report: PhishingRep
     CAPABILITIES.submission,
   ]);
   assertSetOk(responses[0]![1], "Meldung");
-  assertSetOk(responses[1]![1], "Versand");
+  try {
+    assertSetOk(responses[1]![1], "Versand");
+  } catch (error) {
+    // Not sent, so onSuccessDestroyEmail did not run: the report would stay in Drafts.
+    const created = (responses[0]![1] as { created?: Record<string, { id: string }> }).created;
+    const id = created?.report?.id;
+    if (id) await destroyEmails(client, report.accountId, [id]).catch(() => undefined);
+    throw error;
+  }
 };
