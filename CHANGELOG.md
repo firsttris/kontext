@@ -11,6 +11,10 @@ Steps that an update needs beyond raising the version are marked **Upgrade**.
   verwalten*, own address books a new name in *Adressbücher*; "Verschieben nach …" moves a
   contact, or several selected ones, to another address book of the same account (user guide,
   "Kalender und Kontakte").
+- Mail: "Alle herunterladen" below the attachments of a mail with several of them saves them in
+  one `<Betreff>.zip` (packed in the browser, uncompressed; equal names get " (2)"), and "Als
+  .eml speichern" in "Weitere Aktionen" saves the whole mail as `<Betreff>.eml`, on the phone too
+  (user guide, "Mail", "Anhänge, Drucken, Tastatur").
 - Calendar and tasks: a search field finds appointments (title, location, description,
   participants, past and coming; a series once) and tasks (title, notes, checklist, assignee),
   and a hit opens them, on the phone too (user guide, "Kalender" and "Aufgaben").
