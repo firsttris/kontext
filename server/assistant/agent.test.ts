@@ -189,5 +189,6 @@ describe("a tool for the Messages API", () => {
         required: ["query"],
       },
     });
+    expect(toolDefinition(searchMail).input_schema).not.toHaveProperty("$schema");
   });
 });

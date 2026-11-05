@@ -2329,7 +2329,9 @@ Kosten klein.
   nichts. Was angelegt wurde, kommt als Meldung des Writers zurück und steht
   unter der Antwort.
 - **Grenzen:** zehn Fragen und zwanzig Änderungen je Person und Minute (im Speicher, wie
-  `server/mcp/attempts.ts`); Änderungen landen nicht im `mcp_log`, sie sind ja in der App zu sehen.
+  `server/mcp/attempts.ts`); Änderungen landen nicht im `mcp_log`, sie sind ja in der App zu sehen. Wie bei `/mcp` kann fremder Mailtext versuchen, Änderungen
+  anzustoßen (Prompt Injection); mehr als die Werkzeuge erlauben geht nicht: Entwürfe, Termine nur mit
+  Kollegen, Kontakte und Aufgaben, kein Senden nach draußen, kein Löschen.
 
 **Später:** Anrufe und Chat als Werkzeuge; der Assistent auch über Amazon Bedrock (EU).
 

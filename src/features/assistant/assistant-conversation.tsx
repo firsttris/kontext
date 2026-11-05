@@ -71,8 +71,9 @@ const Bubble = ({ entry }: { entry: Entry }) => {
           aria-label={m.assistant_done()}
           className="m-0 flex max-w-[85%] list-none flex-col gap-1 p-0"
         >
-          {entry.done.map((line) => (
-            <li key={line} className="flex items-start gap-1.5 text-[13px] text-muted">
+          {entry.done.map((line, index) => (
+            // biome-ignore lint/suspicious/noArrayIndexKey: the same change can be made twice.
+            <li key={index} className="flex items-start gap-1.5 text-[13px] text-muted">
               <Check size={14} className="mt-0.5 shrink-0 text-ok" aria-hidden="true" />
               {line}
             </li>

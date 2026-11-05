@@ -44,7 +44,7 @@ It also works without an agent of your own: at the top of the chat is the **Assi
 it in words (“What happened lately with Keller Elektro?”, “Write Ms Keller that we’ll come on
 Tuesday”); it uses the same tools as a connected agent, with the rights of the person asking, and
 on request creates drafts, appointments, contacts and tasks; what it created is listed under its
-answer. It, too, sends nothing and deletes nothing.
+answer. Like an agent, it sends nothing outside the company and deletes nothing: you send drafts yourself, and it invites only colleagues to appointments.
 
 - **Setting up:** the Firmenverwaltung enters a Claude API key (console.anthropic.com) under
   *Settings → Chat* and picks the model ([Installation → AI agents](installation.md#ki-agenten)).

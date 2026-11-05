@@ -1059,7 +1059,7 @@
   "assistant_row": "Questions about mail, appointments, customers and tasks",
   "assistant_intro": "Ask about customers, mail, appointments and tasks, for example “What happened lately with Keller Elektro?” or “Write Ms Keller a reply that we’ll come on Tuesday.” The assistant looks things up with your rights and, if you ask, creates drafts, appointments, contacts and tasks.",
   "assistant_input": "Question for the assistant",
-  "assistant_note": "Answers come from Claude (Anthropic). Your question and what the assistant looks up for it are sent there. It sends nothing: you send drafts yourself.",
+  "assistant_note": "Answers come from Claude (Anthropic). Your question and what the assistant looks up for it are sent there. It sends nothing outside the company: you send drafts yourself, and it invites only colleagues to appointments.",
   "assistant_thinking": "The assistant is looking …",
   "assistant_new": "New conversation",
   "assistant_done": "Created",

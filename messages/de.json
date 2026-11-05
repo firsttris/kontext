@@ -1059,7 +1059,7 @@
   "assistant_row": "Fragen zu Mails, Terminen, Kunden und Aufgaben",
   "assistant_intro": "Frag nach Kunden, Mails, Terminen und Aufgaben, zum Beispiel „Was gab es zuletzt mit Keller Elektro?“ oder „Schreib Frau Keller eine Antwort, dass wir Dienstag kommen.“ Der Assistent schaut mit deinen Rechten nach und legt auf Wunsch Entwürfe, Termine, Kontakte und Aufgaben an.",
   "assistant_input": "Frage an den Assistenten",
-  "assistant_note": "Antworten kommen von Claude (Anthropic). Deine Frage und was der Assistent dafür nachschlägt, gehen dorthin. Er sendet nichts: Entwürfe schickst du selbst ab.",
+  "assistant_note": "Antworten kommen von Claude (Anthropic). Deine Frage und was der Assistent dafür nachschlägt, gehen dorthin. Er schickt nichts nach draußen: Entwürfe sendest du selbst, zu Terminen lädt er nur Kollegen ein.",
   "assistant_thinking": "Der Assistent schaut nach …",
   "assistant_new": "Neues Gespräch",
   "assistant_done": "Angelegt",

@@ -2265,7 +2265,9 @@ and the tools are cached (`cache_control`), `effort: medium` keeps the cost down
   out), the server keeps nothing. What was created comes back as the writer's message and is
   listed under the answer.
 - **Limits:** ten questions and twenty changes per person and minute (in memory, like
-  `server/mcp/attempts.ts`); changes do not go into `mcp_log`, since they can be seen in the app.
+  `server/mcp/attempts.ts`); changes do not go into `mcp_log`, since they can be seen in the app. As with `/mcp`, outside mail text
+  can try to trigger changes (prompt injection); nothing beyond what the tools allow is possible:
+  drafts, appointments only with colleagues, contacts and tasks, nothing sent outside, no deleting.
 
 **Later:** calls and chat as tools; the assistant also through Amazon Bedrock (EU).
 

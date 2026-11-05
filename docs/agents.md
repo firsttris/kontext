@@ -44,7 +44,7 @@ Ohne eigenen Agenten geht es auch: Im Chat steht oben der **Assistent**. Man fra
 („Was gab es zuletzt mit Keller Elektro?“, „Schreib Frau Keller, dass wir Dienstag kommen“), er
 nutzt dieselben Werkzeuge wie ein verbundener Agent, mit den Rechten der Person, die fragt, und
 legt auf Wunsch Entwürfe, Termine, Kontakte und Aufgaben an; was er angelegt hat, steht unter
-seiner Antwort. Auch er sendet nichts und löscht nichts.
+seiner Antwort. Wie ein Agent schickt er nichts nach draußen und löscht nichts: Entwürfe sendet man selbst, zu Terminen lädt er nur Kollegen ein.
 
 - **Einrichten:** Die Firmenverwaltung trägt unter *Einstellungen → Chat* einen Schlüssel der
   Claude API (console.anthropic.com) ein und wählt das Modell

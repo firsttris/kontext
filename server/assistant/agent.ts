@@ -36,13 +36,21 @@ export type AskDeps = {
 
 /** Enough for a customer overview plus a draft; a loop that goes on longer has lost its way. */
 export const MAX_ROUNDS = 10;
-const MAX_TOKENS = 4096;
+/** Room for thinking (on by default on the 5.5 models) and an answer; below the SDK's limit
+ * for a request without streaming. */
+const MAX_TOKENS = 16_000;
+
+/** The input as JSON Schema, without the `$schema` line the Messages API has no use for. */
+const inputSchema = (tool: Tool): Anthropic.Tool.InputSchema => {
+  const { $schema: _, ...schema } = z.toJSONSchema(z.object(tool.input), { io: "input" });
+  return schema as Anthropic.Tool.InputSchema;
+};
 
 /** A tool as the Messages API describes it; the schema is what an agent over MCP sees too. */
 export const toolDefinition = (tool: Tool): Anthropic.Tool => ({
   name: tool.name,
   description: tool.description,
-  input_schema: z.toJSONSchema(z.object(tool.input), { io: "input" }) as Anthropic.Tool.InputSchema,
+  input_schema: inputSchema(tool),
 });
 
 const textOf = (message: Anthropic.Message) =>
