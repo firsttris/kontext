@@ -24,8 +24,8 @@ import { type BookRef, bookLabel, startBook } from "./queries";
 type Preview = { cards: ContactCard[]; duplicates: number; failed: number };
 type Csv = { header: string[]; rows: string[][]; mapping: CsvField[]; existing: ContactCard[] };
 
-const csvPreview = ({ rows, mapping, existing }: Csv): Preview => {
-  const cards = csvCards(rows, mapping);
+const csvPreview = ({ header, rows, mapping, existing }: Csv): Preview => {
+  const cards = csvCards(rows, mapping, header);
   const fresh = freshCards(cards, existing);
   return {
     cards: fresh,

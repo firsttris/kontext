@@ -188,4 +188,10 @@ describe("Google Contacts CSV", () => {
     const form = rowToForm(row, header.map(guessField), header);
     expect(form.phones.map((phone) => phone.kind)).toEqual(["mobile", "mobile", "fax", "work"]);
   });
+
+  it("keeps the kind the person picked for a column", () => {
+    const mapping = header.map(guessField).map((field, i) => (i === 7 ? "phone:home" : field));
+    const form = rowToForm(row, mapping, header);
+    expect(form.phones.map((phone) => phone.kind)).toEqual(["mobile", "mobile", "home", "work"]);
+  });
 });

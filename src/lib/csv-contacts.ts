@@ -79,15 +79,47 @@ const values = (cell: string) =>
     .map((value) => value.trim())
     .filter(Boolean);
 
-/** The form for one row: mails and numbers add up, a text field keeps its first value. */
-export const rowToForm = (row: string[], mapping: CsvField[]): ContactForm => {
+/** Google's label of a number ("Mobile", "Home Fax", "* Work"); null for "Main", "Other" … */
+const labelKind = (label: string): PhoneKind | null => {
+  const words = normalize(label);
+  if (/fax/.test(words)) return "fax";
+  if (/mobil|cell|handy/.test(words)) return "mobile";
+  if (/home|privat/.test(words)) return "home";
+  if (/work|business|geschäftlich/.test(words)) return "work";
+  return null;
+};
+
+/** For Google's "Phone 2 - Value" the column of its "Phone 2 - Label" (or "- Type"), else -1. */
+const labelColumn = (header: string[], column: number) => {
+  const n = /^phone (\d+) value$/.exec(normalize(header[column] ?? ""))?.[1];
+  return n
+    ? header.findIndex((name) => [`phone ${n} label`, `phone ${n} type`].includes(normalize(name)))
+    : -1;
+};
+
+/**
+ * The kind of the numbers in a phone column: the one picked for it, or, while that is still the
+ * guess, the label Google wrote next to the number in this row.
+ */
+const phoneKind = (row: string[], header: string[], field: CsvField, column: number) => {
+  const picked = field.slice("phone:".length) as PhoneKind;
+  const label = labelColumn(header, column);
+  const guessed = field === guessField(header[column] ?? "");
+  return (guessed && label >= 0 && labelKind(row[label] ?? "")) || picked;
+};
+
+/**
+ * The form for one row: mails and numbers add up, a text field keeps its first value. The header
+ * gives the kind of a number from Google's label column.
+ */
+export const rowToForm = (row: string[], mapping: CsvField[], header: string[] = []): ContactForm => {
   const form: ContactForm = { ...emptyContactForm, emails: [], phones: [] };
   mapping.forEach((field, i) => {
     const value = row[i]?.trim() ?? "";
     if (!value || field === "skip") return;
     if (field === "email") form.emails.push(...values(value).map((address) => ({ address })));
     else if (field.startsWith("phone:")) {
-      const kind = field.slice("phone:".length) as PhoneKind;
+      const kind = phoneKind(row, header, field, i);
       form.phones.push(...values(value).map((number) => ({ number, kind })));
     } else {
       const text = field as TextField;
@@ -98,8 +130,12 @@ export const rowToForm = (row: string[], mapping: CsvField[]): ContactForm => {
 };
 
 /** The cards for the rows; a row without name, company and mail is left out. */
-export const csvCards = (rows: string[][], mapping: CsvField[]): ContactCard[] =>
+export const csvCards = (
+  rows: string[][],
+  mapping: CsvField[],
+  header: string[] = [],
+): ContactCard[] =>
   rows
-    .map((row) => rowToForm(row, mapping))
+    .map((row) => rowToForm(row, mapping, header))
     .filter((form) => form.given || form.surname || form.company || form.emails.length)
     .map((form) => ({ kind: "individual", ...formToCard(form) }) as ContactCard);
