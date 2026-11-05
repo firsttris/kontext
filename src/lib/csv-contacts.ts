@@ -72,16 +72,24 @@ export const csvDate = (text: string): string => {
     : "";
 };
 
+/** Google puts several values of one label into one cell: "a@x.test ::: b@x.test". */
+const values = (cell: string) =>
+  cell
+    .split(" ::: ")
+    .map((value) => value.trim())
+    .filter(Boolean);
+
 /** The form for one row: mails and numbers add up, a text field keeps its first value. */
 export const rowToForm = (row: string[], mapping: CsvField[]): ContactForm => {
   const form: ContactForm = { ...emptyContactForm, emails: [], phones: [] };
   mapping.forEach((field, i) => {
     const value = row[i]?.trim() ?? "";
     if (!value || field === "skip") return;
-    if (field === "email") form.emails.push({ address: value });
-    else if (field.startsWith("phone:"))
-      form.phones.push({ number: value, kind: field.slice("phone:".length) as PhoneKind });
-    else {
+    if (field === "email") form.emails.push(...values(value).map((address) => ({ address })));
+    else if (field.startsWith("phone:")) {
+      const kind = field.slice("phone:".length) as PhoneKind;
+      form.phones.push(...values(value).map((number) => ({ number, kind })));
+    } else {
       const text = field as TextField;
       form[text] ||= text === "birthday" ? csvDate(value) : value;
     }
