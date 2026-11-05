@@ -312,6 +312,22 @@ describe("video meeting", () => {
     const event = { id: "e", calendarIds: {}, ...free } as unknown as CalendarEvent;
     expect(eventToForm(event, []).showAs).toBe("free");
   });
+  it("writes whether the event is private and reads it back", () => {
+    const form = { ...newEventForm("2026-10-23T10:00:00"), title: "Arzttermin" };
+    expect(formToEvent(form, me).privacy).toBe("public");
+    const hidden = formToEvent({ ...form, private: true }, me);
+    expect(hidden.privacy).toBe("private");
+    const event = { id: "e", calendarIds: {}, ...hidden } as unknown as CalendarEvent;
+    expect(eventToForm(event, []).private).toBe(true);
+  });
+  it("keeps an event secret (Outlook's confidential) while it stays private", () => {
+    const secret = { id: "e", calendarIds: {}, start: "2026-10-23T10:00:00", privacy: "secret" };
+    const form = eventToForm(secret as CalendarEvent, []);
+    expect(formToEvent(form, me, secret as CalendarEvent).privacy).toBe("secret");
+    expect(formToEvent({ ...form, private: false }, me, secret as CalendarEvent).privacy).toBe(
+      "public",
+    );
+  });
 });
 
 describe("attendeeEmails", () => {

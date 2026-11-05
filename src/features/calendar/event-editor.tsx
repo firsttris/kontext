@@ -88,6 +88,10 @@ export const EventEditor = ({ event, series, start, copyOf, onDone, onCancel }: 
     writable.find((calendar) => calendar.key === calendarKey) ??
     writable.find((calendar) => calendar.isPersonal && calendar.calendar.isDefault) ??
     writable[0];
+  // Stalwart lets only the calendar's owner mark an event private (assert_privacy_allowed in
+  // crates/jmap/src/calendar_event/privacy.rs): the user's own calendars and their shared
+  // mailboxes' ones.
+  const mayBePrivate = Boolean((event ? calendarOf(calendars, event) : target)?.isOwner);
   const toast = useToast();
   const shareWith = useShareWith();
   const suggestions = useAddressSuggestions();
@@ -131,12 +135,29 @@ export const EventEditor = ({ event, series, start, copyOf, onDone, onCancel }: 
         : { ...current, [key]: e.target.value };
     });
 
+  /**
+   * One date of a series. Its privacy belongs to the whole series: Stalwart drops `privacy` from a
+   * date's patch (is_forbidden_override_patch in crates/calcard/src/jscalendar/types.rs,
+   * is_ignored_override_key in overrides.rs), so a changed "Privat" goes to the series.
+   */
+  const saveDate = async (
+    date: CalendarEvent,
+    whole: CalendarEvent,
+    data: Record<string, unknown>,
+  ) => {
+    await update.mutateAsync({ event: date, patch: data });
+    if (data.privacy !== (whole.privacy ?? "public")) {
+      await update.mutateAsync({ event: date, id: whole.id, patch: { privacy: data.privacy } });
+    }
+  };
+
   const save = (data: Record<string, unknown>) => {
     if (!event) {
       if (!target) throw new Error(m.calendar_calendar());
       return create.mutateAsync({ event: data, calendar: target });
     }
-    if (!instance || scope === "this") return update.mutateAsync({ event, patch: data });
+    if (!instance) return update.mutateAsync({ event, patch: data });
+    if (scope === "this") return saveDate(instance, series!, data);
     // This date and the following: a new series from here, unless it is the first date anyway.
     if (scope === "following" && !isFirstDate(series!, instance.recurrenceId!)) {
       return split.changeFollowing(instance, series!, data);
@@ -152,7 +173,7 @@ export const EventEditor = ({ event, series, start, copyOf, onDone, onCancel }: 
   const submit = async (e?: FormEvent, toOutside = false) => {
     e?.preventDefault();
     const invalid = validateEventForm(form);
-    const filled = { ...form, reminder };
+    const filled = { ...form, reminder, private: form.private && mayBePrivate };
     if (invalid) {
       setProblem(PROBLEMS[invalid]());
       return;
@@ -252,6 +273,20 @@ export const EventEditor = ({ event, series, start, copyOf, onDone, onCancel }: 
         />
         {m.calendar_event_all_day()}
       </label>
+      {mayBePrivate ? (
+        <label className="flex items-start gap-2 text-[14px]">
+          <input
+            type="checkbox"
+            checked={form.private}
+            onChange={(e) => setForm((current) => ({ ...current, private: e.target.checked }))}
+            className="mt-0.5 size-4 shrink-0 accent-[var(--accent)]"
+          />
+          <span className="flex flex-col">
+            {m.calendar_event_private()}
+            <span className="text-[13px] text-muted">{m.calendar_event_private_hint()}</span>
+          </span>
+        </label>
+      ) : null}
       <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
         <TimeFields
           legend={m.calendar_event_start()}

@@ -88,6 +88,11 @@ Kontext is also on the iPhone, on Android (DAVx⁵) and in Thunderbird.
   the next times when everyone is free – like Outlook's Scheduling Assistant. Within the company,
   everyone sees when colleagues are busy (without titles); this can be switched off per calendar.
   [More](architecture.md#verfugbarkeit)
+- **Private appointments:** "Private" in the editor (in one's own calendars and those of shared
+  mailboxes) keeps the details to oneself: whoever sees the calendar through a share – a deputy,
+  colleagues with read access – sees only "Private" with the time, no title, location, notes or
+  participants; they cannot edit it either. Stalwart itself leaves the details out. Private
+  appointments carry a small lock. [More](architecture.md#private-termine)
 - **Adding public holidays:** under *Manage calendars*, choose the federal state; Kontext creates
   the calendar "Feiertage <Bundesland>" (public holidays of that state) and enters the statutory
   public holidays for this year and next, all-day and as "free" (they block nobody's

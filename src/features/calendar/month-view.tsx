@@ -19,6 +19,7 @@ import { type DayTask, tasksOnDay } from "@/lib/task-context";
 import { m } from "@/paraglide/messages";
 import { EventLink } from "./event-link";
 import { calendarColor } from "./event-style";
+import { EventTitle } from "./event-title";
 import { TaskChip } from "./task-chip";
 
 const WEEKDAYS = weekdayHeads(LOCALE);
@@ -163,7 +164,7 @@ const MonthChip = ({ event, invitation }: { event: CalendarEvent; invitation: bo
           {toLocal(start).slice(11, 16)}
         </span>
       )}
-      <span className="truncate">{event.title || "—"}</span>
+      <EventTitle event={event} />
     </EventLink>
   );
 };

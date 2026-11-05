@@ -2,7 +2,7 @@
 import { useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { Dialog } from "@/components/ui/dialog";
-import { type CalendarEvent, isInstance } from "@/lib/jscalendar";
+import { type CalendarEvent, eventTitle, isInstance } from "@/lib/jscalendar";
 import { m } from "@/paraglide/messages";
 import { EventDetails } from "./event-details";
 import { EventEditor } from "./event-editor";
@@ -45,7 +45,7 @@ export const EventDialog = ({ eventId, event, start }: Props) => {
             ? m.calendar_duplicate_title()
             : editing
               ? (event?.title ?? "")
-              : event?.title || "—"
+              : eventTitle(event!, m.calendar_event_private())
       }
       // Editing gets room for the attendees' schedules.
       className={editing ? "md:w-[min(760px,calc(100vw-32px))]" : undefined}

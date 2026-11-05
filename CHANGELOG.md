@@ -11,6 +11,10 @@ Steps that an update needs beyond raising the version are marked **Upgrade**.
   verwalten*, own address books a new name in *Adressbücher*; "Verschieben nach …" moves a
   contact, or several selected ones, to another address book of the same account (user guide,
   "Kalender und Kontakte").
+- Calendar: "Privat" in the event editor marks an appointment private (JSCalendar `privacy`).
+  Whoever sees the calendar through a share (a deputy, colleagues) sees only "Privat" with the
+  time; Stalwart leaves out the title, location, notes and participants itself. Private
+  appointments show a small lock (user guide, "Kalender und Kontakte").
 - Mail: a reply or forward keeps the images in the text of the original; they go out again as
   inline images (`cid:`). Images from the internet stay in the quote only if they were loaded in
   the mail (user guide, "Mail", "Schreiben").
