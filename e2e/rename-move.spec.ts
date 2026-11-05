@@ -32,7 +32,8 @@ const renamesAndRecoloursACalendar = async (page: Page) => {
     await expect(edit.getByRole("button", { name: "Rot" })).toHaveAttribute("aria-pressed", "true");
     await edit.getByRole("button", { name: "Speichern" }).click();
     await expect(edit).toHaveCount(0);
-    await expect(manage.getByText(after)).toBeVisible();
+    // The row's own button: the new name also shows in the import's "In Kalender" select.
+    await expect(manage.getByRole("button", { name: `Name und Farbe: ${after}` })).toBeVisible();
     await expect
       .poll(async () => {
         const calendar = (await listCalendars(jonas, accountId)).find((c) => c.id === id);
