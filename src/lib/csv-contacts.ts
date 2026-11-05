@@ -51,6 +51,10 @@ export const guessField = (header: string): CsvField =>
 
 const pad = (n: string) => n.padStart(2, "0");
 
+/** A day of the calendar: a British "30/07/2000" read as US gives month 30, which is none. */
+const isDate = (year: number, month: number, day: number) =>
+  month >= 1 && month <= 12 && day >= 1 && day <= new Date(Date.UTC(year, month, 0)).getUTCDate();
+
 /** "YYYY-MM-DD" from ISO, German "24.12.1980" or Outlook's US "12/24/1980"; else "". */
 export const csvDate = (text: string): string => {
   const iso = /^(\d{4})-(\d{1,2})-(\d{1,2})/.exec(text);
@@ -63,7 +67,7 @@ export const csvDate = (text: string): string => {
       : us
         ? [us[3]!, us[1]!, us[2]!]
         : [];
-  return year && Number(month) >= 1 && Number(day) >= 1
+  return year && isDate(Number(year), Number(month), Number(day))
     ? `${year}-${pad(month!)}-${pad(day!)}`
     : "";
 };
