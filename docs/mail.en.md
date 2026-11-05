@@ -95,7 +95,9 @@ SMTP.
 - **Exporting a folder as .mbox:** "…" next to a folder with mails → **Export as .mbox** saves all
   mails of the folder (without subfolders), oldest first, as one file `<folder>.mbox` (mboxrd,
   RFC 4155) that Thunderbird (ImportExportTools), Apple Mail and Kontext's own import read. Read,
-  flagged and answered are in it as `Status` and `X-Status`. The browser loads the mails one by
+  flagged and answered are in it as `Status` and `X-Status`, in place of the flags a mail taken
+  over from an .mbox still carries from the old file (`X-Gmail-Labels`, `X-Mozilla-Status`).
+  The browser loads the mails one by
   one and puts the file together before saving it: Chrome and Edge move large files to disk,
   Firefox and Safari keep more in memory. Folders up to about 1 GB are no problem; for larger ones
   or a whole mailbox, a mail program over IMAP is the way.

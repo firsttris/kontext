@@ -99,7 +99,9 @@ IMAP und SMTP.
 - **Ordner als .mbox exportieren:** „…“ neben einem Ordner mit Mails → **Als .mbox exportieren**
   speichert alle Mails des Ordners (ohne Unterordner), älteste zuerst, als eine Datei
   `<Ordner>.mbox` (mboxrd, RFC 4155), die Thunderbird (ImportExportTools), Apple Mail und Kontexts
-  eigener Import lesen. Gelesen, markiert und beantwortet stehen als `Status` und `X-Status` darin.
+  eigener Import lesen. Gelesen, markiert und beantwortet stehen als `Status` und `X-Status` darin,
+  an Stelle der Kennzeichen, die eine aus einer .mbox übernommene Mail noch aus der alten Datei
+  trägt (`X-Gmail-Labels`, `X-Mozilla-Status`).
   Der Browser lädt die Mails einzeln und setzt die Datei vor dem Speichern zusammen: Chrome und
   Edge lagern große Dateien auf die Festplatte aus, Firefox und Safari halten mehr im
   Arbeitsspeicher. Ordner bis etwa 1 GB sind kein Problem; für größere oder ein ganzes Postfach ist

@@ -141,9 +141,18 @@ export type MboxMail = { sender: string; receivedAt: Date; keywords: Record<stri
 const QUOTE = new Uint8Array([0x3e]);
 
 /**
- * One mail as it goes into an mbox, the inverse of `splitMbox`: the "From " line and the status,
- * the message with one ">" more before every line of ">"s and "From " (mboxrd), and the blank line
- * before the next one, in the mail's own line ends. The parts go into a Blob as they are.
+ * The header fields `mboxFlags` reads the flags from. A mail imported from an mbox still carries
+ * them as they were then; Gmail's and Thunderbird's win over the Status written now, so they go.
+ */
+const FLAG_FIELD = /^(status|x-status|x-mozilla-status2?|x-gmail-labels)[ \t]*:/i;
+const latin1 = new TextDecoder("latin1");
+const isContinued = (line: Uint8Array) => line[0] === 0x20 || line[0] === 0x09;
+
+/**
+ * One mail as it goes into an mbox, the inverse of `splitMbox`: the "From " line and the status
+ * in place of the flag fields the header had, the message with one ">" more before every line of
+ * ">"s and "From " (mboxrd), and the blank line before the next one, in the mail's own line ends.
+ * The parts go into a Blob as they are.
  */
 export const mboxEntry = (raw: Uint8Array, { sender, receivedAt, keywords }: MboxMail) => {
   const firstEnd = raw.indexOf(LF);
@@ -151,12 +160,20 @@ export const mboxEntry = (raw: Uint8Array, { sender, receivedAt, keywords }: Mbo
   const from = `From ${sender.replace(/\s/g, "") || "MAILER-DAEMON"} ${asctime(receivedAt)}`;
   const encoder = new TextEncoder();
   const parts: Uint8Array[] = [encoder.encode([from, ...statusLines(keywords), ""].join(eol))];
-  // The message goes in in runs between the lines that need a ">".
+  // The message goes in in runs between the lines that need a ">" or are left out.
   let run = 0;
+  let inHead = true;
+  let dropping = false;
   for (let start = 0; start < raw.length; ) {
     const end = raw.indexOf(LF, start);
     const line = raw.subarray(start, end === -1 ? raw.length : end + 1);
-    if (isFrom(line, 0) || isEscapedFrom(line)) {
+    if (inHead && isBlank(line)) inHead = false;
+    dropping =
+      inHead && ((dropping && isContinued(line)) || FLAG_FIELD.test(latin1.decode(line)));
+    if (dropping) {
+      parts.push(raw.subarray(run, start));
+      run = start + line.length;
+    } else if (isFrom(line, 0) || isEscapedFrom(line)) {
       parts.push(raw.subarray(run, start), QUOTE);
       run = start;
     }
