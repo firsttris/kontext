@@ -16,7 +16,7 @@ import type { Part, Store, StoredEmail } from "./store";
 
 type BodyValues = Record<string, { value: string }>;
 
-const valueOf = (email: StoredEmail, body: unknown, type: string): string | null => {
+const bodyText = (email: StoredEmail, body: unknown, type: string): string | null => {
   const part = (body as Part[] | undefined)?.find((candidate) => candidate.type === type);
   return part
     ? ((email.bodyValues as BodyValues | undefined)?.[part.partId ?? ""]?.value ?? "")
@@ -55,8 +55,8 @@ export const rawMessage = async (store: Store, email: StoredEmail): Promise<Blob
     inReplyTo: email.inReplyTo as string[] | null,
     references: email.references as string[] | null,
   };
-  const text = valueOf(email, email.textBody, "text/plain") ?? "";
-  const html = valueOf(email, email.htmlBody, "text/html");
+  const text = bodyText(email, email.textBody, "text/plain") ?? "";
+  const html = bodyText(email, email.htmlBody, "text/html");
   const entity = entityOf(text, html, await filesOf(store, email), email.id);
   return new Blob([withHeaders(envelope, entity)], { type: "message/rfc822" });
 };
