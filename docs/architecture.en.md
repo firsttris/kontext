@@ -1545,7 +1545,12 @@ On top of that comes what Stalwart reports itself, under "Shares and changes"
   moves (start, duration, recurrence), cancellations (deleted or `status: cancelled`) and other
   changes; new appointments already stand under "Invitations", participants' answers come as
   mail. For calendars colleagues shared, Stalwart reports only with `isSubscribed`, which Kontext
-  does not set.
+  does not set. Also left out is what Kontext's server writes into subscribed calendars
+  (`server/subscriptions/`): with its key the account `kontext-server@…` changes them, in
+  development the admin without an address. Kontext fetches the 50 newest entries per account
+  without the new appointments (`CalendarEventNotification/query`): those lie unread for 30 days
+  (`expungeSchedulingInboxAfter`), in a full info@ calendar more than a `…/get` without ids answers
+  (500, `maxGetResults`).
 
 A click opens the calendar or contacts and deletes the entry with `…/set` `destroy`; Stalwart hides
 it for oneself only, on every device. Both kinds sit under their account's key, so push keeps them

@@ -24,7 +24,7 @@ const notice = (
 ): EventNotice => ({
   id: "n1",
   created: "2026-11-05T10:00:00Z",
-  changedBy: { name: "Sandra Klein" },
+  changedBy: { name: "Sandra Klein", email: "sandra@weber-haustechnik.test" },
   type,
   calendarEventId: "e1",
   event,

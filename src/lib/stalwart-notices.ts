@@ -8,6 +8,7 @@
  * (`can_view` in crates/groupware/src/calendar/notification.rs). Destroying either clears it for
  * the person only (crates/jmap/src/{share,calendar_event}_notification/set.rs).
  */
+import { ACCOUNT_NAME } from "../../server/stalwart-setup";
 import type { CalendarEvent } from "./jscalendar";
 
 type Person = { name: string; email?: string | null };
@@ -48,10 +49,21 @@ const TIME_KEYS = new Set(["start", "duration", "timeZone", "showWithoutTime", "
 const NOT_A_CHANGE = new Set(["sequence", "updated", "created", "participants"]);
 
 /**
+ * Whether Kontext's server made the change, as it does for subscribed calendars
+ * (server/subscriptions/calendars.ts): with its key that is the account `kontext-server@…`
+ * (server/stalwart-setup.ts), in development the admin, who has no address like no person has.
+ * Stalwart names an outside organizer by address (`ChangedBy::CalendarAddress`).
+ */
+const byKontextServer = (person: Person | null): boolean =>
+  person !== null && (!person.email || person.email.split("@")[0] === ACCOUNT_NAME);
+
+/**
  * What the bell says of the change, or null for what it leaves out: new events (an invitation
- * already stands under "Invitations") and answers of participants (they arrive as mail).
+ * already stands under "Invitations"), answers of participants (they arrive as mail) and the
+ * server's syncs of subscribed calendars.
  */
 export const eventChange = (notice: EventNotice): EventChange | null => {
+  if (byKontextServer(notice.changedBy)) return null;
   if (notice.type === "destroyed") return "cancelled";
   if (notice.type !== "updated") return null;
   const patch = notice.eventPatch ?? {};

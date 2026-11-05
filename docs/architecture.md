@@ -1597,7 +1597,13 @@ Dazu kommt, was Stalwart selbst meldet, unter „Freigaben und Änderungen“
   `crates/groupware/src/calendar/notification.rs`). Die Glocke zeigt Verschieben (Beginn, Dauer,
   Wiederholung), Absagen (gelöscht oder `status: cancelled`) und andere Änderungen; neue Termine
   stehen schon unter „Einladungen“, Antworten von Teilnehmern kommen als Mail. Von Kollegen
-  freigegebene Kalender meldet Stalwart nur mit `isSubscribed`, das Kontext nicht setzt.
+  freigegebene Kalender meldet Stalwart nur mit `isSubscribed`, das Kontext nicht setzt. Weg
+  bleibt auch, was der Kontext-Server in abonnierte Kalender schreibt (`server/subscriptions/`):
+  Mit seinem Schlüssel ändert das Konto `kontext-server@…`, in der Entwicklung der Admin ohne
+  Adresse. Kontext holt je Konto die 50 neuesten Einträge ohne die neuen Termine
+  (`CalendarEventNotification/query`): Die bleiben ungelesen 30 Tage liegen
+  (`expungeSchedulingInboxAfter`), in einem vollen Kalender von info@ mehr, als ein `…/get` ohne
+  ids beantwortet (500, `maxGetResults`).
 
 Ein Klick öffnet Kalender oder Kontakte und löscht den Eintrag mit `…/set` `destroy`; Stalwart
 blendet ihn damit nur für einen selbst aus, auf allen Geräten. Beide Arten liegen unter dem Schlüssel
