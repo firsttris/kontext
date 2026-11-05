@@ -2,6 +2,45 @@
     shows that picture, its title and its description when its address is shared. -#}
 {% extends "base.html" %}
 
+{#- The theme's own meta block (material/templates/base.html), with the language versions as full
+    addresses: search engines ignore an hreflang whose href is relative
+    (https://developers.google.com/search/docs/specialty/international/localized-versions), and
+    x-default names the English page for a reader in any other language. -#}
+{% block site_meta %}
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  {% if page.meta and page.meta.description %}
+    <meta name="description" content="{{ page.meta.description }}">
+  {% elif config.site_description %}
+    <meta name="description" content="{{ config.site_description }}">
+  {% endif %}
+  {% if page.meta and page.meta.author %}
+    <meta name="author" content="{{ page.meta.author }}">
+  {% elif config.site_author %}
+    <meta name="author" content="{{ config.site_author }}">
+  {% endif %}
+  {% if page.canonical_url %}
+    <link rel="canonical" href="{{ page.canonical_url }}">
+  {% endif %}
+  {% if page.previous_page %}
+    <link rel="prev" href="{{ page.previous_page.url | url }}">
+  {% endif %}
+  {% if page.next_page %}
+    <link rel="next" href="{{ page.next_page.url | url }}">
+  {% endif %}
+  {% if config.extra.alternate is iterable %}
+    {% for alt in config.extra.alternate %}
+      {% set address = config.site_url ~ (alt.link | trim("/")) %}
+      <link rel="alternate" href="{{ address }}" hreflang="{{ alt.lang }}">
+      {% if alt.lang == "en" %}
+        <link rel="alternate" href="{{ address }}" hreflang="x-default">
+      {% endif %}
+    {% endfor %}
+  {% endif %}
+  <link rel="icon" href="{{ config.theme.favicon | url }}">
+  <meta name="generator" content="mkdocs-{{ mkdocs_version }}, mkdocs-material">
+{% endblock %}
+
 {% block extrahead %}
   {% include "partials/language-redirect.html" %}
   {% if page and page.meta and page.meta.image %}

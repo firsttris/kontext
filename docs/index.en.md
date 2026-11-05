@@ -1,9 +1,9 @@
 ---
-title: Mail, calendar, chat and phone on your own server
+title: Open-source alternative to Google Workspace and Microsoft 365
 og_title: "Kontext: Feels familiar. Belongs to you."
 description: >-
-  Mail, calendar, contacts, tasks, team chat, phone and documents in one app – on your own
-  server, with no per-user cost. A tour in pictures.
+  Kontext: mail, calendar, contacts, tasks, team chat, phone and documents in one app – on your
+  own server in Europe, with no per-user cost. A tour in pictures.
 image: screenshots/mail.png
 hide:
   - navigation
@@ -14,6 +14,8 @@ hide:
      about hosting. The screenshots show the app in German, as it is for now. -->
 
 <div class="showcase-hero" markdown>
+
+<p class="showcase-kicker">The alternative to Google Workspace and Microsoft 365</p>
 
 # Feels familiar. Belongs to you.
 
