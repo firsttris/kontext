@@ -14,10 +14,16 @@ Kontext is also on the iPhone, on Android (DAVx⁵) and in Thunderbird.
 
 ## Calendar { #kalender }
 
-- **Day, week, month and list**; move appointments by dragging, change or delete recurring ones:
+- **Day, week, work week, month and list**; move appointments by dragging, change or delete recurring ones:
   "This event only", **"This and all following"** or "All events in the series". From a given
   appointment on, the existing series ends before it, and from there a new one starts with the
   changes – as with Google and Outlook. [More](architecture.md#wiederkehrende-termine)
+- **Work week and working hours:** The work week shows Monday to Friday without the weekend; the
+  chosen view is in the address and stays when paging and reloading. Under *Settings →
+  Appearance → Working hours in the calendar* you set when the working day begins and ends (at
+  first 7 am to 6 pm, as for the suggestions of "Who has time?"): day and week open at the start
+  of work, the hours before and after are shaded. The setting applies to that one device. A phone
+  has no work week; it shows one day with the strip of the week above it.
 
   ![Editing an appointment of a series with "This and all following"](screenshots/series-following.png)
 

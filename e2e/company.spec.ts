@@ -241,7 +241,9 @@ test.describe("Firmenverwaltung", () => {
     const local = `geht-${stamp()}`;
     await login(page, "jonas");
     const password = await newEmployee(page, local, "Karl Geht");
-    await page.getByRole("button", { name: /Karl Geht/ }).click();
+    // By the address: a retry or --repeat-each leaves another "Karl Geht" in the list.
+    const karlRow = page.getByRole("button", { name: new RegExp(address(local)) });
+    await karlRow.click();
     await page.getByRole("dialog").getByRole("button", { name: "Austritt" }).click();
     const dialog = page.getByRole("dialog", { name: "Austritt von Karl Geht" });
     await dialog.getByLabel("Postfach übergeben an").selectOption({ label: "Sandra Klein" });
@@ -252,7 +254,7 @@ test.describe("Firmenverwaltung", () => {
     await expect(
       page.getByRole("status").filter({ hasText: "Austritt von Karl Geht" }),
     ).toBeVisible();
-    await expect(page.getByRole("button", { name: /Karl Geht.*Gesperrt/ })).toBeVisible();
+    await expect(karlRow).toContainText("Gesperrt");
 
     const sandra = await (await browser.newContext()).newPage();
     await login(sandra, "sandra");
@@ -265,24 +267,22 @@ test.describe("Firmenverwaltung", () => {
     await max.getByRole("combobox", { name: "An" }).fill(address(local));
     await max.keyboard.press("Enter");
     await max.getByLabel("Betreff").fill(subject);
+    // Counted: Max keeps the replies of earlier runs (a retry, --repeat-each).
+    const replies = async () =>
+      (await inboxMails("max")).filter(
+        (mail) => mail.subject === "Karl Geht ist nicht mehr bei uns",
+      ).length;
+    const repliesBefore = await replies();
     await max.getByRole("button", { name: "Senden", exact: true }).click();
     await expect
       .poll(async () => (await inboxMails("anna")).some((mail) => mail.subject === subject), {
         timeout: 30_000,
       })
       .toBe(true);
-    await expect
-      .poll(
-        async () =>
-          (await inboxMails("max")).some(
-            (mail) => mail.subject === "Karl Geht ist nicht mehr bei uns",
-          ),
-        { timeout: 30_000 },
-      )
-      .toBe(true);
+    await expect.poll(replies, { timeout: 30_000 }).toBe(repliesBefore + 1);
 
     // While Karl is gone, an out-of-office reply would not switch the offboarding off.
-    await page.getByRole("button", { name: /Karl Geht/ }).click();
+    await karlRow.click();
     await page.getByRole("dialog").getByRole("button", { name: "Abwesenheit eintragen" }).click();
     await expect(page.getByRole("dialog", { name: "Abwesenheit von Karl Geht" })).toContainText(
       "Karl ist ausgetreten",
@@ -290,9 +290,17 @@ test.describe("Firmenverwaltung", () => {
     await page.keyboard.press("Escape");
 
     // Back again: mail stays with Karl, no more forwarding.
-    await page.getByRole("button", { name: /Karl Geht/ }).click();
+    await karlRow.click();
     await page.getByRole("dialog").getByRole("button", { name: "Zugang wieder freigeben" }).click();
-    await expect(page.getByRole("button", { name: /Karl Geht.*Gesperrt/ })).toHaveCount(0);
+    // The notice comes once the server is done, the offboarding script switched off with it
+    // (PATCH /api/company/employees/:id, server/company/employees.ts). Stalwart drops its cached
+    // active script before SieveScript/set answers (crates/jmap/src/sieve/set.rs), so a mail
+    // after it is no longer redirected. While the dialog is open, the list is hidden from the
+    // accessibility tree, so the row alone would not wait for that.
+    await expect(
+      page.getByRole("status").filter({ hasText: "Karl Geht kann sich wieder anmelden." }),
+    ).toBeVisible();
+    await expect(karlRow).not.toContainText("Gesperrt");
     const back = unique("Karl wieder da");
     await deliverMail({
       from: "kunde@beispiel.example",

@@ -12,6 +12,10 @@ Steps that an update needs beyond raising the version are marked **Upgrade**.
   by their header, German or English, with the first rows as a preview; each can be changed.
   Excel's Windows-1252 and ";" are read as well as UTF-8, UTF-16 and ","; Google's labels give
   the kind of a number; duplicates are left out (user guide, "Kalender und Kontakte").
+- Calendar: a "Arbeitswoche" view (Monday to Friday) next to day, week and month, and working
+  hours per device (*Einstellungen → Darstellung*, at first 7–18): day and week open at their
+  start and shade the hours outside them; phones keep the day view (user guide, "Kalender und
+  Kontakte").
 - Mail: own folders can be renamed, moved and deleted from "…" next to them in the sidebar
   (their mails go to the trash, subfolders go along); "Mark all as read" works for any folder,
   for all its mails, not only the loaded ones (user guide, "Mail", "Ordner verwalten").
