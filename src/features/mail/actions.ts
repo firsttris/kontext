@@ -118,7 +118,11 @@ export const useMailActions = () => {
       return done;
     },
     onMutate: ({ accountId, ids }) => patchCachedEmails(queryClient, accountId, ids, () => null),
-    onSettled: (_data, _error, { accountId }) => refresh(accountId),
+    // Not awaited: mutateAsync would wait for every list to load again, and the notice with
+    // "Rückgängig" and `z` (undo.ts) would come only after it.
+    onSettled: (_data, _error, { accountId }) => {
+      void refresh(accountId);
+    },
   });
 
   const destroy = useMutation({
