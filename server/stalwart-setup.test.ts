@@ -5,6 +5,7 @@ import {
   type Account,
   accountPlan,
   directoryQueriesPlan,
+  ensureRole,
   ensureServerAccount,
   hasApiKey,
   KONTEXT_SERVER_RIGHTS,
@@ -226,5 +227,57 @@ describe("setting up the account and its key", () => {
     });
     const result = await ensureServerAccount(admin, vi.fn(), { roleId: "f", newPassword });
     expect(result).toEqual({ ok: false, error: "Konto kontext-server@firma.de: Nein" });
+  });
+});
+
+/**
+ * Stalwart's admin may only grant rights it holds itself (validate_role and can_grant_permissions
+ * in crates/jmap/src/registry/mapping/principal.rs, crates/common/src/auth/permissions.rs); on a
+ * Stalwart updated from before 1.0.2 its role lacks the encryption rights (CHANGELOG.md, 1.0.2).
+ */
+const adminWithoutEncryptionRights = (roles: unknown[]) => {
+  const sets: Record<string, unknown>[] = [];
+  const refusal = {
+    type: "forbidden",
+    description: "You are not authorized to grant permissions: sysEncryptionGet",
+  };
+  const answer = (args: Record<string, unknown>): Record<string, unknown> => {
+    sets.push(args);
+    const refused = /sysEncryption|sysExternalPublicKey/.test(JSON.stringify(args));
+    if (args.create)
+      return refused ? { notCreated: { role: refusal } } : { created: { role: { id: "f" } } };
+    return refused ? { notUpdated: { f: refusal } } : { updated: { f: null } };
+  };
+  const request: Request = vi.fn(async (calls: Invocation[]) =>
+    calls.map(([name, args, id]): Invocation => {
+      if (name === "x:Authentication/get")
+        return [name, { list: [{ defaultUserRoleIds: { b: true } }] }, id];
+      if (name === "x:Role/get") return [name, { list: roles }, id];
+      return [name, name === "x:Role/set" ? answer(args) : {}, id];
+    }),
+  );
+  return { request, sets };
+};
+
+describe("the role on a Stalwart updated from before 1.0.2", () => {
+  it("gets every other right and a hint instead of stopping the setup", async () => {
+    const role = {
+      id: "f",
+      description: "Kontext-Server",
+      roleIds: { b: true },
+      enabledPermissions: { sysAccountGet: true, sysRoleGet: true },
+    };
+    const { request, sets } = adminWithoutEncryptionRights([role]);
+    const result = await ensureRole(request);
+    expect(result).toMatchObject({ ok: true, value: { id: "f" } });
+    expect(result.ok && result.value.message).toContain("1.0.2");
+    expect(JSON.stringify(sets.at(-1))).toContain("enabledPermissions/impersonate");
+  });
+
+  it("is still created on a first setup", async () => {
+    const { request } = adminWithoutEncryptionRights([]);
+    const result = await ensureRole(request);
+    expect(result).toMatchObject({ ok: true, value: { id: "f" } });
+    expect(result.ok && result.value.message).toContain("1.0.2");
   });
 });

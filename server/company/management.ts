@@ -22,6 +22,7 @@ export type SetResult = {
   created?: Record<string, { id: string }>;
   notCreated?: Record<string, SetError>;
   notUpdated?: Record<string, SetError>;
+  notDestroyed?: Record<string, SetError>;
 };
 
 /** Stalwart's reasons in words for the Firmenverwaltung. */
@@ -32,7 +33,7 @@ export const describeSetError = (error: SetError): string => {
 };
 
 export const firstError = (result: SetResult): string | undefined => {
-  const failed = { ...result.notCreated, ...result.notUpdated };
+  const failed = { ...result.notCreated, ...result.notUpdated, ...result.notDestroyed };
   const error = Object.values(failed)[0];
   return error ? describeSetError(error) : undefined;
 };

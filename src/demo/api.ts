@@ -65,6 +65,8 @@ const FIXED: Record<string, (store: Store) => unknown> = {
   "GET /api/company/vacation-templates": () => ({ templates: [] }),
   // The demo's search has no index to build (server/company/search-index.ts).
   "GET /api/company/search-index": () => ({ pending: 0, failed: false, known: true }),
+  // Stalwart's encryption gateway needs the real server (server/company/encryption-gateway.ts).
+  "GET /api/company/encryption-gateway": () => ({ known: false, enabled: false, keys: [] }),
   "GET /api/snippets": () => ({ snippets: [] }),
   "GET /api/external-accounts": () => [],
   "GET /api/pgp/me": () => ({ key: null }),
