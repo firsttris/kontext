@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { Mailbox } from "@/jmap/types";
 import { outcome } from "../../server/rules/match";
+import { rulesScript } from "../../server/rules/script";
 import {
   blockRule,
   cleanRule,
@@ -152,5 +153,15 @@ describe("blockRule", () => {
     expect(rule.name).toBe("Blockiert: angebote.example");
     expect(outcome([rule], from("info@angebote.example")).moveTo).toEqual(junk);
     expect(outcome([rule], from("info@meine-angebote.example")).moveTo).toBeNull();
+  });
+
+  it("blocks only that domain, not others that start with it", () => {
+    const rule = blockRule("b", "werbung@angebote.example", "domain", junk);
+    for (const other of ["x@angebote.example.net", "x@angebote.example-shop.de"]) {
+      expect(outcome([rule], from(other)).moveTo).toBeNull();
+    }
+    const script = rulesScript({ vacation: false, rules: [rule] });
+    expect(script).not.toContain(':contains "from" "@angebote.example"');
+    expect(script).toContain('address :domain :is "from" "angebote.example"');
   });
 });
