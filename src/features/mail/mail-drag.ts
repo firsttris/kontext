@@ -9,8 +9,9 @@ import { type DragEvent, useState } from "react";
 import { useToast } from "@/components/ui/toast";
 import type { EmailSummary } from "@/jmap/types";
 import { m } from "@/paraglide/messages";
-import { useMoveTo } from "./actions";
+import { useMailActions } from "./actions";
 import { useEmlImport } from "./eml-import";
+import { useOfferUndo } from "./undo";
 
 const TYPE = "application/x-kontext-mail";
 
@@ -33,7 +34,8 @@ type Target = { accountId: string; mailboxId: string };
  * for the highlight.
  */
 export const useMailDrop = () => {
-  const moveTo = useMoveTo();
+  const { moveTo } = useMailActions();
+  const offerUndo = useOfferUndo();
   const importEml = useEmlImport();
   const toast = useToast();
   const navigate = useNavigate();
@@ -48,8 +50,10 @@ export const useMailDrop = () => {
         prev.email === mail.email.id ? { ...prev, email: undefined, account: undefined } : prev,
     });
     try {
-      await moveTo.mutateAsync({ ...mail, emails: [mail.email], target });
-      toast.show(m.mail_moved({ folder: name }));
+      const move = await moveTo(mail.accountId, [mail.email], mail.from, target);
+      // Into another mailbox (a copy, no way back) the notice comes without "Rückgängig".
+      if (move) offerUndo(m.mail_moved({ folder: name }), [move]);
+      else toast.show(m.mail_moved({ folder: name }));
     } catch (error) {
       toast.show(m.common_error({ message: (error as Error).message }), "error");
     }

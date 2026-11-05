@@ -34,6 +34,7 @@ import { useAllMailboxes, useMailAccounts } from "./queries";
 import { useRemoteImages } from "./remote-images";
 import { useReportPhishing } from "./report-phishing";
 import { useThreadView } from "./thread-view";
+import { useOfferUndo } from "./undo";
 
 /** Closes the open mail (and its composer): back to the list. */
 export const useCloseMail = () => {
@@ -81,6 +82,7 @@ export const Toolbar = ({
   const actions = useEmailActions(accountId);
   const navigate = useNavigate();
   const toast = useToast();
+  const offerUndo = useOfferUndo();
   const accounts = useMailAccounts();
   const mailboxes = useAllMailboxes();
   // Rules run on the own mailbox only, so they are offered for its mails.
@@ -129,8 +131,8 @@ export const Toolbar = ({
     canRemove && mailbox.role !== "sent"
       ? () =>
           void run(async () => {
-            await actions.markSpam(ids, mailbox.id, !inJunk);
-            toast.show(inJunk ? m.mail_spam_unmarked() : m.mail_spam_marked());
+            const move = await actions.markSpam(ids, mailbox.id, !inJunk);
+            offerUndo(inJunk ? m.mail_spam_unmarked() : m.mail_spam_marked(), [move]);
           }, true)
       : undefined;
   const report = useReportPhishing(accountId, email, mailbox.id);
@@ -142,10 +144,18 @@ export const Toolbar = ({
   const print = () => void run(() => printMail(accountId, email, allowRemote), false);
   const archive =
     canRemove && mailbox.role !== "archive"
-      ? () => run(() => actions.archive(ids, mailbox.id), true)
+      ? () =>
+          run(
+            async () => offerUndo(m.mail_archived(), [await actions.archive(ids, mailbox.id)]),
+            true,
+          )
       : undefined;
   const remove = canRemove
-    ? () => void run(() => actions.remove(ids, mailbox.id), true)
+    ? () =>
+        void run(
+          async () => offerUndo(m.mail_trashed(), [await actions.remove(ids, mailbox.id)]),
+          true,
+        )
     : undefined;
   const markUnread = canMarkSeen
     ? () => void run(() => actions.setSeen(ids, false), true)
@@ -234,14 +244,13 @@ export const Toolbar = ({
             ? {
                 groups,
                 onPick: (target) =>
-                  void run(
-                    () =>
-                      actions.moveTo(targets, mailbox.id, {
-                        accountId: target.accountId,
-                        mailboxId: target.mailbox.id,
-                      }),
-                    true,
-                  ),
+                  void run(async () => {
+                    const move = await actions.moveTo(targets, mailbox.id, {
+                      accountId: target.accountId,
+                      mailboxId: target.mailbox.id,
+                    });
+                    offerUndo(m.mail_moved({ folder: target.label }), [move]);
+                  }, true),
               }
             : undefined
         }

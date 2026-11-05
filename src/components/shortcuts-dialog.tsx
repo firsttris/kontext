@@ -30,6 +30,7 @@ const ACTION_LABELS: Record<ShortcutAction, () => string> = {
   flag: m.shortcuts_flag,
   spam: m.shortcuts_spam,
   unread: m.shortcuts_unread,
+  undo: m.shortcuts_undo,
   select: m.shortcuts_select,
   print: m.shortcuts_print,
   newTask: m.shortcuts_newTask,

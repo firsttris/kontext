@@ -26,6 +26,7 @@ import { SelectionBar } from "./selection-bar";
 import { SortMenu } from "./sort-menu";
 import { useSwipeAction } from "./swipe-action";
 import { useThreadView } from "./thread-view";
+import { useUndoShortcut } from "./undo";
 import { useThreadInfo } from "./use-thread-info";
 
 /**
@@ -230,6 +231,7 @@ export const ListFrame = ({
       if (open) pick(pickKey(accountOf(open), open.email.id), false);
     },
   });
+  useUndoShortcut();
 
   return (
     <div className="flex h-full min-h-0 flex-col">

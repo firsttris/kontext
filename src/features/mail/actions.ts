@@ -8,6 +8,7 @@ import {
   copyEmails,
   createMailbox,
   destroyEmails,
+  getMailboxIds,
   JUNK_KEYWORDS,
   listMailboxes,
   moveEmails,
@@ -17,39 +18,28 @@ import {
 import type { EmailDetail, EmailSummary, Mailbox } from "@/jmap/types";
 import { type Assignment, withAssignment } from "@/lib/assignment";
 import { findRole } from "@/lib/mailboxes";
+import { type MailMove, reverseMove, stillMoved } from "@/lib/undo-move";
 import { adjustUnreadCounts, mailboxesKey, patchCachedEmails } from "./queries";
 
 export type MoveTarget = { accountId: string; mailboxId: string };
 
 /**
- * Moves mails into a folder of any mailbox: within the account a folder change, into another
- * account a copy there and a delete here. The account is passed per call, so a list over several
- * accounts (drag and drop in "Alle Posteingänge") can use one hook.
+ * Moves mails into a folder of another mailbox: a copy there and a delete here. Both accounts'
+ * lists are loaded again.
  */
-export const useMoveTo = () => {
+const useCopyTo = () => {
   const client = useClient();
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: ({
       accountId,
       emails,
-      from,
       target,
     }: {
       accountId: string;
       emails: EmailSummary[];
-      from: string;
       target: MoveTarget;
-    }) =>
-      target.accountId === accountId
-        ? moveEmails(
-            client,
-            accountId,
-            emails.map((email) => email.id),
-            from,
-            target.mailboxId,
-          )
-        : copyEmails(client, accountId, target.accountId, emails, target.mailboxId),
+    }) => copyEmails(client, accountId, target.accountId, emails, target.mailboxId),
     onMutate: ({ accountId, emails }) =>
       patchCachedEmails(
         queryClient,
@@ -75,7 +65,7 @@ export const useMailActions = () => {
   const queryClient = useQueryClient();
 
   const refresh = (accountId: string) => queryClient.invalidateQueries({ queryKey: [accountId] });
-  const moveTo = useMoveTo();
+  const copyTo = useCopyTo();
 
   const keyword = useMutation({
     mutationFn: ({
@@ -120,22 +110,19 @@ export const useMailActions = () => {
     onSettled: (_data, _error, { accountId }) => refresh(accountId),
   });
 
+  /** Answers with the move it made, so it can be taken back (`reverseMove`). */
   const move = useMutation({
-    mutationFn: async ({
-      accountId,
-      ids,
-      from,
-      to,
-      keywords,
-    }: {
-      accountId: string;
-      ids: string[];
-      from: string;
-      to: string;
-      keywords?: Record<string, true | null>;
-    }) => moveEmails(client, accountId, ids, from, to, keywords),
+    mutationFn: async (done: MailMove) => {
+      const { accountId, ids, from, to, keywords } = done;
+      await moveEmails(client, accountId, ids, from, to, keywords);
+      return done;
+    },
     onMutate: ({ accountId, ids }) => patchCachedEmails(queryClient, accountId, ids, () => null),
-    onSettled: (_data, _error, { accountId }) => refresh(accountId),
+    // Not awaited: mutateAsync would wait for every list to load again, and the notice with
+    // "Rückgängig" and `z` (undo.ts) would come only after it.
+    onSettled: (_data, _error, { accountId }) => {
+      void refresh(accountId);
+    },
   });
 
   const destroy = useMutation({
@@ -172,9 +159,30 @@ export const useMailActions = () => {
     /** A category (its keyword) on or off. */
     setCategory: (accountId: string, ids: string[], category: string, on: boolean) =>
       keyword.mutateAsync({ accountId, ids, keyword: category, on }),
-    /** Into a folder of this or of another mailbox (`target.accountId`). */
-    moveTo: (accountId: string, emails: EmailSummary[], from: string, target: MoveTarget) =>
-      moveTo.mutateAsync({ accountId, emails, from, target }),
+    /**
+     * Into a folder of this or of another mailbox (`target.accountId`). Within the mailbox it
+     * answers with the move, for "Rückgängig"; a copy into another mailbox has new ids, no way back.
+     */
+    moveTo: async (
+      accountId: string,
+      emails: EmailSummary[],
+      from: string,
+      target: MoveTarget,
+    ): Promise<MailMove | undefined> => {
+      const ids = emails.map((email) => email.id);
+      if (target.accountId === accountId)
+        return move.mutateAsync({ accountId, ids, from, to: target.mailboxId });
+      await copyTo.mutateAsync({ accountId, emails, target });
+      return undefined;
+    },
+    /**
+     * Takes a move back: the mails still where it put them return to their folder
+     * (src/lib/undo-move.ts); the others were moved on or deleted since and stay.
+     */
+    undoMove: async (done: MailMove) => {
+      const back = stillMoved(done, await getMailboxIds(client, done.accountId, done.ids));
+      if (back.ids.length) await move.mutateAsync(reverseMove(back));
+    },
     archive: async (accountId: string, ids: string[], from: string) =>
       move.mutateAsync({ accountId, ids, from, to: await archiveMailboxId(accountId) }),
     /** Into the archive and read, in one step (read receipts filed away). */
@@ -198,10 +206,13 @@ export const useMailActions = () => {
         keywords: spam ? JUNK_KEYWORDS.spam : JUNK_KEYWORDS.notSpam,
       });
     },
-    /** Moves to the trash; in the trash it deletes for good. */
+    /** Moves to the trash (answering with the move); in the trash it deletes for good. */
     remove: async (accountId: string, ids: string[], from: string) => {
       const trash = findRole(mailboxesOf(accountId), "trash");
-      if (!trash || trash.id === from) return destroy.mutateAsync({ accountId, ids });
+      if (!trash || trash.id === from) {
+        await destroy.mutateAsync({ accountId, ids });
+        return undefined;
+      }
       return move.mutateAsync({ accountId, ids, from, to: trash.id });
     },
   };

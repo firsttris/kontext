@@ -45,12 +45,14 @@ import {
   snoozeTargets,
 } from "@/lib/selection";
 import { mailLink, plainSubject } from "@/lib/tasks";
+import type { MailMove } from "@/lib/undo-move";
 import { m } from "@/paraglide/messages";
 import { useCategories } from "../categories/queries";
 import { SnoozeMenu } from "../snooze/snooze-menu";
 import { TaskDialog, type TaskStart } from "../tasks/task-dialog";
 import { useMailActions } from "./actions";
 import { useAllMailboxes, useMailAccounts } from "./queries";
+import { useOfferUndo } from "./undo";
 
 const IconButton = ({
   label,
@@ -94,6 +96,7 @@ export const SelectionBar = ({
   const actions = useMailActions();
   const navigate = useNavigate();
   const toast = useToast();
+  const offerUndo = useOfferUndo();
   const accounts = useMailAccounts();
   const mailboxes = useAllMailboxes();
   const [tasks, setTasks] = useState<TaskStart[] | null>(null);
@@ -114,7 +117,7 @@ export const SelectionBar = ({
       : [];
 
   /** Runs for every group; a refusal (e.g. a mailbox only to read) is said once. */
-  const run = async (action: () => Promise<unknown>[], clear: boolean) => {
+  const run = async <T,>(action: () => Promise<T>[], clear: boolean) => {
     if (clear) onClear();
     const results = await Promise.allSettled(action());
     const failed = results.find((result) => result.status === "rejected");
@@ -123,6 +126,16 @@ export const SelectionBar = ({
         m.common_error({ message: String(failed.reason?.message ?? failed.reason) }),
         "error",
       );
+    return results;
+  };
+
+  /** Moves the mails go through, then offers to take back what did move. */
+  const runMoves = async (action: () => Promise<MailMove | undefined>[], text: string) => {
+    const results = await run(action, true);
+    offerUndo(
+      text,
+      results.flatMap((result) => (result.status === "fulfilled" ? [result.value] : [])),
+    );
   };
 
   const archiveAll = () =>
@@ -184,7 +197,7 @@ export const SelectionBar = ({
         <IconButton
           label={m.mail_archive_action()}
           disabled={none}
-          onClick={() => void run(archiveAll, true)}
+          onClick={() => void runMoves(archiveAll, m.mail_archived())}
         >
           <Archive size={15} strokeWidth={1.75} />
         </IconButton>
@@ -192,7 +205,7 @@ export const SelectionBar = ({
           label={m.mail_delete()}
           disabled={none}
           onClick={() =>
-            void run(
+            void runMoves(
               () =>
                 groups.map((g) =>
                   actions.remove(
@@ -201,7 +214,7 @@ export const SelectionBar = ({
                     g.from,
                   ),
                 ),
-              true,
+              m.mail_trashed(),
             )
           }
         >
@@ -212,7 +225,7 @@ export const SelectionBar = ({
           label={inJunk ? m.mail_spam_unmark() : m.mail_spam_mark()}
           disabled={none}
           onClick={() =>
-            void run(
+            void runMoves(
               () =>
                 groups.map((g) =>
                   actions.markSpam(
@@ -222,7 +235,7 @@ export const SelectionBar = ({
                     !inJunk,
                   ),
                 ),
-              true,
+              inJunk ? m.mail_spam_unmarked() : m.mail_spam_marked(),
             )
           }
         >
@@ -329,14 +342,14 @@ export const SelectionBar = ({
                     <MenuItem
                       key={target.mailbox.id}
                       onSelect={() =>
-                        void run(
+                        void runMoves(
                           () => [
                             actions.moveTo(accountId!, groups[0]!.emails, groups[0]!.from, {
                               accountId: target.accountId,
                               mailboxId: target.mailbox.id,
                             }),
                           ],
-                          true,
+                          m.mail_moved({ folder: target.label }),
                         )
                       }
                     >

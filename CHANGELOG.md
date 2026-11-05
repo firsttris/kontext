@@ -7,6 +7,10 @@ Steps that an update needs beyond raising the version are marked **Upgrade**.
 
 ## Unreleased
 
+- Mail: "Rückgängig" in the notice after archiving, deleting (to the trash), marking as spam and
+  moving – one mail, a selection or a swipe on the phone – puts the mails back in their folder;
+  `z` (or Ctrl+Z / Cmd+Z outside text fields) takes back the last one. Deleting for good from
+  Trash or Spam stays without undo (user guide, "Mail").
 - Chat: the **Assistant** at the top of the chat answers questions about customers, mail,
   appointments and tasks with the agents' tools and the asking person's rights, and on request
   saves drafts, appointments, contacts and tasks; it sends nothing. Optional: it appears once the
