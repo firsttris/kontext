@@ -276,6 +276,31 @@ describe("toCalendarFile", () => {
       "BEGIN:VCALENDAR\r\nPRODID:-//Kontext//Kalender//DE\r\nVERSION:2.0\r\nCALSCALE:GREGORIAN\r\nEND:VCALENDAR\r\n",
     );
   });
+
+  it("keeps each event's status (RFC 8984 §5.1.3), also of one changed date", () => {
+    // An invitation called off by its organizer stays in the attendee's calendar as cancelled
+    // (Stalwart crates/groupware/src/scheduling/inbound.rs adds STATUS:CANCELLED).
+    const cancelled = { ...meeting, status: "cancelled" } as CalendarEvent;
+    const tentative = { ...meeting, id: "e2", uid: "t", status: "tentative" } as CalendarEvent;
+    const series: CalendarEvent = {
+      ...meeting,
+      id: "e3",
+      uid: "s",
+      recurrenceRule: { frequency: "weekly" },
+      recurrenceOverrides: { "2026-11-27T15:00:00": { status: "cancelled" } },
+    };
+    const ics = toCalendarFile([cancelled, tentative, series], NOW);
+    const status = (uid: string, nth = 0) =>
+      ics
+        .split("BEGIN:VEVENT")
+        .filter((part) => part.includes(`UID:${uid}\r\n`))
+        [nth]?.match(/STATUS:(\w+)/)?.[1];
+    expect(status("4f1c-abnahme")).toBe("CANCELLED");
+    expect(status("t")).toBe("TENTATIVE");
+    expect(status("s")).toBe("CONFIRMED");
+    expect(status("s", 1)).toBe("CANCELLED");
+  });
+
 });
 
 describe("toICalendar: zones without one yearly rule", () => {
