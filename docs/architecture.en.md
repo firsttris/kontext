@@ -2034,6 +2034,15 @@ their address in the calendar's account); if one changes an appointment in a col
 calendar that she organises, Stalwart keeps sending. Accepting in one's own calendar goes through
 Stalwart as before (REPLY to the organiser).
 
+**Who invites** (`organizerFor` in `src/lib/event-form.ts`): an appointment keeps its organiser.
+A new one in the calendar of a shared mailbox gets the mailbox's address, otherwise the user's.
+Stalwart schedules an appointment with the addresses of the account it is in
+(`account_info.addresses()` in `crates/jmap/src/calendar_event/set.rs`), and the members have
+info@'s identity; so the invitation goes out from info@ and the answers come back there. JMAP's
+`ParticipantIdentity` does not help here: Stalwart lists and changes only the user's own
+addresses there (`crates/jmap/src/participant_identity/get.rs` reads `access_token.account_id()`,
+`set.rs` refuses another account).
+
 **The mail** (`src/lib/invitation-mail.ts`): HTML in the Kontext look (zinc colours, tables and
 inline styles for mail programs), the same details as text, and the iCalendar twice – as
 `text/calendar; method=…` in `multipart/alternative`, so that Gmail, Outlook and Apple show their

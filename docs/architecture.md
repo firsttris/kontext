@@ -2093,6 +2093,15 @@ Identität mit dessen Adresse im Konto des Kalenders); ändert man einen Termin 
 einer Kollegin, die ihn organisiert, schickt weiter Stalwart. Zusagen im eigenen Kalender gehen
 wie bisher über Stalwart (REPLY an den Organisator).
 
+**Wer einlädt** (`organizerFor` in `src/lib/event-form.ts`): Ein Termin behält seinen
+Organisator. Ein neuer im Kalender eines gemeinsamen Postfachs bekommt dessen Adresse, sonst die
+des Benutzers. Stalwart plant einen Termin mit den Adressen des Kontos, in dem er liegt
+(`account_info.addresses()` in `crates/jmap/src/calendar_event/set.rs`), und die Mitglieder
+haben die Identität von info@; so geht die Einladung von info@ hinaus und die Antworten kommen
+dorthin. JMAPs `ParticipantIdentity` hilft dafür nicht: Stalwart liefert und ändert dort nur die
+eigenen Adressen des Benutzers (`crates/jmap/src/participant_identity/get.rs` liest
+`access_token.account_id()`, `set.rs` lehnt ein fremdes Konto ab).
+
 **Die Mail** (`src/lib/invitation-mail.ts`): HTML im Kontext-Look (Zinc-Farben, Tabellen und
 Inline-Styles für Mailprogramme), dieselben Angaben als Text, und das iCalendar zweimal – als
 `text/calendar; method=…` in `multipart/alternative`, damit Gmail, Outlook und Apple ihre eigenen
