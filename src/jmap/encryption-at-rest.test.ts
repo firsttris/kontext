@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import type { JmapClient } from "./client";
 import {
   ensurePublicKey,
+  forgetPublicKey,
   getEncryptionAtRest,
   keyWithFingerprint,
   setEncryptionAtRest,
@@ -64,6 +65,23 @@ describe("encryption at rest", () => {
     });
     expect(await ensurePublicKey(client, "key", "abcd")).toBe("k1");
     expect(calls.map(([method]) => method)).toEqual(["x:PublicKey/get"]);
+  });
+
+  it("takes the key with that fingerprint off the server, and nothing else", async () => {
+    const { client, calls } = fake({
+      "x:PublicKey/get": {
+        list: [
+          { id: "other", fingerprints: ["1111"] },
+          { id: "k1", fingerprints: ["ABCD"] },
+        ],
+      },
+      "x:PublicKey/set": { destroyed: ["k1"] },
+    });
+    await forgetPublicKey(client, "abcd");
+    expect(calls[1]).toEqual(["x:PublicKey/set", { destroy: ["k1"] }]);
+    const none = fake({ "x:PublicKey/get": { list: [{ id: "other", fingerprints: ["1111"] }] } });
+    await forgetPublicKey(none.client, "abcd");
+    expect(none.calls.map(([method]) => method)).toEqual(["x:PublicKey/get"]);
   });
 
   it("says when Stalwart refuses", async () => {

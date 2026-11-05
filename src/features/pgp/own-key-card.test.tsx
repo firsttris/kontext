@@ -14,6 +14,8 @@ vi.mock("@/jmap/encryption-at-rest", () => ({
     calls.push(`at-rest ${value["@type"]}`);
     atRest.state = value;
   },
+  forgetPublicKey: async (_client: unknown, fingerprint: string) =>
+    void calls.push(`forget ${fingerprint}`),
 }));
 vi.mock("./queries", () => ({
   useOwnKey: () => ({
@@ -56,7 +58,9 @@ describe("deleting one's own key", () => {
     atRest.state = { "@type": "Enabled", publicKey: "k1" };
     renderCard();
     deleteKey();
-    await waitFor(() => expect(calls).toEqual(["at-rest Disabled", "remove key"]));
+    await waitFor(() =>
+      expect(calls).toEqual(["at-rest Disabled", "forget abcd", "remove key"]),
+    );
   });
 
   it("keeps the key when the server cannot be switched off", async () => {
@@ -70,10 +74,12 @@ describe("deleting one's own key", () => {
     expect(calls).toEqual([]);
   });
 
-  it("leaves the server alone when it does not encrypt", async () => {
+  it("takes its registration off the server, also when it does not encrypt", async () => {
+    // Stalwart keeps at most 5 public keys per account (crates/registry/src/schema/structs_impl.rs,
+    // `max_public_keys: Some(5u64)`): without this, the sixth new key could not be switched on.
     atRest.state = { "@type": "Disabled" };
     renderCard();
     deleteKey();
-    await waitFor(() => expect(calls).toEqual(["remove key"]));
+    await waitFor(() => expect(calls).toEqual(["forget abcd", "remove key"]));
   });
 });
