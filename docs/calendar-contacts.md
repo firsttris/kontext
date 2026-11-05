@@ -86,6 +86,11 @@ Kontext steht, steht auch am iPhone, unter Android (DAVx⁵) und in Thunderbird.
   schlägt die nächsten Zeiten vor, in denen alle frei sind – wie Outlooks
   Terminplanungs-Assistent. In der Firma sieht jeder, wann Kollegen belegt sind (ohne Titel);
   abschaltbar je Kalender. [Mehr](architecture.md#verfugbarkeit)
+- **Private Termine:** „Privat“ im Editor (in den eigenen Kalendern und denen der gemeinsamen
+  Postfächer) behält die Einzelheiten für sich: Wer den Kalender über eine Freigabe sieht –
+  Vertretung, Kollegen mit Leserecht –, sieht nur „Privat“ mit der Zeit, ohne Titel, Ort, Notizen
+  und Teilnehmer, und kann den Termin nicht ändern. Die Einzelheiten lässt schon Stalwart weg.
+  Private Termine tragen ein kleines Schloss. [Mehr](architecture.md#private-termine)
 - **Feiertage eintragen:** Unter *Kalender verwalten* das Bundesland wählen; Kontext legt den
   Kalender „Feiertage <Bundesland>“ an und trägt die gesetzlichen Feiertage für dieses und
   nächstes Jahr ein, ganztägig und als „frei“ (sie blockieren niemandes Verfügbarkeit). Über

@@ -387,6 +387,8 @@
   "calendar_event_start": "Start",
   "calendar_event_end": "End",
   "calendar_event_all_day": "All day",
+  "calendar_event_private": "Private",
+  "calendar_event_private_hint": "People the calendar is shared with see only “Private” and the time.",
   "calendar_event_location": "Location",
   "calendar_event_location_hint": "Address, company or room",
   "calendar_place_suggestions": "Location suggestions",

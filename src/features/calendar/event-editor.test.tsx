@@ -30,7 +30,7 @@ const refs = vi.hoisted(() => ({ calendars: [] as unknown[] }));
 const createEvent = vi.fn(async (_input: { event: Record<string, unknown> }) => {});
 vi.mock("./queries", () => ({
   calendarLabel: () => "Kalender",
-  calendarOf: () => undefined,
+  calendarOf: () => refs.calendars[0],
   useCalendarRefs: () => refs,
   useEventMutations: () => ({
     create: { mutateAsync: createEvent, isPending: false },
@@ -164,6 +164,55 @@ describe("EventEditor series", () => {
     });
     expect(changeFollowing).not.toHaveBeenCalled();
     expect(updateEvent).toHaveBeenCalledWith(expect.objectContaining({ id: "s" }));
+  });
+});
+
+describe("EventEditor private date of a series", () => {
+  const series = {
+    id: "s",
+    accountId: "a",
+    calendarIds: { "1": true },
+    title: "Physiotherapie",
+    start: "2026-11-02T10:00:00",
+    timeZone: "Europe/Berlin",
+    duration: "PT1H",
+    recurrenceRule: { "@type": "RecurrenceRule" as const, frequency: "weekly" as const, count: 10 },
+  };
+  const instance = {
+    ...series,
+    id: "i-2026-11-16",
+    baseEventId: "s",
+    recurrenceId: "2026-11-16T10:00:00",
+    start: "2026-11-16T10:00:00",
+    recurrenceRule: undefined,
+  };
+  afterEach(() => {
+    refs.calendars = [];
+    updateEvent.mockClear();
+  });
+
+  // Stalwart drops `privacy` from a patch of one date (is_forbidden_override_patch in
+  // crates/calcard/src/jscalendar/types.rs, is_ignored_override_key in overrides.rs): the
+  // series stays as it was, so "Privat" ticked for one date must reach the series.
+  it("makes the series private when Privat is ticked for this date only", async () => {
+    refs.calendars = [
+      {
+        key: "a/1",
+        accountId: "a",
+        isPersonal: true,
+        isOwner: true,
+        mayWrite: true,
+        calendar: { id: "1" },
+      },
+    ];
+    render(<EventEditor event={instance} series={series} onDone={vi.fn()} onCancel={vi.fn()} />);
+    fireEvent.click(screen.getByRole("checkbox", { name: /Privat/ }));
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: "Speichern" }));
+    });
+    expect(updateEvent).toHaveBeenCalledWith(
+      expect.objectContaining({ id: "s", patch: expect.objectContaining({ privacy: "private" }) }),
+    );
   });
 });
 

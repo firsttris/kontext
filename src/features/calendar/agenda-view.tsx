@@ -16,6 +16,7 @@ import { type DayTask, tasksOnDay } from "@/lib/task-context";
 import { m } from "@/paraglide/messages";
 import { EventLink } from "./event-link";
 import { calendarColor } from "./event-style";
+import { EventTitle } from "./event-title";
 import { TaskChip } from "./task-chip";
 
 export const AGENDA_DAYS = 30;
@@ -111,7 +112,7 @@ const AgendaItem = ({ event, invitation }: { event: CalendarEvent; invitation: b
       />
       <span className="flex min-w-0 flex-1 flex-col">
         <span className="flex items-center gap-1.5 text-[14px] font-medium">
-          <span className="truncate">{event.title || "—"}</span>
+          <EventTitle event={event} />
           {isInstance(event) ? (
             <Repeat size={12} className="shrink-0 text-muted" aria-label={m.calendar_repeat()} />
           ) : null}

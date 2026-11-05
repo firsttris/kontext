@@ -1729,6 +1729,30 @@ calendars of shared mailboxes Stalwart 1.0.1 takes over one member's settings on
 info@'s calendar, which Jonas has hidden, it would be off for her too. So every change sends one's
 own `isVisible` along (`withOwnVisibility`).
 
+### Private appointments { #private-termine }
+
+"Private" in the editor sets `privacy: "private"` (RFC 8984 §4.4.3), offered only in one's own
+calendars and those of shared mailboxes: Stalwart lets only the owner set anything other than `public`
+(`assert_privacy_allowed` in `crates/jmap/src/calendar_event/privacy.rs`). The server does the
+hiding, not the app: whoever sees the event through a share (a deputy, colleagues with read
+access) gets from `CalendarEvent/get` only the times, the repetition and `privacy` – no title,
+location, notes, participants or reminders (`into_private_view` in
+`crates/groupware/src/calendar/privacy.rs`, `crates/jmap/src/calendar_event/get.rs`). Text search
+does not find private events for them (`crates/jmap/src/calendar_event/query.rs`), and they may
+not change or delete them (`assert_privacy_access`); the same holds over CalDAV. So even someone
+asking the JMAP API directly reads nothing more. For members of a shared mailbox its calendar
+counts as their own (`AccessToken::is_member`): they see everything, may change private events
+in it and mark events private (`isOwner` in `src/features/calendar/queries.ts`). `secret` (Outlook's "confidential") Stalwart hides from
+others completely; the app keeps it when saving.
+"Private" holds for the whole series: Stalwart drops `privacy` from the patch of a single
+date (`is_forbidden_override_patch` in `crates/calcard/src/jscalendar/types.rs`), so the app
+writes a "Private" changed under "This event only" to the series.
+
+The app shows an event without a title that has `privacy` as "Private" (`eventTitle` in
+`src/lib/jscalendar.ts`), private events with a small lock, and leaves out "Edit", "Duplicate",
+"Task for the appointment" and "Delete" on someone else's private events (`isOthersPrivate` in
+`src/features/calendar/queries.ts`). "Who is free?" never shows titles anyway.
+
 ## Availability { #verfugbarkeit }
 
 While typing, the "Attendees" field first suggests the company's people (`Principal/get`, the same

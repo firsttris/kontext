@@ -9,6 +9,7 @@ import {
   eventTimes,
   fromLocal,
   isMeetingLink,
+  isPrivate,
   localDiff,
   locationName,
   meetingLink,
@@ -34,6 +35,8 @@ export type EventForm = {
   attendees: string;
   /** Whether the time counts as busy for colleagues planning a meeting (RFC 8984 freeBusyStatus). */
   showAs: "busy" | "free";
+  /** Whether people the calendar is shared with see only the time (RFC 8984 privacy). */
+  private: boolean;
   description: string;
   /** How the event repeats; null for a rule the form cannot show, which is kept as it is. */
   recurrence: RepeatForm | null;
@@ -67,6 +70,7 @@ export const eventToForm = (
       .filter((email) => email && !mine.has(email.toLowerCase()))
       .join(", "),
     showAs: event.freeBusyStatus === "free" ? "free" : "busy",
+    private: isPrivate(event),
     description: event.description ?? "",
     recurrence: fromRecurrenceRule((series ?? event).recurrenceRule),
     reminder: reminderOf(event.alerts),
@@ -88,6 +92,7 @@ export const newEventForm = (startLocal: string, minutes = 60): EventForm => {
     meeting: "",
     attendees: "",
     showAs: "busy",
+    private: false,
     description: "",
     recurrence: NO_REPEAT,
     reminder: defaultReminder(false),
@@ -214,6 +219,8 @@ export const formToEvent = (
     links: withDocuments(existing?.links, form.documents),
     organizerCalendarAddress: participants ? `mailto:${organizer.email}` : null,
     freeBusyStatus: form.showAs,
+    // "secret" (Outlook's confidential) stays; the form only knows private or not.
+    privacy: form.private ? (existing?.privacy === "secret" ? "secret" : "private") : "public",
     ...(alerts !== undefined ? { alerts } : {}),
     ...(withRecurrence && form.recurrence
       ? { recurrenceRule: toRecurrenceRule(form.recurrence) }

@@ -387,6 +387,8 @@
   "calendar_event_start": "Beginn",
   "calendar_event_end": "Ende",
   "calendar_event_all_day": "Ganztägig",
+  "calendar_event_private": "Privat",
+  "calendar_event_private_hint": "Wer den Kalender freigegeben bekommt, sieht nur „Privat“ und die Zeit.",
   "calendar_event_location": "Ort",
   "calendar_event_location_hint": "Adresse, Firma oder Raum",
   "calendar_place_suggestions": "Vorschläge für den Ort",
