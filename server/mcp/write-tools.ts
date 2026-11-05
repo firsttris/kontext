@@ -16,10 +16,28 @@ const contactFields = {
   given: z.string().max(200).optional().describe("First name."),
   surname: z.string().max(200).optional().describe("Last name."),
   company: z.string().max(200).optional().describe("Company."),
-  email: z.string().max(320).optional().describe("E-mail address."),
-  phone: z.string().max(100).optional().describe("Phone number."),
+  department: z.string().max(200).optional().describe("Department in the company."),
+  jobTitle: z.string().max(200).optional().describe("Job title."),
+  email: z
+    .string()
+    .max(320)
+    .optional()
+    .describe("E-mail address (the first one; other addresses stay)."),
+  phone: z
+    .string()
+    .max(100)
+    .optional()
+    .describe("Phone number (the first one; other numbers stay)."),
   street: z.string().max(300).optional().describe("Street and number."),
-  city: z.string().max(200).optional().describe("Postcode and town."),
+  postcode: z.string().max(20).optional().describe("Postcode."),
+  city: z.string().max(200).optional().describe("Town."),
+  country: z.string().max(100).optional().describe("Country."),
+  website: z.string().max(500).optional().describe("Website."),
+  birthday: z
+    .string()
+    .regex(/^(\d{4}-\d{2}-\d{2})?$/)
+    .optional()
+    .describe("Birthday, YYYY-MM-DD."),
   note: optionalText("Note."),
 };
 

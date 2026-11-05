@@ -11,25 +11,19 @@ import { Button } from "@/components/ui/button";
 import { CAPABILITIES } from "@/jmap/client";
 import { emailsWithAddress } from "@/jmap/mail";
 import { formatAddressInput } from "@/lib/addresses";
+import { toForm } from "@/lib/contact-form";
 import { downloadText } from "@/lib/download";
 import { displayName, listDate } from "@/lib/format";
 import { groupsOf } from "@/lib/groups";
 import { dateKey, eventTimes, locationName, toLocal } from "@/lib/jscalendar";
-import {
-  addressLines,
-  company,
-  contactPhoto,
-  fullName,
-  note,
-  primaryEmail,
-  primaryPhone,
-} from "@/lib/jscontact";
+import { company, contactPhoto, fullName, note, primaryEmail, primaryPhone } from "@/lib/jscontact";
 import { LOCALE } from "@/lib/locale";
 import { toVCard } from "@/lib/vcard";
 import { m } from "@/paraglide/messages";
 import { useEventsWith } from "../calendar/queries";
 import { usePhoneDial } from "../phone/phone-page";
 import { ContactDocuments } from "./contact-documents";
+import { ContactFacts, Field } from "./contact-facts";
 import { ContactTasks } from "./contact-tasks";
 import { type BookRef, bookOf, type Contact } from "./queries";
 
@@ -38,13 +32,6 @@ const Card = ({ title, children }: { title: string; children: ReactNode }) => (
     <h3 className="m-0 text-[13px] font-semibold">{title}</h3>
     {children}
   </section>
-);
-
-const Field = ({ label, children }: { label: string; children: ReactNode }) => (
-  <div className="flex flex-col gap-0.5">
-    <span className="text-[12px] text-muted">{label}</span>
-    <span className="break-words">{children}</span>
-  </div>
 );
 
 const dayFormat = new Intl.DateTimeFormat(LOCALE, {
@@ -70,7 +57,6 @@ export const ContactDetail = ({ card, books, groups }: Props) => {
   const email = primaryEmail(card);
   const phone = primaryPhone(card);
   const phoneDial = usePhoneDial();
-  const { street, city } = addressLines(card);
   const mails = useQuery({
     queryKey: [mailAccountId, "emails", "with", email],
     queryFn: () => emailsWithAddress(client, mailAccountId!, email),
@@ -81,6 +67,10 @@ export const ContactDetail = ({ card, books, groups }: Props) => {
     (a, b) => eventTimes(a).start.getTime() - eventTimes(b).start.getTime(),
   );
   const next = upcoming[0];
+  const { jobTitle, department } = toForm(card);
+  const subtitle = [jobTitle, department, company(card) === fullName(card) ? "" : company(card)]
+    .filter(Boolean)
+    .join(" · ");
 
   return (
     <div className="mx-auto flex max-w-[1040px] flex-col gap-7 px-4 pt-3 pb-10 md:px-10 md:pt-9">
@@ -100,9 +90,7 @@ export const ContactDetail = ({ card, books, groups }: Props) => {
         />
         <div className="flex min-w-[220px] flex-1 flex-col gap-1">
           <h2 className="m-0 text-[26px] font-semibold tracking-tight">{fullName(card)}</h2>
-          {company(card) && company(card) !== fullName(card) ? (
-            <span className="text-muted">{company(card)}</span>
-          ) : null}
+          {subtitle ? <span className="text-muted">{subtitle}</span> : null}
           {book && !book.isPersonal ? (
             <span className="text-[13px] text-muted">
               {book.mayWrite
@@ -246,21 +234,7 @@ export const ContactDetail = ({ card, books, groups }: Props) => {
         </div>
         <aside className="flex flex-[1_1_260px] flex-col gap-4">
           <Card title="Kontakt">
-            {email ? (
-              <Field label={m.contacts_email()}>
-                <a href={`mailto:${email}`} className="text-fg">
-                  {email}
-                </a>
-              </Field>
-            ) : null}
-            {phone ? (
-              <Field label={m.contacts_phone()}>
-                <span className="font-mono">{phone}</span>
-              </Field>
-            ) : null}
-            {street || city ? (
-              <Field label="Adresse">{[street, city].filter(Boolean).join(", ")}</Field>
-            ) : null}
+            <ContactFacts card={card} />
             {next ? (
               <Field label={m.contacts_upcoming()}>
                 {next.title} · {dayFormat.format(eventTimes(next).start)}

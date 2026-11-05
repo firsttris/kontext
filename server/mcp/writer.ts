@@ -15,17 +15,10 @@ import { getEmail, listIdentities, listMailboxes, saveDraft } from "@/jmap/mail"
 import type { EmailAddress, Identity } from "@/jmap/types";
 import { parseAddresses } from "@/lib/addresses";
 import { startCompose } from "@/lib/compose";
+import { type ContactForm, emptyContactForm, formToCard, toForm } from "@/lib/contact-form";
 import { formToEvent, newEventForm } from "@/lib/event-form";
 import { textToHtml } from "@/lib/html";
-import {
-  type ContactCard,
-  type ContactForm,
-  emptyContactForm,
-  formToCard,
-  fullName,
-  primaryEmail,
-  toForm,
-} from "@/lib/jscontact";
+import { type ContactCard, fullName, primaryEmail } from "@/lib/jscontact";
 import { findRole } from "@/lib/mailboxes";
 import { contactLink } from "@/lib/task-context";
 import { mailLink } from "@/lib/tasks";
@@ -57,6 +50,11 @@ export const taskApiOf =
 export type WriterDeps = { client: JmapClient; reader: Reader; taskApi: TaskApi };
 
 export type Done = { message: string } & Record<string, unknown>;
+
+/** A contact as the tools give it: one mail address and one number, the rest as in the form. */
+type ContactFields = Partial<
+  Omit<ContactForm, "emails" | "phones"> & { email: string; phone: string }
+>;
 
 const addresses = (list: string[] | undefined, what: string): EmailAddress[] => {
   const { addresses: parsed, invalid } = parseAddresses((list ?? []).join(", "));
@@ -223,13 +221,27 @@ export const createWriter = ({ client, reader, taskApi }: WriterDeps) => {
     };
   };
 
-  const contactForm = (patch: Partial<ContactForm>, base: ContactForm) =>
-    Object.fromEntries(
-      Object.entries(base).map(([key, value]) => [key, patch[key as keyof ContactForm] ?? value]),
-    ) as ContactForm;
+  /** The tools' fields on a form; `email` and `phone` stand for the first address and number. */
+  const contactForm = ({ email, phone, ...text }: ContactFields, base: ContactForm) => {
+    const given = Object.fromEntries(
+      Object.entries(text).filter(([, value]) => value !== undefined),
+    );
+    return {
+      ...base,
+      ...given,
+      emails:
+        email === undefined
+          ? base.emails
+          : [{ ...base.emails[0], address: email }, ...base.emails.slice(1)],
+      phones:
+        phone === undefined
+          ? base.phones
+          : [{ kind: "work" as const, ...base.phones[0], number: phone }, ...base.phones.slice(1)],
+    };
+  };
 
   const createCard = async (
-    input: { accountId?: string; addressBookId?: string } & Partial<ContactForm>,
+    input: { accountId?: string; addressBookId?: string } & ContactFields,
   ): Promise<Done> => {
     const { accountId, addressBookId, ...fields } = input;
     const account = await accountFor("contacts", accountId);
@@ -251,7 +263,7 @@ export const createWriter = ({ client, reader, taskApi }: WriterDeps) => {
   };
 
   const updateCard = async (
-    input: { accountId: string; contactId: string } & Partial<ContactForm>,
+    input: { accountId: string; contactId: string } & ContactFields,
   ): Promise<Done> => {
     const { accountId, contactId, ...fields } = input;
     const account = await accountFor("contacts", accountId);

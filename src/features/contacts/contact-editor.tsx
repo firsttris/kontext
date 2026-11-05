@@ -7,16 +7,10 @@ import { Input, Label, Select, Textarea } from "@/components/ui/input";
 import { useToast } from "@/components/ui/toast";
 import { dataUri, squarePhoto } from "@/features/photos/make-photo";
 import { PhotoPicker } from "@/features/photos/photo-picker";
-import {
-  type ContactForm,
-  contactPhoto,
-  emptyContactForm,
-  formToCard,
-  fullName,
-  mediaWithPhoto,
-  toForm,
-} from "@/lib/jscontact";
+import { type ContactForm, emptyContactForm, formToCard, toForm } from "@/lib/contact-form";
+import { contactPhoto, fullName, mediaWithPhoto } from "@/lib/jscontact";
 import { m } from "@/paraglide/messages";
+import { EmailRows, PhoneRows } from "./contact-rows";
 import { type BookRef, bookLabel, type Contact, startBook, useContactMutations } from "./queries";
 
 type Props = {
@@ -26,16 +20,30 @@ type Props = {
   preferredBook?: string;
 };
 
+/** One empty row to type into where the card has no address or number yet. */
+const withRows = (form: ContactForm): ContactForm => ({
+  ...form,
+  emails: form.emails.length ? form.emails : [{ address: "" }],
+  phones: form.phones.length ? form.phones : [{ number: "", kind: "work" }],
+});
+
 export const ContactEditor = ({ card, books, preferredBook }: Props) => {
-  const [form, setForm] = useState<ContactForm>(card ? toForm(card) : emptyContactForm);
+  const [form, setForm] = useState(() => withRows(card ? toForm(card) : emptyContactForm));
   const [photo, setPhoto] = useState<string | undefined>(card ? contactPhoto(card) : undefined);
   const writable = books.filter((book) => book.mayWrite);
   const [bookKey, setBookKey] = useState(() => startBook(writable, preferredBook));
   const { create, update, remove } = useContactMutations();
   const navigate = useNavigate();
   const toast = useToast();
-  const set = (key: keyof ContactForm) => (event: { target: { value: string } }) =>
+  type TextField = Exclude<keyof ContactForm, "emails" | "phones">;
+  const set = (key: TextField) => (event: { target: { value: string } }) =>
     setForm((current) => ({ ...current, [key]: event.target.value }));
+  const text = (key: TextField, label: string, className?: string) => (
+    <Label className={className}>
+      {label}
+      <Input value={form[key]} onChange={set(key)} autoComplete="off" />
+    </Label>
+  );
 
   const pickPhoto = async (file: File) => {
     try {
@@ -142,25 +150,29 @@ export const ContactEditor = ({ card, books, preferredBook }: Props) => {
           {m.contacts_surname()}
           <Input value={form.surname} onChange={set("surname")} autoComplete="off" />
         </Label>
+        {text("company", m.contacts_company())}
+        {text("department", m.contacts_department())}
+        {text("jobTitle", m.contacts_job_title())}
+        <Label>
+          {m.contacts_birthday()}
+          <Input type="date" value={form.birthday} onChange={set("birthday")} />
+        </Label>
+        <EmailRows rows={form.emails} onChange={(emails) => setForm({ ...form, emails })} />
+        <PhoneRows rows={form.phones} onChange={(phones) => setForm({ ...form, phones })} />
+        {text("street", m.contacts_street(), "sm:col-span-2")}
+        <div className="grid grid-cols-[96px_1fr] gap-4">
+          {text("postcode", m.contacts_postcode())}
+          {text("city", m.contacts_city())}
+        </div>
+        {text("country", m.contacts_country())}
         <Label className="sm:col-span-2">
-          {m.contacts_company()}
-          <Input value={form.company} onChange={set("company")} autoComplete="off" />
-        </Label>
-        <Label>
-          {m.contacts_email()}
-          <Input type="email" value={form.email} onChange={set("email")} autoComplete="off" />
-        </Label>
-        <Label>
-          {m.contacts_phone()}
-          <Input type="tel" value={form.phone} onChange={set("phone")} autoComplete="off" />
-        </Label>
-        <Label>
-          {m.contacts_street()}
-          <Input value={form.street} onChange={set("street")} autoComplete="off" />
-        </Label>
-        <Label>
-          {m.contacts_city()}
-          <Input value={form.city} onChange={set("city")} autoComplete="off" />
+          {m.contacts_website()}
+          <Input
+            inputMode="url"
+            value={form.website}
+            onChange={set("website")}
+            autoComplete="off"
+          />
         </Label>
         <Label className="sm:col-span-2">
           {m.contacts_note()}

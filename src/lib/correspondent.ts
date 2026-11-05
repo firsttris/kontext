@@ -1,6 +1,7 @@
 /** Who the open mail is with, for the panel beside it: the person, their contact card, a new card. */
 import type { EmailAddress } from "@/jmap/types";
-import { type ContactCard, type ContactForm, emptyContactForm } from "./jscontact";
+import { type ContactForm, emptyContactForm } from "./contact-form";
+import type { ContactCard } from "./jscontact";
 
 const same = (a: string, b: string) => a.trim().toLowerCase() === b.trim().toLowerCase();
 
@@ -60,5 +61,5 @@ const nameParts = (name: string): NameParts => {
 export const contactFormFor = (address: EmailAddress): ContactForm => ({
   ...emptyContactForm,
   ...nameParts(address.name ?? ""),
-  email: address.email,
+  emails: [{ address: address.email }],
 });

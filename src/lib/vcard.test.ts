@@ -12,9 +12,18 @@ const petra: ContactCard = {
       { kind: "surname", value: "Keller" },
     ],
   },
-  organizations: { o: { name: "Keller Elektro GmbH, Bühl" } },
+  organizations: { o: { name: "Keller Elektro GmbH, Bühl", units: [{ name: "Einkauf" }] } },
+  titles: { t: { name: "Bauleiterin" } },
   emails: { e: { address: "petra@keller.test", contexts: { work: true } } },
-  phones: { p: { number: "+49 7223 81234", features: { mobile: true } } },
+  phones: {
+    p: { number: "+49 7223 81234", features: { mobile: true } },
+    f: { number: "+49 7223 81235", features: { fax: true }, contexts: { work: true } },
+  },
+  links: {
+    w: { uri: "https://keller.test" },
+    "kontext-document-d": { uri: "https://kontext.test/documents/edit/d" },
+  },
+  anniversaries: { b: { kind: "birth", date: { month: 5, day: 4 } } },
   addresses: {
     a: {
       components: [
@@ -41,7 +50,12 @@ describe("vCard", () => {
     const text = toVCard(petra);
     expect(text).toContain("BEGIN:VCARD\r\nVERSION:4.0\r\nUID:petra-keller\r\nFN:Petra Keller\r\n");
     expect(text).toContain("N:Keller;Petra;;;\r\n");
-    expect(text).toContain("ORG:Keller Elektro GmbH\\, Bühl\r\n");
+    expect(text).toContain("ORG:Keller Elektro GmbH\\, Bühl;Einkauf\r\n");
+    expect(text).toContain("TITLE:Bauleiterin\r\n");
+    expect(text).toContain("TEL;TYPE=work,fax:+49 7223 81235\r\n");
+    expect(text).toContain("URL:https://keller.test\r\n");
+    expect(text).not.toContain("documents/edit");
+    expect(text).toContain("BDAY:--0504\r\n");
     expect(text).toContain("EMAIL;TYPE=work:petra@keller.test\r\n");
     expect(text).toContain("TEL;TYPE=cell:+49 7223 81234\r\n");
     expect(text).toContain("ADR:;;Industriestraße 4;Bühl;;77815;\r\n");

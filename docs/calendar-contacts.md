@@ -146,7 +146,11 @@ Kontext steht, steht auch am iPhone, unter Android (DAVx⁵) und in Thunderbird.
 - **Der Kunde auf einen Blick:** die letzten Mails mit ihm (auch aus info@), die nächsten
   Termine, offene Aufgaben (verknüpft mit ihm oder mit einer Mail mit ihm, aus jedem Postfach),
   verknüpfte Dokumente, „Anrufen“ über die [Telefonie](telephony.md).
-- **Anlegen und bearbeiten**, auch „Als Kontakt speichern“ direkt neben einer Mail.
+- **Anlegen und bearbeiten**, auch „Als Kontakt speichern“ direkt neben einer Mail: mehrere
+  Nummern mit ihrer Art (Mobil, Büro, Privat, Fax) und mehrere Mail-Adressen („+ Nummer“,
+  „+ E-Mail“), Position und Abteilung, Website, Geburtstag (er erscheint im Kalender bei
+  „Geburtstage“), PLZ und Land als eigene Felder. Was ein Kontakt vom Handy oder aus einer vCard
+  sonst noch hat, bleibt beim Bearbeiten erhalten. [Mehr](architecture.md#kontaktformular)
 - **Fotos** an Kontakten: zu sehen in der Liste, neben ihren Mails und wenn sie anrufen; über
   CardDAV auch am Handy. Jeder legt außerdem unter *Einstellungen → Profil* ein eigenes Foto für
   Chat, Anrufe und Aufgaben an. [Mehr](architecture.md#fotos)
