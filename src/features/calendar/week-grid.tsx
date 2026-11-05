@@ -1,4 +1,4 @@
-/** The time grid for one or seven days: all-day row, hours, events side by side, now line. */
+/** The time grid for one, five or seven days: all-day row, hours, events side by side, now line. */
 import { Link } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import { cn } from "@/lib/cn";
@@ -17,6 +17,7 @@ import {
 } from "@/lib/jscalendar";
 import { LOCALE } from "@/lib/locale";
 import { type DayTask, dueMinutes, tasksOnDay } from "@/lib/task-context";
+import { DEFAULT_WORK_HOURS, offHours, type WorkHours } from "@/lib/work-hours";
 import { m } from "@/paraglide/messages";
 import { EventLink } from "./event-link";
 import { calendarColor, eventClass } from "./event-style";
@@ -37,6 +38,12 @@ const HOURS = Array.from({ length: 24 }, (_, hour) => ({ hour, label: timeLabel(
  */
 const GUTTER = "[scrollbar-gutter:stable]";
 const FIXED_ROW = cn("grid shrink-0 overflow-y-hidden border-b border-border", GUTTER);
+
+/** The line at each full hour; the shading outside working hours draws it too, as it starts on one. */
+const HOUR_LINES = {
+  backgroundImage: "linear-gradient(var(--border) 1px, transparent 1px)",
+  backgroundSize: `100% ${HOUR_HEIGHT}px`,
+};
 
 const dayName = new Intl.DateTimeFormat(LOCALE, { weekday: "short", timeZone: "UTC" });
 
@@ -61,6 +68,8 @@ type Props = {
   /** Events the user may drag to another time (their own). */
   canMove?: (event: CalendarEvent) => boolean;
   onMove?: (moved: Moved) => void;
+  /** The grid starts at their beginning and shades the hours outside them. */
+  workHours?: WorkHours;
 };
 
 /** How much room a task due at a time takes in the grid; it has a moment, not a length. */
@@ -96,6 +105,7 @@ export const WeekGrid = ({
   showDayHeader = true,
   canMove = () => false,
   onMove = () => {},
+  workHours = DEFAULT_WORK_HOURS,
 }: Props) => {
   const now = useNow();
   const { preview, handlers } = useDragEvents(HOUR_HEIGHT, onMove);
@@ -103,10 +113,12 @@ export const WeekGrid = ({
   const today = dateKey(now);
   const scroller = useRef<HTMLDivElement>(null);
 
-  // Start at 07:00, where a working day begins.
+  // Start where the working day begins.
+  const { startHour } = workHours;
   useEffect(() => {
-    if (scroller.current) scroller.current.scrollTop = 7 * HOUR_HEIGHT - 8;
-  }, []);
+    if (scroller.current) scroller.current.scrollTop = startHour * HOUR_HEIGHT - 8;
+  }, [startHour]);
+  const shaded = offHours(workHours);
 
   const columns = `56px repeat(${days.length}, minmax(0, 1fr))`;
   const allDay = days.map((day) =>
@@ -197,12 +209,23 @@ export const WeekGrid = ({
                 key={day}
                 data-day={day}
                 className={cn("relative border-l border-border", weekend && "bg-side")}
-                style={{
-                  height: 24 * HOUR_HEIGHT,
-                  backgroundImage: "linear-gradient(var(--border) 1px, transparent 1px)",
-                  backgroundSize: `100% ${HOUR_HEIGHT}px`,
-                }}
+                style={{ height: 24 * HOUR_HEIGHT, ...HOUR_LINES }}
               >
+                {weekend
+                  ? null
+                  : shaded.map(({ top, bottom }) => (
+                      <div
+                        key={top}
+                        data-off-hours
+                        aria-hidden="true"
+                        className="pointer-events-none absolute inset-x-0 bg-side"
+                        style={{
+                          ...HOUR_LINES,
+                          top: (top / 60) * HOUR_HEIGHT,
+                          height: ((bottom - top) / 60) * HOUR_HEIGHT,
+                        }}
+                      />
+                    ))}
                 {HOURS.map(({ hour, label }) => (
                   <Link
                     key={label}
