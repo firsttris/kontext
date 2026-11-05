@@ -55,6 +55,7 @@ describe("copyForm", () => {
       meeting,
       attendees: "anna@weber.test",
       showAs: "free",
+      private: false,
       description: "Pläne mitbringen",
       recurrence: NO_REPEAT,
       reminder: { minutes: 60, action: "email" },

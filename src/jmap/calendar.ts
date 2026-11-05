@@ -29,6 +29,7 @@ const BASE_PROPERTIES = [
   "links",
   "organizerCalendarAddress",
   "freeBusyStatus",
+  "privacy",
   "recurrenceRule",
   "alerts",
   "recurrenceId",

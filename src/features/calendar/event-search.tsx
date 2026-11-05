@@ -6,7 +6,15 @@ import { Link } from "@tanstack/react-router";
 import { Repeat } from "lucide-react";
 import { useDeferredValue } from "react";
 import { Highlighted } from "@/components/highlighted";
-import { dateKey, eventKey, eventTimes, locationName, toLocal, ZONE } from "@/lib/jscalendar";
+import {
+  dateKey,
+  eventKey,
+  eventTimes,
+  eventTitle,
+  locationName,
+  toLocal,
+  ZONE,
+} from "@/lib/jscalendar";
 import { LOCALE } from "@/lib/locale";
 import { m } from "@/paraglide/messages";
 import { calendarColor } from "./event-style";
@@ -53,7 +61,10 @@ export const EventSearchResults = ({ words, onPick }: { words: string; onPick: (
               <span className="flex min-w-0 flex-1 flex-col gap-0.5">
                 <span className="flex items-center gap-1.5 text-[14px] font-medium">
                   <span className="truncate">
-                    <Highlighted text={event.title || "—"} terms={[query]} />
+                    <Highlighted
+                      text={eventTitle(event, m.calendar_event_private())}
+                      terms={[query]}
+                    />
                   </span>
                   {event.recurrenceRule ? (
                     <Repeat

@@ -88,6 +88,9 @@ export const EventEditor = ({ event, series, start, copyOf, onDone, onCancel }: 
     writable.find((calendar) => calendar.key === calendarKey) ??
     writable.find((calendar) => calendar.isPersonal && calendar.calendar.isDefault) ??
     writable[0];
+  // Stalwart lets only the calendar's owner mark an event private (assert_privacy_allowed in
+  // crates/jmap/src/calendar_event/privacy.rs), so the choice is for the user's own calendars.
+  const mayBePrivate = Boolean((event ? calendarOf(calendars, event) : target)?.isPersonal);
   const toast = useToast();
   const shareWith = useShareWith();
   const suggestions = useAddressSuggestions();
@@ -152,7 +155,7 @@ export const EventEditor = ({ event, series, start, copyOf, onDone, onCancel }: 
   const submit = async (e?: FormEvent, toOutside = false) => {
     e?.preventDefault();
     const invalid = validateEventForm(form);
-    const filled = { ...form, reminder };
+    const filled = { ...form, reminder, private: form.private && mayBePrivate };
     if (invalid) {
       setProblem(PROBLEMS[invalid]());
       return;
@@ -252,6 +255,20 @@ export const EventEditor = ({ event, series, start, copyOf, onDone, onCancel }: 
         />
         {m.calendar_event_all_day()}
       </label>
+      {mayBePrivate ? (
+        <label className="flex items-start gap-2 text-[14px]">
+          <input
+            type="checkbox"
+            checked={form.private}
+            onChange={(e) => setForm((current) => ({ ...current, private: e.target.checked }))}
+            className="mt-0.5 size-4 shrink-0 accent-[var(--accent)]"
+          />
+          <span className="flex flex-col">
+            {m.calendar_event_private()}
+            <span className="text-[13px] text-muted">{m.calendar_event_private_hint()}</span>
+          </span>
+        </label>
+      ) : null}
       <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
         <TimeFields
           legend={m.calendar_event_start()}

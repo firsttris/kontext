@@ -35,6 +35,7 @@ import {
   eventKey,
   fromLocal,
   isOrganizer,
+  isPrivate,
   myParticipation,
 } from "@/lib/jscalendar";
 import type { ShareWith } from "@/lib/sharing";
@@ -211,15 +212,24 @@ export const isInvitation = (
 };
 
 /**
+ * A colleague's private event: the user sees only its time, and Stalwart refuses changes to it
+ * from anyone but the owner (assert_privacy_access in crates/jmap/src/calendar_event/privacy.rs).
+ */
+export const isOthersPrivate = (calendar: CalendarRef | undefined, event: CalendarEvent) =>
+  isPrivate(event) && !calendar?.isPersonal;
+
+/**
  * May the user change the event? In a writable calendar, if they or the calendar's owner organize
- * it (invitations from others are answered, not edited).
+ * it (invitations from others are answered, not edited), unless it is a colleague's private one.
  */
 export const mayEdit = (
   calendar: CalendarRef | undefined,
   event: CalendarEvent,
   myAddresses: string[],
 ): boolean =>
-  Boolean(calendar?.mayWrite) && isOrganizer(event, [...myAddresses, calendar!.ownerEmail]);
+  Boolean(calendar?.mayWrite) &&
+  !isOthersPrivate(calendar, event) &&
+  isOrganizer(event, [...myAddresses, calendar!.ownerEmail]);
 
 /** The URL search that opens an event. */
 export const eventSearch = (event: CalendarEvent) => ({

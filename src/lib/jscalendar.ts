@@ -40,6 +40,8 @@ export type CalendarEvent = {
   organizerCalendarAddress?: string;
   /** "free" when the time does not count as busy (RFC 8984 §5.2.2); "busy" when left out. */
   freeBusyStatus?: "free" | "busy";
+  /** "private": who it is shared with sees only the time (RFC 8984 §4.4.3); left out: public. */
+  privacy?: "public" | "private" | "secret";
   recurrenceRule?: RecurrenceRule | null;
   /** Its reminder (RFC 8984 §4.5.2); see reminders.ts. */
   alerts?: Record<string, Alert> | null;
@@ -337,6 +339,17 @@ export const isOrganizer = (event: CalendarEvent, myAddresses: string[]): boolea
   const organizer = event.organizerCalendarAddress.replace(/^mailto:/i, "").toLowerCase();
   return myAddresses.some((a) => a.toLowerCase() === organizer);
 };
+
+/** Whether only the calendar's owner may see what the event is about (RFC 8984 §4.4.3). */
+export const isPrivate = (event: CalendarEvent): boolean =>
+  event.privacy === "private" || event.privacy === "secret";
+
+/**
+ * The event's title as the views show it. Stalwart sends whoever sees a private event through
+ * sharing only its times, no title (into_private_view in crates/groupware/src/calendar/privacy.rs).
+ */
+export const eventTitle = (event: CalendarEvent, privateLabel: string): string =>
+  event.title || (isPrivate(event) ? privateLabel : "—");
 
 /** Event ids are only unique within an account. */
 export const eventKey = (event: CalendarEvent): string => `${event.accountId ?? ""}/${event.id}`;

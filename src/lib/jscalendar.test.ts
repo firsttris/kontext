@@ -5,10 +5,12 @@ import {
   durationMinutes,
   eventSpan,
   eventTimes,
+  eventTitle,
   findLinkedEvent,
   fromLocal,
   isMeetingLink,
   isoWeek,
+  isPrivate,
   onDay,
   placeInColumns,
   toDuration,
@@ -208,5 +210,23 @@ describe("findLinkedEvent", () => {
   it("only in the account asked for", () => {
     expect(findLinkedEvent(events, "h1a", "e", "2026-10-29")).toBeUndefined();
     expect(findLinkedEvent(events, "h1a", undefined, "2026-10-29")).toBe(single);
+  });
+});
+
+describe("private events", () => {
+  it('shows the title to the owner and "Privat" to whom the server sent only the time', () => {
+    const own = event("Arzt", "2026-11-05T10:00:00", "PT1H", { privacy: "private" });
+    expect(isPrivate(own)).toBe(true);
+    expect(eventTitle(own, "Privat")).toBe("Arzt");
+    // What Stalwart sends a sharee: the times and the privacy, no title.
+    const shared = { ...own, title: undefined };
+    expect(eventTitle(shared, "Privat")).toBe("Privat");
+    expect(isPrivate({ ...own, privacy: "secret" })).toBe(true);
+  });
+  it("leaves public events as they are", () => {
+    const open = event("", "2026-11-05T10:00:00", "PT1H", { privacy: "public" });
+    expect(isPrivate(open)).toBe(false);
+    expect(eventTitle(open, "Privat")).toBe("—");
+    expect(isPrivate(event("Baubesprechung", "2026-11-05T10:00:00", "PT1H"))).toBe(false);
   });
 });

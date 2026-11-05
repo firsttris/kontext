@@ -21,6 +21,7 @@ import { DEFAULT_WORK_HOURS, offHours, type WorkHours } from "@/lib/work-hours";
 import { m } from "@/paraglide/messages";
 import { EventLink } from "./event-link";
 import { calendarColor, eventClass } from "./event-style";
+import { EventTitle } from "./event-title";
 import { eventSearch } from "./queries";
 import { TaskChip } from "./task-chip";
 import { type Moved, useDragEvents } from "./use-drag";
@@ -339,7 +340,7 @@ const EventBlock = ({
         eventClass(invitation),
       )}
     >
-      <span className="text-[12px] leading-tight font-semibold">{event.title || "—"}</span>
+      <EventTitle event={event} className="text-[12px] leading-tight font-semibold" />
       <span className="font-mono text-[11px] text-muted">
         {timeLabel(from)}–{timeLabel(to)}
       </span>
@@ -357,6 +358,6 @@ const EventChip = ({ event, invitation }: { event: CalendarEvent; invitation: bo
       eventClass(invitation),
     )}
   >
-    {event.title || "—"}
+    <EventTitle event={event} />
   </EventLink>
 );

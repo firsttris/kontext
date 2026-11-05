@@ -1784,6 +1784,27 @@ Einstellungen eines Mitglieds beim nächsten `Calendar/set` eines anderen
 den Jonas ausgeblendet hat, wäre er auch für sie aus. Darum schickt jede Änderung das eigene
 `isVisible` mit (`withOwnVisibility`).
 
+### Private Termine
+
+„Privat“ im Editor setzt `privacy: "private"` (RFC 8984 §4.4.3), angeboten nur in den eigenen
+Kalendern: Stalwart lässt nur den Besitzer etwas anderes als `public` setzen
+(`assert_privacy_allowed` in `crates/jmap/src/calendar_event/privacy.rs`). Das Ausblenden macht
+der Server, nicht die App: Wer den Termin über eine Freigabe sieht (Vertretung, Kollegen mit
+Leserecht), bekommt von `CalendarEvent/get` nur Zeiten, Wiederholung und `privacy` – kein Titel,
+Ort, keine Notizen, Teilnehmer oder Erinnerungen (`into_private_view` in
+`crates/groupware/src/calendar/privacy.rs`, `crates/jmap/src/calendar_event/get.rs`). Die
+Textsuche findet private Termine für ihn nicht (`crates/jmap/src/calendar_event/query.rs`),
+ändern und löschen darf er sie nicht (`assert_privacy_access`); über CalDAV gilt dasselbe. Auch
+wer die JMAP-API selbst fragt, liest also nichts weiter. Für Mitglieder eines gemeinsamen
+Postfachs gilt dessen Kalender als eigener, sie sehen alles. `secret` (Outlooks „vertraulich“)
+blendet Stalwart für andere ganz aus; die App behält es beim Speichern bei.
+
+Die App zeigt einen Termin ohne Titel mit `privacy` als „Privat“ (`eventTitle` in
+`src/lib/jscalendar.ts`), private Termine mit einem kleinen Schloss, und lässt „Bearbeiten“,
+„Duplizieren“, „Aufgabe zum Termin“ und „Löschen“ bei fremden privaten Terminen weg
+(`isOthersPrivate` in `src/features/calendar/queries.ts`). „Wer hat Zeit?“ zeigt ohnehin nie
+Titel.
+
 ## Verfügbarkeit
 
 Das Feld „Teilnehmer“ schlägt beim Tippen zuerst die Personen der Firma vor (`Principal/get`,

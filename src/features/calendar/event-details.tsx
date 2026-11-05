@@ -2,7 +2,7 @@
  * An appointment as the dialog shows it: when, where, who, its documents, the answer buttons,
  * a task about it, delete.
  */
-import { CalendarDays, Copy, ListChecks, MapPin, Repeat, Users, Video } from "lucide-react";
+import { CalendarDays, Copy, ListChecks, Lock, MapPin, Repeat, Users, Video } from "lucide-react";
 import { useState } from "react";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { useToast } from "@/components/ui/toast";
@@ -14,6 +14,7 @@ import {
   eventTimes,
   isInstance,
   isOrganizer,
+  isPrivate,
   locationName,
   meetingLink,
   myParticipation,
@@ -30,6 +31,7 @@ import { TaskDialog, type TaskStart } from "../tasks/task-dialog";
 import {
   calendarLabel,
   calendarOf,
+  isOthersPrivate,
   mayEdit,
   useCalendarRefs,
   useEventMutations,
@@ -74,6 +76,8 @@ export const EventDetails = ({ event, series, onEdit, onDuplicate, onDone }: Pro
   const me = calendar?.isPersonal ? myParticipation(event, mine) : undefined;
   const organizer = isOrganizer(event, mine);
   const editable = mayEdit(calendar, event, mine);
+  // A colleague's private event: only its time came, so there is nothing to act on.
+  const locked = isOthersPrivate(calendar, event);
   const people = attendees(event);
   const repeats = describeRecurrence((series ?? event).recurrenceRule);
   const place = locationName(event);
@@ -123,6 +127,12 @@ export const EventDetails = ({ event, series, onEdit, onDuplicate, onDone }: Pro
               </span>
             ) : null}
           </span>
+        </div>
+      ) : null}
+      {isPrivate(event) && event.title ? (
+        <div className="flex items-start gap-3 text-[14px]">
+          <Lock size={16} className="mt-0.5 shrink-0 text-muted" />
+          <span>{m.calendar_event_private()}</span>
         </div>
       ) : null}
       {repeats ? (
@@ -226,13 +236,13 @@ export const EventDetails = ({ event, series, onEdit, onDuplicate, onDone }: Pro
             {m.contacts_edit()}
           </Button>
         ) : null}
-        {calendars.some((ref) => ref.mayWrite) ? (
+        {!locked && calendars.some((ref) => ref.mayWrite) ? (
           <Button variant="outline" onClick={onDuplicate}>
             <Copy size={14} />
             {m.calendar_duplicate()}
           </Button>
         ) : null}
-        {accountId ? (
+        {accountId && !locked ? (
           <Button
             variant="outline"
             onClick={() =>
@@ -248,7 +258,7 @@ export const EventDetails = ({ event, series, onEdit, onDuplicate, onDone }: Pro
           </Button>
         ) : null}
         <div className="flex-1" />
-        {!calendar?.mayWrite ? null : isInstance(event) ? (
+        {!calendar?.mayWrite || locked ? null : isInstance(event) ? (
           <>
             <Button
               variant="outline"

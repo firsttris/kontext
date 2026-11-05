@@ -7,6 +7,10 @@ Steps that an update needs beyond raising the version are marked **Upgrade**.
 
 ## Unreleased
 
+- Calendar: "Privat" in the event editor marks an appointment private (JSCalendar `privacy`).
+  Whoever sees the calendar through a share (a deputy, colleagues) sees only "Privat" with the
+  time; Stalwart leaves out the title, location, notes and participants itself. Private
+  appointments show a small lock (user guide, "Kalender und Kontakte").
 - Calendar and tasks: a search field finds appointments (title, location, description,
   participants, past and coming; a series once) and tasks (title, notes, checklist, assignee),
   and a hit opens them, on the phone too (user guide, "Kalender" and "Aufgaben").
