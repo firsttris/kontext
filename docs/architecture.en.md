@@ -1743,6 +1743,9 @@ not change or delete them (`assert_privacy_access`); the same holds over CalDAV.
 asking the JMAP API directly reads nothing more. For members of a shared mailbox its calendar
 counts as their own; they see everything. `secret` (Outlook's "confidential") Stalwart hides from
 others completely; the app keeps it when saving.
+"Private" holds for the whole series: Stalwart drops `privacy` from the patch of a single
+date (`is_forbidden_override_patch` in `crates/calcard/src/jscalendar/types.rs`), so the app
+writes a "Private" changed under "This event only" to the series.
 
 The app shows an event without a title that has `privacy` as "Private" (`eventTitle` in
 `src/lib/jscalendar.ts`), private events with a small lock, and leaves out "Edit", "Duplicate",

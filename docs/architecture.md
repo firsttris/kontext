@@ -1798,6 +1798,9 @@ Textsuche findet private Termine für ihn nicht (`crates/jmap/src/calendar_event
 wer die JMAP-API selbst fragt, liest also nichts weiter. Für Mitglieder eines gemeinsamen
 Postfachs gilt dessen Kalender als eigener, sie sehen alles. `secret` (Outlooks „vertraulich“)
 blendet Stalwart für andere ganz aus; die App behält es beim Speichern bei.
+„Privat“ gilt für die ganze Serie: Im Patch eines einzelnen Termins verwirft Stalwart
+`privacy` (`is_forbidden_override_patch` in `crates/calcard/src/jscalendar/types.rs`), deshalb
+schreibt die App ein bei „Nur dieser Termin“ geändertes „Privat“ in die Serie.
 
 Die App zeigt einen Termin ohne Titel mit `privacy` als „Privat“ (`eventTitle` in
 `src/lib/jscalendar.ts`), private Termine mit einem kleinen Schloss, und lässt „Bearbeiten“,

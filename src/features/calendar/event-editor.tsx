@@ -134,12 +134,29 @@ export const EventEditor = ({ event, series, start, copyOf, onDone, onCancel }: 
         : { ...current, [key]: e.target.value };
     });
 
+  /**
+   * One date of a series. Its privacy belongs to the whole series: Stalwart drops `privacy` from a
+   * date's patch (is_forbidden_override_patch in crates/calcard/src/jscalendar/types.rs,
+   * is_ignored_override_key in overrides.rs), so a changed "Privat" goes to the series.
+   */
+  const saveDate = async (
+    date: CalendarEvent,
+    whole: CalendarEvent,
+    data: Record<string, unknown>,
+  ) => {
+    await update.mutateAsync({ event: date, patch: data });
+    if (data.privacy !== (whole.privacy ?? "public")) {
+      await update.mutateAsync({ event: date, id: whole.id, patch: { privacy: data.privacy } });
+    }
+  };
+
   const save = (data: Record<string, unknown>) => {
     if (!event) {
       if (!target) throw new Error(m.calendar_calendar());
       return create.mutateAsync({ event: data, calendar: target });
     }
-    if (!instance || scope === "this") return update.mutateAsync({ event, patch: data });
+    if (!instance) return update.mutateAsync({ event, patch: data });
+    if (scope === "this") return saveDate(instance, series!, data);
     // This date and the following: a new series from here, unless it is the first date anyway.
     if (scope === "following" && !isFirstDate(series!, instance.recurrenceId!)) {
       return split.changeFollowing(instance, series!, data);
