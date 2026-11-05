@@ -7,6 +7,7 @@ import {
   meetingNote,
   movePatch,
   newEventForm,
+  organizerFor,
   removeMeetingNote,
   seriesStart,
   validateEventForm,
@@ -414,5 +415,75 @@ describe("reminder", () => {
   it("removes it for none and leaves alerts it cannot show alone", () => {
     expect(formToEvent({ ...form, reminder: null }, me).alerts).toBeNull();
     expect("alerts" in formToEvent({ ...form, reminder: "kept" }, me)).toBe(false);
+  });
+});
+
+describe("who invites", () => {
+  const info = { isPersonal: false, isOwner: true, ownerEmail: "info@weber.test" };
+  const colleague = { isPersonal: false, isOwner: false, ownerEmail: "anna@weber.test" };
+  const own = { isPersonal: true, isOwner: true, ownerEmail: "jonas@weber.test" };
+  const me = "jonas@weber.test";
+
+  it("invites as the shared mailbox from its calendar, otherwise as the user", () => {
+    expect(organizerFor(undefined, info, me)).toBe("info@weber.test");
+    expect(organizerFor(undefined, own, me)).toBe(me);
+    expect(organizerFor(undefined, colleague, me)).toBe(me);
+    expect(organizerFor(undefined, undefined, me)).toBe(me);
+  });
+
+  it("keeps the organizer an event has", () => {
+    const event = { organizerCalendarAddress: "mailto:jonas@weber.test" };
+    expect(organizerFor(event, info, me)).toBe(me);
+    expect(organizerFor({ organizerCalendarAddress: undefined }, info, me)).toBe("info@weber.test");
+  });
+
+  it("lists the organizer once, also when the form names it as attendee", () => {
+    const form = {
+      ...newEventForm("2026-10-23T10:00:00"),
+      title: "Kundentermin",
+      attendees: "info@weber.test, kunde@example.test",
+    };
+    const written = formToEvent(form, { email: "info@weber.test" });
+    expect(written.organizerCalendarAddress).toBe("mailto:info@weber.test");
+    expect(
+      Object.values(written.participants as Record<string, { calendarAddress: string }>).map(
+        (participant) => participant.calendarAddress,
+      ),
+    ).toEqual(["mailto:info@weber.test", "mailto:kunde@example.test"]);
+  });
+
+  // Jonas changes an appointment Anna organizes in her calendar; she said "maybe" herself.
+  it("leaves the kept organizer's name and answer as they are", () => {
+    const event = {
+      id: "e1",
+      accountId: "anna",
+      calendarIds: { "1": true },
+      title: "Abnahme",
+      start: "2026-10-23T10:00:00",
+      timeZone: "Europe/Berlin",
+      duration: "PT1H",
+      organizerCalendarAddress: "mailto:anna@weber.test",
+      participants: {
+        p1: {
+          "@type": "Participant",
+          name: "Anna Weber",
+          calendarAddress: "mailto:anna@weber.test",
+          roles: { owner: true, attendee: true },
+          participationStatus: "tentative",
+        },
+        p2: {
+          "@type": "Participant",
+          calendarAddress: "mailto:kunde@example.test",
+          roles: { attendee: true },
+          participationStatus: "accepted",
+        },
+      },
+    } as unknown as CalendarEvent;
+    const form = eventToForm(event, ["anna@weber.test"]);
+    const written = formToEvent(form, { email: "anna@weber.test" }, event);
+    expect((written.participants as Record<string, unknown>).p1).toMatchObject({
+      name: "Anna Weber",
+      participationStatus: "tentative",
+    });
   });
 });

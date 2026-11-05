@@ -25,6 +25,7 @@ import {
   formToEvent,
   isComplete,
   newEventForm,
+  organizerFor,
   seriesStart,
   startOfForm,
   validateEventForm,
@@ -91,14 +92,17 @@ export const EventEditor = ({ event, series, start, copyOf, onDone, onCancel }: 
   // Stalwart lets only the calendar's owner mark an event private (assert_privacy_allowed in
   // crates/jmap/src/calendar_event/privacy.rs): the user's own calendars and their shared
   // mailboxes' ones.
-  const mayBePrivate = Boolean((event ? calendarOf(calendars, event) : target)?.isOwner);
+  const home = event ? calendarOf(calendars, event) : target;
+  const mayBePrivate = Boolean(home?.isOwner);
+  const organizer = organizerFor(event && (series ?? event), home, session?.username ?? "");
   const toast = useToast();
   const shareWith = useShareWith();
   const suggestions = useAddressSuggestions();
   const instance = event && isInstance(event) && series ? event : undefined;
   const [initial] = useState<EventForm>(() =>
     event
-      ? eventToForm(event, mine, series)
+      ? // Only the organizer has a place of its own; the user stays an attendee of someone else's.
+        eventToForm(event, [organizer], series)
       : copyOf
         ? copyForm(copyOf, mine)
         : newEventForm(`${start ?? `${toLocal(new Date()).slice(0, 11)}09:00`}:00`.slice(0, 19)),
@@ -192,11 +196,11 @@ export const EventEditor = ({ event, series, start, copyOf, onDone, onCancel }: 
       return;
     }
     const forSeries = !instance || scope !== "this";
-    const organizer = { email: session?.username ?? "" };
+    const by = { email: organizer };
     const data =
       copyOf && !event
-        ? copyToEvent(filled, organizer, copyOf)
-        : formToEvent(filled, organizer, instance && scope !== "this" ? series : event, forSeries);
+        ? copyToEvent(filled, by, copyOf)
+        : formToEvent(filled, by, instance && scope !== "this" ? series : event, forSeries);
     try {
       await save(data);
       // The colleagues invited can open the appointment's documents.

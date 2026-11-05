@@ -14,6 +14,10 @@ Steps that an update needs beyond raising the version are marked **Upgrade**.
   drafts, Kontext's "Sent" copies and shared mailboxes stay unencrypted; search, rules, the
   assistant and agents can't read encrypted mails (docs, "Verschlüsselung"). Deleting one's key
   switches it off first, so no new mail is encrypted for a key nobody holds.
+- Calendar: an appointment with attendees in the calendar of a shared mailbox (info@, rechnung@)
+  invites as the mailbox. info@ is the organiser, the invitation goes out from info@ and is in its
+  "Sent", and the answers come back to info@ instead of to the colleague who entered it. Editing
+  an appointment keeps its organiser (user guide, "Kalender und Kontakte").
 - Company administration: *Sicherheit der Mails* gets "Beim Versand verschlüsseln", a switch
   with which Stalwart itself encrypts mail to recipients outside the company whose key it knows
   (Stalwart's encryption gateway, `Encryption.gatewayEnable`), and the list of those keys: pasted,
