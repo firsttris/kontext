@@ -12,7 +12,8 @@ Steps that an update needs beyond raising the version are marked **Upgrade**.
   `encryptionAtRest`, since 1.0.2); Kontext registers the key with Stalwart and opens the mails
   like any PGP mail. Optionally also mails stored by mail programs or an import. Existing mails,
   drafts, Kontext's "Sent" copies and shared mailboxes stay unencrypted; search, rules, the
-  assistant and agents can't read encrypted mails (docs, "Verschlüsselung").
+  assistant and agents can't read encrypted mails (docs, "Verschlüsselung"). Deleting one's key
+  switches it off first, so no new mail is encrypted for a key nobody holds.
 - Deploy: `deploy/.env.example` and the Quadlet use Schreibzeug 0.1.19 (was 0.1.18), and Compose
   and the Quadlet use Caddy 2.11.8 (was 2.11.7) and LiveKit SIP 1.23.0 (was 1.22.0), the versions
   running on the first server. No step beyond raising the versions; with Quadlet, raise the images

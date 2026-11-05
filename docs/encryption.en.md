@@ -132,9 +132,11 @@ readable outside (`src/jmap/encryption-at-rest.ts`).
 - **Subject:** stays visible. Stalwart refuses the hidden subject for this encryption
   (`validate_encryption_at_rest` in `crates/jmap/src/registry/mapping/public_key.rs`).
 - **Limits:** search, rules, the assistant and the agents can't see into these mails, as with any
-  encrypted mail. Without the private key (or the recovery code) they are lost. Whoever makes a
-  new key switches it off and on again; until then Stalwart keeps encrypting for the old one, and
-  the card warns.
+  encrypted mail. Without the private key (or the recovery code) they are lost. Whoever deletes
+  the key (also to make a new one) has Kontext switch it off first, so Stalwart does not encrypt
+  for a key nobody holds any more; with the new key one switches it on again. Should Stalwart
+  still encrypt for a key other than the current one, the card warns, and the switch can be
+  turned off even without a key.
 - **Shared mailboxes:** stay unencrypted. They are group accounts without settings of their own
   and are read by several people; a personal key does not fit there.
 - **Requirement:** Stalwart's server-wide switch `atRestEnable` (settings `Encryption`) is on;

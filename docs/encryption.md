@@ -133,8 +133,11 @@ lesbar (`src/jmap/encryption-at-rest.ts`).
   ab (`validate_encryption_at_rest` in `crates/jmap/src/registry/mapping/public_key.rs`).
 - **Grenzen:** Suche, Regeln, der Assistent und die Agenten sehen in diese Mails nicht hinein,
   wie bei jeder verschlüsselten Mail. Ohne den geheimen Schlüssel (oder den
-  Wiederherstellungscode) sind sie verloren. Wer den Schlüssel neu anlegt, schaltet den Schalter
-  aus und wieder ein; bis dahin verschlüsselt Stalwart weiter für den alten, und die Karte warnt.
+  Wiederherstellungscode) sind sie verloren. Wer den Schlüssel löscht (auch um einen neuen
+  anzulegen), dem schaltet Kontext es vorher aus, damit Stalwart nicht für einen Schlüssel
+  verschlüsselt, den niemand mehr hat; mit dem neuen schaltet man es wieder ein. Verschlüsselt
+  Stalwart doch für einen anderen als den jetzigen, warnt die Karte, und der Schalter lässt sich
+  auch ohne Schlüssel ausschalten.
 - **Gemeinsame Postfächer:** bleiben unverschlüsselt. Sie sind Gruppenkonten ohne eigene
   Einstellungen und werden von mehreren gelesen; ein persönlicher Schlüssel passt dort nicht.
 - **Voraussetzung:** Stalwarts serverweiter Schalter `atRestEnable` (Einstellungen
