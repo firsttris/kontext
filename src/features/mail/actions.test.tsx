@@ -1,4 +1,4 @@
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { QueryClient, QueryClientProvider, useQuery } from "@tanstack/react-query";
 import { act, renderHook } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { describe, expect, it, vi } from "vitest";
@@ -21,14 +21,29 @@ vi.mock("@/auth/auth", () => ({
   }),
 }));
 
-const setup = () => {
+/** A list of the account on the screen that, once shown, takes its time to load again. */
+const loads = { count: 0 };
+const useSlowList = () =>
+  useQuery({
+    queryKey: ["jonas", "list"],
+    queryFn: () => (loads.count++ === 0 ? Promise.resolve([]) : new Promise<never[]>(() => {})),
+  });
+
+const setup = (withSlowList = false) => {
   const seeded = { ...createStore(), user: "jonas" };
   store.current = seeded;
+  loads.count = 0;
   const queryClient = new QueryClient({ defaultOptions: { mutations: { retry: false } } });
   const wrapper = ({ children }: { children: ReactNode }) => (
     <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
   );
-  const { result } = renderHook(() => useMailActions(), { wrapper });
+  const useActions = withSlowList
+    ? () => {
+        useSlowList();
+        return useMailActions();
+      }
+    : useMailActions;
+  const { result } = renderHook(useActions, { wrapper });
   const mail = [...seeded.emails.values()].find((email) => email.mailboxIds["jonas-inbox"])!;
   return { actions: () => result.current, mail, seeded };
 };
@@ -68,5 +83,20 @@ describe("undoMove", () => {
     await act(() => actions().remove("jonas", [mail.id], "jonas-trash"));
     await act(() => actions().undoMove(trashed!));
     expect(seeded.emails.has(mail.id)).toBe(false);
+  });
+});
+
+describe("moving", () => {
+  // The notice with "Rückgängig" and `z` (undo.ts) wait for the move's answer: while the lists
+  // were still loading again, `z` found nothing to take back (e2e/selection.spec.ts, "e", "z").
+  it("answers once the server moved the mails, without waiting for the lists to load again", async () => {
+    const { actions, mail } = setup(true);
+    await act(() => new Promise((resolve) => setTimeout(resolve, 10)));
+    const moved = actions().moveTo("jonas", [mail as unknown as EmailSummary], "jonas-inbox", {
+      accountId: "jonas",
+      mailboxId: "jonas-Archiv",
+    });
+    const late = new Promise((resolve) => setTimeout(() => resolve("still waiting"), 500));
+    expect(await act(() => Promise.race([moved, late]))).toMatchObject({ to: "jonas-Archiv" });
   });
 });
