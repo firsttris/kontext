@@ -159,16 +159,20 @@ describe("folder management", () => {
   });
 
   it("lets standard folders only be marked read, and only with unread mails", () => {
-    expect(folderActions({ ...box("i", "Inbox", "inbox"), unreadEmails: 3 })).toEqual({
+    expect(
+      folderActions({ ...box("i", "Inbox", "inbox"), unreadEmails: 3, totalEmails: 5 }),
+    ).toEqual({
       rename: false,
       remove: false,
       markRead: true,
+      exportMbox: true,
     });
     expect(folderActions(box("i", "Inbox", "inbox")).markRead).toBe(false);
     expect(folderActions(box("k", "Kunden"))).toEqual({
       rename: true,
       remove: true,
       markRead: false,
+      exportMbox: false,
     });
   });
 
@@ -185,6 +189,11 @@ describe("folder management", () => {
       unreadEmails: 2,
       myRights: { mayRename: false, mayDelete: false, maySetSeen: false },
     };
-    expect(folderActions(shared)).toEqual({ rename: false, remove: false, markRead: false });
+    expect(folderActions(shared)).toEqual({
+      rename: false,
+      remove: false,
+      markRead: false,
+      exportMbox: false,
+    });
   });
 });

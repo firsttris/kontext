@@ -2011,7 +2011,11 @@ without an end ten years), and a series' rule with everything other programs wri
 `BYMONTH` …). It is Kontext that counts up `SEQUENCE`: on a change and when attendees are added or
 leave, the app writes `sequence` + 1 into the appointment – otherwise someone who was removed and
 is invited again would get an invitation under the number of their cancellation, and Stalwart, like
-other programs, discards it (`OutOfSequence`).
+other programs, discards it (`OutOfSequence`). The same `VEVENT`s make the export of a whole
+calendar (`toCalendarFile`, without `METHOD`, each time zone once): `CalendarEvent/query` with
+`inCalendar` and without `expandRecurrences` returns each series once. A download over CalDAV is
+not there – Stalwart answers `GET` on a calendar collection with 405
+(`crates/dav/src/calendar/get.rs`).
 
 **Colleagues on the same server** get the same mail. Stalwart reads the `text/calendar` part of
 every mail it delivers if the sender was signed in (`crates/email/src/message/ingest.rs`,

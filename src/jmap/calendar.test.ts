@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { eventTimes, toLocal } from "@/lib/jscalendar";
-import { getEvent, getStoredEvent, queryEvents, searchEvents } from "./calendar";
+import { getCalendarEvents, getEvent, getStoredEvent, queryEvents, searchEvents } from "./calendar";
 import type { JmapClient } from "./client";
 
 /**
@@ -141,5 +141,28 @@ describe("searchEvents", () => {
   it("gives a floating appointment its local time, as the views show it", async () => {
     const [hit] = await searchEvents(floatingStalwart, "a", "c", "wartung");
     expect(toLocal(eventTimes(hit!).start)).toBe("2026-11-04T23:30:00");
+  });
+});
+
+describe("getCalendarEvents", () => {
+  it("reads each event's status, which the .ics file keeps", async () => {
+    // Stalwart keeps an invitation called off as cancelled (scheduling/inbound.rs).
+    const client = {
+      call: async (method: string, args: Record<string, unknown>) => {
+        if (method === "CalendarEvent/query") return { ids: ["x"] };
+        const properties = args.properties as string[];
+        return {
+          list: [
+            {
+              id: "x",
+              start: "2026-11-20T15:00:00",
+              ...(properties.includes("status") ? { status: "cancelled" } : {}),
+            },
+          ],
+        };
+      },
+    } as unknown as JmapClient;
+    const [event] = await getCalendarEvents(client, "a", "c");
+    expect(event).toMatchObject({ id: "x", status: "cancelled" });
   });
 });
