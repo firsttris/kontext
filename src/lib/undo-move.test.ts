@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { createUndoSlot, reverseMove } from "./undo-move";
+import { createUndoSlot, reverseMove, stillMoved } from "./undo-move";
 
 describe("reverseMove", () => {
   it("swaps the folders of an archive or trash move", () => {
@@ -22,6 +22,17 @@ describe("reverseMove", () => {
     });
     expect(back).toMatchObject({ from: "junk", to: "inbox" });
     expect(back.keywords).toEqual({ $junk: null, $notjunk: true });
+  });
+});
+
+describe("stillMoved", () => {
+  it("keeps only the mails still in the folder the move put them in", () => {
+    const move = { accountId: "a", ids: ["1", "2", "3"], from: "inbox", to: "archive" };
+    const now: { id: string; mailboxIds: Record<string, boolean> }[] = [
+      { id: "1", mailboxIds: { archive: true } },
+      { id: "2", mailboxIds: { trash: true } },
+    ];
+    expect(stillMoved(move, now)).toEqual({ ...move, ids: ["1"] });
   });
 });
 

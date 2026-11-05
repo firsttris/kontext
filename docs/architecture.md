@@ -272,8 +272,10 @@ sind ein `Email/set`, das einen Ordner aus `mailboxIds` nimmt und einen dazugibt
 der Meldung danach (und `z`, Strg+Z außerhalb von Textfeldern) macht dasselbe umgekehrt
 (`reverseMove` in `src/lib/undo-move.ts`): Die Mails gehen in ihren Ordner zurück, gesetzte
 Stichwörter werden entfernt und entfernte gesetzt – nach Spam also `$notjunk` wie bei „Kein Spam“.
-Andere Ordner einer Mail bleiben unberührt. Endgültiges Löschen (in Papierkorb und Spam) und das
-Verschieben in ein anderes Postfach (eine Kopie mit neuen ids) gehen nicht zurück.
+Andere Ordner einer Mail bleiben unberührt, und eine Mail, die seitdem woandershin verschoben
+oder endgültig gelöscht wurde, bleibt, wo sie ist (`stillMoved`, vorher ein `Email/get` ihrer
+`mailboxIds`). Endgültiges Löschen (in Papierkorb und Spam) und das Verschieben in ein anderes
+Postfach (eine Kopie mit neuen ids) gehen nicht zurück.
 
 „Als Phishing melden“ legt eine Mail an die Adresse aus der Firmenverwaltung (`company_setting`
 `phishingReport`, `GET /api/company/phishing-report`) in den Entwürfen an, mit der gemeldeten Mail

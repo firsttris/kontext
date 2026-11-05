@@ -8,6 +8,7 @@ import {
   copyEmails,
   createMailbox,
   destroyEmails,
+  getMailboxIds,
   JUNK_KEYWORDS,
   listMailboxes,
   moveEmails,
@@ -17,7 +18,7 @@ import {
 import type { EmailDetail, EmailSummary, Mailbox } from "@/jmap/types";
 import { type Assignment, withAssignment } from "@/lib/assignment";
 import { findRole } from "@/lib/mailboxes";
-import { type MailMove, reverseMove } from "@/lib/undo-move";
+import { type MailMove, reverseMove, stillMoved } from "@/lib/undo-move";
 import { adjustUnreadCounts, mailboxesKey, patchCachedEmails } from "./queries";
 
 export type MoveTarget = { accountId: string; mailboxId: string };
@@ -170,8 +171,14 @@ export const useMailActions = () => {
       await copyTo.mutateAsync({ accountId, emails, target });
       return undefined;
     },
-    /** Takes a move back: the mails return to their folder (src/lib/undo-move.ts). */
-    undoMove: (done: MailMove) => move.mutateAsync(reverseMove(done)),
+    /**
+     * Takes a move back: the mails still where it put them return to their folder
+     * (src/lib/undo-move.ts); the others were moved on or deleted since and stay.
+     */
+    undoMove: async (done: MailMove) => {
+      const back = stillMoved(done, await getMailboxIds(client, done.accountId, done.ids));
+      if (back.ids.length) await move.mutateAsync(reverseMove(back));
+    },
     archive: async (accountId: string, ids: string[], from: string) =>
       move.mutateAsync({ accountId, ids, from, to: await archiveMailboxId(accountId) }),
     /** Into the archive and read, in one step (read receipts filed away). */

@@ -269,8 +269,9 @@ that takes one folder out of `mailboxIds` and adds another. "Undo" in the notice
 `z`, Ctrl+Z outside text fields) does the same the other way round (`reverseMove` in
 `src/lib/undo-move.ts`): the mails go back to their folder, keywords that were set are removed and
 removed ones set – after spam that is `$notjunk`, as with "Not spam". A mail's other folders stay
-untouched. Deleting for good (in Trash and Spam) and moving into another mailbox (a copy with new
-ids) cannot be undone.
+untouched, and a mail moved elsewhere or deleted for good since stays where it is (`stillMoved`,
+after an `Email/get` of its `mailboxIds`). Deleting for good (in Trash and Spam) and moving into
+another mailbox (a copy with new ids) cannot be undone.
 
 "Report as phishing" creates a mail to the address from the company administration
 (`company_setting` `phishingReport`, `GET /api/company/phishing-report`) in Drafts, with the
