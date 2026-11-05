@@ -169,8 +169,8 @@ describe("writing the form into the card", () => {
       components: [
         { kind: "title", value: "Dr." },
         { kind: "given", value: "Petra" },
-        { kind: "surname", value: "Keller-Braun" },
         { kind: "given2", value: "Maria" },
+        { kind: "surname", value: "Keller-Braun" },
       ],
       isOrdered: true,
     });

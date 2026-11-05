@@ -195,24 +195,41 @@ const rowsToRecord = <Row extends { key?: string }, T>(
   return entries.length ? Object.fromEntries(entries) : undefined;
 };
 
-/** Given name and surname in place of the old ones; titles, middle names … stay (§2.2.1). */
+/** The list with `item` before position `at`, or at the end when `at` is -1. */
+const insertAt = <T>(list: T[], at: number, item: T): T[] =>
+  at < 0 ? [...list, item] : [...list.slice(0, at), item, ...list.slice(at)];
+
+/**
+ * Given name and surname each in place of the old one, so an ordered name (§2.2.1, `isOrdered`)
+ * keeps its order; titles, middle names … stay. A new given name goes before the surname, a new
+ * surname after the given name.
+ */
 const nameFor = (form: ContactForm, old: ContactCard["name"]): ContactCard["name"] => {
-  const person: NameComponent[] = [
-    ...(form.given ? [{ kind: "given", value: form.given }] : []),
-    ...(form.surname ? [{ kind: "surname", value: form.surname }] : []),
-  ];
-  if (!person.length) return form.company ? { full: form.company } : undefined;
-  const isPerson = (c: NameComponent) => c.kind === "given" || c.kind === "surname";
-  const components = old?.components ?? [];
-  const at = Math.max(0, components.findIndex(isPerson));
-  const others = components.filter((c) => !isPerson(c));
-  // `full` would still read the old name, so it goes.
+  if (!form.given && !form.surname) return form.company ? { full: form.company } : undefined;
+  const person: Record<string, string> = { given: form.given, surname: form.surname };
+  const placed = new Set<string>();
+  const inPlace = (old?.components ?? []).flatMap((c): NameComponent[] => {
+    if (!(c.kind in person)) return [c];
+    if (placed.has(c.kind)) return [];
+    placed.add(c.kind);
+    return person[c.kind] ? [{ kind: c.kind, value: person[c.kind]! }] : [];
+  });
+  const kindAt = (list: NameComponent[], kind: string) => list.findIndex((c) => c.kind === kind);
+  const withGiven =
+    form.given && !placed.has("given")
+      ? insertAt(inPlace, kindAt(inPlace, "surname"), { kind: "given", value: form.given })
+      : inPlace;
+  const givenAt = kindAt(withGiven, "given");
+  const components =
+    form.surname && !placed.has("surname")
+      ? insertAt(withGiven, givenAt < 0 ? -1 : givenAt + 1, {
+          kind: "surname",
+          value: form.surname,
+        })
+      : withGiven;
+  // `full` would still read the old name, so it goes. An unordered name stays unordered.
   const { full: _full, ...rest } = old ?? {};
-  return {
-    ...rest,
-    components: [...others.slice(0, at), ...person, ...others.slice(at)],
-    isOrdered: old?.isOrdered ?? true,
-  };
+  return { ...rest, components, ...(old?.components?.length ? {} : { isOrdered: true }) };
 };
 
 type Address = NonNullable<ContactCard["addresses"]>[string];
