@@ -4,10 +4,12 @@ import { saveDraft } from "@/jmap/mail";
 import type { EmailDetail } from "@/jmap/types";
 import {
   emlName,
+  safeFileName,
   sharedSenderName,
   startCompose,
   startEmlForward,
   startReplyTo,
+  subjectFileName,
   switchReplyTo,
   withOwnReplyTo,
 } from "./compose";
@@ -239,6 +241,22 @@ describe("emlName", () => {
   it("does not cut a character in two when it shortens", () => {
     // "😀" is two UTF-16 code units; a cut between them leaves a lone surrogate in the name.
     expect(emlName(`${"x".repeat(99)}😀 Angebot`)).toBe(`${"x".repeat(99)}😀.eml`);
+  });
+});
+
+describe("safeFileName", () => {
+  it("keeps a sender's file name from reaching into other folders", () => {
+    expect(safeFileName("../../etc/passwd")).toBe("etc passwd");
+    expect(safeFileName("..\\Autostart\\run.bat")).toBe("Autostart run.bat");
+    expect(safeFileName(".htaccess")).toBe("htaccess");
+    expect(safeFileName(null)).toBe("");
+  });
+});
+
+describe("subjectFileName", () => {
+  it("names the attachments' ZIP after the subject", () => {
+    expect(subjectFileName("Lieferschein 48211", "zip")).toBe("Lieferschein 48211.zip");
+    expect(subjectFileName(null, "zip")).toBe("Nachricht.zip");
   });
 });
 

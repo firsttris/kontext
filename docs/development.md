@@ -174,7 +174,8 @@ mit einem Klick als Jonas, Anna, Sandra oder Max an.
 - **Was geht:** Mail – Ordner, gemeinsame Postfächer, Lesen mit Anhängen und PDF-Vorschau,
   Suchen, Markieren, Kategorien, Verschieben (auch zwischen Postfächern), Entwürfe und Senden mit
   „Rückgängig“ und „Später senden“. Eine Mail an Kollegen oder info@/rechnung@ kommt dort an;
-  alles andere geht nirgendwohin.
+  alles andere geht nirgendwohin. „Als .eml speichern“ bekommt die Mail als MIME-Text, den die
+  Demo aus ihren Teilen schreibt, denn die Testdaten haben keinen (`src/demo/raw-message.ts`).
 - **Kalender und Kontakte:** die Termine und Kontakte der Testdaten (dieselben Karten und Termine
   wie im Seed, `dev/seed-objects.ts`), Wiederholungen mit einzeln geänderten oder gelöschten
   Terminen, Einladungen unter Kollegen mit Zusage und Absage, die Verfügbarkeit beim Planen und

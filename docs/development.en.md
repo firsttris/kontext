@@ -177,7 +177,8 @@ over. You sign in with one click as Jonas, Anna, Sandra or Max.
 - **What works:** mail – folders, shared mailboxes, reading with attachments and PDF preview,
   search, flags, categories, moving (between mailboxes too), drafts and sending with
   "Undo" and "Schedule send". A mail to colleagues or to info@/rechnung@ arrives there;
-  everything else goes nowhere.
+  everything else goes nowhere. "Save as .eml" gets the mail as MIME text the demo writes from
+  its parts, since the test data has none (`src/demo/raw-message.ts`).
 - **Calendar and contacts:** the appointments and contacts of the test data (the same cards and
   appointments as in the seed, `dev/seed-objects.ts`), recurrences with single occurrences
   changed or deleted, invitations among colleagues with acceptance and decline, availability
