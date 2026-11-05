@@ -451,4 +451,39 @@ describe("who invites", () => {
       ),
     ).toEqual(["mailto:info@weber.test", "mailto:kunde@example.test"]);
   });
+
+  // Jonas changes an appointment Anna organizes in her calendar; she said "maybe" herself.
+  it("leaves the kept organizer's name and answer as they are", () => {
+    const event = {
+      id: "e1",
+      accountId: "anna",
+      calendarIds: { "1": true },
+      title: "Abnahme",
+      start: "2026-10-23T10:00:00",
+      timeZone: "Europe/Berlin",
+      duration: "PT1H",
+      organizerCalendarAddress: "mailto:anna@weber.test",
+      participants: {
+        p1: {
+          "@type": "Participant",
+          name: "Anna Weber",
+          calendarAddress: "mailto:anna@weber.test",
+          roles: { owner: true, attendee: true },
+          participationStatus: "tentative",
+        },
+        p2: {
+          "@type": "Participant",
+          calendarAddress: "mailto:kunde@example.test",
+          roles: { attendee: true },
+          participationStatus: "accepted",
+        },
+      },
+    } as unknown as CalendarEvent;
+    const form = eventToForm(event, ["anna@weber.test"]);
+    const written = formToEvent(form, { email: "anna@weber.test" }, event);
+    expect((written.participants as Record<string, unknown>).p1).toMatchObject({
+      name: "Anna Weber",
+      participationStatus: "tentative",
+    });
+  });
 });
