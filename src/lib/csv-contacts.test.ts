@@ -51,6 +51,11 @@ describe("guessField", () => {
     ["Notizen", "note"],
     ["Notes", "note"],
     ["Kundennummer", "skip"],
+    // Google Contacts' current export has no number here (seen in real exports, e.g.
+    // RockGTR/Contact_Fixer docs/contacts.csv on GitHub).
+    ["Organization Name", "company"],
+    ["Organization Title", "jobTitle"],
+    ["Organization Department", "department"],
   ])("%s → %s", (header, field) => {
     expect(guessField(header)).toBe(field);
   });
@@ -61,6 +66,12 @@ describe("csvDate", () => {
     expect(csvDate("1980-12-24")).toBe("1980-12-24");
     expect(csvDate("4.7.1975")).toBe("1975-07-04");
     expect(csvDate("7/4/1975")).toBe("1975-07-04");
+  });
+
+  it("gives nothing for a day or month out of range, as a British 30/07/2000", () => {
+    expect(csvDate("30/07/2000")).toBe("");
+    expect(csvDate("1980-13-01")).toBe("");
+    expect(csvDate("32.01.1980")).toBe("");
   });
 
   it("gives nothing for what is no date, as Outlook's empty 0.0.00", () => {
@@ -128,5 +139,53 @@ describe("csvCards", () => {
       phones: { p1: { number: "07223 1", contexts: { work: true } } },
       addresses: { a1: { components: [{ kind: "locality", value: "Bühl" }] } },
     });
+  });
+});
+
+describe("Google Contacts CSV", () => {
+  // As Google writes it: several values of one label in one cell, joined by " ::: ", and the kind
+  // of a number in the "Phone n - Label" column next to it.
+  const header = [
+    "First Name",
+    "Last Name",
+    "E-mail 1 - Label",
+    "E-mail 1 - Value",
+    "Phone 1 - Label",
+    "Phone 1 - Value",
+    "Phone 2 - Label",
+    "Phone 2 - Value",
+    "Phone 3 - Label",
+    "Phone 3 - Value",
+  ];
+  const row = [
+    "Clara",
+    "Novak",
+    "* Home",
+    "clara.novak@example.net ::: clara@novak.example",
+    "Mobile",
+    "+49 170 1234567 ::: 0171 7654321",
+    "Home Fax",
+    "07223 99",
+    "Work",
+    "07223 1",
+  ];
+
+  it("splits the values of one cell", () => {
+    const form = rowToForm(row, header.map(guessField));
+    expect(form.emails).toEqual([
+      { address: "clara.novak@example.net" },
+      { address: "clara@novak.example" },
+    ]);
+    expect(form.phones.map((phone) => phone.number)).toEqual([
+      "+49 170 1234567",
+      "0171 7654321",
+      "07223 99",
+      "07223 1",
+    ]);
+  });
+
+  it("takes the kind of a number from its label", () => {
+    const form = rowToForm(row, header.map(guessField), header);
+    expect(form.phones.map((phone) => phone.kind)).toEqual(["mobile", "mobile", "fax", "work"]);
   });
 });
