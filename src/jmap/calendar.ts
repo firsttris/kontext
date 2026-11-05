@@ -266,6 +266,35 @@ export const getStoredEvent = async (
   return { ...own, id: baseId, recurrenceOverrides: dates?.recurrenceOverrides ?? null };
 };
 
+/** How many ids one query of a whole calendar returns at a time. */
+const EXPORT_PAGE = 1000;
+
+/**
+ * Every stored event of one calendar, each series once with its changed dates, as
+ * `getStoredEvent` reads one: what the .ics export is made of. Without expandRecurrences the
+ * query covers all time.
+ */
+export const getCalendarEvents = async (
+  client: JmapClient,
+  accountId: string,
+  calendarId: string,
+): Promise<CalendarEvent[]> => {
+  const ids: string[] = [];
+  for (let position = 0; ; position += EXPORT_PAGE) {
+    const answer = await client.call<{ ids: string[] }>(
+      "CalendarEvent/query",
+      { accountId, filter: { inCalendar: calendarId }, position, limit: EXPORT_PAGE },
+      USING,
+    );
+    ids.push(...answer.ids);
+    if (answer.ids.length < EXPORT_PAGE) break;
+  }
+  const own = await getEvents(client, accountId, ids, EVENT_PROPERTIES, WITHOUT_OVERRIDES);
+  const dates = await getEvents(client, accountId, ids, ["recurrenceOverrides"]);
+  const overrides = new Map(dates.map((event) => [event.id, event.recurrenceOverrides ?? null]));
+  return own.map((event) => ({ ...event, recurrenceOverrides: overrides.get(event.id) ?? null }));
+};
+
 /**
  * Who sends the invitations: Stalwart (`true`: its own mails, crates/services/src/task_manager/
  * imip.rs) or Kontext, which then sends them itself (invitations.ts).

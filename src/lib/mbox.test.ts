@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { blobPieces, mboxFlags, splitMbox } from "./mbox";
+import { blobPieces, mboxEntry, mboxFlags, splitMbox } from "./mbox";
 
 const encoder = new TextEncoder();
 const decoder = new TextDecoder();
@@ -114,5 +114,45 @@ describe("mboxFlags", () => {
       deleted: false,
       keywords: { $seen: true },
     });
+  });
+});
+
+describe("mboxEntry", () => {
+  const receivedAt = new Date("2026-11-05T09:04:00Z");
+  const FIRST = "Subject: Angebot\r\n\r\nFrom the start\r\n>From quoted\r\n> From bleibt\r\n";
+  const SECOND = "Subject: Zweite\n\nFrom here\nEnde";
+
+  const written = async () => {
+    const entries = [
+      mboxEntry(encoder.encode(FIRST), {
+        sender: "petra@keller.test",
+        receivedAt,
+        keywords: { $seen: true, $flagged: true, $answered: true },
+      }),
+      mboxEntry(encoder.encode(SECOND), { sender: "", receivedAt, keywords: {} }),
+    ];
+    return new Blob(entries.flat() as BlobPart[]);
+  };
+
+  it("writes From lines and mboxrd escapes in the mail's line ends", async () => {
+    const text = await (await written()).text();
+    expect(text).toBe(
+      "From petra@keller.test Thu Nov  5 09:04:00 2026\r\nStatus: RO\r\nX-Status: FA\r\n" +
+        "Subject: Angebot\r\n\r\n>From the start\r\n>>From quoted\r\n> From bleibt\r\n\r\n" +
+        "From MAILER-DAEMON Thu Nov  5 09:04:00 2026\nStatus: O\n" +
+        "Subject: Zweite\n\n>From here\nEnde\n\n",
+    );
+  });
+
+  it("reads back with splitMbox and mboxFlags as it was", async () => {
+    const found: string[] = [];
+    for await (const mail of splitMbox(blobPieces(await written(), 9))) {
+      found.push(decoder.decode(mail));
+    }
+    expect(found).toEqual([`Status: RO\r\nX-Status: FA\r\n${FIRST}`, `Status: O\n${SECOND}\n`]);
+    expect(found.map((mail) => mboxFlags(mail).keywords)).toEqual([
+      { $seen: true, $flagged: true, $answered: true },
+      {},
+    ]);
   });
 });

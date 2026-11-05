@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { applyPatch, toICalendar } from "./itip";
+import { applyPatch, toCalendarFile, toICalendar } from "./itip";
 import type { CalendarEvent } from "./jscalendar";
 
 const NOW = new Date("2026-10-27T12:00:00Z");
@@ -232,6 +232,49 @@ describe("applyPatch", () => {
       participants: { a: { name: "Anna", participationStatus: "declined" } },
     });
     expect(base.participants.a.participationStatus).toBe("accepted");
+  });
+});
+
+describe("toCalendarFile", () => {
+  it("writes every event in one file without METHOD, each zone once over all their years", () => {
+    // A zone without a yearly rule lists each clock change, so the years show.
+    const first: CalendarEvent = { ...meeting, timeZone: "Asia/Jerusalem" };
+    const later: CalendarEvent = {
+      ...first,
+      id: "e2",
+      uid: "5a2d-wartung",
+      title: "Wartung Heizung",
+      start: "2028-03-10T08:00:00",
+    };
+    const allDay: CalendarEvent = {
+      ...meeting,
+      id: "e3",
+      uid: "6b3e-urlaub",
+      title: "Urlaub",
+      start: "2026-12-24T00:00:00",
+      showWithoutTime: true,
+      duration: "P2D",
+    };
+    const ics = toCalendarFile([first, later, allDay], NOW);
+    const lines = ics.replace(/\r\n /g, "").split("\r\n");
+    expect(lines).not.toContainEqual(expect.stringMatching(/^METHOD:/));
+    expect(lines.filter((line) => line === "BEGIN:VEVENT")).toHaveLength(3);
+    expect(lines.filter((line) => line === "BEGIN:VTIMEZONE")).toHaveLength(1);
+    const zone = linesOf(ics, "BEGIN:VTIMEZONE");
+    const years = zone
+      .filter((line) => line.startsWith("DTSTART:"))
+      .map((line) => line.slice(8, 12));
+    expect(years).toContain("2026");
+    expect(years).toContain("2028");
+    expect(lines).toContain("UID:5a2d-wartung");
+    expect(lines).toContain("DTSTART;VALUE=DATE:20261224");
+    expect(lines).toContain("DTEND;VALUE=DATE:20261226");
+  });
+
+  it("is an empty calendar without events", () => {
+    expect(toCalendarFile([], NOW)).toBe(
+      "BEGIN:VCALENDAR\r\nPRODID:-//Kontext//Kalender//DE\r\nVERSION:2.0\r\nCALSCALE:GREGORIAN\r\nEND:VCALENDAR\r\n",
+    );
   });
 });
 

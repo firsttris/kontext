@@ -7,6 +7,11 @@ Steps that an update needs beyond raising the version are marked **Upgrade**.
 
 ## Unreleased
 
+- Export: a mail folder as an .mbox file ("…" next to the folder → "Als .mbox exportieren";
+  mboxrd, with read, flagged and answered as `Status`/`X-Status`, readable by Thunderbird, Apple
+  Mail and Kontext's own import), and a calendar as an .ics file (*Kalender verwalten*, the arrow
+  next to it; series with their changed dates). Both are made in the browser (user guide, "Mail",
+  "Kalender und Kontakte").
 - Calendar and tasks: a search field finds appointments (title, location, description,
   participants, past and coming; a series once) and tasks (title, notes, checklist, assignee),
   and a hit opens them, on the phone too (user guide, "Kalender" and "Aufgaben").

@@ -3,7 +3,7 @@
  * several GB never sits in memory: each mail starts after a "From " line, and a body line that
  * began with "From " was written as ">From " (mboxrd: one ">" more per level), which is undone.
  * The flags the exporters leave in the header (Gmail, Thunderbird, mutt and Apple's mail) become
- * JMAP keywords (RFC 8621 §4.1.1).
+ * JMAP keywords (RFC 8621 §4.1.1). `mboxEntry` writes a mail the same way, for the export.
  */
 import { headerValue } from "./eml-import";
 
@@ -119,4 +119,51 @@ export const mboxFlags = (head: string): MboxFlags => {
     extra.includes("A"),
   );
   return { deleted: extra.includes("D"), keywords };
+};
+
+const DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+const two = (n: number) => String(n).padStart(2, "0");
+
+/** "Thu Nov  5 09:04:00 2026": the date of the "From " line, asctime in UTC (RFC 4155 App. A). */
+export const asctime = (date: Date) =>
+  `${DAYS[date.getUTCDay()]} ${MONTHS[date.getUTCMonth()]} ${String(date.getUTCDate()).padStart(2)} ` +
+  `${two(date.getUTCHours())}:${two(date.getUTCMinutes())}:${two(date.getUTCSeconds())} ${date.getUTCFullYear()}`;
+
+/** Status and X-Status as mutt writes them; `mboxFlags` and Thunderbird read them back. */
+const statusLines = (keywords: Record<string, boolean>) => {
+  const extra = `${keywords.$flagged ? "F" : ""}${keywords.$answered ? "A" : ""}`;
+  return [`Status: ${keywords.$seen ? "RO" : "O"}`, ...(extra ? [`X-Status: ${extra}`] : [])];
+};
+
+export type MboxMail = { sender: string; receivedAt: Date; keywords: Record<string, boolean> };
+
+const QUOTE = new Uint8Array([0x3e]);
+
+/**
+ * One mail as it goes into an mbox, the inverse of `splitMbox`: the "From " line and the status,
+ * the message with one ">" more before every line of ">"s and "From " (mboxrd), and the blank line
+ * before the next one, in the mail's own line ends. The parts go into a Blob as they are.
+ */
+export const mboxEntry = (raw: Uint8Array, { sender, receivedAt, keywords }: MboxMail) => {
+  const firstEnd = raw.indexOf(LF);
+  const eol = firstEnd > 0 && raw[firstEnd - 1] === 13 ? "\r\n" : "\n";
+  const from = `From ${sender.replace(/\s/g, "") || "MAILER-DAEMON"} ${asctime(receivedAt)}`;
+  const encoder = new TextEncoder();
+  const parts: Uint8Array[] = [encoder.encode([from, ...statusLines(keywords), ""].join(eol))];
+  // The message goes in in runs between the lines that need a ">".
+  let run = 0;
+  for (let start = 0; start < raw.length; ) {
+    const end = raw.indexOf(LF, start);
+    const line = raw.subarray(start, end === -1 ? raw.length : end + 1);
+    if (isFrom(line, 0) || isEscapedFrom(line)) {
+      parts.push(raw.subarray(run, start), QUOTE);
+      run = start;
+    }
+    start += line.length;
+  }
+  parts.push(raw.subarray(run));
+  const endsInLine = raw[raw.length - 1] === LF;
+  parts.push(encoder.encode(endsInLine ? eol : eol + eol));
+  return parts;
 };

@@ -92,6 +92,13 @@ SMTP.
   "Connect mailbox".
 
   ![Folder "Altablage 2024" with three imported mails; below, the message "3 mails imported." and "Not imported: Rechnung Dezember.msg (Outlook's .msg format is not supported)"](screenshots/eml-import.png)
+- **Exporting a folder as .mbox:** "…" next to a folder with mails → **Export as .mbox** saves all
+  mails of the folder (without subfolders), oldest first, as one file `<folder>.mbox` (mboxrd,
+  RFC 4155) that Thunderbird (ImportExportTools), Apple Mail and Kontext's own import read. Read,
+  flagged and answered are in it as `Status` and `X-Status`. The browser loads the mails one by
+  one and puts the file together before saving it: Chrome and Edge move large files to disk,
+  Firefox and Safari keep more in memory. Folders up to about 1 GB are no problem; for larger ones
+  or a whole mailbox, a mail program over IMAP is the way.
 - **Sender's picture** on every row of the list, as in Gmail: the photo of the colleague or
   contact, else the initials; in "Sent" the first recipient. A sender the
   [check](#sicherheit) does not confirm gets no photo. Photos come only from one's own contacts and

@@ -110,6 +110,11 @@ Kontext is also on the iPhone, on Android (DAVx⁵) and in Thunderbird.
 
   ![Manage calendars with the preview of an .ics file: four new appointments, one already there](screenshots/calendar-ics-import.png)
 
+- **Exporting a calendar as .ics:** under *Manage calendars*, the down arrow next to a calendar
+  (your own and shared ones) saves all its appointments as `<calendar>.ics`, past and coming,
+  series with their changed and skipped occurrences, attendees with their answers. The file can be
+  imported into Google, Outlook, Apple or another Kontext. Reminders stay out.
+
 - **Printing the calendar:** the printer at the top of the calendar (or Ctrl+P, the `p` key)
   prints the open view on A4 landscape, for the pinboard in the workshop, say: in week and day,
   the week as seven columns with all appointments including time and location, all-day ones

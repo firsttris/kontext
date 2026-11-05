@@ -113,7 +113,7 @@ export const subfolders = (mailbox: Pick<Mailbox, "id">, mailboxes: Mailbox[]): 
  * What a folder's menu in the sidebar offers. Standard folders keep their name and place
  * (Stalwart also refuses to delete Posteingang, Spam and Papierkorb); in a shared mailbox the
  * rights decide (RFC 8621 §2, `myRights`): `mayRename` covers moving, too. Marking read needs
- * unread mails and `maySetSeen`.
+ * unread mails and `maySetSeen`; exporting as .mbox needs mails (seeing the folder is reading them).
  */
 export const folderActions = (mailbox: Mailbox, mailboxes: Mailbox[] = []) => {
   const own = mailbox.role === null;
@@ -123,6 +123,7 @@ export const folderActions = (mailbox: Mailbox, mailboxes: Mailbox[] = []) => {
     rename: own && mailbox.myRights?.mayRename !== false,
     remove: own && !holdsStandard && mailbox.myRights?.mayDelete !== false,
     markRead: mailbox.unreadEmails > 0 && mailboxRights(mailbox).canMarkSeen,
+    exportMbox: mailbox.totalEmails > 0,
   };
 };
 

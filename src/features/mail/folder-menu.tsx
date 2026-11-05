@@ -1,11 +1,12 @@
 /**
  * A folder's row in the sidebar with its menu behind "…" (on hover on a desktop, always on a
  * phone, where the sidebar is the folder screen). Own folders can be renamed, moved and deleted; every folder with unread
- * mails can be marked read. What is offered follows `folderActions` (src/lib/mailboxes.ts).
+ * mails can be marked read, every folder with mails saved as an .mbox file. What is offered
+ * follows `folderActions` (src/lib/mailboxes.ts).
  */
 import { useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
-import { CheckCheck, Ellipsis, FolderInput, Pencil, Trash2 } from "lucide-react";
+import { CheckCheck, Download, Ellipsis, FolderInput, Pencil, Trash2 } from "lucide-react";
 import { type FormEvent, type ReactNode, useState } from "react";
 import { useClient } from "@/auth/auth";
 import { Button } from "@/components/ui/button";
@@ -14,7 +15,9 @@ import { Input, Label } from "@/components/ui/input";
 import { MenuContent, MenuItem, MenuRoot, MenuTrigger } from "@/components/ui/menu";
 import { useToast } from "@/components/ui/toast";
 import { deleteMailboxes, markMailboxRead, updateMailbox } from "@/jmap/folders";
+import { exportMailbox } from "@/jmap/mbox-export";
 import type { Mailbox } from "@/jmap/types";
+import { downloadBlob } from "@/lib/download";
 import {
   type FolderNode,
   findRole,
@@ -44,7 +47,7 @@ export const FolderRow = ({ accountId, mailbox, mailboxes, activeId, children }:
   const actions = folderActions(mailbox, mailboxes);
   const name = mailboxName(mailbox);
 
-  if (!actions.rename && !actions.remove && !actions.markRead)
+  if (!Object.values(actions).some(Boolean))
     return <div className="flex items-center">{children}</div>;
 
   const run = async (work: () => Promise<unknown>) => {
@@ -71,6 +74,11 @@ export const FolderRow = ({ accountId, mailbox, mailboxes, activeId, children }:
       });
   };
 
+  const exportFolder = async () => {
+    toast.show(m.mail_folder_exporting());
+    downloadBlob(await exportMailbox(client, accountId, mailbox.id), `${name}.mbox`);
+  };
+
   return (
     <div className="group flex items-center">
       {children}
@@ -87,6 +95,11 @@ export const FolderRow = ({ accountId, mailbox, mailboxes, activeId, children }:
               onSelect={() => void run(() => markMailboxRead(client, accountId, mailbox.id))}
             >
               <CheckCheck size={15} /> {m.mail_mark_all_read()}
+            </MenuItem>
+          ) : null}
+          {actions.exportMbox ? (
+            <MenuItem onSelect={() => void run(exportFolder)}>
+              <Download size={15} /> {m.mail_folder_export()}
             </MenuItem>
           ) : null}
           {actions.rename ? (

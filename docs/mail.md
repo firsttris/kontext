@@ -96,6 +96,14 @@ IMAP und SMTP.
   Gmail-Postfach mit Ordnern umziehen will, nimmt „Postfach verbinden“.
 
   ![Ordner „Altablage 2024“ mit drei importierten Mails; unten die Meldung „3 Mails importiert.“ und „Nicht importiert: Rechnung Dezember.msg (Outlook-Format .msg wird nicht unterstützt)“](screenshots/eml-import.png)
+- **Ordner als .mbox exportieren:** „…“ neben einem Ordner mit Mails → **Als .mbox exportieren**
+  speichert alle Mails des Ordners (ohne Unterordner), älteste zuerst, als eine Datei
+  `<Ordner>.mbox` (mboxrd, RFC 4155), die Thunderbird (ImportExportTools), Apple Mail und Kontexts
+  eigener Import lesen. Gelesen, markiert und beantwortet stehen als `Status` und `X-Status` darin.
+  Der Browser lädt die Mails einzeln und setzt die Datei vor dem Speichern zusammen: Chrome und
+  Edge lagern große Dateien auf die Festplatte aus, Firefox und Safari halten mehr im
+  Arbeitsspeicher. Ordner bis etwa 1 GB sind kein Problem; für größere oder ein ganzes Postfach ist
+  ein Mailprogramm über IMAP der Weg.
 - **Bild des Absenders** an jeder Zeile der Liste, wie bei Gmail: das Foto des Kollegen oder
   Kontakts, sonst die Initialen; in „Gesendet“ der erste Empfänger. Ein Absender, den die
   [Prüfung](#sicherheit) nicht bestätigt, bekommt kein Foto. Fotos kommen nur aus den eigenen
