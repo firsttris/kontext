@@ -3,8 +3,21 @@
  * Windows-1252 with ";" between the fields, Outlook and Google UTF-8 with ",". Pure.
  */
 
-/** UTF-8 when the bytes are valid UTF-8 (a BOM is dropped), otherwise Windows-1252. */
+/** UTF-16 by its BOM (LibreOffice's "Unicode (UTF-16)" CSV, Excel's Unicode text); null without one. */
+const utf16 = (bytes: Uint8Array): string | null =>
+  bytes[0] === 0xff && bytes[1] === 0xfe
+    ? new TextDecoder("utf-16le").decode(bytes)
+    : bytes[0] === 0xfe && bytes[1] === 0xff
+      ? new TextDecoder("utf-16be").decode(bytes)
+      : null;
+
+/**
+ * UTF-16 when it starts with its BOM, UTF-8 when the bytes are valid UTF-8 (a BOM is dropped),
+ * otherwise Windows-1252.
+ */
 export const decodeText = (bytes: Uint8Array): string => {
+  const wide = utf16(bytes);
+  if (wide !== null) return wide;
   try {
     return new TextDecoder("utf-8", { fatal: true }).decode(bytes);
   } catch {
