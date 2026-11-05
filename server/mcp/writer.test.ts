@@ -222,3 +222,29 @@ describe("writing in a mailbox", () => {
     ).rejects.toThrow("Unbekanntes Konto");
   });
 });
+
+describe("changing a contact", () => {
+  it("changes only the fields given and keeps the second number", async () => {
+    const card = {
+      id: "k",
+      addressBookIds: { b: true },
+      name: { components: [{ kind: "given", value: "Petra" }] },
+      emails: { e1: { address: "petra@keller.test" }, e2: { address: "p@privat.test" } },
+      phones: { p1: { number: "1", features: { voice: true } }, p2: { number: "2" } },
+    };
+    const call = vi.fn(async (method: string) =>
+      method === "ContactCard/get" ? { list: [card] } : { updated: { k: null } },
+    );
+    const w = createWriter({
+      client: { call } as unknown as JmapClient,
+      reader: { accounts: async () => [account()] } as unknown as Reader,
+      taskApi: async () => ({ status: 200, body: {} }),
+    });
+    await w.updateCard({ accountId: "d", contactId: "k", phone: "3", jobTitle: "Meisterin" });
+    const [, args] = call.mock.calls[1] as unknown as [string, { update: { k: object } }];
+    expect(args.update.k).toEqual({
+      phones: { p1: { number: "3", features: { voice: true } }, p2: { number: "2" } },
+      titles: { t1: { "@type": "Title", kind: "title", name: "Meisterin" } },
+    });
+  });
+});

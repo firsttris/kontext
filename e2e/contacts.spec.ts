@@ -577,3 +577,69 @@ test.describe("Mehrere Kontakte", () => {
     }
   });
 });
+
+test.describe("Kontakt mit mehreren Nummern", () => {
+  /** A card as an iPhone leaves it: two numbers, a department and a region without a field. */
+  const editTwoNumbers = async (page: Page) => {
+    const surname = `Nummern${Date.now().toString(36)}`;
+    await addContacts([
+      {
+        ...named("Rita", surname),
+        organizations: { o: { name: "Rita Bau", units: [{ name: "Einkauf" }] } },
+        phones: {
+          p1: { number: "+49 7223 100", features: { voice: true }, contexts: { work: true } },
+          p2: { number: "+49 170 200", features: { mobile: true } },
+        },
+        addresses: {
+          a: {
+            components: [
+              { kind: "name", value: "Weg 1" },
+              { kind: "postcode", value: "77815" },
+              { kind: "locality", value: "Bühl" },
+              { kind: "region", value: "Baden-Württemberg" },
+            ],
+          },
+        },
+      },
+    ]);
+    try {
+      await login(page);
+      await page.goto("/contacts");
+      await page.getByRole("searchbox", { name: "Kontakte suchen" }).fill(surname);
+      await page.getByRole("link", { name: new RegExp(`Rita ${surname}`) }).click();
+      await page.getByRole("link", { name: "Bearbeiten" }).click();
+      await expect(page.getByLabel("Telefon 2", { exact: true })).toHaveValue("+49 170 200");
+      await expect(page.getByLabel("Art der Nummer 2", { exact: true })).toHaveValue("mobile");
+      await expect(page.getByLabel("PLZ", { exact: true })).toHaveValue("77815");
+      await page.getByLabel("Telefon", { exact: true }).fill("+49 7223 101");
+      await page.getByLabel("Position", { exact: true }).fill("Bauleiterin");
+      await page.getByRole("button", { name: "Speichern" }).click();
+
+      await expect(page.getByText("Bauleiterin · Einkauf · Rita Bau")).toBeVisible();
+      await expect(page.getByText("+49 7223 101")).toBeVisible();
+      await expect(page.getByText("+49 170 200")).toBeVisible();
+      const { cards } = await jonasCards();
+      const card = cards.find((c) => JSON.stringify(c.name).includes(surname))!;
+      expect(Object.values(card.phones ?? {}).map((phone) => phone.number)).toEqual([
+        "+49 7223 101",
+        "+49 170 200",
+      ]);
+      expect(Object.values(card.addresses ?? {})[0]?.components).toContainEqual({
+        kind: "region",
+        value: "Baden-Württemberg",
+      });
+      expect(Object.values(card.organizations ?? {})[0]?.units).toEqual([{ name: "Einkauf" }]);
+      expect(Object.values(card.titles ?? {}).map((title) => title.name)).toEqual(["Bauleiterin"]);
+    } finally {
+      await removeCards(surname);
+    }
+  };
+
+  test("ändert eine Nummer, behält die zweite und speichert die Position", async ({ page }) => {
+    await editTwoNumbers(page);
+  });
+
+  test("am Handy @phone", async ({ page }) => {
+    await editTwoNumbers(page);
+  });
+});

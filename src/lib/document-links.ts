@@ -48,13 +48,16 @@ export type LinkedDocument = DocumentFile & { href: string };
 /** Links of appointments and contacts that are documents go by this key, then the file's id. */
 const DOCUMENT_KEY = "kontext-document-";
 
+/** Is this link (by its key) a document, not a website or a link from a vCard? */
+export const isDocumentKey = (key: string): boolean => key.startsWith(DOCUMENT_KEY);
+
 /** Documents among links of any kind, read with how that kind names address and title. */
 const documentsAmong = <L>(
   links: Record<string, L> | null | undefined,
   read: (link: L) => { href: string; title?: string },
 ): LinkedDocument[] =>
   Object.entries(links ?? {}).flatMap(([key, link]) => {
-    if (!key.startsWith(DOCUMENT_KEY)) return [];
+    if (!isDocumentKey(key)) return [];
     const { href, title } = read(link);
     return [{ id: key.slice(DOCUMENT_KEY.length), name: title ?? href, href }];
   });
@@ -65,7 +68,7 @@ const withDocumentsAmong = <L>(
   documents: LinkedDocument[],
   write: (document: LinkedDocument) => L,
 ): Record<string, L> | null => {
-  const others = Object.entries(links ?? {}).filter(([key]) => !key.startsWith(DOCUMENT_KEY));
+  const others = Object.entries(links ?? {}).filter(([key]) => !isDocumentKey(key));
   const all = [
     ...others,
     ...documents.map((document): [string, L] => [`${DOCUMENT_KEY}${document.id}`, write(document)]),

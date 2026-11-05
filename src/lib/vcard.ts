@@ -3,6 +3,8 @@
  * mapping); here the file is only split into single cards, and the export writes vCard 4.0
  * (RFC 6350) for the properties the app edits.
  */
+import { birthDate } from "./birthdays";
+import { isDocumentKey } from "./document-links";
 import { memberUids } from "./groups";
 import { type ContactCard, fullName, givenName, surname } from "./jscontact";
 
@@ -80,16 +82,21 @@ export const toVCard = (card: ContactCard): string => {
   lines.push(`FN:${escapeText(fullName(card))}`);
   if (givenName(card) || surname(card))
     lines.push(`N:${escapeText(surname(card))};${escapeText(givenName(card))};;;`);
+  // ORG carries the departments after the name (RFC 6350 §6.6.4).
   for (const org of Object.values(card.organizations ?? {}))
-    if (org.name) lines.push(`ORG:${escapeText(org.name)}`);
+    lines.push(
+      `ORG:${[org.name ?? "", ...(org.units ?? []).map((u) => u.name)].map(escapeText).join(";")}`,
+    );
+  for (const title of Object.values(card.titles ?? {}))
+    lines.push(`${title.kind === "role" ? "ROLE" : "TITLE"}:${escapeText(title.name)}`);
   for (const email of Object.values(card.emails ?? {})) {
     const context = Object.keys(email.contexts ?? {})[0];
     const type = context && contextType(context);
     lines.push(`EMAIL${type ? `;TYPE=${type}` : ""}:${email.address}`);
   }
   for (const phone of Object.values(card.phones ?? {})) {
-    const features = Object.keys(phone.features ?? {});
-    const type = features.map((f) => (f === "mobile" ? "cell" : f)).join(",");
+    const features = Object.keys(phone.features ?? {}).map((f) => (f === "mobile" ? "cell" : f));
+    const type = [...Object.keys(phone.contexts ?? {}).map(contextType), ...features].join(",");
     lines.push(`TEL${type ? `;TYPE=${type}` : ""}:${phone.number}`);
   }
   for (const address of Object.values(card.addresses ?? {})) {
@@ -98,6 +105,13 @@ export const toVCard = (card: ContactCard): string => {
     lines.push(
       `ADR:;;${street};${component(parts, "locality")};${component(parts, "region")};${component(parts, "postcode")};${component(parts, "country")}`,
     );
+  }
+  for (const [key, link] of Object.entries(card.links ?? {}))
+    if (!isDocumentKey(key)) lines.push(`URL:${link.uri}`);
+  const birthday = birthDate(card);
+  if (birthday) {
+    const pad = (n: number) => String(n).padStart(2, "0");
+    lines.push(`BDAY:${birthday.year ?? "--"}${pad(birthday.month)}${pad(birthday.day)}`);
   }
   for (const note of Object.values(card.notes ?? {})) lines.push(`NOTE:${escapeText(note.note)}`);
   for (const uid of memberUids(card))

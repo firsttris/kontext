@@ -1595,6 +1595,29 @@ row its latest sender. `usePhotoOf()` runs once for the whole list, not per row,
 the address books. None of this asks an outside server: no company logos, favicons or BIMI, which
 would tell when one looks at which mail.
 
+## The contact form { #kontaktformular }
+
+The form (`src/lib/contact-form.ts`) shows given name, surname, company with department
+(`organizations` with `units`, RFC 9553 §2.2.3), job title (`titles` of the kind `title`, §2.2.5),
+every mail address (`emails`, §2.3.1), every number (`phones`, §2.3.3) with its kind, the first
+address with street, postcode, town and country (`addresses`, components `name`, `postcode`,
+`locality`, `country`, §2.5.1), the website (the first link that is not a document, §2.6.3), the
+birthday (`anniversaries` of the kind `birth`, §2.8.1, which the [birthday calendar](#geburtstage)
+reads) and the note. JSContact keeps the kind of a number in two fields: mobile and fax as
+`features` (`mobile`, `fax`), work and home as `voice` with the context `work` or `private`.
+
+A card from an iPhone, from a vCard or from a merge holds more than the form shows. So that
+nothing is lost on saving, `formToCard` writes only the properties whose fields changed (JMAP
+always replaces a property as a whole), and keeps in them what the form does not know: the keys of
+the entries, a second address, the region, roles, further departments, titles and middle names in
+the name, documents among the links, other anniversaries. Only what would be wrong after a change
+goes: `full` of name and address, `countryCode` with another country. Older contacts with
+"77815 Bühl" in one field show postcode and town apart in the form. A birthday without its year
+(vCard `BDAY:--0504`) fits no date field; the form leaves it empty and untouched, the contact's
+view shows it. "Save as contact" and the tools `create_contact` and `update_contact` of the
+[AI agents](agents.md) use the same mapping; their `email` and `phone` stand for the first address
+and number.
+
 ## Contact groups { #kontaktgruppen }
 
 A group is a JSContact card with `kind: "group"`; its `members` holds the members' `uid`s (RFC
@@ -2194,7 +2217,7 @@ rights of the person who connected it (`server/mcp/`).
   | `create_draft`   | mail as a draft in "Drafts" (one's own or a shared mailbox); as a reply with recipients, "Re:", quote and thread headers as in the app (`startCompose`) |
   | `create_event`   | appointment in a calendar; invites colleagues (address or id from `list_colleagues`), nobody from outside |
   | `create_contact` | contact in an address book                                                          |
-  | `update_contact` | change fields of a contact                                                          |
+  | `update_contact` | change fields of a contact; what is not named stays ([contact form](#kontaktformular)) |
   | `create_task`    | task on a board, with due date, person responsible and link to mail and contact     |
   | `update_task`    | change a task, completing it too                                                    |
 

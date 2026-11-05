@@ -1,11 +1,14 @@
 /**
- * JSContact cards (RFC 9553) as the contacts app edits them: one name, company, mail, phone,
- * address, note and photo. Other properties of a card are kept untouched when it is saved.
+ * JSContact cards (RFC 9553) as the contacts app reads them. The form that edits them is in
+ * contact-form.ts.
  */
 import type { EmailAddress } from "@/jmap/types";
 import { inlinePhoto } from "./photo";
 
-type NameComponent = { kind: string; value: string };
+export type NameComponent = { kind: string; value: string };
+
+/** Work or private (RFC 9553 §1.4.1). */
+type Contexts = Record<string, boolean>;
 
 export type ContactCard = {
   id: string;
@@ -13,13 +16,25 @@ export type ContactCard = {
   addressBookIds: Record<string, boolean>;
   kind?: string;
   name?: { full?: string; components?: NameComponent[]; isOrdered?: boolean };
-  organizations?: Record<string, { name?: string }>;
-  emails?: Record<string, { address: string; contexts?: Record<string, boolean>; pref?: number }>;
-  phones?: Record<string, { number: string; features?: Record<string, boolean>; pref?: number }>;
-  addresses?: Record<string, { components?: NameComponent[]; full?: string }>;
+  /** Company and its departments (RFC 9553 §2.2.3). */
+  organizations?: Record<string, { name?: string; units?: { name: string }[] }>;
+  /** Job titles (kind "title", the default) and roles (RFC 9553 §2.2.5). */
+  titles?: Record<string, { "@type"?: "Title"; name: string; kind?: string }>;
+  /** RFC 9553 §2.3.1. */
+  emails?: Record<string, { address: string; contexts?: Contexts; pref?: number }>;
+  /** RFC 9553 §2.3.3: `features` says mobile, voice, fax …, `contexts` work or private. */
+  phones?: Record<
+    string,
+    { number: string; features?: Record<string, boolean>; contexts?: Contexts; pref?: number }
+  >;
+  /** RFC 9553 §2.5.1; `full` is the whole address for display, `countryCode` ISO 3166-1. */
+  addresses?: Record<
+    string,
+    { components?: NameComponent[]; full?: string; countryCode?: string; contexts?: Contexts }
+  >;
   notes?: Record<string, { note: string }>;
   /** Links (RFC 9553 §2.6.3); Kontext keeps documents of Dokumente here (lib/document-links.ts). */
-  links?: Record<string, { "@type"?: "Link"; uri: string; label?: string }>;
+  links?: Record<string, { "@type"?: "Link"; uri: string; kind?: string; label?: string }>;
   /**
    * Photos, logos and sounds (RFC 9553 §2.6.4). Stalwart takes only `uri`; 1.0 gives a stored one
    * back as `blobId`, which jmap/contacts.ts turns into a `data:` URI again.
@@ -50,32 +65,10 @@ export type Media = {
   pref?: number;
 };
 
-export type ContactForm = {
-  given: string;
-  surname: string;
-  company: string;
-  email: string;
-  phone: string;
-  street: string;
-  city: string;
-  note: string;
-};
-
-export const emptyContactForm: ContactForm = {
-  given: "",
-  surname: "",
-  company: "",
-  email: "",
-  phone: "",
-  street: "",
-  city: "",
-  note: "",
-};
-
-const first = <T>(record: Record<string, T> | undefined): T | undefined =>
+export const first = <T>(record: Record<string, T> | undefined): T | undefined =>
   record ? Object.values(record)[0] : undefined;
 
-const component = (components: NameComponent[] | undefined, kind: string): string =>
+export const component = (components: NameComponent[] | undefined, kind: string): string =>
   components
     ?.filter((c) => c.kind === kind)
     .map((c) => c.value)
@@ -97,29 +90,6 @@ export const allEmails = (card: ContactCard): string[] =>
 export const primaryPhone = (card: ContactCard): string => first(card.phones)?.number ?? "";
 export const note = (card: ContactCard): string => first(card.notes)?.note ?? "";
 
-export const addressLines = (card: ContactCard): { street: string; city: string } => {
-  const address = first(card.addresses);
-  if (!address) return { street: "", city: "" };
-  const components = address.components ?? [];
-  const street = [component(components, "name"), component(components, "number")]
-    .filter(Boolean)
-    .join(" ");
-  const city = [component(components, "postcode"), component(components, "locality")]
-    .filter(Boolean)
-    .join(" ");
-  return street || city ? { street, city } : { street: address.full ?? "", city: "" };
-};
-
-export const toForm = (card: ContactCard): ContactForm => ({
-  given: givenName(card),
-  surname: surname(card),
-  company: company(card),
-  email: primaryEmail(card),
-  phone: primaryPhone(card),
-  ...addressLines(card),
-  note: note(card),
-});
-
 /** Sorted by surname, then given name, as in a phone book. */
 export const sortKey = (card: ContactCard): string =>
   `${surname(card) || company(card) || givenName(card) || card.name?.full || primaryEmail(card)} ${givenName(card)}`.toLocaleLowerCase(
@@ -133,64 +103,6 @@ export const matchesSearch = (card: ContactCard, text: string): boolean => {
     .join(" ")
     .toLocaleLowerCase("de")
     .includes(needle);
-};
-
-const keyOf = <T>(record: Record<string, T> | undefined, fallback: string): string =>
-  record ? (Object.keys(record)[0] ?? fallback) : fallback;
-
-/**
- * The card properties to write for a form. Fields left empty remove the property; the keys of
- * existing entries are kept, so other clients' references stay valid.
- */
-export const formToCard = (
-  form: ContactForm,
-  existing?: ContactCard,
-): Partial<ContactCard> & Record<string, unknown> => {
-  const trimmed = Object.fromEntries(
-    Object.entries(form).map(([k, v]) => [k, v.trim()]),
-  ) as ContactForm;
-  const components: NameComponent[] = [
-    ...(trimmed.given ? [{ kind: "given", value: trimmed.given }] : []),
-    ...(trimmed.surname ? [{ kind: "surname", value: trimmed.surname }] : []),
-  ];
-  const addressComponents: NameComponent[] = [
-    ...(trimmed.street ? [{ kind: "name", value: trimmed.street }] : []),
-    ...(trimmed.city ? [{ kind: "locality", value: trimmed.city }] : []),
-  ];
-  const oldEmail = first(existing?.emails);
-  const oldPhone = first(existing?.phones);
-  return {
-    name: components.length
-      ? { components, isOrdered: true }
-      : trimmed.company
-        ? { full: trimmed.company }
-        : undefined,
-    organizations: trimmed.company
-      ? { [keyOf(existing?.organizations, "o")]: { name: trimmed.company } }
-      : undefined,
-    emails: trimmed.email
-      ? {
-          [keyOf(existing?.emails, "e")]: {
-            ...oldEmail,
-            address: trimmed.email,
-            contexts: oldEmail?.contexts ?? { work: true },
-          },
-        }
-      : undefined,
-    phones: trimmed.phone
-      ? {
-          [keyOf(existing?.phones, "p")]: {
-            ...oldPhone,
-            number: trimmed.phone,
-            features: oldPhone?.features ?? { voice: true },
-          },
-        }
-      : undefined,
-    addresses: addressComponents.length
-      ? { [keyOf(existing?.addresses, "a")]: { components: addressComponents } }
-      : undefined,
-    notes: trimmed.note ? { [keyOf(existing?.notes, "n")]: { note: trimmed.note } } : undefined,
-  };
 };
 
 const photoEntries = (card: Pick<ContactCard, "media">) =>

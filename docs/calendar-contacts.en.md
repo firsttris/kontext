@@ -148,7 +148,11 @@ Kontext is also on the iPhone, on Android (DAVx⁵) and in Thunderbird.
 - **The customer at a glance:** the latest mails with them (from info@ too), the next
   appointments, open tasks (linked to them or to a mail with them, from any mailbox), linked
   documents, "Call" via [telephony](telephony.md).
-- **Creating and editing**, also "Save as contact" right next to a mail.
+- **Creating and editing**, also "Save as contact" right next to a mail: several numbers with
+  their kind (mobile, work, home, fax) and several mail addresses ("+ Number", "+ Email"), job
+  title and department, website, birthday (it shows in the calendar under "Birthdays"), postcode
+  and country as fields of their own. Whatever else a contact from a phone or a vCard has stays
+  when it is edited. [More](architecture.md#kontaktformular)
 - **Photos** on contacts: seen in the list, next to their mails and when they call; via CardDAV on
   the phone too. Everyone also sets a photo of their own for chat, calls and tasks under
   *Settings → Profile*. [More](architecture.md#fotos)

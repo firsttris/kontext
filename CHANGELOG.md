@@ -7,6 +7,13 @@ Steps that an update needs beyond raising the version are marked **Upgrade**.
 
 ## Unreleased
 
+- Contacts: editing a contact no longer loses data. Before, saving kept only the first number,
+  mail address and address of a card and dropped the postcode, country, region and department of
+  cards from an iPhone, a vCard or a merge; now only the changed fields are written and everything
+  else stays (also for the agents' `update_contact`). The form has several numbers with their kind
+  (mobile, work, home, fax) and several mail addresses, job title, department, website, birthday
+  (shown in the birthday calendar), postcode and country; the contact's view shows them all
+  (user guide, "Kalender und Kontakte").
 - Chat: the **Assistant** at the top of the chat answers questions about customers, mail,
   appointments and tasks with the agents' tools and the asking person's rights, and on request
   saves drafts, appointments, contacts and tasks; it sends nothing. Optional: it appears once the

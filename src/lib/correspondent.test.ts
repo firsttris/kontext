@@ -38,7 +38,7 @@ describe("contactFormFor", () => {
     expect(contactFormFor(petra)).toMatchObject({
       given: "Petra",
       surname: "Keller",
-      email: petra.email,
+      emails: [{ address: petra.email }],
     });
     expect(contactFormFor({ name: "Anna Maria Weber", email: "a@w.test" })).toMatchObject({
       given: "Anna Maria",
