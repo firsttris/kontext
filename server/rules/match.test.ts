@@ -47,6 +47,19 @@ describe("ruleMatches", () => {
     expect(without("rechnung@")).toBe(true);
   });
 
+  it("'hat die Domain' takes the domain and those below it, not others that start with it", () => {
+    const inDomain = (value: string, address: string) =>
+      ruleMatches(rule({ conditions: [{ field: "from", operator: "domain", value }] }), {
+        ...mail,
+        from: [address],
+      });
+    expect(inDomain("@Firma.de", "info@FIRMA.DE")).toBe(true);
+    expect(inDomain("firma.de", "info@mail.firma.de")).toBe(true);
+    expect(inDomain("firma.de", "info@firma.de.example")).toBe(false);
+    expect(inDomain("firma.de", "info@meinefirma.de")).toBe(false);
+    expect(inDomain("firma.de", "firma.de")).toBe(false);
+  });
+
   it("needs all or one of the conditions, ignoring empty ones", () => {
     const conditions: Rule["conditions"] = [
       { field: "subject", operator: "contains", value: "Rechnung" },

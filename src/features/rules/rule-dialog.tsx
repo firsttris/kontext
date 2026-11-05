@@ -39,7 +39,7 @@ const ConditionRow = ({
     onChange({
       ...condition,
       field,
-      // "ist genau" is not offered for the text; it falls back to "enthält".
+      // An operator the new field does not offer ("ist genau" for the text) falls back to "enthält".
       operator: operatorsFor(field).some((entry) => entry.operator === condition.operator)
         ? condition.operator
         : "contains",

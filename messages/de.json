@@ -308,6 +308,7 @@
   "rules_op_contains": "enthält",
   "rules_op_not_contains": "enthält nicht",
   "rules_op_is": "ist genau",
+  "rules_op_domain": "hat die Domain",
   "rules_condition_text": "{field} {operator} „{value}“",
   "rules_and": " und ",
   "rules_or": " oder ",

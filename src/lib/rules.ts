@@ -22,14 +22,22 @@ const OPERATOR_LABELS: Record<RuleOperator, () => string> = {
   contains: m.rules_op_contains,
   notContains: m.rules_op_not_contains,
   is: m.rules_op_is,
+  domain: m.rules_op_domain,
 };
 
-/** "ist genau" only where a whole value can match: an address or the subject. */
+const OPERATORS: Record<RuleField, readonly RuleOperator[]> = {
+  from: ["contains", "notContains", "is", "domain"],
+  to: ["contains", "notContains", "is", "domain"],
+  subject: ["contains", "notContains", "is"],
+  body: ["contains", "notContains"],
+};
+
+/**
+ * "ist genau" only where a whole value can match: an address or the subject; "hat die Domain"
+ * only for an address.
+ */
 export const operatorsFor = (field: RuleField): { operator: RuleOperator; label: string }[] =>
-  (field === "body"
-    ? (["contains", "notContains"] as const)
-    : (["contains", "notContains", "is"] as const)
-  ).map((operator) => ({ operator, label: OPERATOR_LABELS[operator]() }));
+  OPERATORS[field].map((operator) => ({ operator, label: OPERATOR_LABELS[operator]() }));
 
 export const emptyCondition = (field: RuleField = "from", value = ""): RuleCondition => ({
   field,
@@ -60,7 +68,8 @@ export const ruleFromSender = (id: string, address: string): Rule =>
 export type BlockScope = "address" | "domain";
 
 /**
- * A rule that files every mail from `address` (or its whole domain) into Spam and stops there;
+ * A rule that files every mail from `address` (or its whole domain, subdomains included) into
+ * Spam and stops there;
  * it goes first in the list, so no other rule files the mail elsewhere. Spam rather than deleting:
  * nothing is lost, and the rule can be removed in the rules list.
  */
@@ -74,7 +83,7 @@ export const blockRule = (
   const condition: RuleCondition =
     scope === "address"
       ? { field: "from", operator: "is", value: address.trim().toLowerCase() }
-      : { field: "from", operator: "contains", value: `@${domain}` };
+      : { field: "from", operator: "domain", value: domain };
   return {
     ...newRule(id, [condition]),
     name: m.rules_block_name({ sender: scope === "address" ? condition.value : domain }),

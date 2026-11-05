@@ -129,7 +129,17 @@ describe("list changes", () => {
 
 describe("operatorsFor", () => {
   it("offers 'ist genau' for addresses and subject, not for the text", () => {
-    expect(operatorsFor("from").map((o) => o.operator)).toEqual(["contains", "notContains", "is"]);
+    expect(operatorsFor("from").map((o) => o.operator)).toEqual([
+      "contains",
+      "notContains",
+      "is",
+      "domain",
+    ]);
+    expect(operatorsFor("subject").map((o) => o.operator)).toEqual([
+      "contains",
+      "notContains",
+      "is",
+    ]);
     expect(operatorsFor("body").map((o) => o.operator)).toEqual(["contains", "notContains"]);
   });
 });
@@ -151,7 +161,9 @@ describe("blockRule", () => {
   it("blocks a whole domain by everything after the @", () => {
     const rule = blockRule("b", "werbung@angebote.example", "domain", junk);
     expect(rule.name).toBe("Blockiert: angebote.example");
+    expect(whenText(rule)).toBe("Absender hat die Domain „angebote.example“");
     expect(outcome([rule], from("info@angebote.example")).moveTo).toEqual(junk);
+    expect(outcome([rule], from("info@news.angebote.example")).moveTo).toEqual(junk);
     expect(outcome([rule], from("info@meine-angebote.example")).moveTo).toBeNull();
   });
 
