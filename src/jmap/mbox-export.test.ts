@@ -27,6 +27,11 @@ const folderOf = (count: number, onDownload: (folder: string[], id: string) => v
       ];
     },
     call: async (method: string, args: Record<string, unknown>) => {
+      if (method === "Email/query") {
+        const position = (args.position as number) ?? 0;
+        const limit = (args.limit as number) ?? folder.length;
+        return { ids: folder.slice(position, position + limit), position, total: folder.length };
+      }
       const ids = (args.ids as string[] | undefined) ?? [];
       if (method !== "Email/get") throw new Error(`unexpected ${method}`);
       return {
