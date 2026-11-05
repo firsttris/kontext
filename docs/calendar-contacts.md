@@ -110,6 +110,12 @@ Kontext steht, steht auch am iPhone, unter Android (DAVx⁵) und in Thunderbird.
 
   ![Kalender verwalten mit der Vorschau einer .ics-Datei: vier neue Termine, einer schon vorhanden](screenshots/calendar-ics-import.png)
 
+- **Kalender als .ics exportieren:** Unter *Kalender verwalten* speichert der Pfeil nach unten
+  neben einem Kalender (eigenen wie geteilten) alle seine Termine als `<Kalender>.ics`, vergangene
+  und kommende, Serien mit ihren geänderten und ausgelassenen Terminen, Teilnehmer mit ihren
+  Antworten; ein abgesagter oder vorläufiger Termin bleibt es (`STATUS`). Die Datei lässt sich in Google, Outlook, Apple oder einem anderen Kontext wieder
+  übernehmen. Erinnerungen bleiben draußen.
+
 - **Kalender drucken:** Der Drucker oben im Kalender (oder Strg+P, die Taste `p`) druckt die
   offene Ansicht auf A4 quer, etwa für die Pinnwand in der Werkstatt: in Woche und Tag die
   Woche als sieben Spalten mit allen Terminen samt Uhrzeit und Ort, ganztägige zuerst; im Monat

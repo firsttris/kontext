@@ -3,7 +3,8 @@
  * new or changed event, CANCEL when it is called off or an attendee is taken off. Gmail, Outlook
  * and Apple show their own buttons for it, and their REPLY goes back to the organizer's Stalwart,
  * which enters it into the event (crates/email/src/message/ingest.rs). A colleague's Stalwart
- * puts a REQUEST from the own server straight into their calendar the same way.
+ * puts a REQUEST from the own server straight into their calendar the same way. The same VEVENTs
+ * make the .ics file of a whole calendar (`toCalendarFile`).
  *
  * Built from the JSCalendar event Stalwart returns: JMAP has no export to iCalendar
  * (crates/jmap-proto/src/request/method.rs knows only CalendarEvent/parse, the other way round,
@@ -216,11 +217,11 @@ export type ItipOptions = {
 };
 
 /**
- * The whole iCalendar object: the series with its rule and excluded dates, a VEVENT per changed
- * date (RECURRENCE-ID), and the VTIMEZONE the times name. A CANCEL keeps the times and the title
- * so that the recipient's program finds and names the event, and says STATUS:CANCELLED.
+ * The event's VEVENTs: the series with its rule and excluded dates, and one per changed date
+ * (RECURRENCE-ID). A CANCEL keeps the times and the title so that the recipient's program finds
+ * and names the event, and says STATUS:CANCELLED.
  */
-export const toICalendar = (event: CalendarEvent, { method, now, only }: ItipOptions): string => {
+const vevents = (event: CalendarEvent, { method, now, only }: ItipOptions): string[] => {
   const uid = event.uid ?? event.id;
   const sequence = event.sequence ?? 0;
   const concerned = only && new Set(only.map((email) => email.toLowerCase()));
@@ -228,7 +229,7 @@ export const toICalendar = (event: CalendarEvent, { method, now, only }: ItipOpt
     `UID:${uid}`,
     `SEQUENCE:${stamp.sequence ?? sequence}`,
     `DTSTAMP:${utcStamp(now)}`,
-    `STATUS:${method === "CANCEL" ? "CANCELLED" : "CONFIRMED"}`,
+    `STATUS:${method === "CANCEL" ? "CANCELLED" : (stamp.status ?? "confirmed").toUpperCase()}`,
   ];
   const overrides = Object.entries(event.recurrenceOverrides ?? {});
   const excluded = overrides.filter(([, patch]) => patch.excluded === true);
@@ -254,20 +255,49 @@ export const toICalendar = (event: CalendarEvent, { method, now, only }: ItipOpt
       ...eventProps(date, concerned),
     ];
   });
-  const zones =
-    event.timeZone && !event.showWithoutTime && !isUtc(event.timeZone)
-      ? vtimezone(event.timeZone, firstYear(event), lastYear(event))
-      : [];
-  const lines = [
+  return [...component(series), ...dates.flatMap(component)];
+};
+
+const zoneOf = (event: CalendarEvent) =>
+  event.timeZone && !event.showWithoutTime && !isUtc(event.timeZone) ? event.timeZone : null;
+
+/** One VTIMEZONE per zone the events name, over the years all of them in it cover. */
+const vtimezones = (events: CalendarEvent[]): string[] => {
+  const spans = new Map<string, [number, number]>();
+  for (const event of events) {
+    const zone = zoneOf(event);
+    if (!zone) continue;
+    const [first, last] = spans.get(zone) ?? [firstYear(event), lastYear(event)];
+    spans.set(zone, [Math.min(first, firstYear(event)), Math.max(last, lastYear(event))]);
+  }
+  return [...spans].flatMap(([zone, [first, last]]) => vtimezone(zone, first, last));
+};
+
+const calendarObject = (method: string | null, events: CalendarEvent[], lines: string[]) => {
+  const all = [
     "BEGIN:VCALENDAR",
     "PRODID:-//Kontext//Kalender//DE",
     "VERSION:2.0",
     "CALSCALE:GREGORIAN",
-    `METHOD:${method}`,
-    ...zones,
-    ...component(series),
-    ...dates.flatMap(component),
+    ...(method ? [`METHOD:${method}`] : []),
+    ...vtimezones(events),
+    ...lines,
     "END:VCALENDAR",
   ];
-  return `${lines.map(fold).join("\r\n")}\r\n`;
+  return `${all.map(fold).join("\r\n")}\r\n`;
 };
+
+/** The whole iCalendar object for an invitation: the event's VEVENTs and the zones they name. */
+export const toICalendar = (event: CalendarEvent, options: ItipOptions): string =>
+  calendarObject(options.method, [event], vevents(event, options));
+
+/**
+ * A whole calendar as an .ics file to keep or take elsewhere: every event as an invitation
+ * would carry it, without METHOD (RFC 5545 §3.7.2: no iTIP message).
+ */
+export const toCalendarFile = (events: CalendarEvent[], now: Date): string =>
+  calendarObject(
+    null,
+    events,
+    events.flatMap((event) => vevents(event, { method: "REQUEST", now })),
+  );

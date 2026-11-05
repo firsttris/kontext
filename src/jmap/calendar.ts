@@ -35,7 +35,8 @@ const BASE_PROPERTIES = [
   "baseEventId",
 ];
 const INSTANCE_PROPERTIES = [...BASE_PROPERTIES, "utcStart", "utcEnd"];
-const EVENT_PROPERTIES = [...BASE_PROPERTIES, "recurrenceOverrides"];
+/** A stored event as the invitations and the .ics file write it, with its status. */
+const EVENT_PROPERTIES = [...BASE_PROPERTIES, "status", "recurrenceOverrides"];
 
 /**
  * The longest span one expanded query may cover, a day below Stalwart's maxExpandedQueryDuration
@@ -264,6 +265,35 @@ export const getStoredEvent = async (
   if (!own) return null;
   const [dates] = await getEvents(client, accountId, [baseId], ["recurrenceOverrides"]);
   return { ...own, id: baseId, recurrenceOverrides: dates?.recurrenceOverrides ?? null };
+};
+
+/** How many ids one query of a whole calendar returns at a time. */
+const EXPORT_PAGE = 1000;
+
+/**
+ * Every stored event of one calendar, each series once with its changed dates, as
+ * `getStoredEvent` reads one: what the .ics export is made of. Without expandRecurrences the
+ * query covers all time.
+ */
+export const getCalendarEvents = async (
+  client: JmapClient,
+  accountId: string,
+  calendarId: string,
+): Promise<CalendarEvent[]> => {
+  const ids: string[] = [];
+  for (let position = 0; ; position += EXPORT_PAGE) {
+    const answer = await client.call<{ ids: string[] }>(
+      "CalendarEvent/query",
+      { accountId, filter: { inCalendar: calendarId }, position, limit: EXPORT_PAGE },
+      USING,
+    );
+    ids.push(...answer.ids);
+    if (answer.ids.length < EXPORT_PAGE) break;
+  }
+  const own = await getEvents(client, accountId, ids, EVENT_PROPERTIES, WITHOUT_OVERRIDES);
+  const dates = await getEvents(client, accountId, ids, ["recurrenceOverrides"]);
+  const overrides = new Map(dates.map((event) => [event.id, event.recurrenceOverrides ?? null]));
+  return own.map((event) => ({ ...event, recurrenceOverrides: overrides.get(event.id) ?? null }));
 };
 
 /**

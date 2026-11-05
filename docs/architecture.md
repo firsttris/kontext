@@ -2043,7 +2043,11 @@ einer Serie ohne Ende zehn Jahre), und die Regel einer Serie mit allem, was ande
 `BYMONTH` …). Wer `SEQUENCE` hochzählt, ist Kontext: Bei einer Änderung und wenn Teilnehmer dazukommen
 oder gehen, schreibt die App `sequence` + 1 in den Termin – wer ausgeladen wurde und wieder
 eingeladen wird, bekäme sonst eine Einladung unter der Nummer seiner Absage, und Stalwart wie
-andere Programme verwerfen sie (`OutOfSequence`).
+andere Programme verwerfen sie (`OutOfSequence`). Dieselben `VEVENT`s ergeben den Export eines
+ganzen Kalenders (`toCalendarFile`, ohne `METHOD`, jede Zeitzone einmal): `CalendarEvent/query`
+mit `inCalendar` ohne `expandRecurrences` liefert jede Serie einmal. Ein Download über CalDAV
+gäbe es nicht – Stalwart beantwortet `GET` auf eine Kalender-Sammlung mit 405
+(`crates/dav/src/calendar/get.rs`).
 
 **Kollegen auf demselben Server** bekommen dieselbe Mail. Stalwart liest den `text/calendar`-Teil
 jeder Mail, die es zustellt, wenn der Absender angemeldet war (`crates/email/src/message/ingest.rs`,

@@ -1,17 +1,21 @@
 /**
  * The calendars the user can see, each with a box to show or hide it: in the sidebar, and in the
  * "Kalender verwalten" dialog with sharing, deleting and creating own calendars, adding the
- * public holidays and taking appointments over from an .ics file.
+ * public holidays, taking appointments over from an .ics file and saving a calendar as one.
  */
-import { Settings2, Share2, Trash2 } from "lucide-react";
+import { Download, Settings2, Share2, Trash2 } from "lucide-react";
 import { type FormEvent, useEffect, useState } from "react";
+import { useClient } from "@/auth/auth";
 import { StateSelect } from "@/components/state-select";
 import { Button } from "@/components/ui/button";
 import { Dialog } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/components/ui/toast";
+import { getCalendarEvents } from "@/jmap/calendar";
 import { principalName } from "@/jmap/principals";
+import { downloadText } from "@/lib/download";
 import type { State } from "@/lib/holidays";
+import { toCalendarFile } from "@/lib/itip";
 import { everyoneAccess, sharedWith } from "@/lib/sharing";
 import { m } from "@/paraglide/messages";
 import { useColleagues, usePrincipals } from "../sharing/queries";
@@ -104,9 +108,43 @@ const Row = ({ calendar, manage }: { calendar: CalendarRef; manage: boolean }) =
           ) : null}
         </span>
       </label>
+      {manage ? <ExportButton calendar={calendar} /> : null}
       {manage && calendar.mayWrite ? <DefaultReminderButton calendar={calendar} /> : null}
       {manage && calendar.isPersonal ? <OwnActions calendar={calendar} /> : null}
     </li>
+  );
+};
+
+/** The calendar's events as an .ics file, made in the browser (itip.ts `toCalendarFile`). */
+const ExportButton = ({ calendar }: { calendar: CalendarRef }) => {
+  const client = useClient();
+  const toast = useToast();
+  const [busy, setBusy] = useState(false);
+  const label = `${m.calendar_export()}: ${calendar.name}`;
+
+  const save = async () => {
+    setBusy(true);
+    try {
+      const events = await getCalendarEvents(client, calendar.accountId, calendar.calendar.id);
+      downloadText(toCalendarFile(events, new Date()), `${calendar.name}.ics`, "text/calendar");
+    } catch (error) {
+      fail(toast)(error as Error);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <Button
+      variant="ghost"
+      size="iconSm"
+      onClick={() => void save()}
+      disabled={busy}
+      aria-label={label}
+      title={label}
+    >
+      <Download size={15} />
+    </Button>
   );
 };
 
