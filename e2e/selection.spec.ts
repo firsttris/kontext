@@ -149,6 +149,51 @@ test.describe("Mehrere Mails auswählen", () => {
   });
 });
 
+test.describe("Rückgängig nach Archivieren, Löschen, Spam", () => {
+  test("„Rückgängig“ in der Meldung und „z“ holen archivierte Mails zurück", async ({ page }) => {
+    const subject = unique("Zurück aus dem Archiv");
+    await addMail("jonas", "jonas", subject);
+    await login(page);
+    const inbox = page.getByRole("list", { name: "Posteingang" });
+    await inbox.getByText(subject).click();
+    await page.getByRole("button", { name: "Archivieren" }).click();
+    await expect(inbox.getByText(subject)).toHaveCount(0);
+    const notice = page.getByRole("status").filter({ hasText: "Archiviert." });
+    await notice.getByRole("button", { name: "Rückgängig" }).click();
+    await expect(inbox.getByText(subject)).toBeVisible();
+    await expect
+      .poll(async () => (await stateOf("jonas", "jonas", [subject]))[subject]?.folder)
+      .toBe("inbox");
+
+    // The same with the keyboard: "e" archives the open mail, "z" takes it back.
+    await inbox.getByText(subject).click();
+    await expect(page.getByRole("heading", { name: subject })).toBeVisible();
+    await page.keyboard.press("e");
+    await expect(inbox.getByText(subject)).toHaveCount(0);
+    await expect
+      .poll(async () => (await stateOf("jonas", "jonas", [subject]))[subject]?.folder)
+      .toBe("archive");
+    await page.keyboard.press("z");
+    await expect(inbox.getByText(subject)).toBeVisible();
+  });
+
+  test("Spam aus der Auswahl wird mit „Rückgängig“ wieder Posteingang", async ({ page }) => {
+    const subjects = [unique("Kein Spam A"), unique("Kein Spam B")];
+    for (const subject of subjects) await addMail("jonas", "jonas", subject);
+    await login(page);
+    for (const subject of subjects) await box(page, subject).click();
+    await page.getByRole("button", { name: "Als Spam markieren" }).click();
+    await expect(page.getByText(subjects[0]!)).toHaveCount(0);
+    await page.getByRole("status").getByRole("button", { name: "Rückgängig" }).click();
+    await expect
+      .poll(async () => stateOf("jonas", "jonas", subjects))
+      .toMatchObject({
+        [subjects[0]!]: { folder: "inbox", keywords: expect.not.arrayContaining(["$junk"]) },
+        [subjects[1]!]: { folder: "inbox", keywords: expect.not.arrayContaining(["$junk"]) },
+      });
+  });
+});
+
 test.describe("Auswählen am Handy @phone", () => {
   test("wählt zwei Mails und löscht sie @phone", async ({ page }) => {
     const subjects = [unique("Handy weg 1"), unique("Handy weg 2")];
@@ -264,6 +309,21 @@ test.describe("Wischen am Handy @phone", () => {
         [subjects[2]!]: { folder: "inbox", keywords: ["$seen"] },
       });
     await expect(page).not.toHaveURL(/email=/);
+  });
+
+  test("„Rückgängig“ nach dem Wischen holt die Mail zurück @phone", async ({ page }) => {
+    const subject = unique("Wisch zurück");
+    await addMail("max", "max", subject);
+    await login(page, "max");
+    await expect(page.getByText(subject)).toBeVisible();
+
+    await swipe(page, subject, -250);
+    await expect(page.getByText(subject)).toHaveCount(0);
+    await page.getByRole("status").getByRole("button", { name: "Rückgängig" }).click();
+    await expect(page.getByText(subject)).toBeVisible();
+    await expect
+      .poll(async () => (await stateOf("max", "max", [subject]))[subject]?.folder)
+      .toBe("inbox");
   });
 
   test("was Wischen tut, stellt man je Gerät ein @phone", async ({ page }) => {

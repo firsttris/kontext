@@ -47,6 +47,7 @@ export type ShortcutAction =
   | "flag"
   | "spam"
   | "unread"
+  | "undo"
   | "select"
   | "print"
   | "newTask"
@@ -75,6 +76,8 @@ export const SHORTCUTS: { group: ShortcutGroup; keys: string[]; action: Shortcut
   { group: "mail", keys: ["#"], action: "delete" },
   { group: "mail", keys: ["s"], action: "flag" },
   { group: "mail", keys: ["!"], action: "spam" },
+  // The last of these four back; Ctrl+Z only outside text fields (features/mail/undo.ts).
+  { group: "mail", keys: ["z", "Strg+Z"], action: "undo" },
   { group: "mail", keys: ["U"], action: "unread" },
   { group: "mail", keys: ["x"], action: "select" },
   { group: "mail", keys: ["p"], action: "print" },

@@ -305,6 +305,22 @@ export const moveEmails = (
   });
 
 /**
+ * Which folders the mails lie in now; a mail deleted since is missing from the answer (a standard
+ * /get, RFC 8620 §5.1: unknown ids go into `notFound`).
+ */
+export const getMailboxIds = async (
+  client: JmapClient,
+  accountId: string,
+  ids: string[],
+): Promise<Pick<EmailSummary, "id" | "mailboxIds">[]> => {
+  const { list } = await client.call<{ list: Pick<EmailSummary, "id" | "mailboxIds">[] }>(
+    "Email/get",
+    { accountId, ids, properties: ["mailboxIds"] },
+  );
+  return list;
+};
+
+/**
  * Into Spam with $junk, or out of it with $notjunk (RFC 8621 §2, IANA keywords). Stalwart trains
  * its spam filter on both, the folder move and the keyword (crates/jmap/src/email/set.rs).
  */
