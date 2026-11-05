@@ -1,23 +1,52 @@
 /**
- * vCard import and export for one address book, in the address books dialog. Import reads the
- * file with Stalwart's parser, skips cards that are already in the book and shows what it will
- * add before it does.
+ * vCard import and export for one address book, in the address books dialog. Import reads a vCard
+ * file with Stalwart's parser, or a CSV file with the columns given to contact fields
+ * (`CsvColumns`), skips cards that are already in the book and shows what it will add before it
+ * does.
  */
 import { useQueryClient } from "@tanstack/react-query";
 import { Download, Upload } from "lucide-react";
-import { type ChangeEvent, useRef, useState } from "react";
+import { type ChangeEvent, useMemo, useRef, useState } from "react";
 import { useClient } from "@/auth/auth";
 import { Button } from "@/components/ui/button";
 import { Select } from "@/components/ui/input";
 import { useToast } from "@/components/ui/toast";
 import { createContacts, listContacts, parseVCards } from "@/jmap/contacts";
+import { decodeText, parseCsv } from "@/lib/csv";
+import { type CsvField, csvCards, guessField } from "@/lib/csv-contacts";
 import { downloadText } from "@/lib/download";
 import type { ContactCard } from "@/lib/jscontact";
 import { isDuplicate, normalizeMembers, splitVCards, toVCardFile } from "@/lib/vcard";
 import { m } from "@/paraglide/messages";
+import { CsvColumns } from "./csv-columns";
 import { type BookRef, bookLabel, startBook } from "./queries";
 
 type Preview = { cards: ContactCard[]; duplicates: number; failed: number };
+type Csv = { header: string[]; rows: string[][]; mapping: CsvField[]; existing: ContactCard[] };
+
+/** The cards that are not in the book yet, nor earlier in the file. */
+const freshCards = (cards: ContactCard[], existing: ContactCard[]) => {
+  const known = new Set(
+    [...existing, ...cards].map((card) => card.uid).filter((uid): uid is string => !!uid),
+  );
+  const fresh: ContactCard[] = [];
+  for (const card of cards) {
+    if (!isDuplicate(card, [...existing, ...fresh])) fresh.push(normalizeMembers(card, known));
+  }
+  return fresh;
+};
+
+const csvPreview = ({ rows, mapping, existing }: Csv): Preview => {
+  const cards = csvCards(rows, mapping);
+  const fresh = freshCards(cards, existing);
+  return {
+    cards: fresh,
+    duplicates: cards.length - fresh.length,
+    failed: rows.length - cards.length,
+  };
+};
+
+const isCsv = (file: File) => /\.csv$/i.test(file.name) || file.type === "text/csv";
 
 const fileName = (name: string) => `${name.replace(/[\\/:*?"<>|]+/g, "_") || "Kontakte"}.vcf`;
 
@@ -30,7 +59,13 @@ export const VCardSection = ({ books }: { books: BookRef[] }) => {
   const toast = useToast();
   const writable = books.filter((book) => book.mayWrite);
   const [bookKey, setBookKey] = useState(() => startBook(writable));
-  const [preview, setPreview] = useState<Preview | null>(null);
+  const [vcardPreview, setVcardPreview] = useState<Preview | null>(null);
+  const [csv, setCsv] = useState<Csv | null>(null);
+  const preview = useMemo(() => (csv ? csvPreview(csv) : vcardPreview), [csv, vcardPreview]);
+  const close = () => {
+    setVcardPreview(null);
+    setCsv(null);
+  };
   const [busy, setBusy] = useState(false);
   const input = useRef<HTMLInputElement>(null);
   const book = books.find((b) => b.key === bookKey);
@@ -51,20 +86,23 @@ export const VCardSection = ({ books }: { books: BookRef[] }) => {
     event.target.value = "";
     if (!file || !book) return;
     void run(async () => {
+      close();
+      if (isCsv(file)) {
+        const [header = [], ...rows] = parseCsv(
+          decodeText(new Uint8Array(await file.arrayBuffer())),
+        );
+        const existing = await listContacts(client, book.accountId, book.book.id);
+        setCsv({ header, rows, mapping: header.map(guessField), existing });
+        return;
+      }
       const vcards = splitVCards(await file.text());
       const [parsed, existing] = await Promise.all([
         parseVCards(client, book.accountId, vcards),
         listContacts(client, book.accountId, book.book.id),
       ]);
       const cards = parsed.filter((card): card is ContactCard => card !== null);
-      const known = new Set(
-        [...existing, ...cards].map((card) => card.uid).filter((uid): uid is string => !!uid),
-      );
-      const fresh: ContactCard[] = [];
-      for (const card of cards) {
-        if (!isDuplicate(card, [...existing, ...fresh])) fresh.push(normalizeMembers(card, known));
-      }
-      setPreview({
+      const fresh = freshCards(cards, existing);
+      setVcardPreview({
         cards: fresh,
         duplicates: cards.length - fresh.length,
         failed: vcards.length - cards.length,
@@ -83,7 +121,7 @@ export const VCardSection = ({ books }: { books: BookRef[] }) => {
         preview.cards.map(forCreate),
       );
       await queryClient.invalidateQueries({ queryKey: [book.accountId, "contacts"] });
-      setPreview(null);
+      close();
       toast.show(m.contacts_import_done({ count }));
     });
 
@@ -103,7 +141,7 @@ export const VCardSection = ({ books }: { books: BookRef[] }) => {
           value={bookKey}
           onChange={(e) => {
             setBookKey(e.target.value);
-            setPreview(null);
+            close();
           }}
           className="min-w-0 flex-1 basis-48"
         >
@@ -116,7 +154,7 @@ export const VCardSection = ({ books }: { books: BookRef[] }) => {
         <input
           ref={input}
           type="file"
-          accept=".vcf,text/vcard,text/x-vcard"
+          accept=".vcf,text/vcard,text/x-vcard,.csv,text/csv"
           aria-label={m.contacts_import_file()}
           className="hidden"
           onChange={read}
@@ -132,6 +170,14 @@ export const VCardSection = ({ books }: { books: BookRef[] }) => {
           <Download size={14} /> {m.contacts_export()}
         </Button>
       </div>
+      {csv ? (
+        <CsvColumns
+          header={csv.header}
+          rows={csv.rows}
+          mapping={csv.mapping}
+          onChange={(mapping) => setCsv({ ...csv, mapping })}
+        />
+      ) : null}
       {preview ? (
         <div
           aria-live="polite"
@@ -144,7 +190,7 @@ export const VCardSection = ({ books }: { books: BookRef[] }) => {
               : ""}
             {preview.failed ? ` ${m.contacts_import_failed({ count: preview.failed })}` : ""}
           </span>
-          <Button variant="ghost" onClick={() => setPreview(null)}>
+          <Button variant="ghost" onClick={close}>
             {m.contacts_cancel()}
           </Button>
           <Button

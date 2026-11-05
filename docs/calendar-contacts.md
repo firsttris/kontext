@@ -155,7 +155,11 @@ Kontext steht, steht auch am iPhone, unter Android (DAVx⁵) und in Thunderbird.
   CardDAV auch am Handy. Jeder legt außerdem unter *Einstellungen → Profil* ein eigenes Foto für
   Chat, Anrufe und Aufgaben an. [Mehr](architecture.md#fotos)
 - **Gruppen** wie „Lieferanten“, an die eine Mail geht.
-- **vCard-Import und -Export**; Doppeltes wird beim Import erkannt.
+- **vCard-Import und -Export**, **CSV-Import** (eine Kundenliste aus Excel oder ein Export aus
+  Outlook oder Google; UTF-8 oder Windows-1252, „;“ oder „,“) unter *Adressbücher*: Kontext ordnet
+  die Spalten nach ihrer Überschrift den Feldern des Kontakts zu (Vorname, Firma, E-Mail, Mobil,
+  PLZ …) und zeigt dazu die ersten Zeilen; jede Zuordnung lässt sich ändern oder auf „nicht
+  übernehmen“ stellen. Doppeltes wird beim Import erkannt.
 - **Weitere Kontakte** wie bei Google: Wer einem geschrieben hat oder wem man geschrieben hat,
   aber in keinem Adressbuch steht, erscheint hier – mit „Zu Kontakten hinzufügen“ und „Mail
   schreiben“. Kontext liest dafür die letzten 500 Mails jedes Postfachs (ohne Spam und
