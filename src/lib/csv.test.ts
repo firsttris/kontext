@@ -10,6 +10,14 @@ describe("decodeText", () => {
   it("falls back to Windows-1252, as Excel saves in Germany", () => {
     expect(decodeText(new Uint8Array([0x4d, 0xfc, 0x6c, 0x6c, 0x65, 0x72, 0x80]))).toBe("Müller€");
   });
+
+  it("reads UTF-16 with its BOM, as Excel saves Unicode text", () => {
+    const text = "Vorname\tNachname\r\nJürgen\tGroß €";
+    const le = [0xff, 0xfe, ...[...text].flatMap((c) => [c.charCodeAt(0) & 0xff, c.charCodeAt(0) >> 8])];
+    const be = [0xfe, 0xff, ...[...text].flatMap((c) => [c.charCodeAt(0) >> 8, c.charCodeAt(0) & 0xff])];
+    expect(decodeText(new Uint8Array(le))).toBe(text);
+    expect(decodeText(new Uint8Array(be))).toBe(text);
+  });
 });
 
 describe("detectSeparator", () => {
