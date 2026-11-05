@@ -7,6 +7,14 @@ Steps that an update needs beyond raising the version are marked **Upgrade**.
 
 ## Unreleased
 
+- Company administration: *Sicherheit der Mails* gets "Beim Versand verschlüsseln", a switch
+  with which Stalwart itself encrypts mail to recipients outside the company whose key it knows
+  (Stalwart's encryption gateway, `Encryption.gatewayEnable`), and the list of those keys: pasted,
+  looked up by Stalwart (Web Key Directory, keys.openpgp.org) or learnt from received mail; each
+  can be removed (docs, "Verschlüsselung"). **Upgrade:** run the setup command again
+  (`bun server/setup-stalwart.ts`); it gives the role `Kontext-Server` the rights `sysEncryption*`,
+  `sysExternalPublicKey*`, `sysActionCreate` and `actionReloadSettings`. On a Stalwart updated from
+  before 1.0.2, first give Stalwart's admin role the encryption rights (Stalwart's 1.0.2 changelog).
 - Deploy: `deploy/.env.example` and the Quadlet use Schreibzeug 0.1.19 (was 0.1.18), and Compose
   and the Quadlet use Caddy 2.11.8 (was 2.11.7) and LiveKit SIP 1.23.0 (was 1.22.0), the versions
   running on the first server. No step beyond raising the versions; with Quadlet, raise the images

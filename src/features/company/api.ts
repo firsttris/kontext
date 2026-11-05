@@ -10,6 +10,7 @@ import type {
   SharedMailbox,
 } from "../../../server/company/accounts";
 import type { BackupSettings, BackupView } from "../../../server/company/backup-schema";
+import type { GatewayView, NewKey } from "../../../server/company/encryption-gateway";
 import type { FolderName } from "../../../server/company/mailstore";
 import type { SearchIndexStatus } from "../../../server/company/search-index";
 import type { Check } from "../../../server/company/security";
@@ -161,6 +162,18 @@ export const removeSmimeAuthority = (fingerprint: string) =>
     "DELETE",
     `/smime-authorities/${encodeURIComponent(fingerprint)}`,
   );
+
+/** Mails beim Versand verschlüsseln (server/company/encryption-gateway.ts). */
+export const getEncryptionGateway = () => send<GatewayView>("GET", "/encryption-gateway");
+
+export const setEncryptionGateway = (enabled: boolean) =>
+  send<GatewayView>("PUT", "/encryption-gateway", { enabled });
+
+export const addRecipientKey = (key: NewKey) =>
+  send<GatewayView>("POST", "/encryption-gateway/keys", key);
+
+export const removeRecipientKey = (id: string) =>
+  send<GatewayView>("DELETE", `/encryption-gateway/keys/${encodeURIComponent(id)}`);
 
 export const getChatRetention = () => send<{ days: number }>("GET", "/chat-retention");
 

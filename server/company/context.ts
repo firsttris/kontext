@@ -56,6 +56,8 @@ export type CompanyDeps = {
     resolve: import("./security").Resolve;
     fetchPolicy?: (url: string) => Promise<string | null>;
   };
+  /** Mails beim Versand verschlüsseln: Stalwart's encryption gateway (encryption-gateway.ts). */
+  encryptionGateway?: import("./encryption-gateway").EncryptionGateway;
   /** The Datensicherung, through files the host reads and writes (backup.ts). */
   backup?: BackupControl;
 };

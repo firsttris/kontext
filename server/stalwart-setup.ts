@@ -33,6 +33,15 @@ export const KONTEXT_SERVER_RIGHTS = [
   "sysDomainGet",
   "sysAuthenticationGet",
   "sysIndexQueueStatusGet",
+  // Mails beim Versand verschlüsseln (company/encryption-gateway.ts); the setting takes effect
+  // after ReloadSettings.
+  "sysEncryptionGet",
+  "sysEncryptionUpdate",
+  "sysExternalPublicKeyGet",
+  "sysExternalPublicKeyCreate",
+  "sysExternalPublicKeyDestroy",
+  "sysActionCreate",
+  "actionReloadSettings",
   "impersonate",
 ] as const;
 
