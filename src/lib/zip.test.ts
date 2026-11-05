@@ -87,4 +87,17 @@ describe("uniqueNames", () => {
       ".profile",
     ]);
   });
+
+  it("keeps a sender's long name within the 255 bytes a file system allows, with its extension", () => {
+    // ext4, APFS and NTFS refuse longer names: unzip stops with "File name too long".
+    const long = `${"Ä".repeat(200)}😀.pdf`;
+    const names = uniqueNames([long, long]);
+    for (const name of names) {
+      expect(new TextEncoder().encode(name).length).toBeLessThanOrEqual(255);
+      expect(name).toMatch(/^Ä+.*\.pdf$/u);
+      // Cut between characters, never inside one.
+      expect(name).not.toMatch(/[\uD800-\uDFFF]/u);
+    }
+    expect(new Set(names).size).toBe(2);
+  });
 });
