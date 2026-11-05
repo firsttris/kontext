@@ -41,6 +41,7 @@ import { storageLevel } from "@/lib/storage";
 import { m } from "@/paraglide/messages";
 import { CategoryNav } from "../categories/category-nav";
 import { useSecureMessages } from "../secure/queries";
+import { FolderRow, ParentSelect } from "./folder-menu";
 import { useMailDrop } from "./mail-drag";
 import { useCreateMailbox, useInboxes, useMailAccounts, useMailboxes, useQuota } from "./queries";
 
@@ -100,7 +101,12 @@ export const MailSidebar = ({ accountId, mailbox, view, query }: Props) => {
     const open = !collapsed.has(node.mailbox.id);
     return (
       <li key={node.mailbox.id}>
-        <div className="flex items-center">
+        <FolderRow
+          accountId={accountId}
+          mailbox={node.mailbox}
+          mailboxes={mailboxes}
+          activeId={mailbox?.id}
+        >
           <Link
             to="/mail/$accountId/$mailboxId"
             params={{ accountId, mailboxId: node.mailbox.id }}
@@ -123,7 +129,7 @@ export const MailSidebar = ({ accountId, mailbox, view, query }: Props) => {
               {open ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
             </button>
           ) : null}
-        </div>
+        </FolderRow>
         {hasChildren && open ? (
           <ul className="m-0 list-none p-0">{node.children.map(renderNode)}</ul>
         ) : null}
@@ -174,24 +180,31 @@ export const MailSidebar = ({ accountId, mailbox, view, query }: Props) => {
         {systemMailboxes(mailboxes).map((box) => {
           const Icon = ROLE_ICONS[box.role ?? ""] ?? Folder;
           return (
-            <Link
+            <FolderRow
               key={box.id}
-              to="/mail/$accountId/$mailboxId"
-              params={{ accountId, mailboxId: box.id }}
-              {...(box.role === "drafts" || box.role === "flagged" || box.role === "snoozed"
-                ? {}
-                : dropTarget({ accountId, mailboxId: box.id }, mailboxName(box)))}
-              className={navClass(box.id === mailbox?.id)}
+              accountId={accountId}
+              mailbox={box}
+              mailboxes={mailboxes}
+              activeId={mailbox?.id}
             >
-              <Icon size={16} strokeWidth={1.75} />
-              <span>{mailboxName(box)}</span>
-              {box.role === "inbox" || box.role === "junk" ? (
-                <Count value={box.unreadEmails} />
-              ) : null}
-              {box.role === "drafts" || box.role === "snoozed" ? (
-                <Count value={box.totalEmails} />
-              ) : null}
-            </Link>
+              <Link
+                to="/mail/$accountId/$mailboxId"
+                params={{ accountId, mailboxId: box.id }}
+                {...(box.role === "drafts" || box.role === "flagged" || box.role === "snoozed"
+                  ? {}
+                  : dropTarget({ accountId, mailboxId: box.id }, mailboxName(box)))}
+                className={cn(navClass(box.id === mailbox?.id), "flex-1")}
+              >
+                <Icon size={16} strokeWidth={1.75} />
+                <span>{mailboxName(box)}</span>
+                {box.role === "inbox" || box.role === "junk" ? (
+                  <Count value={box.unreadEmails} />
+                ) : null}
+                {box.role === "drafts" || box.role === "snoozed" ? (
+                  <Count value={box.totalEmails} />
+                ) : null}
+              </Link>
+            </FolderRow>
           );
         })}
         {secure.length ? (
@@ -352,22 +365,7 @@ const NewFolderDialog = ({
           <Input autoFocus value={name} onChange={(e) => setName(e.target.value)} required />
         </Label>
         {parents.length > 0 ? (
-          <Label>
-            {m.mail_folders()}
-            <select
-              value={parentId}
-              onChange={(e) => setParentId(e.target.value)}
-              className="h-10 rounded-lg border border-border bg-bg px-2 text-[14px] text-fg"
-            >
-              <option value="">—</option>
-              {parents.map((node) => (
-                <option key={node.mailbox.id} value={node.mailbox.id}>
-                  {"  ".repeat(node.depth)}
-                  {node.mailbox.name}
-                </option>
-              ))}
-            </select>
-          </Label>
+          <ParentSelect value={parentId} onChange={setParentId} options={parents} />
         ) : null}
         <div className="flex justify-end gap-2">
           <Button variant="ghost" onClick={() => onOpenChange(false)}>

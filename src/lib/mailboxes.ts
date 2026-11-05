@@ -102,3 +102,35 @@ export const mailboxRights = (mailbox: Mailbox) => ({
  * "Nur lesen" grants `maySetKeywords` but not this.
  */
 export const canAssignIn = (mailbox: Mailbox) => mailbox.myRights?.maySetMetadata !== false;
+
+/** A folder's subfolders at every depth, each parent before its children. */
+export const subfolders = (mailbox: Pick<Mailbox, "id">, mailboxes: Mailbox[]): Mailbox[] =>
+  mailboxes
+    .filter((candidate) => candidate.parentId === mailbox.id)
+    .flatMap((child) => [child, ...subfolders(child, mailboxes)]);
+
+/**
+ * What a folder's menu in the sidebar offers. Standard folders keep their name and place
+ * (Stalwart also refuses to delete Posteingang, Spam and Papierkorb); in a shared mailbox the
+ * rights decide (RFC 8621 §2, `myRights`): `mayRename` covers moving, too. Marking read needs
+ * unread mails and `maySetSeen`.
+ */
+export const folderActions = (mailbox: Mailbox) => {
+  const own = mailbox.role === null;
+  return {
+    rename: own && mailbox.myRights?.mayRename !== false,
+    remove: own && mailbox.myRights?.mayDelete !== false,
+    markRead: mailbox.unreadEmails > 0 && mailboxRights(mailbox).canMarkSeen,
+  };
+};
+
+/**
+ * Where a folder can go: any own folder except itself and its subfolders (RFC 8621 §2: no loops)
+ * that takes subfolders (`mayCreateChild`). The top level is always offered besides.
+ */
+export const moveTargets = (mailbox: Mailbox, mailboxes: Mailbox[]): FolderNode[] => {
+  const excluded = new Set([mailbox, ...subfolders(mailbox, mailboxes)].map((box) => box.id));
+  return flattenTree(folderTree(mailboxes)).filter(
+    (node) => !excluded.has(node.mailbox.id) && node.mailbox.myRights?.mayCreateChild !== false,
+  );
+};

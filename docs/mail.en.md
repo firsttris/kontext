@@ -63,6 +63,13 @@ SMTP.
 
 - **Folders and subfolders**, moving by menu or by dragging, also between info@ and your own
   folders.
+- **Managing folders:** "…" next to a folder in the sidebar (on a desktop when the pointer is
+  over it, on a phone always, in the folder screen) offers **Rename**, **Move** (under another own
+  folder or to the top) and **Delete**. Deleting puts the mails in it into the trash and, after a
+  question, deletes the subfolders too. **Mark all as read** is there for every folder with unread
+  mails, the inbox too, and applies to all mails in the folder, not only the loaded ones. The
+  standard folders (Inbox, Sent, Drafts, Archive, Spam, Trash) cannot be renamed, moved or deleted;
+  in shared mailboxes the menu shows only what your rights allow.
 - **Importing .eml files:** single mails saved as a file (from Thunderbird, Apple Mail or
   Kontext's "Forward as attachment") can be brought into the open folder with the button to the
   right of "All / Unread" – several at once too – or dragged onto the list or onto a folder in the

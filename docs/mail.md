@@ -65,6 +65,14 @@ IMAP und SMTP.
 
 - **Ordner und Unterordner**, verschieben per Menü oder Ziehen, auch zwischen info@ und den
   eigenen Ordnern.
+- **Ordner verwalten:** „…“ neben einem Ordner in der Seitenleiste (am Desktop beim Darüberfahren,
+  am Handy im Ordner-Bildschirm immer) bietet **Umbenennen**, **Verschieben** (unter einen anderen
+  eigenen Ordner oder ganz nach oben) und **Löschen**. Beim Löschen kommen die Mails darin in den
+  Papierkorb, die Unterordner werden nach der Rückfrage mitgelöscht. **Alle als gelesen
+  markieren** gibt es für jeden Ordner mit ungelesenen Mails, auch für den Posteingang, und gilt
+  für alle Mails im Ordner, nicht nur die geladenen. Die Standardordner (Posteingang, Gesendet,
+  Entwürfe, Archiv, Spam, Papierkorb) lassen sich nicht umbenennen, verschieben oder löschen; in
+  gemeinsamen Postfächern zeigt das Menü nur, was die eigenen Rechte erlauben.
 - **.eml-Dateien importieren:** einzelne Mails, die als Datei gesichert wurden (aus Thunderbird,
   Apple Mail oder Kontexts „Als Anhang weiterleiten“), mit dem Knopf rechts neben „Alle / Ungelesen“
   in den geöffneten Ordner holen – auch mehrere auf einmal – oder auf die Liste oder einen Ordner in
