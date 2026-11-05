@@ -82,7 +82,9 @@ const phoneKindProps: Record<PhoneKind, Pick<Phone, "features" | "contexts">> = 
 /** The job title, not a role (RFC 9553 §2.2.5: `kind` is "title" when left out). */
 const isJobTitle = (title: { kind?: string }) => (title.kind ?? "title") === "title";
 const isBirth = (anniversary: { kind: string }) => anniversary.kind === "birth";
-const isWebsite = (_link: unknown, key: string) => !isDocumentKey(key);
+/** Not a document, and not a contact link (kind "contact", vCard CONTACT-URI, §2.6.3). */
+const isWebsite = (link: { kind?: string }, key: string) =>
+  !isDocumentKey(key) && link.kind !== "contact";
 
 const entryWhere = <T>(
   record: Record<string, T> | undefined,

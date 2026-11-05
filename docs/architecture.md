@@ -1653,7 +1653,7 @@ Das Formular (`src/lib/contact-form.ts`) zeigt Vorname, Nachname, Firma mit Abte
 (`organizations` mit `units`, RFC 9553 §2.2.3), Position (`titles` der Art `title`, §2.2.5), alle
 Mail-Adressen (`emails`, §2.3.1), alle Nummern (`phones`, §2.3.3) mit ihrer Art, die erste
 Adresse mit Straße, PLZ, Ort und Land (`addresses`, Bestandteile `name`, `postcode`, `locality`,
-`country`, §2.5.1), die Website (der erste Link, der kein Dokument ist, §2.6.3), den Geburtstag
+`country`, §2.5.1), die Website (der erste Link, der kein Dokument und kein Kontaktlink der Art `contact` ist, §2.6.3), den Geburtstag
 (`anniversaries` der Art `birth`, §2.8.1, den der [Geburtstagskalender](#geburtstage) liest) und
 die Notiz. Die Art einer Nummer steht in JSContact in zwei Feldern: Mobil und Fax als `features`
 (`mobile`, `fax`), Büro und Privat als `voice` mit dem Kontext `work` bzw. `private`.

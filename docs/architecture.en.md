@@ -1601,7 +1601,7 @@ The form (`src/lib/contact-form.ts`) shows given name, surname, company with dep
 (`organizations` with `units`, RFC 9553 §2.2.3), job title (`titles` of the kind `title`, §2.2.5),
 every mail address (`emails`, §2.3.1), every number (`phones`, §2.3.3) with its kind, the first
 address with street, postcode, town and country (`addresses`, components `name`, `postcode`,
-`locality`, `country`, §2.5.1), the website (the first link that is not a document, §2.6.3), the
+`locality`, `country`, §2.5.1), the website (the first link that is neither a document nor a contact link of kind `contact`, §2.6.3), the
 birthday (`anniversaries` of the kind `birth`, §2.8.1, which the [birthday calendar](#geburtstage)
 reads) and the note. JSContact keeps the kind of a number in two fields: mobile and fax as
 `features` (`mobile`, `fax`), work and home as `voice` with the context `work` or `private`.
