@@ -112,6 +112,37 @@ which later also carries confidential chats (building block 5).
   there is one for the address (every mail program checks that without further ado), otherwise
   with the PGP key (`signMail`, `smimeSignedMail`).
 
+### Stored encrypted on the server { #auf-dem-server-verschlusselt-ablegen }
+
+Under *Einstellungen → Verschlüsselung*, "Mails auf dem Server verschlüsselt ablegen" (store
+mails encrypted on the server) has Stalwart encrypt every new mail with the public part of your
+own key (building block 2) before it stores it (Stalwart 1.0.2,
+`AccountSettings.encryptionAtRest`). Whoever gets hold of the disk or a backup reads nothing, not
+even the administrator. Kontext registers the key with Stalwart for this (`x:PublicKey`) if it is
+not there yet, and opens the mails like any PGP mail after unlocking: Stalwart writes PGP/MIME
+as in RFC 3156 (`crates/crypto/src/pgp/encrypt.rs`); sender, recipients, date and subject stay
+readable outside (`src/jmap/encryption-at-rest.ts`).
+
+- **What gets encrypted:** only mails that arrive afterwards. What is already there stays as it
+  is. "Auch Mails verschlüsseln, die Mailprogramme oder ein Import ablegen" (also encrypt mails
+  stored by mail programs or an import, `encryptOnAppend`) adds mails that come in over IMAP
+  (such as "Sent" from Thunderbird) or by import. Drafts and the copy in "Sent" that Kontext
+  stores when sending are never encrypted by Stalwart (`crates/email/src/message/ingest.rs`,
+  Stalwart 1.0.1).
+- **Subject:** stays visible. Stalwart refuses the hidden subject for this encryption
+  (`validate_encryption_at_rest` in `crates/jmap/src/registry/mapping/public_key.rs`).
+- **Limits:** search, rules, the assistant and the agents can't see into these mails, as with any
+  encrypted mail. Without the private key (or the recovery code) they are lost. Whoever deletes
+  the key (also to make a new one) has Kontext switch it off first, so Stalwart does not encrypt
+  for a key nobody holds any more, and takes it off Stalwart again (which allows at most five keys
+  per account); with the new key one switches it on again. Should Stalwart
+  still encrypt for a key other than the current one, the card warns, and the switch can be
+  turned off even without a key.
+- **Shared mailboxes:** stay unencrypted. They are group accounts without settings of their own
+  and are read by several people; a personal key does not fit there.
+- **Requirement:** Stalwart's server-wide switch `atRestEnable` (settings `Encryption`) is on;
+  it is by default.
+
 ## Building block 4: "Send confidentially" – for every recipient { #baustein-4-vertraulich-senden-fur-alle-empfanger }
 
 One switch for mails going out; Kontext takes the best way for each recipient:

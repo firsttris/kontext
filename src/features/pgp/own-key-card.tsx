@@ -23,6 +23,7 @@ import { m } from "@/paraglide/messages";
 import { useSendAccount } from "../mail/use-send-account";
 import { usePersonalAccountId } from "../settings/queries";
 import { SettingsCard } from "../settings/settings-page";
+import { useStopAtRest } from "./at-rest-card";
 import { keepUnlocked, type OwnKey, useOwnKey, usePgpActions } from "./queries";
 
 const MIN_PASSPHRASE = 10;
@@ -289,13 +290,14 @@ const PassphraseDialog = ({
 export const OwnKeyCard = () => {
   const { data: own, isPending } = useOwnKey();
   const actions = usePgpActions();
+  const stopAtRest = useStopAtRest();
   const toast = useToast();
   const [dialog, setDialog] = useState<"create" | "import" | "change" | "forgotten" | null>(null);
 
-  const remove = async () => {
+  const remove = async (fingerprint: string) => {
     if (!window.confirm(m.pgp_delete_confirm())) return;
-    await actions
-      .removeOwn()
+    await stopAtRest(fingerprint)
+      .then(() => actions.removeOwn())
       .catch((error: Error) => toast.show(m.common_error({ message: error.message }), "error"));
   };
 
@@ -326,7 +328,11 @@ export const OwnKeyCard = () => {
             <Button variant="ghost" onClick={() => setDialog("forgotten")}>
               {m.pgp_forgotten()}
             </Button>
-            <Button variant="ghost" className="text-danger" onClick={() => void remove()}>
+            <Button
+              variant="ghost"
+              className="text-danger"
+              onClick={() => void remove(own.fingerprint)}
+            >
               {m.pgp_delete()}
             </Button>
           </div>

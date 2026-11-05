@@ -113,6 +113,37 @@ unterschreibt und entschlüsselt – und der später auch vertrauliche Chats tr�
   Mit dem S/MIME-Zertifikat, wenn eins für die Adresse da ist (jedes Mailprogramm prüft das
   ohne Weiteres), sonst mit dem PGP-Schlüssel (`signMail`, `smimeSignedMail`).
 
+### Auf dem Server verschlüsselt ablegen
+
+Unter *Einstellungen → Verschlüsselung* legt „Mails auf dem Server verschlüsselt ablegen“ fest,
+dass Stalwart jede neue Mail mit dem öffentlichen Teil des eigenen Schlüssels (Baustein 2)
+verschlüsselt, bevor es sie speichert (Stalwart 1.0.2, `AccountSettings.encryptionAtRest`). Wer
+Platte oder Sicherung in die Hände bekommt, liest nichts, auch der Administrator nicht. Kontext
+meldet den Schlüssel dafür bei Stalwart an (`x:PublicKey`), wenn er dort noch fehlt, und öffnet
+die Mails wie jede PGP-Mail nach dem Entsperren: Stalwart schreibt PGP/MIME nach RFC 3156
+(`crates/crypto/src/pgp/encrypt.rs`), Absender, Empfänger, Datum und Betreff bleiben außen
+lesbar (`src/jmap/encryption-at-rest.ts`).
+
+- **Was verschlüsselt wird:** nur Mails, die danach ankommen. Was schon da ist, bleibt, wie es
+  ist. „Auch Mails verschlüsseln, die Mailprogramme oder ein Import ablegen“
+  (`encryptOnAppend`) nimmt Mails hinzu, die per IMAP (etwa „Gesendet“ aus Thunderbird) oder per
+  Import hineinkommen. Entwürfe und die Kopie in „Gesendet“, die Kontext beim Senden ablegt,
+  verschlüsselt Stalwart nie (`crates/email/src/message/ingest.rs`, Stalwart 1.0.1).
+- **Betreff:** bleibt sichtbar. Stalwart lehnt den verborgenen Betreff für diese Verschlüsselung
+  ab (`validate_encryption_at_rest` in `crates/jmap/src/registry/mapping/public_key.rs`).
+- **Grenzen:** Suche, Regeln, der Assistent und die Agenten sehen in diese Mails nicht hinein,
+  wie bei jeder verschlüsselten Mail. Ohne den geheimen Schlüssel (oder den
+  Wiederherstellungscode) sind sie verloren. Wer den Schlüssel löscht (auch um einen neuen
+  anzulegen), dem schaltet Kontext es vorher aus, damit Stalwart nicht für einen Schlüssel
+  verschlüsselt, den niemand mehr hat, und nimmt ihn bei Stalwart wieder heraus (dort sind je
+  Konto höchstens fünf Schlüssel erlaubt); mit dem neuen schaltet man es wieder ein. Verschlüsselt
+  Stalwart doch für einen anderen als den jetzigen, warnt die Karte, und der Schalter lässt sich
+  auch ohne Schlüssel ausschalten.
+- **Gemeinsame Postfächer:** bleiben unverschlüsselt. Sie sind Gruppenkonten ohne eigene
+  Einstellungen und werden von mehreren gelesen; ein persönlicher Schlüssel passt dort nicht.
+- **Voraussetzung:** Stalwarts serverweiter Schalter `atRestEnable` (Einstellungen
+  `Encryption`) ist an; das ist er ab Werk.
+
 ## Baustein 4: „Vertraulich senden“ – für alle Empfänger
 
 Ein Schalter für Mails nach außen; Kontext nimmt je Empfänger den besten Weg:
