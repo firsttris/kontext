@@ -82,6 +82,10 @@ Kontext is also on the iPhone, on Android (DAVx⁵) and in Thunderbird.
   Maybe. One click is enough, for customers without an account too; Gmail, Outlook and Apple also
   show their own buttons. Changes and cancellations go out the same way.
   [More](architecture.md#einladungen)
+- **Inviting as info@:** an appointment in the calendar of a shared mailbox (info@, rechnung@)
+  invites as the mailbox: info@ is the organiser, the invitation goes out from info@ and is in its
+  "Sent", and the answers come back to info@ – to everyone who looks after the mailbox, not to the
+  colleague who entered it. [More](architecture.md#einladungen)
 - **Inviting colleagues:** in the "Attendees" field, Kontext suggests colleagues from the company
   while you type (then contacts and contact groups); you don't need to know the address.
 - **Who's free?** When you invite colleagues, Kontext shows who is busy at that time and suggests

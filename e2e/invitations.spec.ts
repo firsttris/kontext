@@ -6,7 +6,6 @@ import {
   login,
   mailboxWithRole,
   mailsWithSubject,
-  personalAccountId,
   unique,
 } from "./helpers";
 
@@ -23,10 +22,16 @@ type Sent = { subject: string; to: string; html: string; calendar: string };
 
 const partsOf = (part: Part): Part[] => [part, ...(part.subParts ?? []).flatMap(partsOf)];
 
-/** The mails in a user's Sent folder whose subject has the text, with HTML and iCalendar. */
-const sentMails = async (user: string, text: string): Promise<Sent[]> => {
+/**
+ * The mails in the Sent folder of a user's mailbox (their own or a shared one like info@) whose
+ * subject has the text, with HTML and iCalendar.
+ */
+const sentMails = async (user: string, text: string, mailbox = user): Promise<Sent[]> => {
   const client = jmapAs(user);
-  const accountId = await personalAccountId(user);
+  const session = await client.getSession();
+  const accountId = Object.entries(session.accounts).find(
+    ([, account]) => account.name === address(mailbox),
+  )![0];
   const sent = await mailboxWithRole(client, accountId, "sent");
   const list = await mailsWithSubject<{
     to: { email: string }[];
@@ -49,13 +54,13 @@ const sentMails = async (user: string, text: string): Promise<Sent[]> => {
   });
 };
 
-/** The invitation to someone, once it is in Sent. */
-const sentTo = async (subject: string, to: string): Promise<Sent> => {
+/** The invitation to someone, once it is in the Sent folder of Jonas's mailbox (or info@'s). */
+const sentTo = async (subject: string, to: string, mailbox = "jonas"): Promise<Sent> => {
   let found: Sent | undefined;
   await expect
     .poll(
       async () => {
-        found = (await sentMails("jonas", subject)).find(
+        found = (await sentMails("jonas", subject, mailbox)).find(
           (mail) => mail.subject === subject && mail.to === to,
         );
         return Boolean(found);
@@ -83,10 +88,21 @@ const outsider = async (browser: Browser, phone = false) =>
     })
   ).newPage();
 
-const createWithAttendees = async (page: Page, title: string, attendees: string) => {
+/** `calendarOf`: the mailbox whose calendar it goes into; the own default one when left out. */
+const createWithAttendees = async (
+  page: Page,
+  title: string,
+  attendees: string,
+  calendarOf?: string,
+) => {
   await page.goto(`/calendar?date=${tomorrow()}&event=new&start=${tomorrow()}T14:00`);
   const dialog = page.getByRole("dialog");
   await dialog.getByLabel("Titel").fill(title);
+  if (calendarOf) {
+    const calendar = dialog.getByLabel("Kalender", { exact: true });
+    const option = calendar.locator("option", { hasText: address(calendarOf) }).first();
+    await calendar.selectOption((await option.getAttribute("value"))!);
+  }
   await dialog.getByLabel("Ort").fill("Hauptstraße 41, Ettlingen");
   await addAttendees(dialog, attendees);
   await dialog.getByRole("button", { name: "Speichern" }).click();
@@ -199,7 +215,52 @@ test.describe("Einladungen", () => {
     expect(removed.calendar).toContain("METHOD:CANCEL");
     expect(removed.calendar.replace(/\r?\n /g, "")).not.toContain(`mailto:${CUSTOMER}`);
   });
+
+  test("aus dem Kalender von info@ lädt info@ ein, die Antwort geht an info@", async ({
+    page,
+    browser,
+  }) => {
+    await invitesAsInfo(page, browser, false);
+  });
 });
+
+/** The customer's answer, as the event in info@'s calendar has it. */
+const answerInInfo = async (title: string) => {
+  const client = jmapAs("jonas");
+  const session = await client.getSession();
+  const accountId = Object.entries(session.accounts).find(
+    ([, account]) => account.name === address("info"),
+  )![0];
+  const { list } = await client.call<{
+    list: { title?: string; participants?: Record<string, Record<string, unknown>> }[];
+  }>("CalendarEvent/get", { accountId, properties: ["title", "participants"] }, [
+    "urn:ietf:params:jmap:core",
+    "urn:ietf:params:jmap:calendars",
+  ]);
+  const event = list.find((candidate) => candidate.title === title);
+  return Object.values(event?.participants ?? {}).find(
+    (participant) => participant.calendarAddress === `mailto:${CUSTOMER}`,
+  )?.participationStatus;
+};
+
+/** Jonas invites a customer from info@'s calendar: info@ sends it, organizes it, gets the answer. */
+const invitesAsInfo = async (page: Page, browser: Browser, phone: boolean) => {
+  test.setTimeout(90_000);
+  const title = unique("Angebot Wärmepumpe");
+  await login(page);
+  await createWithAttendees(page, title, CUSTOMER, "info");
+
+  const mail = await sentTo(`Einladung: ${title}`, CUSTOMER, "info");
+  expect(mail.calendar.replace(/\r?\n /g, "")).toMatch(
+    new RegExp(`ORGANIZER[^:\\r\\n]*:mailto:${address("info").replace(/\./g, "\\.")}`),
+  );
+  expect(mail.calendar).not.toContain(`mailto:${address("jonas")}`);
+
+  const customer = await outsider(browser, phone);
+  await customer.goto(answerLink(mail, "accepted"));
+  await expect(customer.getByRole("status")).toHaveText("Du hast zugesagt.");
+  await expect.poll(() => answerInInfo(title), { timeout: 20_000 }).toBe("accepted");
+};
 
 test.describe("Einladungen am Handy @phone", () => {
   test("Antwort auf der Seite der Einladung, dann geändert", async ({ page, browser }) => {
@@ -224,5 +285,9 @@ test.describe("Einladungen am Handy @phone", () => {
     await expect(customer.getByRole("alert")).toHaveText(
       "Dieser Link ist ungültig oder abgelaufen.",
     );
+  });
+
+  test("aus dem Kalender von info@ lädt info@ ein", async ({ page, browser }) => {
+    await invitesAsInfo(page, browser, true);
   });
 });

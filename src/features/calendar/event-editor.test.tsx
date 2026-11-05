@@ -367,3 +367,59 @@ describe("EventEditor invitations outside the company", () => {
     ).toContain("kunde@example.test");
   });
 });
+
+describe("EventEditor organizer of a shared mailbox's appointment", () => {
+  afterEach(() => {
+    refs.calendars = [];
+    updateEvent.mockClear();
+  });
+
+  // Anna entered it in info@'s calendar and invited Jonas and the customer; Jonas changes it.
+  it("keeps the editing user on it when they are one of its attendees", async () => {
+    refs.calendars = [
+      {
+        key: "info/1",
+        accountId: "info",
+        isPersonal: false,
+        isOwner: true,
+        ownerEmail: "info@weber.test",
+        mayWrite: true,
+        calendar: { id: "1" },
+      },
+    ];
+    const event = {
+      id: "e1",
+      accountId: "info",
+      calendarIds: { "1": true },
+      title: "Abnahme",
+      start: "2026-11-02T09:00:00",
+      timeZone: "Europe/Berlin",
+      duration: "PT1H",
+      organizerCalendarAddress: "mailto:info@weber.test",
+      participants: {
+        organizer: {
+          calendarAddress: "mailto:info@weber.test",
+          roles: { owner: true, attendee: true },
+        },
+        a0: { calendarAddress: "mailto:jonas@weber.test", roles: { attendee: true } },
+        a1: { calendarAddress: "mailto:kunde@example.test", roles: { attendee: true } },
+      },
+    };
+    render(<EventEditor event={event} onDone={vi.fn()} onCancel={vi.fn()} />);
+    fireEvent.change(screen.getByLabelText("Titel"), { target: { value: "Abnahme Bad" } });
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: "Speichern" }));
+    });
+    const { patch } = (
+      updateEvent.mock.calls[0] as unknown as [{ patch: Record<string, unknown> }]
+    )[0];
+    const addresses = Object.values(
+      patch.participants as Record<string, { calendarAddress: string }>,
+    ).map((participant) => participant.calendarAddress);
+    expect(addresses).toEqual([
+      "mailto:info@weber.test",
+      "mailto:jonas@weber.test",
+      "mailto:kunde@example.test",
+    ]);
+  });
+});
