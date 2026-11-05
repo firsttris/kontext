@@ -3,6 +3,7 @@
  * the quoted original for replies. DOMPurify needs a DOM, so `sanitizeMailHtml` runs in the browser.
  */
 import DOMPurify from "dompurify";
+import { cidOfUrl } from "./inline-images";
 import { darkBackgroundColor, darkStylesheet, darkTextColor, parseColor } from "./mail-colors";
 import { cleanCss } from "./mail-css";
 
@@ -164,7 +165,7 @@ export const sanitizeMailHtml = (
         continue;
       }
       if (value.startsWith("cid:")) {
-        const url = cidUrls[value.slice(4).replace(/^<|>$/g, "")];
+        const url = cidUrls[cidOfUrl(value)];
         if (url) element.setAttribute(attribute, url);
         else element.removeAttribute(attribute);
       } else if (!allowRemote && !isLocalUrl(value)) {

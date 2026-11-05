@@ -37,6 +37,9 @@ describe("sanitizeMailHtml", () => {
     expect(clean('<img src="cid:logo@x">').html).toBe('<img src="blob:logo">');
     expect(clean('<img src="cid:unknown">').html).toBe("<img>");
   });
+  it("finds an inline image by a percent-encoded cid: URL (RFC 2392 §2)", () => {
+    expect(clean('<img src="cid:logo%40x">').html).toBe('<img src="blob:logo">');
+  });
   it("turns no cid: into a URL outside images and SVG", () => {
     const math = clean('<math><mtext href="cid:logo@x">x</mtext></math>').html;
     expect(math).not.toContain("href");

@@ -4,6 +4,7 @@ import { m } from "@/paraglide/messages";
 import { prefixSubject, replyRecipients, sameAddress } from "./addresses";
 import { displayName, readingDate } from "./format";
 import { escapeHtml, quoteHtml } from "./html";
+import { bareCid, inlineParts, shownCids } from "./inline-images";
 
 /** The line a forward starts with, below what the user writes above it. */
 export const FORWARD_MARKER = "---------- Weitergeleitete Nachricht ----------";
@@ -24,6 +25,8 @@ export type ComposeStart = {
   references: string[] | null;
   /** Attachments carried along: those of a forwarded original or of a draft. */
   attachments: { blobId: string; name: string; type: string; size: number }[];
+  /** Pictures in the text, by Content-ID: those of a draft, or of the quoted or forwarded original. */
+  images: { blobId: string; name: string; type: string; size: number; cid: string }[];
 };
 
 const empty: ComposeStart = {
@@ -37,11 +40,33 @@ const empty: ComposeStart = {
   inReplyTo: null,
   references: null,
   attachments: [],
+  images: [],
 };
 
-const fileAttachments = (email: EmailDetail): ComposeStart["attachments"] =>
+/**
+ * The pictures of a mail by their Content-ID (RFC 2392); with `shown`, only those its text shows.
+ * A reply sends them again as parts of its own under the same Content-ID, so the quote keeps them.
+ */
+const pictures = (email: EmailDetail, shown?: string[]): ComposeStart["images"] =>
+  inlineParts(email)
+    .map((part) => ({
+      blobId: part.blobId!,
+      name: part.name ?? "bild",
+      type: part.type,
+      size: part.size,
+      cid: bareCid(part.cid!),
+    }))
+    .filter((image) => !shown || shown.includes(image.cid));
+
+/** The files of a mail, without the pictures its text shows (`shown`), which go as pictures. */
+const fileAttachments = (email: EmailDetail, shown: string[] = []): ComposeStart["attachments"] =>
   email.attachments
-    .filter((part) => part.blobId && part.disposition !== "inline")
+    .filter(
+      (part) =>
+        part.blobId &&
+        part.disposition !== "inline" &&
+        !(part.cid && shown.includes(bareCid(part.cid))),
+    )
     .map((part) => ({
       blobId: part.blobId!,
       name: part.name ?? "anhang",
@@ -92,7 +117,7 @@ export const startEmlForward = (originals: EmlOriginal[]): ComposeStart => ({
 
 /**
  * `originalHtml` is the cleaned body of the original (already sanitized for display), so the
- * quote shows what the user saw.
+ * quote shows what the user saw; its pictures carry their Content-ID (`data-cid`) and come along.
  */
 export const startCompose = (
   mode: Exclude<ComposeMode, "forwardEml">,
@@ -113,8 +138,10 @@ export const startCompose = (
       inReplyTo: original.inReplyTo,
       references: original.references,
       attachments: fileAttachments(original),
+      images: pictures(original),
     };
   }
+  const shown = shownCids(originalHtml);
   const sender = original.from?.[0];
   const header = m.mail_quote_header({
     date: readingDate(original.sentAt ?? original.receivedAt),
@@ -131,7 +158,8 @@ export const startCompose = (
       ...empty,
       subject: prefixSubject("Fwd", original.subject),
       html: `<p></p><p>${FORWARD_MARKER}<br>${lines.join("<br>")}</p>${originalHtml}`,
-      attachments: fileAttachments(original),
+      attachments: fileAttachments(original, shown),
+      images: pictures(original, shown),
     };
   }
 
@@ -144,6 +172,7 @@ export const startCompose = (
     html: quoteHtml(header, originalHtml),
     inReplyTo: original.messageId,
     references: [...(original.references ?? [])],
+    images: pictures(original, shown),
   };
 };
 
