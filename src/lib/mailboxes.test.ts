@@ -172,6 +172,13 @@ describe("folder management", () => {
     });
   });
 
+  it("offers no delete for a folder that holds a standard folder, which would go along", () => {
+    const parent = box("k", "Kunden");
+    const trashInside = box("t", "Trash", "trash", "k");
+    expect(folderActions(parent, [parent, trashInside]).remove).toBe(false);
+    expect(folderActions(parent, [parent, box("h", "Hoffmann", null, "k")]).remove).toBe(true);
+  });
+
   it("follows the rights in a shared mailbox", () => {
     const shared = {
       ...box("k", "Kunden"),
