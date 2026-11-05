@@ -7,6 +7,10 @@ Steps that an update needs beyond raising the version are marked **Upgrade**.
 
 ## Unreleased
 
+- Calendar: a "Arbeitswoche" view (Monday to Friday) next to day, week and month, and working
+  hours per device (*Einstellungen → Darstellung*, at first 7–18): day and week open at their
+  start and shade the hours outside them; phones keep the day view (user guide, "Kalender und
+  Kontakte").
 - Mail: own folders can be renamed, moved and deleted from "…" next to them in the sidebar
   (their mails go to the trash, subfolders go along); "Mark all as read" works for any folder,
   for all its mails, not only the loaded ones (user guide, "Mail", "Ordner verwalten").

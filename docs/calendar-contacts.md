@@ -14,10 +14,17 @@ Kontext steht, steht auch am iPhone, unter Android (DAVx⁵) und in Thunderbird.
 
 ## Kalender
 
-- **Tag, Woche, Monat und Liste**; Termine per Ziehen verschieben, wiederkehrende Termine ändern
+- **Tag, Woche, Arbeitswoche, Monat und Liste**; Termine per Ziehen verschieben, wiederkehrende Termine ändern
   oder löschen: „Nur dieser Termin“, **„Dieser und alle folgenden“** oder „Alle Termine der
   Serie“. Ab einem Termin endet die bisherige Serie davor, und ab dort beginnt eine neue mit den
   Änderungen – wie bei Google und Outlook. [Mehr](architecture.md#wiederkehrende-termine)
+- **Arbeitswoche und Arbeitszeit:** Die Arbeitswoche zeigt Montag bis Freitag ohne das
+  Wochenende; die gewählte Ansicht steht in der Adresse und bleibt beim Blättern und Neuladen.
+  Unter *Einstellungen → Darstellung → Arbeitszeit im Kalender* stellt man ein, wann der
+  Arbeitstag beginnt und endet (anfangs 7 bis 18 Uhr, wie bei den Vorschlägen von „Wer hat
+  Zeit?“): Tag und Woche öffnen zu Arbeitsbeginn, die Stunden davor und danach sind grau
+  hinterlegt. Die Einstellung gilt für das eine Gerät. Am Handy gibt es keine Arbeitswoche, es
+  zeigt einen Tag mit der Wochenleiste darüber.
 
   ![Termin einer Serie bearbeiten mit „Dieser und alle folgenden“](screenshots/series-following.png)
 
