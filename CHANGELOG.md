@@ -10,6 +10,11 @@ Steps that an update needs beyond raising the version are marked **Upgrade**.
 - Mail: a reply or forward keeps the images in the text of the original; they go out again as
   inline images (`cid:`). Images from the internet stay in the quote only if they were loaded in
   the mail (user guide, "Mail", "Schreiben").
+- Export: a mail folder as an .mbox file ("…" next to the folder → "Als .mbox exportieren";
+  mboxrd, with read, flagged and answered as `Status`/`X-Status`, readable by Thunderbird, Apple
+  Mail and Kontext's own import), and a calendar as an .ics file (*Kalender verwalten*, the arrow
+  next to it; series with their changed dates). Both are made in the browser (user guide, "Mail",
+  "Kalender und Kontakte").
 - Mail: "Alle herunterladen" below the attachments of a mail with several of them saves them in
   one `<Betreff>.zip` (packed in the browser, uncompressed; equal names get " (2)"), and "Als
   .eml speichern" in "Weitere Aktionen" saves the whole mail as `<Betreff>.eml`, on the phone too

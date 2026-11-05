@@ -40,6 +40,11 @@ export type CalendarEvent = {
   organizerCalendarAddress?: string;
   /** "free" when the time does not count as busy (RFC 8984 §5.2.2); "busy" when left out. */
   freeBusyStatus?: "free" | "busy";
+  /**
+   * Whether it takes place (RFC 8984 §5.1.3), "confirmed" when left out. Stalwart keeps an
+   * invitation its organizer called off as "cancelled" (crates/groupware/src/scheduling/inbound.rs).
+   */
+  status?: "confirmed" | "cancelled" | "tentative";
   recurrenceRule?: RecurrenceRule | null;
   /** Its reminder (RFC 8984 §4.5.2); see reminders.ts. */
   alerts?: Record<string, Alert> | null;
