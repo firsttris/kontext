@@ -1528,6 +1528,34 @@ whoever reads a mail on the phone sees it disappear here. Nothing is stored on t
 on the bell is there for mails that came after the last opening and for invitations that were not
 there yet at that time – the browser remembers both.
 
+On top of that comes what Stalwart reports itself, under "Shares and changes"
+(`src/features/notifications/notices.ts`, rules in `src/lib/stalwart-notices.ts`):
+
+- **Shares** (`ShareNotification`, RFC 9670): when someone shares a calendar or an address book
+  with a person or takes the share back, Stalwart puts an entry into that person's account
+  (`crates/common/src/storage/index/build.rs`) and keeps it 30 days (`expungeShareNotifyAfter`).
+  The bell only shows whether one may now read the contents or no longer may (`mayReadItems`,
+  `mayRead` for an address book). Left out are the free and busy times Kontext's server shares
+  with every colleague (`server/company/availability.ts`), other changed rights and mail folders –
+  a deputy would get one entry per folder.
+- **Changed appointments** (`CalendarEventNotification`, draft-ietf-jmap-calendars): when someone
+  else changes an appointment in a calendar one sees – say in info@'s calendar – or an organizer's
+  update comes in, the entry lives in the calendar's account; everyone but the one who changed it
+  can see it (`can_view` in `crates/groupware/src/calendar/notification.rs`). The bell shows
+  moves (start, duration, recurrence), cancellations (deleted or `status: cancelled`) and other
+  changes; new appointments already stand under "Invitations", participants' answers come as
+  mail. For calendars colleagues shared, Stalwart reports only with `isSubscribed`, which Kontext
+  does not set. Also left out is what Kontext's server writes into subscribed calendars
+  (`server/subscriptions/`): with its key the account `kontext-server@…` changes them, in
+  development the admin without an address. Kontext fetches the 50 newest entries per account
+  without the new appointments (`CalendarEventNotification/query`): those lie unread for 30 days
+  (`expungeSchedulingInboxAfter`), in a full info@ calendar more than a `…/get` without ids answers
+  (500, `maxGetResults`).
+
+A click opens the calendar or contacts and deletes the entry with `…/set` `destroy`; Stalwart hides
+it for oneself only, on every device. Both kinds sit under their account's key, so push keeps them
+current like the mails; new ones count towards the dot on the bell.
+
 On the phone there is no bell; so that after a push notification one knows where the new thing is,
 the apps in the tab bar (and on the PC in the rail) carry a number from the same state
 (`app-badges.ts`, `appBadges` in `src/lib/notifications.ts`): Mail all unread mails of the inboxes

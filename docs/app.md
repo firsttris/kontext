@@ -58,7 +58,10 @@ eingehende Anrufe, **auch wenn Kontext ganz geschlossen ist**.
 - Wann ein Termin erinnert und ob per Hinweis oder Mail, steht am Termin
   ([Erinnerung je Termin](calendar-contacts.md#kalender)).
 - Die Glocke selbst zeigt ungelesene Mails der letzten Tage, offene Einladungen und die Termine
-  von heute. Mehr dazu in der [Architektur](architecture.md#benachrichtigungen).
+  von heute, dazu unter „Freigaben und Änderungen“, was Stalwart meldet: „Anna Weber hat dir einen
+  Kalender freigegeben“ oder „Sandra Klein hat „Wartung“ verschoben“ (auch geändert, abgesagt) –
+  für Termine, die jemand anderes in einem Kalender geändert hat, den man sieht. Ein Klick öffnet
+  ihn und nimmt den Eintrag aus der Glocke, auf allen Geräten. Mehr dazu in der [Architektur](architecture.md#benachrichtigungen).
 
 ## Am Handy
 

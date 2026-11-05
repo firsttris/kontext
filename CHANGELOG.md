@@ -7,6 +7,11 @@ Steps that an update needs beyond raising the version are marked **Upgrade**.
 
 ## Unreleased
 
+- Notifications: the bell shows what Stalwart itself reports (JMAP `ShareNotification`,
+  `CalendarEventNotification`): a colleague shared a calendar or an address book with you or
+  stopped, and someone else moved, changed or cancelled an appointment in a calendar you see (a
+  shared mailbox's, or an organizer's update of an invitation). Opening an entry clears it on
+  every device (user guide, "App, Handy und Konto", "Benachrichtigungen").
 - Encryption: "Mails auf dem Server verschlüsselt ablegen" under *Einstellungen →
   Verschlüsselung* has Stalwart store new mails encrypted with one's own OpenPGP key (Stalwart's
   `encryptionAtRest`, since 1.0.2); Kontext registers the key with Stalwart and opens the mails

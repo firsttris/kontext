@@ -1580,6 +1580,35 @@ Ansicht; wer eine Mail am Handy liest, sieht sie hier verschwinden. Auf dem Serv
 gespeichert: Den Punkt an der Glocke gibt es für Mails, die nach dem letzten Öffnen kamen, und für
 Einladungen, die damals noch nicht da waren – beides merkt sich der Browser.
 
+Dazu kommt, was Stalwart selbst meldet, unter „Freigaben und Änderungen“
+(`src/features/notifications/notices.ts`, Regeln in `src/lib/stalwart-notices.ts`):
+
+- **Freigaben** (`ShareNotification`, RFC 9670): Gibt jemand einem einen Kalender oder ein
+  Adressbuch frei oder nimmt die Freigabe zurück, legt Stalwart einen Eintrag im Konto der Person
+  an (`crates/common/src/storage/index/build.rs`) und hält ihn 30 Tage
+  (`expungeShareNotifyAfter`). Die Glocke zeigt nur, ob man den Inhalt jetzt lesen darf oder
+  nicht mehr (`mayReadItems`, beim Adressbuch `mayRead`). Weg bleiben die Frei/Gebucht-Zeiten,
+  die der Kontext-Server jedem Kollegen freigibt (`server/company/availability.ts`), andere
+  geänderte Rechte und Mailordner – eine Vertretung bekäme einen Eintrag je Ordner.
+- **Geänderte Termine** (`CalendarEventNotification`, draft-ietf-jmap-calendars): Ändert jemand
+  anderes einen Termin in einem Kalender, den man sieht – etwa im Kalender von info@ –, oder
+  kommt die Änderung eines Organisators, steht der Eintrag im Konto des Kalenders; sehen können
+  ihn alle außer dem, der geändert hat (`can_view` in
+  `crates/groupware/src/calendar/notification.rs`). Die Glocke zeigt Verschieben (Beginn, Dauer,
+  Wiederholung), Absagen (gelöscht oder `status: cancelled`) und andere Änderungen; neue Termine
+  stehen schon unter „Einladungen“, Antworten von Teilnehmern kommen als Mail. Von Kollegen
+  freigegebene Kalender meldet Stalwart nur mit `isSubscribed`, das Kontext nicht setzt. Weg
+  bleibt auch, was der Kontext-Server in abonnierte Kalender schreibt (`server/subscriptions/`):
+  Mit seinem Schlüssel ändert das Konto `kontext-server@…`, in der Entwicklung der Admin ohne
+  Adresse. Kontext holt je Konto die 50 neuesten Einträge ohne die neuen Termine
+  (`CalendarEventNotification/query`): Die bleiben ungelesen 30 Tage liegen
+  (`expungeSchedulingInboxAfter`), in einem vollen Kalender von info@ mehr, als ein `…/get` ohne
+  ids beantwortet (500, `maxGetResults`).
+
+Ein Klick öffnet Kalender oder Kontakte und löscht den Eintrag mit `…/set` `destroy`; Stalwart
+blendet ihn damit nur für einen selbst aus, auf allen Geräten. Beide Arten liegen unter dem Schlüssel
+ihres Kontos, Push hält sie also aktuell wie die Mails; neue zählen zum Punkt an der Glocke.
+
 Am Handy gibt es keine Glocke; damit man nach einer Push-Benachrichtigung weiß, wo das Neue
 liegt, tragen die Apps in der Tab-Leiste (und am PC in der Leiste) aus demselben Stand eine Zahl
 (`app-badges.ts`, `appBadges` in `src/lib/notifications.ts`): Mail alle ungelesenen Mails der

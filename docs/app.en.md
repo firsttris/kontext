@@ -57,7 +57,10 @@ closed**.
 - When an appointment reminds you, and whether by notification or email, is set on the appointment
   ([Reminder per appointment](calendar-contacts.md#kalender)).
 - The bell itself shows unread mails of the last few days, open invitations and today's
-  appointments. More on this in the [architecture](architecture.md#benachrichtigungen).
+  appointments, and under "Shares and changes" what Stalwart reports: "Anna Weber shared a
+  calendar with you" or "Sandra Klein moved “Maintenance”" (also changed, cancelled) – for
+  appointments someone else changed in a calendar one sees. A click opens it and takes the entry
+  out of the bell, on every device. More on this in the [architecture](architecture.md#benachrichtigungen).
 
 ## On the phone { #am-handy }
 
