@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { eventTimes, toLocal } from "@/lib/jscalendar";
-import { getEvent, getStoredEvent, queryEvents } from "./calendar";
+import { getEvent, getStoredEvent, queryEvents, searchEvents } from "./calendar";
 import type { JmapClient } from "./client";
 
 /**
@@ -117,5 +117,29 @@ describe("getEvent and getStoredEvent against Stalwart 1.0", () => {
     const { client } = strictStalwart();
     expect((await getEvent(client, "a", "s"))?.id).toBe("s");
     expect((await getStoredEvent(client, "a", "s"))?.id).toBe("s");
+  });
+});
+
+/**
+ * A floating appointment (no timeZone) at 23:30, as Stalwart 1.0 returns the stored event: utcStart
+ * and utcEnd only when asked for, resolved in the request's timeZone (crates/jmap/src/
+ * calendar_event/get.rs, `expand_base(default_tz)` for the base event).
+ */
+const floatingStalwart = {
+  call: async (method: string, args: Record<string, unknown>) => {
+    if (method === "CalendarEvent/query") return { ids: ["f"] };
+    const utc = (args.properties as string[]).includes("utcStart")
+      ? { utcStart: "2026-11-04T22:30:00Z", utcEnd: "2026-11-04T23:30:00Z" }
+      : {};
+    return {
+      list: [{ id: "f", start: "2026-11-04T23:30:00", timeZone: null, duration: "PT1H", ...utc }],
+    };
+  },
+} as unknown as JmapClient;
+
+describe("searchEvents", () => {
+  it("gives a floating appointment its local time, as the views show it", async () => {
+    const [hit] = await searchEvents(floatingStalwart, "a", "c", "wartung");
+    expect(toLocal(eventTimes(hit!).start)).toBe("2026-11-04T23:30:00");
   });
 });
