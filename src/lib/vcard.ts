@@ -151,3 +151,15 @@ export const isDuplicate = (card: ContactCard, existing: ContactCard[]): boolean
       (name(other) === name(card) && email(other) === email(card)),
   );
 };
+
+/** The cards that are not in the book yet, nor earlier in the file. */
+export const freshCards = (cards: ContactCard[], existing: ContactCard[]): ContactCard[] => {
+  const known = new Set(
+    [...existing, ...cards].map((card) => card.uid).filter((uid): uid is string => !!uid),
+  );
+  const fresh: ContactCard[] = [];
+  for (const card of cards) {
+    if (!isDuplicate(card, [...existing, ...fresh])) fresh.push(normalizeMembers(card, known));
+  }
+  return fresh;
+};

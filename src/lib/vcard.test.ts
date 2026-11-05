@@ -1,6 +1,13 @@
 import { describe, expect, it } from "vitest";
 import type { ContactCard } from "./jscontact";
-import { foldLine, isDuplicate, normalizeMembers, splitVCards, toVCard } from "./vcard";
+import {
+  foldLine,
+  freshCards,
+  isDuplicate,
+  normalizeMembers,
+  splitVCards,
+  toVCard,
+} from "./vcard";
 
 const petra: ContactCard = {
   id: "b",
@@ -99,5 +106,34 @@ describe("vCard", () => {
     expect(isDuplicate(copy, [petra])).toBe(true);
     expect(isDuplicate({ ...petra, uid: "petra-keller", emails: {} }, [petra])).toBe(true);
     expect(isDuplicate({ ...copy, emails: { e: { address: "neu@x.test" } } }, [petra])).toBe(false);
+  });
+});
+
+describe("freshCards", () => {
+  const person = (i: number, uid?: string): ContactCard => ({
+    ...(uid && { uid }),
+    name: {
+      components: [
+        { kind: "given", value: `Vorname${i}` },
+        { kind: "surname", value: `Nachname${i}` },
+      ],
+    },
+    emails: { e1: { address: `person${i}@kunde.test` } },
+  });
+
+  it("leaves out the cards in the book and those earlier in the file", () => {
+    const existing = [person(1, "u1"), person(2)];
+    const cards = [person(1), { ...person(9), uid: "u1" }, person(2), person(3), person(3)];
+    expect(freshCards(cards, existing)).toEqual([person(3)]);
+  });
+
+  // A customer list from Excel has thousands of rows, and the CSV preview runs this again on
+  // every change of a column; comparing each card with all before it took seconds.
+  it("checks a file of 5000 cards against 2000 in the book quickly", () => {
+    const existing = Array.from({ length: 2000 }, (_, i) => person(i));
+    const cards = Array.from({ length: 5000 }, (_, i) => person(i + 1000));
+    const start = performance.now();
+    expect(freshCards(cards, existing)).toHaveLength(4000);
+    expect(performance.now() - start).toBeLessThan(500);
   });
 });

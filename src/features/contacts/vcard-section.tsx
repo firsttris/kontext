@@ -16,25 +16,13 @@ import { decodeText, parseCsv } from "@/lib/csv";
 import { type CsvField, csvCards, guessField } from "@/lib/csv-contacts";
 import { downloadText } from "@/lib/download";
 import type { ContactCard } from "@/lib/jscontact";
-import { isDuplicate, normalizeMembers, splitVCards, toVCardFile } from "@/lib/vcard";
+import { freshCards, splitVCards, toVCardFile } from "@/lib/vcard";
 import { m } from "@/paraglide/messages";
 import { CsvColumns } from "./csv-columns";
 import { type BookRef, bookLabel, startBook } from "./queries";
 
 type Preview = { cards: ContactCard[]; duplicates: number; failed: number };
 type Csv = { header: string[]; rows: string[][]; mapping: CsvField[]; existing: ContactCard[] };
-
-/** The cards that are not in the book yet, nor earlier in the file. */
-const freshCards = (cards: ContactCard[], existing: ContactCard[]) => {
-  const known = new Set(
-    [...existing, ...cards].map((card) => card.uid).filter((uid): uid is string => !!uid),
-  );
-  const fresh: ContactCard[] = [];
-  for (const card of cards) {
-    if (!isDuplicate(card, [...existing, ...fresh])) fresh.push(normalizeMembers(card, known));
-  }
-  return fresh;
-};
 
 const csvPreview = ({ rows, mapping, existing }: Csv): Preview => {
   const cards = csvCards(rows, mapping);
