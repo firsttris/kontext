@@ -1,9 +1,20 @@
 import { expect, type Page, test } from "@playwright/test";
-import { setEncryptionAtRest } from "../src/jmap/encryption-at-rest";
+import { CAPABILITIES } from "../src/jmap/client";
+import { getEncryptionAtRest, setEncryptionAtRest } from "../src/jmap/encryption-at-rest";
 import { address, jmapAs, login, rawInboxMail, unique } from "./helpers";
 import { giveKey, PASSPHRASE } from "./pgp-key";
 
 const SWITCH = "Mails auf dem Server verschlüsselt ablegen";
+
+/** The ids of Sandra's public keys at Stalwart. */
+const registeredKeyIds = async () =>
+  (
+    await jmapAs("sandra").call<{ list: { id: string }[] }>(
+      "x:PublicKey/get",
+      { ids: null, properties: ["id"] },
+      [CAPABILITIES.core, CAPABILITIES.stalwart],
+    )
+  ).list.map(({ id }) => id);
 
 const switchOn = async (page: Page) => {
   await page.goto("/settings?section=encryption");
@@ -61,6 +72,22 @@ test.describe("Verschlüsselung: Mails auf dem Server verschlüsselt", () => {
     await expect(on).toHaveAttribute("aria-checked", "true");
     await on.click();
     await expect(on).toHaveAttribute("aria-checked", "false");
+  });
+
+  test("Schlüssel löschen schaltet es vorher aus", async ({ page }) => {
+    await login(page, "sandra");
+    await giveKey(page, "sandra");
+    await switchOn(page);
+    const before = await getEncryptionAtRest(jmapAs("sandra"));
+    expect(before["@type"]).toBe("Enabled");
+    page.once("dialog", (dialog) => void dialog.accept());
+    await page.getByRole("button", { name: "Schlüssel löschen" }).click();
+    await expect(page.getByRole("button", { name: "Schlüssel anlegen" })).toBeVisible();
+    // Stalwart no longer encrypts for the key that is gone, and keeps no copy of it.
+    expect(await getEncryptionAtRest(jmapAs("sandra"))).toEqual({ "@type": "Disabled" });
+    const ids = await registeredKeyIds();
+    expect(ids).not.toContain(before["@type"] === "Enabled" ? before.publicKey : "");
+    await expect(page.getByText("Dafür brauchst du zuerst einen eigenen Schlüssel")).toBeVisible();
   });
 
   test("lässt sich am Handy einschalten @phone", async ({ page }) => {

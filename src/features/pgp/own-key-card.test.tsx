@@ -58,9 +58,7 @@ describe("deleting one's own key", () => {
     atRest.state = { "@type": "Enabled", publicKey: "k1" };
     renderCard();
     deleteKey();
-    await waitFor(() =>
-      expect(calls).toEqual(["at-rest Disabled", "forget abcd", "remove key"]),
-    );
+    await waitFor(() => expect(calls).toEqual(["at-rest Disabled", "forget abcd", "remove key"]));
   });
 
   it("keeps the key when the server cannot be switched off", async () => {

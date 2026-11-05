@@ -294,9 +294,9 @@ export const OwnKeyCard = () => {
   const toast = useToast();
   const [dialog, setDialog] = useState<"create" | "import" | "change" | "forgotten" | null>(null);
 
-  const remove = async () => {
+  const remove = async (fingerprint: string) => {
     if (!window.confirm(m.pgp_delete_confirm())) return;
-    await stopAtRest()
+    await stopAtRest(fingerprint)
       .then(() => actions.removeOwn())
       .catch((error: Error) => toast.show(m.common_error({ message: error.message }), "error"));
   };
@@ -328,7 +328,11 @@ export const OwnKeyCard = () => {
             <Button variant="ghost" onClick={() => setDialog("forgotten")}>
               {m.pgp_forgotten()}
             </Button>
-            <Button variant="ghost" className="text-danger" onClick={() => void remove()}>
+            <Button
+              variant="ghost"
+              className="text-danger"
+              onClick={() => void remove(own.fingerprint)}
+            >
               {m.pgp_delete()}
             </Button>
           </div>

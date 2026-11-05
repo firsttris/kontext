@@ -8,6 +8,7 @@ import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/components/ui/toast";
 import {
   ensurePublicKey,
+  forgetPublicKey,
   getEncryptionAtRest,
   registeredKeyId,
   setEncryptionAtRest,
@@ -23,14 +24,16 @@ type Choice = { on: boolean; encryptOnAppend: boolean };
 
 /**
  * Before one's key goes: switch encryption at rest off, or Stalwart keeps encrypting every new
- * mail for a key nobody holds any more. Throws when Stalwart refuses, so the key stays.
+ * mail for a key nobody holds any more; then take the key off Stalwart. Throws when Stalwart
+ * refuses, so the key stays.
  */
 export const useStopAtRest = () => {
   const client = useClient();
   const queryClient = useQueryClient();
-  return async () => {
+  return async (fingerprint: string) => {
     if ((await getEncryptionAtRest(client))["@type"] === "Enabled")
       await setEncryptionAtRest(client, { "@type": "Disabled" });
+    await forgetPublicKey(client, fingerprint);
     await queryClient.invalidateQueries({ queryKey: KEY });
   };
 };

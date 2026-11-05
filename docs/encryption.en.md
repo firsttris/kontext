@@ -134,7 +134,8 @@ readable outside (`src/jmap/encryption-at-rest.ts`).
 - **Limits:** search, rules, the assistant and the agents can't see into these mails, as with any
   encrypted mail. Without the private key (or the recovery code) they are lost. Whoever deletes
   the key (also to make a new one) has Kontext switch it off first, so Stalwart does not encrypt
-  for a key nobody holds any more; with the new key one switches it on again. Should Stalwart
+  for a key nobody holds any more, and takes it off Stalwart again (which allows at most five keys
+  per account); with the new key one switches it on again. Should Stalwart
   still encrypt for a key other than the current one, the card warns, and the switch can be
   turned off even without a key.
 - **Shared mailboxes:** stay unencrypted. They are group accounts without settings of their own

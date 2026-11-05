@@ -135,7 +135,8 @@ lesbar (`src/jmap/encryption-at-rest.ts`).
   wie bei jeder verschlüsselten Mail. Ohne den geheimen Schlüssel (oder den
   Wiederherstellungscode) sind sie verloren. Wer den Schlüssel löscht (auch um einen neuen
   anzulegen), dem schaltet Kontext es vorher aus, damit Stalwart nicht für einen Schlüssel
-  verschlüsselt, den niemand mehr hat; mit dem neuen schaltet man es wieder ein. Verschlüsselt
+  verschlüsselt, den niemand mehr hat, und nimmt ihn bei Stalwart wieder heraus (dort sind je
+  Konto höchstens fünf Schlüssel erlaubt); mit dem neuen schaltet man es wieder ein. Verschlüsselt
   Stalwart doch für einen anderen als den jetzigen, warnt die Karte, und der Schalter lässt sich
   auch ohne Schlüssel ausschalten.
 - **Gemeinsame Postfächer:** bleiben unverschlüsselt. Sie sind Gruppenkonten ohne eigene

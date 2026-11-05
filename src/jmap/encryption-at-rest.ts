@@ -58,6 +58,18 @@ export const registeredKeyId = async (client: JmapClient, fingerprint: string) =
   return keyWithFingerprint(list, fingerprint)?.id;
 };
 
+/**
+ * Takes one's public key off Stalwart when the key goes: Stalwart keeps at most 5 per account by
+ * default (crates/registry/src/schema/structs_impl.rs `max_public_keys`), and one is registered
+ * for every new key. Only after encryption at rest no longer points at it: Stalwart refuses to
+ * delete an object something still links to (crates/jmap/src/registry/set.rs, no orphans allowed).
+ */
+export const forgetPublicKey = async (client: JmapClient, fingerprint: string) => {
+  const id = await registeredKeyId(client, fingerprint);
+  if (!id) return;
+  assertSetOk(await client.call("x:PublicKey/set", { destroy: [id] }, STALWART), "Schlüssel");
+};
+
 /** The id of one's public key at Stalwart; it is registered first if it is not there yet. */
 export const ensurePublicKey = async (
   client: JmapClient,
