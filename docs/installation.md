@@ -170,6 +170,14 @@ bleibt er bei der Domain des Kontos. Ohne Terminal (etwa in
 einem Skript) nimmt er den Zugang aus der Umgebungsvariablen `STALWART_ADMIN` (`name:passwort`).
 Was er genau tut, steht in `server/stalwart-setup.ts`.
 
+Stalwart lässt den Admin nur Rechte weitergeben, die er selbst hat. Wurde Stalwart von einer
+Version vor 1.0.2 aktualisiert, fehlen seiner Admin-Rolle die Rechte für die Verschlüsselung
+(`sysEncryption…`, `sysExternalPublicKey…`). Der Befehl richtet dann alles andere ein und lässt
+nur die Rechte für das [Verschlüsseln durch Stalwart](encryption.md#verschlusseln-durch-stalwart)
+weg; ein Hinweis sagt das. Um es zu nutzen, der Admin-Rolle diese Rechte geben, wie es Stalwarts
+[Changelog zu 1.0.2](https://github.com/stalwartlabs/stalwart/blob/main/CHANGELOG.md) beschreibt,
+und den Befehl erneut ausführen.
+
 Danach unter `https://kontext.firma.de` anmelden. Am Handy im Browser „Zum Startbildschirm
 hinzufügen“ wählen: Kontext startet dann wie eine App und bleibt angemeldet.
 
@@ -365,8 +373,14 @@ von Hand in Stalwarts Verwaltung geht es so:
 1. Eine **Rolle** `Kontext-Server` anlegen: sie erbt die Rolle *User*
    und bekommt dazu die Rechte `sysAccountGet`, `sysAccountQuery`, `sysAccountCreate`,
    `sysAccountUpdate`, `sysRoleGet`, `sysRoleCreate`, `sysDomainGet`, `sysAuthenticationGet`,
-   `sysIndexQueueStatusGet` und `impersonate`. Mit `sysIndexQueueStatusGet` zeigt die
-   Firmenverwaltung, solange Stalwart den Suchindex aufbaut. Mit `impersonate` arbeitet der Server in den Postfächern der Mitarbeiter
+   `sysIndexQueueStatusGet`, `sysEncryptionGet`, `sysEncryptionUpdate`,
+   `sysExternalPublicKeyGet`, `sysExternalPublicKeyCreate`, `sysExternalPublicKeyDestroy`,
+   `sysActionCreate`, `actionReloadSettings` und `impersonate`. Mit `sysIndexQueueStatusGet` zeigt die
+   Firmenverwaltung, solange Stalwart den Suchindex aufbaut. Mit den `sysEncryption…`- und
+   `sysExternalPublicKey…`-Rechten schaltet sie das [Verschlüsseln durch
+   Stalwart](encryption.md#verschlusseln-durch-stalwart) und verwaltet die Schlüssel der
+   Empfänger; `sysActionCreate` mit `actionReloadSettings` lässt sie Stalwart danach die
+   Einstellungen neu laden. Mit `impersonate` arbeitet der Server in den Postfächern der Mitarbeiter
    (Abwesenheit, Leserechte für gemeinsame Postfächer) und trägt Antworten auf Einladungen ein;
    die App zeigt dem Chef dabei nie fremde Mails.
 2. Ein **Konto** `kontext-server@firma.de` mit dieser Rolle (statt *User*) und einem langen
