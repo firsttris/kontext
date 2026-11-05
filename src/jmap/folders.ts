@@ -20,6 +20,7 @@ export const drainEmails = async (
   change: (mails: FolderMail[]) => Record<string, unknown>,
 ): Promise<number> => {
   let changed = 0;
+  let previous = "";
   for (;;) {
     const [, got] = await client.request([
       ["Email/query", { accountId, filter, limit: PAGE }, "q"],
@@ -35,6 +36,11 @@ export const drainEmails = async (
     ]);
     const mails = (got![1] as { list: FolderMail[] }).list;
     if (!mails.length) return changed;
+    // The same page again: the change took no effect (a standard folder nested inside, a
+    // rule moving mails back). Stop rather than ask the server for ever.
+    const page = mails.map((mail) => mail.id).join(",");
+    if (page === previous) throw new Error("Die Mails im Ordner ändern sich nicht weiter.");
+    previous = page;
     assertSetOk(await client.call("Email/set", { accountId, ...change(mails) }), "Email/set");
     changed += mails.length;
   }

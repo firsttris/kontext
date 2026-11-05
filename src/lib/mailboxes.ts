@@ -115,11 +115,13 @@ export const subfolders = (mailbox: Pick<Mailbox, "id">, mailboxes: Mailbox[]): 
  * rights decide (RFC 8621 §2, `myRights`): `mayRename` covers moving, too. Marking read needs
  * unread mails and `maySetSeen`.
  */
-export const folderActions = (mailbox: Mailbox) => {
+export const folderActions = (mailbox: Mailbox, mailboxes: Mailbox[] = []) => {
   const own = mailbox.role === null;
+  // Deleting takes the subfolders along: never a standard folder such as the Papierkorb.
+  const holdsStandard = subfolders(mailbox, mailboxes).some((child) => child.role !== null);
   return {
     rename: own && mailbox.myRights?.mayRename !== false,
-    remove: own && mailbox.myRights?.mayDelete !== false,
+    remove: own && !holdsStandard && mailbox.myRights?.mayDelete !== false,
     markRead: mailbox.unreadEmails > 0 && mailboxRights(mailbox).canMarkSeen,
   };
 };

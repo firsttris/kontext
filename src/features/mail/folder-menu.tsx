@@ -41,7 +41,7 @@ export const FolderRow = ({ accountId, mailbox, mailboxes, activeId, children }:
   const navigate = useNavigate();
   const [dialog, setDialog] = useState<"rename" | "move" | "delete" | null>(null);
   const [busy, setBusy] = useState(false);
-  const actions = folderActions(mailbox);
+  const actions = folderActions(mailbox, mailboxes);
   const name = mailboxName(mailbox);
 
   if (!actions.rename && !actions.remove && !actions.markRead)
