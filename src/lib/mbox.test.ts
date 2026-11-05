@@ -156,3 +156,30 @@ describe("mboxEntry", () => {
     ]);
   });
 });
+
+describe("mboxEntry over flag headers the mail already carries", () => {
+  const receivedAt = new Date("2026-11-05T09:04:00Z");
+  const readBack = async (raw: string, keywords: Record<string, boolean>) => {
+    const parts = mboxEntry(encoder.encode(raw), { sender: "", receivedAt, keywords });
+    for await (const mail of splitMbox(blobPieces(new Blob(parts as BlobPart[])))) {
+      return { mail: decoder.decode(mail), flags: mboxFlags(decoder.decode(mail)) };
+    }
+    throw new Error("no mail");
+  };
+
+  it("reads back the flags of now, not those of an earlier Gmail export", async () => {
+    // Imported from a Google Takeout while unread and starred, then read and unstarred here.
+    const raw = "X-Gmail-Labels: Posteingang,Unread,Starred\r\nSubject: A\r\n\r\nText\r\n";
+    const { flags } = await readBack(raw, { $seen: true });
+    expect(flags).toEqual({ deleted: false, keywords: { $seen: true } });
+  });
+
+  it("reads back the flags of now, not those of an earlier mutt or Thunderbird mbox", async () => {
+    const raw =
+      "Status: O\nX-Status: FD\nX-Mozilla-Status: 0004\nX-Mozilla-Status2:\n 00000000\n" +
+      "Subject: B\n\nStatus: im Text bleibt\n";
+    const { mail, flags } = await readBack(raw, { $seen: true, $answered: true });
+    expect(flags).toEqual({ deleted: false, keywords: { $seen: true, $answered: true } });
+    expect(mail).toBe("Status: RO\nX-Status: A\nSubject: B\n\nStatus: im Text bleibt\n");
+  });
+});
