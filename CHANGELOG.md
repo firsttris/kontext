@@ -7,6 +7,10 @@ Steps that an update needs beyond raising the version are marked **Upgrade**.
 
 ## Unreleased
 
+- Deploy: `deploy/.env.example` and the Quadlet use Schreibzeug 0.1.19 (was 0.1.18), and Compose
+  and the Quadlet use Caddy 2.11.8 (was 2.11.7) and LiveKit SIP 1.23.0 (was 1.22.0), the versions
+  running on the first server. No step beyond raising the versions; with Quadlet, raise the images
+  in `schreibzeug.container`, `caddy.container` and `livekit-sip.container`.
 - Calendar and contacts: own calendars get a new name and colour from the pencil in *Kalender
   verwalten*, own address books a new name in *Adressbücher*; "Verschieben nach …" moves a
   contact, or several selected ones, to another address book of the same account (user guide,
