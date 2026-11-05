@@ -3,10 +3,13 @@ import type { Mailbox } from "@/jmap/types";
 import {
   canAssignIn,
   flattenTree,
+  folderActions,
   folderTree,
   mailboxName,
   mailboxPath,
   mailboxRights,
+  moveTargets,
+  subfolders,
   systemMailboxes,
 } from "./mailboxes";
 
@@ -108,5 +111,80 @@ describe("canAssignIn", () => {
         myRights: { mayReadItems: true, maySetKeywords: true, maySetMetadata: false },
       } as Mailbox),
     ).toBe(false);
+  });
+});
+
+describe("folder management", () => {
+  const nested = [...mailboxes, box("x", "Rechnungen", null, "h")];
+  const names = (list: { name: string }[]) => list.map((entry) => entry.name);
+
+  it("lists a folder's subfolders at every depth, parents first", () => {
+    expect(names(subfolders(box("k", "Kunden"), nested))).toEqual([
+      "Hoffmann",
+      "Rechnungen",
+      "Keller Elektro",
+    ]);
+    expect(subfolders(box("b", "Buchhaltung"), nested)).toEqual([]);
+  });
+
+  it("offers every own folder as a move target except the folder and its subfolders", () => {
+    const targets = moveTargets(box("h", "Hoffmann", null, "k"), nested);
+    expect(names(targets.map((node) => node.mailbox))).toEqual([
+      "Buchhaltung",
+      "Kunden",
+      "Keller Elektro",
+    ]);
+  });
+
+  it("leaves out folders that take no subfolders", () => {
+    const closed = { ...box("b", "Buchhaltung"), myRights: { mayCreateChild: false } };
+    const targets = moveTargets(
+      box("h", "Hoffmann", null, "k"),
+      nested.map((entry) => (entry.id === "b" ? closed : entry)),
+    );
+    expect(names(targets.map((node) => node.mailbox))).not.toContain("Buchhaltung");
+  });
+
+  it("keeps the current parent, first when it is a standard folder", () => {
+    const underInbox = box("p", "Projekte", null, "i");
+    const targets = moveTargets(underInbox, [...nested, underInbox]);
+    expect(names(targets.map((node) => node.mailbox))[0]).toBe("Inbox");
+
+    const closed = { ...box("k", "Kunden"), myRights: { mayCreateChild: false } };
+    const kept = moveTargets(
+      box("h", "Hoffmann", null, "k"),
+      nested.map((entry) => (entry.id === "k" ? closed : entry)),
+    );
+    expect(names(kept.map((node) => node.mailbox))).toContain("Kunden");
+  });
+
+  it("lets standard folders only be marked read, and only with unread mails", () => {
+    expect(folderActions({ ...box("i", "Inbox", "inbox"), unreadEmails: 3 })).toEqual({
+      rename: false,
+      remove: false,
+      markRead: true,
+    });
+    expect(folderActions(box("i", "Inbox", "inbox")).markRead).toBe(false);
+    expect(folderActions(box("k", "Kunden"))).toEqual({
+      rename: true,
+      remove: true,
+      markRead: false,
+    });
+  });
+
+  it("offers no delete for a folder that holds a standard folder, which would go along", () => {
+    const parent = box("k", "Kunden");
+    const trashInside = box("t", "Trash", "trash", "k");
+    expect(folderActions(parent, [parent, trashInside]).remove).toBe(false);
+    expect(folderActions(parent, [parent, box("h", "Hoffmann", null, "k")]).remove).toBe(true);
+  });
+
+  it("follows the rights in a shared mailbox", () => {
+    const shared = {
+      ...box("k", "Kunden"),
+      unreadEmails: 2,
+      myRights: { mayRename: false, mayDelete: false, maySetSeen: false },
+    };
+    expect(folderActions(shared)).toEqual({ rename: false, remove: false, markRead: false });
   });
 });

@@ -102,3 +102,46 @@ export const mailboxRights = (mailbox: Mailbox) => ({
  * "Nur lesen" grants `maySetKeywords` but not this.
  */
 export const canAssignIn = (mailbox: Mailbox) => mailbox.myRights?.maySetMetadata !== false;
+
+/** A folder's subfolders at every depth, each parent before its children. */
+export const subfolders = (mailbox: Pick<Mailbox, "id">, mailboxes: Mailbox[]): Mailbox[] =>
+  mailboxes
+    .filter((candidate) => candidate.parentId === mailbox.id)
+    .flatMap((child) => [child, ...subfolders(child, mailboxes)]);
+
+/**
+ * What a folder's menu in the sidebar offers. Standard folders keep their name and place
+ * (Stalwart also refuses to delete Posteingang, Spam and Papierkorb); in a shared mailbox the
+ * rights decide (RFC 8621 §2, `myRights`): `mayRename` covers moving, too. Marking read needs
+ * unread mails and `maySetSeen`.
+ */
+export const folderActions = (mailbox: Mailbox, mailboxes: Mailbox[] = []) => {
+  const own = mailbox.role === null;
+  // Deleting takes the subfolders along: never a standard folder such as the Papierkorb.
+  const holdsStandard = subfolders(mailbox, mailboxes).some((child) => child.role !== null);
+  return {
+    rename: own && mailbox.myRights?.mayRename !== false,
+    remove: own && !holdsStandard && mailbox.myRights?.mayDelete !== false,
+    markRead: mailbox.unreadEmails > 0 && mailboxRights(mailbox).canMarkSeen,
+  };
+};
+
+/**
+ * Where a folder can go: any own folder except itself and its subfolders (RFC 8621 §2: no loops)
+ * that takes subfolders (`mayCreateChild`). The top level is always offered besides. The current
+ * parent stays in the list even when it is no target (a standard folder such as the Posteingang,
+ * or one without `mayCreateChild`), first if it is not in the tree: otherwise the select would
+ * show "—" for a folder that is not at the top level, and "—" could not be picked.
+ */
+export const moveTargets = (mailbox: Mailbox, mailboxes: Mailbox[]): FolderNode[] => {
+  const excluded = new Set([mailbox, ...subfolders(mailbox, mailboxes)].map((box) => box.id));
+  const targets = flattenTree(folderTree(mailboxes)).filter(
+    (node) =>
+      !excluded.has(node.mailbox.id) &&
+      (node.mailbox.myRights?.mayCreateChild !== false || node.mailbox.id === mailbox.parentId),
+  );
+  const parent = mailboxes.find((box) => box.id === mailbox.parentId);
+  return parent && !targets.some((node) => node.mailbox.id === parent.id)
+    ? [{ mailbox: parent, depth: 0, children: [] }, ...targets]
+    : targets;
+};

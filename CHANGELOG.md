@@ -7,6 +7,9 @@ Steps that an update needs beyond raising the version are marked **Upgrade**.
 
 ## Unreleased
 
+- Mail: own folders can be renamed, moved and deleted from "…" next to them in the sidebar
+  (their mails go to the trash, subfolders go along); "Mark all as read" works for any folder,
+  for all its mails, not only the loaded ones (user guide, "Mail", "Ordner verwalten").
 - Contacts: editing a contact no longer loses data. Before, saving kept only the first number,
   mail address and address of a card and dropped the postcode, country, region and department of
   cards from an iPhone, a vCard or a merge; now only the changed fields are written and everything
