@@ -262,6 +262,11 @@ SMTP.
 - **Report as phishing** in the "More actions" menu, once the company administration has entered
   an address for it ([Company](company.md#mitarbeiter-und-postfacher)): the mail goes as an
   attachment (.eml) to the IT team or the IT provider and lands in spam.
+- **Block sender** in the "More actions" menu: just this address or everyone from its domain
+  (subdomains like `news.…` included, but not `….net`).
+  The mail and every future one from there land in spam (nothing is deleted). It is a rule
+  "Blocked: …" at the top of the [rules](#ordnen-und-finden); deleting it there lifts the block.
+  Colleagues and the own domains are not offered.
 - **Images from the internet** only load on request, or right away for senders you trust (all
   contacts too) – but only if the mail really comes from them.
 - **Unsubscribe from newsletters** with one click right on the mail.

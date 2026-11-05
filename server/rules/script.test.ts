@@ -91,6 +91,20 @@ describe("rulesScript", () => {
     expect(script).toContain('header :contains "subject" "a\\"b\\\\c d ${dollar}{x}"');
   });
 
+  it("compares a domain exactly or below it, with wildcards in it taken literally", () => {
+    const domain = (value: string) =>
+      rulesScript({
+        vacation: false,
+        rules: [rule({ conditions: [{ field: "to", operator: "domain", value }] })],
+      });
+    expect(domain(" @Angebote.Example. ")).toContain(
+      'anyof (address :domain :is ["to", "cc"] "angebote.example", address :domain :matches ["to", "cc"] "*.angebote.example")',
+    );
+    expect(domain('a*?"\\b')).toContain(
+      'anyof (address :domain :is ["to", "cc"] "a*?\\"\\\\b", address :domain :matches ["to", "cc"] "*.a\\\\*\\\\?\\"\\\\\\\\b")',
+    );
+  });
+
   it("leaves out disabled rules and rules without a condition or action", () => {
     const script = rulesScript({
       vacation: false,

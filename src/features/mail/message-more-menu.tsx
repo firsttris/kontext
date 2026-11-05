@@ -17,6 +17,7 @@ import {
   ReplyAll,
   ShieldAlert,
   ShieldCheck,
+  UserX,
 } from "lucide-react";
 import { Fragment, type ReactNode } from "react";
 import { Button } from "@/components/ui/button";
@@ -32,6 +33,7 @@ import {
   MenuTrigger,
 } from "@/components/ui/menu";
 import type { MoveGroup, MoveTarget } from "@/lib/move-targets";
+import type { BlockScope } from "@/lib/rules";
 import { m } from "@/paraglide/messages";
 
 export type ComposeMode = "reply" | "replyAll" | "forward" | "forwardEml";
@@ -90,12 +92,28 @@ const MoveSubmenu = ({
   </MenuSub>
 );
 
+export type BlockSender = { address: string; domain: string; run: (scope: BlockScope) => void };
+
+/** "Absender blockieren": just the address, or everyone from its domain. */
+const BlockSubmenu = ({ address, domain, run }: BlockSender) => (
+  <MenuSub>
+    <MenuSubTrigger>
+      <UserX size={15} /> {m.mail_block_sender()}
+    </MenuSubTrigger>
+    <MenuSubContent aria-label={m.mail_block_sender()}>
+      <MenuItem onSelect={() => run("address")}>{m.mail_block_address({ address })}</MenuItem>
+      <MenuItem onSelect={() => run("domain")}>{m.mail_block_domain({ domain })}</MenuItem>
+    </MenuSubContent>
+  </MenuSub>
+);
+
 export const MoreMenu = ({
   compose,
   print,
   markUnread,
   spam,
   reportPhishing,
+  block,
   move,
   categories,
   newTask,
@@ -109,6 +127,8 @@ export const MoreMenu = ({
   spam?: { undo: boolean; run: () => void };
   /** Only where the Firmenverwaltung set a report address. */
   reportPhishing?: () => void;
+  /** Only for outside senders, in the own mailbox. */
+  block?: BlockSender;
   move?: { groups: MoveGroup[]; onPick: (target: MoveTarget) => void };
   /** The category submenu, where categories may be set. */
   categories?: ReactNode;
@@ -144,7 +164,7 @@ export const MoreMenu = ({
       <Item onSelect={print} shortcut="p">
         <Printer size={15} /> {m.mail_print()}
       </Item>
-      {markUnread || spam || move || categories ? <MenuSeparator /> : null}
+      {markUnread || spam || block || move || categories ? <MenuSeparator /> : null}
       {markUnread ? (
         <Item onSelect={markUnread} shortcut="U">
           <MailOpen size={15} /> {m.mail_mark_unread()}
@@ -161,6 +181,7 @@ export const MoreMenu = ({
           <Fish size={15} /> {m.mail_phishing_report()}
         </Item>
       ) : null}
+      {block ? <BlockSubmenu {...block} /> : null}
       {move ? <MoveSubmenu groups={move.groups} onPick={move.onPick} /> : null}
       {categories}
       <MenuSeparator />

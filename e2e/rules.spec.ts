@@ -1,40 +1,6 @@
 import { expect, type Page, test } from "@playwright/test";
-import {
-  addMail,
-  address,
-  givenKeywords,
-  inboxMails,
-  jmapAs,
-  login,
-  mailsWithSubject,
-  removeMails,
-  unique,
-} from "./helpers";
+import { addMail, address, findMail, inboxMails, login, removeMails, unique } from "./helpers";
 import { deliverMail } from "./protocols";
-
-/**
- * Where a mail with this subject is, by folder role or name, and its keywords; in the user's own
- * mailbox or in a shared one they belong to.
- */
-const findMail = async (user: string, subject: string, mailbox = user) => {
-  const client = jmapAs(user);
-  const session = await client.getSession();
-  const accountId = Object.entries(session.accounts).find(
-    ([, account]) => account.name === address(mailbox),
-  )![0];
-  const { list: mailboxes } = await client.call<{
-    list: { id: string; name: string; role: string | null }[];
-  }>("Mailbox/get", { accountId, properties: ["name", "role"] });
-  const [email] = await mailsWithSubject<{ mailboxIds: object; keywords: object }>(
-    client,
-    accountId,
-    [subject],
-    ["mailboxIds", "keywords"],
-  );
-  if (!email) return null;
-  const box = mailboxes.find((candidate) => Object.keys(email.mailboxIds).includes(candidate.id));
-  return { folder: box?.role ?? box?.name, keywords: givenKeywords(email.keywords) };
-};
 
 const deleteRule = async (page: Page, title: RegExp) => {
   await page.getByRole("button", { name: title }).click();

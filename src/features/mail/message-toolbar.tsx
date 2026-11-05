@@ -13,14 +13,17 @@ import { useShortcuts } from "@/components/use-shortcuts";
 import { isFlagged } from "@/jmap/mail";
 import type { EmailDetail, EmailSummary, Mailbox } from "@/jmap/types";
 import { correspondent } from "@/lib/correspondent";
+import { domainOf, isExternal } from "@/lib/external-hint";
 import { canAssignIn, mailboxRights } from "@/lib/mailboxes";
 import { moveTargets } from "@/lib/move-targets";
-import { type Rule, ruleFromSender } from "@/lib/rules";
+import { type BlockScope, type Rule, ruleFromSender } from "@/lib/rules";
 import { mailLink, plainSubject } from "@/lib/tasks";
 import { m } from "@/paraglide/messages";
 import { CategoryDialog } from "../categories/category-dialog";
 import { CategorySubmenu } from "../categories/category-menu";
 import { DiscussDialog } from "../chat/discuss-dialog";
+import { useExternalHint } from "../company/external-hint";
+import { useBlockSender } from "../rules/block-sender";
 import { OwnRuleDialog } from "../rules/rule-dialog";
 import { usePersonalAccountId } from "../settings/queries";
 import { SnoozeMenu } from "../snooze/snooze-menu";
@@ -135,6 +138,32 @@ export const Toolbar = ({
             offerUndo(inJunk ? m.mail_spam_unmarked() : m.mail_spam_marked(), [move]);
           }, true)
       : undefined;
+  const blockSender = useBlockSender(accountId);
+  const { data: company } = useExternalHint();
+  // Colleagues and shared mailboxes are not blocked: the company's domains and the mailboxes' own.
+  const ownDomains = [
+    ...(company?.domains ?? []),
+    ...accounts.map((candidate) => domainOf(candidate.name)),
+  ];
+  const block =
+    ownMailbox && sender && blockSender && isExternal(sender, ownDomains)
+      ? {
+          address: sender,
+          domain: domainOf(sender),
+          run: (scope: BlockScope) =>
+            void run(
+              async () => {
+                await blockSender(sender, scope);
+                const text = m.mail_sender_blocked({
+                  sender: scope === "address" ? sender : domainOf(sender),
+                });
+                if (inJunk || !toggleSpam) return toast.show(text, "info");
+                offerUndo(text, [await actions.markSpam(ids, mailbox.id, true)]);
+              },
+              Boolean(toggleSpam && !inJunk),
+            ),
+        }
+      : undefined;
   const report = useReportPhishing(accountId, email, mailbox.id);
   const reportPhishing = report && toggleSpam && !inJunk ? () => void run(report, true) : undefined;
   const compose = (mode: ComposeMode) =>
@@ -239,6 +268,7 @@ export const Toolbar = ({
         markUnread={markUnread}
         spam={toggleSpam ? { undo: inJunk, run: toggleSpam } : undefined}
         reportPhishing={reportPhishing}
+        block={block}
         move={
           canRemove
             ? {
