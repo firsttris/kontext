@@ -7,6 +7,9 @@ Steps that an update needs beyond raising the version are marked **Upgrade**.
 
 ## Unreleased
 
+- Mail: a reply or forward keeps the images in the text of the original; they go out again as
+  inline images (`cid:`). Images from the internet stay in the quote only if they were loaded in
+  the mail (user guide, "Mail", "Schreiben").
 - Calendar and tasks: a search field finds appointments (title, location, description,
   participants, past and coming; a series once) and tasks (title, notes, checklist, assignee),
   and a hit opens them, on the phone too (user guide, "Kalender" and "Aufgaben").

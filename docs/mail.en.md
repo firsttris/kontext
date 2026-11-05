@@ -147,8 +147,9 @@ SMTP.
   corners makes an image larger or smaller, keeping its aspect ratio. It goes out as an inline
   image (`cid:`, together with the HTML in `multipart/related`), so Outlook, Gmail and Apple Mail
   show it in the text rather than as an attachment; a draft keeps its images. Other files, SVG
-  too, still come along as attachments. Kontext does not yet carry over images in the quoted or
-  forwarded original.
+  too, still come along as attachments. Images in the quoted or forwarded original stay in the
+  text and go out again as inline images; a forward brings the attachments along too. Images from
+  the internet stay in the quote only if they were loaded in the mail.
 
   ![New mail with a photo in the text, selected, with the corners to drag](screenshots/compose-image.png)
 - **"Reply to"** (Reply-To): next to "Cc / Bcc", "Reply to" shows another address field, with the

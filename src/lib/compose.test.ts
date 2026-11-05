@@ -97,6 +97,55 @@ describe("startCompose", () => {
       { blobId: "b1", name: "Angebot.pdf", type: "application/pdf", size: 5 },
     ]);
   });
+  describe("with pictures in the original", () => {
+    const picture = (cid: string, blobId: string, disposition: string) => ({
+      partId: blobId,
+      blobId,
+      type: "image/png",
+      name: `${blobId}.png`,
+      size: 7,
+      cid: `<${cid}>`,
+      disposition,
+    });
+    const withPictures: EmailDetail = {
+      ...original,
+      htmlBody: [picture("logo@keller.test", "b2", "inline")],
+      // Shown in the text although sent as an attachment, and one the text does not show.
+      attachments: [
+        ...original.attachments,
+        picture("plan@keller.test", "b3", "attachment"),
+        picture("unused@keller.test", "b4", "inline"),
+      ],
+    };
+    const quoted =
+      '<p><img src="blob:x/1" data-cid="logo@keller.test"></p>' +
+      '<p><img src="blob:x/2" data-cid="plan@keller.test"></p>';
+    const image = (cid: string, blobId: string) => ({
+      blobId,
+      name: `${blobId}.png`,
+      type: "image/png",
+      size: 7,
+      cid,
+    });
+
+    it("sends the pictures the quote shows again, under their Content-ID", () => {
+      const start = startCompose("reply", withPictures, quoted, ["jonas@weber.test"]);
+      expect(start.images).toEqual([
+        image("plan@keller.test", "b3"),
+        image("logo@keller.test", "b2"),
+      ]);
+      expect(start.attachments).toEqual([]);
+      expect(start.html).toContain('data-cid="logo@keller.test"');
+    });
+    it("forwards the files, but a picture shown in the text as a picture", () => {
+      const start = startCompose("forward", withPictures, quoted, ["jonas@weber.test"]);
+      expect(start.attachments.map((file) => file.blobId)).toEqual(["b1"]);
+      expect(start.images.map((each) => each.blobId)).toEqual(["b3", "b2"]);
+    });
+    it("quotes no pictures from a text that shows none", () => {
+      expect(startCompose("reply", withPictures, "<p>Hallo</p>", []).images).toEqual([]);
+    });
+  });
   it("reopens a draft as it was saved", () => {
     const draft = {
       ...original,

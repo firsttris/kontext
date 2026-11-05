@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { markCids, newCid, sendableHtml } from "./inline-images";
+import { inlineParts, markCids, newCid, sendableHtml, shownCids } from "./inline-images";
 
 describe("sendableHtml", () => {
   it("points each marked image to its Content-ID and lists them once", () => {
@@ -32,5 +32,36 @@ describe("markCids", () => {
 
   it("makes Content-IDs that are addresses", () => {
     expect(newCid("a1b2")).toBe("bild-a1b2@kontext");
+  });
+});
+
+describe("shownCids", () => {
+  it("lists the Content-IDs the text shows, each once", () => {
+    expect(
+      shownCids(
+        '<blockquote><img src="blob:x/1" data-cid="logo@keller.test"><img data-cid="logo@keller.test">' +
+          '<img src="https://keller.test/a.png"></blockquote>',
+      ),
+    ).toEqual(["logo@keller.test"]);
+    expect(shownCids("<p>ohne Bild</p>")).toEqual([]);
+  });
+});
+
+describe("inlineParts", () => {
+  const part = (cid: string | null, blobId: string | null) => ({
+    partId: "1",
+    blobId,
+    type: "image/png",
+    name: null,
+    size: 1,
+    cid,
+    disposition: "inline",
+  });
+  it("keeps the parts with a Content-ID and a blob, from the attachments and the HTML body", () => {
+    const parts = inlineParts({
+      attachments: [part("<a@x>", "b1"), part(null, "b2"), part("<c@x>", null)],
+      htmlBody: [part("<d@x>", "b4")],
+    });
+    expect(parts.map((p) => p.blobId)).toEqual(["b1", "b4"]);
   });
 });

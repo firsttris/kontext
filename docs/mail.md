@@ -156,7 +156,9 @@ IMAP und SMTP.
   als Inline-Bild hinaus (`cid:`, zusammen mit dem HTML in `multipart/related`), so zeigen es
   Outlook, Gmail und Apple Mail im Text statt als Anhang; ein Entwurf behält seine Bilder.
   Andere Dateien, auch SVG, kommen weiter als Anhang mit. Bilder im zitierten oder
-  weitergeleiteten Original nimmt Kontext noch nicht mit.
+  weitergeleiteten Original bleiben im Text und gehen wieder als Inline-Bilder mit; eine
+  Weiterleitung nimmt auch die Anhänge mit. Bilder aus dem Internet bleiben im Zitat nur, wenn sie
+  in der Mail geladen waren.
 
   ![Neue Mail mit einem Foto im Text, ausgewählt mit den Ecken zum Ziehen](screenshots/compose-image.png)
 - **„Antwort an“** (Reply-To): neben „Cc / Bcc“ blendet „Antwort an“ ein weiteres Adressfeld ein,
