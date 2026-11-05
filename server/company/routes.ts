@@ -8,6 +8,7 @@ import { retentionSchema } from "../chat/chat";
 import { migrationRoutes } from "../migration/routes";
 import { syncRoutes } from "../migration/sync-routes";
 import { authorityRoutes } from "../smime/authorities";
+import { assistantRoutes } from "./assistant";
 import { backupRoutes } from "./backup-routes";
 import { bad, bodyOf, type CompanyDeps, createLoader, type Env } from "./context";
 import { employeeRoutes } from "./employees";
@@ -94,6 +95,7 @@ export const createCompanyRoutes = (deps: CompanyDeps) => {
   app.route("/idle-logout", idleLogoutRoutes(deps));
   app.route("/vacation-templates", vacationTemplateRoutes(deps));
   app.route("/phishing-report", phishingReportRoutes(deps));
+  app.route("/assistant", assistantRoutes(deps));
   app.get("/chat-retention", async (c) =>
     c.json({ days: (await deps.chatRetention?.days()) ?? 0 }),
   );

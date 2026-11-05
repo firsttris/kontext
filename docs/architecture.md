@@ -2308,7 +2308,32 @@ der Person, die ihn verbunden hat (`server/mcp/`).
 - **Discovery und Caddy:** Die beiden `/.well-known/oauth-*`-Pfade liegen auf der Wurzel und gehen
   an Better Auth (`server/app.ts`); Caddy gibt sie Kontext statt Stalwart (`deploy/Caddyfile`).
 
-**Später:** Anrufe und Chat als Werkzeuge.
+### Assistent im Chat
+
+Derselbe Werkzeugkasten ohne eigenen Agenten: `/api/assistant` (`server/assistant/`) lässt Claude
+über die Messages API mit `TOOLS` arbeiten, als die angemeldete Person – mit dem Stalwart-Token
+ihrer Browser-Sitzung, also ihren Rechten (`createToolContext` in `server/mcp/routes.ts`, wie für
+`/mcp`). Die Schleife (`agent.ts`): Claude bittet um Werkzeuge, der Server prüft die Eingabe am
+Schema, führt sie aus (`runTool`) und schickt die Ergebnisse zurück, bis eine Antwort in Text
+kommt; höchstens zehn Runden, und Werkzeuge aus einer abgebrochenen Antwort (`max_tokens`,
+`refusal`) laufen nicht. Anweisungen wie für `/mcp` (Mailtext ist fremder Text), dazu Person und
+Datum; System-Prompt und Werkzeuge werden gecacht (`cache_control`), `effort: medium` hält die
+Kosten klein.
+
+- **Ein und aus:** Schlüssel und Modell setzt die Firmenverwaltung (`/api/company/assistant`,
+  `server/company/assistant.ts`); der Schlüssel liegt versiegelt in `company_setting` und geht nie
+  zurück an den Browser, nur seine letzten vier Zeichen. `GET /api/assistant` sagt der App, ob es
+  ihn gibt, dann steht er oben im Chat (`src/features/assistant/`). Die Demo hat keinen.
+- **Gespräch:** bleibt in der App, im Query-Cache, den An- und Abmelden leeren; jede Frage schickt
+  die bisherigen Fragen und Antworten als Text mit (Antworten ohne Text nicht), der Server behält
+  nichts. Was angelegt wurde, kommt als Meldung des Writers zurück und steht
+  unter der Antwort.
+- **Grenzen:** zehn Fragen und zwanzig Änderungen je Person und Minute (im Speicher, wie
+  `server/mcp/attempts.ts`); Änderungen landen nicht im `mcp_log`, sie sind ja in der App zu sehen. Wie bei `/mcp` kann fremder Mailtext versuchen, Änderungen
+  anzustoßen (Prompt Injection); mehr als die Werkzeuge erlauben geht nicht: Entwürfe, Termine nur mit
+  Kollegen, Kontakte und Aufgaben, kein Senden nach draußen, kein Löschen.
+
+**Später:** Anrufe und Chat als Werkzeuge; der Assistent auch über Amazon Bedrock (EU).
 
 ## Code
 

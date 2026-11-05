@@ -2245,7 +2245,31 @@ rights of the person who connected it (`server/mcp/`).
 - **Discovery and Caddy:** the two `/.well-known/oauth-*` paths are at the root and go to Better Auth
   (`server/app.ts`); Caddy gives them to Kontext instead of Stalwart (`deploy/Caddyfile`).
 
-**Later:** calls and chat as tools.
+### Assistant in the chat { #assistent-im-chat }
+
+The same toolbox without an agent of one's own: `/api/assistant` (`server/assistant/`) lets Claude
+work with `TOOLS` through the Messages API, as the signed-in person – with the Stalwart token of
+their browser session, so with their rights (`createToolContext` in `server/mcp/routes.ts`, as for
+`/mcp`). The loop (`agent.ts`): Claude asks for tools, the server checks the input against the
+schema, runs them (`runTool`) and sends the results back until an answer in text comes; at most
+ten rounds, and tools from a cut-off answer (`max_tokens`, `refusal`) do not run. Instructions as
+for `/mcp` (mail text is someone else's text), plus the person and the date; the system prompt
+and the tools are cached (`cache_control`), `effort: medium` keeps the cost down.
+
+- **On and off:** the Firmenverwaltung sets key and model (`/api/company/assistant`,
+  `server/company/assistant.ts`); the key is sealed in `company_setting` and never goes back to
+  the browser, only its last four characters. `GET /api/assistant` tells the app whether there is
+  one, and then it is at the top of the chat (`src/features/assistant/`). The demo has none.
+- **Conversation:** stays in the app, in the query cache, which signing out or in clears; every
+  question sends the earlier questions and answers along as text (answers without text left
+  out), the server keeps nothing. What was created comes back as the writer's message and is
+  listed under the answer.
+- **Limits:** ten questions and twenty changes per person and minute (in memory, like
+  `server/mcp/attempts.ts`); changes do not go into `mcp_log`, since they can be seen in the app. As with `/mcp`, outside mail text
+  can try to trigger changes (prompt injection); nothing beyond what the tools allow is possible:
+  drafts, appointments only with colleagues, contacts and tasks, nothing sent outside, no deleting.
+
+**Later:** calls and chat as tools; the assistant also through Amazon Bedrock (EU).
 
 ## Code { #code }
 

@@ -91,6 +91,7 @@ const setup = (
   const idle = { minutes: 0 };
   const vacation = { templates: [] as { title: string; text: string }[] };
   const phishing = { address: "" };
+  const assistant = { setting: null as { apiKey: string; model: string } | null };
   const ended: string[] = [];
   const welcomed: { newcomer: string; people: string[] }[] = [];
   const shownToAll: string[][] = [];
@@ -133,6 +134,10 @@ const setup = (
       phishingReport: async () => phishing.address,
       savePhishingReport: async (address) => {
         phishing.address = address;
+      },
+      assistant: async () => assistant.setting,
+      saveAssistant: async (setting) => {
+        assistant.setting = setting;
       },
     },
     externalHint: {
@@ -191,6 +196,7 @@ const setup = (
     idle,
     vacation,
     phishing,
+    assistant,
     send,
     hint,
   };
@@ -546,5 +552,31 @@ describe("Firmenverwaltung", () => {
     expect(chef.phishing.address).toBe("it@dienstleister.de");
     await chef.send("PUT", "/phishing-report", { address: "" });
     expect(chef.phishing.address).toBe("");
+  });
+
+  it("lets only the admin set the assistant's key and model, and never shows the key", async () => {
+    const key = "sk-ant-api03-abcdefghijklmnopqrstuvwxyz-WXYZ";
+    expect((await setup("anna@firma.de").send("PUT", "/assistant", { apiKey: key })).status).toBe(
+      403,
+    );
+    const chef = setup("chef@firma.de");
+    expect(await (await chef.send("GET", "/assistant")).json()).toEqual({ assistant: null });
+    // No key yet: a model alone is not enough.
+    expect((await chef.send("PUT", "/assistant", { model: "claude-sonnet-5-5" })).status).toBe(400);
+    const saved = await chef.send("PUT", "/assistant", { apiKey: key, model: "claude-sonnet-5-5" });
+    expect(await saved.json()).toEqual({
+      assistant: { model: "claude-sonnet-5-5", keyEnd: "WXYZ" },
+    });
+    // Another model, the key stays.
+    await chef.send("PUT", "/assistant", { model: "claude-haiku-5-5" });
+    expect(chef.assistant.setting).toEqual({ apiKey: key, model: "claude-haiku-5-5" });
+    expect(JSON.stringify(await (await chef.send("GET", "/assistant")).json())).not.toContain(
+      "abcdefghijklmnop",
+    );
+    expect((await chef.send("PUT", "/assistant", { apiKey: key, model: "gpt-5" })).status).toBe(
+      400,
+    );
+    await chef.send("DELETE", "/assistant");
+    expect(chef.assistant.setting).toBeNull();
   });
 });

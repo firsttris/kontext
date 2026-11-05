@@ -37,3 +37,21 @@ Every connection has a session of its own and can be disconnected on its own; wh
 blocked, their agents are disconnected too. There is nothing to set up on the server
 ([Installation → AI agents](installation.md#ki-agenten)). The tools in detail:
 [Architecture → Agents](architecture.md#agenten-mcp).
+
+## Assistant in the chat { #assistent-im-chat }
+
+It also works without an agent of your own: at the top of the chat is the **Assistant**. You ask
+it in words (“What happened lately with Keller Elektro?”, “Write Ms Keller that we’ll come on
+Tuesday”); it uses the same tools as a connected agent, with the rights of the person asking, and
+on request creates drafts, appointments, contacts and tasks; what it created is listed under its
+answer. Like an agent, it sends nothing outside the company and deletes nothing: you send drafts yourself, and it invites only colleagues to appointments.
+
+- **Setting up:** the Firmenverwaltung enters a Claude API key (console.anthropic.com) under
+  *Settings → Chat* and picks the model ([Installation → AI agents](installation.md#ki-agenten)).
+  Without a key there is no assistant.
+- **Cost:** Anthropic bills by use; a question with a few lookups usually costs a few cents with the
+  default model (Claude Sonnet 5.5).
+- **Data:** the question and what the assistant looks up for it (mail text, appointments,
+  contacts) go to Anthropic; this is said under the input field. Kontext does not store the
+  conversation; it stays in the open tab until you reload it, sign out or choose “New
+  conversation”.

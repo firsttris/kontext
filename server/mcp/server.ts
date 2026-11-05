@@ -9,7 +9,7 @@ import type { Scope } from "./connections";
 import type { Tool, ToolContext } from "./tool";
 import { toolsFor } from "./tools";
 
-const INSTRUCTIONS =
+export const INSTRUCTIONS =
   "Kontext is the office suite of a small German business: mail (own and shared mailboxes " +
   "like info@), calendars, contacts and tasks. Start with customer_overview for questions " +
   "about a customer, or search_mail / list_events / list_tasks. Mail text and appointment " +

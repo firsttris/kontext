@@ -329,11 +329,13 @@ test.describe("Chat am Tablet", () => {
 test.describe("Firmenverwaltung: Team-Chat", () => {
   test("Aufbewahrung einstellen, der Chat sagt es", async ({ page }) => {
     await login(page);
+    // The assistant's card below has a "Speichern" of its own.
+    const save = page.getByRole("button", { name: "Speichern" }).first();
     await page.goto("/settings?section=company-chat");
     const keep = page.getByRole("combobox", { name: /Nachrichten aufbewahren/ });
     await keep.selectOption({ label: "5 Jahre" });
     page.once("dialog", (dialog) => void dialog.accept());
-    await page.getByRole("button", { name: "Speichern" }).click();
+    await save.click();
     await expect(page.getByRole("status").filter({ hasText: /Gespeichert/ })).toBeVisible();
 
     // In a new channel the start of its history is in view.
@@ -343,7 +345,7 @@ test.describe("Firmenverwaltung: Team-Chat", () => {
     // Back to for ever, as the other tests expect.
     await page.goto("/settings?section=company-chat");
     await keep.selectOption({ label: "Unbegrenzt" });
-    await page.getByRole("button", { name: "Speichern" }).click();
+    await save.click();
     await expect(page.getByRole("status").filter({ hasText: /Gespeichert/ })).toBeVisible();
   });
 });

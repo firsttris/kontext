@@ -36,6 +36,7 @@ import {
 import { lazy, type ReactNode, Suspense, useId } from "react";
 import { TabBar } from "@/components/shell/app-shell";
 import { AgentsSection } from "@/features/agents/agents-section";
+import { AssistantSection } from "@/features/company/assistant-section";
 import { BackupSection } from "@/features/company/backup-section";
 import { ChatSection } from "@/features/company/chat-section";
 import { EmployeesSection } from "@/features/company/employees-section";
@@ -152,7 +153,12 @@ const CONTENT: Record<Section, () => ReactNode> = {
   "company-signature": () => <CompanySignatureSection />,
   "company-legal": () => <LegalFooterSection />,
   "company-vacation": () => <VacationTemplatesSection />,
-  "company-chat": () => <ChatSection />,
+  "company-chat": () => (
+    <>
+      <ChatSection />
+      <AssistantSection />
+    </>
+  ),
   "company-security": () => (
     <>
       <CompanySecuritySection />

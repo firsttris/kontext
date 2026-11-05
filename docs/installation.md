@@ -437,6 +437,13 @@ gilt:
 - Wer einen Agenten nicht mehr will, trennt ihn in den Einstellungen; das Sperren eines
   Mitarbeiters trennt alle seine Agenten.
 
+Den **Assistenten im Chat** ([KI-Agenten → Assistent im Chat](agents.md#assistent-im-chat)) gibt
+es mit einem Schlüssel der Claude API: unter console.anthropic.com anlegen und in der
+Firmenverwaltung unter *Chat → Assistent im Chat* eintragen, dazu das Modell wählen (empfohlen
+Claude Sonnet 5.5). Kontext speichert den Schlüssel verschlüsselt und zeigt danach nur noch seine
+letzten vier Zeichen. Jede Person darf zehn Fragen in der Minute stellen. Die Fragen und was der Assistent nachschlägt, gehen an Anthropic in
+die USA: Das gehört in die Datenschutzinformation, mit Anthropics Auftragsverarbeitungsvertrag.
+
 ## 4. Platte verschlüsseln
 
 Mails, Chat, Aufgaben und Dateien liegen auf der Platte des Servers. Verschlüsselt ist sie

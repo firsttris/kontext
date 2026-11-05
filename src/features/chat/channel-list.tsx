@@ -4,10 +4,11 @@
  * the last message of each.
  */
 import { Link } from "@tanstack/react-router";
-import { AtSign, BellOff, Hash, LockKeyhole, Phone, Plus } from "lucide-react";
+import { AtSign, BellOff, Hash, LockKeyhole, Phone, Plus, Sparkles } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { FROM_PARENT } from "@/components/use-back";
+import { ASSISTANT_ID, useAssistantEnabled } from "@/features/assistant/assistant";
 import { usePhone } from "@/features/phone/queries";
 import { ColleagueAvatar } from "@/features/photos/colleague-avatar";
 import { type ChannelSummary, firstName, shortTime, sortChannels, sortDirect } from "@/lib/chat";
@@ -132,6 +133,38 @@ const sideItem = (active: boolean, unread: boolean) =>
     (active || unread) && "font-semibold",
   );
 
+/** The assistant above the channels, where the server has one (server/assistant/). */
+const AssistantItem = ({ active }: { active: boolean }) =>
+  useAssistantEnabled() ? (
+    <Link
+      to="/chat"
+      search={{ channel: ASSISTANT_ID }}
+      aria-current={active ? "page" : undefined}
+      className={sideItem(active, false)}
+    >
+      <Sparkles size={14} aria-hidden="true" className="text-accent" />
+      <span className="flex-1 truncate">{m.assistant_title()}</span>
+    </Link>
+  ) : null;
+
+const AssistantRow = () =>
+  useAssistantEnabled() ? (
+    <Link
+      to="/chat"
+      search={{ channel: ASSISTANT_ID }}
+      state={FROM_PARENT}
+      className="flex items-center gap-3 rounded-xl p-2.5 text-fg no-underline active:bg-hover"
+    >
+      <span className="flex size-[42px] shrink-0 items-center justify-center rounded-xl bg-subtle text-accent">
+        <Sparkles size={18} aria-hidden="true" />
+      </span>
+      <span className="flex min-w-0 flex-1 flex-col gap-0.5">
+        <span className="truncate font-medium">{m.assistant_title()}</span>
+        <span className="truncate text-[13px] text-muted">{m.assistant_row()}</span>
+      </span>
+    </Link>
+  ) : null;
+
 /** Beside the conversation, from `md`. */
 export const ChannelSidebar = ({ channels, online, activeId, onNew }: Props) => {
   const { named, direct } = useRows(channels, online);
@@ -148,6 +181,7 @@ export const ChannelSidebar = ({ channels, online, activeId, onNew }: Props) => 
         <ChatSearchResults words={words} />
       ) : (
         <>
+          <AssistantItem active={activeId === ASSISTANT_ID} />
           <nav aria-label={m.chat_channels()} className="flex flex-col gap-px">
             <span className="px-2.5 pb-1.5 text-[12px] font-medium text-muted">
               {m.chat_channels()}
@@ -268,6 +302,7 @@ export const ChannelScreen = ({ channels, online, onNew }: Props) => {
         </div>
       ) : (
         <div className="flex min-h-0 flex-1 flex-col overflow-y-auto px-2 pb-2">
+          <AssistantRow />
           <span className="px-2.5 pt-2.5 pb-1 text-[12px] font-semibold text-muted">
             {m.chat_channels()}
           </span>

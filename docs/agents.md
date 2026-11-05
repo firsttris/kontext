@@ -37,3 +37,21 @@ Jede Verbindung hat eine eigene Sitzung und lässt sich einzeln trennen; wird ei
 gesperrt, sind auch seine Agenten getrennt. Auf dem Server ist nichts einzurichten
 ([Installation → KI-Agenten](installation.md#ki-agenten)). Die Werkzeuge im Einzelnen:
 [Architektur → Agenten](architecture.md#agenten-mcp).
+
+## Assistent im Chat
+
+Ohne eigenen Agenten geht es auch: Im Chat steht oben der **Assistent**. Man fragt ihn in Worten
+(„Was gab es zuletzt mit Keller Elektro?“, „Schreib Frau Keller, dass wir Dienstag kommen“), er
+nutzt dieselben Werkzeuge wie ein verbundener Agent, mit den Rechten der Person, die fragt, und
+legt auf Wunsch Entwürfe, Termine, Kontakte und Aufgaben an; was er angelegt hat, steht unter
+seiner Antwort. Wie ein Agent schickt er nichts nach draußen und löscht nichts: Entwürfe sendet man selbst, zu Terminen lädt er nur Kollegen ein.
+
+- **Einrichten:** Die Firmenverwaltung trägt unter *Einstellungen → Chat* einen Schlüssel der
+  Claude API (console.anthropic.com) ein und wählt das Modell
+  ([Installation → KI-Agenten](installation.md#ki-agenten)). Ohne Schlüssel gibt es keinen
+  Assistenten.
+- **Kosten:** Anthropic rechnet nach Nutzung ab; eine Frage mit ein paar Nachschlagen kostet mit
+  dem voreingestellten Modell (Claude Sonnet 5.5) meist ein paar Cent.
+- **Daten:** Die Frage und was der Assistent dafür nachschlägt (Mailtext, Termine, Kontakte)
+  gehen an Anthropic; das steht unter dem Eingabefeld. Kontext speichert das Gespräch nicht, es
+  bleibt im offenen Tab, bis man ihn neu lädt, sich abmeldet oder „Neues Gespräch“ wählt.

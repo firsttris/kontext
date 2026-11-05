@@ -25,7 +25,13 @@ export type CompanySettings = {
   /** Where „Als Phishing melden“ sends a mail (phishing-report.ts); empty while there is none. */
   phishingReport: () => Promise<string>;
   savePhishingReport: (address: string) => Promise<void>;
+  /** The assistant in the chat (assistant.ts): Claude API key and model; the key sealed at rest. */
+  assistant: () => Promise<AssistantSetting | null>;
+  /** null takes the assistant away. */
+  saveAssistant: (setting: AssistantSetting | null) => Promise<void>;
 };
+
+export type AssistantSetting = { apiKey: string; model: string };
 
 const SIGNATURE = "signature";
 const M365 = "m365";
@@ -33,6 +39,7 @@ const LEGAL_FOOTER = "legalFooter";
 const IDLE_LOGOUT = "idleLogout";
 const VACATION_TEMPLATES = "vacationTemplates";
 const PHISHING_REPORT = "phishingReport";
+const ASSISTANT = "assistant";
 
 export const createCompanySettings = (db: Db, sealer: Sealer): CompanySettings => {
   const read = async (key: string): Promise<string | null> => {
@@ -72,5 +79,15 @@ export const createCompanySettings = (db: Db, sealer: Sealer): CompanySettings =
     saveVacationTemplates: (templates) => write(VACATION_TEMPLATES, JSON.stringify(templates)),
     phishingReport: async () => (await read(PHISHING_REPORT)) ?? "",
     savePhishingReport: (address) => write(PHISHING_REPORT, address),
+    assistant: async () => {
+      const value = await read(ASSISTANT);
+      return value ? (JSON.parse(await sealer.open(value)) as AssistantSetting) : null;
+    },
+    saveAssistant: async (setting) =>
+      setting
+        ? write(ASSISTANT, await sealer.seal(JSON.stringify(setting)))
+        : void (await db
+            .delete(schema.companySetting)
+            .where(eq(schema.companySetting.key, ASSISTANT))),
   };
 };

@@ -440,6 +440,13 @@ or adds the address in Claude as a connector and signs in in the browser (OAuth)
 - Whoever no longer wants an agent disconnects it in the settings; locking an
   employee disconnects all their agents.
 
+The **assistant in the chat** ([AI agents → Assistant in the chat](agents.md#assistent-im-chat))
+comes with a Claude API key: create one at console.anthropic.com and enter it in the
+Firmenverwaltung under *Chat → Assistant in the chat*, and pick the model (recommended: Claude
+Sonnet 5.5). Kontext stores the key encrypted and afterwards shows only its last four characters.
+Each person may ask ten questions a minute. The questions and what the assistant looks up go to Anthropic in the USA: this belongs
+in the privacy notice, with Anthropic's data processing agreement.
+
 ## 4. Encrypting the disk { #4-platte-verschlusseln }
 
 Mails, chat, tasks and files are on the server's disk. Encrypted, it is

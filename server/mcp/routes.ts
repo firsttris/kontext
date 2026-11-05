@@ -22,6 +22,7 @@ import {
 } from "./connections";
 import { createReader } from "./reader";
 import { handleMcp } from "./server";
+import type { ToolContext } from "./tool";
 import { createWriter, type TaskApi } from "./writer";
 
 const HOUR = 3_600_000;
@@ -76,6 +77,52 @@ const clientWith = (stalwartUrl: string, token: string, base: typeof fetch) =>
     }) as typeof fetch,
   });
 
+export type ToolContextDeps = {
+  stalwartUrl: string;
+  /** The Stalwart token the tools act with. */
+  token: string;
+  /** The person's address: their name when no identity has one. */
+  email: string;
+  tasksFor: McpDeps["tasksFor"];
+  fetch?: typeof fetch;
+};
+
+/**
+ * The reader and writer the tools use, acting as the holder of this token: the agents over /mcp
+ * and the assistant in the chat (server/assistant/routes.ts).
+ */
+export const createToolContext = ({
+  stalwartUrl,
+  token,
+  email,
+  tasksFor,
+  fetch: base = fetch,
+}: ToolContextDeps): ToolContext => {
+  const client = clientWith(stalwartUrl, token, base);
+  // The mailboxes and rights as the web app sees them (account-rights.ts): Stalwart's session
+  // lists every account that shared anything, a calendar say, as writable.
+  let rights: Promise<SessionAccount[]> | null = null;
+  const sessionAccounts = (): Promise<SessionAccount[]> => {
+    rights ??= client
+      .getSession()
+      .then((session) =>
+        accountRights(
+          session.accounts as Record<string, JmapSessionAccount>,
+          createFoldersOf(session.apiUrl, `Bearer ${token}`, base),
+        ),
+      );
+    return rights;
+  };
+  const name = async () => {
+    const own = (await sessionAccounts()).find((account) => account.isPersonal);
+    const identities = own ? await listIdentities(client, own.id) : [];
+    return identities[0]?.name || email;
+  };
+  const taskApi = tasksFor(sessionAccounts, name);
+  const reader = createReader({ client, taskApi });
+  return { reader, writer: createWriter({ client, reader, taskApi }) };
+};
+
 export const scopesFor = (write: boolean): Scope[] => (write ? ["read", "write"] : ["read"]);
 
 export const createMcpEndpoint = (deps: McpDeps) => {
@@ -115,31 +162,15 @@ export const createMcpEndpoint = (deps: McpDeps) => {
       }
       return expired();
     }
-    const client = clientWith(stalwartUrl, token, base);
-    // The mailboxes and rights as the web app sees them (account-rights.ts): Stalwart's session
-    // lists every account that shared anything, a calendar say, as writable.
-    let rights: Promise<SessionAccount[]> | null = null;
-    const sessionAccounts = (): Promise<SessionAccount[]> => {
-      rights ??= client
-        .getSession()
-        .then((session) =>
-          accountRights(
-            session.accounts as Record<string, JmapSessionAccount>,
-            createFoldersOf(session.apiUrl, `Bearer ${token}`, base),
-          ),
-        );
-      return rights;
-    };
-    const name = async () => {
-      const own = (await sessionAccounts()).find((account) => account.isPersonal);
-      const identities = own ? await listIdentities(client, own.id) : [];
-      return identities[0]?.name || caller.email;
-    };
-    const taskApi = tasksFor(sessionAccounts, name);
-    const reader = createReader({ client, taskApi });
-    const writer = createWriter({ client, reader, taskApi });
+    const context = createToolContext({
+      stalwartUrl,
+      token,
+      email: caller.email,
+      tasksFor,
+      fetch: base,
+    });
     return handleMcp(request, {
-      context: { reader, writer },
+      context,
       scopes: caller.scopes,
       version,
       guard: {
