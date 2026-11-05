@@ -3,8 +3,16 @@
  * invitations); on a phone one day with a strip of the week above it, the month, or the list.
  */
 import { Link, useNavigate } from "@tanstack/react-router";
-import { ChevronLeft, ChevronRight, Plus, Printer, Settings2 } from "lucide-react";
+import {
+  ChevronLeft,
+  ChevronRight,
+  Plus,
+  Printer,
+  Search as SearchIcon,
+  Settings2,
+} from "lucide-react";
 import { useState } from "react";
+import { SearchField } from "@/components/search-field";
 import { TabBar, useSession } from "@/components/shell/app-shell";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/toast";
@@ -32,6 +40,7 @@ import { AGENDA_DAYS, AgendaView } from "./agenda-view";
 import { useBirthdayEvents } from "./birthdays";
 import { CalendarList, CalendarsDialog } from "./calendar-list";
 import { EventDialog } from "./event-dialog";
+import { EventSearchResults } from "./event-search";
 import { MiniMonth } from "./mini-month";
 import { MonthView, monthDays } from "./month-view";
 import { printCalendar } from "./print-calendar";
@@ -118,6 +127,13 @@ export const CalendarPage = ({ search }: { search: Search }) => {
   const birthdays = useBirthdayEvents(from, to);
   const events = birthdays.length ? [...stored, ...birthdays] : stored;
   const [managing, setManaging] = useState(false);
+  const [words, setWords] = useState("");
+  /** Phone: the search field shows after a tap on the magnifier. */
+  const [searchOpen, setSearchOpen] = useState(false);
+  const closeSearch = () => {
+    setWords("");
+    setSearchOpen(false);
+  };
   const me = useMe();
   const { tasks: allTasks } = useTasks();
   const tasks = useTasksShown() ? calendarTasks(allTasks, me, today) : [];
@@ -186,6 +202,25 @@ export const CalendarPage = ({ search }: { search: Search }) => {
         </span>
       ) : null}
       <div className="flex-1" />
+      <SearchField
+        label={m.calendar_search()}
+        value={words}
+        onChange={setWords}
+        className={cn(
+          "order-last h-9 w-full md:order-none md:flex md:h-8 md:w-52",
+          searchOpen || words ? "flex" : "hidden",
+        )}
+      />
+      <Button
+        variant="ghost"
+        size="iconSm"
+        aria-label={m.calendar_search()}
+        aria-expanded={searchOpen}
+        onClick={() => (searchOpen ? closeSearch() : setSearchOpen(true))}
+        className="md:hidden"
+      >
+        <SearchIcon size={16} />
+      </Button>
       <Button
         variant="ghost"
         size="iconSm"
@@ -245,6 +280,30 @@ export const CalendarPage = ({ search }: { search: Search }) => {
     </div>
   );
 
+  const body =
+    view === "month" ? (
+      <MonthView
+        selected={selected}
+        today={today}
+        events={events}
+        tasks={tasks}
+        isInvitation={invited}
+        compact={phone}
+      />
+    ) : view === "agenda" ? (
+      <AgendaView from={from} today={today} events={events} tasks={tasks} isInvitation={invited} />
+    ) : (
+      <WeekGrid
+        days={days}
+        events={events}
+        tasks={tasks}
+        isInvitation={invited}
+        showDayHeader={!phone}
+        canMove={canMove}
+        onMove={onMove}
+      />
+    );
+
   return (
     <>
       <aside className="hidden h-full w-sidebar shrink-0 flex-col gap-6 border-r border-border bg-side p-4 lg:flex">
@@ -283,39 +342,18 @@ export const CalendarPage = ({ search }: { search: Search }) => {
       </aside>
       <main className="flex h-full min-w-0 flex-1 flex-col">
         {header}
-        {phone && view === "day" ? (
-          <DayStrip week={week} selected={selected} today={today} />
-        ) : null}
-        {isPending ? (
-          <p className="px-5 py-3 text-[13px] text-muted">{m.common_loading()}</p>
-        ) : null}
-        {view === "month" ? (
-          <MonthView
-            selected={selected}
-            today={today}
-            events={events}
-            tasks={tasks}
-            isInvitation={invited}
-            compact={phone}
-          />
-        ) : view === "agenda" ? (
-          <AgendaView
-            from={from}
-            today={today}
-            events={events}
-            tasks={tasks}
-            isInvitation={invited}
-          />
+        {words.trim() ? (
+          <EventSearchResults words={words} onPick={closeSearch} />
         ) : (
-          <WeekGrid
-            days={days}
-            events={events}
-            tasks={tasks}
-            isInvitation={invited}
-            showDayHeader={!phone}
-            canMove={canMove}
-            onMove={onMove}
-          />
+          <>
+            {phone && view === "day" ? (
+              <DayStrip week={week} selected={selected} today={today} />
+            ) : null}
+            {isPending ? (
+              <p className="px-5 py-3 text-[13px] text-muted">{m.common_loading()}</p>
+            ) : null}
+            {body}
+          </>
         )}
         <Link
           to="/calendar"

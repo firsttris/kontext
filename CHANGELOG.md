@@ -7,6 +7,9 @@ Steps that an update needs beyond raising the version are marked **Upgrade**.
 
 ## Unreleased
 
+- Calendar and tasks: a search field finds appointments (title, location, description,
+  participants, past and coming; a series once) and tasks (title, notes, checklist, assignee),
+  and a hit opens them, on the phone too (user guide, "Kalender" and "Aufgaben").
 - Mail: own folders can be renamed, moved and deleted from "…" next to them in the sidebar
   (their mails go to the trash, subfolders go along); "Mark all as read" works for any folder,
   for all its mails, not only the loaded ones (user guide, "Mail", "Ordner verwalten").

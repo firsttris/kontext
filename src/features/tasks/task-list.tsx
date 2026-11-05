@@ -22,6 +22,7 @@ export const TaskList = ({
   hiddenDone = 0,
   header,
   below,
+  empty = m.tasks_empty(),
 }: {
   title: string;
   tasks: Task[];
@@ -40,6 +41,8 @@ export const TaskList = ({
   header?: ReactNode;
   /** Under the title, e.g. the phone's views and boards. */
   below?: ReactNode;
+  /** What an empty list says. */
+  empty?: string;
 }) => {
   const today = dateKey(new Date());
   const actions = useTaskActions();
@@ -97,7 +100,7 @@ export const TaskList = ({
       </header>
       <div className="min-h-0 flex-1 overflow-y-auto px-2 pb-3">
         {groups.length === 0 ? (
-          <p className="px-3 py-6 text-[14px] text-muted">{m.tasks_empty()}</p>
+          <p className="px-3 py-6 text-[14px] text-muted">{empty}</p>
         ) : (
           groups.map((group) => (
             <div key={group.group} className="mb-3 flex flex-col gap-px">

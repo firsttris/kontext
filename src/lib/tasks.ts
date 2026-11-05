@@ -95,6 +95,20 @@ export const inView = (task: Task, view: TaskView, me: string, today: string): b
   return true;
 };
 
+/**
+ * Whether a task matches the search: every word in its title, notes, checklist or the name of the
+ * person it is assigned to, in any case ("hoffmann rückruf").
+ */
+export const taskMatches = (task: Task, words: string, assignee: string | null): boolean => {
+  const text = [task.title, task.notes, ...task.checklist.map((item) => item.text), assignee ?? ""]
+    .join(" ")
+    .toLocaleLowerCase("de");
+  return words
+    .toLocaleLowerCase("de")
+    .split(/\s+/)
+    .every((word) => text.includes(word));
+};
+
 export type DueGroup = "overdue" | "today" | "week" | "later" | "none";
 
 export const dueGroup = (dueDate: string | null, today: string): DueGroup => {

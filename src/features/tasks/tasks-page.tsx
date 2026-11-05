@@ -6,18 +6,19 @@
 import { Link, useNavigate } from "@tanstack/react-router";
 import { Columns3, EyeOff, List, Pencil, Plus, SquareKanban } from "lucide-react";
 import { useState } from "react";
+import { SearchField } from "@/components/search-field";
 import { TabBar } from "@/components/shell/app-shell";
 import { Button } from "@/components/ui/button";
 import { useAssignedTasksSeen } from "@/features/notifications/app-badges";
 import { cn } from "@/lib/cn";
 import { dateKey } from "@/lib/jscalendar";
-import { boardKey, inView, type TaskView } from "@/lib/tasks";
+import { boardKey, inView, type TaskView, taskMatches } from "@/lib/tasks";
 import { m } from "@/paraglide/messages";
 import type { TasksSearch } from "@/routes/_app/tasks";
 import { BoardDialog } from "./board-dialog";
 import { ColumnsDialog } from "./columns-dialog";
 import { setHideDone, useHideDone } from "./hide-done";
-import { useBoards, useMe, useTasks } from "./queries";
+import { useBoards, useMe, usePeople, useTasks } from "./queries";
 import { TaskBoard } from "./task-board";
 import { TaskDetail } from "./task-detail";
 import { TaskDialog } from "./task-dialog";
@@ -83,6 +84,8 @@ export const TasksPage = ({ search }: { search: TasksSearch }) => {
   const hideDone = useHideDone();
   /** The board dialog: a new board, or the open project to rename or delete. */
   const [boardDialog, setBoardDialog] = useState<"new" | "edit" | null>(null);
+  const [words, setWords] = useState("");
+  const people = usePeople();
   useAssignedTasksSeen();
 
   const board = search.board
@@ -91,6 +94,11 @@ export const TasksPage = ({ search }: { search: TasksSearch }) => {
   const mode = board ? (search.mode ?? "board") : "list";
   const view: TaskView = search.show ?? "mine";
   const open = tasks.find((task) => task.id === search.task);
+  // A search looks through every task one sees, not just the view or board.
+  const nameOf = (id: string | null) => people.find((person) => person.id === id)?.name ?? null;
+  const found = words.trim()
+    ? tasks.filter((task) => taskMatches(task, words.trim(), nameOf(task.assigneeId)))
+    : null;
   const inList = board
     ? tasks.filter((task) => boardKey(task) === board.id)
     : tasks.filter((task) => inView(task, view, me, today));
@@ -223,19 +231,32 @@ export const TasksPage = ({ search }: { search: TasksSearch }) => {
           >
             <div className="min-h-0 flex-1">
               <TaskList
-                title={title}
-                tasks={shown}
+                title={found ? m.tasks_search_hits() : title}
+                tasks={found ?? shown}
                 openId={open?.id}
-                addTo={addTo}
-                showBoards={!board}
-                hiddenDone={inList.length - shown.length}
+                addTo={found ? null : addTo}
+                showBoards={!board || found !== null}
+                hiddenDone={found ? 0 : inList.length - shown.length}
+                empty={found ? m.mail_empty_search() : undefined}
                 header={
                   <>
-                    {canHide ? <HideDoneToggle hidden={hideDone} labelled={false} /> : null}
+                    {canHide && !found ? (
+                      <HideDoneToggle hidden={hideDone} labelled={false} />
+                    ) : null}
                     {board ? <ModeSwitch board={board.id} mode="list" /> : null}
                   </>
                 }
-                below={phoneChips}
+                below={
+                  <>
+                    <SearchField
+                      label={m.tasks_search()}
+                      value={words}
+                      onChange={setWords}
+                      className="h-10"
+                    />
+                    {found ? null : phoneChips}
+                  </>
+                }
               />
             </div>
             <TabBar />

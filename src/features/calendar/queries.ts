@@ -20,12 +20,14 @@ import {
   listCalendars,
   queryEvents,
   respondToEvent,
+  searchEvents,
   updateCalendar,
 } from "@/jmap/calendar";
 import { CAPABILITIES } from "@/jmap/client";
 import { type AnswerLinksOf, type EventChange, saveEvent } from "@/jmap/invitations";
 import { principalName } from "@/jmap/principals";
 import { hiddenToMove, withOwnVisibility } from "@/lib/calendar-visibility";
+import { orderHits } from "@/lib/event-search";
 import {
   addDays,
   type CalendarEvent,
@@ -258,6 +260,34 @@ export const useEvents = (from: string, to: string) => {
     data: events,
     calendars,
     isPending: calendarsPending || results.some((result) => result.isPending),
+  };
+};
+
+/**
+ * Appointments of the visible calendars that mention the words, past and future; a series is one
+ * hit. Hidden calendars are left out like in the views, which could not open their events.
+ */
+export const useEventSearch = (words: string) => {
+  const client = useClient();
+  const { calendars } = useCalendarRefs();
+  const shown = calendars.filter((calendar) => calendar.visible);
+  const results = useQueries({
+    queries: shown.map((calendar) => ({
+      queryKey: [calendar.accountId, "events", calendar.calendar.id, "search", words],
+      queryFn: () => searchEvents(client, calendar.accountId, calendar.calendar.id, words),
+      enabled: words.length >= 2,
+    })),
+  });
+  const found = shown.flatMap((calendar, index) =>
+    (results[index]?.data ?? []).map((event) => ({
+      ...event,
+      accountId: calendar.accountId,
+      color: calendar.color,
+    })),
+  );
+  return {
+    hits: orderHits(found, new Date()),
+    isFetching: results.some((result) => result.isFetching),
   };
 };
 

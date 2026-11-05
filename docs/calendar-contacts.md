@@ -21,6 +21,10 @@ Kontext steht, steht auch am iPhone, unter Android (DAVx⁵) und in Thunderbird.
 
   ![Termin einer Serie bearbeiten mit „Dieser und alle folgenden“](screenshots/series-following.png)
 
+- **Termine suchen:** Das Feld „Termine suchen“ oben (am Handy hinter der Lupe) findet Termine
+  nach Titel, Ort, Beschreibung und Teilnehmern („Hoffmann“), vergangene wie kommende, in den
+  eingeblendeten Kalendern; die kommenden stehen oben. Eine Serie erscheint einmal. Ein Treffer
+  öffnet den Termin an seinem Tag. [Mehr](architecture.md#termine-und-aufgaben-suchen)
 - **Einladungen in der Mail:** Kommt eine Einladung per Mail – aus Outlook, Google, Apple oder von
   Kollegen –, steht über dem Text, was, wann und wo, ob der Termin schon im Kalender steht und
   was man geantwortet hat, dazu **Zusagen**, **Vielleicht**, **Absagen** und **In den Kalender**.
