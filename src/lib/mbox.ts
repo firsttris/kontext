@@ -168,8 +168,7 @@ export const mboxEntry = (raw: Uint8Array, { sender, receivedAt, keywords }: Mbo
     const end = raw.indexOf(LF, start);
     const line = raw.subarray(start, end === -1 ? raw.length : end + 1);
     if (inHead && isBlank(line)) inHead = false;
-    dropping =
-      inHead && ((dropping && isContinued(line)) || FLAG_FIELD.test(latin1.decode(line)));
+    dropping = inHead && ((dropping && isContinued(line)) || FLAG_FIELD.test(latin1.decode(line)));
     if (dropping) {
       parts.push(raw.subarray(run, start));
       run = start + line.length;

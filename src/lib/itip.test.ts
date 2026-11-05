@@ -300,7 +300,6 @@ describe("toCalendarFile", () => {
     expect(status("s")).toBe("CONFIRMED");
     expect(status("s", 1)).toBe("CANCELLED");
   });
-
 });
 
 describe("toICalendar: zones without one yearly rule", () => {
