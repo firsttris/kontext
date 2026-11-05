@@ -10,6 +10,11 @@ Steps that an update needs beyond raising the version are marked **Upgrade**.
 - Mail: "Absender blockieren" in "Weitere Aktionen" blocks an outside sender's address or whole
   domain: the mail and all future ones from there go to Spam. It is a rule "Blockiert: …" at the
   top of the rules, removed there to unblock (user guide, "Mail", "Sicherheit").
+- Contacts: import from a CSV file (a customer list from Excel, an Outlook or Google export)
+  next to the vCard import under *Adressbücher*. The columns are matched to the contact's fields
+  by their header, German or English, with the first rows as a preview; each can be changed.
+  Excel's Windows-1252 and ";" are read as well as UTF-8, UTF-16 and ","; Google's labels give
+  the kind of a number; duplicates are left out (user guide, "Kalender und Kontakte").
 - Calendar: a "Arbeitswoche" view (Monday to Friday) next to day, week and month, and working
   hours per device (*Einstellungen → Darstellung*, at first 7–18): day and week open at their
   start and shade the hours outside them; phones keep the day view (user guide, "Kalender und
