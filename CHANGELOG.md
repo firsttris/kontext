@@ -7,6 +7,9 @@ Steps that an update needs beyond raising the version are marked **Upgrade**.
 
 ## Unreleased
 
+- Mail: "Absender blockieren" in "Weitere Aktionen" blocks an outside sender's address or whole
+  domain: the mail and all future ones from there go to Spam. It is a rule "Blockiert: …" at the
+  top of the rules, removed there to unblock (user guide, "Mail", "Sicherheit").
 - Mail: own folders can be renamed, moved and deleted from "…" next to them in the sidebar
   (their mails go to the trash, subfolders go along); "Mark all as read" works for any folder,
   for all its mails, not only the loaded ones (user guide, "Mail", "Ordner verwalten").

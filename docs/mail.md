@@ -274,6 +274,10 @@ IMAP und SMTP.
 - **Als Phishing melden** im Menü „Weitere Aktionen“, sobald die Firmenverwaltung eine Adresse
   dafür eingetragen hat ([Firma](company.md#mitarbeiter-und-postfacher)): die Mail geht als
   Anhang (.eml) an die IT oder den IT-Dienstleister und landet im Spam.
+- **Absender blockieren** im Menü „Weitere Aktionen“: nur diese Adresse oder alle von ihrer
+  Domain. Die Mail und alle künftigen von dort landen im Spam (nichts wird gelöscht). Das ist
+  eine Regel „Blockiert: …“ ganz oben in den [Regeln](#ordnen-und-finden); wer sie dort löscht,
+  hebt die Sperre auf. Kollegen und die eigenen Domains werden nicht angeboten.
 - **Bilder aus dem Internet** laden erst auf Wunsch, oder sofort für Absender, denen man vertraut
   (auch alle Kontakte) – aber nur, wenn die Mail wirklich von ihnen kommt.
 - **Newsletter abbestellen** mit einem Klick direkt an der Mail.

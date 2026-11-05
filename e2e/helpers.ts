@@ -328,6 +328,30 @@ export const givenKeywords = (keywords: object): string[] =>
     .filter((keyword) => keyword !== "$hasattachment" && keyword !== "$hasnoattachment")
     .sort();
 
+/**
+ * Where a mail with this subject is, by folder role or name, and its keywords; in the user's own
+ * mailbox or in a shared one they belong to.
+ */
+export const findMail = async (user: string, subject: string, mailbox = user) => {
+  const client = jmapAs(user);
+  const session = await client.getSession();
+  const accountId = Object.entries(session.accounts).find(
+    ([, account]) => account.name === address(mailbox),
+  )![0];
+  const { list: mailboxes } = await client.call<{
+    list: { id: string; name: string; role: string | null }[];
+  }>("Mailbox/get", { accountId, properties: ["name", "role"] });
+  const [email] = await mailsWithSubject<{ mailboxIds: object; keywords: object }>(
+    client,
+    accountId,
+    [subject],
+    ["mailboxIds", "keywords"],
+  );
+  if (!email) return null;
+  const box = mailboxes.find((candidate) => Object.keys(email.mailboxIds).includes(candidate.id));
+  return { folder: box?.role ?? box?.name, keywords: givenKeywords(email.keywords) };
+};
+
 /** Deletes a test's own mails again, wherever they went (moved, snoozed). */
 export const removeMails = async (user: string, mailbox: string, subjects: string[]) => {
   const found = await findMails(user, mailbox, subjects);

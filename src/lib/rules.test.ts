@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import type { Mailbox } from "@/jmap/types";
+import { outcome } from "../../server/rules/match";
 import {
+  blockRule,
   cleanRule,
   moveRule,
   newRule,
@@ -128,5 +130,27 @@ describe("operatorsFor", () => {
   it("offers 'ist genau' for addresses and subject, not for the text", () => {
     expect(operatorsFor("from").map((o) => o.operator)).toEqual(["contains", "notContains", "is"]);
     expect(operatorsFor("body").map((o) => o.operator)).toEqual(["contains", "notContains"]);
+  });
+});
+
+describe("blockRule", () => {
+  const junk = { id: "j", path: "Junk Mail" };
+  const from = (address: string) => ({ from: [address], to: [], subject: "", body: "" });
+
+  it("files mail from exactly this address into Spam, before any other rule", () => {
+    const rule = blockRule("b", "Werbung@Angebote.example", "address", junk);
+    expect(rule.name).toBe("Blockiert: werbung@angebote.example");
+    expect(whenText(rule)).toBe("Absender ist genau „werbung@angebote.example“");
+    expect(ruleProblem(rule)).toBeNull();
+    const other = { ...ruleFromSender("o", "angebote.example"), moveTo: { id: "k", path: "K" } };
+    expect(outcome([rule, other], from("werbung@angebote.example")).moveTo).toEqual(junk);
+    expect(outcome([rule, other], from("info@angebote.example")).moveTo).toEqual(other.moveTo);
+  });
+
+  it("blocks a whole domain by everything after the @", () => {
+    const rule = blockRule("b", "werbung@angebote.example", "domain", junk);
+    expect(rule.name).toBe("Blockiert: angebote.example");
+    expect(outcome([rule], from("info@angebote.example")).moveTo).toEqual(junk);
+    expect(outcome([rule], from("info@meine-angebote.example")).moveTo).toBeNull();
   });
 });

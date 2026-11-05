@@ -6,6 +6,7 @@
 import type { Mailbox } from "@/jmap/types";
 import { m } from "@/paraglide/messages";
 import type { Rule, RuleCondition, RuleField, RuleOperator } from "../../server/rules/script";
+import { domainOf } from "./external-hint";
 import { flattenTree, folderTree, mailboxPath, systemMailboxes } from "./mailboxes";
 
 export type { Rule, RuleCondition, RuleField, RuleOperator };
@@ -54,6 +55,33 @@ export const newRule = (id: string, conditions = [emptyCondition()]): Rule => ({
 /** A rule for mails like this one: from its sender. */
 export const ruleFromSender = (id: string, address: string): Rule =>
   newRule(id, [emptyCondition("from", address)]);
+
+/** "Absender blockieren": just this address, or everyone from its domain. */
+export type BlockScope = "address" | "domain";
+
+/**
+ * A rule that files every mail from `address` (or its whole domain) into Spam and stops there;
+ * it goes first in the list, so no other rule files the mail elsewhere. Spam rather than deleting:
+ * nothing is lost, and the rule can be removed in the rules list.
+ */
+export const blockRule = (
+  id: string,
+  address: string,
+  scope: BlockScope,
+  junk: Rule["moveTo"] & {},
+): Rule => {
+  const domain = domainOf(address);
+  const condition: RuleCondition =
+    scope === "address"
+      ? { field: "from", operator: "is", value: address.trim().toLowerCase() }
+      : { field: "from", operator: "contains", value: `@${domain}` };
+  return {
+    ...newRule(id, [condition]),
+    name: m.rules_block_name({ sender: scope === "address" ? condition.value : domain }),
+    moveTo: junk,
+    stop: true,
+  };
+};
 
 /** How Stalwart finds a folder by name: the names from the top, joined by "/". */
 export const sievePath = (mailbox: Mailbox, mailboxes: Mailbox[]): string => {
