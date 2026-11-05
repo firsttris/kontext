@@ -267,8 +267,12 @@ export const formToCard = (
   const changed = (...keys: (keyof ContactForm)[]) =>
     !before || keys.some((key) => JSON.stringify(form[key]) !== JSON.stringify(before[key]));
   const was = before ?? emptyContactForm;
+  // The company stands in for the name only where the name was the company or none: a name
+  // given only in full (vCard FN without N) stays.
+  const nameIsCompany = !existing?.name?.full || existing.name.full === was.company;
   const nameChanged =
-    changed("given", "surname") || (!form.given && !form.surname && changed("company"));
+    changed("given", "surname") ||
+    (!form.given && !form.surname && nameIsCompany && changed("company"));
   return {
     ...(nameChanged ? { name: nameFor(form, existing?.name) } : {}),
     ...(changed("company", "department") && {
