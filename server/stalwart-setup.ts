@@ -22,6 +22,21 @@ export type Plan = { calls: Invocation[]; message: string };
 export const ROLE_NAME = "Kontext-Server";
 export const ACCOUNT_NAME = "kontext-server";
 
+/**
+ * Mails beim Versand verschlüsseln (company/encryption-gateway.ts); the setting takes effect after
+ * ReloadSettings. Optional: an admin role from before Stalwart 1.0.2 lacks the encryption rights
+ * and may not grant them (CHANGELOG.md, 1.0.2), so the role is then set up without these.
+ */
+export const GATEWAY_RIGHTS = [
+  "sysEncryptionGet",
+  "sysEncryptionUpdate",
+  "sysExternalPublicKeyGet",
+  "sysExternalPublicKeyCreate",
+  "sysExternalPublicKeyDestroy",
+  "sysActionCreate",
+  "actionReloadSettings",
+] as const;
+
 /** The rights the Kontext server's key needs beside those of User (docs/installation.md). */
 export const KONTEXT_SERVER_RIGHTS = [
   "sysAccountGet",
@@ -33,17 +48,24 @@ export const KONTEXT_SERVER_RIGHTS = [
   "sysDomainGet",
   "sysAuthenticationGet",
   "sysIndexQueueStatusGet",
-  // Mails beim Versand verschlüsseln (company/encryption-gateway.ts); the setting takes effect
-  // after ReloadSettings.
-  "sysEncryptionGet",
-  "sysEncryptionUpdate",
-  "sysExternalPublicKeyGet",
-  "sysExternalPublicKeyCreate",
-  "sysExternalPublicKeyDestroy",
-  "sysActionCreate",
-  "actionReloadSettings",
+  ...GATEWAY_RIGHTS,
   "impersonate",
 ] as const;
+
+const withoutGatewayRights: readonly string[] = KONTEXT_SERVER_RIGHTS.filter(
+  (right) => !(GATEWAY_RIGHTS as readonly string[]).includes(right),
+);
+
+/** What the admin reads when its role may not grant the gateway rights. */
+export const GATEWAY_RIGHTS_HINT =
+  "Hinweis: Stalwarts Admin-Rolle fehlen die Rechte für die Verschlüsselung (Stalwart wurde von " +
+  "einer Version vor 1.0.2 aktualisiert); ohne sie kann Kontext nicht beim Versand verschlüsseln. " +
+  "Der Admin-Rolle die Rechte geben, wie es Stalwarts Changelog zu 1.0.2 beschreibt " +
+  "(https://github.com/stalwartlabs/stalwart/blob/main/CHANGELOG.md), dann den Befehl erneut ausführen.";
+
+/** Stalwart's refusal of rights the admin does not hold (build_set_error, principal.rs). */
+const isGrantRefusal = (error: string): boolean =>
+  error.includes("You are not authorized to grant permissions");
 
 export type OAuthClient = { id: string; clientId: string; scopes?: Record<string, boolean> };
 export type Role = {
@@ -112,23 +134,31 @@ const trueMap = (keys: readonly string[]): Record<string, true> =>
   Object.fromEntries(keys.map((key) => [key, true as const]));
 
 /** The role `Kontext-Server`: created, or given the inherited User roles and rights it lacks. */
-export const rolePlan = (roles: Role[], userRoleIds: string[]): Plan => {
+export const rolePlan = (
+  roles: Role[],
+  userRoleIds: string[],
+  wanted: readonly string[] = KONTEXT_SERVER_RIGHTS,
+): Plan => {
   const role = roles.find((candidate) => candidate.description === ROLE_NAME);
   if (!role) {
     const create = {
       description: ROLE_NAME,
       roleIds: trueMap(userRoleIds),
-      enabledPermissions: trueMap(KONTEXT_SERVER_RIGHTS),
+      enabledPermissions: trueMap(wanted),
     };
     return {
       calls: [["x:Role/set", { create: { role: create } }, "0"]],
       message: `Rolle „${ROLE_NAME}“ angelegt.`,
     };
   }
-  const rights = KONTEXT_SERVER_RIGHTS.filter((right) => !role.enabledPermissions?.[right]);
+  const rights = wanted.filter((right) => !role.enabledPermissions?.[right]);
   const inherited = userRoleIds.filter((id) => !role.roleIds?.[id]);
   if (!rights.length && !inherited.length)
-    return none(`Rolle „${ROLE_NAME}“ gibt es schon, mit allen Rechten.`);
+    return none(
+      wanted === KONTEXT_SERVER_RIGHTS
+        ? `Rolle „${ROLE_NAME}“ gibt es schon, mit allen Rechten.`
+        : `Rolle „${ROLE_NAME}“ gibt es schon.`,
+    );
   const patch = Object.fromEntries([
     ...rights.map((right) => [`enabledPermissions/${right}`, true]),
     ...inherited.map((id) => [`roleIds/${id}`, true]),
@@ -300,12 +330,26 @@ export const ensureRole = async (
     { ids: null, properties: ["description", "roleIds", "enabledPermissions"] },
     "0",
   ]);
-  const plan = rolePlan(roles, Object.keys(auth?.defaultUserRoleIds ?? {}));
-  const result = await applyPlan(request, plan);
+  const userRoleIds = Object.keys(auth?.defaultUserRoleIds ?? {});
+  const applied = await applyRole(request, rolePlan(roles, userRoleIds));
+  const outcome =
+    !applied.result.ok && isGrantRefusal(applied.result.error)
+      ? await applyRole(
+          request,
+          rolePlan(roles, userRoleIds, withoutGatewayRights),
+          GATEWAY_RIGHTS_HINT,
+        )
+      : applied;
+  const { result, message } = outcome;
   if (!result.ok) return fail(`Rolle „${ROLE_NAME}“: ${result.error}`);
   const id = result.value.created?.role?.id ?? roles.find((r) => r.description === ROLE_NAME)?.id;
-  return id ? ok({ id, message: plan.message }) : fail(`Rolle „${ROLE_NAME}“ nicht angelegt.`);
+  return id ? ok({ id, message }) : fail(`Rolle „${ROLE_NAME}“ nicht angelegt.`);
 };
+
+const applyRole = async (request: Request, plan: Plan, hint?: string) => ({
+  result: await applyPlan(request, plan),
+  message: hint ? `${plan.message}\n${hint}` : plan.message,
+});
 
 export type ServerAccountOutcome = { messages: string[]; key?: string };
 

@@ -173,8 +173,9 @@ it does is in `server/stalwart-setup.ts`.
 
 Stalwart lets the admin pass on only permissions it has itself. If Stalwart was updated from a
 version before 1.0.2, its admin role lacks the encryption permissions (`sysEncryption…`,
-`sysExternalPublicKey…`), and the command stops with `You are not authorized to grant
-permissions: …`. Then first give the admin role these permissions, as Stalwart's
+`sysExternalPublicKey…`). The command then sets everything else up and leaves out only the
+permissions for [encrypting by Stalwart](encryption.md#verschlusseln-durch-stalwart), with a hint
+saying so. To use that, give the admin role these permissions, as Stalwart's
 [changelog for 1.0.2](https://github.com/stalwartlabs/stalwart/blob/main/CHANGELOG.md) describes,
 and run the command again.
 

@@ -1791,7 +1791,7 @@
   "company_gateway": "Beim Versand verschlüsseln",
   "company_gateway_hint": "Stalwart verschlüsselt eine Mail an Empfänger außerhalb der Firma selbst, wenn es deren Schlüssel kennt (OpenPGP oder S/MIME); ohne Schlüssel geht sie wie bisher. Die Schlüssel stehen in der Liste: eingefügt, von Stalwart gesucht oder aus Mails gelernt, die mit Schlüssel ankamen.",
   "company_gateway_enabled": "Mails an Empfänger mit bekanntem Schlüssel automatisch verschlüsseln",
-  "company_gateway_unknown": "Kontexts Schlüssel für Stalwart darf das noch nicht. Den Einrichtungsbefehl erneut ausführen, dann geht es.",
+  "company_gateway_unknown": "Kontexts Schlüssel für Stalwart darf das noch nicht. Den Einrichtungsbefehl erneut ausführen, dann geht es; nennt er dabei die Rechte für die Verschlüsselung, zuerst Stalwarts Admin-Rolle diese Rechte geben.",
   "company_gateway_list": "Schlüssel der Empfänger",
   "company_gateway_empty": "Noch keine Schlüssel.",
   "company_gateway_manual": "Eingefügt",

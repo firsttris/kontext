@@ -172,8 +172,9 @@ Was er genau tut, steht in `server/stalwart-setup.ts`.
 
 Stalwart lässt den Admin nur Rechte weitergeben, die er selbst hat. Wurde Stalwart von einer
 Version vor 1.0.2 aktualisiert, fehlen seiner Admin-Rolle die Rechte für die Verschlüsselung
-(`sysEncryption…`, `sysExternalPublicKey…`), und der Befehl bricht mit `You are not authorized to
-grant permissions: …` ab. Dann der Admin-Rolle zuerst diese Rechte geben, wie es Stalwarts
+(`sysEncryption…`, `sysExternalPublicKey…`). Der Befehl richtet dann alles andere ein und lässt
+nur die Rechte für das [Verschlüsseln durch Stalwart](encryption.md#verschlusseln-durch-stalwart)
+weg; ein Hinweis sagt das. Um es zu nutzen, der Admin-Rolle diese Rechte geben, wie es Stalwarts
 [Changelog zu 1.0.2](https://github.com/stalwartlabs/stalwart/blob/main/CHANGELOG.md) beschreibt,
 und den Befehl erneut ausführen.
 

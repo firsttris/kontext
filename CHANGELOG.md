@@ -14,7 +14,9 @@ Steps that an update needs beyond raising the version are marked **Upgrade**.
   can be removed (docs, "Verschlüsselung"). **Upgrade:** run the setup command again
   (`bun server/setup-stalwart.ts`); it gives the role `Kontext-Server` the rights `sysEncryption*`,
   `sysExternalPublicKey*`, `sysActionCreate` and `actionReloadSettings`. On a Stalwart updated from
-  before 1.0.2, first give Stalwart's admin role the encryption rights (Stalwart's 1.0.2 changelog).
+  before 1.0.2, Stalwart's admin role lacks the encryption rights: the command then sets up the
+  rest, leaves these out and says so; give the admin role the encryption rights (Stalwart's 1.0.2
+  changelog) and run it again.
 - Deploy: `deploy/.env.example` and the Quadlet use Schreibzeug 0.1.19 (was 0.1.18), and Compose
   and the Quadlet use Caddy 2.11.8 (was 2.11.7) and LiveKit SIP 1.23.0 (was 1.22.0), the versions
   running on the first server. No step beyond raising the versions; with Quadlet, raise the images

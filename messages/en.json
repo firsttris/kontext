@@ -1791,7 +1791,7 @@
   "company_gateway": "Encrypt when sending",
   "company_gateway_hint": "Stalwart itself encrypts a mail to recipients outside the company when it knows their key (OpenPGP or S/MIME); without a key it goes as before. The keys are in the list: pasted, looked up by Stalwart or learnt from mails that arrived with a key.",
   "company_gateway_enabled": "Automatically encrypt mail to recipients with a known key",
-  "company_gateway_unknown": "Kontext's key for Stalwart may not do this yet. Run the setup command again, then it works.",
+  "company_gateway_unknown": "Kontext's key for Stalwart may not do this yet. Run the setup command again, then it works; if it names the encryption permissions, first give Stalwart's admin role these permissions.",
   "company_gateway_list": "Recipients' keys",
   "company_gateway_empty": "No keys yet.",
   "company_gateway_manual": "Pasted",
