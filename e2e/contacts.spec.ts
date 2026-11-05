@@ -163,13 +163,13 @@ test.describe("vCard", () => {
     await dialog.getByRole("button", { name: "Anlegen" }).click();
     await dialog.getByLabel("Adressbuch für Import und Export").selectOption({ label: book });
 
-    await dialog.getByLabel("vCard-Datei").setInputFiles(file);
+    await dialog.getByLabel("vCard- oder CSV-Datei").setInputFiles(file);
     await expect(dialog.getByText("2 neue Kontakte gefunden.")).toBeVisible();
     await dialog.getByRole("button", { name: "2 importieren" }).click();
     await expect(page.getByRole("status")).toHaveText("2 Kontakte importiert.");
 
     // The same file again adds nothing.
-    await dialog.getByLabel("vCard-Datei").setInputFiles(file);
+    await dialog.getByLabel("vCard- oder CSV-Datei").setInputFiles(file);
     await expect(
       dialog.getByText("0 neue Kontakte gefunden. 2 sind schon vorhanden."),
     ).toBeVisible();
@@ -641,5 +641,72 @@ test.describe("Kontakt mit mehreren Nummern", () => {
 
   test("am Handy @phone", async ({ page }) => {
     await editTwoNumbers(page);
+  });
+});
+
+test.describe("CSV-Import", () => {
+  /** A customer list as Excel saves it in Germany: ";" and Windows-1252. */
+  const importCsv = async (page: Page) => {
+    const surname = `Groß${Date.now().toString(36)}`;
+    const csv = [
+      "Anrede;Vorname;Nachname;Firma;E-Mail;Telefon;Mobil;Straße;PLZ;Ort;Kundennummer",
+      `Herr;Jürgen;${surname};Bäckerei Groß;j.gross@baeckerei.test;07223 1001;;Hauptstraße 5;77815;Bühl;K-17`,
+      `Frau;Käthe;Müller-${surname};;kaethe@mueller.test;;0170 2223344;"Am Bach 2";77855;Achern;K-18`,
+      "",
+    ].join("\r\n");
+    const file = { name: "kunden.csv", mimeType: "text/csv", buffer: Buffer.from(csv, "latin1") };
+    try {
+      await login(page);
+      await page.goto("/contacts");
+      await page.getByRole("button", { name: "Adressbücher" }).click();
+      const dialog = page.getByRole("dialog", { name: "Adressbücher" });
+      await dialog.getByLabel("vCard- oder CSV-Datei").setInputFiles(file);
+
+      const columns = dialog.getByRole("list", { name: "Spalten der CSV-Datei" });
+      await expect(columns.getByLabel("Vorname", { exact: true })).toHaveValue("given");
+      await expect(columns.getByLabel("Mobil", { exact: true })).toHaveValue("phone:mobile");
+      await expect(columns.getByText("Jürgen · Käthe")).toBeVisible();
+      const customerNumber = columns.getByLabel("Kundennummer", { exact: true });
+      await expect(customerNumber).toHaveValue("skip");
+      await customerNumber.selectOption({ label: "Notiz" });
+      await expect(dialog.getByText("2 neue Kontakte gefunden.")).toBeVisible();
+      await dialog.getByRole("button", { name: "2 importieren" }).click();
+      await expect(page.getByRole("status")).toHaveText("2 Kontakte importiert.");
+      await page.keyboard.press("Escape");
+
+      await page.getByRole("searchbox", { name: "Kontakte suchen" }).fill(surname);
+      await page.getByRole("link", { name: new RegExp(`Jürgen ${surname}`) }).click();
+      await expect(page.getByRole("heading", { name: `Jürgen ${surname}` })).toBeVisible();
+      await expect(page.getByText("j.gross@baeckerei.test")).toBeVisible();
+      await expect(page.getByText("07223 1001")).toBeVisible();
+      await expect(page.getByText("Hauptstraße 5, 77815 Bühl")).toBeVisible();
+
+      const { cards } = await jonasCards();
+      const kaethe = cards.find((c) => JSON.stringify(c.name).includes(`Müller-${surname}`))!;
+      expect(Object.values(kaethe.emails ?? {}).map((e) => e.address)).toEqual([
+        "kaethe@mueller.test",
+      ]);
+      expect(Object.values(kaethe.phones ?? {})[0]).toMatchObject({
+        number: "0170 2223344",
+        features: { mobile: true },
+      });
+      expect(Object.values(kaethe.notes ?? {})[0]?.note).toBe("K-18");
+      expect(Object.values(kaethe.addresses ?? {})[0]?.components).toContainEqual({
+        kind: "locality",
+        value: "Achern",
+      });
+      const juergen = cards.find((c) => JSON.stringify(c.name).includes(`"${surname}"`))!;
+      expect(Object.values(juergen.organizations ?? {})[0]?.name).toBe("Bäckerei Groß");
+    } finally {
+      await removeCards(surname);
+    }
+  };
+
+  test("liest eine Excel-Liste mit Semikolon und Umlauten", async ({ page }) => {
+    await importCsv(page);
+  });
+
+  test("am Handy @phone", async ({ page }) => {
+    await importCsv(page);
   });
 });
