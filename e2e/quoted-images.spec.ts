@@ -99,7 +99,10 @@ const startFrom = async (page: Page, subject: string, button: RegExp) => {
   await page.getByRole("list", { name: "Posteingang" }).getByText(subject).click();
   await expect(page.getByRole("heading", { name: subject })).toBeVisible();
   await page.getByRole("link", { name: button }).click();
-  const picture = page.getByRole("textbox", { name: "Ihre Nachricht …" }).locator("img");
+  // The quoted picture by its Content-ID: on phones ProseMirror adds `img.ProseMirror-separator`.
+  const picture = page
+    .getByRole("textbox", { name: "Ihre Nachricht …" })
+    .locator(`img[data-cid="${CID}"]`);
   await expect.poll(() => picture.evaluate((img: HTMLImageElement) => img.naturalWidth)).toBe(60);
 };
 
