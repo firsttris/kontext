@@ -1,69 +1,37 @@
 # Roadmap
 
-Was als Nächstes in Kontext kommt, sortiert nach Nutzen für kleine Betriebe. Die Reihenfolge ist
-ein Plan, kein Versprechen; Wünsche und Hinweise gern als
+Die Funktionen, die als Nächstes in Kontext kommen, sortiert nach Nutzen: oben, was am meisten
+bringt. Die Reihenfolge ist ein Plan, kein Versprechen; Wünsche gern als
 [Issue](https://github.com/firsttris/kontext/issues). Was schon fertig ist, steht im
 [Changelog](CHANGELOG.md) und in der [Dokumentation](https://firsttris.github.io/kontext/).
 
-## Als Nächstes
+## Neu in Stalwart
 
-| Funktion | Worum es geht |
-| --- | --- |
-| **Pilot** | Vier Wochen bei einem Kunden parallel zum alten System, mit der [Telefonie](https://firsttris.github.io/kontext/telephony.html) im Test. |
-| **Offene Punkte** | die Lücke unten: S/MIME-Zertifikate aus LDAP-Verzeichnissen. |
-
-## Danach
-
-| Funktion | Worum es geht |
-| --- | --- |
-| **Telefonie: mehr** | Anschluss direkt beim Anbieter oder per SIP-Trunk statt über die Fritzbox, SIP über TLS, Warteschleife mit Position, weitere Tischtelefone (Yealink, Grandstream). |
-| **Module für Kunden** | Was nur manche Betriebe brauchen, kommt als eigenes Projekt wie [Schreibzeug](https://github.com/firsttris/schreibzeug) (Dokumente): eigener Dienst mit eigenen Daten und Releases, im Rahmen in Kontext eingebunden, Anmelden mit Kontext (OpenID Connect), je Kunde zuschaltbar. Ideen: **Arbeitsberichte** (etwa fürs Handwerk, mit Fotos von der Baustelle), **Belege**, **Team-Wissen** (Seiten pro Postfach: Abläufe, Zugänge, Preise), **Tickets**. |
-
-## Mit Stalwart 1.0
-
-Was Stalwart 1.0 neu mitbringt und Kontext nutzen kann; Kontext läuft seit
-[#140](https://github.com/firsttris/kontext/pull/140) auf 1.0. Sortiert nach Mehrwert: oben, was
-am meisten bringt. Fertig sind schon „Mails zuweisen“, „Suche in Anhängen“, „Ausgeblendete Kalender auf allen
-Geräten“ und die „Übersicht der Zugänge“ (im [Changelog](CHANGELOG.md)).
-
-| # | Funktion | Mehrwert | Umsetzung |
-| --- | --- | --- | --- |
-| 1 | **Mailprogramme ohne App-Passwort** | Mit Zwei-Faktor-Anmeldung bräuchten Apple Mail und Thunderbird kein App-Passwort mehr. | Stalwart 1.0 setzt das OAuth-Profil für Mailprogramme vollständig um. Dafür müsste die OAuth-Erkennung unter `/.well-known` zu Stalwart statt zu Kontext (Caddy) und Stalwarts Anmeldeseite öffentlich erreichbar sein – eine Frage der Architektur, erst nach dem Pilot. |
-
-Nicht für Kontext: Volltextsuche in Dateien (betrifft Stalwarts eigenen Dateispeicher; Kontexts
-Dokumente liegen in Schreibzeug), der KI-Spamfilter und das Wiederherstellen gelöschter Mails
-(beides nur in der Enterprise-Edition).
-
-## Für den Alltag
-
-Kleinere und mittlere Funktionen, sortiert nach Nutzen: oben, was fast jedem Betrieb täglich hilft.
-
-**Kleinerer Nutzen**
+Was Stalwart 1.0.2 und 1.0.3 mitbringen und Kontext noch nicht nutzt.
 
 | # | Funktion | Worum es geht |
 | --- | --- | --- |
-| 29 | **Gelöschte Mails zurückholen** | Endgültig gelöschte Mails eine Zeit lang wiederherstellen; Stalwart bietet das nur in der Enterprise-Edition, Kontext bräuchte einen eigenen Weg. |
+| 1 | **Mails verschlüsselt auf dem Server ablegen** | Jedes Postfach kann einen öffentlichen Schlüssel (OpenPGP oder S/MIME) bekommen; Stalwart legt neue Mails dann nur verschlüsselt ab, auf Wunsch mit verborgenem Betreff und auch Gesendetes und Entwürfe (`AccountSettings.encryptionAtRest`, seit 1.0.2). Wer Platte oder Backup in die Hände bekommt, liest nichts. Kontext entschlüsselt OpenPGP und S/MIME schon im Browser; es fehlt der Schalter unter *Einstellungen → Verschlüsselung*, mit dem Hinweis, dass Suche, Regeln, Assistent und Agenten in diese Mails nicht hineinsehen. |
+| 2 | **Mails beim Versand automatisch verschlüsseln** | Stalwart verschlüsselt ausgehende Mails selbst, wenn es den Schlüssel des Empfängers kennt (Web Key Directory, keys.openpgp.org, DNS oder aus eingehenden Mails gelernt), je Empfänger nie, wenn möglich oder Pflicht (seit 1.0.2). In der Firmenverwaltung ein Schalter und die Liste der Empfänger-Schlüssel (`Encryption`, `ExternalPublicKey`, `SmimeTrustAnchor`); diese darf nur der Superuser ändern, der Schlüssel des Einrichtungsbefehls braucht dafür neue Rechte. |
+| 3 | **Einladungen im Namen von info@** | Aus einem gemeinsamen Kalender als das Postfach einladen statt als man selbst (JMAP `ParticipantIdentity`). |
+| 4 | **Hinweise von Stalwart in der Glocke** | „Anna hat dir ihren Kalender freigegeben“, „Sandra hat den Termin verschoben“ (JMAP `ShareNotification`, `CalendarEventNotification`). |
+| 5 | **Speicher verschlüsseln und komprimieren** | Stalwart verschlüsselt gespeicherte Daten mit einem Server-Schlüssel (`SymmetricKey`, AES-256-GCM) und komprimiert sie mit Zstandard; `BlobRecode` schreibt Vorhandenes um (seit 1.0.3). Schützt Platte und Backup. Der Einrichtungsbefehl schaltet es ein. |
+| 6 | **Mailprogramme ohne App-Passwort** | Mit Zwei-Faktor-Anmeldung brauchen Apple Mail und Thunderbird kein App-Passwort mehr: Stalwart 1.0 setzt das OAuth-Profil für Mailprogramme um. Dafür muss die OAuth-Erkennung unter `/.well-known` zu Stalwart statt zu Kontext (Caddy) und Stalwarts Anmeldeseite öffentlich erreichbar sein. |
 
-## Offene Punkte
+## Weitere Funktionen
 
-Lücken und Befunde, die beim Bauen offen geblieben sind und noch angegangen werden.
+| # | Funktion | Worum es geht |
+| --- | --- | --- |
+| 7 | **Telefonie: mehr** | Anschluss direkt beim Anbieter oder per SIP-Trunk statt über die Fritzbox, SIP über TLS, Warteschleife mit Position, weitere Tischtelefone (Yealink, Grandstream). |
+| 8 | **Weitere Sprachen** | Nach Deutsch und Englisch weitere europäische Sprachen. |
 
-**Funktionen**
+## Weitere Ideen
 
-- [ ] **S/MIME:** Zertifikate von Empfängern im LDAP-Verzeichnis ihrer Stelle suchen (bewusst
-  offen, Gründe in der
-  [Verschlüsselung](https://firsttris.github.io/kontext/encryption.html#grenzen-und-offene-punkte)).
+Noch nicht eingeplant; was davon kommt, entscheidet sich später.
 
-## Bekannte Einschränkungen
-
-- **Kategorien aus Outlook-Dateien (PST):** `readpst` gibt Kategorien nur für Kontakte und
-  Termine aus, nicht für Mails. Aus Microsoft 365 und per IMAP kommen sie mit.
-- **Regeln auf vorhandene Mails:** wirken auf die neuesten 1.000 Mails im Posteingang.
-- **Regeln und Umlaute:** Stalwart vergleicht Groß- und Kleinschreibung nur bei ASCII; „MÜLLER“
-  trifft dort nicht „Müller“.
-- **Drucken:** Eingebettete Bilder werden mitgedruckt, Bilder aus dem Internet nur, wenn sie in der
-  Mail geladen sind; Anhänge erscheinen nur mit Name und Größe.
-- **Fotos im vertraulichen Chat** bekommen kein Vorschaubild: Der Server kann sie nicht lesen, sie
-  laden in voller Größe.
-- **Kategorien in Handy-Apps:** Apple Mail und die Gmail-App zeigen eigene Schlagworte nicht;
-  sichtbar sind sie in Kontext und Thunderbird.
+| Idee | Worum es geht |
+| --- | --- |
+| **Online-Terminbuchung** | Eine Buchungsseite für Kunden mit den freien Zeiten aus dem Kalender; der gebuchte Termin landet direkt im Kalender, mit Bestätigung per Mail. Für Praxen, Kanzleien und Handwerk; „Wer hat Zeit?“ und die Gast-Links für Videobesprechungen sind schon da. |
+| **Räume, Firmenwagen und Geräte buchen** | Buchbare Ressourcen mit eigenem Kalender, die man zum Termin einlädt und die Doppelbuchungen ablehnen. Stalwart kennt nur Benutzer- und Gruppenkonten, eine Ressource wäre ein Gruppenkonto wie ein gemeinsames Postfach. |
+| **GoBD-Mail-Archiv** | Geschäftsmails unveränderbar und jahrelang aufbewahren, wie es die deutschen Aufbewahrungsregeln verlangen; heute braucht es dafür ein Archiv daneben. Groß, eher als eigenes Modul wie [Schreibzeug](https://github.com/firsttris/schreibzeug). |
+| **Serienmail an eine Kontaktgruppe** | Eine Mail an alle einer Gruppe, jede einzeln und persönlich mit Anrede, etwa für Betriebsurlaub oder neue Preise. |
