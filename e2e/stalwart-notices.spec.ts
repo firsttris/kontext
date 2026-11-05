@@ -73,7 +73,78 @@ const jonasShares = async () => {
   return list.map((notice) => notice.id);
 };
 
+/**
+ * Sandra plans `count` appointments into a new calendar of info@ and moves one of them. Stalwart
+ * keeps a notice of each new one for 30 days (`expungeSchedulingInboxAfter`); the bell never
+ * shows those, so nobody dismisses them. Destroying the calendar takes its notices with it
+ * (`reap_calendar_notifications`, crates/groupware/src/calendar/notification.rs).
+ */
+const sandraPlansMany = async (count: number, moved: string) => {
+  const sandra = jmapAs("sandra");
+  const session = await sandra.getSession();
+  const infoId = Object.entries(session.accounts).find(([, a]) => a.name.startsWith("info@"))![0];
+  const calendar = await sandra.call<{ created: Record<string, { id: string }> }>(
+    "Calendar/set",
+    { accountId: infoId, create: { c: { name: unique("Einsätze") } } },
+    USING,
+  );
+  const calendarId = calendar.created.c!.id;
+  const event = (title: string) => ({
+    calendarIds: { [calendarId]: true },
+    title,
+    start: `${dayFromToday(5)}T08:00:00`,
+    timeZone: "Europe/Berlin",
+    duration: "PT1H",
+  });
+  for (let at = 0; at < count; at += 250) {
+    const titles = Array.from({ length: Math.min(250, count - at) }, (_, i) => `Einsatz ${at + i}`);
+    await sandra.call(
+      "CalendarEvent/set",
+      { accountId: infoId, create: Object.fromEntries(titles.map((t, i) => [`e${i}`, event(t)])) },
+      USING,
+    );
+  }
+  const created = await sandra.call<{ created: Record<string, { id: string }> }>(
+    "CalendarEvent/set",
+    { accountId: infoId, create: { e: event(moved) } },
+    USING,
+  );
+  await sandra.call(
+    "CalendarEvent/set",
+    {
+      accountId: infoId,
+      update: { [created.created.e!.id]: { start: `${dayFromToday(6)}T10:00:00` } },
+    },
+    USING,
+  );
+  return () =>
+    sandra.call(
+      "Calendar/set",
+      { accountId: infoId, destroy: [calendarId], onDestroyRemoveEvents: true },
+      USING,
+    );
+};
+
 test.describe("Hinweise von Stalwart in der Glocke", () => {
+  test("ein voller Kalender von info@ verdrängt die Änderungen nicht", async ({ page }) => {
+    // More notices than one CalendarEventNotification/get without ids answers (maxGetResults,
+    // 500 by default: crates/registry/src/schema/structs_impl.rs; all_ids in
+    // crates/jmap-proto/src/method/get.rs answers requestTooLarge beyond it).
+    const title = unique("Umzug Lager");
+    const remove = await sandraPlansMany(501, title);
+    try {
+      await login(page);
+      await bell(page).click();
+      await expect(
+        page
+          .getByRole("dialog", { name: "Benachrichtigungen" })
+          .getByRole("link", { name: new RegExp(`Sandra Klein hat „${title}“ verschoben`) }),
+      ).toBeVisible();
+    } finally {
+      await remove();
+    }
+  });
+
   test("Freigabe und verschobener Termin erscheinen live und verschwinden beim Öffnen", async ({
     page,
   }) => {

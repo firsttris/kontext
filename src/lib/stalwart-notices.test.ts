@@ -74,6 +74,36 @@ describe("eventChange", () => {
   });
 });
 
+describe("eventChange of what Kontext's server wrote", () => {
+  // A subscribed calendar (server/subscriptions/) is written with the server's key; Stalwart
+  // records each changed or dropped event of the feed as someone else's change (seen on 1.0.3).
+  const by = (changedBy: EventNotice["changedBy"]) => ({
+    ...notice("updated", { title: "Restmüll (verlegt)", sequence: 1 }),
+    changedBy,
+  });
+
+  it("leaves out the changes of the server's account and of the admin without an address", () => {
+    expect(
+      eventChange(
+        by({ name: "Kontext-Server (Firmenverwaltung)", email: "kontext-server@firma.de" }),
+      ),
+    ).toBeNull();
+    expect(
+      eventChange({
+        ...by({ name: "Recovery admin account", email: null }),
+        type: "destroyed",
+      }),
+    ).toBeNull();
+  });
+
+  it("keeps colleagues and an outside organizer", () => {
+    expect(eventChange(by({ name: "Sandra Klein", email: "sandra@firma.de" }))).toBe("changed");
+    expect(eventChange(by({ name: "kunde@example.test", email: "kunde@example.test" }))).toBe(
+      "changed",
+    );
+  });
+});
+
 describe("eventNow", () => {
   it("applies the patch's whole properties to the snapshot before the change", () => {
     const now = eventNow(
