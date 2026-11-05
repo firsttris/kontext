@@ -24,3 +24,14 @@ Was Stalwart 1.0.2 und 1.0.3 mitbringen und Kontext noch nicht nutzt.
 | --- | --- | --- |
 | 7 | **Telefonie: mehr** | Anschluss direkt beim Anbieter oder per SIP-Trunk statt über die Fritzbox, SIP über TLS, Warteschleife mit Position, weitere Tischtelefone (Yealink, Grandstream). |
 | 8 | **Weitere Sprachen** | Nach Deutsch und Englisch weitere europäische Sprachen. |
+
+## Weitere Ideen
+
+Noch nicht eingeplant; was davon kommt, entscheidet sich später.
+
+| Idee | Worum es geht |
+| --- | --- |
+| **Online-Terminbuchung** | Eine Buchungsseite für Kunden mit den freien Zeiten aus dem Kalender; der gebuchte Termin landet direkt im Kalender, mit Bestätigung per Mail. Für Praxen, Kanzleien und Handwerk; „Wer hat Zeit?“ und die Gast-Links für Videobesprechungen sind schon da. |
+| **Räume, Firmenwagen und Geräte buchen** | Buchbare Ressourcen mit eigenem Kalender, die man zum Termin einlädt und die Doppelbuchungen ablehnen. Stalwart kennt nur Benutzer- und Gruppenkonten, eine Ressource wäre ein Gruppenkonto wie ein gemeinsames Postfach. |
+| **GoBD-Mail-Archiv** | Geschäftsmails unveränderbar und jahrelang aufbewahren, wie es die deutschen Aufbewahrungsregeln verlangen; heute braucht es dafür ein Archiv daneben. Groß, eher als eigenes Modul wie [Schreibzeug](https://github.com/firsttris/schreibzeug). |
+| **Serienmail an eine Kontaktgruppe** | Eine Mail an alle einer Gruppe, jede einzeln und persönlich mit Anrede, etwa für Betriebsurlaub oder neue Preise. |
