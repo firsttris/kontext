@@ -222,12 +222,12 @@ export const PasswordNotice = ({ name, password }: { name: string; password: str
       <div className="flex items-center gap-2">
         <code
           data-testid="new-password"
-          className="flex-1 rounded-lg border border-border bg-bg px-3 py-2 font-mono text-[15px] tracking-wide select-all"
+          className="flex-1 rounded-lg border border-border bg-bg px-3 py-2 font-mono text-[16px] tracking-wide select-all"
         >
           {password}
         </code>
         <Button onClick={copy} aria-label={m.company_password_copy()}>
-          {copied ? <Check size={15} /> : <Copy size={15} />}
+          {copied ? <Check size={16} /> : <Copy size={16} />}
           {copied ? m.company_password_copied() : m.company_password_copy()}
         </Button>
       </div>

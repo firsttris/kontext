@@ -279,7 +279,7 @@ test.describe("Telefonie über die Telefonbox", () => {
       .filter({ hasText: "07112 223334" })
       .first();
     await item.getByRole("button", { name: "Sperren" }).click();
-    await expect(page.getByText("07112 223334 wird ab jetzt abgewiesen.")).toBeVisible();
+    await expect(page.getByText("07112 223334 wird ab jetzt abgewiesen")).toBeVisible();
     await expect
       .poll(async () => (await box.state()).config?.blocked?.numbers)
       .toContain("07112223334");

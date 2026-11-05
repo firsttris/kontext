@@ -92,12 +92,7 @@ export const MessageList = ({ accountId, mailbox, search }: Props) => {
         account && !account.isPersonal ? (
           // Inline, not flex: a long address is cut with "…" like the rest of the title.
           <span title={mailboxNotice(account)}>
-            <Users
-              size={13}
-              strokeWidth={1.75}
-              aria-hidden="true"
-              className="mr-1 inline align-[-2px]"
-            />
+            <Users size={14} aria-hidden="true" className="mr-1 inline align-[-2px]" />
             {account.name}
           </span>
         ) : undefined

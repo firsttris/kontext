@@ -37,9 +37,7 @@ const dayFormat = new Intl.DateTimeFormat(LOCALE, {
 
 const Section = ({ title, children }: { title: string; children: ReactNode }) => (
   <section className="flex flex-col gap-1">
-    <h3 className="m-0 px-2 pb-1 text-[11px] font-medium tracking-wide text-muted uppercase">
-      {title}
-    </h3>
+    <h3 className="m-0 px-2 pb-1 text-[12px] font-medium text-muted">{title}</h3>
     {children}
   </section>
 );
@@ -97,7 +95,7 @@ export const SenderPanel = ({ accountId, email }: { accountId: string; email: Em
           size={56}
         />
         <div className="flex min-w-0 max-w-full flex-col">
-          <span className="truncate text-[15px] font-semibold">{name}</span>
+          <span className="truncate text-[16px] font-medium">{name}</span>
           {card && company(card) && company(card) !== name ? (
             <span className="truncate text-[13px] text-muted">{company(card)}</span>
           ) : null}
@@ -137,7 +135,7 @@ export const SenderPanel = ({ accountId, email }: { accountId: string; email: Em
             search={{ id: card.id, account: card.accountId }}
             className="flex items-center gap-1 text-[12px] text-muted hover:text-fg"
           >
-            <UserRound size={13} /> {m.mail_person_open_contact()}
+            <UserRound size={14} /> {m.mail_person_open_contact()}
           </Link>
         ) : ownBook ? (
           <button
@@ -146,7 +144,7 @@ export const SenderPanel = ({ accountId, email }: { accountId: string; email: Em
             disabled={create.isPending}
             className="flex items-center gap-1 text-[12px] text-muted hover:text-fg"
           >
-            <UserPlus size={13} /> {m.mail_person_save_contact()}
+            <UserPlus size={14} /> {m.mail_person_save_contact()}
           </button>
         ) : null}
       </div>

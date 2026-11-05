@@ -132,7 +132,7 @@ export const CategoryDialog = ({
                 aria-label={m.categories_remove({ name: category.name })}
                 onClick={() => setList((current) => removeCategory(current, category.keyword))}
               >
-                <Trash2 size={15} />
+                <Trash2 size={16} />
               </Button>
             </li>
           ))}
@@ -149,7 +149,7 @@ export const CategoryDialog = ({
           onChange={(e) => setName(e.target.value)}
         />
         <Button type="submit" disabled={!name.trim()}>
-          <Plus size={15} /> {m.categories_add()}
+          <Plus size={16} /> {m.categories_add()}
         </Button>
       </form>
       {problem ? (

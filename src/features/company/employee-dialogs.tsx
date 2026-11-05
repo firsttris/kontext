@@ -216,7 +216,7 @@ export const EmployeeDialog = ({
       </form>
 
       <section className="flex flex-col gap-3 border-t border-border pt-4">
-        <h3 className="m-0 text-[14px] font-semibold">{m.company_access()}</h3>
+        <h3 className="m-0 text-[14px] font-medium">{m.company_access()}</h3>
         <p className="m-0 text-[13px] text-muted">
           {employee.quotaBytes
             ? m.company_storage_of({
@@ -231,7 +231,7 @@ export const EmployeeDialog = ({
             {m.company_vacation()}
           </Button>
           <Button disabled={busy} onClick={() => onOpen("rules")}>
-            <ListFilter size={15} /> {m.rules_open()}
+            <ListFilter size={16} /> {m.rules_open()}
           </Button>
           {self ? null : (
             <Button variant="danger" disabled={busy} onClick={() => onOpen("offboarding")}>

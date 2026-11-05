@@ -52,7 +52,7 @@ test.describe("Firmenverwaltung: Datensicherung", () => {
 
     await page.getByLabel("Uhrzeit").fill("04:30");
     await page.getByLabel("Uhrzeit").blur();
-    await expect(page.getByText("Gespeichert.")).toBeVisible();
+    await expect(page.getByText("Gespeichert", { exact: true })).toBeVisible();
     expect(JSON.parse(readFileSync(join(CONTROL, "settings.json"), "utf8"))).toEqual({
       enabled: true,
       time: "04:30",

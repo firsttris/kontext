@@ -106,7 +106,7 @@ export const ColumnsDialog = ({
                 disabled={!movable(index) || index === 1}
                 onClick={() => move(index, -1)}
               >
-                <ArrowUp size={15} />
+                <ArrowUp size={16} />
               </Button>
               <Button
                 variant="ghost"
@@ -115,7 +115,7 @@ export const ColumnsDialog = ({
                 disabled={!movable(index) || index === columns.length - 2}
                 onClick={() => move(index, 1)}
               >
-                <ArrowDown size={15} />
+                <ArrowDown size={16} />
               </Button>
               <Button
                 variant="ghost"
@@ -124,7 +124,7 @@ export const ColumnsDialog = ({
                 disabled={fixed(column)}
                 onClick={() => setColumns((list) => list.filter((c) => c.id !== column.id))}
               >
-                <Trash2 size={15} />
+                <Trash2 size={16} />
               </Button>
             </li>
           ))}

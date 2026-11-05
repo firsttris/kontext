@@ -184,12 +184,12 @@ const SectionLinks = ({ entries, current }: { entries: Entry[]; current: Section
           search={{ section: id }}
           aria-current={id === current ? "page" : undefined}
           className={cn(
-            "flex h-11 items-center gap-2.5 rounded-lg px-2.5 text-[15px] no-underline hover:bg-hover md:h-[34px] md:text-[14px]",
+            "flex h-11 items-center gap-2.5 rounded-lg px-2.5 text-[16px] no-underline hover:bg-hover md:h-8 md:text-[14px]",
             id === current ? "md:bg-subtle md:font-medium md:text-fg" : "md:text-muted",
             "text-fg",
           )}
         >
-          <Icon size={16} strokeWidth={1.75} />
+          <Icon size={16} />
           <span className="flex-1">{label()}</span>
           <ChevronRight size={16} className="text-muted md:hidden" />
         </Link>
@@ -217,7 +217,7 @@ export const SettingsPage = ({ section }: { section: Section | undefined }) => {
           section ? "hidden md:flex" : "flex",
         )}
       >
-        <h1 className="m-0 px-2.5 text-[30px] leading-tight font-semibold tracking-tight md:text-[17px]">
+        <h1 className="m-0 px-2.5 text-[30px] leading-tight font-semibold md:text-[18px]">
           {m.nav_settings()}
         </h1>
         {/* Own sections and the Firmenverwaltung are taller than a phone: they scroll, the tab bar stays. */}
@@ -247,9 +247,9 @@ export const SettingsPage = ({ section }: { section: Section | undefined }) => {
             search={{}}
             className="flex items-center gap-1 text-[14px] text-muted no-underline md:hidden"
           >
-            <ChevronLeft size={18} /> {m.nav_settings()}
+            <ChevronLeft size={20} /> {m.nav_settings()}
           </Link>
-          <h2 className="m-0 text-[24px] font-semibold tracking-tight">{title}</h2>
+          <h2 className="m-0 text-[22px] font-semibold">{title}</h2>
           <Suspense fallback={<p className="m-0 text-[14px] text-muted">{m.common_loading()}</p>}>
             {CONTENT[current]()}
           </Suspense>
@@ -277,7 +277,7 @@ export const SettingsCard = ({
       className="flex flex-col gap-4 rounded-xl border border-border p-4 md:p-5"
     >
       <div className="flex flex-col gap-1">
-        <h3 id={id} className="m-0 text-[15px] font-semibold">
+        <h3 id={id} className="m-0 text-[16px] font-semibold">
           {title}
         </h3>
         {description ? <p className="m-0 text-[13px] text-muted">{description}</p> : null}

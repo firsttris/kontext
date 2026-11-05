@@ -91,7 +91,7 @@ export const FilterChips = ({
   // One line each ("Mir zugewiesen" broke in two); a narrow list scrolls the chips instead.
   <nav
     aria-label="Filter"
-    className="flex min-w-0 max-w-full gap-1 self-start overflow-x-auto rounded-[9px] bg-subtle p-[3px] [scrollbar-width:none]"
+    className="flex min-w-0 max-w-full gap-1 self-start overflow-x-auto rounded-[10px] bg-subtle p-1 [scrollbar-width:none]"
   >
     {options.map((option) => (
       <Link
@@ -100,7 +100,7 @@ export const FilterChips = ({
         search={(prev) => ({ ...prev, ...option.set })}
         aria-current={option.on ? "page" : undefined}
         className={cn(
-          "flex h-7 shrink-0 items-center whitespace-nowrap rounded-[7px] px-3 text-[13px] no-underline",
+          "flex h-7 shrink-0 items-center whitespace-nowrap rounded-md px-3 text-[13px] no-underline",
           option.on ? "bg-bg text-fg shadow-sm" : "text-muted",
         )}
       >
@@ -263,10 +263,10 @@ export const ListFrame = ({
           />
         ) : (
           <div className="flex items-baseline justify-between gap-3">
-            <h1 className="m-0 truncate text-[30px] leading-tight font-semibold tracking-tight md:text-[18px]">
+            <h1 className="m-0 truncate text-[30px] leading-tight font-semibold md:text-[18px]">
               {title}
               {subtitle ? (
-                <span className="ml-2 text-[15px] font-normal text-muted md:text-[13px]">
+                <span className="ml-2 text-[16px] font-normal text-muted md:text-[13px]">
                   {subtitle}
                 </span>
               ) : null}

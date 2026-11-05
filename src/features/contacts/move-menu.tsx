@@ -45,7 +45,7 @@ export const MoveMenu = ({ cards, books, compact = false, onMoved }: Props) => {
           title={m.contacts_move()}
           disabled={moveMany.isPending}
         >
-          <FolderInput size={15} strokeWidth={1.75} />
+          <FolderInput size={16} />
           {compact ? null : m.contacts_move()}
         </Button>
       </MenuTrigger>

@@ -56,7 +56,7 @@ export const CalendarList = ({ onManage }: { onManage: () => void }) => {
           onClick={onManage}
           className="flex size-6 items-center justify-center rounded-md text-muted hover:bg-hover hover:text-fg"
         >
-          <Settings2 size={15} />
+          <Settings2 size={16} />
         </button>
       </div>
       <Rows calendars={calendars.filter((c) => c.isPersonal)} />
@@ -146,7 +146,7 @@ const ExportButton = ({ calendar }: { calendar: CalendarRef }) => {
       aria-label={label}
       title={label}
     >
-      <Download size={15} />
+      <Download size={16} />
     </Button>
   );
 };
@@ -195,7 +195,7 @@ const OwnActions = ({ calendar }: { calendar: CalendarRef }) => {
         aria-label={`${m.calendar_edit()}: ${calendar.name}`}
         title={m.calendar_edit()}
       >
-        <Pencil size={15} />
+        <Pencil size={16} />
       </Button>
       <Button
         variant="outline"
@@ -213,7 +213,7 @@ const OwnActions = ({ calendar }: { calendar: CalendarRef }) => {
           aria-label={`${m.calendar_delete()}: ${calendar.name}`}
           title={m.calendar_delete()}
         >
-          <Trash2 size={15} />
+          <Trash2 size={16} />
         </Button>
       ) : null}
       {editing ? (

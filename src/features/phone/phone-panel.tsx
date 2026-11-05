@@ -143,7 +143,7 @@ const Controls = ({ call }: { call: PhoneCall }) => {
           onClick={() => void mic.toggle()}
           className={roundButton(mic.enabled)}
         >
-          {mic.enabled ? <Mic size={18} /> : <MicOff size={18} />}
+          {mic.enabled ? <Mic size={20} /> : <MicOff size={20} />}
         </button>
         <button
           type="button"
@@ -153,7 +153,7 @@ const Controls = ({ call }: { call: PhoneCall }) => {
           onClick={() => setKeypad((open) => !open)}
           className={roundButton(true)}
         >
-          <Grid3x3 size={18} />
+          <Grid3x3 size={20} />
         </button>
         <button
           type="button"
@@ -164,7 +164,7 @@ const Controls = ({ call }: { call: PhoneCall }) => {
           onClick={hold}
           className={cn(roundButton(!call.held), "disabled:opacity-40")}
         >
-          {call.held ? <Play size={18} /> : <Pause size={18} />}
+          {call.held ? <Play size={20} /> : <Pause size={20} />}
         </button>
         <button
           type="button"
@@ -175,7 +175,7 @@ const Controls = ({ call }: { call: PhoneCall }) => {
           onClick={() => setTransfer((open) => !open)}
           className={cn(roundButton(true), "disabled:opacity-40")}
         >
-          <ArrowRightLeft size={18} />
+          <ArrowRightLeft size={20} />
         </button>
         <button
           type="button"
@@ -184,7 +184,7 @@ const Controls = ({ call }: { call: PhoneCall }) => {
           onClick={hangup}
           className="flex size-12 items-center justify-center rounded-full bg-danger text-white hover:opacity-90"
         >
-          <PhoneOff size={18} />
+          <PhoneOff size={20} />
         </button>
       </div>
     </div>
@@ -205,7 +205,7 @@ const PhoneView = ({ call }: { call: PhoneCall }) => {
     <>
       <div className="flex flex-1 flex-col items-center justify-center gap-2 text-center">
         <Avatar name={caller.name} photo={caller.photo} size={64} />
-        <span className="text-[16px] font-semibold">{caller.name}</span>
+        <span className="text-[16px] font-medium">{caller.name}</span>
         {caller.contact ? (
           <span className="text-[13px] text-muted">{readableNumber(call.remote)}</span>
         ) : null}

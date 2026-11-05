@@ -19,7 +19,7 @@ test.describe("Kalender abonnieren", () => {
     await dialog.getByLabel("Adresse des Kalenders").fill(web.url);
     await dialog.getByLabel("Name", { exact: true }).fill(name);
     await dialog.getByRole("button", { name: "Abonnieren" }).click();
-    await expect(page.getByRole("status")).toHaveText("Kalender abonniert.");
+    await expect(page.getByRole("status")).toHaveText("Kalender abonniert");
     const list = dialog.getByRole("list", { name: "Kalender abonnieren" });
     await expect(list.getByText(name)).toBeVisible();
     await expect(list.getByText(/^Aktualisiert /)).toBeVisible();
@@ -34,7 +34,7 @@ test.describe("Kalender abonnieren", () => {
     web.serve([changed]);
     const again = await manage(page);
     await again.getByRole("button", { name: `Jetzt aktualisieren: ${name}` }).click();
-    await expect(page.getByRole("status").last()).toHaveText("Kalender aktualisiert.");
+    await expect(page.getByRole("status").last()).toHaveText("Kalender aktualisiert");
     await page.keyboard.press("Escape");
     await page.goto("/calendar?view=agenda");
     await expect(page.getByRole("list", { name: "Liste" }).getByText(changed)).toBeVisible();

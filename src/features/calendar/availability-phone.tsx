@@ -41,7 +41,7 @@ export const AvailabilityPhone = ({
     <section aria-label={m.availability_title()} className="flex flex-col gap-2.5">
       {busyNow.length ? (
         <div className="flex items-start gap-2.5 rounded-[10px] border border-noteborder bg-note p-3">
-          <AlertTriangle size={18} className="mt-px shrink-0 text-warn" aria-hidden="true" />
+          <AlertTriangle size={20} className="mt-px shrink-0 text-warn" aria-hidden="true" />
           <div className="flex min-w-0 flex-col gap-2">
             <span aria-live="polite" className="text-[14px] text-warn">
               {clashText(busyNow)}
@@ -65,7 +65,7 @@ export const AvailabilityPhone = ({
             className="flex min-h-12 items-center gap-2.5 border-b border-subtle px-3 last:border-b-0"
           >
             <span className={`size-2.5 shrink-0 rounded-full ${DOT[row.status.kind]}`} />
-            <span className="min-w-0 flex-1 truncate text-[15px]">
+            <span className="min-w-0 flex-1 truncate text-[16px]">
               {row.isMe ? m.availability_me() : row.name}
             </span>
             <span className={`shrink-0 text-[13px] ${STATUS_TONE[row.status.kind]}`}>
@@ -119,7 +119,7 @@ const Schedule = ({
         {rows.map((row) => (
           <span
             key={row.email}
-            className={`min-w-0 flex-1 truncate text-center text-[12px] font-semibold ${STATUS_TONE[row.status.kind]}`}
+            className={`min-w-0 flex-1 truncate text-center text-[12px] font-medium ${STATUS_TONE[row.status.kind]}`}
           >
             {row.isMe ? m.availability_me() : row.name.split(" ")[0]}
           </span>

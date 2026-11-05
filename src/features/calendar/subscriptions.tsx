@@ -121,7 +121,7 @@ export const Subscriptions = () => {
                 disabled={update.isPending}
                 onClick={() => update.mutate(subscription.id)}
               >
-                <RefreshCw size={15} />
+                <RefreshCw size={16} />
               </Button>
               <Button
                 variant="ghost"
@@ -138,7 +138,7 @@ export const Subscriptions = () => {
                     remove.mutate(subscription.id);
                 }}
               >
-                <Trash2 size={15} />
+                <Trash2 size={16} />
               </Button>
             </li>
           ))}

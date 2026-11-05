@@ -58,7 +58,7 @@ test.describe("Firmenverwaltung: S/MIME-Stellen", () => {
         .getByLabel("Zertifikat einer Stelle hinzufügen")
         .setInputFiles({ name: "stelle.cer", mimeType: "application/pkix-cert", buffer: made.der });
       await expect(
-        page.getByRole("status").filter({ hasText: "Stelle hinzugefügt." }),
+        page.getByRole("status").filter({ hasText: "Stelle hinzugefügt" }),
       ).toBeVisible();
       const list = page.getByRole("list", { name: "Anerkannte Stellen" });
       const row = list.getByRole("listitem").filter({ hasText: organization });
@@ -68,7 +68,7 @@ test.describe("Firmenverwaltung: S/MIME-Stellen", () => {
 
       page.once("dialog", (dialog) => void dialog.accept());
       await row.getByRole("button", { name: `${organization} entfernen` }).click();
-      await expect(page.getByRole("status").filter({ hasText: "Stelle entfernt." })).toBeVisible();
+      await expect(page.getByRole("status").filter({ hasText: "Stelle entfernt" })).toBeVisible();
       await expect(list.getByRole("listitem").filter({ hasText: organization })).toHaveCount(0);
       expect(await trust()).toBe("untrusted");
     } finally {

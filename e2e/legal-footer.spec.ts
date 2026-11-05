@@ -78,7 +78,7 @@ test.describe("Pflichtangaben", () => {
     expect(draft!.text).not.toContain("HRB 4711");
 
     await page.getByRole("button", { name: "Senden", exact: true }).click();
-    await expect(page.getByRole("status")).toHaveText("Mail gesendet.");
+    await expect(page.getByRole("status")).toHaveText("Mail gesendet");
     await expect.poll(async () => (await bodiesOf("max", subject, false)).length).toBe(1);
     const [arrived] = await bodiesOf("max", subject, false);
     expect(arrived!.text).toContain(`hier das Angebot.\n\n${FOOTER}`);
@@ -101,7 +101,7 @@ test.describe("Pflichtangaben", () => {
     const editor = page.getByRole("textbox", { name: "Ihre Nachricht …" });
     await editor.fill("Hallo Max, die Wartung kostet 180 Euro.");
     await page.getByRole("button", { name: "Senden", exact: true }).click();
-    const sent = page.getByRole("status").filter({ hasText: "Mail gesendet." });
+    const sent = page.getByRole("status").filter({ hasText: "Mail gesendet" });
     await sent.getByRole("button", { name: "Rückgängig" }).click();
     await expect(page.getByRole("status").filter({ hasText: "Nicht gesendet" })).toBeVisible();
     await expect(page.getByRole("textbox", { name: "Betreff" })).toHaveValue(subject);

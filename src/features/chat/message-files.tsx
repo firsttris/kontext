@@ -67,10 +67,10 @@ const PhotoViewer = ({
               aria-label={m.chat_download()}
               className={button}
             >
-              <Download size={18} />
+              <Download size={20} />
             </a>
             <DialogPrimitive.Close aria-label={m.chat_close()} className={button}>
-              <X size={18} />
+              <X size={20} />
             </DialogPrimitive.Close>
           </div>
           <div className="flex min-h-0 flex-1 items-center justify-center gap-3 px-3 pb-6">
@@ -132,7 +132,7 @@ export const MessageFiles = ({ files, urls }: { files: ChatFile[]; urls?: Urls }
                     "block object-cover",
                     photos.length === 1
                       ? "max-h-72 w-auto max-w-[min(100%,360px)]"
-                      : "size-[120px] md:size-[150px]",
+                      : "size-[120px] md:size-[152px]",
                   )}
                 />
               </button>

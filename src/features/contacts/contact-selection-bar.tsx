@@ -129,7 +129,7 @@ export const ContactSelectionBar = ({
             title={m.contacts_bulk_group()}
             disabled={none}
           >
-            <UserPlus size={15} strokeWidth={1.75} />
+            <UserPlus size={16} />
           </Button>
         </MenuTrigger>
         <MenuContent>
@@ -146,17 +146,17 @@ export const ContactSelectionBar = ({
       </MenuRoot>
       <MoveMenu cards={picked} books={books} compact onMoved={onClear} />
       <IconButton label={m.contacts_bulk_export()} disabled={none} onClick={exportAll}>
-        <Download size={15} strokeWidth={1.75} />
+        <Download size={16} />
       </IconButton>
       <IconButton
         label={m.contacts_bulk_delete()}
         disabled={none || !mayDelete || removeMany.isPending}
         onClick={() => void remove()}
       >
-        <Trash2 size={15} strokeWidth={1.75} />
+        <Trash2 size={16} />
       </IconButton>
       <IconButton label={m.mail_selection_clear()} onClick={onClear}>
-        <X size={15} />
+        <X size={16} />
       </IconButton>
     </div>
   );

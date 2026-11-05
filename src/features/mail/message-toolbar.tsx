@@ -231,12 +231,12 @@ export const Toolbar = ({
       <div className="flex min-w-0 flex-1 items-center gap-1">
         {archive ? (
           <LabelledButton label={m.mail_archive_action()} shortcut="e" onClick={archive}>
-            <Archive size={16} strokeWidth={1.75} />
+            <Archive size={16} />
           </LabelledButton>
         ) : null}
         {remove ? (
           <LabelledButton label={m.mail_delete()} shortcut="#" onClick={remove}>
-            <Trash2 size={16} strokeWidth={1.75} />
+            <Trash2 size={16} />
           </LabelledButton>
         ) : null}
         {canRemove && mailbox.role !== "drafts" && mailbox.role !== "sent" ? (
@@ -255,11 +255,7 @@ export const Toolbar = ({
             title={`${flagged ? m.mail_unflag() : m.mail_flag()} (s)`}
             onClick={toggleFlag}
           >
-            <Star
-              size={16}
-              strokeWidth={1.75}
-              className={flagged ? "fill-warn text-warn" : undefined}
-            />
+            <Star size={16} className={flagged ? "fill-warn text-warn" : undefined} />
           </Button>
         ) : null}
         {canAssignIn(mailbox) && account && !account.isPersonal ? (
@@ -268,7 +264,7 @@ export const Toolbar = ({
       </div>
       <Button asChild variant="outline" size="sm" className="hidden shrink-0 sm:inline-flex">
         <Link to="." search={(prev) => ({ ...prev, compose: "reply" })}>
-          <Reply size={15} /> {m.mail_reply()}
+          <Reply size={16} /> {m.mail_reply()}
         </Link>
       </Button>
       <MoreMenu

@@ -108,7 +108,7 @@ const Reply = ({
       ) : null}
       <div className="flex items-center gap-2">
         <label className="inline-flex h-9 cursor-pointer items-center gap-1.5 rounded-lg px-3 text-[14px] text-muted hover:bg-hover hover:text-fg">
-          <Paperclip size={15} /> {m.secure_reply_attach()}
+          <Paperclip size={16} /> {m.secure_reply_attach()}
           <input
             type="file"
             multiple
@@ -118,7 +118,7 @@ const Reply = ({
         </label>
         <div className="flex-1" />
         <Button type="submit" variant="primary" disabled={busy || (!text.trim() && !files.length)}>
-          <Send size={15} /> {m.secure_reply_send()}
+          <Send size={16} /> {m.secure_reply_send()}
         </Button>
       </div>
     </form>
@@ -176,7 +176,7 @@ export const SecurePage = ({ id }: { id: string }) => {
   if (isError) {
     return (
       <Frame>
-        <h1 className="m-0 text-[20px] font-semibold">{m.secure_gone_title()}</h1>
+        <h1 className="m-0 text-[22px] font-semibold">{m.secure_gone_title()}</h1>
         <p className="m-0 text-[14px] text-muted">{m.secure_gone()}</p>
       </Frame>
     );
@@ -204,7 +204,7 @@ export const SecurePage = ({ id }: { id: string }) => {
           <LockKeyhole size={20} aria-hidden="true" />
         </span>
         <div className="flex flex-col">
-          <h1 className="m-0 text-[20px] font-semibold">{m.secure_page_title()}</h1>
+          <h1 className="m-0 text-[22px] font-semibold">{m.secure_page_title()}</h1>
           <span className="text-[14px] text-muted">{m.secure_page_from({ sender })}</span>
         </div>
       </div>

@@ -18,7 +18,7 @@ const EmojiButton = ({ emoji, onPick }: { emoji: Emoji; onPick: (emoji: string) 
       aria-label={m.chat_react_with({ emoji: `${emoji.emoji} ${name}` })}
       title={name}
       onClick={() => onPick(emoji.emoji)}
-      className="flex size-10 items-center justify-center rounded-lg text-[22px] hover:bg-hover focus-visible:bg-hover md:size-9 md:text-[20px]"
+      className="flex size-10 items-center justify-center rounded-lg text-[22px] hover:bg-hover focus-visible:bg-hover md:size-9 md:text-[22px]"
     >
       {emoji.emoji}
     </button>
@@ -56,7 +56,7 @@ export const EmojiPicker = ({
   return (
     <div className={cn("flex min-h-0 flex-col gap-2", className)}>
       <label className="flex h-10 items-center gap-2 rounded-lg border border-border px-2.5 focus-within:border-muted md:h-9">
-        <Search size={15} aria-hidden="true" className="shrink-0 text-muted" />
+        <Search size={16} aria-hidden="true" className="shrink-0 text-muted" />
         <input
           type="search"
           value={query}

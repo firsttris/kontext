@@ -34,7 +34,7 @@ export const ReactionPicker = ({
       }}
     >
       <Popover.Trigger aria-label={m.chat_react()} title={m.chat_react()} className={className}>
-        <SmilePlus size={15} />
+        <SmilePlus size={16} />
       </Popover.Trigger>
       <Popover.Portal>
         <Popover.Content
@@ -58,7 +58,7 @@ export const ReactionPicker = ({
                   type="button"
                   aria-label={m.chat_react_with({ emoji })}
                   onClick={() => pick(emoji)}
-                  className="flex size-9 items-center justify-center rounded-full text-[20px] transition-transform hover:scale-125 hover:bg-hover"
+                  className="flex size-9 items-center justify-center rounded-full text-[22px] transition-[transform,background-color] hover:bg-hover active:scale-[0.97]"
                 >
                   {emoji}
                 </button>
@@ -70,7 +70,7 @@ export const ReactionPicker = ({
                 onClick={() => setAll(true)}
                 className="flex size-9 items-center justify-center rounded-full text-muted hover:bg-hover hover:text-fg"
               >
-                <Plus size={18} />
+                <Plus size={20} />
               </button>
             </>
           )}
@@ -115,7 +115,7 @@ export const ReactionBar = ({
                   : "border-border bg-bg text-muted hover:border-muted hover:text-fg",
               )}
             >
-              <span className="text-[15px] leading-none">{reaction.emoji}</span>
+              <span className="text-[16px] leading-none">{reaction.emoji}</span>
               <span className="font-mono text-[12px]">{reaction.members.length}</span>
             </button>
           </li>

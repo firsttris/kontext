@@ -108,9 +108,9 @@ export const GroupEditor = ({ group, contacts, books, preferredBook }: Props) =>
         onClick={() => cancel()}
         className="flex items-center gap-1 self-start border-0 bg-transparent p-0 text-[14px] text-muted md:hidden"
       >
-        <ChevronLeft size={18} /> {m.contacts_cancel()}
+        <ChevronLeft size={20} /> {m.contacts_cancel()}
       </button>
-      <h2 className="m-0 text-[24px] font-semibold tracking-tight">
+      <h2 className="m-0 text-[22px] font-semibold">
         {group ? fullName(group) : m.contacts_group_new()}
       </h2>
       {!group && writable.length > 1 ? (
@@ -140,8 +140,8 @@ export const GroupEditor = ({ group, contacts, books, preferredBook }: Props) =>
         <legend className="mb-1.5 p-0 text-[13px] text-muted">
           {m.contacts_group_members()} ({members.size})
         </legend>
-        <label className="flex h-9 items-center gap-2 rounded-[9px] border border-border px-3 text-muted">
-          <Search size={15} />
+        <label className="flex h-9 items-center gap-2 rounded-lg border border-border px-3 text-muted">
+          <Search size={16} />
           <input
             type="search"
             aria-label={m.contacts_group_pick()}

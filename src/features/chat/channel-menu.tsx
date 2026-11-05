@@ -73,12 +73,12 @@ export const ChannelMenu = ({
         <MenuItem
           onSelect={() => actions.mute.mutate({ channelId: channel.id, muted: !channel.muted })}
         >
-          {channel.muted ? <Bell size={15} /> : <BellOff size={15} />}
+          {channel.muted ? <Bell size={16} /> : <BellOff size={16} />}
           {channel.muted ? m.chat_unmute() : m.chat_mute()}
         </MenuItem>
         {canGoConfidential ? (
           <MenuItem onSelect={() => void goConfidential()}>
-            <LockKeyhole size={15} /> {m.chat_go_confidential()}
+            <LockKeyhole size={16} /> {m.chat_go_confidential()}
           </MenuItem>
         ) : null}
         {channel.kind === "channel" ? (
@@ -88,7 +88,7 @@ export const ChannelMenu = ({
               void run(() => actions.leave.mutateAsync(channel.id), m.chat_left({ name: title }));
             }}
           >
-            <LogOut size={15} /> {m.chat_leave()}
+            <LogOut size={16} /> {m.chat_leave()}
           </MenuItem>
         ) : null}
         {channel.kind === "channel" && channel.createdBy === me ? (
@@ -102,7 +102,7 @@ export const ChannelMenu = ({
               );
             }}
           >
-            <Trash2 size={15} /> {m.chat_delete_channel()}
+            <Trash2 size={16} /> {m.chat_delete_channel()}
           </MenuItem>
         ) : null}
       </MenuContent>

@@ -142,7 +142,7 @@ export const AttachmentList = ({
           key={file.blobId}
           className="flex items-center gap-2 rounded-lg border border-border py-1 pr-1 pl-2.5 text-[13px]"
         >
-          <Paperclip size={13} className="text-muted" />
+          <Paperclip size={14} className="text-muted" />
           <span className="max-w-[200px] truncate">{file.name}</span>
           <span className="text-muted">{formatSize(file.size)}</span>
           <button

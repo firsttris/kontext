@@ -23,7 +23,7 @@ export const SearchIndexNotice = () => {
       role="status"
       className="m-0 flex items-start gap-2 rounded-lg bg-subtle px-3 py-2 text-[13px] text-muted"
     >
-      <Icon size={15} aria-hidden="true" className="mt-0.5 shrink-0" />
+      <Icon size={16} aria-hidden="true" className="mt-0.5 shrink-0" />
       {data.failed
         ? m.company_search_index_failed()
         : m.company_search_index_pending({ count: data.pending.toLocaleString(LOCALE) })}

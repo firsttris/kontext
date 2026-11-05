@@ -30,7 +30,7 @@ import { type BookRef, bookOf, type Contact } from "./queries";
 
 const Card = ({ title, children }: { title: string; children: ReactNode }) => (
   <section className="flex flex-col gap-3 rounded-xl border border-border p-4">
-    <h3 className="m-0 text-[13px] font-semibold">{title}</h3>
+    <h3 className="m-0 text-[13px] font-medium">{title}</h3>
     {children}
   </section>
 );
@@ -80,7 +80,7 @@ export const ContactDetail = ({ card, books, groups }: Props) => {
         search={{}}
         className="flex items-center gap-1 text-[14px] text-muted no-underline md:hidden"
       >
-        <ChevronLeft size={18} /> {m.contacts_title()}
+        <ChevronLeft size={20} /> {m.contacts_title()}
       </Link>
       <header className="flex flex-wrap items-center gap-5">
         <Avatar
@@ -90,7 +90,7 @@ export const ContactDetail = ({ card, books, groups }: Props) => {
           className="border-0 bg-primary text-onprimary"
         />
         <div className="flex min-w-[220px] flex-1 flex-col gap-1">
-          <h2 className="m-0 text-[26px] font-semibold tracking-tight">{fullName(card)}</h2>
+          <h2 className="m-0 text-[22px] font-semibold">{fullName(card)}</h2>
           {subtitle ? <span className="text-muted">{subtitle}</span> : null}
           {book && !book.isPersonal ? (
             <span className="text-[13px] text-muted">
@@ -111,24 +111,24 @@ export const ContactDetail = ({ card, books, groups }: Props) => {
                   to: formatAddressInput([{ name: fullName(card), email }]),
                 }}
               >
-                <Mail size={15} /> {m.contacts_write_mail()}
+                <Mail size={16} /> {m.contacts_write_mail()}
               </Link>
             </Button>
           ) : null}
           {phone && phoneDial.available ? (
             <Button disabled={phoneDial.busy} onClick={() => void phoneDial.dial(phone)}>
-              <Phone size={15} /> {m.contacts_call()}
+              <Phone size={16} /> {m.contacts_call()}
             </Button>
           ) : phone ? (
             <Button asChild>
               <a href={`tel:${phone.replace(/[^+\d]/g, "")}`}>
-                <Phone size={15} /> {m.contacts_call()}
+                <Phone size={16} /> {m.contacts_call()}
               </a>
             </Button>
           ) : null}
           <Button asChild>
             <Link to="/calendar" search={{ event: "new", start: `${dateKey(new Date())}T09:00` }}>
-              <CalendarDays size={15} /> {m.calendar_new()}
+              <CalendarDays size={16} /> {m.calendar_new()}
             </Link>
           </Button>
           <Button
@@ -136,12 +136,12 @@ export const ContactDetail = ({ card, books, groups }: Props) => {
             onClick={() => downloadText(toVCard(card), `${fullName(card)}.vcf`, "text/vcard")}
             title={m.contacts_export()}
           >
-            <Download size={15} /> {m.contacts_export_one()}
+            <Download size={16} /> {m.contacts_export_one()}
           </Button>
           {book?.mayWrite ? (
             <Button asChild variant="ghost">
               <Link to="/contacts" search={(prev) => ({ ...prev, id: card.id, edit: true })}>
-                <Pencil size={15} /> {m.contacts_edit()}
+                <Pencil size={16} /> {m.contacts_edit()}
               </Link>
             </Button>
           ) : null}
@@ -154,7 +154,7 @@ export const ContactDetail = ({ card, books, groups }: Props) => {
           <ContactTasks card={card} name={fullName(card)} email={email} />
           <ContactDocuments card={card} mayWrite={Boolean(book?.mayWrite)} />
           <section className="flex flex-col gap-2">
-            <h3 className="m-0 border-b border-border pb-2 text-[14px] font-semibold">
+            <h3 className="m-0 border-b border-border pb-2 text-[14px] font-medium">
               {m.contacts_upcoming()}
             </h3>
             {upcoming.length === 0 ? (
@@ -172,9 +172,9 @@ export const ContactDetail = ({ card, books, groups }: Props) => {
                       >
                         <span
                           aria-hidden="true"
-                          className="flex size-8 shrink-0 items-center justify-center rounded-[9px] bg-subtle text-muted"
+                          className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-subtle text-muted"
                         >
-                          <CalendarDays size={15} />
+                          <CalendarDays size={16} />
                         </span>
                         <span className="flex min-w-0 flex-1 flex-col">
                           <span className="font-medium">{event.title}</span>
@@ -192,7 +192,7 @@ export const ContactDetail = ({ card, books, groups }: Props) => {
             )}
           </section>
           <section className="flex flex-col gap-2">
-            <h3 className="m-0 border-b border-border pb-2 text-[14px] font-semibold">
+            <h3 className="m-0 border-b border-border pb-2 text-[14px] font-medium">
               {m.contacts_recent_mails()}
             </h3>
             {(mails.data ?? []).length === 0 ? (
@@ -212,9 +212,9 @@ export const ContactDetail = ({ card, books, groups }: Props) => {
                     >
                       <span
                         aria-hidden="true"
-                        className="flex size-8 shrink-0 items-center justify-center rounded-[9px] bg-subtle text-muted"
+                        className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-subtle text-muted"
                       >
-                        <Mail size={15} />
+                        <Mail size={16} />
                       </span>
                       <span className="flex min-w-0 flex-1 flex-col">
                         <span className="flex gap-2">

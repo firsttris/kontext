@@ -68,9 +68,9 @@ const Tile = ({
         <Avatar name={fullName} photo={photoOf?.(participant)} size={avatarSize} />
       )}
       <span className="absolute bottom-1.5 left-1.5 flex max-w-[calc(100%-12px)] items-center gap-1 rounded-md bg-black/55 px-1.5 py-0.5 text-[11px] text-white">
-        {screen ? <MonitorUp size={11} aria-hidden="true" /> : null}
+        {screen ? <MonitorUp size={12} aria-hidden="true" /> : null}
         <span className="truncate">{name}</span>
-        {micMuted && !screen ? <MicOff size={11} aria-hidden="true" /> : null}
+        {micMuted && !screen ? <MicOff size={12} aria-hidden="true" /> : null}
       </span>
     </li>
   );

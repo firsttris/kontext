@@ -50,7 +50,7 @@ export const ContactDocuments = ({ card, mayWrite }: { card: Contact; mayWrite: 
   return (
     <section aria-label={m.documents_linked()} className="flex flex-col gap-2">
       <div className="flex items-center gap-2 border-b border-border pb-1.5">
-        <h3 className="m-0 flex-1 text-[14px] font-semibold">{m.documents_linked()}</h3>
+        <h3 className="m-0 flex-1 text-[14px] font-medium">{m.documents_linked()}</h3>
         {mayWrite ? <LinkDocument onPick={(file) => void add(file)} /> : null}
       </div>
       {documents.length === 0 ? (

@@ -19,7 +19,7 @@ export const SearchField = ({
       className,
     )}
   >
-    <Search size={15} aria-hidden="true" />
+    <Search size={16} aria-hidden="true" />
     <span className="sr-only">{label}</span>
     <input
       type="search"

@@ -88,7 +88,7 @@ export const ContactsPage = ({ search }: { search: ContactsSearch }) => {
             />
           ) : (
             <div className="flex items-center justify-between">
-              <h1 className="m-0 text-[30px] leading-tight font-semibold tracking-tight md:text-[18px]">
+              <h1 className="m-0 text-[30px] leading-tight font-semibold md:text-[18px]">
                 {m.contacts_title()}
               </h1>
               <div className="flex gap-1.5">
@@ -125,8 +125,8 @@ export const ContactsPage = ({ search }: { search: ContactsSearch }) => {
               </div>
             </div>
           )}
-          <label className="flex h-[42px] items-center gap-2 rounded-xl bg-subtle px-3 text-muted md:h-9 md:rounded-[9px] md:border md:border-border md:bg-bg">
-            <Search size={15} />
+          <label className="flex h-11 items-center gap-2 rounded-xl bg-subtle px-3 text-muted md:h-9 md:rounded-lg md:border md:border-border md:bg-bg">
+            <Search size={16} />
             <input
               ref={searchRef}
               type="search"
@@ -134,7 +134,7 @@ export const ContactsPage = ({ search }: { search: ContactsSearch }) => {
               placeholder={m.contacts_search()}
               value={text}
               onChange={(e) => setText(e.target.value)}
-              className="min-w-0 flex-1 border-0 bg-transparent text-[15px] text-fg outline-none md:text-[14px]"
+              className="min-w-0 flex-1 border-0 bg-transparent text-[16px] text-fg outline-none md:text-[14px]"
             />
           </label>
           {books.length > 1 ? <BookPicker books={books} value={search.book} /> : null}
@@ -250,7 +250,7 @@ const BookPicker = ({ books, value }: { books: BookRef[]; value: string | undefi
       aria-label={m.contacts_book()}
       value={value ?? ""}
       onChange={(e) => navigate({ to: "/contacts", search: { book: e.target.value || undefined } })}
-      className="h-9 rounded-[9px] text-[14px]"
+      className="h-9 rounded-lg text-[14px]"
     >
       <option value="">{m.contacts_all()}</option>
       <optgroup label={m.contacts_books_mine()}>

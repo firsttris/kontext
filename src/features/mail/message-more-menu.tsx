@@ -69,7 +69,7 @@ const MoveSubmenu = ({
 }) => (
   <MenuSub>
     <MenuSubTrigger>
-      <FolderInput size={15} /> {m.mail_move()}
+      <FolderInput size={16} /> {m.mail_move()}
     </MenuSubTrigger>
     <MenuSubContent aria-label={m.mail_move()}>
       {groups.map((group, index) => (
@@ -99,7 +99,7 @@ export type BlockSender = { address: string; domain: string; run: (scope: BlockS
 const BlockSubmenu = ({ address, domain, run }: BlockSender) => (
   <MenuSub>
     <MenuSubTrigger>
-      <UserX size={15} /> {m.mail_block_sender()}
+      <UserX size={16} /> {m.mail_block_sender()}
     </MenuSubTrigger>
     <MenuSubContent aria-label={m.mail_block_sender()}>
       <MenuItem onSelect={() => run("address")}>{m.mail_block_address({ address })}</MenuItem>
@@ -154,38 +154,38 @@ export const MoreMenu = ({
     </MenuTrigger>
     <MenuContent>
       <Item onSelect={() => compose("reply")} shortcut="r">
-        <Reply size={15} /> {m.mail_reply()}
+        <Reply size={16} /> {m.mail_reply()}
       </Item>
       <Item onSelect={() => compose("replyAll")} shortcut="a">
-        <ReplyAll size={15} /> {m.mail_reply_all()}
+        <ReplyAll size={16} /> {m.mail_reply_all()}
       </Item>
       <Item onSelect={() => compose("forward")} shortcut="f">
-        <Forward size={15} /> {m.mail_forward()}
+        <Forward size={16} /> {m.mail_forward()}
       </Item>
       <Item onSelect={() => compose("forwardEml")}>
-        <Paperclip size={15} /> {m.mail_forward_eml()}
+        <Paperclip size={16} /> {m.mail_forward_eml()}
       </Item>
       <Item onSelect={print} shortcut="p">
-        <Printer size={15} /> {m.mail_print()}
+        <Printer size={16} /> {m.mail_print()}
       </Item>
       <Item onSelect={saveEml}>
-        <Download size={15} /> {m.mail_save_eml()}
+        <Download size={16} /> {m.mail_save_eml()}
       </Item>
       {markUnread || spam || block || move || categories ? <MenuSeparator /> : null}
       {markUnread ? (
         <Item onSelect={markUnread} shortcut="U">
-          <MailOpen size={15} /> {m.mail_mark_unread()}
+          <MailOpen size={16} /> {m.mail_mark_unread()}
         </Item>
       ) : null}
       {spam ? (
         <Item onSelect={spam.run} shortcut="!">
-          {spam.undo ? <ShieldCheck size={15} /> : <ShieldAlert size={15} />}{" "}
+          {spam.undo ? <ShieldCheck size={16} /> : <ShieldAlert size={16} />}{" "}
           {spam.undo ? m.mail_spam_unmark() : m.mail_spam_mark()}
         </Item>
       ) : null}
       {reportPhishing ? (
         <Item onSelect={reportPhishing}>
-          <Fish size={15} /> {m.mail_phishing_report()}
+          <Fish size={16} /> {m.mail_phishing_report()}
         </Item>
       ) : null}
       {block ? <BlockSubmenu {...block} /> : null}
@@ -193,14 +193,14 @@ export const MoreMenu = ({
       {categories}
       <MenuSeparator />
       <Item onSelect={newTask} shortcut="t">
-        <ListChecks size={15} /> {m.tasks_from_mail_title()}
+        <ListChecks size={16} /> {m.tasks_from_mail_title()}
       </Item>
       <Item onSelect={discuss} shortcut="b">
-        <MessagesSquare size={15} /> {m.chat_discuss()}
+        <MessagesSquare size={16} /> {m.chat_discuss()}
       </Item>
       {newRule ? (
         <Item onSelect={newRule}>
-          <ListFilter size={15} /> {m.rules_from_mail()}
+          <ListFilter size={16} /> {m.rules_from_mail()}
         </Item>
       ) : null}
     </MenuContent>

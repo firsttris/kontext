@@ -35,7 +35,7 @@ export const InputTray = ({ attachments }: { attachments: Attachments }) => {
                   aria-label={m.chat_uploading({ name: file.name })}
                   className="absolute inset-0 flex items-center justify-center rounded-lg bg-bg/60"
                 >
-                  <LoaderCircle size={18} className="animate-spin text-muted" aria-hidden="true" />
+                  <LoaderCircle size={20} className="animate-spin text-muted" aria-hidden="true" />
                 </span>
               )}
               <button

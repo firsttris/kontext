@@ -54,7 +54,7 @@ export const Clash = ({ busy, pending }: { busy: PlanningRow[]; pending: boolean
       aria-live="polite"
       className={`inline-flex items-center gap-1.5 text-[13px] ${busy.length ? "text-warn" : "text-ok"}`}
     >
-      {busy.length ? <AlertTriangle size={15} aria-hidden="true" /> : null}
+      {busy.length ? <AlertTriangle size={16} aria-hidden="true" /> : null}
       {clashText(busy)}
     </span>
   );
@@ -106,7 +106,7 @@ export const DayNav = ({ day, onDay }: { day: string; onDay: (day: string) => vo
     >
       <ChevronLeft size={16} />
     </Button>
-    <span className="min-w-[150px] text-center text-[14px] font-semibold">
+    <span className="min-w-[150px] text-center text-[14px] font-medium">
       {m.availability_day({ day: dayTitle(day) })}
     </span>
     <Button

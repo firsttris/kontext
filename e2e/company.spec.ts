@@ -216,7 +216,7 @@ test.describe("Firmenverwaltung", () => {
     await card.getByLabel("Position").fill("Kundendienst");
     await card.getByLabel("Telefon").fill("07223 4711-30");
     await card.getByRole("button", { name: "Speichern" }).click();
-    await expect(her.getByRole("status")).toHaveText("Gespeichert, die Signatur ist aktualisiert.");
+    await expect(her.getByRole("status")).toHaveText("Gespeichert, die Signatur ist aktualisiert");
     await expect.poll(own).toContain("Kundendienst, Tel. 07223 4711-30");
     expect(await own()).not.toContain("Mobil");
     // Empty again for the other tests.

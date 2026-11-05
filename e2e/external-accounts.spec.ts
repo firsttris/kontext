@@ -74,7 +74,7 @@ test("Weiteres Postfach: abrufen, als diese Adresse antworten, ohne Bcc versende
     await bcc.fill("geheim@example.test");
     await bcc.press("Enter");
     await page.getByRole("button", { name: "Senden", exact: true }).click();
-    await expect(page.getByRole("status")).toHaveText("Mail gesendet.");
+    await expect(page.getByRole("status")).toHaveText("Mail gesendet");
 
     await expect.poll(() => smtp.received.length, { timeout: 15_000 }).toBe(1);
     const [sent] = smtp.received;

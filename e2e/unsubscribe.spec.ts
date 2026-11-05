@@ -76,7 +76,7 @@ test.describe("Newsletter abbestellen", () => {
     await dialog.getByLabel("Diese Mail danach löschen").check();
     await dialog.getByRole("button", { name: "Abbestellen" }).click();
     await expect(
-      page.getByRole("status").filter({ hasText: "Bei Heizungsbau News abgemeldet." }),
+      page.getByRole("status").filter({ hasText: "Bei Heizungsbau News abgemeldet" }),
     ).toBeVisible();
     expect(list.posts).toEqual([{ path: "/off?u=sandra", body: "List-Unsubscribe=One-Click" }]);
     await expect(page.getByRole("list", { name: "Posteingang" }).getByText(subject)).toHaveCount(0);

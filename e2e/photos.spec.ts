@@ -14,13 +14,13 @@ const PICTURE = {
 const setOwnPhoto = async (page: Page) => {
   await page.goto("/settings?section=profile");
   await page.getByLabel("Foto", { exact: true }).setInputFiles(PICTURE);
-  await expect(page.getByRole("status").filter({ hasText: "Foto gespeichert." })).toBeVisible();
+  await expect(page.getByRole("status").filter({ hasText: "Foto gespeichert" })).toBeVisible();
 };
 
 const removeOwnPhoto = async (page: Page) => {
   await page.goto("/settings?section=profile");
   await page.getByRole("button", { name: "Foto entfernen" }).click();
-  await expect(page.getByRole("status").filter({ hasText: "Foto entfernt." })).toBeVisible();
+  await expect(page.getByRole("status").filter({ hasText: "Foto entfernt" })).toBeVisible();
 };
 
 test.describe("Fotos", () => {

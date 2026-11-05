@@ -92,7 +92,7 @@ export const VacationForm = ({
 
   return (
     <form onSubmit={submit} className="flex flex-col gap-4">
-      <label className="flex items-center gap-2.5 text-[15px] font-medium">
+      <label className="flex items-center gap-2.5 text-[16px] font-medium">
         <input
           type="checkbox"
           checked={form.isEnabled}

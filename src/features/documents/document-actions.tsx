@@ -65,7 +65,7 @@ export const SaveToDocuments = ({
         aria-label={label}
         title={label}
       >
-        <FolderInput size={15} strokeWidth={1.75} />
+        <FolderInput size={16} />
       </Button>
       <DocumentPicker
         open={open}

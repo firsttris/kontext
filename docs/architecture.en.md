@@ -1495,6 +1495,27 @@ The sidebar next to the app rail is equally wide in mail, calendar, tasks, chat 
 modules. Contacts has no sidebar: the column there is the contact list and as wide as the mail list
 (320 px).
 
+The look keeps to a few steps, so that no view drifts off with values of its own (checked by
+`src/design-rules.test.ts`; the guideline is the [unslop](https://github.com/heydamir/unslop)
+skill):
+
+- **Font sizes** 11, 12, 13, 14, 16, 18, 22 and 30 px; 16 is body text on the phone, 18 the title
+  of a column on the desktop, 22 that of a mail, task or contact, 30 the page title on the phone.
+  Weights 400 and 500; 600 only for titles, the logo and unread items.
+- **Labels** in sentence case, without capitals and without wide or tight tracking, nothing in
+  italics. Capitals only for codes in monospace and file extensions.
+- **Icons** (lucide) 12, 14, 16, 20 px, 24 and 32 for empty states and large tiles, 10 only inside
+  a dot or a checkbox. The stroke is set once in `styles.css`: 1.25 px on screen, the same at every
+  size (`vector-effect: non-scaling-stroke`); no icon sets its own. Icons take the colour of their
+  text; AI gets no sparkle.
+- **Sizes** on the 4 px grid, 2 px steps only below 20 px. Nested radii: inner = outer − padding,
+  e.g. a toggle with 10 px outside, 4 px padding and 6 px inside.
+- **Motion** only on colour, opacity and `transform`, never on width, height or position; nothing
+  grows on hover. Pulsing only for things that are live right now (call, recording, typing,
+  loading).
+- **Short messages** (toasts, empty lists) end without a full stop; whole sentences and hints that
+  are joined with others keep it.
+
 On the phone the tab bar shows four apps next to "More", at first Mail, Calendar, Chat and Tasks.
 Under Settings → Appearance → "Tab bar on phone" one chooses an app per slot; choosing an app that
 already has a slot swaps the two. Only apps one has are offered (Documents with Schreibzeug, Phone

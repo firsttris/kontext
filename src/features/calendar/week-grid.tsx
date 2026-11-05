@@ -153,7 +153,7 @@ export const WeekGrid = ({
               </span>
               <span
                 className={cn(
-                  "inline-flex size-7 items-center justify-center rounded-full text-[16px] font-semibold",
+                  "inline-flex size-7 items-center justify-center rounded-full text-[16px] font-medium",
                   isToday && "bg-accent-fill text-white",
                 )}
               >
@@ -340,7 +340,7 @@ const EventBlock = ({
         eventClass(invitation),
       )}
     >
-      <EventTitle event={event} className="text-[12px] leading-tight font-semibold" />
+      <EventTitle event={event} className="text-[12px] leading-tight font-medium" />
       <span className="font-mono text-[11px] text-muted">
         {timeLabel(from)}–{timeLabel(to)}
       </span>

@@ -39,9 +39,7 @@ test.describe("Aufgaben: eigene Spalten und Wiederholung", () => {
     await dialog.getByLabel("Name der Spalte 4").fill("Bestellt");
     await dialog.getByRole("button", { name: "„Bestellt“ nach links" }).click();
     await dialog.getByRole("button", { name: "Speichern" }).click();
-    await expect(
-      page.getByRole("status").filter({ hasText: "Spalten gespeichert." }),
-    ).toBeVisible();
+    await expect(page.getByRole("status").filter({ hasText: "Spalten gespeichert" })).toBeVisible();
 
     const bestellt = page.getByRole("region", { name: "Bestellt" });
     await expect(bestellt).toBeVisible();

@@ -94,7 +94,7 @@ export const SnoozeMenu = ({
             aria-label={m.mail_snooze()}
             title={shortcut ? `${m.mail_snooze()} (w)` : m.mail_snooze()}
           >
-            <AlarmClock size={small ? 15 : 16} strokeWidth={1.75} />
+            <AlarmClock size={16} />
           </Button>
         </MenuTrigger>
         <MenuContent align="start" aria-label={m.mail_snooze_title()}>

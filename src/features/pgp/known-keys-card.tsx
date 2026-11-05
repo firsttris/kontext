@@ -84,7 +84,7 @@ export const KnownKeysCard = () => {
                 </span>
                 {key.previousFingerprint ? (
                   <span className="flex items-center gap-1.5 text-[12px] text-warn">
-                    <AlertTriangle size={13} aria-hidden="true" /> {m.pgp_key_changed()}
+                    <AlertTriangle size={14} aria-hidden="true" /> {m.pgp_key_changed()}
                   </span>
                 ) : null}
               </span>
@@ -111,7 +111,7 @@ export const KnownKeysCard = () => {
           onChange={(event) => setSearch(event.target.value)}
         />
         <Button type="submit" variant="outline" disabled={busy || !search.trim()}>
-          <Search size={15} /> {m.pgp_lookup()}
+          <Search size={16} /> {m.pgp_lookup()}
         </Button>
       </form>
       <div className="flex flex-col gap-2">
@@ -128,7 +128,7 @@ export const KnownKeysCard = () => {
             {m.pgp_import_public()}
           </Button>
           <label className="inline-flex h-9 cursor-pointer items-center gap-1.5 rounded-lg px-3 text-[14px] text-muted hover:bg-hover hover:text-fg">
-            <Upload size={15} /> {m.pgp_import_file()}
+            <Upload size={16} /> {m.pgp_import_file()}
             <input
               type="file"
               accept=".asc,.gpg,.pgp,application/pgp-keys"

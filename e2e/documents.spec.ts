@@ -58,7 +58,7 @@ test.describe("Dokumente", () => {
       const dialog = page.getByRole("dialog", { name: "In Dokumente ablegen" });
       await dialog.getByRole("button", { name: "Hier ablegen" }).click();
       await expect(
-        page.getByText("„Angebot-Wartung-2027.pdf“ liegt jetzt in Dokumente."),
+        page.getByText("„Angebot-Wartung-2027.pdf“ liegt jetzt in Dokumente"),
       ).toBeVisible();
 
       await page.keyboard.press("c");

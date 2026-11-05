@@ -69,7 +69,7 @@ export const ContactList = ({
                 title={m.contacts_group_new()}
                 className="flex size-6 items-center justify-center rounded-md text-muted hover:bg-hover hover:text-fg"
               >
-                <Plus size={15} />
+                <Plus size={16} />
               </Link>
             ) : null}
           </div>

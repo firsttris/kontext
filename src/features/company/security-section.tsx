@@ -51,7 +51,7 @@ const CheckRow = ({ check }: { check: Check }) => {
   return (
     <li className="flex items-start gap-3 py-2.5">
       <Icon
-        size={17}
+        size={16}
         aria-label={STATE_LABEL[check.state]()}
         className={cn(
           "mt-0.5 shrink-0",
@@ -97,7 +97,7 @@ export const SecuritySection = () => {
       ) : null}
       {data?.domains.map(({ domain, checks }) => (
         <section key={domain} aria-label={domain} className="flex flex-col">
-          <h3 className="m-0 border-b border-border pb-2 text-[14px] font-semibold">{domain}</h3>
+          <h3 className="m-0 border-b border-border pb-2 text-[14px] font-medium">{domain}</h3>
           <ul className="m-0 list-none divide-y divide-border p-0">
             {checks.map((check) => (
               <CheckRow key={check.id} check={check} />

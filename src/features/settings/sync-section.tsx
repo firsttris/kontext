@@ -11,7 +11,7 @@ import { SettingsCard } from "./settings-page";
 
 const Steps = ({ title, children }: { title: string; children: ReactNode }) => (
   <div className="flex flex-col gap-1.5">
-    <h4 className="m-0 text-[14px] font-semibold">{title}</h4>
+    <h4 className="m-0 text-[14px] font-medium">{title}</h4>
     <ol className="m-0 flex flex-col gap-1 pl-5 text-[13px] text-muted">{children}</ol>
   </div>
 );
@@ -36,7 +36,7 @@ export const SyncSection = () => {
             {address}
           </code>
           <Button variant="outline" onClick={() => void copy()} aria-label={m.sync_copy()}>
-            {copied ? <Check size={15} /> : <Copy size={15} />}
+            {copied ? <Check size={16} /> : <Copy size={16} />}
             {copied ? m.sync_copied() : m.sync_copy()}
           </Button>
         </div>

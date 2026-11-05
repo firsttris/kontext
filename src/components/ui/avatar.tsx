@@ -22,7 +22,7 @@ export const Avatar = ({
       aria-hidden="true"
       style={{ width: size, height: size, fontSize: Math.max(10, Math.round(size / 3)) }}
       className={cn(
-        "inline-flex shrink-0 items-center justify-center overflow-hidden rounded-full border border-border bg-subtle font-semibold",
+        "inline-flex shrink-0 items-center justify-center overflow-hidden rounded-full border border-border bg-subtle font-medium",
         className,
       )}
     >

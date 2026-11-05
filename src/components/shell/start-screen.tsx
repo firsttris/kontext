@@ -23,7 +23,7 @@ const TabBarPlaceholder = () => (
     {Array.from({ length: 5 }, (_, index) => (
       // biome-ignore lint/suspicious/noArrayIndexKey: fixed tabs without identity
       <div key={index} className="flex w-16 flex-col items-center gap-1.5">
-        <Bar className="size-[22px] rounded-md" />
+        <Bar className="size-6 rounded-md" />
         <Bar className="h-2 w-10" />
       </div>
     ))}
@@ -35,7 +35,7 @@ const RailPlaceholder = () => (
     aria-hidden="true"
     className="hidden h-full w-[60px] shrink-0 flex-col items-center gap-1.5 border-r border-border bg-side py-3.5 md:flex"
   >
-    <div className="mb-3.5 flex size-8 items-center justify-center rounded-[9px] bg-primary text-[13px] font-semibold text-onprimary">
+    <div className="mb-3.5 flex size-8 items-center justify-center rounded-lg bg-primary text-[13px] font-semibold text-onprimary">
       K
     </div>
     {Array.from({ length: 5 }, (_, index) => (
@@ -52,7 +52,7 @@ const SidebarPlaceholder = () => (
     aria-hidden="true"
     className="hidden h-full w-sidebar shrink-0 flex-col gap-5 border-r border-border bg-side px-3 py-4 lg:flex"
   >
-    <Bar className="h-[38px] w-full rounded-lg" />
+    <Bar className="h-9 w-full rounded-lg" />
     <PlaceholderNav count={8} />
   </div>
 );

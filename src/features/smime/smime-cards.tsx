@@ -138,7 +138,7 @@ export const OwnCertCard = () => {
                 downloadText(own.certificate, `${own.email}.pem`, "application/x-pem-file")
               }
             >
-              <Download size={15} /> {m.smime_download()}
+              <Download size={16} /> {m.smime_download()}
             </Button>
             <Button variant="outline" onClick={() => setImporting(true)}>
               {m.smime_replace()}
@@ -150,7 +150,7 @@ export const OwnCertCard = () => {
         </>
       ) : (
         <Button variant="outline" className="self-start" onClick={() => setImporting(true)}>
-          <Upload size={15} /> {m.smime_import()}
+          <Upload size={16} /> {m.smime_import()}
         </Button>
       )}
       {importing ? <ImportDialog onClose={() => setImporting(false)} /> : null}
@@ -227,7 +227,7 @@ export const KnownCertsCard = () => {
                 </span>
                 {cert.previousFingerprint ? (
                   <span className="flex items-center gap-1.5 text-[12px] text-warn">
-                    <AlertTriangle size={13} aria-hidden="true" /> {m.smime_cert_changed()}
+                    <AlertTriangle size={14} aria-hidden="true" /> {m.smime_cert_changed()}
                   </span>
                 ) : null}
               </span>
@@ -254,11 +254,11 @@ export const KnownCertsCard = () => {
           onChange={(event) => setSearch(event.target.value)}
         />
         <Button type="submit" variant="outline" disabled={busy || !search.trim()}>
-          <Search size={15} /> {m.smime_lookup()}
+          <Search size={16} /> {m.smime_lookup()}
         </Button>
       </form>
       <label className="inline-flex h-9 cursor-pointer items-center gap-1.5 self-start rounded-lg px-3 text-[14px] text-muted hover:bg-hover hover:text-fg">
-        <Upload size={15} /> {m.smime_cert_import()}
+        <Upload size={16} /> {m.smime_cert_import()}
         <input
           type="file"
           accept=".cer,.crt,.pem,.der,application/pkix-cert,application/x-x509-ca-cert"

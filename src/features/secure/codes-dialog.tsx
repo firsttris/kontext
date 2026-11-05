@@ -44,7 +44,7 @@ export const SecureCodesDialog = () => {
               aria-label={m.secure_code_copy({ to })}
               onClick={() => void copy(code)}
             >
-              {copied === code ? <Check size={15} /> : <Copy size={15} />}
+              {copied === code ? <Check size={16} /> : <Copy size={16} />}
             </Button>
           </li>
         ))}

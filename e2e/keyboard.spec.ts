@@ -83,7 +83,7 @@ test.describe("Mit der Tastatur", () => {
     await page.getByRole("option", { name: /Anna Weber/ }).click();
     await page.getByLabel("Betreff").fill(subject);
     await page.getByLabel("Betreff").press("Control+Enter");
-    await expect(page.getByRole("status")).toHaveText("Mail gesendet.");
+    await expect(page.getByRole("status")).toHaveText("Mail gesendet");
     await expect.poll(() => inboxSubjects("anna")).toContain(subject);
   });
 
@@ -99,7 +99,7 @@ test.describe("Mit der Tastatur", () => {
     const dialog = page.getByRole("dialog", { name: "Später senden" });
     await dialog.getByLabel("Senden am").press("Control+Enter");
     await page.waitForTimeout(3_000);
-    await expect(page.getByRole("status").filter({ hasText: "Mail gesendet." })).toHaveCount(0);
+    await expect(page.getByRole("status").filter({ hasText: "Mail gesendet" })).toHaveCount(0);
     expect(await inboxSubjects("anna")).not.toContain(subject);
   });
 

@@ -49,8 +49,8 @@ export const PlaceholderNav = ({ count = 6 }: { count?: number }) => (
   <div aria-hidden="true" className="flex flex-col gap-px">
     {Array.from({ length: count }, (_, index) => (
       // biome-ignore lint/suspicious/noArrayIndexKey: fixed lines without identity
-      <div key={index} className="flex h-[34px] items-center gap-2.5 px-2.5">
-        <Bar className="size-4 rounded-[5px]" />
+      <div key={index} className="flex h-8 items-center gap-2.5 px-2.5">
+        <Bar className="size-4 rounded" />
         <Bar className={index % 2 ? "w-20" : "w-28"} />
       </div>
     ))}
@@ -75,11 +75,11 @@ export const ListPlaceholder = ({ footer }: { footer?: ReactNode }) => (
       <div aria-hidden="true" className="flex flex-col gap-3 px-4 pt-3 pb-3 md:pt-4">
         <div className="flex h-8 items-center justify-between md:hidden">
           <Bar className="h-8 w-32" />
-          <Bar className="size-8 rounded-[9px]" />
+          <Bar className="size-8 rounded-lg" />
         </div>
         <Bar className="h-6 w-36 rounded-md md:h-4 md:w-28" />
-        <Bar className="h-[42px] w-full rounded-xl md:h-9 md:rounded-[9px]" />
-        <Bar className="h-[34px] w-40 rounded-[9px]" />
+        <Bar className="h-11 w-full rounded-xl md:h-9 md:rounded-lg" />
+        <Bar className="h-8 w-40 rounded-lg" />
       </div>
       <div className="px-2">
         <PlaceholderRows />

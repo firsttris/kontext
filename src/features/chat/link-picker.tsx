@@ -129,7 +129,7 @@ export const LinkPicker = ({
           : undefined
       }
     >
-      <div role="tablist" className="flex gap-0.5 rounded-[9px] bg-subtle p-[3px]">
+      <div role="tablist" className="flex gap-0.5 rounded-[10px] bg-subtle p-1">
         {tabs.map(([value, label]) => (
           <button
             key={value}
@@ -138,7 +138,7 @@ export const LinkPicker = ({
             aria-selected={kind === value}
             onClick={() => setKind(value)}
             className={cn(
-              "h-8 flex-1 rounded-[7px] text-[13px]",
+              "h-8 flex-1 rounded-md text-[13px]",
               kind === value ? "bg-bg font-medium text-fg shadow-sm" : "text-muted",
             )}
           >
@@ -157,8 +157,8 @@ export const LinkPicker = ({
         />
       ) : (
         <>
-          <label className="flex h-10 items-center gap-2 rounded-[9px] border border-border px-3 text-muted focus-within:border-muted">
-            <Search size={15} aria-hidden="true" />
+          <label className="flex h-10 items-center gap-2 rounded-lg border border-border px-3 text-muted focus-within:border-muted">
+            <Search size={16} aria-hidden="true" />
             <span className="sr-only">{m.chat_link_search()}</span>
             <input
               type="search"

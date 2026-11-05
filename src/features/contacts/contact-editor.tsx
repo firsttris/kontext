@@ -114,11 +114,9 @@ export const ContactEditor = ({ card, books, preferredBook }: Props) => {
         onClick={() => cancel()}
         className="flex items-center gap-1 self-start border-0 bg-transparent p-0 text-[14px] text-muted md:hidden"
       >
-        <ChevronLeft size={18} /> {m.contacts_cancel()}
+        <ChevronLeft size={20} /> {m.contacts_cancel()}
       </button>
-      <h2 className="m-0 text-[24px] font-semibold tracking-tight">
-        {card ? fullName(card) : m.contacts_new()}
-      </h2>
+      <h2 className="m-0 text-[22px] font-semibold">{card ? fullName(card) : m.contacts_new()}</h2>
       <PhotoPicker
         name={[form.given, form.surname].join(" ").trim() || form.company || "?"}
         photo={photo}

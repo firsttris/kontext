@@ -72,7 +72,7 @@ export const ContactTasks = ({
   return (
     <section aria-label={m.contacts_tasks()} className="flex flex-col gap-2">
       <div className="flex items-center gap-2 border-b border-border pb-1.5">
-        <h3 className="m-0 flex-1 text-[14px] font-semibold">{m.contacts_tasks()}</h3>
+        <h3 className="m-0 flex-1 text-[14px] font-medium">{m.contacts_tasks()}</h3>
         <Button
           size="sm"
           variant="ghost"

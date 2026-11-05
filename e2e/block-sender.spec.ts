@@ -43,7 +43,7 @@ const blockAndUnblock = async (
     const dialog = page.getByRole("dialog", { name: "Regel bearbeiten" });
     await dialog.getByRole("button", { name: "Regel löschen" }).click();
     await dialog.getByRole("button", { name: "Wirklich löschen?" }).click();
-    await expect(page.getByRole("status").filter({ hasText: "Regel gelöscht." })).toBeVisible();
+    await expect(page.getByRole("status").filter({ hasText: "Regel gelöscht" })).toBeVisible();
     await expect(page.getByText(`Blockiert: ${blocked}`)).toHaveCount(0);
   } finally {
     await removeMails(user, user, [subject, next]);

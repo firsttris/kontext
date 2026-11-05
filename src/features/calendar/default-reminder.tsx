@@ -37,7 +37,7 @@ export const DefaultReminderButton = ({ calendar }: { calendar: CalendarRef }) =
         aria-label={`${m.calendar_default_reminder()}: ${calendar.name}`}
         title={m.calendar_default_reminder()}
       >
-        <Bell size={15} />
+        <Bell size={16} />
       </Button>
       {open ? <DefaultReminderDialog calendar={calendar} onClose={() => setOpen(false)} /> : null}
     </>

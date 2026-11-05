@@ -26,7 +26,7 @@ test.describe("Unterhaltungen", () => {
     await page.getByRole("textbox", { name: "Ihre Nachricht …" }).click();
     await page.keyboard.type("Wir melden uns morgen mit einem Termin.");
     await page.getByRole("button", { name: "Senden", exact: true }).click();
-    await expect(page.getByRole("status").filter({ hasText: "Mail gesendet." })).toBeVisible();
+    await expect(page.getByRole("status").filter({ hasText: "Mail gesendet" })).toBeVisible();
 
     // The customer answers, quoting.
     await deliverMail({

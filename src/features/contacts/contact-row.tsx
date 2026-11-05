@@ -100,11 +100,11 @@ export const ContactRow = ({ card, active, ownAccount, book, group, picking }: P
         )}
       >
         {group ? (
-          <span className="flex size-[34px] shrink-0 items-center justify-center rounded-full bg-subtle text-muted">
+          <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-subtle text-muted">
             <Users size={16} />
           </span>
         ) : (
-          <Avatar name={fullName(card)} photo={contactPhoto(card)} size={34} />
+          <Avatar name={fullName(card)} photo={contactPhoto(card)} size={36} />
         )}
         <span className="flex min-w-0 flex-col">
           <span className="truncate font-medium">{fullName(card)}</span>

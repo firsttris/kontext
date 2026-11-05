@@ -75,7 +75,7 @@ export const DeliveryReportCard = ({
           const { Icon, tone } = ICON[recipient.outcome];
           return (
             <li key={recipient.recipient} className="flex items-start gap-2">
-              <Icon size={15} className={`mt-0.5 shrink-0 ${tone}`} aria-hidden="true" />
+              <Icon size={16} className={`mt-0.5 shrink-0 ${tone}`} aria-hidden="true" />
               <span className="flex min-w-0 flex-col">
                 <span>{sentence(recipient, email.receivedAt, [])}</span>
                 {recipient.outcome !== "delivered" && recipient.diagnostic ? (
@@ -125,7 +125,7 @@ export const DeliveryReportsReceived = ({
   return (
     <div role="note" aria-label={m.mail_dsn_report()} className={line}>
       <PackageCheck
-        size={15}
+        size={16}
         className={allDelivered ? "text-ok" : "text-muted"}
         aria-hidden="true"
       />

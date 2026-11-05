@@ -61,7 +61,7 @@ const RuleRow = ({
         </span>
         {rule.name.trim() ? <span className="text-[13px] text-muted">{whenText(rule)}</span> : null}
         <span className="flex gap-1.5 text-[13px] text-muted">
-          <ArrowRight size={13} className="mt-[3px] shrink-0" aria-hidden="true" />
+          <ArrowRight size={14} className="mt-[3px] shrink-0" aria-hidden="true" />
           <span>{thenText(rule, folderName, categoryName).join(" · ")}</span>
         </span>
       </button>
@@ -73,7 +73,7 @@ const RuleRow = ({
           disabled={first}
           onClick={() => onChange((rules) => moveRule(rules, rule.id, -1))}
         >
-          <ArrowUp size={15} />
+          <ArrowUp size={16} />
         </Button>
         <Button
           variant="ghost"
@@ -82,7 +82,7 @@ const RuleRow = ({
           disabled={last}
           onClick={() => onChange((rules) => moveRule(rules, rule.id, 1))}
         >
-          <ArrowDown size={15} />
+          <ArrowDown size={16} />
         </Button>
         <Switch
           checked={rule.enabled}
@@ -112,7 +112,7 @@ export const RulesList = ({ store }: { store: RulesStore }) => {
       {store.rules ? null : <p className="m-0 text-[14px] text-muted">{m.common_loading()}</p>}
       {store.rules && !rules.length ? (
         <div className="flex flex-col items-center gap-2 rounded-lg bg-subtle px-6 py-8 text-center">
-          <ListFilter size={22} className="text-muted" />
+          <ListFilter size={24} className="text-muted" />
           <p className="m-0 max-w-[380px] text-[13px] text-muted">{m.rules_empty()}</p>
         </div>
       ) : null}
@@ -141,7 +141,7 @@ export const RulesList = ({ store }: { store: RulesStore }) => {
         disabled={!store.rules}
         onClick={() => setEditing(newRule(crypto.randomUUID()))}
       >
-        <Plus size={15} /> {m.rules_add()}
+        <Plus size={16} /> {m.rules_add()}
       </Button>
       {editing ? (
         <RuleDialog store={store} initial={editing} onClose={() => setEditing(null)} />

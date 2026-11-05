@@ -108,7 +108,7 @@ const startFrom = async (page: Page, subject: string, button: RegExp) => {
 
 const send = async (page: Page) => {
   await page.getByRole("button", { name: "Senden", exact: true }).click();
-  await expect(page.getByRole("status").filter({ hasText: "Mail gesendet." })).toBeVisible();
+  await expect(page.getByRole("status").filter({ hasText: "Mail gesendet" })).toBeVisible();
 };
 
 /** Anna opens the answer: the picture shows in it. */

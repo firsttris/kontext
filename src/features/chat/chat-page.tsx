@@ -70,7 +70,7 @@ export const ChatPage = ({
           />
         ) : (
           <div className="flex flex-1 flex-col items-center justify-center gap-3 text-[14px] text-muted">
-            <MessagesSquare size={28} strokeWidth={1.5} aria-hidden="true" />
+            <MessagesSquare size={32} aria-hidden="true" />
             {isPending ? m.chat_loading() : channelId ? m.chat_unknown() : m.chat_pick()}
           </div>
         )}

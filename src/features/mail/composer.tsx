@@ -732,7 +732,7 @@ export const Composer = ({ accountId, mode, sourceEmailId, forwardIds, prefill }
         >
           <ChevronLeft size={20} />
         </Button>
-        <h2 className="m-0 flex-1 truncate text-[19px] font-semibold tracking-tight">
+        <h2 className="m-0 flex-1 truncate text-[18px] font-semibold">
           {subject || (mode === "new" ? m.mail_compose() : m.mail_no_subject())}
         </h2>
         <Button

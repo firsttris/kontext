@@ -51,7 +51,7 @@ const REASONS: Record<DuplicateReason, () => string> = {
   name: m.contacts_duplicate_name,
 };
 
-const sectionTitle = "m-0 border-b border-border pb-2 text-[14px] font-semibold";
+const sectionTitle = "m-0 border-b border-border pb-2 text-[14px] font-medium";
 
 export const Cleanup = () => {
   const { contacts, books, duplicates, fixes, isPending } = useCleanup();
@@ -100,9 +100,9 @@ export const Cleanup = () => {
         search={{}}
         className="flex items-center gap-1 text-[14px] text-muted no-underline md:hidden"
       >
-        <ChevronLeft size={18} /> {m.contacts_title()}
+        <ChevronLeft size={20} /> {m.contacts_title()}
       </Link>
-      <h2 className="m-0 text-[24px] font-semibold tracking-tight">{m.contacts_cleanup()}</h2>
+      <h2 className="m-0 text-[22px] font-semibold">{m.contacts_cleanup()}</h2>
       {isPending ? (
         <p className="m-0 text-[14px] text-muted">{m.common_loading()}</p>
       ) : duplicates.length === 0 && fixes.length === 0 ? (
@@ -111,7 +111,7 @@ export const Cleanup = () => {
       {duplicates.length > 0 ? (
         <section aria-label={m.contacts_duplicates()} className="flex flex-col gap-3">
           <div className="flex items-center gap-3 border-b border-border pb-2">
-            <h3 className="m-0 flex-1 text-[14px] font-semibold">{m.contacts_duplicates()}</h3>
+            <h3 className="m-0 flex-1 text-[14px] font-medium">{m.contacts_duplicates()}</h3>
             {duplicates.length > 1 ? (
               <Button size="sm" disabled={busy} onClick={() => void run(mergeAll)}>
                 {m.contacts_merge_all()}
@@ -179,7 +179,7 @@ const DuplicateCard = ({ set, books, busy, onMerge, onIgnore }: DuplicateCardPro
   return (
     <article aria-label={title} className="flex flex-col gap-3 rounded-xl border border-border p-4">
       <header className="flex flex-col gap-0.5">
-        <span className="font-semibold">{title}</span>
+        <span className="font-medium">{title}</span>
         <span className="text-[13px] text-muted">
           {m.contacts_duplicate_title({ count: set.cards.length })} ·{" "}
           {set.reasons.map((reason) => REASONS[reason]()).join(", ")}

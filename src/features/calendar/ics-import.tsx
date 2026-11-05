@@ -65,7 +65,7 @@ const PreviewRow = ({ item, known }: { item: FileEvent; known: boolean }) => (
         className="flex items-center gap-1 text-[12px] text-muted"
         title={m.calendar_import_repeats()}
       >
-        <Repeat size={13} /> {m.calendar_import_repeats()}
+        <Repeat size={14} /> {m.calendar_import_repeats()}
       </span>
     ) : null}
     {known ? (

@@ -18,7 +18,7 @@ test.describe("Lesebestätigung", () => {
     await receipt.click();
     await expect(receipt).toHaveAttribute("aria-pressed", "true");
     await page.getByRole("button", { name: "Senden", exact: true }).click();
-    await expect(page.getByRole("status")).toHaveText("Mail gesendet.");
+    await expect(page.getByRole("status")).toHaveText("Mail gesendet");
     await expect.poll(() => inboxSubjects("max")).toContain(subject);
 
     const max = await (await browser.newContext()).newPage();
@@ -28,7 +28,7 @@ test.describe("Lesebestätigung", () => {
     await expect(asked).toContainText("Jonas Weber");
     await asked.getByRole("button", { name: "Senden", exact: true }).click();
     await expect(
-      max.getByRole("status").filter({ hasText: "Lesebestätigung an Jonas Weber geschickt." }),
+      max.getByRole("status").filter({ hasText: "Lesebestätigung an Jonas Weber geschickt" }),
     ).toBeVisible();
     await expect(asked).toHaveCount(0);
     // Asked once: opened again, the question does not come back.

@@ -237,7 +237,7 @@ test.describe("Screenshots @screenshots", () => {
             buffer: Buffer.from([0xd0, 0xcf, 0x11, 0xe0]),
           },
         ]);
-      await expect(page.getByText("3 Mails importiert.")).toBeVisible();
+      await expect(page.getByText("3 Mails importiert")).toBeVisible();
       await expect(
         page.getByRole("list", { name: "Altablage 2024" }).getByText("Abnahmeprotokoll"),
       ).toBeVisible();

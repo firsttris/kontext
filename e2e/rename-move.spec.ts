@@ -82,7 +82,7 @@ const renamesABookAndMovesAContact = async (page: Page) => {
     await page.getByRole("link", { name: new RegExp(surname) }).click();
     await page.getByRole("button", { name: "Verschieben nach …" }).click();
     await page.getByRole("menuitem", { name: after }).click();
-    await expect(page.getByRole("status")).toHaveText(`Nach „${after}“ verschoben.`);
+    await expect(page.getByRole("status")).toHaveText(`Nach „${after}“ verschoben`);
     await expect
       .poll(async () => (await listContacts(jonas, accountId, book)).map((c) => c.id))
       .toEqual([card]);

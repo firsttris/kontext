@@ -68,7 +68,7 @@ test.describe("Verschlüsselung: S/MIME", () => {
     await dialog.getByLabel("Passwort des Zertifikats").fill(PASSWORD);
     await dialog.getByRole("button", { name: "Zertifikat importieren" }).click();
     await expect(
-      page.getByRole("status").filter({ hasText: "Zertifikat gespeichert." }),
+      page.getByRole("status").filter({ hasText: "Zertifikat gespeichert" }),
     ).toBeVisible();
     await expect(own).toContainText(address("sandra"));
     await expect(own).toContainText("Gültig bis");
@@ -107,7 +107,7 @@ test.describe("Verschlüsselung: S/MIME", () => {
     const unlock = page.getByRole("dialog", { name: "Entsperren" });
     await unlock.getByLabel("Passwort des Zertifikats").fill(PASSWORD);
     await unlock.getByRole("button", { name: "Entsperren" }).click();
-    await expect(page.getByRole("status").filter({ hasText: "Mail gesendet." })).toBeVisible();
+    await expect(page.getByRole("status").filter({ hasText: "Mail gesendet" })).toBeVisible();
     // The subject went inside; outside it says "Vertrauliche Nachricht" (Protected Headers).
     await expect
       .poll(async () => (await inboxSubjects("max")).filter((s) => s === STAND_IN).length)
@@ -177,7 +177,7 @@ test.describe("Verschlüsselung: S/MIME", () => {
     const unlock = page.getByRole("dialog", { name: "Entsperren" });
     await unlock.getByLabel("Passwort des Zertifikats").fill(PASSWORD);
     await unlock.getByRole("button", { name: "Entsperren" }).click();
-    await expect(page.getByRole("status").filter({ hasText: "Mail gesendet." })).toBeVisible();
+    await expect(page.getByRole("status").filter({ hasText: "Mail gesendet" })).toBeVisible();
     // Not encrypted: the subject is the real one.
     await expect.poll(() => inboxSubjects("max")).toContain(subject);
 
@@ -238,7 +238,7 @@ test.describe("Verschlüsselung: S/MIME", () => {
       const unlock = page.getByRole("dialog", { name: "Entsperren" });
       await unlock.getByLabel("Passwort des Zertifikats").fill(PASSWORD);
       await unlock.getByRole("button", { name: "Entsperren" }).click();
-      await expect(page.getByRole("status").filter({ hasText: "Mail gesendet." })).toBeVisible();
+      await expect(page.getByRole("status").filter({ hasText: "Mail gesendet" })).toBeVisible();
       await expect.poll(() => inboxSubjects("max")).toContain(subject);
       await other.goto("/mail");
       await other

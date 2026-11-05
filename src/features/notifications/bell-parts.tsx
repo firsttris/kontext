@@ -11,9 +11,7 @@ export const dayFormat = new Intl.DateTimeFormat(LOCALE, {
 
 export const Section = ({ title, children }: { title: string; children: ReactNode }) => (
   <section aria-label={title} className="flex flex-col gap-0.5">
-    <h3 className="m-0 px-2 pt-1 pb-1 text-[11px] font-medium tracking-wide text-muted uppercase">
-      {title}
-    </h3>
+    <h3 className="m-0 px-2 pt-1 pb-1 text-[12px] font-medium text-muted">{title}</h3>
     {children}
   </section>
 );

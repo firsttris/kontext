@@ -83,7 +83,7 @@ const Ringing = ({
           <div className="flex items-center gap-3">
             <Avatar name={caller.name} photo={caller.photo} size={44} className="animate-pulse" />
             <div className="flex min-w-0 flex-1 flex-col">
-              <DialogPrimitive.Title className="m-0 truncate text-[15px] font-semibold">
+              <DialogPrimitive.Title className="m-0 truncate text-[16px] font-semibold">
                 {call.door
                   ? m.phone_door()
                   : handedBy
@@ -149,7 +149,7 @@ const Ringing = ({
                   )
                 }
               >
-                <DoorOpen size={15} />
+                <DoorOpen size={16} />
                 {m.phone_door_open()}
               </Button>
             ) : null}
@@ -159,7 +159,7 @@ const Ringing = ({
                 disabled={busy}
                 onClick={() => void answer()}
               >
-                <Phone size={15} />
+                <Phone size={16} />
                 {call.door ? m.phone_door_talk() : m.phone_answer()}
               </Button>
             ) : null}

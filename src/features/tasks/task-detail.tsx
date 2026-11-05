@@ -131,11 +131,11 @@ export const TaskDetail = ({ task, onClose }: { task: Task; onClose?: () => void
               e.currentTarget.blur();
             }}
             className={cn(
-              "field-sizing-content w-full resize-none border-0 bg-transparent p-0 text-[22px] leading-snug font-semibold tracking-tight text-fg outline-none",
+              "field-sizing-content w-full resize-none border-0 bg-transparent p-0 text-[22px] leading-snug font-semibold text-fg outline-none",
               done && "text-muted line-through",
             )}
           />
-          <fieldset className="m-0 flex flex-wrap gap-0.5 self-start rounded-[9px] border-0 bg-subtle p-[3px]">
+          <fieldset className="m-0 flex flex-wrap gap-0.5 self-start rounded-[10px] border-0 bg-subtle p-1">
             <legend className="sr-only">Status</legend>
             {columns.map((column) => (
               <button
@@ -144,7 +144,7 @@ export const TaskDetail = ({ task, onClose }: { task: Task; onClose?: () => void
                 aria-pressed={task.status === column.id}
                 onClick={() => void save({ status: column.id })}
                 className={cn(
-                  "h-7 rounded-[7px] px-3 text-[13px]",
+                  "h-7 rounded-md px-3 text-[13px]",
                   task.status === column.id
                     ? "bg-bg font-medium text-fg shadow-sm"
                     : "text-muted hover:text-fg",
@@ -267,9 +267,7 @@ export const TaskDetail = ({ task, onClose }: { task: Task; onClose?: () => void
           </Label>
           {task.links.length || documentsConnected ? (
             <div className="flex flex-col gap-2">
-              <span className="text-[12px] font-semibold tracking-wide text-muted uppercase">
-                {m.tasks_links()}
-              </span>
+              <span className="text-[12px] font-medium text-muted">{m.tasks_links()}</span>
               {task.links.map((link) => (
                 <ItemLink
                   key={`${link.kind}-${link.ref}`}

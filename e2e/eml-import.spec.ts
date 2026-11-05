@@ -73,7 +73,7 @@ const importMboxByButton = async (page: Page, folder: string, subjects: [string,
   const chooser = page.waitForEvent("filechooser");
   await button.click();
   await (await chooser).setFiles(mbox(subjects));
-  await expect(page.getByText("2 Mails importiert.")).toBeVisible();
+  await expect(page.getByText("2 Mails importiert")).toBeVisible();
   for (const subject of subjects) {
     await expect(page.getByRole("list", { name: folder }).getByText(subject)).toBeVisible();
   }
@@ -130,7 +130,7 @@ test.describe(".eml-Dateien importieren", () => {
       await page
         .locator('input[type="file"][aria-label="E-Mails importieren (.eml, .mbox)"]')
         .setInputFiles([eml(subject), outlookMsg]);
-      await expect(page.getByText("1 Mail importiert.")).toBeVisible();
+      await expect(page.getByText("1 Mail importiert")).toBeVisible();
       await expect(page.getByRole("alert")).toHaveText(
         "Nicht importiert: Rechnung.msg (Outlook-Format .msg wird nicht unterstützt)",
       );
@@ -157,7 +157,7 @@ test.describe(".eml-Dateien importieren", () => {
       const link = page.getByRole("link", { name: folder });
       await expect(link).toBeVisible();
       await dropFiles(page, `a[href$="/${folderId}"]`, eml(subject));
-      await expect(page.getByText("1 Mail importiert.")).toBeVisible();
+      await expect(page.getByText("1 Mail importiert")).toBeVisible();
       await link.click();
       await expect(page.getByRole("list", { name: folder }).getByText(subject)).toBeVisible();
     } finally {
@@ -220,7 +220,7 @@ test.describe(".eml-Dateien importieren", () => {
       const chooser = page.waitForEvent("filechooser");
       await button.click();
       await (await chooser).setFiles(eml(subject));
-      await expect(page.getByText("1 Mail importiert.")).toBeVisible();
+      await expect(page.getByText("1 Mail importiert")).toBeVisible();
       await expect(page.getByRole("list", { name: folder }).getByText(subject)).toBeVisible();
     } finally {
       await removeFolder(accountId, folderId);

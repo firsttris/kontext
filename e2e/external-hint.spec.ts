@@ -84,7 +84,7 @@ test.describe("Hinweis „Extern“", () => {
     const ask = page.getByRole("dialog", { name: "An externe Empfänger senden?" });
     await expect(ask).toContainText(address("max"));
     await ask.getByRole("button", { name: "Trotzdem senden" }).click();
-    await expect(page.getByRole("status")).toHaveText("Mail gesendet.");
+    await expect(page.getByRole("status")).toHaveText("Mail gesendet");
     await expect.poll(() => inboxSubjects("max")).toContain(subject);
 
     const day = new Date(Date.now() + 86_400_000).toISOString().slice(0, 10);
@@ -121,7 +121,7 @@ test.describe("Hinweis „Extern“", () => {
       // Saved for real while the hint stays off: the partners alone change nothing for anyone.
       await partners.fill([...before.partners, `@${partner.toUpperCase()}`].join("\n"));
       await page.getByRole("button", { name: "Speichern" }).click();
-      await expect(page.getByRole("status")).toHaveText("Gespeichert.");
+      await expect(page.getByRole("status")).toHaveText("Gespeichert");
       await page.reload();
       await expect(page.getByLabel("Partner-Domains")).toHaveValue(new RegExp(partner));
       expect((await server.read()).enabled).toBe(false);

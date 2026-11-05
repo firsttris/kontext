@@ -41,7 +41,7 @@ const EventRow = ({ item, invitation }: { item: FeedEvent; invitation?: boolean 
             invitation ? "bg-accent/10 text-accent-ink" : "bg-subtle text-muted",
           )}
         >
-          {invitation ? <CalendarCheck size={15} /> : <CalendarDays size={15} />}
+          {invitation ? <CalendarCheck size={16} /> : <CalendarDays size={16} />}
         </span>
         <span className="flex min-w-0 flex-col">
           <span className="truncate font-medium">{item.title || m.notifications_untitled()}</span>
@@ -76,7 +76,7 @@ const TaskEntry = ({
           fresh ? "bg-accent/10 text-accent-ink" : "bg-subtle text-muted",
         )}
       >
-        <ListChecks size={15} />
+        <ListChecks size={16} />
       </span>
       <span className="flex min-w-0 flex-1 flex-col">
         <span className="truncate font-medium">{task.title}</span>
@@ -139,7 +139,7 @@ export const NotificationBell = ({ className }: { className: string }) => {
       }}
     >
       <Popover.Trigger aria-label={label} title={label} className={cn(className, "relative")}>
-        <Bell size={18} strokeWidth={1.75} />
+        <Bell size={20} />
         {unseen > 0 ? (
           <span
             aria-hidden="true"
@@ -156,7 +156,7 @@ export const NotificationBell = ({ className }: { className: string }) => {
           className="z-50 flex max-h-[min(640px,80dvh)] w-[360px] flex-col overflow-hidden rounded-xl border border-border bg-bg shadow-lg"
         >
           <header className="flex items-baseline justify-between border-b border-border px-4 py-3">
-            <h2 className="m-0 text-[15px] font-semibold">{m.notifications_title()}</h2>
+            <h2 className="m-0 text-[16px] font-semibold">{m.notifications_title()}</h2>
             {mails.length ? (
               <span className="text-[12px] text-muted">
                 {m.mail_unread_count({ count: mails.length })}
@@ -166,7 +166,7 @@ export const NotificationBell = ({ className }: { className: string }) => {
           <div className="flex flex-col gap-3 overflow-y-auto p-2">
             {empty ? (
               <p className="m-0 flex flex-col items-center gap-2 px-6 py-8 text-center text-[13px] text-muted">
-                <CheckCheck size={22} className="text-ok" />
+                <CheckCheck size={24} className="text-ok" />
                 {m.notifications_empty()}
               </p>
             ) : null}
@@ -242,7 +242,7 @@ export const NotificationBell = ({ className }: { className: string }) => {
                         </span>
                         <span className="flex items-center gap-1.5">
                           {mailbox ? (
-                            <span className="shrink-0 rounded bg-subtle px-1 text-[10px] font-medium text-muted">
+                            <span className="shrink-0 rounded bg-subtle px-1 text-[11px] font-medium text-muted">
                               {mailbox}
                             </span>
                           ) : null}

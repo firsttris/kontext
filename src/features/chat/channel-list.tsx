@@ -4,7 +4,15 @@
  * the last message of each.
  */
 import { Link } from "@tanstack/react-router";
-import { AtSign, BellOff, Hash, LockKeyhole, Phone, Plus, Sparkles } from "lucide-react";
+import {
+  AtSign,
+  BellOff,
+  Hash,
+  LockKeyhole,
+  MessageCircleQuestion,
+  Phone,
+  Plus,
+} from "lucide-react";
 import { useState } from "react";
 import { SearchField } from "@/components/search-field";
 import { Button } from "@/components/ui/button";
@@ -27,7 +35,7 @@ type Props = {
 
 const Badge = ({ channel }: { channel: ChannelSummary }) =>
   channel.muted ? (
-    <BellOff size={13} role="img" aria-label={m.chat_muted()} className="shrink-0 text-muted" />
+    <BellOff size={14} role="img" aria-label={m.chat_muted()} className="shrink-0 text-muted" />
   ) : channel.unread > 0 ? (
     <span
       title={channel.mentions > 0 ? m.chat_mentioned() : undefined}
@@ -42,9 +50,9 @@ const Badge = ({ channel }: { channel: ChannelSummary }) =>
 
 const ChannelIcon = ({ channel, size }: { channel: ChannelSummary; size: number }) =>
   channel.kind === "mailbox" ? (
-    <AtSign size={size} strokeWidth={1.75} aria-hidden="true" />
+    <AtSign size={size} aria-hidden="true" />
   ) : (
-    <Hash size={size} strokeWidth={1.75} aria-hidden="true" />
+    <Hash size={size} aria-hidden="true" />
   );
 
 /** A confidential channel: a small lock after its name. */
@@ -79,9 +87,9 @@ const PersonIcon = ({
         role="img"
         aria-label={m.chat_on_phone()}
         title={m.chat_on_phone()}
-        className="absolute -right-1 -bottom-1 flex size-3.5 items-center justify-center rounded-full border-2 border-bg bg-danger text-white"
+        className="absolute -right-1 -bottom-1 flex size-4 items-center justify-center rounded-full border-2 border-bg bg-danger text-white"
       >
-        <Phone size={7} strokeWidth={3} aria-hidden="true" />
+        <Phone size={10} aria-hidden="true" />
       </span>
     ) : online ? (
       <span
@@ -143,7 +151,7 @@ const AssistantItem = ({ active }: { active: boolean }) =>
       aria-current={active ? "page" : undefined}
       className={sideItem(active, false)}
     >
-      <Sparkles size={14} aria-hidden="true" className="text-accent" />
+      <MessageCircleQuestion size={14} aria-hidden="true" />
       <span className="flex-1 truncate">{m.assistant_title()}</span>
     </Link>
   ) : null;
@@ -156,8 +164,8 @@ const AssistantRow = () =>
       state={FROM_PARENT}
       className="flex items-center gap-3 rounded-xl p-2.5 text-fg no-underline active:bg-hover"
     >
-      <span className="flex size-[42px] shrink-0 items-center justify-center rounded-xl bg-subtle text-accent">
-        <Sparkles size={18} aria-hidden="true" />
+      <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-subtle text-muted">
+        <MessageCircleQuestion size={20} aria-hidden="true" />
       </span>
       <span className="flex min-w-0 flex-1 flex-col gap-0.5">
         <span className="truncate font-medium">{m.assistant_title()}</span>
@@ -173,8 +181,8 @@ export const ChannelSidebar = ({ channels, online, activeId, onNew }: Props) => 
   return (
     <div className="flex h-full flex-col gap-5 overflow-y-auto px-3 py-4">
       <div className="flex flex-col gap-2.5">
-        <Button variant="primary" className="h-[38px]" onClick={onNew}>
-          <Plus size={15} /> {m.chat_new()}
+        <Button variant="primary" className="h-9" onClick={onNew}>
+          <Plus size={16} /> {m.chat_new()}
         </Button>
         <SearchField label={m.chat_search()} value={words} onChange={setWords} className="h-9" />
       </div>
@@ -257,8 +265,8 @@ const PhoneRow = ({ row }: { row: ReturnType<typeof useRows>["named"][number] })
           size={42}
         />
       ) : (
-        <span className="flex size-[42px] shrink-0 items-center justify-center rounded-xl bg-subtle text-muted">
-          <ChannelIcon channel={channel} size={18} />
+        <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-subtle text-muted">
+          <ChannelIcon channel={channel} size={20} />
         </span>
       )}
       <span className="flex min-w-0 flex-1 flex-col gap-0.5">
@@ -290,9 +298,9 @@ export const ChannelScreen = ({ channels, online, onNew }: Props) => {
     <div className="flex min-h-0 flex-1 flex-col">
       <header className="flex flex-col gap-3.5 px-[18px] pt-5 pb-2.5">
         <div className="flex items-center justify-between">
-          <h1 className="m-0 text-[30px] font-semibold tracking-tight">{m.chat_title()}</h1>
+          <h1 className="m-0 text-[30px] font-semibold">{m.chat_title()}</h1>
           <Button variant="primary" size="icon" aria-label={m.chat_new()} onClick={onNew}>
-            <Plus size={18} />
+            <Plus size={20} />
           </Button>
         </div>
         <SearchField
@@ -309,7 +317,7 @@ export const ChannelScreen = ({ channels, online, onNew }: Props) => {
       ) : (
         <div className="flex min-h-0 flex-1 flex-col overflow-y-auto px-2 pb-2">
           <AssistantRow />
-          <span className="px-2.5 pt-2.5 pb-1 text-[12px] font-semibold text-muted">
+          <span className="px-2.5 pt-2.5 pb-1 text-[12px] font-medium text-muted">
             {m.chat_channels()}
           </span>
           <nav aria-label={m.chat_channels()} className="flex flex-col">
@@ -317,7 +325,7 @@ export const ChannelScreen = ({ channels, online, onNew }: Props) => {
               <PhoneRow key={row.channel.id} row={row} />
             ))}
           </nav>
-          <span className="px-2.5 pt-3 pb-1 text-[12px] font-semibold text-muted">
+          <span className="px-2.5 pt-3 pb-1 text-[12px] font-medium text-muted">
             {m.chat_direct()}
           </span>
           <nav aria-label={m.chat_direct()} className="flex flex-col">

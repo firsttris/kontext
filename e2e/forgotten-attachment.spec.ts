@@ -22,7 +22,7 @@ test.describe("Anhang vergessen?", () => {
     const ask = page.getByRole("dialog", { name: "Anhang vergessen?" });
     await expect(ask).toContainText("Im Text steht „anbei“, aber es ist nichts angehängt.");
     await ask.getByRole("button", { name: "Ohne Anhang senden" }).click();
-    await expect(page.getByRole("status")).toHaveText("Mail gesendet.");
+    await expect(page.getByRole("status")).toHaveText("Mail gesendet");
     await expect.poll(() => inboxSubjects("max")).toContain(subject);
   });
 
@@ -41,7 +41,7 @@ test.describe("Anhang vergessen?", () => {
     await expect(ask).toHaveCount(0);
     await expect(page.getByText("Lieferschein-4711.txt")).toBeVisible();
     await page.getByRole("button", { name: "Senden", exact: true }).click();
-    await expect(page.getByRole("status")).toHaveText("Mail gesendet.");
+    await expect(page.getByRole("status")).toHaveText("Mail gesendet");
     await expect.poll(() => inboxSubjects("max")).toContain(subject);
   });
 
@@ -50,6 +50,6 @@ test.describe("Anhang vergessen?", () => {
     await login(page);
     await write(page, subject, "Passt mir am Freitag.");
     await expect(page.getByRole("dialog", { name: "Anhang vergessen?" })).toHaveCount(0);
-    await expect(page.getByRole("status")).toHaveText("Mail gesendet.");
+    await expect(page.getByRole("status")).toHaveText("Mail gesendet");
   });
 });

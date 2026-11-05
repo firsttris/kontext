@@ -62,9 +62,9 @@ export const VoiceRecorderBar = ({
         disabled={sending}
         onClick={onDiscard}
       >
-        <Trash2 size={18} />
+        <Trash2 size={20} />
       </Button>
-      <span className="flex min-w-0 flex-1 items-center gap-2.5 px-1 text-[15px]">
+      <span className="flex min-w-0 flex-1 items-center gap-2.5 px-1 text-[16px]">
         <span
           aria-hidden="true"
           className={cn(
@@ -85,10 +85,10 @@ export const VoiceRecorderBar = ({
         className="size-11 rounded-full p-0 md:h-8 md:w-auto md:rounded-lg md:px-3.5"
       >
         {sending ? (
-          <LoaderCircle size={17} className="animate-spin" />
+          <LoaderCircle size={16} className="animate-spin" />
         ) : (
           <>
-            <SendHorizontal size={17} className="md:hidden" />
+            <SendHorizontal size={16} className="md:hidden" />
             <span className="hidden md:inline">{m.chat_send()}</span>
           </>
         )}

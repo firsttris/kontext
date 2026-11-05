@@ -95,18 +95,16 @@ function AgentConsentPage() {
         <div className="flex items-center gap-3">
           <span
             aria-hidden="true"
-            className="flex size-9 items-center justify-center rounded-[10px] bg-primary text-[15px] font-semibold text-onprimary"
+            className="flex size-9 items-center justify-center rounded-[10px] bg-primary text-[16px] font-semibold text-onprimary"
           >
             K
           </span>
-          <span className="text-[17px] font-semibold">{m.app_name()}</span>
+          <span className="text-[18px] font-semibold">{m.app_name()}</span>
         </div>
         {oauthQuery && clientId ? (
           <>
             <div className="flex flex-col gap-1">
-              <h1 className="m-0 text-[22px] font-semibold tracking-tight">
-                {m.agent_consent_title({ name })}
-              </h1>
+              <h1 className="m-0 text-[22px] font-semibold">{m.agent_consent_title({ name })}</h1>
               {client?.client_uri ? (
                 <span className="text-[13px] break-all text-muted">{client.client_uri}</span>
               ) : null}

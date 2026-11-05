@@ -164,24 +164,30 @@ const AttachmentCard = ({ accountId, part }: { accountId: string; part: BodyPart
             )}
           >
             <span className={cn("flex size-11 items-center justify-center rounded-xl", tone)}>
-              <Icon size={22} strokeWidth={1.75} aria-hidden="true" />
+              <Icon size={24} aria-hidden="true" />
             </span>
-            <span className="font-mono text-[11px] tracking-wide text-muted uppercase">
-              {extension.slice(0, 5)}
+            <span className="font-mono text-[11px] text-muted">
+              {extension.slice(0, 5).toUpperCase()}
             </span>
           </span>
         )}
       </button>
       <div className="flex items-center gap-2 py-2 pr-1.5 pl-2.5">
-        <span className={cn("flex size-6 shrink-0 items-center justify-center rounded-md", tone)}>
-          <Icon size={13} strokeWidth={2} aria-hidden="true" />
+        {/* Two cards side by side on a phone leave no room for it; the thumbnail shows the type. */}
+        <span
+          className={cn(
+            "hidden size-6 shrink-0 items-center justify-center rounded-md sm:flex",
+            tone,
+          )}
+        >
+          <Icon size={14} aria-hidden="true" />
         </span>
         <span className="flex min-w-0 flex-1 flex-col leading-tight">
           <span className="truncate text-[13px] font-medium" title={name}>
             {name}
           </span>
-          <span className="text-[11px] text-muted uppercase">
-            {extension.slice(0, 5)} · <span className="normal-case">{formatSize(part.size)}</span>
+          <span className="truncate text-[11px] text-muted">
+            {extension.slice(0, 5).toUpperCase()} · {formatSize(part.size)}
           </span>
         </span>
         {part.blobId ? (
@@ -197,7 +203,7 @@ const AttachmentCard = ({ accountId, part }: { accountId: string; part: BodyPart
           aria-label={m.mail_download({ name })}
           title={m.mail_download({ name })}
         >
-          <Download size={15} strokeWidth={1.75} />
+          <Download size={16} />
         </Button>
       </div>
     </li>
@@ -239,7 +245,7 @@ const DownloadAll = ({
   };
   return (
     <Button variant="ghost" size="sm" className="self-start" disabled={busy} onClick={run}>
-      <Download size={15} strokeWidth={1.75} /> {m.mail_download_all()}
+      <Download size={16} /> {m.mail_download_all()}
     </Button>
   );
 };

@@ -10,7 +10,7 @@ const snoozeUntilTomorrow = async (page: Page) => {
   await page.getByRole("button", { name: "Wiedervorlage" }).click();
   await page.getByRole("menuitem", { name: /^Morgen 08:00/ }).click();
   await expect(
-    page.getByRole("status").filter({ hasText: /^Kommt .* 08:00 wieder\./ }),
+    page.getByRole("status").filter({ hasText: /^Kommt .* 08:00 wieder/ }),
   ).toBeVisible();
 };
 
@@ -34,7 +34,7 @@ test.describe("Wiedervorlage", () => {
     await expect(page.getByText(/^Liegt auf Wiedervorlage – kommt .* wieder/)).toBeVisible();
     await page.getByRole("button", { name: "Jetzt zurückholen" }).click();
     await expect(
-      page.getByRole("status").filter({ hasText: "Wieder im Posteingang." }),
+      page.getByRole("status").filter({ hasText: "Wieder im Posteingang" }),
     ).toBeVisible();
     await expect.poll(() => inboxSubjects("jonas")).toContain(subject);
   });
@@ -48,7 +48,7 @@ test.describe("Wiedervorlage", () => {
     await openInInbox(page, subject);
     await page.keyboard.press("w");
     await page.getByRole("menuitem", { name: /^In einer Woche 08:00/ }).click();
-    const toast = page.getByRole("status").filter({ hasText: /^Kommt .* wieder\./ });
+    const toast = page.getByRole("status").filter({ hasText: /^Kommt .* wieder/ });
     await toast.getByRole("button", { name: "Rückgängig" }).click();
     await expect(page.getByRole("list", { name: "Posteingang" }).getByText(subject)).toBeVisible();
   });
@@ -125,7 +125,7 @@ test.describe("Wiedervorlage für mehrere Mails", () => {
       await page.getByRole("button", { name: "Wiedervorlage" }).click();
       await page.getByRole("menuitem", { name: /^Morgen 08:00/ }).click();
       await expect(
-        page.getByRole("status").filter({ hasText: /^2 Mails kommen .* 08:00 wieder\./ }),
+        page.getByRole("status").filter({ hasText: /^2 Mails kommen .* 08:00 wieder/ }),
       ).toBeVisible();
       const list = page.getByRole("list", { name: "Alle Posteingänge" });
       await expect(list.getByText(own)).toHaveCount(0);

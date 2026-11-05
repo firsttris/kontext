@@ -141,7 +141,7 @@ export const MessageInput = ({
       onClick={() => void voice.start()}
       className="size-11 rounded-full p-0 md:hidden"
     >
-      <Mic size={18} />
+      <Mic size={20} />
     </Button>
   );
 
@@ -262,24 +262,24 @@ export const MessageInput = ({
                 aria-label={m.chat_add()}
                 className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-subtle text-fg md:hidden"
               >
-                <Plus size={19} />
+                <Plus size={20} />
               </MenuTrigger>
               <MenuContent side="top" align="start">
                 <MenuItem onSelect={() => camera.current?.click()}>
-                  <Camera size={15} /> {m.chat_take_photo()}
+                  <Camera size={16} /> {m.chat_take_photo()}
                 </MenuItem>
                 <MenuItem onSelect={() => filePicker.current?.click()}>
-                  <Paperclip size={15} /> {m.chat_attach()}
+                  <Paperclip size={16} /> {m.chat_attach()}
                 </MenuItem>
                 {cards ? (
                   <MenuItem onSelect={() => setLinking(true)}>
-                    <Link2 size={15} /> {linkTitle}
+                    <Link2 size={16} /> {linkTitle}
                   </MenuItem>
                 ) : null}
               </MenuContent>
             </MenuRoot>
           ) : null}
-          <label className="flex min-w-0 flex-1 rounded-[22px] border border-border md:rounded-none md:border-0">
+          <label className="flex min-w-0 flex-1 rounded-3xl border border-border md:rounded-none md:border-0">
             <span className="sr-only">{m.chat_message()}</span>
             <textarea
               ref={field}
@@ -297,7 +297,7 @@ export const MessageInput = ({
                 attachments.addFiles(event.clipboardData.files);
               }}
               autoFocus={autoFocus}
-              className="field-sizing-content max-h-40 min-h-11 flex-1 resize-none bg-transparent px-3.5 py-[11px] text-[15px] leading-[1.45] text-fg outline-none placeholder:text-muted md:min-h-[52px] md:py-3"
+              className="field-sizing-content max-h-40 min-h-11 flex-1 resize-none bg-transparent px-3.5 py-2.5 text-[16px] leading-[1.45] text-fg outline-none placeholder:text-muted md:min-h-[52px] md:py-3"
             />
           </label>
           <div className="flex items-center gap-0.5 md:px-2 md:pb-1.5">
@@ -357,7 +357,7 @@ export const MessageInput = ({
                 micInsteadOfSend && "hidden md:inline-flex",
               )}
             >
-              <SendHorizontal size={17} className="md:hidden" />
+              <SendHorizontal size={16} className="md:hidden" />
               <span className="hidden md:inline">{m.chat_send()}</span>
             </Button>
           </div>

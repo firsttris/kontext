@@ -63,7 +63,7 @@ const RecoveryStep = ({ locked, onDone }: { locked: LockedKey; onDone: () => voi
         {locked.recoveryCode}
       </output>
       <Button variant="outline" className="self-start" onClick={print}>
-        <Printer size={15} /> {m.pgp_recovery_print()}
+        <Printer size={16} /> {m.pgp_recovery_print()}
       </Button>
       <label className="flex items-center gap-2.5 text-[14px]">
         <input
@@ -320,10 +320,10 @@ export const OwnKeyCard = () => {
                 downloadText(own.publicKey, `${own.email}.asc`, "application/pgp-keys")
               }
             >
-              <Download size={15} /> {m.pgp_download_public()}
+              <Download size={16} /> {m.pgp_download_public()}
             </Button>
             <Button variant="outline" onClick={() => setDialog("change")}>
-              <KeyRound size={15} /> {m.pgp_change_passphrase()}
+              <KeyRound size={16} /> {m.pgp_change_passphrase()}
             </Button>
             <Button variant="ghost" onClick={() => setDialog("forgotten")}>
               {m.pgp_forgotten()}
@@ -340,7 +340,7 @@ export const OwnKeyCard = () => {
       ) : (
         <div className="flex flex-wrap gap-2">
           <Button variant="primary" onClick={() => setDialog("create")}>
-            <KeyRound size={15} /> {m.pgp_create()}
+            <KeyRound size={16} /> {m.pgp_create()}
           </Button>
           <Button variant="outline" onClick={() => setDialog("import")}>
             {m.pgp_import()}

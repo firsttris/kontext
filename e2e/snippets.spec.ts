@@ -17,7 +17,7 @@ test.describe("Textbausteine", () => {
     await info.getByLabel("Text").fill("Guten Tag {Name},\n\nwir kommen am Dienstag um 8 Uhr.");
     await info.getByRole("button", { name: "Speichern" }).click();
     await expect(
-      page.getByRole("status").filter({ hasText: "Textbaustein gespeichert." }),
+      page.getByRole("status").filter({ hasText: "Textbaustein gespeichert" }),
     ).toBeVisible();
     await expect(info.getByRole("list")).toContainText(title);
 

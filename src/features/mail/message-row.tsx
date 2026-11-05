@@ -261,20 +261,20 @@ export const MessageRow = ({
                   title={account.title}
                   className="flex min-w-0 items-center gap-1 rounded-md bg-subtle px-1.5 text-[11px] font-medium text-muted"
                 >
-                  <Users size={11} strokeWidth={2} className="shrink-0" aria-hidden="true" />
+                  <Users size={12} className="shrink-0" aria-hidden="true" />
                   <span className="truncate">{account.label}</span>
                 </span>
               ) : null}
               <ExternalMark address={email.from?.[0]?.email} />
               {sendAt ? (
                 <span className="inline-flex h-[18px] shrink-0 items-center gap-1 rounded-full bg-warn/10 px-1.5 text-[11px] font-medium text-warn">
-                  <CalendarClock size={11} strokeWidth={2.25} aria-hidden="true" />
+                  <CalendarClock size={12} aria-hidden="true" />
                   {m.mail_scheduled_at({ when: sendTimeLabel(new Date(sendAt)) })}
                 </span>
               ) : null}
               {snoozedUntil ? (
                 <span className="inline-flex h-[18px] shrink-0 items-center gap-1 rounded-full bg-accent/10 px-1.5 text-[11px] font-medium text-accent-ink">
-                  <AlarmClock size={11} strokeWidth={2.25} aria-hidden="true" />
+                  <AlarmClock size={12} aria-hidden="true" />
                   {Date.parse(snoozedUntil) <= Date.now()
                     ? m.mail_snoozed_soon()
                     : m.mail_snoozed_until({ when: sendTimeLabel(new Date(snoozedUntil)) })}
@@ -292,7 +292,7 @@ export const MessageRow = ({
                   }
                   className="inline-flex shrink-0 items-center gap-1 text-[11px] font-medium text-muted"
                 >
-                  <CornerUpLeft size={12} strokeWidth={2} aria-label={m.mail_answered()} />
+                  <CornerUpLeft size={12} aria-label={m.mail_answered()} />
                   {shared && answer
                     ? `${answer.name.split(" ")[0]} · ${listDate(answer.at, new Date())}`
                     : null}
@@ -300,13 +300,13 @@ export const MessageRow = ({
               ) : null}
               {task ? (
                 <span className="inline-flex h-[18px] shrink-0 items-center gap-1 rounded-full bg-accent/10 px-1.5 text-[11px] font-medium text-accent-ink">
-                  <ListChecks size={11} strokeWidth={2.25} aria-hidden="true" />
+                  <ListChecks size={12} aria-hidden="true" />
                   {m.tasks_from_mail()}
                 </span>
               ) : null}
               {inAttachment ? (
                 <span className="inline-flex h-[18px] shrink-0 items-center gap-1 rounded-full bg-accent/10 px-1.5 text-[11px] font-medium text-accent-ink">
-                  <Paperclip size={11} strokeWidth={2.25} aria-hidden="true" />
+                  <Paperclip size={12} aria-hidden="true" />
                   {m.search_in_attachment()}
                 </span>
               ) : null}

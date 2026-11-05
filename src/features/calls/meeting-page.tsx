@@ -122,7 +122,7 @@ export const MeetingPage = ({ id }: { id: string }) => {
       <header className="flex shrink-0 items-center gap-2.5">
         <div
           aria-hidden="true"
-          className="flex size-8 items-center justify-center rounded-[9px] bg-primary text-[13px] font-semibold text-onprimary"
+          className="flex size-8 items-center justify-center rounded-lg bg-primary text-[13px] font-semibold text-onprimary"
         >
           K
         </div>

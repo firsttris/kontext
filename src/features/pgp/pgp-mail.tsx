@@ -58,7 +58,7 @@ export const SignatureNote = ({ signature, sender }: { signature: Signature; sen
         : [ShieldQuestion, "text-muted", m.pgp_signed_unknown({ sender })];
   return (
     <span className={cn("flex items-center gap-1.5 text-[13px]", tone)}>
-      <Icon size={15} aria-hidden="true" /> {text}
+      <Icon size={16} aria-hidden="true" /> {text}
     </span>
   );
 };
@@ -205,7 +205,7 @@ export const EncryptedMail = ({ accountId, email }: { accountId: string; email: 
     <div className="flex flex-col gap-3">
       <div className="flex flex-wrap items-center gap-x-4 gap-y-1 rounded-lg border border-border px-3 py-2">
         <span className="flex items-center gap-1.5 text-[13px] font-medium text-accent">
-          <LockKeyhole size={15} aria-hidden="true" /> {m.pgp_encrypted()}
+          <LockKeyhole size={16} aria-hidden="true" /> {m.pgp_encrypted()}
         </span>
         {read ? (
           <SignatureNote signature={read.signature} sender={email.from?.[0]?.email ?? ""} />

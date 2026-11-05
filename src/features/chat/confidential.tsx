@@ -207,7 +207,7 @@ export const SealedLine = ({ state }: { state: NonNullable<Shown["sealed"]> }) =
 
 export const ForgedNote = () => (
   <span className="flex items-center gap-1.5 text-[12px] text-danger">
-    <ShieldAlert size={13} aria-hidden="true" /> {m.chat_confidential_forged()}
+    <ShieldAlert size={14} aria-hidden="true" /> {m.chat_confidential_forged()}
   </span>
 );
 
@@ -271,7 +271,7 @@ export const ChangedKeys = ({
           role="alert"
           className="flex flex-wrap items-center gap-x-3 gap-y-1.5 rounded-xl border border-warn/40 bg-warn/5 px-3 py-2 text-[13px]"
         >
-          <KeyRound size={15} className="shrink-0 text-warn" aria-hidden="true" />
+          <KeyRound size={16} className="shrink-0 text-warn" aria-hidden="true" />
           <span className="min-w-0 flex-1">
             {m.chat_key_changed({ name: nameOf(key.memberId) })}{" "}
             <span className="font-mono text-[12px] break-all text-muted">

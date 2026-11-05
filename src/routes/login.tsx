@@ -74,14 +74,14 @@ function LoginPage() {
         <div className="flex items-center gap-3">
           <span
             aria-hidden="true"
-            className="flex size-9 items-center justify-center rounded-[10px] bg-primary text-[15px] font-semibold text-onprimary"
+            className="flex size-9 items-center justify-center rounded-[10px] bg-primary text-[16px] font-semibold text-onprimary"
           >
             K
           </span>
-          <span className="text-[17px] font-semibold">{m.app_name()}</span>
+          <span className="text-[18px] font-semibold">{m.app_name()}</span>
         </div>
         <div className="flex flex-col gap-1">
-          <h1 className="m-0 text-[22px] font-semibold tracking-tight">
+          <h1 className="m-0 text-[22px] font-semibold">
             {DemoSignIn ? m.demo_title() : m.login_title()}
           </h1>
           {DemoSignIn ? null : <p className="m-0 text-[14px] text-muted">{m.login_intro()}</p>}

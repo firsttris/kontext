@@ -106,7 +106,7 @@ const createWithAttendees = async (
   await dialog.getByLabel("Ort").fill("Hauptstraße 41, Ettlingen");
   await addAttendees(dialog, attendees);
   await dialog.getByRole("button", { name: "Speichern" }).click();
-  await expect(page.getByRole("status")).toHaveText("Einladungen werden verschickt.");
+  await expect(page.getByRole("status")).toHaveText("Einladungen werden verschickt");
 };
 
 test.describe("Einladungen", () => {

@@ -86,7 +86,7 @@ export const ExternalSection = () => {
         <p className="m-0 text-[13px] text-muted">{m.external_empty()}</p>
       )}
       <Button variant="outline" className="self-start" onClick={() => setAdding(true)}>
-        <Plus size={15} />
+        <Plus size={16} />
         {m.external_add()}
       </Button>
       <p className="m-0 border-t border-border pt-3 text-[12px] text-muted">

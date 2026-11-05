@@ -71,7 +71,7 @@ test.describe("Spam und Papierkorb leeren", () => {
     const ask = page.getByRole("dialog", { name: "Spam leeren?" });
     await expect(ask).toContainText("Mails werden endgültig gelöscht.");
     await ask.getByRole("button", { name: "Endgültig löschen" }).click();
-    await expect(page.getByRole("status")).toHaveText("Spam geleert.");
+    await expect(page.getByRole("status")).toHaveText("Spam geleert");
     await expect.poll(() => whereIs([only, both])).toEqual([[], ["inbox"]]);
     await expect(page.getByRole("button", { name: "Spam leeren" })).toHaveCount(0);
   });
@@ -92,7 +92,7 @@ test.describe("Spam und Papierkorb leeren", () => {
       .getByRole("dialog", { name: "Papierkorb leeren?" })
       .getByRole("button", { name: "Endgültig löschen" })
       .click();
-    await expect(page.getByRole("status")).toHaveText("Papierkorb geleert.");
+    await expect(page.getByRole("status")).toHaveText("Papierkorb geleert");
     await expect.poll(() => whereIs([subject])).toEqual([[]]);
   });
 });

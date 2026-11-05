@@ -123,7 +123,7 @@ export const ReceiptRequest = ({ accountId, email }: { accountId: string; email:
   const button = "text-[12px] font-medium underline-offset-2 hover:underline disabled:opacity-50";
   return (
     <div role="note" className={line}>
-      <MailCheck size={15} className="text-accent" aria-hidden="true" />
+      <MailCheck size={16} className="text-accent" aria-hidden="true" />
       <span className="flex-1">{m.mail_receipt_asked({ name: displayName(asker) })}</span>
       <button type="button" className={button} disabled={busy} onClick={() => void answer(true)}>
         {m.mail_receipt_send()}
@@ -168,7 +168,7 @@ export const ReceiptsReceived = ({
   if (!asked) return null;
   return (
     <div role="note" className={line}>
-      <MailCheck size={15} className={data.length ? "text-ok" : "text-muted"} aria-hidden="true" />
+      <MailCheck size={16} className={data.length ? "text-ok" : "text-muted"} aria-hidden="true" />
       <span className="text-muted">
         {data.length
           ? data

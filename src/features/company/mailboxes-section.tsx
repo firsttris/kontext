@@ -42,7 +42,7 @@ const Mailboxes = ({ company }: { company: Company }) => {
       <div className="flex flex-col items-start gap-3 md:flex-row md:items-center">
         <p className="m-0 flex-1 text-[13px] text-muted">{m.company_mailboxes_hint()}</p>
         <Button variant="primary" onClick={() => setOpen("new")}>
-          <Plus size={15} /> {m.company_mailbox_new()}
+          <Plus size={16} /> {m.company_mailbox_new()}
         </Button>
       </div>
       {company.mailboxes.length ? (
@@ -54,7 +54,7 @@ const Mailboxes = ({ company }: { company: Company }) => {
                 onClick={() => setOpen(item.id)}
                 className="flex min-w-0 flex-1 items-center gap-3 px-3 py-2.5 text-left md:px-4"
               >
-                <span className="flex size-[34px] shrink-0 items-center justify-center rounded-full border border-border bg-subtle text-muted">
+                <span className="flex size-9 shrink-0 items-center justify-center rounded-full border border-border bg-subtle text-muted">
                   <Inbox size={16} />
                 </span>
                 <span className="flex min-w-0 flex-1 flex-col">
@@ -76,7 +76,7 @@ const Mailboxes = ({ company }: { company: Company }) => {
                 aria-label={m.rules_mailbox_title({ address: item.email })}
                 onClick={() => setRulesOf(item)}
               >
-                <ListFilter size={15} /> <span className="hidden sm:inline">{m.rules_open()}</span>
+                <ListFilter size={16} /> <span className="hidden sm:inline">{m.rules_open()}</span>
               </Button>
             </li>
           ))}

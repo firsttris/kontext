@@ -30,13 +30,13 @@ export const SendLater = ({
             disabled={disabled}
             className="w-8 rounded-l-none border-l border-onprimary/20"
           >
-            <ChevronDown size={15} />
+            <ChevronDown size={16} />
           </Button>
         </MenuTrigger>
         <MenuContent align="start" side="top">
           {sendChoices(new Date()).map((choice) => (
             <MenuItem key={choice.label} onSelect={() => onPick(choice.at)}>
-              <CalendarClock size={15} /> {choice.label}
+              <CalendarClock size={16} /> {choice.label}
               <span className="ml-auto pl-4 text-[12px] text-muted">
                 {sendTimeLabel(choice.at)}
               </span>

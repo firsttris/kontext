@@ -1545,6 +1545,27 @@ gleich breit (`w-sidebar`, 236 px, in `src/styles.css`), damit beim Wechsel zwis
 nichts springt. Kontakte hat keine Seitenleiste: die Spalte dort ist die Kontaktliste und so
 breit wie die Mailliste (320 px).
 
+Der Look hält sich an wenige Stufen, damit keine Ansicht mit eigenen Werten aus der Reihe fällt
+(geprüft von `src/design-rules.test.ts`, die Richtschnur ist der Skill
+[unslop](https://github.com/heydamir/unslop)):
+
+- **Schriftgrößen** 11, 12, 13, 14, 16, 18, 22 und 30 px; 16 ist am Handy der Fließtext, 18 der
+  Titel einer Spalte am PC, 22 der einer Mail, Aufgabe oder eines Kontakts, 30 der Seitentitel am
+  Handy. Gewichte 400 und 500; 600 nur für Titel, das Logo und Ungelesenes.
+- **Beschriftungen** in normaler Schreibweise, ohne Versalien und ohne gesperrte oder enge
+  Laufweite, nichts kursiv. Großbuchstaben nur für Codes in Monospace und Dateiendungen.
+- **Icons** (lucide) 12, 14, 16, 20 px, 24 und 32 für leere Zustände und große Kacheln, 10 nur in
+  einem Punkt oder Kästchen. Die Strichstärke steht einmal in `styles.css`: 1,25 px auf dem
+  Bildschirm, gleich bei jeder Größe (`vector-effect: non-scaling-stroke`), kein Icon setzt eine
+  eigene. Icons nehmen die Farbe ihres Texts an; KI bekommt kein Funkeln.
+- **Maße** auf dem 4-px-Raster, 2-px-Schritte nur unter 20 px. Radien verschachtelt: innen =
+  außen − Abstand, etwa ein Umschalter mit 10 px außen, 4 px Abstand und 6 px innen.
+- **Bewegung** nur auf Farbe, Deckkraft und `transform`, nie auf Breite, Höhe oder Lage; nichts
+  wächst beim Darüberfahren. Pulsieren nur bei Dingen, die gerade live sind (Anruf, Aufnahme,
+  Tippen, Laden).
+- **Kurze Meldungen** (Toasts, leere Listen) enden ohne Punkt; ganze Sätze und Hinweise, die mit
+  anderen zusammengesetzt werden, behalten ihn.
+
 Am Handy zeigt die Tab-Leiste vier Apps neben „Mehr“, anfangs Mail, Kalender, Chat und Aufgaben.
 Unter Einstellungen → Darstellung → „Tab-Leiste am Handy“ wählt man pro Platz eine App; wer eine
 App wählt, die schon einen Platz hat, tauscht die beiden. Zur Wahl stehen nur Apps, die man hat

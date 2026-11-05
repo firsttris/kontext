@@ -213,7 +213,7 @@ test.describe("Vertraulich senden: Dateien im Browser", () => {
     await page.getByRole("button", { name: "Als Entwurf speichern" }).click();
     // Nothing was saved, so it must not say so and close the mail: it would be lost.
     await page.waitForTimeout(1000);
-    await expect(page.getByRole("status").filter({ hasText: "Entwurf gespeichert." })).toHaveCount(
+    await expect(page.getByRole("status").filter({ hasText: "Entwurf gespeichert" })).toHaveCount(
       0,
     );
     await expect(page.getByLabel("Betreff")).toHaveValue(subject);

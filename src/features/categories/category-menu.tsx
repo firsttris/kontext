@@ -44,7 +44,7 @@ export const CategorySubmenu = ({
   return (
     <MenuSub>
       <MenuSubTrigger>
-        <Tag size={15} /> {m.categories_menu()}
+        <Tag size={16} /> {m.categories_menu()}
       </MenuSubTrigger>
       <MenuSubContent aria-label={m.categories_menu()}>
         {categories.map((category) => (

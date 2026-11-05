@@ -51,7 +51,7 @@ export const TabBarSection = () => {
         )}
         onClick={() => setTabChoice(null)}
       >
-        <RotateCcw size={15} /> {m.settings_tab_bar_reset()}
+        <RotateCcw size={16} /> {m.settings_tab_bar_reset()}
       </Button>
     </SettingsCard>
   );

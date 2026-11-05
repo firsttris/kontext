@@ -140,7 +140,7 @@ export const EditorToolbar = ({ editor, extra }: { editor: Editor; extra?: React
                   on && "bg-subtle text-fg",
                 )}
               >
-                <Icon size={15} strokeWidth={1.9} />
+                <Icon size={16} />
               </button>
             );
           })}

@@ -48,7 +48,7 @@ export const MenuCheckboxItem = ({
   >
     {children}
     <Menu.ItemIndicator className="ml-auto text-fg">
-      <Check size={15} />
+      <Check size={16} />
     </Menu.ItemIndicator>
   </Menu.CheckboxItem>
 );
@@ -64,7 +64,7 @@ export const MenuRadioItem = ({
   <Menu.RadioItem className={cn(itemClass, className)} {...props}>
     {children}
     <Menu.ItemIndicator className="ml-auto text-fg">
-      <Check size={15} />
+      <Check size={16} />
     </Menu.ItemIndicator>
   </Menu.RadioItem>
 );
@@ -79,7 +79,7 @@ export const MenuSubTrigger = ({
 }: ComponentProps<typeof Menu.SubTrigger>) => (
   <Menu.SubTrigger className={cn(itemClass, "data-[state=open]:bg-hover", className)} {...props}>
     {children}
-    <ChevronRight size={15} className="ml-auto text-muted" />
+    <ChevronRight size={16} className="ml-auto text-muted" />
   </Menu.SubTrigger>
 );
 
