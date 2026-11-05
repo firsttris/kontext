@@ -158,9 +158,10 @@ Kontext is also on the iPhone, on Android (DAVx⁵) and in Thunderbird.
   *Settings → Profile*. [More](architecture.md#fotos)
 - **Groups** like "Lieferanten" (suppliers) that a mail can go to.
 - **vCard import and export**, **CSV import** (a customer list from Excel or an export from
-  Outlook or Google; UTF-8 or Windows-1252, ";" or ",") under *Address books*: Kontext matches the
-  columns to the contact's fields by their header (first name, company, email, mobile, postcode …)
-  and shows the first rows next to them; each match can be changed or set to "don't import".
+  Outlook or Google; UTF-8, UTF-16 or Windows-1252, ";" or ",") under *Address books*: Kontext
+  matches the columns to the contact's fields by their header (first name, company, email, mobile,
+  postcode …) and shows the first rows next to them; each match can be changed or set to "don't
+  import". In Google's export the kind of a number (mobile, fax …) comes from its label.
   Duplicates are detected on import.
 - **Other contacts** as at Google: whoever has written to you or whom you have written to, but who
   isn't in any address book, appears here – with "Add to contacts" and "Write mail". For this,

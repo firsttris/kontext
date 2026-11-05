@@ -10,8 +10,8 @@ Steps that an update needs beyond raising the version are marked **Upgrade**.
 - Contacts: import from a CSV file (a customer list from Excel, an Outlook or Google export)
   next to the vCard import under *Adressbücher*. The columns are matched to the contact's fields
   by their header, German or English, with the first rows as a preview; each can be changed.
-  Excel's Windows-1252 and ";" are read as well as UTF-8 and ","; duplicates are left out (user
-  guide, "Kalender und Kontakte").
+  Excel's Windows-1252 and ";" are read as well as UTF-8, UTF-16 and ","; Google's labels give
+  the kind of a number; duplicates are left out (user guide, "Kalender und Kontakte").
 - Mail: own folders can be renamed, moved and deleted from "…" next to them in the sidebar
   (their mails go to the trash, subfolders go along); "Mark all as read" works for any folder,
   for all its mails, not only the loaded ones (user guide, "Mail", "Ordner verwalten").

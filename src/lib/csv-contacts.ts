@@ -112,7 +112,11 @@ const phoneKind = (row: string[], header: string[], field: CsvField, column: num
  * The form for one row: mails and numbers add up, a text field keeps its first value. The header
  * gives the kind of a number from Google's label column.
  */
-export const rowToForm = (row: string[], mapping: CsvField[], header: string[] = []): ContactForm => {
+export const rowToForm = (
+  row: string[],
+  mapping: CsvField[],
+  header: string[] = [],
+): ContactForm => {
   const form: ContactForm = { ...emptyContactForm, emails: [], phones: [] };
   mapping.forEach((field, i) => {
     const value = row[i]?.trim() ?? "";

@@ -11,10 +11,18 @@ describe("decodeText", () => {
     expect(decodeText(new Uint8Array([0x4d, 0xfc, 0x6c, 0x6c, 0x65, 0x72, 0x80]))).toBe("Müller€");
   });
 
-  it("reads UTF-16 with its BOM, as LibreOffice and Excel save "Unicode"", () => {
+  it("reads UTF-16 with its BOM, as LibreOffice and Excel save Unicode", () => {
     const text = "Vorname\tNachname\r\nJürgen\tGroß €";
-    const le = [0xff, 0xfe, ...[...text].flatMap((c) => [c.charCodeAt(0) & 0xff, c.charCodeAt(0) >> 8])];
-    const be = [0xfe, 0xff, ...[...text].flatMap((c) => [c.charCodeAt(0) >> 8, c.charCodeAt(0) & 0xff])];
+    const le = [
+      0xff,
+      0xfe,
+      ...[...text].flatMap((c) => [c.charCodeAt(0) & 0xff, c.charCodeAt(0) >> 8]),
+    ];
+    const be = [
+      0xfe,
+      0xff,
+      ...[...text].flatMap((c) => [c.charCodeAt(0) >> 8, c.charCodeAt(0) & 0xff]),
+    ];
     expect(decodeText(new Uint8Array(le))).toBe(text);
     expect(decodeText(new Uint8Array(be))).toBe(text);
   });

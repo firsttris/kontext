@@ -1,13 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { ContactCard } from "./jscontact";
-import {
-  foldLine,
-  freshCards,
-  isDuplicate,
-  normalizeMembers,
-  splitVCards,
-  toVCard,
-} from "./vcard";
+import { foldLine, freshCards, isDuplicate, normalizeMembers, splitVCards, toVCard } from "./vcard";
 
 const petra: ContactCard = {
   id: "b",
@@ -111,6 +104,8 @@ describe("vCard", () => {
 
 describe("freshCards", () => {
   const person = (i: number, uid?: string): ContactCard => ({
+    id: `c${i}`,
+    addressBookIds: { b: true },
     ...(uid && { uid }),
     name: {
       components: [
