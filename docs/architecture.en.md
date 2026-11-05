@@ -264,6 +264,14 @@ is common with small companies and only appears in the details.
 to the inbox and sets `$notjunk` (IANA keywords, RFC 8621 §2). Stalwart learns from both, from the
 move and from the keyword (`crates/jmap/src/email/set.rs`).
 
+Archiving, moving to the trash, spam/not spam and moving within one mailbox are an `Email/set`
+that takes one folder out of `mailboxIds` and adds another. "Undo" in the notice that follows (and
+`z`, Ctrl+Z outside text fields) does the same the other way round (`reverseMove` in
+`src/lib/undo-move.ts`): the mails go back to their folder, keywords that were set are removed and
+removed ones set – after spam that is `$notjunk`, as with "Not spam". A mail's other folders stay
+untouched. Deleting for good (in Trash and Spam) and moving into another mailbox (a copy with new
+ids) cannot be undone.
+
 "Report as phishing" creates a mail to the address from the company administration
 (`company_setting` `phishingReport`, `GET /api/company/phishing-report`) in Drafts, with the
 reported mail as a `message/rfc822` attachment by its blob, and sends it with

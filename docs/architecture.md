@@ -267,6 +267,14 @@ oft haben; „nicht eingerichtet“ ist bei kleinen Firmen häufig und steht nur
 holt sie in den Posteingang und setzt `$notjunk` (IANA-Stichwörter, RFC 8621 §2). Stalwart lernt
 aus beidem, aus dem Verschieben und aus dem Stichwort (`crates/jmap/src/email/set.rs`).
 
+Archivieren, in den Papierkorb legen, Spam/Kein Spam und Verschieben innerhalb eines Postfachs
+sind ein `Email/set`, das einen Ordner aus `mailboxIds` nimmt und einen dazugibt. „Rückgängig“ in
+der Meldung danach (und `z`, Strg+Z außerhalb von Textfeldern) macht dasselbe umgekehrt
+(`reverseMove` in `src/lib/undo-move.ts`): Die Mails gehen in ihren Ordner zurück, gesetzte
+Stichwörter werden entfernt und entfernte gesetzt – nach Spam also `$notjunk` wie bei „Kein Spam“.
+Andere Ordner einer Mail bleiben unberührt. Endgültiges Löschen (in Papierkorb und Spam) und das
+Verschieben in ein anderes Postfach (eine Kopie mit neuen ids) gehen nicht zurück.
+
 „Als Phishing melden“ legt eine Mail an die Adresse aus der Firmenverwaltung (`company_setting`
 `phishingReport`, `GET /api/company/phishing-report`) in den Entwürfen an, mit der gemeldeten Mail
 als `message/rfc822`-Anhang über ihren Blob, und sendet sie mit `onSuccessDestroyEmail` (RFC 8621
