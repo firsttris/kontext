@@ -1657,6 +1657,29 @@ Unterhaltung als eine Zeile ihr letzter Absender. `usePhotoOf()` läuft einmal f
 nicht je Zeile, weil es die Adressbücher lädt. Nichts davon fragt einen fremden Server: keine
 Firmenlogos, Favicons oder BIMI, die verraten würden, wann man welche Mail ansieht.
 
+## Kontaktformular
+
+Das Formular (`src/lib/contact-form.ts`) zeigt Vorname, Nachname, Firma mit Abteilung
+(`organizations` mit `units`, RFC 9553 §2.2.3), Position (`titles` der Art `title`, §2.2.5), alle
+Mail-Adressen (`emails`, §2.3.1), alle Nummern (`phones`, §2.3.3) mit ihrer Art, die erste
+Adresse mit Straße, PLZ, Ort und Land (`addresses`, Bestandteile `name`, `postcode`, `locality`,
+`country`, §2.5.1), die Website (der erste Link, der kein Dokument und kein Kontaktlink der Art `contact` ist, §2.6.3), den Geburtstag
+(`anniversaries` der Art `birth`, §2.8.1, den der [Geburtstagskalender](#geburtstage) liest) und
+die Notiz. Die Art einer Nummer steht in JSContact in zwei Feldern: Mobil und Fax als `features`
+(`mobile`, `fax`), Büro und Privat als `voice` mit dem Kontext `work` bzw. `private`.
+
+Eine Karte vom iPhone, aus einer vCard oder vom Zusammenführen hält mehr, als das Formular zeigt.
+Damit beim Speichern nichts verloren geht, schreibt `formToCard` nur die Eigenschaften, deren
+Felder sich geändert haben (JMAP ersetzt eine Eigenschaft immer ganz), und behält darin, was das
+Formular nicht kennt: Schlüssel der Einträge, eine zweite Adresse, Region, Rollen, weitere
+Abteilungen, Titel und zweite Vornamen im Namen, Dokumente unter den Links, andere Jahrestage. Nur
+was nach einer Änderung falsch wäre, fällt weg: `full` von Name und Adresse, `countryCode` bei
+einem anderen Land. Ältere Kontakte mit „77815 Bühl“ in einem Feld zeigt das Formular als PLZ und
+Ort getrennt. Ein Geburtstag ohne Jahr (vCard `BDAY:--0504`) passt in kein Datumsfeld; das Formular
+lässt ihn leer und unverändert, die Ansicht des Kontakts zeigt ihn. Dieselbe Abbildung nutzen
+„Als Kontakt speichern“ und die Werkzeuge `create_contact` und `update_contact` der
+[KI-Agenten](agents.md), deren `email` und `phone` für die erste Adresse und Nummer stehen.
+
 ## Kontaktgruppen
 
 Eine Gruppe ist eine JSContact-Karte mit `kind: "group"`; ihr `members` hält die `uid`s der
@@ -2265,7 +2288,7 @@ der Person, die ihn verbunden hat (`server/mcp/`).
   | `create_draft`   | Mail als Entwurf in „Entwürfe“ (eigenes oder gemeinsames Postfach); als Antwort mit Empfängern, „Re:“, Zitat und Thread-Headern wie in der App (`startCompose`) |
   | `create_event`   | Termin in einen Kalender; lädt Kollegen ein (Adresse oder Id aus `list_colleagues`), niemanden von draußen |
   | `create_contact` | Kontakt in ein Adressbuch                                                           |
-  | `update_contact` | Felder eines Kontakts ändern                                                        |
+  | `update_contact` | Felder eines Kontakts ändern; was nicht genannt ist, bleibt ([Kontaktformular](#kontaktformular)) |
   | `create_task`    | Aufgabe auf ein Board, mit Fälligkeit, Zuständiger und Verknüpfung zu Mail und Kontakt |
   | `update_task`    | Aufgabe ändern, auch erledigen                                                      |
 

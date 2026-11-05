@@ -10,6 +10,13 @@ Steps that an update needs beyond raising the version are marked **Upgrade**.
 - Mail: own folders can be renamed, moved and deleted from "…" next to them in the sidebar
   (their mails go to the trash, subfolders go along); "Mark all as read" works for any folder,
   for all its mails, not only the loaded ones (user guide, "Mail", "Ordner verwalten").
+- Contacts: editing a contact no longer loses data. Before, saving kept only the first number,
+  mail address and address of a card and dropped the postcode, country, region and department of
+  cards from an iPhone, a vCard or a merge; now only the changed fields are written and everything
+  else stays (also for the agents' `update_contact`). The form has several numbers with their kind
+  (mobile, work, home, fax) and several mail addresses, job title, department, website, birthday
+  (shown in the birthday calendar), postcode and country; the contact's view shows them all
+  (user guide, "Kalender und Kontakte").
 - Mail: "Rückgängig" in the notice after archiving, deleting (to the trash), marking as spam and
   moving – one mail, a selection or a swipe on the phone – puts the mails back in their folder;
   `z` (or Ctrl+Z / Cmd+Z outside text fields) takes back the last one. Deleting for good from

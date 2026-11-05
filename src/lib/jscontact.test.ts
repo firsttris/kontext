@@ -3,13 +3,11 @@ import {
   type ContactCard,
   contactAddresses,
   contactPhoto,
-  formToCard,
   fullName,
   indexLetter,
   matchesSearch,
   mediaWithPhoto,
   sortKey,
-  toForm,
 } from "./jscontact";
 
 const petra: ContactCard = {
@@ -37,18 +35,8 @@ const petra: ContactCard = {
 };
 
 describe("reading cards", () => {
-  it("builds name, form and search", () => {
+  it("builds name and search", () => {
     expect(fullName(petra)).toBe("Petra Keller");
-    expect(toForm(petra)).toEqual({
-      given: "Petra",
-      surname: "Keller",
-      company: "Keller Elektro",
-      email: "petra@keller.test",
-      phone: "+49 7223 1",
-      street: "Industriestraße 4",
-      city: "77815 Bühl",
-      note: "Wartung",
-    });
     expect(matchesSearch(petra, "elektro")).toBe(true);
     expect(matchesSearch(petra, "hoffmann")).toBe(false);
     expect(sortKey(petra)).toBe("keller petra");
@@ -63,19 +51,6 @@ describe("reading cards", () => {
     expect(contactAddresses([petra])).toEqual([
       { name: "Petra Keller", email: "petra@keller.test" },
     ]);
-  });
-});
-
-describe("formToCard", () => {
-  it("keeps the keys of existing entries", () => {
-    const card = formToCard({ ...toForm(petra), email: "neu@keller.test", note: "" }, petra);
-    expect(card.emails).toEqual({ e1: { address: "neu@keller.test", contexts: { work: true } } });
-    expect(card.notes).toBeUndefined();
-    expect(card.organizations).toEqual({ o1: { name: "Keller Elektro" } });
-  });
-  it("uses the company as name when no person is given", () => {
-    const card = formToCard({ ...toForm(petra), given: "", surname: "" });
-    expect(card.name).toEqual({ full: "Keller Elektro" });
   });
 });
 
