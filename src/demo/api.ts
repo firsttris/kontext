@@ -59,6 +59,7 @@ const FIXED: Record<string, (store: Store) => unknown> = {
   "GET /api/company/phishing-report": () => ({ address: "" }),
   // No assistant without a server and a key (server/assistant/).
   "GET /api/assistant": () => ({ enabled: false }),
+  "GET /api/company/assistant": () => ({ assistant: null }),
   "GET /api/company/external-hint": () => ({ enabled: true, partners: [], domains: [DEV_DOMAIN] }),
   "GET /api/company/legal-footer": () => ({ text: "" }),
   "GET /api/company/vacation-templates": () => ({ templates: [] }),

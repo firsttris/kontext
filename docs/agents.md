@@ -46,9 +46,10 @@ nutzt dieselben Werkzeuge wie ein verbundener Agent, mit den Rechten der Person,
 legt auf Wunsch Entwürfe, Termine, Kontakte und Aufgaben an; was er angelegt hat, steht unter
 seiner Antwort. Auch er sendet nichts und löscht nichts.
 
-- **Einrichten:** Die Firma braucht einen Schlüssel der Claude API (console.anthropic.com) als
-  `ANTHROPIC_API_KEY` ([Installation → KI-Agenten](installation.md#ki-agenten)). Ohne ihn gibt es
-  keinen Assistenten.
+- **Einrichten:** Die Firmenverwaltung trägt unter *Einstellungen → Chat* einen Schlüssel der
+  Claude API (console.anthropic.com) ein und wählt das Modell
+  ([Installation → KI-Agenten](installation.md#ki-agenten)). Ohne Schlüssel gibt es keinen
+  Assistenten.
 - **Kosten:** Anthropic rechnet nach Nutzung ab; eine Frage mit ein paar Nachschlagen kostet mit
   dem voreingestellten Modell (Claude Sonnet 5.5) meist ein paar Cent.
 - **Daten:** Die Frage und was der Assistent dafür nachschlägt (Mailtext, Termine, Kontakte)

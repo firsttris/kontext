@@ -2320,8 +2320,10 @@ kommt; höchstens zehn Runden, und Werkzeuge aus einer abgebrochenen Antwort (`m
 Datum; System-Prompt und Werkzeuge werden gecacht (`cache_control`), `effort: medium` hält die
 Kosten klein.
 
-- **Ein und aus:** nur mit `ANTHROPIC_API_KEY`; `GET /api/assistant` sagt der App, ob es ihn gibt,
-  dann steht er oben im Chat (`src/features/assistant/`). Die Demo hat keinen.
+- **Ein und aus:** Schlüssel und Modell setzt die Firmenverwaltung (`/api/company/assistant`,
+  `server/company/assistant.ts`); der Schlüssel liegt versiegelt in `company_setting` und geht nie
+  zurück an den Browser, nur seine letzten vier Zeichen. `GET /api/assistant` sagt der App, ob es
+  ihn gibt, dann steht er oben im Chat (`src/features/assistant/`). Die Demo hat keinen.
 - **Gespräch:** bleibt in der App; jede Frage schickt die bisherigen Fragen und Antworten als Text
   mit, der Server behält nichts. Was angelegt wurde, kommt als Meldung des Writers zurück und steht
   unter der Antwort.

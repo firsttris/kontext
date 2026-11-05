@@ -46,9 +46,9 @@ Tuesday”); it uses the same tools as a connected agent, with the rights of the
 on request creates drafts, appointments, contacts and tasks; what it created is listed under its
 answer. It, too, sends nothing and deletes nothing.
 
-- **Setting up:** the company needs a Claude API key (console.anthropic.com) as
-  `ANTHROPIC_API_KEY` ([Installation → AI agents](installation.md#ki-agenten)). Without it there
-  is no assistant.
+- **Setting up:** the Firmenverwaltung enters a Claude API key (console.anthropic.com) under
+  *Settings → Chat* and picks the model ([Installation → AI agents](installation.md#ki-agenten)).
+  Without a key there is no assistant.
 - **Cost:** Anthropic bills by use; a question with a few lookups usually costs a few cents with the
   default model (Claude Sonnet 5.5).
 - **Data:** the question and what the assistant looks up for it (mail text, appointments,

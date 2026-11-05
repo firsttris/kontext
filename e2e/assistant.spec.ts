@@ -5,8 +5,8 @@ const ANSWER = "Der Entwurf an Frau Keller liegt in „Entwürfe“.";
 const DONE = "Entwurf an petra.keller@keller-elektro.test liegt in „Entwürfe“ von Jonas Weber.";
 
 /**
- * The server in CI has no ANTHROPIC_API_KEY: here the page gets an assistant that answers like
- * Claude after create_draft. The loop itself is tested in server/assistant/agent.test.ts.
+ * Setting it up goes through the real server; asking does not, as CI has no Claude API key:
+ * there the page gets an assistant that answers like Claude after create_draft. The loop itself is tested in server/assistant/agent.test.ts.
  */
 const withAssistant = async (page: Page) => {
   const asked: unknown[] = [];
@@ -24,8 +24,31 @@ const ask = async (page: Page, question: string) => {
 };
 
 test.describe("Assistent im Chat", () => {
-  test("ohne Schlüssel am Server gibt es keinen Assistenten", async ({ page }) => {
+  test("die Firmenverwaltung trägt Schlüssel und Modell ein, dann steht er im Chat", async ({
+    page,
+  }) => {
     await login(page);
+    await page.goto("/chat");
+    await expect(page.getByRole("navigation", { name: "Kanäle" })).toBeVisible();
+    await expect(page.getByRole("link", { name: "Assistent" })).toHaveCount(0);
+
+    await page.goto("/settings?section=company-chat");
+    await page.getByLabel("API-Schlüssel").fill("sk-ant-api03-e2e-nur-ein-test-schluessel-ABCD");
+    await page.getByLabel("Modell").selectOption("claude-haiku-5-5");
+    try {
+      await page.getByRole("button", { name: "Speichern" }).last().click();
+      await expect(page.getByRole("status")).toHaveText("Gespeichert.");
+      // Only the end of the key is shown again.
+      await expect(page.getByLabel("API-Schlüssel")).toHaveAttribute("placeholder", "…ABCD");
+      await expect(page.getByLabel("API-Schlüssel")).toHaveValue("");
+
+      await page.goto("/chat");
+      await expect(page.getByRole("link", { name: "Assistent" })).toBeVisible();
+    } finally {
+      await page.goto("/settings?section=company-chat");
+      await page.getByRole("button", { name: "Assistent entfernen" }).click();
+      await expect(page.getByRole("status")).toHaveText("Der Assistent ist entfernt.");
+    }
     await page.goto("/chat");
     await expect(page.getByRole("navigation", { name: "Kanäle" })).toBeVisible();
     await expect(page.getByRole("link", { name: "Assistent" })).toHaveCount(0);

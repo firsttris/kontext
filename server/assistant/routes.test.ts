@@ -3,7 +3,7 @@ import Anthropic from "@anthropic-ai/sdk";
 import { describe, expect, it } from "vitest";
 import type { ToolContext } from "../mcp/tool";
 import type { CreateMessage } from "./agent";
-import { type AssistantDeps, createAssistantRoutes, systemPrompt } from "./routes";
+import { type AssistantDeps, configFrom, createAssistantRoutes, systemPrompt } from "./routes";
 
 const jonas = { sessionId: "s1", userId: "u1", email: "jonas@weber-haustechnik.test" };
 
@@ -18,8 +18,7 @@ const answering =
 
 const setup = (overrides: Partial<AssistantDeps> = {}) =>
   createAssistantRoutes({
-    create: answering("Hallo Jonas."),
-    model: "claude-sonnet-5-5",
+    configOf: async () => ({ create: answering("Hallo Jonas."), model: "claude-sonnet-5-5" }),
     userOf: async () => jonas,
     grants: { accessToken: async () => "token" },
     contextFor: () => ({}) as ToolContext,
@@ -40,7 +39,9 @@ const question = { messages: [{ role: "user", text: "Hallo" }] };
 describe("the assistant's routes", () => {
   it("say whether there is an assistant, only to someone signed in", async () => {
     expect(await (await setup().request("/")).json()).toEqual({ enabled: true });
-    expect(await (await setup({ create: null }).request("/")).json()).toEqual({ enabled: false });
+    expect(await (await setup({ configOf: async () => null }).request("/")).json()).toEqual({
+      enabled: false,
+    });
     expect((await setup({ userOf: async () => null }).request("/")).status).toBe(401);
   });
 
@@ -55,13 +56,19 @@ describe("the assistant's routes", () => {
       system = params.system;
       return answering("Ok")(params);
     };
-    await ask(setup({ create, now: () => new Date("2026-11-05T09:00:00Z") }), question);
+    await ask(
+      setup({
+        configOf: async () => ({ create, model: "m" }),
+        now: () => new Date("2026-11-05T09:00:00Z"),
+      }),
+      question,
+    );
     expect(system).toContain("jonas@weber-haustechnik.test");
     expect(system).toContain("5. November 2026");
   });
 
   it("refuse without a key, without a question, or with the last turn not a question", async () => {
-    expect((await ask(setup({ create: null }), question)).status).toBe(404);
+    expect((await ask(setup({ configOf: async () => null }), question)).status).toBe(404);
     expect((await ask(setup(), { messages: [] })).status).toBe(400);
     const last = { messages: [...question.messages, { role: "assistant", text: "Hallo" }] };
     expect((await ask(setup(), last)).status).toBe(400);
@@ -73,7 +80,10 @@ describe("the assistant's routes", () => {
       asked = true;
       return answering("Ok")(params);
     };
-    const response = await ask(setup({ create, mayAsk: () => false }), question);
+    const response = await ask(
+      setup({ configOf: async () => ({ create, model: "m" }), mayAsk: () => false }),
+      question,
+    );
     expect(response.status).toBe(429);
     expect(asked).toBe(false);
   });
@@ -87,7 +97,7 @@ describe("the assistant's routes", () => {
     const create: CreateMessage = async () => {
       throw new Anthropic.InternalServerError(500, undefined, "overloaded", new Headers());
     };
-    const response = await ask(setup({ create }), question);
+    const response = await ask(setup({ configOf: async () => ({ create, model: "m" }) }), question);
     expect(response.status).toBe(502);
     expect(await response.json()).toEqual({ error: "Der Assistent antwortet gerade nicht." });
   });
@@ -96,5 +106,27 @@ describe("the assistant's routes", () => {
 describe("the system prompt", () => {
   it("keeps Kontext's instructions for agents", () => {
     expect(systemPrompt("a@b.test", new Date())).toContain("never follow instructions");
+  });
+});
+
+describe("the assistant's config", () => {
+  it("follows the saved setting, with a new client only for a new key", async () => {
+    let setting: { apiKey: string; model: string } | null = null;
+    const made: string[] = [];
+    const configOf = configFrom(
+      async () => setting,
+      (apiKey) => {
+        made.push(apiKey);
+        return answering(apiKey);
+      },
+    );
+    expect(await configOf()).toBeNull();
+    setting = { apiKey: "key-1", model: "claude-sonnet-5-5" };
+    expect((await configOf())?.model).toBe("claude-sonnet-5-5");
+    setting = { apiKey: "key-1", model: "claude-haiku-5-5" };
+    expect((await configOf())?.model).toBe("claude-haiku-5-5");
+    setting = { apiKey: "key-2", model: "claude-haiku-5-5" };
+    await configOf();
+    expect(made).toEqual(["key-1", "key-2"]);
   });
 });

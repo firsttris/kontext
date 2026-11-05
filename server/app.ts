@@ -11,7 +11,7 @@ import { serveStatic } from "hono/bun";
 import { version as packageVersion } from "../package.json";
 import { createAccessRoutes } from "./access/routes";
 import { createSessionStore } from "./access/store";
-import { anthropicCreate, createAssistantRoutes } from "./assistant/routes";
+import { configFrom, createAssistantRoutes } from "./assistant/routes";
 import { type Auth, createAuth, createGrants, type Grants } from "./auth";
 import { currentRoomEvents, type LiveKitConfig } from "./calls/livekit";
 import { createMeetRoutes } from "./calls/meet-routes";
@@ -700,8 +700,11 @@ export const createApp = async (env: Env) => {
   app.route(
     "/api/assistant",
     createAssistantRoutes({
-      create: env.ANTHROPIC_API_KEY ? anthropicCreate(env.ANTHROPIC_API_KEY) : null,
-      model: env.ASSISTANT_MODEL,
+      // Key and model come from the Firmenverwaltung (server/company/assistant.ts).
+      configOf: configFrom(
+        createCompanySettings(db, await createSealer(env.BETTER_AUTH_SECRET, "mail-sync"))
+          .assistant,
+      ),
       userOf: async (request) => {
         const found = await auth.api.getSession({ headers: request.headers });
         return found

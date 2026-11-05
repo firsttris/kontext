@@ -438,10 +438,10 @@ gilt:
   Mitarbeiters trennt alle seine Agenten.
 
 Den **Assistenten im Chat** ([KI-Agenten → Assistent im Chat](agents.md#assistent-im-chat)) gibt
-es mit einem Schlüssel der Claude API: unter console.anthropic.com anlegen, als
-`ANTHROPIC_API_KEY=sk-ant-…` in `deploy/.env` (Quadlet: `kontext.env`) eintragen und Kontext neu
-starten. Das Modell wählt `ASSISTANT_MODEL` (Standard `claude-sonnet-5-5`). Jede Person darf zehn
-Fragen in der Minute stellen. Die Fragen und was der Assistent nachschlägt, gehen an Anthropic in
+es mit einem Schlüssel der Claude API: unter console.anthropic.com anlegen und in der
+Firmenverwaltung unter *Chat → Assistent im Chat* eintragen, dazu das Modell wählen (empfohlen
+Claude Sonnet 5.5). Kontext speichert den Schlüssel verschlüsselt und zeigt danach nur noch seine
+letzten vier Zeichen. Jede Person darf zehn Fragen in der Minute stellen. Die Fragen und was der Assistent nachschlägt, gehen an Anthropic in
 die USA: Das gehört in die Datenschutzinformation, mit Anthropics Auftragsverarbeitungsvertrag.
 
 ## 4. Platte verschlüsseln
@@ -826,7 +826,6 @@ eine Warnung ins Log.
 | `TAILSCALE_IP` | `127.0.0.1` | wo Stalwarts Verwaltung (Port 8080) lauscht; mit Tailscale die Tailscale-Adresse des Servers |
 | `KONTEXT_SECRET` | – | Pflicht, mindestens 32 Zeichen; wird zu `BETTER_AUTH_SECRET` |
 | `STALWART_ADMIN_KEY` | leer | API-Schlüssel für die [Firmenverwaltung](#firmenverwaltung-einschalten) |
-| `ANTHROPIC_API_KEY` | leer | Schlüssel der Claude API für den [Assistenten im Chat](#ki-agenten); leer: kein Assistent |
 | `KONTEXT_VERSION` | – | Pflicht: Version des Images `tristanteu/kontext` |
 | `STALWART_VERSION` | – | Pflicht: Version des Images `stalwartlabs/stalwart` (ohne „v“), mit `KONTEXT_VERSION` gehoben |
 | `COMPOSE_PROFILES` | – | `calls` (LiveKit, LiveKit SIP, Redis) und `documents` (Schreibzeug) |
@@ -855,8 +854,6 @@ Image setzt `PORT=3000`, `STATIC_DIR=/app/dist`, `DATABASE_PATH=/data/kontext.db
 | `DATABASE_PATH` | `.dev/server/kontext.db` | die SQLite-Datenbank (im Image `/data/kontext.db`) |
 | `SIGN_IN_PER_MINUTE` | `10` | Anmeldungen je Minute und IP-Adresse |
 | `STALWART_ADMIN_KEY` | leer | API-Schlüssel (`API_…`) oder `name:passwort` für die Firmenverwaltung |
-| `ANTHROPIC_API_KEY` | leer | Schlüssel der Claude API; damit gibt es den Assistenten im Chat |
-| `ASSISTANT_MODEL` | `claude-sonnet-5-5` | das Claude-Modell des Assistenten |
 | `DOH_URL` | `https://cloudflare-dns.com/dns-query` | DNS-over-HTTPS (JSON-API) für „Sicherheit der Mails“ und die Suche nach S/MIME-Zertifikaten |
 | `SMIME_ROOTS` | leer | Pfad zu einer PEM-Datei mit weiteren anerkannten S/MIME-Stellen, etwa der Verwaltungs-PKI; einfacher in der Firmenverwaltung unter „S/MIME-Stellen“ |
 | `LIVEKIT_URL` | leer | LiveKits API, wie der Server sie erreicht (in Compose `http://livekit:7880`) |

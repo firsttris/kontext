@@ -1,6 +1,7 @@
 /**
  * /api/assistant: the assistant in the chat (agent.ts). GET tells the app whether there is one
- * (only with ANTHROPIC_API_KEY); POST answers the last question of a conversation the app keeps.
+ * (once the Firmenverwaltung saved a Claude API key, server/company/assistant.ts); POST answers
+ * the last question of a conversation the app keeps.
  * The tools act with the signed-in person's own Stalwart token, so the assistant sees what they
  * see; like an agent over /mcp it saves drafts but never sends anything.
  */
@@ -13,12 +14,13 @@ import { TOOLS } from "../mcp/tools";
 import { tokenOrUnavailable, unavailable } from "../stalwart-away";
 import { askAssistant, type CreateMessage } from "./agent";
 
+export type AssistantConfig = { create: CreateMessage; model: string };
+
 export type AssistantUser = { sessionId: string; userId: string; email: string };
 
 export type AssistantDeps = {
-  /** The Messages API, or null while no key is set: then there is no assistant. */
-  create: CreateMessage | null;
-  model: string;
+  /** The Messages API with the company's key and model, or null while none is set. */
+  configOf: () => Promise<AssistantConfig | null>;
   userOf: (request: Request) => Promise<AssistantUser | null>;
   grants: { accessToken: (sessionId: string) => Promise<string | null> };
   /** The tools' reader and writer as the holder of this token (server/mcp/routes.ts). */
@@ -56,20 +58,37 @@ export const anthropicCreate = (apiKey: string): CreateMessage => {
   return (params) => client.messages.create(params);
 };
 
+/** The config from the saved setting, with one client per key rather than one per question. */
+export const configFrom = (
+  read: () => Promise<{ apiKey: string; model: string } | null>,
+  createFor: (apiKey: string) => CreateMessage = anthropicCreate,
+) => {
+  let client: { apiKey: string; create: CreateMessage } | null = null;
+  return async (): Promise<AssistantConfig | null> => {
+    const setting = await read();
+    if (!setting) return null;
+    if (client?.apiKey !== setting.apiKey) {
+      client = { apiKey: setting.apiKey, create: createFor(setting.apiKey) };
+    }
+    return { create: client.create, model: setting.model };
+  };
+};
+
 export const createAssistantRoutes = (deps: AssistantDeps) => {
-  const { create, model, userOf, grants, contextFor, mayAsk, mayWrite } = deps;
+  const { configOf, userOf, grants, contextFor, mayAsk, mayWrite } = deps;
   const now = deps.now ?? (() => new Date());
   const app = new Hono();
 
   app.get("/", async (c) => {
     if (!(await userOf(c.req.raw))) return c.json({ error: "Nicht angemeldet" }, 401);
-    return c.json({ enabled: create !== null });
+    return c.json({ enabled: (await configOf()) !== null });
   });
 
   app.post("/", async (c) => {
     const user = await userOf(c.req.raw);
     if (!user) return c.json({ error: "Nicht angemeldet" }, 401);
-    if (!create) return c.json({ error: "Kein Assistent eingerichtet" }, 404);
+    const config = await configOf();
+    if (!config) return c.json({ error: "Kein Assistent eingerichtet" }, 404);
     const parsed = askSchema.safeParse(await c.req.json().catch(() => null));
     if (!parsed.success) return c.json({ error: "Keine Frage" }, 400);
     if (!mayAsk(user.userId)) {
@@ -81,8 +100,7 @@ export const createAssistantRoutes = (deps: AssistantDeps) => {
     try {
       const answer = await askAssistant(
         {
-          create,
-          model,
+          ...config,
           system: systemPrompt(user.email, now()),
           tools: TOOLS,
           context: contextFor(token, user.email),

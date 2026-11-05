@@ -36,13 +36,6 @@ const schema = z.object({
    * Firmenverwaltung is off.
    */
   STALWART_ADMIN_KEY: z.preprocess((v) => v || undefined, z.string().optional()),
-  /**
-   * Key of the Claude API (console.anthropic.com) for the assistant in the chat
-   * (server/assistant/); without it there is no assistant.
-   */
-  ANTHROPIC_API_KEY: z.preprocess((v) => v || undefined, z.string().optional()),
-  /** The Claude model the assistant uses. */
-  ASSISTANT_MODEL: z.string().min(1).default("claude-sonnet-5-5"),
   /** Tests only: moves over IMAP may use any port and servers without TLS (the local Stalwart). */
   MAIL_SYNC_ALLOW_PLAIN: z.stringbool().default(false),
   /** DNS-over-HTTPS for the check of the domains' mail security (JSON API). */

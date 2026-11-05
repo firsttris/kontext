@@ -9,10 +9,9 @@ Steps that an update needs beyond raising the version are marked **Upgrade**.
 
 - Chat: the **Assistant** at the top of the chat answers questions about customers, mail,
   appointments and tasks with the agents' tools and the asking person's rights, and on request
-  saves drafts, appointments, contacts and tasks; it sends nothing. Optional: it appears only with
-  a Claude API key as `ANTHROPIC_API_KEY` in `deploy/.env` (Quadlet: `kontext.env`), model through
-  `ASSISTANT_MODEL` (default `claude-sonnet-5-5`); questions and what it looks up go to Anthropic
-  (user guide, "KI-Agenten", "Assistent im Chat").
+  saves drafts, appointments, contacts and tasks; it sends nothing. Optional: it appears once the
+  Firmenverwaltung enters a Claude API key and picks the model under *Settings → Chat*; questions
+  and what it looks up go to Anthropic (user guide, "KI-Agenten", "Assistent im Chat").
 - Mail: the import button above a folder's list also takes `.mbox` files (Thunderbird, Apple
   Mail, Google Takeout), read piece by piece in the browser so files of several GB work; each mail
   keeps its date, and read, flagged and answered where Gmail's labels, `X-Mozilla-Status` or

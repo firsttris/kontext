@@ -2256,8 +2256,10 @@ ten rounds, and tools from a cut-off answer (`max_tokens`, `refusal`) do not run
 for `/mcp` (mail text is someone else's text), plus the person and the date; the system prompt
 and the tools are cached (`cache_control`), `effort: medium` keeps the cost down.
 
-- **On and off:** only with `ANTHROPIC_API_KEY`; `GET /api/assistant` tells the app whether there
-  is one, and then it is at the top of the chat (`src/features/assistant/`). The demo has none.
+- **On and off:** the Firmenverwaltung sets key and model (`/api/company/assistant`,
+  `server/company/assistant.ts`); the key is sealed in `company_setting` and never goes back to
+  the browser, only its last four characters. `GET /api/assistant` tells the app whether there is
+  one, and then it is at the top of the chat (`src/features/assistant/`). The demo has none.
 - **Conversation:** stays in the app; every question sends the earlier questions and answers along
   as text, the server keeps nothing. What was created comes back as the writer's message and is
   listed under the answer.
