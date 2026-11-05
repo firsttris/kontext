@@ -191,16 +191,19 @@ export const formToEvent = (
       [id, p] as const,
     ]),
   );
+  const [organizerId, organizerBefore] = previous.get(organizer.email.toLowerCase()) ?? [];
   const participants = emails.length
     ? Object.fromEntries([
         [
-          previous.get(organizer.email.toLowerCase())?.[0] ?? "organizer",
+          organizerId ?? "organizer",
           {
             "@type": "Participant",
-            name: organizer.name,
+            // A kept organizer (organizerFor) keeps its name and its own answer.
+            name: organizer.name ?? organizerBefore?.name,
             calendarAddress: `mailto:${organizer.email}`,
             roles: { owner: true, attendee: true },
-            participationStatus: "accepted",
+            participationStatus:
+              (organizerBefore?.roles?.owner && organizerBefore.participationStatus) || "accepted",
           },
         ],
         ...emails.map((email, index) => {

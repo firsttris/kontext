@@ -101,7 +101,8 @@ export const EventEditor = ({ event, series, start, copyOf, onDone, onCancel }: 
   const instance = event && isInstance(event) && series ? event : undefined;
   const [initial] = useState<EventForm>(() =>
     event
-      ? eventToForm(event, [...mine, organizer], series)
+      ? // Only the organizer has a place of its own; the user stays an attendee of someone else's.
+        eventToForm(event, [organizer], series)
       : copyOf
         ? copyForm(copyOf, mine)
         : newEventForm(`${start ?? `${toLocal(new Date()).slice(0, 11)}09:00`}:00`.slice(0, 19)),
