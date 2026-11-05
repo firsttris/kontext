@@ -35,6 +35,28 @@ const folderWithTwoMails = async (name: string, subjects: [string, string]) => {
     client.call("Mailbox/set", { accountId, destroy: [folderId], onDestroyRemoveEmails: true });
 };
 
+/** The Subject lines of the file, each on one line (RFC 5322 §2.2.3). */
+const unfoldedHeaders = (mbox: string) =>
+  mbox.replace(/\r?\n[ \t]+/g, " ").match(/^Subject: .*$/gm) ?? [];
+
+/** The UTF-8 encoded words of a header (RFC 2047 §4), the space between two of them dropped. */
+const decodeWords = (header: string) =>
+  header
+    .replace(/(\?=)\s+(=\?)/g, "$1$2")
+    .replace(/=\?utf-8\?([QB])\?([^?]*)\?=/gi, (_, encoding: string, data: string) =>
+      encoding.toUpperCase() === "B"
+        ? Buffer.from(data, "base64").toString("utf8")
+        : Buffer.from(
+            data
+              .replace(/_/g, " ")
+              .replace(/=([0-9A-F]{2})/gi, (_hex, hex: string) =>
+                String.fromCharCode(Number.parseInt(hex, 16)),
+              ),
+            "latin1",
+          ).toString("utf8"),
+    )
+    .replace(/\r$/, "");
+
 const exportFolder = async (page: Page, folder: string, subjects: [string, string]) => {
   await page.getByRole("button", { name: `Ordnermenü „${folder}“` }).click();
   const [download] = await Promise.all([
@@ -44,8 +66,12 @@ const exportFolder = async (page: Page, folder: string, subjects: [string, strin
   expect(download.suggestedFilename()).toBe(`${folder}.mbox`);
   const mbox = await readFile(await download.path(), "utf8");
   expect(mbox.match(/^From \S+ \w{3} \w{3} [ \d]\d \d\d:\d\d:\d\d \d{4}\r?$/gm)).toHaveLength(2);
-  expect(mbox).toContain(`Subject: ${subjects[0]}`);
-  expect(mbox).toContain(`Subject: ${subjects[1]}`);
+  // The messages as Stalwart stored them: a subject with "ü" is an encoded word (RFC 2047),
+  // which the export leaves as it is.
+  expect(mbox).toMatch(/^Subject: =\?utf-8\?[QB]\?/im);
+  const subjectsInFile = unfoldedHeaders(mbox).map(decodeWords);
+  expect(subjectsInFile).toContain(`Subject: ${subjects[0]}`);
+  expect(subjectsInFile).toContain(`Subject: ${subjects[1]}`);
   // The read and flagged first mail, the unread second (mboxrd escaping: src/lib/mbox.test.ts).
   expect(mbox).toMatch(/Status: RO\r?\nX-Status: F\r?\n/);
   expect(mbox).toMatch(/Status: O\r?\n/);
