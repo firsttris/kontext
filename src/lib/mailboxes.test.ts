@@ -145,6 +145,19 @@ describe("folder management", () => {
     expect(names(targets.map((node) => node.mailbox))).not.toContain("Buchhaltung");
   });
 
+  it("keeps the current parent, first when it is a standard folder", () => {
+    const underInbox = box("p", "Projekte", null, "i");
+    const targets = moveTargets(underInbox, [...nested, underInbox]);
+    expect(names(targets.map((node) => node.mailbox))[0]).toBe("Inbox");
+
+    const closed = { ...box("k", "Kunden"), myRights: { mayCreateChild: false } };
+    const kept = moveTargets(
+      box("h", "Hoffmann", null, "k"),
+      nested.map((entry) => (entry.id === "k" ? closed : entry)),
+    );
+    expect(names(kept.map((node) => node.mailbox))).toContain("Kunden");
+  });
+
   it("lets standard folders only be marked read, and only with unread mails", () => {
     expect(folderActions({ ...box("i", "Inbox", "inbox"), unreadEmails: 3 })).toEqual({
       rename: false,

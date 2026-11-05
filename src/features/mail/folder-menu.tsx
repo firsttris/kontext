@@ -212,7 +212,7 @@ export const ParentSelect = ({
       {options.map((node) => (
         <option key={node.mailbox.id} value={node.mailbox.id}>
           {"  ".repeat(node.depth)}
-          {node.mailbox.name}
+          {mailboxName(node.mailbox)}
         </option>
       ))}
     </select>

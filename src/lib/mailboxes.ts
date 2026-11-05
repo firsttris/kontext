@@ -126,11 +126,20 @@ export const folderActions = (mailbox: Mailbox) => {
 
 /**
  * Where a folder can go: any own folder except itself and its subfolders (RFC 8621 §2: no loops)
- * that takes subfolders (`mayCreateChild`). The top level is always offered besides.
+ * that takes subfolders (`mayCreateChild`). The top level is always offered besides. The current
+ * parent stays in the list even when it is no target (a standard folder such as the Posteingang,
+ * or one without `mayCreateChild`), first if it is not in the tree: otherwise the select would
+ * show "—" for a folder that is not at the top level, and "—" could not be picked.
  */
 export const moveTargets = (mailbox: Mailbox, mailboxes: Mailbox[]): FolderNode[] => {
   const excluded = new Set([mailbox, ...subfolders(mailbox, mailboxes)].map((box) => box.id));
-  return flattenTree(folderTree(mailboxes)).filter(
-    (node) => !excluded.has(node.mailbox.id) && node.mailbox.myRights?.mayCreateChild !== false,
+  const targets = flattenTree(folderTree(mailboxes)).filter(
+    (node) =>
+      !excluded.has(node.mailbox.id) &&
+      (node.mailbox.myRights?.mayCreateChild !== false || node.mailbox.id === mailbox.parentId),
   );
+  const parent = mailboxes.find((box) => box.id === mailbox.parentId);
+  return parent && !targets.some((node) => node.mailbox.id === parent.id)
+    ? [{ mailbox: parent, depth: 0, children: [] }, ...targets]
+    : targets;
 };
