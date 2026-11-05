@@ -7,6 +7,10 @@ Steps that an update needs beyond raising the version are marked **Upgrade**.
 
 ## Unreleased
 
+- Calendar: an appointment with attendees in the calendar of a shared mailbox (info@, rechnung@)
+  invites as the mailbox. info@ is the organiser, the invitation goes out from info@ and is in its
+  "Sent", and the answers come back to info@ instead of to the colleague who entered it. Editing
+  an appointment keeps its organiser (user guide, "Kalender und Kontakte").
 - Deploy: `deploy/.env.example` and the Quadlet use Schreibzeug 0.1.19 (was 0.1.18), and Compose
   and the Quadlet use Caddy 2.11.8 (was 2.11.7) and LiveKit SIP 1.23.0 (was 1.22.0), the versions
   running on the first server. No step beyond raising the versions; with Quadlet, raise the images

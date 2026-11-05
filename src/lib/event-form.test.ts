@@ -7,6 +7,7 @@ import {
   meetingNote,
   movePatch,
   newEventForm,
+  organizerFor,
   removeMeetingNote,
   seriesStart,
   validateEventForm,
@@ -414,5 +415,40 @@ describe("reminder", () => {
   it("removes it for none and leaves alerts it cannot show alone", () => {
     expect(formToEvent({ ...form, reminder: null }, me).alerts).toBeNull();
     expect("alerts" in formToEvent({ ...form, reminder: "kept" }, me)).toBe(false);
+  });
+});
+
+describe("who invites", () => {
+  const info = { isPersonal: false, isOwner: true, ownerEmail: "info@weber.test" };
+  const colleague = { isPersonal: false, isOwner: false, ownerEmail: "anna@weber.test" };
+  const own = { isPersonal: true, isOwner: true, ownerEmail: "jonas@weber.test" };
+  const me = "jonas@weber.test";
+
+  it("invites as the shared mailbox from its calendar, otherwise as the user", () => {
+    expect(organizerFor(undefined, info, me)).toBe("info@weber.test");
+    expect(organizerFor(undefined, own, me)).toBe(me);
+    expect(organizerFor(undefined, colleague, me)).toBe(me);
+    expect(organizerFor(undefined, undefined, me)).toBe(me);
+  });
+
+  it("keeps the organizer an event has", () => {
+    const event = { organizerCalendarAddress: "mailto:jonas@weber.test" };
+    expect(organizerFor(event, info, me)).toBe(me);
+    expect(organizerFor({ organizerCalendarAddress: undefined }, info, me)).toBe("info@weber.test");
+  });
+
+  it("lists the organizer once, also when the form names it as attendee", () => {
+    const form = {
+      ...newEventForm("2026-10-23T10:00:00"),
+      title: "Kundentermin",
+      attendees: "info@weber.test, kunde@example.test",
+    };
+    const written = formToEvent(form, { email: "info@weber.test" });
+    expect(written.organizerCalendarAddress).toBe("mailto:info@weber.test");
+    expect(
+      Object.values(written.participants as Record<string, { calendarAddress: string }>).map(
+        (participant) => participant.calendarAddress,
+      ),
+    ).toEqual(["mailto:info@weber.test", "mailto:kunde@example.test"]);
   });
 });

@@ -147,8 +147,27 @@ export const validateEventForm = (form: EventForm): FormProblem => {
 };
 
 /**
- * The JSCalendar properties for a form. Attendees get a participant each; the organizer is the
- * user, so the server sends the invitations (iMIP).
+ * Who invites. An event keeps its organizer. A new one in a shared mailbox's calendar invites as
+ * the mailbox, so the answers go to info@ and not to the colleague who typed it: Stalwart
+ * schedules an event with the addresses of the account it is in (`account_info.addresses()` in
+ * crates/jmap/src/calendar_event/set.rs), and the members send as the mailbox. JMAP's
+ * ParticipantIdentity cannot name info@: Stalwart lists and changes only the user's own addresses
+ * there (crates/jmap/src/participant_identity/get.rs reads `access_token.account_id()`, set.rs
+ * refuses another account). Otherwise the user.
+ */
+export const organizerFor = (
+  existing: Pick<CalendarEvent, "organizerCalendarAddress"> | undefined,
+  calendar: { isPersonal: boolean; isOwner: boolean; ownerEmail: string } | undefined,
+  me: string,
+): string => {
+  const kept = existing?.organizerCalendarAddress?.replace(/^mailto:/i, "");
+  if (kept) return kept;
+  return calendar && !calendar.isPersonal && calendar.isOwner ? calendar.ownerEmail : me;
+};
+
+/**
+ * The JSCalendar properties for a form. Attendees get a participant each, the organizer one of
+ * its own (organizerFor), never twice.
  */
 export const formToEvent = (
   form: EventForm,
@@ -163,7 +182,9 @@ export const formToEvent = (
       1440
     : // On the wall clock, the way Stalwart reads it back (see localEnd in jscalendar.ts).
       Math.max(0, localDiff(startLocal, `${form.endDate}T${form.endTime}:00`));
-  const emails = attendeeEmails(form.attendees);
+  const emails = attendeeEmails(form.attendees).filter(
+    (email) => email.toLowerCase() !== organizer.email.toLowerCase(),
+  );
   const previous = new Map(
     attendees(existing ?? ({} as CalendarEvent)).map(([id, p]) => [
       participantEmail(p).toLowerCase(),
