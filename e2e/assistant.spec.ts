@@ -36,7 +36,10 @@ test.describe("Assistent im Chat", () => {
     await page.getByLabel("API-Schlüssel").fill("sk-ant-api03-e2e-nur-ein-test-schluessel-ABCD");
     await page.getByLabel("Modell").selectOption("claude-haiku-5-5");
     try {
-      await page.getByRole("button", { name: "Speichern" }).last().click();
+      await page
+        .getByRole("region", { name: "Assistent im Chat" })
+        .getByRole("button", { name: "Speichern" })
+        .click();
       await expect(page.getByRole("status")).toHaveText("Gespeichert.");
       // Only the end of the key is shown again.
       await expect(page.getByLabel("API-Schlüssel")).toHaveAttribute("placeholder", "…ABCD");
