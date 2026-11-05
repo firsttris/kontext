@@ -5,6 +5,8 @@
  * apart from parsing in a document of its own, which loads nothing.
  */
 
+import type { BodyPart } from "@/jmap/types";
+
 const parse = (html: string) => new DOMParser().parseFromString(html, "text/html");
 
 /** A new Content-ID: unique, and an addr-spec as RFC 2392 wants it. */
@@ -36,7 +38,43 @@ export const markCids = (html: string): string => {
   const doc = parse(html);
   for (const img of doc.querySelectorAll("img")) {
     const src = img.getAttribute("src") ?? "";
-    if (/^cid:/i.test(src)) img.setAttribute("data-cid", src.slice(4).replace(/^<|>$/g, ""));
+    if (/^cid:/i.test(src)) img.setAttribute("data-cid", cidOfUrl(src));
   }
   return doc.body.innerHTML;
+};
+
+/** A Content-ID without the angle brackets of its header form (RFC 2392 §2). */
+export const bareCid = (cid: string): string => cid.replace(/^<|>$/g, "");
+
+/**
+ * The Content-ID a `cid:` URL names: without the prefix, its %-encoded characters decoded
+ * (RFC 2392 §2). One that does not decode stays as written.
+ */
+export const cidOfUrl = (url: string): string => {
+  const cid = bareCid(url.slice(4));
+  try {
+    return decodeURIComponent(cid);
+  } catch {
+    return cid;
+  }
+};
+
+/**
+ * The parts a mail shows by their Content-ID, each once: an inline image after the HTML inside
+ * multipart/alternative is in htmlBody and in attachments (RFC 8621 §4.1.4; Stalwart's
+ * mail-parser, src/parser/classify.rs `rfc8621_lists`).
+ */
+export const inlineParts = (email: { attachments: BodyPart[]; htmlBody: BodyPart[] }): BodyPart[] =>
+  [...email.attachments, ...email.htmlBody].filter(
+    (part, index, all) =>
+      part.cid &&
+      part.blobId &&
+      all.findIndex((other) => other.blobId === part.blobId && other.cid === part.cid) === index,
+  );
+
+/** The Content-IDs of the images a text being written shows (`data-cid`). */
+export const shownCids = (html: string): string[] => {
+  if (!html.includes("data-cid")) return [];
+  const images = parse(html).querySelectorAll("img[data-cid]");
+  return [...new Set(Array.from(images, (img) => img.getAttribute("data-cid")!))];
 };
