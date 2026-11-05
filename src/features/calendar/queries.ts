@@ -49,6 +49,12 @@ export type CalendarRef = {
   key: string;
   accountId: string;
   isPersonal: boolean;
+  /**
+   * Whether Stalwart counts the user as the calendar's owner: their own account, or a shared
+   * mailbox (a group) they are a member of (AccessToken::is_member in
+   * crates/common/src/auth/access_token.rs). Only owners see, change and mark private events.
+   */
+  isOwner: boolean;
   /** Who it belongs to: a colleague's name or a shared mailbox by its address. */
   owner: string;
   /** The owner's address; counts as organizer when the user edits a colleague's calendar. */
@@ -114,6 +120,7 @@ export const useCalendarRefs = (): { calendars: CalendarRef[]; isPending: boolea
           key: `${account.id}:${calendar.id}`,
           accountId: account.id,
           isPersonal: account.isPersonal,
+          isOwner: account.isPersonal || principal?.type === "group",
           owner,
           ownerEmail: principal?.email ?? account.name,
           name: calendarName(calendar, account.isPersonal, owner),
@@ -214,9 +221,10 @@ export const isInvitation = (
 /**
  * A colleague's private event: the user sees only its time, and Stalwart refuses changes to it
  * from anyone but the owner (assert_privacy_access in crates/jmap/src/calendar_event/privacy.rs).
+ * A shared mailbox's members count as its owner.
  */
 export const isOthersPrivate = (calendar: CalendarRef | undefined, event: CalendarEvent) =>
-  isPrivate(event) && !calendar?.isPersonal;
+  isPrivate(event) && !calendar?.isOwner;
 
 /**
  * May the user change the event? In a writable calendar, if they or the calendar's owner organize

@@ -196,7 +196,14 @@ describe("EventEditor private date of a series", () => {
   // series stays as it was, so "Privat" ticked for one date must reach the series.
   it("makes the series private when Privat is ticked for this date only", async () => {
     refs.calendars = [
-      { key: "a/1", accountId: "a", isPersonal: true, mayWrite: true, calendar: { id: "1" } },
+      {
+        key: "a/1",
+        accountId: "a",
+        isPersonal: true,
+        isOwner: true,
+        mayWrite: true,
+        calendar: { id: "1" },
+      },
     ];
     render(<EventEditor event={instance} series={series} onDone={vi.fn()} onCancel={vi.fn()} />);
     fireEvent.click(screen.getByRole("checkbox", { name: /Privat/ }));

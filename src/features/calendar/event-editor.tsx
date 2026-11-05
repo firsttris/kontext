@@ -89,8 +89,9 @@ export const EventEditor = ({ event, series, start, copyOf, onDone, onCancel }: 
     writable.find((calendar) => calendar.isPersonal && calendar.calendar.isDefault) ??
     writable[0];
   // Stalwart lets only the calendar's owner mark an event private (assert_privacy_allowed in
-  // crates/jmap/src/calendar_event/privacy.rs), so the choice is for the user's own calendars.
-  const mayBePrivate = Boolean((event ? calendarOf(calendars, event) : target)?.isPersonal);
+  // crates/jmap/src/calendar_event/privacy.rs): the user's own calendars and their shared
+  // mailboxes' ones.
+  const mayBePrivate = Boolean((event ? calendarOf(calendars, event) : target)?.isOwner);
   const toast = useToast();
   const shareWith = useShareWith();
   const suggestions = useAddressSuggestions();

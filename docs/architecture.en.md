@@ -1732,7 +1732,7 @@ own `isVisible` along (`withOwnVisibility`).
 ### Private appointments { #private-termine }
 
 "Private" in the editor sets `privacy: "private"` (RFC 8984 §4.4.3), offered only in one's own
-calendars: Stalwart lets only the owner set anything other than `public`
+calendars and those of shared mailboxes: Stalwart lets only the owner set anything other than `public`
 (`assert_privacy_allowed` in `crates/jmap/src/calendar_event/privacy.rs`). The server does the
 hiding, not the app: whoever sees the event through a share (a deputy, colleagues with read
 access) gets from `CalendarEvent/get` only the times, the repetition and `privacy` – no title,
@@ -1741,7 +1741,8 @@ location, notes, participants or reminders (`into_private_view` in
 does not find private events for them (`crates/jmap/src/calendar_event/query.rs`), and they may
 not change or delete them (`assert_privacy_access`); the same holds over CalDAV. So even someone
 asking the JMAP API directly reads nothing more. For members of a shared mailbox its calendar
-counts as their own; they see everything. `secret` (Outlook's "confidential") Stalwart hides from
+counts as their own (`AccessToken::is_member`): they see everything, may change private events
+in it and mark events private (`isOwner` in `src/features/calendar/queries.ts`). `secret` (Outlook's "confidential") Stalwart hides from
 others completely; the app keeps it when saving.
 "Private" holds for the whole series: Stalwart drops `privacy` from the patch of a single
 date (`is_forbidden_override_patch` in `crates/calcard/src/jscalendar/types.rs`), so the app

@@ -1787,7 +1787,7 @@ den Jonas ausgeblendet hat, wäre er auch für sie aus. Darum schickt jede Ände
 ### Private Termine
 
 „Privat“ im Editor setzt `privacy: "private"` (RFC 8984 §4.4.3), angeboten nur in den eigenen
-Kalendern: Stalwart lässt nur den Besitzer etwas anderes als `public` setzen
+Kalendern und denen der gemeinsamen Postfächer: Stalwart lässt nur den Besitzer etwas anderes als `public` setzen
 (`assert_privacy_allowed` in `crates/jmap/src/calendar_event/privacy.rs`). Das Ausblenden macht
 der Server, nicht die App: Wer den Termin über eine Freigabe sieht (Vertretung, Kollegen mit
 Leserecht), bekommt von `CalendarEvent/get` nur Zeiten, Wiederholung und `privacy` – kein Titel,
@@ -1796,7 +1796,9 @@ Ort, keine Notizen, Teilnehmer oder Erinnerungen (`into_private_view` in
 Textsuche findet private Termine für ihn nicht (`crates/jmap/src/calendar_event/query.rs`),
 ändern und löschen darf er sie nicht (`assert_privacy_access`); über CalDAV gilt dasselbe. Auch
 wer die JMAP-API selbst fragt, liest also nichts weiter. Für Mitglieder eines gemeinsamen
-Postfachs gilt dessen Kalender als eigener, sie sehen alles. `secret` (Outlooks „vertraulich“)
+Postfachs gilt dessen Kalender als eigener (`AccessToken::is_member`): Sie sehen alles, dürfen
+private Termine darin ändern und als privat markieren (`isOwner` in
+`src/features/calendar/queries.ts`). `secret` (Outlooks „vertraulich“)
 blendet Stalwart für andere ganz aus; die App behält es beim Speichern bei.
 „Privat“ gilt für die ganze Serie: Im Patch eines einzelnen Termins verwirft Stalwart
 `privacy` (`is_forbidden_override_patch` in `crates/calcard/src/jscalendar/types.rs`), deshalb
