@@ -113,8 +113,8 @@ IMAP und SMTP.
 - **Die Leiste über einer Mail:** „Archivieren“ (`e`) und „Löschen“ (`#`) mit Namen, daneben
   Wiedervorlage (`w`), Markieren (`s`) und in gemeinsamen Postfächern „Zuweisen“, rechts
   „Antworten“. Alles Seltenere liegt unter „Weitere Aktionen“ (die drei Punkte): antworten an
-  alle, weiterleiten, drucken, als ungelesen markieren (`U`), Spam (`!`), verschieben, Kategorie,
-  Aufgabe (`t`), Besprechen (`b`) und Regel. Wo der Platz knapp ist, am Handy oder im schmalen
+  alle, weiterleiten, drucken, als .eml speichern, als ungelesen markieren (`U`), Spam (`!`),
+  verschieben, Kategorie, Aufgabe (`t`), Besprechen (`b`) und Regel. Wo der Platz knapp ist, am Handy oder im schmalen
   Lesebereich, bleiben von Archivieren und Löschen nur die Symbole.
 - **Mehrere Mails auf einmal** (Kästchen links an jeder Zeile, Strg-/Shift-Klick, `x`; am Handy
   lange drücken): archivieren, löschen, gelesen, Kategorie, verschieben, Aufgaben erstellen, als
@@ -303,6 +303,13 @@ kommt alle zwei Minuten in Kontext, gesendet wird als diese Adresse über den Se
 ## Anhänge, Drucken, Tastatur
 
 - **Vorschau** von Fotos und der ersten PDF-Seite; ein Klick öffnet sie groß.
+- **Alle herunterladen:** Hat eine Mail mehrere Anhänge, lädt der Knopf unter ihnen alle in einer
+  ZIP-Datei `<Betreff>.zip` herunter, auch am Handy. Kontext packt sie im Browser, ohne zu
+  komprimieren (PDFs, Fotos und Office-Dateien sind es schon); gleiche Namen bekommen „ (2)“.
+  Ohne ZIP64 geht das bis 4 GB, weit mehr, als eine Mail tragen kann.
+- **Als .eml speichern** im Menü „Weitere Aktionen“ lädt die ganze Mail als Datei
+  `<Betreff>.eml` herunter, so wie sie ankam: mit allen Kopfzeilen und Anhängen, etwa zum
+  Ablegen oder für den Steuerberater. Thunderbird, Outlook und Apple Mail öffnen sie.
 - **winmail.dat:** Ältere Outlook-Versionen packen ihre Anhänge in eine Datei „winmail.dat“
   (TNEF). Kontext packt sie im Browser aus und zeigt die Dateien darin als normale Anhänge, mit
   Vorschau, Herunterladen und „In Dokumente“. Dafür lädt Kontext sie als Blobs ins Postfach hoch

@@ -223,7 +223,7 @@ export const MessageView = ({ accountId, mailbox, emailId }: Props) => {
                   <SmimeSignedNote accountId={accountId} email={email} />
                 ) : null}
                 <MailBody accountId={accountId} email={email} />
-                <Attachments accountId={accountId} parts={attachments} />
+                <Attachments accountId={accountId} parts={attachments} subject={email.subject} />
               </>
             )}
             <LaterMails accountId={accountId} email={email} />

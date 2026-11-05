@@ -3,6 +3,7 @@
  * so the toolbar itself keeps few, labelled buttons. Each item names its shortcut.
  */
 import {
+  Download,
   Fish,
   FolderInput,
   Forward,
@@ -110,6 +111,7 @@ const BlockSubmenu = ({ address, domain, run }: BlockSender) => (
 export const MoreMenu = ({
   compose,
   print,
+  saveEml,
   markUnread,
   spam,
   reportPhishing,
@@ -122,6 +124,8 @@ export const MoreMenu = ({
 }: {
   compose: (mode: ComposeMode) => void;
   print: () => void;
+  /** The whole message as a file (its blob, RFC 8621 §4.1.1). */
+  saveEml: () => void;
   /** Left out where the mailbox does not allow it. */
   markUnread?: () => void;
   spam?: { undo: boolean; run: () => void };
@@ -163,6 +167,9 @@ export const MoreMenu = ({
       </Item>
       <Item onSelect={print} shortcut="p">
         <Printer size={15} /> {m.mail_print()}
+      </Item>
+      <Item onSelect={saveEml}>
+        <Download size={15} /> {m.mail_save_eml()}
       </Item>
       {markUnread || spam || block || move || categories ? <MenuSeparator /> : null}
       {markUnread ? (

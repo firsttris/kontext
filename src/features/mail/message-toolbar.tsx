@@ -6,13 +6,16 @@
 import { Link, useNavigate } from "@tanstack/react-router";
 import { Archive, ChevronLeft, Reply, Star, Trash2 } from "lucide-react";
 import { type ReactNode, useState } from "react";
+import { useClient } from "@/auth/auth";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/toast";
 import { usePrintKey } from "@/components/use-print-key";
 import { useShortcuts } from "@/components/use-shortcuts";
 import { isFlagged } from "@/jmap/mail";
 import type { EmailDetail, EmailSummary, Mailbox } from "@/jmap/types";
+import { emlName } from "@/lib/compose";
 import { correspondent } from "@/lib/correspondent";
+import { downloadBlob } from "@/lib/download";
 import { domainOf, isExternal } from "@/lib/external-hint";
 import { canAssignIn, mailboxRights } from "@/lib/mailboxes";
 import { moveTargets } from "@/lib/move-targets";
@@ -171,6 +174,12 @@ export const Toolbar = ({
   const printMail = usePrintMail();
   const { allowRemote } = useRemoteImages(email);
   const print = () => void run(() => printMail(accountId, email, allowRemote), false);
+  const client = useClient();
+  const saveEml = () =>
+    void run(async () => {
+      const name = emlName(email.subject);
+      downloadBlob(await client.download(accountId, email.blobId, name, "message/rfc822"), name);
+    }, false);
   const archive =
     canRemove && mailbox.role !== "archive"
       ? () =>
@@ -265,6 +274,7 @@ export const Toolbar = ({
       <MoreMenu
         compose={compose}
         print={print}
+        saveEml={saveEml}
         markUnread={markUnread}
         spam={toggleSpam ? { undo: inJunk, run: toggleSpam } : undefined}
         reportPhishing={reportPhishing}

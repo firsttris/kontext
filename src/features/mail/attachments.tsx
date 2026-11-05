@@ -30,8 +30,11 @@ import {
   hasThumbnail,
 } from "@/lib/attachment-kind";
 import { cn } from "@/lib/cn";
+import { safeFileName, subjectFileName } from "@/lib/compose";
+import { downloadBlob } from "@/lib/download";
 import { formatSize } from "@/lib/format";
-import { asDownload, asViewable, imageUrl, releaseImageUrl } from "@/lib/safe-blob";
+import { asViewable, imageUrl, releaseImageUrl } from "@/lib/safe-blob";
+import { uniqueNames, zipStored } from "@/lib/zip";
 import { m } from "@/paraglide/messages";
 import { renderPdfThumbnail } from "./pdf-thumbnail";
 import { useUnpackedAttachments } from "./winmail";
@@ -108,15 +111,6 @@ const useAttachment = (accountId: string, part: BodyPart, kind: AttachmentKind) 
   };
 };
 
-const save = (blob: Blob, name: string) => {
-  const url = URL.createObjectURL(asDownload(blob));
-  const link = document.createElement("a");
-  link.href = url;
-  link.download = name;
-  link.click();
-  setTimeout(() => URL.revokeObjectURL(url), 60_000);
-};
-
 const AttachmentCard = ({ accountId, part }: { accountId: string; part: BodyPart }) => {
   const toast = useToast();
   const kind = attachmentKind(part.type, part.name);
@@ -127,7 +121,7 @@ const AttachmentCard = ({ accountId, part }: { accountId: string; part: BodyPart
 
   const download = async () => {
     try {
-      save(await fetchFile(), part.name ?? "anhang");
+      downloadBlob(await fetchFile(), part.name ?? "anhang");
     } catch (error) {
       toast.show(m.common_error({ message: (error as Error).message }), "error");
     }
@@ -210,17 +204,72 @@ const AttachmentCard = ({ accountId, part }: { accountId: string; part: BodyPart
   );
 };
 
+/** "Alle herunterladen": the files in one "<Betreff>.zip", each under a name of its own. */
+const DownloadAll = ({
+  accountId,
+  parts,
+  subject,
+}: {
+  accountId: string;
+  parts: BodyPart[];
+  subject: string | null;
+}) => {
+  const client = useClient();
+  const toast = useToast();
+  const [busy, setBusy] = useState(false);
+  const run = async () => {
+    setBusy(true);
+    try {
+      const files = await Promise.all(
+        parts.map((part) => client.download(accountId, part.blobId!, "anhang", part.type)),
+      );
+      const names = uniqueNames(parts.map((part) => safeFileName(part.name) || "anhang"));
+      const entries = await Promise.all(
+        files.map(async (file, index) => ({
+          name: names[index]!,
+          data: new Uint8Array(await file.arrayBuffer()),
+        })),
+      );
+      downloadBlob(zipStored(entries), subjectFileName(subject, "zip"));
+    } catch (error) {
+      toast.show(m.common_error({ message: (error as Error).message }), "error");
+    } finally {
+      setBusy(false);
+    }
+  };
+  return (
+    <Button variant="ghost" size="sm" className="self-start" disabled={busy} onClick={run}>
+      <Download size={15} strokeWidth={1.75} /> {m.mail_download_all()}
+    </Button>
+  );
+};
+
 /** A winmail.dat shows as the files it holds (winmail.ts). */
-export const Attachments = ({ accountId, parts }: { accountId: string; parts: BodyPart[] }) => {
+export const Attachments = ({
+  accountId,
+  parts,
+  subject,
+}: {
+  accountId: string;
+  parts: BodyPart[];
+  subject: string | null;
+}) => {
   const shown = useUnpackedAttachments(accountId, parts);
-  return shown.length === 0 ? null : (
-    <ul
-      aria-label={m.mail_attachments()}
-      className="m-0 grid list-none grid-cols-2 gap-3 p-0 sm:flex sm:flex-wrap"
-    >
-      {shown.map((part) => (
-        <AttachmentCard key={part.blobId ?? part.partId} accountId={accountId} part={part} />
-      ))}
-    </ul>
+  if (shown.length === 0) return null;
+  const downloadable = shown.filter((part) => part.blobId);
+  return (
+    <div className="flex flex-col gap-2">
+      <ul
+        aria-label={m.mail_attachments()}
+        className="m-0 grid list-none grid-cols-2 gap-3 p-0 sm:flex sm:flex-wrap"
+      >
+        {shown.map((part) => (
+          <AttachmentCard key={part.blobId ?? part.partId} accountId={accountId} part={part} />
+        ))}
+      </ul>
+      {downloadable.length > 1 ? (
+        <DownloadAll accountId={accountId} parts={downloadable} subject={subject} />
+      ) : null}
+    </div>
   );
 };

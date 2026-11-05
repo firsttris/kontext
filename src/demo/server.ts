@@ -5,6 +5,7 @@
 import { handleApi } from "./api";
 import { handleRequest, sessionOf } from "./jmap";
 import { createPhone, handlePhone } from "./phone";
+import { rawMessage } from "./raw-message";
 import { json } from "./respond";
 import { releaseDue } from "./sending";
 import { newId, type Store } from "./store";
@@ -47,9 +48,17 @@ const upload = async (store: Store, request: Request) => {
   return json({ blobId, type, size: blob.size });
 };
 
-const download = (store: Store, path: string) => {
+/** A blob in the store, or a mail's own (the seed's mails have none stored, raw-message.ts). */
+const blobOf = async (store: Store, blobId: string): Promise<Blob | undefined> => {
+  const stored = store.blobs.get(blobId);
+  if (stored) return stored;
+  const email = [...store.emails.values()].find((candidate) => candidate.blobId === blobId);
+  return email ? rawMessage(store, email) : undefined;
+};
+
+const download = async (store: Store, path: string) => {
   const [, , , , blobId] = path.split("/");
-  const blob = store.blobs.get(decodeURIComponent(blobId ?? ""));
+  const blob = await blobOf(store, decodeURIComponent(blobId ?? ""));
   return blob
     ? new Response(blob, { headers: { "content-type": blob.type } })
     : json({ type: "notFound" }, 404);
