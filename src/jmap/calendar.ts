@@ -235,7 +235,9 @@ export const searchEvents = async (
     },
     USING,
   );
-  return getEvents(client, accountId, ids, BASE_PROPERTIES, WITHOUT_OVERRIDES);
+  // utcStart/utcEnd: Stalwart resolves a floating start in the get's timeZone, as in the views
+  // (expand_base in crates/groupware/src/calendar/expand.rs); a series gets its first date's.
+  return getEvents(client, accountId, ids, INSTANCE_PROPERTIES, WITHOUT_OVERRIDES);
 };
 
 /** One stored event, e.g. the series behind an instance (which carries the rule). */
