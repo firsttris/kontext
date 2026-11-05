@@ -35,7 +35,8 @@ const BASE_PROPERTIES = [
   "baseEventId",
 ];
 const INSTANCE_PROPERTIES = [...BASE_PROPERTIES, "utcStart", "utcEnd"];
-const EVENT_PROPERTIES = [...BASE_PROPERTIES, "recurrenceOverrides"];
+/** A stored event as the invitations and the .ics file write it, with its status. */
+const EVENT_PROPERTIES = [...BASE_PROPERTIES, "status", "recurrenceOverrides"];
 
 /**
  * The longest span one expanded query may cover, a day below Stalwart's maxExpandedQueryDuration

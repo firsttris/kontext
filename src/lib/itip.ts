@@ -229,7 +229,7 @@ const vevents = (event: CalendarEvent, { method, now, only }: ItipOptions): stri
     `UID:${uid}`,
     `SEQUENCE:${stamp.sequence ?? sequence}`,
     `DTSTAMP:${utcStamp(now)}`,
-    `STATUS:${method === "CANCEL" ? "CANCELLED" : "CONFIRMED"}`,
+    `STATUS:${method === "CANCEL" ? "CANCELLED" : (stamp.status ?? "confirmed").toUpperCase()}`,
   ];
   const overrides = Object.entries(event.recurrenceOverrides ?? {});
   const excluded = overrides.filter(([, patch]) => patch.excluded === true);

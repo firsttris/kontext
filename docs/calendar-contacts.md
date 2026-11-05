@@ -113,7 +113,7 @@ Kontext steht, steht auch am iPhone, unter Android (DAVx⁵) und in Thunderbird.
 - **Kalender als .ics exportieren:** Unter *Kalender verwalten* speichert der Pfeil nach unten
   neben einem Kalender (eigenen wie geteilten) alle seine Termine als `<Kalender>.ics`, vergangene
   und kommende, Serien mit ihren geänderten und ausgelassenen Terminen, Teilnehmer mit ihren
-  Antworten. Die Datei lässt sich in Google, Outlook, Apple oder einem anderen Kontext wieder
+  Antworten; ein abgesagter oder vorläufiger Termin bleibt es (`STATUS`). Die Datei lässt sich in Google, Outlook, Apple oder einem anderen Kontext wieder
   übernehmen. Erinnerungen bleiben draußen.
 
 - **Kalender drucken:** Der Drucker oben im Kalender (oder Strg+P, die Taste `p`) druckt die
