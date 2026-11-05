@@ -15,6 +15,8 @@ import {
   destroyContacts,
   listAddressBooks,
   listContacts,
+  moveContacts,
+  renameAddressBook,
   setContacts,
   shareAddressBook,
   updateContact,
@@ -181,7 +183,18 @@ export const useContactMutations = () => {
     onSettled: (_data, _error, cards) =>
       Promise.all(idsByAccount(cards).map(({ accountId }) => refresh(accountId))),
   });
-  return { create, update, remove, merge, removeMany };
+  /** Into another book of the same account (lib/contact-selection.ts `moveTargets`). */
+  const moveMany = useMutation({
+    mutationFn: ({ cards, book }: { cards: Contact[]; book: BookRef }) =>
+      moveContacts(
+        client,
+        book.accountId,
+        cards.map((card) => card.id),
+        book.book.id,
+      ),
+    onSettled: (_data, _error, { book }) => refresh(book.accountId),
+  });
+  return { create, update, remove, merge, removeMany, moveMany };
 };
 
 export const useBookMutations = () => {
@@ -207,5 +220,10 @@ export const useBookMutations = () => {
       shareAddressBook(client, book.accountId, book.book.id, shareWith),
     onSettled: (_data, _error, { book }) => refresh(book.accountId),
   });
-  return { createBook, deleteBook, shareBook };
+  const renameBook = useMutation({
+    mutationFn: ({ book, name }: { book: BookRef; name: string }) =>
+      renameAddressBook(client, book.accountId, book.book.id, name),
+    onSettled: (_data, _error, { book }) => refresh(book.accountId),
+  });
+  return { createBook, deleteBook, shareBook, renameBook };
 };

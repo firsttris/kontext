@@ -1,6 +1,10 @@
-/** Own address books: create, share with colleagues, delete. Shared ones are listed for reference. */
-import { Share2, Trash2, Users } from "lucide-react";
+/**
+ * Own address books: create, rename, share with colleagues, delete. Shared ones are listed for
+ * reference.
+ */
+import { Pencil, Share2, Trash2, Users } from "lucide-react";
 import { type FormEvent, useState } from "react";
+import { NameDialog } from "@/components/name-dialog";
 import { Button } from "@/components/ui/button";
 import { Dialog } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -17,10 +21,11 @@ type Props = { open: boolean; onOpenChange: (open: boolean) => void };
 
 export const BooksDialog = ({ open, onOpenChange }: Props) => {
   const { books } = useBooks();
-  const { createBook } = useBookMutations();
+  const { createBook, renameBook } = useBookMutations();
   const toast = useToast();
   const [name, setName] = useState("");
   const [sharing, setSharing] = useState<BookRef | null>(null);
+  const [renaming, setRenaming] = useState<BookRef | null>(null);
   const own = books.filter((book) => book.isPersonal);
   const shared = books.filter((book) => !book.isPersonal);
 
@@ -37,12 +42,21 @@ export const BooksDialog = ({ open, onOpenChange }: Props) => {
 
   return (
     <>
-      <Dialog open={open && !sharing} onOpenChange={onOpenChange} title={m.contacts_books()}>
+      <Dialog
+        open={open && !sharing && !renaming}
+        onOpenChange={onOpenChange}
+        title={m.contacts_books()}
+      >
         <section className="flex flex-col gap-2">
           <h3 className="m-0 text-[12px] font-medium text-muted">{m.contacts_books_mine()}</h3>
           <ul aria-label={m.contacts_books_mine()} className="m-0 flex list-none flex-col p-0">
             {own.map((book) => (
-              <OwnBook key={book.key} book={book} onShare={() => setSharing(book)} />
+              <OwnBook
+                key={book.key}
+                book={book}
+                onShare={() => setSharing(book)}
+                onRename={() => setRenaming(book)}
+              />
             ))}
           </ul>
           <form onSubmit={create} className="flex gap-2 pt-1">
@@ -84,11 +98,26 @@ export const BooksDialog = ({ open, onOpenChange }: Props) => {
           onClose={() => setSharing(null)}
         />
       ) : null}
+      {renaming ? (
+        <NameDialog
+          title={m.contacts_book_rename_title({ name: renaming.name })}
+          nameLabel={m.contacts_book_name()}
+          name={renaming.name}
+          onSave={(name) =>
+            name === renaming.name
+              ? Promise.resolve()
+              : renameBook.mutateAsync({ book: renaming, name })
+          }
+          onClose={() => setRenaming(null)}
+        />
+      ) : null}
     </>
   );
 };
 
-const OwnBook = ({ book, onShare }: { book: BookRef; onShare: () => void }) => {
+type OwnBookProps = { book: BookRef; onShare: () => void; onRename: () => void };
+
+const OwnBook = ({ book, onShare, onRename }: OwnBookProps) => {
   const { data: principals = [] } = usePrincipals();
   const { deleteBook } = useBookMutations();
   const toast = useToast();
@@ -116,6 +145,15 @@ const OwnBook = ({ book, onShare }: { book: BookRef; onShare: () => void }) => {
             : m.contacts_book_private()}
         </span>
       </span>
+      <Button
+        variant="ghost"
+        size="iconSm"
+        onClick={onRename}
+        aria-label={`${m.contacts_book_rename()}: ${book.name}`}
+        title={m.contacts_book_rename()}
+      >
+        <Pencil size={15} />
+      </Button>
       <Button
         variant="outline"
         size="sm"

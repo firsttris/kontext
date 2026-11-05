@@ -1,6 +1,6 @@
 /**
  * Above the contacts list while contacts are picked: delete them (one question with the count),
- * add them to a group, or save them as one vCard file. Groups are offered only within the one
+ * add them to a group, move them to another address book, or save them as one vCard file. Groups are offered only within the one
  * account all picked contacts are in, as members are named by uid there.
  */
 import { Download, Trash2, UserPlus, X } from "lucide-react";
@@ -13,6 +13,7 @@ import { downloadText } from "@/lib/download";
 import { fullName } from "@/lib/jscontact";
 import { toVCardFile } from "@/lib/vcard";
 import { m } from "@/paraglide/messages";
+import { MoveMenu } from "./move-menu";
 import { type BookRef, bookOf, type Contact, contactKey, useContactMutations } from "./queries";
 
 const IconButton = ({
@@ -143,6 +144,7 @@ export const ContactSelectionBar = ({
           )}
         </MenuContent>
       </MenuRoot>
+      <MoveMenu cards={picked} books={books} compact onMoved={onClear} />
       <IconButton label={m.contacts_bulk_export()} disabled={none} onClick={exportAll}>
         <Download size={15} strokeWidth={1.75} />
       </IconButton>

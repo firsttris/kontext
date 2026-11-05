@@ -49,6 +49,8 @@ Kontext steht, steht auch am iPhone, unter Android (DAVx⁵) und in Thunderbird.
   Hinweis. [Mehr](architecture.md#erinnerungen-an-termine)
 
   ![Neuer Termin mit Erinnerung einen Tag vorher per Mail](screenshots/event-reminder.png)
+- **Name und Farbe:** In *Kalender verwalten* öffnet der Stift neben einem eigenen Kalender
+  seinen Namen und seine Farbe (sieben zur Wahl). [Mehr](architecture.md#adressbucher-und-kalender-teilen)
 - **Erinnerung je Kalender:** In *Kalender verwalten* öffnet die Glocke neben einem Kalender die
   Erinnerung, die neue Termine in ihm bekommen, getrennt für Termine mit Uhrzeit und ganztägige.
   Etwa „Baustellen“: einen Tag vorher per Mail. Der neue Termin übernimmt sie ins Formular, man
@@ -186,10 +188,15 @@ Kontext steht, steht auch am iPhone, unter Android (DAVx⁵) und in Thunderbird.
   darf. Namen ganz in Groß- oder Kleinbuchstaben („MAX MUSTERMANN“) bietet Kontext in üblicher
   Schreibweise an. „Ignorieren“ merkt sich der Browser.
 - **Adressbücher teilen** mit Kollegen – lesen oder bearbeiten, alle auf einmal mit der
-  [Vertretung](mail.md#abwesenheit-und-signaturen).
+  [Vertretung](mail.md#abwesenheit-und-signaturen). Eigene Adressbücher lassen sich unter
+  *Adressbücher* mit dem Stift umbenennen.
+- **Verschieben nach …** am Kontakt (und für mehrere ausgewählte) legt ihn in ein anderes
+  Adressbuch desselben Kontos, etwa aus „Meine Kontakte“ nach „Lieferanten“. Angeboten werden nur
+  Adressbücher, in die man schreiben darf, und nur, wenn man ihn aus seinem jetzigen herausnehmen
+  darf. [Mehr](architecture.md#adressbucher-und-kalender-teilen)
 - **Mehrere Kontakte auf einmal:** Das Kästchen vor einem Kontakt wählt ihn aus, mit Umschalt
   alle bis dorthin, mit Strg/⌘ einzelne dazu; am Handy beginnt „Auswählen“ oder langes Drücken
-  die Auswahl, dann wählt ein Tipp (nicht, während ein Kontakt oder eine Gruppe bearbeitet wird). Über der Liste stehen dann „Zu Gruppe hinzufügen“, „Als vCard
+  die Auswahl, dann wählt ein Tipp (nicht, während ein Kontakt oder eine Gruppe bearbeitet wird). Über der Liste stehen dann „Zu Gruppe hinzufügen“, „Verschieben nach …“, „Als vCard
   exportieren“ (eine Datei `Kontakte.vcf`) und „Löschen“ (eine Frage mit der Anzahl; nicht, wenn
   ein Kontakt aus einem nur zum Lesen geteilten Adressbuch dabei ist). Gruppen
   bietet Kontext an, wenn alle ausgewählten Kontakte im selben Konto liegen wie die Gruppe und

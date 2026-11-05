@@ -1686,6 +1686,16 @@ JMAP session. That is why in mail only accounts of **groups** count as shared ma
 address books and calendars. Every appointment carries the account it comes from; changing, moving
 and deleting go to that account.
 
+A calendar's name and colour belong to each person (draft-ietf-jmap-calendars, "per-user
+properties"; Stalwart keeps them in the person's preferences, `crates/jmap/src/calendar/set.rs`),
+and so does an address book's name (`crates/jmap/src/addressbook/set.rs`). Kontext still offers
+renaming and the colour only for one's own calendars and address books. Moving a contact to
+another address book means replacing its `addressBookIds` with the new one; that works only within
+one account and only where one may write in all the old address books and in the new one
+(`mayWrite`: "move them to or from this AddressBook"). Kontext offers only such targets
+(`src/lib/contact-selection.ts`, `moveTargets`); Stalwart checks the same
+(`crates/jmap/src/contact/set.rs`).
+
 An appointment in someone else's calendar may be changed with "Edit" if one oneself or the
 calendar's owner organises it. Accepting and declining exist only in one's own calendar.
 

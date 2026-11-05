@@ -211,17 +211,32 @@ export const deleteAddressBook = async (
   );
 };
 
-export const shareAddressBook = async (
+const updateAddressBook = async (
+  client: JmapClient,
+  accountId: string,
+  id: string,
+  patch: Partial<Pick<AddressBook, "name" | "shareWith">>,
+): Promise<void> => {
+  assertSetOk(
+    await client.call("AddressBook/set", { accountId, update: { [id]: patch } }, USING),
+    "Adressbuch",
+  );
+};
+
+export const shareAddressBook = (
   client: JmapClient,
   accountId: string,
   id: string,
   shareWith: ShareWith,
-): Promise<void> => {
-  assertSetOk(
-    await client.call("AddressBook/set", { accountId, update: { [id]: { shareWith } } }, USING),
-    "Adressbuch",
-  );
-};
+): Promise<void> => updateAddressBook(client, accountId, id, { shareWith });
+
+/** Stalwart keeps the name per user (crates/jmap/src/addressbook/set.rs `update_address_book`). */
+export const renameAddressBook = (
+  client: JmapClient,
+  accountId: string,
+  id: string,
+  name: string,
+): Promise<void> => updateAddressBook(client, accountId, id, { name });
 
 export const createContact = async (
   client: JmapClient,
@@ -284,6 +299,25 @@ export const setContacts = async (
     await client.call("ContactCard/set", { accountId, update, destroy }, USING),
     "Kontakt",
   );
+};
+
+/**
+ * Moves cards into another book of the same account: `addressBookIds` replaced by the one book
+ * (draft-ietf-jmap-contacts, ContactCard). Stalwart checks the right to add to the new book and to
+ * remove from the old ones (crates/jmap/src/contact/set.rs). 500 per call (`maxObjectsInSet`).
+ */
+export const moveContacts = async (
+  client: JmapClient,
+  accountId: string,
+  ids: string[],
+  addressBookId: string,
+): Promise<void> => {
+  for (const page of chunk(ids, 500)) {
+    const update = Object.fromEntries(
+      page.map((id) => [id, { addressBookIds: { [addressBookId]: true } }]),
+    );
+    assertSetOk(await client.call("ContactCard/set", { accountId, update }, USING), "Kontakt");
+  }
 };
 
 /** Deletes many cards of one account, 500 per call (Stalwart's `maxObjectsInSet`). */

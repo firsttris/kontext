@@ -25,6 +25,7 @@ import { usePhoneDial } from "../phone/phone-page";
 import { ContactDocuments } from "./contact-documents";
 import { ContactFacts, Field } from "./contact-facts";
 import { ContactTasks } from "./contact-tasks";
+import { MoveMenu } from "./move-menu";
 import { type BookRef, bookOf, type Contact } from "./queries";
 
 const Card = ({ title, children }: { title: string; children: ReactNode }) => (
@@ -144,6 +145,7 @@ export const ContactDetail = ({ card, books, groups }: Props) => {
               </Link>
             </Button>
           ) : null}
+          <MoveMenu cards={[card]} books={books} />
         </div>
       </header>
 

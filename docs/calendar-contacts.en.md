@@ -49,6 +49,8 @@ Kontext is also on the iPhone, on Android (DAVx⁵) and in Thunderbird.
   minutes before by notification, as before. [More](architecture.md#erinnerungen-an-termine)
 
   ![New appointment with a reminder by email one day before](screenshots/event-reminder.png)
+- **Name and colour:** in *Manage calendars*, the pencil next to one of your own calendars opens
+  its name and its colour (seven to choose from). [More](architecture.md#adressbucher-und-kalender-teilen)
 - **Reminder per calendar:** in *Manage calendars*, the bell next to a calendar opens the reminder
   that new appointments in it get, separately for appointments with a time and all-day ones. For
   example "Building sites": one day before by email. The new appointment takes it over into the
@@ -185,11 +187,16 @@ Kontext is also on the iPhone, on Android (DAVx⁵) and in Thunderbird.
   happens within one account and only where you may write. Names entirely in upper or lower case
   ("MAX MUSTERMANN") Kontext offers in the usual spelling. The browser remembers "Ignore".
 - **Sharing address books** with colleagues – view or edit, all at once with the
-  [deputy](mail.md#abwesenheit-und-signaturen).
+  [deputy](mail.md#abwesenheit-und-signaturen). Your own address books can be renamed under
+  *Address books* with the pencil.
+- **Move to …** on a contact (and for several selected ones) puts it into another address book of
+  the same account, for example from "My contacts" to "Suppliers". Only address books you may
+  write to are offered, and only if you may take it out of its current one.
+  [More](architecture.md#adressbucher-und-kalender-teilen)
 - **Several contacts at once:** the checkbox in front of a contact selects it, with Shift all up
   to there, with Ctrl/⌘ single ones in addition; on the phone, "Select" or a long press starts the
   selection, then a tap selects (not while a contact or a group is being edited). Above the list
-  there are then "Add to group", "Export as vCard" (one file `Kontakte.vcf`) and "Delete" (a
+  there are then "Add to group", "Move to …", "Export as vCard" (one file `Kontakte.vcf`) and "Delete" (a
   question with the number; not if a contact from an address book shared read-only is among them).
   Kontext offers groups if all selected contacts are in the same account as the group and you may
   change it: a group names its members by the card's `uid`, and that only counts within one

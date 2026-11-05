@@ -7,6 +7,10 @@ Steps that an update needs beyond raising the version are marked **Upgrade**.
 
 ## Unreleased
 
+- Calendar and contacts: own calendars get a new name and colour from the pencil in *Kalender
+  verwalten*, own address books a new name in *Adressbücher*; "Verschieben nach …" moves a
+  contact, or several selected ones, to another address book of the same account (user guide,
+  "Kalender und Kontakte").
 - Calendar and tasks: a search field finds appointments (title, location, description,
   participants, past and coming; a series once) and tasks (title, notes, checklist, assignee),
   and a hit opens them, on the phone too (user guide, "Kalender" and "Aufgaben").
