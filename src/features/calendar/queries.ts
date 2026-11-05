@@ -41,6 +41,7 @@ import {
 import type { ShareWith } from "@/lib/sharing";
 import { m } from "@/paraglide/messages";
 import { usePrincipals } from "../sharing/queries";
+import { CALENDAR_COLORS } from "./calendar-colors";
 import { forgetHiddenCalendar, useHiddenCalendars } from "./hidden-calendars";
 
 /** A calendar together with the account it lives in. */
@@ -92,7 +93,7 @@ const calendarName = (calendar: Calendar, own: boolean, owner: string): string =
   /^Stalwart Calendar/.test(calendar.name) ? (own ? m.calendar_mine() : owner) : calendar.name;
 
 /** A colour per calendar when the user has not picked one. */
-const PALETTE = ["#2563eb", "#16a34a", "#d97706", "#9333ea", "#dc2626", "#0891b2", "#db2777"];
+const PALETTE = CALENDAR_COLORS.map((choice) => choice.color);
 
 export const listKey = (accountId: string) => [accountId, "calendars"] as const;
 
@@ -482,5 +483,22 @@ export const useCalendarMutations = () => {
       ),
     onSettled: (_data, _error, { calendar }) => refresh(calendar.accountId),
   });
-  return { createOne, deleteOne, share };
+  /** A new name or colour, the user's own (calendar-colors.ts). */
+  const edit = useMutation({
+    mutationFn: ({
+      calendar,
+      patch,
+    }: {
+      calendar: CalendarRef;
+      patch: { name?: string; color?: string };
+    }) =>
+      updateCalendar(
+        client,
+        calendar.accountId,
+        calendar.calendar.id,
+        withOwnVisibility(patch, calendar.visible),
+      ),
+    onSettled: (_data, _error, { calendar }) => refresh(calendar.accountId),
+  });
+  return { createOne, deleteOne, share, edit };
 };

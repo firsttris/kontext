@@ -1,11 +1,13 @@
 /**
  * The calendars the user can see, each with a box to show or hide it: in the sidebar, and in the
- * "Kalender verwalten" dialog with sharing, deleting and creating own calendars, adding the
- * public holidays, taking appointments over from an .ics file and saving a calendar as one.
+ * "Kalender verwalten" dialog with renaming, recolouring, sharing, deleting and creating own
+ * calendars, adding the public holidays, taking appointments over from an .ics file and saving a
+ * calendar as one.
  */
-import { Download, Settings2, Share2, Trash2 } from "lucide-react";
+import { Download, Pencil, Settings2, Share2, Trash2 } from "lucide-react";
 import { type FormEvent, useEffect, useState } from "react";
 import { useClient } from "@/auth/auth";
+import { NameDialog } from "@/components/name-dialog";
 import { StateSelect } from "@/components/state-select";
 import { Button } from "@/components/ui/button";
 import { Dialog } from "@/components/ui/dialog";
@@ -21,6 +23,7 @@ import { m } from "@/paraglide/messages";
 import { useColleagues, usePrincipals } from "../sharing/queries";
 import { ShareDialog } from "../sharing/share-dialog";
 import { BirthdaysToggle } from "./birthdays";
+import { CALENDAR_COLORS, calendarChanges } from "./calendar-colors";
 import { DefaultReminderButton } from "./default-reminder";
 import { useAddHolidays } from "./holiday-queries";
 import { IcsImport } from "./ics-import";
@@ -173,9 +176,10 @@ const SharedWith = ({ calendar }: { calendar: CalendarRef }) => {
 };
 
 const OwnActions = ({ calendar }: { calendar: CalendarRef }) => {
-  const { deleteOne, share } = useCalendarMutations();
+  const { deleteOne, share, edit } = useCalendarMutations();
   const toast = useToast();
   const [sharing, setSharing] = useState(false);
+  const [editing, setEditing] = useState(false);
 
   const destroy = () => {
     if (!window.confirm(m.calendar_delete_confirm({ name: calendar.name }))) return;
@@ -184,6 +188,15 @@ const OwnActions = ({ calendar }: { calendar: CalendarRef }) => {
 
   return (
     <>
+      <Button
+        variant="ghost"
+        size="iconSm"
+        onClick={() => setEditing(true)}
+        aria-label={`${m.calendar_edit()}: ${calendar.name}`}
+        title={m.calendar_edit()}
+      >
+        <Pencil size={15} />
+      </Button>
       <Button
         variant="outline"
         size="sm"
@@ -202,6 +215,19 @@ const OwnActions = ({ calendar }: { calendar: CalendarRef }) => {
         >
           <Trash2 size={15} />
         </Button>
+      ) : null}
+      {editing ? (
+        <NameDialog
+          title={m.calendar_edit_title({ name: calendar.name })}
+          nameLabel={m.calendar_calendar_name()}
+          name={calendar.name}
+          color={calendar.color}
+          colors={CALENDAR_COLORS}
+          onSave={(name, color) =>
+            edit.mutateAsync({ calendar, patch: calendarChanges(calendar, name, color) })
+          }
+          onClose={() => setEditing(false)}
+        />
       ) : null}
       {sharing ? (
         <ShareDialog

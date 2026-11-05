@@ -1,5 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { byLetter, groupTargets, idsByAccount, withMembers } from "./contact-selection";
+import {
+  byLetter,
+  groupTargets,
+  idsByAccount,
+  moveTargets,
+  withMembers,
+} from "./contact-selection";
 import type { ContactCard } from "./jscontact";
 
 const person = (id: string, name: string, accountId = "a", uid: string | undefined = `u-${id}`) =>
@@ -63,5 +69,39 @@ describe("contact selection", () => {
       added: 1,
     });
     expect(withMembers(kunden, [person("1", "A")]).added).toBe(0);
+  });
+
+  describe("moveTargets", () => {
+    const book = (id: string, accountId = "a", mayWrite = true) => ({
+      accountId,
+      book: { id },
+      mayWrite,
+    });
+    const inBooks = (id: string, books: string[], accountId = "a") => ({
+      ...person(id, id, accountId),
+      addressBookIds: Object.fromEntries(books.map((b) => [b, true])),
+    });
+    const books = [book("main"), book("kunden"), book("lesen", "a", false), book("x", "b")];
+
+    it("offers the other writable books of the same account", () => {
+      expect(moveTargets([inBooks("1", ["main"])], books).map((b) => b.book.id)).toEqual([
+        "kunden",
+      ]);
+    });
+
+    it("keeps a book some of the picked are not in yet", () => {
+      const picked = [inBooks("1", ["main"]), inBooks("2", ["kunden"])];
+      expect(moveTargets(picked, books).map((b) => b.book.id)).toEqual(["main", "kunden"]);
+    });
+
+    it("offers a card in two books the one of them, to keep it there alone", () => {
+      expect(moveTargets([inBooks("1", ["main", "kunden"])], books)).toHaveLength(2);
+    });
+
+    it("moves nothing out of a read-only or unseen book, nor across accounts", () => {
+      expect(moveTargets([inBooks("1", ["lesen"])], books)).toEqual([]);
+      expect(moveTargets([inBooks("1", ["hidden"])], books)).toEqual([]);
+      expect(moveTargets([inBooks("1", ["main"]), inBooks("2", ["x"], "b")], books)).toEqual([]);
+    });
   });
 });

@@ -21,10 +21,13 @@ export const EventDialog = ({ eventId, event, start }: Props) => {
     event && isInstance(event) ? event : undefined,
   );
   const series = found ?? undefined;
+  // Only this dialog's appointment: a deletion resolves after its refetch has dropped the date,
+  // by when another one may be open (search.event changed) and must stay so.
   const close = () =>
     navigate({
       to: "/calendar",
-      search: (prev) => ({ ...prev, event: undefined, start: undefined }),
+      search: (prev) =>
+        prev.event === eventId ? { ...prev, event: undefined, start: undefined } : prev,
     });
   if (!isNew && !event) return null;
   const waiting = event && isInstance(event) && seriesPending;

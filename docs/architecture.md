@@ -1739,6 +1739,16 @@ Deshalb gelten in der Mail nur Konten von **Gruppen** als gemeinsame Postfächer
 Adressbüchern und Kalendern steht. Jeder Termin trägt das Konto, aus dem er kommt; Ändern,
 Verschieben und Löschen gehen an dieses Konto.
 
+Name und Farbe eines Kalenders gehören jedem selbst (draft-ietf-jmap-calendars, „per-user
+properties“; Stalwart legt sie in die Einstellungen der Person, `crates/jmap/src/calendar/set.rs`),
+ebenso der Name eines Adressbuchs (`crates/jmap/src/addressbook/set.rs`). Kontext bietet
+Umbenennen und die Farbe trotzdem nur für eigene Kalender und Adressbücher an. Einen Kontakt in
+ein anderes Adressbuch verschieben heißt, sein `addressBookIds` durch das neue zu ersetzen; das
+geht nur innerhalb eines Kontos und nur, wo man in allen alten Adressbüchern und im neuen
+schreiben darf (`mayWrite`: „move them to or from this AddressBook“). Kontext bietet nur solche
+Ziele an (`src/lib/contact-selection.ts`, `moveTargets`); Stalwart prüft dasselbe
+(`crates/jmap/src/contact/set.rs`).
+
 Einen Termin in einem fremden Kalender darf man mit „Bearbeiten“ ändern, wenn man selbst oder der
 Besitzer des Kalenders ihn organisiert. Zusagen und Absagen gibt es nur im eigenen Kalender.
 
