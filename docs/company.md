@@ -81,6 +81,11 @@ Stalwarts Admin-Oberfläche und ohne IT-Kenntnisse.
   ([Verschlüsselung](encryption.md#baustein-4-vertraulich-senden-fur-alle-empfanger)).
 - **Sicherheit prüfen:** SPF, DMARC, MTA-STS, TLS-RPT, DANE und HTTPS der eigenen Domain
   ([Verschlüsselung](encryption.md#baustein-1-grundschutz-unsichtbar-fur-alles)).
+- **Beim Versand verschlüsseln** unter *Einstellungen → Firma → Sicherheit der Mails*: ein
+  Schalter, mit dem Stalwart Mails an Empfänger außerhalb der Firma selbst verschlüsselt, wenn es
+  deren Schlüssel kennt, und die Liste dieser Schlüssel – eingefügt, von Stalwart gesucht (Web Key
+  Directory, keys.openpgp.org) oder aus empfangenen Mails gelernt; jeder lässt sich entfernen
+  ([Verschlüsselung](encryption.md#verschlusseln-durch-stalwart)).
 - **Datensicherung:** wohin gesichert wird, wie der letzte Lauf ausging, wie voll der Speicher
   ist, die Uhrzeit der nächtlichen Sicherung und „Jetzt sichern“, dazu das Protokoll. Dafür
   müssen auf dem Server die Units eingerichtet sein

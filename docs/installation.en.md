@@ -171,6 +171,14 @@ the account's domain. Without a terminal (in a script, say)
 it takes the login from the environment variable `STALWART_ADMIN` (`name:password`). What exactly
 it does is in `server/stalwart-setup.ts`.
 
+Stalwart lets the admin pass on only permissions it has itself. If Stalwart was updated from a
+version before 1.0.2, its admin role lacks the encryption permissions (`sysEncryption…`,
+`sysExternalPublicKey…`). The command then sets everything else up and leaves out only the
+permissions for [encrypting by Stalwart](encryption.md#verschlusseln-durch-stalwart), with a hint
+saying so. To use that, give the admin role these permissions, as Stalwart's
+[changelog for 1.0.2](https://github.com/stalwartlabs/stalwart/blob/main/CHANGELOG.md) describes,
+and run the command again.
+
 Then sign in at `https://kontext.firma.de`. On the phone, choose "Add to Home Screen" in the
 browser: Kontext then starts like an app and stays signed in.
 
@@ -369,8 +377,14 @@ in Stalwart's admin interface it goes like this:
 1. Create a **role** `Kontext-Server`: it inherits the role *User*
    and additionally gets the permissions `sysAccountGet`, `sysAccountQuery`, `sysAccountCreate`,
    `sysAccountUpdate`, `sysRoleGet`, `sysRoleCreate`, `sysDomainGet`, `sysAuthenticationGet`,
-   `sysIndexQueueStatusGet` and `impersonate`. With `sysIndexQueueStatusGet` the
-   company admin shows while Stalwart is building the search index. With `impersonate` the server works in the employees' mailboxes
+   `sysIndexQueueStatusGet`, `sysEncryptionGet`, `sysEncryptionUpdate`,
+   `sysExternalPublicKeyGet`, `sysExternalPublicKeyCreate`, `sysExternalPublicKeyDestroy`,
+   `sysActionCreate`, `actionReloadSettings` and `impersonate`. With `sysIndexQueueStatusGet` the
+   company admin shows while Stalwart is building the search index. With the `sysEncryption…` and
+   `sysExternalPublicKey…` permissions it switches [encryption by
+   Stalwart](encryption.md#verschlusseln-durch-stalwart) and manages the recipients' keys;
+   `sysActionCreate` with `actionReloadSettings` lets it have Stalwart reload its settings
+   afterwards. With `impersonate` the server works in the employees' mailboxes
    (out of office, read access to shared mailboxes) and enters replies to invitations;
    the app never shows the boss anyone else's mail in doing so.
 2. Create an **account** `kontext-server@firma.de` with this role (instead of *User*) and a long

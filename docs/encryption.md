@@ -227,6 +227,24 @@ Ein Schalter für Mails nach außen; Kontext nimmt je Empfänger den besten Weg:
 Im Fenster „Neue Mail“ heißt das Schloss „Vertraulich senden“; der Hinweis daneben sagt, wie viele
 Empfänger PGP, S/MIME und einen Link bekommen. Mit Links gibt es keine „Rückgängig“-Frist.
 
+### Verschlüsseln durch Stalwart
+
+Ohne Schloss im Fenster „Neue Mail“ verschlüsselt Stalwart selbst, wenn die Firmenverwaltung es
+unter *Einstellungen → Firma → Sicherheit der Mails* einschaltet („Mails an Empfänger mit
+bekanntem Schlüssel automatisch verschlüsseln“, `Encryption.gatewayEnable` seit Stalwart 1.0.2).
+Jede Mail an einen Empfänger außerhalb der eigenen Domains, dessen Schlüssel (OpenPGP oder
+S/MIME) Stalwart kennt, geht dann als eigene verschlüsselte Kopie hinaus; ohne Schlüssel geht sie
+wie bisher. Das ist Stalwarts Voreinstellung `opportunistic` (`gatewayOutbound`); eine Pflicht je
+Empfänger, bei der Stalwart die Mail ohne Schlüssel zurückweist (`5.7.5`), stellt Kontext nicht
+ein.
+
+Die Schlüssel (`ExternalPublicKey`) stehen darunter in einer Liste. Man fügt einen ein, oder gibt
+nur die Adresse an und lässt Stalwart suchen – im Web Key Directory der Domain des Empfängers
+oder auf keys.openpgp.org; Stalwart hält den gefundenen Schlüssel danach selbst aktuell. Dazu
+lernt Stalwart Schlüssel aus Mails, die von außen mit Schlüssel ankommen. Jeder lässt sich
+entfernen. Für unbekannte Empfänger sucht Stalwart nichts. Die Rechte dafür bekommt Kontexts
+Schlüssel vom [Einrichtungsbefehl](installation.md#einrichtungsbefehl).
+
 ## Baustein 5: vertrauliche Unterhaltungen im Chat
 
 Der Chat bleibt im Alltag wie er ist – geschützt durch Baustein 1, mit Suche, Benachrichtigungen

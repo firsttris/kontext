@@ -225,6 +225,23 @@ One switch for mails going out; Kontext takes the best way for each recipient:
 In the "New mail" window, the lock is called "Send confidentially"; the note next to it says how
 many recipients get PGP, S/MIME and a link. With links there is no "Undo" period.
 
+### Encryption by Stalwart { #verschlusseln-durch-stalwart }
+
+Without the lock in the "New mail" window, Stalwart encrypts by itself once the company
+administration switches it on under *Settings → Company → Sicherheit der Mails* ("Automatically
+encrypt mail to recipients with a known key", `Encryption.gatewayEnable` since Stalwart 1.0.2).
+Every mail to a recipient outside the own domains whose key (OpenPGP or S/MIME) Stalwart knows then
+goes out as its own encrypted copy; without a key it goes as before. This is Stalwart's default
+`opportunistic` (`gatewayOutbound`); Kontext does not set a per-recipient requirement, where
+Stalwart would bounce the mail without a key (`5.7.5`).
+
+The keys (`ExternalPublicKey`) are listed below it. One pastes a key, or gives only the address and
+lets Stalwart look it up – in the Web Key Directory of the recipient's domain or on
+keys.openpgp.org; Stalwart then keeps the found key up to date itself. Stalwart also learns keys
+from mails that arrive from outside with a key. Each can be removed. Stalwart looks up nothing for
+unknown recipients. Kontext's key gets the rights for this from the
+[setup command](installation.md#einrichtungsbefehl).
+
 ## Building block 5: confidential conversations in the chat { #baustein-5-vertrauliche-unterhaltungen-im-chat }
 
 Day to day, the chat stays as it is – protected by building block 1, with search, notifications

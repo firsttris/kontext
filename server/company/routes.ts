@@ -12,6 +12,7 @@ import { assistantRoutes } from "./assistant";
 import { backupRoutes } from "./backup-routes";
 import { bad, bodyOf, type CompanyDeps, createLoader, type Env } from "./context";
 import { employeeRoutes } from "./employees";
+import { encryptionGatewayRoutes } from "./encryption-gateway";
 import { externalHintRoutes, readExternalHint } from "./external-hint";
 import { idleLogoutRoutes, readIdleLogout } from "./idle-logout";
 import { legalFooterRoutes, readLegalFooter } from "./legal-footer";
@@ -134,6 +135,9 @@ export const createCompanyRoutes = (deps: CompanyDeps) => {
   });
   if (deps.smimeAuthorities) {
     app.route("/smime-authorities", authorityRoutes(deps.smimeAuthorities));
+  }
+  if (deps.encryptionGateway) {
+    app.route("/encryption-gateway", encryptionGatewayRoutes(deps.encryptionGateway));
   }
   if (deps.backup) app.route("/backup", backupRoutes(deps.backup));
   app.route("/migrations", migrationRoutes(deps.migrations));
