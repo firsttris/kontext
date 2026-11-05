@@ -10,6 +10,10 @@ Steps that an update needs beyond raising the version are marked **Upgrade**.
 - Mail: "Absender blockieren" in "Weitere Aktionen" blocks an outside sender's address or whole
   domain: the mail and all future ones from there go to Spam. It is a rule "Blockiert: …" at the
   top of the rules, removed there to unblock (user guide, "Mail", "Sicherheit").
+- Calendar: a "Arbeitswoche" view (Monday to Friday) next to day, week and month, and working
+  hours per device (*Einstellungen → Darstellung*, at first 7–18): day and week open at their
+  start and shade the hours outside them; phones keep the day view (user guide, "Kalender und
+  Kontakte").
 - Mail: own folders can be renamed, moved and deleted from "…" next to them in the sidebar
   (their mails go to the trash, subfolders go along); "Mark all as read" works for any folder,
   for all its mails, not only the loaded ones (user guide, "Mail", "Ordner verwalten").

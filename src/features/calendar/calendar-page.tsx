@@ -1,5 +1,5 @@
 /**
- * The calendar: on the desktop day, week, month or list with a sidebar (month, calendars, open
+ * The calendar: on the desktop day, week, work week, month or list with a sidebar (month, calendars, open
  * invitations); on a phone one day with a strip of the week above it, the month, or the list.
  */
 import { Link, useNavigate } from "@tanstack/react-router";
@@ -26,6 +26,7 @@ import {
 } from "@/lib/jscalendar";
 import { LOCALE } from "@/lib/locale";
 import { calendarTasks } from "@/lib/task-context";
+import { workWeek } from "@/lib/work-hours";
 import { m } from "@/paraglide/messages";
 import { useMe, useTasks } from "../tasks/queries";
 import { AGENDA_DAYS, AgendaView } from "./agenda-view";
@@ -39,8 +40,9 @@ import { calendarOf, isInvitation, mayEdit, useEventMutations, useEvents } from 
 import { useTasksShown } from "./task-chip";
 import type { Moved } from "./use-drag";
 import { WeekGrid } from "./week-grid";
+import { useWorkHours } from "./work-hours-setting";
 
-type View = "day" | "week" | "month" | "agenda";
+type View = "day" | "week" | "workweek" | "month" | "agenda";
 type Search = {
   date?: string;
   view?: View;
@@ -52,6 +54,7 @@ type Search = {
 const VIEWS: [View, () => string][] = [
   ["day", m.calendar_day],
   ["week", m.calendar_week],
+  ["workweek", m.calendar_work_week],
   ["month", m.calendar_month],
   ["agenda", m.calendar_agenda],
 ];
@@ -74,7 +77,7 @@ const monthTitle = new Intl.DateTimeFormat(LOCALE, {
   timeZone: "UTC",
 });
 
-/** The days a view loads and shows. Day and week both load the week, so switching is instant. */
+/** The days a view loads and shows. Day and both weeks load the week, so switching is instant. */
 const range = (view: View, selected: string): { from: string; to: string } => {
   if (view === "month") {
     const days = monthDays(selected);
@@ -87,7 +90,7 @@ const range = (view: View, selected: string): { from: string; to: string } => {
 
 const move = (view: View, selected: string, direction: 1 | -1): string => {
   if (view === "month") return addMonths(selected, direction);
-  return addDays(selected, direction * { day: 1, week: 7, agenda: AGENDA_DAYS }[view]);
+  return addDays(selected, direction * { day: 1, week: 7, workweek: 7, agenda: AGENDA_DAYS }[view]);
 };
 
 const rangeTitle = (days: string[]): string => {
@@ -102,17 +105,20 @@ const rangeTitle = (days: string[]): string => {
 const weekFrom = (first: string): string[] =>
   Array.from({ length: 7 }, (_, index) => addDays(first, index));
 
+const isWeek = (view: View): boolean => view === "week" || view === "workweek";
+
 const useIsPhone = (): boolean => useMediaQuery("(max-width: 767px)");
 
 export const CalendarPage = ({ search }: { search: Search }) => {
   const today = dateKey(new Date());
   const selected = search.date ?? today;
   const phone = useIsPhone();
-  // A phone has no room for seven columns: the week becomes the day.
+  // A phone has no room for five or seven columns: either week becomes the day.
   const chosen = search.view ?? (phone ? "day" : "week");
-  const view: View = phone && chosen === "week" ? "day" : chosen;
+  const view: View = phone && isWeek(chosen) ? "day" : chosen;
   const week = weekDays(selected);
-  const days = view === "day" ? [selected] : week;
+  const days = view === "day" ? [selected] : view === "workweek" ? workWeek(selected) : week;
+  const workHours = useWorkHours();
   const { from, to } = range(view, selected);
   const { data: stored, calendars, isPending } = useEvents(from, to);
   const birthdays = useBirthdayEvents(from, to);
@@ -180,7 +186,7 @@ export const CalendarPage = ({ search }: { search: Search }) => {
             ? rangeTitle([from, to])
             : rangeTitle(days)}
       </h1>
-      {view === "day" || view === "week" ? (
+      {view === "day" || isWeek(view) ? (
         <span className="text-[13px] text-muted">
           {m.calendar_week_number({ week: isoWeek(selected) })}
         </span>
@@ -227,7 +233,7 @@ export const CalendarPage = ({ search }: { search: Search }) => {
         aria-label="Ansicht"
         className="order-last flex w-full gap-1 rounded-[9px] bg-subtle p-[3px] md:order-none md:w-auto"
       >
-        {VIEWS.filter(([value]) => !(phone && value === "week")).map(([value, label]) => (
+        {VIEWS.filter(([value]) => !(phone && isWeek(value))).map(([value, label]) => (
           <Link
             key={value}
             to="/calendar"
@@ -315,6 +321,7 @@ export const CalendarPage = ({ search }: { search: Search }) => {
             showDayHeader={!phone}
             canMove={canMove}
             onMove={onMove}
+            workHours={workHours}
           />
         )}
         <Link
