@@ -142,6 +142,14 @@ describe("startCompose", () => {
       expect(start.attachments.map((file) => file.blobId)).toEqual(["b1"]);
       expect(start.images.map((each) => each.blobId)).toEqual(["b3", "b2"]);
     });
+    it("sends a picture listed in the HTML body and in the attachments once", () => {
+      // RFC 8621 §4.1.4 (and mail-parser 1.0.1, src/parser/classify.rs, which Stalwart uses):
+      // an inline image after the HTML inside multipart/alternative is in htmlBody and attachments.
+      const logo = picture("logo@keller.test", "b2", "inline");
+      const both: EmailDetail = { ...original, htmlBody: [logo], attachments: [logo] };
+      const start = startCompose("reply", both, quoted, ["jonas@weber.test"]);
+      expect(start.images).toEqual([image("logo@keller.test", "b2")]);
+    });
     it("quotes no pictures from a text that shows none", () => {
       expect(startCompose("reply", withPictures, "<p>Hallo</p>", []).images).toEqual([]);
     });
