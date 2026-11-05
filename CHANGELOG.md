@@ -12,6 +12,13 @@ Steps that an update needs beyond raising the version are marked **Upgrade**.
   stopped, and someone else moved, changed or cancelled an appointment in a calendar you see (a
   shared mailbox's, or an organizer's update of an invitation). Opening an entry clears it on
   every device (user guide, "App, Handy und Konto", "Benachrichtigungen").
+- Encryption: "Mails auf dem Server verschlüsselt ablegen" under *Einstellungen →
+  Verschlüsselung* has Stalwart store new mails encrypted with one's own OpenPGP key (Stalwart's
+  `encryptionAtRest`, since 1.0.2); Kontext registers the key with Stalwart and opens the mails
+  like any PGP mail. Optionally also mails stored by mail programs or an import. Existing mails,
+  drafts, Kontext's "Sent" copies and shared mailboxes stay unencrypted; search, rules, the
+  assistant and agents can't read encrypted mails (docs, "Verschlüsselung"). Deleting one's key
+  switches it off first, so no new mail is encrypted for a key nobody holds.
 - Calendar: an appointment with attendees in the calendar of a shared mailbox (info@, rechnung@)
   invites as the mailbox. info@ is the organiser, the invitation goes out from info@ and is in its
   "Sent", and the answers come back to info@ instead of to the colleague who entered it. Editing

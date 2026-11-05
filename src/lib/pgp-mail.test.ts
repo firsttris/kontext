@@ -1,5 +1,5 @@
 // @vitest-environment node
-import { createMessage, generateKey, readKey, sign } from "openpgp";
+import { createMessage, encrypt, generateKey, readKey, sign } from "openpgp";
 import PostalMime from "postal-mime";
 import { describe, expect, it } from "vitest";
 import {
@@ -134,5 +134,46 @@ describe("PGP in mails", () => {
     const changed = raw.replace(/^(QW5iZWkg)/m, "QW5kZXJz");
     expect(changed).not.toBe(raw);
     expect((await checkSigned(changed, type, [jonas.publicKey])).state).toBe("invalid");
+  }, 30_000);
+
+  it("reads a mail the server encrypted at rest", async () => {
+    const jonas = await person("jonas@w.test");
+    // The inner part and the wrapper as Stalwart writes them (crates/crypto/src/pgp/encrypt.rs
+    // MIME_HEADER_START … DATA_PART; crates/crypto/src/mime/entity.rs write_inner): outer
+    // headers kept, an unsigned literal packet in an armored encrypted.asc.
+    const inner =
+      "Content-Type: text/plain; charset=utf-8\r\nContent-Transfer-Encoding: 8bit\r\n\r\nDie Pumpe läuft wieder.\r\n";
+    const armored = await encrypt({
+      message: await createMessage({ binary: new TextEncoder().encode(inner) }),
+      encryptionKeys: await readKey({ armoredKey: jonas.publicKey }),
+    });
+    const raw = [
+      "From: kunde@example.test",
+      "To: jonas@w.test",
+      "Subject: Heizung",
+      "MIME-Version: 1.0",
+      'Content-Type: multipart/encrypted;\r\n\tprotocol="application/pgp-encrypted";\r\n\tboundary="s1"',
+      "",
+      "OpenPGP/MIME message (Automatically encrypted by Stalwart)",
+      "",
+      "--s1",
+      "Content-Type: application/pgp-encrypted",
+      "",
+      "Version: 1",
+      "",
+      "--s1",
+      'Content-Type: application/octet-stream; name="encrypted.asc"',
+      'Content-Disposition: inline; filename="encrypted.asc"',
+      "",
+      armored as string,
+      "--s1--",
+      "",
+    ].join("\r\n");
+    expect(pgpKind('multipart/encrypted; protocol="application/pgp-encrypted"', "")).toBe(
+      "encrypted",
+    );
+    const read = await readEncrypted(raw, jonas.privateKey, []);
+    expect(read.text.trim()).toBe("Die Pumpe läuft wieder.");
+    expect(read.signature.state).toBe("none");
   }, 30_000);
 });
