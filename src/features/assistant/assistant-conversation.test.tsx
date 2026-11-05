@@ -1,3 +1,4 @@
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { AssistantConversation, turnsOf } from "./assistant-conversation";
@@ -68,6 +69,52 @@ describe("the assistant's conversation", () => {
         { role: "user", text: "Zweite" },
       ],
     });
+  });
+});
+
+describe("the assistant's conversation across sign-ins and empty answers", () => {
+  it("is gone after signing out, as everything the app cleared from its query cache", async () => {
+    server(
+      Response.json({
+        text: "Keller Elektro hat am Montag geschrieben.",
+        done: [],
+        incomplete: false,
+      }),
+    );
+    const queryClient = new QueryClient();
+    const withCache = () => (
+      <QueryClientProvider client={queryClient}>
+        <AssistantConversation />
+      </QueryClientProvider>
+    );
+    render(withCache());
+    ask("Was gab es zuletzt mit Keller Elektro?");
+    expect(await screen.findByText("Keller Elektro hat am Montag geschrieben.")).toBeTruthy();
+    cleanup();
+    // What src/main.tsx does when someone signs out or another person signs in.
+    queryClient.clear();
+    render(withCache());
+    expect(screen.queryByText("Keller Elektro hat am Montag geschrieben.")).toBeNull();
+    expect(screen.queryByText("Was gab es zuletzt mit Keller Elektro?")).toBeNull();
+  });
+
+  it("goes on after an answer without text (the server takes no empty turn)", async () => {
+    const sent = server(
+      Response.json({ text: "", done: ["Aufgabe „Angebot Keller“ angelegt."], incomplete: true }),
+      Response.json({ text: "Erledigt.", done: [], incomplete: false }),
+    );
+    render(
+      <QueryClientProvider client={new QueryClient()}>
+        <AssistantConversation />
+      </QueryClientProvider>,
+    );
+    ask("Leg eine Aufgabe für das Angebot an Keller an.");
+    expect(await screen.findByText("Aufgabe „Angebot Keller“ angelegt.")).toBeTruthy();
+    ask("Und trag sie für Freitag ein.");
+    expect(await screen.findByText("Erledigt.")).toBeTruthy();
+    const { messages } = sent[1] as { messages: { role: string; text: string }[] };
+    // server/assistant/routes.ts: every turn's text has at least one character, else 400.
+    expect(messages.filter((turn) => turn.text.trim() === "")).toEqual([]);
   });
 });
 
