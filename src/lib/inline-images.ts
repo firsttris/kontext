@@ -46,9 +46,18 @@ export const markCids = (html: string): string => {
 /** A Content-ID without the angle brackets of its header form (RFC 2392 §2). */
 export const bareCid = (cid: string): string => cid.replace(/^<|>$/g, "");
 
-/** The parts a mail shows by their Content-ID. */
+/**
+ * The parts a mail shows by their Content-ID, each once: an inline image after the HTML inside
+ * multipart/alternative is in htmlBody and in attachments (RFC 8621 §4.1.4; Stalwart's
+ * mail-parser, src/parser/classify.rs `rfc8621_lists`).
+ */
 export const inlineParts = (email: { attachments: BodyPart[]; htmlBody: BodyPart[] }): BodyPart[] =>
-  [...email.attachments, ...email.htmlBody].filter((part) => part.cid && part.blobId);
+  [...email.attachments, ...email.htmlBody].filter(
+    (part, index, all) =>
+      part.cid &&
+      part.blobId &&
+      all.findIndex((other) => other.blobId === part.blobId && other.cid === part.cid) === index,
+  );
 
 /** The Content-IDs of the images a text being written shows (`data-cid`). */
 export const shownCids = (html: string): string[] => {
