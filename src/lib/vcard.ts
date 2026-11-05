@@ -138,28 +138,37 @@ export const normalizeMembers = (card: ContactCard, knownUids: Set<string>): Con
 /** A whole file for several cards. */
 export const toVCardFile = (cards: ContactCard[]): string => cards.map(toVCard).join("");
 
+/** What makes two cards the same: the uid, and the name with the first mail address. */
+const duplicateKeys = (card: ContactCard): string[] => {
+  const email = (Object.values(card.emails ?? {})[0]?.address ?? "").toLowerCase();
+  const nameAndEmail = `name:${fullName(card).toLowerCase()}\n${email}`;
+  return card.uid ? [`uid:${card.uid}`, nameAndEmail] : [nameAndEmail];
+};
+
+const hasAny = (keys: Set<string>, card: ContactCard) =>
+  duplicateKeys(card).some((key) => keys.has(key));
+
 /**
  * Is this card already in the book? Same uid, or same name with the same mail address (or both
  * without one) – a second import of the same file then adds nothing.
  */
-export const isDuplicate = (card: ContactCard, existing: ContactCard[]): boolean => {
-  const email = (c: ContactCard) => (Object.values(c.emails ?? {})[0]?.address ?? "").toLowerCase();
-  const name = (c: ContactCard) => fullName(c).toLowerCase();
-  return existing.some(
-    (other) =>
-      (card.uid && other.uid === card.uid) ||
-      (name(other) === name(card) && email(other) === email(card)),
-  );
-};
+export const isDuplicate = (card: ContactCard, existing: ContactCard[]): boolean =>
+  hasAny(new Set(existing.flatMap(duplicateKeys)), card);
 
-/** The cards that are not in the book yet, nor earlier in the file. */
+/**
+ * The cards that are not in the book yet, nor earlier in the file. The keys go into one set, so
+ * a customer list of thousands of rows is checked at once, not each row against all before it.
+ */
 export const freshCards = (cards: ContactCard[], existing: ContactCard[]): ContactCard[] => {
   const known = new Set(
     [...existing, ...cards].map((card) => card.uid).filter((uid): uid is string => !!uid),
   );
+  const seen = new Set(existing.flatMap(duplicateKeys));
   const fresh: ContactCard[] = [];
   for (const card of cards) {
-    if (!isDuplicate(card, [...existing, ...fresh])) fresh.push(normalizeMembers(card, known));
+    if (hasAny(seen, card)) continue;
+    for (const key of duplicateKeys(card)) seen.add(key);
+    fresh.push(normalizeMembers(card, known));
   }
   return fresh;
 };
