@@ -440,6 +440,13 @@ or adds the address in Claude as a connector and signs in in the browser (OAuth)
 - Whoever no longer wants an agent disconnects it in the settings; locking an
   employee disconnects all their agents.
 
+The **assistant in the chat** ([AI agents → Assistant in the chat](agents.md#assistent-im-chat))
+comes with a Claude API key: create one at console.anthropic.com, put it as
+`ANTHROPIC_API_KEY=sk-ant-…` into `deploy/.env` (Quadlet: `kontext.env`) and restart Kontext.
+`ASSISTANT_MODEL` picks the model (default `claude-sonnet-5-5`). Each person may ask ten questions
+a minute. The questions and what the assistant looks up go to Anthropic in the USA: this belongs
+in the privacy notice, with Anthropic's data processing agreement.
+
 ## 4. Encrypting the disk { #4-platte-verschlusseln }
 
 Mails, chat, tasks and files are on the server's disk. Encrypted, it is
@@ -822,6 +829,7 @@ a warning to the log.
 | `TAILSCALE_IP` | `127.0.0.1` | where Stalwart's admin interface (port 8080) listens; with Tailscale, the server's Tailscale address |
 | `KONTEXT_SECRET` | – | required, at least 32 characters; becomes `BETTER_AUTH_SECRET` |
 | `STALWART_ADMIN_KEY` | empty | API key for the [company admin](#firmenverwaltung-einschalten) |
+| `ANTHROPIC_API_KEY` | empty | Claude API key for the [assistant in the chat](#ki-agenten); empty: no assistant |
 | `KONTEXT_VERSION` | – | required: version of the image `tristanteu/kontext` |
 | `STALWART_VERSION` | – | required: version of the image `stalwartlabs/stalwart` (without "v"), raised with `KONTEXT_VERSION` |
 | `COMPOSE_PROFILES` | – | `calls` (LiveKit, LiveKit SIP, Redis) and `documents` (Schreibzeug) |
@@ -850,6 +858,8 @@ image sets `PORT=3000`, `STATIC_DIR=/app/dist`, `DATABASE_PATH=/data/kontext.db`
 | `DATABASE_PATH` | `.dev/server/kontext.db` | the SQLite database (`/data/kontext.db` in the image) |
 | `SIGN_IN_PER_MINUTE` | `10` | sign-ins per minute and IP address |
 | `STALWART_ADMIN_KEY` | empty | API key (`API_…`) or `name:passwort` for the company admin |
+| `ANTHROPIC_API_KEY` | empty | Claude API key; with it there is the assistant in the chat |
+| `ASSISTANT_MODEL` | `claude-sonnet-5-5` | the assistant's Claude model |
 | `DOH_URL` | `https://cloudflare-dns.com/dns-query` | DNS over HTTPS (JSON API) for "Email security" and the search for S/MIME certificates |
 | `SMIME_ROOTS` | empty | path to a PEM file with further recognized S/MIME authorities, such as the public administration's PKI; easier in the company admin under "S/MIME authorities" |
 | `LIVEKIT_URL` | empty | LiveKit's API as the server reaches it (in Compose `http://livekit:7880`) |

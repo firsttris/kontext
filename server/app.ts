@@ -11,6 +11,7 @@ import { serveStatic } from "hono/bun";
 import { version as packageVersion } from "../package.json";
 import { createAccessRoutes } from "./access/routes";
 import { createSessionStore } from "./access/store";
+import { anthropicCreate, createAssistantRoutes } from "./assistant/routes";
 import { type Auth, createAuth, createGrants, type Grants } from "./auth";
 import { currentRoomEvents, type LiveKitConfig } from "./calls/livekit";
 import { createMeetRoutes } from "./calls/meet-routes";
@@ -70,7 +71,12 @@ import { createAttempts } from "./mcp/attempts";
 import { createConnections } from "./mcp/connections";
 import { createOAuthCaller, createRevokeClient, jwtVerifier } from "./mcp/oauth";
 import { createConsentRoutes } from "./mcp/oauth-routes";
-import { createMcpEndpoint, createMcpKeyRoutes, type McpDeps } from "./mcp/routes";
+import {
+  createMcpEndpoint,
+  createMcpKeyRoutes,
+  createToolContext,
+  type McpDeps,
+} from "./mcp/routes";
 import { taskApiOf } from "./mcp/writer";
 import { createImporter, type Importer } from "./migration/importer";
 import { createJobs } from "./migration/jobs";
@@ -115,6 +121,10 @@ import { createTaskStore } from "./tasks/store";
 import { createUnsubscribeRoutes } from "./unsubscribe/routes";
 
 /** Request headers that go on to Stalwart; cookies and the browser's own auth stay here. */
+/** What one person's assistant may do per minute: questions cost money, changes are guarded. */
+const ASSISTANT_QUESTIONS_PER_MINUTE = 10;
+const ASSISTANT_CHANGES_PER_MINUTE = 20;
+
 const FORWARDED_REQUEST_HEADERS = [
   "accept",
   "content-type",
@@ -685,6 +695,25 @@ export const createApp = async (env: Env) => {
       "/.well-known/oauth-authorization-server/*",
     ],
     (c) => auth.handler(c.req.raw),
+  );
+  // The assistant in the chat: Claude with the same tools, as the signed-in person.
+  app.route(
+    "/api/assistant",
+    createAssistantRoutes({
+      create: env.ANTHROPIC_API_KEY ? anthropicCreate(env.ANTHROPIC_API_KEY) : null,
+      model: env.ASSISTANT_MODEL,
+      userOf: async (request) => {
+        const found = await auth.api.getSession({ headers: request.headers });
+        return found
+          ? { sessionId: found.session.id, userId: found.user.id, email: found.user.email }
+          : null;
+      },
+      grants,
+      contextFor: (token, email) =>
+        createToolContext({ stalwartUrl: env.STALWART_URL, token, email, tasksFor: mcp.tasksFor }),
+      mayAsk: createAttempts(ASSISTANT_QUESTIONS_PER_MINUTE),
+      mayWrite: createAttempts(ASSISTANT_CHANGES_PER_MINUTE),
+    }),
   );
   const mcpEndpoint = createMcpEndpoint(mcp);
   app.all("/mcp", (c) => mcpEndpoint(c.req.raw));

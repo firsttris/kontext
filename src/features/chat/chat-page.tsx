@@ -7,6 +7,8 @@ import { MessagesSquare } from "lucide-react";
 import { useState } from "react";
 import { TabBar } from "@/components/shell/app-shell";
 import { FROM_PARENT } from "@/components/use-back";
+import { ASSISTANT_ID } from "@/features/assistant/assistant";
+import { AssistantConversation } from "@/features/assistant/assistant-conversation";
 import type { Channel } from "@/lib/chat";
 import { cn } from "@/lib/cn";
 import { m } from "@/paraglide/messages";
@@ -46,7 +48,7 @@ export const ChatPage = ({
         <ChannelSidebar
           channels={channels}
           online={online}
-          activeId={open?.id}
+          activeId={channelId === ASSISTANT_ID ? ASSISTANT_ID : open?.id}
           onNew={() => setEditing({})}
         />
       </div>
@@ -55,7 +57,9 @@ export const ChatPage = ({
         <TabBar />
       </div>
       <main className={cn("h-full min-w-0 flex-1 flex-col", channelId ? "flex" : "hidden md:flex")}>
-        {open ? (
+        {channelId === ASSISTANT_ID ? (
+          <AssistantConversation />
+        ) : open ? (
           <Conversation
             key={open.id}
             channel={open}

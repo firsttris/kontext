@@ -42,6 +42,8 @@ services:
       BETTER_AUTH_URL: https://${KONTEXT_DOMAIN}
       BETTER_AUTH_SECRET: ${KONTEXT_SECRET:?KONTEXT_SECRET in deploy/.env setzen}
       STALWART_ADMIN_KEY: ${STALWART_ADMIN_KEY:-}
+      # The assistant in the chat (Claude API); without a key there is none.
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
       # Calls in the chat; without a secret they are off.
       LIVEKIT_URL: http://livekit:7880
       LIVEKIT_API_KEY: kontext
