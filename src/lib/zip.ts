@@ -104,18 +104,37 @@ export const zipStored = (entries: ZipEntry[], now = new Date()): Uint8Array<Arr
   return concat([...local, directory, end]);
 };
 
+/** ext4 and APFS take 255 bytes of UTF-8 per name, NTFS 255 UTF-16 units: never more. */
+const MAX_NAME_BYTES = 255;
+/** Longer than this after the last dot is no extension worth keeping whole. */
+const MAX_EXTENSION_BYTES = 32;
+
+const byteLength = (text: string) => new TextEncoder().encode(text).length;
+
+/** The stem shortened, by whole characters, until stem and tail fit into one file name. */
+const fitted = (stem: string, tail: string): string => {
+  if (byteLength(stem + tail) <= MAX_NAME_BYTES) return stem + tail;
+  const chars = Array.from(stem);
+  while (chars.length > 0 && byteLength(chars.join("") + tail) > MAX_NAME_BYTES) chars.pop();
+  return chars.join("").trimEnd() + tail;
+};
+
 /**
  * Names that differ, as the files keep them on disk: a second "Rechnung.pdf" becomes
- * "Rechnung (2).pdf". Compared without case, as Windows and macOS do.
+ * "Rechnung (2).pdf". Compared without case, as Windows and macOS do. A name too long for a
+ * file system is shortened before its extension; unzip refuses it otherwise.
  */
 export const uniqueNames = (names: string[]): string[] => {
   const taken = new Set<string>();
   return names.map((name) => {
     const dot = name.lastIndexOf(".");
-    const [stem, extension] = dot > 0 ? [name.slice(0, dot), name.slice(dot)] : [name, ""];
-    let candidate = name;
+    const [stem, extension] =
+      dot > 0 && byteLength(name.slice(dot)) <= MAX_EXTENSION_BYTES
+        ? [name.slice(0, dot), name.slice(dot)]
+        : [name, ""];
+    let candidate = fitted(stem, extension);
     for (let n = 2; taken.has(candidate.toLowerCase()); n++) {
-      candidate = `${stem} (${n})${extension}`;
+      candidate = fitted(stem, ` (${n})${extension}`);
     }
     taken.add(candidate.toLowerCase());
     return candidate;
