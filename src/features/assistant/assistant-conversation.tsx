@@ -18,9 +18,15 @@ type Entry = Turn & { done?: string[]; incomplete?: boolean; failure?: AskFailur
 /** Kept outside the component: switching to a channel and back keeps the conversation. */
 let kept: Entry[] = [];
 
-/** What goes to the server: the questions and answers, without the failed tries. */
+/**
+ * What goes to the server: the questions and answers, without the failed tries and without
+ * answers that brought no text (cut short, or only what was created): the server takes no empty
+ * turn (server/assistant/routes.ts).
+ */
 export const turnsOf = (entries: Entry[]): Turn[] =>
-  entries.filter((entry) => !entry.failure).map(({ role, text }) => ({ role, text }));
+  entries
+    .filter((entry) => !entry.failure && entry.text.trim() !== "")
+    .map(({ role, text }) => ({ role, text }));
 
 const failureText = (failure: AskFailure) =>
   failure === "too-many" ? m.assistant_too_many() : m.assistant_failed();
