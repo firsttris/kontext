@@ -38,13 +38,26 @@ export const markCids = (html: string): string => {
   const doc = parse(html);
   for (const img of doc.querySelectorAll("img")) {
     const src = img.getAttribute("src") ?? "";
-    if (/^cid:/i.test(src)) img.setAttribute("data-cid", bareCid(src.slice(4)));
+    if (/^cid:/i.test(src)) img.setAttribute("data-cid", cidOfUrl(src));
   }
   return doc.body.innerHTML;
 };
 
 /** A Content-ID without the angle brackets of its header form (RFC 2392 §2). */
 export const bareCid = (cid: string): string => cid.replace(/^<|>$/g, "");
+
+/**
+ * The Content-ID a `cid:` URL names: without the prefix, its %-encoded characters decoded
+ * (RFC 2392 §2). One that does not decode stays as written.
+ */
+export const cidOfUrl = (url: string): string => {
+  const cid = bareCid(url.slice(4));
+  try {
+    return decodeURIComponent(cid);
+  } catch {
+    return cid;
+  }
+};
 
 /**
  * The parts a mail shows by their Content-ID, each once: an inline image after the HTML inside
