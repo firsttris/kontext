@@ -52,10 +52,11 @@ import { registerDraftFlush } from "./draft-flush";
 import { EditorToolbar } from "./editor-toolbar";
 import { useExternalQuestion } from "./external-question";
 import { ForgottenAttachment } from "./forgotten-attachment";
-import { inlineParts, useInlineImageUrls } from "./inline-image-urls";
+import { useInlineImageUrls } from "./inline-image-urls";
 import { LegalFooterPreview } from "./legal-footer-preview";
 import { type OpenedMail, openedMail, shownSubject } from "./opened-mails";
 import { useEmail } from "./queries";
+import { useRemoteImages } from "./remote-images";
 import { richText, spellChecked } from "./rich-text";
 import { useUndoSeconds } from "./send-settings";
 import { useTakeBack } from "./take-back";
@@ -80,6 +81,9 @@ type Props = {
   forwardIds?: string[];
   prefill?: ComposePrefill;
 };
+
+/** No original (a new mail): nothing whose pictures from the internet could be allowed. */
+const NO_MAIL = { id: "", from: null, authenticationResults: null };
 
 /** The identity to send from: in a shared mailbox its address, else the login address. */
 const defaultIdentity = (identities: Identity[], preferred: string): Identity | undefined =>
@@ -184,11 +188,13 @@ export const Composer = ({ accountId, mode, sourceEmailId, forwardIds, prefill }
     onBusy: (by) => setUploading((n) => n + by),
   });
   insertPictures.current = (files) => void pics.insert(files);
-  // A draft's pictures, to show them again before its text goes into the editor.
-  const draftImages = useInlineImageUrls(
+  // The pictures of a draft or of the original, to show them before the text goes into the editor.
+  const originalImages = useInlineImageUrls(
     accountId,
-    mode === "draft" ? (source.data ?? undefined) : undefined,
+    mode === "new" || asEml ? undefined : (source.data ?? undefined),
   );
+  // Pictures from the internet stay in a quote only if the original showed them (remote-images.ts).
+  const { allowRemote: originalRemote } = useRemoteImages(source.data ?? NO_MAIL);
 
   const myAddresses = useMemo(
     () =>
@@ -204,7 +210,7 @@ export const Composer = ({ accountId, mode, sourceEmailId, forwardIds, prefill }
     if (initialized.current || !editor || editor.isDestroyed || identities.length === 0) return;
     if (!sendersReady) return;
     if (asEml ? !eml.data : sourceEmailId && !source.data) return;
-    if (!draftImages.done) return;
+    if (!originalImages.done) return;
     let originalHtml = "";
     // An encrypted original, opened here before: its real content (opened-mails.ts).
     let opened: OpenedMail | undefined;
@@ -229,30 +235,19 @@ export const Composer = ({ accountId, mode, sourceEmailId, forwardIds, prefill }
         } else if (mode === "forward") {
           toast.show(m.mail_forward_encrypted_closed());
         }
-      } else if (mode === "draft" && body.kind === "html") {
-        // A draft keeps its pictures: shown from local URLs, marked with their Content-ID. A mail
+      } else if (body.kind === "html") {
+        // Pictures come along: shown from local URLs, marked with their Content-ID. A mail
         // taken back was sent with the Pflichtangaben; they go on again when it is sent.
-        originalHtml = sanitizeMailHtml(markCids(withoutLegalFooter(body.value)), {
-          allowRemote: false,
-          cidUrls: draftImages.urls,
-        }).html;
-        pics.setImages(
-          inlineParts(source.data).map((part) => ({
-            blobId: part.blobId!,
-            name: part.name ?? "bild",
-            type: part.type,
-            size: part.size,
-            cid: part.cid!.replace(/^<|>$/g, ""),
-          })),
-        );
-      } else {
+        const draft = mode === "draft";
         originalHtml = sanitizeMailHtml(
-          body.kind === "html" ? body.value : textToHtml(body.value),
-          {
-            allowRemote: false,
-            cidUrls: {},
-          },
+          markCids(draft ? withoutLegalFooter(body.value) : body.value),
+          { allowRemote: !draft && originalRemote, cidUrls: originalImages.urls },
         ).html;
+      } else {
+        originalHtml = sanitizeMailHtml(textToHtml(body.value), {
+          allowRemote: false,
+          cidUrls: {},
+        }).html;
       }
     }
     // An encrypted original: "Re:" to its real subject, where it was opened (not to the stand-in).
@@ -300,6 +295,8 @@ export const Composer = ({ accountId, mode, sourceEmailId, forwardIds, prefill }
             )
           : [],
     );
+    // An encrypted original's parts are cipher text too; its pictures are not quoted.
+    pics.setImages(encryptedOriginal ? [] : start.images);
     setThreading({ inReplyTo: start.inReplyTo, references: start.references });
     // A draft already has its signature; a new mail gets the one of the sender.
     const signature = mode === "draft" ? "" : signatureOf(identity);
@@ -328,7 +325,8 @@ export const Composer = ({ accountId, mode, sourceEmailId, forwardIds, prefill }
     session?.username,
     sendAccountId,
     accountId,
-    draftImages,
+    originalImages,
+    originalRemote,
   ]);
 
   const identity = identities.find((i) => i.id === identityId);

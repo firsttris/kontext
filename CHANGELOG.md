@@ -11,6 +11,9 @@ Steps that an update needs beyond raising the version are marked **Upgrade**.
   Whoever sees the calendar through a share (a deputy, colleagues) sees only "Privat" with the
   time; Stalwart leaves out the title, location, notes and participants itself. Private
   appointments show a small lock (user guide, "Kalender und Kontakte").
+- Mail: a reply or forward keeps the images in the text of the original; they go out again as
+  inline images (`cid:`). Images from the internet stay in the quote only if they were loaded in
+  the mail (user guide, "Mail", "Schreiben").
 - Export: a mail folder as an .mbox file ("…" next to the folder → "Als .mbox exportieren";
   mboxrd, with read, flagged and answered as `Status`/`X-Status`, readable by Thunderbird, Apple
   Mail and Kontext's own import), and a calendar as an .ics file (*Kalender verwalten*, the arrow

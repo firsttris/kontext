@@ -48,6 +48,7 @@ const original = {
   receivedAt: "2026-10-20T09:31:00Z",
   sentAt: "2026-10-20T09:31:00Z",
   attachments: [],
+  htmlBody: [],
 } as unknown as Parameters<typeof startCompose>[1];
 
 describe("ownText: what the composer counts as the user's own words", () => {
