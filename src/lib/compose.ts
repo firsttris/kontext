@@ -81,13 +81,23 @@ export type EmlOriginal = { blobId: string; subject: string | null; size: number
 // biome-ignore lint/suspicious/noControlCharactersInRegex: control characters are what is removed
 const UNSAFE_IN_NAME = /[\u0000-\u001f\u007f/\\:*?"<>|]+/g;
 
-/** "<Betreff>.eml", safe as a file name on the receiver's disk. */
-export const emlName = (subject: string | null): string => {
-  const name = (subject ?? "").replace(UNSAFE_IN_NAME, " ").replace(/\s+/g, " ").trim();
+/** The text without what a file name may not hold; leading dots would hide the file. */
+export const safeFileName = (text: string | null): string =>
+  (text ?? "")
+    .replace(UNSAFE_IN_NAME, " ")
+    .replace(/\s+/g, " ")
+    .replace(/^[.\s]+/, "")
+    .trim();
+
+/** "<Betreff>.<extension>", safe as a file name on the receiver's disk. */
+export const subjectFileName = (subject: string | null, extension: string): string => {
   // By code points: a cut inside a UTF-16 pair leaves a lone surrogate, which Stalwart refuses.
-  const short = Array.from(name).slice(0, 100).join("").trim();
-  return `${short || m.mail_eml_unnamed()}.eml`;
+  const short = Array.from(safeFileName(subject)).slice(0, 100).join("").trim();
+  return `${short || m.mail_eml_unnamed()}.${extension}`;
 };
+
+/** "<Betreff>.eml" */
+export const emlName = (subject: string | null): string => subjectFileName(subject, "eml");
 
 /**
  * "Als Anhang weiterleiten": each mail as a message/rfc822 file, by the blob it already has, so
