@@ -112,6 +112,11 @@ IMAP und SMTP.
   darüber ist, die Tastatur dort steht oder Mails ausgewählt sind.
 - **Am Handy wischen:** eine Mail nach links wischen archiviert, nach rechts gelesen/ungelesen;
   je Richtung einstellbar ([Am Handy](app.md#am-handy)).
+- **Rückgängig:** Nach Archivieren, Löschen (in den Papierkorb), Spam und Verschieben – ob eine
+  Mail, mehrere ausgewählte oder gewischt – steht „Rückgängig“ in der Meldung unten; `z` (oder
+  Strg+Z, wenn kein Textfeld den Cursor hat) nimmt den letzten dieser Schritte zurück. Die Mails
+  kommen in ihren Ordner zurück. Endgültig Gelöschtes (aus Papierkorb oder Spam) und in ein
+  anderes Postfach Verschobenes lässt sich nicht zurückholen.
 - **Spam und Papierkorb leeren:** oben in der Liste der beiden Ordner, nach einer Rückfrage mit
   der Zahl der Mails. Gelöscht ist dann gelöscht – Stalwarts Community-Edition hebt nichts auf.
   Eine Mail, die zugleich in einem anderen Ordner liegt, verlässt nur Spam bzw. Papierkorb. In

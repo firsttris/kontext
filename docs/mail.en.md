@@ -107,6 +107,10 @@ SMTP.
   there or mails are selected.
 - **Swiping on the phone:** swiping a mail to the left archives it, to the right marks it
   read/unread; adjustable per direction ([On the phone](app.md#am-handy)).
+- **Undo:** after archiving, deleting (to the trash), spam and moving – one mail, several selected
+  or swiped – the notice at the bottom has "Undo"; `z` (or Ctrl+Z while no text field
+  has the cursor) takes back the last of these steps. The mails return to their folder. What was
+  deleted for good (from Trash or Spam) or moved into another mailbox cannot be brought back.
 - **Emptying spam and trash:** at the top of the list in those two folders, after a question with
   the number of mails. Deleted then means deleted – Stalwart's Community edition keeps nothing. A
   mail that is also in another folder only leaves Spam or Trash. In shared mailboxes only for
