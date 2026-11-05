@@ -22,7 +22,7 @@ Was Stalwart 1.0.2 und 1.0.3 mitbringen und Kontext noch nicht nutzt.
 
 | # | Funktion | Worum es geht |
 | --- | --- | --- |
-| 7 | **Telefonie: mehr** | Anschluss direkt beim Anbieter oder per SIP-Trunk statt über die Fritzbox, SIP über TLS, Warteschleife mit Position, weitere Tischtelefone (Yealink, Grandstream). |
+| 7 | **Telefonbox als eigene Telefonanlage (SIP-Trunk)** | Die Telefonbox meldet sich per SIP-Trunk direkt beim Anbieter an (etwa Telekom, sipgate, easybell), statt sich als IP-Telefon an der Fritzbox anzumelden. Damit wird sie selbst die Telefonanlage, wie 3CX oder Placetel, aber in Kontext und ohne Lizenz pro Nebenstelle: Rufnummern, Durchwahlen, Weiterleitungen und Tischtelefone hängen an Kontext, die Fritzbox ist nur noch Router oder entfällt. Dazu SIP über TLS, eine Warteschleife mit Position und weitere Tischtelefone (Yealink, Grandstream). Die Fritzbox bleibt als einfacher Weg für Betriebe, die sie behalten wollen. |
 | 8 | **Weitere Sprachen** | Nach Deutsch und Englisch weitere europäische Sprachen. |
 
 ## Weitere Ideen
