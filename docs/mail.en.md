@@ -98,8 +98,8 @@ SMTP.
   profiles, never from the internet (no logos or favicons).
 - **The bar above a mail:** "Archive" (`e`) and "Delete" (`#`) with their names, next to them
   Snooze (`w`), Flag (`s`) and, in shared mailboxes, "Assign", on the right "Reply". Everything
-  used less often is under "More actions" (the three dots): reply all, forward, print, mark as
-  unread (`U`), spam (`!`), move, category, task (`t`), Discuss (`b`) and rule. Where space is
+  used less often is under "More actions" (the three dots): reply all, forward, print, save as
+  .eml, mark as unread (`U`), spam (`!`), move, category, task (`t`), Discuss (`b`) and rule. Where space is
   short, on the phone or in a narrow reading pane, Archive and Delete keep only their icons.
 - **Several mails at once** (checkbox on the left of each row, Ctrl/Shift-click, `x`; on the phone
   a long press): archive, delete, mark read, category, move, create tasks, forward as attachment.
@@ -282,6 +282,13 @@ SPF and DMARC are right), and replies go from the address the mail was sent to.
 ## Attachments, printing, keyboard { #anhange-drucken-tastatur }
 
 - **Preview** of photos and the first page of a PDF; one click opens it large.
+- **Download all:** if a mail has several attachments, the button below them downloads all of
+  them in one ZIP file `<subject>.zip`, on the phone too. Kontext packs them in the browser
+  without compressing (PDFs, photos and Office files already are); equal names get " (2)".
+  Without ZIP64 this works up to 4 GB, far more than a mail can carry.
+- **Save as .eml** in the "More actions" menu downloads the whole mail as a file
+  `<subject>.eml`, as it arrived: with all headers and attachments, for filing or for the tax
+  advisor, say. Thunderbird, Outlook and Apple Mail open it.
 - **winmail.dat:** older Outlook versions pack their attachments into a file "winmail.dat"
   (TNEF). Kontext unpacks it in the browser and shows the files inside as normal attachments, with
   preview, download and "Save to Documents". For that, Kontext uploads them into the mailbox as
