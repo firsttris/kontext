@@ -53,4 +53,5 @@ answer. It, too, sends nothing and deletes nothing.
   default model (Claude Sonnet 5.5).
 - **Data:** the question and what the assistant looks up for it (mail text, appointments,
   contacts) go to Anthropic; this is said under the input field. Kontext does not store the
-  conversation; it stays in the open tab until you reload it or choose “New conversation”.
+  conversation; it stays in the open tab until you reload it, sign out or choose “New
+  conversation”.

@@ -2324,8 +2324,9 @@ Kosten klein.
   `server/company/assistant.ts`); der Schlüssel liegt versiegelt in `company_setting` und geht nie
   zurück an den Browser, nur seine letzten vier Zeichen. `GET /api/assistant` sagt der App, ob es
   ihn gibt, dann steht er oben im Chat (`src/features/assistant/`). Die Demo hat keinen.
-- **Gespräch:** bleibt in der App; jede Frage schickt die bisherigen Fragen und Antworten als Text
-  mit, der Server behält nichts. Was angelegt wurde, kommt als Meldung des Writers zurück und steht
+- **Gespräch:** bleibt in der App, im Query-Cache, den An- und Abmelden leeren; jede Frage schickt
+  die bisherigen Fragen und Antworten als Text mit (Antworten ohne Text nicht), der Server behält
+  nichts. Was angelegt wurde, kommt als Meldung des Writers zurück und steht
   unter der Antwort.
 - **Grenzen:** zehn Fragen und zwanzig Änderungen je Person und Minute (im Speicher, wie
   `server/mcp/attempts.ts`); Änderungen landen nicht im `mcp_log`, sie sind ja in der App zu sehen.

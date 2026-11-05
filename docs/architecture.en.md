@@ -2260,8 +2260,9 @@ and the tools are cached (`cache_control`), `effort: medium` keeps the cost down
   `server/company/assistant.ts`); the key is sealed in `company_setting` and never goes back to
   the browser, only its last four characters. `GET /api/assistant` tells the app whether there is
   one, and then it is at the top of the chat (`src/features/assistant/`). The demo has none.
-- **Conversation:** stays in the app; every question sends the earlier questions and answers along
-  as text, the server keeps nothing. What was created comes back as the writer's message and is
+- **Conversation:** stays in the app, in the query cache, which signing out or in clears; every
+  question sends the earlier questions and answers along as text (answers without text left
+  out), the server keeps nothing. What was created comes back as the writer's message and is
   listed under the answer.
 - **Limits:** ten questions and twenty changes per person and minute (in memory, like
   `server/mcp/attempts.ts`); changes do not go into `mcp_log`, since they can be seen in the app.

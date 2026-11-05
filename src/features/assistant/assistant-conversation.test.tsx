@@ -24,6 +24,14 @@ const server = (...answers: Response[]) => {
   return sent;
 };
 
+/** With a query cache of its own, where the conversation is kept. */
+const renderConversation = (queryClient = new QueryClient()) =>
+  render(
+    <QueryClientProvider client={queryClient}>
+      <AssistantConversation />
+    </QueryClientProvider>,
+  );
+
 const ask = (text: string) => {
   fireEvent.change(screen.getByRole("textbox", { name: "Frage an den Assistenten" }), {
     target: { value: text },
@@ -40,7 +48,7 @@ describe("the assistant's conversation", () => {
         incomplete: false,
       }),
     );
-    render(<AssistantConversation />);
+    renderConversation();
     ask("Schreib Frau Keller, dass wir Dienstag kommen.");
     expect(await screen.findByText("Der Entwurf an Frau Keller liegt bereit.")).toBeTruthy();
     expect(screen.getByRole("list", { name: "Angelegt" }).textContent).toContain(
@@ -58,7 +66,7 @@ describe("the assistant's conversation", () => {
       new Response(null, { status: 429 }),
       Response.json({ text: "Ja.", done: [], incomplete: false }),
     );
-    render(<AssistantConversation />);
+    renderConversation();
     ask("Erste");
     expect(await screen.findByText(/Zu viele Fragen/)).toBeTruthy();
     ask("Zweite");
@@ -82,18 +90,13 @@ describe("the assistant's conversation across sign-ins and empty answers", () =>
       }),
     );
     const queryClient = new QueryClient();
-    const withCache = () => (
-      <QueryClientProvider client={queryClient}>
-        <AssistantConversation />
-      </QueryClientProvider>
-    );
-    render(withCache());
+    renderConversation(queryClient);
     ask("Was gab es zuletzt mit Keller Elektro?");
     expect(await screen.findByText("Keller Elektro hat am Montag geschrieben.")).toBeTruthy();
     cleanup();
     // What src/main.tsx does when someone signs out or another person signs in.
     queryClient.clear();
-    render(withCache());
+    renderConversation(queryClient);
     expect(screen.queryByText("Keller Elektro hat am Montag geschrieben.")).toBeNull();
     expect(screen.queryByText("Was gab es zuletzt mit Keller Elektro?")).toBeNull();
   });
@@ -103,11 +106,7 @@ describe("the assistant's conversation across sign-ins and empty answers", () =>
       Response.json({ text: "", done: ["Aufgabe „Angebot Keller“ angelegt."], incomplete: true }),
       Response.json({ text: "Erledigt.", done: [], incomplete: false }),
     );
-    render(
-      <QueryClientProvider client={new QueryClient()}>
-        <AssistantConversation />
-      </QueryClientProvider>,
-    );
+    renderConversation();
     ask("Leg eine Aufgabe für das Angebot an Keller an.");
     expect(await screen.findByText("Aufgabe „Angebot Keller“ angelegt.")).toBeTruthy();
     ask("Und trag sie für Freitag ein.");

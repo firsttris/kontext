@@ -3,6 +3,7 @@
  * tasks with the person's own rights and may save drafts, appointments, contacts and tasks. The
  * conversation stays in this tab until it is reloaded or "Neues Gespräch" clears it.
  */
+import { useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import { Check, ChevronLeft, RotateCcw, SendHorizontal, Sparkles } from "lucide-react";
 import { type FormEvent, type KeyboardEvent, useEffect, useRef, useState } from "react";
@@ -15,8 +16,26 @@ import { type AskFailure, askAssistant, type Turn } from "./assistant";
 
 type Entry = Turn & { done?: string[]; incomplete?: boolean; failure?: AskFailure };
 
-/** Kept outside the component: switching to a channel and back keeps the conversation. */
-let kept: Entry[] = [];
+/**
+ * Kept in the query cache, not in the component: switching to a channel and back keeps the
+ * conversation, and signing out or in clears it with everything else (src/main.tsx), so the next
+ * person in this tab does not get it. Its own key: invalidating ["assistant"] leaves it alone.
+ */
+const CONVERSATION = ["assistant-conversation"];
+
+const useConversation = () => {
+  const queryClient = useQueryClient();
+  const [entries, setShown] = useState<Entry[]>(
+    () => queryClient.getQueryData<Entry[]>(CONVERSATION) ?? [],
+  );
+  const setEntries = (next: Entry[]) => {
+    setShown(next);
+    // Without anyone watching it, a query is dropped after five minutes; this one is not.
+    queryClient.setQueryDefaults(CONVERSATION, { gcTime: Number.POSITIVE_INFINITY });
+    queryClient.setQueryData(CONVERSATION, next);
+  };
+  return [entries, setEntries] as const;
+};
 
 /**
  * What goes to the server: the questions and answers, without the failed tries and without
@@ -67,13 +86,13 @@ const Bubble = ({ entry }: { entry: Entry }) => {
 export const AssistantConversation = () => {
   const navigate = useNavigate();
   const back = useBack();
-  const [entries, setEntries] = useState<Entry[]>(kept);
+  const [entries, setEntries] = useConversation();
   const [text, setText] = useState("");
   const [busy, setBusy] = useState(false);
   const end = useRef<HTMLLIElement>(null);
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: scrolls down whenever an entry comes
   useEffect(() => {
-    kept = entries;
     end.current?.scrollIntoView?.({ block: "end" });
   }, [entries]);
 

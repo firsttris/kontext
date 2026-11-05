@@ -54,4 +54,4 @@ seiner Antwort. Auch er sendet nichts und löscht nichts.
   dem voreingestellten Modell (Claude Sonnet 5.5) meist ein paar Cent.
 - **Daten:** Die Frage und was der Assistent dafür nachschlägt (Mailtext, Termine, Kontakte)
   gehen an Anthropic; das steht unter dem Eingabefeld. Kontext speichert das Gespräch nicht, es
-  bleibt im offenen Tab, bis man ihn neu lädt oder „Neues Gespräch“ wählt.
+  bleibt im offenen Tab, bis man ihn neu lädt, sich abmeldet oder „Neues Gespräch“ wählt.
