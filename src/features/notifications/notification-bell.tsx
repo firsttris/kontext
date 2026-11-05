@@ -1,46 +1,30 @@
 /**
  * The bell in the rail: a dot when something arrived since it was last opened; opened, tasks
- * given to me, the invitations to answer, what is due today (tasks, appointments) and the new
- * mail, each one click away, and the switch for notifications on this device.
+ * given to me, the invitations to answer, Stalwart's notices of shares and changed appointments,
+ * what is due today (tasks, appointments) and the new mail, each one click away, and the switch
+ * for notifications on this device.
  */
 import * as Popover from "@radix-ui/react-popover";
 import { Link } from "@tanstack/react-router";
 import { Bell, CalendarCheck, CalendarDays, CheckCheck, ListChecks } from "lucide-react";
-import { type ReactNode, useState } from "react";
+import { useState } from "react";
 import { Avatar } from "@/components/ui/avatar";
 import { cn } from "@/lib/cn";
 import { displayName, listDate } from "@/lib/format";
 import { dateKey, locationName, toLocal } from "@/lib/jscalendar";
-import { LOCALE } from "@/lib/locale";
 import { unseenCount } from "@/lib/notifications";
 import { dueLabel, type Task } from "@/lib/tasks";
 import { m } from "@/paraglide/messages";
 import { usePeople } from "../tasks/queries";
 import { useAnnouncements } from "./announcements";
+import { dayFormat, row, Section } from "./bell-parts";
 import { markSeen, notificationsSupported, useSeen } from "./device-settings";
 import { DeviceSwitch } from "./device-switch";
 import { type FeedEvent, useNotificationFeed, useNow } from "./feed";
-
-const dayFormat = new Intl.DateTimeFormat(LOCALE, {
-  timeZone: "Europe/Berlin",
-  weekday: "short",
-  day: "numeric",
-  month: "short",
-});
+import { useStalwartNotices } from "./notices";
+import { StalwartNotices } from "./stalwart-notices";
 
 const MAX_MAILS = 8;
-
-const Section = ({ title, children }: { title: string; children: ReactNode }) => (
-  <section aria-label={title} className="flex flex-col gap-0.5">
-    <h3 className="m-0 px-2 pt-1 pb-1 text-[11px] font-medium tracking-wide text-muted uppercase">
-      {title}
-    </h3>
-    {children}
-  </section>
-);
-
-const row =
-  "flex items-start gap-3 rounded-lg px-2 py-2 text-[13px] text-fg no-underline hover:bg-hover";
 
 const EventRow = ({ item, invitation }: { item: FeedEvent; invitation?: boolean }) => {
   const place = locationName(item.event);
@@ -110,6 +94,11 @@ const TaskEntry = ({
 export const NotificationBell = ({ className }: { className: string }) => {
   const now = useNow();
   const { mails, invitations, appointments, coming, assigned, due } = useNotificationFeed(now);
+  const notices = useStalwartNotices();
+  const noticeTimes = [
+    ...notices.shared.map(({ notice }) => new Date(notice.created)),
+    ...notices.changed.map(({ notice }) => new Date(notice.created)),
+  ];
   useAnnouncements(mails, coming);
   const seen = useSeen();
   const people = usePeople();
@@ -121,10 +110,17 @@ export const NotificationBell = ({ className }: { className: string }) => {
       seen.at,
     ) +
     invitations.filter((item) => !seen.invitations.includes(item.key)).length +
-    assigned.filter((task) => !seen.tasks.includes(task.id)).length;
+    assigned.filter((task) => !seen.tasks.includes(task.id)).length +
+    unseenCount(noticeTimes, seen.at);
   const label = unseen > 0 ? m.notifications_open_new({ count: unseen }) : m.notifications_title();
   const empty =
-    mails.length + invitations.length + appointments.length + assigned.length + due.length === 0;
+    mails.length +
+      invitations.length +
+      appointments.length +
+      assigned.length +
+      due.length +
+      noticeTimes.length ===
+    0;
   // What was new when the bell opened stays marked while it is open.
   const [fresh, setFresh] = useState<ReadonlySet<string>>(new Set());
 
@@ -198,6 +194,7 @@ export const NotificationBell = ({ className }: { className: string }) => {
                 ))}
               </Section>
             ) : null}
+            {noticeTimes.length ? <StalwartNotices notices={notices} now={now} /> : null}
             {due.length ? (
               <Section title={m.notifications_tasks_due()}>
                 {due.map((task) => (

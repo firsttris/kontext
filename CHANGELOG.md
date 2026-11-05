@@ -7,6 +7,11 @@ Steps that an update needs beyond raising the version are marked **Upgrade**.
 
 ## Unreleased
 
+- Notifications: the bell shows what Stalwart itself reports (JMAP `ShareNotification`,
+  `CalendarEventNotification`): a colleague shared a calendar or an address book with you or
+  stopped, and someone else moved, changed or cancelled an appointment in a calendar you see (a
+  shared mailbox's, or an organizer's update of an invitation). Opening an entry clears it on
+  every device (user guide, "App, Handy und Konto", "Benachrichtigungen").
 - Deploy: `deploy/.env.example` and the Quadlet use Schreibzeug 0.1.19 (was 0.1.18), and Compose
   and the Quadlet use Caddy 2.11.8 (was 2.11.7) and LiveKit SIP 1.23.0 (was 1.22.0), the versions
   running on the first server. No step beyond raising the versions; with Quadlet, raise the images
