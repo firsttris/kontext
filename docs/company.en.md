@@ -81,6 +81,11 @@ Stalwart's admin interface and without IT skills.
   ([Encryption](encryption.md#baustein-4-vertraulich-senden-fur-alle-empfanger)).
 - **Check security:** SPF, DMARC, MTA-STS, TLS-RPT, DANE and HTTPS of your own domain
   ([Encryption](encryption.md#baustein-1-grundschutz-unsichtbar-fur-alles)).
+- **Encrypt when sending** under *Settings → Company → Sicherheit der Mails*: a switch with
+  which Stalwart itself encrypts mail to recipients outside the company when it knows their key,
+  and the list of those keys – pasted, looked up by Stalwart (Web Key Directory, keys.openpgp.org)
+  or learnt from received mails; each can be removed
+  ([Encryption](encryption.md#verschlusseln-durch-stalwart)).
 - **Backup:** where the backup goes, how the last run went, how full the storage is, the time of
   the nightly backup and “Back up now”, plus the log. For this, the units must be set up on the
   server ([Installation → Backups](installation.md#5-backups)); otherwise it says “Control isn’t
