@@ -21,6 +21,11 @@ describe("sendableHtml", () => {
 });
 
 describe("markCids", () => {
+  it("decodes a cid: URL to the Content-ID it names (RFC 2392 §2)", () => {
+    expect(markCids('<img src="cid:logo%40keller.test">')).toBe(
+      '<img src="cid:logo%40keller.test" data-cid="logo@keller.test">',
+    );
+  });
   it("marks a draft's cid: images, with or without angle brackets", () => {
     // Serialising escapes < and > in attribute values (HTML spec since 2025, parse5 8.1).
     expect(markCids('<p><img src="cid:bild-1@kontext"><img src="cid:<b2@x>"></p>')).toBe(
