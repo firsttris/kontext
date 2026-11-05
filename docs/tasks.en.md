@@ -27,6 +27,10 @@ Hoffmann building site), so that their tasks don't sit among all the others.
 - **Hide completed:** the switch with the crossed-out eye above the list and the board hides
   checked-off tasks; at the end of the list or in the “Done” column, “… completed – show” brings
   them back. The choice applies per device; the “Done” view always shows them.
+- **Searching tasks:** the field above the list searches all tasks you can see – on every board,
+  completed ones too – by title, notes, checklist and whom they are assigned to; every word must
+  occur, also as part of a word (“zaun” finds “Zaunpfosten”). A hit opens the task.
+  [More](architecture.md#termine-und-aufgaben-suchen)
 
 ## Deleting tasks { #aufgaben-loschen }
 

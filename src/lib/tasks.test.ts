@@ -14,6 +14,7 @@ import {
   plainSubject,
   positionBetween,
   type Task,
+  taskMatches,
   tasksOfMail,
 } from "./tasks";
 
@@ -181,5 +182,27 @@ describe("columns", () => {
     expect(newColumnId("Prüfen", [])).toBe("c-prufen");
     expect(newColumnId("?!", [])).toBe("c-spalte");
     expect(newColumnId("Ab", [])).toBe("c-abxx");
+  });
+});
+
+describe("taskMatches", () => {
+  const task = sampleTask({
+    title: "Rückruf Hoffmann",
+    notes: "Wegen Fußbodenheizung",
+    checklist: [{ id: "c", text: "Angebot heraussuchen", done: false }],
+  });
+
+  it("finds a word in the title, the notes, the checklist or the assignee's name", () => {
+    expect(taskMatches(task, "hoffmann", null)).toBe(true);
+    expect(taskMatches(task, "FUSSBODEN", null)).toBe(false);
+    expect(taskMatches(task, "fußboden", null)).toBe(true);
+    expect(taskMatches(task, "angebot", null)).toBe(true);
+    expect(taskMatches(task, "anna", "Anna Schmidt")).toBe(true);
+    expect(taskMatches(task, "anna", null)).toBe(false);
+  });
+
+  it("needs every word, in any order", () => {
+    expect(taskMatches(task, " heizung  rückruf ", null)).toBe(true);
+    expect(taskMatches(task, "rückruf sommer", null)).toBe(false);
   });
 });

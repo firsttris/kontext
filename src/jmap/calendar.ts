@@ -209,6 +209,37 @@ export const queryEvents = async (
   return events.map(withAllDayOf(new Map(bases.map((base) => [base.id, base]))));
 };
 
+/** How many stored events one calendar's search returns at most. */
+const SEARCH_LIMIT = 50;
+
+/**
+ * Stored events of one calendar that mention the words in title, description, location,
+ * organizer or attendees (names and addresses), past and future, the latest first. Without
+ * expandRecurrences Stalwart searches all time and a series is one hit; `text` covers
+ * TEXT_FIELDS and `start` is a supported sort (crates/jmap/src/calendar_event/query.rs).
+ */
+export const searchEvents = async (
+  client: JmapClient,
+  accountId: string,
+  calendarId: string,
+  text: string,
+): Promise<CalendarEvent[]> => {
+  const { ids } = await client.call<{ ids: string[] }>(
+    "CalendarEvent/query",
+    {
+      accountId,
+      filter: { text, inCalendar: calendarId },
+      sort: [{ property: "start", isAscending: false }],
+      timeZone: ZONE,
+      limit: SEARCH_LIMIT,
+    },
+    USING,
+  );
+  // utcStart/utcEnd: Stalwart resolves a floating start in the get's timeZone, as in the views
+  // (expand_base in crates/groupware/src/calendar/expand.rs); a series gets its first date's.
+  return getEvents(client, accountId, ids, INSTANCE_PROPERTIES, WITHOUT_OVERRIDES);
+};
+
 /** One stored event, e.g. the series behind an instance (which carries the rule). */
 export const getEvent = async (
   client: JmapClient,

@@ -1345,6 +1345,26 @@ kopiert ihn nicht); bis dahin findet die Suche nicht alles. Die Firmenverwaltung
 Vorschläge beim Tippen kommen aus den Kontakten (für `von:`/`an:`), den Ordnern (für `in:`), den
 Operatoren und den letzten Suchen (pro Gerät im Browser).
 
+### Termine und Aufgaben suchen
+
+**Termine** sucht Stalwart: `CalendarEvent/query` mit dem Filter `text` je eingeblendetem
+Kalender (`src/jmap/calendar.ts`, `searchEvents`), ohne `expandRecurrences`. So durchsucht
+Stalwart alle Zeit statt eines Fensters und gibt eine Serie als einen Treffer zurück; `text`
+deckt Titel, Beschreibung, Ort, Organisator und Teilnehmer ab, Namen wie Adressen, und `start`
+ist als Sortierung erlaubt (`TEXT_FIELDS` und `EventSortKey::Start` in
+`crates/jmap/src/calendar_event/query.rs`, die Teilnehmer samt `CN` aus
+`crates/groupware/src/calendar/index.rs`). Je Kalender kommen höchstens 50 Termine, die
+spätesten zuerst; `src/lib/event-search.ts` mischt sie: kommende nach Beginn, dann vergangene,
+die letzten zuerst; eine Serie zählt mit ihrem ersten Termin. Wie in der Mail findet Stalwart
+ganze Wörter und Wortstämme, keine Wortteile („Hoffmann“, nicht „Hoff“). Ein Treffer öffnet
+`/calendar?event=…&account=…&date=…`; die Ansicht findet den Termin des Tages über
+`baseEventId` (`findLinkedEvent`). Ausgeblendete Kalender bleiben außen vor, weil die Ansicht
+ihre Termine nicht lädt.
+
+**Aufgaben** lädt die App ohnehin alle (`/api/tasks`); `taskMatches` in `src/lib/tasks.ts`
+filtert sie im Browser nach Titel, Notiz, Checkliste und dem Namen der zuständigen Person, jedes
+Wort auch als Wortteil. Der Server bekommt keine eigene Suche.
+
 ## Unterhaltungen
 
 Die Liste bleibt, wie die Mails hereinkommen; die Unterhaltung steht dort, wo sie hilft – beim

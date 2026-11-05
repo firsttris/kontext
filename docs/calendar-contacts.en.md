@@ -27,6 +27,10 @@ Kontext is also on the iPhone, on Android (DAVx⁵) and in Thunderbird.
 
   ![Editing an appointment of a series with "This and all following"](screenshots/series-following.png)
 
+- **Searching appointments:** the "Search events" field at the top (on the phone behind the
+  magnifier) finds appointments by title, location, description and participants ("Hoffmann"),
+  past and coming ones, in the calendars shown; the coming ones are on top. A series shows once.
+  A hit opens the appointment on its day. [More](architecture.md#termine-und-aufgaben-suchen)
 - **Invitations in the mail:** when an invitation comes by mail – from Outlook, Google, Apple or
   from colleagues –, above the text it shows what, when and where, whether the appointment is
   already in the calendar and what you replied, plus **Accept**, **Maybe**, **Decline** and

@@ -7,6 +7,9 @@ Steps that an update needs beyond raising the version are marked **Upgrade**.
 
 ## Unreleased
 
+- Calendar and tasks: a search field finds appointments (title, location, description,
+  participants, past and coming; a series once) and tasks (title, notes, checklist, assignee),
+  and a hit opens them, on the phone too (user guide, "Kalender" and "Aufgaben").
 - Mail: "Absender blockieren" in "Weitere Aktionen" blocks an outside sender's address or whole
   domain: the mail and all future ones from there go to Spam. It is a rule "Blockiert: …" at the
   top of the rules, removed there to unblock (user guide, "Mail", "Sicherheit").

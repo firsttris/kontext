@@ -1297,6 +1297,26 @@ still being built" with the number of entries waiting, from `x:IndexQueueStatus`
 Suggestions while typing come from the contacts (for `von:`/`an:`), the folders (for `in:`), the
 operators and the recent searches (per device in the browser).
 
+### Searching appointments and tasks { #termine-und-aufgaben-suchen }
+
+**Appointments** are searched by Stalwart: `CalendarEvent/query` with the `text` filter per
+calendar shown (`src/jmap/calendar.ts`, `searchEvents`), without `expandRecurrences`. That way
+Stalwart searches all time instead of a window and returns a series as one hit; `text` covers
+title, description, location, organiser and participants, names as well as addresses, and
+`start` is an allowed sort (`TEXT_FIELDS` and `EventSortKey::Start` in
+`crates/jmap/src/calendar_event/query.rs`, the participants with their `CN` from
+`crates/groupware/src/calendar/index.rs`). Each calendar returns at most 50 appointments, the
+latest first; `src/lib/event-search.ts` merges them: coming ones by start, then past ones, the
+latest first; a series counts with its first date. As in the mail, Stalwart finds whole words
+and word stems, not parts of words ("Hoffmann", not "Hoff"). A hit opens
+`/calendar?event=…&account=…&date=…`; the view finds the day's appointment through
+`baseEventId` (`findLinkedEvent`). Hidden calendars are left out, because the view does not load
+their appointments.
+
+**Tasks** are all loaded by the app anyway (`/api/tasks`); `taskMatches` in `src/lib/tasks.ts`
+filters them in the browser by title, notes, checklist and the name of the person assigned,
+every word also as part of a word. The server gets no search of its own.
+
 ## Conversations { #unterhaltungen }
 
 The list stays the way the mails come in; the conversation appears where it helps – when reading

@@ -29,6 +29,10 @@ Hoffmann“), damit deren Aufgaben nicht zwischen den übrigen liegen.
   blendet abgehakte Aufgaben aus; am Ende der Liste bzw. in der Spalte „Erledigt“ holt
   „… erledigt – einblenden“ sie zurück. Die Wahl gilt je Gerät; die Ansicht „Erledigt“ zeigt
   sie immer.
+- **Aufgaben suchen:** Das Feld über der Liste durchsucht alle Aufgaben, die man sieht – auf
+  allen Boards, auch erledigte – nach Titel, Notiz, Checkliste und wem sie zugewiesen sind; jedes
+  Wort muss vorkommen, auch als Teil („zaun“ findet „Zaunpfosten“). Ein Treffer öffnet die
+  Aufgabe. [Mehr](architecture.md#termine-und-aufgaben-suchen)
 
 ## Aufgaben löschen
 

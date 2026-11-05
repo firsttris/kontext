@@ -6,6 +6,7 @@
 import { Link } from "@tanstack/react-router";
 import { AtSign, BellOff, Hash, LockKeyhole, Phone, Plus, Sparkles } from "lucide-react";
 import { useState } from "react";
+import { SearchField } from "@/components/search-field";
 import { Button } from "@/components/ui/button";
 import { FROM_PARENT } from "@/components/use-back";
 import { ASSISTANT_ID, useAssistantEnabled } from "@/features/assistant/assistant";
@@ -14,7 +15,7 @@ import { ColleagueAvatar } from "@/features/photos/colleague-avatar";
 import { type ChannelSummary, firstName, shortTime, sortChannels, sortDirect } from "@/lib/chat";
 import { cn } from "@/lib/cn";
 import { m } from "@/paraglide/messages";
-import { ChatSearchField, ChatSearchResults } from "./chat-search";
+import { ChatSearchResults } from "./chat-search";
 import { useChatNames } from "./use-chat-names";
 
 type Props = {
@@ -175,7 +176,7 @@ export const ChannelSidebar = ({ channels, online, activeId, onNew }: Props) => 
         <Button variant="primary" className="h-[38px]" onClick={onNew}>
           <Plus size={15} /> {m.chat_new()}
         </Button>
-        <ChatSearchField value={words} onChange={setWords} className="h-9" />
+        <SearchField label={m.chat_search()} value={words} onChange={setWords} className="h-9" />
       </div>
       {words ? (
         <ChatSearchResults words={words} />
@@ -294,7 +295,12 @@ export const ChannelScreen = ({ channels, online, onNew }: Props) => {
             <Plus size={18} />
           </Button>
         </div>
-        <ChatSearchField value={words} onChange={setWords} className="h-10 rounded-xl" />
+        <SearchField
+          label={m.chat_search()}
+          value={words}
+          onChange={setWords}
+          className="h-10 rounded-xl"
+        />
       </header>
       {words ? (
         <div className="min-h-0 flex-1 overflow-y-auto px-2 pb-2">
