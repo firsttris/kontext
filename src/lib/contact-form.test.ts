@@ -275,3 +275,58 @@ describe("writing the form into the card", () => {
     });
   });
 });
+
+describe("formToCard on cards from other clients", () => {
+  it("keeps a name given only as full name (vCard FN without N) when the company changes", () => {
+    // calcard maps FN to name.full and N to name.components (jscontact/import/convert.rs).
+    const card: ContactCard = {
+      id: "c2",
+      addressBookIds: { b: true },
+      name: { full: "Hans Müller" },
+      organizations: { o: { name: "Alt GmbH" } },
+    };
+    expect(saved({ ...toForm(card), company: "Neu GmbH" }, card).name).toEqual({
+      full: "Hans Müller",
+    });
+  });
+
+  it("puts a new surname where the old one was in an ordered name (RFC 9553 §2.2.1)", () => {
+    const card = saved({ ...toForm(rich), surname: "Keller-Braun" });
+    expect(card.name?.components?.map((c) => c.value)).toEqual([
+      "Dr.",
+      "Petra",
+      "Maria",
+      "Keller-Braun",
+    ]);
+  });
+
+  it("does not mark an unordered name (as imported from N) as ordered", () => {
+    // calcard sets isOrdered only for N with JSCOMPS; plain N gives the components by position.
+    const card: ContactCard = {
+      id: "c3",
+      addressBookIds: { b: true },
+      name: {
+        components: [
+          { kind: "surname", value: "Keller" },
+          { kind: "given", value: "Petra" },
+          { kind: "given2", value: "Maria" },
+          { kind: "title", value: "Dr." },
+        ],
+      },
+    };
+    expect(saved({ ...toForm(card), surname: "Braun" }, card).name?.isOrdered).not.toBe(true);
+  });
+
+  it("keeps a contact link (vCard CONTACT-URI) when a website is added", () => {
+    // calcard maps CONTACT-URI to a link of kind "contact" (jscontact/import/convert.rs).
+    const card: ContactCard = {
+      id: "c4",
+      addressBookIds: { b: true },
+      name: { components: [{ kind: "given", value: "Eva" }], isOrdered: true },
+      links: { l1: { "@type": "Link", kind: "contact", uri: "mailto:kontakt@fischer.test" } },
+    };
+    const links = saved({ ...toForm(card), website: "fischer.test" }, card).links;
+    expect(links?.l1).toEqual(card.links!.l1);
+    expect(Object.values(links ?? {}).map((l) => l.uri)).toContain("https://fischer.test");
+  });
+});
