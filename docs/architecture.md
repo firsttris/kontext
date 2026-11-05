@@ -578,8 +578,9 @@ Sieve-Skript** (`kontext-regeln`, RFC 5228) und lädt es per JMAP (`SieveScript/
 ins eigene Konto. So wirken sie auch, wenn niemand angemeldet ist, und gleich auf jedem Gerät.
 
 - **Bedingungen:** Absender (`address "from"`), Empfänger (`address ["to", "cc"]`), Betreff
-  (`header`), Text (`body :text`), je mit „enthält“, „enthält nicht“ oder „ist genau“; alle oder
-  eine davon.
+  (`header`), Text (`body :text`), je mit „enthält“, „enthält nicht“ oder „ist genau“, bei Adressen
+  auch „hat die Domain“ (`address :domain`: die Domain selbst oder eine darunter, also nicht
+  `angebote.example.net`); alle oder eine davon.
 - **Aktionen:** in einen Ordner (`fileinto :mailboxid`, mit dem Pfad als Ersatz, falls die Id
   fehlt), als gelesen markieren oder markieren (`addflag`), weiterleiten mit Kopie
   (`redirect :copy`; Stalwart leitet eine Mail höchstens einmal weiter), keine weiteren Regeln,

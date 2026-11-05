@@ -564,8 +564,9 @@ Rules sort new mail on arrival, on the server: Kontext writes them as **one Siev
 account. So they work even when nobody is signed in, and on every device at once.
 
 - **Conditions:** sender (`address "from"`), recipient (`address ["to", "cc"]`), subject
-  (`header`), text (`body :text`), each with "contains", "does not contain" or "is exactly"; all of
-  them or any one.
+  (`header`), text (`body :text`), each with "contains", "does not contain" or "is exactly", for
+  addresses also "has the domain" (`address :domain`: the domain itself or one below it, so not
+  `angebote.example.net`); all of them or any one.
 - **Actions:** into a folder (`fileinto :mailboxid`, with the path as a fallback in case the id is
   missing), mark as read or flag (`addflag`), forward a copy (`redirect :copy`; Stalwart forwards a
   mail at most once), no further rules, **create a task**: the script sets the keyword

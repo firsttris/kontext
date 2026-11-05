@@ -3,7 +3,7 @@
  * arrival (script.ts): substring tests without regard to case, every matching rule in order, the
  * first folder wins, "stop" ends the list. Pure functions.
  */
-import { isEffective, type Rule, type RuleCondition } from "./script";
+import { isEffective, type Rule, type RuleCondition, ruleDomain } from "./script";
 
 /** What a rule looks at; addresses without names, like Sieve's `address :all`. */
 export type MailFacts = { from: string[]; to: string[]; subject: string; body: string };
@@ -20,9 +20,24 @@ const fold = (text: string) => text.toLowerCase();
 const valuesOf = (mail: MailFacts, field: RuleCondition["field"]): string[] =>
   ({ from: mail.from, to: mail.to, subject: [mail.subject], body: [mail.body] })[field];
 
+/** The part after the first "@", as Sieve's `address :domain` takes it; empty without one. */
+const domainPart = (address: string): string => {
+  const at = address.indexOf("@");
+  return at < 0 ? "" : address.slice(at + 1);
+};
+
+/** The domain itself or one below it, like the script's `domainTest`. */
+const inDomain = (address: string, domain: string): boolean => {
+  const own = domainPart(address);
+  return domain !== "" && (own === domain || own.endsWith(`.${domain}`));
+};
+
 const holds = ({ field, operator, value }: RuleCondition, mail: MailFacts): boolean => {
-  const wanted = fold(value.trim());
   const values = valuesOf(mail, field).map(fold);
+  if (operator === "domain") {
+    return values.some((candidate) => inDomain(candidate, ruleDomain(value)));
+  }
+  const wanted = fold(value.trim());
   if (operator === "is") return values.some((candidate) => candidate === wanted);
   const contained = values.some((candidate) => candidate.includes(wanted));
   return operator === "contains" ? contained : !contained;

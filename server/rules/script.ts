@@ -26,7 +26,8 @@ export const TASK_KEYWORD = "kontext.task";
 
 const condition = z.object({
   field: z.enum(["from", "to", "subject", "body"]),
-  operator: z.enum(["contains", "notContains", "is"]),
+  /** "domain": the address's domain is the value or below it (an address field only). */
+  operator: z.enum(["contains", "notContains", "is", "domain"]),
   value: z.string(),
 });
 
@@ -86,11 +87,35 @@ const quoted = (value: string) =>
     .replace(/"/g, '\\"')
     .replace(/\$\{/g, `${variable("dollar")}{`)}"`;
 
-const test = ({ field, operator, value }: RuleCondition): string => {
+/** A domain as a rule compares it: lower case, without a leading "@" or a trailing dot. */
+export const ruleDomain = (value: string): string =>
+  value.trim().toLowerCase().replace(/^@+/, "").replace(/\.$/, "");
+
+/** `value` taken literally in a `:matches` pattern (RFC 5228 §2.7.1): "*", "?" and "\" escaped. */
+const literalPattern = (value: string) => value.replace(/[\\*?]/g, "\\$&");
+
+/**
+ * The domain itself or one below it ("angebote.example" also covers "news.angebote.example", as
+ * the company's own domains do in lib/external-hint.ts), but not "angebote.example.net".
+ * `address :domain` is the part after the "@" (Stalwart: crates/sieve/src/runtime/tests/
+ * test_address.rs, mail-parser's `parse_address_domain`).
+ */
+const domainTest = (headers: string, value: string): string => {
+  const domain = ruleDomain(value);
+  return `anyof (address :domain :is ${headers} ${quoted(domain)}, address :domain :matches ${headers} ${quoted(`*.${literalPattern(domain)}`)})`;
+};
+
+const addressTest = (headers: string, { operator, value }: RuleCondition): string =>
+  operator === "domain"
+    ? domainTest(headers, value)
+    : `address :all ${operator === "is" ? ":is" : ":contains"} ${headers} ${quoted(value.trim())}`;
+
+const test = (condition: RuleCondition): string => {
+  const { field, operator, value } = condition;
   const match = operator === "is" ? ":is" : ":contains";
   const positive = {
-    from: `address :all ${match} "from" ${quoted(value.trim())}`,
-    to: `address :all ${match} ["to", "cc"] ${quoted(value.trim())}`,
+    from: addressTest('"from"', condition),
+    to: addressTest('["to", "cc"]', condition),
     subject: `header ${match} "subject" ${quoted(value.trim())}`,
     body: `body :text ${match} ${quoted(value.trim())}`,
   }[field];
