@@ -730,22 +730,26 @@ test.describe("Mail am Handy @phone", () => {
     // The less-used actions sit in "Weitere Aktionen"; the toggles stay on while it is open.
     await form.getByRole("button", { name: "Weitere Aktionen" }).click();
     const menu = page.getByRole("menu");
+    // Radix places the menu on device pixels (Pixel 7: 2.625 per CSS px), so its edges are
+    // fractional, and Chromium's IntersectionObserver then reports a fully visible item as
+    // 0.99999988 instead of 1. Fully visible here means all but a rounding error.
+    const whole = { ratio: 0.999 };
     for (const name of [
       "Lesebestätigung anfordern",
       "Zustellbestätigung anfordern",
       "Vertraulich senden",
     ]) {
       const toggle = menu.getByRole("menuitemcheckbox", { name });
-      await expect(toggle).toBeInViewport({ ratio: 1 });
+      await expect(toggle).toBeInViewport(whole);
       await expect(toggle).toHaveAttribute("aria-checked", "false");
     }
     await menu.getByRole("menuitemcheckbox", { name: "Lesebestätigung anfordern" }).click();
     await expect(
       menu.getByRole("menuitemcheckbox", { name: "Lesebestätigung anfordern" }),
     ).toHaveAttribute("aria-checked", "true");
-    await expect(menu.getByRole("menuitem", { name: "Als Entwurf speichern" })).toBeInViewport({
-      ratio: 1,
-    });
+    await expect(menu.getByRole("menuitem", { name: "Als Entwurf speichern" })).toBeInViewport(
+      whole,
+    );
     await page.keyboard.press("Escape");
     await form.getByRole("button", { name: "Verwerfen" }).click();
     await expect(form).toHaveCount(0);
