@@ -188,7 +188,7 @@ export const ComposerActions = (props: Props) => {
           disabled={sending || !canSend}
           className="rounded-r-none"
         >
-          <Send size={15} /> {sending ? m.mail_sending() : m.mail_send()}
+          <Send size={16} /> {sending ? m.mail_sending() : m.mail_send()}
         </Button>
         <SendLater disabled={sending || !canSend} onPick={onSendLater} />
       </span>

@@ -7,7 +7,7 @@ const deleteRule = async (page: Page, title: RegExp) => {
   const dialog = page.getByRole("dialog", { name: "Regel bearbeiten" });
   await dialog.getByRole("button", { name: "Regel löschen" }).click();
   await dialog.getByRole("button", { name: "Wirklich löschen?" }).click();
-  await expect(page.getByRole("status").filter({ hasText: "Regel gelöscht." })).toBeVisible();
+  await expect(page.getByRole("status").filter({ hasText: "Regel gelöscht" })).toBeVisible();
 };
 
 test.describe("Regeln", () => {
@@ -104,7 +104,7 @@ test.describe("Regeln", () => {
     // Clean up: reply off, rule gone.
     await page.getByLabel("Abwesenheitsnotiz einschalten").uncheck();
     await page.getByRole("button", { name: "Speichern" }).click();
-    await expect(page.getByRole("status").filter({ hasText: "Gespeichert." })).toBeVisible();
+    await expect(page.getByRole("status").filter({ hasText: "Gespeichert" })).toBeVisible();
     await page.goto("/settings?section=rules");
     await deleteRule(page, /erika@example\.test/);
   });

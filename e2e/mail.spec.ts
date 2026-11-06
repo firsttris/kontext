@@ -191,7 +191,7 @@ test.describe("Mail", () => {
     await page.getByRole("button", { name: "Aufzählung" }).click();
     await page.keyboard.type("Rohre");
     await page.getByRole("button", { name: "Senden", exact: true }).click();
-    await expect(page.getByRole("status")).toHaveText("Mail gesendet.");
+    await expect(page.getByRole("status")).toHaveText("Mail gesendet");
     await expect.poll(() => inboxSubjects("anna")).toContain(subject);
 
     await page.getByRole("link", { name: "Gesendet", exact: true }).click();
@@ -226,7 +226,7 @@ test.describe("Mail", () => {
     await expect(body.locator("tr")).toHaveCount(3);
     await expect(body).toContainText("Pumpe");
     await page.getByRole("button", { name: "Senden", exact: true }).click();
-    await expect(page.getByRole("status")).toHaveText("Mail gesendet.");
+    await expect(page.getByRole("status")).toHaveText("Mail gesendet");
 
     const received = async () => {
       const client = jmapAs("anna");
@@ -280,7 +280,7 @@ test.describe("Mail", () => {
       );
       await page.keyboard.type("Ich bin dabei.");
       await page.getByRole("button", { name: "Senden", exact: true }).click();
-      await expect(page.getByRole("status")).toHaveText("Mail gesendet.");
+      await expect(page.getByRole("status")).toHaveText("Mail gesendet");
       await expect.poll(() => inboxSubjects("anna")).toContain(`Re: ${dinner.subject}`);
     } finally {
       await dinner.remove();
@@ -302,7 +302,7 @@ test.describe("Mail", () => {
       const subject = unique("Zur Ablage");
       await page.getByLabel("Betreff").fill(subject);
       await page.getByRole("button", { name: "Senden", exact: true }).click();
-      await expect(page.getByRole("status")).toHaveText("Mail gesendet.");
+      await expect(page.getByRole("status")).toHaveText("Mail gesendet");
       // Anna gets the original whole, as a mail in the mail.
       await expect.poll(() => attachedMails("anna", subject)).toEqual([original]);
     } finally {
@@ -326,7 +326,7 @@ test.describe("Mail", () => {
       const subject = unique("Belege");
       await page.getByLabel("Betreff").fill(subject);
       await page.getByRole("button", { name: "Senden", exact: true }).click();
-      await expect(page.getByRole("status")).toHaveText("Mail gesendet.");
+      await expect(page.getByRole("status")).toHaveText("Mail gesendet");
       await expect
         .poll(async () => (await attachedMails("anna", subject)).sort())
         .toEqual([...subjects].sort());
@@ -478,7 +478,7 @@ test.describe("Gemeinsames Postfach erkennen und verschieben", () => {
     });
     await expect(row).toContainText("info@");
     await row.dragTo(page.getByRole("link", { name: "Lieferanten" }));
-    await expect(page.getByRole("status")).toHaveText("Nach „Lieferanten“ verschoben.");
+    await expect(page.getByRole("status")).toHaveText("Nach „Lieferanten“ verschoben");
     await expect(row).toHaveCount(0);
 
     await page.getByRole("link", { name: "Lieferanten" }).click();
@@ -570,7 +570,7 @@ test("sendet aus dem gemeinsamen Postfach als info@", async ({ page }) => {
   // Sent, or an error toast; a failure then names the error instead of only timing out (this
   // test failed now and then in full runs, showing just the composer's "Entwurf gespeichert").
   await expect(
-    page.getByRole("status").filter({ hasText: "Mail gesendet." }).or(page.getByRole("alert")),
+    page.getByRole("status").filter({ hasText: "Mail gesendet" }).or(page.getByRole("alert")),
   ).toBeVisible({ timeout: 15_000 });
   expect(await page.getByRole("alert").allTextContents()).toEqual([]);
   await expect
@@ -730,22 +730,26 @@ test.describe("Mail am Handy @phone", () => {
     // The less-used actions sit in "Weitere Aktionen"; the toggles stay on while it is open.
     await form.getByRole("button", { name: "Weitere Aktionen" }).click();
     const menu = page.getByRole("menu");
+    // Radix places the menu on device pixels (Pixel 7: 2.625 per CSS px), so its edges are
+    // fractional, and Chromium's IntersectionObserver then reports a fully visible item as
+    // 0.99999988 instead of 1. Fully visible here means all but a rounding error.
+    const whole = { ratio: 0.999 };
     for (const name of [
       "Lesebestätigung anfordern",
       "Zustellbestätigung anfordern",
       "Vertraulich senden",
     ]) {
       const toggle = menu.getByRole("menuitemcheckbox", { name });
-      await expect(toggle).toBeInViewport({ ratio: 1 });
+      await expect(toggle).toBeInViewport(whole);
       await expect(toggle).toHaveAttribute("aria-checked", "false");
     }
     await menu.getByRole("menuitemcheckbox", { name: "Lesebestätigung anfordern" }).click();
     await expect(
       menu.getByRole("menuitemcheckbox", { name: "Lesebestätigung anfordern" }),
     ).toHaveAttribute("aria-checked", "true");
-    await expect(menu.getByRole("menuitem", { name: "Als Entwurf speichern" })).toBeInViewport({
-      ratio: 1,
-    });
+    await expect(menu.getByRole("menuitem", { name: "Als Entwurf speichern" })).toBeInViewport(
+      whole,
+    );
     await page.keyboard.press("Escape");
     await form.getByRole("button", { name: "Verwerfen" }).click();
     await expect(form).toHaveCount(0);
@@ -823,7 +827,7 @@ test.describe("Entwürfe", () => {
     await page.keyboard.press("End");
     await page.keyboard.type(" Zweiter Teil.");
     await page.getByRole("button", { name: "Senden", exact: true }).click();
-    await expect(page.getByRole("status").filter({ hasText: "Mail gesendet." })).toBeVisible();
+    await expect(page.getByRole("status").filter({ hasText: "Mail gesendet" })).toBeVisible();
     await expect.poll(() => inboxSubjects("anna")).toContain(subject);
     await expect(page.getByRole("list", { name: "Entwürfe" }).getByText(subject)).toHaveCount(0);
   });
@@ -866,7 +870,7 @@ test.describe("Entwürfe", () => {
     await page.getByRole("list", { name: "Entwürfe" }).getByText(subject).click();
     await expect.poll(() => image.evaluate((img: HTMLImageElement) => img.naturalWidth)).toBe(60);
     await page.getByRole("button", { name: "Senden", exact: true }).click();
-    await expect(page.getByRole("status").filter({ hasText: "Mail gesendet." })).toBeVisible();
+    await expect(page.getByRole("status").filter({ hasText: "Mail gesendet" })).toBeVisible();
 
     const received = async () => {
       const client = jmapAs("anna");
@@ -936,7 +940,7 @@ test.describe("Entwürfe", () => {
     await expect(image).toHaveCount(1);
     await page.getByRole("button", { name: "Senden", exact: true }).click();
     await expect(
-      page.getByRole("status").filter({ hasText: "Mail gesendet." }).or(page.getByRole("alert")),
+      page.getByRole("status").filter({ hasText: "Mail gesendet" }).or(page.getByRole("alert")),
     ).toBeVisible({ timeout: 15_000 });
     expect(await page.getByRole("alert").allTextContents()).toEqual([]);
     await expect.poll(() => inboxSubjects("anna")).toContain(subject);
@@ -969,7 +973,7 @@ test.describe("Entwürfe", () => {
     await saving;
     await page.getByRole("button", { name: "Senden", exact: true }).click();
     await expect(
-      page.getByRole("status").filter({ hasText: "Mail gesendet." }).or(page.getByRole("alert")),
+      page.getByRole("status").filter({ hasText: "Mail gesendet" }).or(page.getByRole("alert")),
     ).toBeVisible({ timeout: 15_000 });
     expect(await page.getByRole("alert").allTextContents()).toEqual([]);
     await expect.poll(() => inboxSubjects("anna")).toContain(subject);
@@ -1171,7 +1175,7 @@ test.describe("Breiter Bildschirm", () => {
     await page.getByRole("list", { name: "Posteingang" }).getByText(subject).click();
     const panel = page.getByRole("complementary", { name: "Zu Erika Test" });
     await panel.getByRole("button", { name: "Als Kontakt speichern" }).click();
-    await expect(page.getByRole("status")).toHaveText("Erika Test ist jetzt in Ihren Kontakten.");
+    await expect(page.getByRole("status")).toHaveText("Erika Test ist jetzt in Ihren Kontakten");
     await expect(panel.getByRole("link", { name: "Kontakt öffnen" })).toBeVisible();
   });
 });
@@ -1425,7 +1429,7 @@ test.describe("Benachrichtigungen", () => {
     await dialog.getByLabel("Titel").fill(title);
     await addAttendees(dialog, address("anna"));
     await dialog.getByRole("button", { name: "Speichern" }).click();
-    await expect(page.getByRole("status")).toHaveText("Einladungen werden verschickt.");
+    await expect(page.getByRole("status")).toHaveText("Einladungen werden verschickt");
 
     const anna = await (
       await browser.newContext({ locale: "de-DE", timezoneId: "Europe/Berlin" })

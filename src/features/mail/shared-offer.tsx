@@ -15,8 +15,8 @@ export const SharedOffer = ({ shared, onTake, onDiscard }: Props) => (
     aria-label={m.share_offer_title()}
     className="mx-auto flex w-full max-w-lg flex-col gap-4 p-4 md:p-8"
   >
-    <div className="flex items-center gap-2 text-[15px] font-semibold">
-      <Share2 size={18} aria-hidden="true" /> {m.share_offer_title()}
+    <div className="flex items-center gap-2 text-[16px] font-medium">
+      <Share2 size={20} aria-hidden="true" /> {m.share_offer_title()}
     </div>
     <p className="m-0 text-[13px] text-muted">{m.share_offer_hint()}</p>
     <div className="flex flex-col gap-2 rounded-xl border border-border p-3 text-[13px]">

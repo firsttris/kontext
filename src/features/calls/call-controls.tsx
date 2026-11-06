@@ -43,7 +43,7 @@ const Toggle = ({
         enabled ? "bg-subtle text-fg hover:bg-hover" : "bg-fg text-bg hover:opacity-90",
       )}
     >
-      <Icon size={18} />
+      <Icon size={20} />
     </button>
   );
 };
@@ -88,7 +88,7 @@ export const CallControls = ({
       onClick={onLeave}
       className="flex size-11 items-center justify-center rounded-full bg-danger text-white hover:opacity-90"
     >
-      <PhoneOff size={18} />
+      <PhoneOff size={20} />
     </button>
   </div>
 );

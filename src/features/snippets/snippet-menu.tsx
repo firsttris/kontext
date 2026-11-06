@@ -93,7 +93,7 @@ export const SnippetMenu = ({
           onMouseDown={(event) => event.preventDefault()}
           className="flex size-8 items-center justify-center rounded-md text-muted hover:bg-hover hover:text-fg"
         >
-          <TextQuote size={15} strokeWidth={1.9} />
+          <TextQuote size={16} />
         </MenuTrigger>
         <MenuContent
           align="start"

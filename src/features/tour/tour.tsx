@@ -111,10 +111,11 @@ const useSize = (ref: RefObject<HTMLElement | null>): Size | null => {
 const Spotlight = ({ box }: { box: Box }) => (
   <div
     aria-hidden="true"
-    className="pointer-events-none fixed z-40 rounded-[12px] ring-2 ring-primary motion-safe:transition-all motion-safe:duration-200"
+    className="pointer-events-none fixed top-0 left-0 z-40 rounded-xl ring-2 ring-primary motion-safe:transition-transform motion-safe:duration-200"
+    // Only the move is animated, as a transform; the size changes at once (animating width and
+    // height lays the page out again in every frame).
     style={{
-      top: box.top - 4,
-      left: box.left - 4,
+      transform: `translate(${box.left - 4}px, ${box.top - 4}px)`,
       width: box.width + 8,
       height: box.height + 8,
       boxShadow: "0 0 0 9999px rgb(0 0 0 / 0.35)",

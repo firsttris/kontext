@@ -195,7 +195,7 @@ export const CalendarPage = ({ search }: { search: Search }) => {
 
   const header = (
     <div className="flex min-h-16 shrink-0 flex-wrap items-center gap-3 border-b border-border px-4 py-2 md:px-5">
-      <h1 className="m-0 text-[22px] font-semibold tracking-tight capitalize md:text-[18px]">
+      <h1 className="m-0 text-[22px] font-semibold capitalize md:text-[18px]">
         {view === "month"
           ? monthTitle.format(new Date(`${selected.slice(0, 7)}-15T12:00:00Z`))
           : view === "agenda"
@@ -266,7 +266,7 @@ export const CalendarPage = ({ search }: { search: Search }) => {
       </div>
       <nav
         aria-label="Ansicht"
-        className="order-last flex w-full gap-1 rounded-[9px] bg-subtle p-[3px] md:order-none md:w-auto"
+        className="order-last flex w-full gap-1 rounded-[10px] bg-subtle p-1 md:order-none md:w-auto"
       >
         {VIEWS.filter(([value]) => !(phone && isWeek(value))).map(([value, label]) => (
           <Link
@@ -275,7 +275,7 @@ export const CalendarPage = ({ search }: { search: Search }) => {
             search={(prev) => ({ ...prev, view: value })}
             aria-current={view === value ? "page" : undefined}
             className={cn(
-              "flex h-[30px] flex-1 items-center justify-center rounded-[7px] px-3 text-[13px] no-underline md:h-[26px] md:flex-none",
+              "flex h-7 flex-1 items-center justify-center rounded-md px-3 text-[13px] no-underline md:h-6 md:flex-none",
               view === value ? "bg-bg text-fg shadow-sm" : "text-muted",
             )}
           >
@@ -314,7 +314,7 @@ export const CalendarPage = ({ search }: { search: Search }) => {
   return (
     <>
       <aside className="hidden h-full w-sidebar shrink-0 flex-col gap-6 border-r border-border bg-side p-4 lg:flex">
-        <Button asChild variant="primary" className="h-[38px]">
+        <Button asChild variant="primary" className="h-9">
           <Link
             to="/calendar"
             search={(prev) => ({ ...prev, event: "new", start: `${selected}T09:00` })}
@@ -414,7 +414,7 @@ const DayStrip = ({
         </span>
         <span
           className={cn(
-            "font-mono text-[16px] font-semibold",
+            "font-mono text-[16px] font-medium",
             day === today && day !== selected && "text-accent",
           )}
         >

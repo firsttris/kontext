@@ -92,7 +92,7 @@ const Boxes = ({ boxes }: { boxes: Admin["boxes"] }) => {
       {/* The code is only of use until the box has paired with it. */}
       {code && boxes.some((box) => !box.paired) ? (
         <div role="status" className="flex flex-col gap-1.5 rounded-lg bg-subtle p-3 text-[13px]">
-          <strong className="font-mono text-[15px]">{m.phone_box_code({ code })}</strong>
+          <strong className="font-mono text-[16px]">{m.phone_box_code({ code })}</strong>
           <span className="text-muted">{m.phone_box_code_hint()}</span>
           <code className="overflow-x-auto font-mono text-[12px] whitespace-pre">
             {`docker run -d --name kontext-box --network host --restart unless-stopped \\\n  -v kontext-box:/data -e KONTEXT_URL=${origin} -e PAIRING_CODE=${code} \\\n  docker.io/tristanteu/kontext-box`}

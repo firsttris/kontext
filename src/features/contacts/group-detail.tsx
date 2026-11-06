@@ -29,14 +29,14 @@ export const GroupDetail = ({ group, contacts, books }: Props) => {
         search={(prev) => ({ book: prev.book })}
         className="flex items-center gap-1 text-[14px] text-muted no-underline md:hidden"
       >
-        <ChevronLeft size={18} /> {m.contacts_title()}
+        <ChevronLeft size={20} /> {m.contacts_title()}
       </Link>
       <header className="flex flex-wrap items-center gap-5">
         <span className="flex size-16 items-center justify-center rounded-full bg-primary text-onprimary">
-          <Users size={26} />
+          <Users size={24} />
         </span>
         <div className="flex min-w-[220px] flex-1 flex-col gap-1">
-          <h2 className="m-0 text-[26px] font-semibold tracking-tight">{fullName(group)}</h2>
+          <h2 className="m-0 text-[22px] font-semibold">{fullName(group)}</h2>
           <span className="text-muted">{m.contacts_group_count({ count: members.length })}</span>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -47,21 +47,21 @@ export const GroupDetail = ({ group, contacts, books }: Props) => {
                 params={{ accountId: mailAccountId, mailboxId: "inbox" }}
                 search={{ compose: "new", to: formatAddressInput(addresses) }}
               >
-                <Mail size={15} /> {m.contacts_group_mail_all()}
+                <Mail size={16} /> {m.contacts_group_mail_all()}
               </Link>
             </Button>
           ) : null}
           {book?.mayWrite ? (
             <Button asChild variant="ghost">
               <Link to="/contacts" search={(prev) => ({ ...prev, edit: true })}>
-                <Pencil size={15} /> {m.contacts_edit()}
+                <Pencil size={16} /> {m.contacts_edit()}
               </Link>
             </Button>
           ) : null}
         </div>
       </header>
       <section className="flex flex-col gap-2">
-        <h3 className="m-0 border-b border-border pb-2 text-[14px] font-semibold">
+        <h3 className="m-0 border-b border-border pb-2 text-[14px] font-medium">
           {m.contacts_group_members()}
         </h3>
         {members.length === 0 ? (

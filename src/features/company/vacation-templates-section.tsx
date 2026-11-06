@@ -68,7 +68,7 @@ const TemplatesForm = ({ saved }: { saved: VacationTemplate[] }) => {
               aria-label={m.company_vacation_template_remove({ title: template.title })}
               onClick={() => setTemplates(templates.filter((_, i) => i !== index))}
             >
-              <Trash2 size={15} />
+              <Trash2 size={16} />
             </Button>
           </div>
           <Label>
@@ -86,7 +86,7 @@ const TemplatesForm = ({ saved }: { saved: VacationTemplate[] }) => {
       <div className="flex flex-wrap gap-2">
         {templates.length < VACATION_TEMPLATES_MAX ? (
           <Button onClick={() => setTemplates([...templates, { title: "", text: "" }])}>
-            <Plus size={15} /> {m.company_vacation_template_add()}
+            <Plus size={16} /> {m.company_vacation_template_add()}
           </Button>
         ) : null}
         <Button

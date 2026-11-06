@@ -107,7 +107,7 @@ const Row = ({ snippet }: { snippet: Snippet }) => {
         aria-label={m.snippets_edit({ title: snippet.title })}
         onClick={() => setEditing(true)}
       >
-        <Pencil size={15} />
+        <Pencil size={16} />
       </Button>
       <Button
         variant="ghost"
@@ -120,7 +120,7 @@ const Row = ({ snippet }: { snippet: Snippet }) => {
           });
         }}
       >
-        <Trash2 size={15} />
+        <Trash2 size={16} />
       </Button>
     </li>
   );
@@ -166,7 +166,7 @@ const Mailbox = ({
         </div>
       ) : (
         <Button className="self-start" onClick={() => setAdding(true)}>
-          <Plus size={15} /> {m.snippets_new()}
+          <Plus size={16} /> {m.snippets_new()}
         </Button>
       )}
     </SettingsCard>

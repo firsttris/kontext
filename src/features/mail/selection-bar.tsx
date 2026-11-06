@@ -190,7 +190,7 @@ export const SelectionBar = ({
           {picked.length === 1 ? m.mail_selected_one() : m.mail_selected({ count: picked.length })}
         </span>
         <IconButton label={m.mail_selection_clear()} disabled={false} onClick={onClear}>
-          <X size={15} />
+          <X size={16} />
         </IconButton>
       </div>
       <div className="flex flex-wrap items-center gap-0.5">
@@ -199,7 +199,7 @@ export const SelectionBar = ({
           disabled={none}
           onClick={() => void runMoves(archiveAll, m.mail_archived())}
         >
-          <Archive size={15} strokeWidth={1.75} />
+          <Archive size={16} />
         </IconButton>
         <IconButton
           label={m.mail_delete()}
@@ -218,7 +218,7 @@ export const SelectionBar = ({
             )
           }
         >
-          <Trash2 size={15} strokeWidth={1.75} />
+          <Trash2 size={16} />
         </IconButton>
         {toSnooze ? <SnoozeMenu targets={toSnooze} onLeave={onClear} small /> : null}
         <IconButton
@@ -239,11 +239,7 @@ export const SelectionBar = ({
             )
           }
         >
-          {inJunk ? (
-            <ShieldCheck size={15} strokeWidth={1.75} />
-          ) : (
-            <ShieldAlert size={15} strokeWidth={1.75} />
-          )}
+          {inJunk ? <ShieldCheck size={16} /> : <ShieldAlert size={16} />}
         </IconButton>
         <IconButton
           label={read ? m.mail_mark_read() : m.mail_mark_unread()}
@@ -252,7 +248,7 @@ export const SelectionBar = ({
             void run(() => byAccount.map((a) => actions.setSeen(a.id, a.ids, read)), false)
           }
         >
-          {read ? <MailOpen size={15} strokeWidth={1.75} /> : <Mail size={15} strokeWidth={1.75} />}
+          {read ? <MailOpen size={16} /> : <Mail size={16} />}
         </IconButton>
         <IconButton
           label={flag ? m.mail_flag() : m.mail_unflag()}
@@ -261,10 +257,10 @@ export const SelectionBar = ({
             void run(() => byAccount.map((a) => actions.setFlagged(a.id, a.ids, flag)), false)
           }
         >
-          <Star size={15} strokeWidth={1.75} className={flag ? undefined : "fill-warn text-warn"} />
+          <Star size={16} className={flag ? undefined : "fill-warn text-warn"} />
         </IconButton>
         <IconButton label={m.mail_tasks_action()} disabled={none} onClick={makeTasks}>
-          <ListChecks size={15} strokeWidth={1.75} />
+          <ListChecks size={16} />
         </IconButton>
         {accountId ? (
           <IconButton
@@ -272,7 +268,7 @@ export const SelectionBar = ({
             disabled={none}
             onClick={() => forwardAsFiles(accountId)}
           >
-            <Paperclip size={15} strokeWidth={1.75} />
+            <Paperclip size={16} />
           </IconButton>
         ) : null}
         {accountId && categories.length ? (
@@ -285,7 +281,7 @@ export const SelectionBar = ({
                 title={m.categories_menu()}
                 disabled={none}
               >
-                <Tag size={15} strokeWidth={1.75} />
+                <Tag size={16} />
               </Button>
             </MenuTrigger>
             <MenuContent>
@@ -330,7 +326,7 @@ export const SelectionBar = ({
                 title={m.mail_move()}
                 disabled={none}
               >
-                <FolderInput size={15} strokeWidth={1.75} />
+                <FolderInput size={16} />
               </Button>
             </MenuTrigger>
             <MenuContent>

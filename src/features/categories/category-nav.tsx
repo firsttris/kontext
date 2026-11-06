@@ -38,7 +38,7 @@ export const CategoryNav = ({
           onClick={() => setEditing(true)}
           className="flex size-6 items-center justify-center rounded-md text-muted hover:bg-hover hover:text-fg"
         >
-          <Pencil size={13} />
+          <Pencil size={14} />
         </button>
       </div>
       {categories.map((category) => (

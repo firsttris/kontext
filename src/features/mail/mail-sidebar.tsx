@@ -58,7 +58,7 @@ const ROLE_ICONS: Record<string, LucideIcon> = {
 
 const navClass = (active: boolean) =>
   cn(
-    "flex h-[34px] items-center gap-2.5 rounded-lg px-2.5 text-left text-[14px] no-underline hover:bg-hover",
+    "flex h-8 items-center gap-2.5 rounded-lg px-2.5 text-left text-[14px] no-underline hover:bg-hover",
     // A mail dragged over it (mail-drag.ts).
     "data-[drop-over]:bg-hover data-[drop-over]:text-fg data-[drop-over]:ring-1 data-[drop-over]:ring-accent",
     active ? "bg-subtle font-medium text-fg" : "text-muted",
@@ -114,7 +114,7 @@ export const MailSidebar = ({ accountId, mailbox, view, query }: Props) => {
             className={cn(navClass(node.mailbox.id === mailbox?.id), "h-8 flex-1")}
             style={{ paddingLeft: 10 + node.depth * 18 }}
           >
-            <Folder size={16} strokeWidth={1.75} />
+            <Folder size={16} />
             <span className="truncate">{node.mailbox.name}</span>
             <Count value={node.mailbox.unreadEmails} />
           </Link>
@@ -149,14 +149,14 @@ export const MailSidebar = ({ accountId, mailbox, view, query }: Props) => {
         >
           <ChevronLeft size={20} />
         </Link>
-        <Button asChild variant="primary" className="h-[38px] flex-1">
+        <Button asChild variant="primary" className="h-9 flex-1">
           <Link
             data-tour="compose"
             to="/mail/$accountId/$mailboxId"
             params={{ accountId, mailboxId: mailbox?.id ?? "inbox" }}
             search={{ compose: "new" }}
           >
-            <SquarePen size={15} /> {m.mail_compose()}
+            <SquarePen size={16} /> {m.mail_compose()}
           </Link>
         </Button>
       </div>
@@ -170,7 +170,7 @@ export const MailSidebar = ({ accountId, mailbox, view, query }: Props) => {
             aria-current={view === "unified" ? "page" : undefined}
             className={navClass(view === "unified")}
           >
-            <Layers size={16} strokeWidth={1.75} />
+            <Layers size={16} />
             <span>{m.mail_all_inboxes()}</span>
             <Count value={inboxes.reduce((sum, inbox) => sum + inbox.mailbox.unreadEmails, 0)} />
           </Link>
@@ -195,7 +195,7 @@ export const MailSidebar = ({ accountId, mailbox, view, query }: Props) => {
                   : dropTarget({ accountId, mailboxId: box.id }, mailboxName(box)))}
                 className={cn(navClass(box.id === mailbox?.id), "flex-1")}
               >
-                <Icon size={16} strokeWidth={1.75} />
+                <Icon size={16} />
                 <span>{mailboxName(box)}</span>
                 {box.role === "inbox" || box.role === "junk" ? (
                   <Count value={box.unreadEmails} />
@@ -209,7 +209,7 @@ export const MailSidebar = ({ accountId, mailbox, view, query }: Props) => {
         })}
         {secure.length ? (
           <Link to="/secure" search={{}} className={navClass(false)}>
-            <LockKeyhole size={16} strokeWidth={1.75} />
+            <LockKeyhole size={16} />
             <span>{m.secure_list_link()}</span>
             <Count value={secure.reduce((sum, message) => sum + message.unreadReplies, 0)} />
           </Link>
@@ -238,7 +238,7 @@ export const MailSidebar = ({ accountId, mailbox, view, query }: Props) => {
                 {entry.isPersonal ? (
                   <span aria-hidden="true" className="size-2 rounded-full bg-accent" />
                 ) : (
-                  <Users size={15} strokeWidth={1.75} />
+                  <Users size={16} />
                 )}
                 <span className="truncate">{label}</span>
               </Link>
@@ -261,7 +261,7 @@ export const MailSidebar = ({ accountId, mailbox, view, query }: Props) => {
             onClick={() => setCreating(true)}
             className="flex size-6 items-center justify-center rounded-md text-muted hover:bg-hover hover:text-fg"
           >
-            <Plus size={15} />
+            <Plus size={16} />
           </button>
         </div>
         <ul className="m-0 list-none p-0">{tree.map(renderNode)}</ul>

@@ -21,7 +21,7 @@ export const TaskChecklist = ({
   };
   return (
     <fieldset className="m-0 flex flex-col gap-1.5 border-0 p-0">
-      <legend className="mb-1.5 text-[12px] font-semibold tracking-wide text-muted uppercase">
+      <legend className="mb-1.5 text-[12px] font-medium text-muted">
         {items.length
           ? m.tasks_checklist_count({ done, total: items.length })
           : m.tasks_checklist()}

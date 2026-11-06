@@ -87,34 +87,34 @@ export const FolderRow = ({ accountId, mailbox, mailboxes, activeId, children }:
           aria-label={m.mail_folder_menu({ name })}
           className="flex size-7 shrink-0 items-center justify-center rounded-md text-muted hover:bg-hover hover:text-fg focus-visible:opacity-100 data-[state=open]:opacity-100 md:opacity-0 md:group-hover:opacity-100"
         >
-          <Ellipsis size={15} />
+          <Ellipsis size={16} />
         </MenuTrigger>
         <MenuContent aria-label={m.mail_folder_menu({ name })}>
           {actions.markRead ? (
             <MenuItem
               onSelect={() => void run(() => markMailboxRead(client, accountId, mailbox.id))}
             >
-              <CheckCheck size={15} /> {m.mail_mark_all_read()}
+              <CheckCheck size={16} /> {m.mail_mark_all_read()}
             </MenuItem>
           ) : null}
           {actions.exportMbox ? (
             <MenuItem onSelect={() => void run(exportFolder)}>
-              <Download size={15} /> {m.mail_folder_export()}
+              <Download size={16} /> {m.mail_folder_export()}
             </MenuItem>
           ) : null}
           {actions.rename ? (
             <>
               <MenuItem onSelect={() => setDialog("rename")}>
-                <Pencil size={15} /> {m.mail_folder_rename()}
+                <Pencil size={16} /> {m.mail_folder_rename()}
               </MenuItem>
               <MenuItem onSelect={() => setDialog("move")}>
-                <FolderInput size={15} /> {m.mail_folder_move()}
+                <FolderInput size={16} /> {m.mail_folder_move()}
               </MenuItem>
             </>
           ) : null}
           {actions.remove ? (
             <MenuItem onSelect={() => setDialog("delete")} className="text-danger">
-              <Trash2 size={15} /> {m.mail_folder_delete()}
+              <Trash2 size={16} /> {m.mail_folder_delete()}
             </MenuItem>
           ) : null}
         </MenuContent>

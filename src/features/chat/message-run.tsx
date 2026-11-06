@@ -136,7 +136,7 @@ const EditField = ({
         onFocus={(event) => event.currentTarget.setSelectionRange(text.length, text.length)}
         onChange={(event) => setText(event.target.value)}
         onKeyDown={onKeyDown}
-        className="field-sizing-content min-h-11 w-full resize-none rounded-xl border border-border bg-bg px-3 py-2 text-[15px] text-fg outline-none focus:border-muted md:text-[14px]"
+        className="field-sizing-content min-h-11 w-full resize-none rounded-xl border border-border bg-bg px-3 py-2 text-[16px] text-fg outline-none focus:border-muted md:text-[14px]"
       />
       <div className="flex justify-end gap-1.5">
         <Button variant="ghost" size="sm" onClick={onCancel}>
@@ -165,7 +165,7 @@ const Body = ({
   if (message.call) return <CallLine call={message.call} channelId={message.channelId} own={own} />;
   if (message.deleted)
     return (
-      <p className="m-0 rounded-2xl border border-dashed border-border px-3 py-1.5 text-[14px] text-muted italic">
+      <p className="m-0 rounded-2xl border border-dashed border-border px-3 py-1.5 text-[14px] text-muted">
         {m.chat_message_deleted()}
       </p>
     );
@@ -312,7 +312,7 @@ const Item = ({
             item={{ kind: "task", accountId: task.accountId, ref: task.id }}
             className="flex items-center gap-1.5 text-[12px] text-muted no-underline hover:text-fg"
           >
-            <ListChecks size={13} aria-hidden="true" />
+            <ListChecks size={14} aria-hidden="true" />
             {m.chat_task_made({ title: task.title, status: statusLabel(task) })}
           </ItemLink>
         ))}
@@ -346,7 +346,7 @@ export const Run = ({ run, ...rest }: Props) => {
         <ColleagueAvatar
           id={run.authorId}
           name={name}
-          size={34}
+          size={36}
           className="hidden md:inline-flex"
         />
       )}
@@ -354,7 +354,7 @@ export const Run = ({ run, ...rest }: Props) => {
         <span className="text-[12px] text-muted md:text-[13px]">
           {own ? null : (
             <>
-              <span className="font-semibold text-fg">{firstName(name)}</span>
+              <span className="font-medium text-fg">{firstName(name)}</span>
               {" · "}
             </>
           )}

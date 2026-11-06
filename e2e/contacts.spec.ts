@@ -60,7 +60,7 @@ test.describe("Kontakte", () => {
   test("verlangt einen Namen", async ({ page }) => {
     await page.getByRole("link", { name: "Neuer Kontakt" }).click();
     await page.getByRole("button", { name: "Speichern" }).click();
-    await expect(page.getByRole("alert")).toHaveText("Bitte einen Namen angeben.");
+    await expect(page.getByRole("alert")).toHaveText("Bitte einen Namen angeben");
   });
 
   test("schlägt Kontakte beim Schreiben vor", async ({ page }) => {
@@ -166,7 +166,7 @@ test.describe("vCard", () => {
     await dialog.getByLabel("vCard- oder CSV-Datei").setInputFiles(file);
     await expect(dialog.getByText("2 neue Kontakte gefunden.")).toBeVisible();
     await dialog.getByRole("button", { name: "2 importieren" }).click();
-    await expect(page.getByRole("status")).toHaveText("2 Kontakte importiert.");
+    await expect(page.getByRole("status")).toHaveText("2 Kontakte importiert");
 
     // The same file again adds nothing.
     await dialog.getByLabel("vCard- oder CSV-Datei").setInputFiles(file);
@@ -225,7 +225,7 @@ test.describe("Adressbücher teilen", () => {
     const share = page.getByRole("dialog", { name: `„${book}“ teilen` });
     await share.getByLabel("Anna Weber").selectOption("edit");
     await share.getByRole("button", { name: "Speichern" }).click();
-    await expect(page.getByRole("status")).toHaveText("Freigabe gespeichert.");
+    await expect(page.getByRole("status")).toHaveText("Freigabe gespeichert");
     await expect(books.getByText("Geteilt mit Anna Weber")).toBeVisible();
     await page.keyboard.press("Escape");
 
@@ -273,7 +273,7 @@ test.describe("Adressbücher teilen", () => {
     await books.getByRole("button", { name: `Teilen: ${book}` }).click();
     await share.getByLabel("Anna Weber").selectOption("read");
     await share.getByRole("button", { name: "Speichern" }).click();
-    await expect(page.getByRole("status")).toHaveText("Freigabe gespeichert.");
+    await expect(page.getByRole("status")).toHaveText("Freigabe gespeichert");
 
     await anna.reload();
     await expect(anna.getByText("Von Jonas Weber geteilt, nur zum Lesen.")).toBeVisible();
@@ -373,7 +373,7 @@ test.describe("Weitere Kontakte", () => {
     await expect(list.getByRole("listitem", { name: "Anna Weber" })).toHaveCount(0);
 
     await nora.getByRole("button", { name: "Zu Kontakten hinzufügen" }).click();
-    await expect(page.getByRole("status")).toHaveText(`${name} steht jetzt in Ihren Kontakten.`);
+    await expect(page.getByRole("status")).toHaveText(`${name} steht jetzt in Ihren Kontakten`);
     await expect(nora).toHaveCount(0);
     await expect(page.getByRole("link", { name: new RegExp(`Nora Neukunde ${id}`) })).toBeVisible();
   });
@@ -491,7 +491,7 @@ test.describe("Mehrere Kontakte", () => {
 
       await page.getByRole("button", { name: "Zu Gruppe hinzufügen" }).click();
       await page.getByRole("menuitem", { name: group }).click();
-      await expect(page.getByRole("status")).toHaveText(`3 zu „${group}“ hinzugefügt.`);
+      await expect(page.getByRole("status")).toHaveText(`3 zu „${group}“ hinzugefügt`);
       await expect
         .poll(async () => {
           const card = (await jonasCards()).cards.find((c) => c.name?.full === group);
@@ -515,7 +515,7 @@ test.describe("Mehrere Kontakte", () => {
       });
       await page.getByRole("button", { name: "Löschen", exact: true }).click();
       await expect(page.getByRole("status").filter({ hasText: "gelöscht" })).toHaveText(
-        "3 Kontakte gelöscht.",
+        "3 Kontakte gelöscht",
       );
       await expect(page.getByRole("link", { name: new RegExp(surname) })).toHaveCount(0);
       await expect(page.getByText("ausgewählt")).toHaveCount(0);
@@ -546,7 +546,7 @@ test.describe("Mehrere Kontakte", () => {
 
       page.once("dialog", (dialog) => void dialog.accept());
       await page.getByRole("button", { name: "Löschen", exact: true }).click();
-      await expect(page.getByRole("status")).toHaveText("2 Kontakte gelöscht.");
+      await expect(page.getByRole("status")).toHaveText("2 Kontakte gelöscht");
       await expect(page.getByRole("link", { name: new RegExp(surname) })).toHaveCount(0);
     } finally {
       await removeCards(id);
@@ -671,7 +671,7 @@ test.describe("CSV-Import", () => {
       await customerNumber.selectOption({ label: "Notiz" });
       await expect(dialog.getByText("2 neue Kontakte gefunden.")).toBeVisible();
       await dialog.getByRole("button", { name: "2 importieren" }).click();
-      await expect(page.getByRole("status")).toHaveText("2 Kontakte importiert.");
+      await expect(page.getByRole("status")).toHaveText("2 Kontakte importiert");
       await page.keyboard.press("Escape");
 
       await page.getByRole("searchbox", { name: "Kontakte suchen" }).fill(surname);

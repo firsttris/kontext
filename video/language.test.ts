@@ -14,7 +14,7 @@ describe("the film's language", () => {
 
   it("matches a text of the app with any value in its params", () => {
     expect(uiPattern("call_panel").test("Gespräch: Anna Weber")).toBe(true);
-    expect(uiPattern("documents_saved").test("„a.pdf“ liegt jetzt in Dokumente.")).toBe(true);
+    expect(uiPattern("documents_saved").test("„a.pdf“ liegt jetzt in Dokumente")).toBe(true);
     expect(uiPattern("call_panel").test("Telefonat: Anna Weber")).toBe(false);
   });
 

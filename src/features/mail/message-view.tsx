@@ -122,11 +122,11 @@ export const MessageView = ({ accountId, mailbox, emailId }: Props) => {
                   title={m.mail_shared_mailbox_hint({ address: account.name })}
                   className="m-0 flex max-w-full items-center gap-1.5 self-start rounded-md bg-subtle px-2 py-1 text-[12px] text-muted"
                 >
-                  <Users size={13} strokeWidth={1.75} aria-hidden="true" className="shrink-0" />
+                  <Users size={14} aria-hidden="true" className="shrink-0" />
                   <span className="truncate">{notice}</span>
                 </p>
               ) : null}
-              <h2 className="m-0 text-[21px] leading-snug font-semibold tracking-tight">
+              <h2 className="m-0 text-[22px] leading-snug font-semibold">
                 {subject || m.mail_no_subject()}
               </h2>
               {account && !account.isPersonal ? <AssignmentChip email={email} /> : null}
@@ -176,7 +176,7 @@ export const MessageView = ({ accountId, mailbox, emailId }: Props) => {
                       className="flex items-center gap-1 text-[12px] text-muted hover:text-fg"
                     >
                       <ChevronDown
-                        size={13}
+                        size={14}
                         aria-hidden="true"
                         className={showDetails ? "rotate-180" : undefined}
                       />

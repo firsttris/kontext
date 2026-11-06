@@ -5,7 +5,7 @@
  */
 import { useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
-import { Check, ChevronLeft, RotateCcw, SendHorizontal, Sparkles } from "lucide-react";
+import { Check, ChevronLeft, MessageCircleQuestion, RotateCcw, SendHorizontal } from "lucide-react";
 import { type FormEvent, type KeyboardEvent, useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { useBack } from "@/components/use-back";
@@ -56,7 +56,7 @@ const Bubble = ({ entry }: { entry: Entry }) => {
     <li className={cn("flex flex-col gap-1", own ? "items-end" : "items-start")}>
       <div
         className={cn(
-          "max-w-[85%] rounded-2xl px-3.5 py-2 text-[15px] leading-[1.5] break-words whitespace-pre-wrap md:text-[14px]",
+          "max-w-[85%] rounded-2xl px-3.5 py-2 text-[16px] leading-[1.5] break-words whitespace-pre-wrap md:text-[14px]",
           own ? "bg-[var(--bubble-own)]" : "bg-[var(--bubble)]",
           entry.failure && "text-danger",
         )}
@@ -137,8 +137,8 @@ export const AssistantConversation = () => {
         >
           <ChevronLeft size={20} />
         </button>
-        <h1 className="m-0 flex min-w-0 flex-1 items-center gap-2 truncate text-[16px] font-semibold md:text-[17px]">
-          <Sparkles size={16} aria-hidden="true" className="shrink-0 text-accent" />
+        <h1 className="m-0 flex min-w-0 flex-1 items-center gap-2 truncate text-[16px] font-semibold md:text-[18px]">
+          <MessageCircleQuestion size={16} aria-hidden="true" className="shrink-0 text-muted" />
           {m.assistant_title()}
         </h1>
         {entries.length ? (
@@ -150,7 +150,7 @@ export const AssistantConversation = () => {
       <div className="flex min-h-0 flex-1 flex-col overflow-y-auto px-3 py-4 md:px-5">
         {entries.length ? null : (
           <div className="mx-auto flex max-w-md flex-1 flex-col items-center justify-center gap-3 text-center text-[14px] text-muted">
-            <Sparkles size={28} strokeWidth={1.5} aria-hidden="true" />
+            <MessageCircleQuestion size={32} aria-hidden="true" />
             <p className="m-0">{m.assistant_intro()}</p>
           </div>
         )}
@@ -181,7 +181,7 @@ export const AssistantConversation = () => {
             placeholder={m.assistant_input()}
             onChange={(event) => setText(event.target.value)}
             onKeyDown={onKeyDown}
-            className="min-h-11 flex-1 resize-none rounded-lg border border-border bg-bg px-3 py-2 text-[15px] md:text-[14px]"
+            className="min-h-11 flex-1 resize-none rounded-lg border border-border bg-bg px-3 py-2 text-[16px] md:text-[14px]"
           />
           <Button
             type="submit"

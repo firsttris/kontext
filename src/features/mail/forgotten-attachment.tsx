@@ -40,7 +40,7 @@ export const ForgottenAttachment = ({ word, onAttach, onSendAnyway, onClose }: P
           {m.mail_attachment_send_anyway()}
         </Button>
         <Button variant="primary" autoFocus onClick={() => fileInput.current?.click()}>
-          <Paperclip size={15} /> {m.mail_attachment_add()}
+          <Paperclip size={16} /> {m.mail_attachment_add()}
         </Button>
       </div>
     </Dialog>

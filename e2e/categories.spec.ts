@@ -93,7 +93,7 @@ test.describe("Kategorien", () => {
     await page.getByRole("button", { name: "Violett" }).click();
     await dialog.getByRole("button", { name: "Speichern" }).click();
     await expect(
-      page.getByRole("status").filter({ hasText: "Kategorien gespeichert." }),
+      page.getByRole("status").filter({ hasText: "Kategorien gespeichert" }),
     ).toBeVisible();
     const nav = page.getByRole("navigation", { name: "Kategorien" });
     await expect(nav).toContainText("Fertig");
@@ -130,7 +130,7 @@ test.describe("Kategorien", () => {
     const edit = page.getByRole("dialog", { name: "Regel bearbeiten" });
     await edit.getByRole("button", { name: "Regel löschen" }).click();
     await edit.getByRole("button", { name: "Wirklich löschen?" }).click();
-    await expect(page.getByRole("status").filter({ hasText: "Regel gelöscht." })).toBeVisible();
+    await expect(page.getByRole("status").filter({ hasText: "Regel gelöscht" })).toBeVisible();
   });
 });
 

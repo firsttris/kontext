@@ -51,7 +51,7 @@ export const SwipeBackdrop = ({
         side === "left" ? "justify-end" : "justify-start",
       )}
     >
-      <Icon size={18} />
+      <Icon size={20} />
       {label}
     </div>
   );

@@ -215,8 +215,8 @@ export const Conversation = ({
         }}
       >
         {dragging ? (
-          <div className="pointer-events-none absolute inset-2 z-10 flex flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-accent bg-bg/90 text-[15px] font-medium text-accent">
-            <ImageUp size={28} aria-hidden="true" />
+          <div className="pointer-events-none absolute inset-2 z-10 flex flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-accent bg-bg/90 text-[16px] font-medium text-accent">
+            <ImageUp size={32} aria-hidden="true" />
             {m.chat_drop_here({ name: `${prefix}${title}` })}
           </div>
         ) : null}
@@ -230,7 +230,7 @@ export const Conversation = ({
             <ChevronLeft size={20} />
           </button>
           <div className="flex min-w-0 flex-1 flex-col md:flex-row md:items-baseline md:gap-3">
-            <h1 className="m-0 truncate text-[16px] font-semibold md:text-[17px]">
+            <h1 className="m-0 truncate text-[16px] font-semibold md:text-[18px]">
               {prefix}
               {title}
             </h1>
@@ -277,7 +277,7 @@ export const Conversation = ({
           <div aria-hidden="true" className="grow" />
           {!hasOlder && !loading && retentionDays ? (
             <p className="m-0 flex items-center justify-center gap-1.5 pb-4 text-center text-[12px] text-muted">
-              <Clock size={13} aria-hidden="true" />
+              <Clock size={14} aria-hidden="true" />
               {m.chat_kept_for({ time: retentionText(retentionDays) })}
             </p>
           ) : null}

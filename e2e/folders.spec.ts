@@ -83,7 +83,7 @@ const manageFolder = async (page: Page, folder: string, parent: string, subject:
   const ask = page.getByRole("dialog", { name: `„${renamed}“ löschen?` });
   await expect(ask).toContainText("1 Mail kommt in den Papierkorb.");
   await ask.getByRole("button", { name: "Löschen" }).click();
-  await expect(page.getByRole("status")).toHaveText("Ordner gelöscht.");
+  await expect(page.getByRole("status")).toHaveText("Ordner gelöscht");
   await expect(page.getByRole("link", { name: renamed })).toHaveCount(0);
   await expect.poll(async () => (await mailState(subject)).where).toEqual(["trash"]);
 };

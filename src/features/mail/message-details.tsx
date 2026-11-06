@@ -76,7 +76,7 @@ const ResultChip = ({ label, result }: { label: string; result: MethodResult }) 
   return (
     <li className="flex items-center gap-1.5 rounded-md border border-border px-2 py-1 text-[12px]">
       <Icon
-        size={13}
+        size={14}
         aria-hidden="true"
         className={cn(passed ? "text-ok" : failed ? "text-danger" : "text-muted")}
       />
@@ -91,7 +91,7 @@ const ResultChip = ({ label, result }: { label: string; result: MethodResult }) 
 
 const Group = ({ title, children }: { title: string; children: ReactNode }) => (
   <div className="flex min-w-0 flex-col gap-2">
-    <h3 className="m-0 text-[11px] font-medium tracking-wide text-muted uppercase">{title}</h3>
+    <h3 className="m-0 text-[12px] font-medium text-muted">{title}</h3>
     {children}
   </div>
 );

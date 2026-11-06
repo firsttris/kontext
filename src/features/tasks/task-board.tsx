@@ -128,7 +128,7 @@ export const TaskBoard = ({
             }}
             className="flex w-[82vw] shrink-0 snap-start flex-col gap-2 self-start rounded-[14px] bg-subtle p-2.5 md:w-auto"
           >
-            <h2 className="m-0 flex items-center gap-2 px-1 pt-0.5 pb-1 text-[13px] font-semibold">
+            <h2 className="m-0 flex items-center gap-2 px-1 pt-0.5 pb-1 text-[13px] font-medium">
               <span aria-hidden="true" className={cn("size-2 rounded-full", dot)} />
               {label}
               <span className="font-mono text-[12px] font-normal text-muted">

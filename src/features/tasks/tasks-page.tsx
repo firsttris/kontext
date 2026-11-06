@@ -32,7 +32,7 @@ const chip = (active: boolean) =>
   );
 
 const ModeSwitch = ({ board, mode }: { board: string; mode: "list" | "board" }) => (
-  <div className="flex gap-0.5 rounded-[9px] bg-subtle p-[3px]">
+  <div className="flex gap-0.5 rounded-[10px] bg-subtle p-1">
     {(
       [
         ["list", m.tasks_list(), List],
@@ -46,11 +46,11 @@ const ModeSwitch = ({ board, mode }: { board: string; mode: "list" | "board" }) 
         aria-current={mode === value ? "page" : undefined}
         aria-label={label}
         className={cn(
-          "flex h-7 items-center gap-1.5 rounded-[7px] px-2.5 text-[13px] no-underline",
+          "flex h-7 items-center gap-1.5 rounded-md px-2.5 text-[13px] no-underline",
           mode === value ? "bg-bg text-fg shadow-sm" : "text-muted hover:text-fg",
         )}
       >
-        <Icon size={14} strokeWidth={1.75} />
+        <Icon size={14} />
         <span className="hidden sm:inline">{label}</span>
       </Link>
     ))}
@@ -68,7 +68,7 @@ const HideDoneToggle = ({ hidden, labelled }: { hidden: boolean; labelled: boole
     onClick={() => setHideDone(!hidden)}
     className={cn(hidden && "bg-subtle text-fg")}
   >
-    <EyeOff size={15} />
+    <EyeOff size={16} />
     {labelled ? <span className="hidden sm:inline">{m.tasks_hide_done()}</span> : null}
   </Button>
 );
@@ -153,7 +153,7 @@ export const TasksPage = ({ search }: { search: TasksSearch }) => {
         aria-label={m.tasks_board_new()}
         className={cn(chip(false), "px-2.5")}
       >
-        <Plus size={15} />
+        <Plus size={16} />
       </button>
     </nav>
   );
@@ -184,7 +184,7 @@ export const TasksPage = ({ search }: { search: TasksSearch }) => {
           >
             <header className="flex flex-col gap-3 border-b border-border px-4 pt-3 pb-3 md:px-6 md:pt-4">
               <div className="flex items-center gap-3">
-                <h1 className="m-0 flex-1 truncate text-[30px] leading-tight font-semibold tracking-tight md:text-[18px]">
+                <h1 className="m-0 flex-1 truncate text-[30px] leading-tight font-semibold md:text-[18px]">
                   {title}
                 </h1>
                 {board.projectId ? (
@@ -195,7 +195,7 @@ export const TasksPage = ({ search }: { search: TasksSearch }) => {
                     aria-label={m.tasks_board_edit()}
                     title={m.tasks_board_edit()}
                   >
-                    <Pencil size={15} />
+                    <Pencil size={16} />
                   </Button>
                 ) : null}
                 <Button
@@ -204,7 +204,7 @@ export const TasksPage = ({ search }: { search: TasksSearch }) => {
                   onClick={() => setEditingColumns(true)}
                   aria-label={m.tasks_columns_edit()}
                 >
-                  <Columns3 size={15} />
+                  <Columns3 size={16} />
                   <span className="hidden sm:inline">{m.tasks_columns_edit()}</span>
                 </Button>
                 <HideDoneToggle hidden={hideDone} labelled />

@@ -89,7 +89,7 @@ export const InsertImageButton = ({ onFiles }: { onFiles: (files: File[]) => voi
         onClick={() => input.current?.click()}
         className="flex size-8 items-center justify-center rounded-md text-muted hover:bg-hover hover:text-fg"
       >
-        <ImagePlus size={15} strokeWidth={1.9} />
+        <ImagePlus size={16} />
       </button>
       <input
         ref={input}

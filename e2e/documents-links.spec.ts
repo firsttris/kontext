@@ -149,7 +149,7 @@ test.describe("Dokumente in Chat, Aufgaben, Terminen und Kontakten", () => {
       address("info"),
     );
     await dialog.getByRole("button", { name: "Hier ablegen" }).click();
-    await expect(page.getByText("„Grundriss-EG.svg“ liegt jetzt in Dokumente.")).toBeVisible();
+    await expect(page.getByText("„Grundriss-EG.svg“ liegt jetzt in Dokumente")).toBeVisible();
 
     // The folder belongs to info@ and is shared with its members, not with Max.
     const [folder] = await foldersOf(page, "info");

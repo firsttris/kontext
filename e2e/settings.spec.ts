@@ -12,7 +12,7 @@ test.describe("Einstellungen", () => {
     await editor.click();
     await page.keyboard.type("Sandra Klein · Weber Haustechnik");
     await page.getByRole("button", { name: "Speichern" }).first().click();
-    await expect(page.getByRole("status").filter({ hasText: "Gespeichert." })).toBeVisible();
+    await expect(page.getByRole("status").filter({ hasText: "Gespeichert" })).toBeVisible();
 
     await page
       .getByRole("link", { name: /^Mail($|, )/ })
@@ -87,7 +87,7 @@ test.describe("Einstellungen", () => {
     await page.getByRole("button", { name: "Passwort ändern" }).click();
     await expect(page.getByRole("alert")).toHaveText("Das aktuelle Passwort stimmt nicht.");
 
-    const changed = page.getByRole("status").filter({ hasText: "Passwort geändert." });
+    const changed = page.getByRole("status").filter({ hasText: "Passwort geändert" });
     await page.getByLabel("Aktuelles Passwort").first().fill(DEV_PASSWORD);
     await page.getByRole("button", { name: "Passwort ändern" }).click();
     await expect(changed).toBeVisible();

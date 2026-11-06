@@ -7,6 +7,13 @@ Steps that an update needs beyond raising the version are marked **Upgrade**.
 
 ## Unreleased
 
+- Look: a polish pass after the [unslop](https://github.com/heydamir/unslop) checklist. Labels in
+  sentence case instead of tracked capitals, no tight tracking on headings, fewer font sizes (11 to
+  30 px in eight steps) and semibold only for titles and unread items, icons in five sizes with one
+  stroke for all, sizes and radii on the 4 px grid (the segmented toggles have nested radii now),
+  no italic, no growing on hover, the assistant without the AI sparkle, and toasts and empty lists
+  without a full stop. On the phone, two attachments side by side leave room for the file name.
+  A unit test keeps these steps (docs, "Darstellung und Tastaturkürzel").
 - Notifications: the bell shows what Stalwart itself reports (JMAP `ShareNotification`,
   `CalendarEventNotification`): a colleague shared a calendar or an address book with you or
   stopped, and someone else moved, changed or cancelled an appointment in a calendar you see (a

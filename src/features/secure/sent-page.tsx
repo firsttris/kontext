@@ -129,9 +129,7 @@ export const SecureSentPage = ({ messageId }: { messageId?: string }) => {
         )}
       >
         <header className="border-b border-border px-4 py-3 md:px-5">
-          <h1 className="m-0 text-[22px] font-semibold tracking-tight md:text-[18px]">
-            {m.secure_list_link()}
-          </h1>
+          <h1 className="m-0 text-[22px] font-semibold md:text-[18px]">{m.secure_list_link()}</h1>
           <p className="m-0 mt-1 text-[13px] text-muted">{m.secure_list_hint()}</p>
         </header>
         <ul className="m-0 min-h-0 flex-1 list-none overflow-y-auto p-2">
@@ -180,7 +178,7 @@ export const SecureSentPage = ({ messageId }: { messageId?: string }) => {
               search={{}}
               className="flex items-center gap-1 text-[14px] text-muted no-underline md:hidden"
             >
-              <ChevronLeft size={18} /> {m.secure_list_link()}
+              <ChevronLeft size={20} /> {m.secure_list_link()}
             </Link>
             <Opened key={open.id} message={open} />
           </div>

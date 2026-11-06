@@ -54,7 +54,7 @@ export const AppearanceSection = () => {
                 onChange={() => setThemeChoice(value)}
                 className="sr-only"
               />
-              <Icon size={20} strokeWidth={1.75} />
+              <Icon size={20} />
               {label()}
             </label>
           ))}

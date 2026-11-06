@@ -121,7 +121,7 @@ export const RecipientField = ({
             onClick={() => onChange(value.filter((a) => a !== address))}
             className="flex size-4 items-center justify-center rounded-full text-muted hover:bg-hover hover:text-fg"
           >
-            <X size={11} />
+            <X size={12} />
           </button>
         </span>
       ))}

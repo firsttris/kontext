@@ -1,5 +1,5 @@
 /**
- * Small notices at the bottom ("Mail gesendet."), without a library; one may carry an action
+ * Small notices at the bottom ("Mail gesendet"), without a library; one may carry an action
  * ("Rückgängig") and stay longer.
  */
 import { createContext, type ReactNode, useCallback, useContext, useMemo, useState } from "react";
@@ -53,7 +53,7 @@ export const ToastProvider = ({ children }: { children: ReactNode }) => {
                   dismiss(toast.id);
                   toast.action!.run();
                 }}
-                className="ml-3 font-semibold underline-offset-2 hover:underline"
+                className="ml-3 font-medium underline-offset-2 hover:underline"
               >
                 {toast.action.label}
               </button>

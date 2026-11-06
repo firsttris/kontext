@@ -38,7 +38,7 @@ const LastRun = ({ view, now }: { view: BackupView; now: Date }) => {
   if (running || view.requested) {
     return (
       <span className="flex items-center gap-1.5">
-        <LoaderCircle size={15} className="animate-spin text-muted" />
+        <LoaderCircle size={16} className="animate-spin text-muted" />
         {running ? m.backup_running() : m.backup_requested()}
       </span>
     );
@@ -49,7 +49,7 @@ const LastRun = ({ view, now }: { view: BackupView; now: Date }) => {
   return (
     <span className="flex flex-col gap-0.5">
       <span className="flex items-center gap-1.5">
-        <Icon size={15} className={last.ok ? "text-ok" : "text-danger"} />
+        <Icon size={16} className={last.ok ? "text-ok" : "text-danger"} />
         {[
           dayAndTime(last.start, now),
           last.ok ? m.backup_ok() : m.backup_failed(),
@@ -189,7 +189,7 @@ export const BackupSection = () => {
               </Button>
             </div>
             <p className="m-0 flex items-start gap-2 text-[13px] text-muted">
-              <Info size={15} className="mt-px shrink-0" />
+              <Info size={16} className="mt-px shrink-0" />
               {m.backup_pause()}
             </p>
           </div>

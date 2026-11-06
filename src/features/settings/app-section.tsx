@@ -26,7 +26,7 @@ export const AppSection = () => {
         </p>
       ) : install ? (
         <Button variant="primary" className="self-start" onClick={() => void install()}>
-          <Download size={15} /> {m.pwa_install()}
+          <Download size={16} /> {m.pwa_install()}
         </Button>
       ) : (
         <p className="m-0 text-[13px] text-muted">
@@ -42,7 +42,7 @@ export const AppSection = () => {
               setMailtoAsked(true);
             }}
           >
-            <Mail size={15} /> {m.pwa_mailto()}
+            <Mail size={16} /> {m.pwa_mailto()}
           </Button>
           <span className="text-[12px] text-muted">
             {mailtoAsked ? m.pwa_mailto_done() : m.pwa_mailto_hint()}

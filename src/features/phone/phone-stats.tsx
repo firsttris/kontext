@@ -27,7 +27,7 @@ const usualHours = (missedAt: number[][]) => {
 
 const Tile = ({ label, value }: { label: string; value: string | number }) => (
   <div className="flex flex-col gap-0.5 rounded-lg border border-border px-3 py-2">
-    <span className="text-[20px] font-semibold tabular-nums">{value}</span>
+    <span className="text-[22px] font-medium tabular-nums">{value}</span>
     <span className="text-[12px] text-muted">{label}</span>
   </div>
 );

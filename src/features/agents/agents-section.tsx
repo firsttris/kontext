@@ -54,7 +54,7 @@ export const CopyField = ({
           onClick={() => void copy()}
           aria-label={m.agents_copy({ what: label })}
         >
-          {copied ? <Check size={15} /> : <Copy size={15} />}
+          {copied ? <Check size={16} /> : <Copy size={16} />}
         </Button>
       </div>
     </div>

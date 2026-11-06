@@ -101,9 +101,7 @@ export const SecureContentView = ({
 }) => (
   <div className="flex flex-col gap-4">
     <div className="flex flex-col gap-1">
-      <h1 className="m-0 text-[22px] font-semibold tracking-tight">
-        {content.subject || m.mail_no_subject()}
-      </h1>
+      <h1 className="m-0 text-[22px] font-semibold">{content.subject || m.mail_no_subject()}</h1>
       <span className="text-[13px] text-muted">
         {m.secure_from({ sender, when: when(content.sentAt) })}
       </span>
@@ -115,7 +113,7 @@ export const SecureContentView = ({
         aria-label={m.secure_replies()}
         className="flex flex-col gap-3 border-t border-border pt-4"
       >
-        <h2 className="m-0 text-[15px] font-semibold">{m.secure_replies()}</h2>
+        <h2 className="m-0 text-[16px] font-semibold">{m.secure_replies()}</h2>
         {replies.map((reply) => (
           <article
             key={reply.at}

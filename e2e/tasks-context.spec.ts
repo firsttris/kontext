@@ -234,9 +234,7 @@ test.describe("Aufgaben im Kontext", () => {
     await dialog.getByRole("button", { name: "Heute" }).click();
     await dialog.getByLabel("Mails danach archivieren").check();
     await dialog.getByRole("button", { name: "2 Aufgaben erstellen" }).click();
-    await expect(
-      page.getByRole("status").filter({ hasText: "2 Aufgaben angelegt." }),
-    ).toBeVisible();
+    await expect(page.getByRole("status").filter({ hasText: "2 Aufgaben angelegt" })).toBeVisible();
     for (const subject of subjects) {
       await expect
         .poll(async () => (await taskOf(page, subject))?.links.map((link) => link.kind))
@@ -268,7 +266,7 @@ test.describe("Aufgaben im Kontext", () => {
     await expect(chip).toHaveCount(0);
     await page
       .getByRole("status")
-      .filter({ hasText: `„${due}“ erledigt.` })
+      .filter({ hasText: `„${due}“ erledigt` })
       .getByRole("button", { name: "Rückgängig" })
       .click();
     await expect(chip).toBeVisible();

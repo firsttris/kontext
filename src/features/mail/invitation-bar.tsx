@@ -112,7 +112,7 @@ const Bar = ({ accountId, blobId }: { accountId: string; blobId: string }) => {
       className="flex flex-col gap-3 rounded-lg border border-border px-4 py-3 text-[14px]"
     >
       <div className="flex items-start gap-3">
-        <CalendarDays size={18} className="mt-0.5 shrink-0 text-accent" aria-hidden="true" />
+        <CalendarDays size={20} className="mt-0.5 shrink-0 text-accent" aria-hidden="true" />
         <div className="flex min-w-0 flex-1 flex-col gap-0.5">
           <span className="text-[12px] text-muted">
             {view.kind === "cancel"

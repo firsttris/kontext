@@ -75,7 +75,7 @@ export const MiniMonth = ({ selected, today }: { selected: string; today: string
   return (
     <div className="flex flex-col gap-2.5">
       <div className="flex items-center justify-between">
-        <span className="font-semibold capitalize">
+        <span className="font-medium capitalize">
           {monthTitle.format(new Date(`${month}T12:00:00Z`))}
         </span>
         <span className="flex gap-0.5 text-muted">
@@ -83,7 +83,7 @@ export const MiniMonth = ({ selected, today }: { selected: string; today: string
             type="button"
             aria-label="Vorheriger Monat"
             onClick={() => setMonth(addMonths(month, -1))}
-            className="flex size-[26px] items-center justify-center rounded-md hover:bg-hover"
+            className="flex size-7 items-center justify-center rounded-md hover:bg-hover"
           >
             <ChevronLeft size={14} />
           </button>
@@ -91,7 +91,7 @@ export const MiniMonth = ({ selected, today }: { selected: string; today: string
             type="button"
             aria-label="Nächster Monat"
             onClick={() => setMonth(addMonths(month, 1))}
-            className="flex size-[26px] items-center justify-center rounded-md hover:bg-hover"
+            className="flex size-7 items-center justify-center rounded-md hover:bg-hover"
           >
             <ChevronRight size={14} />
           </button>
@@ -120,12 +120,12 @@ export const MiniMonth = ({ selected, today }: { selected: string; today: string
               aria-label={dayName.format(new Date(`${day}T12:00:00Z`))}
               aria-current={day === today ? "date" : undefined}
               className={cn(
-                "flex h-7 items-center justify-center rounded-[7px] font-mono no-underline",
+                "flex h-7 items-center justify-center rounded-md font-mono no-underline",
                 // Other months' days dimmed as far as WCAG AA's 4.5:1 allows, also on the week's grey (dark: 4.9:1 at 80 %).
                 // Not for today: text-white below does not override the dark: variant.
                 inMonth || day === today ? "text-fg" : "text-muted dark:text-muted/80",
                 week.has(day) && "bg-subtle",
-                day === today && "bg-accent-fill font-semibold text-white",
+                day === today && "bg-accent-fill font-medium text-white",
               )}
             >
               {Number(day.slice(8))}

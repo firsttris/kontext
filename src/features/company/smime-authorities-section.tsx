@@ -31,7 +31,7 @@ export const certificateText = async (file: File) => {
 
 const Row = ({ authority, onRemove }: { authority: SmimeAuthority; onRemove: () => void }) => (
   <li className="flex items-start gap-3 py-3">
-    <BadgeCheck size={18} aria-hidden="true" className="mt-0.5 shrink-0 text-muted" />
+    <BadgeCheck size={20} aria-hidden="true" className="mt-0.5 shrink-0 text-muted" />
     <div className="flex min-w-0 flex-1 flex-col gap-0.5">
       <span className="truncate text-[14px] font-medium">
         {authority.subject}
@@ -111,7 +111,7 @@ export const SmimeAuthoritiesSection = () => {
         <p className="m-0 text-[14px] text-muted">{m.company_smime_empty()}</p>
       ) : null}
       <label className="inline-flex h-9 cursor-pointer items-center gap-1.5 self-start rounded-lg border border-border px-3 text-[14px] hover:bg-hover">
-        <Upload size={15} /> {m.company_smime_add()}
+        <Upload size={16} /> {m.company_smime_add()}
         <input
           type="file"
           accept=".cer,.crt,.pem,.der,application/pkix-cert,application/x-x509-ca-cert"

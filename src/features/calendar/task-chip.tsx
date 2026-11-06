@@ -71,7 +71,7 @@ export const TaskChip = ({
       className={cn(
         "group flex min-w-0 items-center gap-1.5 rounded-md text-fg",
         size === "sm" ? "px-1 py-px text-[12px]" : "-ml-[5px] flex-1 text-[14px] font-medium",
-        touch && "max-md:min-h-[26px]",
+        touch && "max-md:min-h-7",
       )}
     >
       {/* The ring is small in the grids; the button around it is larger to hit, so a click
@@ -94,7 +94,7 @@ export const TaskChip = ({
             overdue ? "border-danger" : "border-muted",
           )}
         >
-          <Check size={size === "sm" ? 9 : 12} strokeWidth={3} />
+          <Check size={size === "sm" ? 10 : 12} />
         </span>
       </button>
       <Link

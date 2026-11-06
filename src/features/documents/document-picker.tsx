@@ -69,7 +69,7 @@ export const DocumentBrowser = ({
       >
         {crumbs.map((crumb, index) => (
           <span key={crumb.id ?? "root"} className="flex items-center gap-1">
-            {index > 0 ? <ChevronRight size={13} className="text-muted" /> : null}
+            {index > 0 ? <ChevronRight size={14} className="text-muted" /> : null}
             <button
               type="button"
               onClick={() => setFolderId(crumb.id)}
@@ -101,11 +101,11 @@ export const DocumentBrowser = ({
                 className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-left text-[13px] hover:bg-hover"
               >
                 {node.mailbox ? (
-                  <Inbox size={15} className="text-muted" />
+                  <Inbox size={16} className="text-muted" />
                 ) : node.kind === "folder" ? (
-                  <Folder size={15} className="text-muted" />
+                  <Folder size={16} className="text-muted" />
                 ) : (
-                  <FileText size={15} className="text-muted" />
+                  <FileText size={16} className="text-muted" />
                 )}
                 <span className="truncate">{node.name}</span>
               </button>

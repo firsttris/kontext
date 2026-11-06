@@ -36,7 +36,7 @@ export const MeetingField = ({ meeting, description, onChange }: Props) => {
     };
     return (
       <Button className="self-start" disabled={busy} onClick={() => void add()}>
-        <Video size={15} />
+        <Video size={16} />
         {m.meeting_add()}
       </Button>
     );
@@ -48,7 +48,7 @@ export const MeetingField = ({ meeting, description, onChange }: Props) => {
   };
   return (
     <div className="flex items-center gap-2 rounded-lg border border-border px-3 py-2 text-[13px]">
-      <Video size={15} aria-hidden="true" className="shrink-0 text-muted" />
+      <Video size={16} aria-hidden="true" className="shrink-0 text-muted" />
       <span className="flex min-w-0 flex-1 flex-col">
         <span className="font-medium">{m.meeting_label()}</span>
         <span className="truncate font-mono text-[12px] text-muted">{meeting}</span>
@@ -60,7 +60,7 @@ export const MeetingField = ({ meeting, description, onChange }: Props) => {
         title={m.meeting_copy()}
         onClick={() => void copy()}
       >
-        <Copy size={15} />
+        <Copy size={16} />
       </Button>
       <Button
         variant="ghost"
@@ -69,7 +69,7 @@ export const MeetingField = ({ meeting, description, onChange }: Props) => {
         title={m.meeting_remove()}
         onClick={() => onChange("", removeMeetingNote(description, meeting))}
       >
-        <X size={15} />
+        <X size={16} />
       </Button>
     </div>
   );

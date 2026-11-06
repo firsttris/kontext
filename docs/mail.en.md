@@ -91,7 +91,7 @@ SMTP.
   lands in the chosen folder, spam and trash too; to move a Gmail mailbox with its folders, use
   "Connect mailbox".
 
-  ![Folder "Altablage 2024" with three imported mails; below, the message "3 mails imported." and "Not imported: Rechnung Dezember.msg (Outlook's .msg format is not supported)"](screenshots/eml-import.png)
+  ![Folder "Altablage 2024" with three imported mails; below, the message "3 mails imported" and "Not imported: Rechnung Dezember.msg (Outlook's .msg format is not supported)"](screenshots/eml-import.png)
 - **Exporting a folder as .mbox:** "…" next to a folder with mails → **Export as .mbox** saves all
   mails of the folder (without subfolders), oldest first, as one file `<folder>.mbox` (mboxrd,
   RFC 4155) that Thunderbird (ImportExportTools), Apple Mail and Kontext's own import read. Read,

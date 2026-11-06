@@ -54,7 +54,7 @@ test.describe("Verschlüsselung: PGP in Mails", () => {
     const unlock = page.getByRole("dialog", { name: "Entsperren" });
     await unlock.getByLabel("Passphrase deines Schlüssels").fill(PASSPHRASE);
     await unlock.getByRole("button", { name: "Entsperren" }).click();
-    await expect(page.getByRole("status").filter({ hasText: "Mail gesendet." })).toBeVisible();
+    await expect(page.getByRole("status").filter({ hasText: "Mail gesendet" })).toBeVisible();
     expect(uploads.length).toBeGreaterThan(0);
     expect(uploads.filter((body) => body.includes("Grad;42"))).toEqual([]);
     // The subject went inside; outside it says "Vertrauliche Nachricht" (Protected Headers).
@@ -148,7 +148,7 @@ test.describe("Verschlüsselung: PGP in Mails", () => {
     const unlock = page.getByRole("dialog", { name: "Entsperren" });
     await unlock.getByLabel("Passphrase deines Schlüssels").fill(PASSPHRASE);
     await unlock.getByRole("button", { name: "Entsperren" }).click();
-    await expect(page.getByRole("status").filter({ hasText: "Mail gesendet." })).toBeVisible();
+    await expect(page.getByRole("status").filter({ hasText: "Mail gesendet" })).toBeVisible();
     await expect.poll(() => inboxSubjects("max")).toContain(subject);
 
     await max.goto("/mail");

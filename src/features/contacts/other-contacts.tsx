@@ -99,14 +99,14 @@ export const OtherContacts = () => {
         search={{}}
         className="flex items-center gap-1 text-[14px] text-muted no-underline md:hidden"
       >
-        <ChevronLeft size={18} /> {m.contacts_title()}
+        <ChevronLeft size={20} /> {m.contacts_title()}
       </Link>
       <header className="flex flex-col gap-1.5">
-        <h2 className="m-0 text-[24px] font-semibold tracking-tight">{m.contacts_other()}</h2>
+        <h2 className="m-0 text-[22px] font-semibold">{m.contacts_other()}</h2>
         <p className="m-0 text-[14px] text-muted">{m.contacts_other_info()}</p>
       </header>
-      <label className="flex h-9 items-center gap-2 rounded-[9px] border border-border bg-bg px-3 text-muted">
-        <Search size={15} />
+      <label className="flex h-9 items-center gap-2 rounded-lg border border-border bg-bg px-3 text-muted">
+        <Search size={16} />
         <input
           type="search"
           aria-label={m.contacts_other_search()}
@@ -131,7 +131,7 @@ export const OtherContacts = () => {
                 aria-label={name}
                 className="flex items-center gap-3 border-b border-border py-2.5 last:border-0"
               >
-                <Avatar name={name} size={34} />
+                <Avatar name={name} size={36} />
                 <span className="flex min-w-0 flex-1 flex-col">
                   <span className="truncate font-medium">{name}</span>
                   <span className="truncate text-[13px] text-muted">
@@ -157,7 +157,7 @@ export const OtherContacts = () => {
                       }}
                       search={{ compose: "new", to: formatAddressInput([person]) }}
                     >
-                      <Mail size={15} />
+                      <Mail size={16} />
                     </Link>
                   </Button>
                 ) : null}
@@ -169,7 +169,7 @@ export const OtherContacts = () => {
                   disabled={!book || create.isPending}
                   onClick={() => void add(person)}
                 >
-                  <UserPlus size={15} />
+                  <UserPlus size={16} />
                 </Button>
               </li>
             );

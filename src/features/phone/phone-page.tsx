@@ -240,7 +240,7 @@ export const PhonePage = () => {
     <div className="flex h-full min-w-0 flex-1 flex-col">
       <main className="min-h-0 flex-1 overflow-y-auto">
         <div className="mx-auto flex max-w-[720px] flex-col gap-5 px-4 pt-4 pb-10 md:px-8 md:pt-9">
-          <h1 className="m-0 text-[30px] leading-tight font-semibold tracking-tight md:text-[24px]">
+          <h1 className="m-0 text-[30px] leading-tight font-semibold md:text-[22px]">
             {m.phone_title()}
           </h1>
           {!enabled || !allowed ? (
@@ -268,7 +268,7 @@ export const PhonePage = () => {
                 </Button>
               </form>
               <div className="flex items-center gap-2">
-                <h2 className="m-0 flex-1 text-[15px] font-semibold">
+                <h2 className="m-0 flex-1 text-[16px] font-semibold">
                   {view === "stats" ? m.phone_stats() : m.phone_recent()}
                 </h2>
                 {(

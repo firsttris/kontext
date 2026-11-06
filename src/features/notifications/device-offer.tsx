@@ -42,7 +42,7 @@ const OfferCard = ({
 const AppleSteps = () => (
   <ol className="m-0 flex list-none flex-col gap-1.5 p-0 text-[12px]">
     <li className="flex gap-2">
-      <Share size={15} aria-hidden="true" className="mt-px shrink-0" />
+      <Share size={16} aria-hidden="true" className="mt-px shrink-0" />
       {/* Newer iOS hides "Teilen" behind a long press on the address bar. */}
       <span className="flex flex-col">
         {m.install_offer_apple_share()}
@@ -50,10 +50,10 @@ const AppleSteps = () => (
       </span>
     </li>
     <li className="flex items-center gap-2">
-      <SquarePlus size={15} aria-hidden="true" className="shrink-0" /> {m.install_offer_apple_add()}
+      <SquarePlus size={16} aria-hidden="true" className="shrink-0" /> {m.install_offer_apple_add()}
     </li>
     <li className="flex items-center gap-2">
-      <Smartphone size={15} aria-hidden="true" className="shrink-0" />{" "}
+      <Smartphone size={16} aria-hidden="true" className="shrink-0" />{" "}
       {m.install_offer_apple_open()}
     </li>
   </ol>
@@ -89,7 +89,7 @@ export const DeviceOffer = () => {
       if (!(await install?.())) later();
     };
     return (
-      <OfferCard icon={<Smartphone size={18} aria-hidden="true" />} title={m.install_offer_title()}>
+      <OfferCard icon={<Smartphone size={20} aria-hidden="true" />} title={m.install_offer_title()}>
         <p className="m-0 text-[12px] text-muted">{m.install_offer_hint()}</p>
         {apple ? <AppleSteps /> : null}
         <div className="flex gap-2">
@@ -107,7 +107,7 @@ export const DeviceOffer = () => {
     if (!(await setDeviceNotifications(true))) toast.show(m.notifications_device_denied(), "error");
   };
   return (
-    <OfferCard icon={<BellRing size={18} aria-hidden="true" />} title={m.push_offer_title()}>
+    <OfferCard icon={<BellRing size={20} aria-hidden="true" />} title={m.push_offer_title()}>
       <p className="m-0 text-[12px] text-muted">{m.push_offer_hint()}</p>
       <div className="flex gap-2">
         <Button variant="primary" size="sm" onClick={() => void switchOn()}>

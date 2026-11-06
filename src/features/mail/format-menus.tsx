@@ -34,7 +34,7 @@ const FormatMenu = ({
           on && "bg-subtle text-fg",
         )}
       >
-        <Icon size={15} strokeWidth={1.9} />
+        <Icon size={16} />
       </button>
     </MenuTrigger>
     {/* Focus goes back to the text, so the choice applies where the cursor was. */}
@@ -47,7 +47,7 @@ const FormatMenu = ({
 const Swatch = ({ color, text }: { color: string | null; text?: boolean }) => (
   <span
     aria-hidden="true"
-    className="flex size-5 items-center justify-center rounded border border-border text-[12px] font-semibold"
+    className="flex size-5 items-center justify-center rounded border border-border text-[12px] font-medium"
     style={text ? { color: color ?? undefined } : { background: color ?? undefined }}
   >
     {text ? "A" : null}

@@ -23,7 +23,7 @@ test.describe("Vertretung", () => {
       await page.getByRole("checkbox", { name: "Kontakte" }).uncheck();
       await page.getByRole("button", { name: "Freigeben" }).click();
       await expect(
-        page.getByRole("status").filter({ hasText: "Freigegeben für Max Becker." }),
+        page.getByRole("status").filter({ hasText: "Freigegeben für Max Becker" }),
       ).toBeVisible();
       const list = page.getByRole("list", { name: "Wer hat Zugriff" });
       await expect(list.getByRole("listitem").filter({ hasText: "Max Becker" })).toContainText(
@@ -46,7 +46,7 @@ test.describe("Vertretung", () => {
 
       await page.getByRole("button", { name: "Alles entziehen: Max Becker" }).click();
       await expect(
-        page.getByRole("status").filter({ hasText: "Zugriff für Max Becker entzogen." }),
+        page.getByRole("status").filter({ hasText: "Zugriff für Max Becker entzogen" }),
       ).toBeVisible();
       await expect(list.getByRole("listitem").filter({ hasText: "Max Becker" })).toHaveCount(0);
       await expect.poll(sandraAccount).toBeUndefined();

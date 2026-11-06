@@ -43,7 +43,7 @@ test.describe("Zustellbestätigung", () => {
     await request.click();
     await expect(request).toHaveAttribute("aria-pressed", "true");
     await page.getByRole("button", { name: "Senden", exact: true }).click();
-    await expect(page.getByRole("status")).toHaveText("Mail gesendet.");
+    await expect(page.getByRole("status")).toHaveText("Mail gesendet");
 
     // The envelope asks Stalwart for a report (RFC 3461), with an id to find the mail again.
     await expect.poll(() => submissionOf(subject)).toBeTruthy();
@@ -74,7 +74,7 @@ test.describe("Zustellbestätigung", () => {
     await page.getByLabel("Betreff").fill(subject);
     await page.getByRole("textbox", { name: "Ihre Nachricht …" }).fill("Kurze Frage.");
     await page.getByRole("button", { name: "Senden", exact: true }).click();
-    await expect(page.getByRole("status")).toHaveText("Mail gesendet.");
+    await expect(page.getByRole("status")).toHaveText("Mail gesendet");
     await expect.poll(() => submissionOf(subject)).toBeTruthy();
     expect((await submissionOf(subject))!.envelope.rcptTo[0]!.parameters).toBeNull();
 

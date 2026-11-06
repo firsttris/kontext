@@ -24,11 +24,11 @@ export const PhotoPicker = ({
       <Avatar name={name} photo={photo} size={64} />
       <div className="flex flex-wrap gap-2">
         <Button disabled={busy} onClick={() => input.current?.click()}>
-          <Camera size={15} /> {photo ? m.photo_change() : m.photo_choose()}
+          <Camera size={16} /> {photo ? m.photo_change() : m.photo_choose()}
         </Button>
         {photo ? (
           <Button variant="ghost" disabled={busy} onClick={onRemove}>
-            <Trash2 size={15} /> {m.photo_remove()}
+            <Trash2 size={16} /> {m.photo_remove()}
           </Button>
         ) : null}
       </div>

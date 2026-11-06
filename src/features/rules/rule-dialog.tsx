@@ -83,7 +83,7 @@ const ConditionRow = ({
         onClick={onRemove}
         className="col-start-3 row-start-1 md:col-start-4"
       >
-        <X size={15} />
+        <X size={16} />
       </Button>
     </div>
   );
@@ -116,7 +116,7 @@ const Action = ({
 );
 
 const Heading = ({ children }: { children: ReactNode }) => (
-  <span className="text-[12px] font-semibold tracking-wide text-muted uppercase">{children}</span>
+  <span className="text-[12px] font-medium text-muted">{children}</span>
 );
 
 export const RuleDialog = ({

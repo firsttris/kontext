@@ -18,7 +18,7 @@ test.describe("Senden rückgängig und später senden", () => {
     await page.evaluate(() => window.localStorage.setItem("kontext.mail.undo", "5"));
     await writeToAnna(page, subject);
     await page.getByRole("button", { name: "Senden", exact: true }).click();
-    const sent = page.getByRole("status").filter({ hasText: "Mail gesendet." });
+    const sent = page.getByRole("status").filter({ hasText: "Mail gesendet" });
     await sent.getByRole("button", { name: "Rückgängig" }).click();
     await expect(page.getByRole("status").filter({ hasText: "Nicht gesendet" })).toBeVisible();
     // Back as a draft, to change and send again.
@@ -45,7 +45,7 @@ test.describe("Senden rückgängig und später senden", () => {
     await dialog.getByLabel("Senden am").fill(`${day}T08:00`);
     await dialog.getByRole("button", { name: "Planen" }).click();
     await expect(
-      page.getByRole("status").filter({ hasText: /^Wird .* 08:00 gesendet\./ }),
+      page.getByRole("status").filter({ hasText: /^Wird .* 08:00 gesendet/ }),
     ).toBeVisible();
 
     await page.getByRole("link", { name: "Gesendet", exact: true }).click();
@@ -56,7 +56,7 @@ test.describe("Senden rückgängig und später senden", () => {
     await row.click();
     // The notice in the mail, once the toast with the same words has gone.
     await expect(page.getByRole("status").filter({ hasText: "gesendet" })).toHaveCount(0);
-    await expect(page.getByText(/^Wird .* 08:00 gesendet\./)).toBeVisible();
+    await expect(page.getByText(/^Wird .* 08:00 gesendet/)).toBeVisible();
     await page.getByRole("button", { name: "Nicht senden" }).click();
     await expect(page.getByRole("textbox", { name: "Betreff" })).toHaveValue(subject);
     await page.getByRole("link", { name: "Gesendet", exact: true }).click();

@@ -28,7 +28,7 @@ export const DemoSignIn = ({
               aria-label={m.demo_sign_in_as({ name: user.fullName })}
               className="flex w-full items-center gap-3 rounded-xl border border-border px-3 py-2.5 text-left hover:bg-hover disabled:opacity-60"
             >
-              <Avatar name={user.fullName} size={34} />
+              <Avatar name={user.fullName} size={36} />
               <span className="flex min-w-0 flex-col">
                 <span className="text-[14px] font-medium">{user.fullName}</span>
                 <span className="truncate text-[12px] text-muted">{email}</span>

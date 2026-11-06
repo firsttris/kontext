@@ -21,7 +21,7 @@ export const VIEWS: { view: TaskView; label: () => string; icon: typeof User }[]
 
 const item = (active: boolean) =>
   cn(
-    "flex h-[34px] items-center gap-2.5 rounded-lg px-2.5 text-[14px] no-underline hover:bg-hover",
+    "flex h-8 items-center gap-2.5 rounded-lg px-2.5 text-[14px] no-underline hover:bg-hover",
     active ? "bg-subtle font-medium text-fg" : "text-muted",
   );
 
@@ -44,8 +44,8 @@ export const TaskSidebar = ({
   footer?: ReactNode;
 }) => (
   <div className="flex h-full flex-col gap-5 overflow-y-auto px-3 py-4">
-    <Button variant="primary" className="h-[38px]" onClick={onNew}>
-      <Plus size={15} /> {m.tasks_new()}
+    <Button variant="primary" className="h-9" onClick={onNew}>
+      <Plus size={16} /> {m.tasks_new()}
     </Button>
     <nav aria-label={m.tasks_title()} className="flex flex-col gap-px">
       {VIEWS.map(({ view, label, icon: Icon }) => {
@@ -58,7 +58,7 @@ export const TaskSidebar = ({
             aria-current={active ? "page" : undefined}
             className={item(active)}
           >
-            <Icon size={16} strokeWidth={1.75} />
+            <Icon size={16} />
             <span>{label()}</span>
             {view === "done" ? null : <Count value={counts[view]} />}
           </Link>
@@ -89,11 +89,11 @@ export const TaskSidebar = ({
             className={cn(item(active), board.projectId && "pl-7")}
           >
             {board.projectId ? (
-              <SquareKanban size={15} strokeWidth={1.75} />
+              <SquareKanban size={16} />
             ) : board.isPersonal ? (
               <span aria-hidden="true" className="mx-[3px] size-2.5 rounded-full bg-accent" />
             ) : (
-              <Users size={15} strokeWidth={1.75} />
+              <Users size={16} />
             )}
             <span className="truncate">{board.name}</span>
             <Count value={board.open} />

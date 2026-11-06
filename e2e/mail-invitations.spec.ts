@@ -109,7 +109,7 @@ test.describe("Einladung in der Mail", () => {
       .getByRole("button", { name: "In den Kalender" })
       .click();
     await expect(
-      page.getByRole("status").filter({ hasText: "Termin in den Kalender übernommen." }),
+      page.getByRole("status").filter({ hasText: "Termin in den Kalender übernommen" }),
     ).toBeVisible();
     expect(await storedAnswers(INVITEE, uid)).toEqual(["needs-action"]);
 
@@ -119,7 +119,7 @@ test.describe("Einladung in der Mail", () => {
     await expect(bar).toContainText("Petra Keller hat den Termin abgesagt");
     await bar.getByRole("button", { name: "Aus dem Kalender entfernen" }).click();
     await expect(
-      page.getByRole("status").filter({ hasText: "Termin aus dem Kalender entfernt." }),
+      page.getByRole("status").filter({ hasText: "Termin aus dem Kalender entfernt" }),
     ).toBeVisible();
     await expect.poll(() => storedAnswers(INVITEE, uid)).toEqual([]);
   });

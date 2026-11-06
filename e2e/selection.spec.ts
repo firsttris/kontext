@@ -158,7 +158,7 @@ test.describe("Rückgängig nach Archivieren, Löschen, Spam", () => {
     await inbox.getByText(subject).click();
     await page.getByRole("button", { name: "Archivieren" }).click();
     await expect(inbox.getByText(subject)).toHaveCount(0);
-    const notice = page.getByRole("status").filter({ hasText: "Archiviert." });
+    const notice = page.getByRole("status").filter({ hasText: "Archiviert" });
     await notice.getByRole("button", { name: "Rückgängig" }).click();
     await expect(inbox.getByText(subject)).toBeVisible();
     await expect

@@ -141,6 +141,6 @@ test("Abmelden nach Inaktivität setzt die Firmenverwaltung", async ({ page }) =
   await expect(save).toBeDisabled();
   await time.selectOption("30 Minuten");
   await save.click();
-  await expect(page.getByRole("status")).toHaveText("Gespeichert.");
+  await expect(page.getByRole("status")).toHaveText("Gespeichert");
   expect(saved).toEqual([30]);
 });

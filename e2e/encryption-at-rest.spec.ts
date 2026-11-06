@@ -50,7 +50,7 @@ test.describe("Verschlüsselung: Mails auf dem Server verschlüsselt", () => {
       .getByRole("textbox", { name: "Ihre Nachricht …" })
       .fill("Zähler 4711 steht bei 815.");
     await page.getByRole("button", { name: "Senden", exact: true }).click();
-    await expect(page.getByRole("status").filter({ hasText: "Mail gesendet." })).toBeVisible();
+    await expect(page.getByRole("status").filter({ hasText: "Mail gesendet" })).toBeVisible();
 
     // On the server: Stalwart's PGP/MIME, the subject outside, the words only inside.
     await expect

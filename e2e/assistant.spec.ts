@@ -40,7 +40,7 @@ test.describe("Assistent im Chat", () => {
         .getByRole("region", { name: "Assistent im Chat" })
         .getByRole("button", { name: "Speichern" })
         .click();
-      await expect(page.getByRole("status")).toHaveText("Gespeichert.");
+      await expect(page.getByRole("status")).toHaveText("Gespeichert");
       // Only the end of the key is shown again.
       await expect(page.getByLabel("API-Schlüssel")).toHaveAttribute("placeholder", "…ABCD");
       await expect(page.getByLabel("API-Schlüssel")).toHaveValue("");
@@ -50,7 +50,7 @@ test.describe("Assistent im Chat", () => {
     } finally {
       await page.goto("/settings?section=company-chat");
       await page.getByRole("button", { name: "Assistent entfernen" }).click();
-      await expect(page.getByRole("status")).toHaveText("Der Assistent ist entfernt.");
+      await expect(page.getByRole("status")).toHaveText("Der Assistent ist entfernt");
     }
     await page.goto("/chat");
     await expect(page.getByRole("navigation", { name: "Kanäle" })).toBeVisible();

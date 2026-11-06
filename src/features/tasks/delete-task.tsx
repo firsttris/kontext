@@ -48,7 +48,7 @@ export const DeleteTaskButton = ({
       onMouseLeave={() => setConfirm(false)}
       className={cn(className, confirm && "md:opacity-100")}
     >
-      <Trash2 size={15} />
+      <Trash2 size={16} />
       {confirm ? m.tasks_delete_really() : null}
     </Button>
   );

@@ -109,7 +109,7 @@ test.describe("Kalender", () => {
     await dialog.getByLabel("Ort").fill("Hauptstraße 41");
     await addAttendees(dialog, "anna@weber-haustechnik.test");
     await dialog.getByRole("button", { name: "Speichern" }).click();
-    await expect(page.getByRole("status")).toHaveText("Einladungen werden verschickt.");
+    await expect(page.getByRole("status")).toHaveText("Einladungen werden verschickt");
     const block = page.locator(`[data-day="${tomorrow()}"]`).getByText(title);
     await expect(block).toBeVisible();
 
@@ -178,7 +178,7 @@ test.describe("Kalender", () => {
     await expect(dialog.getByLabel("Ende Datum")).toHaveValue(day(2));
     await expect(dialog.getByLabel("Ende Uhrzeit")).toHaveValue("15:30");
     await dialog.getByRole("button", { name: "Speichern" }).click();
-    await expect(page.getByRole("status")).toHaveText("Einladungen werden verschickt.");
+    await expect(page.getByRole("status")).toHaveText("Einladungen werden verschickt");
     await expect(dialog).toHaveCount(0);
 
     // Each day in its own week: on a Saturday, day 2 is a Monday and the week shown starts there.
@@ -270,7 +270,7 @@ test.describe("Kalender", () => {
     await defaults.getByLabel("Termine mit Uhrzeit").selectOption({ label: "1 Tag vorher" });
     await defaults.getByLabel("Erinnern per").selectOption({ label: "Mail" });
     await defaults.getByRole("button", { name: "Speichern" }).click();
-    await expect(page.getByRole("status")).toHaveText("Erinnerung gespeichert.");
+    await expect(page.getByRole("status")).toHaveText("Erinnerung gespeichert");
     await page.keyboard.press("Escape");
 
     await page.goto(`/calendar?date=${tomorrow()}&event=new&start=${tomorrow()}T10:00`);
@@ -385,7 +385,7 @@ test.describe("Kalender", () => {
     await page.mouse.move(box.x + box.width / 2, box.y + 66, { steps: 4 });
     await expect(page.getByTestId("drag-preview")).toContainText("11:00–12:00");
     await page.mouse.up();
-    await expect(page.getByRole("status")).toHaveText("Termin verschoben.");
+    await expect(page.getByRole("status")).toHaveText("Termin verschoben");
     await expect(block).toContainText("11:00–12:00");
     await expect(page.getByRole("dialog")).toHaveCount(0);
 
@@ -488,7 +488,7 @@ test.describe("Kalender teilen", () => {
     const share = page.getByRole("dialog", { name: `„${calendar}“ teilen` });
     await share.getByLabel("Anna Weber").selectOption("edit");
     await share.getByRole("button", { name: "Speichern" }).click();
-    await expect(page.getByRole("status")).toHaveText("Freigabe gespeichert.");
+    await expect(page.getByRole("status")).toHaveText("Freigabe gespeichert");
     await expect(
       manage
         .getByRole("listitem")
@@ -541,7 +541,7 @@ test.describe("Kalender teilen", () => {
     await manage.getByRole("button", { name: `Teilen: ${calendar}` }).click();
     await share.getByLabel("Anna Weber").selectOption("read");
     await share.getByRole("button", { name: "Speichern" }).click();
-    await expect(page.getByRole("status")).toHaveText("Freigabe gespeichert.");
+    await expect(page.getByRole("status")).toHaveText("Freigabe gespeichert");
 
     await anna.reload();
     await expect(annaCalendar).toContainText("Jonas Weber · Nur lesen");
@@ -576,7 +576,7 @@ test.describe("Feiertage", () => {
     await manage.getByRole("button", { name: "Feiertage eintragen" }).click();
     // Twelve days in the Saarland, this year and next.
     await expect(
-      page.getByRole("status").filter({ hasText: "24 Feiertage eingetragen." }),
+      page.getByRole("status").filter({ hasText: "24 Feiertage eingetragen" }),
     ).toBeVisible();
     // The calendar's line, not its entry in "Aus Datei übernehmen"'s list of calendars.
     await expect(
@@ -584,7 +584,7 @@ test.describe("Feiertage", () => {
     ).toBeVisible();
     await manage.getByRole("button", { name: "Feiertage eintragen" }).click();
     await expect(
-      page.getByRole("status").filter({ hasText: "Die Feiertage stehen schon im Kalender." }),
+      page.getByRole("status").filter({ hasText: "Die Feiertage stehen schon im Kalender" }),
     ).toBeVisible();
     await page.keyboard.press("Escape");
 
@@ -694,7 +694,7 @@ test.describe("Termine aus Datei", () => {
     ).toContainText("schon vorhanden");
     await manage.getByRole("button", { name: "Übernehmen" }).click();
     await expect(
-      page.getByRole("status").filter({ hasText: "2 Termine übernommen." }),
+      page.getByRole("status").filter({ hasText: "2 Termine übernommen" }),
     ).toBeVisible();
 
     // The same file again: nothing new.

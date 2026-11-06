@@ -67,7 +67,7 @@ export const StalwartNotices = ({
         return (
           <Popover.Close asChild key={notice.id}>
             <Link to={calendar ? "/calendar" : "/contacts"} className={row} onClick={open}>
-              <NoticeContent icon={<Share2 size={15} />} heading={heading} detail={detail} />
+              <NoticeContent icon={<Share2 size={16} />} heading={heading} detail={detail} />
             </Link>
           </Popover.Close>
         );
@@ -94,7 +94,7 @@ export const StalwartNotices = ({
               onClick={() => dismiss("CalendarEventNotification", accountId, notice.id)}
             >
               <NoticeContent
-                icon={cancelled ? <CalendarX size={15} /> : <CalendarClock size={15} />}
+                icon={cancelled ? <CalendarX size={16} /> : <CalendarClock size={16} />}
                 heading={heading}
                 detail={detail}
               />

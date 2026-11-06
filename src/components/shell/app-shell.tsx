@@ -38,7 +38,7 @@ const TourItem = ({ user }: { user: string }) => {
         restartTour(user);
       }}
     >
-      <Compass size={15} /> {m.tour_open()}
+      <Compass size={16} /> {m.tour_open()}
     </MenuItem>
   );
 };
@@ -63,12 +63,12 @@ const UserMenu = () => {
         <MenuSeparator />
         <MenuItem asChild>
           <Link to="/settings" search={{}} className="text-fg no-underline">
-            <Settings size={15} /> {m.nav_settings()}
+            <Settings size={16} /> {m.nav_settings()}
           </Link>
         </MenuItem>
         <TourItem user={name} />
         <MenuItem onSelect={logout}>
-          <LogOut size={15} /> {m.logout()}
+          <LogOut size={16} /> {m.logout()}
         </MenuItem>
       </MenuContent>
     </MenuRoot>
@@ -87,7 +87,7 @@ const UnreadBadge = ({ count, className }: { count: number; className?: string }
     <span
       aria-hidden="true"
       className={cn(
-        "absolute rounded-full bg-accent-fill px-1 font-mono text-[10px] leading-[15px] font-medium text-white",
+        "absolute rounded-full bg-accent-fill px-1 font-mono text-[11px] leading-[15px] font-medium text-white",
         className,
       )}
     >
@@ -133,7 +133,7 @@ const Rail = ({ onHelp, bell }: { onHelp: () => void; bell: ReactNode }) => {
     >
       <div
         aria-hidden="true"
-        className="mb-3.5 flex size-8 items-center justify-center rounded-[9px] bg-primary text-[13px] font-semibold text-onprimary"
+        className="mb-3.5 flex size-8 items-center justify-center rounded-lg bg-primary text-[13px] font-semibold text-onprimary"
       >
         K
       </div>
@@ -152,7 +152,7 @@ const Rail = ({ onHelp, bell }: { onHelp: () => void; bell: ReactNode }) => {
               active ? "bg-subtle text-fg" : "text-muted",
             )}
           >
-            <Icon size={18} strokeWidth={1.75} />
+            <Icon size={20} />
             <UnreadBadge count={badges[to] ?? 0} className="top-0.5 right-0.5" />
             {to === "/documents" && unsaved ? (
               <span
@@ -171,7 +171,7 @@ const Rail = ({ onHelp, bell }: { onHelp: () => void; bell: ReactNode }) => {
           aria-current={pathname.startsWith("/phone") ? "page" : undefined}
           className={railButton(pathname.startsWith("/phone"))}
         >
-          <Phone size={18} strokeWidth={1.75} />
+          <Phone size={20} />
         </Link>
       ) : null}
       <div className="flex-1" />
@@ -183,7 +183,7 @@ const Rail = ({ onHelp, bell }: { onHelp: () => void; bell: ReactNode }) => {
         title={m.shortcuts_open()}
         className={railButton(false)}
       >
-        <Keyboard size={18} strokeWidth={1.75} />
+        <Keyboard size={20} />
       </button>
       <Link
         to="/settings"
@@ -193,7 +193,7 @@ const Rail = ({ onHelp, bell }: { onHelp: () => void; bell: ReactNode }) => {
         aria-current={pathname.startsWith("/settings") ? "page" : undefined}
         className={cn("mb-1.5", railButton(pathname.startsWith("/settings")))}
       >
-        <Settings size={18} strokeWidth={1.75} />
+        <Settings size={20} />
       </Link>
       <UserMenu />
     </nav>
@@ -276,7 +276,7 @@ const MoreMenu = ({ badges }: { badges: AppBadges }) => {
           active ? "font-medium text-fg" : "text-muted",
         )}
       >
-        <Ellipsis size={22} strokeWidth={1.75} />
+        <Ellipsis size={24} />
         <AppName label={m.nav_more()} spoken={badgeLabel(MORE, m.nav_more(), count)} />
         <UnreadBadge count={count} className="-top-1 left-[calc(50%+4px)]" />
       </MenuTrigger>
@@ -287,7 +287,7 @@ const MoreMenu = ({ badges }: { badges: AppBadges }) => {
         {moreItems.map(({ to, label, icon: Icon }) => (
           <MenuItem key={to} asChild>
             <Link to={to} className="text-fg no-underline">
-              <Icon size={15} />{" "}
+              <Icon size={16} />{" "}
               <AppName label={label()} spoken={badgeLabel(to, label(), countOf(to))} />
               {countOf(to) > 0 ? (
                 <span aria-hidden="true" className="ml-auto font-mono text-[11px] text-muted">
@@ -299,13 +299,13 @@ const MoreMenu = ({ badges }: { badges: AppBadges }) => {
         ))}
         <MenuItem asChild>
           <Link to="/settings" search={{}} className="text-fg no-underline">
-            <Settings size={15} /> {m.nav_settings()}
+            <Settings size={16} /> {m.nav_settings()}
           </Link>
         </MenuItem>
         <TourItem user={session?.username ?? ""} />
         <MenuSeparator />
         <MenuItem onSelect={logout}>
-          <LogOut size={15} /> {m.logout()}
+          <LogOut size={16} /> {m.logout()}
         </MenuItem>
       </MenuContent>
     </MenuRoot>
@@ -339,7 +339,7 @@ export const TabBar = () => {
               active ? "font-medium text-fg" : "text-muted",
             )}
           >
-            <Icon size={22} strokeWidth={1.75} />
+            <Icon size={24} />
             <AppName label={label()} spoken={badgeLabel(to, label(), count)} />
             <UnreadBadge count={count} className="-top-1 left-[calc(50%+4px)]" />
           </Link>

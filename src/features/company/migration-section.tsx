@@ -66,10 +66,10 @@ const Migrations = ({ company }: { company: Company }) => {
       <p className="m-0 text-[13px] text-muted">{m.company_migration_hint()}</p>
       <div className="flex flex-wrap gap-2">
         <Button variant="primary" onClick={() => setOpen("connect")}>
-          <Link2 size={15} /> {m.company_sync_new()}
+          <Link2 size={16} /> {m.company_sync_new()}
         </Button>
         <Button onClick={() => setOpen("upload")}>
-          <Upload size={15} /> {m.company_migration_new()}
+          <Upload size={16} /> {m.company_migration_new()}
         </Button>
       </div>
       {syncs.length || migrations.length ? (

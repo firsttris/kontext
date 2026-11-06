@@ -152,7 +152,7 @@ const OwnBook = ({ book, onShare, onRename }: OwnBookProps) => {
         aria-label={`${m.contacts_book_rename()}: ${book.name}`}
         title={m.contacts_book_rename()}
       >
-        <Pencil size={15} />
+        <Pencil size={16} />
       </Button>
       <Button
         variant="outline"
@@ -170,7 +170,7 @@ const OwnBook = ({ book, onShare, onRename }: OwnBookProps) => {
           aria-label={`${m.contacts_book_delete()}: ${book.name}`}
           title={m.contacts_book_delete()}
         >
-          <Trash2 size={15} />
+          <Trash2 size={16} />
         </Button>
       ) : null}
     </li>

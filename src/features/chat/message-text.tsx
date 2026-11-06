@@ -18,7 +18,7 @@ export const MessageText = ({
 }) => {
   const mentioned = people.filter((person) => message.mentions.includes(person.id));
   return (
-    <p className="m-0 text-[15px] leading-[1.5] break-words whitespace-pre-wrap md:text-[14px]">
+    <p className="m-0 text-[16px] leading-[1.5] break-words whitespace-pre-wrap md:text-[14px]">
       {segments(message.text, mentioned).map((part, index) => {
         const key = `${index}-${part.kind}`;
         if (part.kind === "link") {

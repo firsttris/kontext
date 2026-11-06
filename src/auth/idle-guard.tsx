@@ -148,7 +148,7 @@ const StayDialog = ({ timer, onLogout }: { timer: IdleTimer; onLogout: () => voi
       <div
         role="timer"
         aria-label={m.idle_countdown({ time: countdownText(seconds) })}
-        className="text-center text-[32px] font-semibold tabular-nums"
+        className="text-center text-[30px] font-medium tabular-nums"
       >
         {countdownText(seconds)}
       </div>

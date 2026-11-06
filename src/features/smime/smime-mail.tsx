@@ -53,7 +53,7 @@ export const SmimeSignatureNote = ({
   if (signature.state === "unsupported") {
     return (
       <span className="flex items-center gap-1.5 text-[13px] text-muted">
-        <ShieldQuestion size={15} aria-hidden="true" /> {m.smime_signed_unsupported({ sender })}
+        <ShieldQuestion size={16} aria-hidden="true" /> {m.smime_signed_unsupported({ sender })}
       </span>
     );
   }
@@ -85,7 +85,7 @@ export const SmimeSignatureNote = ({
                   : [ShieldQuestion, "text-muted", m.smime_signed_checking({ sender })];
   return (
     <span className={cn("flex items-center gap-1.5 text-[13px]", tone)}>
-      <Icon size={15} aria-hidden="true" /> {text}
+      <Icon size={16} aria-hidden="true" /> {text}
     </span>
   );
 };
@@ -216,7 +216,7 @@ export const SmimeMail = ({
       <div className="flex flex-wrap items-center gap-x-4 gap-y-1 rounded-lg border border-border px-3 py-2">
         {encrypted ? (
           <span className="flex items-center gap-1.5 text-[13px] font-medium text-accent">
-            <LockKeyhole size={15} aria-hidden="true" /> {m.smime_encrypted()}
+            <LockKeyhole size={16} aria-hidden="true" /> {m.smime_encrypted()}
           </span>
         ) : null}
         {read ? <SmimeSignatureNote signature={read.signature} sender={sender} /> : null}

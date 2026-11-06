@@ -66,7 +66,7 @@ export const Dialog = ({
         >
           <div className="flex items-start gap-3">
             <div className="flex flex-1 flex-col gap-1">
-              <DialogPrimitive.Title className="m-0 text-[17px] font-semibold">
+              <DialogPrimitive.Title className="m-0 text-[18px] font-semibold">
                 {title}
               </DialogPrimitive.Title>
               {description ? (

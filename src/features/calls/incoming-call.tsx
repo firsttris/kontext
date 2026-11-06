@@ -68,7 +68,7 @@ export const IncomingCall = () => {
               className="animate-pulse"
             />
             <div className="flex min-w-0 flex-col">
-              <DialogPrimitive.Title className="m-0 truncate text-[15px] font-semibold">
+              <DialogPrimitive.Title className="m-0 truncate text-[16px] font-semibold">
                 {m.call_incoming({ name: caller })}
               </DialogPrimitive.Title>
               <span className="text-[13px] text-muted">
@@ -78,7 +78,7 @@ export const IncomingCall = () => {
           </div>
           <div className="flex gap-2">
             <Button variant="danger" className="flex-1" onClick={decline} disabled={answering}>
-              <PhoneOff size={15} />
+              <PhoneOff size={16} />
               {m.call_decline()}
             </Button>
             <Button
@@ -86,7 +86,7 @@ export const IncomingCall = () => {
               onClick={() => void answer(false)}
               disabled={answering}
             >
-              <Phone size={15} />
+              <Phone size={16} />
               {m.call_answer()}
             </Button>
             {call.video ? (

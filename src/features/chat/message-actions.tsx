@@ -76,17 +76,17 @@ export const HoverBar = ({ actions, side }: { actions: MessageActions; side: "st
           <MenuContent align="end">
             {onMakeTask ? (
               <MenuItem onSelect={onMakeTask}>
-                <ListChecks size={15} /> {m.chat_make_task()}
+                <ListChecks size={16} /> {m.chat_make_task()}
               </MenuItem>
             ) : null}
             {onEdit ? (
               <MenuItem onSelect={onEdit}>
-                <Pencil size={15} /> {m.chat_edit_message()}
+                <Pencil size={16} /> {m.chat_edit_message()}
               </MenuItem>
             ) : null}
             {onDelete ? (
               <MenuItem onSelect={onDelete} className="text-danger">
-                <Trash2 size={15} /> {m.chat_delete_message()}
+                <Trash2 size={16} /> {m.chat_delete_message()}
               </MenuItem>
             ) : null}
           </MenuContent>
@@ -168,7 +168,7 @@ export const ActionSheet = ({
                 onClick={() => setAll(false)}
                 className="flex h-10 w-fit items-center gap-1 px-1 text-[14px] text-muted"
               >
-                <ChevronLeft size={18} /> {m.emoji_back()}
+                <ChevronLeft size={20} /> {m.emoji_back()}
               </button>
               <EmojiPicker onPick={(emoji) => choose(() => onReact(emoji))()} className="flex-1" />
             </div>
@@ -184,7 +184,7 @@ export const ActionSheet = ({
                   type="button"
                   aria-label={m.chat_react_with({ emoji })}
                   onClick={choose(() => onReact(emoji))}
-                  className="flex size-10 items-center justify-center rounded-full bg-subtle text-[21px] active:scale-110"
+                  className="flex size-10 items-center justify-center rounded-full bg-subtle text-[22px] active:scale-110"
                 >
                   {emoji}
                 </button>

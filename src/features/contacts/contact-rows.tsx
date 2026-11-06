@@ -33,7 +33,7 @@ const Rows = <Row,>({ label, addLabel, rows, blank, onChange, renderRow }: RowsP
             aria-label={m.contacts_remove_row({ field: rowLabel(label, index) })}
             onClick={() => onChange(rows.filter((_, i) => i !== index))}
           >
-            <X size={15} />
+            <X size={16} />
           </Button>
         ) : null}
       </div>

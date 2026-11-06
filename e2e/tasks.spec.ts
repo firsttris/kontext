@@ -66,7 +66,7 @@ test.describe("Aufgaben", () => {
     await dialog.getByRole("button", { name: "Morgen" }).click();
     await dialog.getByLabel("Zuständig").selectOption({ label: "Niemand" });
     await dialog.getByRole("button", { name: "Aufgabe erstellen" }).click();
-    await expect(page.getByRole("status").filter({ hasText: "Aufgabe angelegt." })).toBeVisible();
+    await expect(page.getByRole("status").filter({ hasText: "Aufgabe angelegt" })).toBeVisible();
 
     // The mail knows its task, in the reading pane and in the list.
     await expect(page.getByRole("link", { name: new RegExp(`Aufgabe: ${subject}`) })).toBeVisible();
@@ -135,7 +135,7 @@ test.describe("Aufgaben", () => {
     await row.hover();
     await row.getByRole("button", { name: `„${gone}“ löschen` }).click();
     await row.getByRole("button", { name: "Wirklich löschen?" }).click();
-    await expect(page.getByRole("status").filter({ hasText: "Aufgabe gelöscht." })).toBeVisible();
+    await expect(page.getByRole("status").filter({ hasText: "Aufgabe gelöscht" })).toBeVisible();
     await expect(page.getByRole("link", { name: new RegExp(gone) })).toBeHidden();
     await expect.poll(() => taskOf(page, gone)).toBeUndefined();
   });
@@ -169,7 +169,7 @@ test.describe("Aufgaben am Handy @phone", () => {
     const detail = page.getByRole("article", { name });
     await detail.getByRole("button", { name: "Aufgabe löschen" }).click();
     await detail.getByRole("button", { name: "Wirklich löschen?" }).click();
-    await expect(page.getByRole("status").filter({ hasText: "Aufgabe gelöscht." })).toBeVisible();
+    await expect(page.getByRole("status").filter({ hasText: "Aufgabe gelöscht" })).toBeVisible();
     await expect(page.getByRole("heading", { name: "Meine Aufgaben", level: 1 })).toBeVisible();
     await expect(page.getByRole("link", { name: new RegExp(name) })).toBeHidden();
   });

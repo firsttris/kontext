@@ -38,7 +38,7 @@ const SetupForm = ({ onDone }: { onDone: () => void }) => {
   return (
     <form onSubmit={submit} className="flex flex-col gap-4 rounded-xl border border-border p-4">
       <div className="flex flex-col gap-1">
-        <h3 className="m-0 text-[14px] font-semibold">{m.company_m365_setup()}</h3>
+        <h3 className="m-0 text-[14px] font-medium">{m.company_m365_setup()}</h3>
         <p className="m-0 text-[13px] text-muted">{m.company_m365_setup_hint()}</p>
       </div>
       <Label>

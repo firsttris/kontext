@@ -33,7 +33,7 @@ const stateOf = (key: RecipientKey) =>
 
 const Row = ({ item, onRemove }: { item: RecipientKey; onRemove: () => void }) => (
   <li className="flex items-start gap-3 py-3">
-    <KeyRound size={18} aria-hidden="true" className="mt-0.5 shrink-0 text-muted" />
+    <KeyRound size={20} aria-hidden="true" className="mt-0.5 shrink-0 text-muted" />
     <div className="flex min-w-0 flex-1 flex-col gap-0.5">
       <span className="truncate text-[14px] font-medium">{item.email}</span>
       <span className="text-[13px] text-muted">{ORIGIN[item.origin]()}</span>

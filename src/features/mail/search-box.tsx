@@ -109,8 +109,8 @@ export const SearchBox = forwardRef<SearchBoxHandle, { initial?: string }>(({ in
 
   return (
     <div className="relative">
-      <label className="flex h-[42px] items-center gap-2 rounded-xl bg-subtle px-3 text-muted md:h-9 md:rounded-[9px] md:border md:border-border md:bg-transparent">
-        <Search size={15} />
+      <label className="flex h-11 items-center gap-2 rounded-xl bg-subtle px-3 text-muted md:h-9 md:rounded-lg md:border md:border-border md:bg-transparent">
+        <Search size={16} />
         <input
           ref={input}
           type="search"
@@ -129,7 +129,7 @@ export const SearchBox = forwardRef<SearchBoxHandle, { initial?: string }>(({ in
           onFocus={() => setOpen(true)}
           onBlur={() => setTimeout(() => setOpen(false), 120)}
           onKeyDown={onKeyDown}
-          className="min-w-0 flex-1 border-0 bg-transparent text-[15px] text-fg outline-none md:text-[14px] [&::-webkit-search-cancel-button]:hidden"
+          className="min-w-0 flex-1 border-0 bg-transparent text-[16px] text-fg outline-none md:text-[14px] [&::-webkit-search-cancel-button]:hidden"
         />
         {text ? (
           <button

@@ -48,12 +48,12 @@ test.describe("Als Phishing melden", () => {
       await page.goto("/settings?section=company-security");
       await page.getByLabel("Adresse für Meldungen").fill(address("max"));
       await page.getByRole("button", { name: "Speichern" }).click();
-      await expect(page.getByRole("status")).toHaveText("Gespeichert.");
+      await expect(page.getByRole("status")).toHaveText("Gespeichert");
 
       await page.goto("/mail");
       await report(page, subject);
       await expect(page.getByRole("status")).toHaveText(
-        `An ${address("max")} gemeldet und in den Spam verschoben.`,
+        `An ${address("max")} gemeldet und in den Spam verschoben`,
       );
       await expect(page.getByRole("list", { name: "Posteingang" }).getByText(subject)).toHaveCount(
         0,

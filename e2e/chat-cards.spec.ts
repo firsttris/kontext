@@ -96,7 +96,7 @@ test.describe("Chat: Fotos, Dateien und Karten", () => {
     await dialog.getByRole("textbox", { name: "Nachricht" }).fill("Wer ruft zurück?");
     await dialog.getByRole("button", { name: "Senden", exact: true }).click();
     await expect(
-      page.getByRole("status").filter({ hasText: "An info@weber-haustechnik.test geschickt." }),
+      page.getByRole("status").filter({ hasText: "An info@weber-haustechnik.test geschickt" }),
     ).toBeVisible();
     await expect(page.getByRole("link", { name: "Besprochen in info@" })).toBeVisible();
 

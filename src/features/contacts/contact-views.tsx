@@ -29,7 +29,7 @@ const Entry = ({
         current && "bg-bg shadow-[0_0_0_1px_var(--border)]",
       )}
     >
-      <span className="flex size-[34px] shrink-0 items-center justify-center text-muted md:size-6">
+      <span className="flex size-9 shrink-0 items-center justify-center text-muted md:size-6">
         {icon}
       </span>
       <span className="min-w-0 flex-1 truncate">{label}</span>

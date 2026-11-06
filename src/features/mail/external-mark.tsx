@@ -12,7 +12,7 @@ export const ExternalMark = ({ address }: { address: string | undefined }) => {
       title={m.mail_external_title()}
       className="inline-flex h-[18px] shrink-0 items-center gap-1 rounded-full bg-warn/10 px-1.5 text-[11px] font-medium text-warn"
     >
-      <Globe size={11} strokeWidth={2.25} aria-hidden="true" />
+      <Globe size={12} aria-hidden="true" />
       {m.mail_external()}
     </span>
   );

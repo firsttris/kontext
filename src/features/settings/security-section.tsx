@@ -67,10 +67,10 @@ const TwoFactorStatus = ({ on, action }: { on: boolean; action: ReactNode }) => 
           on ? "bg-ok/15 text-ok" : "bg-bg text-muted",
         )}
       >
-        <Icon size={18} aria-hidden="true" />
+        <Icon size={20} aria-hidden="true" />
       </span>
       <div className="flex min-w-0 flex-1 flex-col">
-        <span className={cn("text-[14px] font-semibold", on && "text-ok")}>
+        <span className={cn("text-[14px] font-medium", on && "text-ok")}>
           {on ? m.settings_2fa_active() : m.settings_2fa_inactive()}
         </span>
         <span className="text-[13px] text-muted">

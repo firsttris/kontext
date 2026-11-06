@@ -58,7 +58,7 @@ export const AgendaView = ({ from, today, events, tasks = [], isInvitation }: Pr
           <li key={day} className="border-b border-border px-4 py-3 md:px-5">
             <h2
               className={cn(
-                "m-0 mb-2 text-[13px] font-semibold",
+                "m-0 mb-2 text-[13px] font-medium",
                 day === today ? "text-accent" : "text-muted",
               )}
             >

@@ -154,7 +154,7 @@ export const EmlImportButton = ({
         onClick={() => input.current?.click()}
         className="flex size-8 shrink-0 items-center justify-center rounded-md text-muted hover:bg-hover hover:text-fg"
       >
-        <FileUp size={15} aria-hidden="true" />
+        <FileUp size={16} aria-hidden="true" />
       </button>
       <input
         ref={input}

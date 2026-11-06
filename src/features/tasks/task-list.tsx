@@ -77,7 +77,7 @@ export const TaskList = ({
     <section aria-label={title} className="flex h-full min-h-0 flex-col">
       <header className="flex flex-col gap-3 px-4 pt-3 pb-3 md:pt-4">
         <div className="flex items-center gap-3">
-          <h1 className="m-0 flex-1 truncate text-[30px] leading-tight font-semibold tracking-tight md:text-[18px]">
+          <h1 className="m-0 flex-1 truncate text-[30px] leading-tight font-semibold md:text-[18px]">
             {title}
           </h1>
           {header}
@@ -105,7 +105,7 @@ export const TaskList = ({
           groups.map((group) => (
             <div key={group.group} className="mb-3 flex flex-col gap-px">
               <h2
-                className={`m-0 px-3 py-1 text-[12px] font-semibold ${group.group === "overdue" ? "text-danger" : "text-fg"}`}
+                className={`m-0 px-3 py-1 text-[12px] font-medium ${group.group === "overdue" ? "text-danger" : "text-fg"}`}
               >
                 {group.label}
               </h2>

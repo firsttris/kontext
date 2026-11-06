@@ -32,7 +32,7 @@ test.describe("Verschlüsselung: persönlicher Schlüssel", () => {
     await dialog.getByLabel("Ich habe den Code sicher aufbewahrt.").check();
     await save.click();
     await expect(
-      page.getByRole("status").filter({ hasText: "Schlüssel gespeichert." }),
+      page.getByRole("status").filter({ hasText: "Schlüssel gespeichert" }),
     ).toBeVisible();
     await expect(own).toContainText(`jonas@${DEV_DOMAIN}`);
     await expect(own).toContainText(/([0-9A-F]{4} ){9}[0-9A-F]{4}/);
@@ -44,9 +44,7 @@ test.describe("Verschlüsselung: persönlicher Schlüssel", () => {
     await forgot.getByLabel("Neue Passphrase").fill("Die Pumpe steht im Keller");
     await forgot.getByLabel("Passphrase wiederholen").fill("Die Pumpe steht im Keller");
     await forgot.getByRole("button", { name: "Speichern" }).click();
-    await expect(
-      page.getByRole("status").filter({ hasText: "Passphrase geändert." }),
-    ).toBeVisible();
+    await expect(page.getByRole("status").filter({ hasText: "Passphrase geändert" })).toBeVisible();
 
     // WKD: Thunderbird finds the key at the company's address.
     const wkd = await page.request.get(
@@ -65,7 +63,7 @@ test.describe("Verschlüsselung: persönlicher Schlüssel", () => {
     await page.getByLabel("Betreff").fill(subject);
     await page.getByRole("textbox", { name: "Ihre Nachricht …" }).fill("Hallo Max");
     await page.getByRole("button", { name: "Senden", exact: true }).click();
-    await expect(page.getByRole("status")).toHaveText("Mail gesendet.");
+    await expect(page.getByRole("status")).toHaveText("Mail gesendet");
     await expect.poll(() => inboxSubjects("max")).toContain(subject);
 
     const max = await (await browser.newContext()).newPage();

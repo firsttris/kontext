@@ -118,8 +118,8 @@ export const DiscussDialog = ({
   return (
     <Dialog open onOpenChange={(open) => !open && onClose()} title={m.chat_discuss_title()}>
       <div className="flex flex-col gap-1.5">
-        <label className="flex h-10 items-center gap-2 rounded-[9px] border border-border px-3 text-muted focus-within:border-muted">
-          <Search size={15} aria-hidden="true" />
+        <label className="flex h-10 items-center gap-2 rounded-lg border border-border px-3 text-muted focus-within:border-muted">
+          <Search size={16} aria-hidden="true" />
           <span className="sr-only">{m.chat_discuss_to()}</span>
           <input
             value={filter}
@@ -153,9 +153,9 @@ export const DiscussDialog = ({
                 {option.kind === "person" ? (
                   <ColleagueAvatar id={option.person.id} name={option.person.name} size={22} />
                 ) : option.channel.kind === "mailbox" ? (
-                  <AtSign size={15} className="text-muted" aria-hidden="true" />
+                  <AtSign size={16} className="text-muted" aria-hidden="true" />
                 ) : (
-                  <Hash size={15} className="text-muted" aria-hidden="true" />
+                  <Hash size={16} className="text-muted" aria-hidden="true" />
                 )}
                 <span className="flex-1 truncate text-fg">{label(option)}</span>
                 {option.kind === "channel" && option.why ? (

@@ -59,7 +59,7 @@ export const AssignMenu = ({ accountId, email }: { accountId: string; email: Ema
     <MenuRoot>
       <MenuTrigger asChild>
         <Button variant="ghost" size="icon" aria-label={m.mail_assign()} title={m.mail_assign()}>
-          <UserCheck size={16} strokeWidth={1.75} />
+          <UserCheck size={16} />
         </Button>
       </MenuTrigger>
       <MenuContent align="start">
@@ -115,7 +115,7 @@ export const AssignmentChip = ({
         done ? "bg-subtle text-muted" : "bg-accent/10 text-accent-ink",
       )}
     >
-      <Icon size={compact ? 11 : 13} strokeWidth={2.25} aria-hidden="true" />
+      <Icon size={compact ? 12 : 14} aria-hidden="true" />
       {compact && !done ? shown : label}
     </span>
   );

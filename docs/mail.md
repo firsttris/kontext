@@ -95,7 +95,7 @@ IMAP und SMTP.
   werden dabei keine Ordner, alles landet im gewählten Ordner, auch Spam und Papierkorb; wer ein
   Gmail-Postfach mit Ordnern umziehen will, nimmt „Postfach verbinden“.
 
-  ![Ordner „Altablage 2024“ mit drei importierten Mails; unten die Meldung „3 Mails importiert.“ und „Nicht importiert: Rechnung Dezember.msg (Outlook-Format .msg wird nicht unterstützt)“](screenshots/eml-import.png)
+  ![Ordner „Altablage 2024“ mit drei importierten Mails; unten die Meldung „3 Mails importiert“ und „Nicht importiert: Rechnung Dezember.msg (Outlook-Format .msg wird nicht unterstützt)“](screenshots/eml-import.png)
 - **Ordner als .mbox exportieren:** „…“ neben einem Ordner mit Mails → **Als .mbox exportieren**
   speichert alle Mails des Ordners (ohne Unterordner), älteste zuerst, als eine Datei
   `<Ordner>.mbox` (mboxrd, RFC 4155), die Thunderbird (ImportExportTools), Apple Mail und Kontexts

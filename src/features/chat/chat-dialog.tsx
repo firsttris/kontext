@@ -43,8 +43,8 @@ const PersonPicker = ({
   );
   return (
     <div className="flex flex-col gap-2">
-      <label className="flex h-10 items-center gap-2 rounded-[9px] border border-border px-3 text-muted focus-within:border-muted">
-        <Search size={15} aria-hidden="true" />
+      <label className="flex h-10 items-center gap-2 rounded-lg border border-border px-3 text-muted focus-within:border-muted">
+        <Search size={16} aria-hidden="true" />
         <span className="sr-only">{m.chat_find_people()}</span>
         <input
           value={filter}
@@ -137,7 +137,7 @@ export const ChatDialog = ({
     >
       <form onSubmit={submit} className="flex flex-col gap-4">
         {editing ? null : (
-          <div role="tablist" className="flex gap-0.5 rounded-[9px] bg-subtle p-[3px]">
+          <div role="tablist" className="flex gap-0.5 rounded-[10px] bg-subtle p-1">
             {(
               [
                 ["direct", m.chat_new_direct()],
@@ -151,7 +151,7 @@ export const ChatDialog = ({
                 aria-selected={mode === value}
                 onClick={() => setMode(value)}
                 className={cn(
-                  "h-8 flex-1 rounded-[7px] text-[13px]",
+                  "h-8 flex-1 rounded-md text-[13px]",
                   mode === value ? "bg-bg font-medium text-fg shadow-sm" : "text-muted",
                 )}
               >

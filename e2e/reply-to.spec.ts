@@ -51,7 +51,7 @@ test.describe("Antwort an", () => {
       await login(page);
       await writeToMax(page, subject);
       await page.getByRole("button", { name: "Senden", exact: true }).click();
-      await expect(page.getByRole("status").filter({ hasText: "Mail gesendet." })).toBeVisible();
+      await expect(page.getByRole("status").filter({ hasText: "Mail gesendet" })).toBeVisible();
 
       const max = await (await browser.newContext()).newPage();
       await login(max, "max");
@@ -92,7 +92,7 @@ test.describe("Antwort an", () => {
       await page.goto("/settings?section=signature");
       await page.getByLabel("Antwort an", { exact: true }).first().fill(INFO);
       await page.getByRole("button", { name: "Speichern" }).first().click();
-      await expect(page.getByRole("status").filter({ hasText: "Gespeichert." })).toBeVisible();
+      await expect(page.getByRole("status").filter({ hasText: "Gespeichert" })).toBeVisible();
 
       await page
         .getByRole("link", { name: /^Mail($|, )/ })
@@ -121,7 +121,7 @@ test.describe("Antwort an", () => {
       const card = page.getByRole("region", { name: INFO, exact: true });
       await card.getByLabel("Antwort an", { exact: true }).fill(address("rechnung"));
       await card.getByRole("button", { name: "Speichern" }).click();
-      await expect(page.getByRole("status").filter({ hasText: "Gespeichert." })).toBeVisible();
+      await expect(page.getByRole("status").filter({ hasText: "Gespeichert" })).toBeVisible();
 
       await page
         .getByRole("link", { name: /^Mail($|, )/ })

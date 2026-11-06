@@ -149,7 +149,7 @@ test.describe("Verfügbarkeit", () => {
       await expect(dialog.getByLabel("Alle Kollegen")).toHaveValue(from);
       await dialog.getByLabel("Alle Kollegen").selectOption(to);
       await dialog.getByRole("button", { name: "Speichern" }).click();
-      await expect(max.getByRole("status")).toHaveText("Freigabe gespeichert.");
+      await expect(max.getByRole("status")).toHaveText("Freigabe gespeichert");
     };
     const maxAtTen = async () => {
       await page.goto(`/calendar?date=${day}&event=new&start=${day}T10:00`);

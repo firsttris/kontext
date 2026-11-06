@@ -203,7 +203,7 @@ export const CallPanel = ({ active, title }: { active: ActiveCall; title: string
       )}
     >
       <header className="flex shrink-0 items-center gap-2">
-        <h2 className="m-0 min-w-0 flex-1 truncate text-[14px] font-semibold">{title}</h2>
+        <h2 className="m-0 min-w-0 flex-1 truncate text-[14px] font-medium">{title}</h2>
         {encrypted ? (
           <span className="flex shrink-0 items-center gap-1 text-[12px] text-accent">
             <LockKeyhole size={12} aria-hidden="true" /> {m.call_encrypted()}
@@ -216,7 +216,7 @@ export const CallPanel = ({ active, title }: { active: ActiveCall; title: string
           onClick={() => setExpanded((value) => !value)}
           className="hidden size-8 items-center justify-center rounded-lg text-muted hover:bg-hover hover:text-fg md:flex"
         >
-          {expanded ? <Minimize2 size={15} /> : <Maximize2 size={15} />}
+          {expanded ? <Minimize2 size={16} /> : <Maximize2 size={16} />}
         </button>
       </header>
       <CallView active={active} />

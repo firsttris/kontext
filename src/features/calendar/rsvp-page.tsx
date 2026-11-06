@@ -137,7 +137,7 @@ export const RsvpPage = ({ token, answer }: { token: string; answer?: Answer }) 
   if (first.isError) {
     return (
       <Frame>
-        <h1 className="m-0 text-[20px] font-semibold">{m.rsvp_title()}</h1>
+        <h1 className="m-0 text-[22px] font-semibold">{m.rsvp_title()}</h1>
         <p role="alert" className="m-0 text-[14px] text-muted">
           {problemText(first.error)}
         </p>
@@ -153,7 +153,7 @@ export const RsvpPage = ({ token, answer }: { token: string; answer?: Answer }) 
     <Frame>
       <header className="flex flex-col gap-1">
         <p className="m-0 text-[13px] text-muted">{m.rsvp_from({ name: organizer })}</p>
-        <h1 className="m-0 text-[20px] font-semibold">
+        <h1 className="m-0 text-[22px] font-semibold">
           {view.event.title || m.invitation_untitled()}
         </h1>
       </header>
@@ -162,7 +162,7 @@ export const RsvpPage = ({ token, answer }: { token: string; answer?: Answer }) 
         aria-label={m.rsvp_question()}
         className="flex flex-col gap-3 rounded-xl bg-subtle p-4"
       >
-        <p role="status" className="m-0 text-[15px] font-semibold">
+        <p role="status" className="m-0 text-[16px] font-medium">
           {done ? done() : m.rsvp_open()}
         </p>
         {done ? (

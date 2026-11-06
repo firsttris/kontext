@@ -43,7 +43,7 @@ export const CallLine = ({
   };
   return (
     <div className="flex items-center gap-2 rounded-xl border border-border px-3 py-2 text-[14px]">
-      <Icon size={15} aria-hidden="true" className={cn(missed ? "text-danger" : "text-muted")} />
+      <Icon size={16} aria-hidden="true" className={cn(missed ? "text-danger" : "text-muted")} />
       <span className={cn(missed && "text-danger")}>
         {missed && own ? m.call_unanswered() : callLine(call)}
       </span>
