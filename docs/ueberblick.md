@@ -51,7 +51,7 @@ braucht. Backups gehen verschlüsselt mit Restic auf S3 mit Object Lock.
 ## Wie es weitergeht
 
 Was als Nächstes kommt und welche Punkte noch offen sind, steht in der
-[Roadmap](https://github.com/firsttris/kontext/blob/main/ROADMAP.md); was sich in jeder Version
+[Roadmap](https://github.com/firsttris/kontext/blob/main/ROADMAP.de.md); was sich in jeder Version
 geändert hat, im [Changelog](https://github.com/firsttris/kontext/blob/main/CHANGELOG.md).
 
 Weiter: [Installation](installation.md) · [Architektur](architecture.md) · [Entwicklung](development.md)

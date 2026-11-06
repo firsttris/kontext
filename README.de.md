@@ -282,7 +282,7 @@ Die ganze Dokumentation, mit Suche, steht unter **[firsttris.github.io/kontext](
 [Architektur](https://firsttris.github.io/kontext/architecture.html) und
 [Entwicklung](https://firsttris.github.io/kontext/development.html). Was sich in jeder Version
 geändert hat, samt den Schritten für ein Update, steht im [Changelog](CHANGELOG.md) (Englisch); was
-als Nächstes kommt, in der [Roadmap](ROADMAP.md).
+als Nächstes kommt, in der [Roadmap](ROADMAP.de.md).
 
 ## 🛠️ Entwicklung
 

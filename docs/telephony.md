@@ -93,4 +93,4 @@ Anrufe der letzten 30 Tage: wie viele, wie schnell angenommen, wann Anrufe verpa
 Einrichtung Schritt für Schritt: [Installation → Telefonie](installation.md#telefonie). Wie Box,
 Asterisk, LiveKit SIP und Kontext zusammenspielen: [Architektur → Telefonie](architecture.md#telefonie).
 Was als Nächstes kommt (SIP-Trunk direkt beim Anbieter, SIP über TLS, Warteschleife, weitere
-Tischtelefone): [Roadmap](https://github.com/firsttris/kontext/blob/main/ROADMAP.md).
+Tischtelefone): [Roadmap](https://github.com/firsttris/kontext/blob/main/ROADMAP.de.md).

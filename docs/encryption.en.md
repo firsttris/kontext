@@ -335,8 +335,8 @@ What Kontext deliberately does not protect, or can't do (yet):
     (host, base DN, search attribute `mail`, attribute `userCertificate;binary`), which the
     company admin would have to maintain per authority, and many hand out certificates only after
     signing in, or not at all. For small businesses, an authority's certificate usually comes with
-    its first signed mail; the benefit is out of proportion. It is the only S/MIME item on the
-    roadmap.
+    its first signed mail; the benefit is out of proportion. It is therefore not
+    planned.
   - Revocation lists are only loaded over http/https (no `ldap://` addresses), and only for the
     sender's certificate, not for the intermediate authorities of the chain.
   - Mails encrypted with AuthEnvelopedData (RFC 5083, `smime-type=authEnveloped-data`) Kontext

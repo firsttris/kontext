@@ -13,7 +13,7 @@ Funktionen (Suche, Regeln, Benachrichtigungen mit Text, Aufgaben aus Mails) brau
 Server, der die Inhalte lesen kann. Ende-zu-Ende gibt es dort, wo es zählt: nach außen und für
 ausgewählte vertrauliche Unterhaltungen.
 
-Stand: alle fünf Bausteine sind umgesetzt ([Roadmap](https://github.com/firsttris/kontext/blob/main/ROADMAP.md)).
+Stand: alle fünf Bausteine sind umgesetzt ([Roadmap](https://github.com/firsttris/kontext/blob/main/ROADMAP.de.md)).
 
 ## Wovor geschützt wird
 
@@ -343,8 +343,8 @@ Was Kontext bewusst nicht schützt, oder (noch) nicht kann:
     (Host, Basis-DN, Suchattribut `mail`, Attribut `userCertificate;binary`), das die
     Firmenverwaltung je Stelle pflegen müsste, und viele geben Zertifikate nur nach Anmeldung
     oder gar nicht heraus. Für kleine Betriebe kommt das Zertifikat einer Behörde meist mit ihrer
-    ersten unterschriebenen Mail; der Nutzen steht nicht im Verhältnis. Steht als einziger
-    S/MIME-Punkt in der Roadmap.
+    ersten unterschriebenen Mail; der Nutzen steht nicht im Verhältnis. Deshalb ist es nicht
+    eingeplant.
   - Sperrlisten werden nur über http/https geladen (keine `ldap://`-Adressen), und nur für das
     Zertifikat des Absenders, nicht für die Zwischenstellen der Kette.
   - Mit AuthEnvelopedData (RFC 5083, `smime-type=authEnveloped-data`) verschlüsselte Mails

@@ -280,7 +280,7 @@ The full documentation, in English and German, with search, is at **[firsttris.g
 [architecture](https://firsttris.github.io/kontext/en/architecture.html) and
 [development](https://firsttris.github.io/kontext/en/development.html). What changed in each release,
 with the steps an update needs, is in the [changelog](CHANGELOG.md); what comes next is in the
-[roadmap](ROADMAP.md) (German).
+[roadmap](ROADMAP.md).
 
 ## 🛠️ Development
 
