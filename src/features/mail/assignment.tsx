@@ -3,7 +3,6 @@
  * list and over the mail, and the names behind the principal ids (src/lib/assignment.ts).
  */
 import { CircleCheck, UserCheck } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import {
   MenuCheckboxItem,
   MenuContent,
@@ -24,6 +23,7 @@ import { useMailboxMembers } from "../company/mailbox-members";
 import { usePersonalAccountId } from "../settings/queries";
 import { usePrincipals } from "../sharing/queries";
 import { useEmailActions } from "./actions";
+import { ToolbarButton } from "./toolbar-button";
 
 /** The people of the company by principal id, the own one first. */
 export const usePeople = () => {
@@ -58,9 +58,7 @@ export const AssignMenu = ({ accountId, email }: { accountId: string; email: Ema
   return (
     <MenuRoot>
       <MenuTrigger asChild>
-        <Button variant="ghost" size="icon" aria-label={m.mail_assign()} title={m.mail_assign()}>
-          <UserCheck size={16} />
-        </Button>
+        <ToolbarButton label={m.mail_assign()} icon={<UserCheck size={16} />} />
       </MenuTrigger>
       <MenuContent align="start">
         <MenuLabel>{m.mail_assign()}</MenuLabel>
