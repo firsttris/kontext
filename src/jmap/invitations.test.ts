@@ -115,3 +115,73 @@ describe("saveEvent", () => {
     expect(request).toBeGreaterThanOrEqual(cancel!);
   });
 });
+
+describe("saveEvent with a refused attendee", () => {
+  it("still invites the others when the server refuses one of them", async () => {
+    const niemand = {
+      calendarAddress: "mailto:niemand@weber-haustechnik.test",
+      roles: { attendee: true },
+      participationStatus: "needs-action",
+      expectReply: true,
+    };
+    const { client, sent } = fakeStalwart({ ...event, participants: { o: organizer } });
+    // Stalwart refuses a local address that does not exist at RCPT TO: "final" at once, 550.
+    const base = client.request.bind(client);
+    const rcpt: string[] = [];
+    (client as { request: unknown }).request = async (
+      calls: [string, Record<string, unknown>, string][],
+    ) => {
+      const [name] = calls[0]!;
+      if (name === "EmailSubmission/get") {
+        const refused = rcpt.at(-1) === "niemand@weber-haustechnik.test";
+        return [
+          [
+            name,
+            {
+              list: [
+                {
+                  id: "x",
+                  deliveryStatus: {
+                    [rcpt.at(-1)!]: {
+                      smtpReply: refused ? "550 5.1.1 Mailbox does not exist." : "250 2.1.5 Queued",
+                    },
+                  },
+                },
+              ],
+            },
+            "0",
+          ],
+        ];
+      }
+      if (name === "Email/set") return [[name, { destroyed: ["m"] }, "0"]];
+      const submission = calls[1]![1].create as Record<
+        string,
+        { envelope: { rcptTo: { email: string }[] } }
+      >;
+      const to = submission.send!.envelope.rcptTo[0]!.email;
+      rcpt.push(to);
+      const responses = await base(calls);
+      return to === "niemand@weber-haustechnik.test"
+        ? [
+            responses[0],
+            ["EmailSubmission/set", { created: { send: { id: "x", undoStatus: "final" } } }, "1"],
+          ]
+        : responses;
+    };
+    const saved = saveEvent(
+      client,
+      "a",
+      {
+        kind: "update",
+        id: "e1",
+        patch: { participants: { o: organizer, n: niemand, k: markus } },
+      },
+      async () => ({}),
+      () => new Date("2026-10-27T12:00:00Z"),
+    );
+    // The user hears of the refusal ...
+    await expect(saved).rejects.toThrow("niemand@weber-haustechnik.test: 550");
+    // ... and Markus gets his invitation all the same.
+    expect(sent.map((mail) => mail.to)).toContainEqual(["markus@hoffmann.test"]);
+  });
+});
