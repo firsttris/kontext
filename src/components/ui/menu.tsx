@@ -17,7 +17,15 @@ export const MenuContent = ({
   ...props
 }: ComponentProps<typeof Menu.Content>) => (
   <Menu.Portal>
-    <Menu.Content sideOffset={6} align="end" className={cn(contentClass, className)} {...props}>
+    {/* A menu wider than the room beside its trigger is pushed aside; without padding it stops
+        flush at the screen's edge (or a rounding error past it). */}
+    <Menu.Content
+      sideOffset={6}
+      collisionPadding={8}
+      align="end"
+      className={cn(contentClass, className)}
+      {...props}
+    >
       {children}
     </Menu.Content>
   </Menu.Portal>

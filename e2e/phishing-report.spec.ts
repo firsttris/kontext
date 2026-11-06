@@ -53,7 +53,7 @@ test.describe("Als Phishing melden", () => {
       await page.goto("/mail");
       await report(page, subject);
       await expect(page.getByRole("status")).toHaveText(
-        `An ${address("max")} gemeldet und in den Spam verschoben.`,
+        `An ${address("max")} gemeldet und in den Spam verschoben`,
       );
       await expect(page.getByRole("list", { name: "Posteingang" }).getByText(subject)).toHaveCount(
         0,
