@@ -88,7 +88,7 @@ test.describe("Abgelehnte Empfänger", () => {
     await page.keyboard.type("Kommt nie an.");
     await page.getByRole("button", { name: "Senden", exact: true }).click();
 
-    await expect(page.getByRole("status").filter({ hasText: "Nicht gesendet" })).toContainText(
+    await expect(page.getByRole("alert").filter({ hasText: "Nicht gesendet" })).toContainText(
       "niemand@weber-haustechnik.test: 550 5.1.1 Mailbox does not exist.",
     );
     await expect(page.getByRole("status").filter({ hasText: "Mail gesendet" })).toHaveCount(0);
