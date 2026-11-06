@@ -392,9 +392,14 @@ test.describe("Mail", () => {
     await addMail("jonas", "jonas", subject);
     const inbox = page.getByRole("list", { name: "Posteingang" });
     await inbox.getByText(subject).click();
-    // Every action of the toolbar carries its name where the pane is wide; the rarer ones are
-    // under "Weitere Aktionen".
-    for (const name of ["Archivieren", "Löschen", "Als Spam markieren", "Wiedervorlage"]) {
+    // The toolbar's actions look alike: icons alone where the pane is narrow (1280 px), every
+    // one with its name where it is wide; the rarer ones are under "Weitere Aktionen".
+    const toolbar = ["Archivieren", "Löschen", "Als Spam markieren", "Wiedervorlage"];
+    for (const name of toolbar) {
+      await expect(page.getByRole("button", { name, exact: true }).getByText(name)).toBeHidden();
+    }
+    await page.setViewportSize({ width: 1920, height: 1080 });
+    for (const name of toolbar) {
       await expect(page.getByRole("button", { name, exact: true }).getByText(name)).toBeVisible();
     }
     await expect(page.getByRole("button", { name: "Verschieben nach …" })).toHaveCount(0);
