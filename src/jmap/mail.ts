@@ -13,6 +13,7 @@ import type { Comparator } from "@/lib/mail-sort";
 import { bodyStructureOf } from "@/lib/mail-structure";
 import { replyReferences } from "@/lib/references";
 import { assertSetOk, CAPABILITIES, type Invocation, type JmapClient } from "./client";
+import { assertAccepted } from "./refused";
 import type { BodyPart, EmailAddress, EmailDetail, EmailSummary, Identity, Mailbox } from "./types";
 
 /**
@@ -544,11 +545,11 @@ export const sendEmail = async (
   assertSetOk(responses[0]![1], "Entwurf");
   assertSetOk(responses[1]![1], "Versand");
   const created = (result: unknown, key: string) =>
-    (result as { created?: Record<string, { id: string }> }).created?.[key]?.id ?? "";
-  return {
-    emailId: created(responses[0]![1], "draft"),
-    submissionId: created(responses[1]![1], "send"),
-  };
+    (result as { created?: Record<string, { id: string; undoStatus?: string }> }).created?.[key];
+  const emailId = created(responses[0]![1], "draft")?.id ?? "";
+  const submission = created(responses[1]![1], "send");
+  await assertAccepted(client, mail.accountId, submission, emailId, mailboxes.draftsId);
+  return { emailId, submissionId: submission?.id ?? "" };
 };
 
 /** What "Als Anhang weiterleiten" needs of each mail, in the order asked for. */

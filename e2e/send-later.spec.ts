@@ -1,5 +1,13 @@
 import { expect, type Page, test } from "@playwright/test";
-import { inboxSubjects, login, unique } from "./helpers";
+import {
+  inboxSubjects,
+  jmapAs,
+  login,
+  mailboxWithRole,
+  mailsWithSubject,
+  personalAccountId,
+  unique,
+} from "./helpers";
 
 const writeToAnna = async (page: Page, subject: string) => {
   await page.getByRole("link", { name: "Neue Mail" }).first().click();
@@ -63,5 +71,38 @@ test.describe("Senden rückgängig und später senden", () => {
     await page.getByRole("link", { name: /^Geplant/ }).click();
     await expect(list.getByText(subject)).toHaveCount(0);
     expect(await inboxSubjects("anna")).not.toContain(subject);
+  });
+});
+
+test.describe("Abgelehnte Empfänger", () => {
+  // Stalwart refuses an address of its own domain that does not exist at RCPT TO, as it does
+  // past its sending limit: the submission is made, nothing goes out (src/jmap/refused.ts).
+  test("sagt, dass nichts gesendet wurde, und behält die Mail als Entwurf", async ({ page }) => {
+    const subject = unique("An niemanden");
+    await login(page);
+    await page.getByRole("link", { name: "Neue Mail" }).first().click();
+    await page.getByRole("combobox", { name: "An" }).fill("niemand@weber-haustechnik.test");
+    await page.keyboard.press("Enter");
+    await page.getByLabel("Betreff").fill(subject);
+    await page.getByRole("textbox", { name: "Ihre Nachricht …" }).click();
+    await page.keyboard.type("Kommt nie an.");
+    await page.getByRole("button", { name: "Senden", exact: true }).click();
+
+    await expect(page.getByRole("status").filter({ hasText: "Nicht gesendet" })).toContainText(
+      "niemand@weber-haustechnik.test: 550 5.1.1 Mailbox does not exist.",
+    );
+    await expect(page.getByRole("status").filter({ hasText: "Mail gesendet" })).toHaveCount(0);
+    // The form stays open with the mail, which lies among the drafts, not in Sent.
+    await expect(page.getByRole("textbox", { name: "Betreff" })).toHaveValue(subject);
+    const client = jmapAs("jonas");
+    const accountId = await personalAccountId("jonas");
+    const drafts = await mailboxWithRole(client, accountId, "drafts");
+    const mails = await mailsWithSubject<{ mailboxIds: Record<string, boolean> }>(
+      client,
+      accountId,
+      [subject],
+      ["mailboxIds"],
+    );
+    expect(mails.map((mail) => Object.keys(mail.mailboxIds))).toEqual([[drafts]]);
   });
 });

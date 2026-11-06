@@ -170,6 +170,7 @@
   "mail_send": "Senden",
   "mail_sending": "Wird gesendet …",
   "mail_sent_toast": "Mail gesendet",
+  "mail_refused": "Nicht gesendet – der Server hat jeden Empfänger abgelehnt: {reasons}",
   "mail_discard": "Verwerfen",
   "mail_save_draft": "Als Entwurf speichern",
   "mail_draft_saved": "Entwurf gespeichert",

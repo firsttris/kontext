@@ -228,31 +228,6 @@ const treatSmtpAsInbound = async (port: number, smtpPort: string): Promise<void>
 };
 
 /**
- * Stalwart's inbound throttles off on this local instance: its defaults let one sender domain
- * send 25 mails an hour to the same address, and an IP 5 a second (crates/common/src/manager/
- * defaults.rs). The tests send hundreds of mails from weber-haustechnik.test to the same few
- * people; past the limit RCPT TO is refused ("452 4.4.5 Rate limit exceeded",
- * crates/smtp/src/inbound/rcpt.rs) and the submission ends up "final" without being sent.
- * Stalwart creates the defaults on its first start, so they are switched off after it; the
- * running server reads the change only once its settings are reloaded.
- */
-const withoutThrottles = async (port: number): Promise<void> => {
-  const [[, got]] = (await adminRequest(port, [
-    ["x:MtaInboundThrottle/get", { ids: null, properties: ["enable"] }, "0"],
-  ])) as [Invocation];
-  const on = ((got.list ?? []) as { id: string; enable: boolean }[]).filter((rule) => rule.enable);
-  if (!on.length) return;
-  await adminRequest(port, [
-    [
-      "x:MtaInboundThrottle/set",
-      { update: Object.fromEntries(on.map(({ id }) => [id, { enable: false }])) },
-      "0",
-    ],
-    ["x:Action/set", { create: { reload: { "@type": "ReloadSettings" } } }, "1"],
-  ]);
-};
-
-/**
  * As on a customer's server (docs/installation.md): Kontext sends the invitations with its own
  * answer page, Stalwart's RSVP page stays off; its scheduling stays on for the answers that come.
  */
@@ -327,7 +302,6 @@ const main = async (): Promise<void> => {
   await waitForHttp(httpPort);
   await treatSmtpAsInbound(httpPort, args.smtp);
   await withoutStalwartRsvp(httpPort);
-  await withoutThrottles(httpPort);
   await setUpForKontext(httpPort);
   console.log(
     `Stalwart ${STALWART_VERSION} läuft: http://127.0.0.1:${httpPort} (SMTP ${args.smtp}, IMAP ${args.imap}), Admin ${STALWART_ADMIN.user}`,

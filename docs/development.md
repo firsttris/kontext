@@ -291,11 +291,7 @@ hat. Darum:
 
 Die lokale Instanz
 erlaubt IMAP-Anmeldungen ohne TLS (nur auf 127.0.0.1), damit Mailprogramme und die
-Integrationstests sich verbinden können. Stalwarts Drosseln für eingehende Mail sind dort aus
-(`dev/stalwart.ts`): von Haus aus nimmt Stalwart von einer Absender-Domain nur 25 Mails pro Stunde
-an dieselbe Adresse an, danach lehnt es den Empfänger ab, und eine geplante Mail geht gar nicht
-erst in die Warteschlange. Die Tests schicken weit mehr von weber-haustechnik.test an dieselben
-Leute.
+Integrationstests sich verbinden können.
 
 ## Film
 

@@ -293,10 +293,7 @@ once more in CI – in the state the first attempt left behind. Hence:
 
 The local instance
 allows IMAP sign-ins without TLS (only on 127.0.0.1), so that mail programs and the integration
-tests can connect. Stalwart's throttles for incoming mail are off there (`dev/stalwart.ts`): by
-default Stalwart takes only 25 mails an hour from one sender domain to the same address, then
-refuses the recipient, and a scheduled mail never reaches the queue. The tests send far more from
-weber-haustechnik.test to the same people.
+tests can connect.
 
 ## Film { #film }
 

@@ -1413,6 +1413,15 @@ dort liegt (`undoStatus: "canceled"`, RFC 8621 §7). Die Empfänger nimmt es dan
   Gesendet-Ordner unter „Geplant“, mit Zeitpunkt in der Liste und „Nicht senden“ in der Mail.
 - **Zurückholen:** erst wird der Versand gestoppt, dann kommt die Mail zurück zu den Entwürfen und
   öffnet sich zum Ändern – nie liegt eine Mail bei den Entwürfen, die doch hinausging.
+- **Abgelehnt:** Lehnt Stalwart jeden Empfänger schon bei `RCPT TO` ab (eine Adresse der eigenen
+  Domain, die es nicht gibt, oder seine Sendebremse: von Haus aus 25 Mails pro Stunde von einer
+  Absender-Domain an dieselbe Adresse), gelingt `EmailSubmission/set` trotzdem: Stalwart legt
+  nichts in die Warteschlange und meldet sofort `undoStatus: "final"`. Kontext liest dann den
+  `deliveryStatus`. Hat kein Empfänger mit 2xx geantwortet, kommt die Mail zurück zu den
+  Entwürfen (verschlüsselt wird sie gelöscht, sie bleibt im Fenster), das Fenster bleibt offen,
+  und die Meldung nennt Stalwarts Antwort je Empfänger („Nicht gesendet – …“,
+  `src/jmap/refused.ts`). Ohne diese Prüfung stünde die Mail unter „Gesendet“ oder „Geplant“ und
+  ginge nie hinaus.
 
 ## Textbausteine
 

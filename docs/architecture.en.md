@@ -1365,6 +1365,14 @@ there (`undoStatus: "canceled"`, RFC 8621 §7). It then takes the recipients fro
   under "Scheduled", with its time in the list and "Unsend" in the mail.
 - **Bringing back:** first the sending is stopped, then the mail goes back to the drafts and opens
   for editing – a mail that went out after all never sits among the drafts.
+- **Refused:** if Stalwart refuses every recipient already at `RCPT TO` (an address of its own
+  domain that does not exist, or its sending brake: by default 25 mails an hour from one sender
+  domain to the same address), `EmailSubmission/set` succeeds anyway: Stalwart queues nothing and
+  answers `undoStatus: "final"` at once. Kontext then reads the `deliveryStatus`. If no recipient
+  answered with 2xx, the mail goes back to the drafts (encrypted, it is deleted and stays in the
+  form), the form stays open, and the message names Stalwart's reply per recipient ("Nicht
+  gesendet – …", not sent, `src/jmap/refused.ts`). Without this check the mail would sit under
+  "Sent" or "Scheduled" and never go out.
 
 ## Snippets { #textbausteine }
 

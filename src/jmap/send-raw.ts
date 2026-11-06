@@ -5,6 +5,7 @@
  */
 import { type Hold, holdParameters } from "@/lib/envelope";
 import { assertSetOk, CAPABILITIES, type JmapClient } from "./client";
+import { assertAccepted } from "./refused";
 
 export const sendRaw = async (
   client: JmapClient,
@@ -88,9 +89,10 @@ export const sendRaw = async (
   assertSetOk(responses[0]![1], "Entwurf");
   assertSetOk(responses[1]![1], "Versand");
   const created = (result: unknown, key: string) =>
-    (result as { created?: Record<string, { id: string }> }).created?.[key]?.id ?? "";
-  return {
-    emailId: created(responses[0]![1], "draft"),
-    submissionId: created(responses[1]![1], "send"),
-  };
+    (result as { created?: Record<string, { id: string; undoStatus?: string }> }).created?.[key];
+  const emailId = created(responses[0]![1], "draft")?.id ?? "";
+  const submission = created(responses[1]![1], "send");
+  // Encrypted, the mail is no draft: refused, it goes, and stays in the open form.
+  await assertAccepted(client, accountId, submission, emailId, null);
+  return { emailId, submissionId: submission?.id ?? "" };
 };
