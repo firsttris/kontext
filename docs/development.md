@@ -279,9 +279,15 @@ hat. Darum:
   und lädt Fax oder Nachricht im selben Atemzug hoch; käme der Upload zuerst, gäbe es „Unbekannter
   Anruf“ (`dev/fake-box.ts`, `uploadOnceKnown`).
 - **Nachts dreimal.** Der nächtliche CI-Lauf führt jeden E2E-Test dreimal und ohne Wiederholung
-  aus (`--repeat-each=3 --retries=0`); was dort mal fehlschlägt, ist wackelig und wird repariert,
-  nicht übersprungen. Lokal geht das mit `bun run e2e --repeat-each=3`, auf einem Branch mit
-  **Actions → CI → Run workflow** und „repeat“.
+  aus (`--retries=0`): drei Durchläufe nacheinander, jeder mit frischem Stalwart und denselben
+  Dateien je Teil wie bei einem Pull Request. Was dort mal fehlschlägt, ist wackelig und wird
+  repariert, nicht übersprungen. Nicht `--repeat-each=3` mit `--shard`: Playwright verteilt die
+  Kopien dann anders, fast die ganze Suite landet in jedem von drei Teilen auf einem Server, und
+  die Tests treffen dort aufeinander, wie sie es bei einem Pull Request nie tun. Lokal geht das mit
+  `bun run e2e --repeat-each=3`, auf einem Branch mit **Actions → CI → Run workflow** und „repeat“.
+- **Listen zeigen nur, was auf den Bildschirm passt.** Die Mailliste zeichnet nur die sichtbaren
+  Zeilen. Eine alte Mail aus den Testdaten steht unter allem, was andere Tests vorher geschrieben
+  haben; ein Test, der sie unter vielen Treffern sucht, sortiert „Älteste zuerst“.
 
 Die lokale Instanz
 erlaubt IMAP-Anmeldungen ohne TLS (nur auf 127.0.0.1), damit Mailprogramme und die

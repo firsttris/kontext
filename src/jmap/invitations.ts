@@ -16,6 +16,7 @@ import { findRole } from "@/lib/mailboxes";
 import { createEvent, deleteEvent, getStoredEvent, updateEvent } from "./calendar";
 import type { JmapClient } from "./client";
 import { listIdentities, listMailboxes } from "./mail";
+import { isRefusedError } from "./refused";
 import { sendRaw } from "./send-raw";
 import type { Identity } from "./types";
 
@@ -125,6 +126,8 @@ export const saveEvent = async (
   const drafts = findRole(mailboxes, "drafts");
   const sent = findRole(mailboxes, "sent");
   if (!drafts || !sent) throw new Error("Postfach ohne Entwürfe oder Gesendet");
+  // A recipient the server refuses keeps no one else from theirs; the user hears of it after.
+  const refused: Error[] = [];
   for (const invitation of planned) {
     const raw = invitationMessage({
       kind: invitation.kind,
@@ -143,7 +146,11 @@ export const saveEvent = async (
       recipients: [invitation.email],
       draftsId: drafts.id,
       sentId: sent.id,
+    }).catch((error: unknown) => {
+      if (!isRefusedError(error)) throw error;
+      refused.push(error);
     });
   }
+  if (refused.length) throw new Error(refused.map((error) => error.message).join(", "));
   return id;
 };

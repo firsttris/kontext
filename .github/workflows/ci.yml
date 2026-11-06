@@ -145,12 +145,23 @@ jobs:
           path: .dev/bin
           key: stalwart-${{ hashFiles('dev/config.ts') }}
       - run: bun install --frozen-lockfile
+      - if: ${{ github.event_name != 'schedule' && !inputs.repeat }}
+        run: bun run e2e --shard=${{ matrix.shard }}/4
       # Nightly each test runs three times and without the retry, so one that passes only now and
       # then shows up there before it holds up a pull request. By hand too ("repeat"), to check a
-      # fix for such a test on its branch.
-      - run: >-
-          bun run e2e --shard=${{ matrix.shard }}/4
-          ${{ (github.event_name == 'schedule' || inputs.repeat) && '--repeat-each=3 --retries=0' || '' }}
+      # fix for such a test on its branch. Three runs one after the other, each with a fresh
+      # Stalwart and the same files as on a pull request: --repeat-each would deal the copies out
+      # differently, nearly the whole suite into each of three parts, and tests met there what they
+      # never meet on a pull request (Stalwart's sending limit, lists too long for the screen).
+      - if: ${{ github.event_name == 'schedule' || inputs.repeat }}
+        run: |
+          failed=0
+          for pass in 1 2 3; do
+            PLAYWRIGHT_HTML_OUTPUT_DIR=playwright-report/pass-$pass \
+              bun run e2e --shard=${{ matrix.shard }}/4 --retries=0 --output=test-results/pass-$pass \
+              || failed=1
+          done
+          exit $failed
       - if: failure()
         uses: actions/upload-artifact@v7
         with:

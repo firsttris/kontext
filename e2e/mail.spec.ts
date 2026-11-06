@@ -1211,8 +1211,17 @@ test.describe("Suche", () => {
     return page.getByRole("list", { name: "Suche" });
   };
 
+  // The list only draws the rows on screen, and the seed's hits are older than every mail the
+  // other tests write with "Angebot" in it: the oldest first keeps them in view however many
+  // tests ran before against the same server (all of them in the nightly run).
+  const oldestFirst = async (page: Page) => {
+    await page.getByRole("button", { name: /^Sortierung:/ }).click();
+    await page.getByRole("menuitemradio", { name: "Älteste zuerst" }).click();
+  };
+
   test("findet in allen Ordnern und Postfächern, auch die Mehrzahl", async ({ page }) => {
     const results = await searchFor(page, "angebote");
+    await oldestFirst(page);
     await expect(page).toHaveURL(/\/mail\/all\/search\?q=angebote/);
     await expect(results.getByText("Angebot Wartungsvertrag 2027")).toBeVisible();
     // From the folder Kunden/Hoffmann and from info@, each named.
@@ -1233,6 +1242,7 @@ test.describe("Suche", () => {
 
   test("versteht Operatoren und Chips", async ({ page }) => {
     let results = await searchFor(page, "von:keller hat:anhang");
+    await oldestFirst(page);
     await expect(results.getByText("Angebot Wartungsvertrag 2027")).toBeVisible();
     await expect(results.getByText("Rechnung 2026-117", { exact: true })).toBeVisible();
     await expect(results.getByText("Heizung macht Geräusche – Termin möglich?")).toHaveCount(0);

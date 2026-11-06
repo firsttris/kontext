@@ -281,9 +281,15 @@ once more in CI – in the state the first attempt left behind. Hence:
   uploads a fax or voicemail in the same breath; if the upload came first, the result would be
   "Unbekannter Anruf" (unknown call) (`dev/fake-box.ts`, `uploadOnceKnown`).
 - **Three times at night.** The nightly CI run runs every E2E test three times and without
-  retries (`--repeat-each=3 --retries=0`); what fails there even once is flaky and gets fixed,
-  not skipped. Locally that works with `bun run e2e --repeat-each=3`, on a branch with
-  **Actions → CI → Run workflow** and "repeat".
+  retries (`--retries=0`): three runs one after the other, each with a fresh Stalwart and the same
+  files per part as on a pull request. What fails there even once is flaky and gets fixed, not
+  skipped. Not `--repeat-each=3` with `--shard`: Playwright then deals the copies out
+  differently, nearly the whole suite lands on one server in each of three parts, and the tests
+  meet each other there in ways they never do on a pull request. Locally that works with
+  `bun run e2e --repeat-each=3`, on a branch with **Actions → CI → Run workflow** and "repeat".
+- **Lists only show what fits on the screen.** The mail list only draws the visible rows. An old
+  mail from the test data sits below everything other tests wrote before; a test that looks for
+  it among many hits sorts "Älteste zuerst" (oldest first).
 
 The local instance
 allows IMAP sign-ins without TLS (only on 127.0.0.1), so that mail programs and the integration

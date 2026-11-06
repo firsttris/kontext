@@ -18,6 +18,7 @@ import {
   saveDraft,
   sendEmail,
 } from "@/jmap/mail";
+import { isRefusedError } from "@/jmap/refused";
 import type { EmailAddress, Identity } from "@/jmap/types";
 import { parseAddresses } from "@/lib/addresses";
 import { attachmentMention, ownText } from "@/lib/attachment-reminder";
@@ -652,7 +653,11 @@ export const Composer = ({ accountId, mode, sourceEmailId, forwardIds, prefill }
         void queryClient.invalidateQueries({ queryKey: [sendAccountId] });
       await leave();
     } catch (error) {
-      toast.show(m.common_error({ message: (error as Error).message }), "error");
+      if (isRefusedError(error)) {
+        // Back among the drafts (or, encrypted, only here in the form): the old draft is gone.
+        draftId.current = error.draftId;
+        toast.show(m.mail_refused({ reasons: error.message }), "error");
+      } else toast.show(m.common_error({ message: (error as Error).message }), "error");
     } finally {
       setSending(false);
     }
