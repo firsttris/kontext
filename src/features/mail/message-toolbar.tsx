@@ -1,11 +1,11 @@
 /**
- * The reading pane's toolbar: archive and delete with their names, snooze, flag and assign as
- * icons, reply, and everything else under "Weitere Aktionen" (message-more-menu.tsx); the
- * shortcuts for all of them.
+ * The reading pane's toolbar: the actions used on almost every mail (archive, delete, spam,
+ * snooze, flag, assign), all alike (toolbar-button.tsx), then reply and everything else under
+ * "Weitere Aktionen" (message-more-menu.tsx); the shortcuts for all of them.
  */
 import { Link, useNavigate } from "@tanstack/react-router";
-import { Archive, ChevronLeft, Reply, Star, Trash2 } from "lucide-react";
-import { type ReactNode, useState } from "react";
+import { Archive, ChevronLeft, Reply, ShieldAlert, ShieldCheck, Star, Trash2 } from "lucide-react";
+import { useState } from "react";
 import { useClient } from "@/auth/auth";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/toast";
@@ -40,6 +40,7 @@ import { useAllMailboxes, useMailAccounts } from "./queries";
 import { useRemoteImages } from "./remote-images";
 import { useReportPhishing } from "./report-phishing";
 import { useThreadView } from "./thread-view";
+import { ToolbarButton } from "./toolbar-button";
 import { useOfferUndo } from "./undo";
 
 /** Closes the open mail (and its composer): back to the list. */
@@ -48,33 +49,6 @@ export const useCloseMail = () => {
   return () =>
     navigate({ to: ".", search: (prev) => ({ ...prev, email: undefined, compose: undefined }) });
 };
-
-/**
- * An icon with its name beside it, for the actions used most. The name gives way where the pane
- * is narrow (a phone, a tablet's split view); the icon keeps it as its label.
- */
-const LabelledButton = ({
-  label,
-  shortcut,
-  onClick,
-  children,
-}: {
-  label: string;
-  shortcut: string;
-  onClick: () => void;
-  children: ReactNode;
-}) => (
-  <Button
-    variant="ghost"
-    aria-label={label}
-    title={`${label} (${shortcut})`}
-    className="size-9 px-0 @[34rem]:w-auto @[34rem]:gap-1.5 @[34rem]:px-2.5"
-    onClick={onClick}
-  >
-    {children}
-    <span className="hidden @[34rem]:inline">{label}</span>
-  </Button>
-);
 
 export const Toolbar = ({
   accountId,
@@ -230,33 +204,45 @@ export const Toolbar = ({
       </Button>
       <div className="flex min-w-0 flex-1 items-center gap-1">
         {archive ? (
-          <LabelledButton label={m.mail_archive_action()} shortcut="e" onClick={archive}>
-            <Archive size={16} />
-          </LabelledButton>
+          <ToolbarButton
+            label={m.mail_archive_action()}
+            shortcut="e"
+            onClick={archive}
+            icon={<Archive size={16} />}
+          />
         ) : null}
         {remove ? (
-          <LabelledButton label={m.mail_delete()} shortcut="#" onClick={remove}>
-            <Trash2 size={16} />
-          </LabelledButton>
+          <ToolbarButton
+            label={m.mail_delete()}
+            shortcut="#"
+            onClick={remove}
+            icon={<Trash2 size={16} />}
+          />
+        ) : null}
+        {toggleSpam ? (
+          <ToolbarButton
+            label={inJunk ? m.mail_spam_unmark() : m.mail_spam_mark()}
+            shortcut="!"
+            onClick={toggleSpam}
+            icon={inJunk ? <ShieldCheck size={16} /> : <ShieldAlert size={16} />}
+          />
         ) : null}
         {canRemove && mailbox.role !== "drafts" && mailbox.role !== "sent" ? (
           <SnoozeMenu
             targets={[{ accountId, ids, from: mailbox.id }]}
             onLeave={mailbox.role === "snoozed" ? undefined : close}
             shortcut
+            labelled
           />
         ) : null}
         {canFlag ? (
-          <Button
-            variant="ghost"
-            size="icon"
-            aria-label={flagged ? m.mail_unflag() : m.mail_flag()}
+          <ToolbarButton
+            label={flagged ? m.mail_unflag() : m.mail_flag()}
+            shortcut="s"
             aria-pressed={flagged}
-            title={`${flagged ? m.mail_unflag() : m.mail_flag()} (s)`}
             onClick={toggleFlag}
-          >
-            <Star size={16} className={flagged ? "fill-warn text-warn" : undefined} />
-          </Button>
+            icon={<Star size={16} className={flagged ? "fill-warn text-warn" : undefined} />}
+          />
         ) : null}
         {canAssignIn(mailbox) && account && !account.isPersonal ? (
           <AssignMenu accountId={accountId} email={email} />
@@ -272,7 +258,6 @@ export const Toolbar = ({
         print={print}
         saveEml={saveEml}
         markUnread={markUnread}
-        spam={toggleSpam ? { undo: inJunk, run: toggleSpam } : undefined}
         reportPhishing={reportPhishing}
         block={block}
         move={

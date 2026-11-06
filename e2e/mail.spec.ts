@@ -370,16 +370,14 @@ test.describe("Mail", () => {
     };
     const inbox = page.getByRole("list", { name: "Posteingang" });
     await inbox.getByText(subject).click();
-    await page.getByRole("button", { name: "Weitere Aktionen" }).click();
-    await page.getByRole("menuitem", { name: "Als Spam markieren" }).click();
+    await page.getByRole("button", { name: "Als Spam markieren" }).click();
     await expect(page.getByRole("status")).toContainText("Als Spam markiert.");
     await expect(inbox.getByText(subject)).toHaveCount(0);
     await expect.poll(keywords).toContain("$junk");
 
     await page.getByRole("link", { name: "Spam" }).click();
     await page.getByRole("list", { name: "Spam" }).getByText(subject).click();
-    await page.getByRole("button", { name: "Weitere Aktionen" }).click();
-    await page.getByRole("menuitem", { name: "Kein Spam" }).click();
+    await page.getByRole("button", { name: "Kein Spam" }).click();
     await expect(
       page.getByRole("status").filter({ hasText: "In den Posteingang verschoben." }),
     ).toBeVisible();
@@ -394,11 +392,12 @@ test.describe("Mail", () => {
     await addMail("jonas", "jonas", subject);
     const inbox = page.getByRole("list", { name: "Posteingang" });
     await inbox.getByText(subject).click();
-    // The most used actions carry their name; the rest is under "Weitere Aktionen".
-    for (const name of ["Archivieren", "Löschen"]) {
+    // Every action of the toolbar carries its name where the pane is wide; the rarer ones are
+    // under "Weitere Aktionen".
+    for (const name of ["Archivieren", "Löschen", "Als Spam markieren", "Wiedervorlage"]) {
       await expect(page.getByRole("button", { name, exact: true }).getByText(name)).toBeVisible();
     }
-    await expect(page.getByRole("button", { name: "Als Spam markieren" })).toHaveCount(0);
+    await expect(page.getByRole("button", { name: "Verschieben nach …" })).toHaveCount(0);
     await page.getByRole("button", { name: "Archivieren" }).click();
     await expect(inbox.getByText(subject)).toHaveCount(0);
     await page.getByRole("link", { name: "Archiv" }).click();
@@ -682,14 +681,15 @@ test.describe("Mail am Handy @phone", () => {
     await page.getByRole("list", { name: "Posteingang" }).getByText(subject).click();
     await expect(page.getByRole("heading", { name: subject })).toBeVisible();
     await expect(page.getByRole("list", { name: "Posteingang" })).toBeHidden();
-    // The toolbar fits on one line: Archivieren, Löschen and "Weitere Aktionen" are on the
-    // screen (as icons, their names give way), the page no wider than it.
-    for (const name of ["Archivieren", "Löschen", "Weitere Aktionen"]) {
-      await expect(page.getByRole("button", { name, exact: true })).toBeInViewport({ ratio: 1 });
+    // The toolbar fits on one line: its actions are on the screen as icons (all names give
+    // way alike), the page no wider than it.
+    for (const name of ["Archivieren", "Löschen", "Als Spam markieren", "Weitere Aktionen"]) {
+      const button = page.getByRole("button", { name, exact: true });
+      await expect(button).toBeInViewport({ ratio: 1 });
+      await expect(button.getByText(name)).toBeHidden();
     }
     // The rarer ones are in the menu.
     await page.getByRole("button", { name: "Weitere Aktionen" }).click();
-    await expect(page.getByRole("menuitem", { name: "Als Spam markieren" })).toBeVisible();
     await expect(page.getByRole("menuitem", { name: "Verschieben nach …" })).toBeVisible();
     await page.keyboard.press("Escape");
     const width = page.viewportSize()?.width ?? 0;

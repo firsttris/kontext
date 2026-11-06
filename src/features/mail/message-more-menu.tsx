@@ -1,6 +1,6 @@
 /**
  * The reading pane's "Weitere Aktionen": answering, printing and the actions used less often,
- * so the toolbar itself keeps few, labelled buttons. Each item names its shortcut.
+ * so the toolbar itself keeps the few used on almost every mail. Each item names its shortcut.
  */
 import {
   Download,
@@ -16,8 +16,6 @@ import {
   Printer,
   Reply,
   ReplyAll,
-  ShieldAlert,
-  ShieldCheck,
   UserX,
 } from "lucide-react";
 import { Fragment, type ReactNode } from "react";
@@ -113,7 +111,6 @@ export const MoreMenu = ({
   print,
   saveEml,
   markUnread,
-  spam,
   reportPhishing,
   block,
   move,
@@ -128,7 +125,6 @@ export const MoreMenu = ({
   saveEml: () => void;
   /** Left out where the mailbox does not allow it. */
   markUnread?: () => void;
-  spam?: { undo: boolean; run: () => void };
   /** Only where the Firmenverwaltung set a report address. */
   reportPhishing?: () => void;
   /** Only for outside senders, in the own mailbox. */
@@ -171,16 +167,10 @@ export const MoreMenu = ({
       <Item onSelect={saveEml}>
         <Download size={16} /> {m.mail_save_eml()}
       </Item>
-      {markUnread || spam || block || move || categories ? <MenuSeparator /> : null}
+      {markUnread || reportPhishing || block || move || categories ? <MenuSeparator /> : null}
       {markUnread ? (
         <Item onSelect={markUnread} shortcut="U">
           <MailOpen size={16} /> {m.mail_mark_unread()}
-        </Item>
-      ) : null}
-      {spam ? (
-        <Item onSelect={spam.run} shortcut="!">
-          {spam.undo ? <ShieldCheck size={16} /> : <ShieldAlert size={16} />}{" "}
-          {spam.undo ? m.mail_spam_unmark() : m.mail_spam_mark()}
         </Item>
       ) : null}
       {reportPhishing ? (

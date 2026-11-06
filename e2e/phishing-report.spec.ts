@@ -41,7 +41,7 @@ test.describe("Als Phishing melden", () => {
       // Without an address, the menu has no such item.
       await page.getByRole("list", { name: "Posteingang" }).getByText(subject).click();
       await page.getByRole("button", { name: "Weitere Aktionen" }).click();
-      await expect(page.getByRole("menuitem", { name: "Als Spam markieren" })).toBeVisible();
+      await expect(page.getByRole("menuitem", { name: "Weiterleiten" })).toBeVisible();
       await expect(page.getByRole("menuitem", { name: "Als Phishing melden" })).toHaveCount(0);
       await page.keyboard.press("Escape");
 

@@ -12,6 +12,7 @@ import { sendTimeLabel, snoozeChoices } from "@/lib/schedule";
 import { m } from "@/paraglide/messages";
 import { validUntil } from "../../../server/snooze/snooze";
 import { TimeDialog } from "../mail/time-dialog";
+import { ToolbarButton } from "../mail/toolbar-button";
 import { useSnoozeActions } from "./queries";
 
 /** Mails of one account, taken out of one folder. */
@@ -66,6 +67,7 @@ export const SnoozeMenu = ({
   onLeave,
   shortcut = false,
   small = false,
+  labelled = false,
 }: {
   targets: SnoozeTarget[];
   /** Before the mails go: e.g. close the open mail. */
@@ -74,6 +76,8 @@ export const SnoozeMenu = ({
   shortcut?: boolean;
   /** The smaller button of the selection bar. */
   small?: boolean;
+  /** The reading pane's toolbar: the icon with its name where there is room. */
+  labelled?: boolean;
 }) => {
   const [open, setOpen] = useState(false);
   const [picking, setPicking] = useState(false);
@@ -87,15 +91,24 @@ export const SnoozeMenu = ({
     <>
       <MenuRoot open={open} onOpenChange={setOpen}>
         <MenuTrigger asChild>
-          <Button
-            variant="ghost"
-            size={small ? "iconSm" : "icon"}
-            disabled={targets.length === 0}
-            aria-label={m.mail_snooze()}
-            title={shortcut ? `${m.mail_snooze()} (w)` : m.mail_snooze()}
-          >
-            <AlarmClock size={16} />
-          </Button>
+          {labelled ? (
+            <ToolbarButton
+              label={m.mail_snooze()}
+              shortcut={shortcut ? "w" : undefined}
+              disabled={targets.length === 0}
+              icon={<AlarmClock size={16} />}
+            />
+          ) : (
+            <Button
+              variant="ghost"
+              size={small ? "iconSm" : "icon"}
+              disabled={targets.length === 0}
+              aria-label={m.mail_snooze()}
+              title={shortcut ? `${m.mail_snooze()} (w)` : m.mail_snooze()}
+            >
+              <AlarmClock size={16} />
+            </Button>
+          )}
         </MenuTrigger>
         <MenuContent align="start" aria-label={m.mail_snooze_title()}>
           {snoozeChoices(new Date()).map((choice) => (
