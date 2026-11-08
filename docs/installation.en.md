@@ -505,7 +505,8 @@ meanwhile. On every later run it sees that everything is there and does nothing.
 If the variable is missing, Stalwart refuses the key: the command then only compresses and says
 so with a hint. If the admin has already chosen a key of their own, it stays. If Stalwart was
 updated from a version before 1.0.3, its admin role may lack the permissions for keys
-(`sysSymmetricKey…`); then start Stalwart once with `STALWART_UPDATE_ROLE_PERMISSIONS=true`
+(`sysSymmetricKey…`) and for the rewrite (`taskBlobRecode`): the command still finishes and says so
+with a hint; start Stalwart once with `STALWART_UPDATE_ROLE_PERMISSIONS=true`
 ([Stalwart 1.0.3](#stalwart-103)). What exactly the command does is in
 `server/stalwart-storage.ts`.
 

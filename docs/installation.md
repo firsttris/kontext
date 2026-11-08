@@ -502,7 +502,8 @@ bleiben dabei lesbar. Bei jedem weiteren Lauf sieht er, dass alles da ist, und t
 Fehlt die Variable, weist Stalwart den Schlüssel ab: Der Befehl komprimiert dann nur und sagt das
 mit einem Hinweis. Hat sich der Admin schon selbst einen Schlüssel eingestellt, bleibt der. Wurde
 Stalwart von einer Version vor 1.0.3 aktualisiert, fehlen seiner Admin-Rolle womöglich die Rechte
-für Schlüssel (`sysSymmetricKey…`); dann Stalwart einmal mit
+für Schlüssel (`sysSymmetricKey…`) und das Umschreiben (`taskBlobRecode`): Der Befehl läuft dann
+durch und sagt das mit einem Hinweis; Stalwart einmal mit
 `STALWART_UPDATE_ROLE_PERMISSIONS=true` starten ([Stalwart 1.0.3](#stalwart-103)). Was der Befehl
 genau tut, steht in `server/stalwart-storage.ts`.
 

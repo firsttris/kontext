@@ -34,6 +34,16 @@ export const keyHint = (error: string): string =>
   "den Befehl erneut ausführen. Fehlt Stalwarts Admin-Rolle das Recht dafür (Stalwart von vor " +
   "1.0.3 aktualisiert): Stalwart einmal mit STALWART_UPDATE_ROLE_PERMISSIONS=true starten.";
 
+/**
+ * What the admin reads when Stalwart refused the BlobRecode task: what is stored stays as it is,
+ * new mails and files follow the settings. The right taskBlobRecode came with Stalwart 1.0.3
+ * (crates/registry/src/utils/task.rs), so an updated admin role lacks it.
+ */
+export const recodeHint = (error: string): string =>
+  `Hinweis: Vorhandene Mails und Dateien nicht umgeschrieben (BlobRecode: ${error}). Fehlt ` +
+  "Stalwarts Admin-Rolle das Recht dafür (Stalwart von vor 1.0.3 aktualisiert): Stalwart einmal " +
+  "mit STALWART_UPDATE_ROLE_PERMISSIONS=true starten.";
+
 /** The server key, created once; Stalwart reads its secret from the environment variable. */
 export const keyPlan = (keys: SymmetricKey[]): Plan & { existing?: string } => {
   const known = keys.find((key) => key.description === KEY_NAME);
@@ -145,7 +155,8 @@ const ensureKey = async (request: Request): Promise<Result<string>> => {
 
 /**
  * Encrypts and compresses the storage: the key (a refusal only leaves the storage unencrypted,
- * with a hint), the settings, and the rewrite of what is there, only when the settings changed.
+ * with a hint), the settings, and the rewrite of what is there, only when the settings changed
+ * (a refused rewrite too only leaves a hint).
  */
 export const ensureStorage = async (request: Request): Promise<Result<string[]>> => {
   const key = await ensureKey(request);
@@ -161,6 +172,8 @@ export const ensureStorage = async (request: Request): Promise<Result<string[]>>
   if (!applied.ok) return { ok: false, error: `Speicher: ${applied.error}` };
   const recode = recodePlan(wantedKey(settings.Email, keyId));
   const started = await applyPlan(request, recode);
-  if (!started.ok) return { ok: false, error: `Speicher umschreiben: ${started.error}` };
-  return { ok: true, value: [...messages, recode.message] };
+  return {
+    ok: true,
+    value: [...messages, started.ok ? recode.message : recodeHint(started.error)],
+  };
 };
