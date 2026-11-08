@@ -92,6 +92,13 @@
   body {
     background: var(--bg);
   }
+  /* No pinch zoom, like an installed app: two fingers on a mail grew the whole page, header and
+     tab bar with it, and left it panned off to the side. Safari on iOS ignores user-scalable=no
+     in index.html but keeps to touch-action; the mail's iframe has the same rule (lib/html.ts).
+     Larger text still comes from the browser's or system's text size and Ctrl+plus. */
+  html {
+    touch-action: pan-x pan-y;
+  }
   body {
     margin: 0;
     color: var(--fg);

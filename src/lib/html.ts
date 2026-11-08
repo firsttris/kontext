@@ -230,7 +230,8 @@ export const mailPolicy = (allowRemote: boolean) => {
  * the last paragraph's margin stays inside it: mail-body.tsx fits the frame to body.scrollHeight,
  * and a margin sticking out would give the frame its own scrollbar. Its height is held to the
  * content inline, which beats the mail's `!important`: newsletters set `html, body { height:
- * 100% }`, and a body as high as the frame would grow it on every fit, without end.
+ * 100% }`, and a body as high as the frame would grow it on every fit, without end. A pinch
+ * starts in the frame's own document, so it gets the page's `touch-action` (styles.css) too.
  */
 export const mailDocument = (
   body: string,
@@ -241,7 +242,7 @@ export const mailDocument = (
 <meta http-equiv="Content-Security-Policy" content="${mailPolicy(allowRemote)}">
 <base target="_blank">
 <style>
-  html { color-scheme: ${dark ? "dark" : "light"}; }
+  html { color-scheme: ${dark ? "dark" : "light"}; touch-action: pan-x pan-y; }
   body { margin: 0; display: flow-root; font: 15px/1.65 "Geist Variable", system-ui, sans-serif; color: ${dark ? "#fafafa" : "#09090b"}; background: transparent; overflow-wrap: anywhere; }
   p { margin: 0 0 0.9em; }
   /* Outlook writes every line as such a paragraph and sets their margin to 0 in a <style> that

@@ -31,7 +31,8 @@ Arbeitsplätze von Beschäftigten mit Behinderung (SGB IX § 164) ist das die Me
   Dazu kommen Tastaturkürzel wie in Gmail; `?` zeigt sie ([App, Handy und Konto](app.md)).
 - **Am Handy:** Was dort ein langes Drücken öffnet, etwa die Aktionen zu einer Chat-Nachricht,
   erreicht ein Screenreader über einen eigenen, unsichtbaren Knopf. Vergrößern mit zwei Fingern
-  bleibt möglich.
+  ist wie in einer installierten App gesperrt, auch in einer Mail; größere Schrift kommt über die
+  Schriftgröße des Browsers oder des Systems, am Desktop über Strg und Plus.
 - **Kontraste:** Texte haben mindestens 4,5 : 1 zu ihrem Hintergrund, hell wie dunkel.
 - **Weniger Bewegung:** Ist in den Systemeinstellungen „Bewegung reduzieren“ an, erscheinen
   Blätter, Hinweise und Dialoge ohne Animation.
@@ -55,6 +56,8 @@ prüfen.
 - **Prüfung von Hand:** Ein vollständiger Durchgang mit NVDA, VoiceOver und TalkBack steht aus,
   ebenso ein Test nach BITV-Prüfverfahren durch eine unabhängige Stelle.
 - **Mails von außen:** Wie barrierefrei eine empfangene HTML-Mail ist, entscheidet ihr Absender.
+- **Vergrößern am Handy:** Mit zwei Fingern lässt sich nicht zoomen (siehe oben); wer WCAG
+  1.4.4 streng liest, verlangt das.
 - **Videocalls:** Es gibt noch keine Live-Untertitel.
 - **Dokumente:** Word, Excel und PowerPoint öffnet [Schreibzeug](documents.md); wie weit dessen
   Editor mit Screenreader nutzbar ist, steht in seiner eigenen Dokumentation.
