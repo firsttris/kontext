@@ -42,7 +42,7 @@ export const keyHint = (error: string): string =>
 export const recodeHint = (error: string): string =>
   `Hinweis: Vorhandene Mails und Dateien nicht umgeschrieben (BlobRecode: ${error}). Fehlt ` +
   "Stalwarts Admin-Rolle das Recht dafür (Stalwart von vor 1.0.3 aktualisiert): Stalwart einmal " +
-  "mit STALWART_UPDATE_ROLE_PERMISSIONS=true starten.";
+  "mit STALWART_UPDATE_ROLE_PERMISSIONS=true starten, dann den Befehl mit --recode erneut ausführen.";
 
 /** The server key, created once; Stalwart reads its secret from the environment variable. */
 export const keyPlan = (keys: SymmetricKey[]): Plan & { existing?: string } => {
@@ -156,9 +156,13 @@ const ensureKey = async (request: Request): Promise<Result<string>> => {
 /**
  * Encrypts and compresses the storage: the key (a refusal only leaves the storage unencrypted,
  * with a hint), the settings, and the rewrite of what is there, only when the settings changed
- * (a refused rewrite too only leaves a hint).
+ * (a refused rewrite too only leaves a hint). `recode` starts the rewrite also when they did not:
+ * after a refused rewrite, once the admin role has the right (setup-stalwart.ts --recode).
  */
-export const ensureStorage = async (request: Request): Promise<Result<string[]>> => {
+export const ensureStorage = async (
+  request: Request,
+  options: { recode?: boolean } = {},
+): Promise<Result<string[]>> => {
   const key = await ensureKey(request);
   const keyId = key.ok ? key.value : undefined;
   const settings: Settings = {
@@ -167,7 +171,7 @@ export const ensureStorage = async (request: Request): Promise<Result<string[]>>
   };
   const plan = settingsPlan(settings, keyId);
   const messages = [...(key.ok ? [] : [keyHint(key.error)]), plan.message];
-  if (!plan.calls.length) return { ok: true, value: messages };
+  if (!plan.calls.length && !options.recode) return { ok: true, value: messages };
   const applied = await applyPlan(request, plan);
   if (!applied.ok) return { ok: false, error: `Speicher: ${applied.error}` };
   const recode = recodePlan(wantedKey(settings.Email, keyId));

@@ -507,7 +507,8 @@ so with a hint. If the admin has already chosen a key of their own, it stays. If
 updated from a version before 1.0.3, its admin role may lack the permissions for keys
 (`sysSymmetricKey…`) and for the rewrite (`taskBlobRecode`): the command still finishes and says so
 with a hint; start Stalwart once with `STALWART_UPDATE_ROLE_PERMISSIONS=true`
-([Stalwart 1.0.3](#stalwart-103)). What exactly the command does is in
+([Stalwart 1.0.3](#stalwart-103)) and run the command again; if the rewrite did not start, with
+`--recode`, which starts it even without changed settings. What exactly the command does is in
 `server/stalwart-storage.ts`.
 
 ## 5. Backups { #5-backups }

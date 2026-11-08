@@ -139,6 +139,13 @@ describe("ensuring the storage", () => {
     expect(names.at(-1)).toBe("x:Task/set");
   });
 
+  it("rewrites again when asked, though nothing changed", async () => {
+    const { request, names } = stalwart(done);
+    const result = await ensureStorage(request, { recode: true });
+    expect(names.at(-1)).toBe("x:Task/set");
+    expect(result.ok && result.value.at(-1)).toContain("BlobRecode");
+  });
+
   it("starts no rewrite when nothing changed", async () => {
     const { request, names } = stalwart(done);
     await ensureStorage(request);

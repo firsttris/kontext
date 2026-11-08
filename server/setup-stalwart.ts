@@ -4,6 +4,7 @@
  *   docker compose -f deploy/compose.yaml exec kontext bun server/setup-stalwart.ts
  *   podman exec -it kontext bun server/setup-stalwart.ts            # Quadlet
  *   … bun server/setup-stalwart.ts --domain firma.de                # with several domains
+ *   … bun server/setup-stalwart.ts --recode                         # rewrite what is stored again
  *
  * Asks for Stalwart's admin login (or takes it from STALWART_ADMIN="name:password"); it is only
  * held in memory, never written or printed. Reaches Stalwart at STALWART_URL (the container's,
@@ -22,7 +23,9 @@ import {
 } from "./stalwart-setup";
 import { ensureStorage } from "./stalwart-storage";
 
-const { values: args } = parseArgs({ options: { domain: { type: "string" } } });
+const { values: args } = parseArgs({
+  options: { domain: { type: "string" }, recode: { type: "boolean", default: false } },
+});
 const stalwartUrl = process.env.STALWART_URL ?? "http://127.0.0.1:8080";
 
 /** One line from the terminal; with `hidden` nothing is echoed (raw mode). */
@@ -114,7 +117,7 @@ const main = async (): Promise<number> => {
     console.log("und Kontext neu starten (docker compose -f deploy/compose.yaml up -d):\n");
     console.log(envLine(account.value.key));
   }
-  const storage = await attempt(() => ensureStorage(request));
+  const storage = await attempt(() => ensureStorage(request, { recode: args.recode }));
   if (!storage.ok) return report(storage.error);
   console.log(`\n${storage.value.join("\n")}`);
   console.log("\nStalwart ist für Kontext eingerichtet.");

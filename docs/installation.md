@@ -504,7 +504,9 @@ mit einem Hinweis. Hat sich der Admin schon selbst einen Schlüssel eingestellt,
 Stalwart von einer Version vor 1.0.3 aktualisiert, fehlen seiner Admin-Rolle womöglich die Rechte
 für Schlüssel (`sysSymmetricKey…`) und das Umschreiben (`taskBlobRecode`): Der Befehl läuft dann
 durch und sagt das mit einem Hinweis; Stalwart einmal mit
-`STALWART_UPDATE_ROLE_PERMISSIONS=true` starten ([Stalwart 1.0.3](#stalwart-103)). Was der Befehl
+`STALWART_UPDATE_ROLE_PERMISSIONS=true` starten ([Stalwart 1.0.3](#stalwart-103)) und den Befehl
+erneut ausführen; blieb das Umschreiben aus, mit `--recode`, das es auch ohne geänderte
+Einstellungen startet. Was der Befehl
 genau tut, steht in `server/stalwart-storage.ts`.
 
 ## 5. Backups
