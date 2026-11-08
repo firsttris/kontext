@@ -22,6 +22,9 @@ const PAGES = [
 const violations = async (page: Page) => {
   const { violations } = await new AxeBuilder({ page })
     .withTags(WCAG)
+    // Pinch zoom is off on purpose, like in an installed app (index.html, styles.css); text grows
+    // with the browser's and the system's text size instead (docs/accessibility.md).
+    .disableRules(["meta-viewport"])
     // The box that picks a mail is 16 px, but the whole 36 px column beside the row clicks it
     // (message-row.tsx), which axe cannot see.
     .exclude('input[type="checkbox"][aria-label$="auswählen"]')

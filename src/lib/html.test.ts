@@ -229,6 +229,10 @@ describe("mailDocument", () => {
     expect(mailDocument("", false, true)).toContain("img-src data: blob: https: http:;");
   });
 
+  it("does not let two fingers zoom into the mail", () => {
+    expect(mailDocument("", false)).toContain("touch-action: pan-x pan-y;");
+  });
+
   it("keeps Outlook's lines together", () => {
     expect(mailDocument("", false)).toContain(".MsoNormal { margin: 0; }");
   });

@@ -30,8 +30,9 @@ the workplaces of employees with disabilities (SGB IX § 164), that is the bench
   appointments through the date and time in the appointment, files through “Attach file”. On top of
   that come keyboard shortcuts like in Gmail; `?` shows them ([App, phone and account](app.md)).
 - **On the phone:** what a long press opens there, such as the actions for a chat message, a screen
-  reader reaches through a button of its own that isn't visible. Zooming with two fingers stays
-  possible.
+  reader reaches through a button of its own that isn't visible. Zooming with two fingers is
+  turned off, as in an installed app, inside a mail too; larger text comes from the browser's or
+  the system's text size, on the desktop from Ctrl and plus.
 - **Contrast:** text has at least 4.5 : 1 against its background, light and dark alike.
 - **Reduced motion:** if “Reduce motion” is on in the system settings, sheets, notices and dialogs
   appear without animation.
@@ -55,6 +56,8 @@ order is right and a task can be done with a screen reader has to be checked by 
 - **Manual testing:** a complete run with NVDA, VoiceOver and TalkBack is still to come, as is a
   test by an independent body following the BITV test procedure.
 - **Mails from outside:** how accessible a received HTML mail is, its sender decides.
+- **Zooming on the phone:** two fingers don't zoom (see above); a strict reading of WCAG 1.4.4
+  asks for it.
 - **Video calls:** there are no live captions yet.
 - **Documents:** Word, Excel and PowerPoint are opened by [Schreibzeug](documents.md); how far its
   editor can be used with a screen reader is described in its own documentation.
