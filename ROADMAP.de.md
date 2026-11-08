@@ -11,15 +11,14 @@ Was Stalwart 1.0.2 und 1.0.3 mitbringen und Kontext noch nicht nutzt.
 
 | # | Funktion | Worum es geht |
 | --- | --- | --- |
-| 1 | **Speicher verschlüsseln und komprimieren** | Stalwart verschlüsselt gespeicherte Daten mit einem Server-Schlüssel (`SymmetricKey`, AES-256-GCM) und komprimiert sie mit Zstandard; `BlobRecode` schreibt Vorhandenes um (seit 1.0.3). Schützt Platte und Backup. Der Einrichtungsbefehl schaltet es ein. |
-| 2 | **Mailprogramme ohne App-Passwort** | Mit Zwei-Faktor-Anmeldung brauchen Apple Mail und Thunderbird kein App-Passwort mehr: Stalwart 1.0 setzt das OAuth-Profil für Mailprogramme um. Dafür muss die OAuth-Erkennung unter `/.well-known` zu Stalwart statt zu Kontext (Caddy) und Stalwarts Anmeldeseite öffentlich erreichbar sein. |
+| 1 | **Mailprogramme ohne App-Passwort** | Mit Zwei-Faktor-Anmeldung brauchen Apple Mail und Thunderbird kein App-Passwort mehr: Stalwart 1.0 setzt das OAuth-Profil für Mailprogramme um. Dafür muss die OAuth-Erkennung unter `/.well-known` zu Stalwart statt zu Kontext (Caddy) und Stalwarts Anmeldeseite öffentlich erreichbar sein. |
 
 ## Weitere Funktionen
 
 | # | Funktion | Worum es geht |
 | --- | --- | --- |
-| 3 | **Telefonbox als eigene Telefonanlage (SIP-Trunk)** | Die Telefonbox meldet sich per SIP-Trunk direkt beim Anbieter an (etwa Telekom, sipgate, easybell), statt sich als IP-Telefon an der Fritzbox anzumelden. Damit wird sie selbst die Telefonanlage, wie 3CX oder Placetel, aber in Kontext und ohne Lizenz pro Nebenstelle: Rufnummern, Durchwahlen, Weiterleitungen und Tischtelefone hängen an Kontext, die Fritzbox ist nur noch Router oder entfällt. Dazu SIP über TLS, eine Warteschleife mit Position und weitere Tischtelefone (Yealink, Grandstream). Die Fritzbox bleibt als einfacher Weg für Betriebe, die sie behalten wollen. |
-| 4 | **Weitere Sprachen** | Nach Deutsch und Englisch weitere europäische Sprachen. |
+| 2 | **Telefonbox als eigene Telefonanlage (SIP-Trunk)** | Die Telefonbox meldet sich per SIP-Trunk direkt beim Anbieter an (etwa Telekom, sipgate, easybell), statt sich als IP-Telefon an der Fritzbox anzumelden. Damit wird sie selbst die Telefonanlage, wie 3CX oder Placetel, aber in Kontext und ohne Lizenz pro Nebenstelle: Rufnummern, Durchwahlen, Weiterleitungen und Tischtelefone hängen an Kontext, die Fritzbox ist nur noch Router oder entfällt. Dazu SIP über TLS, eine Warteschleife mit Position und weitere Tischtelefone (Yealink, Grandstream). Die Fritzbox bleibt als einfacher Weg für Betriebe, die sie behalten wollen. |
+| 3 | **Weitere Sprachen** | Nach Deutsch und Englisch weitere europäische Sprachen. |
 
 ## Weitere Ideen
 

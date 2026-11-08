@@ -18,6 +18,9 @@ Volume=stalwart-data:/var/lib/stalwart
 # Only what Stalwart needs, not deploy/.env with Kontext's secrets and the backup's keys
 Environment=STALWART_HOSTNAME=mail.firma.de
 Environment=STALWART_PUBLIC_URL=https://kontext.firma.de
+# The key that encrypts mails and files in the storage (STALWART_BLOB_KEY=…, chmod 600;
+# docs/installation.md): never change or lose it once set, Stalwart cannot read them without it
+#EnvironmentFile=/opt/kontext/deploy/stalwart.env
 HealthCmd=curl -fsS http://127.0.0.1:8080/healthz/live
 
 [Service]

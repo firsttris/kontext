@@ -27,6 +27,9 @@ services:
     environment:
       STALWART_HOSTNAME: ${STALWART_HOSTNAME}
       STALWART_PUBLIC_URL: https://${KONTEXT_DOMAIN}
+      # Encrypts mails and files in Stalwart's storage (server/stalwart-storage.ts); never change
+      # or lose it once set, Stalwart cannot read them without it
+      STALWART_BLOB_KEY: ${STALWART_BLOB_KEY:-}
     healthcheck:
       test: ["CMD", "curl", "-fsS", "http://127.0.0.1:8080/healthz/live"]
       interval: 30s

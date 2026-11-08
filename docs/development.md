@@ -93,7 +93,10 @@ im Wiederherstellungsmodus, legt die Listener auf Ports über 1024 an (HTTP 1808
 IMAP 10143) und startet dann normal. Der Admin ist `admin` / `kontext-admin-dev`. Bei jedem Start
 trägt es Kontext als OAuth-Client `kontext` ein, falls er fehlt, und erlaubt
 Verzeichnisabfragen, mit demselben Code wie der [Einrichtungsbefehl](installation.md#einrichtungsbefehl)
-(`server/stalwart-setup.ts`).
+(`server/stalwart-setup.ts`). Ebenso verschlüsselt und komprimiert es den Speicher
+(`server/stalwart-storage.ts`), mit dem festen Schlüssel `DEV_BLOB_KEY` aus `dev/config.ts`, den es
+Stalwart als `STALWART_BLOB_KEY` mitgibt; so laufen Entwicklung und e2e-Tests wie ein
+eingerichteter Server.
 
 Stalwarts eigene Weboberfläche (`/admin`, `/account`) schaltet das Skript beim ersten Start ab:
 Kontext braucht sie nicht, und Stalwart lädt sie vor dem Öffnen der Ports von GitHub (bis zu 60 s,

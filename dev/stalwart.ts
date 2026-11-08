@@ -23,7 +23,8 @@ import { chmod, mkdir, rm, writeFile } from "node:fs/promises";
 import { dirname, join, resolve } from "node:path";
 import { parseArgs } from "node:util";
 import { ensureDirectoryQueries, ensureOAuthClient } from "../server/stalwart-setup";
-import { STALWART_ADMIN, STALWART_VERSION } from "./config";
+import { BLOB_KEY_VARIABLE, ensureStorage } from "../server/stalwart-storage";
+import { DEV_BLOB_KEY, STALWART_ADMIN, STALWART_VERSION } from "./config";
 import { download } from "./download";
 
 const { values: args } = parseArgs({
@@ -86,7 +87,12 @@ const startServer = (env: Record<string, string>) => {
   return spawn(binary, ["--config", configPath], {
     cwd: instanceDir,
     stdio: ["ignore", output, output],
-    env: { ...process.env, STALWART_RECOVERY_ADMIN: adminEnv, ...env },
+    env: {
+      ...process.env,
+      STALWART_RECOVERY_ADMIN: adminEnv,
+      [BLOB_KEY_VARIABLE]: DEV_BLOB_KEY,
+      ...env,
+    },
   });
 };
 
@@ -261,7 +267,8 @@ const withoutStalwartRsvp = (port: number) =>
 
 /**
  * As on a customer's server (docs/installation.md, server/setup-stalwart.ts): the OAuth client
- * `kontext` with the scope `full` and directory queries, from the same module.
+ * `kontext` with the scope `full`, directory queries and the encrypted, compressed storage, from
+ * the same modules.
  */
 const setUpForKontext = async (port: number): Promise<void> => {
   const request = (calls: Invocation[]) => adminRequest(port, calls);
@@ -269,6 +276,10 @@ const setUpForKontext = async (port: number): Promise<void> => {
     const result = await step(request);
     if (!result.ok) throw new Error(`Stalwart setup failed: ${result.error}`);
   }
+  const storage = await ensureStorage(request);
+  if (!storage.ok) throw new Error(`Stalwart setup failed: ${storage.error}`);
+  if (storage.value.some((message) => message.startsWith("Hinweis")))
+    throw new Error(`Stalwart setup failed: ${storage.value.join(" ")}`);
 };
 
 const stop = (child: ReturnType<typeof spawn>): Promise<void> =>

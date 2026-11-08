@@ -8,6 +8,9 @@ export const DEV_PASSWORD = "kaffee-werkbank-kontext";
 
 export const DEV_DOMAIN = "weber-haustechnik.test";
 
+/** The storage key the dev Stalwart encrypts mails and files with (STALWART_BLOB_KEY, 32 bytes). */
+export const DEV_BLOB_KEY = Buffer.from("kontext-dev-storage-key-32-bytes").toString("base64");
+
 /** LiveKit for calls in the chat (dev/livekit.ts): the release and the dev key pair. */
 export const LIVEKIT_VERSION = "1.13.11";
 export const LIVEKIT_DEV_KEY = {

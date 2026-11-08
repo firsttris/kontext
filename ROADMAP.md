@@ -11,15 +11,14 @@ What Stalwart 1.0.2 and 1.0.3 bring and Kontext does not use yet.
 
 | # | Feature | What it is about |
 | --- | --- | --- |
-| 1 | **Encrypt and compress the storage** | Stalwart encrypts stored data with a server key (`SymmetricKey`, AES-256-GCM) and compresses it with Zstandard; `BlobRecode` rewrites what is already there (since 1.0.3). Protects the disk and the backup. The setup command switches it on. |
-| 2 | **Mail programs without an app password** | With two-factor sign-in, Apple Mail and Thunderbird no longer need an app password: Stalwart 1.0 implements the OAuth profile for mail programs. For it, the OAuth discovery under `/.well-known` has to go to Stalwart instead of Kontext (Caddy), and Stalwart's sign-in page has to be reachable from outside. |
+| 1 | **Mail programs without an app password** | With two-factor sign-in, Apple Mail and Thunderbird no longer need an app password: Stalwart 1.0 implements the OAuth profile for mail programs. For it, the OAuth discovery under `/.well-known` has to go to Stalwart instead of Kontext (Caddy), and Stalwart's sign-in page has to be reachable from outside. |
 
 ## More features
 
 | # | Feature | What it is about |
 | --- | --- | --- |
-| 3 | **The telephone box as its own phone system (SIP trunk)** | The telephone box signs in directly with the provider over a SIP trunk (such as Telekom, sipgate, easybell) instead of signing in at the Fritzbox as an IP phone. It then becomes the phone system itself, like 3CX or Placetel, but in Kontext and without a licence per extension: numbers, extensions, forwarding and desk phones hang on Kontext, and the Fritzbox is only a router or goes away. Along with it SIP over TLS, a queue with position and more desk phones (Yealink, Grandstream). The Fritzbox stays as the simple way for businesses that want to keep it. |
-| 4 | **More languages** | After German and English, more European languages. |
+| 2 | **The telephone box as its own phone system (SIP trunk)** | The telephone box signs in directly with the provider over a SIP trunk (such as Telekom, sipgate, easybell) instead of signing in at the Fritzbox as an IP phone. It then becomes the phone system itself, like 3CX or Placetel, but in Kontext and without a licence per extension: numbers, extensions, forwarding and desk phones hang on Kontext, and the Fritzbox is only a router or goes away. Along with it SIP over TLS, a queue with position and more desk phones (Yealink, Grandstream). The Fritzbox stays as the simple way for businesses that want to keep it. |
+| 3 | **More languages** | After German and English, more European languages. |
 
 ## More ideas
 
