@@ -258,8 +258,12 @@ printf '%s\n' "SCHREIBZEUG_URL=https://dokumente.firma.de" \
   "OIDC_ISSUER=https://kontext.firma.de/api/auth" "OIDC_CLIENT_SECRET=$SS" > schreibzeug.env
 echo "LIVEKIT_KEYS=kontext: $LS" > livekit.env
 echo "SIP_CONFIG_BODY={api_key: kontext, api_secret: \"$LS\", ws_url: \"ws://livekit:7880\", redis: {address: \"redis:6379\"}, sip_port: 5060, rtp_port: \"20000-20100\", use_external_ip: true, symmetric_rtp: true, hide_inbound_port: true, logging: {level: warn}}" > livekit-sip.env
+echo "STALWART_BLOB_KEY=$(openssl rand -base64 32)" > stalwart.env
 umask 022
 ```
+
+`stalwart.env` hält den [Speicherschlüssel](installation.md#speicher-verschlusseln), mit dem Stalwart
+Mails und Dateien verschlüsselt; ihn in den Passwortmanager ([Schritt 13](#13-zugangsdaten-sichern)).
 
 `SIP_CONFIG_BODY` steht in einer Zeile (YAML in Klammerschreibweise): Eine Env-Datei kennt keine
 Werte über mehrere Zeilen.
@@ -276,6 +280,7 @@ sed -i 's/firma\.de/meinefirma.de/g' kontext.env schreibzeug.env
 cd /etc/containers/systemd
 sed -i 's/firma\.de/meinefirma.de/g' *.container
 sed -i 's/^Environment=ACME_EMAIL=.*/Environment=ACME_EMAIL=admin@meinefirma.de/' caddy.container
+sed -i 's|^#EnvironmentFile=|EnvironmentFile=|' stalwart.container
 grep -h 'firma\.de' *.container /opt/kontext/deploy/*.env   # jede Zeile nennt jetzt die eigene Domain
 systemctl daemon-reload
 ```
@@ -597,6 +602,7 @@ Was außerhalb des Servers in einen Passwortmanager gehört – nicht in eine Te
 | Eintrag | Wozu | Auf dem Server |
 | --- | --- | --- |
 | **Restic-Passwort** | Ohne es ist das Backup nicht lesbar | `deploy/backup.env` |
+| **Speicherschlüssel** (`STALWART_BLOB_KEY`) | Ohne ihn kann Stalwart die Mails nicht lesen, auch nicht aus dem Backup | `deploy/stalwart.env` |
 | **Stalwart-Admin** (`admin@firma.de`) | Notzugang zu Stalwarts Verwaltung | `/root/.stalwart-admin` |
 | **Konto des Chefs** | Anmeldung in Kontext und Mailprogrammen (nach dem Ändern das neue) | – |
 | **SSH-Schlüssel, Zugang zum Anbieter** | Server und Panel | – |

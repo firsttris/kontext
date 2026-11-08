@@ -97,6 +97,9 @@ recovery mode, sets up the listeners on ports above 1024 (HTTP 18080, SMTP 10025
 then starts it normally. The admin is `admin` / `kontext-admin-dev`. On every start it registers
 Kontext as OAuth client `kontext` if it is missing, and allows directory queries, with
 the same code as the [setup command](installation.md#einrichtungsbefehl) (`server/stalwart-setup.ts`).
+It also encrypts and compresses the storage (`server/stalwart-storage.ts`), with the fixed key
+`DEV_BLOB_KEY` from `dev/config.ts` that it hands Stalwart as `STALWART_BLOB_KEY`; so development
+and the e2e tests run like a set-up server.
 
 Stalwart's own web interface (`/admin`, `/account`) is switched off by the script on the first
 start: Kontext doesn't need it, and Stalwart downloads it from GitHub before it opens its ports (up

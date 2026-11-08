@@ -56,6 +56,8 @@ For `KONTEXT_SECRET`, use a long random string (`openssl rand -base64 48`); it s
 sessions and encrypts the Stalwart tokens. Replace all `change-me` placeholders: Kontext does not
 start with them, and `backup.sh` does not back up. Leave `STALWART_ADMIN_KEY` empty for now; it is
 added in step 3 ([Turning on the company admin](#firmenverwaltung-einschalten)).
+`STALWART_BLOB_KEY` (`openssl rand -base64 32`) encrypts the storage; keep it in the password
+manager ([Encrypting and compressing the storage](#speicher-verschlusseln)).
 All settings are listed under [Settings at a glance](#einstellungen-im-uberblick). For calls in the chat, also
 set `LIVEKIT_SECRET` and open **TCP 7881 and UDP 7882** in the firewall (see
 [Calls](#anrufe)). Caddy gets the certificate for
@@ -156,7 +158,9 @@ It makes sure that
 - the **role** `Kontext-Server` with exactly the permissions from [Turning on the company
   admin](#firmenverwaltung-einschalten) exists (it inherits *User*), plus the **account**
   `kontext-server@firma.de` with this role and a random password, and an **API key** for this
-  account.
+  account;
+- the **storage is encrypted and compressed** ([Encrypting and compressing the
+  storage](#speicher-verschlusseln)).
 
 It prints the new key once, as the line `STALWART_ADMIN_KEY=API_…`: put it into `deploy/.env`
 (with Quadlet into `deploy/kontext.env`) and restart Kontext
@@ -469,6 +473,42 @@ with LUKS (many VPS providers offer this as an option when creating the server, 
 disk with `cryptsetup luksFormat` and the Docker volumes on it). Do not keep the key on the
 server; enter it on reboot or unlock over the network (Clevis/Tang).
 
+### Encrypting and compressing the storage { #speicher-verschlusseln }
+
+On top of that, Stalwart itself encrypts what it stores: mails, attachments and files with a
+server key (AES-256-GCM), compressed with Zstandard first, which saves space and so backup
+storage. The key is not in Stalwart's database but in the environment variable
+`STALWART_BLOB_KEY` of the Stalwart container; an image of the disk or a backup on its own
+therefore does not give the mails away.
+
+1. Create a key and put it into `deploy/.env` as `STALWART_BLOB_KEY=…` (with Quadlet into
+   `deploy/stalwart.env`, `chmod 600`, and uncomment the line
+   `EnvironmentFile=/opt/kontext/deploy/stalwart.env` in `stalwart.container`):
+
+    ```bash
+    openssl rand -base64 32
+    ```
+
+2. **Put the key into the password manager** ([Keep the credentials safe](vps.md#13-zugangsdaten-sichern)).
+   Once it is set, it must never change and must not get lost: without it Stalwart can no
+   longer read the mails, not even from the backup.
+3. Restart Stalwart (`docker compose -f deploy/compose.yaml up -d`, with Quadlet
+   `systemctl daemon-reload && systemctl restart stalwart`) and run the
+   [setup command](#einrichtungsbefehl).
+
+The command creates the key `Kontext` in Stalwart (a `SymmetricKey` that reads its secret from the
+variable), switches mails (`Email`) and files (`FileStorage`) to Zstandard and this key, reloads
+the settings and starts the task `BlobRecode`, which rewrites everything already stored in the
+background. Depending on the amount that takes minutes to hours; the mails stay readable
+meanwhile. On every later run it sees that everything is there and does nothing.
+
+If the variable is missing, Stalwart refuses the key: the command then only compresses and says
+so with a hint. If the admin has already chosen a key of their own, it stays. If Stalwart was
+updated from a version before 1.0.3, its admin role may lack the permissions for keys
+(`sysSymmetricKey…`); then start Stalwart once with `STALWART_UPDATE_ROLE_PERMISSIONS=true`
+([Stalwart 1.0.3](#stalwart-103)). What exactly the command does is in
+`server/stalwart-storage.ts`.
+
 ## 5. Backups { #5-backups }
 
 `deploy/backup.sh` backs up with [Restic](https://restic.net) to S3 storage, most simply
@@ -578,6 +618,8 @@ without the prefix `stalwart-data`, `kontext-data`, `schreibzeug-data`.
 Not in the backup: the settings (`deploy/.env` or the Quadlet files and
 `kontext.env` … – which is why they belong in the password manager, see
 [Saving the credentials](vps.md#13-zugangsdaten-sichern)) and Stalwart's volume `stalwart-config`.
+That includes the [storage key](#speicher-verschlusseln) `STALWART_BLOB_KEY`: without the same
+key the new Stalwart cannot read the restored mails.
 It only holds `config.json` with the storage location; everything else (domains, accounts, DKIM keys,
 settings) is in Stalwart's database and comes back with `stalwart`.
 
@@ -743,7 +785,8 @@ Everyone signs in once more: Stalwart discards grants from the time as a
 sign-in. Started once with the
 environment variable `STALWART_UPDATE_ROLE_PERMISSIONS=true`, Stalwart adds to the
 default roles the permissions that have come along since 1.0.0 (such as encryption in the
-admin interface); remove the variable again afterwards. Kontext does not need this.
+admin interface); remove the variable again afterwards. Kontext only needs this for the
+[storage key](#speicher-verschlusseln), if the setup command points to it.
 
 ### Upgrading Stalwart 0.16 to 1.0 { #stalwart-016-auf-10-heben }
 
@@ -843,6 +886,7 @@ a warning to the log.
 | `TAILSCALE_IP` | `127.0.0.1` | where Stalwart's admin interface (port 8080) listens; with Tailscale, the server's Tailscale address |
 | `KONTEXT_SECRET` | – | required, at least 32 characters; becomes `BETTER_AUTH_SECRET` |
 | `STALWART_ADMIN_KEY` | empty | API key for the [company admin](#firmenverwaltung-einschalten) |
+| `STALWART_BLOB_KEY` | empty | key Stalwart encrypts mails and files with (`openssl rand -base64 32`); never change it once set ([Encrypting the storage](#speicher-verschlusseln)) |
 | `KONTEXT_VERSION` | – | required: version of the image `tristanteu/kontext` |
 | `STALWART_VERSION` | – | required: version of the image `stalwartlabs/stalwart` (without "v"), raised with `KONTEXT_VERSION` |
 | `COMPOSE_PROFILES` | – | `calls` (LiveKit, LiveKit SIP, Redis) and `documents` (Schreibzeug) |

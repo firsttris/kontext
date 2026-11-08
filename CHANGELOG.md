@@ -7,6 +7,12 @@ Steps that an update needs beyond raising the version are marked **Upgrade**.
 
 ## Unreleased
 
+- Storage: the setup command encrypts and compresses Stalwart's storage. With
+  `STALWART_BLOB_KEY` (`openssl rand -base64 32`) in the Stalwart container it creates the key
+  `Kontext` (a `SymmetricKey` read from that variable, so neither in Stalwart's database nor in
+  the backup), switches mails and files to Zstandard and the key, and starts `BlobRecode` for
+  what is already stored; without the variable it only compresses, with a hint. The dev Stalwart
+  runs encrypted too (installation guide, "Speicher verschlüsseln und komprimieren").
 - Look: a polish pass after the [unslop](https://github.com/heydamir/unslop) checklist. Labels in
   sentence case instead of tracked capitals, no tight tracking on headings, fewer font sizes (11 to
   30 px in eight steps) and semibold only for titles and unread items, icons in five sizes with one

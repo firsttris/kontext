@@ -56,6 +56,8 @@ Für `KONTEXT_SECRET` eine lange Zufallszeichenfolge nehmen (`openssl rand -base
 sind die Sitzungen signiert und die Stalwart-Tokens verschlüsselt. Alle `change-me`-Platzhalter
 ersetzen: Kontext startet nicht mit ihnen, `backup.sh` sichert nicht. `STALWART_ADMIN_KEY` bleibt
 vorerst leer; er kommt in Schritt 3 dazu ([Firmenverwaltung einschalten](#firmenverwaltung-einschalten)).
+`STALWART_BLOB_KEY` (`openssl rand -base64 32`) verschlüsselt den Speicher; ihn im Passwortmanager
+ablegen ([Speicher verschlüsseln und komprimieren](#speicher-verschlusseln)).
 Alle Einstellungen stehen unter [Einstellungen im Überblick](#einstellungen-im-uberblick). Für Anrufe im Chat ebenso
 `LIVEKIT_SECRET` setzen und in der Firewall **TCP 7881 und UDP 7882** öffnen (siehe
 [Anrufe](#anrufe)). Caddy holt das Zertifikat für
@@ -155,7 +157,9 @@ Er sorgt dafür, dass
 - die **Rolle** `Kontext-Server` mit genau den Rechten aus [Firmenverwaltung
   einschalten](#firmenverwaltung-einschalten) da ist (sie erbt *User*), dazu das **Konto**
   `kontext-server@firma.de` mit dieser Rolle und einem Zufallspasswort und für dieses Konto ein
-  **API-Schlüssel**.
+  **API-Schlüssel**;
+- der **Speicher verschlüsselt und komprimiert** ist ([Speicher verschlüsseln und
+  komprimieren](#speicher-verschlusseln)).
 
 Den neuen Schlüssel gibt er einmal aus, als Zeile `STALWART_ADMIN_KEY=API_…`: in `deploy/.env`
 eintragen (mit Quadlet in `deploy/kontext.env`) und Kontext neu starten
@@ -466,6 +470,42 @@ mit LUKS verschlüsseln (bei vielen VPS-Anbietern als Option beim Anlegen, sonst
 Platte mit `cryptsetup luksFormat` und darauf die Docker-Volumes). Den Schlüssel nicht auf dem
 Server ablegen, sondern beim Neustart eingeben oder per Netzwerk entsperren (Clevis/Tang).
 
+### Speicher verschlüsseln und komprimieren { #speicher-verschlusseln }
+
+Dazu verschlüsselt Stalwart selbst, was es speichert: Mails, Anhänge und Dateien mit einem
+Serverschlüssel (AES-256-GCM), vorher mit Zstandard komprimiert, was Platz und damit
+Backup-Speicher spart. Der Schlüssel steht nicht in Stalwarts Datenbank, sondern in der
+Umgebungsvariablen `STALWART_BLOB_KEY` des Stalwart-Containers; ein Abzug der Platte oder eine
+Sicherung allein verrät die Mails also nicht.
+
+1. Einen Schlüssel erzeugen und als `STALWART_BLOB_KEY=…` in `deploy/.env` eintragen (mit Quadlet
+   in `deploy/stalwart.env`, `chmod 600`, und in `stalwart.container` die Zeile
+   `EnvironmentFile=/opt/kontext/deploy/stalwart.env` einkommentieren):
+
+    ```bash
+    openssl rand -base64 32
+    ```
+
+2. **Den Schlüssel in den Passwortmanager** ([Zugangsdaten sichern](vps.md#13-zugangsdaten-sichern)).
+   Ist er einmal gesetzt, darf er sich nie ändern und nicht verloren gehen: Ohne ihn kann
+   Stalwart die Mails nicht mehr lesen, auch nicht aus der Sicherung.
+3. Stalwart neu starten (`docker compose -f deploy/compose.yaml up -d`, mit Quadlet
+   `systemctl daemon-reload && systemctl restart stalwart`) und den
+   [Einrichtungsbefehl](#einrichtungsbefehl) ausführen.
+
+Der Befehl legt in Stalwart den Schlüssel `Kontext` an (ein `SymmetricKey`, der sein Geheimnis aus
+der Variablen liest), stellt Mails (`Email`) und Dateien (`FileStorage`) auf Zstandard und diesen
+Schlüssel um, lädt die Einstellungen neu und startet die Aufgabe `BlobRecode`, die alles schon
+Gespeicherte im Hintergrund neu schreibt. Das läuft je nach Menge Minuten bis Stunden, die Mails
+bleiben dabei lesbar. Bei jedem weiteren Lauf sieht er, dass alles da ist, und tut nichts.
+
+Fehlt die Variable, weist Stalwart den Schlüssel ab: Der Befehl komprimiert dann nur und sagt das
+mit einem Hinweis. Hat sich der Admin schon selbst einen Schlüssel eingestellt, bleibt der. Wurde
+Stalwart von einer Version vor 1.0.3 aktualisiert, fehlen seiner Admin-Rolle womöglich die Rechte
+für Schlüssel (`sysSymmetricKey…`); dann Stalwart einmal mit
+`STALWART_UPDATE_ROLE_PERMISSIONS=true` starten ([Stalwart 1.0.3](#stalwart-103)). Was der Befehl
+genau tut, steht in `server/stalwart-storage.ts`.
+
 ## 5. Backups
 
 `deploy/backup.sh` sichert mit [Restic](https://restic.net) auf einen S3-Speicher, am einfachsten
@@ -575,6 +615,8 @@ ohne Vorsilbe `stalwart-data`, `kontext-data`, `schreibzeug-data`.
 Nicht in der Sicherung: die Einstellungen (`deploy/.env` bzw. die Quadlet-Dateien und
 `kontext.env` … – darum gehören sie in den Passwortmanager, siehe
 [Zugangsdaten sichern](vps.md#13-zugangsdaten-sichern)) und Stalwarts Volume `stalwart-config`.
+Dazu gehört der [Speicherschlüssel](#speicher-verschlusseln) `STALWART_BLOB_KEY`: Ohne denselben
+Schlüssel kann der neue Stalwart die zurückgeholten Mails nicht lesen.
 Darin steht nur `config.json` mit dem Speicherort; alles andere (Domains, Konten, DKIM-Schlüssel,
 Einstellungen) liegt in Stalwarts Datenbank und kommt mit `stalwart` zurück.
 
@@ -740,7 +782,8 @@ nicht anfordert. Alle melden sich einmal neu an: Freigaben aus der Zeit als
 Anmeldung. Einmal mit der
 Umgebungsvariablen `STALWART_UPDATE_ROLE_PERMISSIONS=true` gestartet, ergänzt Stalwart die
 Standardrollen um die Rechte, die seit 1.0.0 dazugekommen sind (etwa die Verschlüsselung in der
-Verwaltung); danach die Variable wieder entfernen. Kontext braucht das nicht.
+Verwaltung); danach die Variable wieder entfernen. Kontext braucht das nur für den
+[Speicherschlüssel](#speicher-verschlusseln), falls der Einrichtungsbefehl darauf hinweist.
 
 ### Stalwart 0.16 auf 1.0 heben
 
@@ -840,6 +883,7 @@ eine Warnung ins Log.
 | `TAILSCALE_IP` | `127.0.0.1` | wo Stalwarts Verwaltung (Port 8080) lauscht; mit Tailscale die Tailscale-Adresse des Servers |
 | `KONTEXT_SECRET` | – | Pflicht, mindestens 32 Zeichen; wird zu `BETTER_AUTH_SECRET` |
 | `STALWART_ADMIN_KEY` | leer | API-Schlüssel für die [Firmenverwaltung](#firmenverwaltung-einschalten) |
+| `STALWART_BLOB_KEY` | leer | Schlüssel, mit dem Stalwart Mails und Dateien verschlüsselt (`openssl rand -base64 32`); einmal gesetzt nie ändern ([Speicher verschlüsseln](#speicher-verschlusseln)) |
 | `KONTEXT_VERSION` | – | Pflicht: Version des Images `tristanteu/kontext` |
 | `STALWART_VERSION` | – | Pflicht: Version des Images `stalwartlabs/stalwart` (ohne „v“), mit `KONTEXT_VERSION` gehoben |
 | `COMPOSE_PROFILES` | – | `calls` (LiveKit, LiveKit SIP, Redis) und `documents` (Schreibzeug) |

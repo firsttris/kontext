@@ -35,7 +35,10 @@ wer auf dem Server Administrator ist, kann alles außer Ende-zu-Ende-Verschlüss
 - **Gespeichert:** Die Platte des Servers ist verschlüsselt (LUKS o. ä.), Sicherungen werden
   verschlüsselt abgelegt (z. B. restic). Das betrifft alles auf einmal: Stalwarts Postfächer,
   Kontexts Datenbank (Chat, Aufgaben) und die Dateien des Chats. Die
-  [Installation](installation.md) beschreibt es.
+  [Installation](installation.md) beschreibt es. Dazu verschlüsselt Stalwart Mails und Dateien
+  selbst mit einem Serverschlüssel, der nicht in seiner Datenbank steht, und komprimiert sie
+  ([Speicher verschlüsseln](installation.md#speicher-verschlusseln)); der Einrichtungsbefehl
+  schaltet das ein.
 - **Sichtbar:** Eine Mail zeigt neben „Details anzeigen“, ob sie verschlüsselt beim eigenen
   Server ankam – aus der obersten `Received`-Zeile, dem Protokoll nach `with` (RFC 3848: `ESMTPS`,
   `ESMTPSA`; `src/lib/transport.ts`). Die Zeile kommt roh (`header:Received:all`): Als Text gibt

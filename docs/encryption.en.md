@@ -34,7 +34,10 @@ whoever is administrator on the server can read everything except what is end-to
   otherwise (STARTTLS). Incoming, Stalwart accepts encrypted connections.
 - **At rest:** the server's disk is encrypted (LUKS or similar), backups are stored encrypted
   (e.g. restic). That covers everything at once: Stalwart's mailboxes, Kontext's database (chat,
-  tasks) and the chat's files. The [installation](installation.md) describes it.
+  tasks) and the chat's files. The [installation](installation.md) describes it. On top of that,
+  Stalwart encrypts mails and files itself with a server key that is not in its database, and
+  compresses them ([Encrypting the storage](installation.md#speicher-verschlusseln)); the setup
+  command turns this on.
 - **Visible:** next to "Show details", a mail shows whether it reached your own server encrypted
   – from the topmost `Received` line, the protocol after `with` (RFC 3848: `ESMTPS`, `ESMTPSA`;
   `src/lib/transport.ts`). The line comes raw (`header:Received:all`): JMAP does not hand out
