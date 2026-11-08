@@ -145,3 +145,29 @@ describe("ensuring the storage", () => {
     expect(names).not.toContain("x:Task/set");
   });
 });
+
+describe("ensuring the storage on a Stalwart updated from before 1.0.3", () => {
+  /** Its admin role lacks the rights added in 1.0.3: keys and the BlobRecode task. */
+  const updated = (): Request =>
+    vi.fn(async (calls: Invocation[]) =>
+      calls.map(([name, , id]): Invocation => {
+        const forbidden = (createId: string) => ({
+          notCreated: {
+            [createId]: { type: "forbidden", description: "Insufficient permissions" },
+          },
+        });
+        if (name === "x:SymmetricKey/get") return [name, { list: [] }, id];
+        if (name === "x:SymmetricKey/set") return [name, forbidden("key"), id];
+        if (name === "x:Task/set") return [name, forbidden("recode"), id];
+        if (name.endsWith("/get")) return [name, { list: [fresh] }, id];
+        return [name, {}, id];
+      }),
+    );
+
+  it("still compresses and explains the missing rights instead of failing", async () => {
+    const result = await ensureStorage(updated());
+    expect(result.ok).toBe(true);
+    expect(result.ok && result.value.join(" ")).toContain("STALWART_UPDATE_ROLE_PERMISSIONS");
+    expect(result.ok && result.value.join(" ")).toContain("BlobRecode");
+  });
+});
