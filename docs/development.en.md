@@ -98,6 +98,11 @@ then starts it normally. The admin is `admin` / `kontext-admin-dev`. On every st
 Kontext as OAuth client `kontext` if it is missing, and allows directory queries, with
 the same code as the [setup command](installation.md#einrichtungsbefehl) (`server/stalwart-setup.ts`).
 
+Stalwart's own web interface (`/admin`, `/account`) is switched off by the script on the first
+start: Kontext doesn't need it, and Stalwart downloads it from GitHub before it opens its ports (up
+to 60 s when GitHub is slow). Only the start in recovery mode still downloads it; the script waits
+up to 90 s for that.
+
 A new Stalwart doesn't open the data of an older Stalwart major version (since 1.0: `The data
 store was created by a Stalwart version prior to 1.0`, in `.dev/stalwart.log`). After such an
 update, run `bun dev/stalwart.ts --fresh --seed` once.

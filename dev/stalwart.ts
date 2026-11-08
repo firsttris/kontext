@@ -90,8 +90,17 @@ const startServer = (env: Record<string, string>) => {
   });
 };
 
+/**
+ * Before it listens, Stalwart unpacks its web interface on every start and, if it has none cached,
+ * downloads it from GitHub with a 60 s timeout (crates/services/src/lib.rs `unpack_all`,
+ * crates/common/src/manager/application.rs `fetch`). When GitHub answers slowly or with 503, the
+ * port only opens after that, so the wait has to outlast it.
+ */
+const STARTUP_TIMEOUT_MS = 90_000;
+
 const waitForHttp = async (port: number): Promise<void> => {
-  for (let attempt = 0; attempt < 100; attempt++) {
+  const deadline = Date.now() + STARTUP_TIMEOUT_MS;
+  while (Date.now() < deadline) {
     try {
       const response = await fetch(`http://127.0.0.1:${port}/jmap/session`, {
         headers: { authorization: `Basic ${btoa(adminEnv)}` },
@@ -151,6 +160,20 @@ const createListeners = async (port: number): Promise<void> => {
     // shared by all their tabs and devices; the app asks more on start (see docs/installation.md).
     ["x:Jmap/set", { update: { singleton: { maxConcurrentRequests: 16 } } }, "3"],
   ]);
+};
+
+/**
+ * Stalwart's own web interface (/admin, /account) is an `Application` it inserts on the first
+ * start (crates/common/src/manager/defaults.rs) and downloads from GitHub before it listens.
+ * Kontext doesn't use it; switched off, the normal starts no longer wait for GitHub.
+ */
+const withoutWebInterface = async (port: number): Promise<void> => {
+  const [[, { list }]] = (await adminRequest(port, [
+    ["x:Application/get", { ids: null, properties: ["id"] }, "0"],
+  ])) as [[string, { list: { id: string }[] }, string]];
+  if (!list.length) return;
+  const update = Object.fromEntries(list.map(({ id }) => [id, { enable: false }]));
+  await adminRequest(port, [["x:Application/set", { update }, "0"]]);
 };
 
 /**
@@ -266,6 +289,7 @@ const firstStart = async (): Promise<void> => {
   });
   await waitForHttp(httpPort);
   await createListeners(httpPort);
+  await withoutWebInterface(httpPort);
   await stop(recovery);
 };
 
