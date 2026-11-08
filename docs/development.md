@@ -95,6 +95,11 @@ trägt es Kontext als OAuth-Client `kontext` ein, falls er fehlt, und erlaubt
 Verzeichnisabfragen, mit demselben Code wie der [Einrichtungsbefehl](installation.md#einrichtungsbefehl)
 (`server/stalwart-setup.ts`).
 
+Stalwarts eigene Weboberfläche (`/admin`, `/account`) schaltet das Skript beim ersten Start ab:
+Kontext braucht sie nicht, und Stalwart lädt sie vor dem Öffnen der Ports von GitHub (bis zu 60 s,
+wenn GitHub hakt). Nur der Start im Wiederherstellungsmodus lädt sie noch; darauf wartet das
+Skript bis zu 90 s.
+
 Daten einer älteren Stalwart-Hauptversion öffnet ein neuer Stalwart nicht (seit 1.0: `The data
 store was created by a Stalwart version prior to 1.0`, in `.dev/stalwart.log`). Nach so einem
 Update einmal `bun dev/stalwart.ts --fresh --seed` laufen lassen.
