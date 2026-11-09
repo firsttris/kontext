@@ -76,7 +76,7 @@
       "isAccessibleForFree": true,
       "license": "https://www.gnu.org/licenses/agpl-3.0.html",
       "image": seo_image,
-      "installUrl": config.site_url ~ "installation.html",
+      "installUrl": config.site_url ~ (page.url | replace("index.html", "installation.html")),
       "offers": { "@type": "Offer", "price": "0", "priceCurrency": "EUR" },
       "sameAs": [config.repo_url]
     } | tojson }}
