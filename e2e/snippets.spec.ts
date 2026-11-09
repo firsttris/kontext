@@ -70,7 +70,12 @@ test.describe("Textbausteine", () => {
       await dialog.getByRole("button", { name: "Einfügen" }).click();
       await expect(dialog).toBeHidden();
 
-      const today = new Intl.DateTimeFormat("de-DE", { dateStyle: "medium" }).format(new Date());
+      // The browser runs in Europe/Berlin (playwright.config.ts), the runner in UTC: between
+      // midnight and 1 am in Berlin they are a day apart.
+      const today = new Intl.DateTimeFormat("de-DE", {
+        dateStyle: "medium",
+        timeZone: "Europe/Berlin",
+      }).format(new Date());
       const body = page.getByRole("textbox", { name: "Ihre Nachricht …" });
       await expect(body).toContainText("Guten Tag Markus Hoffmann,");
       await expect(body).toContainText(
