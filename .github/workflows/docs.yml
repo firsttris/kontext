@@ -57,6 +57,10 @@ jobs:
           test -z "$(grep -L 'property="og:image"' site/*.html site/en/*.html | grep -v 'entdecken.html$')"
       - run: |
           grep -q 'application/ld+json' site/index.html && grep -q 'application/ld+json' site/en/index.html
+      # The structured data points to the installation page in the start page's language
+      - run: |
+          grep -q '"installUrl": "https://kontext.email/installation.html"' site/index.html
+          grep -q '"installUrl": "https://kontext.email/en/installation.html"' site/en/index.html
       - run: |
           test -z "$(grep -l 'name="robots" content="noindex"' site/*.html site/en/*.html | grep -v -e '^site/404.html$' -e 'entdecken.html$')"
       - run: |
