@@ -215,11 +215,11 @@ mit einem Klick als Jonas, Anna, Sandra oder Max an.
   wie auf einem Server ohne sie abgeschaltet (`src/demo/api.ts`).
 - **Neue Server-Route:** Fragt die App beim Start eine neue `/api`-Route ab, braucht sie in
   `src/demo/api.ts` eine Antwort, sonst steht `[demo] GET /api/…` in der Konsole.
-- **Ausprobieren:** `bun run build:demo`, dann `dist-demo/` unter `/kontext/demo/` ausliefern
+- **Ausprobieren:** `bun run build:demo`, dann `dist-demo/` unter `/demo/` ausliefern
   (oder mit `DEMO_BASE=/ bun run build:demo` unter `/`). Die Routen stehen hinter `#`, weil GitHub
   Pages keine Weiterleitung auf `index.html` kennt; einen Service Worker hat die Demo nicht.
 - **Veröffentlicht** wird sie vom Docs-Workflow bei jedem Push auf `main`, neben der Doku unter
-  `/kontext/demo/`.
+  `/demo/`.
 
 ## Tests
 

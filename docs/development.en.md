@@ -218,11 +218,11 @@ over. You sign in with one click as Jonas, Anna, Sandra or Max.
   turned off as on a server without them (`src/demo/api.ts`).
 - **New server route:** if the app asks for a new `/api` route on start, it needs an answer in
   `src/demo/api.ts`; otherwise `[demo] GET /api/…` appears in the console.
-- **Trying it out:** `bun run build:demo`, then serve `dist-demo/` under `/kontext/demo/`
+- **Trying it out:** `bun run build:demo`, then serve `dist-demo/` under `/demo/`
   (or under `/` with `DEMO_BASE=/ bun run build:demo`). The routes sit behind `#` because GitHub
   Pages has no fallback to `index.html`; the demo has no service worker.
 - **Published** by the docs workflow on every push to `main`, next to the docs under
-  `/kontext/demo/`.
+  `/demo/`.
 
 ## Tests { #tests }
 
