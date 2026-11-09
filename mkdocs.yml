@@ -1,4 +1,4 @@
-# Documentation as a website: https://firsttris.github.io/kontext/
+# Documentation as a website: https://kontext.email/
 # Source is docs/, built with MkDocs Material (.github/workflows/docs.yml publishes it).
 # Locally: pip install mkdocs-material mkdocs-static-i18n && mkdocs serve
 # Languages: German at /, English at /en/. Every page has its translation next to it with .en.md
@@ -9,7 +9,7 @@ site_description: >-
   Mail, Kalender, Kontakte, Aufgaben, Team-Chat und Telefonie (CTI) auf dem eigenen Server – die
   selbst gehostete Alternative zu Google Workspace und Microsoft 365, mit Stalwart als Mailserver.
 site_author: Tristan Teufel
-site_url: https://firsttris.github.io/kontext/
+site_url: https://kontext.email/
 repo_url: https://github.com/firsttris/kontext
 repo_name: firsttris/kontext
 edit_uri: edit/main/docs/
@@ -22,9 +22,12 @@ validation:
   anchors: warn
 theme:
   name: material
-  # Link previews for pages with an image (overrides/main.html)
+  # Search engines and link previews (overrides/main.html)
   custom_dir: overrides
   language: de
+  # The app's icon (public/favicon.svg)
+  logo: assets/icon.svg
+  favicon: assets/icon.svg
   icon:
     repo: fontawesome/brands/github
   features:
@@ -79,6 +82,11 @@ plugins:
             Technik: How it is built
             Architektur: Architecture
             Entwicklung: Development
+  # "Letztes Update" under every page, from the last commit of its file (the docs workflow checks
+  # out the whole history for it); after i18n, which gives it the page's language
+  - git-revision-date-localized:
+      type: date
+      fallback_to_build_date: true
 markdown_extensions:
   - admonition
   - attr_list

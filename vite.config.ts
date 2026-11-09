@@ -27,7 +27,7 @@ const proxy = {
 
 export default defineConfig(({ mode }) => ({
   // The demo (src/demo) is served from GitHub Pages next to the docs.
-  base: mode === "demo" ? (process.env.DEMO_BASE ?? "/kontext/demo/") : "/",
+  base: mode === "demo" ? (process.env.DEMO_BASE ?? "/demo/") : "/",
   plugins: [
     // The language chosen in Einstellungen (this device, src/lib/locale.ts), else the browser's,
     // else German.

@@ -5,7 +5,7 @@
 Only the latest release of Kontext gets security fixes. Kontext and its images
 (`tristanteu/kontext`, `tristanteu/kontext-box`) are released together; update to the newest
 version before reporting, as described under
-[Updates](https://firsttris.github.io/kontext/installation.html#6-updates).
+[Updates](https://kontext.email/installation.html#6-updates).
 
 | Version | Supported |
 | --- | --- |

@@ -24,7 +24,7 @@ import {
 } from "./api";
 
 const KEY = ["company", "backup"];
-const GUIDE = "https://firsttris.github.io/kontext/installation.html#5-backups";
+const GUIDE = "https://kontext.email/installation.html#5-backups";
 
 const Row = ({ label, children }: { label: string; children: ReactNode }) => (
   <div className="flex flex-col gap-0.5 py-2.5 sm:flex-row sm:gap-4">

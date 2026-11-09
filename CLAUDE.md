@@ -2,7 +2,7 @@
 
 ## Documentation
 
-The documentation is in `docs/` (<https://firsttris.github.io/kontext/>). Read the pages that
+The documentation is in `docs/` (<https://kontext.email/>). Read the pages that
 touch the change before starting: `architecture.md` for how the pieces fit, `development.md` for
 the local Stalwart, the seed and the tests, `installation.md` for a customer server. Links in the
 README and the docs point to the GitHub Pages site, not to `docs/*.md`.
@@ -82,7 +82,7 @@ split it past ~400 lines, a function past ~80. A refactor changes no behaviour.
   admin, passkeys) go there.
 - Shared mailboxes are Stalwart group accounts: every member sees the group's account in the JMAP
   session (`isPersonal: false`) and can send as its address.
-- The demo (`src/demo/`, `bun run build:demo`, on GitHub Pages under `/kontext/demo/`) is the app
+- The demo (`src/demo/`, `bun run build:demo`, on GitHub Pages under `/demo/` of kontext.email) is the app
   without a server: it answers `/jmap` and `/api` in the page from the seed. A new `/api` route the
   app asks for on start needs an answer in `src/demo/api.ts`.
 - Test data: `dev/seed-data.ts` ("Weber Haustechnik"). Logins `jonas@`, `anna@`, `sandra@`,

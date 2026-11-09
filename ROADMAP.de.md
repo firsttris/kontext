@@ -3,7 +3,7 @@
 Die Funktionen, die als Nächstes in Kontext kommen, sortiert nach Nutzen: oben, was am meisten
 bringt. Die Reihenfolge ist ein Plan, kein Versprechen; Wünsche gern als
 [Issue](https://github.com/firsttris/kontext/issues). Was schon fertig ist, steht im
-[Changelog](CHANGELOG.md) und in der [Dokumentation](https://firsttris.github.io/kontext/). In English: [ROADMAP.md](ROADMAP.md).
+[Changelog](CHANGELOG.md) und in der [Dokumentation](https://kontext.email/). In English: [ROADMAP.md](ROADMAP.md).
 
 ## Neu in Stalwart
 

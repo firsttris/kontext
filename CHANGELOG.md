@@ -2,11 +2,16 @@
 
 What changed in each release of Kontext, newest first. The images are `tristanteu/kontext` and
 `tristanteu/kontext-box` with the same version; how to update is in the
-[installation guide](https://firsttris.github.io/kontext/installation.html#6-updates) (German).
+[installation guide](https://kontext.email/installation.html#6-updates) (German).
 Steps that an update needs beyond raising the version are marked **Upgrade**.
 
 ## Unreleased
 
+- Docs: the documentation and the demo moved to their own domain,
+  [kontext.email](https://kontext.email/) (the demo under `/demo/`); the old address redirects. Every
+  page now has Open Graph with a picture for link previews, the start page structured data for
+  search engines, `robots.txt` names the sitemap, the header shows the app's icon, and every page
+  shows when it last changed.
 - Storage: the setup command encrypts and compresses Stalwart's storage. With
   `STALWART_BLOB_KEY` (`openssl rand -base64 32`) in the Stalwart container it creates the key
   `Kontext` (a `SymmetricKey` read from that variable, so neither in Stalwart's database nor in
@@ -433,7 +438,7 @@ Steps that an update needs beyond raising the version are marked **Upgrade**.
   now, days outside the month in the small calendar too; tasks in the calendar are touch targets of
   24 px on phones; view and filter switches are marked as
   the current page instead of as pressed buttons; "Reduce motion" turns animations off. New page
-  [Barrierefreiheit](https://firsttris.github.io/kontext/accessibility.html).
+  [Barrierefreiheit](https://kontext.email/accessibility.html).
 - Documents: Schreibzeug trusts Caddy as its proxy (`SCHREIBZEUG_TRUSTED_PROXIES` in
   `deploy/compose.yaml` and `schreibzeug.container`), so its sign-in limit counts per person, not
   for everyone at once. **Upgrade:** with Compose, `git pull` and start again; with Quadlet, copy
@@ -482,7 +487,7 @@ Steps that an update needs beyond raising the version are marked **Upgrade**.
 - iPhone: no zoom into the search field or the editor, photos save via the share sheet.
 - Telephone box: reports its real version instead of "dev".
 - **Upgrade:** turn off Stalwart's own RSVP buttons (`httpRsvpEnable: false`, see
-  [Stalwart einrichten](https://firsttris.github.io/kontext/installation.html#3-stalwart-einrichten),
+  [Stalwart einrichten](https://kontext.email/installation.html#3-stalwart-einrichten),
   step 10), since Kontext sends invitations itself.
 
 ## 0.1.4 – 2026-10-27
@@ -495,10 +500,10 @@ Steps that an update needs beyond raising the version are marked **Upgrade**.
   defaults to `192.168.178.1`.
 - Backups also with Podman Quadlet (settings in `deploy/backup.env`) and to SFTP targets (the S3
   keys only for S3). **Upgrade (Quadlet):** create `deploy/backup.env` as described under
-  [Backups](https://firsttris.github.io/kontext/installation.html#5-backups).
+  [Backups](https://kontext.email/installation.html#5-backups).
 - Deployment: secrets in `deploy/.env` and the Quadlet env files are ignored by git; Stalwart's
   admin listens on `127.0.0.1` (SSH tunnel), Tailscale optional; the guide
-  [VPS einrichten](https://firsttris.github.io/kontext/vps.html).
+  [VPS einrichten](https://kontext.email/vps.html).
 
 ## 0.1.3 – 2026-10-26
 
@@ -512,7 +517,7 @@ Steps that an update needs beyond raising the version are marked **Upgrade**.
   then start as usual.
 - **Upgrade:** enter Kontext's container network `10.89.250.0/24` in Stalwart as an allowed IP and
   set ban periods
-  ([Stalwart einrichten](https://firsttris.github.io/kontext/installation.html#3-stalwart-einrichten),
+  ([Stalwart einrichten](https://kontext.email/installation.html#3-stalwart-einrichten),
   steps 6 and 7).
 
 ## 0.1.2 – 2026-10-26

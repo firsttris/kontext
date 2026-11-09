@@ -128,7 +128,7 @@ export const scenes: Scene[] = [
       "Open Source · Deine Daten · Kein Preis pro Kopf",
       "Open source · Your data · No per-seat pricing",
     ),
-    link: "firsttris.github.io/kontext",
+    link: "kontext.email",
     seconds: 3.6,
   },
 ];
