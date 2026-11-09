@@ -176,7 +176,7 @@ tests don't – they expect an empty chat and empty tasks, and their seed
 
 ## Demo { #demo }
 
-The [demo](https://firsttris.github.io/kontext/demo/) is the app without a server: a build of
+The [demo](https://kontext.email/demo/) is the app without a server: a build of
 its own (`bun run build:demo`, Vite mode `demo`, to `dist-demo/`) answers the requests to `/jmap`
 and `/api` inside the page itself (`src/demo/`). The data is the test data from
 `dev/seed-data.ts` without the XSS test mail, as JMAP objects in the browser; reloading starts
@@ -218,11 +218,11 @@ over. You sign in with one click as Jonas, Anna, Sandra or Max.
   turned off as on a server without them (`src/demo/api.ts`).
 - **New server route:** if the app asks for a new `/api` route on start, it needs an answer in
   `src/demo/api.ts`; otherwise `[demo] GET /api/…` appears in the console.
-- **Trying it out:** `bun run build:demo`, then serve `dist-demo/` under `/kontext/demo/`
+- **Trying it out:** `bun run build:demo`, then serve `dist-demo/` under `/demo/`
   (or under `/` with `DEMO_BASE=/ bun run build:demo`). The routes sit behind `#` because GitHub
   Pages has no fallback to `index.html`; the demo has no service worker.
 - **Published** by the docs workflow on every push to `main`, next to the docs under
-  `/kontext/demo/`.
+  `/demo/`.
 
 ## Tests { #tests }
 
@@ -357,10 +357,16 @@ Actions → _Update video_ → Run workflow (or `bun run video`, needs ffmpeg an
   run; a release after that then tests on its own before it builds.
 - **Documentation** (`.github/workflows/docs.yml`): every pull request and every push to `main`
   that changes `docs/` or `mkdocs.yml` builds the pages with MkDocs Material (`--strict`); on
-  `main` they are then published to GitHub Pages (once: Settings → Pages → Source "GitHub Actions"). Locally: `pip install mkdocs-material
-  mkdocs-static-i18n && mkdocs serve`. German is under `/`, English under `/en/`: a page is
-  translated with a file next to it (`index.en.md` for `index.md`); without one, the English
-  page shows the German text. The home page is the tour in pictures, `ueberblick.md` the overview.
+  `main` they are then published with the demo to GitHub Pages under
+  [kontext.email](https://kontext.email/) (once: Settings → Pages → Source "GitHub Actions" and
+  Custom domain `kontext.email`; the DNS is at Cloudflare, A/AAAA on GitHub Pages, without
+  Cloudflare's proxy). Locally: `pip install -r requirements-docs.txt && mkdocs serve`. German is
+  under `/`, English under `/en/`: a page is translated with a file next to it (`index.en.md` for
+  `index.md`); without one, the English page shows the German text. The home page is the tour in
+  pictures, `ueberblick.md` the overview. Every page needs a `description:` in its front matter,
+  for search engines and link previews; the workflow checks it, as it does Open Graph on every
+  page, the structured data on the start page and `robots.txt`. The date under every page comes
+  from the last commit of its file. Not with Zensical as in Haben: it ignores mkdocs-static-i18n.
 - **New versions of Stalwart, LiveKit & Co.** (`.github/renovate.json5`): the
   [Renovate app](https://github.com/apps/renovate) opens a pull request for every new release of
   the images in `deploy/` (Stalwart, LiveKit, LiveKit SIP, Redis, Caddy) and of the Bun base

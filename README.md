@@ -2,7 +2,7 @@
 
 <h1>Kontext – your own alternative to Google Workspace and Microsoft 365</h1>
 
-<a href="https://firsttris.github.io/kontext/en/"><img src="docs/assets/kontext-teaser.en.webp" alt="Kontext in motion: every module at a glance, the inbox with a PDF preview, a video call from the laptop to a phone, Word in the browser with comments, and an AI agent that looks up a customer and leaves a draft" width="900"></a>
+<a href="https://kontext.email/en/"><img src="docs/assets/kontext-teaser.en.webp" alt="Kontext in motion: every module at a glance, the inbox with a PDF preview, a video call from the laptop to a phone, Word in the browser with comments, and an AI agent that looks up a customer and leaves a draft" width="900"></a>
 
 **Mail, calendar, chat, documents and phone for your team – on your own server, open source**<br>
 No per-seat pricing. Made in Europe.
@@ -11,7 +11,7 @@ No per-seat pricing. Made in Europe.
 [![Release](https://img.shields.io/github/v/release/firsttris/kontext?logo=github&label=release)](https://github.com/firsttris/kontext/releases/latest)
 [![Docker Pulls](https://img.shields.io/docker/pulls/tristanteu/kontext?logo=docker&logoColor=white)](https://hub.docker.com/r/tristanteu/kontext)
 [![Platforms](https://img.shields.io/badge/platform-amd64%20%7C%20arm64-lightgrey)](https://hub.docker.com/r/tristanteu/kontext/tags)
-[![Docs](https://img.shields.io/badge/docs-firsttris.github.io%2Fkontext-4f46e5?logo=materialformkdocs&logoColor=white)](https://firsttris.github.io/kontext/en/)
+[![Docs](https://img.shields.io/badge/docs-kontext.email-4f46e5?logo=materialformkdocs&logoColor=white)](https://kontext.email/en/)
 [![License: AGPL-3.0](https://img.shields.io/badge/license-AGPL--3.0-blue)](LICENSE)
 [![Stalwart 1.0](https://img.shields.io/badge/Stalwart-1.0-18181b)](https://stalw.art)
 [![JMAP](https://img.shields.io/badge/JMAP-mail%20%7C%20calendar%20%7C%20contacts-0f766e)](https://jmap.io)
@@ -25,7 +25,7 @@ No per-seat pricing. Made in Europe.
 [![Vite](https://img.shields.io/badge/Vite-646cff?logo=vite&logoColor=white)](https://vite.dev)
 [![Hono](https://img.shields.io/badge/Hono-e36002?logo=hono&logoColor=white)](https://hono.dev)
 [![SQLite](https://img.shields.io/badge/SQLite-Drizzle-003b57?logo=sqlite&logoColor=white)](https://orm.drizzle.team)
-[![MCP server](https://img.shields.io/badge/MCP-Claude-d97757)](https://firsttris.github.io/kontext/en/agents.html)
+[![MCP server](https://img.shields.io/badge/MCP-Claude-d97757)](https://kontext.email/en/agents.html)
 
 [Why](#-why-kontext) •
 [Install](#-install) •
@@ -33,10 +33,10 @@ No per-seat pricing. Made in Europe.
 [Screenshots](#-screenshots) •
 [Alternatives](#-kontext-and-the-alternatives) •
 [FAQ](#-faq) •
-[Documentation](https://firsttris.github.io/kontext/en/) •
+[Documentation](https://kontext.email/en/) •
 [Deutsch](README.de.md)
 
-▶️ **[Watch the film (2 min)](https://firsttris.github.io/kontext/en/)** · 🖱️ **[Try the demo](https://firsttris.github.io/kontext/demo/)** – in your browser, nothing to install
+▶️ **[Watch the film (2 min)](https://kontext.email/en/)** · 🖱️ **[Try the demo](https://kontext.email/demo/)** – in your browser, nothing to install
 
 </div>
 
@@ -59,7 +59,7 @@ of your own.
 - **Built for the phone too**: every view works on the phone, swipe a mail to archive it, and it
   installs as an app without an app store.
 - **Accessible by keyboard**: every view works without a mouse, with visible focus and a skip
-  link, in light and dark – [more on accessibility](https://firsttris.github.io/kontext/en/accessibility.html).
+  link, in light and dark – [more on accessibility](https://kontext.email/en/accessibility.html).
 - **AI if you want it**: Claude and other assistants find customers, mails and appointments for you
   and write drafts – they never send or delete anything.
 - **Open, no lock-in**: open source (AGPL) and standard protocols, so Outlook, Thunderbird, iPhone
@@ -73,7 +73,7 @@ businesses · self-hosters looking for a web client for [Stalwart](https://stalw
 ### 1. Let an agent set it up
 
 Give Claude Code or another coding agent this repository and SSH access to your server and say:
-"Set up Kontext on my server following the [installation guide](https://firsttris.github.io/kontext/en/installation.html)."
+"Set up Kontext on my server following the [installation guide](https://kontext.email/en/installation.html)."
 
 ### 2. Manually
 
@@ -88,7 +88,7 @@ docker compose -f deploy/compose.yaml up -d   # pulls Kontext, Stalwart and Cadd
 ```
 
 Then the main steps in Stalwart's admin (port 8080, only through an SSH tunnel or Tailscale); the
-[guide](https://firsttris.github.io/kontext/en/installation.html#3-stalwart-einrichten) lists all of them:
+[guide](https://kontext.email/en/installation.html#3-stalwart-einrichten) lists all of them:
 
 1. Set up the domain and DKIM and create the boss's account; the boss adds everyone else in Kontext.
 2. Enter Kontext's network `10.89.250.0/24` as an allowed IP, so that wrong passwords never get
@@ -96,7 +96,7 @@ Then the main steps in Stalwart's admin (port 8080, only through an SSH tunnel o
 3. Run `docker compose -f deploy/compose.yaml exec kontext bun server/setup-stalwart.ts` and give
    it Stalwart's admin login: it registers Kontext as the OAuth client `kontext` with the scope
    `full`, allows directory queries and creates the role, account and API key for the company admin
-   ([what it does](https://firsttris.github.io/kontext/en/installation.html#einrichtungsbefehl)). It
+   ([what it does](https://kontext.email/en/installation.html#einrichtungsbefehl)). It
    only adds what is missing, so run it again after every update.
 4. Put the line `STALWART_ADMIN_KEY=…` it prints into `deploy/.env` and start Kontext again
    (`docker compose -f deploy/compose.yaml up -d`).
@@ -105,24 +105,24 @@ Then the main steps in Stalwart's admin (port 8080, only through an SSH tunnel o
 Calls and documents (Schreibzeug, no install of its own needed) are switched on in `.env.example`; to leave them out, remove them from
 `COMPOSE_PROFILES`. Telephony adds a small box in the office. Ten users run fine on a VPS with
 2 vCPUs and 4 GB RAM. Everything else – DNS, Podman, backups, updates – is in the
-[installation guide](https://firsttris.github.io/kontext/en/installation.html).
+[installation guide](https://kontext.email/en/installation.html).
 
 ## ✨ Features
 
 | | |
 |---|---|
-| ✉️ **Mail** | **Shared mailboxes** like info@ with rights per person, **assign mails** with “Assigned to me” and “Open”, **a deputy in one step**, **categories** and **rules on the server**, search like Gmail (also inside PDF and Office attachments), send later and snooze, **other mailboxes** (Gmail, GMX), **warnings about forged senders** · [more →](https://firsttris.github.io/kontext/en/mail.html) |
-| 📅 **Calendar** | Day, week, work week, month and recurring events, working hours shaded, **invitations answered with one click** (also from Outlook and Google), **who is free?**, a **video meeting per event**, shared calendars (shown or hidden on every device) and **subscriptions** (iCal), public holidays and the contacts' birthdays · [more →](https://firsttris.github.io/kontext/en/calendar-contacts.html) |
-| 👥 **Contacts** | **The customer at a glance**: latest mails, next appointments, open tasks and calls; groups, vCard and CSV import, merging duplicates, several contacts at once (delete, add to a group, move to another address book, export) · [more →](https://firsttris.github.io/kontext/en/calendar-contacts.html#kontakte) |
-| ✅ **Tasks** | **List or Kanban board** per mailbox and per project, **from a mail, a chat message, an appointment or a missed call**, reminders, in Thunderbird and on the phone via CalDAV · [more →](https://firsttris.github.io/kontext/en/tasks.html) |
-| 💬 **Team chat & video** | Channels and direct messages **as bubbles (your own on the right)**, **mails and tasks as cards**, threads with **"also send to channel"**, **reactions with any emoji**, voice messages, **video calls and screen sharing** on your own server, end-to-end encrypted conversations · [more →](https://firsttris.github.io/kontext/en/chat.html) |
-| 📞 **Telephony (CTI)** | **Your Fritzbox and numbers stay**: calls ring in Kontext with the caller's contact and last mail, **click to call**, **voicemail as mail**, missed calls become tasks · [more →](https://firsttris.github.io/kontext/en/telephony.html) |
-| 🔐 **Encryption** | **OpenPGP** and **S/MIME**, **send confidentially to anyone** through a link to your own server, **automatic encryption when sending** to recipients with a known key, mails stored encrypted on the server, **storage encrypted and compressed by the server**, encrypted backups · [more →](https://firsttris.github.io/kontext/en/encryption.html) |
-| 📄 **Documents** | **Word, Excel, PowerPoint and PDF** in Kontext with [Schreibzeug](https://github.com/firsttris/schreibzeug), a folder per shared mailbox · [more →](https://firsttris.github.io/kontext/en/documents.html) |
-| 🤖 **AI agents (MCP)** | Claude and other agents look up customers, mails and appointments with your rights, **write drafts** and **invite colleagues to appointments** – nothing goes outside the company, no deleting, every change logged; or simply ask the **assistant in the chat** (with a Claude API key) · [more →](https://firsttris.github.io/kontext/en/agents.html) |
-| 🏢 **Company admin** | **People, shared mailboxes and rights** without IT skills, **mail rules for each employee**, company signature with each person's phone and position, **legal footer under every mail**, sign-out after inactivity for shared computers, **offboarding without deleting**, backups at a glance, **moving in from Microsoft 365, Gmail and Outlook** · [more →](https://firsttris.github.io/kontext/en/company.html) |
-| 📱 **On every device** | **An app on desktop, Android and iPhone** without an app store, **a short tour on the first start**, push notifications with **badges in the tab bar that show which app has news**, light and dark, two-factor sign-in, **one overview of who has access** (sign out other devices), **built for keyboard and screen reader**, checked automatically against WCAG 2.2 AA on every push ([accessibility](https://firsttris.github.io/kontext/en/accessibility.html)) · [more →](https://firsttris.github.io/kontext/en/app.html) |
-| ♿ **Accessibility** | **Everything by keyboard** with a skip link and visible focus, contrast in light and dark, **reduced motion** · [more →](https://firsttris.github.io/kontext/en/accessibility.html) |
+| ✉️ **Mail** | **Shared mailboxes** like info@ with rights per person, **assign mails** with “Assigned to me” and “Open”, **a deputy in one step**, **categories** and **rules on the server**, search like Gmail (also inside PDF and Office attachments), send later and snooze, **other mailboxes** (Gmail, GMX), **warnings about forged senders** · [more →](https://kontext.email/en/mail.html) |
+| 📅 **Calendar** | Day, week, work week, month and recurring events, working hours shaded, **invitations answered with one click** (also from Outlook and Google), **who is free?**, a **video meeting per event**, shared calendars (shown or hidden on every device) and **subscriptions** (iCal), public holidays and the contacts' birthdays · [more →](https://kontext.email/en/calendar-contacts.html) |
+| 👥 **Contacts** | **The customer at a glance**: latest mails, next appointments, open tasks and calls; groups, vCard and CSV import, merging duplicates, several contacts at once (delete, add to a group, move to another address book, export) · [more →](https://kontext.email/en/calendar-contacts.html#kontakte) |
+| ✅ **Tasks** | **List or Kanban board** per mailbox and per project, **from a mail, a chat message, an appointment or a missed call**, reminders, in Thunderbird and on the phone via CalDAV · [more →](https://kontext.email/en/tasks.html) |
+| 💬 **Team chat & video** | Channels and direct messages **as bubbles (your own on the right)**, **mails and tasks as cards**, threads with **"also send to channel"**, **reactions with any emoji**, voice messages, **video calls and screen sharing** on your own server, end-to-end encrypted conversations · [more →](https://kontext.email/en/chat.html) |
+| 📞 **Telephony (CTI)** | **Your Fritzbox and numbers stay**: calls ring in Kontext with the caller's contact and last mail, **click to call**, **voicemail as mail**, missed calls become tasks · [more →](https://kontext.email/en/telephony.html) |
+| 🔐 **Encryption** | **OpenPGP** and **S/MIME**, **send confidentially to anyone** through a link to your own server, **automatic encryption when sending** to recipients with a known key, mails stored encrypted on the server, **storage encrypted and compressed by the server**, encrypted backups · [more →](https://kontext.email/en/encryption.html) |
+| 📄 **Documents** | **Word, Excel, PowerPoint and PDF** in Kontext with [Schreibzeug](https://github.com/firsttris/schreibzeug), a folder per shared mailbox · [more →](https://kontext.email/en/documents.html) |
+| 🤖 **AI agents (MCP)** | Claude and other agents look up customers, mails and appointments with your rights, **write drafts** and **invite colleagues to appointments** – nothing goes outside the company, no deleting, every change logged; or simply ask the **assistant in the chat** (with a Claude API key) · [more →](https://kontext.email/en/agents.html) |
+| 🏢 **Company admin** | **People, shared mailboxes and rights** without IT skills, **mail rules for each employee**, company signature with each person's phone and position, **legal footer under every mail**, sign-out after inactivity for shared computers, **offboarding without deleting**, backups at a glance, **moving in from Microsoft 365, Gmail and Outlook** · [more →](https://kontext.email/en/company.html) |
+| 📱 **On every device** | **An app on desktop, Android and iPhone** without an app store, **a short tour on the first start**, push notifications with **badges in the tab bar that show which app has news**, light and dark, two-factor sign-in, **one overview of who has access** (sign out other devices), **built for keyboard and screen reader**, checked automatically against WCAG 2.2 AA on every push ([accessibility](https://kontext.email/en/accessibility.html)) · [more →](https://kontext.email/en/app.html) |
+| ♿ **Accessibility** | **Everything by keyboard** with a skip link and visible focus, contrast in light and dark, **reduced motion** · [more →](https://kontext.email/en/accessibility.html) |
 
 <img src="docs/screenshots/phone-call.png" alt="CTI in Kontext: an incoming call from the Fritzbox rings in the browser with the caller's contact, company, number and last mail, next to the inbox" width="900">
 
@@ -130,16 +130,16 @@ Calls and documents (Schreibzeug, no install of its own needed) are switched on 
 
 <table>
   <tr>
-    <td width="50%"><img src="docs/screenshots/shared-mailbox.png" alt="Shared mailbox info@ in Kontext: a customer enquiry about a heat pump with the category In progress"><br><sub><b>Shared mailbox</b> – info@ for the whole team · <a href="https://firsttris.github.io/kontext/en/mail.html">docs →</a></sub></td>
-    <td width="50%"><img src="docs/screenshots/compose.png" alt="Writing a reply in Kontext with the formatting bar, quote and sender selection"><br><sub><b>Writing</b> – rich text, quote, sender · <a href="https://firsttris.github.io/kontext/en/mail.html#schreiben">docs →</a></sub></td>
+    <td width="50%"><img src="docs/screenshots/shared-mailbox.png" alt="Shared mailbox info@ in Kontext: a customer enquiry about a heat pump with the category In progress"><br><sub><b>Shared mailbox</b> – info@ for the whole team · <a href="https://kontext.email/en/mail.html">docs →</a></sub></td>
+    <td width="50%"><img src="docs/screenshots/compose.png" alt="Writing a reply in Kontext with the formatting bar, quote and sender selection"><br><sub><b>Writing</b> – rich text, quote, sender · <a href="https://kontext.email/en/mail.html#schreiben">docs →</a></sub></td>
   </tr>
   <tr>
-    <td><img src="docs/screenshots/calendar.png" alt="Team calendar week view with site meeting, maintenance appointment and month overview"><br><sub><b>Calendar</b> – week, month, availability · <a href="https://firsttris.github.io/kontext/en/calendar-contacts.html">docs →</a></sub></td>
-    <td><img src="docs/screenshots/contacts.png" alt="Contact Markus Hoffmann with upcoming appointments and latest mails, like a small CRM"><br><sub><b>Contacts</b> – the customer at a glance · <a href="https://firsttris.github.io/kontext/en/calendar-contacts.html#kontakte">docs →</a></sub></td>
+    <td><img src="docs/screenshots/calendar.png" alt="Team calendar week view with site meeting, maintenance appointment and month overview"><br><sub><b>Calendar</b> – week, month, availability · <a href="https://kontext.email/en/calendar-contacts.html">docs →</a></sub></td>
+    <td><img src="docs/screenshots/contacts.png" alt="Contact Markus Hoffmann with upcoming appointments and latest mails, like a small CRM"><br><sub><b>Contacts</b> – the customer at a glance · <a href="https://kontext.email/en/calendar-contacts.html#kontakte">docs →</a></sub></td>
   </tr>
   <tr>
-    <td><img src="docs/screenshots/tasks-board.png" alt="Kanban board of the shared mailbox info@ with Open, In progress, Waiting and Done"><br><sub><b>Tasks</b> – a Kanban board per mailbox · <a href="https://firsttris.github.io/kontext/en/tasks.html">docs →</a></sub></td>
-    <td><img src="docs/screenshots/chat.png" alt="Team chat channel with a site report, a shared customer mail as a card and a task made from a message"><br><sub><b>Team chat</b> – mails as cards, tasks from messages · <a href="https://firsttris.github.io/kontext/en/chat.html">docs →</a></sub></td>
+    <td><img src="docs/screenshots/tasks-board.png" alt="Kanban board of the shared mailbox info@ with Open, In progress, Waiting and Done"><br><sub><b>Tasks</b> – a Kanban board per mailbox · <a href="https://kontext.email/en/tasks.html">docs →</a></sub></td>
+    <td><img src="docs/screenshots/chat.png" alt="Team chat channel with a site report, a shared customer mail as a card and a task made from a message"><br><sub><b>Team chat</b> – mails as cards, tasks from messages · <a href="https://kontext.email/en/chat.html">docs →</a></sub></td>
   </tr>
 </table>
 
@@ -176,7 +176,7 @@ mail, calendar, chat and the office phone in one place.
 
 Yes, Kontext: mail with shared mailboxes, calendar, contacts, tasks, team chat with video calls and
 the office phone in one web app on your own server, with documents through
-[Schreibzeug](https://github.com/firsttris/schreibzeug). See the [installation guide](https://firsttris.github.io/kontext/en/installation.html).
+[Schreibzeug](https://github.com/firsttris/schreibzeug). See the [installation guide](https://kontext.email/en/installation.html).
 </details>
 
 <details>
@@ -191,7 +191,7 @@ sets it up and keeps it updated.
 
 Yes, that is what Kontext is: a JMAP web client for mail, calendar and contacts on
 [Stalwart](https://stalw.art), plus tasks, chat, telephony and a company admin area that manages
-Stalwart's accounts and groups. See the [architecture](https://firsttris.github.io/kontext/en/architecture.html).
+Stalwart's accounts and groups. See the [architecture](https://kontext.email/en/architecture.html).
 </details>
 
 <details>
@@ -199,7 +199,7 @@ Stalwart's accounts and groups. See the [architecture](https://firsttris.github.
 
 Yes. A telephone box in the office registers as an IP phone at the Fritzbox; calls then ring in
 Kontext with the caller's contact, last mail and next appointment, and you call out from any
-contact. See [Telephony](https://firsttris.github.io/kontext/en/telephony.html).
+contact. See [Telephony](https://kontext.email/en/telephony.html).
 </details>
 
 <details>
@@ -240,7 +240,7 @@ directly. Kontext is the browser interface on top, and its tasks are CalDAV task
 
 Yes, under *Settings → Company → Migration*: IMAP mailboxes (kept in sync until the move is finished),
 Microsoft 365 through an app in the company's Microsoft account, Outlook as a PST file, contacts and
-calendars from a Google export. See [Company admin and moving in](https://firsttris.github.io/kontext/en/company.html).
+calendars from a Google export. See [Company admin and moving in](https://kontext.email/en/company.html).
 </details>
 
 <details>
@@ -254,7 +254,7 @@ through the provider's server, so recipients see it as genuine.
 <summary><b>Can I use Claude or other AI agents with my mail?</b></summary>
 
 Yes. Kontext is an MCP server, so Claude and other agents can look things up with your rights,
-write drafts and invite colleagues to appointments; they never mail anyone outside or delete anything. See [AI agents](https://firsttris.github.io/kontext/en/agents.html).
+write drafts and invite colleagues to appointments; they never mail anyone outside or delete anything. See [AI agents](https://kontext.email/en/agents.html).
 </details>
 
 <details>
@@ -273,12 +273,12 @@ Report vulnerabilities privately as described in [SECURITY.md](SECURITY.md).
 
 ## 📚 Documentation
 
-The documentation opens with a tour in pictures, made to send to customers: **[in English](https://firsttris.github.io/kontext/en/)** and **[in German](https://firsttris.github.io/kontext/)**.
+The documentation opens with a tour in pictures, made to send to customers: **[in English](https://kontext.email/en/)** and **[in German](https://kontext.email/)**.
 
-The full documentation, in English and German, with search, is at **[firsttris.github.io/kontext](https://firsttris.github.io/kontext/en/)**:
-[every feature in detail](https://firsttris.github.io/kontext/en/ueberblick.html), [installation](https://firsttris.github.io/kontext/en/installation.html),
-[architecture](https://firsttris.github.io/kontext/en/architecture.html) and
-[development](https://firsttris.github.io/kontext/en/development.html). What changed in each release,
+The full documentation, in English and German, with search, is at **[kontext.email](https://kontext.email/en/)**:
+[every feature in detail](https://kontext.email/en/ueberblick.html), [installation](https://kontext.email/en/installation.html),
+[architecture](https://kontext.email/en/architecture.html) and
+[development](https://kontext.email/en/development.html). What changed in each release,
 with the steps an update needs, is in the [changelog](CHANGELOG.md); what comes next is in the
 [roadmap](ROADMAP.md).
 
@@ -298,7 +298,7 @@ mailboxes. `bun run dev:stalwart -- --fresh --seed` resets the test data.
 
 React, TanStack Router/Query, Tailwind and Tiptap in the browser; a small Bun server with Hono,
 Better Auth and SQLite (Drizzle) for sign-in, JMAP to Stalwart, chat and tasks; LiveKit for calls,
-Asterisk in the telephone box. Tests, CI and releases: [Development](https://firsttris.github.io/kontext/en/development.html).
+Asterisk in the telephone box. Tests, CI and releases: [Development](https://kontext.email/en/development.html).
 
 ## 🧩 More from us
 

@@ -107,7 +107,7 @@ export const SecuritySection = () => {
       ))}
       <p className="m-0 rounded-lg border border-border px-3 py-2.5 text-[13px] text-muted">
         {m.security_disk()}{" "}
-        <a href="https://firsttris.github.io/kontext/encryption/" target="_blank" rel="noreferrer">
+        <a href="https://kontext.email/encryption.html" target="_blank" rel="noreferrer">
           {m.security_guide()}
         </a>
       </p>

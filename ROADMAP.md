@@ -3,7 +3,7 @@
 The features coming next to Kontext, sorted by benefit: the most useful first. The order is a
 plan, not a promise; wishes are welcome as an [issue](https://github.com/firsttris/kontext/issues).
 What is already done is in the [changelog](CHANGELOG.md) and the
-[documentation](https://firsttris.github.io/kontext/en/). Auf Deutsch: [ROADMAP.de.md](ROADMAP.de.md).
+[documentation](https://kontext.email/en/). Auf Deutsch: [ROADMAP.de.md](ROADMAP.de.md).
 
 ## New in Stalwart
 

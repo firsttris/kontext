@@ -1,7 +1,7 @@
 blank_issues_enabled: true
 contact_links:
   - name: Documentation
-    url: https://firsttris.github.io/kontext/
+    url: https://kontext.email/
     about: Installation, every feature in detail, architecture and development (German).
   - name: Report a security vulnerability
     url: https://github.com/firsttris/kontext/security/advisories/new

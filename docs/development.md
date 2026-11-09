@@ -173,7 +173,7 @@ Seed (`dev/stalwart.ts --seed`) füllt nur Stalwart.
 
 ## Demo
 
-Die [Demo](https://firsttris.github.io/kontext/demo/) ist die App ohne Server: Ein eigener Build
+Die [Demo](https://kontext.email/demo/) ist die App ohne Server: Ein eigener Build
 (`bun run build:demo`, Vite-Modus `demo`, nach `dist-demo/`) beantwortet die Anfragen an `/jmap`
 und `/api` in der Seite selbst (`src/demo/`). Die Daten sind die Testdaten aus `dev/seed-data.ts`
 ohne die XSS-Testmail, als JMAP-Objekte im Browser; Neu laden fängt von vorn an. Man meldet sich
@@ -215,11 +215,11 @@ mit einem Klick als Jonas, Anna, Sandra oder Max an.
   wie auf einem Server ohne sie abgeschaltet (`src/demo/api.ts`).
 - **Neue Server-Route:** Fragt die App beim Start eine neue `/api`-Route ab, braucht sie in
   `src/demo/api.ts` eine Antwort, sonst steht `[demo] GET /api/…` in der Konsole.
-- **Ausprobieren:** `bun run build:demo`, dann `dist-demo/` unter `/kontext/demo/` ausliefern
+- **Ausprobieren:** `bun run build:demo`, dann `dist-demo/` unter `/demo/` ausliefern
   (oder mit `DEMO_BASE=/ bun run build:demo` unter `/`). Die Routen stehen hinter `#`, weil GitHub
   Pages keine Weiterleitung auf `index.html` kennt; einen Service Worker hat die Demo nicht.
 - **Veröffentlicht** wird sie vom Docs-Workflow bei jedem Push auf `main`, neben der Doku unter
-  `/kontext/demo/`.
+  `/demo/`.
 
 ## Tests
 
@@ -355,10 +355,17 @@ Actions → _Update video_ → Run workflow (oder `bun run video`, braucht ffmpe
   nicht; ein Release danach testet dann selbst, bevor es baut.
 - **Dokumentation** (`.github/workflows/docs.yml`): jeder Pull Request und jeder Push auf `main`,
   der `docs/` oder `mkdocs.yml` ändert, baut die Seiten mit MkDocs Material (`--strict`); auf `main`
-  werden sie danach auf GitHub Pages veröffentlicht (einmalig: Settings → Pages → Source „GitHub Actions“). Lokal: `pip install mkdocs-material
-  mkdocs-static-i18n && mkdocs serve`. Deutsch steht unter `/`, Englisch unter `/en/`: Übersetzt wird
-  eine Seite mit einer Datei daneben (`index.en.md` zu `index.md`); ohne sie zeigt die englische
-  Seite den deutschen Text. Die Startseite ist der Rundgang in Bildern, `ueberblick.md` die Übersicht.
+  werden sie danach mit der Demo auf GitHub Pages unter [kontext.email](https://kontext.email/)
+  veröffentlicht (einmalig: Settings → Pages → Source „GitHub Actions“ und Custom domain
+  `kontext.email`; der DNS liegt bei Cloudflare, A/AAAA auf GitHub Pages, ohne Cloudflare-Proxy).
+  Lokal: `pip install -r requirements-docs.txt && mkdocs serve`. Deutsch steht unter `/`, Englisch
+  unter `/en/`: Übersetzt wird eine Seite mit einer Datei daneben (`index.en.md` zu `index.md`);
+  ohne sie zeigt die englische Seite den deutschen Text. Die Startseite ist der Rundgang in Bildern,
+  `ueberblick.md` die Übersicht. Jede Seite braucht im Front Matter eine `description:`, für
+  Suchmaschinen und die Vorschau beim Teilen eines Links; der Workflow prüft das, ebenso Open Graph
+  auf jeder Seite, die strukturierten Daten auf der Startseite und `robots.txt`. Das Datum unter
+  jeder Seite kommt aus dem letzten Commit ihrer Datei. Nicht mit Zensical wie bei Haben: Es
+  übergeht mkdocs-static-i18n.
 - **Neue Versionen von Stalwart, LiveKit & Co.** (`.github/renovate.json5`): Die
   [Renovate-App](https://github.com/apps/renovate) öffnet für jedes neue Release der Images in
   `deploy/` (Stalwart, LiveKit, LiveKit SIP, Redis, Caddy) und der Bun-Basis-Images in den

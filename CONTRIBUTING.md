@@ -2,8 +2,8 @@
 
 Issues and pull requests are welcome. Kontext is a web app and a small Bun server in front of the
 Stalwart mail server; how the pieces fit is in the
-[architecture](https://firsttris.github.io/kontext/architecture.html), how to run it locally in
-[development](https://firsttris.github.io/kontext/development.html) (both in German).
+[architecture](https://kontext.email/architecture.html), how to run it locally in
+[development](https://kontext.email/development.html) (both in German).
 
 ## Reporting bugs and ideas
 
@@ -41,7 +41,7 @@ Run these before every push; CI runs the same:
 bun install --frozen-lockfile
 bun run typecheck && bun run lint && bun run test && bun run build   # or: bun run check
 bun run e2e              # own Stalwart on 28080, server on 28090, Vite on 5174, seeded fresh
-mkdocs build --strict    # when docs/ or mkdocs.yml changed (pip install mkdocs-material mkdocs-static-i18n)
+mkdocs build --strict    # when docs/ or mkdocs.yml changed (pip install -r requirements-docs.txt)
 ```
 
 `bun run e2e` needs Playwright's Chromium once (`bunx playwright install chromium`). The ports of

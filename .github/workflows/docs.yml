@@ -1,5 +1,8 @@
 # Builds docs/ with MkDocs Material and the demo (src/demo, `bun run build:demo`) and publishes
-# both on GitHub Pages: https://firsttris.github.io/kontext/ and …/kontext/demo/
+# both on GitHub Pages: https://kontext.email/ and https://kontext.email/demo/
+# The domain is set under Settings → Pages → Custom domain; its DNS is at Cloudflare (A/AAAA on
+# GitHub Pages, www as CNAME on firsttris.github.io, without Cloudflare's proxy, so GitHub can
+# issue the certificate). firsttris.github.io/kontext/ redirects there.
 # On a push to main it runs for every change, as the demo is the app; on a pull request it only
 # builds the docs (--strict), so broken links show up before the merge – CI builds the app.
 # One-time prerequisite: Settings → Pages → Source "GitHub Actions"
@@ -14,6 +17,7 @@ on:
       - "docs/**"
       - "mkdocs.yml"
       - "overrides/**"
+      - "requirements-docs.txt"
       - ".github/workflows/docs.yml"
   workflow_dispatch:
 
@@ -31,11 +35,36 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
+        with:
+          # The whole history: the date under every page comes from the last commit of its file
+          fetch-depth: 0
       - uses: actions/setup-python@v7
         with:
           python-version: "3.15"
-      - run: pip install mkdocs-material mkdocs-static-i18n
+          cache: pip
+          cache-dependency-path: requirements-docs.txt
+      - run: pip install -r requirements-docs.txt
       - run: mkdocs build --strict
+        env:
+          NO_MKDOCS_2_WARNING: "1"
+      # Search engines: every page with its own description in the front matter (else every page
+      # had site_description), Open Graph on every page, structured data on both start pages,
+      # noindex only on the 404 page and the pages that moved (overrides/main.html,
+      # overrides/redirect.html), robots.txt with the sitemap
+      - run: |
+          test -z "$(grep -L '^description:' $(grep -L '^template: redirect.html' docs/*.md))"
+      - run: |
+          test -z "$(grep -L 'property="og:image"' site/*.html site/en/*.html | grep -v 'entdecken.html$')"
+      - run: |
+          grep -q 'application/ld+json' site/index.html && grep -q 'application/ld+json' site/en/index.html
+      # The structured data points to the installation page in the start page's language
+      - run: |
+          grep -q '"installUrl": "https://kontext.email/installation.html"' site/index.html
+          grep -q '"installUrl": "https://kontext.email/en/installation.html"' site/en/index.html
+      - run: |
+          test -z "$(grep -l 'name="robots" content="noindex"' site/*.html site/en/*.html | grep -v -e '^site/404.html$' -e 'entdecken.html$')"
+      - run: |
+          grep -q '^Sitemap: https://kontext.email/sitemap.xml' site/robots.txt
       - if: github.event_name != 'pull_request'
         uses: oven-sh/setup-bun@v2
         with:
