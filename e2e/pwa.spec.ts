@@ -77,7 +77,7 @@ test.describe("App (PWA)", () => {
     await controlled(page);
     await context.setOffline(true);
     await page.reload();
-    await expect(page.getByRole("button", { name: "Anmelden" })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Anmelden", exact: true })).toBeVisible();
     await expect(page.getByText("Keine Verbindung.")).toBeVisible();
     await context.setOffline(false);
   });

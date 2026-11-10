@@ -127,6 +127,13 @@ ohnehin die neue. Updates des Servers spielt der Betreiber ein
   1Password). „Einrichten“, den QR-Code mit der App scannen (oder den Schlüssel von Hand
   eingeben), den angezeigten Code und das Passwort eingeben, „Einschalten“. Zum Ausschalten
   braucht es Passwort und aktuellen Code. Ob sie an ist, zeigt die Seite auf einen Blick.
+- **Passkeys** auf derselben Seite: anmelden mit Fingerabdruck, Gesicht oder der PIN des Geräts,
+  ohne Passwort. „Passkey hinzufügen“, einen Namen geben (etwa „MacBook“), Passwort (und Code)
+  eingeben, „Passkey anlegen“ und den Passkey im Dialog des Browsers oder Handys bestätigen. Danach
+  meldet „Mit Passkey anmelden“ auf der Anmeldeseite an, ohne E-Mail-Adresse und ohne Code. Jeder
+  Passkey lässt sich umbenennen und löschen. Der Mailserver bewahrt die Passkeys neben dem
+  Passwort auf. Mailprogramme und Handys melden sich weiter mit Passwort oder App-Passwort an.
+  [Mehr](architecture.md#passkeys)
 - **Zugänge** (*Einstellungen → Zugänge*): wer und was auf das eigene Konto zugreift, an einem
   Ort. Die angemeldeten Browser („Firefox auf Windows“, „Safari auf iPhone“) mit „angemeldet“,
   „zuletzt aktiv“ und IP-Adresse; das eigene ist als „Dieses Gerät“ markiert. Jedes andere lässt

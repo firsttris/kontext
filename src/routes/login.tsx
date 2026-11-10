@@ -1,9 +1,11 @@
 import { createFileRoute, redirect, useNavigate } from "@tanstack/react-router";
+import { KeyRound } from "lucide-react";
 import { type FormEvent, lazy, Suspense, useState } from "react";
-import { useAuth } from "@/auth/auth";
+import { type SignInResult, useAuth } from "@/auth/auth";
 import { signedOAuthQuery } from "@/auth/oauth-query";
 import { Button } from "@/components/ui/button";
 import { Input, Label } from "@/components/ui/input";
+import { passkeysSupported } from "@/lib/webauthn";
 import { z } from "@/lib/zod";
 import { m } from "@/paraglide/messages";
 
@@ -22,8 +24,25 @@ const DemoSignIn =
     ? lazy(() => import("@/demo/demo-sign-in").then((module) => ({ default: module.DemoSignIn })))
     : null;
 
+/** What a failed sign-in says; none for a closed passkey dialog. */
+const problemOf = (
+  result: SignInResult,
+  withCode: boolean,
+  withPasskey: boolean,
+): string | null => {
+  if (result === "cancelled") return null;
+  if (result === "no-passkeys") return m.login_passkey_unavailable();
+  if (result === "failed")
+    return withPasskey
+      ? m.login_passkey_failed()
+      : withCode
+        ? m.login_code_failed()
+        : m.login_failed();
+  return result === "limited" ? m.login_limited() : m.login_offline();
+};
+
 function LoginPage() {
-  const { login } = useAuth();
+  const { login, loginWithPasskey } = useAuth();
   const navigate = useNavigate();
   const { redirect: target } = Route.useSearch();
   const [username, setUsername] = useState("");
@@ -33,11 +52,7 @@ function LoginPage() {
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
-  const submit = async (event: FormEvent) => {
-    event.preventDefault();
-    setBusy(true);
-    setError(null);
-    const result = await login(username.trim(), password, needsCode ? code : undefined);
+  const finish = async (result: SignInResult, withPasskey: boolean) => {
     // On to Schreibzeug or an agent's consent: the page is leaving, the button stays busy.
     if (result === "continue") return;
     setBusy(false);
@@ -46,16 +61,22 @@ function LoginPage() {
     } else if (result === "mfa") {
       setNeedsCode(true);
     } else {
-      setError(
-        result === "failed"
-          ? needsCode
-            ? m.login_code_failed()
-            : m.login_failed()
-          : result === "limited"
-            ? m.login_limited()
-            : m.login_offline(),
-      );
+      setError(problemOf(result, needsCode, withPasskey));
     }
+  };
+
+  const submit = async (event: FormEvent) => {
+    event.preventDefault();
+    setBusy(true);
+    setError(null);
+    await finish(await login(username.trim(), password, needsCode ? code : undefined), false);
+  };
+
+  /** A passkey is a whole sign-in on its own: Stalwart asks no code after it. */
+  const withPasskey = async () => {
+    setBusy(true);
+    setError(null);
+    await finish(await loginWithPasskey(), true);
   };
 
   /** In the demo, to the start: the page before may be someone else's mailbox. */
@@ -136,6 +157,24 @@ function LoginPage() {
             <Button type="submit" variant="primary" size="lg" disabled={busy}>
               {busy ? m.login_busy() : m.login_submit()}
             </Button>
+            {passkeysSupported() && !needsCode ? (
+              <>
+                <div className="flex items-center gap-3 text-[12px] text-muted" aria-hidden="true">
+                  <span className="h-px flex-1 bg-border" />
+                  {m.login_or()}
+                  <span className="h-px flex-1 bg-border" />
+                </div>
+                <Button
+                  variant="outline"
+                  size="lg"
+                  disabled={busy}
+                  onClick={() => void withPasskey()}
+                >
+                  <KeyRound size={16} aria-hidden="true" />
+                  {m.login_passkey()}
+                </Button>
+              </>
+            ) : null}
           </>
         )}
       </form>

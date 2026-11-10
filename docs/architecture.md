@@ -2121,7 +2121,9 @@ Antworten oder wer sonst kommt, zählen nicht als Änderung; vergangene Termine 
 (wie Stalwarts `EventInPast`). Kontext sendet nur, wenn man als Organisator senden darf (eine
 Identität mit dessen Adresse im Konto des Kalenders); ändert man einen Termin im geteilten Kalender
 einer Kollegin, die ihn organisiert, schickt weiter Stalwart. Zusagen im eigenen Kalender gehen
-wie bisher über Stalwart (REPLY an den Organisator).
+wie bisher über Stalwart (REPLY an den Organisator), seit Stalwart 1.1.0 auch bei Terminen, die
+Kontext aus einer Mail ohne Scheduling eingetragen hat (`itip_unscheduled_update` in
+`crates/groupware/src/scheduling/event_create.rs`); vorher ging dort keine Antwort hinaus.
 
 **Wer einlädt** (`organizerFor` in `src/lib/event-form.ts`): Ein Termin behält seinen
 Organisator. Ein neuer im Kalender eines gemeinsamen Postfachs bekommt dessen Adresse, sonst die
@@ -2193,10 +2195,12 @@ Stalwart trägt eine Einladung von außen nur selbst ein, wenn DMARC passt **und
 den Kontakten steht oder `autoAddInvitations` an ist (`itip_ingest` in
 `crates/groupware/src/calendar/itip.rs`, `crates/email/src/message/ingest.rs`). Sonst legt
 Kontext den Termin an. Die **Antwort schickt Kontext selbst** (`src/jmap/mail-invitations.ts`):
-Einen Termin, den der Teilnehmer über JMAP angelegt hat, kennt Stalwart ohne `schedule_tag`, und
-eine Änderung daran gilt ihm als neuer Termin, für den nur der Organisator senden darf
-(`itip_create` und `NotOrganizer` in `crates/jmap/src/calendar_event/set.rs`,
-`crates/groupware/src/scheduling/event_create.rs`). Darum schreibt Kontext die Antwort mit
+Bis Stalwart 1.0.3 galt eine Änderung an einem Termin, den der Teilnehmer über JMAP angelegt hat
+(ohne `schedule_tag`), als neuer Termin, für den nur der Organisator senden darf (`itip_create`
+und `NotOrganizer` in `crates/jmap/src/calendar_event/set.rs`). Seit 1.1.0 schickte Stalwart die
+Antwort dafür selbst (`itip_unscheduled_update`), aber englisch („Accepted: … at 10:00 AM“), ohne
+Kopie in „Gesendet“ und nicht von der gewählten Identität – wie bei den Einladungen bleibt es
+darum bei Kontexts eigener Mail. Kontext schreibt die Antwort mit
 `sendSchedulingMessages: false` in den Termin (trägt die Mail eine neuere Fassung, also eine
 höhere `SEQUENCE`, übernimmt er sie dabei ganz) und schickt danach eine Mail an den Organisator –
 von der Identität mit der eigenen Adresse unter den Eingeladenen, mit einer Zeile Text und dem
@@ -2209,7 +2213,8 @@ dann nicht noch eine zweite Antwort.
 ## Anmeldung
 
 Benutzer und Passwörter bleiben in Stalwart. Bei der Anmeldung schickt die App E-Mail, Passwort
-und – wenn eingerichtet – den Code der Authenticator-App an den Server
+und – wenn eingerichtet – den Code der Authenticator-App (oder die Antwort eines
+[Passkeys](#passkeys)) an den Server
 (`POST /api/auth/sign-in/stalwart`). Der meldet sich über Stalwarts OAuth an (Autorisierungscode
 mit PKCE, ohne Umleitung), legt eine Better-Auth-Sitzung an und setzt ein httpOnly-Cookie. Dafür
 schickt er die Zugangsdaten zusammen mit der Autorisierungsanfrage an Stalwarts `/api/auth` und
@@ -2262,9 +2267,41 @@ der Liste der Freigaben stehen, bis der Refresh-Token abläuft, obwohl ihn niema
 - **App-Passwörter, KI-Agenten, weitere Postfächer:** die vorhandenen Listen, mit „Verwalten“ zum
   jeweiligen Abschnitt.
 
-**Passkeys später:** Better Auth bringt ein Passkey-Plugin mit. Beim Einrichten eines Passkeys legt
-der Server in Stalwart ein App-Passwort für das Gerät an und speichert es verschlüsselt; eine
-Passkey-Anmeldung holt damit den Stalwart-Token. Am Rest ändert sich nichts.
+### Passkeys
+
+Passkeys (WebAuthn) bewahrt Stalwart auf, seit 1.1.0, neben dem Passwort (`x:Passkey`,
+`crates/jmap/src/registry/mapping/passkey.rs`); Better Auth hält weiter nur die Sitzungen. So
+gibt es keine zweite Liste neben Stalwarts Konten, und sobald sich Mailprogramme per OAuth bei
+Stalwart anmelden ([Roadmap](https://github.com/firsttris/kontext/blob/main/ROADMAP.de.md)),
+gelten die Passkeys auch dort.
+
+**Anmelden** (`signInWithPasskey` in `src/auth/auth.tsx`): Die App holt über den Server eine
+Challenge von Stalwart (`POST /api/auth/sign-in/stalwart/passkey-options` → `/api/auth` mit
+`type: "passkeyOptions"`), der Browser lässt sie vom Passkey unterschreiben
+(`navigator.credentials.get`, ohne Liste von Schlüsseln: der Browser bietet an, was er für die
+Seite hat), und die App schickt die Antwort an `POST /api/auth/sign-in/stalwart`. Der Server
+reicht sie als `authCodePasskey` mit derselben Autorisierungsanfrage wie beim Passwort an
+Stalwart weiter (`server/stalwart.ts`); danach geht es weiter wie oben. Ein Passkey ist eine
+ganze Anmeldung: Stalwart fragt danach keinen Code. Stalwart prüft die Unterschrift gegen seine
+öffentliche Adresse (`PasskeyRp::from_issuer`, `crates/common/src/auth/passkey/mod.rs`): Ursprung
+und Relying Party müssen die Seite sein, auf der der Browser unterschreibt. Darum ist
+`STALWART_PUBLIC_URL` die Adresse von Kontext (`deploy/compose.yaml`), und Kontext kann die
+Abfrage auf seiner eigenen Anmeldeseite stellen, ohne Umleitung zu Stalwart. Ein Passkey, den
+Stalwart nicht (mehr) kennt, ist eine fehlgeschlagene Anmeldung; die Seite sagt, wie es
+weitergeht. Fehlversuche zählen je Adresse (Better Auth) und in Stalwarts fail2ban; einen
+Anmeldenamen, gegen den sie zählen könnten, hat ein Passkey nicht.
+
+**Anlegen** (*Einstellungen → Passwort und Sicherheit*, `src/features/settings/passkeys-card.tsx`,
+`src/jmap/passkeys.ts`): `x:Passkey/registrationOptions` mit dem aktuellen Passwort (und dem Code)
+liefert die Optionen, `navigator.credentials.create` macht den Passkey, `x:Passkey/set` legt ihn
+mit Namen und der Antwort des Browsers (`registration`) an; Stalwart prüft Challenge und Ursprung.
+Umbenennen und Löschen gehen über `x:Passkey/set`. Die Umrechnung zwischen Stalwarts base64url
+und den Puffern des Browsers steht in `src/lib/webauthn.ts`. Die Rechte `sysPasskey*` hat die
+Rolle *User* eines neuen Stalwart; einem aktualisierten fehlen sie
+([Installation, Stalwart 1.1.0](installation.md#stalwart-110)), dann bleibt die Karte weg, wie
+bei einem Stalwart vor 1.1.0, der `x:Passkey` nicht kennt. In der Entwicklung ist Stalwarts
+öffentliche Adresse die der App (`--app` in `dev/stalwart.ts`), so dass Passkeys auch dort und in
+den e2e-Tests (`e2e/passkeys.spec.ts`, mit Chromes virtuellem Authenticator) gehen.
 
 Kontext ist außerdem **Anmeldeanbieter**: per OpenID Connect für Schreibzeug, siehe
 [Dokumente](#dokumente), und per OAuth 2.1 für KI-Agenten, siehe [Agenten (MCP)](#agenten-mcp).

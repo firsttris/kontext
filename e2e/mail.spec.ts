@@ -33,7 +33,7 @@ test.describe("Anmeldung", () => {
     await expect(page).toHaveURL(/\/login/);
     await page.getByLabel("E-Mail-Adresse").fill(address("jonas"));
     await page.getByLabel("Passwort").fill("falsch-falsch-falsch");
-    await page.getByRole("button", { name: "Anmelden" }).click();
+    await page.getByRole("button", { name: "Anmelden", exact: true }).click();
     await expect(page.getByRole("alert")).toHaveText("E-Mail-Adresse oder Passwort stimmt nicht.");
   });
 

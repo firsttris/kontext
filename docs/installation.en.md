@@ -720,7 +720,7 @@ docker compose -f deploy/compose.yaml pull && docker compose -f deploy/compose.y
 - `STALWART_VERSION` raises Stalwart, also fixed and by hand: `git pull` never changes the mail
   server on its own. Raise it to the version in `.env.example` together with `KONTEXT_VERSION` of
   the same Kontext release, after the steps the changelog names for it (like the scope for
-  [Stalwart 1.0.3](#stalwart-103)).
+  [Stalwart 1.0.3](#stalwart-103) or the roles for [Stalwart 1.1.0](#stalwart-110)).
 - LiveKit, LiveKit SIP, Redis and Caddy have fixed versions in `deploy/compose.yaml`; new ones
   come with `git pull`, and `pull` fetches them.
 - If `deploy/Caddyfile` has changed, reload Caddy:
@@ -762,6 +762,40 @@ docker compose -f deploy/compose.yaml up -d
 Before a Stalwart update to a new major version, read Stalwart's `UPGRADING` notes and
 make a backup first. After every update, run the [setup command](#einrichtungsbefehl) again; it
 only adds what a new version needs and is still missing.
+
+### Stalwart 1.1.0 { #stalwart-110 }
+
+Stalwart 1.1.0 brings **passkeys**: under *Settings → Password and security* everyone adds their
+passkeys, and "Sign in with a passkey" signs in without a password
+([App, phone and account](app.md#profil-passwort-und-anmeldung-mit-code)). Stalwart keeps them
+beside the password and checks them against its public address; that is Kontext's
+(`STALWART_PUBLIC_URL=https://<KONTEXT_DOMAIN>` in `compose.yaml`, `Environment=STALWART_PUBLIC_URL`
+in `stalwart.container`). With another address there, Stalwart refuses every passkey the browser
+signs on Kontext's page.
+
+Raise `STALWART_VERSION=1.1.0` in `deploy/.env` (Quadlet: `Image=…/stalwart:v1.1.0`) together with
+the new Kontext version. Kontext keeps running with 1.0.3 too; only the passkeys are missing then.
+
+A Stalwart set up before 1.1.0 keeps its default roles: the role *User* lacks the rights
+`sysPasskey*`, and the passkeys do not show in the settings. The
+[setup command](#einrichtungsbefehl) says so ("Hinweis: Die Standardrolle der Benutzer hat keine
+Rechte für Passkeys"). Then start Stalwart once with `STALWART_UPDATE_ROLE_PERMISSIONS=true` and
+remove the variable afterwards:
+
+```bash
+docker compose -f deploy/compose.yaml stop stalwart
+docker compose -f deploy/compose.yaml run -d --name stalwart-roles -e STALWART_UPDATE_ROLE_PERMISSIONS=true stalwart
+docker logs -f stalwart-roles    # until Stalwart runs, then Ctrl+C
+docker rm -f stalwart-roles && docker compose -f deploy/compose.yaml up -d stalwart
+```
+
+With Quadlet add the line `Environment=STALWART_UPDATE_ROLE_PERMISSIONS=true` to
+`stalwart.container`, `systemctl daemon-reload && systemctl restart stalwart`, delete the line again
+and reload and restart once more.
+
+From 1.1.0 on, Stalwart also sends the answer to an invitation for appointments Kontext put into
+the calendar from a mail, when you accept in the calendar ([architecture,
+invitations](architecture.md#einladungen)).
 
 ### Stalwart 1.0.3 { #stalwart-103 }
 

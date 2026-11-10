@@ -11,12 +11,14 @@ vi.mock("./db", async () => ({
 // Jonas' password is right; his account wants a second factor.
 vi.mock("./stalwart", async (importOriginal) => ({
   ...(await importOriginal<typeof import("./stalwart")>()),
-  loginAtStalwart: async (_url: string, body: { password: string; code?: string }) => {
+  loginAtStalwart: async (_url: string, body: { password?: string; code?: string }) => {
+    if (!body.password) return { status: "failed" }; // a passkey Stalwart does not know
     if (body.password === "stalwart-down") return { status: "unavailable" };
     if (body.password !== "right") return { status: "failed" };
     if (!body.code) return { status: "mfa" };
     return { status: "failed" }; // every code tried here is wrong
   },
+  passkeyOptionsAtStalwart: async () => ({ challenge: "ch", rpId: "kontext.test", timeout: 1 }),
 }));
 
 const env = readEnv({
@@ -82,5 +84,34 @@ describe("the per-login limit while Stalwart is away", () => {
       );
     for (let i = 0; i < 12; i++) expect((await as("stalwart-down")).status).toBe(503);
     expect((await as("wrong")).status).toBe(401);
+  });
+});
+
+describe("signing in with a passkey", () => {
+  const post = (path: string, body: unknown) =>
+    auth.handler(
+      new Request(`https://kontext.test/api/auth${path}`, {
+        method: "POST",
+        headers: { "content-type": "application/json", origin: "https://kontext.test" },
+        body: JSON.stringify(body),
+      }),
+    );
+  const passkey = {
+    rawId: "a2V5",
+    response: { clientDataJSON: "Y2Q", authenticatorData: "YWQ", signature: "c2ln" },
+  };
+
+  it("hands out Stalwart's challenge", async () => {
+    const response = await post("/sign-in/stalwart/passkey-options", {});
+    expect(await response.json()).toEqual({ challenge: "ch", rpId: "kontext.test", timeout: 1 });
+  });
+
+  it("refuses a passkey Stalwart does not know, without a login name to count against", async () => {
+    expect((await post("/sign-in/stalwart", { passkey })).status).toBe(401);
+  });
+
+  it("refuses an assertion that is no base64url", async () => {
+    const broken = { ...passkey, rawId: "<script>" };
+    expect((await post("/sign-in/stalwart", { passkey: broken })).status).toBe(400);
   });
 });

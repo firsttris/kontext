@@ -1,10 +1,12 @@
 /**
  * The answer to an invitation from someone else (iTIP REPLY, RFC 5546 §3.2.3; iMIP, RFC 6047),
- * sent by Kontext to the organizer. Stalwart does not send it for these: an event the attendee put
- * into the calendar over JMAP has no schedule tag, and without one an update counts as a new
- * event, which only an organizer may send for (`itip_create` / `itip_update` in
- * crates/jmap/src/calendar_event/set.rs). Outlook, Gmail and Apple enter the answer into the
- * organizer's event; Stalwart does so too (crates/email/src/message/ingest.rs). Pure.
+ * sent by Kontext to the organizer from the invitation in the mail. Since Stalwart 1.1.0 Stalwart
+ * would send one too for an event the attendee put into the calendar over JMAP
+ * (`itip_unscheduled_update` in crates/groupware/src/scheduling/event_create.rs), but in English
+ * ("Accepted: … at 10:00 AM"), from the account's address and without a copy in "Gesendet"; so
+ * Kontext writes the answer without Stalwart's scheduling and sends its own, as it sends its
+ * invitations (invitations.ts). Outlook, Gmail and Apple enter the answer into the organizer's
+ * event; Stalwart does so too (crates/email/src/message/ingest.rs). Pure.
  */
 import { m } from "@/paraglide/messages";
 import { fold, paramValue, utcStamp, writeText } from "./ical-text";

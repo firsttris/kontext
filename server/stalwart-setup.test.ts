@@ -10,8 +10,12 @@ import {
   hasApiKey,
   KONTEXT_SERVER_RIGHTS,
   oauthClientPlan,
+  PASSKEY_RIGHTS,
+  PASSKEY_RIGHTS_HINT,
+  passkeyRightsMessage,
   pickDomain,
   type Request,
+  type Role,
   rolePlan,
 } from "./stalwart-setup";
 
@@ -279,5 +283,50 @@ describe("the role on a Stalwart updated from before 1.0.2", () => {
     const result = await ensureRole(request);
     expect(result).toMatchObject({ ok: true, value: { id: "f" } });
     expect(result.ok && result.value.message).toContain("1.0.2");
+  });
+});
+
+describe("the passkey rights of new users", () => {
+  const all = Object.fromEntries(PASSKEY_RIGHTS.map((right) => [right, true]));
+
+  it("are there on a new Stalwart 1.1.0, whose User role has them", () => {
+    const roles = [
+      { id: "b", description: "User", enabledPermissions: { ...all, emailSend: true } },
+    ];
+    expect(passkeyRightsMessage(roles, ["b"])).not.toBe(PASSKEY_RIGHTS_HINT);
+  });
+
+  it("count when inherited from another role", () => {
+    const roles = [
+      { id: "b", description: "User", roleIds: { p: true } },
+      { id: "p", description: "Passkeys", enabledPermissions: all },
+    ];
+    expect(passkeyRightsMessage(roles, ["b"])).not.toBe(PASSKEY_RIGHTS_HINT);
+  });
+
+  it("are missing on a server updated from before 1.1.0: the admin gets the hint", () => {
+    const roles = [{ id: "b", description: "User", enabledPermissions: { emailSend: true } }];
+    expect(passkeyRightsMessage(roles, ["b"])).toBe(PASSKEY_RIGHTS_HINT);
+  });
+
+  it("are missing when a role disables them, as Stalwart takes disabled ones away (PermissionsGroup::finalize)", () => {
+    const roles: Role[] = [
+      {
+        id: "b",
+        description: "User",
+        roleIds: { p: true },
+        disabledPermissions: { sysPasskeyCreate: true },
+      },
+      { id: "p", description: "Passkeys", enabledPermissions: all },
+    ];
+    expect(passkeyRightsMessage(roles, ["b"])).toBe(PASSKEY_RIGHTS_HINT);
+  });
+
+  it("do not loop on roles that inherit each other", () => {
+    const roles: Role[] = [
+      { id: "a", description: "A", roleIds: { b: true } },
+      { id: "b", description: "B", roleIds: { a: true } },
+    ];
+    expect(passkeyRightsMessage(roles, ["a"])).toBe(PASSKEY_RIGHTS_HINT);
   });
 });
