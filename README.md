@@ -266,9 +266,19 @@ German and English, per device under *Settings → Appearance → Language* (oth
 <details>
 <summary><b>Is it secure?</b></summary>
 
-Check it yourself, the code is open: let your agent run Cloudflare's [Security Audit Skill](https://github.com/cloudflare/security-audit-skill) or
-Claude Code's `/security-review` on this repository.
-Report vulnerabilities privately as described in [SECURITY.md](SECURITY.md).
+We checked, and you can too: the code is open.
+
+- **Checked:** with Cloudflare's [Security Audit Skill](https://github.com/cloudflare/security-audit-skill) and
+  Claude Code's `/security-review`. Feel free to let your agent run them on this repository itself.
+- **Secured:** the browser holds only an httpOnly cookie, the Stalwart tokens are stored encrypted on
+  the server; Stalwart's storage is encrypted, backups go encrypted and immutable (Object Lock) to S3
+  storage; a mail loads images from the internet only when asked to; AI agents never send anything
+  out and never delete.
+- **Kept up to date:** Renovate brings dependency updates as pull requests through CI; known
+  vulnerabilities (Dependabot alerts and the OSV database) it fixes outside the schedule, see
+  [SECURITY.md](SECURITY.md#keeping-dependencies-up-to-date).
+- **Open to everyone:** anyone can read the code and report vulnerabilities, please privately as
+  described in [SECURITY.md](SECURITY.md).
 </details>
 
 ## 📚 Documentation
