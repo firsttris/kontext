@@ -309,6 +309,19 @@ describe("the passkey rights of new users", () => {
     expect(passkeyRightsMessage(roles, ["b"])).toBe(PASSKEY_RIGHTS_HINT);
   });
 
+  it("are missing when a role disables them, as Stalwart takes disabled ones away (PermissionsGroup::finalize)", () => {
+    const roles: Role[] = [
+      {
+        id: "b",
+        description: "User",
+        roleIds: { p: true },
+        disabledPermissions: { sysPasskeyCreate: true },
+      },
+      { id: "p", description: "Passkeys", enabledPermissions: all },
+    ];
+    expect(passkeyRightsMessage(roles, ["b"])).toBe(PASSKEY_RIGHTS_HINT);
+  });
+
   it("do not loop on roles that inherit each other", () => {
     const roles: Role[] = [
       { id: "a", description: "A", roleIds: { b: true } },
