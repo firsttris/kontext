@@ -1,11 +1,11 @@
 /**
  * What Kontext needs in Stalwart, set up idempotently: the OAuth client `kontext` with the scope
  * `full`, directory queries, and the role, account and API key of the Kontext server
- * (docs/installation.md). Used by the admin's command (server/setup-stalwart.ts) and by the dev
+ * (docs/installation.md), and a word when people may not keep passkeys. Used by the admin's command (server/setup-stalwart.ts) and by the dev
  * Stalwart (dev/stalwart.ts). The pure functions compute what is missing from what Stalwart
  * returns; the `ensure…` functions read, apply that and say in German what they did.
  *
- * Objects and properties: crates/registry/src/schema/structs.rs of stalwartlabs/stalwart v1.0.3
+ * Objects and properties: crates/registry/src/schema/structs.rs of stalwartlabs/stalwart v1.1.0
  * (OAuthClient, Sharing, Role, UserAccount, Credential, SecondaryCredential, CustomRoles), the
  * permission names in crates/registry/src/schema/enums_impl.rs (Permission::as_str).
  */
@@ -62,6 +62,46 @@ export const GATEWAY_RIGHTS_HINT =
   "einer Version vor 1.0.2 aktualisiert); ohne sie kann Kontext nicht beim Versand verschlüsseln. " +
   "Der Admin-Rolle die Rechte geben, wie es Stalwarts Changelog zu 1.0.2 beschreibt " +
   "(https://github.com/stalwartlabs/stalwart/blob/main/CHANGELOG.md), dann den Befehl erneut ausführen.";
+
+/**
+ * What the passkeys in the settings need (x:Passkey, src/jmap/passkeys.ts). A new server's User
+ * role has them; one updated from before 1.1.0 keeps its roles as they were until Stalwart starts
+ * once with STALWART_UPDATE_ROLE_PERMISSIONS=true (CHANGELOG.md of Stalwart, 1.1.0).
+ */
+export const PASSKEY_RIGHTS = [
+  "sysPasskeyGet",
+  "sysPasskeyCreate",
+  "sysPasskeyUpdate",
+  "sysPasskeyDestroy",
+] as const;
+
+export const PASSKEY_RIGHTS_HINT =
+  "Hinweis: Die Standardrolle der Benutzer hat keine Rechte für Passkeys (Stalwart wurde von einer " +
+  "Version vor 1.1.0 aktualisiert); ohne sie fehlen die Passkeys in Kontexts Einstellungen. Stalwart " +
+  "einmal mit STALWART_UPDATE_ROLE_PERMISSIONS=true starten, danach die Variable wieder entfernen " +
+  "(docs/installation.md, Stalwart 1.1.0).";
+
+/** The rights a role has, with those of the roles it inherits. */
+const rightsOf = (roles: Role[], id: string, seen = new Set<string>()): Set<string> => {
+  const role = roles.find((candidate) => candidate.id === id);
+  if (!role || seen.has(id)) return new Set();
+  seen.add(id);
+  const inherited = Object.keys(role.roleIds ?? {}).flatMap((parent) => [
+    ...rightsOf(roles, parent, seen),
+  ]);
+  const own = Object.keys(role.enabledPermissions ?? {}).filter(
+    (right) => role.enabledPermissions?.[right],
+  );
+  return new Set([...inherited, ...own]);
+};
+
+/** Whether the roles new users get let them keep passkeys; a hint for the admin when not. Pure. */
+export const passkeyRightsMessage = (roles: Role[], userRoleIds: string[]): string => {
+  const rights = new Set(userRoleIds.flatMap((id) => [...rightsOf(roles, id)]));
+  return PASSKEY_RIGHTS.every((right) => rights.has(right))
+    ? "Passkeys sind für die Benutzer erlaubt."
+    : PASSKEY_RIGHTS_HINT;
+};
 
 /** Stalwart's refusal of rights the admin does not hold (build_set_error, principal.rs). */
 const isGrantRefusal = (error: string): boolean =>
@@ -344,6 +384,21 @@ export const ensureRole = async (
   if (!result.ok) return fail(`Rolle „${ROLE_NAME}“: ${result.error}`);
   const id = result.value.created?.role?.id ?? roles.find((r) => r.description === ROLE_NAME)?.id;
   return id ? ok({ id, message }) : fail(`Rolle „${ROLE_NAME}“ nicht angelegt.`);
+};
+
+/** Reads the default user roles and says whether they allow passkeys; changes nothing. */
+export const checkPasskeyRights = async (request: Request): Promise<Result<string>> => {
+  const [auth] = await getList<{ defaultUserRoleIds?: Record<string, boolean> }>(request, [
+    "x:Authentication/get",
+    { ids: ["singleton"], properties: ["defaultUserRoleIds"] },
+    "0",
+  ]);
+  const roles = await getList<Role>(request, [
+    "x:Role/get",
+    { ids: null, properties: ["description", "roleIds", "enabledPermissions"] },
+    "0",
+  ]);
+  return ok(passkeyRightsMessage(roles, Object.keys(auth?.defaultUserRoleIds ?? {})));
 };
 
 const applyRole = async (request: Request, plan: Plan, hint?: string) => ({

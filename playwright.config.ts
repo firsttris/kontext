@@ -101,7 +101,7 @@ export default defineConfig({
   ],
   webServer: [
     {
-      command: `bun dev/stalwart.ts --instance e2e --http ${STALWART_PORT} --smtp 20025 --imap 20143 --fresh --seed`,
+      command: `bun dev/stalwart.ts --instance e2e --http ${STALWART_PORT} --smtp 20025 --imap 20143 --app ${APP_PORT} --fresh --seed`,
       wait: { stdout: /Testdaten bereit/ },
       timeout: 180_000,
       reuseExistingServer: false,

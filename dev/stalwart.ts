@@ -4,7 +4,7 @@
  *   bun dev/stalwart.ts                 # dev instance, data in .dev/stalwart, HTTP on 18080
  *   bun dev/stalwart.ts --fresh         # wipe the dev data first
  *   bun dev/stalwart.ts --seed          # and fill it with the test data
- *   bun dev/stalwart.ts --instance e2e --http 28080 --smtp 20025 --imap 20143 --fresh --seed
+ *   bun dev/stalwart.ts --instance e2e --http 28080 --smtp 20025 --imap 20143 --app 5174 --fresh --seed
  *   bun dev/stalwart.ts --seed --log .dev/stalwart.log   # server log into a file
  *   bun dev/stalwart.ts --seed --reuse --log .dev/stalwart.log   # bun run dev
  *
@@ -37,6 +37,8 @@ const { values: args } = parseArgs({
     seed: { type: "boolean", default: false },
     log: { type: "string" },
     reuse: { type: "boolean", default: false },
+    /** The port of the app in front of it: Stalwart's public URL, as in deploy/compose.yaml. */
+    app: { type: "string", default: "5173" },
   },
 });
 
@@ -333,7 +335,12 @@ const main = async (): Promise<void> => {
   if (args.fresh) await rm(instanceDir, { recursive: true, force: true });
   if (!existsSync(configPath)) await firstStart();
 
-  const server = startServer({ STALWART_HOSTNAME: "localhost" });
+  // The public URL is the app's address, as on a customer's server (STALWART_PUBLIC_URL in
+  // deploy/compose.yaml): Stalwart takes the passkeys' relying party and origin from it.
+  const server = startServer({
+    STALWART_HOSTNAME: "localhost",
+    STALWART_PUBLIC_URL: `http://localhost:${args.app}`,
+  });
   await waitForHttp(httpPort);
   await treatSmtpAsInbound(httpPort, args.smtp);
   await withoutStalwartRsvp(httpPort);

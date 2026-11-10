@@ -3,7 +3,13 @@
  * the credentials with the authorization request to /api/auth (authorization code with PKCE) and
  * swaps the code from the redirect it gets back at /auth/token. Source:
  * crates/http/src/auth/oauth/auth.rs (LoginRequest, LoginResponse), authorize.rs
- * (validate_authorization) and token.rs in stalwartlabs/stalwart v1.0.1.
+ * (validate_authorization) and token.rs in stalwartlabs/stalwart v1.1.0.
+ *
+ * The credentials are a password (with the code of the authenticator app) or, since Stalwart
+ * 1.1.0, a passkey: the browser signs Stalwart's challenge (`passkeyOptions`) and the server hands
+ * the assertion on as `authCodePasskey`. Stalwart checks it against its public URL
+ * (`PasskeyRp::from_issuer` in crates/common/src/auth/passkey/mod.rs), which is Kontext's address
+ * (STALWART_PUBLIC_URL in deploy/compose.yaml), so the browser signs on Kontext's own page.
  *
  * Stalwart 1.0 only takes clients it knows (crates/common/src/auth/oauth/client.rs,
  * resolve_oauth_client): Kontext is registered there as the OAuth client `kontext` with this
@@ -30,6 +36,24 @@ const SETUP_HINT =
 
 export type StalwartTokens = { accessToken: string; refreshToken: string; accessExpiresAt: Date };
 
+/** A passkey's answer to Stalwart's challenge, as the browser gives it (PasskeyAssertion). */
+export type PasskeyAssertion = {
+  rawId: string;
+  response: {
+    clientDataJSON: string;
+    authenticatorData: string;
+    signature: string;
+    userHandle?: string;
+  };
+};
+
+export type Credentials =
+  | { email: string; password: string; code?: string }
+  | { passkey: PasskeyAssertion };
+
+/** What the browser needs to ask for a passkey (LoginResponse::PasskeyOptions). */
+export type PasskeyOptions = { challenge: string; rpId: string; timeout: number };
+
 export type LoginResult =
   | { status: "ok"; tokens: StalwartTokens }
   | { status: "mfa" }
@@ -47,7 +71,16 @@ const loginResponse = z.discriminatedUnion("type", [
   z.object({ type: z.literal("invalid"), description: z.string() }),
   /** Refused after the client was known, as an error on the redirect (authorize.rs). */
   z.object({ type: z.literal("redirect"), location: z.string() }),
+  /** A passkey Stalwart does not know (deleted, or from another server). */
+  z.object({ type: z.literal("passkeyUnknown") }),
 ]);
+
+const passkeyOptionsResponse = z.object({
+  type: z.literal("passkeyOptions"),
+  challenge: z.string(),
+  rpId: z.string(),
+  timeout: z.number(),
+});
 
 const tokenResponse = z.object({
   access_token: z.string(),
@@ -123,31 +156,64 @@ export const codeFromRedirect = (location: string, state: string): string | null
   return url.searchParams.get("state") === state ? url.searchParams.get("code") : null;
 };
 
+const postLogin = (stalwartUrl: string, body: Record<string, unknown>) =>
+  fetch(`${stalwartUrl}/api/auth`, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify(body),
+  }).catch(() => null);
+
+/** The login request for the credentials, with the authorization request it answers. */
+export const loginRequest = (credentials: Credentials, query: string): Record<string, unknown> =>
+  "passkey" in credentials
+    ? { type: "authCodePasskey", credential: credentials.passkey, query, consent: true }
+    : {
+        type: "authCode",
+        accountName: credentials.email,
+        accountSecret: credentials.password,
+        ...(credentials.code ? { mfaToken: credentials.code } : {}),
+        query,
+        consent: true,
+      };
+
+/**
+ * A fresh challenge for a passkey sign-in; null when Stalwart offers none (no public URL it can
+ * take a relying party from) or does not answer. Each challenge is good for one try, 5 minutes
+ * (PASSKEY_CHALLENGE_TTL in crates/common/src/auth/passkey/mod.rs).
+ */
+export const passkeyOptionsAtStalwart = async (
+  stalwartUrl: string,
+): Promise<PasskeyOptions | null> => {
+  const response = await postLogin(stalwartUrl, { type: "passkeyOptions" });
+  if (!response?.ok) return null;
+  const options = passkeyOptionsResponse.safeParse(await response.json().catch(() => null));
+  if (!options.success) return null;
+  const { challenge, rpId, timeout } = options.data;
+  return { challenge, rpId, timeout };
+};
+
 export const loginAtStalwart = async (
   stalwartUrl: string,
-  credentials: { email: string; password: string; code?: string },
+  credentials: Credentials,
 ): Promise<LoginResult> => {
   const { verifier, challenge } = await pkce();
   const state = base64url(crypto.getRandomValues(new Uint8Array(16)));
-  const response = await fetch(`${stalwartUrl}/api/auth`, {
-    method: "POST",
-    headers: { "content-type": "application/json" },
-    body: JSON.stringify({
-      type: "authCode",
-      accountName: credentials.email,
-      accountSecret: credentials.password,
-      ...(credentials.code ? { mfaToken: credentials.code } : {}),
-      query: authorizationQuery(challenge, state),
-      consent: true,
-    }),
-  }).catch(() => null);
+  const response = await postLogin(
+    stalwartUrl,
+    loginRequest(credentials, authorizationQuery(challenge, state)),
+  );
   // A wrong password is a 200 with type "failure" (LoginResponse in
   // crates/http/src/auth/oauth/auth.rs); an HTTP error is Stalwart not answering as it should.
   if (!response?.ok) return { status: "unavailable" };
   const login = loginResponse.safeParse(await response.json().catch(() => null));
   if (!login.success) return { status: "unavailable" };
   if (login.data.type === "mfaRequired") return { status: "mfa" };
-  if (login.data.type === "failure" || login.data.type === "expired") return { status: "failed" };
+  if (
+    login.data.type === "failure" ||
+    login.data.type === "expired" ||
+    login.data.type === "passkeyUnknown"
+  )
+    return { status: "failed" };
   if (login.data.type === "invalid" || login.data.type === "redirect") {
     const reason =
       login.data.type === "invalid"

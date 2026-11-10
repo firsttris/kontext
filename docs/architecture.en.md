@@ -2061,7 +2061,9 @@ Answers, or who else is coming, do not count as a change; past appointments get 
 Stalwart's `EventInPast`). Kontext only sends if one may send as the organiser (an identity with
 their address in the calendar's account); if one changes an appointment in a colleague's shared
 calendar that she organises, Stalwart keeps sending. Accepting in one's own calendar goes through
-Stalwart as before (REPLY to the organiser).
+Stalwart as before (REPLY to the organiser), since Stalwart 1.1.0 also for appointments Kontext
+put in from a mail without scheduling (`itip_unscheduled_update` in
+`crates/groupware/src/scheduling/event_create.rs`); before, no answer went out for those.
 
 **Who invites** (`organizerFor` in `src/lib/event-form.ts`): an appointment keeps its organiser.
 A new one in the calendar of a shared mailbox gets the mailbox's address, otherwise the user's.
@@ -2132,10 +2134,12 @@ invitations and answers (`reply`) show nothing; Stalwart enters those itself. Th
 Stalwart only enters an invitation from outside itself if DMARC passes **and** the sender is in the
 contacts or `autoAddInvitations` is on (`itip_ingest` in `crates/groupware/src/calendar/itip.rs`,
 `crates/email/src/message/ingest.rs`). Otherwise Kontext creates the appointment. **Kontext sends the
-answer itself** (`src/jmap/mail-invitations.ts`): an appointment the attendee created over JMAP is
-known to Stalwart without a `schedule_tag`, and a change to it counts for Stalwart as a new
-appointment, for which only the organiser may send (`itip_create` and `NotOrganizer` in
-`crates/jmap/src/calendar_event/set.rs`, `crates/groupware/src/scheduling/event_create.rs`). So
+answer itself** (`src/jmap/mail-invitations.ts`): up to Stalwart 1.0.3 a change to an appointment
+the attendee created over JMAP (without a `schedule_tag`) counted as a new appointment, for which
+only the organiser may send (`itip_create` and `NotOrganizer` in
+`crates/jmap/src/calendar_event/set.rs`). Since 1.1.0 Stalwart would send the answer for it itself
+(`itip_unscheduled_update`), but in English ("Accepted: … at 10:00 AM"), without a copy in "Sent"
+and not from the chosen identity – so, as with the invitations, Kontext keeps sending its own mail.
 Kontext writes the answer into the appointment with `sendSchedulingMessages: false` (if the mail
 carries a newer version, that is a higher `SEQUENCE`, it takes it over completely in the process)
 and then sends a mail to the organiser – from the identity with one's own address among the
@@ -2148,7 +2152,7 @@ then does not send a second answer.
 ## Sign-in { #anmeldung }
 
 Users and passwords stay in Stalwart. On sign-in the app sends email, password and – if set up –
-the authenticator app's code to the server (`POST /api/auth/sign-in/stalwart`). It signs in through
+the authenticator app's code (or a [passkey](#passkeys)'s answer) to the server (`POST /api/auth/sign-in/stalwart`). It signs in through
 Stalwart's OAuth (authorisation code with PKCE, without a redirect), creates a Better Auth session
 and sets an httpOnly cookie. For this it sends the credentials together with the authorisation
 request to Stalwart's `/api/auth` and reads the code from the redirect Stalwart returns
@@ -2199,9 +2203,40 @@ refresh token expires, even though nobody has it any more.
 - **App passwords, AI agents, other mailboxes:** the existing lists, with "Manage" leading to the
   respective section.
 
-**Passkeys later:** Better Auth comes with a passkey plugin. When a passkey is set up, the server
-creates an app password for the device in Stalwart and stores it encrypted; a passkey sign-in uses
-it to get the Stalwart token. Nothing else changes.
+### Passkeys { #passkeys }
+
+Stalwart keeps the passkeys (WebAuthn), since 1.1.0, beside the password (`x:Passkey`,
+`crates/jmap/src/registry/mapping/passkey.rs`); Better Auth still only holds the sessions. So
+there is no second list beside Stalwart's accounts, and once mail programs sign in to Stalwart
+with OAuth ([roadmap](https://github.com/firsttris/kontext/blob/main/ROADMAP.md)), the passkeys
+work there too.
+
+**Signing in** (`signInWithPasskey` in `src/auth/auth.tsx`): the app gets a challenge from
+Stalwart through the server (`POST /api/auth/sign-in/stalwart/passkey-options` → `/api/auth` with
+`type: "passkeyOptions"`), the browser has the passkey sign it (`navigator.credentials.get`,
+without a list of keys: the browser offers what it has for the site), and the app sends the
+answer to `POST /api/auth/sign-in/stalwart`. The server hands it on to Stalwart as
+`authCodePasskey` with the same authorisation request as for the password (`server/stalwart.ts`);
+from there it goes on as above. A passkey is a whole sign-in: Stalwart asks for no code after it.
+Stalwart checks the signature against its public address (`PasskeyRp::from_issuer`,
+`crates/common/src/auth/passkey/mod.rs`): origin and relying party must be the page the browser
+signs on. That is why `STALWART_PUBLIC_URL` is Kontext's address (`deploy/compose.yaml`), and
+Kontext can ask on its own sign-in page, without a redirect to Stalwart. A passkey Stalwart does
+not know (any more) is a failed sign-in; the page says how to go on. Failed tries count per
+address (Better Auth) and in Stalwart's fail2ban; a passkey has no login name to count them
+against.
+
+**Adding** (*Settings → Password and security*, `src/features/settings/passkeys-card.tsx`,
+`src/jmap/passkeys.ts`): `x:Passkey/registrationOptions` with the current password (and the code)
+gives the options, `navigator.credentials.create` makes the passkey, `x:Passkey/set` creates it
+with its name and the browser's answer (`registration`); Stalwart checks challenge and origin.
+Renaming and deleting go through `x:Passkey/set`. The conversion between Stalwart's base64url and
+the browser's buffers is in `src/lib/webauthn.ts`. A new Stalwart's role *User* has the rights
+`sysPasskey*`; an updated one lacks them
+([installation, Stalwart 1.1.0](installation.md#stalwart-110)), and then the card stays away, as
+on a Stalwart before 1.1.0, which does not know `x:Passkey`. In development Stalwart's public
+address is the app's (`--app` in `dev/stalwart.ts`), so passkeys work there and in the e2e tests
+(`e2e/passkeys.spec.ts`, with Chrome's virtual authenticator) too.
 
 Kontext is also a **sign-in provider**: by OpenID Connect for Schreibzeug, see
 [Documents](#dokumente), and by OAuth 2.1 for AI agents, see [Agents (MCP)](#agenten-mcp). Both

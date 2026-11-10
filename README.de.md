@@ -13,7 +13,7 @@ Ohne Kosten pro Benutzer. Made in Europe.
 [![Platforms](https://img.shields.io/badge/platform-amd64%20%7C%20arm64-lightgrey)](https://hub.docker.com/r/tristanteu/kontext/tags)
 [![Docs](https://img.shields.io/badge/docs-kontext.email-4f46e5?logo=materialformkdocs&logoColor=white)](https://kontext.email/)
 [![License: AGPL-3.0](https://img.shields.io/badge/license-AGPL--3.0-blue)](LICENSE)
-[![Stalwart 1.0](https://img.shields.io/badge/Stalwart-1.0-18181b)](https://stalw.art)
+[![Stalwart 1.1](https://img.shields.io/badge/Stalwart-1.1-18181b)](https://stalw.art)
 [![JMAP](https://img.shields.io/badge/JMAP-mail%20%7C%20calendar%20%7C%20contacts-0f766e)](https://jmap.io)
 [![DSGVO](https://img.shields.io/badge/DSGVO-Daten%20auf%20deinem%20Server-15803d)](#-warum-kontext)
 [![Made in Europe](https://img.shields.io/badge/made%20in-Europe-003399)](#-warum-kontext)
@@ -121,7 +121,7 @@ VPS mit 2 vCPU und 4 GB RAM. Alles Weitere – DNS, Podman, Backups, Updates –
 | 📄 **Dokumente** | **Word, Excel, PowerPoint und PDF** in Kontext mit [Schreibzeug](https://github.com/firsttris/schreibzeug), ein Ordner pro gemeinsamem Postfach · [mehr →](https://kontext.email/documents.html) |
 | 🤖 **KI-Agenten (MCP)** | Claude und andere Agenten schlagen Kunden, Mails und Termine mit deinen Rechten nach, **schreiben Entwürfe** und **laden Kollegen zu Terminen ein** – nichts geht nach draußen, kein Löschen, jede Änderung protokolliert; oder einfach den **Assistenten im Chat** fragen (mit einem Schlüssel der Claude API) · [mehr →](https://kontext.email/agents.html) |
 | 🏢 **Firmenverwaltung** | **Mitarbeiter, gemeinsame Postfächer und Rechte** ohne IT-Kenntnisse, **Mail-Regeln für jeden Mitarbeiter**, Firmen-Signatur mit Telefon und Position je Person, **Pflichtangaben unter jeder Mail**, Abmelden nach Inaktivität an gemeinsamen Rechnern, **Austritt ohne Löschen**, Datensicherung im Blick, **Umzug von Microsoft 365, Gmail und Outlook** · [mehr →](https://kontext.email/company.html) |
-| 📱 **Auf jedem Gerät** | **Eine App am PC, unter Android und am iPhone** ohne App Store, **eine kurze Einführung beim ersten Start**, Benachrichtigungen mit **Zahlen in der Tab-Leiste, die zeigen, in welcher App es Neues gibt**, hell und dunkel, Anmeldung mit zweitem Faktor, **eine Übersicht der Zugänge** (andere Geräte abmelden), **für Tastatur und Screenreader gebaut**, bei jedem Push automatisch gegen WCAG 2.2 AA geprüft ([Barrierefreiheit](https://kontext.email/accessibility.html)) · [mehr →](https://kontext.email/app.html) |
+| 📱 **Auf jedem Gerät** | **Eine App am PC, unter Android und am iPhone** ohne App Store, **eine kurze Einführung beim ersten Start**, Benachrichtigungen mit **Zahlen in der Tab-Leiste, die zeigen, in welcher App es Neues gibt**, hell und dunkel, Anmeldung mit zweitem Faktor, **Anmeldung mit Passkey** (Fingerabdruck oder Gesicht, ohne Passwort), **eine Übersicht der Zugänge** (andere Geräte abmelden), **für Tastatur und Screenreader gebaut**, bei jedem Push automatisch gegen WCAG 2.2 AA geprüft ([Barrierefreiheit](https://kontext.email/accessibility.html)) · [mehr →](https://kontext.email/app.html) |
 | ♿ **Barrierefreiheit** | **Alles per Tastatur** mit „Zum Inhalt springen“ und sichtbarem Fokus, Kontraste hell und dunkel, **weniger Bewegung** · [mehr →](https://kontext.email/accessibility.html) |
 
 <img src="docs/screenshots/phone-call.png" alt="CTI in Kontext: ein Anruf über die Fritzbox klingelt im Browser mit Kontakt, Firma, Nummer und letzter Mail des Anrufers, neben dem Posteingang" width="900">

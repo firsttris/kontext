@@ -13,7 +13,7 @@ No per-seat pricing. Made in Europe.
 [![Platforms](https://img.shields.io/badge/platform-amd64%20%7C%20arm64-lightgrey)](https://hub.docker.com/r/tristanteu/kontext/tags)
 [![Docs](https://img.shields.io/badge/docs-kontext.email-4f46e5?logo=materialformkdocs&logoColor=white)](https://kontext.email/en/)
 [![License: AGPL-3.0](https://img.shields.io/badge/license-AGPL--3.0-blue)](LICENSE)
-[![Stalwart 1.0](https://img.shields.io/badge/Stalwart-1.0-18181b)](https://stalw.art)
+[![Stalwart 1.1](https://img.shields.io/badge/Stalwart-1.1-18181b)](https://stalw.art)
 [![JMAP](https://img.shields.io/badge/JMAP-mail%20%7C%20calendar%20%7C%20contacts-0f766e)](https://jmap.io)
 [![GDPR](https://img.shields.io/badge/GDPR-data%20on%20your%20server-15803d)](#-why-kontext)
 [![Made in Europe](https://img.shields.io/badge/made%20in-Europe-003399)](#-why-kontext)
@@ -121,7 +121,7 @@ Calls and documents (Schreibzeug, no install of its own needed) are switched on 
 | 📄 **Documents** | **Word, Excel, PowerPoint and PDF** in Kontext with [Schreibzeug](https://github.com/firsttris/schreibzeug), a folder per shared mailbox · [more →](https://kontext.email/en/documents.html) |
 | 🤖 **AI agents (MCP)** | Claude and other agents look up customers, mails and appointments with your rights, **write drafts** and **invite colleagues to appointments** – nothing goes outside the company, no deleting, every change logged; or simply ask the **assistant in the chat** (with a Claude API key) · [more →](https://kontext.email/en/agents.html) |
 | 🏢 **Company admin** | **People, shared mailboxes and rights** without IT skills, **mail rules for each employee**, company signature with each person's phone and position, **legal footer under every mail**, sign-out after inactivity for shared computers, **offboarding without deleting**, backups at a glance, **moving in from Microsoft 365, Gmail and Outlook** · [more →](https://kontext.email/en/company.html) |
-| 📱 **On every device** | **An app on desktop, Android and iPhone** without an app store, **a short tour on the first start**, push notifications with **badges in the tab bar that show which app has news**, light and dark, two-factor sign-in, **one overview of who has access** (sign out other devices), **built for keyboard and screen reader**, checked automatically against WCAG 2.2 AA on every push ([accessibility](https://kontext.email/en/accessibility.html)) · [more →](https://kontext.email/en/app.html) |
+| 📱 **On every device** | **An app on desktop, Android and iPhone** without an app store, **a short tour on the first start**, push notifications with **badges in the tab bar that show which app has news**, light and dark, two-factor sign-in, **sign-in with a passkey** (fingerprint or face, no password), **one overview of who has access** (sign out other devices), **built for keyboard and screen reader**, checked automatically against WCAG 2.2 AA on every push ([accessibility](https://kontext.email/en/accessibility.html)) · [more →](https://kontext.email/en/app.html) |
 | ♿ **Accessibility** | **Everything by keyboard** with a skip link and visible focus, contrast in light and dark, **reduced motion** · [more →](https://kontext.email/en/accessibility.html) |
 
 <img src="docs/screenshots/phone-call.png" alt="CTI in Kontext: an incoming call from the Fritzbox rings in the browser with the caller's contact, company, number and last mail, next to the inbox" width="900">

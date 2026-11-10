@@ -718,7 +718,7 @@ docker compose -f deploy/compose.yaml pull && docker compose -f deploy/compose.y
 - `STALWART_VERSION` hebt Stalwart, ebenfalls fest und von Hand: `git pull` ändert den
   Mailserver nie von selbst. Die Version aus `.env.example` mit dem `KONTEXT_VERSION` derselben
   Kontext-Version heben, und vorher die Schritte machen, die das Changelog dafür nennt (wie den
-  Scope bei [Stalwart 1.0.3](#stalwart-103)).
+  Scope bei [Stalwart 1.0.3](#stalwart-103) oder die Rollen bei [Stalwart 1.1.0](#stalwart-110)).
 - LiveKit, LiveKit SIP, Redis und Caddy stehen mit festen Versionen in `deploy/compose.yaml`;
   neue kommen mit `git pull`, und `pull` holt sie.
 - Hat sich `deploy/Caddyfile` geändert, Caddy neu laden:
@@ -760,6 +760,40 @@ docker compose -f deploy/compose.yaml up -d
 Vor einem Stalwart-Update mit neuer Hauptversion die `UPGRADING`-Hinweise von Stalwart lesen und
 vorher ein Backup machen. Nach jedem Update den [Einrichtungsbefehl](#einrichtungsbefehl) noch
 einmal ausführen; er ergänzt nur, was eine neue Version braucht und noch fehlt.
+
+### Stalwart 1.1.0
+
+Stalwart 1.1.0 bringt **Passkeys**: Unter *Einstellungen → Passwort und Sicherheit* legt jeder
+seine Passkeys an, und „Mit Passkey anmelden“ meldet ohne Passwort an
+([App, Handy und Konto](app.md#profil-passwort-und-anmeldung-mit-code)). Stalwart bewahrt sie
+neben dem Passwort auf und prüft sie gegen seine öffentliche Adresse; die ist die von Kontext
+(`STALWART_PUBLIC_URL=https://<KONTEXT_DOMAIN>` in `compose.yaml`, `Environment=STALWART_PUBLIC_URL`
+in `stalwart.container`). Steht dort eine andere Adresse, weist Stalwart jeden Passkey ab, den
+der Browser auf Kontexts Seite unterschreibt.
+
+`STALWART_VERSION=1.1.0` in `deploy/.env` (Quadlet: `Image=…/stalwart:v1.1.0`) zusammen mit der
+neuen Kontext-Version heben. Kontext läuft auch weiter mit 1.0.3; dann fehlen nur die Passkeys.
+
+Ein Stalwart, der vor 1.1.0 eingerichtet wurde, behält seine Standardrollen: Der Rolle *User*
+fehlen die Rechte `sysPasskey*`, und die Passkeys erscheinen nicht in den Einstellungen. Der
+[Einrichtungsbefehl](#einrichtungsbefehl) sagt es („Hinweis: Die Standardrolle der Benutzer hat
+keine Rechte für Passkeys“). Dann Stalwart einmal mit `STALWART_UPDATE_ROLE_PERMISSIONS=true`
+starten und die Variable danach wieder entfernen:
+
+```bash
+docker compose -f deploy/compose.yaml stop stalwart
+docker compose -f deploy/compose.yaml run -d --name stalwart-roles -e STALWART_UPDATE_ROLE_PERMISSIONS=true stalwart
+docker logs -f stalwart-roles    # bis Stalwart läuft, dann Strg+C
+docker rm -f stalwart-roles && docker compose -f deploy/compose.yaml up -d stalwart
+```
+
+Mit Quadlet die Zeile `Environment=STALWART_UPDATE_ROLE_PERMISSIONS=true` in `stalwart.container`
+eintragen, `systemctl daemon-reload && systemctl restart stalwart`, die Zeile wieder löschen und
+noch einmal neu laden und starten.
+
+Antworten auf Einladungen schickt Stalwart ab 1.1.0 auch für Termine, die Kontext aus einer Mail
+in den Kalender eingetragen hat, wenn man im Kalender zusagt ([Architektur,
+Einladungen](architecture.md#einladungen)).
 
 ### Stalwart 1.0.3
 

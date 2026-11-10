@@ -7,11 +7,11 @@ bringt. Die Reihenfolge ist ein Plan, kein Versprechen; Wünsche gern als
 
 ## Neu in Stalwart
 
-Was Stalwart 1.0.2 und 1.0.3 mitbringen und Kontext noch nicht nutzt.
+Was Stalwart 1.0.2, 1.0.3 und 1.1.0 mitbringen und Kontext noch nicht nutzt.
 
 | # | Funktion | Worum es geht |
 | --- | --- | --- |
-| 1 | **Mailprogramme ohne App-Passwort** | Mit Zwei-Faktor-Anmeldung brauchen Apple Mail und Thunderbird kein App-Passwort mehr: Stalwart 1.0 setzt das OAuth-Profil für Mailprogramme um. Dafür muss die OAuth-Erkennung unter `/.well-known` zu Stalwart statt zu Kontext (Caddy) und Stalwarts Anmeldeseite öffentlich erreichbar sein. |
+| 1 | **Mailprogramme ohne App-Passwort** | Mit Zwei-Faktor-Anmeldung brauchen Apple Mail und Thunderbird kein App-Passwort mehr: Stalwart 1.0 setzt das OAuth-Profil für Mailprogramme um. Dafür muss die OAuth-Erkennung unter `/.well-known` zu Stalwart statt zu Kontext (Caddy) und Stalwarts Anmeldeseite öffentlich erreichbar sein. Dann gelten auch die Passkeys (Stalwart 1.1.0, in Kontext schon da) für Mailprogramme. |
 
 ## Weitere Funktionen
 

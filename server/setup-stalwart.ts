@@ -15,6 +15,7 @@ import { parseArgs } from "node:util";
 import type { Result } from "./company/accounts";
 import { createRequest } from "./company/management";
 import {
+  checkPasskeyRights,
   ensureDirectoryQueries,
   ensureOAuthClient,
   ensureRole,
@@ -101,6 +102,9 @@ const main = async (): Promise<number> => {
   const role = await attempt(() => ensureRole(request));
   if (!role.ok) return report(role.error);
   console.log(role.value.message);
+  const passkeys = await attempt(() => checkPasskeyRights(request));
+  if (!passkeys.ok) return report(passkeys.error);
+  console.log(passkeys.value);
   const account = await attempt(() =>
     ensureServerAccount(request, asAccount, {
       roleId: role.value.id,

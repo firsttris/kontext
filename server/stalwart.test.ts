@@ -3,6 +3,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   codeFromRedirect,
   loginAtStalwart,
+  passkeyOptionsAtStalwart,
   REDIRECT_URI,
   refreshAtStalwart,
   revokeAtStalwart,
@@ -117,6 +118,30 @@ describe("signing in at Stalwart", () => {
     expect(await loginAtStalwart("http://stalwart", credentials)).toEqual({ status: "mfa" });
   });
 
+  it("signs in with a passkey's assertion, for the same authorization request", async () => {
+    const fetch = stalwart((state) => `${REDIRECT_URI}?code=c1&state=${state}`);
+    vi.stubGlobal("fetch", fetch);
+    const passkey = {
+      rawId: "k1",
+      response: { clientDataJSON: "c", authenticatorData: "a", signature: "s", userHandle: "u" },
+    };
+    const result = await loginAtStalwart("http://stalwart", { passkey });
+    expect(result.status).toBe("ok");
+    const login = JSON.parse(String(fetch.mock.calls[0]![1].body));
+    expect(login).toMatchObject({ type: "authCodePasskey", credential: passkey, consent: true });
+    expect(login).not.toHaveProperty("accountName");
+    expect(new URLSearchParams(login.query).get("client_id")).toBe("kontext");
+  });
+
+  it("calls a passkey Stalwart does not know failed", async () => {
+    vi.stubGlobal("fetch", answer(200, { type: "passkeyUnknown" }));
+    const passkey = {
+      rawId: "k1",
+      response: { clientDataJSON: "c", authenticatorData: "a", signature: "s" },
+    };
+    expect(await loginAtStalwart("http://stalwart", { passkey })).toEqual({ status: "failed" });
+  });
+
   it("calls an expired password failed", async () => {
     vi.stubGlobal("fetch", answer(200, { type: "expired" }));
     expect(await loginAtStalwart("http://stalwart", credentials)).toEqual({ status: "failed" });
@@ -187,6 +212,32 @@ describe("signing in at Stalwart", () => {
     expect(await loginAtStalwart("http://stalwart", credentials)).toEqual({
       status: "unavailable",
     });
+  });
+});
+
+describe("passkey options from Stalwart", () => {
+  it("are the challenge, relying party and timeout it hands out", async () => {
+    const fetch = answer(200, {
+      type: "passkeyOptions",
+      challenge: "ch",
+      rpId: "kontext.firma.de",
+      timeout: 300000,
+    });
+    vi.stubGlobal("fetch", fetch);
+    expect(await passkeyOptionsAtStalwart("http://stalwart")).toEqual({
+      challenge: "ch",
+      rpId: "kontext.firma.de",
+      timeout: 300000,
+    });
+    const [, init] = fetch.mock.calls[0] as unknown as [string, RequestInit];
+    expect(JSON.parse(String(init.body))).toEqual({ type: "passkeyOptions" });
+  });
+
+  it("are none when Stalwart has no public URL for them (before 1.1.0: no such request)", async () => {
+    vi.stubGlobal("fetch", answer(200, { type: "failure" }));
+    expect(await passkeyOptionsAtStalwart("http://stalwart")).toBeNull();
+    vi.stubGlobal("fetch", answer(400, { type: "about:blank" }));
+    expect(await passkeyOptionsAtStalwart("http://stalwart")).toBeNull();
   });
 });
 

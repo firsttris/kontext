@@ -402,7 +402,11 @@ export const deleteEvent = async (
   );
 };
 
-/** Accept, decline or maybe: Stalwart tells the organizer (iMIP REPLY), also one outside. */
+/**
+ * Accept, decline or maybe in the calendar: Stalwart tells the organizer (iMIP REPLY), also one
+ * outside; since Stalwart 1.1.0 also for an event Kontext put in from a mail without scheduling
+ * (`itip_unscheduled_update`, crates/groupware/src/scheduling/event_create.rs).
+ */
 export const respondToEvent = (
   client: JmapClient,
   accountId: string,

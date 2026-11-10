@@ -7,11 +7,11 @@ What is already done is in the [changelog](CHANGELOG.md) and the
 
 ## New in Stalwart
 
-What Stalwart 1.0.2 and 1.0.3 bring and Kontext does not use yet.
+What Stalwart 1.0.2, 1.0.3 and 1.1.0 bring and Kontext does not use yet.
 
 | # | Feature | What it is about |
 | --- | --- | --- |
-| 1 | **Mail programs without an app password** | With two-factor sign-in, Apple Mail and Thunderbird no longer need an app password: Stalwart 1.0 implements the OAuth profile for mail programs. For it, the OAuth discovery under `/.well-known` has to go to Stalwart instead of Kontext (Caddy), and Stalwart's sign-in page has to be reachable from outside. |
+| 1 | **Mail programs without an app password** | With two-factor sign-in, Apple Mail and Thunderbird no longer need an app password: Stalwart 1.0 implements the OAuth profile for mail programs. For it, the OAuth discovery under `/.well-known` has to go to Stalwart instead of Kontext (Caddy), and Stalwart's sign-in page has to be reachable from outside. Then the passkeys (Stalwart 1.1.0, already in Kontext) work for mail programs too. |
 
 ## More features
 

@@ -2,9 +2,10 @@
  * Sign-in with Better Auth; the users and passwords stay in Stalwart.
  *
  * The plugin `stalwartSignIn` adds POST /api/auth/sign-in/stalwart: it checks e-mail, password
- * and (if the account has two-factor sign-in) the code at Stalwart, keeps Stalwart's tokens for
- * the new session and sets Better Auth's session cookie. Passkeys can be added later with
- * Better Auth's passkey plugin; such a session then gets its Stalwart token from an app password.
+ * and (if the account has two-factor sign-in) the code at Stalwart, or a passkey's answer to
+ * Stalwart's challenge (POST /api/auth/sign-in/stalwart/passkey-options hands one out), keeps
+ * Stalwart's tokens for the new session and sets Better Auth's session cookie. The passkeys live
+ * in Stalwart (since 1.1.0), beside the password, so mail programs signing in there use them too.
  */
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
@@ -19,7 +20,9 @@ import type { Env } from "./env";
 import { attemptOf, createLoginFailures, type FailureLimit, loginKey } from "./failures";
 import { providerPlugins } from "./oidc/provider";
 import {
+  type Credentials,
   loginAtStalwart,
+  passkeyOptionsAtStalwart,
   refreshAtStalwart,
   revokeAtStalwart,
   type StalwartTokens,
@@ -111,7 +114,17 @@ export const createGrants = (
 
 export type Grants = ReturnType<typeof createGrants>;
 
-const signInBody = z.object({
+/** The signed authorization request when the sign-in is for an OAuth client (Schreibzeug, an agent). */
+const oauthQuery = z.string().max(8192).optional();
+
+/** base64url, as WebAuthn's buffers travel (the limits are Stalwart's, assertion.rs). */
+const encoded = (max: number) =>
+  z
+    .string()
+    .max(max)
+    .regex(/^[A-Za-z0-9_-]*$/);
+
+const passwordBody = z.object({
   email: z.string().trim().min(3).max(320),
   password: z.string().min(1).max(1024),
   code: z
@@ -119,9 +132,29 @@ const signInBody = z.object({
     .trim()
     .regex(/^\d{6,8}$/)
     .optional(),
-  /** The signed authorization request when the sign-in is for an OAuth client (Schreibzeug, an agent). */
-  oauth_query: z.string().max(8192).optional(),
+  oauth_query: oauthQuery,
 });
+
+const passkeyBody = z.object({
+  passkey: z.object({
+    rawId: encoded(1400).min(1),
+    response: z.object({
+      clientDataJSON: encoded(6000).min(1),
+      authenticatorData: encoded(6000).min(1),
+      signature: encoded(1400).min(1),
+      userHandle: encoded(200).optional(),
+    }),
+  }),
+  oauth_query: oauthQuery,
+});
+
+const signInBody = z.union([passwordBody, passkeyBody]);
+
+/** The credentials for Stalwart, without what is only Kontext's business. */
+const credentialsOf = (body: z.infer<typeof signInBody>): Credentials =>
+  "passkey" in body
+    ? { passkey: body.passkey }
+    : { email: body.email, password: body.password, code: body.code };
 
 /** The name the person sends mail as, from their Stalwart account (session-info.ts). */
 export type NameOf = (accessToken: string, email: string) => Promise<string>;
@@ -139,14 +172,15 @@ const stalwartSignIn = (
         "/sign-in/stalwart",
         { method: "POST", body: signInBody },
         async (ctx) => {
-          // Per login name, on top of Better Auth's limit per address (failures.ts).
-          const login = loginKey(ctx.body.email);
-          if (failures.blocked(login)) {
+          // Per login name, on top of Better Auth's limit per address (failures.ts). A passkey
+          // names no login; its tries count per address, here and in Stalwart's fail2ban.
+          const login = "email" in ctx.body ? loginKey(ctx.body.email) : null;
+          if (login && failures.blocked(login)) {
             throw new APIError("TOO_MANY_REQUESTS", {
               message: "Zu viele Fehlversuche. Bitte in einer Viertelstunde erneut versuchen.",
             });
           }
-          const result = await loginAtStalwart(stalwartUrl, ctx.body);
+          const result = await loginAtStalwart(stalwartUrl, credentialsOf(ctx.body));
           // No verdict on the password: counts against nobody.
           if (result.status === "unavailable") {
             throw new APIError("SERVICE_UNAVAILABLE", {
@@ -154,13 +188,14 @@ const stalwartSignIn = (
             });
           }
           if (result.status === "failed") {
-            failures.failed(login, await attemptOf(ctx.body.password, ctx.body.code));
+            if (login && "password" in ctx.body)
+              failures.failed(login, await attemptOf(ctx.body.password, ctx.body.code));
             throw new APIError("UNAUTHORIZED", { message: "Anmeldung fehlgeschlagen" });
           }
           // The code is still to come: only a whole sign-in clears the count, or sending the
           // password alone between wrong codes would let them be guessed without end.
           if (result.status === "mfa") return ctx.json({ status: "mfa" as const });
-          failures.cleared(login);
+          if (login) failures.cleared(login);
           // Stalwart may accept a bare name; the account's real address comes from the session.
           const { email } = await whoAmI(stalwartUrl, result.tokens.accessToken);
           const adapter = ctx.context.internalAdapter;
@@ -179,6 +214,16 @@ const stalwartSignIn = (
           await grants.save(session.id, result.tokens);
           await setSessionCookie(ctx, { session, user });
           return ctx.json({ status: "ok" as const, email });
+        },
+      ),
+      /** A challenge for the browser to sign with a passkey; 404 when Stalwart offers none. */
+      passkeyOptionsStalwart: createAuthEndpoint(
+        "/sign-in/stalwart/passkey-options",
+        { method: "POST" },
+        async (ctx) => {
+          const options = await passkeyOptionsAtStalwart(stalwartUrl);
+          if (!options) throw new APIError("NOT_FOUND", { message: "Keine Passkeys" });
+          return ctx.json(options);
         },
       ),
     },
@@ -208,6 +253,7 @@ export const createAuth = (
       storage: "memory",
       customRules: {
         "/sign-in/stalwart": { window: 60, max: env.SIGN_IN_PER_MINUTE },
+        "/sign-in/stalwart/passkey-options": { window: 60, max: env.SIGN_IN_PER_MINUTE },
         // Asked on every app start; a 429 there would look like being signed out.
         "/get-session": false,
       },

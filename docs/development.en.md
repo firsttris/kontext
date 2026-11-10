@@ -115,6 +115,7 @@ update, run `bun dev/stalwart.ts --fresh --seed` once.
 | `--fresh`                       | delete the data first                               |
 | `--seed`                        | load the test data as soon as the server runs       |
 | `--instance e2e --http 28080 …` | a second, separate instance (how the E2E tests run) |
+| `--app 5174`                    | the app's port: Stalwart's public address becomes `http://localhost:<port>` as in the deployment, so passkeys work (default 5173) |
 
 The SMTP port behaves like port 25 of a real server: mail arrives without sign-in, as from a
 mail server on the internet, and Stalwart checks SPF, DKIM, DMARC and reverse DNS and adds

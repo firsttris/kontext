@@ -125,6 +125,13 @@ starts the next time anyway. Updates of the server are installed by the operator
   up", scan the QR code with the app (or enter the key by hand), enter the code shown and the
   password, "Turn on". Turning it off needs the password and a current code. The page shows at a
   glance whether it is on.
+- **Passkeys** on the same page: sign in with your fingerprint, face or the device's PIN, without
+  a password. "Add a passkey", give it a name (say "MacBook"), enter the password (and code),
+  "Create passkey" and confirm the passkey in the dialog of the browser or phone. From then on
+  "Sign in with a passkey" on the sign-in page signs you in, without e-mail address and without
+  code. Each passkey can be renamed and deleted. The mail server keeps the passkeys beside the
+  password. Mail programs and phones keep signing in with the password or an app password.
+  [More](architecture.md#passkeys)
 - **Access** (*Settings → Access*): who and what accesses your account, in one place. The
   signed-in browsers ("Firefox on Windows", "Safari on iPhone") with "signed in", "last active"
   and IP address; your own is marked "This device". Each other one can be signed out on its own,

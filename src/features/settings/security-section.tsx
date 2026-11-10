@@ -1,6 +1,6 @@
 /**
- * Password and two-factor sign-in (both need the current password, Stalwart checks it), and whose
- * pictures from the internet load at once.
+ * Password, two-factor sign-in and passkeys (all need the current password, Stalwart checks it),
+ * and whose pictures from the internet load at once.
  */
 
 import { useNavigate } from "@tanstack/react-router";
@@ -17,6 +17,7 @@ import { cn } from "@/lib/cn";
 import { newSecret, otpauthUrl, verifyTotp } from "@/lib/totp";
 import { m } from "@/paraglide/messages";
 import { ImageSendersCard } from "./image-senders-card";
+import { PasskeysCard } from "./passkeys-card";
 import { useSave, useTwoFactor } from "./queries";
 import { SettingsCard } from "./settings-page";
 
@@ -86,6 +87,7 @@ export const SecuritySection = () => (
   <>
     <PasswordCard />
     <TwoFactorCard />
+    <PasskeysCard />
     <ImageSendersCard />
   </>
 );
