@@ -81,23 +81,36 @@ export const PASSKEY_RIGHTS_HINT =
   "einmal mit STALWART_UPDATE_ROLE_PERMISSIONS=true starten, danach die Variable wieder entfernen " +
   "(docs/installation.md, Stalwart 1.1.0).";
 
-/** The rights a role has, with those of the roles it inherits. */
-const rightsOf = (roles: Role[], id: string, seen = new Set<string>()): Set<string> => {
-  const role = roles.find((candidate) => candidate.id === id);
-  if (!role || seen.has(id)) return new Set();
-  seen.add(id);
-  const inherited = Object.keys(role.roleIds ?? {}).flatMap((parent) => [
-    ...rightsOf(roles, parent, seen),
-  ]);
-  const own = Object.keys(role.enabledPermissions ?? {}).filter(
-    (right) => role.enabledPermissions?.[right],
+/** The roles reached from these, with those they inherit, each once. */
+const reachedRoles = (roles: Role[], ids: string[], seen = new Set<string>()): Role[] =>
+  ids.flatMap((id) => {
+    const role = roles.find((candidate) => candidate.id === id);
+    if (!role || seen.has(id)) return [];
+    seen.add(id);
+    return [role, ...reachedRoles(roles, Object.keys(role.roleIds ?? {}), seen)];
+  });
+
+const switchedOn = (permissions: Record<string, boolean> | undefined): string[] =>
+  Object.keys(permissions ?? {}).filter((right) => permissions?.[right]);
+
+/**
+ * The rights the roles give, with those they inherit: all enabled ones minus all disabled ones,
+ * as Stalwart computes them (add_role_permissions, PermissionsGroup::finalize in
+ * crates/common/src/auth/permissions.rs).
+ */
+const rightsOf = (roles: Role[], ids: string[]): Set<string> => {
+  const reached = reachedRoles(roles, ids);
+  const disabled = new Set(reached.flatMap((role) => switchedOn(role.disabledPermissions)));
+  return new Set(
+    reached
+      .flatMap((role) => switchedOn(role.enabledPermissions))
+      .filter((right) => !disabled.has(right)),
   );
-  return new Set([...inherited, ...own]);
 };
 
 /** Whether the roles new users get let them keep passkeys; a hint for the admin when not. Pure. */
 export const passkeyRightsMessage = (roles: Role[], userRoleIds: string[]): string => {
-  const rights = new Set(userRoleIds.flatMap((id) => [...rightsOf(roles, id)]));
+  const rights = rightsOf(roles, userRoleIds);
   return PASSKEY_RIGHTS.every((right) => rights.has(right))
     ? "Passkeys sind für die Benutzer erlaubt."
     : PASSKEY_RIGHTS_HINT;
@@ -113,6 +126,7 @@ export type Role = {
   description: string;
   roleIds?: Record<string, boolean>;
   enabledPermissions?: Record<string, boolean>;
+  disabledPermissions?: Record<string, boolean>;
 };
 export type Domain = { id: string; name: string };
 type Credential = { "@type": string };
@@ -395,7 +409,10 @@ export const checkPasskeyRights = async (request: Request): Promise<Result<strin
   ]);
   const roles = await getList<Role>(request, [
     "x:Role/get",
-    { ids: null, properties: ["description", "roleIds", "enabledPermissions"] },
+    {
+      ids: null,
+      properties: ["description", "roleIds", "enabledPermissions", "disabledPermissions"],
+    },
     "0",
   ]);
   return ok(passkeyRightsMessage(roles, Object.keys(auth?.defaultUserRoleIds ?? {})));
