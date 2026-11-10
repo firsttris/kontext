@@ -244,7 +244,7 @@ test.describe("KI-Agenten mit Anmeldung (OAuth)", () => {
     await page.goto(authorize.toString());
     await page.getByLabel("E-Mail-Adresse").fill("jonas@weber-haustechnik.test");
     await page.getByLabel("Passwort").fill(DEV_PASSWORD);
-    await page.getByRole("button", { name: "Anmelden" }).click();
+    await page.getByRole("button", { name: "Anmelden", exact: true }).click();
     await expect(
       page.getByRole("heading", { name: `${name} möchte mit Kontext arbeiten` }),
     ).toBeVisible();

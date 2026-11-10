@@ -13,7 +13,7 @@ const secondBrowser = async (browser: Browser, user: string): Promise<Page> => {
   await page.goto("/login");
   await page.getByLabel("E-Mail-Adresse").fill(address(user));
   await page.getByLabel("Passwort").fill(DEV_PASSWORD);
-  await page.getByRole("button", { name: "Anmelden" }).click();
+  await page.getByRole("button", { name: "Anmelden", exact: true }).click();
   await expect(page).toHaveURL(/\/mail\//);
   return page;
 };

@@ -133,9 +133,9 @@ test.describe("Einstellungen", () => {
     await page.getByRole("menuitem", { name: "Abmelden" }).click();
     await page.getByLabel("E-Mail-Adresse").fill(address("sandra"));
     await page.getByLabel("Passwort").fill(DEV_PASSWORD);
-    await page.getByRole("button", { name: "Anmelden" }).click();
+    await page.getByRole("button", { name: "Anmelden", exact: true }).click();
     await page.getByLabel("Bestätigungscode").fill(await totp(secret));
-    await page.getByRole("button", { name: "Anmelden" }).click();
+    await page.getByRole("button", { name: "Anmelden", exact: true }).click();
     // back where Sandra was before signing out
     await expect(page.getByRole("heading", { name: "Passwort und Sicherheit" })).toBeVisible();
 

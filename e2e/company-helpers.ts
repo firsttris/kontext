@@ -10,7 +10,7 @@ export const signInWith = async (page: Page, email: string, password: string) =>
   await page.goto("/login");
   await page.getByLabel("E-Mail-Adresse").fill(email);
   await page.getByLabel("Passwort").fill(password);
-  await page.getByRole("button", { name: "Anmelden" }).click();
+  await page.getByRole("button", { name: "Anmelden", exact: true }).click();
 };
 
 export const newEmployee = async (
