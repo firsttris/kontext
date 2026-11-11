@@ -66,6 +66,17 @@ Alle Einstellungen stehen unter [Einstellungen im Überblick](#einstellungen-im-
 und Adressen stehen dort in jeder Datei selbst, jeder Dienst bekommt nur seine eigenen
 Einstellungen (`kontext.env`, `livekit.env` … mit `chmod 600`), keiner `deploy/.env`.
 
+### Härtung { #hartung }
+
+Kontext und Schreibzeug laufen gehärtet (`deploy/compose.yaml`, in den Quadlets `ReadOnly`,
+`DropCapability`, `NoNewPrivileges`): Das Dateisystem des Containers ist schreibgeschützt bis auf
+das Volume `/data` und `/tmp` (im Arbeitsspeicher), der Prozess hat keine Capabilities und kann
+keine neuen Rechte bekommen. Alles, was die Server schreiben (Datenbank, Dateien im Chat, Fotos,
+der Umzug aus Outlook samt `readpst`), liegt in `/data`. Das Image von Kontext enthält nur die
+Pakete, die der Server zur Laufzeit lädt, keine Build-Werkzeuge; die CI startet es so gehärtet und
+prüft, dass jeder Import auflöst. Wer im Container als root etwas ändern muss, gibt die nötige
+Capability für diesen einen Aufruf frei (Beispiel unter [Updates](#6-updates)).
+
 ## 3. Stalwart einrichten
 
 Stalwarts eigene Verwaltung lauscht nur auf dem Server selbst (`127.0.0.1:8080`), nie im
@@ -750,10 +761,11 @@ Schreibzeug mit Compose ohne `SCHREIBZEUG_VERSION` und die Telefonbox (siehe
 [Telefonie](#telefonie)).
 
 Seit 0.1.3 läuft der Kontext-Server nicht mehr als root, sondern als Benutzer `bun`. Ein Volume aus
-einer älteren Version gehört noch root; einmal übergeben, dann starten:
+einer älteren Version gehört noch root; einmal übergeben (`--cap-add CHOWN`, weil der Container
+sonst keine Capabilities hat, siehe [Härtung](#hartung)), dann starten:
 
 ```bash
-docker compose -f deploy/compose.yaml run --rm --user root --entrypoint chown kontext -R bun:bun /data
+docker compose -f deploy/compose.yaml run --rm --user root --cap-add CHOWN --entrypoint chown kontext -R bun:bun /data
 docker compose -f deploy/compose.yaml up -d
 ```
 

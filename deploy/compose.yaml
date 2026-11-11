@@ -40,6 +40,14 @@ services:
     image: docker.io/tristanteu/kontext:${KONTEXT_VERSION:?KONTEXT_VERSION in deploy/.env setzen}
     restart: unless-stopped
     depends_on: [stalwart]
+    # Hardened: the file system read-only except the volume below and /tmp, no capabilities, no
+    # new privileges (docs/installation.md, Hardening)
+    read_only: true
+    tmpfs:
+      - /tmp
+    cap_drop: [ALL]
+    security_opt:
+      - no-new-privileges:true
     environment:
       STALWART_URL: http://stalwart:8080
       BETTER_AUTH_URL: https://${KONTEXT_DOMAIN}
@@ -64,6 +72,14 @@ services:
     profiles: [documents]
     restart: unless-stopped
     depends_on: [kontext]
+    # Hardened: the file system read-only except the volume below and /tmp, no capabilities, no
+    # new privileges (docs/installation.md, Hardening)
+    read_only: true
+    tmpfs:
+      - /tmp
+    cap_drop: [ALL]
+    security_opt:
+      - no-new-privileges:true
     environment:
       SCHREIBZEUG_URL: ${SCHREIBZEUG_URL:-}
       SCHREIBZEUG_EMBED_ORIGIN: https://${KONTEXT_DOMAIN}

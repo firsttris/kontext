@@ -13,6 +13,11 @@ Image=docker.io/tristanteu/schreibzeug:0.1.19
 ContainerName=schreibzeug
 Network=kontext.network
 Volume=schreibzeug-data:/data
+# Hardened: the file system read-only except the volume above (/tmp Podman mounts as tmpfs itself
+# with ReadOnly), no capabilities, no new privileges (docs/installation.md, Hardening)
+ReadOnly=true
+DropCapability=ALL
+NoNewPrivileges=true
 Environment=OIDC_CLIENT_ID=schreibzeug
 # Caddy, as Schreibzeug sees it (kontext.network), so sign-ins count per client, not as Caddy's
 Environment=SCHREIBZEUG_TRUSTED_PROXIES=10.89.250.0/24

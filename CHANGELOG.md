@@ -21,6 +21,13 @@ Steps that an update needs beyond raising the version are marked **Upgrade**.
 - Calendar: since Stalwart 1.1.0, accepting in the calendar also tells the organizer for an
   appointment Kontext put in from an invitation mail; before, no answer went out for those.
   Answering in the mail itself stays Kontext's own mail (German subject, copy in "Gesendet").
+- Container hardening: Kontext and Schreibzeug run read-only except `/data` and `/tmp`, without
+  capabilities and with `no-new-privileges` (`deploy/compose.yaml`, the Quadlets). The image of
+  Kontext leaves out the peer dependencies and with them the build tools (vite, vitest,
+  drizzle-kit, esbuild): 641 instead of 814 MB. A new CI job starts it hardened and checks that
+  every import of the server resolves and `readpst` is there. **Upgrade** with your own copy of
+  `compose.yaml` or the Quadlets: take over the new lines; handing an old volume to `bun` now needs
+  `--cap-add CHOWN` (installation guide, "Härtung").
 
 - Docs: the documentation and the demo moved to their own domain,
   [kontext.email](https://kontext.email/) (the demo under `/demo/`); the old address redirects. Every
