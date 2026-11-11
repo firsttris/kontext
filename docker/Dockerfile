@@ -20,9 +20,10 @@ ARG LIBPST_COMMIT=cc600ee98c4ed23b8ab0bc2cf6b6c6e9cb587e89
 # autoconf-archive: configure.ac uses AX_PYTHON, AX_PYTHON_DEVEL and AX_BOOST_PYTHON even with
 # --disable-python; libpst's release tarball ships them in m4/, the git repository does not, and
 # unexpanded they break ./configure ("syntax error: unexpected redirection").
+# pkgconf-dev: PKG_CHECK_MODULES (pkg.m4), which Wolfi puts into the -dev package.
 RUN echo https://packages.wolfi.dev/os > /etc/apk/repositories \
   && apk add --no-cache build-base autoconf autoconf-archive automake libtool gettext gettext-dev \
-    pkgconf git libgsf-dev zlib-dev
+    pkgconf pkgconf-dev git libgsf-dev zlib-dev
 WORKDIR /src
 # Checked out by its full hash, so git verifies what is built.
 RUN git init -q . && git remote add origin https://github.com/pst-format/libpst \
@@ -31,6 +32,9 @@ RUN git init -q . && git remote add origin https://github.com/pst-format/libpst 
 # The bootstrap of libpst's Makefile.cvs, without doxygen and the final ./configure.
 RUN mkdir -p m4 && autopoint && libtoolize --force --copy && aclocal -I m4 && autoheader \
   && automake --add-missing && autoconf \
+  && if grep -nwE 'AX_PYTHON|AX_PYTHON_DEVEL|AX_BOOST_PYTHON|PKG_CHECK_MODULES|AM_ICONV|AM_GNU_GETTEXT' \
+       configure | grep -vE '^[0-9]+:[[:space:]]*#'; then \
+       echo "configure has unexpanded macros (above): an m4 package is missing" >&2; exit 1; fi \
   && ./configure --disable-python --disable-dii --enable-libpst-shared=no --enable-static-tools \
     --disable-dependency-tracking \
   && make -C src readpst && install -m 755 src/readpst /usr/local/bin/readpst
