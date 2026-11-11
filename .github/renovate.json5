@@ -81,6 +81,16 @@
       dependencyDashboardApproval: false,
     },
     {
+      // The base of the runtime and of readpst's build in docker/Dockerfile: Wolfi is rolling, the
+      // pinned digest brings the system packages. Every week instead of once a month, so security
+      // fixes do not wait; CI's app-image job builds readpst against it, compares its output with
+      // Debian's pst-utils and starts the image, then Renovate merges by itself.
+      matchPackageNames: ["cgr.dev/chainguard/wolfi-base"],
+      groupName: "Wolfi",
+      schedule: ["* 0-5 * * 1"],
+      automerge: true,
+    },
+    {
       // Kontext's own images move with its releases (release.yml), Schreibzeug with its own
       matchPackageNames: ["docker.io/tristanteu/**"],
       enabled: false,
