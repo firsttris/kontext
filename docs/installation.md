@@ -68,7 +68,7 @@ Einstellungen (`kontext.env`, `livekit.env` … mit `chmod 600`), keiner `deploy
 
 ### Härtung { #hartung }
 
-Kontext und Schreibzeug laufen gehärtet (`deploy/compose.yaml`, in den Quadlets `ReadOnly`,
+Kontext, Schreibzeug und Stalwart laufen gehärtet (`deploy/compose.yaml`, in den Quadlets `ReadOnly`,
 `DropCapability`, `NoNewPrivileges`): Das Dateisystem des Containers ist schreibgeschützt bis auf
 das Volume `/data` und `/tmp` (im Arbeitsspeicher), der Prozess hat keine Capabilities und kann
 keine neuen Rechte bekommen. Alles, was die Server schreiben (Datenbank, Dateien im Chat, Fotos,
@@ -76,6 +76,12 @@ der Umzug aus Outlook samt `readpst`), liegt in `/data`. Das Image von Kontext e
 Pakete, die der Server zur Laufzeit lädt, keine Build-Werkzeuge; die CI startet es so gehärtet und
 prüft, dass jeder Import auflöst. Wer im Container als root etwas ändern muss, gibt die nötige
 Capability für diesen einen Aufruf frei (Beispiel unter [Updates](#6-updates)).
+
+Stalwart braucht eine Ausnahme: Es läuft als uid 2000 und öffnet die Mail-Ports 25, 465, 587 und
+993 über eine Capability an seinem Programm (`NET_BIND_SERVICE`). Diese eine bleibt erlaubt
+(`cap_add`, im Quadlet `AddCapability`); ohne sie startet Stalwart gar nicht. Stalwart schreibt nur
+in seine Volumes und nach `/tmp`. Die CI startet Stalwarts Image so gehärtet und prüft, dass die
+Mail-Ports offen sind und SMTP antwortet (`docker/check-stalwart.sh`).
 
 Das Image von Kontext läuft auf [Wolfi](https://github.com/wolfi-dev/os) statt Debian: aktuelle
 Versionen der Systempakete und wenige bekannte Lücken. Wolfi hat kein Paket für `readpst`; das

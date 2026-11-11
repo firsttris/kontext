@@ -68,7 +68,7 @@ settings (`kontext.env`, `livekit.env` … with `chmod 600`), none gets `deploy/
 
 ### Hardening { #hartung }
 
-Kontext and Schreibzeug run hardened (`deploy/compose.yaml`, in the Quadlets `ReadOnly`,
+Kontext, Schreibzeug and Stalwart run hardened (`deploy/compose.yaml`, in the Quadlets `ReadOnly`,
 `DropCapability`, `NoNewPrivileges`): the container's file system is read-only except the volume
 `/data` and `/tmp` (in memory), the process has no capabilities and cannot gain new privileges.
 Everything the servers write (database, files in the chat, photos, the move from Outlook with
@@ -76,6 +76,12 @@ Everything the servers write (database, files in the chat, photos, the move from
 build tools; CI starts it hardened like this and checks that every import resolves. Whoever has to
 change something in the container as root allows the capability needed for that one call
 (example under [Updates](#6-updates)).
+
+Stalwart needs one exception: it runs as uid 2000 and opens the mail ports 25, 465, 587 and 993
+through a capability on its binary (`NET_BIND_SERVICE`). That one stays allowed (`cap_add`, in the
+Quadlet `AddCapability`); without it Stalwart does not start at all. Stalwart writes only to its
+volumes and to `/tmp`. CI starts Stalwart's image hardened like this and checks that the mail ports
+are open and SMTP answers (`docker/check-stalwart.sh`).
 
 Kontext's image runs on [Wolfi](https://github.com/wolfi-dev/os) instead of Debian: current
 versions of the system packages and few known vulnerabilities. Wolfi has no package for `readpst`,
