@@ -28,6 +28,7 @@
     "box",
     "video",
     "deploy",
+    "docker",
     "vite.config.ts",
     "playwright.config.ts",
     "drizzle.config.ts"

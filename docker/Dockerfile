@@ -15,7 +15,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends pst-utils \
   && rm -rf /var/lib/apt/lists/*
 ENV NODE_ENV=production PORT=3000 STATIC_DIR=/app/dist DATABASE_PATH=/data/kontext.db
 COPY package.json bun.lock ./
-RUN bun install --frozen-lockfile --production --ignore-scripts
+# Without peer dependencies: through them build tools would come into the image (vite, vitest,
+# drizzle-kit, esbuild with a Go runtime of its own) that never run there and only add known
+# vulnerabilities. What the server imports is checked in the image by docker/check-imports.ts.
+RUN bun install --frozen-lockfile --production --ignore-scripts --omit=peer
 COPY --from=build /app/dist ./dist
 COPY server ./server
 # The server uses parts of the app (src/jmap, src/lib) through the "@/" paths of tsconfig.json;

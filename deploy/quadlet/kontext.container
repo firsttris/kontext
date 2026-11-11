@@ -14,6 +14,11 @@ Image=docker.io/tristanteu/kontext:0.1.28
 ContainerName=kontext
 Network=kontext.network
 Volume=kontext-data:/data
+# Hardened: the file system read-only except the volume above (/tmp Podman mounts as tmpfs itself
+# with ReadOnly), no capabilities, no new privileges (docs/installation.md, Hardening)
+ReadOnly=true
+DropCapability=ALL
+NoNewPrivileges=true
 Environment=STALWART_URL=http://stalwart:8080
 Environment=LIVEKIT_URL=http://livekit:7880
 Environment=LIVEKIT_API_KEY=kontext

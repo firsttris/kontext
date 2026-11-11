@@ -66,6 +66,17 @@ set `LIVEKIT_SECRET` and open **TCP 7881 and UDP 7882** in the firewall (see
 and addresses are written in each file itself, and each service gets only its own
 settings (`kontext.env`, `livekit.env` … with `chmod 600`), none gets `deploy/.env`.
 
+### Hardening { #hartung }
+
+Kontext and Schreibzeug run hardened (`deploy/compose.yaml`, in the Quadlets `ReadOnly`,
+`DropCapability`, `NoNewPrivileges`): the container's file system is read-only except the volume
+`/data` and `/tmp` (in memory), the process has no capabilities and cannot gain new privileges.
+Everything the servers write (database, files in the chat, photos, the move from Outlook with
+`readpst`) is in `/data`. Kontext's image holds only the packages the server loads at runtime, no
+build tools; CI starts it hardened like this and checks that every import resolves. Whoever has to
+change something in the container as root allows the capability needed for that one call
+(example under [Updates](#6-updates)).
+
 ## 3. Setting up Stalwart { #3-stalwart-einrichten }
 
 Stalwart's own admin interface listens only on the server itself (`127.0.0.1:8080`), never on the
@@ -752,10 +763,11 @@ Schreibzeug with Compose without `SCHREIBZEUG_VERSION`, and the phone box (see
 [Telephony](#telefonie)).
 
 Since 0.1.3 the Kontext server no longer runs as root, but as the user `bun`. A volume from
-an older version still belongs to root; hand it over once, then start:
+an older version still belongs to root; hand it over once (`--cap-add CHOWN`, since the
+container has no capabilities otherwise, see [Hardening](#hartung)), then start:
 
 ```bash
-docker compose -f deploy/compose.yaml run --rm --user root --entrypoint chown kontext -R bun:bun /data
+docker compose -f deploy/compose.yaml run --rm --user root --cap-add CHOWN --entrypoint chown kontext -R bun:bun /data
 docker compose -f deploy/compose.yaml up -d
 ```
 

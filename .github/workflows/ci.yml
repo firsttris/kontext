@@ -55,6 +55,35 @@ jobs:
       # in the browser (src/lib/smime.ts) and by node:crypto on the server (server/smime).
       - run: bun audit --audit-level=high --ignore GHSA-86w9-cpqp-85rv
 
+  app-image:
+    name: App image, started hardened
+    # Draft pull requests do not build; "Ready for review" starts the run
+    if: ${{ !github.event.pull_request.draft }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - run: docker build -f docker/Dockerfile -t kontext .
+      # Hardened as in deploy/compose.yaml: read-only except /tmp and the volume, no capabilities.
+      # Stalwart is not needed to start; the app and /healthz answer without it.
+      - run: |
+          docker run -d --name kontext -p 3000:3000 \
+            --read-only --tmpfs /tmp --cap-drop ALL --security-opt no-new-privileges:true \
+            -v kontext-data:/data \
+            -e BETTER_AUTH_SECRET="$(openssl rand -hex 32)" \
+            -e BETTER_AUTH_URL=http://localhost:3000 \
+            -e STALWART_URL=http://127.0.0.1:1 \
+            kontext
+          for i in $(seq 1 30); do curl -fsS -o /dev/null http://localhost:3000/healthz && break; sleep 1; done
+          curl -fsS -o /dev/null http://localhost:3000/healthz
+          curl -fsS http://localhost:3000/ | grep -q "<div id=\"root\">"
+          docker exec kontext test -f /data/kontext.db
+          # Every import of the server resolves without the peer dependencies (docker/Dockerfile)
+          docker exec -i kontext sh -c 'cat > /tmp/check-imports.ts && bun /tmp/check-imports.ts' < docker/check-imports.ts
+          # readpst for the Outlook move (server/migration/pst.ts)
+          docker exec kontext sh -c 'command -v readpst'
+      - if: always()
+        run: docker logs kontext || true
+
   box:
     name: Telephone box image (Asterisk + agent)
     # Draft pull requests do not build; "Ready for review" starts the run
