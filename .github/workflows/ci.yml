@@ -91,6 +91,19 @@ jobs:
       - if: always()
         run: docker logs kontext || true
 
+  stalwart-container:
+    name: Stalwart image, started hardened
+    # Draft pull requests do not build; "Ready for review" starts the run
+    if: ${{ !github.event.pull_request.draft }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      # The release of dev/config.ts, which deploy/ runs too; the e2e tests use its binary, this
+      # job its image with the hardening of deploy/compose.yaml: mail ports open, SMTP answers.
+      - run: |
+          version=$(grep -oP 'STALWART_VERSION = "\K[^"]+' dev/config.ts)
+          docker/check-stalwart.sh "docker.io/stalwartlabs/stalwart:v$version"
+
   box:
     name: Telephone box image (Asterisk + agent)
     # Draft pull requests do not build; "Ready for review" starts the run

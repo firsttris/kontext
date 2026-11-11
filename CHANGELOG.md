@@ -33,6 +33,10 @@ Steps that an update needs beyond raising the version are marked **Upgrade**.
   (pst-format/libpst, 0.6.76 and the fixes since); CI checks that it writes the same mails,
   contacts and appointments as Debian's `pst-utils`. The user `bun` keeps UID 1000; nothing to do
   on update.
+- Stalwart hardened like Kontext: read-only except its volumes and `/tmp`, `no-new-privileges`,
+  no capabilities but `NET_BIND_SERVICE`, which it needs for the mail ports. A new CI job starts
+  its image so and checks that 25, 587 and 993 listen and SMTP answers. **Upgrade** with your own
+  copy of `compose.yaml` or `stalwart.container`: take over the new lines.
 
 - Docs: the documentation and the demo moved to their own domain,
   [kontext.email](https://kontext.email/) (the demo under `/demo/`); the old address redirects. Every
