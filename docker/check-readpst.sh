@@ -11,11 +11,16 @@ shift
 work=$(mktemp -d)
 trap 'rm -rf "$work"' EXIT
 
-# readpst writes a random number into each MIME boundary and the export time into each DTSTAMP
+# readpst writes a random number into each MIME boundary and the export time into each DTSTAMP.
+# Attachment names (filename*=utf-8''…, RFC 2231) are compared decoded: since libpst's 2f4b9fd
+# ("Encode all the characters that are required by RFC 2231 and RFC 5987", after 0.6.76) the
+# image's readpst also encodes ( ) ' as RFC 2231 asks, Debian's 0.6.76 does not; the names are
+# the same.
 normalize() {
   find "$1" -type f -exec sed -i -E \
     -e 's/boundary-LibPST-iamunique-[0-9]+_-_-/boundary-LibPST/g' \
     -e 's/^DTSTAMP:.*$/DTSTAMP:/' {} +
+  find "$1" -type f -exec perl -i -pe "s/%([0-9A-Fa-f]{2})/chr(hex(\$1))/ge if /filename\*=utf-8''/" {} +
 }
 
 failed=0
