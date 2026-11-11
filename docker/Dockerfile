@@ -47,10 +47,12 @@ FROM cgr.dev/chainguard/wolfi-base:latest@sha256:b7787f1d3f29dcfb48730372d351539
 COPY --from=docker.io/oven/bun:1.4-slim /usr/local/bin/bun /usr/local/bin/bun
 COPY --from=readpst /usr/local/bin/readpst /usr/local/bin/readpst
 # What readpst and Bun load: libgsf (with glib and libxml2), zlib, libstdc++ for readpst's C++
-# part, libgcc. The user "bun" with UID 1000 as in oven/bun's image, so existing volumes stay
-# readable.
+# part, libgcc, and glibc-iconv: libpst turns Outlook's UTF-16 and Windows code pages into UTF-8
+# with iconv, whose tables wolfi-base leaves out; without them every name stays its first byte
+# (the folder "Personal folders" became "P"). The user "bun" with UID 1000 as in oven/bun's
+# image, so existing volumes stay readable.
 RUN echo https://packages.wolfi.dev/os > /etc/apk/repositories \
-  && apk add --no-cache libgsf zlib libstdc++ libgcc \
+  && apk add --no-cache libgsf zlib libstdc++ libgcc glibc-iconv \
   && addgroup -g 1000 bun \
   && adduser -D -u 1000 -G bun -h /home/bun -s /bin/sh bun \
   && readpst -V
