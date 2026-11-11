@@ -17,9 +17,12 @@ RUN bun run build
 FROM cgr.dev/chainguard/wolfi-base:latest@sha256:b7787f1d3f29dcfb48730372d3515391ac3b218723201a765c94949922676099 AS readpst
 ARG LIBPST_COMMIT=cc600ee98c4ed23b8ab0bc2cf6b6c6e9cb587e89
 # The free Wolfi repository; wolfi-base names Chainguard's, which asks for a login.
+# autoconf-archive: configure.ac uses AX_PYTHON, AX_PYTHON_DEVEL and AX_BOOST_PYTHON even with
+# --disable-python; libpst's release tarball ships them in m4/, the git repository does not, and
+# unexpanded they break ./configure ("syntax error: unexpected redirection").
 RUN echo https://packages.wolfi.dev/os > /etc/apk/repositories \
-  && apk add --no-cache build-base autoconf automake libtool gettext gettext-dev pkgconf git \
-    libgsf-dev zlib-dev
+  && apk add --no-cache build-base autoconf autoconf-archive automake libtool gettext gettext-dev \
+    pkgconf git libgsf-dev zlib-dev
 WORKDIR /src
 # Checked out by its full hash, so git verifies what is built.
 RUN git init -q . && git remote add origin https://github.com/pst-format/libpst \
