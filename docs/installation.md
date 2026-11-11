@@ -77,6 +77,13 @@ Pakete, die der Server zur Laufzeit lädt, keine Build-Werkzeuge; die CI startet
 prüft, dass jeder Import auflöst. Wer im Container als root etwas ändern muss, gibt die nötige
 Capability für diesen einen Aufruf frei (Beispiel unter [Updates](#6-updates)).
 
+Das Image von Kontext läuft auf [Wolfi](https://github.com/wolfi-dev/os) statt Debian: aktuelle
+Versionen der Systempakete und wenige bekannte Lücken. Wolfi hat kein Paket für `readpst`; das
+Image baut es deshalb selbst aus den Quellen von libpst
+([pst-format/libpst](https://github.com/pst-format/libpst), auf einen Commit festgelegt), und die
+CI vergleicht seine Ausgabe mit der von Debians `pst-utils`. Der Benutzer `bun` hat wie bisher die
+UID 1000, bestehende Volumes bleiben lesbar.
+
 ## 3. Stalwart einrichten
 
 Stalwarts eigene Verwaltung lauscht nur auf dem Server selbst (`127.0.0.1:8080`), nie im

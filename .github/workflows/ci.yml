@@ -79,8 +79,15 @@ jobs:
           docker exec kontext test -f /data/kontext.db
           # Every import of the server resolves without the peer dependencies (docker/Dockerfile)
           docker exec -i kontext sh -c 'cat > /tmp/check-imports.ts && bun /tmp/check-imports.ts' < docker/check-imports.ts
-          # readpst for the Outlook move (server/migration/pst.ts)
-          docker exec kontext sh -c 'command -v readpst'
+      # readpst, built from libpst's sources on Wolfi (docker/Dockerfile), against Debian's
+      # pst-utils on the Outlook files of the e2e tests: the same mails, contacts and appointments
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.4.x
+      - run: |
+          sudo apt-get update -qq && sudo apt-get install -y -qq --no-install-recommends pst-utils
+          files=$(bun -e 'import { pstFixture } from "./e2e/fixtures.ts"; console.log(await pstFixture("enron.pst"), await pstFixture("dist-list.pst"))')
+          docker/check-readpst.sh kontext $files
       - if: always()
         run: docker logs kontext || true
 

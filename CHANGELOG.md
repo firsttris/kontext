@@ -28,6 +28,11 @@ Steps that an update needs beyond raising the version are marked **Upgrade**.
   every import of the server resolves and `readpst` is there. **Upgrade** with your own copy of
   `compose.yaml` or the Quadlets: take over the new lines; handing an old volume to `bun` now needs
   `--cap-add CHOWN` (installation guide, "Härtung").
+- Image on Wolfi instead of Debian (as Haben): current system packages and few known
+  vulnerabilities. `readpst` for the Outlook move is built from libpst's upstream sources
+  (pst-format/libpst, 0.6.76 and the fixes since); CI checks that it writes the same mails,
+  contacts and appointments as Debian's `pst-utils`. The user `bun` keeps UID 1000; nothing to do
+  on update.
 
 - Docs: the documentation and the demo moved to their own domain,
   [kontext.email](https://kontext.email/) (the demo under `/demo/`); the old address redirects. Every

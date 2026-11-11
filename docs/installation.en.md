@@ -77,6 +77,13 @@ build tools; CI starts it hardened like this and checks that every import resolv
 change something in the container as root allows the capability needed for that one call
 (example under [Updates](#6-updates)).
 
+Kontext's image runs on [Wolfi](https://github.com/wolfi-dev/os) instead of Debian: current
+versions of the system packages and few known vulnerabilities. Wolfi has no package for `readpst`,
+so the image builds it from libpst's sources
+([pst-format/libpst](https://github.com/pst-format/libpst), pinned to a commit), and CI compares
+its output with that of Debian's `pst-utils`. The user `bun` keeps UID 1000, so existing volumes
+stay readable.
+
 ## 3. Setting up Stalwart { #3-stalwart-einrichten }
 
 Stalwart's own admin interface listens only on the server itself (`127.0.0.1:8080`), never on the
