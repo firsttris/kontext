@@ -7,6 +7,10 @@ Steps that an update needs beyond raising the version are marked **Upgrade**.
 
 ## Unreleased
 
+- Deploy: `deploy/.env.example` and the Quadlet use Schreibzeug 0.1.21 (was 0.1.19, with security
+  updates and its own container hardening), and Compose and the Quadlet use Caddy 2.11.9 (was
+  2.11.8), the versions running on the first server. No step beyond raising the versions; with
+  Quadlet, raise the images in `schreibzeug.container` and `caddy.container`.
 - **Upgrade** Stalwart 1.1.0: raise `STALWART_VERSION=1.1.0` in `deploy/.env` (Quadlet:
   `Image=…/stalwart:v1.1.0`) with this release. Kontext keeps working with 1.0.3, only without
   passkeys. On a Stalwart set up before 1.1.0 the default role *User* lacks the `sysPasskey*`
