@@ -39,3 +39,13 @@ const { app } = await createApp(env);
 
 const server = Bun.serve({ port: env.PORT, fetch: app.fetch, websocket, idleTimeout: 0 });
 console.log(`Kontext-Server läuft: http://127.0.0.1:${server.port} → Stalwart ${env.STALWART_URL}`);
+
+// As PID 1 in the container, bun gets no default handler for SIGTERM: without this, `podman stop`
+// (every restart, the nightly backup) waits its 10 s and then kills the server with SIGKILL.
+const shutdown = (signal: string) => {
+  console.log(`Kontext-Server: ${signal}, wird beendet`);
+  void server.stop(true);
+  process.exit(0);
+};
+process.on("SIGTERM", () => shutdown("SIGTERM"));
+process.on("SIGINT", () => shutdown("SIGINT"));
