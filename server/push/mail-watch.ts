@@ -118,6 +118,9 @@ export const createMailWatch = ({
             body: JSON.stringify({ using: USING, methodCalls: calls }),
             signal,
           });
+          // Like the other JMAP callers: a refused request (Stalwart busy or restarting) answers
+          // no methodResponses, which would only show up as a TypeError in the log.
+          if (!response.ok) throw new Error(`JMAP ${response.status}`);
           const { methodResponses } = (await response.json()) as {
             methodResponses: [string, T][];
           };
