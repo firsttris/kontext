@@ -83,6 +83,25 @@ describe("createMailWatch", () => {
     watch.stop();
   });
 
+  it("names the status when Stalwart refuses a JMAP request", async () => {
+    const session = {
+      apiUrl: "http://stalwart:8080/jmap/",
+      eventSourceUrl: "http://stalwart:8080/jmap/eventsource/",
+      accounts: { a: { accountCapabilities: { "urn:ietf:params:jmap:mail": {} } } },
+    };
+    const fetch = vi.fn(async (url: string) =>
+      url.endsWith("/jmap/session")
+        ? Response.json(session)
+        : new Response("busy", { status: 503 }),
+    );
+    vi.stubGlobal("fetch", fetch);
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => undefined);
+    const { watch } = watchFor("valid");
+    await watch.refresh();
+    await vi.waitFor(() => expect(warn).toHaveBeenCalledWith("Mail-Push für jonas: JMAP 503"));
+    watch.stop();
+  });
+
   it("does not ask Stalwart without a grant", async () => {
     const fetch = vi.fn(async () => new Response("{}"));
     vi.stubGlobal("fetch", fetch);
