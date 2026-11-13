@@ -30,7 +30,8 @@ flowchart LR
 
 ## The parts { #die-teile }
 
-- **Stalwart** (Community Edition, AGPL, version 1.0) is mail, calendar and contacts server in
+- **Stalwart** (Community Edition, AGPL, version 1.1; Enterprise with a license works the same,
+  see [company admin](#firmenverwaltung)) is mail, calendar and contacts server in
   one. Since 0.16 its whole configuration lives in its database; the only file on disk is
   `config.json` with the storage location.
 - **Kontext** is a single-page app. It speaks [JMAP](https://jmap.io): mail (RFC 8621),
@@ -301,6 +302,14 @@ its own and allows only what the company admin needs.
   IMAP, SMTP or DAV, but mail to the address keeps arriving. Kontext also ends all of the person's
   sessions for this, as it does after a new password.
 - **Additional addresses** are Stalwart's aliases (`aliases`), only in the server's domains.
+- **Stalwart edition:** Community and Enterprise are the same program; a license key in Stalwart
+  unlocks Enterprise. Which one runs, Stalwart says in `GET /api/account` (`edition`:
+  `enterprise` with a valid license, otherwise `community`; `crates/http/src/auth/permissions.rs`).
+  The server asks with its key and keeps the answer for ten minutes, one after an error
+  (`server/company/edition.ts`); everyone signed in reads it at `GET /api/company/edition`, the
+  company admin shows it under *Employees*. Kontext needs Enterprise for nothing; what only
+  Stalwart Enterprise can do, the app offers only once the license is active
+  (`useStalwartEdition`, `src/features/company/edition.ts`).
 - **Shared mailboxes** are groups; a member is whoever has the group in `memberGroupIds`.
   "Read only" goes to whoever has all of the mailbox's folders shared with them via `shareWith`
   (`mayReadItems`, `maySetSeen`); the app reads this off the inbox.

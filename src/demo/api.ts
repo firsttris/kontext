@@ -67,6 +67,8 @@ const FIXED: Record<string, (store: Store) => unknown> = {
   "GET /api/company/search-index": () => ({ pending: 0, failed: false, known: true }),
   // Stalwart's encryption gateway needs the real server (server/company/encryption-gateway.ts).
   "GET /api/company/encryption-gateway": () => ({ known: false, enabled: false, keys: [] }),
+  // The demo stands in for a Stalwart without a license (server/company/edition.ts).
+  "GET /api/company/edition": () => ({ edition: "community" }),
   "GET /api/snippets": () => ({ snippets: [] }),
   "GET /api/external-accounts": () => [],
   "GET /api/pgp/me": () => ({ key: null }),

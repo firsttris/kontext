@@ -11,6 +11,7 @@ import { authorityRoutes } from "../smime/authorities";
 import { assistantRoutes } from "./assistant";
 import { backupRoutes } from "./backup-routes";
 import { bad, bodyOf, type CompanyDeps, createLoader, type Env } from "./context";
+import { readEdition } from "./edition";
 import { employeeRoutes } from "./employees";
 import { encryptionGatewayRoutes } from "./encryption-gateway";
 import { externalHintRoutes, readExternalHint } from "./external-hint";
@@ -35,6 +36,7 @@ export const createCompanyRoutes = (deps: CompanyDeps) => {
   const vacationTemplates = readVacationTemplates(deps);
   const phishingReport = readPhishingReport(deps);
   const mailboxMembers = readMailboxMembers(deps);
+  const edition = readEdition(deps);
 
   /** Whether to show the Firmenverwaltung at all; asked by every signed-in user. */
   app.get("/me", async (c) =>
@@ -75,6 +77,12 @@ export const createCompanyRoutes = (deps: CompanyDeps) => {
   app.get("/mailbox-members", async (c) => {
     const members = await mailboxMembers(c.req.raw);
     return members ? c.json({ members }) : c.json({ error: "Nicht angemeldet" }, 401);
+  });
+
+  /** Stalwart Community or Enterprise: every signed-in user's app shows what the license allows. */
+  app.get("/edition", async (c) => {
+    const result = await edition(c.req.raw);
+    return result ? c.json(result) : c.json({ error: "Nicht angemeldet" }, 401);
   });
 
   app.use("*", async (c, next) => {

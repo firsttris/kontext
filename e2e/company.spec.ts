@@ -24,6 +24,13 @@ test.describe("Firmenverwaltung", () => {
     await expect(page.getByRole("link", { name: "Mitarbeiter" })).toHaveCount(0);
     await page.goto("/settings?section=employees");
     await expect(page.getByText("nur für Konten mit dem Recht")).toBeVisible();
+    await expect(page.getByTestId("stalwart-edition")).toHaveCount(0);
+  });
+
+  test("zeigt die Stalwart-Ausgabe: ohne Lizenz Community", async ({ page }) => {
+    await login(page);
+    await page.goto("/settings?section=employees");
+    await expect(page.getByTestId("stalwart-edition")).toHaveText("Community (kostenlos)");
   });
 
   test("legt einen Mitarbeiter an, der sich anmeldet, und sperrt ihn wieder", async ({

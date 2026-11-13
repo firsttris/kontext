@@ -489,6 +489,24 @@ Sonnet 5.5). Kontext stores the key encrypted and afterwards shows only its last
 Each person may ask ten questions a minute. The questions and what the assistant looks up go to Anthropic in the USA: this belongs
 in the privacy notice, with Anthropic's data processing agreement.
 
+### Stalwart Enterprise (optional) { #stalwart-enterprise }
+
+Kontext runs fully on Stalwart's free Community edition; an Enterprise license is not needed.
+Whoever wants Stalwart's Enterprise features all the same (restoring deleted items on the server,
+the AI spam filter, SCIM, for example) buys the license from Stalwart Labs
+([pricing](https://stalw.art/pricing/), 30 days to try) and enters it in Stalwart, not in Kontext:
+it is the same image, only the key unlocks it.
+
+1. In Stalwart's web interface under *Settings → Enterprise*, enter the key in `licenseKey`.
+2. Reload the settings (action `ReloadSettings`). The log then says
+   "Stalwart Enterprise Edition license key is valid".
+
+Kontext notices within ten minutes; the company admin shows "Enterprise (license active)" under
+*Employees*. The key is valid for the domain of the server's host name and for a number of
+mailboxes, shared mailboxes included; beyond it Stalwart refuses new accounts, and the company
+admin shows Stalwart's message. When the license lapses, Stalwart carries on as Community, without
+losing data.
+
 ## 4. Encrypting the disk { #4-platte-verschlusseln }
 
 Mails, chat, tasks and files are on the server's disk. Encrypted, it is

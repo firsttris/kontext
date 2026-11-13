@@ -60,6 +60,8 @@ export type CompanyDeps = {
   encryptionGateway?: import("./encryption-gateway").EncryptionGateway;
   /** The Datensicherung, through files the host reads and writes (backup.ts). */
   backup?: BackupControl;
+  /** Stalwart Community or Enterprise (edition.ts); Enterprise-only parts ask it. */
+  edition?: import("./edition").EditionCheck;
 };
 
 export type Loaded = {

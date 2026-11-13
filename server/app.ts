@@ -27,6 +27,7 @@ import { createChatRoutes, viewerOf } from "./chat/routes";
 import { createChatStore } from "./chat/store";
 import { createBackupControl } from "./company/backup";
 import { createCalendars } from "./company/calendars";
+import { createEditionCheck } from "./company/edition";
 import { createEncryptionGateway } from "./company/encryption-gateway";
 import { createExternalHintStore } from "./company/external-hint";
 import { createMailstore } from "./company/mailstore";
@@ -420,6 +421,7 @@ export const createApp = async (env: Env) => {
       security: { publicUrl: env.BETTER_AUTH_URL, resolve: dohResolver(env.DOH_URL) },
       encryptionGateway: createEncryptionGateway(request),
       backup: createBackupControl(join(dirname(env.DATABASE_PATH), "backup-control")),
+      edition: createEditionCheck({ stalwartUrl: env.STALWART_URL, key: env.STALWART_ADMIN_KEY }),
     });
     app.route("/api/company", company);
   }
