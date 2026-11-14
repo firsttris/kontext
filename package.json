@@ -1,6 +1,6 @@
 {
   "name": "kontext",
-  "version": "0.1.30",
+  "version": "0.1.31",
   "private": true,
   "type": "module",
   "description": "Kontext – self-hosted office suite for small businesses on top of Stalwart",
