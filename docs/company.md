@@ -14,6 +14,9 @@ Stalwarts Admin-Oberfläche und ohne IT-Kenntnisse.
 
 - **Mitarbeiter anlegen** mit Startpasswort, Passwort und Anmeldung mit Code zurücksetzen,
   **Zugang sperren** (Mails kommen weiter an), weitere Adressen wie buchhaltung@.
+- **Stalwart Community oder Enterprise:** Kontext läuft mit beiden. Unter *Mitarbeiter* steht,
+  welche Ausgabe der Server hat; eine Enterprise-Lizenz erkennt Kontext von selbst
+  ([Installation](installation.md#stalwart-enterprise)).
 - **Gemeinsame Postfächer** mit Rechten je Person: kein Zugriff, nur lesen, lesen und senden;
   eigene Regeln je Postfach.
 - **Abwesenheit für Kollegen** (etwa bei Krankheit) mit Vertretung in der Antwort.

@@ -187,6 +187,14 @@ sets it up and keeps it updated.
 </details>
 
 <details>
+<summary><b>Stalwart Community or Enterprise?</b></summary>
+
+Both. Kontext runs fully on Stalwart's free Community edition, so there is no license to buy. If
+you have a Stalwart Enterprise license, Kontext detects it and shows it in the company admin area;
+see [Stalwart Enterprise](https://kontext.email/en/installation.html#stalwart-enterprise).
+</details>
+
+<details>
 <summary><b>Is there a web interface for the Stalwart mail server?</b></summary>
 
 Yes, that is what Kontext is: a JMAP web client for mail, calendar and contacts on

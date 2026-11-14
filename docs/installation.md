@@ -486,6 +486,25 @@ Claude Sonnet 5.5). Kontext speichert den Schlüssel verschlüsselt und zeigt da
 letzten vier Zeichen. Jede Person darf zehn Fragen in der Minute stellen. Die Fragen und was der Assistent nachschlägt, gehen an Anthropic in
 die USA: Das gehört in die Datenschutzinformation, mit Anthropics Auftragsverarbeitungsvertrag.
 
+### Stalwart Enterprise (optional) { #stalwart-enterprise }
+
+Kontext läuft mit der kostenlosen Community-Ausgabe von Stalwart vollständig; eine
+Enterprise-Lizenz braucht es nicht. Wer Stalwarts Enterprise-Funktionen trotzdem will (etwa
+Gelöschtes auf dem Server wiederherstellen, KI-Spamfilter, SCIM), kauft die Lizenz bei Stalwart
+Labs ([Preise](https://stalw.art/pricing/), 30 Tage zum Testen) und trägt sie in Stalwart ein, nicht
+in Kontext: Es ist dasselbe Image, nur der Schlüssel schaltet frei.
+
+1. In Stalwarts Weboberfläche unter *Settings → Enterprise* den Schlüssel in `licenseKey`
+   eintragen.
+2. Die Einstellungen neu laden (Aktion `ReloadSettings`). Im Log steht dann
+   „Stalwart Enterprise Edition license key is valid“.
+
+Kontext merkt es innerhalb von zehn Minuten; die Firmenverwaltung zeigt unter *Mitarbeiter*
+„Enterprise (Lizenz aktiv)“. Der Schlüssel gilt für die Domain des Server-Hostnamens und für eine
+Zahl von Postfächern, gemeinsame Postfächer zählen mit; darüber lehnt Stalwart neue Konten ab, und
+die Firmenverwaltung zeigt Stalwarts Meldung. Läuft die Lizenz aus, arbeitet Stalwart als
+Community weiter, ohne Datenverlust.
+
 ## 4. Platte verschlüsseln
 
 Mails, Chat, Aufgaben und Dateien liegen auf der Platte des Servers. Verschlüsselt ist sie

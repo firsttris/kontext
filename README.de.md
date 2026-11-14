@@ -187,6 +187,15 @@ jemanden, der ihn einrichtet und aktuell hält.
 </details>
 
 <details>
+<summary><b>Stalwart Community oder Enterprise?</b></summary>
+
+Beides. Kontext läuft vollständig mit der kostenlosen Community-Ausgabe von Stalwart, eine Lizenz
+muss niemand kaufen. Ist eine Lizenz für Stalwart Enterprise eingetragen, erkennt Kontext sie und
+zeigt sie in der Firmenverwaltung; siehe
+[Stalwart Enterprise](https://kontext.email/installation.html#stalwart-enterprise).
+</details>
+
+<details>
 <summary><b>Gibt es eine Weboberfläche für den Mailserver Stalwart?</b></summary>
 
 Ja, das ist Kontext: ein JMAP-Webclient für Mail, Kalender und Kontakte auf

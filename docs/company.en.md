@@ -14,6 +14,9 @@ Stalwart's admin interface and without IT skills.
 
 - **Add employees** with a starting password, reset the password and the sign-in with a code,
   **block access** (mail keeps arriving), further addresses such as buchhaltung@.
+- **Stalwart Community or Enterprise:** Kontext runs with both. *Employees* shows which edition
+  the server has; Kontext detects an Enterprise license by itself
+  ([installation](installation.md#stalwart-enterprise)).
 - **Shared mailboxes** with rights per person: no access, read only, read and send; rules of
   their own per mailbox.
 - **Out of office for colleagues** (during illness, for example) with a stand-in named in the reply.

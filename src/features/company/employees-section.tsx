@@ -10,6 +10,7 @@ import { m } from "@/paraglide/messages";
 import { useCompanyRules } from "../rules/queries";
 import { RulesList } from "../rules/rules-section";
 import { type Company, type Employee, showAvailabilityToAll } from "./api";
+import { EditionCard } from "./edition-card";
 import { EmployeeDialog, type EmployeeSubDialog, NewEmployeeDialog } from "./employee-dialogs";
 import { Badge } from "./fields";
 import { CompanyGate } from "./gate";
@@ -89,6 +90,7 @@ const Employees = ({ company }: { company: Company }) => {
       {other && next?.dialog === "offboarding" ? (
         <OffboardingDialog company={company} employee={other} onClose={() => setNext(null)} />
       ) : null}
+      <EditionCard />
     </>
   );
 };

@@ -30,7 +30,8 @@ flowchart LR
 
 ## Die Teile
 
-- **Stalwart** (Community Edition, AGPL, Version 1.0) ist Mail-, Kalender- und Kontaktserver in
+- **Stalwart** (Community Edition, AGPL, Version 1.1; Enterprise mit Lizenz geht genauso, siehe
+  [Firmenverwaltung](#firmenverwaltung)) ist Mail-, Kalender- und Kontaktserver in
   einem. Seit 0.16 liegt die ganze Konfiguration in seiner Datenbank; auf der Platte steht nur
   `config.json` mit dem Speicherort.
 - **Kontext** ist eine Single-Page-App. Sie spricht [JMAP](https://jmap.io): Mail (RFC 8621),
@@ -306,6 +307,14 @@ mit einem eigenen API-Schlüssel an und erlaubt nur, was die Firmenverwaltung br
   SMTP oder DAV, Mails an die Adresse kommen aber weiter an. Kontext beendet dazu alle Sitzungen
   der Person, ebenso nach einem neuen Passwort.
 - **Weitere Adressen** sind Stalwarts Aliase (`aliases`), nur in den Domains des Servers.
+- **Stalwart-Ausgabe:** Community und Enterprise sind dasselbe Programm, ein Lizenzschlüssel in
+  Stalwart schaltet Enterprise frei. Welche läuft, sagt Stalwart in `GET /api/account` (`edition`:
+  `enterprise` mit gültiger Lizenz, sonst `community`; `crates/http/src/auth/permissions.rs`).
+  Der Server fragt mit seinem Schlüssel und merkt sich die Antwort zehn Minuten, nach einem Fehler
+  eine (`server/company/edition.ts`); jeder Angemeldete liest sie unter
+  `GET /api/company/edition`, die Firmenverwaltung zeigt sie unter *Mitarbeiter*. Kontext braucht
+  Enterprise für nichts; was nur Stalwart Enterprise kann, bietet die App erst an, wenn die
+  Lizenz aktiv ist (`useStalwartEdition`, `src/features/company/edition.ts`).
 - **Gemeinsame Postfächer** sind Gruppen; Mitglied ist, wer die Gruppe in `memberGroupIds` hat.
   „Nur lesen“ bekommt, wem alle Ordner des Postfachs per `shareWith` geteilt sind
   (`mayReadItems`, `maySetSeen`); die App liest das am Posteingang ab.

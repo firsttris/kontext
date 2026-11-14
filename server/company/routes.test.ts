@@ -178,6 +178,7 @@ const setup = (
       saveSettings: async () => {},
       requestRun: async () => {},
     },
+    edition: async () => "enterprise",
   });
   const send = (method: string, path: string, body?: unknown) =>
     app.request(path, {
@@ -552,6 +553,13 @@ describe("Firmenverwaltung", () => {
     expect(chef.phishing.address).toBe("it@dienstleister.de");
     await chef.send("PUT", "/phishing-report", { address: "" });
     expect(chef.phishing.address).toBe("");
+  });
+
+  it("tells everyone signed in which Stalwart edition runs", async () => {
+    expect(await (await setup("anna@firma.de").send("GET", "/edition")).json()).toEqual({
+      edition: "enterprise",
+    });
+    expect((await setup(null).send("GET", "/edition")).status).toBe(401);
   });
 
   it("lets only the admin set the assistant's key and model, and never shows the key", async () => {
